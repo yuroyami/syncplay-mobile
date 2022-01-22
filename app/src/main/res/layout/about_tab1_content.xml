@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@drawable/bg2_gradient"
+    android:padding="10dp">
+    <TextView
+        android:id="@+id/about_credits0"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:text="UNOFFICIAL Android Client\nDeveloped by Cosmik Inc."
+        android:textColor="@color/sp_highlight"
+        android:textAlignment="center"
+        android:fontFamily="monospace"
+        android:textStyle="bold" />
+    <TextView
+        android:id="@+id/about_credits1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/about_credits0"
+        android:text="> This is an Android Client app written from the source code of the open source project SyncPlay.\n> What SyncPlay does is synchronize the video playback of any video between you and your faraway friends.\n> This Android Client can work flawlessly with the PC Client, so no matter which device you use, Laptop or Phone, SyncPlay got you covered."
+        android:textColor="@color/sp_highlight"
+        android:fontFamily="monospace"
+        />
+    <TextView
+        android:id="@+id/about_credits2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/about_credits1"
+        android:text=">>>> Developer: Volnutt"
+        android:textColor="@color/sp_highlight"
+        android:fontFamily="monospace"
+        />
+    <TextView
+        android:id="@+id/about_credits3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/about_credits2"
+        android:text="- Minimum Android Ver.: Android KitKat (4.4.2)"
+        android:textColor="@color/sp_highlight"
+        android:fontFamily="monospace" />
+    <TextView
+        android:id="@+id/about_credits4"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/about_credits3"
+        android:text="- Original App by: Uriziel (Visit www.syncplay.pl)"
+        android:textColor="@color/sp_highlight"
+        android:fontFamily="monospace" />
+    <TextView
+        android:id="@+id/about_credits5"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/about_credits4"
+        android:text="> All Rights go to Syncplay's Original Authors"
+        android:textColor="@color/sp_highlight"
+        android:fontFamily="monospace" />
+    <TextView
+        android:id="@+id/about_credits6"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/about_credits5"
+        android:text="Special Thanks Go to :\n\t\t- FillableLoader: jorgecastilloprz (GitHub)\n\t\t- ExpandableLayout: skydoves (GitHub)\n\t\t"
+        android:textColor="@color/sp_highlight"
+        android:fontFamily="monospace" />
+</androidx.constraintlayout.widget.ConstraintLayout>

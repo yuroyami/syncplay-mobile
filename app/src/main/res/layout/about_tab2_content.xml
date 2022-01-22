@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@drawable/bg2_gradient"
+    android:padding="10dp">
+    <TextView
+        android:id="@+id/about_faq0"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:text="Frequently Asked Questions"
+        android:textColor="@color/sp_highlight"
+        android:textAlignment="center"
+        android:fontFamily="monospace"
+        android:textStyle="bold" />
+    <TextView
+        android:id="@+id/about_faq1a"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/about_faq0"
+        android:text="> What does the app do ?"
+        android:textColor="@color/sp_highlight"
+        android:fontFamily="monospace"
+        />
+    <TextView
+        android:id="@+id/about_faq1b"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/about_faq1a"
+        android:text=">>>> The app syncs video playback between devices (Windows, Linux, macOS or Android."
+        android:textColor="@color/white"
+        android:fontFamily="monospace" />
+
+
+    <TextView
+        android:id="@+id/about_faq2a"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/about_faq1b"
+        android:text="> What do I need ?"
+        android:textColor="@color/sp_highlight"
+        android:fontFamily="monospace"
+        />
+    <TextView
+        android:id="@+id/about_faq2b"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/about_faq2a"
+        android:text=">>>> You and your friends only need a SyncPlay Client installed."
+        android:textColor="@color/white"
+        android:fontFamily="monospace" />
+
+    <TextView
+        android:id="@+id/about_faq3a"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/about_faq2b"
+        android:text="> I'm using SyncPlay's client on phone, can I watch with my friends who use PC?"
+        android:textColor="@color/sp_highlight"
+        android:fontFamily="monospace"
+        />
+    <TextView
+        android:id="@+id/about_faq3b"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/about_faq3a"
+        android:text=">>>> Yes, the android client is inter-operable with the PC client. The support is unofficial, but we are doing our best to make sure the app is finally recommended by SyncPlay's original authors."
+        android:textColor="@color/white"
+        android:fontFamily="monospace" />
+
+    <TextView
+        android:id="@+id/about_faq4a"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/about_faq3b"
+        android:text="> How to correctly use the client?"
+        android:textColor="@color/sp_highlight"
+        android:fontFamily="monospace"
+        />
+    <TextView
+        android:id="@+id/about_faq4b"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/about_faq4a"
+        android:text=">>>> First of all, you have to join the same server as your friends, choose the room name where your friends or think of a new name and the room will be created once you click the button. You can also change your username."
+        android:textColor="@color/white"
+        android:fontFamily="monospace" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

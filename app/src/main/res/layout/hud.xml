@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2016 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/vidplayerhud"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom"
+    android:layoutDirection="ltr"
+    android:background="@drawable/hud_gradient"
+    android:orientation="vertical"
+    tools:ignore="UseAppTint"
+    tools:targetApi="28">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingTop="4dp"
+        android:orientation="horizontal">
+
+
+        <ImageButton android:id="@+id/syncplay_screen"
+            android:src="@drawable/ic_screen"
+            style="@style/ExoMediaButton.FastForward"
+            android:tint="#FFD66F"
+            tools:ignore="ContentDescription" />
+
+        <ImageButton android:id="@id/exo_audio_track"
+            android:src="@drawable/exo_ic_audiotrack"
+            style="@style/ExoMediaButton.FastForward"
+            android:tint="#FFD66F" />
+
+        <ImageButton android:id="@id/exo_subtitle"
+            style="@style/ExoMediaButton.FastForward"
+            android:src="@drawable/ic_subtitles"
+            android:tint="#FFD66F" />
+
+        <ImageButton android:id="@id/exo_rew"
+            style="@style/ExoMediaButton.Rewind"
+            android:tint="#FFD66F" />
+
+        <ImageButton android:id="@id/exo_repeat_toggle"
+            android:tint="#FFD66F"
+            style="@style/ExoMediaButton"/>
+
+        <ImageButton android:id="@id/exo_play"
+            android:tint="#FFD66F"
+            style="@style/ExoMediaButton.Play" />
+
+        <ImageButton android:id="@id/exo_pause"
+            android:tint="#FFD66F"
+            style="@style/ExoMediaButton.Pause"/>
+
+        <ImageButton android:id="@id/exo_ffwd"
+            android:tint="#FFD66F"
+            style="@style/ExoMediaButton.FastForward"/>
+
+        <ImageButton android:id="@+id/syncplay_addfile"
+            android:src="@drawable/ic_add_video"
+            style="@style/ExoMediaButton.FastForward"
+            android:tint="#FFD66F" />
+
+        <ImageButton android:id="@+id/syncplay_lock"
+            android:src="@drawable/ic_locked"
+            style="@style/ExoMediaButton.FastForward"
+            android:tint="#FFD66F" />
+
+        <ImageButton android:id="@+id/syncplay_more"
+            android:src="@drawable/ic_more"
+            style="@style/ExoMediaButton.FastForward"
+            android:tint="#FFD66F" />
+
+
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView android:id="@id/exo_position"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:paddingLeft="4dp"
+            android:paddingRight="4dp"
+            android:layout_marginStart="16dp"
+            android:includeFontPadding="false"
+            android:textColor="#FFBEBEBE"/>
+
+        <View android:id="@id/exo_progress_placeholder"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="26dp"/>
+
+        <TextView android:id="@id/exo_duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:paddingLeft="4dp"
+            android:paddingRight="4dp"
+            android:layout_marginEnd="16dp"
+            android:includeFontPadding="false"
+            android:textColor="#FFBEBEBE"/>
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/bg2_gradient.xml" value="0.1825" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/bg_gradient.xml" value="0.1435" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/bg_player.xml" value="0.166" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/cosmik_gradient.xml" value="0.158" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/hud_gradient.xml" value="0.149" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/ic_arrowleft.xml" value="0.1565" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/ic_audio.xml" value="0.1165" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/ic_blanker.xml" value="0.1565" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/ic_lock.xml" value="0.1165" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/ic_lock_on.xml" value="0.102" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/ic_locked.xml" value="0.102" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/ic_more.xml" value="0.1565" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/ic_not_ready.xml" value="0.102" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/ic_pause.xml" value="0.1595" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/ic_play.xml" value="0.1595" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/ic_ready.xml" value="0.1825" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/ic_room.xml" value="0.1825" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/ic_screen.xml" value="0.102" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/ic_send.xml" value="0.102" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/ic_subtitles.xml" value="0.1595" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/ic_subtitles_off.xml" value="0.1" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/ic_unlocked.xml" value="0.102" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/ic_user.xml" value="0.154" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/ic_username.xml" value="0.1825" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/ic_users.xml" value="0.102" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/ic_volume.xml" value="0.102" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/splash_gradient.xml" value="0.158" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/drawable/splash_screen_activity.xml" value="0.1225" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/layout/about_tab1.xml" value="0.278125" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/layout/about_tab1_content.xml" value="0.278125" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/layout/about_tab2_content.xml" value="0.278125" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/layout/about_tab2_header.xml" value="0.278125" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/layout/about_tab3_content.xml" value="0.25" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/layout/about_tab3_header.xml" value="0.209375" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/layout/fragment_about.xml" value="0.1" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/layout/fragment_connect.xml" value="0.33" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/layout/fragment_room.xml" value="0.22" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/layout/fragment_settings.xml" value="0.24909420289855072" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/layout/hud.xml" value="0.1" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/layout/main_activity.xml" value="0.17074275362318841" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/layout/main_fragment.xml" value="0.25" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/layout/messages_popup.xml" value="0.1718683197947841" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/layout/page1_connect.xml" value="0.10914855072463768" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/layout/room_activity.xml" value="0.2" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/layout/sp_serverList.xml" value="0.20199275362318841" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/layout/sp_serverlist.xml" value="0.2028985507246377" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/layout/userbottomsheet.xml" value="0.10182370820668693" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/menu/cc_menu.xml" value="0.209375" />
+        <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/xml/settings.xml" value="0.1" />
+      </map>
+    </option>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="Android Studio default JDK" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/build/classes" />
+  </component>
+  <component name="ProjectType">
+    <option name="id" value="Android" />
+  </component>
+</project>

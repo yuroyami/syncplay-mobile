@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="350dp"
+    android:layout_height="200dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:cardElevation="8dp">
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/syncplay_MH_nester"
+        android:layout_width="350dp"
+        android:layout_height="200dp"
+        >
+        <RelativeLayout
+            android:id="@+id/syncplay_MESSAGEHISTORY"
+            android:layout_width="350dp"
+            android:layout_height="200dp"
+            android:padding="6dp">
+        </RelativeLayout>
+    </androidx.core.widget.NestedScrollView>
+</com.google.android.material.card.MaterialCardView>
