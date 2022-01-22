@@ -1,4 +1,4 @@
-# SyncPlay
+# About SyncPlay BETA:
 The unofficial Syncplay client for Android. Works with the Desktop version of Syncplay !
 It supports the chat functionality, and most video formats !
 It's still a work in progress and it's really early in the alpha phase. There are various stuff that are still missing but exist in the official release. I am working on it slowly.
