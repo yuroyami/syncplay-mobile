@@ -200,7 +200,7 @@
         android:id="@+id/connect_Footnote"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="SyncPlay's unofficial Android Client v0.2.5g BETA"
+        android:text="SyncPlay's unofficial Android Client v0.3.0h BETA"
         android:textSize="12sp"
         android:fontFamily="@font/directive4bold"
         android:textAlignment="center"

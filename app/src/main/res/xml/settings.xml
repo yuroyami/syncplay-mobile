@@ -156,16 +156,12 @@
             app:key="tls"
             app:title="Use Secure Connection (TLSv1.3)"
             app:summary="Enabled by default. Turn off if you encounter issues connecting to the server. This will tell SyncPlay to connect to the servers with a secure connection (TLSv1.3). It is recommended to use a secure encrypted connection rather than a bare unencrypted connection (Turn off to use unencrypted connection). Unencrypted connection is however, faster."
-            app:defaultValue="true"
+            app:defaultValue="false"
             />
         <Preference
             app:key="resetdefault"
             app:title="Reset Default Settings"
             android:summary="Reset everything to its default value (Recommended)"/>
     </PreferenceCategory>
-
-
-
-
 
 </androidx.preference.PreferenceScreen>
