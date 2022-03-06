@@ -76,7 +76,7 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
     private var receivedSeek = false
 
     /*-- Initializing Player embeddable parts --*/
-    private var myMediaPlayer: SimpleExoPlayer? = null
+    private var myMediaPlayer: ExoPlayer? = null
     private var updatePosition = false
     private var startFromPosition = (-3.0).toLong()
 
@@ -103,16 +103,43 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
             when (requestCode) {
                 90909 -> {
                     gottenFile = data?.data
-                    Toast.makeText(
-                        this,
-                        "Selected file successfully: ${
-                            URLDecoder.decode(
-                                gottenFile?.lastPathSegment,
-                                "UTF-8"
-                            )
-                        }",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    val extension =
+                        data?.data.toString().substring(data?.data.toString().length - 4)
+                    if ((extension.contains("mp4", true))
+                        || (extension.contains("mkv", true))
+                        || (extension.contains("mov", true))
+                        || (extension.contains("avi", true))
+                        || (extension.contains("flv", true))
+                        || (extension.contains("swf", true))
+                        || (extension.contains("mpeg", true))
+                        || (extension.contains("mpg", true))
+                        || (extension.contains("avchd", true))
+                        || (extension.contains("3gp", true))
+                    ) {
+                        Toast.makeText(
+                            this,
+                            "Loaded video file: ${
+                                URLDecoder.decode(
+                                    gottenFile?.lastPathSegment,
+                                    "UTF-8"
+                                )
+                            }",
+                            Toast.LENGTH_LONG
+                        ).show()
+
+                    } else {
+                        Toast.makeText(
+                            this,
+                            "File not valid: ${
+                                URLDecoder.decode(
+                                    gottenFile?.lastPathSegment,
+                                    "UTF-8"
+                                )
+                            }",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        gottenFile = null
+                    }
                 }
                 80808 -> {
                     if (gottenFile!=null) {
@@ -242,14 +269,14 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
                 DefaultTrackSelector.ParametersBuilder(this)
                     .build()
         }
-        myMediaPlayer = SimpleExoPlayer.Builder(this)
+        myMediaPlayer = ExoPlayer.Builder(this)
             .setTrackSelector(trackSelec)
             .setLoadControl(loadControl)
             .build()
             .also { exoPlayer ->
                 binding.vidplayer.player = exoPlayer
             }
-        myMediaPlayer?.videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
+        myMediaPlayer?.videoScalingMode = VIDEO_SCALING_MODE_SCALE_TO_FIT
         binding.vidplayer.subtitleView?.background = null
         myMediaPlayer?.playWhenReady = true
         myMediaPlayer?.addListener(object : Player.Listener {
@@ -381,7 +408,7 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
         hideSystemUI(false) //Immersive Mode
 
         if (gottenFile != null) {
-            injectVideo(binding.vidplayer.player as SimpleExoPlayer, gottenFile!!)
+            injectVideo(binding.vidplayer.player as ExoPlayer, gottenFile!!)
             binding.starterInfo.visibility = GONE
         }
 
@@ -474,7 +501,7 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
     }
 
     /*--------------------------------------------------------*/
-    private fun injectVideo(mp: SimpleExoPlayer, mediaPath: Uri) {
+    private fun injectVideo(mp: ExoPlayer, mediaPath: Uri) {
         try {
             //val vid: MediaItem = MediaItem.fromUri(mediaPath)
             val vidbuilder = MediaItem.Builder()
@@ -519,13 +546,13 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
 
     /*--------------------------------------------------------*/
 //Playback-related functions
-    private fun pausePlayback(mp: SimpleExoPlayer) {
+    private fun pausePlayback(mp: ExoPlayer) {
         runOnUiThread {
             mp.pause()
         }
     }
 
-    private fun playPlayback(mp: SimpleExoPlayer) {
+    private fun playPlayback(mp: ExoPlayer) {
         runOnUiThread {
             mp.play()
         }
@@ -749,7 +776,7 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
          ******************/
         findViewById<ImageButton>(rr.id.syncplay_addfile).setOnClickListener {
             val intent1 = Intent()
-            intent1.type = "video/*"
+            intent1.type = "*/*"
             intent1.action = Intent.ACTION_PICK
             startActivityForResult(intent1, 90909)
         }
