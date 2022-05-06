@@ -39,7 +39,8 @@ import com.cosmik.syncplay.databinding.RoomActivityBinding
 import com.cosmik.syncplay.toolkit.AltStorageHandler
 import com.cosmik.syncplay.toolkit.DpToPx
 import com.google.android.exoplayer2.*
-import com.google.android.exoplayer2.C.*
+import com.google.android.exoplayer2.C.SELECTION_FLAG_DEFAULT
+import com.google.android.exoplayer2.C.VIDEO_SCALING_MODE_SCALE_TO_FIT
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.CaptionStyleCompat
@@ -103,43 +104,7 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
             when (requestCode) {
                 90909 -> {
                     gottenFile = data?.data
-                    val extension =
-                        data?.data.toString().substring(data?.data.toString().length - 4)
-                    if ((extension.contains("mp4", true))
-                        || (extension.contains("mkv", true))
-                        || (extension.contains("mov", true))
-                        || (extension.contains("avi", true))
-                        || (extension.contains("flv", true))
-                        || (extension.contains("swf", true))
-                        || (extension.contains("mpeg", true))
-                        || (extension.contains("mpg", true))
-                        || (extension.contains("avchd", true))
-                        || (extension.contains("3gp", true))
-                    ) {
-                        Toast.makeText(
-                            this,
-                            "Loaded video file: ${
-                                URLDecoder.decode(
-                                    gottenFile?.lastPathSegment,
-                                    "UTF-8"
-                                )
-                            }",
-                            Toast.LENGTH_LONG
-                        ).show()
-
-                    } else {
-                        Toast.makeText(
-                            this,
-                            "File not valid: ${
-                                URLDecoder.decode(
-                                    gottenFile?.lastPathSegment,
-                                    "UTF-8"
-                                )
-                            }",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        gottenFile = null
-                    }
+                    Toast.makeText(this, "Selected video successfully.",Toast.LENGTH_LONG).show()
                 }
                 80808 -> {
                     if (gottenFile!=null) {
@@ -777,7 +742,7 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
         findViewById<ImageButton>(rr.id.syncplay_addfile).setOnClickListener {
             val intent1 = Intent()
             intent1.type = "*/*"
-            intent1.action = Intent.ACTION_PICK
+            intent1.action = Intent.ACTION_OPEN_DOCUMENT
             startActivityForResult(intent1, 90909)
         }
 
@@ -833,7 +798,6 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
             }
 
         }
-
 
         /***************
          * Lock Screen *
@@ -900,7 +864,7 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
                     loadsubItem -> {
                         val intent2 = Intent()
                         intent2.type = "*/*"
-                        intent2.action = Intent.ACTION_PICK
+                        intent2.action = Intent.ACTION_OPEN_DOCUMENT
                         startActivityForResult(intent2, 80808)
                     }
                     seekbuttonsItem -> {

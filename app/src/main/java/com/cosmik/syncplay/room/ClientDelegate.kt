@@ -1,7 +1,6 @@
 package com.cosmik.syncplay.room
 
 import android.util.Log
-import androidx.preference.PreferenceManager
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
@@ -61,7 +60,6 @@ open class ClientDelegate {
 
     private lateinit var syncplayBroadcaster: SyncplayBroadcaster
 
-
     fun connect(host: String, port: Int, viewModel: RoomViewModel, tls: Boolean) {
         associatedViewModel = viewModel
 
@@ -77,7 +75,7 @@ open class ClientDelegate {
         val room: HashMap<String, String> = hashMapOf()
         room["name"] = associatedViewModel.currentRoom
         hello["room"] = room
-        hello["version"] = "1.6.8"
+        hello["version"] = "1.6.9"
         val features: HashMap<String, Boolean> = hashMapOf()
         features["sharedPlaylists"] = false
         features["chat"] = true

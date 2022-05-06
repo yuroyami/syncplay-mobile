@@ -4,9 +4,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import com.cosmik.syncplay.room.UserInteractionDelegate.UserInteractionListener
 import com.cosmik.syncplay.main.MainFragment
-
+import com.cosmik.syncplay.room.UserInteractionDelegate.UserInteractionListener
 
 class MainActivity : AppCompatActivity() {
 
