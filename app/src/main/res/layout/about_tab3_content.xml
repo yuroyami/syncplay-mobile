@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg2_gradient"
+    android:padding="10dp"
+    tools:ignore="HardcodedText">
+
+    <TextView
+        android:id="@+id/about_cl_1a"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="monospace"
+        android:text="> Version 0.1.1a:"
+        android:textAlignment="textStart"
+        android:textColor="@color/sp_highlight"
+        android:textSize="15sp"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/about_cl_1b"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/firacoderegular"
+        android:text=">>> Initial Release.
+        \n>>> Provides interoperability with the PC client, supports Chat and Readiness, and also retrieves and sends file information.
+        \n>>> Has the necessary fundamental functionality with a humble UI."
+        android:textColor="@color/white"
+        android:textSize="11sp"
+        app:layout_constraintTop_toBottomOf="@id/about_cl_1a" />
+
+    <TextView
+        android:id="@+id/about_cl_3a"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:fontFamily="monospace"
+        android:text="> Version 0.1.2b:"
+        android:textAlignment="textStart"
+        android:textColor="@color/sp_highlight"
+        android:textSize="15sp"
+        app:layout_constraintTop_toBottomOf="@id/about_cl_1b" />
+
+    <TextView
+        android:id="@+id/about_cl_3b"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/firacoderegular"
+        android:text=">>> Fixed player issues on some devices.
+        \n>>> Fixed minor bugs.
+        \n>>> Added option to change subtitle size.
+        \n>>> Improved User Experience."
+        android:textColor="@color/white"
+        android:textSize="11sp"
+        app:layout_constraintTop_toBottomOf="@id/about_cl_3a" />
+
+
+    <TextView
+        android:id="@+id/about_cl_4a"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:fontFamily="monospace"
+        android:text="> Version 0.2.4d:"
+        android:textAlignment="textStart"
+        android:textColor="@color/sp_highlight"
+        android:textSize="15sp"
+        app:layout_constraintTop_toBottomOf="@id/about_cl_3b" />
+
+    <TextView
+        android:id="@+id/about_cl_4b"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/firacoderegular"
+        android:text=">>> Room information now automatically saved (+ option to disable this).
+\n>>> Fixed crashing after sending certain messages and keywords.
+\n>>> Enhanced UI/UE when typing and receiving messages.
+\n>>> Added custom player buffer settings.
+\n>>> Added several important room action buttons.
+\n>>> Implemented the ability to disable subtitles.
+\n>>> Hiding System UI more intelligently.
+\n>>> Displaying connection and ping status.
+\n>>> Added lock screen feature (to be improved later).
+\n>>> Added settings to control multiple UI components.
+\n>>> Fixed major bugs."
+        android:textColor="@color/white"
+        android:textSize="11sp"
+        app:layout_constraintTop_toBottomOf="@id/about_cl_4a" />
+
+    <TextView
+        android:id="@+id/about_cl_5a"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:fontFamily="monospace"
+        android:text="> Version 0.2.5g:"
+        android:textAlignment="textStart"
+        android:textColor="@color/sp_highlight"
+        android:textSize="15sp"
+        app:layout_constraintTop_toBottomOf="@id/about_cl_4b" />
+
+    <TextView
+        android:id="@+id/about_cl_5b"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/firacoderegular"
+        android:text=">>> Added feature to load custom subtitles.
+>>> Added feature to retrieve message history.
+>>> Added option to control message count and size.
+>>> Fixed issue where certain symbols in username and roomname would crash the app.
+>>> Restricted username, roomname, and messages lengths due to server issues.
+>>> Fixed issue where keyboard hides roomname textbox while typing.
+>>> Removed cut-out option from devices that didn't need it."
+        android:textColor="@color/white"
+        android:textSize="11sp"
+        app:layout_constraintTop_toBottomOf="@id/about_cl_5a" />
+
+    <TextView
+        android:id="@+id/about_cl_2a"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:fontFamily="monospace"
+        android:text="> What's coming next:"
+        android:textAlignment="textStart"
+        android:textColor="@color/sp_highlight"
+        android:textSize="15sp"
+        app:layout_constraintTop_toBottomOf="@id/about_cl_5b" />
+
+    <TextView
+        android:id="@+id/about_cl_2b"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/firacoderegular"
+        android:text=">>> Support for TLSv1.3 secure connection.
+        \n>>> Support for continuous stream sources (YouTube, HLS, DASH, SmoothStreaming...etc)
+        \n>>> Inherit more functionality and options from the PC Client.
+        \n>>> Further enhancing the player and app performance."
+        android:textColor="@color/white"
+        android:textSize="11sp"
+        app:layout_constraintTop_toBottomOf="@id/about_cl_2a" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

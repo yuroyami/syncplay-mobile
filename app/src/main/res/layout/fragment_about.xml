@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".about.AboutFragment"
+    tools:ignore="HardcodedText">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="12dp">
+
+        <com.github.jorgecastillo.FillableLoader
+            android:id="@+id/fillableLoader"
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:layout_marginStart="12dp"
+            app:fl_clippingTransform="waves"
+            app:fl_fillColor="@color/sp3"
+            app:fl_fillDuration="3500"
+            app:fl_fillPercentage="85"
+            app:fl_originalHeight="300"
+            app:fl_originalWidth="300"
+            app:fl_strokeColor="@color/sp_screener"
+            app:fl_strokeDrawingDuration="2500"
+            app:fl_strokeWidth="2dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_margin="2dp"
+            app:layout_constraintBottom_toBottomOf="@id/fillableLoader"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/fillableLoader"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/syncplay_about" />
+
+        <com.skydoves.expandablelayout.ExpandableLayout
+            android:id="@+id/about_tab1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            app:expandable_animation="accelerate"
+            app:expandable_duration="225"
+            app:expandable_isExpanded="false"
+            app:expandable_parentLayout="@layout/about_tab1_header"
+            app:expandable_secondLayout="@layout/about_tab1_content"
+            app:expandable_showSpinner="true"
+            app:expandable_spinner="@drawable/ic_arrow_down"
+            app:expandable_spinner_animate="true"
+            app:expandable_spinner_gravity="end"
+            app:expandable_spinner_margin="14dp"
+            app:expandable_spinner_size="32dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/fillableLoader" />
+
+        <com.skydoves.expandablelayout.ExpandableLayout
+            android:id="@+id/about_tab2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="6dp"
+            app:expandable_animation="accelerate"
+            app:expandable_duration="225"
+            app:expandable_isExpanded="false"
+            app:expandable_parentLayout="@layout/about_tab2_header"
+            app:expandable_secondLayout="@layout/about_tab2_content"
+            app:expandable_showSpinner="true"
+            app:expandable_spinner="@drawable/ic_arrow_down"
+            app:expandable_spinner_animate="true"
+            app:expandable_spinner_gravity="end"
+            app:expandable_spinner_margin="14dp"
+            app:expandable_spinner_size="32dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/about_tab1" />
+
+        <com.skydoves.expandablelayout.ExpandableLayout
+            android:id="@+id/about_tab3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="6dp"
+            app:expandable_animation="accelerate"
+            app:expandable_duration="225"
+            app:expandable_isExpanded="false"
+            app:expandable_parentLayout="@layout/about_tab3_header"
+            app:expandable_secondLayout="@layout/about_tab3_content"
+            app:expandable_showSpinner="true"
+            app:expandable_spinner="@drawable/ic_arrow_down"
+            app:expandable_spinner_animate="true"
+            app:expandable_spinner_gravity="end"
+            app:expandable_spinner_margin="14dp"
+            app:expandable_spinner_size="32dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/about_tab2" />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.core.widget.NestedScrollView>

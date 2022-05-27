@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/pageConnect"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".main.ConnectFragment"
+    tools:ignore="HardcodedText">
+
+
+    <ImageView
+        android:id="@+id/connect_Logo"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:paddingVertical="18dp"
+        app:layout_constraintBottom_toTopOf="@id/connect_Username"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/syncplay_logo"
+        tools:ignore="ContentDescription" />
+
+    <TextView
+        android:id="@+id/connect_Username"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="6dp"
+        android:fontFamily="@font/directive4bold"
+        android:text="Type your username:"
+        android:textAlignment="center"
+        android:textColor="@color/sp3"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toTopOf="@id/connect_UsernameInput"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/connect_UsernameInput"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:hint="Username"
+        android:textColorHint="@color/sp_screener"
+        app:boxStrokeColor="@color/sp_shade"
+        app:counterEnabled="true"
+        app:counterMaxLength="150"
+        app:counterTextColor="@color/sp2"
+        app:endIconMode="clear_text"
+        app:helperText="Name you want to use"
+        app:helperTextEnabled="true"
+        app:helperTextTextColor="@color/sp_shade"
+        app:layout_constraintBottom_toTopOf="@id/connect_Roomname"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintWidth_percent="0.6"
+        app:placeholderTextColor="@color/sp_shade"
+        app:startIconContentDescription="Username"
+        app:startIconDrawable="@drawable/ic_username"
+        app:startIconTint="@color/preroom_ic_color">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/connect_UsernameInputText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLength="150"
+            android:singleLine="true"
+            android:textColor="#555555" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+
+    <TextView
+        android:id="@+id/connect_Roomname"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="6dp"
+        android:fontFamily="@font/directive4bold"
+        android:text="Insert room name:"
+        android:textAlignment="center"
+        android:textColor="@color/sp3"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toTopOf="@id/connect_RoomnameInput"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/connect_RoomnameInput"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="36dp"
+        android:hint="Room name"
+        android:textColorHint="@color/sp_screener"
+        app:boxStrokeColor="@color/sp_shade"
+        app:counterEnabled="true"
+        app:counterMaxLength="35"
+        app:counterTextColor="@color/sp2"
+        app:endIconMode="clear_text"
+        app:helperText="Room in which you watch"
+        app:helperTextEnabled="true"
+        app:helperTextTextColor="@color/sp_shade"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth_percent="0.6"
+        app:placeholderTextColor="@color/sp_shade"
+        app:startIconContentDescription="Username"
+        app:startIconDrawable="@drawable/ic_room"
+        app:startIconTint="@color/preroom_ic_color">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/connect_RoomnameInputText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:textColor="#555555" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+
+    <TextView
+        android:id="@+id/connect_serverTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:fontFamily="@font/directive4bold"
+        android:text="Select Syncplay server:"
+        android:textAlignment="center"
+        android:textColor="@color/sp3"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/connect_RoomnameInput" />
+
+    <TextView
+        android:id="@+id/connect_serverHint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:fontFamily="@font/directive4bold"
+        android:text="make sure you and your friends are\non the same server"
+        android:textAlignment="center"
+        android:textColor="@color/sp_shade"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/connect_serverTitle" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/connect_serverSelect"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="8dp"
+        android:fontFamily="@font/directive4bold"
+        android:hint="Server Address"
+        android:textColorHint="@color/sp_screener"
+        app:boxStrokeColor="@color/sp_shade"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/connect_serverHint"
+        app:layout_constraintVertical_bias="0"
+        app:layout_constraintWidth_percent="0.7"
+        app:placeholderTextColor="@color/sp_shade">
+
+        <AutoCompleteTextView
+            android:id="@+id/sp_menuAutocomplete"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="none"
+            android:textColor="#555555" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/connect_JoinButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:fontFamily="@font/directive4bold"
+        android:padding="16dp"
+        android:text="JOIN/CREATE ROOM"
+        android:textAlignment="center"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        app:backgroundTint="@color/sp_screener"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/connect_serverSelect" />
+
+
+    <TextView
+        android:id="@+id/connect_Footnote"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:fontFamily="@font/directive4bold"
+        android:text="SyncPlay's unofficial Android Client v0.5.1a BETA"
+        android:textAlignment="center"
+        android:textColor="#BFDADADA"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

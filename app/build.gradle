@@ -1,0 +1,75 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+}
+
+android {
+    compileSdk 32
+    buildToolsVersion "33.0.0-rc4"
+
+    signingConfigs {
+        github {
+            storeFile file("${rootDir}/keystore/keystore.jks")
+            keyAlias 'keystore  '
+            keyPassword 'az90az09'
+            storePassword 'az90az09'
+        }
+    }
+    defaultConfig {
+        applicationId "com.gintoki.syncplay"
+        minSdk 21
+        targetSdk 32
+        versionCode 10050011
+        versionName "0.5.1a"
+        signingConfig signingConfigs.github
+    }
+
+    buildTypes {
+        getByName("release") {
+            minifyEnabled false
+            shrinkResources = false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        getByName("debug") {
+            minifyEnabled false
+            shrinkResources = false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    buildFeatures {
+        viewBinding true
+    }
+    lintOptions {
+        abortOnError false
+    }
+}
+
+dependencies {
+    //noinspection GradleDependency
+    implementation 'androidx.core:core-ktx:1.8.0-rc02'
+    //noinspection GradleDependency
+    implementation 'androidx.appcompat:appcompat:1.5.0-alpha01'
+    implementation 'com.google.android.material:material:1.7.0-alpha02'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.0-alpha01'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.5.0-rc01'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.0-rc01'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.viewpager2:viewpager2:1.1.0-beta01'
+    implementation 'com.google.code.gson:gson:2.9.0'
+    implementation("com.google.android.exoplayer:exoplayer:2.17.1") {
+        exclude group: 'com.android.support'
+    }
+    implementation 'com.github.jorgecastilloprz:fillableloaders:1.03@aar'
+    implementation 'androidx.preference:preference-ktx:1.2.0'
+    implementation "com.github.skydoves:expandablelayout:1.0.7"
+    implementation 'io.github.razerdp:BasePopup:3.2.0'
+    implementation 'com.blankj:utilcodex:1.31.0'
+    implementation 'com.github.bumptech.glide:glide:4.13.2'
+}
