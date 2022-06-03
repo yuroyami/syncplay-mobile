@@ -197,7 +197,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="4dp"
         android:fontFamily="@font/directive4bold"
-        android:text="SyncPlay's unofficial Android Client v0.5.1a BETA"
+        android:text="SyncPlay's unofficial Android Client v0.5.2a BETA"
         android:textAlignment="center"
         android:textColor="#BFDADADA"
         android:textSize="12sp"

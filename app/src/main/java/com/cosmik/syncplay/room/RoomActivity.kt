@@ -119,38 +119,38 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
                     if (gottenFile != null) {
                         val path = data?.data!!
                         val extension = path.toString().substring(path.toString().length - 4)
-                        val type =
-                            if (extension.contains("srt")) MimeTypes.APPLICATION_SUBRIP
-                            else if ((extension.contains("ass"))
-                                || (extension.contains("ssa"))
-                            ) MimeTypes.TEXT_SSA
-                            else if (extension.contains("ttml")) MimeTypes.APPLICATION_TTML
-                            else if (extension.contains("vtt")) MimeTypes.TEXT_VTT else ""
-                        if (type != "") {
-                            gottenSub = MediaItem.Subtitle(
-                                path,
-                                type,  // The correct MIME type.
-                                null,  // The subtitle language. May be null.
-                                SELECTION_FLAG_DEFAULT
-                            ) // Selection flags for the track.
+                        val type = MimeTypes.APPLICATION_SUBRIP
+//                            if (extension.contains("srt")) MimeTypes.APPLICATION_SUBRIP
+//                            else if ((extension.contains("ass"))
+//                                || (extension.contains("ssa"))
+//                            ) MimeTypes.TEXT_SSA
+//                            else if (extension.contains("ttml")) MimeTypes.APPLICATION_TTML
+//                            else if (extension.contains("vtt")) MimeTypes.TEXT_VTT else ""
+//                        if (type != "") {
+                        gottenSub = MediaItem.Subtitle(
+                            path,
+                            type,  // The correct MIME type.
+                            null,  // The subtitle language. May be null.
+                            SELECTION_FLAG_DEFAULT
+                        ) // Selection flags for the track.
 
-                            Toast.makeText(
-                                this, "Loaded sub successfully: ${
-                                    URLDecoder.decode(
-                                        path.lastPathSegment,
-                                        "UTF-8"
-                                    )
-                                }", Toast.LENGTH_LONG
-                            ).show()
-                            gotSub = true
+                        Toast.makeText(
+                            this, "Loaded sub successfully: ${
+                                URLDecoder.decode(
+                                    path.lastPathSegment,
+                                    "UTF-8"
+                                )
+                            }", Toast.LENGTH_LONG
+                        ).show()
+                        gotSub = true
 
-                        } else {
-                            Toast.makeText(
-                                this,
-                                "Invalid subtitle file. Supported formats are: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
+//                        } else {
+//                            Toast.makeText(
+//                                this,
+//                                "Invalid subtitle file. Supported formats are: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'",
+//                                Toast.LENGTH_LONG
+//                            ).show()
+//                        }
                     } else {
                         Toast.makeText(this, "Load video first", Toast.LENGTH_LONG).show()
                     }
@@ -353,8 +353,8 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
                 binding.syncplayVisiblitydelegate.visibility = VISIBLE
                 val visib = if (seekButtonEnable == false) GONE else VISIBLE
                 Handler(Looper.getMainLooper()).postDelayed({
-                    findViewById<ImageButton>(R.id.exo_ffwd).visibility = visib
-                    findViewById<ImageButton>(R.id.exo_rew).visibility = visib
+                    findViewById<ImageButton>(rr.id.exo_ffwd).visibility = visib
+                    findViewById<ImageButton>(rr.id.exo_rew).visibility = visib
                 }, 10)
 
 
@@ -482,7 +482,7 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
             if (gotSub) {
                 gotSub = false
                 runOnUiThread {
-                    findViewById<ImageButton>(R.id.exo_subtitle).setImageDrawable(
+                    findViewById<ImageButton>(rr.id.exo_subtitle).setImageDrawable(
                         getDrawable(
                             this,
                             rr.drawable.ic_subtitles
@@ -497,8 +497,8 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
             val file = File(mediaPath.path.toString())
             runOnUiThread {
                 mp.setMediaItem(vid)
-                findViewById<ImageButton>(R.id.exo_play).performClick()
-                findViewById<ImageButton>(R.id.exo_pause).performClick()
+                findViewById<ImageButton>(rr.id.exo_play).performClick()
+                findViewById<ImageButton>(rr.id.exo_pause).performClick()
                 val vidtitle = mp.mediaMetadata.title
                 val vidname = vidtitle?.toString() ?: URLDecoder.decode(file.name, "UTF-8")
                 roomViewModel.currentVideoName = vidname
@@ -809,7 +809,7 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
         /*******************
          * Subtitles track *
          *******************/
-        findViewById<ImageButton>(R.id.exo_subtitle).setOnClickListener {
+        findViewById<ImageButton>(rr.id.exo_subtitle).setOnClickListener {
             if (trackSelec.currentMappedTrackInfo != null) {
                 ccSelect(it as ImageButton)
             }
@@ -818,7 +818,7 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
         /***************
          * Audio Track *
          ***************/
-        findViewById<ImageButton>(R.id.exo_audio_track).setOnClickListener {
+        findViewById<ImageButton>(rr.id.exo_audio_track).setOnClickListener {
             if (trackSelec.currentMappedTrackInfo != null) {
                 audioSelect(it as ImageButton)
             }
@@ -877,7 +877,7 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
             val loadsubItem = popup.menu.add(0, 0, 0, "Load Subtitle File...")
             val seekbuttonsItem = popup.menu.add(0, 2, 2, "Fast Seek Buttons")
             seekbuttonsItem.isCheckable = true
-            val ffwdButton = findViewById<ImageButton>(R.id.exo_ffwd)
+            val ffwdButton = findViewById<ImageButton>(rr.id.exo_ffwd)
             val rwndButton = findViewById<ImageButton>(R.id.exo_rew)
             seekbuttonsItem.isChecked = seekButtonEnable != false
             val messagesItem = popup.menu.add(0, 3, 3, "Messages History")
