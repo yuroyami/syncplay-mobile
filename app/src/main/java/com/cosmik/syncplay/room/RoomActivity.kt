@@ -45,11 +45,16 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
 import com.cosmik.syncplay.databinding.RoomActivityBinding
-import com.cosmik.syncplay.room.RoomUtils.timeStamper
-import com.cosmik.syncplay.toolkit.AltStorageHandler
+import com.cosmik.syncplay.protocol.SyncplayBroadcaster
+import com.cosmik.syncplay.protocol.SyncplayProtocol
+import com.cosmik.syncplay.toolkit.SyncplayUtils
+import com.cosmik.syncplay.toolkit.SyncplayUtils.getFileName
+import com.cosmik.syncplay.toolkit.SyncplayUtils.timeStamper
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.C.SELECTION_FLAG_DEFAULT
 import com.google.android.exoplayer2.C.VIDEO_SCALING_MODE_SCALE_TO_FIT
+import com.google.android.exoplayer2.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
+import com.google.android.exoplayer2.ext.ffmpeg.FfmpegLibrary
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.CaptionStyleCompat
@@ -60,9 +65,7 @@ import com.google.common.collect.Lists
 import com.google.gson.GsonBuilder
 import kotlinx.coroutines.*
 import razerdp.basepopup.BasePopupWindow
-import java.io.File
 import java.io.IOException
-import java.net.URLDecoder
 import java.sql.Timestamp
 import kotlin.collections.set
 import kotlin.math.roundToInt
@@ -71,12 +74,11 @@ import com.cosmik.syncplay.R as rr
 
 /*----------------------------------------------*/
 @OptIn(DelicateCoroutinesApi::class)
-class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractionListener,
-    SyncplayBroadcaster {
+class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
 
     private var _binding: RoomActivityBinding? = null
     private val binding get() = _binding!!
-    lateinit var roomViewModel: RoomViewModel
+    lateinit var protocol: SyncplayProtocol
 
     /*-- Initializing Player Settings --*/
     private lateinit var trackSelec: DefaultTrackSelector
@@ -94,11 +96,7 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
     /*-- Initialize video path from intent --*/
     private var gottenFile: Uri? = null
     private var gotSub: Boolean = false
-    private lateinit var gottenSub: MediaItem.Subtitle
-
-    /*-- Initiating ServerTalker --*/
-    private var serverTalker: ClientDelegate? = ClientDelegate()
-    private val altStorageHandler = AltStorageHandler()
+    private lateinit var gottenSub: MediaItem.SubtitleConfiguration
 
     /*-- Cosmetics --*/
     private val tempMsgs = mutableListOf<String>()
@@ -113,44 +111,40 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
             when (requestCode) {
                 90909 -> {
                     gottenFile = data?.data
-                    Toast.makeText(this, "Selected video successfully.", Toast.LENGTH_LONG).show()
+                    val filename = gottenFile?.let { getFileName(it) }
+                    Toast.makeText(this, "Selected video file: $filename", Toast.LENGTH_LONG).show()
+
                 }
                 80808 -> {
                     if (gottenFile != null) {
                         val path = data?.data!!
-                        val extension = path.toString().substring(path.toString().length - 4)
-                        val type = MimeTypes.APPLICATION_SUBRIP
-//                            if (extension.contains("srt")) MimeTypes.APPLICATION_SUBRIP
-//                            else if ((extension.contains("ass"))
-//                                || (extension.contains("ssa"))
-//                            ) MimeTypes.TEXT_SSA
-//                            else if (extension.contains("ttml")) MimeTypes.APPLICATION_TTML
-//                            else if (extension.contains("vtt")) MimeTypes.TEXT_VTT else ""
-//                        if (type != "") {
-                        gottenSub = MediaItem.Subtitle(
-                            path,
-                            type,  // The correct MIME type.
-                            null,  // The subtitle language. May be null.
-                            SELECTION_FLAG_DEFAULT
-                        ) // Selection flags for the track.
-
-                        Toast.makeText(
-                            this, "Loaded sub successfully: ${
-                                URLDecoder.decode(
-                                    path.lastPathSegment,
-                                    "UTF-8"
-                                )
-                            }", Toast.LENGTH_LONG
-                        ).show()
-                        gotSub = true
-
-//                        } else {
-//                            Toast.makeText(
-//                                this,
-//                                "Invalid subtitle file. Supported formats are: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'",
-//                                Toast.LENGTH_LONG
-//                            ).show()
-//                        }
+                        val filename = getFileName(path).toString()
+                        val extension = filename.substring(filename.length - 4)
+                        val mimeType =
+                            if (extension.contains("srt")) MimeTypes.APPLICATION_SUBRIP
+                            else if ((extension.contains("ass"))
+                                || (extension.contains("ssa"))
+                            ) MimeTypes.TEXT_SSA
+                            else if (extension.contains("ttml")) MimeTypes.APPLICATION_TTML
+                            else if (extension.contains("vtt")) MimeTypes.TEXT_VTT else ""
+                        if (mimeType != "") {
+                            gottenSub = MediaItem.SubtitleConfiguration.Builder(path)
+                                .setUri(path)
+                                .setMimeType(mimeType)
+                                .setLanguage(null)
+                                .setSelectionFlags(SELECTION_FLAG_DEFAULT)
+                                .build()
+                            Toast.makeText(
+                                this, "Loaded sub successfully: $filename", Toast.LENGTH_LONG
+                            ).show()
+                            gotSub = true
+                        } else {
+                            Toast.makeText(
+                                this,
+                                "Invalid subtitle file. Supported formats are: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
                     } else {
                         Toast.makeText(this, "Load video first", Toast.LENGTH_LONG).show()
                     }
@@ -167,6 +161,8 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
         val view = binding.root
         setContentView(view)
 
+        protocol = ViewModelProvider(this)[SyncplayProtocol::class.java]
+
 //        Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
 //            Log.e(
 //                "Error ${Thread.currentThread().stackTrace[2]}",
@@ -180,25 +176,23 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
         val joinInfo: List<Any> =
             GsonBuilder().create().fromJson(ourInfo, List::class.java) as List<Any>
         //Creating all infrastructure roomviewmodel variables.
-        serverTalker?.addBroadcaster(this)
-        roomViewModel = ViewModelProvider(this)[RoomViewModel::class.java]
-        roomViewModel.serverHost = "151.80.32.178"
-        roomViewModel.serverPort = (joinInfo[0] as Double).toInt()
-        roomViewModel.currentUsername = joinInfo[1] as String
-        roomViewModel.currentRoom = joinInfo[2] as String
+        protocol.addBroadcaster(this)
+        protocol.serverHost = "151.80.32.178"
+        protocol.serverPort = (joinInfo[0] as Double).toInt()
+        protocol.currentUsername = joinInfo[1] as String
+        protocol.currentRoom = joinInfo[2] as String
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
         findViewById<MaterialCheckBox>(rr.id.syncplay_ready).isChecked =
             sp.getBoolean("ready_firsthand", true)
-        roomViewModel.ready = sp.getBoolean("ready_firsthand", true)
-        roomViewModel.rewindThreshold = sp.getInt("rewind_threshold", 12).toLong()
+        protocol.ready = sp.getBoolean("ready_firsthand", true)
+        protocol.rewindThreshold = sp.getInt("rewind_threshold", 12).toLong()
 
         //Connecting to server
         val tls = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("tls", false)
-        if (!roomViewModel.connected) {
-            serverTalker?.connect(
-                roomViewModel.serverHost,
-                roomViewModel.serverPort,
-                roomViewModel,
+        if (!protocol.connected) {
+            protocol.connect(
+                protocol.serverHost,
+                protocol.serverPort,
                 tls
             )
         }
@@ -243,9 +237,15 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
                 DefaultTrackSelector.ParametersBuilder(this)
                     .build()
         }
+
         myMediaPlayer = ExoPlayer.Builder(this)
             .setTrackSelector(trackSelec)
             .setLoadControl(loadControl)
+            .setRenderersFactory(
+                DefaultRenderersFactory(this).setExtensionRendererMode(
+                    EXTENSION_RENDERER_MODE_PREFER
+                )
+            ) //Activating FFmpeg-audio
             .build()
             .also { exoPlayer ->
                 binding.vidplayer.player = exoPlayer
@@ -258,13 +258,13 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
                 super.onIsLoadingChanged(isLoading)
                 if (!isLoading) {
                     val length = (myMediaPlayer?.duration!!.toDouble()) / 1000.0
-                    if (length != roomViewModel.currentVideoLength) {
-                        roomViewModel.currentVideoLength =
+                    if (length != protocol.currentVideoLength) {
+                        protocol.currentVideoLength =
                             (myMediaPlayer?.duration!!.toDouble()) / 1000.0
-                        serverTalker?.sendPacket(
-                            serverTalker!!.sendFile(),
-                            roomViewModel.serverHost,
-                            roomViewModel.serverPort
+                        protocol.sendPacket(
+                            protocol.sendFile(),
+                            protocol.serverHost,
+                            protocol.serverPort
                         )
                     }
                 }
@@ -277,13 +277,13 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
                         true -> {
                             if (myMediaPlayer?.playbackState != ExoPlayer.STATE_BUFFERING) {
                                 sendPlayback(true)
-                                serverTalker?.paused = false
+                                protocol.paused = false
                             }
                         }
                         false -> {
                             if (myMediaPlayer?.playbackState != ExoPlayer.STATE_BUFFERING) {
                                 sendPlayback(false)
-                                serverTalker?.paused = true
+                                protocol.paused = true
                             }
                         }
                     }
@@ -300,8 +300,8 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
                         if (!receivedSeek) {
                             val clienttime =
                                 (System.currentTimeMillis() / 1000.0)
-                            serverTalker?.sendPacket(
-                                serverTalker!!.sendState(
+                            protocol.sendPacket(
+                                protocol.sendState(
                                     null,
                                     clienttime,
                                     true,
@@ -309,8 +309,8 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
                                     1,
                                     play = myMediaPlayer?.isPlaying
                                 ),
-                                roomViewModel.serverHost,
-                                roomViewModel.serverPort
+                                protocol.serverHost,
+                                protocol.serverPort
                             )
                         } else receivedSeek = false
                     }
@@ -353,8 +353,8 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
                 binding.syncplayVisiblitydelegate.visibility = VISIBLE
                 val visib = if (seekButtonEnable == false) GONE else VISIBLE
                 Handler(Looper.getMainLooper()).postDelayed({
-                    findViewById<ImageButton>(rr.id.exo_ffwd).visibility = visib
-                    findViewById<ImageButton>(rr.id.exo_rew).visibility = visib
+                    findViewById<ImageButton>(R.id.exo_ffwd).visibility = visib
+                    findViewById<ImageButton>(R.id.exo_rew).visibility = visib
                 }, 10)
 
 
@@ -372,7 +372,12 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
                 }
             }
         }
+
+        Log.e("FFMPEG", "${FfmpegLibrary.isAvailable()}")
+
         implementClickListeners() //Implementing click reactors
+
+
     }
 
     @SuppressLint("NewApi", "SetTextI18n")
@@ -391,8 +396,8 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putDouble("last_position", roomViewModel.currentVideoPosition)
-        Log.e("STATUS", "SAVED INSTANCE: ${roomViewModel.currentVideoPosition}")
+        outState.putDouble("last_position", protocol.currentVideoPosition)
+        Log.e("STATUS", "SAVED INSTANCE: ${protocol.currentVideoPosition}")
     }
 
     override fun onPause() {
@@ -426,10 +431,6 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
     /***********************************************
      *                MY FUNCTIONS                 *
      ***********************************************/
-    @SuppressLint("InlinedApi")
-    override fun onUserInteraction() {
-    }
-
     private fun hideSystemUI(newTrick: Boolean) {
         GlobalScope.launch(Dispatchers.Main) {
             if (newTrick) {
@@ -482,38 +483,38 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
             if (gotSub) {
                 gotSub = false
                 runOnUiThread {
-                    findViewById<ImageButton>(rr.id.exo_subtitle).setImageDrawable(
+                    findViewById<ImageButton>(R.id.exo_subtitle).setImageDrawable(
                         getDrawable(
                             this,
                             rr.drawable.ic_subtitles
                         )
                     )
                 }
-                vidbuilder.setUri(mediaPath).setSubtitles(Lists.newArrayList(gottenSub))
+                vidbuilder.setUri(mediaPath)
+                    .setSubtitleConfigurations(Lists.newArrayList(gottenSub))
             } else {
                 vidbuilder.setUri(mediaPath)
             }
             val vid = vidbuilder.build()
-            val file = File(mediaPath.path.toString())
+            //val file = File(mediaPath.path.toString())
             runOnUiThread {
                 mp.setMediaItem(vid)
-                findViewById<ImageButton>(rr.id.exo_play).performClick()
-                findViewById<ImageButton>(rr.id.exo_pause).performClick()
-                val vidtitle = mp.mediaMetadata.title
-                val vidname = vidtitle?.toString() ?: URLDecoder.decode(file.name, "UTF-8")
-                roomViewModel.currentVideoName = vidname
-                roomViewModel.currentVideoPosition = 0.0
-                roomViewModel.currentVideoSize =
-                    altStorageHandler.getRealSizeFromUri(this, mediaPath)?.toDouble()
+                findViewById<ImageButton>(R.id.exo_play).performClick()
+                findViewById<ImageButton>(R.id.exo_pause).performClick()
+                val vidtitle = getFileName(mediaPath)!!
+                protocol.currentVideoName = vidtitle
+                protocol.currentVideoPosition = 0.0
+                protocol.currentVideoSize =
+                    SyncplayUtils.getRealSizeFromUri(this, mediaPath)?.toDouble()
                         ?.roundToInt()!!
                 if (startFromPosition != (-3.0).toLong()) mp.seekTo(startFromPosition)
             }
 
-            if (!roomViewModel.connected) {
-                serverTalker?.sendPacket(
-                    serverTalker!!.sendFile(),
-                    roomViewModel.serverHost,
-                    roomViewModel.serverPort
+            if (!protocol.connected) {
+                protocol.sendPacket(
+                    protocol!!.sendFile(),
+                    protocol.serverHost,
+                    protocol.serverPort
                 )
             }
             updatePosition = true
@@ -540,10 +541,10 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
 
     private fun sendPlayback(play: Boolean) {
         val clienttime = System.currentTimeMillis() / 1000.0
-        serverTalker?.sendPacket(
-            serverTalker!!.sendState(null, clienttime, null, 0, 1, play),
-            roomViewModel.serverHost,
-            roomViewModel.serverPort
+        protocol.sendPacket(
+            protocol.sendState(null, clienttime, null, 0, 1, play),
+            protocol.serverHost,
+            protocol.serverPort
         )
     }
 
@@ -552,10 +553,10 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
         if (binding.syncplayMESSAGERY.visibility != VISIBLE) {
             binding.syncplayVisiblitydelegate.visibility = GONE
         }
-        serverTalker?.sendPacket(
-            serverTalker!!.sendChat(message),
-            roomViewModel.serverHost,
-            roomViewModel.serverPort
+        protocol.sendPacket(
+            protocol.sendChat(message),
+            protocol.serverHost,
+            protocol.serverPort
         )
         binding.syncplayINPUTBox.setText("")
     }
@@ -564,7 +565,7 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
         GlobalScope.launch(Dispatchers.Main) {
             rltvLayout.removeAllViews()
             val msgs =
-                if (roomViewModel.messageSequence.size != 0 && tempMsgs.size == 0) roomViewModel.messageSequence else tempMsgs
+                if (protocol.messageSequence.size != 0 && tempMsgs.size == 0) protocol.messageSequence else tempMsgs
             for (message in msgs) {
                 val msgPosition: Int = msgs.indexOf(message)
 
@@ -628,11 +629,11 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
         runOnUiThread {
             if (binding.syncplayOverviewcheckbox.isChecked) {
                 linearLayout.removeAllViews()
-                val userList: MutableMap<String, MutableList<String>> = roomViewModel.userList
+                val userList: MutableMap<String, MutableList<String>> = protocol.userList
 
                 //Creating line for room-name:
                 val roomnameView = TextView(this)
-                roomnameView.text = "Current Room : ${roomViewModel.currentRoom}"
+                roomnameView.text = "Current Room : ${protocol.currentRoom}"
 
                 roomnameView.isFocusable = false
                 val linearlayout0 = LinearLayout(this)
@@ -809,7 +810,7 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
         /*******************
          * Subtitles track *
          *******************/
-        findViewById<ImageButton>(rr.id.exo_subtitle).setOnClickListener {
+        findViewById<ImageButton>(R.id.exo_subtitle).setOnClickListener {
             if (trackSelec.currentMappedTrackInfo != null) {
                 ccSelect(it as ImageButton)
             }
@@ -818,7 +819,7 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
         /***************
          * Audio Track *
          ***************/
-        findViewById<ImageButton>(rr.id.exo_audio_track).setOnClickListener {
+        findViewById<ImageButton>(R.id.exo_audio_track).setOnClickListener {
             if (trackSelec.currentMappedTrackInfo != null) {
                 audioSelect(it as ImageButton)
             }
@@ -877,7 +878,7 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
             val loadsubItem = popup.menu.add(0, 0, 0, "Load Subtitle File...")
             val seekbuttonsItem = popup.menu.add(0, 2, 2, "Fast Seek Buttons")
             seekbuttonsItem.isCheckable = true
-            val ffwdButton = findViewById<ImageButton>(rr.id.exo_ffwd)
+            val ffwdButton = findViewById<ImageButton>(R.id.exo_ffwd)
             val rwndButton = findViewById<ImageButton>(R.id.exo_rew)
             seekbuttonsItem.isChecked = seekButtonEnable != false
             val messagesItem = popup.menu.add(0, 3, 3, "Messages History")
@@ -929,16 +930,16 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
          * Ready Button *
          ****************/
         findViewById<MaterialCheckBox>(rr.id.syncplay_ready).setOnCheckedChangeListener { _, b ->
-            roomViewModel.ready = b
+            protocol.ready = b
             if (b) {
-                serverTalker?.sendPacket(
-                    serverTalker!!.sendReadiness(true),
-                    roomViewModel.serverHost, roomViewModel.serverPort
+                protocol.sendPacket(
+                    protocol.sendReadiness(true),
+                    protocol.serverHost, protocol.serverPort
                 )
             } else {
-                serverTalker?.sendPacket(
-                    serverTalker!!.sendReadiness(false),
-                    roomViewModel.serverHost, roomViewModel.serverPort
+                protocol.sendPacket(
+                    protocol.sendReadiness(false),
+                    protocol.serverHost, protocol.serverPort
                 )
 
             }
@@ -1155,7 +1156,7 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
                     runOnUiThread {
                         val progress = (binding.vidplayer.player?.currentPosition?.div(1000.0))
                         if (progress != null) {
-                            roomViewModel.currentVideoPosition = progress
+                            protocol.currentVideoPosition = progress
                         }
                     }
                 }
@@ -1169,27 +1170,25 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
         GlobalScope.launch(Dispatchers.Default) {
             while (true) {
                 /* Informing my ViewModel about current vid position so it is retrieved for networking after */
-                if (serverTalker != null) {
-                    if (serverTalker!!.socket.isConnected && !serverTalker!!.socket.isClosed) {
-                        val ping = IcmpPing().pingIcmp("151.80.32.178", 32) * 1000.0
-                        GlobalScope.launch(Dispatchers.Main) {
-                            binding.syncplayConnectionInfo.text = "CONNECTED - Ping: $ping ms"
-                            when (ping) {
-                                in (0.0..100.0) -> binding.syncplaySignalIcon.setImageResource(rr.drawable.ping_3)
-                                in (100.0..200.0) -> binding.syncplaySignalIcon.setImageResource(rr.drawable.ping_2)
-                                else -> binding.syncplaySignalIcon.setImageResource(rr.drawable.ping_1)
-                            }
+                if (protocol.socket.isConnected && !protocol.socket.isClosed) {
+                    val ping = SyncplayUtils.pingIcmp("151.80.32.178", 32) * 1000.0
+                    GlobalScope.launch(Dispatchers.Main) {
+                        binding.syncplayConnectionInfo.text = "CONNECTED - Ping: $ping ms"
+                        when (ping) {
+                            in (0.0..100.0) -> binding.syncplaySignalIcon.setImageResource(rr.drawable.ping_3)
+                            in (100.0..200.0) -> binding.syncplaySignalIcon.setImageResource(rr.drawable.ping_2)
+                            else -> binding.syncplaySignalIcon.setImageResource(rr.drawable.ping_1)
                         }
-                    } else {
-                        GlobalScope.launch(Dispatchers.Main) {
-                            binding.syncplayConnectionInfo.text = "DISCONNECTED "
-                            binding.syncplaySignalIcon.setImageDrawable(
-                                getDrawable(
-                                    this@RoomActivity,
-                                    rr.drawable.ic_unconnected
-                                )
+                    }
+                } else {
+                    GlobalScope.launch(Dispatchers.Main) {
+                        binding.syncplayConnectionInfo.text = "DISCONNECTED "
+                        binding.syncplaySignalIcon.setImageDrawable(
+                            getDrawable(
+                                this@RoomActivity,
+                                rr.drawable.ic_unconnected
                             )
-                        }
+                        )
                     }
                 }
                 delay(1000)
@@ -1207,7 +1206,7 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
         val fullmsg: String = if (isChat) {
             val selfColorCode = "#ff2d2d"
             val friendColorCode = "#6082B6"
-            if (chatter.lowercase() == roomViewModel.currentUsername.lowercase()) {
+            if (chatter.lowercase() == protocol.currentUsername.lowercase()) {
                 val username =
                     "<font color=\"${selfColorCode}\"><strong><bold> $chatter:</bold></strong></font>"
                 "$timestamp$username<font color=\"#ffffff\"><bold> $message</bold></font>"
@@ -1219,7 +1218,7 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
         } else {
             "$timestamp<font color=\"#eeeeee\"><bold>$message</bold></font>"
         }
-        roomViewModel.messageSequence.add(fullmsg)
+        protocol.messageSequence.add(fullmsg)
         tempMsgs.add(fullmsg)
         val maxmsgs =
             PreferenceManager.getDefaultSharedPreferences(this@RoomActivity).getInt("msg_count", 12)
@@ -1247,16 +1246,15 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
                 setContentView(rr.layout.messages_popup)
                 val rltvLayout = findViewById<RelativeLayout>(rr.id.syncplay_MESSAGEHISTORY)
                 rltvLayout.removeAllViews()
-                val msgs = roomViewModel.messageSequence
+                val msgs = protocol.messageSequence
                 for (message in msgs) {
                     val msgPosition: Int = msgs.indexOf(message)
 
                     val txtview = TextView(this@RoomActivity)
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-                        txtview.text = Html.fromHtml(message)
-                    } else {
-                        txtview.text = Html.fromHtml(message, Html.FROM_HTML_MODE_LEGACY)
-                    }
+                    txtview.text = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+                        Html.fromHtml(message, Html.FROM_HTML_MODE_LEGACY) else Html.fromHtml(
+                        message
+                    )
                     txtview.textSize = 9F
                     val rltvParams: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
@@ -1331,12 +1329,12 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
 
     /*<---------------------- Event Listeners ---------------------->*/
     override fun onSomeonePaused(pauser: String) {
-        if (pauser != roomViewModel.currentUsername) myMediaPlayer?.let { pausePlayback(it) }
+        if (pauser != protocol.currentUsername) myMediaPlayer?.let { pausePlayback(it) }
         broadcastMessage("$pauser paused", false)
     }
 
     override fun onSomeonePlayed(player: String) {
-        if (player != roomViewModel.currentUsername) myMediaPlayer?.let { playPlayback(it) }
+        if (player != protocol.currentUsername) myMediaPlayer?.let { playPlayback(it) }
         broadcastMessage("$player unpaused", false)
     }
 
@@ -1346,9 +1344,9 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
 
     override fun onSomeoneSeeked(seeker: String, toPosition: Double) {
         runOnUiThread {
-            if (seeker != roomViewModel.currentUsername) {
+            if (seeker != protocol.currentUsername) {
                 broadcastMessage(
-                    "$seeker jumped from ${timeStamper((roomViewModel.currentVideoPosition).roundToInt())} to ${
+                    "$seeker jumped from ${timeStamper((protocol.currentVideoPosition).roundToInt())} to ${
                         timeStamper(
                             toPosition.roundToInt()
                         )
@@ -1409,26 +1407,24 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
     override fun onDisconnected() {
         broadcastMessage("Lost connection to the server. Attempting to reconnect...", false)
         disconnectedPopup()
-        roomViewModel.connected = false
-        serverTalker?.connect(
-            roomViewModel.serverHost,
-            roomViewModel.serverPort,
-            roomViewModel,
-            serverTalker!!.useTLS
+        protocol.connected = false
+        protocol.connect(
+            protocol.serverHost,
+            protocol.serverPort,
+            protocol.useTLS
         )
     }
 
     override fun onJoined() {
-        broadcastMessage("You have joined the room: ${roomViewModel.currentRoom}", false)
+        broadcastMessage("You have joined the room: ${protocol.currentRoom}", false)
     }
 
     override fun onConnectionFailed() {
         broadcastMessage("Connecting failed.", false)
-        serverTalker?.connect(
-            roomViewModel.serverHost,
-            roomViewModel.serverPort,
-            roomViewModel,
-            serverTalker!!.useTLS
+        protocol.connect(
+            protocol.serverHost,
+            protocol.serverPort,
+            protocol.useTLS
         )
     }
 
@@ -1446,8 +1442,7 @@ class RoomActivity : AppCompatActivity(), UserInteractionDelegate.UserInteractio
         finishAffinity()
         finish()
         finishAndRemoveTask()
-        serverTalker?.socket?.close()
-        serverTalker = null
+        protocol.socket.close()
     }
 }
 

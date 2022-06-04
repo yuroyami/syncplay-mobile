@@ -1,39 +1,58 @@
-package com.cosmik.syncplay.room
+package com.cosmik.syncplay.protocol
 
 import android.util.Log
+import androidx.lifecycle.ViewModel
+import com.cosmik.syncplay.toolkit.SyncplayUtils
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import kotlinx.coroutines.*
+import org.conscrypt.Conscrypt
 import org.json.JSONObject
 import java.io.BufferedInputStream
 import java.io.IOException
 import java.net.Socket
 import java.net.SocketException
 import java.net.UnknownHostException
-import javax.net.ssl.SSLSocket
-import javax.net.ssl.SSLSocketFactory
+import java.security.Security
+import java.security.cert.X509Certificate
+import javax.net.ssl.*
+
 
 @OptIn(DelicateCoroutinesApi::class)
-open class ClientDelegate {
+open class SyncplayProtocol : ViewModel() {
 
-    private lateinit var associatedViewModel: RoomViewModel
     var paused: Boolean = true
     private var serverIgnFly: Int = 0
     private var clientIgnFly: Int = 0
-    private var checkConnection = false
     private val gson: Gson = GsonBuilder().setPrettyPrinting().create()
     private val basicgson: Gson = GsonBuilder().create()
-    private val pinger = IcmpPing()
     var useTLS = false
     var socket: Socket = Socket()
     var dummyfactory: SSLSocketFactory = SSLSocketFactory.getDefault() as SSLSocketFactory
     var sslsocket: SSLSocket = dummyfactory.createSocket() as SSLSocket
 
+    //ViewModel
+    var ready = false
+    var joinedRoom: Boolean = false
+    var currentVideoPosition: Double = 0.0
+    var currentVideoName: String = ""
+    var currentVideoLength: Double = 0.0
+    var currentVideoSize: Int = 0
+    var serverHost: String = "151.80.32.178"
+    var serverPort: Int = 8999
+    var connected = false
+    var currentUsername: String = "username_${(0..999999999999).random()}"
+    var currentRoom: String = "roomname"
+    var rewindThreshold = 12L
+
+    //User Properties: User Index // Readiness // File Name // File Duration // File Size
+    var userList: MutableMap<String, MutableList<String>> = mutableMapOf()
+    var messageSequence: MutableList<String> = mutableListOf()
+
     private lateinit var syncplayBroadcaster: SyncplayBroadcaster
 
-    fun connect(host: String, port: Int, viewModel: RoomViewModel, tls: Boolean) {
-        associatedViewModel = viewModel
+    fun connect(host: String, port: Int, tls: Boolean) {
         useTLS = tls
         syncplayBroadcaster.onConnectionAttempt(port.toString())
         sendPacket(sendHello(), host, port)
@@ -41,9 +60,9 @@ open class ClientDelegate {
 
     private fun sendHello(): String {
         val hello: HashMap<String, Any> = hashMapOf()
-        hello["username"] = associatedViewModel.currentUsername
+        hello["username"] = currentUsername
         val room: HashMap<String, String> = hashMapOf()
-        room["name"] = associatedViewModel.currentRoom
+        room["name"] = currentRoom
         hello["room"] = room
         hello["version"] = "1.6.9"
         val features: HashMap<String, Boolean> = hashMapOf()
@@ -60,18 +79,18 @@ open class ClientDelegate {
     }
 
     private fun sendJoined(): String {
-        associatedViewModel.joinedRoom = true
+        joinedRoom = true
         val event: HashMap<String, Any> = hashMapOf()
         event["joined"] = true
         val room: HashMap<String, String> = hashMapOf()
-        room["name"] = associatedViewModel.currentRoom
+        room["name"] = currentRoom
 
         val username: HashMap<String, Any> = hashMapOf()
         username["room"] = room
         username["event"] = event
 
         val user: HashMap<String, Any> = hashMapOf()
-        user[associatedViewModel.currentUsername] = username
+        user[currentUsername] = username
 
         val wrapper: HashMap<String, HashMap<String, Any>> = hashMapOf()
         wrapper["Set"] = user
@@ -94,9 +113,9 @@ open class ClientDelegate {
 
     fun sendFile(): String {
         val fileproperties: HashMap<String, Any> = hashMapOf()
-        fileproperties["duration"] = associatedViewModel.currentVideoLength
-        fileproperties["name"] = associatedViewModel.currentVideoName
-        fileproperties["size"] = associatedViewModel.currentVideoSize
+        fileproperties["duration"] = currentVideoLength
+        fileproperties["name"] = currentVideoName
+        fileproperties["size"] = currentVideoSize
 
 
         val file: HashMap<String, Any> = hashMapOf()
@@ -133,7 +152,7 @@ open class ClientDelegate {
         if (doSeek == true) {
             playstate["position"] = seekPosition.toDouble() / 1000.0
         } else {
-            playstate["position"] = associatedViewModel.currentVideoPosition.toFloat()
+            playstate["position"] = currentVideoPosition.toFloat()
         }
         playstate["paused"] = paused
         playstate["doSeek"] = doSeek
@@ -142,7 +161,7 @@ open class ClientDelegate {
             ping["latencyCalculation"] = servertime
         }
         ping["clientLatencyCalculation"] = clienttime
-        ping["clientRtt"] = pinger.pingIcmp("151.80.32.178", 32)
+        ping["clientRtt"] = SyncplayUtils.pingIcmp("151.80.32.178", 32)
 
         if (iChangeState == 1) {
             val ignore: HashMap<String, Any?> = hashMapOf()
@@ -172,7 +191,6 @@ open class ClientDelegate {
     fun sendPacket(json: String, host: String, port: Int) {
         val jsonEncoded = "$json\r\n".encodeToByteArray()
         GlobalScope.launch(Dispatchers.IO) {
-            val connected = associatedViewModel.connected
             try {
                 if (!useTLS) {
                     if (!connected) {
@@ -200,7 +218,7 @@ open class ClientDelegate {
 
                         if (!socket.isClosed && socket.isConnected) {
                             syncplayBroadcaster.onReconnected()
-                            associatedViewModel.connected = true
+                            connected = true
                             readPacket(host, port)
                         }
                     }
@@ -208,13 +226,62 @@ open class ClientDelegate {
                     dOut.write(jsonEncoded)
                 } else {
                     if (!connected) {
-                        sslsocket =
-                            SSLSocketFactory.getDefault().createSocket(host, port) as SSLSocket
-                        sslsocket.enabledProtocols = arrayOf("TLSv1.3")
-                        if (sslsocket.isConnected) {
-                            syncplayBroadcaster.onReconnected()
-                        } else {
-                            syncplayBroadcaster.onConnectionFailed()
+                        try {
+
+                            Security.setProperty("crypto.policy", "limited")
+                            System.setProperty("javax.net.debug", "ssl:handshake")
+                            System.setProperty(
+                                "jdk.tls.namedGroups",
+                                "secp256r1, secp384r1, secp521r1, secp160k1"
+                            )
+                            System.setProperty("javax.net.debug", "ssl:handshake")
+                            System.setProperty(
+                                "jdk.tls.client.enableStatusRequestExtension",
+                                "false"
+                            )
+                            System.setProperty("jsse.enableFFDHEExtension", "false")
+                            System.setProperty("jdk.tls.client.protocols", "TLSv1.1,TLSv1.2")
+                            Security.addProvider(Conscrypt.newProvider())
+                            Security.insertProviderAt(Conscrypt.newProvider(), 0)
+
+                            val sslContext: SSLContext =
+                                SSLContext.getInstance("TLSv1.3", Conscrypt.newProvider())
+
+                            sslContext.init(null, arrayOf<TrustManager>(object : X509TrustManager {
+                                override fun checkClientTrusted(
+                                    x509Certificates: Array<X509Certificate>,
+                                    s: String
+                                ) {
+                                    println("Skip trust check for: " + x509Certificates[0])
+                                }
+
+                                override fun checkServerTrusted(
+                                    x509Certificates: Array<X509Certificate>,
+                                    s: String
+                                ) {
+                                    println("Skip trust check for: " + x509Certificates[0])
+                                }
+
+                                override fun getAcceptedIssuers(): Array<X509Certificate?> {
+                                    return arrayOfNulls(0)
+                                }
+                            }), null)
+
+                            sslsocket =
+                                sslContext.socketFactory.createSocket(host, port) as SSLSocket
+                            sslsocket.useClientMode = true
+                            sslsocket.addHandshakeCompletedListener { evt ->
+                                println("Handshake completed: ${evt.session.protocol} - ${evt.session.cipherSuite}, ${evt.socket}")
+                            }
+
+                            sslsocket.startHandshake()
+                            if (sslsocket.isConnected) {
+                                syncplayBroadcaster.onReconnected()
+                            } else {
+                                syncplayBroadcaster.onConnectionFailed()
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
                         }
                     }
                     val dOut = sslsocket.outputStream
@@ -239,7 +306,7 @@ open class ClientDelegate {
                                             extractJson(json, host, port)
                                         }
                                 } catch (s: SocketException) {
-                                    associatedViewModel.connected = false
+                                    connected = false
                                     syncplayBroadcaster.onDisconnected()
                                     s.printStackTrace()
                                 }
@@ -248,7 +315,7 @@ open class ClientDelegate {
                             }
                         }
                     } else {
-                        associatedViewModel.connected = false
+                        connected = false
                     }
                 } else {
                     if (sslsocket.isConnected) {
@@ -260,7 +327,7 @@ open class ClientDelegate {
                                             extractJson(json, host, port)
                                         }
                                 } catch (s: SocketException) {
-                                    associatedViewModel.connected = false
+                                    connected = false
                                     s.printStackTrace()
                                 }
                             } else {
@@ -268,7 +335,7 @@ open class ClientDelegate {
                             }
                         }
                     } else {
-                        associatedViewModel.connected = false
+                        connected = false
                     }
                 }
                 delay(300)
@@ -277,7 +344,7 @@ open class ClientDelegate {
     }
 
     private fun extractJson(json: String, host: String, port: Int) {
-        associatedViewModel.connected = true
+        connected = true
         Log.e("Server:", json)
         val jsoner = gson.fromJson(json, JsonObject::class.java)
         val jsonHeader = jsoner.keySet().toList()[0]
@@ -288,15 +355,15 @@ open class ClientDelegate {
             val trueusername = jsoner
                 .getAsJsonObject("Hello")
                 .getAsJsonPrimitive("username").asString
-            associatedViewModel.currentUsername = trueusername
+            currentUsername = trueusername
             sendPacket(sendJoined(), host, port)
             sendPacket(sendEmptyList(), host, port)
             sendPacket(
-                sendReadiness(associatedViewModel.ready),
+                sendReadiness(ready),
                 host,
                 port
             )
-            associatedViewModel.connected = true
+            connected = true
             syncplayBroadcaster.onJoined()
             //periodicNetworkCheckup(associatedViewModel.serverHost, associatedViewModel.serverPort)
         }
@@ -305,14 +372,14 @@ open class ClientDelegate {
          *******************/
         if (jsonHeader == "List") {
             val userlist =
-                jsoner.getAsJsonObject("List").getAsJsonObject(associatedViewModel.currentRoom)
+                jsoner.getAsJsonObject("List").getAsJsonObject(currentRoom)
             val userkeys = userlist.keySet()
             var indexer = 1
             val tempUserList: MutableMap<String, MutableList<String>> = mutableMapOf()
             for (user in userkeys) {
                 val userProperties: MutableList<String> = mutableListOf()
                 var userindex = 0
-                if (user != associatedViewModel.currentUsername) {
+                if (user != currentUsername) {
                     userindex = indexer
                     indexer += 1
                 }
@@ -336,8 +403,8 @@ open class ClientDelegate {
                     filesize = file.getAsJsonPrimitive("size").toString()
                 }
 
-                if (associatedViewModel.userList.keys.contains(user)) {
-                    if (associatedViewModel.userList[user]?.get(2) != filename) {
+                if (userList.keys.contains(user)) {
+                    if (userList[user]?.get(2) != filename) {
                         syncplayBroadcaster.onSomeoneLoadedFile(
                             user,
                             filename,
@@ -356,7 +423,7 @@ open class ClientDelegate {
                 tempUserList[user] = userProperties
             }
 
-            associatedViewModel.userList = tempUserList
+            userList = tempUserList
             syncplayBroadcaster.onReceivedList()
         }
         /********************
@@ -473,9 +540,9 @@ open class ClientDelegate {
                 ).optString("setBy")
 
                 //Rewind check if someone is behind
-                val threshold = associatedViewModel.rewindThreshold
-                if (seeker != (associatedViewModel.currentUsername)) {
-                    if (seekedPosition < ((associatedViewModel.currentVideoPosition) - threshold)) {
+                val threshold = rewindThreshold
+                if (seeker != (currentUsername)) {
+                    if (seekedPosition < (currentVideoPosition - threshold)) {
                         syncplayBroadcaster.onSomeoneBehind(seeker, seekedPosition)
                     }
                 }

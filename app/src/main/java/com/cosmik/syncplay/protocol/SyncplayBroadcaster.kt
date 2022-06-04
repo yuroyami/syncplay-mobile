@@ -1,6 +1,10 @@
-package com.cosmik.syncplay.room
+package com.cosmik.syncplay.protocol
 
 interface SyncplayBroadcaster {
+
+    /** Interface that is used as an intermediate (middle-man) bridge between the protocol and the
+     * client itself. This interface broadcasts multiple events to the UI client (RoomActivity) **/
+
     fun onSomeonePaused(pauser: String)
 
     fun onSomeonePlayed(player: String)
