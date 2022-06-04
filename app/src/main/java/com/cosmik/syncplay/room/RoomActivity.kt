@@ -47,6 +47,10 @@ import com.bumptech.glide.request.target.Target
 import com.cosmik.syncplay.databinding.RoomActivityBinding
 import com.cosmik.syncplay.protocol.SyncplayBroadcaster
 import com.cosmik.syncplay.protocol.SyncplayProtocol
+import com.cosmik.syncplay.protocol.SyncplayProtocolUtils.sendChat
+import com.cosmik.syncplay.protocol.SyncplayProtocolUtils.sendFile
+import com.cosmik.syncplay.protocol.SyncplayProtocolUtils.sendReadiness
+import com.cosmik.syncplay.protocol.SyncplayProtocolUtils.sendState
 import com.cosmik.syncplay.toolkit.SyncplayUtils
 import com.cosmik.syncplay.toolkit.SyncplayUtils.getFileName
 import com.cosmik.syncplay.toolkit.SyncplayUtils.timeStamper
@@ -163,13 +167,6 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
 
         protocol = ViewModelProvider(this)[SyncplayProtocol::class.java]
 
-//        Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
-//            Log.e(
-//                "Error ${Thread.currentThread().stackTrace[2]}",
-//                paramThrowable.message.toString()
-//            )
-//            paramThrowable.printStackTrace()
-//        }
 
         //Getting all info from intent
         val ourInfo = intent.getStringExtra("json")
@@ -192,8 +189,7 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
         if (!protocol.connected) {
             protocol.connect(
                 protocol.serverHost,
-                protocol.serverPort,
-                tls
+                protocol.serverPort
             )
         }
 
@@ -262,7 +258,11 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
                         protocol.currentVideoLength =
                             (myMediaPlayer?.duration!!.toDouble()) / 1000.0
                         protocol.sendPacket(
-                            protocol.sendFile(),
+                            sendFile(
+                                protocol.currentVideoLength,
+                                protocol.currentVideoName,
+                                protocol.currentVideoSize
+                            ),
                             protocol.serverHost,
                             protocol.serverPort
                         )
@@ -301,13 +301,14 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
                             val clienttime =
                                 (System.currentTimeMillis() / 1000.0)
                             protocol.sendPacket(
-                                protocol.sendState(
+                                sendState(
                                     null,
                                     clienttime,
                                     true,
                                     newPosition.positionMs,
                                     1,
-                                    play = myMediaPlayer?.isPlaying
+                                    play = myMediaPlayer?.isPlaying,
+                                    protocol
                                 ),
                                 protocol.serverHost,
                                 protocol.serverPort
@@ -512,7 +513,11 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
 
             if (!protocol.connected) {
                 protocol.sendPacket(
-                    protocol!!.sendFile(),
+                    sendFile(
+                        protocol.currentVideoLength,
+                        protocol.currentVideoName,
+                        protocol.currentVideoSize
+                    ),
                     protocol.serverHost,
                     protocol.serverPort
                 )
@@ -542,7 +547,7 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
     private fun sendPlayback(play: Boolean) {
         val clienttime = System.currentTimeMillis() / 1000.0
         protocol.sendPacket(
-            protocol.sendState(null, clienttime, null, 0, 1, play),
+            sendState(null, clienttime, null, 0, 1, play, protocol),
             protocol.serverHost,
             protocol.serverPort
         )
@@ -554,7 +559,7 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
             binding.syncplayVisiblitydelegate.visibility = GONE
         }
         protocol.sendPacket(
-            protocol.sendChat(message),
+            sendChat(message),
             protocol.serverHost,
             protocol.serverPort
         )
@@ -933,12 +938,12 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
             protocol.ready = b
             if (b) {
                 protocol.sendPacket(
-                    protocol.sendReadiness(true),
+                    sendReadiness(true),
                     protocol.serverHost, protocol.serverPort
                 )
             } else {
                 protocol.sendPacket(
-                    protocol.sendReadiness(false),
+                    sendReadiness(false),
                     protocol.serverHost, protocol.serverPort
                 )
 
@@ -1410,8 +1415,7 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
         protocol.connected = false
         protocol.connect(
             protocol.serverHost,
-            protocol.serverPort,
-            protocol.useTLS
+            protocol.serverPort
         )
     }
 
@@ -1423,8 +1427,7 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
         broadcastMessage("Connecting failed.", false)
         protocol.connect(
             protocol.serverHost,
-            protocol.serverPort,
-            protocol.useTLS
+            protocol.serverPort
         )
     }
 

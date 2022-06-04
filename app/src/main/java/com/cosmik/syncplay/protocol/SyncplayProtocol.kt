@@ -2,39 +2,34 @@ package com.cosmik.syncplay.protocol
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.cosmik.syncplay.toolkit.SyncplayUtils
+import com.cosmik.syncplay.protocol.SyncplayProtocolUtils.sendEmptyList
+import com.cosmik.syncplay.protocol.SyncplayProtocolUtils.sendHello
+import com.cosmik.syncplay.protocol.SyncplayProtocolUtils.sendJoined
+import com.cosmik.syncplay.protocol.SyncplayProtocolUtils.sendReadiness
+import com.cosmik.syncplay.protocol.SyncplayProtocolUtils.sendState
+import com.cosmik.syncplay.toolkit.SyncplayUtils.loggy
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import kotlinx.coroutines.*
-import org.conscrypt.Conscrypt
 import org.json.JSONObject
 import java.io.BufferedInputStream
 import java.io.IOException
 import java.net.Socket
 import java.net.SocketException
 import java.net.UnknownHostException
-import java.security.Security
-import java.security.cert.X509Certificate
-import javax.net.ssl.*
-
 
 @OptIn(DelicateCoroutinesApi::class)
 open class SyncplayProtocol : ViewModel() {
 
     var paused: Boolean = true
-    private var serverIgnFly: Int = 0
-    private var clientIgnFly: Int = 0
+    var serverIgnFly: Int = 0
+    var clientIgnFly: Int = 0
     private val gson: Gson = GsonBuilder().setPrettyPrinting().create()
-    private val basicgson: Gson = GsonBuilder().create()
-    var useTLS = false
     var socket: Socket = Socket()
-    var dummyfactory: SSLSocketFactory = SSLSocketFactory.getDefault() as SSLSocketFactory
-    var sslsocket: SSLSocket = dummyfactory.createSocket() as SSLSocket
 
     //ViewModel
     var ready = false
-    var joinedRoom: Boolean = false
     var currentVideoPosition: Double = 0.0
     var currentVideoName: String = ""
     var currentVideoLength: Double = 0.0
@@ -52,243 +47,47 @@ open class SyncplayProtocol : ViewModel() {
 
     private lateinit var syncplayBroadcaster: SyncplayBroadcaster
 
-    fun connect(host: String, port: Int, tls: Boolean) {
-        useTLS = tls
+    fun connect(host: String, port: Int) {
         syncplayBroadcaster.onConnectionAttempt(port.toString())
-        sendPacket(sendHello(), host, port)
-    }
-
-    private fun sendHello(): String {
-        val hello: HashMap<String, Any> = hashMapOf()
-        hello["username"] = currentUsername
-        val room: HashMap<String, String> = hashMapOf()
-        room["name"] = currentRoom
-        hello["room"] = room
-        hello["version"] = "1.6.9"
-        val features: HashMap<String, Boolean> = hashMapOf()
-        features["sharedPlaylists"] = false
-        features["chat"] = true
-        features["featureList"] = true
-        features["readiness"] = true
-        features["managedRooms"] = true
-        hello["features"] = features
-
-        val wrapper: HashMap<String, HashMap<String, Any>> = hashMapOf()
-        wrapper["Hello"] = hello
-        return gson.toJson(wrapper)
-    }
-
-    private fun sendJoined(): String {
-        joinedRoom = true
-        val event: HashMap<String, Any> = hashMapOf()
-        event["joined"] = true
-        val room: HashMap<String, String> = hashMapOf()
-        room["name"] = currentRoom
-
-        val username: HashMap<String, Any> = hashMapOf()
-        username["room"] = room
-        username["event"] = event
-
-        val user: HashMap<String, Any> = hashMapOf()
-        user[currentUsername] = username
-
-        val wrapper: HashMap<String, HashMap<String, Any>> = hashMapOf()
-        wrapper["Set"] = user
-        return gson.toJson(wrapper)
-    }
-
-    fun sendReadiness(isReady: Boolean): String {
-        val ready: HashMap<String, Boolean> = hashMapOf()
-        ready["isReady"] = isReady
-        ready["manuallyInitiated"] = true
-
-        val setting: HashMap<String, Any> = hashMapOf()
-        setting["ready"] = ready
-
-        val wrapper: HashMap<String, Any> = hashMapOf()
-        wrapper["Set"] = setting
-
-        return gson.toJson(wrapper)
-    }
-
-    fun sendFile(): String {
-        val fileproperties: HashMap<String, Any> = hashMapOf()
-        fileproperties["duration"] = currentVideoLength
-        fileproperties["name"] = currentVideoName
-        fileproperties["size"] = currentVideoSize
-
-
-        val file: HashMap<String, Any> = hashMapOf()
-        file["file"] = fileproperties
-
-        val wrapper: HashMap<String, Any> = hashMapOf()
-        wrapper["Set"] = file
-
-        return basicgson.toJson(wrapper)
-    }
-
-    private fun sendEmptyList(): String {
-        val emptylist: HashMap<String, Any?> = hashMapOf()
-        emptylist["List"] = null
-
-        return GsonBuilder().serializeNulls().create().toJson(emptylist)
-    }
-
-
-    fun sendChat(message: String): String {
-        val wrapper: HashMap<String, Any> = hashMapOf()
-        wrapper["Chat"] = message
-
-        return gson.toJson(wrapper)
-    }
-
-    fun sendState(
-        servertime: Double?, clienttime: Double, doSeek: Boolean?, seekPosition: Long = 0,
-        iChangeState: Int, play: Boolean?
-    ): String {
-
-        val state: HashMap<String, Any?> = hashMapOf()
-        val playstate: HashMap<String, Any?> = hashMapOf()
-        if (doSeek == true) {
-            playstate["position"] = seekPosition.toDouble() / 1000.0
-        } else {
-            playstate["position"] = currentVideoPosition.toFloat()
-        }
-        playstate["paused"] = paused
-        playstate["doSeek"] = doSeek
-        val ping: HashMap<String, Any?> = hashMapOf()
-        if (servertime != null) {
-            ping["latencyCalculation"] = servertime
-        }
-        ping["clientLatencyCalculation"] = clienttime
-        ping["clientRtt"] = SyncplayUtils.pingIcmp("151.80.32.178", 32)
-
-        if (iChangeState == 1) {
-            val ignore: HashMap<String, Any?> = hashMapOf()
-            ignore["client"] = clientIgnFly
-            state["ignoringOnTheFly"] = ignore
-            playstate["paused"] = !play!!
-
-        } else {
-            if (serverIgnFly != 0) {
-                val ignore: HashMap<String, Any?> = hashMapOf()
-                ignore["server"] = serverIgnFly
-                state["ignoringOnTheFly"] = ignore
-                serverIgnFly = 0
-            }
-        }
-
-        state["playstate"] = playstate
-        state["ping"] = ping
-
-        val statewrapper: HashMap<String, Any?> = hashMapOf()
-        statewrapper["State"] = state
-
-        return gson.toJson(statewrapper)
-
+        sendPacket(sendHello(currentUsername, currentRoom), host, port)
     }
 
     fun sendPacket(json: String, host: String, port: Int) {
         val jsonEncoded = "$json\r\n".encodeToByteArray()
         GlobalScope.launch(Dispatchers.IO) {
             try {
-                if (!useTLS) {
-                    if (!connected) {
-                        try {
-                            socket = Socket(host, port)
-                        } catch (e: Exception) {
-                            delay(2000) //Safety-interval delay.
-                            syncplayBroadcaster.onConnectionFailed()
-                            when (e) {
-                                is UnknownHostException -> {
-                                    Log.e("SOCKET", "UnknownHostException")
-                                }
-                                is IOException -> {
-                                    Log.e("SOCKET", "IOException")
-
-                                }
-                                is SecurityException -> {
-                                    Log.e("SOCKET", "SecurityException")
-                                }
-                                else -> {
-                                    e.printStackTrace()
-                                }
+                if (!connected) {
+                    try {
+                        socket = Socket(host, port)
+                    } catch (e: Exception) {
+                        delay(2000) //Safety-interval delay.
+                        syncplayBroadcaster.onConnectionFailed()
+                        when (e) {
+                            is UnknownHostException -> {
+                                loggy("SOCKET UnknownHostException")
                             }
-                        }
-
-                        if (!socket.isClosed && socket.isConnected) {
-                            syncplayBroadcaster.onReconnected()
-                            connected = true
-                            readPacket(host, port)
+                            is IOException -> {
+                                loggy("SOCKET IOException")
+                            }
+                            is SecurityException -> {
+                                loggy("SOCKET SecurityException")
+                            }
+                            else -> {
+                                e.printStackTrace()
+                            }
                         }
                     }
-                    val dOut = socket.outputStream
-                    dOut.write(jsonEncoded)
-                } else {
-                    if (!connected) {
-                        try {
 
-                            Security.setProperty("crypto.policy", "limited")
-                            System.setProperty("javax.net.debug", "ssl:handshake")
-                            System.setProperty(
-                                "jdk.tls.namedGroups",
-                                "secp256r1, secp384r1, secp521r1, secp160k1"
-                            )
-                            System.setProperty("javax.net.debug", "ssl:handshake")
-                            System.setProperty(
-                                "jdk.tls.client.enableStatusRequestExtension",
-                                "false"
-                            )
-                            System.setProperty("jsse.enableFFDHEExtension", "false")
-                            System.setProperty("jdk.tls.client.protocols", "TLSv1.1,TLSv1.2")
-                            Security.addProvider(Conscrypt.newProvider())
-                            Security.insertProviderAt(Conscrypt.newProvider(), 0)
-
-                            val sslContext: SSLContext =
-                                SSLContext.getInstance("TLSv1.3", Conscrypt.newProvider())
-
-                            sslContext.init(null, arrayOf<TrustManager>(object : X509TrustManager {
-                                override fun checkClientTrusted(
-                                    x509Certificates: Array<X509Certificate>,
-                                    s: String
-                                ) {
-                                    println("Skip trust check for: " + x509Certificates[0])
-                                }
-
-                                override fun checkServerTrusted(
-                                    x509Certificates: Array<X509Certificate>,
-                                    s: String
-                                ) {
-                                    println("Skip trust check for: " + x509Certificates[0])
-                                }
-
-                                override fun getAcceptedIssuers(): Array<X509Certificate?> {
-                                    return arrayOfNulls(0)
-                                }
-                            }), null)
-
-                            sslsocket =
-                                sslContext.socketFactory.createSocket(host, port) as SSLSocket
-                            sslsocket.useClientMode = true
-                            sslsocket.addHandshakeCompletedListener { evt ->
-                                println("Handshake completed: ${evt.session.protocol} - ${evt.session.cipherSuite}, ${evt.socket}")
-                            }
-
-                            sslsocket.startHandshake()
-                            if (sslsocket.isConnected) {
-                                syncplayBroadcaster.onReconnected()
-                            } else {
-                                syncplayBroadcaster.onConnectionFailed()
-                            }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
+                    if (!socket.isClosed && socket.isConnected) {
+                        syncplayBroadcaster.onReconnected()
+                        connected = true
+                        readPacket(host, port)
                     }
-                    val dOut = sslsocket.outputStream
-                    dOut.write(jsonEncoded)
                 }
+                val dOut = socket.outputStream
+                dOut.write(jsonEncoded)
             } catch (s: SocketException) {
-                Log.e("Socket", "${s.stackTrace}")
+                loggy("Socket: ${s.stackTrace}")
             }
         }
     }
@@ -296,7 +95,6 @@ open class SyncplayProtocol : ViewModel() {
     private fun readPacket(host: String, port: Int) {
         GlobalScope.launch(Dispatchers.IO) {
             while (true) {
-                if (!useTLS) {
                     if (socket.isConnected) {
                         socket.getInputStream().also { input ->
                             if (!socket.isInputShutdown) {
@@ -317,27 +115,6 @@ open class SyncplayProtocol : ViewModel() {
                     } else {
                         connected = false
                     }
-                } else {
-                    if (sslsocket.isConnected) {
-                        sslsocket.inputStream.also { input ->
-                            if (!sslsocket.isInputShutdown) {
-                                try {
-                                    BufferedInputStream(input).reader(Charsets.UTF_8)
-                                        .forEachLine { json ->
-                                            extractJson(json, host, port)
-                                        }
-                                } catch (s: SocketException) {
-                                    connected = false
-                                    s.printStackTrace()
-                                }
-                            } else {
-                                Log.e("Server:", "STREAMED SHUTDOWN")
-                            }
-                        }
-                    } else {
-                        connected = false
-                    }
-                }
                 delay(300)
             }
         }
@@ -356,7 +133,7 @@ open class SyncplayProtocol : ViewModel() {
                 .getAsJsonObject("Hello")
                 .getAsJsonPrimitive("username").asString
             currentUsername = trueusername
-            sendPacket(sendJoined(), host, port)
+            sendPacket(sendJoined(currentRoom), host, port)
             sendPacket(sendEmptyList(), host, port)
             sendPacket(
                 sendReadiness(ready),
@@ -511,7 +288,8 @@ open class SyncplayProtocol : ViewModel() {
                                 clienttime,
                                 null, 0,
                                 iChangeState = 0,
-                                play = null
+                                play = null,
+                                protocol = this
                             ),
                             host,
                             port
@@ -524,7 +302,8 @@ open class SyncplayProtocol : ViewModel() {
                                 clienttime,
                                 doSeek, 0,
                                 0,
-                                null
+                                null,
+                                this
                             ),
                             host,
                             port
@@ -550,7 +329,7 @@ open class SyncplayProtocol : ViewModel() {
                 val clienttime =
                     (System.currentTimeMillis() / 1000.0)
                 sendPacket(
-                    sendState(latency, clienttime, false, 0, 0, null),
+                    sendState(latency, clienttime, false, 0, 0, null, this),
                     host,
                     port
                 )

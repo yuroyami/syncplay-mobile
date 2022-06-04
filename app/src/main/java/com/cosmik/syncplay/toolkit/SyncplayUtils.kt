@@ -7,6 +7,8 @@ import android.net.Uri
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.util.DisplayMetrics
+import android.util.Log
+import com.cosmik.syncplay.BuildConfig
 import java.io.*
 
 object SyncplayUtils {
@@ -120,6 +122,14 @@ object SyncplayUtils {
         } catch (e: IOException) {
         }
         return result
+    }
+
+    /** Basically a convenience log function that will log stuff to error pool if it's a debug build **/
+    @JvmStatic
+    fun loggy(string: String) {
+        if (BuildConfig.DEBUG) {
+            Log.e("STUFF", string)
+        }
     }
 
 }
