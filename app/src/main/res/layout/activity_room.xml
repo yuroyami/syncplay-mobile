@@ -227,4 +227,55 @@
         android:layout_height="wrap_content"
         android:visibility="visible"
         app:constraint_referenced_ids="syncplay_INPUT, syncplay_SEND, syncplay_overview_card, syncplay_overviewcheckbox, syncplay_ready, syncplay_connection_info, syncplay_signal_icon" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/pseudo_popup_parent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:elevation="16dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/popup_dismisser"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0.3"
+            android:clickable="true"
+            android:focusable="true"
+            android:src="@color/black" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/pseudo_popup_containercard"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="8dp"
+            app:layout_constraintBottom_toTopOf="@id/popup_button"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHeight_percent="0.75"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintWidth_percent="0.60">
+
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/pseudo_popup_container"
+                android:name="com.cosmik.syncplay.room.RoomSettingsFragment"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:ignore="HardcodedText" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <Button
+            android:id="@+id/popup_button"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:fontFamily="@font/directive4bold"
+            android:text="APPLY"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/pseudo_popup_containercard"
+            app:layout_constraintWidth_percent="0.2" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

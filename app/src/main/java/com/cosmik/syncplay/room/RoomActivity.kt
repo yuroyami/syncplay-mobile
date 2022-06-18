@@ -44,7 +44,7 @@ import com.bumptech.glide.load.resource.gif.GifDrawable
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
-import com.cosmik.syncplay.databinding.RoomActivityBinding
+import com.cosmik.syncplay.databinding.ActivityRoomBinding
 import com.cosmik.syncplay.protocol.SyncplayBroadcaster
 import com.cosmik.syncplay.protocol.SyncplayProtocol
 import com.cosmik.syncplay.protocol.SyncplayProtocolUtils.sendChat
@@ -52,6 +52,7 @@ import com.cosmik.syncplay.protocol.SyncplayProtocolUtils.sendFile
 import com.cosmik.syncplay.protocol.SyncplayProtocolUtils.sendReadiness
 import com.cosmik.syncplay.protocol.SyncplayProtocolUtils.sendState
 import com.cosmik.syncplay.toolkit.SyncplayUtils
+import com.cosmik.syncplay.toolkit.SyncplayUtils.generateTimestamp
 import com.cosmik.syncplay.toolkit.SyncplayUtils.getFileName
 import com.cosmik.syncplay.toolkit.SyncplayUtils.timeStamper
 import com.google.android.exoplayer2.*
@@ -70,7 +71,6 @@ import com.google.gson.GsonBuilder
 import kotlinx.coroutines.*
 import razerdp.basepopup.BasePopupWindow
 import java.io.IOException
-import java.sql.Timestamp
 import kotlin.collections.set
 import kotlin.math.roundToInt
 import com.cosmik.syncplay.R as rr
@@ -78,9 +78,10 @@ import com.cosmik.syncplay.R as rr
 
 /*----------------------------------------------*/
 @OptIn(DelicateCoroutinesApi::class)
+@SuppressLint("SetTextI18n")
 class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
 
-    private var _binding: RoomActivityBinding? = null
+    private var _binding: ActivityRoomBinding? = null
     private val binding get() = _binding!!
     lateinit var protocol: SyncplayProtocol
 
@@ -91,80 +92,27 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
     private var audioTracker: Int = -1
     private var seekTracker: Double = 0.0
     private var receivedSeek = false
-
     /*-- Initializing Player embeddable parts --*/
     private var myMediaPlayer: ExoPlayer? = null
     private var updatePosition = false
     private var startFromPosition = (-3.0).toLong()
-
     /*-- Initialize video path from intent --*/
     private var gottenFile: Uri? = null
     private var gotSub: Boolean = false
     private lateinit var gottenSub: MediaItem.SubtitleConfiguration
-
     /*-- Cosmetics --*/
-    private val tempMsgs = mutableListOf<String>()
     private var lockedScreen = false
     private var seekButtonEnable: Boolean? = null
     private var cutOutMode: Boolean = true
-
-    /*----------------------------------------------*/
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == Activity.RESULT_OK) {
-            when (requestCode) {
-                90909 -> {
-                    gottenFile = data?.data
-                    val filename = gottenFile?.let { getFileName(it) }
-                    Toast.makeText(this, "Selected video file: $filename", Toast.LENGTH_LONG).show()
-
-                }
-                80808 -> {
-                    if (gottenFile != null) {
-                        val path = data?.data!!
-                        val filename = getFileName(path).toString()
-                        val extension = filename.substring(filename.length - 4)
-                        val mimeType =
-                            if (extension.contains("srt")) MimeTypes.APPLICATION_SUBRIP
-                            else if ((extension.contains("ass"))
-                                || (extension.contains("ssa"))
-                            ) MimeTypes.TEXT_SSA
-                            else if (extension.contains("ttml")) MimeTypes.APPLICATION_TTML
-                            else if (extension.contains("vtt")) MimeTypes.TEXT_VTT else ""
-                        if (mimeType != "") {
-                            gottenSub = MediaItem.SubtitleConfiguration.Builder(path)
-                                .setUri(path)
-                                .setMimeType(mimeType)
-                                .setLanguage(null)
-                                .setSelectionFlags(SELECTION_FLAG_DEFAULT)
-                                .build()
-                            Toast.makeText(
-                                this, "Loaded sub successfully: $filename", Toast.LENGTH_LONG
-                            ).show()
-                            gotSub = true
-                        } else {
-                            Toast.makeText(
-                                this,
-                                "Invalid subtitle file. Supported formats are: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    } else {
-                        Toast.makeText(this, "Load video first", Toast.LENGTH_LONG).show()
-                    }
-                }
-            }
-        }
-    }
-
     /*----------------------------------------------*/
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(com.cosmik.syncplay.R.layout.room_activity)
-        _binding = RoomActivityBinding.inflate(layoutInflater)
+        //setContentView(com.cosmik.syncplay.R.layout.room_activity)
+        _binding = ActivityRoomBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
 
+        //Preparing UI Settings fragment
         protocol = ViewModelProvider(this)[SyncplayProtocol::class.java]
 
 
@@ -193,14 +141,11 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
             )
         }
 
-        //Update ping
+        //Launch the ping updater
         pingStatusUpdater()
 
-        //Room Overview transparency adjustment
-        val alpha = PreferenceManager.getDefaultSharedPreferences(this)
-            .getInt("overview_alpha", 30) //between 0-255
-        @ColorInt val alphaColor = ColorUtils.setAlphaComponent(Color.DKGRAY, alpha)
-        binding.syncplayOverviewCard.setBackgroundColor(alphaColor)
+        //Apply UI Settings from SharedPreferences
+        applyUISettings()
 
         //Controlling Cut-out mode and orientation.
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
@@ -209,7 +154,6 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
                 WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
         }
     }
-
     override fun onStart() {
         super.onStart()
         //Initializing player with default settings.
@@ -380,33 +324,24 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
 
 
     }
-
-    @SuppressLint("NewApi", "SetTextI18n")
     override fun onResume() {
         super.onResume()
-
         hideSystemUI(false) //Immersive Mode
-
         if (gottenFile != null) {
             injectVideo(binding.vidplayer.player as ExoPlayer, gottenFile!!)
             binding.starterInfo.visibility = GONE
         }
-
-
     }
-
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putDouble("last_position", protocol.currentVideoPosition)
         Log.e("STATUS", "SAVED INSTANCE: ${protocol.currentVideoPosition}")
     }
-
     override fun onPause() {
         super.onPause()
         startFromPosition = binding.vidplayer.player?.currentPosition!!
         updatePosition = false
     }
-
     override fun onStop() {
         super.onStop()
         updatePosition = false
@@ -429,54 +364,305 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
         myMediaPlayer?.release()
     }
 
-    /***********************************************
-     *                MY FUNCTIONS                 *
-     ***********************************************/
-    private fun hideSystemUI(newTrick: Boolean) {
-        GlobalScope.launch(Dispatchers.Main) {
-            if (newTrick) {
-                WindowCompat.setDecorFitsSystemWindows(this@RoomActivity.window, false)
-                WindowInsetsControllerCompat(
-                    this@RoomActivity.window,
-                    binding.root
-                ).let { controller ->
-                    controller.hide(WindowInsetsCompat.Type.systemBars())
-                    controller.systemBarsBehavior =
-                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                    controller.systemBarsBehavior =
-                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+    /*----------------------------------------------*/
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode == Activity.RESULT_OK) {
+            when (requestCode) {
+                90909 -> {
+                    gottenFile = data?.data
+                    val filename = gottenFile?.let { getFileName(it) }
+                    Toast.makeText(this, "Selected video file: $filename", Toast.LENGTH_LONG).show()
 
                 }
-            } else {
-                val decorView: View = window.decorView
-                val uiOptions = decorView.systemUiVisibility
-                var newUiOptions = uiOptions
-                newUiOptions = newUiOptions or SYSTEM_UI_FLAG_LOW_PROFILE
-                newUiOptions = newUiOptions or SYSTEM_UI_FLAG_FULLSCREEN
-                newUiOptions = newUiOptions or SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                newUiOptions = newUiOptions or SYSTEM_UI_FLAG_IMMERSIVE
-                newUiOptions = newUiOptions or SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                decorView.systemUiVisibility = newUiOptions
-                OnSystemUiVisibilityChangeListener { newmode ->
-                    if (newmode != newUiOptions) {
-                        hideSystemUI(false)
+                80808 -> {
+                    if (gottenFile != null) {
+                        val path = data?.data!!
+                        val filename = getFileName(path).toString()
+                        val extension = filename.substring(filename.length - 4)
+                        val mimeType =
+                            if (extension.contains("srt")) MimeTypes.APPLICATION_SUBRIP
+                            else if ((extension.contains("ass"))
+                                || (extension.contains("ssa"))
+                            ) MimeTypes.TEXT_SSA
+                            else if (extension.contains("ttml")) MimeTypes.APPLICATION_TTML
+                            else if (extension.contains("vtt")) MimeTypes.TEXT_VTT else ""
+                        if (mimeType != "") {
+                            gottenSub = MediaItem.SubtitleConfiguration.Builder(path)
+                                .setUri(path)
+                                .setMimeType(mimeType)
+                                .setLanguage(null)
+                                .setSelectionFlags(SELECTION_FLAG_DEFAULT)
+                                .build()
+                            Toast.makeText(
+                                this, "Loaded sub successfully: $filename", Toast.LENGTH_LONG
+                            ).show()
+                            gotSub = true
+                        } else {
+                            Toast.makeText(
+                                this,
+                                "Invalid subtitle file. Supported formats are: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    } else {
+                        Toast.makeText(this, "Load video first", Toast.LENGTH_LONG).show()
                     }
                 }
-                window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
-                window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
-
             }
         }
     }
 
-    private fun showSystemUI() {
-        val decorView: View = window.decorView
-        decorView.systemUiVisibility = (SYSTEM_UI_FLAG_LAYOUT_STABLE
-                or SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                or SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
+    /*********************************************************************************************
+     *                                     CUSTOM FUNCTIONS                                      *
+     ********************************************************************************************/
+    private fun implementClickListeners() {
+
+        /******************
+         * Add Video File *
+         ******************/
+        findViewById<ImageButton>(rr.id.syncplay_addfile).setOnClickListener {
+            val intent1 = Intent()
+            intent1.type = "*/*"
+            intent1.action = Intent.ACTION_OPEN_DOCUMENT
+            startActivityForResult(intent1, 90909)
+        }
+
+
+        /**************************
+         * Message Focus Listener *
+         **************************/
+        binding.syncplayINPUTBox.onFocusChangeListener = OnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                binding.syncplayINPUT.clearAnimation()
+                binding.syncplayINPUT.alpha = 1f
+                binding.syncplaySEND.clearAnimation()
+                binding.syncplaySEND.alpha = 1f
+                binding.syncplayINPUTBox.clearAnimation()
+                binding.syncplayINPUTBox.alpha = 1f
+            }
+        }
+
+        /*****************
+         * Send Messages *
+         *****************/
+        binding.syncplaySEND.setOnClickListener {
+            val msg: String = binding.syncplayINPUTBox.text.toString()
+                .also {
+                    it.replace("\\", "")
+                    if (it.length > 150) it.substring(0, 149)
+                }
+            if (msg != "" && msg != " ") {
+                sendMessage(msg)
+                binding.syncplayINPUT.isErrorEnabled = false
+            } else {
+                binding.syncplayINPUT.isErrorEnabled = true
+                binding.syncplayINPUT.error = "Type something!"
+            }
+        }
+
+        /*******************
+         * Subtitles track *
+         *******************/
+        findViewById<ImageButton>(R.id.exo_subtitle).setOnClickListener {
+            if (trackSelec.currentMappedTrackInfo != null) {
+                ccSelect(it as ImageButton)
+            }
+        }
+
+        /***************
+         * Audio Track *
+         ***************/
+        findViewById<ImageButton>(R.id.exo_audio_track).setOnClickListener {
+            if (trackSelec.currentMappedTrackInfo != null) {
+                audioSelect(it as ImageButton)
+            }
+
+        }
+
+        /***************
+         * Lock Screen *
+         ***************/
+        findViewById<ImageButton>(rr.id.syncplay_lock).setOnClickListener {
+            if (lockedScreen) {
+                lockedScreen = false
+            } else {
+                lockedScreen = true
+                runOnUiThread {
+                    binding.syncplayVisiblitydelegate.visibility = GONE
+                    binding.vidplayer.controllerHideOnTouch = false
+                    binding.vidplayer.controllerAutoShow = false
+                    binding.vidplayer.hideController()
+                    binding.syncplayerLockoverlay.visibility = VISIBLE
+                    binding.syncplayerLockoverlay.isFocusable = true
+                    binding.syncplayerLockoverlay.isClickable = true
+                    binding.syncplayerUnlock.visibility = VISIBLE
+                    binding.syncplayerUnlock.isFocusable = true
+                    binding.syncplayerUnlock.isClickable = true
+                }
+            }
+        }
+
+        binding.syncplayerUnlock.setOnClickListener {
+            lockedScreen = false
+            runOnUiThread {
+                binding.vidplayer.controllerHideOnTouch = true
+                binding.vidplayer.showController()
+                binding.vidplayer.controllerAutoShow = true
+                binding.syncplayerLockoverlay.visibility = GONE
+                binding.syncplayerLockoverlay.isFocusable = false
+                binding.syncplayerLockoverlay.isClickable = false
+                binding.syncplayerUnlock.visibility = GONE
+                binding.syncplayerUnlock.isFocusable = false
+                binding.syncplayerUnlock.isClickable = false
+            }
+        }
+
+        binding.syncplayerLockoverlay.setOnClickListener {
+            binding.syncplayerUnlock.also {
+                it.alpha = if (it.alpha == 0.35f) 0.05f else 0.35f
+            }
+        }
+        /****************
+         * OverFlow Menu *
+         *****************/
+        findViewById<ImageButton>(rr.id.syncplay_more).setOnClickListener { overflow ->
+            val popup = PopupMenu(this, overflow)
+
+            val loadsubItem = popup.menu.add(0, 0, 0, "Load Subtitle File...")
+            val cutoutItem = popup.menu.add(0, 1, 1, "Cut-out (Notch) Mode")
+            cutoutItem.isCheckable = true
+            cutoutItem.isChecked = cutOutMode
+            cutoutItem.isEnabled = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+            val seekbuttonsItem = popup.menu.add(0, 2, 2, "Fast Seek Buttons")
+            seekbuttonsItem.isCheckable = true
+            val ffwdButton = findViewById<ImageButton>(R.id.exo_ffwd)
+            val rwndButton = findViewById<ImageButton>(R.id.exo_rew)
+            seekbuttonsItem.isChecked = seekButtonEnable != false
+            val messagesItem = popup.menu.add(0, 3, 3, "Messages History")
+            val uiItem = popup.menu.add(0, 4, 4, "Settings")
+            //val exitItem = popup.menu.add(0,5,5,"Exit Room")
+
+
+            popup.setOnMenuItemClickListener {
+                when (it) {
+                    loadsubItem -> {
+                        val intent2 = Intent()
+                        intent2.type = "*/*"
+                        intent2.action = Intent.ACTION_OPEN_DOCUMENT
+                        startActivityForResult(intent2, 80808)
+                    }
+                    cutoutItem -> {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            if (!cutOutMode) {
+                                cutOutMode = true
+                                window?.attributes?.layoutInDisplayCutoutMode =
+                                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+
+                            } else {
+                                cutOutMode = false
+                                window?.attributes?.layoutInDisplayCutoutMode =
+                                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER
+                            }
+                            binding.vidplayer.performClick()
+                            binding.vidplayer.performClick()
+
+                        }
+                    }
+                    seekbuttonsItem -> {
+                        if (seekButtonEnable == true || seekButtonEnable == null) {
+                            seekButtonEnable = false
+                            ffwdButton.visibility = GONE
+                            rwndButton.visibility = GONE
+                        } else {
+                            seekButtonEnable = true
+                            ffwdButton.visibility = VISIBLE
+                            rwndButton.visibility = VISIBLE
+                        }
+                    }
+                    messagesItem -> {
+                        messageHistoryPopup()
+                    }
+                    uiItem -> {
+                        binding.pseudoPopupParent.visibility = View.VISIBLE
+
+                    }
+                }
+                return@setOnMenuItemClickListener true
+            }
+
+            popup.show()
+        }
+
+        /********************
+         * Room Information *
+         ********************/
+        binding.syncplayOverviewcheckbox.setOnCheckedChangeListener { _, checked ->
+            if (checked) {
+                replenishUsers(binding.syncplayOverview)
+            } else {
+                binding.syncplayOverview.removeAllViews()
+            }
+        }
+
+        /****************
+         * Ready Button *
+         ****************/
+        findViewById<MaterialCheckBox>(rr.id.syncplay_ready).setOnCheckedChangeListener { _, b ->
+            protocol.ready = b
+            if (b) {
+                protocol.sendPacket(
+                    sendReadiness(true),
+                    protocol.serverHost, protocol.serverPort
+                )
+            } else {
+                protocol.sendPacket(
+                    sendReadiness(false),
+                    protocol.serverHost, protocol.serverPort
+                )
+
+            }
+        }
+
+        /*******************
+         * Change Fit Mode *
+         *******************/
+        findViewById<ImageButton>(rr.id.syncplay_screen).setOnClickListener {
+            val currentresolution = binding.vidplayer.resizeMode
+            val resolutions = mutableMapOf<Int, String>()
+            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIT] = "Resize Mode: FIT TO SCREEN"
+            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH] = "Resize Mode: FIXED WIDTH"
+            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT] =
+                "Resize Mode: FIXED HEIGHT"
+            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FILL] = "Resize Mode: FILL SCREEN"
+            resolutions[AspectRatioFrameLayout.RESIZE_MODE_ZOOM] = "Resize Mode: Zoom"
+
+            val nextRes = currentresolution + 1
+            if (nextRes == 5) {
+                binding.vidplayer.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                displayInfo(resolutions[0]!!)
+            } else {
+                binding.vidplayer.resizeMode = nextRes
+                displayInfo(resolutions[nextRes]!!)
+            }
+
+            binding.vidplayer.performClick()
+            binding.vidplayer.performClick()
+        }
+
+
+        /** UI Settings' Popup Click Controllers **/
+        binding.popupDismisser.setOnClickListener {
+            binding.pseudoPopupParent.visibility = GONE
+            applyUISettings()
+        }
+
+        binding.popupButton.setOnClickListener {
+            applyUISettings()
+        }
     }
 
-    /*--------------------------------------------------------*/
+    /* UI-Related Functions */
     private fun injectVideo(mp: ExoPlayer, mediaPath: Uri) {
         try {
             //val vid: MediaItem = MediaItem.fromUri(mediaPath)
@@ -528,9 +714,6 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
             throw RuntimeException("Invalid asset folder")
         }
     }
-
-    /*--------------------------------------------------------*/
-//Playback-related functions
     private fun pausePlayback(mp: ExoPlayer) {
         runOnUiThread {
             mp.pause()
@@ -542,6 +725,50 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
             mp.play()
         }
         hideSystemUI(false)
+    }
+
+    private fun hideSystemUI(newTrick: Boolean) {
+        GlobalScope.launch(Dispatchers.Main) {
+            if (newTrick) {
+                WindowCompat.setDecorFitsSystemWindows(this@RoomActivity.window, false)
+                WindowInsetsControllerCompat(
+                    this@RoomActivity.window,
+                    binding.root
+                ).let { controller ->
+                    controller.hide(WindowInsetsCompat.Type.systemBars())
+                    controller.systemBarsBehavior =
+                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    controller.systemBarsBehavior =
+                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+
+                }
+            } else {
+                val decorView: View = window.decorView
+                val uiOptions = decorView.systemUiVisibility
+                var newUiOptions = uiOptions
+                newUiOptions = newUiOptions or SYSTEM_UI_FLAG_LOW_PROFILE
+                newUiOptions = newUiOptions or SYSTEM_UI_FLAG_FULLSCREEN
+                newUiOptions = newUiOptions or SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                newUiOptions = newUiOptions or SYSTEM_UI_FLAG_IMMERSIVE
+                newUiOptions = newUiOptions or SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                decorView.systemUiVisibility = newUiOptions
+                OnSystemUiVisibilityChangeListener { newmode ->
+                    if (newmode != newUiOptions) {
+                        hideSystemUI(false)
+                    }
+                }
+                window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+                window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
+
+            }
+        }
+    }
+
+    private fun showSystemUI() {
+        val decorView: View = window.decorView
+        decorView.systemUiVisibility = (SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
     }
 
     private fun sendPlayback(play: Boolean) {
@@ -565,20 +792,29 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
         )
         binding.syncplayINPUTBox.setText("")
     }
-
     private fun replenishMsgs(rltvLayout: RelativeLayout) {
         GlobalScope.launch(Dispatchers.Main) {
-            rltvLayout.removeAllViews()
-            val msgs =
-                if (protocol.messageSequence.size != 0 && tempMsgs.size == 0) protocol.messageSequence else tempMsgs
+            rltvLayout.removeAllViews() /* First, we clean out the current messages */
+            val isTimestampEnabled = PreferenceManager
+                .getDefaultSharedPreferences(this@RoomActivity)
+                .getBoolean("ui_timestamp", true)
+            val maxMsgsCount = PreferenceManager
+                .getDefaultSharedPreferences(this@RoomActivity)
+                .getInt("msg_count", 12) /* We obtain max count, determined by user */
+
+            val msgs = protocol.messageSequence.takeLast(maxMsgsCount)
+
             for (message in msgs) {
                 val msgPosition: Int = msgs.indexOf(message)
 
                 val txtview = TextView(this@RoomActivity)
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-                    txtview.text = Html.fromHtml(message)
+                    txtview.text = Html.fromHtml(message.factorize(isTimestampEnabled))
                 } else {
-                    txtview.text = Html.fromHtml(message, Html.FROM_HTML_MODE_LEGACY)
+                    txtview.text = Html.fromHtml(
+                        message.factorize(isTimestampEnabled),
+                        Html.FROM_HTML_MODE_LEGACY
+                    )
                 }
                 txtview.textSize = PreferenceManager.getDefaultSharedPreferences(this@RoomActivity)
                     .getInt("msg_size", 12).toFloat()
@@ -628,8 +864,6 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
             }
         }
     }
-
-    @SuppressLint("SetTextI18n")
     private fun replenishUsers(linearLayout: LinearLayout) {
         runOnUiThread {
             if (binding.syncplayOverviewcheckbox.isChecked) {
@@ -765,239 +999,7 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
             }
         }
     }
-
     /*--------------------------------------------------------*/
-    private fun implementClickListeners() {
-
-        /******************
-         * Add Video File *
-         ******************/
-        findViewById<ImageButton>(rr.id.syncplay_addfile).setOnClickListener {
-            val intent1 = Intent()
-            intent1.type = "*/*"
-            intent1.action = Intent.ACTION_OPEN_DOCUMENT
-            startActivityForResult(intent1, 90909)
-        }
-
-
-        /**************************
-         * Message Focus Listener *
-         **************************/
-        binding.syncplayINPUTBox.onFocusChangeListener = OnFocusChangeListener { _, hasFocus ->
-            if (hasFocus) {
-                binding.syncplayINPUT.clearAnimation()
-                binding.syncplayINPUT.alpha = 1f
-                binding.syncplaySEND.clearAnimation()
-                binding.syncplaySEND.alpha = 1f
-                binding.syncplayINPUTBox.clearAnimation()
-                binding.syncplayINPUTBox.alpha = 1f
-            }
-        }
-
-        /*****************
-         * Send Messages *
-         *****************/
-        binding.syncplaySEND.setOnClickListener {
-            val msg: String = binding.syncplayINPUTBox.text.toString()
-                .also {
-                    it.replace("\\", "")
-                    if (it.length > 150) it.substring(0, 149)
-                }
-            if (msg != "" && msg != " ") {
-                sendMessage(msg)
-                binding.syncplayINPUT.isErrorEnabled = false
-            } else {
-                binding.syncplayINPUT.isErrorEnabled = true
-                binding.syncplayINPUT.error = "Type something!"
-            }
-        }
-
-        /*******************
-         * Subtitles track *
-         *******************/
-        findViewById<ImageButton>(R.id.exo_subtitle).setOnClickListener {
-            if (trackSelec.currentMappedTrackInfo != null) {
-                ccSelect(it as ImageButton)
-            }
-        }
-
-        /***************
-         * Audio Track *
-         ***************/
-        findViewById<ImageButton>(R.id.exo_audio_track).setOnClickListener {
-            if (trackSelec.currentMappedTrackInfo != null) {
-                audioSelect(it as ImageButton)
-            }
-
-        }
-
-        /***************
-         * Lock Screen *
-         ***************/
-        findViewById<ImageButton>(rr.id.syncplay_lock).setOnClickListener {
-            if (lockedScreen) {
-                lockedScreen = false
-            } else {
-                lockedScreen = true
-                runOnUiThread {
-                    binding.syncplayVisiblitydelegate.visibility = GONE
-                    binding.vidplayer.controllerHideOnTouch = false
-                    binding.vidplayer.controllerAutoShow = false
-                    binding.vidplayer.hideController()
-                    binding.syncplayerLockoverlay.visibility = VISIBLE
-                    binding.syncplayerLockoverlay.isFocusable = true
-                    binding.syncplayerLockoverlay.isClickable = true
-                    binding.syncplayerUnlock.visibility = VISIBLE
-                    binding.syncplayerUnlock.isFocusable = true
-                    binding.syncplayerUnlock.isClickable = true
-                }
-            }
-        }
-
-        binding.syncplayerUnlock.setOnClickListener {
-            lockedScreen = false
-            runOnUiThread {
-                binding.vidplayer.controllerHideOnTouch = true
-                binding.vidplayer.showController()
-                binding.vidplayer.controllerAutoShow = true
-                binding.syncplayerLockoverlay.visibility = GONE
-                binding.syncplayerLockoverlay.isFocusable = false
-                binding.syncplayerLockoverlay.isClickable = false
-                binding.syncplayerUnlock.visibility = GONE
-                binding.syncplayerUnlock.isFocusable = false
-                binding.syncplayerUnlock.isClickable = false
-            }
-        }
-
-        binding.syncplayerLockoverlay.setOnClickListener {
-            binding.syncplayerUnlock.also {
-                it.alpha = if (it.alpha == 0.35f) 0.05f else 0.35f
-            }
-        }
-        /****************
-         * OverFlow Menu *
-         *****************/
-        findViewById<ImageButton>(rr.id.syncplay_more).setOnClickListener { overflow ->
-            val popup = PopupMenu(this, overflow)
-
-            val loadsubItem = popup.menu.add(0, 0, 0, "Load Subtitle File...")
-            val seekbuttonsItem = popup.menu.add(0, 2, 2, "Fast Seek Buttons")
-            seekbuttonsItem.isCheckable = true
-            val ffwdButton = findViewById<ImageButton>(R.id.exo_ffwd)
-            val rwndButton = findViewById<ImageButton>(R.id.exo_rew)
-            seekbuttonsItem.isChecked = seekButtonEnable != false
-            val messagesItem = popup.menu.add(0, 3, 3, "Messages History")
-            //val reconnectItem = popup.menu.add(0,4,4,"Reconnect to Server")
-            //val exitItem = popup.menu.add(0,5,5,"Exit Room")
-
-
-            popup.setOnMenuItemClickListener {
-                when (it) {
-                    loadsubItem -> {
-                        val intent2 = Intent()
-                        intent2.type = "*/*"
-                        intent2.action = Intent.ACTION_OPEN_DOCUMENT
-                        startActivityForResult(intent2, 80808)
-                    }
-                    seekbuttonsItem -> {
-                        if (seekButtonEnable == true || seekButtonEnable == null) {
-                            seekButtonEnable = false
-                            ffwdButton.visibility = GONE
-                            rwndButton.visibility = GONE
-                        } else {
-                            seekButtonEnable = true
-                            ffwdButton.visibility = VISIBLE
-                            rwndButton.visibility = VISIBLE
-                        }
-                    }
-                    messagesItem -> {
-                        messageHistoryPopup()
-                    }
-                }
-                return@setOnMenuItemClickListener true
-            }
-
-            popup.show()
-        }
-
-        /********************
-         * Room Information *
-         ********************/
-        binding.syncplayOverviewcheckbox.setOnCheckedChangeListener { _, checked ->
-            if (checked) {
-                replenishUsers(binding.syncplayOverview)
-            } else {
-                binding.syncplayOverview.removeAllViews()
-            }
-        }
-
-        /****************
-         * Ready Button *
-         ****************/
-        findViewById<MaterialCheckBox>(rr.id.syncplay_ready).setOnCheckedChangeListener { _, b ->
-            protocol.ready = b
-            if (b) {
-                protocol.sendPacket(
-                    sendReadiness(true),
-                    protocol.serverHost, protocol.serverPort
-                )
-            } else {
-                protocol.sendPacket(
-                    sendReadiness(false),
-                    protocol.serverHost, protocol.serverPort
-                )
-
-            }
-        }
-
-        /*******************
-         * Change Fit Mode *
-         *******************/
-        findViewById<ImageButton>(rr.id.syncplay_screen).setOnClickListener {
-            var currentresolution = binding.vidplayer.resizeMode
-            val resolutions = mutableMapOf<Int, String>()
-            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIT] = "Resize Mode: FIT TO SCREEN"
-            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH] = "Resize Mode: FIXED WIDTH"
-            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT] =
-                "Resize Mode: FIXED HEIGHT"
-            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FILL] = "Resize Mode: FILL SCREEN"
-            resolutions[AspectRatioFrameLayout.RESIZE_MODE_ZOOM] = "Resize Mode: Zoom"
-            resolutions[6] = "Resize Mode: FIT TO SCREEN with CUT-OUT MODE DISABLED"
-            val nextresolution = currentresolution + 1
-            currentresolution = binding.vidplayer.resizeMode
-
-            if (currentresolution == 0) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    if (!cutOutMode) {
-                        cutOutMode = true
-                        window?.attributes?.layoutInDisplayCutoutMode =
-                            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-                    } else {
-                        cutOutMode = false
-                        window?.attributes?.layoutInDisplayCutoutMode =
-                            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER
-                    }
-                }
-            }
-            when {
-                nextresolution == 5 -> {
-                    binding.vidplayer.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
-                    resolutions[0]?.let { it1 -> displayInfo(it1) }
-                }
-                cutOutMode -> {
-                    binding.vidplayer.resizeMode = nextresolution
-                    resolutions[currentresolution]?.let { it1 -> displayInfo(it1) }
-                }
-                else -> {
-                    resolutions[6]?.let { it1 -> displayInfo(it1) }
-                }
-            }
-
-            binding.vidplayer.performClick()
-            binding.vidplayer.performClick()
-        }
-    }
-
     private fun ccSelect(ccButton: ImageButton) {
         val mappedTrackInfo =
             trackSelec.currentMappedTrackInfo!! //get Tracks from our default (already injected) selector
@@ -1151,7 +1153,6 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
         binding.syncplayINPUTBox.clearFocus()
     }
 
-    @SuppressLint("SetTextI18n")
     private fun casualUpdater() {
         //TODO: Change periodic sleep to periodic handler.
         GlobalScope.launch(Dispatchers.Unconfined) {
@@ -1170,9 +1171,8 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
         }
     }
 
-    @SuppressLint("SetTextI18n")
     private fun pingStatusUpdater() {
-        GlobalScope.launch(Dispatchers.Default) {
+        GlobalScope.launch(Dispatchers.IO) {
             while (true) {
                 /* Informing my ViewModel about current vid position so it is retrieved for networking after */
                 if (protocol.socket.isConnected && !protocol.socket.isClosed) {
@@ -1204,32 +1204,30 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
 
     @UiThread
     private fun broadcastMessage(message: String, isChat: Boolean, chatter: String = "") {
-        //Time-stamp only
-        var timeSent: String = Timestamp(System.currentTimeMillis()).toString()
-        timeSent = timeSent.removeRange(19 until timeSent.length).removeRange(0..10)
-        val timestamp = "<font color=\"#aa666666\">[$timeSent] </font>"
-        val fullmsg: String = if (isChat) {
-            val selfColorCode = "#ff2d2d"
+        val msg = Message() /* Creating our custom message instance */
+        msg.content =
+            message /* Assigning the message content to the variable inside our instance */
+        msg.timestamp = generateTimestamp()
+        msg.timestampStylized = "<font color=\"#aa666666\">[${msg.timestamp}] </font>"
+
+        msg.stylizedContent = if (isChat) {
+            msg.sender = chatter
+            val selfColorCode = "#ff2d2d";
             val friendColorCode = "#6082B6"
             if (chatter.lowercase() == protocol.currentUsername.lowercase()) {
                 val username =
                     "<font color=\"${selfColorCode}\"><strong><bold> $chatter:</bold></strong></font>"
-                "$timestamp$username<font color=\"#ffffff\"><bold> $message</bold></font>"
+                "$username<font color=\"#ffffff\"><bold> $message</bold></font>"
             } else {
                 val username =
                     "<font color=\"${friendColorCode}\"><strong><bold> $chatter:</bold></strong></font>"
-                "$timestamp$username<font color=\"#ffffff\"><bold> $message</bold></font>"
+                "$username<font color=\"#ffffff\"><bold> $message</bold></font>"
             }
         } else {
-            "$timestamp<font color=\"#eeeeee\"><bold>$message</bold></font>"
+            "<font color=\"#eeeee1\"><bold>$message</bold></font>"
         }
-        protocol.messageSequence.add(fullmsg)
-        tempMsgs.add(fullmsg)
-        val maxmsgs =
-            PreferenceManager.getDefaultSharedPreferences(this@RoomActivity).getInt("msg_count", 12)
-        if (tempMsgs.size > maxmsgs) {
-            tempMsgs.removeFirst()
-        }
+        protocol.messageSequence.add(msg)
+
         replenishMsgs(binding.syncplayMESSAGERY)
     }
 
@@ -1248,7 +1246,7 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
     private fun messageHistoryPopup() {
         class DemoPopup(context: Context?) : BasePopupWindow(context) {
             init {
-                setContentView(rr.layout.messages_popup)
+                setContentView(rr.layout.popup_messages)
                 val rltvLayout = findViewById<RelativeLayout>(rr.id.syncplay_MESSAGEHISTORY)
                 rltvLayout.removeAllViews()
                 val msgs = protocol.messageSequence
@@ -1257,8 +1255,11 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
 
                     val txtview = TextView(this@RoomActivity)
                     txtview.text = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-                        Html.fromHtml(message, Html.FROM_HTML_MODE_LEGACY) else Html.fromHtml(
-                        message
+                        Html.fromHtml(
+                            message.stylizedContent,
+                            Html.FROM_HTML_MODE_LEGACY
+                        ) else Html.fromHtml(
+                        message.stylizedContent
                     )
                     txtview.textSize = 9F
                     val rltvParams: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(
@@ -1285,11 +1286,10 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
         DemoPopup(this).setBlurBackgroundEnable(true).showPopupWindow()
     }
 
-
     private fun disconnectedPopup() {
         class DisconnectedPopup(context: Context) : BasePopupWindow(context) {
             init {
-                setContentView(rr.layout.disconnected_popup)
+                setContentView(rr.layout.popup_disconnected)
                 val gif = findViewById<ImageView>(rr.id.disconnected_gif)
                 Glide.with(context)
                     .asGif()
@@ -1329,10 +1329,22 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
         runOnUiThread {
             DisconnectedPopup(this).setBlurBackgroundEnable(true).showPopupWindow()
         }
-
     }
 
-    /*<---------------------- Event Listeners ---------------------->*/
+    fun applyUISettings() {
+        /* Applying 'Timestamp', 'Message Count', 'Message Font Size' and 'Messages alpha' settings altogether.*/
+        replenishMsgs(binding.syncplayMESSAGERY)
+
+        /* Applying 'User Info Alpha' setting */
+        val alpha = PreferenceManager.getDefaultSharedPreferences(this)
+            .getInt("overview_alpha", 30) //between 0-255
+        @ColorInt val alphaColor = ColorUtils.setAlphaComponent(Color.DKGRAY, alpha)
+        binding.syncplayOverviewCard.setBackgroundColor(alphaColor)
+    }
+
+    /*********************************************************************************************
+     *                                        CALLBACKS                                          *
+     ********************************************************************************************/
     override fun onSomeonePaused(pauser: String) {
         if (pauser != protocol.currentUsername) myMediaPlayer?.let { pausePlayback(it) }
         broadcastMessage("$pauser paused", false)
@@ -1401,11 +1413,8 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
     ) {
         replenishUsers(binding.syncplayOverview)
         broadcastMessage(
-            "$person is playing '$file' (${
-                timeStamper(
-                    fileduration.toDouble().roundToInt()
-                )
-            })", false
+            "$person is playing '$file' (${timeStamper(fileduration.toDouble().roundToInt())})",
+            false
         )
     }
 

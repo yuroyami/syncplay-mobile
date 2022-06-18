@@ -30,7 +30,7 @@
                 android:id="@+id/syncplay_MESSAGEHISTORY"
                 android:layout_width="350dp"
                 android:layout_height="200dp"
-                android:padding="6dp"></RelativeLayout>
+                android:padding="6dp" />
         </androidx.core.widget.NestedScrollView>
     </com.google.android.material.card.MaterialCardView>
 

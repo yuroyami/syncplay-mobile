@@ -10,6 +10,7 @@ import android.util.DisplayMetrics
 import android.util.Log
 import com.cosmik.syncplay.BuildConfig
 import java.io.*
+import java.sql.Timestamp
 
 object SyncplayUtils {
 
@@ -52,7 +53,7 @@ object SyncplayUtils {
         }
     }
 
-    /** This function is used to print/format the timestamp used in chat messages
+    /** This function is used to print/format the timestamp used in determining video values
      * @param seconds Unix epoch timestamp in seconds
      ***/
     @JvmStatic
@@ -64,9 +65,17 @@ object SyncplayUtils {
         }
     }
 
+    /** This is used to generate chat messages' timestamps **/
+    @JvmStatic
+    fun generateTimestamp(): String {
+        var s = Timestamp(System.currentTimeMillis()).toString().trim()
+        s = s.removeRange(19 until s.length).removeRange(0..10)
+        return s
+    }
+
     /**          Helps get the file name from an Uri, it's very useful when we're using              *
      * the intent ACTION_GET_CONTENT when picking a file. Usually it returns meaningless identifiers *
-     *        such as "msf:6057", the following two functions help get the roper file name           */
+     *        such as "msf:6057", the following two functions help get the proper file name          */
     @JvmStatic
     fun Context.getFileName(uri: Uri): String? = when (uri.scheme) {
         ContentResolver.SCHEME_CONTENT -> getContentFileName(uri)

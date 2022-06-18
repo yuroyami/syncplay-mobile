@@ -33,26 +33,41 @@ class ConnectFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         val binding = FragmentConnectBinding.bind(view)
 
-        val items = listOf(
+        val servers = listOf(
             "syncplay.pl:8995",
             "syncplay.pl:8996",
             "syncplay.pl:8997",
             "syncplay.pl:8998",
             "syncplay.pl:8999"
         )
-        val adapter = ArrayAdapter(requireContext(), R.layout.sp_serverlist, items)
+
+        val adapter = ArrayAdapter(requireContext(), R.layout.serverlist_textview, servers)
         binding.spMenuAutocomplete.setAdapter(adapter)
 
         binding.connectJoinButton.setOnClickListener {
             val joiningInfo: MutableList<Any> = mutableListOf()
+
             val serverPort =
                 (binding.spMenuAutocomplete.text).toString().substringAfter("syncplay.pl:").toInt()
-            val username = binding.connectUsernameInputText.text.toString().replace("\\", "").also {
-                if (it.length > 150) it.substring(0, 149)
-            }
-            val roomname = binding.connectRoomnameInputText.text.toString().replace("\\", "").also {
-                if (it.length > 35) it.substring(0, 34)
-            }
+
+            val username = binding.connectUsernameInputText.text.toString().replace("\\", "")
+                .trim().also {
+                    if (it.length > 150) it.substring(0, 149)
+                    if (it.isEmpty()) {
+                        binding.connectUsernameInput.error = "Username shouldn't be empty"
+                        return@setOnClickListener
+                    }
+                }
+
+            val roomname = binding.connectRoomnameInputText.text.toString().replace("\\", "")
+                .trim().also {
+                    if (it.length > 35) it.substring(0, 34)
+                    if (it.isEmpty()) {
+                        binding.connectRoomnameInput.error = "Room name shouldn't be empty"
+                        return@setOnClickListener
+                    }
+                }
+
             joiningInfo.add(0, serverPort)
             joiningInfo.add(1, username)
             joiningInfo.add(2, roomname)
