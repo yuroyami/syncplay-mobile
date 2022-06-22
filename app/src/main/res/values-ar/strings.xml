@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Syncplay</string>
+    <string name="disconnected_notice_header">انقطع الاتصال</string>
+    <string name="connect_username_a">اكتب اسم مستخدمك:</string>
+    <string name="tab_connect">اتصال</string>
+    <string name="tab_settings">إعدادات</string>
+    <string name="tab_about">حول</string>
+</resources>

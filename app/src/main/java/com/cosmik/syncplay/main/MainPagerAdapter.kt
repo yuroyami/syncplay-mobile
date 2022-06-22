@@ -3,6 +3,7 @@ package com.cosmik.syncplay.main
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import com.cosmik.syncplay.R
 import com.cosmik.syncplay.about.AboutFragment
 
 
@@ -14,9 +15,9 @@ class MainPagerAdapter(fa: FragmentActivity?) : FragmentStateAdapter(fa!!) {
         AboutFragment()
     )
     val mFragmentNames = arrayOf( //Tabs names array
-        "Connect",
-        "Settings",
-        "About"
+        fa!!.baseContext.getString(R.string.tab_connect),
+        fa.baseContext.getString(R.string.tab_settings),
+        fa.baseContext.getString(R.string.tab_about)
     )
 
 

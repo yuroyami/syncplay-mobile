@@ -54,9 +54,10 @@
         <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/xml/settings.xml" value="0.1" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/drawable/hud_gradient.xml" value="0.158" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/layout/about_tab1_header.xml" value="0.196875" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/layout/activity_main.xml" value="0.1" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/layout/activity_room.xml" value="0.12318840579710146" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/layout/disconnected_popup.xml" value="0.25" />
-        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/layout/fragment_connect.xml" value="0.12" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/layout/fragment_connect.xml" value="0.22" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/layout/fragment_main.xml" value="0.196875" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/layout/fragment_room_settings.xml" value="0.1585144927536232" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/layout/fragment_settings.xml" value="0.1585144927536232" />

@@ -75,7 +75,6 @@ import kotlin.collections.set
 import kotlin.math.roundToInt
 import com.cosmik.syncplay.R as rr
 
-
 /*----------------------------------------------*/
 @OptIn(DelicateCoroutinesApi::class)
 @SuppressLint("SetTextI18n")
@@ -98,8 +97,8 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
     private var startFromPosition = (-3.0).toLong()
     /*-- Initialize video path from intent --*/
     private var gottenFile: Uri? = null
-    private var gotSub: Boolean = false
-    private lateinit var gottenSub: MediaItem.SubtitleConfiguration
+    private var gottenSub: MediaItem.SubtitleConfiguration? = null
+
     /*-- Cosmetics --*/
     private var lockedScreen = false
     private var seekButtonEnable: Boolean? = null
@@ -107,7 +106,6 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
     /*----------------------------------------------*/
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //setContentView(com.cosmik.syncplay.R.layout.room_activity)
         _binding = ActivityRoomBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
@@ -397,7 +395,6 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
                             Toast.makeText(
                                 this, "Loaded sub successfully: $filename", Toast.LENGTH_LONG
                             ).show()
-                            gotSub = true
                         } else {
                             Toast.makeText(
                                 this,
@@ -412,7 +409,6 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
             }
         }
     }
-
     /*********************************************************************************************
      *                                     CUSTOM FUNCTIONS                                      *
      ********************************************************************************************/
@@ -530,6 +526,7 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
             val popup = PopupMenu(this, overflow)
 
             val loadsubItem = popup.menu.add(0, 0, 0, "Load Subtitle File...")
+
             val cutoutItem = popup.menu.add(0, 1, 1, "Cut-out (Notch) Mode")
             cutoutItem.isCheckable = true
             cutoutItem.isChecked = cutOutMode
@@ -541,7 +538,7 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
             seekbuttonsItem.isChecked = seekButtonEnable != false
             val messagesItem = popup.menu.add(0, 3, 3, "Messages History")
             val uiItem = popup.menu.add(0, 4, 4, "Settings")
-            //val exitItem = popup.menu.add(0,5,5,"Exit Room")
+            //val adjustItem = popup.menu.add(0,5,5,"Change Username or Room")
 
 
             popup.setOnMenuItemClickListener {
@@ -667,8 +664,7 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
         try {
             //val vid: MediaItem = MediaItem.fromUri(mediaPath)
             val vidbuilder = MediaItem.Builder()
-            if (gotSub) {
-                gotSub = false
+            if (gottenSub != null) {
                 runOnUiThread {
                     findViewById<ImageButton>(R.id.exo_subtitle).setImageDrawable(
                         getDrawable(
@@ -678,7 +674,7 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
                     )
                 }
                 vidbuilder.setUri(mediaPath)
-                    .setSubtitleConfigurations(Lists.newArrayList(gottenSub))
+                    .setSubtitleConfigurations(Lists.newArrayList(gottenSub!!))
             } else {
                 vidbuilder.setUri(mediaPath)
             }

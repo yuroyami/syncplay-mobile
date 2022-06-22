@@ -4,8 +4,8 @@ plugins {
 }
 
 android {
-    compileSdk 32
-    buildToolsVersion "33.0.0-rc4"
+    compileSdk 33
+    buildToolsVersion "33.0.0"
 
     signingConfigs {
         github {
@@ -19,8 +19,8 @@ android {
         applicationId "com.gintoki.syncplay"
         minSdk 21
         targetSdk 32
-        versionCode 100600315
-        versionName "0.6.3j"
+        versionCode 100007000
+        versionName "0.7.0"
         signingConfig signingConfigs.github
     }
 
@@ -52,27 +52,36 @@ android {
 }
 
 dependencies {
-    //noinspection GradleDependency
-    implementation 'androidx.core:core-ktx:1.8.0-rc02'
-    //noinspection GradleDependency
-    implementation 'androidx.appcompat:appcompat:1.5.0-alpha01'
+    implementation 'androidx.core:core-ktx:1.8.0'
+    implementation 'androidx.appcompat:appcompat:1.6.0-alpha05'
     implementation 'com.google.android.material:material:1.7.0-alpha02'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.0-alpha02'
-    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.5.0-rc01'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.0-rc01'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.5.0-rc02'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.0-rc02'
+
     implementation 'androidx.viewpager2:viewpager2:1.1.0-beta01'
+
     implementation 'com.google.code.gson:gson:2.9.0'
+
     implementation("com.google.android.exoplayer:exoplayer:2.17.1") {
         exclude group: 'com.android.support'
     }
     implementation 'com.github.jorgecastilloprz:fillableloaders:1.03@aar'
+
     implementation 'androidx.preference:preference-ktx:1.2.0'
+
     implementation "com.github.skydoves:expandablelayout:1.0.7"
+
     implementation 'io.github.razerdp:BasePopup:3.2.0'
-    implementation 'com.blankj:utilcodex:1.31.0'
+
+    //implementation 'com.blankj:utilcodex:1.31.0'
+
     implementation 'com.github.bumptech.glide:glide:4.13.2'
+
     implementation files('libs/extension-ffmpeg.aar')
-    implementation 'org.conscrypt:conscrypt-android:2.5.2'
+
+    //implementation 'org.conscrypt:conscrypt-android:2.5.2'
 
 }

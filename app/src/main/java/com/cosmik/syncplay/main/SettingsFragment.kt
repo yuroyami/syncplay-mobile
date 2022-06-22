@@ -3,6 +3,10 @@ package com.cosmik.syncplay.main
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
+import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
@@ -14,12 +18,22 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(com.cosmik.syncplay.R.xml.settings, rootKey)
-        loadSettings()
-    }
 
+        val langPref = findPreference<ListPreference>("lang")
+        langPref!!.setOnPreferenceChangeListener { pref, newVal ->
 
-    private fun loadSettings() {
-        val sp = PreferenceManager.getDefaultSharedPreferences(requireContext())
+            /** AndroidX allows us now to change app language in just one line of code. This would *
+             * work without issues for Android 13 and higher. But on lower Android versions, there *
+             * needs to be a service to be added in AndroidManifest.xml                            *
+             *                                                                                     *
+             * For more info: @link https://developer.android.com/reference/androidx/appcompat/app/AppCompatDelegate#setApplicationLocales(androidx.core.os.LocaleListCompat) **/
+
+            val localesList: LocaleListCompat = LocaleListCompat.forLanguageTags(newVal.toString())
+            AppCompatDelegate.setApplicationLocales(localesList)
+
+            Toast.makeText(requireContext(), "changed lang", Toast.LENGTH_SHORT).show()
+            true
+        }
     }
 
     override fun onPreferenceTreeClick(preference: Preference): Boolean {
@@ -41,6 +55,4 @@ class SettingsFragment : PreferenceFragmentCompat(),
         }
         return super.onPreferenceTreeClick(preference)
     }
-
-
 }

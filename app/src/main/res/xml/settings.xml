@@ -6,16 +6,24 @@
         <CheckBoxPreference
             app:defaultValue="true"
             app:key="save_info"
-            app:summary="Enabled by default. This will allow SyncPlay to save your connect info for the next time you open the app."
-            app:title="Remember join info" />
+            app:summary="@string/setting_remember_join_info_summary"
+            app:title="@string/setting_remember_join_info_title" />
+
+        <ListPreference
+            app:defaultValue="en"
+            app:entries="@array/Lang"
+            app:entryValues="@array/LangValues"
+            app:key="lang"
+            app:summary="@string/setting_display_language_summry"
+            app:title="@string/setting_display_language_title" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Player Settings">
         <CheckBoxPreference
             app:defaultValue="false"
             app:key="use_custom_buffer_boolean"
-            app:summary="If you are not satisfied with the player's video load times before and during playback, you can use custom buffer sizes (Use at your own risk)."
-            app:title="Use Custom Buffer Sizes" />
+            app:summary="@string/setting_use_buffer_summary"
+            app:title="@string/setting_use_buffer_title" />
         <SeekBarPreference
             android:max="60"
             app:defaultValue="50"
@@ -24,8 +32,8 @@
             app:min="1"
             app:seekBarIncrement="1"
             app:showSeekBarValue="true"
-            app:summary="Default is 50 (50000 milliseconds). This determines the maximum buffer size before starting to play the video. If you don't know what this is, don't change it."
-            app:title="Custom max buffer size"
+            app:summary="@string/setting_max_buffer_summary"
+            app:title="@string/setting_max_buffer_title"
             app:useSimpleSummaryProvider="true" />
         <SeekBarPreference
             android:max="30"
@@ -35,8 +43,8 @@
             app:min="1"
             app:seekBarIncrement="1"
             app:showSeekBarValue="true"
-            app:summary="Default is 15 (15000 milliseconds). Decrease this value to play video faster but there is a possibility that the player may fail or even crash. Change at your own risk."
-            app:title="Custom min buffer size"
+            app:summary="@string/setting_min_buffer_summary"
+            app:title="@string/setting_min_buffer_title"
             app:useSimpleSummaryProvider="true" />
 
         <SeekBarPreference
@@ -47,8 +55,8 @@
             app:min="100"
             app:seekBarIncrement="100"
             app:showSeekBarValue="true"
-            app:summary="Default is 2500 milliseconds. This represents the buffer size when SEEKING or UNPAUSING the video. Change this if you're not satisfied with the small delay when seeking video."
-            app:title="Custom playback buffer size (ms)"
+            app:summary="@string/setting_playback_buffer_summary"
+            app:title="@string/setting_playback_buffer_title"
             app:useSimpleSummaryProvider="true" />
 
     </PreferenceCategory>
@@ -57,8 +65,8 @@
         <CheckBoxPreference
             app:defaultValue="true"
             app:key="ready_firsthand"
-            app:summary="Enable this if you wanna be set automatically as ready once you enter the room."
-            app:title="Set as ready first-hand" />
+            app:summary="@string/setting_ready_firsthand_summary"
+            app:title="@string/setting_ready_firsthand_title" />
 
         <SeekBarPreference
             android:max="60"
@@ -67,8 +75,8 @@
             app:min="3"
             app:seekBarIncrement="1"
             app:showSeekBarValue="true"
-            app:summary="If someone is behind with the value you select here, your video will be rewinded to match with the one behind."
-            app:title="Rewind when someone is X secs behind"
+            app:summary="@string/setting_rewind_threshold_summary"
+            app:title="@string/setting_rewind_threshold_title"
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
@@ -80,8 +88,8 @@
             app:min="8"
             app:seekBarIncrement="1"
             app:showSeekBarValue="true"
-            app:summary="Default is 18. This will change the subtitles size."
-            app:title="Subtitle Size"
+            app:summary="@string/setting_subtitle_size_summary"
+            app:title="@string/setting_subtitle_size_title"
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
@@ -91,13 +99,13 @@
             app:defaultValue="false"
             app:key="tls"
             android:enabled="false"
-            app:summary="Enabled by default. Turn off if you encounter issues connecting to the server. This will tell SyncPlay to connect to the servers with a secure connection (TLSv1.3). It is recommended to use a secure encrypted connection rather than a bare unencrypted connection (Turn off to use unencrypted connection). Unencrypted connection is however, faster."
-            app:title="Use Secure Connection (TLSv1.3) [Available Soon]" />
+            app:summary="@string/setting_tls_summary"
+            app:title="@string/setting_tls_title" />
 
         <Preference
-            android:summary="Reset everything to its default value (Recommended)"
+            android:summary="@string/setting_resetdefault_summary"
             app:key="resetdefault"
-            app:title="Reset Default Settings" />
+            app:title="@string/setting_resetdefault_title" />
     </PreferenceCategory>
 
 </androidx.preference.PreferenceScreen>
