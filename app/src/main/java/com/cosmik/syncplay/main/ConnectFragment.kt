@@ -33,17 +33,6 @@ class ConnectFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         val binding = FragmentConnectBinding.bind(view)
 
-        val servers = listOf(
-            "syncplay.pl:8995",
-            "syncplay.pl:8996",
-            "syncplay.pl:8997",
-            "syncplay.pl:8998",
-            "syncplay.pl:8999"
-        )
-
-        val adapter = ArrayAdapter(requireContext(), R.layout.serverlist_textview, servers)
-        binding.spMenuAutocomplete.setAdapter(adapter)
-
         binding.connectJoinButton.setOnClickListener {
             val joiningInfo: MutableList<Any> = mutableListOf()
 
@@ -93,6 +82,17 @@ class ConnectFragment : Fragment() {
     override fun onResume() {
         super.onResume()
 
+        val servers = listOf(
+            "syncplay.pl:8995",
+            "syncplay.pl:8996",
+            "syncplay.pl:8997",
+            "syncplay.pl:8998",
+            "syncplay.pl:8999"
+        )
+
+        val adapter = ArrayAdapter(requireContext(), R.layout.serverlist_textview, servers)
+        binding.spMenuAutocomplete.setAdapter(adapter)
+
         if (PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getBoolean("save_info", true)
         ) {
@@ -111,7 +111,7 @@ class ConnectFragment : Fragment() {
                 )
             )
         } else {
-            binding.spMenuAutocomplete.setText("syncplay.pl:8999")
+            binding.spMenuAutocomplete.setText("syncplay.pl:8997")
             binding.connectUsernameInputText.setText(
                 "user_" + (0..9999).random()
 

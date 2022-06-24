@@ -2,7 +2,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:key="syncplay_settings">
 
-    <PreferenceCategory app:title="General Settings">
+    <PreferenceCategory app:title="@string/settings_categ_general">
         <CheckBoxPreference
             app:defaultValue="true"
             app:key="save_info"
@@ -18,7 +18,7 @@
             app:title="@string/setting_display_language_title" />
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="Player Settings">
+    <PreferenceCategory app:title="@string/settings_categ_player">
         <CheckBoxPreference
             app:defaultValue="false"
             app:key="use_custom_buffer_boolean"
@@ -61,7 +61,7 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="Room Settings">
+    <PreferenceCategory app:title="@string/settings_categ_room">
         <CheckBoxPreference
             app:defaultValue="true"
             app:key="ready_firsthand"
@@ -80,20 +80,20 @@
             app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="Video Settings">
-        <SeekBarPreference
-            android:max="60"
-            app:defaultValue="18"
-            app:key="subtitle_size"
-            app:min="8"
-            app:seekBarIncrement="1"
-            app:showSeekBarValue="true"
-            app:summary="@string/setting_subtitle_size_summary"
-            app:title="@string/setting_subtitle_size_title"
-            app:useSimpleSummaryProvider="true" />
-    </PreferenceCategory>
+    <!--    <PreferenceCategory app:title="@string/settings_categ_video">-->
+    <!--        <SeekBarPreference-->
+    <!--            android:max="60"-->
+    <!--            app:defaultValue="18"-->
+    <!--            app:key="subtitle_size"-->
+    <!--            app:min="8"-->
+    <!--            app:seekBarIncrement="1"-->
+    <!--            app:showSeekBarValue="true"-->
+    <!--            app:summary="@string/setting_subtitle_size_summary"-->
+    <!--            app:title="@string/setting_subtitle_size_title"-->
+    <!--            app:useSimpleSummaryProvider="true" />-->
+    <!--    </PreferenceCategory>-->
 
-    <PreferenceCategory app:title="Miscellaneous">
+    <PreferenceCategory app:title="@string/settings_categ_misc">
 
         <SwitchPreference
             app:defaultValue="false"

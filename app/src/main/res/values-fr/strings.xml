@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name">Syncplay</string>
-    <string name="connect_username_a">Choisir votre nom.</string>
-    <string name="tab_connect">Connecter</string>
-    <string name="tab_settings">Paramètres</string>
-    <string name="tab_about">A propos</string>
-</resources>

@@ -1,5 +1,6 @@
 package com.cosmik.syncplay.toolkit
 
+import android.app.Activity
 import android.content.ContentResolver
 import android.content.Context
 import android.database.Cursor
@@ -8,16 +9,28 @@ import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.util.DisplayMetrics
 import android.util.Log
+import android.view.View
+import android.view.Window
+import android.view.WindowManager
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.cosmik.syncplay.BuildConfig
 import java.io.*
 import java.sql.Timestamp
 
 object SyncplayUtils {
 
-    /** A tool-kit of different operations necessary for the correct functionality of Syncplay BETA **/
-    /****** This toolkit consists of various static functions that can be executed on-the-go ********/
+    /** Usually, the following set of operations were pretty hard to refine to the best shape possible *
+     * In short, this class represents a bunch of functions that do a certain job, and their code is at
+     * its best shape and state, which means, it's maintainable, clean, and requires no longer tweaking.
+     * Why ? because they do what they're supposed to do. There is no absolute need to include 'em directly
+     * in my activity classes. So if a function is fully working and can be separated from the main classes,
+     * I just put it here. This is like a small codex for functions often hard to find on the internet. *
+     */
 
-    /** This function helps convert Uris to Paths **/
+
+    /* This function helps convert Uris to Paths. Not yet used.*/
     @JvmStatic
     fun alternativeUriToPath(context: Context, uri: Uri): String? {
         val contentResolver = context.contentResolver
@@ -38,7 +51,7 @@ object SyncplayUtils {
         return file.absolutePath
     }
 
-    /** Helps determine the size of a file, needing only its Uri and a context **/
+    /* Helps determine the size of a file, needing only its Uri and a context */
     @JvmStatic
     fun getRealSizeFromUri(context: Context, uri: Uri): String? {
         var cursor: Cursor? = null
@@ -65,7 +78,7 @@ object SyncplayUtils {
         }
     }
 
-    /** This is used to generate chat messages' timestamps **/
+    /** This is used to generate chat messages' timestamp ready-for-use strings **/
     @JvmStatic
     fun generateTimestamp(): String {
         var s = Timestamp(System.currentTimeMillis()).toString().trim()
@@ -92,7 +105,7 @@ object SyncplayUtils {
     }.getOrNull()
 
 
-    /** This one converts screen resolution units. DP to PX (Pixel) **/
+    /* This one converts screen resolution units. DP to PX (Pixel), not used yet */
     @JvmStatic
     fun convertUnit(dp: Float, contexT: Context?): Float {
         val resources = contexT?.resources
@@ -129,6 +142,7 @@ object SyncplayUtils {
                 }
             }
         } catch (e: IOException) {
+
         }
         return result
     }
@@ -141,4 +155,51 @@ object SyncplayUtils {
         }
     }
 
+
+    /** Completely revised and working versions for "System UI" manipulators. **/
+    @Suppress("DEPRECATION") //We know they'rte deprecated. Yet they work better than stupid modern functions.
+    @JvmStatic
+    fun hideSystemUI(activity: Activity, newTrick: Boolean) {
+        val window = activity.window
+        activity.runOnUiThread {
+            if (newTrick) {
+                WindowCompat.setDecorFitsSystemWindows(window, false)
+                WindowInsetsControllerCompat(window, window.decorView).let { controller ->
+                    controller.hide(WindowInsetsCompat.Type.systemBars())
+                    controller.systemBarsBehavior =
+                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    controller.systemBarsBehavior =
+                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+
+                }
+            } else {
+                val decorView: View = window.decorView
+                val uiOptions = decorView.systemUiVisibility
+                var newUiOptions = uiOptions
+                newUiOptions = newUiOptions or View.SYSTEM_UI_FLAG_LOW_PROFILE
+                newUiOptions = newUiOptions or View.SYSTEM_UI_FLAG_FULLSCREEN
+                newUiOptions = newUiOptions or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                newUiOptions = newUiOptions or View.SYSTEM_UI_FLAG_IMMERSIVE
+                newUiOptions = newUiOptions or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                decorView.systemUiVisibility = newUiOptions
+                View.OnSystemUiVisibilityChangeListener { newmode ->
+                    if (newmode != newUiOptions) {
+                        hideSystemUI(activity, false)
+                    }
+                }
+                window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+                window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
+
+            }
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    @JvmStatic
+    fun showSystemUI(window: Window) { //Unused, just in case you need a contrary for the first one.
+        val decorView: View = window.decorView
+        decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
+    }
 }

@@ -4,8 +4,8 @@
     <CheckBoxPreference
         app:defaultValue="true"
         app:key="ui_timestamp"
-        app:summary="Disable this to hide the timestamps at the beginning of chat messages."
-        app:title="Chat timestamps" />
+        app:summary="@string/uisetting_timestamp_summary"
+        app:title="@string/uisetting_timestamp_title" />
 
     <SeekBarPreference
         android:max="255"
@@ -14,8 +14,8 @@
         app:min="0"
         app:seekBarIncrement="1"
         app:showSeekBarValue="true"
-        app:summary="Default is 30 (Almost transparent), change this if you want to make the users' info more readable by increasing opacity."
-        app:title="User Info Background Opacity"
+        app:summary="@string/uisetting_overview_alpha_summary"
+        app:title="@string/uisetting_overview_alpha_title"
         app:useSimpleSummaryProvider="true" />
 
     <SeekBarPreference
@@ -25,8 +25,8 @@
         app:min="0"
         app:seekBarIncrement="1"
         app:showSeekBarValue="true"
-        app:summary="Default is 0 (Transparent). Maximum is 255 (100% Opaque). Increase readability of the messages by making background more opaque."
-        app:title="Messages' background opacity"
+        app:summary="@string/uisetting_messagery_alpha_summary"
+        app:title="@string/uisetting_messagery_alpha_title"
         app:useSimpleSummaryProvider="true" />
 
     <SeekBarPreference
@@ -36,8 +36,8 @@
         app:min="6"
         app:seekBarIncrement="1"
         app:showSeekBarValue="true"
-        app:summary="Changes message text size. Default is 11. "
-        app:title="Message font size"
+        app:summary="@string/uisetting_msgsize_summary"
+        app:title="@string/uisetting_msgsize_title"
         app:useSimpleSummaryProvider="true" />
 
     <SeekBarPreference
@@ -46,8 +46,8 @@
         app:key="msg_count"
         app:min="1"
         app:showSeekBarValue="true"
-        app:summary="Default is 12. Limits the message number count to this value."
-        app:title="Message max count" />
+        app:summary="@string/uisetting_msgcount_summary"
+        app:title="@string/uisetting_msgcount_title" />
 
     <SeekBarPreference
         android:max="30"
@@ -56,8 +56,8 @@
         app:min="1"
         app:seekBarIncrement="1"
         app:showSeekBarValue="true"
-        app:summary="When receiving a chat message or room message, it will begin fading out for the amount of time set below."
-        app:title="Display duration for Chat messages"
+        app:summary="@string/uisetting_msglife_summary"
+        app:title="@string/uisetting_msglife_title"
         app:useSimpleSummaryProvider="true" />
 
     <SeekBarPreference
@@ -67,14 +67,13 @@
         app:min="8"
         app:seekBarIncrement="1"
         app:showSeekBarValue="true"
-        app:summary="Default is 18. This will change the subtitles size."
-        app:title="Subtitle Size"
+        app:summary="@string/setting_subtitle_size_summary"
+        app:title="@string/setting_subtitle_size_title"
         app:useSimpleSummaryProvider="true" />
 
     <Preference
-        android:summary="Reset all room settings to their default values."
-        app:isPreferenceVisible="false"
+        android:summary="@string/uisetting_resetdefault_summary"
         app:key="ui_resetdefault"
-        app:title="Reset Default Settings" />
+        app:title="@string/uisetting_resetdefault_title" />
 
 </androidx.preference.PreferenceScreen>

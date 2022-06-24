@@ -30,7 +30,6 @@ import androidx.annotation.UiThread
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources.getDrawable
 import androidx.core.graphics.ColorUtils
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.children
@@ -54,6 +53,7 @@ import com.cosmik.syncplay.protocol.SyncplayProtocolUtils.sendState
 import com.cosmik.syncplay.toolkit.SyncplayUtils
 import com.cosmik.syncplay.toolkit.SyncplayUtils.generateTimestamp
 import com.cosmik.syncplay.toolkit.SyncplayUtils.getFileName
+import com.cosmik.syncplay.toolkit.SyncplayUtils.hideSystemUI
 import com.cosmik.syncplay.toolkit.SyncplayUtils.timeStamper
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.C.SELECTION_FLAG_DEFAULT
@@ -116,8 +116,8 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
 
         //Getting all info from intent
         val ourInfo = intent.getStringExtra("json")
-        val joinInfo: List<Any> =
-            GsonBuilder().create().fromJson(ourInfo, List::class.java) as List<Any>
+        val joinInfo: List<*> =
+            GsonBuilder().create().fromJson(ourInfo, List::class.java) as List<*>
         //Creating all infrastructure roomviewmodel variables.
         protocol.addBroadcaster(this)
         protocol.serverHost = "151.80.32.178"
@@ -302,7 +302,7 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
 
 
             } else {
-                hideSystemUI(false)
+                SyncplayUtils.hideSystemUI(this, false)
                 binding.syncplayMESSAGERY.also {
                     it.clearAnimation()
                     it.alpha = 0f
@@ -324,7 +324,7 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
     }
     override fun onResume() {
         super.onResume()
-        hideSystemUI(false) //Immersive Mode
+        hideSystemUI(this, false) //Immersive Mode
         if (gottenFile != null) {
             injectVideo(binding.vidplayer.player as ExoPlayer, gottenFile!!)
             binding.starterInfo.visibility = GONE
@@ -654,9 +654,6 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
             applyUISettings()
         }
 
-        binding.popupButton.setOnClickListener {
-            applyUISettings()
-        }
     }
 
     /* UI-Related Functions */
@@ -720,52 +717,9 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
         runOnUiThread {
             mp.play()
         }
-        hideSystemUI(false)
+        SyncplayUtils.hideSystemUI(this, false)
     }
 
-    private fun hideSystemUI(newTrick: Boolean) {
-        GlobalScope.launch(Dispatchers.Main) {
-            if (newTrick) {
-                WindowCompat.setDecorFitsSystemWindows(this@RoomActivity.window, false)
-                WindowInsetsControllerCompat(
-                    this@RoomActivity.window,
-                    binding.root
-                ).let { controller ->
-                    controller.hide(WindowInsetsCompat.Type.systemBars())
-                    controller.systemBarsBehavior =
-                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                    controller.systemBarsBehavior =
-                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-
-                }
-            } else {
-                val decorView: View = window.decorView
-                val uiOptions = decorView.systemUiVisibility
-                var newUiOptions = uiOptions
-                newUiOptions = newUiOptions or SYSTEM_UI_FLAG_LOW_PROFILE
-                newUiOptions = newUiOptions or SYSTEM_UI_FLAG_FULLSCREEN
-                newUiOptions = newUiOptions or SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                newUiOptions = newUiOptions or SYSTEM_UI_FLAG_IMMERSIVE
-                newUiOptions = newUiOptions or SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                decorView.systemUiVisibility = newUiOptions
-                OnSystemUiVisibilityChangeListener { newmode ->
-                    if (newmode != newUiOptions) {
-                        hideSystemUI(false)
-                    }
-                }
-                window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
-                window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
-
-            }
-        }
-    }
-
-    private fun showSystemUI() {
-        val decorView: View = window.decorView
-        decorView.systemUiVisibility = (SYSTEM_UI_FLAG_LAYOUT_STABLE
-                or SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                or SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
-    }
 
     private fun sendPlayback(play: Boolean) {
         val clienttime = System.currentTimeMillis() / 1000.0
@@ -1331,7 +1285,7 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
         /* Applying 'Timestamp', 'Message Count', 'Message Font Size' and 'Messages alpha' settings altogether.*/
         replenishMsgs(binding.syncplayMESSAGERY)
 
-        /* Applying 'User Info Alpha' setting */
+        /* Applying 'Room Details Alpha' setting */
         val alpha = PreferenceManager.getDefaultSharedPreferences(this)
             .getInt("overview_alpha", 30) //between 0-255
         @ColorInt val alphaColor = ColorUtils.setAlphaComponent(Color.DKGRAY, alpha)
@@ -1447,10 +1401,11 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
     }
 
     override fun onBackPressed() {
+        protocol.socket.close()
         finishAffinity()
         finish()
         finishAndRemoveTask()
-        protocol.socket.close()
+        super.onBackPressed()
     }
 }
 

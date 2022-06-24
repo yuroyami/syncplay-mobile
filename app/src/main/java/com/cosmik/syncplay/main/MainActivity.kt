@@ -22,7 +22,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(view)
 
         //This disables crashing.
-        Thread.setDefaultUncaughtExceptionHandler { paramThread, paramThrowable ->
+        Thread.setDefaultUncaughtExceptionHandler { _, paramThrowable ->
             Log.e(
                 "Error ${Thread.currentThread().stackTrace[2]}",
                 paramThrowable.localizedMessage!!

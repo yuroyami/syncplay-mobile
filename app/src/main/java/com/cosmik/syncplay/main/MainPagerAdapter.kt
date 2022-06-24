@@ -6,7 +6,6 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.cosmik.syncplay.R
 import com.cosmik.syncplay.about.AboutFragment
 
-
 class MainPagerAdapter(fa: FragmentActivity?) : FragmentStateAdapter(fa!!) {
     private val mFragments = arrayOf<Fragment>( //Initialize fragments views
         //Fragment views are initialized like any other fragment (Extending Fragment)
