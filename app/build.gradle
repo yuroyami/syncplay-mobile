@@ -84,5 +84,4 @@ dependencies {
     implementation("com.google.android.exoplayer:exoplayer:2.17.1") { exclude group: 'com.android.support' }
     implementation files('libs/extension-ffmpeg.aar') //FFmpeg Audio Extension (Compiled)
 
-
 }
