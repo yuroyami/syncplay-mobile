@@ -1,5 +1,9 @@
 package com.cosmik.syncplay.room
 
+/********************************************************************************************
+ * Message wrapper class. It encapsulates all information and data we need about a message  *
+ ********************************************************************************************/
+
 class Message {
     var sender: String? = null
     var timestamp: String = ""

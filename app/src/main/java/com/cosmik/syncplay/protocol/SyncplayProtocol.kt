@@ -2,8 +2,8 @@ package com.cosmik.syncplay.protocol
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.cosmik.syncplay.protocol.SyncplayProtocolJsonExtracter.extractJson
-import com.cosmik.syncplay.protocol.SyncplayProtocolUtils.sendHello
+import com.cosmik.syncplay.protocol.SPJsonHandler.extractJson
+import com.cosmik.syncplay.protocol.SPWrappers.sendHello
 import com.cosmik.syncplay.room.Message
 import com.cosmik.syncplay.toolkit.SyncplayUtils.loggy
 import com.google.gson.Gson
@@ -41,7 +41,7 @@ open class SyncplayProtocol : ViewModel() {
     var userList: MutableMap<String, MutableList<String>> = mutableMapOf()
     var messageSequence: MutableList<Message> = mutableListOf()
 
-    lateinit var syncplayBroadcaster: SyncplayBroadcaster
+    lateinit var syncplayBroadcaster: SPBroadcaster
 
     fun connect(host: String, port: Int) {
         syncplayBroadcaster.onConnectionAttempt(port.toString())
@@ -115,9 +115,10 @@ open class SyncplayProtocol : ViewModel() {
             }
         }
     }
+
     // Fragment will call this to link its listener with this class's listener
     //Anything called to this class's broadcaster will be overridden in the fragment's implemented broadcaster.
-    open fun addBroadcaster(broadcaster: SyncplayBroadcaster) {
+    open fun addBroadcaster(broadcaster: SPBroadcaster) {
         this.syncplayBroadcaster = broadcaster
     }
 }

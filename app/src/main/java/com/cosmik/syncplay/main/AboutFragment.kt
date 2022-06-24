@@ -1,4 +1,4 @@
-package com.cosmik.syncplay.about
+package com.cosmik.syncplay.main
 
 import android.os.Bundle
 import android.util.DisplayMetrics
@@ -11,10 +11,6 @@ import kotlin.math.roundToInt
 
 
 class AboutFragment : Fragment() {
-
-    companion object {
-        fun newInstance() = AboutFragment()
-    }
 
     private var _binding: FragmentAboutBinding? = null
     private val binding get() = _binding!!

@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.graphics.Typeface
 import android.net.Uri
@@ -44,12 +43,12 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
 import com.cosmik.syncplay.databinding.ActivityRoomBinding
-import com.cosmik.syncplay.protocol.SyncplayBroadcaster
+import com.cosmik.syncplay.protocol.SPBroadcaster
+import com.cosmik.syncplay.protocol.SPWrappers.sendChat
+import com.cosmik.syncplay.protocol.SPWrappers.sendFile
+import com.cosmik.syncplay.protocol.SPWrappers.sendReadiness
+import com.cosmik.syncplay.protocol.SPWrappers.sendState
 import com.cosmik.syncplay.protocol.SyncplayProtocol
-import com.cosmik.syncplay.protocol.SyncplayProtocolUtils.sendChat
-import com.cosmik.syncplay.protocol.SyncplayProtocolUtils.sendFile
-import com.cosmik.syncplay.protocol.SyncplayProtocolUtils.sendReadiness
-import com.cosmik.syncplay.protocol.SyncplayProtocolUtils.sendState
 import com.cosmik.syncplay.toolkit.SyncplayUtils
 import com.cosmik.syncplay.toolkit.SyncplayUtils.generateTimestamp
 import com.cosmik.syncplay.toolkit.SyncplayUtils.getFileName
@@ -59,7 +58,6 @@ import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.C.SELECTION_FLAG_DEFAULT
 import com.google.android.exoplayer2.C.VIDEO_SCALING_MODE_SCALE_TO_FIT
 import com.google.android.exoplayer2.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
-import com.google.android.exoplayer2.ext.ffmpeg.FfmpegLibrary
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.CaptionStyleCompat
@@ -68,7 +66,10 @@ import com.google.android.exoplayer2.util.MimeTypes
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.common.collect.Lists
 import com.google.gson.GsonBuilder
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import razerdp.basepopup.BasePopupWindow
 import java.io.IOException
 import kotlin.collections.set
@@ -76,62 +77,78 @@ import kotlin.math.roundToInt
 import com.cosmik.syncplay.R as rr
 
 /*----------------------------------------------*/
-@OptIn(DelicateCoroutinesApi::class)
 @SuppressLint("SetTextI18n")
-class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
+class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
+    /* Declaring our ViewBinding global variables **/
     private var _binding: ActivityRoomBinding? = null
     private val binding get() = _binding!!
+
+    /* This will initialize our protocol the first time it is needed */
     lateinit var protocol: SyncplayProtocol
 
-    /*-- Initializing Player Settings --*/
+    /*-- Declaring ExoPlayer-specific variables --*/
+    private var myMediaPlayer: ExoPlayer? = null
     private lateinit var trackSelec: DefaultTrackSelector
     private lateinit var paramBuilder: DefaultTrackSelector.ParametersBuilder
+
+    /*-- Declaring Playtracking variables **/
     private var ccTracker: Int = -1
     private var audioTracker: Int = -1
     private var seekTracker: Double = 0.0
     private var receivedSeek = false
-    /*-- Initializing Player embeddable parts --*/
-    private var myMediaPlayer: ExoPlayer? = null
     private var updatePosition = false
     private var startFromPosition = (-3.0).toLong()
-    /*-- Initialize video path from intent --*/
+
+    /*-- Saving video uri and its sub in a global variable allows us to reload them any time --*/
     private var gottenFile: Uri? = null
     private var gottenSub: MediaItem.SubtitleConfiguration? = null
 
-    /*-- Cosmetics --*/
+    /*-- UI-Related --*/
     private var lockedScreen = false
     private var seekButtonEnable: Boolean? = null
     private var cutOutMode: Boolean = true
-    /*----------------------------------------------*/
+    private var ccsize = 18f
+
+    /**********************************************************************************************
+     *                                        LIFECYCLE METHODS
+     *********************************************************************************************/
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding = ActivityRoomBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
 
-        //Preparing UI Settings fragment
+        /** Initializing our ViewModel, which is our protocol at the same time **/
         protocol = ViewModelProvider(this)[SyncplayProtocol::class.java]
 
-
-        //Getting all info from intent
+        /** Extracting joining info from our intent **/
         val ourInfo = intent.getStringExtra("json")
-        val joinInfo: List<*> =
-            GsonBuilder().create().fromJson(ourInfo, List::class.java) as List<*>
-        //Creating all infrastructure roomviewmodel variables.
+        val joinInfo = GsonBuilder().create().fromJson(ourInfo, List::class.java) as List<*>
+
+        /** Adding the callback interface so we can respond to multiple syncplay events **/
         protocol.addBroadcaster(this)
+
+        /** Storing the join info into the protocol directly **/
         protocol.serverHost = "151.80.32.178"
         protocol.serverPort = (joinInfo[0] as Double).toInt()
         protocol.currentUsername = joinInfo[1] as String
         protocol.currentRoom = joinInfo[2] as String
+
+        /** Storing SharedPreferences to apply some settings **/
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
-        findViewById<MaterialCheckBox>(rr.id.syncplay_ready).isChecked =
-            sp.getBoolean("ready_firsthand", true)
-        protocol.ready = sp.getBoolean("ready_firsthand", true)
+
+        /** Pref No.1 : Should the READY button be initially clicked ? **/
+        binding.syncplayReady.isChecked = sp.getBoolean("ready_firsthand", true).also {
+            protocol.ready = it /* Telling our protocol that we're ready */
+        }
+
+        /** Pref No.2 : Rewind threshold **/
         protocol.rewindThreshold = sp.getInt("rewind_threshold", 12).toLong()
 
-        //Connecting to server
-        val tls = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("tls", false)
+        /** Now, let's connect to the server, everything should be ready **/
+        val tls = sp.getBoolean("tls", false) /* We're not using this yet */
         if (!protocol.connected) {
             protocol.connect(
                 protocol.serverHost,
@@ -139,58 +156,72 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
             )
         }
 
-        //Launch the ping updater
-        pingStatusUpdater()
-
-        //Apply UI Settings from SharedPreferences
+        /** Let's apply Room UI Settings **/
         applyUISettings()
 
-        //Controlling Cut-out mode and orientation.
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        /** Let's apply Cut-Out Mode on the get-go, user can turn it off later **/
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             window?.attributes?.layoutInDisplayCutoutMode =
                 WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
         }
     }
+
     override fun onStart() {
         super.onStart()
-        //Initializing player with default settings.
-        val useCustomBuffer = PreferenceManager.getDefaultSharedPreferences(this)
-            .getBoolean("use_custom_buffer_boolean", false)
-        val maxBuffer = if (useCustomBuffer) (PreferenceManager.getDefaultSharedPreferences(this)
-            .getInt("player_max_buffer", 50)) * 1000 else 50000
-        var minBuffer = if (useCustomBuffer) (PreferenceManager.getDefaultSharedPreferences(this)
-            .getInt("player_min_buffer", 15)) * 1000 else 15000
-        val playbackBuffer =
-            if (useCustomBuffer) (PreferenceManager.getDefaultSharedPreferences(this)
-                .getInt("player_playback_buffer", 2500)) else 2000
-        if (minBuffer < (playbackBuffer + 500)) minBuffer = playbackBuffer + 500
-        val loadControl =
-            DefaultLoadControl.Builder()
-                .setBufferDurationsMs(minBuffer, maxBuffer, playbackBuffer, playbackBuffer + 500)
-                .build()
 
+        /** We initialize ExoPlayer components here, right after onStart() and not onCreate() **/
+
+        /** First, we hold a reference to preferences, we will use it quite a few times **/
+        val sp = PreferenceManager.getDefaultSharedPreferences(this)
+
+        /** LoadControl variables and building (Buffering Controller) **/
+        val useCustomBuffer = sp.getBoolean("use_custom_buffer_boolean", false)
+        val maxBuffer = if (useCustomBuffer) (sp.getInt("player_max_buffer", 50) * 1000) else 50000
+        var minBuffer = if (useCustomBuffer) (sp.getInt("player_min_buffer", 15) * 1000) else 15000
+        val playbackBuffer =
+            if (useCustomBuffer) (sp.getInt("player_playback_buffer", 2500)) else 2000
+        if (minBuffer < (playbackBuffer + 500)) minBuffer = playbackBuffer + 500
+        val loadControl = DefaultLoadControl
+            .Builder()
+            .setBufferDurationsMs(
+                minBuffer,
+                maxBuffer,
+                playbackBuffer,
+                playbackBuffer + 500
+            )
+            .build()
+
+        /** TrackSelector building **/
         trackSelec = DefaultTrackSelector(this).also {
             it.parameters =
                 DefaultTrackSelector.ParametersBuilder(this)
                     .build()
         }
 
+        /** Now, on to building Exoplayer itself using the components we have **/
         myMediaPlayer = ExoPlayer.Builder(this)
-            .setTrackSelector(trackSelec)
-            .setLoadControl(loadControl)
+            .setTrackSelector(trackSelec) /* We use the trackselector we initialized before */
+            .setLoadControl(loadControl) /* We use the custom LoadControl we initialized before */
             .setRenderersFactory(
                 DefaultRenderersFactory(this).setExtensionRendererMode(
-                    EXTENSION_RENDERER_MODE_PREFER
+                    EXTENSION_RENDERER_MODE_PREFER /* We prefer extensions, such as FFmpeg */
                 )
-            ) //Activating FFmpeg-audio
+            )
             .build()
             .also { exoPlayer ->
                 binding.vidplayer.player = exoPlayer
             }
-        myMediaPlayer?.videoScalingMode = VIDEO_SCALING_MODE_SCALE_TO_FIT
-        binding.vidplayer.subtitleView?.background = null
-        myMediaPlayer?.playWhenReady = true
+
+
+        /** Customizing ExoPlayer components **/
+        myMediaPlayer?.videoScalingMode = VIDEO_SCALING_MODE_SCALE_TO_FIT /* Starter scaling */
+
+        binding.vidplayer.subtitleView?.background = null /* Removing any bg color on subtitles */
+
+        myMediaPlayer?.playWhenReady = true /* Play once the media has been buffered */
+
+        /** This listener is very important, why ? Because without it, syncplay has no meaning */
+        /** TODO: Seperate the interface from the activity **/
         myMediaPlayer?.addListener(object : Player.Listener {
             override fun onIsLoadingChanged(isLoading: Boolean) {
                 super.onIsLoadingChanged(isLoading)
@@ -260,6 +291,8 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
                 }
             }
         })
+
+        /** Defining the subtitle appearance, and inserting it into ExoPlayer **/
         val captionStyle = CaptionStyleCompat(
             Color.WHITE,
             Color.TRANSPARENT,
@@ -268,17 +301,18 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
             Color.BLACK,
             Typeface.DEFAULT_BOLD
         )
-        val ccsize = PreferenceManager.getDefaultSharedPreferences(this).getInt("subtitle_size", 18)
-            .toFloat()
         binding.vidplayer.subtitleView?.also {
             it.setStyle(captionStyle)
             it.setFixedTextSize(COMPLEX_UNIT_SP, ccsize)
         }
 
+        /** Clicking on the player hides the keyboard, and loses focus from the message box **/
         binding.vidplayer.setOnClickListener {
             hideKb()
             binding.syncplayINPUTBox.clearFocus()
         }
+
+        /** Listening to ExoPlayer's UI Visibility **/
         binding.vidplayer.setControllerVisibilityListener { visibility ->
             if (visibility == VISIBLE) {
                 binding.syncplayMESSAGERY.also {
@@ -302,121 +336,22 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
 
 
             } else {
-                SyncplayUtils.hideSystemUI(this, false)
+                hideSystemUI(this, false)
                 binding.syncplayMESSAGERY.also {
                     it.clearAnimation()
                     it.alpha = 0f
                     it.visibility = GONE
                 }
-                val isTyping = binding.syncplayINPUTBox.hasFocus()
-                if (!isTyping) {
+                if (!binding.syncplayINPUTBox.hasFocus()) {
                     binding.syncplayVisiblitydelegate.visibility = GONE
                     hideKb()
                 }
             }
         }
 
-        Log.e("FFMPEG", "${FfmpegLibrary.isAvailable()}")
-
-        implementClickListeners() //Implementing click reactors
-
-
-    }
-    override fun onResume() {
-        super.onResume()
-        hideSystemUI(this, false) //Immersive Mode
-        if (gottenFile != null) {
-            injectVideo(binding.vidplayer.player as ExoPlayer, gottenFile!!)
-            binding.starterInfo.visibility = GONE
-        }
-    }
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putDouble("last_position", protocol.currentVideoPosition)
-        Log.e("STATUS", "SAVED INSTANCE: ${protocol.currentVideoPosition}")
-    }
-    override fun onPause() {
-        super.onPause()
-        startFromPosition = binding.vidplayer.player?.currentPosition!!
-        updatePosition = false
-    }
-    override fun onStop() {
-        super.onStop()
-        updatePosition = false
-
-        myMediaPlayer?.stop()
-//        myMediaPlayer?.run {
-//            roomViewModel.currentVideoPosition = this.currentPosition.toDouble()
-//            myPlayerWindow = this.currentWindowIndex
-//            playWhenReady = this.playWhenReady
-//            release()
-//        }
-//        myMediaPlayer = null
-
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.e("STATUS", "DESTROYED")
-        updatePosition = false
-        myMediaPlayer?.release()
-    }
-
-    /*----------------------------------------------*/
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == Activity.RESULT_OK) {
-            when (requestCode) {
-                90909 -> {
-                    gottenFile = data?.data
-                    val filename = gottenFile?.let { getFileName(it) }
-                    Toast.makeText(this, "Selected video file: $filename", Toast.LENGTH_LONG).show()
-
-                }
-                80808 -> {
-                    if (gottenFile != null) {
-                        val path = data?.data!!
-                        val filename = getFileName(path).toString()
-                        val extension = filename.substring(filename.length - 4)
-                        val mimeType =
-                            if (extension.contains("srt")) MimeTypes.APPLICATION_SUBRIP
-                            else if ((extension.contains("ass"))
-                                || (extension.contains("ssa"))
-                            ) MimeTypes.TEXT_SSA
-                            else if (extension.contains("ttml")) MimeTypes.APPLICATION_TTML
-                            else if (extension.contains("vtt")) MimeTypes.TEXT_VTT else ""
-                        if (mimeType != "") {
-                            gottenSub = MediaItem.SubtitleConfiguration.Builder(path)
-                                .setUri(path)
-                                .setMimeType(mimeType)
-                                .setLanguage(null)
-                                .setSelectionFlags(SELECTION_FLAG_DEFAULT)
-                                .build()
-                            Toast.makeText(
-                                this, "Loaded sub successfully: $filename", Toast.LENGTH_LONG
-                            ).show()
-                        } else {
-                            Toast.makeText(
-                                this,
-                                "Invalid subtitle file. Supported formats are: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    } else {
-                        Toast.makeText(this, "Load video first", Toast.LENGTH_LONG).show()
-                    }
-                }
-            }
-        }
-    }
-    /*********************************************************************************************
-     *                                     CUSTOM FUNCTIONS                                      *
-     ********************************************************************************************/
-    private fun implementClickListeners() {
-
-        /******************
-         * Add Video File *
-         ******************/
+        /************************
+         * Adding a  Video File *
+         ************************/
         findViewById<ImageButton>(rr.id.syncplay_addfile).setOnClickListener {
             val intent1 = Intent()
             intent1.type = "*/*"
@@ -653,10 +588,97 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
             binding.pseudoPopupParent.visibility = GONE
             applyUISettings()
         }
-
     }
 
-    /* UI-Related Functions */
+    override fun onResume() {
+        super.onResume()
+        hideSystemUI(this, false) //Immersive Mode
+        if (gottenFile != null) {
+            injectVideo(binding.vidplayer.player as ExoPlayer, gottenFile!!)
+            binding.starterInfo.visibility = GONE
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putDouble("last_position", protocol.currentVideoPosition)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        startFromPosition = binding.vidplayer.player?.currentPosition!!
+        updatePosition = false
+    }
+    override fun onStop() {
+        super.onStop()
+
+        updatePosition = false
+        myMediaPlayer?.stop()
+//        myMediaPlayer?.run {
+//            roomViewModel.currentVideoPosition = this.currentPosition.toDouble()
+//            myPlayerWindow = this.currentWindowIndex
+//            playWhenReady = this.playWhenReady
+//            release()
+//        }
+//        myMediaPlayer = null
+
+    }
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.e("STATUS", "DESTROYED")
+        updatePosition = false
+        myMediaPlayer?.release()
+    }
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode == Activity.RESULT_OK) {
+            when (requestCode) {
+                90909 -> {
+                    gottenFile = data?.data
+                    val filename = gottenFile?.let { getFileName(it) }
+                    Toast.makeText(this, "Selected video file: $filename", Toast.LENGTH_LONG).show()
+
+                }
+                80808 -> {
+                    if (gottenFile != null) {
+                        val path = data?.data!!
+                        val filename = getFileName(path).toString()
+                        val extension = filename.substring(filename.length - 4)
+                        val mimeType =
+                            if (extension.contains("srt")) MimeTypes.APPLICATION_SUBRIP
+                            else if ((extension.contains("ass"))
+                                || (extension.contains("ssa"))
+                            ) MimeTypes.TEXT_SSA
+                            else if (extension.contains("ttml")) MimeTypes.APPLICATION_TTML
+                            else if (extension.contains("vtt")) MimeTypes.TEXT_VTT else ""
+                        if (mimeType != "") {
+                            gottenSub = MediaItem.SubtitleConfiguration.Builder(path)
+                                .setUri(path)
+                                .setMimeType(mimeType)
+                                .setLanguage(null)
+                                .setSelectionFlags(SELECTION_FLAG_DEFAULT)
+                                .build()
+                            Toast.makeText(
+                                this, "Loaded sub successfully: $filename", Toast.LENGTH_LONG
+                            ).show()
+                        } else {
+                            Toast.makeText(
+                                this,
+                                "Invalid subtitle file. Supported formats are: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    } else {
+                        Toast.makeText(this, "Load video first", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+        }
+    }
+
+    /*********************************************************************************************
+     *                                     CUSTOM FUNCTIONS                                      *
+     ********************************************************************************************/
     private fun injectVideo(mp: ExoPlayer, mediaPath: Uri) {
         try {
             //val vid: MediaItem = MediaItem.fromUri(mediaPath)
@@ -712,15 +734,12 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
             mp.pause()
         }
     }
-
     private fun playPlayback(mp: ExoPlayer) {
         runOnUiThread {
             mp.play()
         }
-        SyncplayUtils.hideSystemUI(this, false)
+        hideSystemUI(this, false)
     }
-
-
     private fun sendPlayback(play: Boolean) {
         val clienttime = System.currentTimeMillis() / 1000.0
         protocol.sendPacket(
@@ -729,7 +748,6 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
             protocol.serverPort
         )
     }
-
     private fun sendMessage(message: String) {
         hideKb()
         if (binding.syncplayMESSAGERY.visibility != VISIBLE) {
@@ -949,7 +967,6 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
             }
         }
     }
-    /*--------------------------------------------------------*/
     private fun ccSelect(ccButton: ImageButton) {
         val mappedTrackInfo =
             trackSelec.currentMappedTrackInfo!! //get Tracks from our default (already injected) selector
@@ -1029,7 +1046,6 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
 
         }
     }
-
     private fun audioSelect(audioButton: ImageButton) {
         val mappedTrackInfo =
             trackSelec.currentMappedTrackInfo!! //get Tracks from our default (already injected) selector
@@ -1097,12 +1113,10 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
             popup.show()
         }
     }
-
     private fun hideKb() {
         WindowInsetsControllerCompat(window, window.decorView).hide(WindowInsetsCompat.Type.ime())
         binding.syncplayINPUTBox.clearFocus()
     }
-
     private fun casualUpdater() {
         //TODO: Change periodic sleep to periodic handler.
         GlobalScope.launch(Dispatchers.Unconfined) {
@@ -1182,11 +1196,10 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
     }
 
     private fun displayInfo(msg: String) {
-        val info = binding.syncplayInfoDelegate
-        info.clearAnimation()
-        info.text = msg
-        info.alpha = 1f
-        info.animate()
+        binding.syncplayInfoDelegate.clearAnimation()
+        binding.syncplayInfoDelegate.text = msg
+        binding.syncplayInfoDelegate.alpha = 1f
+        binding.syncplayInfoDelegate.animate()
             .alpha(0f)
             .setDuration(750L)
             .setInterpolator(AccelerateInterpolator())
@@ -1282,19 +1295,26 @@ class RoomActivity : AppCompatActivity(), SyncplayBroadcaster {
     }
 
     fun applyUISettings() {
-        /* Applying 'Timestamp', 'Message Count', 'Message Font Size' and 'Messages alpha' settings altogether.*/
+        /* For settings: Timestamp,Message Count,Message Font Size, Messages alpha */
         replenishMsgs(binding.syncplayMESSAGERY)
 
-        /* Applying 'Room Details Alpha' setting */
-        val alpha = PreferenceManager.getDefaultSharedPreferences(this)
-            .getInt("overview_alpha", 30) //between 0-255
+        /* Holding a reference to SharedPreferences to use it later */
+        val sp = PreferenceManager.getDefaultSharedPreferences(this)
+
+        /* Applying "overview_alpha" setting */
+        val alpha = sp.getInt("overview_alpha", 30) //between 0-255
         @ColorInt val alphaColor = ColorUtils.setAlphaComponent(Color.DKGRAY, alpha)
         binding.syncplayOverviewCard.setBackgroundColor(alphaColor)
+
+        /* Applying Subtitle Size setting */
+        ccsize = sp.getInt("subtitle_size", 18).toFloat()
     }
+
 
     /*********************************************************************************************
      *                                        CALLBACKS                                          *
      ********************************************************************************************/
+
     override fun onSomeonePaused(pauser: String) {
         if (pauser != protocol.currentUsername) myMediaPlayer?.let { pausePlayback(it) }
         broadcastMessage("$pauser paused", false)

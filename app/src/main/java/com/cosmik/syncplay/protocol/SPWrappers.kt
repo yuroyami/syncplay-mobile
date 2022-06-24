@@ -4,7 +4,7 @@ import com.cosmik.syncplay.toolkit.SyncplayUtils
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 
-object SyncplayProtocolUtils {
+object SPWrappers {
 
     private val gson: Gson = GsonBuilder().setPrettyPrinting().create()
     private val basicgson: Gson = GsonBuilder().create()

@@ -4,7 +4,7 @@ import android.util.Log
 import com.google.gson.JsonObject
 import org.json.JSONObject
 
-object SyncplayProtocolJsonExtracter {
+object SPJsonHandler {
 
     /** Probably the most important function. This breaks down the JSONs received from the server
      * and behaves in accordance with the protocol as per the the JSONs received.
@@ -25,10 +25,10 @@ object SyncplayProtocolJsonExtracter {
                 .getAsJsonObject("Hello")
                 .getAsJsonPrimitive("username").asString
             protocol.currentUsername = trueusername
-            protocol.sendPacket(SyncplayProtocolUtils.sendJoined(protocol.currentRoom), host, port)
-            protocol.sendPacket(SyncplayProtocolUtils.sendEmptyList(), host, port)
+            protocol.sendPacket(SPWrappers.sendJoined(protocol.currentRoom), host, port)
+            protocol.sendPacket(SPWrappers.sendEmptyList(), host, port)
             protocol.sendPacket(
-                SyncplayProtocolUtils.sendReadiness(protocol.ready),
+                SPWrappers.sendReadiness(protocol.ready),
                 host,
                 port
             )
@@ -110,7 +110,7 @@ object SyncplayProtocolJsonExtracter {
                 }
             }
 
-            protocol.sendPacket(SyncplayProtocolUtils.sendEmptyList(), host, port)
+            protocol.sendPacket(SPWrappers.sendEmptyList(), host, port)
         }
         /********************
          * Handling Chats *
@@ -174,7 +174,7 @@ object SyncplayProtocolJsonExtracter {
                     if (!(json.contains("client\":"))) {
                         protocol.clientIgnFly = 0
                         protocol.sendPacket(
-                            SyncplayProtocolUtils.sendState(
+                            SPWrappers.sendState(
                                 latency,
                                 clienttime,
                                 null, 0,
@@ -188,7 +188,7 @@ object SyncplayProtocolJsonExtracter {
                     } else {
                         protocol.clientIgnFly = 0
                         protocol.sendPacket(
-                            SyncplayProtocolUtils.sendState(
+                            SPWrappers.sendState(
                                 latency,
                                 clienttime,
                                 doSeek, 0,
@@ -220,7 +220,7 @@ object SyncplayProtocolJsonExtracter {
                 val clienttime =
                     (System.currentTimeMillis() / 1000.0)
                 protocol.sendPacket(
-                    SyncplayProtocolUtils.sendState(
+                    SPWrappers.sendState(
                         latency,
                         clienttime,
                         false,
