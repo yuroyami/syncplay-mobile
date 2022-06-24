@@ -20,7 +20,7 @@
     <string name="room_send_button">إرسال</string>
     <string name="room_ready">مستعد</string>
     <string name="room_details">إظهار التفاصيل</string>
-    <string name="room_ping_connected">متصل - التأخير</string>
+    <string name="room_ping_connected">متصل - تأخر: %s ميليثانية</string>
     <string name="room_ping_disconnected">غير متصل</string>
     <string name="room_overflow_sub">إدخال ملف ترجمة…</string>
     <string name="room_overflow_cutout">وضع توسيع ثلمة الكاميرا</string>
@@ -74,4 +74,17 @@
     <string name="settings_categ_misc">إعدادات مميزة</string>
     <string name="en">الانجليزية</string>
     <string name="ar">العربية</string>
+    <string name="room_empty_message_error">اكتب شيئاً !</string>
+    <string name="room_attempting_connect">محاولة الاتصال بـ syncplay.pl:%s</string>
+    <string name="room_connected_to_server">تم الاتصال بالسيرفر.</string>
+    <string name="room_connection_failed">فشل الاتصال.</string>
+    <string name="room_attempting_reconnection">انقطع الاتصال بالسيرفر. يتم إعادة المحاولة…</string>
+    <string name="room_guy_played">%s يواصل التشغيل.</string>
+    <string name="room_guy_paused">%s جمَّدَ التشغيل.</string>
+    <string name="room_seeked">%1s قفز من %2s إلى %3s</string>
+    <string name="room_rewinded">الرجوع إلى الوراء بسبب الفرق الزمني مع %s</string>
+    <string name="room_guy_left">%s غادر الغرفة.</string>
+    <string name="room_guy_joined">%s انضم للغرفة.</string>
+    <string name="room_isplayingfile">%1s الآن يلعب الفيديو \'%2s\' (%3s)</string>
+    <string name="room_you_joined_room">لقد انضممت إلى الغرفة: %s</string>
 </resources>

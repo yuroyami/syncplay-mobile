@@ -268,7 +268,6 @@
             android:layout_height="0dp"
             app:cardCornerRadius="12dp"
             app:cardElevation="8dp"
-            android:alpha="0.95"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHeight_percent="0.75"

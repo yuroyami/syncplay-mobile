@@ -20,21 +20,31 @@
     <string name="connect_footnote">Syncplay\'s Unofficial Android Client</string>
 
     <!-- Room Activity Strings -->
-    <string name="n"></string>
     <string name="room_startup_hint">"Insert a new video from storage by clicking on the button with the following icon "</string>
     <string name="room_type_message">Type your message…</string>
     <string name="room_send_button">SEND</string>
     <string name="room_ready">Ready</string>
     <string name="room_details">Show Details</string>
-    <string name="room_ping_connected">CONNECTED - PING </string>
+    <string name="room_ping_connected">Connected - PING: %s ms </string>
     <string name="room_ping_disconnected">DISCONNECTED</string>
     <string name="room_overflow_sub">Load Subtitle File…</string>
     <string name="room_overflow_cutout">Cut-out (Notch) Mode</string>
     <string name="room_overflow_ff">Fast Seek Buttons</string>
     <string name="room_overflow_msghistory">Message History</string>
     <string name="room_overflow_settings">Settings</string>
-
-
+    <string name="room_empty_message_error">Type something!</string>
+    <string name="room_attempting_connect">Attempting to connect to syncplay.pl:%s</string>
+    <string name="room_connected_to_server">Connected to the server.</string>
+    <string name="room_connection_failed">Connecting failed.</string>
+    <string name="room_attempting_reconnection">Lost connection to the server. Attempting to reconnect…</string>
+    <string name="room_guy_played">%s unpaused</string>
+    <string name="room_guy_paused">%s paused</string>
+    <string name="room_seeked">%1s jumped from %2s to %3s</string>
+    <string name="room_rewinded">Rewinded due to time difference with %s</string>
+    <string name="room_guy_left">%s left the room.</string>
+    <string name="room_guy_joined">%s joined the room.</string>
+    <string name="room_isplayingfile">%1s is playing \'%2s\' (%3s)</string>
+    <string name="room_you_joined_room">You have joined the room: %s</string>
     <string name="disconnected_notice_header">DISCONNECTED</string>
     <string name="disconnected_notice_a">You have been disconnected from the server due to a network problem.</string>
     <string name="disconnected_notice_b">Attempting to reconnect…</string>
@@ -87,9 +97,10 @@
     <string name="uisetting_resetdefault_title">Reset Default Settings</string>
 
 
-    <!--List of Languages identifier strings used for, well, just a toast-->
+    <!--List of Languages identifier strings used for, meh, just a toast... -->
     <string name="en">English</string>
     <string name="ar">Arabic</string>
+
 
     <!--List of Languages and their Tags-->
     <string-array name="Lang">

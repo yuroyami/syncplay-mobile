@@ -17,7 +17,6 @@ import android.util.TypedValue.COMPLEX_UNIT_SP
 import android.view.Gravity.END
 import android.view.Menu.NONE
 import android.view.MenuItem
-import android.view.View
 import android.view.View.*
 import android.view.ViewGroup
 import android.view.WindowManager
@@ -164,6 +163,9 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
             window?.attributes?.layoutInDisplayCutoutMode =
                 WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
         }
+
+        /** Launch the visible ping updater **/
+        pingStatusUpdater()
     }
 
     override fun onStart() {
@@ -220,7 +222,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
         myMediaPlayer?.playWhenReady = true /* Play once the media has been buffered */
 
-        /** This listener is very important, why ? Because without it, syncplay has no meaning */
+        /** This listener is very important, without it, syncplay is nothing but a video player */
         /** TODO: Seperate the interface from the activity **/
         myMediaPlayer?.addListener(object : Player.Listener {
             override fun onIsLoadingChanged(isLoading: Boolean) {
@@ -363,7 +365,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         /**************************
          * Message Focus Listener *
          **************************/
-        binding.syncplayINPUTBox.onFocusChangeListener = OnFocusChangeListener { _, hasFocus ->
+        binding.syncplayINPUTBox.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
                 binding.syncplayINPUT.clearAnimation()
                 binding.syncplayINPUT.alpha = 1f
@@ -388,7 +390,8 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                 binding.syncplayINPUT.isErrorEnabled = false
             } else {
                 binding.syncplayINPUT.isErrorEnabled = true
-                binding.syncplayINPUT.error = "Type something!"
+                binding.syncplayINPUT.error =
+                    getString(com.cosmik.syncplay.R.string.room_empty_message_error)
             }
         }
 
@@ -408,7 +411,6 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
             if (trackSelec.currentMappedTrackInfo != null) {
                 audioSelect(it as ImageButton)
             }
-
         }
 
         /***************
@@ -454,27 +456,44 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                 it.alpha = if (it.alpha == 0.35f) 0.05f else 0.35f
             }
         }
-        /****************
+
+        /*****************
          * OverFlow Menu *
          *****************/
         findViewById<ImageButton>(rr.id.syncplay_more).setOnClickListener { overflow ->
             val popup = PopupMenu(this, overflow)
 
-            val loadsubItem = popup.menu.add(0, 0, 0, "Load Subtitle File...")
+            val loadsubItem =
+                popup.menu.add(0, 0, 0, getString(com.cosmik.syncplay.R.string.room_overflow_sub))
 
-            val cutoutItem = popup.menu.add(0, 1, 1, "Cut-out (Notch) Mode")
+            val cutoutItem = popup.menu.add(
+                0,
+                1,
+                1,
+                getString(com.cosmik.syncplay.R.string.room_overflow_cutout)
+            )
             cutoutItem.isCheckable = true
             cutoutItem.isChecked = cutOutMode
             cutoutItem.isEnabled = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
-            val seekbuttonsItem = popup.menu.add(0, 2, 2, "Fast Seek Buttons")
+            val seekbuttonsItem =
+                popup.menu.add(0, 2, 2, getString(com.cosmik.syncplay.R.string.room_overflow_ff))
             seekbuttonsItem.isCheckable = true
             val ffwdButton = findViewById<ImageButton>(R.id.exo_ffwd)
             val rwndButton = findViewById<ImageButton>(R.id.exo_rew)
             seekbuttonsItem.isChecked = seekButtonEnable != false
-            val messagesItem = popup.menu.add(0, 3, 3, "Messages History")
-            val uiItem = popup.menu.add(0, 4, 4, "Settings")
+            val messagesItem = popup.menu.add(
+                0,
+                3,
+                3,
+                getString(com.cosmik.syncplay.R.string.room_overflow_msghistory)
+            )
+            val uiItem = popup.menu.add(
+                0,
+                4,
+                4,
+                getString(com.cosmik.syncplay.R.string.room_overflow_settings)
+            )
             //val adjustItem = popup.menu.add(0,5,5,"Change Username or Room")
-
 
             popup.setOnMenuItemClickListener {
                 when (it) {
@@ -490,7 +509,6 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                                 cutOutMode = true
                                 window?.attributes?.layoutInDisplayCutoutMode =
                                     WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-
                             } else {
                                 cutOutMode = false
                                 window?.attributes?.layoutInDisplayCutoutMode =
@@ -498,7 +516,6 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                             }
                             binding.vidplayer.performClick()
                             binding.vidplayer.performClick()
-
                         }
                     }
                     seekbuttonsItem -> {
@@ -516,8 +533,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                         messageHistoryPopup()
                     }
                     uiItem -> {
-                        binding.pseudoPopupParent.visibility = View.VISIBLE
-
+                        binding.pseudoPopupParent.visibility = VISIBLE
                     }
                 }
                 return@setOnMenuItemClickListener true
@@ -542,18 +558,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
          ****************/
         findViewById<MaterialCheckBox>(rr.id.syncplay_ready).setOnCheckedChangeListener { _, b ->
             protocol.ready = b
-            if (b) {
-                protocol.sendPacket(
-                    sendReadiness(true),
-                    protocol.serverHost, protocol.serverPort
-                )
-            } else {
-                protocol.sendPacket(
-                    sendReadiness(false),
-                    protocol.serverHost, protocol.serverPort
-                )
-
-            }
+            protocol.sendPacket(sendReadiness(b), protocol.serverHost, protocol.serverPort)
         }
 
         /*******************
@@ -582,7 +587,6 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
             binding.vidplayer.performClick()
         }
 
-
         /** UI Settings' Popup Click Controllers **/
         binding.popupDismisser.setOnClickListener {
             binding.pseudoPopupParent.visibility = GONE
@@ -609,6 +613,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         startFromPosition = binding.vidplayer.player?.currentPosition!!
         updatePosition = false
     }
+
     override fun onStop() {
         super.onStop()
 
@@ -623,12 +628,14 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 //        myMediaPlayer = null
 
     }
+
     override fun onDestroy() {
         super.onDestroy()
         Log.e("STATUS", "DESTROYED")
         updatePosition = false
         myMediaPlayer?.release()
     }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (resultCode == Activity.RESULT_OK) {
@@ -1142,7 +1149,8 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                 if (protocol.socket.isConnected && !protocol.socket.isClosed) {
                     val ping = SyncplayUtils.pingIcmp("151.80.32.178", 32) * 1000.0
                     GlobalScope.launch(Dispatchers.Main) {
-                        binding.syncplayConnectionInfo.text = "CONNECTED - Ping: $ping ms"
+                        binding.syncplayConnectionInfo.text =
+                            string(rr.string.room_ping_connected, "$ping")
                         when (ping) {
                             in (0.0..100.0) -> binding.syncplaySignalIcon.setImageResource(rr.drawable.ping_3)
                             in (100.0..200.0) -> binding.syncplaySignalIcon.setImageResource(rr.drawable.ping_2)
@@ -1151,7 +1159,8 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                     }
                 } else {
                     GlobalScope.launch(Dispatchers.Main) {
-                        binding.syncplayConnectionInfo.text = "DISCONNECTED "
+                        binding.syncplayConnectionInfo.text =
+                            string(rr.string.room_ping_disconnected)
                         binding.syncplaySignalIcon.setImageDrawable(
                             getDrawable(
                                 this@RoomActivity,
@@ -1317,12 +1326,13 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
     override fun onSomeonePaused(pauser: String) {
         if (pauser != protocol.currentUsername) myMediaPlayer?.let { pausePlayback(it) }
-        broadcastMessage("$pauser paused", false)
+        broadcastMessage(string(rr.string.room_guy_paused, pauser), false)
     }
 
     override fun onSomeonePlayed(player: String) {
         if (player != protocol.currentUsername) myMediaPlayer?.let { playPlayback(it) }
-        broadcastMessage("$player unpaused", false)
+        broadcastMessage(string(rr.string.room_guy_played, player), false)
+
     }
 
     override fun onChatReceived(chatter: String, chatmessage: String) {
@@ -1333,21 +1343,23 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         runOnUiThread {
             if (seeker != protocol.currentUsername) {
                 broadcastMessage(
-                    "$seeker jumped from ${timeStamper((protocol.currentVideoPosition).roundToInt())} to ${
-                        timeStamper(
-                            toPosition.roundToInt()
-                        )
-                    }", false
+                    string(
+                        rr.string.room_seeked,
+                        seeker,
+                        timeStamper((protocol.currentVideoPosition).roundToInt()),
+                        timeStamper(toPosition.roundToInt())
+                    ), false
                 )
                 receivedSeek = true
                 myMediaPlayer?.seekTo((toPosition * 1000.0).toLong())
             } else {
                 broadcastMessage(
-                    "$seeker jumped from ${timeStamper((seekTracker).roundToInt())} to ${
-                        timeStamper(
-                            toPosition.roundToInt()
-                        )
-                    }", false
+                    string(
+                        rr.string.room_seeked,
+                        seeker,
+                        timeStamper((seekTracker).roundToInt()),
+                        timeStamper(toPosition.roundToInt())
+                    ), false
                 )
             }
         }
@@ -1358,17 +1370,17 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         runOnUiThread {
             myMediaPlayer?.seekTo((toPosition * 1000.0).toLong())
         }
-        broadcastMessage("Rewinded due to time difference with $behinder", false)
+        broadcastMessage(string(rr.string.room_rewinded, behinder), false)
     }
 
     override fun onSomeoneLeft(leaver: String) {
         replenishUsers(binding.syncplayOverview)
-        broadcastMessage("$leaver left the room.", false)
+        broadcastMessage(string(rr.string.room_guy_left, leaver), false)
     }
 
     override fun onSomeoneJoined(joiner: String) {
         replenishUsers(binding.syncplayOverview)
-        broadcastMessage("$joiner joined the room.", false)
+        broadcastMessage(string(rr.string.room_guy_joined, joiner), false)
     }
 
     override fun onReceivedList() {
@@ -1383,13 +1395,18 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     ) {
         replenishUsers(binding.syncplayOverview)
         broadcastMessage(
-            "$person is playing '$file' (${timeStamper(fileduration.toDouble().roundToInt())})",
+            string(
+                rr.string.room_isplayingfile,
+                person,
+                file,
+                timeStamper(fileduration.toDouble().roundToInt())
+            ),
             false
         )
     }
 
     override fun onDisconnected() {
-        broadcastMessage("Lost connection to the server. Attempting to reconnect...", false)
+        broadcastMessage(string(rr.string.room_attempting_reconnection), false)
         disconnectedPopup()
         protocol.connected = false
         protocol.connect(
@@ -1399,11 +1416,11 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     }
 
     override fun onJoined() {
-        broadcastMessage("You have joined the room: ${protocol.currentRoom}", false)
+        broadcastMessage(string(rr.string.room_you_joined_room, protocol.currentRoom), false)
     }
 
     override fun onConnectionFailed() {
-        broadcastMessage("Connecting failed.", false)
+        broadcastMessage(string(rr.string.room_connection_failed), false)
         protocol.connect(
             protocol.serverHost,
             protocol.serverPort
@@ -1411,12 +1428,12 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     }
 
     override fun onReconnected() {
-        broadcastMessage("Connected to the server.", false)
+        broadcastMessage(string(rr.string.room_connected_to_server), false)
         replenishUsers(binding.syncplayOverview)
     }
 
     override fun onConnectionAttempt(port: String) {
-        broadcastMessage("Attempting to connect to syncplay.pl:${port}", false)
+        broadcastMessage(string(rr.string.room_attempting_connect, port.toString()), false)
 
     }
 
@@ -1427,5 +1444,12 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         finishAndRemoveTask()
         super.onBackPressed()
     }
+
+
+    /** Functions to grab a localized string from resources, format it according to arguments **/
+    fun string(id: Int, vararg stuff: String): String {
+        return String.format(resources.getString(id), *stuff)
+    }
+
 }
 
