@@ -14,7 +14,6 @@ import android.os.Looper
 import android.text.Html
 import android.util.TypedValue.COMPLEX_UNIT_SP
 import android.view.Gravity.END
-import android.view.Menu.NONE
 import android.view.MenuItem
 import android.view.View.*
 import android.view.ViewGroup
@@ -56,6 +55,7 @@ import com.google.android.exoplayer2.C.SELECTION_FLAG_DEFAULT
 import com.google.android.exoplayer2.C.VIDEO_SCALING_MODE_SCALE_TO_FIT
 import com.google.android.exoplayer2.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
+import com.google.android.exoplayer2.trackselection.TrackSelectionOverride
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.CaptionStyleCompat
 import com.google.android.exoplayer2.ui.CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW
@@ -85,13 +85,15 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     lateinit var protocol: SyncplayProtocol
 
     /*-- Declaring ExoPlayer-specific variables --*/
-    private var myMediaPlayer: ExoPlayer? = null
+    private var myExoPlayer: ExoPlayer? = null
     private lateinit var trackSelec: DefaultTrackSelector
     private lateinit var paramBuilder: DefaultTrackSelector.ParametersBuilder
 
     /*-- Declaring Playtracking variables **/
-    private var ccTracker: Int = -999
-    private var audioTracker: Int = -999
+    private var audioTracks: MutableList<Track> = mutableListOf()
+    private var subtitleTracks: MutableList<Track> = mutableListOf()
+    private var lastAudioOverride: TrackSelectionOverride? = null
+    private var lastSubtitleOverride: TrackSelectionOverride? = null
     private var seekTracker: Double = 0.0
     private var receivedSeek = false
     private var updatePosition = false
@@ -205,7 +207,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
 
         /** Now, on to building Exoplayer itself using the components we have **/
-        myMediaPlayer = ExoPlayer.Builder(this)
+        myExoPlayer = ExoPlayer.Builder(this)
             .setTrackSelector(trackSelec) /* We use the trackselector we initialized before */
             .setLoadControl(loadControl) /* We use the custom LoadControl we initialized before */
             .setRenderersFactory(
@@ -220,22 +222,22 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
 
         /** Customizing ExoPlayer components **/
-        myMediaPlayer?.videoScalingMode = VIDEO_SCALING_MODE_SCALE_TO_FIT /* Starter scaling */
+        myExoPlayer?.videoScalingMode = VIDEO_SCALING_MODE_SCALE_TO_FIT /* Starter scaling */
 
         binding.vidplayer.subtitleView?.background = null /* Removing any bg color on subtitles */
 
-        myMediaPlayer?.playWhenReady = true /* Play once the media has been buffered */
+        myExoPlayer?.playWhenReady = true /* Play once the media has been buffered */
 
         /** This listener is very important, without it, syncplay is nothing but a video player */
         /** TODO: Seperate the interface from the activity **/
-        myMediaPlayer?.addListener(object : Player.Listener {
+        myExoPlayer?.addListener(object : Player.Listener {
             override fun onIsLoadingChanged(isLoading: Boolean) {
                 super.onIsLoadingChanged(isLoading)
                 if (!isLoading) {
-                    val length = (myMediaPlayer?.duration!!.toDouble()) / 1000.0
+                    val length = (myExoPlayer?.duration!!.toDouble()) / 1000.0
                     if (length != protocol.currentVideoLength) {
                         protocol.currentVideoLength =
-                            (myMediaPlayer?.duration!!.toDouble()) / 1000.0
+                            (myExoPlayer?.duration!!.toDouble()) / 1000.0
                         protocol.sendPacket(
                             sendFile(
                                 protocol.currentVideoLength,
@@ -251,16 +253,16 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 super.onIsPlayingChanged(isPlaying)
-                if (myMediaPlayer?.mediaItemCount != 0) {
+                if (myExoPlayer?.mediaItemCount != 0) {
                     when (isPlaying) {
                         true -> {
-                            if (myMediaPlayer?.playbackState != ExoPlayer.STATE_BUFFERING) {
+                            if (myExoPlayer?.playbackState != ExoPlayer.STATE_BUFFERING) {
                                 sendPlayback(true)
                                 protocol.paused = false
                             }
                         }
                         false -> {
-                            if (myMediaPlayer?.playbackState != ExoPlayer.STATE_BUFFERING) {
+                            if (myExoPlayer?.playbackState != ExoPlayer.STATE_BUFFERING) {
                                 sendPlayback(false)
                                 protocol.paused = true
                             }
@@ -273,7 +275,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                 oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int
             ) {
                 super.onPositionDiscontinuity(oldPosition, newPosition, reason)
-                if (myMediaPlayer?.mediaItemCount != 0) {
+                if (myExoPlayer?.mediaItemCount != 0) {
                     seekTracker = oldPosition.positionMs / 1000.0
                     if (reason == 1) {
                         if (!receivedSeek) {
@@ -286,7 +288,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                                     true,
                                     newPosition.positionMs,
                                     1,
-                                    play = myMediaPlayer?.isPlaying,
+                                    play = myExoPlayer?.isPlaying,
                                     protocol
                                 ),
                                 protocol.serverHost,
@@ -295,6 +297,12 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                         } else receivedSeek = false
                     }
                 }
+            }
+
+            override fun onTracksChanged(tracks: Tracks) {
+                super.onTracksChanged(tracks)
+                /** Repopulate audio and subtitle track lists with the new analysis of tracks **/
+                analyzeTracks()
             }
         })
 
@@ -404,7 +412,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
          *******************/
         findViewById<ImageButton>(R.id.exo_subtitle).setOnClickListener {
             if (trackSelec.currentMappedTrackInfo != null) {
-                ccSelect(it as ImageButton)
+                subtitleSelect(it as ImageButton)
             }
         }
 
@@ -604,10 +612,16 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
     override fun onResume() {
         super.onResume()
-        hideSystemUI(this, false) //Immersive Mode
+        hideSystemUI(this, false)
+        /** Activating Immersive Mode **/
+
+        /** If there exists a file already, inject it again **/
         if (gottenFile != null) {
             injectVideo(binding.vidplayer.player as ExoPlayer, gottenFile!!)
             binding.starterInfo.visibility = GONE
+
+            /** And apply track choices again **/
+            applyLastOverrides()
         }
     }
 
@@ -626,7 +640,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         super.onStop()
 
         updatePosition = false
-        myMediaPlayer?.stop()
+        myExoPlayer?.stop()
 //        myMediaPlayer?.run {
 //            roomViewModel.currentVideoPosition = this.currentPosition.toDouble()
 //            myPlayerWindow = this.currentWindowIndex
@@ -640,7 +654,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     override fun onDestroy() {
         super.onDestroy()
         updatePosition = false
-        myMediaPlayer?.release()
+        myExoPlayer?.release()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -982,158 +996,109 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         }
     }
 
-    private fun ccSelect(ccButton: ImageButton) {
-        val mappedTrackInfo =
-            trackSelec.currentMappedTrackInfo!! //get Tracks from our default (already injected) selector
-        var rendererIndex = 0
-        for (i in 0 until mappedTrackInfo.rendererCount) {
-            val trackgroups = mappedTrackInfo.getTrackGroups(i)
-            if (trackgroups.length != 0) {
-                when (myMediaPlayer?.getRendererType(i)) {
-                    C.TRACK_TYPE_TEXT -> rendererIndex = i
-                }
-            }
-        }
-        if (rendererIndex == 0) {
+    private fun subtitleSelect(ccButton: ImageButton) {
+        analyzeTracks()
+
+        if (subtitleTracks.isEmpty()) {
             displayInfo(getString(rr.string.room_sub_track_notfound))
             runOnUiThread {
                 ccButton.setImageDrawable(getDrawable(this, rr.drawable.ic_subtitles_off))
             }
         } else {
-            //Get Tracks
-            val cctrackgroups = mappedTrackInfo.getTrackGroups(rendererIndex)
-            val ccmap: MutableMap<Int, Format> = mutableMapOf()
-            for (index in 0 until cctrackgroups.length) {
-                ccmap[index] = cctrackgroups.get(index).getFormat(0)
-            }
-
             val popup = PopupMenu(this, ccButton)
             popup.menu.add(0, -3, 0, getString(rr.string.room_sub_track_disable))
-            for (cc in ccmap) {
-                var name = cc.value.label
-                if (cc.value.label == null) {
-                    name = getString(rr.string.room_track_track)
+            for (subtitleTrack in subtitleTracks) {
+                /* Choosing a name for the audio track, a format's label is a good choice */
+                val name = if (subtitleTrack.format?.label == null) {
+                    getString(rr.string.room_track_track)
+                } else {
+                    subtitleTrack.format?.label!!
                 }
+
+                /* Now creating the popup menu item corresponding to the audio track */
                 val item = popup.menu.add(
                     0,
-                    cc.key,
-                    NONE,
-                    "$name [${(cc.value.language).toString().uppercase()}]"
+                    subtitleTracks.indexOf(subtitleTrack),
+                    0,
+                    "$name [${(subtitleTrack.format?.language).toString().uppercase()}]"
                 )
-                item.isCheckable = true
-                if (ccTracker == -999) {
-                    if (cc.value.selectionFlags == 1) {
-                        item.isChecked = true
-                    }
-                } else {
-                    if (cc.key == ccTracker) {
-                        item.isChecked = true
-                    }
-                }
-            }
-            popup.setOnMenuItemClickListener { menuItem: MenuItem ->
-                paramBuilder = trackSelec.parameters.buildUpon().also {
-                    if (menuItem.itemId != -3) {
-                        val override: DefaultTrackSelector.SelectionOverride =
-                            DefaultTrackSelector.SelectionOverride(menuItem.itemId, 0)
-                        it.setSelectionOverride(
-                            rendererIndex,
-                            trackSelec.currentMappedTrackInfo!!.getTrackGroups(rendererIndex),
-                            override
-                        )
-                    } else {
-                        it.clearSelectionOverride(
-                            rendererIndex,
-                            trackSelec.currentMappedTrackInfo!!.getTrackGroups(rendererIndex)
-                        )
-                    }
-                }
-                trackSelec.setParameters(paramBuilder)
-                ccTracker = menuItem.itemId
-                displayInfo(string(rr.string.room_sub_track_changed, menuItem.title.toString()))
 
+                /* Making the popup menu item checkable */
+                item.isCheckable = true
+
+                /* Now to see whether it should be checked or not (whether it's selected) */
+                item.isChecked = subtitleTrack.selected
+            }
+
+            popup.setOnMenuItemClickListener { menuItem: MenuItem ->
+                val builder = myExoPlayer?.trackSelector?.parameters?.buildUpon()
+                if (menuItem.itemId == -3) {
+                    myExoPlayer?.trackSelector?.parameters =
+                        builder?.clearOverridesOfType(C.TRACK_TYPE_TEXT)!!.build()
+                    lastSubtitleOverride = null
+                } else {
+                    lastSubtitleOverride = TrackSelectionOverride(
+                        subtitleTracks[menuItem.itemId].trackGroup!!,
+                        subtitleTracks[menuItem.itemId].index
+                    )
+                    myExoPlayer?.trackSelector?.parameters =
+                        builder?.addOverride(lastSubtitleOverride!!)!!.build()
+                }
+
+                /** Show an info that audio track has been changed **/
+                displayInfo(string(rr.string.room_sub_track_changed, menuItem.title.toString()))
                 return@setOnMenuItemClickListener true
             }
-            popup.setOnDismissListener {
-                // Respond to popup being dismissed.
-            }
+
             // Show the popup menu.
             popup.show()
 
         }
     }
     private fun audioSelect(audioButton: ImageButton) {
-        val mappedTrackInfo =
-            trackSelec.currentMappedTrackInfo!! //get Tracks from our default (already injected) selector
+        analyzeTracks()
 
-        /** Now, we try to determine the audio renderer index (to use when we override tracks...etc) **/
-        var rendererIndex = 0
-        for (i in 0 until mappedTrackInfo.rendererCount) {
-            val trackgroups = mappedTrackInfo.getTrackGroups(i)
-            if (trackgroups.length != 0) {
-                when (myMediaPlayer?.getRendererType(i)) {
-                    C.TRACK_TYPE_AUDIO -> rendererIndex = i
-                }
-            }
-        }
-        /** Normally, if there is any audio renderer found, it should be something different than 0 **/
-        if (rendererIndex == 0) {
+        if (audioTracks.isEmpty()) {
             displayInfo(getString(rr.string.room_audio_track_not_found)) /* Otherwise, no audio track found */
         } else {
-            /* If the renderer index is greater than 0, then we've got some audio tracks, at least 1 */
-            val audiotrackgroups =
-                mappedTrackInfo.getTrackGroups(rendererIndex) /* Getting all audio tracks */
-            val audiomap: MutableMap<Int, Format> =
-                mutableMapOf() /* Creating a map variable for tracks */
-
-            for (index in 0 until audiotrackgroups.length) {
-                audiomap[index] = audiotrackgroups.get(index).getFormat(0) /* Populating the map */
-            }
-
-
             val popup =
                 PopupMenu(this, audioButton) /* Creating a popup menu, anchored on Audio Button */
 
-            /** Going through the entire audio track group, and populating the popup menu with each one of them **/
-            for (audio in audiomap) {
+            /** Going through the entire audio track list, and populating the popup menu with each one of them **/
+            for (audioTrack in audioTracks) {
                 /* Choosing a name for the audio track, a format's label is a good choice */
-                val name = if (audio.value.label == null)
-                    getString(rr.string.room_track_track) else audio.value.label
+                val name = if (audioTrack.format?.label == null) {
+                    getString(rr.string.room_track_track)
+                } else {
+                    audioTrack.format?.label!!
+                }
 
                 /* Now creating the popup menu item corresponding to the audio track */
                 val item = popup.menu.add(
                     0,
-                    audio.key,
+                    audioTracks.indexOf(audioTrack),
                     0,
-                    "$name [${(audio.value.language).toString().uppercase()}]"
+                    "$name [${(audioTrack.format?.language).toString().uppercase()}]"
                 )
 
                 /* Making the popup menu item checkable */
                 item.isCheckable = true
 
-                /* Now to see whether it should be checked or not (whether it's selected/forced/default) */
-                if (audioTracker == -999) {
-                    if (audio.value.selectionFlags == C.SELECTION_FLAG_DEFAULT) {
-                        item.isChecked = true
-                    }
-                } else {
-                    if (audio.key == audioTracker) {
-                        item.isChecked = true
-                    }
-                }
+                /* Now to see whether it should be checked or not (whether it's selected) */
+                item.isChecked = audioTrack.selected
             }
+
             popup.setOnMenuItemClickListener { menuItem: MenuItem ->
-                paramBuilder = trackSelec.parameters.buildUpon().also {
-                    val override: DefaultTrackSelector.SelectionOverride =
-                        DefaultTrackSelector.SelectionOverride(menuItem.itemId, 0)
-                    it.setSelectionOverride(
-                        rendererIndex,
-                        trackSelec.currentMappedTrackInfo!!.getTrackGroups(rendererIndex),
-                        override
-                    )
-                }
-                trackSelec.setParameters(paramBuilder)
-                audioTracker = menuItem.itemId
+
+                var builder = myExoPlayer?.trackSelector?.parameters?.buildUpon()
+                lastAudioOverride = TrackSelectionOverride(
+                    audioTracks[menuItem.itemId].trackGroup!!,
+                    audioTracks[menuItem.itemId].index
+                )
+                val newParams = builder?.addOverride(lastAudioOverride!!)!!.build()
+                myExoPlayer?.trackSelector?.parameters = newParams
+
+                /** Show an info that audio track has been changed **/
                 displayInfo(string(rr.string.room_audio_track_changed, menuItem.title.toString()))
                 return@setOnMenuItemClickListener true
             }
@@ -1141,14 +1106,6 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
             // Show the popup menu.
             popup.show()
         }
-    }
-
-    private fun selectAudioTrack(id: Int) {
-
-    }
-
-    private fun selectCCTrack(id: Int) {
-
     }
 
     private fun hideKb() {
@@ -1353,12 +1310,12 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
      ********************************************************************************************/
 
     override fun onSomeonePaused(pauser: String) {
-        if (pauser != protocol.currentUsername) myMediaPlayer?.let { pausePlayback(it) }
+        if (pauser != protocol.currentUsername) myExoPlayer?.let { pausePlayback(it) }
         broadcastMessage(string(rr.string.room_guy_paused, pauser), false)
     }
 
     override fun onSomeonePlayed(player: String) {
-        if (player != protocol.currentUsername) myMediaPlayer?.let { playPlayback(it) }
+        if (player != protocol.currentUsername) myExoPlayer?.let { playPlayback(it) }
         broadcastMessage(string(rr.string.room_guy_played, player), false)
 
     }
@@ -1379,7 +1336,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                     ), false
                 )
                 receivedSeek = true
-                myMediaPlayer?.seekTo((toPosition * 1000.0).toLong())
+                myExoPlayer?.seekTo((toPosition * 1000.0).toLong())
             } else {
                 broadcastMessage(
                     string(
@@ -1396,7 +1353,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
     override fun onSomeoneBehind(behinder: String, toPosition: Double) {
         runOnUiThread {
-            myMediaPlayer?.seekTo((toPosition * 1000.0).toLong())
+            myExoPlayer?.seekTo((toPosition * 1000.0).toLong())
         }
         broadcastMessage(string(rr.string.room_rewinded, behinder), false)
     }
@@ -1479,5 +1436,69 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         return String.format(resources.getString(id), *stuff)
     }
 
+
+    /** In ExoPlayer, a MediaItem consists of TrackGroups
+     * Each TrackGroup can contain one track (format) or more.
+     * Basically, ExoPlayer gathers similar tracks (same language, different bitrate, for example)
+     * into one track group. There can exist for example 4 track groups, 3 of them of audio or text
+     *
+     * Anyway, in order to manipulate track selection, you need to know how to retrieve those trackgroups
+     * and also, how to retrieve the tracks inside them, and check which one is selected...etc
+     *
+     * I do all of this here.
+     */
+
+    fun analyzeTracks() {
+        audioTracks.clear()
+        subtitleTracks.clear()
+        val tracks = myExoPlayer!!.currentTracks
+        for (group in tracks.groups) {
+            val trackGroup = group.mediaTrackGroup
+            val trackType = group.type
+            if (trackType == C.TRACK_TYPE_AUDIO || trackType == C.TRACK_TYPE_TEXT) {
+                for (i in (0 until trackGroup.length)) {
+                    val format = trackGroup.getFormat(i)
+                    val index = trackGroup.indexOf(format)
+
+                    /** Creating a custom Track instance for every track in a track group **/
+                    val track = Track()
+                    track.trackGroup = trackGroup
+                    track.trackType = trackType
+                    track.index = index
+                    track.format = format
+                    track.selected = group.isTrackSelected(index)
+
+                    if (trackType == C.TRACK_TYPE_TEXT) {
+                        subtitleTracks.add(track)
+                    } else {
+                        audioTracks.add(track)
+                    }
+                }
+            }
+        }
+    }
+
+    fun applyLastOverrides() {
+
+        analyzeTracks()
+
+        if (myExoPlayer != null) {
+            if (myExoPlayer!!.trackSelector != null) {
+                val builder = myExoPlayer!!.trackSelector!!.parameters.buildUpon()
+
+                var newParams = builder.build()
+
+                if (lastAudioOverride != null) {
+                    newParams = newParams.buildUpon().addOverride(lastAudioOverride!!).build()
+                }
+                if (lastSubtitleOverride != null) {
+                    newParams = newParams.buildUpon().addOverride(lastSubtitleOverride!!).build()
+                }
+
+                myExoPlayer?.trackSelector?.parameters = newParams
+            }
+        }
+
+    }
 }
 
