@@ -31,6 +31,7 @@
           <stringArguments>
             <stringArg name="classpath">
               <args>
+                <arg>$MODULE_DIR$/../../../ColorPreference/build/intermediates/compile_library_classes_jar/debug/classes.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/2b78879e50da0cc864b679c29842540c/transformed/jetified-preference-ktx-1.2.0-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/2bea822568d08a4e8cf3710ff04a11c8/transformed/preference-1.2.0-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/8d8f1e9240e414fc2528adca9bf83d10/transformed/appcompat-1.6.0-alpha05-api.jar</arg>

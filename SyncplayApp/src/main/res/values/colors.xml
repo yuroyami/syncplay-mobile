@@ -12,7 +12,7 @@
     <color name="preroom_ic_color">#FFEF6493</color>
     <color name="setting_text1">#FF575757</color>
     <color name="setting_text2">#FF7E7E7E</color>
-    <color name="timestamp_default">#aa6666</color>
+    <color name="timestamp_default">#FF5C87</color>
     <color name="selftag_default">#ff2d2d</color>
     <color name="friendtag_default">#6082B6</color>
     <color name="systemmsg_default">#eeeee1</color>

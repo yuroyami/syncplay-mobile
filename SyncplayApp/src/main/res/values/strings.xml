@@ -45,6 +45,20 @@
     <string name="room_guy_joined">%s joined the room.</string>
     <string name="room_isplayingfile">%1s is playing \'%2s\' (%3s)</string>
     <string name="room_you_joined_room">You have joined the room: %s</string>
+    <string name="room_scaling_fit_screen">Resize Mode: FIT TO SCREEN</string>
+    <string name="room_scaling_fixed_width">Resize Mode: FIXED WIDTH</string>
+    <string name="room_scaling_fixed_height">Resize Mode: FIXED HEIGHT</string>
+    <string name="room_scaling_fill_screen">Resize Mode: FILL SCREEN</string>
+    <string name="room_scaling_zoom">Resize Mode: Zoom</string>
+    <string name="room_sub_track_changed">Subtitle Track changed to: %s</string>
+    <string name="room_audio_track_changed">Audio Track changed to: %s</string>
+    <string name="room_audio_track_not_found">No audio found !</string>
+    <string name="room_sub_track_disable">Disable Subtitles</string>
+    <string name="room_track_track">Track</string>
+    <string name="room_sub_track_notfound">No subtitles found !</string>
+    <string name="room_details_current_room">Current Room: %s</string>
+    <string name="room_details_nofileplayed">(No file being played)</string>
+    <string name="room_details_file_properties">Duration: %1s - Size: %2s MBs</string>
     <string name="disconnected_notice_header">DISCONNECTED</string>
     <string name="disconnected_notice_a">You have been disconnected from the server due to a network problem.</string>
     <string name="disconnected_notice_b">Attempting to reconnect…</string>
@@ -93,17 +107,16 @@
     <string name="uisetting_msgcount_title">Message max count</string>
     <string name="uisetting_msglife_summary">When receiving a chat message or room message, it will begin fading out for the amount of time set below.</string>
     <string name="uisetting_msglife_title">Display duration for Chat messages</string>
-
     <string name="uisetting_timestamp_color_summary">Customize the text color of message timestamps (Default is Pink)</string>
-    <string name="uisetting_timestamp_color_title">Timestamp text color</string>
+    <string name="uisetting_timestamp_color_title">Timestamp Text Color</string>
     <string name="uisetting_self_color_summary">Customize the text color of your name tag (Default is Red)</string>
-    <string name="uisetting_self_color_title">Self tag color</string>
+    <string name="uisetting_self_color_title">Self Tag Color</string>
     <string name="uisetting_friend_color_summary">Customize the text color of friends\' name tags (Default is Blue)</string>
-    <string name="uisetting_friend_color_title">Friend tag text color</string>
+    <string name="uisetting_friend_color_title">Friend Tag Text Color</string>
     <string name="uisetting_system_color_summary">Customize the text color of system room messages (Default is White)</string>
-    <string name="uisetting_system_color_title">System text color</string>
+    <string name="uisetting_system_color_title">System Message Text Color</string>
     <string name="uisetting_human_color_summary">Customize the text color of user messages (Default is White)</string>
-    <string name="uisetting_human_color_title">User message text color</string>
+    <string name="uisetting_human_color_title">User Message Text Color</string>
 
 
     <string name="uisetting_resetdefault_summary">Reset all of the above settings to default.</string>
@@ -113,7 +126,6 @@
     <!--List of Languages identifier strings used for, meh, just a toast... -->
     <string name="en">English</string>
     <string name="ar">Arabic</string>
-
 
     <!--List of Languages and their Tags-->
     <string-array name="Lang">

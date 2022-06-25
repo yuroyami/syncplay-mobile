@@ -79,12 +79,38 @@
     <string name="room_connected_to_server">تم الاتصال بالسيرفر.</string>
     <string name="room_connection_failed">فشل الاتصال.</string>
     <string name="room_attempting_reconnection">انقطع الاتصال بالسيرفر. يتم إعادة المحاولة…</string>
-    <string name="room_guy_played">%s يواصل التشغيل.</string>
-    <string name="room_guy_paused">%s جمَّدَ التشغيل.</string>
-    <string name="room_seeked">%1s قفز من %2s إلى %3s</string>
+    <string name="room_guy_played">واصل %s التشغيل</string>
+    <string name="room_guy_paused">جمد %s التشغيل</string>
+    <string name="room_seeked">قفز %1s من %2s إلى %3s</string>
     <string name="room_rewinded">الرجوع إلى الوراء بسبب الفرق الزمني مع %s</string>
-    <string name="room_guy_left">%s غادر الغرفة.</string>
-    <string name="room_guy_joined">%s انضم للغرفة.</string>
-    <string name="room_isplayingfile">%1s الآن يلعب الفيديو \'%2s\' (%3s)</string>
+    <string name="room_guy_left">غادر %s الغرفة</string>
+    <string name="room_guy_joined">انضم %s للغرفة</string>
+    <string name="room_isplayingfile">%1s الآن يلعب الفيديو %2s (%3s)</string>
     <string name="room_you_joined_room">لقد انضممت إلى الغرفة: %s</string>
+    <string name="room_details_file_properties">المدة: %1s - الحجم : %2s ميغا</string>
+    <string name="room_details_nofileplayed">(ما مـِن ملف جاري تشغيله)</string>
+    <string name="room_details_current_room">الغرفة الحـالية : %s</string>
+    <string name="room_sub_track_notfound">ما من ترجمة في الملف !</string>
+    <string name="room_track_track">مقطع</string>
+    <string name="room_sub_track_disable">تعطيل الترجمة</string>
+    <string name="room_audio_track_not_found">ما من صوت في الملف</string>
+    <string name="room_audio_track_changed">تم تغيير مقطع الصوت إلى : %s</string>
+    <string name="room_sub_track_changed">تم تغيير مقطع الترجمة إلى : %s</string>
+    <string name="room_scaling_zoom">وضع التكبير : زووم</string>
+    <string name="room_scaling_fill_screen">وضع التكبير : ملء الشاشة</string>
+    <string name="room_scaling_fixed_height">وضع التكبير : طول ثابت</string>
+    <string name="room_scaling_fixed_width">وضع التكبير : عرض ثابت</string>
+    <string name="room_scaling_fit_screen">وضع التكبير : ملاءمة الشاشة</string>
+    <string name="uisetting_human_color_title">لون خط رسائل المستخدمين</string>
+    <string name="uisetting_human_color_summary">"يعدل لون خط رسائل المستخدمين (اللون الافتراضي : أبيض) "</string>
+    <string name="uisetting_system_color_title">لون خـط رسائل النظام</string>
+    <string name="uisetting_system_color_summary">يعدل لون خط رسائل نظام الغرفة التلقائية (أبيض افتراضيا)</string>
+    <string name="uisetting_friend_color_title">لون خـط اسم الصديق</string>
+    <string name="uisetting_friend_color_summary">يعدل لون خط اسم الصديق (أزرق افتراضيا)</string>
+    <string name="uisetting_self_color_title">لون خط الاسم الشخصي</string>
+    <string name="uisetting_self_color_summary">يعدل لون خط اسم الذات (أحمر افتراضياً)</string>
+    <string name="uisetting_timestamp_color_title">لون خط الطوابع الزمنية</string>
+    <string name="uisetting_timestamp_color_summary">يعدل لون خط طوابع الزمن في الرسائل (وردي افتراضياً)</string>
+
+
 </resources>

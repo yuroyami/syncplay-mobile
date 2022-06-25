@@ -7,10 +7,10 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ColorPreference/SyncPlay.ColorPreference.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/ColorPreference/SyncPlay.ColorPreference.androidTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ColorPreference/SyncPlay.ColorPreference.main.iml" filepath="$PROJECT_DIR$/.idea/modules/ColorPreference/SyncPlay.ColorPreference.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ColorPreference/SyncPlay.ColorPreference.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/ColorPreference/SyncPlay.ColorPreference.unitTest.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/SyncPlay.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/SyncPlay.app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/SyncPlay.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/SyncPlay.app.androidTest.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/SyncPlay.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/SyncPlay.app.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/SyncPlay.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/SyncPlay.app.unitTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/SyncPlay.SyncplayApp.iml" filepath="$PROJECT_DIR$/.idea/modules/app/SyncPlay.SyncplayApp.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SyncplayApp/SyncPlay.SyncplayApp.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/SyncplayApp/SyncPlay.SyncplayApp.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SyncplayApp/SyncPlay.SyncplayApp.main.iml" filepath="$PROJECT_DIR$/.idea/modules/SyncplayApp/SyncPlay.SyncplayApp.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SyncplayApp/SyncPlay.SyncplayApp.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/SyncplayApp/SyncPlay.SyncplayApp.unitTest.iml" />
     </modules>
   </component>
 </project>

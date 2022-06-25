@@ -12,7 +12,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.text.Html
-import android.util.Log
 import android.util.TypedValue.COMPLEX_UNIT_SP
 import android.view.Gravity.END
 import android.view.Menu.NONE
@@ -49,7 +48,6 @@ import com.cosmik.syncplay.protocol.SPWrappers.sendReadiness
 import com.cosmik.syncplay.protocol.SPWrappers.sendState
 import com.cosmik.syncplay.protocol.SyncplayProtocol
 import com.cosmik.syncplay.toolkit.SyncplayUtils
-import com.cosmik.syncplay.toolkit.SyncplayUtils.generateTimestamp
 import com.cosmik.syncplay.toolkit.SyncplayUtils.getFileName
 import com.cosmik.syncplay.toolkit.SyncplayUtils.hideSystemUI
 import com.cosmik.syncplay.toolkit.SyncplayUtils.timeStamper
@@ -92,8 +90,8 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     private lateinit var paramBuilder: DefaultTrackSelector.ParametersBuilder
 
     /*-- Declaring Playtracking variables **/
-    private var ccTracker: Int = -1
-    private var audioTracker: Int = -1
+    private var ccTracker: Int = -999
+    private var audioTracker: Int = -999
     private var seekTracker: Double = 0.0
     private var receivedSeek = false
     private var updatePosition = false
@@ -147,7 +145,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         protocol.rewindThreshold = sp.getInt("rewind_threshold", 12).toLong()
 
         /** Now, let's connect to the server, everything should be ready **/
-        val tls = sp.getBoolean("tls", false) /* We're not using this yet */
+        //val tls = sp.getBoolean("tls", false) /* We're not using this yet */
         if (!protocol.connected) {
             protocol.connect(
                 protocol.serverHost,
@@ -175,8 +173,6 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
     override fun onStart() {
         super.onStart()
-
-
         /** We initialize ExoPlayer components here, right after onStart() and not onCreate() **/
 
         /** First, we hold a reference to preferences, we will use it quite a few times **/
@@ -204,7 +200,9 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
             it.parameters =
                 DefaultTrackSelector.ParametersBuilder(this)
                     .build()
+
         }
+
 
         /** Now, on to building Exoplayer itself using the components we have **/
         myMediaPlayer = ExoPlayer.Builder(this)
@@ -573,12 +571,16 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         findViewById<ImageButton>(rr.id.syncplay_screen).setOnClickListener {
             val currentresolution = binding.vidplayer.resizeMode
             val resolutions = mutableMapOf<Int, String>()
-            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIT] = "Resize Mode: FIT TO SCREEN"
-            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH] = "Resize Mode: FIXED WIDTH"
+            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIT] =
+                getString(rr.string.room_scaling_fit_screen)
+            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH] =
+                getString(rr.string.room_scaling_fixed_width)
             resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT] =
-                "Resize Mode: FIXED HEIGHT"
-            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FILL] = "Resize Mode: FILL SCREEN"
-            resolutions[AspectRatioFrameLayout.RESIZE_MODE_ZOOM] = "Resize Mode: Zoom"
+                getString(rr.string.room_scaling_fixed_height)
+            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FILL] =
+                getString(rr.string.room_scaling_fill_screen)
+            resolutions[AspectRatioFrameLayout.RESIZE_MODE_ZOOM] =
+                getString(rr.string.room_scaling_zoom)
 
             val nextRes = currentresolution + 1
             if (nextRes == 5) {
@@ -637,7 +639,6 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.e("STATUS", "DESTROYED")
         updatePosition = false
         myMediaPlayer?.release()
     }
@@ -790,10 +791,11 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
                 val txtview = TextView(this@RoomActivity)
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-                    txtview.text = Html.fromHtml(message.factorize(isTimestampEnabled))
+                    txtview.text =
+                        Html.fromHtml(message.factorize(isTimestampEnabled, this@RoomActivity))
                 } else {
                     txtview.text = Html.fromHtml(
-                        message.factorize(isTimestampEnabled),
+                        message.factorize(isTimestampEnabled, this@RoomActivity),
                         Html.FROM_HTML_MODE_LEGACY
                     )
                 }
@@ -845,6 +847,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
             }
         }
     }
+
     private fun replenishUsers(linearLayout: LinearLayout) {
         runOnUiThread {
             if (binding.syncplayOverviewcheckbox.isChecked) {
@@ -853,8 +856,8 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
                 //Creating line for room-name:
                 val roomnameView = TextView(this)
-                roomnameView.text = "Current Room : ${protocol.currentRoom}"
-
+                roomnameView.text =
+                    string(rr.string.room_details_current_room, protocol.currentRoom)
                 roomnameView.isFocusable = false
                 val linearlayout0 = LinearLayout(this)
                 val linearlayoutParams0: LinearLayout.LayoutParams =
@@ -909,7 +912,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                     //Second line (File name)
                     val isThereFile = userList[user]?.get(2) != ""
                     val fileFirstLine =
-                        if (isThereFile) userList[user]?.get(2) else "(No file being played)"
+                        if (isThereFile) userList[user]?.get(2) else getString(rr.string.room_details_nofileplayed)
 
                     val lineArrower = ImageView(this)
                     lineArrower.setImageResource(rr.drawable.ic_arrowleft)
@@ -943,13 +946,11 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                         val filesizegetter = if (userList[user]?.get(4)
                                 ?.toIntOrNull() != null
                         ) (userList[user]!![4].toDouble() / 1000000.0).toFloat() else 0.0.toFloat()
-                        val fileInfoLine =
-                            "Duration: ${
-                                timeStamper(
-                                    userList[user]?.get(3)?.toDouble()?.roundToInt()!!
-                                )
-                            } - Size: $filesizegetter MBs"
-
+                        val fileInfoLine = string(
+                            rr.string.room_details_file_properties,
+                            timeStamper(userList[user]?.get(3)?.toDouble()?.roundToInt()!!),
+                            filesizegetter.toString()
+                        )
                         val lineFileInfo = TextView(this)
                         lineFileInfo.text = fileInfoLine
                         lineFileInfo.setTextSize(COMPLEX_UNIT_SP, 11f)
@@ -980,6 +981,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
             }
         }
     }
+
     private fun ccSelect(ccButton: ImageButton) {
         val mappedTrackInfo =
             trackSelec.currentMappedTrackInfo!! //get Tracks from our default (already injected) selector
@@ -993,7 +995,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
             }
         }
         if (rendererIndex == 0) {
-            displayInfo("No subtitles found !")
+            displayInfo(getString(rr.string.room_sub_track_notfound))
             runOnUiThread {
                 ccButton.setImageDrawable(getDrawable(this, rr.drawable.ic_subtitles_off))
             }
@@ -1006,11 +1008,11 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
             }
 
             val popup = PopupMenu(this, ccButton)
-            popup.menu.add(0, -3, 0, "Disable Subtitles")
+            popup.menu.add(0, -3, 0, getString(rr.string.room_sub_track_disable))
             for (cc in ccmap) {
                 var name = cc.value.label
                 if (cc.value.label == null) {
-                    name = "Track"
+                    name = getString(rr.string.room_track_track)
                 }
                 val item = popup.menu.add(
                     0,
@@ -1019,7 +1021,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                     "$name [${(cc.value.language).toString().uppercase()}]"
                 )
                 item.isCheckable = true
-                if (ccTracker == -1) {
+                if (ccTracker == -999) {
                     if (cc.value.selectionFlags == 1) {
                         item.isChecked = true
                     }
@@ -1048,7 +1050,8 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                 }
                 trackSelec.setParameters(paramBuilder)
                 ccTracker = menuItem.itemId
-                displayInfo("Subtitle Track changed to: ${menuItem.title}")
+                displayInfo(string(rr.string.room_sub_track_changed, menuItem.title.toString()))
+
                 return@setOnMenuItemClickListener true
             }
             popup.setOnDismissListener {
@@ -1062,6 +1065,8 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     private fun audioSelect(audioButton: ImageButton) {
         val mappedTrackInfo =
             trackSelec.currentMappedTrackInfo!! //get Tracks from our default (already injected) selector
+
+        /** Now, we try to determine the audio renderer index (to use when we override tracks...etc) **/
         var rendererIndex = 0
         for (i in 0 until mappedTrackInfo.rendererCount) {
             val trackgroups = mappedTrackInfo.getTrackGroups(i)
@@ -1071,31 +1076,44 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                 }
             }
         }
+        /** Normally, if there is any audio renderer found, it should be something different than 0 **/
         if (rendererIndex == 0) {
-            displayInfo("No audio found !")
+            displayInfo(getString(rr.string.room_audio_track_not_found)) /* Otherwise, no audio track found */
         } else {
-            //Get Tracks
-            val audiotrackgroups = mappedTrackInfo.getTrackGroups(rendererIndex)
-            val audiomap: MutableMap<Int, Format> = mutableMapOf()
+            /* If the renderer index is greater than 0, then we've got some audio tracks, at least 1 */
+            val audiotrackgroups =
+                mappedTrackInfo.getTrackGroups(rendererIndex) /* Getting all audio tracks */
+            val audiomap: MutableMap<Int, Format> =
+                mutableMapOf() /* Creating a map variable for tracks */
+
             for (index in 0 until audiotrackgroups.length) {
-                audiomap[index] = audiotrackgroups.get(index).getFormat(0)
+                audiomap[index] = audiotrackgroups.get(index).getFormat(0) /* Populating the map */
             }
 
-            val popup = PopupMenu(this, audioButton)
+
+            val popup =
+                PopupMenu(this, audioButton) /* Creating a popup menu, anchored on Audio Button */
+
+            /** Going through the entire audio track group, and populating the popup menu with each one of them **/
             for (audio in audiomap) {
-                var name = audio.value.label
-                if (audio.value.label == null) {
-                    name = "Track"
-                }
+                /* Choosing a name for the audio track, a format's label is a good choice */
+                val name = if (audio.value.label == null)
+                    getString(rr.string.room_track_track) else audio.value.label
+
+                /* Now creating the popup menu item corresponding to the audio track */
                 val item = popup.menu.add(
                     0,
                     audio.key,
                     0,
                     "$name [${(audio.value.language).toString().uppercase()}]"
                 )
+
+                /* Making the popup menu item checkable */
                 item.isCheckable = true
-                if (audioTracker == -1) {
-                    if (audio.value.selectionFlags == 1) {
+
+                /* Now to see whether it should be checked or not (whether it's selected/forced/default) */
+                if (audioTracker == -999) {
+                    if (audio.value.selectionFlags == C.SELECTION_FLAG_DEFAULT) {
                         item.isChecked = true
                     }
                 } else {
@@ -1116,20 +1134,28 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                 }
                 trackSelec.setParameters(paramBuilder)
                 audioTracker = menuItem.itemId
-                displayInfo("Audio Track changed to: ${menuItem.title}")
+                displayInfo(string(rr.string.room_audio_track_changed, menuItem.title.toString()))
                 return@setOnMenuItemClickListener true
             }
-            popup.setOnDismissListener {
-                // Respond to popup being dismissed.
-            }
+
             // Show the popup menu.
             popup.show()
         }
     }
+
+    private fun selectAudioTrack(id: Int) {
+
+    }
+
+    private fun selectCCTrack(id: Int) {
+
+    }
+
     private fun hideKb() {
         WindowInsetsControllerCompat(window, window.decorView).hide(WindowInsetsCompat.Type.ime())
         binding.syncplayINPUTBox.clearFocus()
     }
+
     private fun casualUpdater() {
         //TODO: Change periodic sleep to periodic handler.
         GlobalScope.launch(Dispatchers.Unconfined) {
@@ -1183,30 +1209,28 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
     @UiThread
     private fun broadcastMessage(message: String, isChat: Boolean, chatter: String = "") {
-        val msg = Message() /* Creating our custom message instance */
+        /** Messages are just a wrapper class for everything we need about a message
+        So first, we initialize it, customize it, then add it to our long list of messages */
+        val msg = Message()
+
+        /** Check if it's a system or a user message **/
+        if (isChat) {
+            msg.sender = chatter
+        }
+
+        /** Check if the sender is also the main user, to determine colors **/
+        if (chatter.lowercase() == protocol.currentUsername.lowercase()) {
+            msg.isMainUser = true
+        }
+
+        /** Assigning the message content to the message **/
         msg.content =
             message /* Assigning the message content to the variable inside our instance */
-        msg.timestamp = generateTimestamp()
-        msg.timestampStylized = "<font color=\"#aa6666\">[${msg.timestamp}] </font>"
 
-        msg.stylizedContent = if (isChat) {
-            msg.sender = chatter
-            val selfColorCode = "#ff2d2d"
-            val friendColorCode = "#6082B6"
-            if (chatter.lowercase() == protocol.currentUsername.lowercase()) {
-                val username =
-                    "<font color=\"${selfColorCode}\"><strong><bold> $chatter:</bold></strong></font>"
-                "$username<font color=\"#ffffff\"><bold> $message</bold></font>"
-            } else {
-                val username =
-                    "<font color=\"${friendColorCode}\"><strong><bold> $chatter:</bold></strong></font>"
-                "$username<font color=\"#ffffff\"><bold> $message</bold></font>"
-            }
-        } else {
-            "<font color=\"#eeeee1\"><bold>$message</bold></font>"
-        }
+        /** Adding the message instance to our message sequence **/
         protocol.messageSequence.add(msg)
 
+        /** Refresh views **/
         replenishMsgs(binding.syncplayMESSAGERY)
     }
 
@@ -1234,9 +1258,9 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                     val txtview = TextView(this@RoomActivity)
                     txtview.text = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
                         Html.fromHtml(
-                            message.factorize(true),
+                            message.factorize(true, this@RoomActivity),
                             Html.FROM_HTML_MODE_LEGACY
-                        ) else Html.fromHtml(message.factorize(true))
+                        ) else Html.fromHtml(message.factorize(true, this@RoomActivity))
                     txtview.textSize = 9F
                     val rltvParams: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
@@ -1437,7 +1461,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     }
 
     override fun onConnectionAttempt(port: String) {
-        broadcastMessage(string(rr.string.room_attempting_connect, port.toString()), false)
+        broadcastMessage(string(rr.string.room_attempting_connect, port), false)
 
     }
 

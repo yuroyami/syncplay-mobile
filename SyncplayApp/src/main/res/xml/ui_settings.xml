@@ -75,31 +75,36 @@
         android:defaultValue="@color/timestamp_default"
         android:key="timestamp_color"
         android:summary="@string/uisetting_timestamp_color_summary"
-        android:title="@string/uisetting_timestamp_color_title" />
+        android:title="@string/uisetting_timestamp_color_title"
+        app:cpv_dialogType="custom" />
 
     <com.chromaticnoob.colorpreference.ColorPreferenceCompat
         android:defaultValue="@color/selftag_default"
         android:key="selftag_color"
         android:summary="@string/uisetting_self_color_summary"
-        android:title="@string/uisetting_self_color_title" />
+        android:title="@string/uisetting_self_color_title"
+        app:cpv_dialogType="custom" />
 
     <com.chromaticnoob.colorpreference.ColorPreferenceCompat
         android:defaultValue="@color/friendtag_default"
         android:key="friendtag_color"
         android:summary="@string/uisetting_friend_color_summary"
-        android:title="@string/uisetting_friend_color_title" />
+        android:title="@string/uisetting_friend_color_title"
+        app:cpv_dialogType="custom" />
 
     <com.chromaticnoob.colorpreference.ColorPreferenceCompat
         android:defaultValue="@color/systemmsg_default"
         android:key="systemtext_color"
         android:summary="@string/uisetting_system_color_summary"
-        android:title="@string/uisetting_system_color_title" />
+        android:title="@string/uisetting_system_color_title"
+        app:cpv_dialogType="custom" />
 
     <com.chromaticnoob.colorpreference.ColorPreferenceCompat
         android:defaultValue="@color/usermsg_default"
         android:key="usertext_color"
         android:summary="@string/uisetting_human_color_summary"
-        android:title="@string/uisetting_human_color_title" />
+        android:title="@string/uisetting_human_color_title"
+        app:cpv_dialogType="custom" />
 
     <Preference
         android:summary="@string/uisetting_resetdefault_summary"

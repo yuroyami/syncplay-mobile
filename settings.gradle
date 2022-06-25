@@ -20,5 +20,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "SyncPlay"
-include ':app'
+include ':SyncplayApp'
 include ':ColorPreference'

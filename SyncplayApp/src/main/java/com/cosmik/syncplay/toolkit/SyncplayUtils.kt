@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.ContentResolver
 import android.content.Context
 import android.database.Cursor
+import android.graphics.Color
 import android.net.Uri
 import android.provider.MediaStore
 import android.provider.OpenableColumns
@@ -12,16 +13,18 @@ import android.util.Log
 import android.view.View
 import android.view.Window
 import android.view.WindowManager
+import androidx.annotation.ColorInt
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.preference.PreferenceManager
 import com.cosmik.syncplay.BuildConfig
 import java.io.*
 import java.sql.Timestamp
 
 object SyncplayUtils {
 
-    /** Usually, the following set of operations were pretty hard to refine to the best shape possible *
+    /** Usually, the following set of operations were pretty hard to refine to the best shape possible
      * In short, this class represents a bunch of functions that do a certain job, and their code is at
      * its best shape and state, which means, it's maintainable, clean, and requires no longer tweaking.
      * Why ? because they do what they're supposed to do. There is no absolute need to include 'em directly
@@ -29,8 +32,7 @@ object SyncplayUtils {
      * I just put it here. This is like a small codex for functions often hard to find on the internet. *
      */
 
-
-    /* This function helps convert Uris to Paths. Not yet used.*/
+    /** This function helps convert Uris to Paths. Not yet used.*/
     @JvmStatic
     fun alternativeUriToPath(context: Context, uri: Uri): String? {
         val contentResolver = context.contentResolver
@@ -202,4 +204,15 @@ object SyncplayUtils {
                 or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                 or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
     }
+
+
+    /** Returns a hexadecimal color code from a preference ColorInt **/
+    @JvmStatic
+    fun getColorCode(key: String, context: Context): String {
+        @ColorInt val color =
+            PreferenceManager.getDefaultSharedPreferences(context).getInt(key, Color.BLACK)
+        return String.format("#%06X", 0xFFFFFF and color)
+    }
+
+
 }
