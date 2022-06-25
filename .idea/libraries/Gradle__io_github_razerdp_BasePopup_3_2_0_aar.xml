@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: io.github.razerdp:BasePopup:3.2.0@aar">
+    <CLASSES>
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-3/54ce275cc5b56c9d38995747c804a9e8/transformed/jetified-BasePopup-3.2.0/AndroidManifest.xml" />
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-3/54ce275cc5b56c9d38995747c804a9e8/transformed/jetified-BasePopup-3.2.0/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-3/54ce275cc5b56c9d38995747c804a9e8/transformed/jetified-BasePopup-3.2.0/res" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

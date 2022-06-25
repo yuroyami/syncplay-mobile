@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <com.chromaticnoob.colorpreference.ColorPickerView
+            android:id="@+id/cpv_color_picker_view"
+            style="@style/cpv_ColorPickerViewStyle" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingTop="16dp">
+
+            <com.chromaticnoob.colorpreference.ColorPanelView
+                android:id="@+id/cpv_color_panel_new"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                app:cpv_colorShape="circle" />
+
+            <LinearLayout
+                android:id="@+id/cpv_hex_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:orientation="horizontal"
+                android:padding="8dp"
+                tools:ignore="RtlHardcoded">
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/cpv_hex_prefix"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@null"
+                    android:focusable="false"
+                    android:maxLength="1"
+                    android:maxLines="1"
+                    android:text="#"
+                    android:textSize="16sp"
+                    android:typeface="monospace" />
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/cpv_hex"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@null"
+                    android:digits="0123456789ABCDEFabcdef"
+                    android:focusable="true"
+                    android:imeOptions="actionGo"
+                    android:importantForAutofill="no"
+                    android:inputType="textNoSuggestions"
+                    android:maxLength="8"
+                    android:maxLines="1"
+                    android:textSize="16sp"
+                    android:typeface="monospace"
+                    tools:ignore="RtlHardcoded"
+                    tools:text="000000" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

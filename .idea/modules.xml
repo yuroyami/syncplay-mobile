@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SyncPlay.iml" filepath="$PROJECT_DIR$/.idea/modules/SyncPlay.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ColorPreference/SyncPlay.ColorPreference.iml" filepath="$PROJECT_DIR$/.idea/modules/ColorPreference/SyncPlay.ColorPreference.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ColorPreference/SyncPlay.ColorPreference.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/ColorPreference/SyncPlay.ColorPreference.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ColorPreference/SyncPlay.ColorPreference.main.iml" filepath="$PROJECT_DIR$/.idea/modules/ColorPreference/SyncPlay.ColorPreference.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ColorPreference/SyncPlay.ColorPreference.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/ColorPreference/SyncPlay.ColorPreference.unitTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/SyncPlay.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/SyncPlay.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/SyncPlay.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/SyncPlay.app.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/SyncPlay.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/SyncPlay.app.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/SyncPlay.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/SyncPlay.app.unitTest.iml" />
+    </modules>
+  </component>
+</project>

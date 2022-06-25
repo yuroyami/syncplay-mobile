@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="Gradle: F">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-3/6a33fd08dcde3dc4aeb8edaefd575de9/transformed/jetified-extension-ffmpeg/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-3/6a33fd08dcde3dc4aeb8edaefd575de9/transformed/jetified-extension-ffmpeg/AndroidManifest.xml" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

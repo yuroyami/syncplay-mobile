@@ -52,6 +52,15 @@
         <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/layout/userbottomsheet.xml" value="0.10182370820668693" />
         <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/menu/cc_menu.xml" value="0.209375" />
         <entry key="..\:/AKRAM's Android Development/SyncPlay/SYNCPLAY/app/src/main/res/xml/settings.xml" value="0.1" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/ColorPreference/src/main/res/layout/cpv_color_item_circle.xml" value="0.19067028985507245" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/ColorPreference/src/main/res/layout/cpv_color_item_square.xml" value="0.19067028985507245" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/ColorPreference/src/main/res/layout/cpv_dialog.xml" value="0.19067028985507245" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/ColorPreference/src/main/res/layout/cpv_dialog_color_picker.xml" value="0.19067028985507245" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/ColorPreference/src/main/res/layout/cpv_dialog_presets.xml" value="0.19067028985507245" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/ColorPreference/src/main/res/layout/cpv_preference_circle.xml" value="0.19067028985507245" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/ColorPreference/src/main/res/layout/cpv_preference_circle_large.xml" value="0.19067028985507245" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/ColorPreference/src/main/res/layout/cpv_preference_square.xml" value="0.19067028985507245" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/ColorPreference/src/main/res/layout/cpv_preference_square_large.xml" value="0.19067028985507245" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/drawable/hud_gradient.xml" value="0.158" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/layout/about_tab1_content.xml" value="0.18931159420289856" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/layout/about_tab1_header.xml" value="0.196875" />
@@ -71,7 +80,8 @@
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/layout/serverlist_textview.xml" value="0.196875" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/menu/cc_menu.xml" value="0.196875" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.1" />
-        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/xml/settings.xml" value="0.1585144927536232" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/xml/settings.xml" value="0.11" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/xml/ui_settings.xml" value="0.10472659870250231" />
       </map>
     </option>
   </component>

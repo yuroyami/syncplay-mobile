@@ -277,7 +277,6 @@
 
             <androidx.fragment.app.FragmentContainerView
                 android:id="@+id/pseudo_popup_container"
-                android:name="com.cosmik.syncplay.room.RoomSettingsFragment"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 tools:ignore="HardcodedText" />

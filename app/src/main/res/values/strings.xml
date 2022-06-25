@@ -93,6 +93,19 @@
     <string name="uisetting_msgcount_title">Message max count</string>
     <string name="uisetting_msglife_summary">When receiving a chat message or room message, it will begin fading out for the amount of time set below.</string>
     <string name="uisetting_msglife_title">Display duration for Chat messages</string>
+
+    <string name="uisetting_timestamp_color_summary">Customize the text color of message timestamps (Default is Pink)</string>
+    <string name="uisetting_timestamp_color_title">Timestamp text color</string>
+    <string name="uisetting_self_color_summary">Customize the text color of your name tag (Default is Red)</string>
+    <string name="uisetting_self_color_title">Self tag color</string>
+    <string name="uisetting_friend_color_summary">Customize the text color of friends\' name tags (Default is Blue)</string>
+    <string name="uisetting_friend_color_title">Friend tag text color</string>
+    <string name="uisetting_system_color_summary">Customize the text color of system room messages (Default is White)</string>
+    <string name="uisetting_system_color_title">System text color</string>
+    <string name="uisetting_human_color_summary">Customize the text color of user messages (Default is White)</string>
+    <string name="uisetting_human_color_title">User message text color</string>
+
+
     <string name="uisetting_resetdefault_summary">Reset all of the above settings to default.</string>
     <string name="uisetting_resetdefault_title">Reset Default Settings</string>
 

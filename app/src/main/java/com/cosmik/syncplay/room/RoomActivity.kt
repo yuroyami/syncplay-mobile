@@ -166,10 +166,16 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
         /** Launch the visible ping updater **/
         pingStatusUpdater()
+
+        /** Inject preference fragment **/
+        supportFragmentManager.beginTransaction()
+            .replace(rr.id.pseudo_popup_container, RoomSettingsFragment())
+            .commit()
     }
 
     override fun onStart() {
         super.onStart()
+
 
         /** We initialize ExoPlayer components here, right after onStart() and not onCreate() **/
 
@@ -1181,11 +1187,11 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         msg.content =
             message /* Assigning the message content to the variable inside our instance */
         msg.timestamp = generateTimestamp()
-        msg.timestampStylized = "<font color=\"#aa666666\">[${msg.timestamp}] </font>"
+        msg.timestampStylized = "<font color=\"#aa6666\">[${msg.timestamp}] </font>"
 
         msg.stylizedContent = if (isChat) {
             msg.sender = chatter
-            val selfColorCode = "#ff2d2d";
+            val selfColorCode = "#ff2d2d"
             val friendColorCode = "#6082B6"
             if (chatter.lowercase() == protocol.currentUsername.lowercase()) {
                 val username =
@@ -1228,11 +1234,9 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                     val txtview = TextView(this@RoomActivity)
                     txtview.text = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
                         Html.fromHtml(
-                            message.stylizedContent,
+                            message.factorize(true),
                             Html.FROM_HTML_MODE_LEGACY
-                        ) else Html.fromHtml(
-                        message.stylizedContent
-                    )
+                        ) else Html.fromHtml(message.factorize(true))
                     txtview.textSize = 9F
                     val rltvParams: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
