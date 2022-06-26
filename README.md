@@ -32,11 +32,11 @@
 [![is Maintained?](https://img.shields.io/badge/Maintained-YES-green?style=for-the-badge)]()
 [![License](https://img.shields.io/badge/License-AGPL--3.0-brightgreen?style=for-the-badge)]()
 [![Status](https://img.shields.io/badge/Status-BETA-0cf?style=for-the-badge&logo=statuspage)]()
-[![Requirement]([https://img.shields.io/badge/Status-BETA-0cf?style=for-the-badge&logo=statuspage](https://img.shields.io/badge/REQUIREMENT-Android%205.0%20and%20later-blueviolet?style=for-the-badge&logo=android%20studio))]()
+[![Requirement](https://img.shields.io/badge/REQUIREMENT-Android%205.0%20and%20later-blueviolet?style=for-the-badge&logo=android%20studio)]()
 
 Syncplay BETA is the unofficial Android port for the amazing free software that synchronises media players so that faraway friends can watch videos together, Syncplay.
 
-**Available for both iOS and Android.**
+**Cannot run on Android versions below Android 5.0 (Codename: Lollipop)**
 
 <p align="center">
   <img src = "http://i.imgur.com/HowF6aM.png" width=350>
