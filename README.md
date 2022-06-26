@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  **Syncplay BETA - The Unofficial Android Client**
+  ** Syncplay BETA - The Unofficial Android Client **
 </p>
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
