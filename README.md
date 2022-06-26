@@ -41,7 +41,7 @@ Syncplay BETA brings the most important functions that Syncplay on Desktop has, 
 **Cannot run on Android versions below Android 5.0 (Codename: Lollipop)**
 
 <p align="center">
-  <img src = "[http://i.imgur.com/HowF6aM.png](https://github.com/chromaticnoob/syncplay-android/blob/master/art/SS1.png?raw=true)" width=150>
+  <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS1.png" width=150>
 </p>
 
 ## Features
