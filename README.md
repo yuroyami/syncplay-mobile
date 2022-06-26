@@ -45,6 +45,7 @@ Syncplay BETA brings the most important functions that Syncplay on Desktop has, 
 </p>
 
 ## Features
+* Flawless interoperability with Syncplay's official desktop client and other Syncplay BETA Android clients. 
 * Same base functionality as Syncplay for Desktop. The Syncplay protocol was re-written from Python to Kotlin line by line.
 * Integrated lightning-speed video player, whose capabilities depend on your device.
 * Real-time chat functionality, with emojis support.
@@ -54,59 +55,44 @@ Syncplay BETA brings the most important functions that Syncplay on Desktop has, 
 * No delay or latency opening the app or the room.
 * App written in efficient native Kotlin code, reassurring the optimal performance.
 * Multi-language support (Available Language: English, Arabic. More languages on the way)
+* Supports Android 5.0 Lollipop up to Android 13 Tiramisu.
 
-<p align="left">
-  <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS2.png" width=300>
+<p align="center">
+  <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS2.png" width=200>
+  <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS3.png" width=750>
 </p>
 
-<p align="right">
-  <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS3.png" width=700>
-</p>
+## How to use
+The functionality is much simpler than desktop Syncplay. There are no additional arguments you can pass to the player, there is also no feature yet allowing users to join custom servers, just the default ones. Therefore, the usage is very easy :
+- Download the latest release APK from [here](https://github.com/chromaticnoob/syncplay-android/releases/latest).
+- Uninstall any old version you have, then install the latest release APK you downloaded (To make sure installation goes smoothly).
+- Open Syncplay.
+- Specify a username of your choice, a room name of your choice (Tell your friends about it)
+- Select a server from the list (Tell your friends about this one too)
+- Click JOIN/CREATE Room. You will be taken to the Room screen. You're all set. Tell your friends to join the same room and server.
+- Ta-Dah ! Just load the same video file as your friends and enjoy the synchronized playback.
 
+## F.A.Q
+
+* If my friend uses Syncplay on PC, can I watch with them ? 
+  -> Yes, you can. Syncplay for Android works perfectly even if there are 100 people in the room, with clients for PC or Android.
+* I get an error saying "App not installed" upon installing the app. What's wrong ? 
+  -> Uninstall the older version before installing the new one.
+  
 ## Feedback
 
-Feel free to send us feedback on [Twitter](https://twitter.com/gitpointapp) or [file an issue](https://github.com/gitpoint/git-point/issues/new). Feature requests are always welcome. If you wish to contribute, please take a quick look at the [guidelines](./CONTRIBUTING.md)!
+Feel free to [file an issue](https://github.com/chromaticnoob/syncplay-android/issues/new).
 
-If there's anything you'd like to chat about, please feel free to join our [Gitter chat](https://gitter.im/git-point)!
-
-## Contributors
-
-This project follows the [all-contributors](https://github.com/kentcdodds/all-contributors) specification and is brought to you by these [awesome contributors](./CONTRIBUTORS.md).
+If there's anything you'd like to chat about, please feel free to open a new discussion.
 
 ## Build Process
 
-- Follow the [React Native Guide](https://facebook.github.io/react-native/docs/getting-started.html) for getting started building a project with native code. **A Mac is required if you wish to develop for iOS.**
-- Clone or download the repo
-- `yarn` to install dependencies
-- `yarn run link` to link react-native dependencies
-- `yarn start:ios` to start the packager and run the app in the iOS simulator (`yarn start:ios:logger` will boot the application with [redux-logger](<https://github.com/evgenyrodionov/redux-logger>))
-- `yarn start:android` to start the packager and run the app in the the Android device/emulator (`yarn start:android:logger` will boot the application with [redux-logger](https://github.com/evgenyrodionov/redux-logger))
-
-Please take a look at the [contributing guidelines](./CONTRIBUTING.md) for a detailed process on how to build your application as well as troubleshooting information.
-
-**Development Keys**: The `CLIENT_ID` and `CLIENT_SECRET` in `api/index.js` are for development purposes and do not represent the actual application keys. Feel free to use them or use a new set of keys by creating an [OAuth application](https://github.com/settings/applications/new) of your own. Set the "Authorization callback URL" to `gitpoint://welcome`.
-
-## Backers [![Backers on Open Collective](https://opencollective.com/git-point/backers/badge.svg)](#backers)
-
-Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/git-point#backer)]
-
-<a href="https://opencollective.com/git-point#backers" target="_blank"><img src="https://opencollective.com/git-point/backers.svg?width=890"></a>
-
-## Sponsors [![Sponsors on Open Collective](https://opencollective.com/git-point/sponsors/badge.svg)](#sponsors)
-
-Support this project by becoming a sponsor. Your logo will show up here with a link to your website. [[Become a sponsor](https://opencollective.com/git-point#sponsor)]
-
-<a href="https://opencollective.com/git-point/sponsor/0/website" target="_blank"><img src="https://opencollective.com/git-point/sponsor/0/avatar.svg"></a>
-<a href="https://opencollective.com/git-point/sponsor/1/website" target="_blank"><img src="https://opencollective.com/git-point/sponsor/1/avatar.svg"></a>
-<a href="https://opencollective.com/git-point/sponsor/2/website" target="_blank"><img src="https://opencollective.com/git-point/sponsor/2/avatar.svg"></a>
-<a href="https://opencollective.com/git-point/sponsor/3/website" target="_blank"><img src="https://opencollective.com/git-point/sponsor/3/avatar.svg"></a>
-<a href="https://opencollective.com/git-point/sponsor/4/website" target="_blank"><img src="https://opencollective.com/git-point/sponsor/4/avatar.svg"></a>
-<a href="https://opencollective.com/git-point/sponsor/5/website" target="_blank"><img src="https://opencollective.com/git-point/sponsor/5/avatar.svg"></a>
-<a href="https://opencollective.com/git-point/sponsor/6/website" target="_blank"><img src="https://opencollective.com/git-point/sponsor/6/avatar.svg"></a>
-<a href="https://opencollective.com/git-point/sponsor/7/website" target="_blank"><img src="https://opencollective.com/git-point/sponsor/7/avatar.svg"></a>
-<a href="https://opencollective.com/git-point/sponsor/8/website" target="_blank"><img src="https://opencollective.com/git-point/sponsor/8/avatar.svg"></a>
-<a href="https://opencollective.com/git-point/sponsor/9/website" target="_blank"><img src="https://opencollective.com/git-point/sponsor/9/avatar.svg"></a>
+The project is developed under Android Studio Dolphin | 2021.3.1 Beta 4
+Make sure you have a version equal or later than the one I am using. Dowload the source code ZIP and extract it somewhere, then open it using Android Studio. Then you can just build the app using a custom JKS keystore of your choice (Edit the keystore information on the module's ```build.gradle```).
 
 ## Acknowledgments
 
-Thanks to [JetBrains](https://www.jetbrains.com) for supporting us with a [free Open Source License](https://www.jetbrains.com/buy/opensource).
+Thanks to [Official Syncplay](https://www.syncplay.pl/) for maintaining and open-sourcing such an amazing software.
+
+## License
+Syncplay for Android is under the [AGPL-3.0 Open-Source License](https://www.gnu.org/licenses/agpl-3.0.en.html)
