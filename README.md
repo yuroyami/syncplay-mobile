@@ -85,8 +85,8 @@ These are the things I am willing to add/adjust in the future :
 - [ ] Self-Updater
 - [ ] Support for LibVLC plugin integration to play all possible video formats without depencing on device capabilities
 - [x] Multi-language Support
-    - [x] English
-    - [x] Arabic
+    - [x] English (as of 0.7.0)
+    - [x] Arabic (as of 0.7.0)
     - [ ] French
     - [ ] Spanish
     - [ ] Portuguese
