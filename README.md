@@ -4,11 +4,9 @@
     <img alt="Syncplay BETA for Android" title="Syncplay Android" src="https://github.com/chromaticnoob/syncplay-android/blob/master/art/LOGO.png?raw=true" width="250">
   </a>
 </p>
-
 <p align="center">
   <b> Syncplay BETA - The Unofficial Android Client </b>
 </p>
-
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 ## Table of Contents
