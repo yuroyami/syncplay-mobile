@@ -36,10 +36,12 @@
 
 Syncplay BETA is the unofficial Android port for the amazing free software that synchronises media players so that faraway friends can watch videos together, Syncplay.
 
+Syncplay BETA brings the most important functions that Syncplay on Desktop has, and ports it to Android flawlessly, such as real-time chat functionality.
+
 **Cannot run on Android versions below Android 5.0 (Codename: Lollipop)**
 
 <p align="center">
-  <img src = "http://i.imgur.com/HowF6aM.png" width=350>
+  <img src = "[http://i.imgur.com/HowF6aM.png](https://github.com/chromaticnoob/syncplay-android/blob/master/art/SS1.png?raw=true)" width=150>
 </p>
 
 ## Features
