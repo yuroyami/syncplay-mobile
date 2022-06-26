@@ -1,7 +1,7 @@
 <h1 align="center"> Syncplay for Android </h1> <br>
 <p align="center">
   <a href="https://gitpoint.co/">
-    <img alt="Syncplay BETA for Android" title="Syncplay Android" src="https://github.com/chromaticnoob/syncplay-android/blob/master/art/LOGO.png?raw=true" width="450">
+    <img alt="Syncplay BETA for Android" title="Syncplay Android" src="https://github.com/chromaticnoob/syncplay-android/blob/master/art/LOGO.png?raw=true" width="250">
   </a>
 </p>
 
