@@ -45,25 +45,22 @@ Syncplay BETA brings the most important functions that Syncplay on Desktop has, 
 </p>
 
 ## Features
+* Same base functionality as Syncplay for Desktop. The Syncplay protocol was re-written from Python to Kotlin line by line.
+* Integrated lightning-speed video player, whose capabilities depend on your device.
+* Real-time chat functionality, with emojis support.
+* A huge set of settings and preferences to tweak and customize your client.
+* Supports all audio track formats.
+* Supports loading custom external subtitle files.
+* No delay or latency opening the app or the room.
+* App written in efficient native Kotlin code, reassurring the optimal performance.
+* Multi-language support (Available Language: English, Arabic. More languages on the way)
 
-A few of the things you can do with GitPoint:
-
-* View user activity feed
-* Communicate on your issue and pull request conversations
-* Close or lock issues
-* Apply labels and assignees
-* Review and merge pull requests
-* Create new issues
-* Star, watch and fork repositories
-* Control your unread and participating notifications
-* Easily search for any user or repository
-
-<p align="center">
-  <img src = "http://i.imgur.com/IkSnFRL.png" width=700>
+<p align="left">
+  <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS2.png" width=300>
 </p>
 
-<p align="center">
-  <img src = "http://i.imgur.com/0iorG20.png" width=700>
+<p align="right">
+  <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS3.png" width=700>
 </p>
 
 ## Feedback
