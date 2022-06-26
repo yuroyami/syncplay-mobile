@@ -16,6 +16,7 @@
 - [Introduction](#introduction)
 - [Features](#features)
 - [How to use](#how-to-use)
+- [Roadmap](#roadmap)
 - [F.A.Q](#f.a.q)
 - [Feedback](#feedback)
 - [Build Process](#build-process)
@@ -72,6 +73,28 @@ The functionality is much simpler than desktop Syncplay. There are no additional
 - Click JOIN/CREATE Room. You will be taken to the Room screen. You're all set. Tell your friends to join the same room and server.
 - Ta-Dah ! Just load the same video file as your friends and enjoy the synchronized playback.
 
+## Roadmap
+These are the things I am willing to add/adjust in the future :
+
+- [x] Adopt original Syncplay's Chat functionality (as of 0.1.0)
+- [x] Enable FFmpeg Audio extension to play all possible audio track formats. (as of 0.6.3j)
+- [x] Add Color preferences and in-room settings (as of 0.7.0)
+- [ ] Shared Playlists
+- [ ] Fix TLS/SSL Secure Connection
+- [ ] Support for custom/private servers
+- [ ] Self-Updater
+- [ ] Support for LibVLC plugin integration to play all possible video formats without depencing on device capabilities
+- [x] Multi-language Support
+    - [x] English
+    - [x] Arabic
+    - [ ] French
+    - [ ] Spanish
+    - [ ] Portuguese
+    - [ ] Japanese
+    - [ ] German
+    - [ ] Italian
+    - [ ] Russian
+  
 ## F.A.Q
 
 * If my friend uses Syncplay on PC, can I watch with them ? 
