@@ -60,7 +60,7 @@ Syncplay BETA brings the most important functions that Syncplay on Desktop has, 
 
 <p align="center">
   <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS2.png" width=200>
-  <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS3.png" width=750>
+  <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS3.png" width=550>
 </p>
 
 ## How to use
