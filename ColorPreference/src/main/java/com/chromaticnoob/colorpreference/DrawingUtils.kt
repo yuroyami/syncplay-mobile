@@ -1,16 +1,14 @@
-package com.chromaticnoob.colorpreference;
+package com.chromaticnoob.colorpreference
 
-import android.content.Context;
-import android.util.DisplayMetrics;
-import android.util.TypedValue;
+import android.content.Context
+import android.util.TypedValue
 
-final class DrawingUtils {
-
-    static int dpToPx(Context c, float dipValue) {
-        DisplayMetrics metrics = c.getResources().getDisplayMetrics();
-        float val = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dipValue, metrics);
-        int res = (int) (val + 0.5); // Round
-        // Ensure at least 1 pixel if val was > 0
-        return res == 0 && val > 0 ? 1 : res;
+internal object DrawingUtils {
+    @JvmStatic
+    fun dpToPx(c: Context, dipValue: Float): Int {
+        val metrics = c.resources.displayMetrics
+        val `val` = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dipValue, metrics)
+        val res = (`val` + 0.5).toInt()
+        return if (res == 0 && `val` > 0) 1 else res
     }
 }
