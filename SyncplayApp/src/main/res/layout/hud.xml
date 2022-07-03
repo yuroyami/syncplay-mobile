@@ -1,18 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?><!-- Copyright (C) 2016 The Android Open Source Project
-
-     Licensed under the Apache License, Version 2.0 (the "License");
-     you may not use this file except in compliance with the License.
-     You may obtain a copy of the License at
-
-          http://www.apache.org/licenses/LICENSE-2.0
-
-     Unless required by applicable law or agreed to in writing, software
-     distributed under the License is distributed on an "AS IS" BASIS,
-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-     See the License for the specific language governing permissions and
-     limitations under the License.
--->
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/vidplayerhud"
     android:layout_width="match_parent"
@@ -21,8 +9,7 @@
     android:background="@drawable/hud_gradient"
     android:layoutDirection="ltr"
     android:orientation="vertical"
-    tools:ignore="UseAppTint"
-    tools:targetApi="28">
+    tools:ignore="ContentDescription">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -31,68 +18,67 @@
         android:orientation="horizontal"
         android:paddingTop="4dp">
 
-
         <ImageButton
             android:id="@+id/syncplay_screen"
             style="@style/ExoMediaButton.FastForward"
             android:src="@drawable/ic_screen"
-            android:tint="#FFD66F"
+            app:tint="#FFD66F"
             tools:ignore="ContentDescription" />
 
         <ImageButton
             android:id="@id/exo_audio_track"
             style="@style/ExoMediaButton.FastForward"
             android:src="@drawable/exo_ic_audiotrack"
-            android:tint="#FFD66F" />
+            app:tint="#FFD66F" />
 
         <ImageButton
             android:id="@id/exo_subtitle"
             style="@style/ExoMediaButton.FastForward"
             android:src="@drawable/ic_subtitles"
-            android:tint="#FFD66F" />
+            app:tint="#FFD66F" />
 
         <ImageButton
             android:id="@id/exo_rew"
             style="@style/ExoMediaButton.Rewind"
-            android:tint="#FFD66F" />
+            app:tint="#FFD66F" />
 
         <ImageButton
             android:id="@id/exo_repeat_toggle"
             style="@style/ExoMediaButton"
-            android:tint="#FFD66F" />
+            app:tint="#FFD66F" />
 
         <ImageButton
             android:id="@id/exo_play"
             style="@style/ExoMediaButton.Play"
-            android:tint="#FFD66F" />
+            app:tint="#FFD66F" />
 
         <ImageButton
             android:id="@id/exo_pause"
             style="@style/ExoMediaButton.Pause"
-            android:tint="#FFD66F" />
+            app:tint="#FFD66F" />
 
         <ImageButton
             android:id="@id/exo_ffwd"
             style="@style/ExoMediaButton.FastForward"
-            android:tint="#FFD66F" />
+            app:tint="#FFD66F" />
 
         <ImageButton
             android:id="@+id/syncplay_addfile"
             style="@style/ExoMediaButton.FastForward"
             android:src="@drawable/ic_add_video"
-            android:tint="#FFD66F" />
+            app:tint="#FFD66F" />
 
         <ImageButton
             android:id="@+id/syncplay_lock"
             style="@style/ExoMediaButton.FastForward"
             android:src="@drawable/ic_locked"
-            android:tint="#FFD66F" />
+            app:tint="#FFD66F" />
 
         <ImageButton
             android:id="@+id/syncplay_more"
             style="@style/ExoMediaButton.FastForward"
             android:src="@drawable/ic_more"
-            android:tint="#FFD66F" />
+            app:tint="#FFD66F" />
 
 
     </LinearLayout>

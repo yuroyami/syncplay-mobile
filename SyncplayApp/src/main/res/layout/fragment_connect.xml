@@ -191,13 +191,12 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/connect_serverSelect" />
 
-
     <TextView
         android:id="@+id/connect_Footnote"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="4dp"
-        android:layout_marginStart="6dp"
+        android:layout_marginStart="10dp"
         android:fontFamily="@font/directive4bold"
         android:text="@string/connect_footnote"
         android:textAlignment="center"
@@ -210,7 +209,7 @@
         android:id="@+id/connect_Footnote_B"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="6dp"
+        android:layout_marginEnd="10dp"
         android:layout_marginBottom="4dp"
         android:fontFamily="@font/directive4bold"
         android:text="@string/app_version"
