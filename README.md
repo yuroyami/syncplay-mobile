@@ -64,7 +64,7 @@ Syncplay BETA brings the most important functions that Syncplay on Desktop has, 
 </p>
 
 ## How to use
-The functionality is much simpler than desktop Syncplay. There are no additional arguments you can pass to the player, there is also no feature yet allowing users to join custom servers, just the default ones. Therefore, the usage is very easy :
+The functionality is much more simplified and abstracted than PC's Syncplay. Syncplay on PC supports a variety of video players, and therefore, a user can pass arguments to the player. There are no additional arguments you can pass to the player on Syncplay Android as it doesn't support such feature, there is also no feature yet allowing users to join custom servers, just the default ones. Therefore, the usage is very easy :
 - Download the latest release APK from [here](https://github.com/chromaticnoob/syncplay-android/releases/latest).
 - Uninstall any old version you have, then install the latest release APK you downloaded (To make sure installation goes smoothly).
 - Open Syncplay.
