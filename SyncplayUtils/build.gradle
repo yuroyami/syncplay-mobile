@@ -33,7 +33,7 @@ dependencies {
        on this particular module. All our modules depend on SyncplayUtils, so... */
     api 'androidx.core:core-ktx:1.9.0-alpha05'
     api 'androidx.appcompat:appcompat:1.6.0-alpha05'
-    api 'com.google.android.material:material:1.6.1'
+    api 'com.google.android.material:material:1.7.0-alpha02'
     api 'androidx.constraintlayout:constraintlayout:2.2.0-alpha03' //ConstraintLayout
     api 'androidx.viewpager2:viewpager2:1.1.0-beta01' //ViewPager
     api 'androidx.preference:preference-ktx:1.2.0' //PreferenceScreen

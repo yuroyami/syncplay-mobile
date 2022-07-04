@@ -18,30 +18,44 @@ import java.net.UnknownHostException
 @OptIn(DelicateCoroutinesApi::class)
 open class SyncplayProtocol : ViewModel() {
 
-    var paused: Boolean = true
+    /** This refers to the event callback interface */
+    lateinit var syncplayBroadcaster: SPBroadcaster
+
+    /** Protocol-exclusive variables **/
     var serverIgnFly: Int = 0
     var clientIgnFly: Int = 0
-    val gson: Gson = GsonBuilder().setPrettyPrinting().create()
-    var socket: Socket = Socket()
 
-    //ViewModel
+    /** Our JSON instance */
+    val gson: Gson = GsonBuilder().setPrettyPrinting().create()
+
+    /** Variables that track user status */
+    var paused: Boolean = true
     var ready = false
+    var connected = false
+
+    /** Variables related to current video properties */
     var currentVideoPosition: Double = 0.0
     var currentVideoName: String = ""
     var currentVideoLength: Double = 0.0
     var currentVideoSize: Int = 0
+
+    /** Variables related to joining info */
     var serverHost: String = "151.80.32.178"
     var serverPort: Int = 8999
-    var connected = false
     var currentUsername: String = "username_${(0..999999999999).random()}"
     var currentRoom: String = "roomname"
-    var rewindThreshold = 12L
 
-    //User Properties: User Index // Readiness // File Name // File Duration // File Size
-    var userList: MutableMap<String, MutableList<String>> = mutableMapOf()
+    /** Variable that stores all messages that have been sent/received */
     var messageSequence: MutableList<Message> = mutableListOf()
 
-    lateinit var syncplayBroadcaster: SPBroadcaster
+    /** Variable that represents the room's user list */
+    var userList: MutableMap<String, MutableList<String>> = mutableMapOf()
+
+    /** Variable that defines rewind threshold **/
+    var rewindThreshold = 12L /* This is as per official Syncplay, shouldn't be subject to change */
+
+    /** Instantiating a socket to perform a TCP/IP connection later **/
+    var socket: Socket = Socket()
 
     fun connect(host: String, port: Int) {
         syncplayBroadcaster.onConnectionAttempt(port.toString())
@@ -116,8 +130,14 @@ open class SyncplayProtocol : ViewModel() {
         }
     }
 
-    // Fragment will call this to link its listener with this class's listener
-    //Anything called to this class's broadcaster will be overridden in the fragment's implemented broadcaster.
+    /** Nothing more than a function that binds an interface between two classes
+     * Here's how it works :
+     * a) You have 2 classes, and 1 interface (used for callback)
+     * b) One class should fire an interface's functions, and another should respond to them
+     * c) You put the following addBroadcaster() function in the class that FIRES the events
+     * d) You add the interface as a variable instance in the responding class, and make it call this function
+     * e) Voila, you get a callback/listener system between two classes easily.
+     */
     open fun addBroadcaster(broadcaster: SPBroadcaster) {
         this.syncplayBroadcaster = broadcaster
     }

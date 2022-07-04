@@ -43,7 +43,8 @@ class ConnectFragment : Fragment() {
                 .trim().also {
                     if (it.length > 150) it.substring(0, 149)
                     if (it.isEmpty()) {
-                        binding.connectUsernameInput.error = "Username shouldn't be empty"
+                        binding.connectUsernameInput.error =
+                            getString(R.string.connect_username_empty_error)
                         return@setOnClickListener
                     }
                 }
@@ -52,7 +53,8 @@ class ConnectFragment : Fragment() {
                 .trim().also {
                     if (it.length > 35) it.substring(0, 34)
                     if (it.isEmpty()) {
-                        binding.connectRoomnameInput.error = "Room name shouldn't be empty"
+                        binding.connectRoomnameInput.error =
+                            getString(R.string.connect_roomname_empty_error)
                         return@setOnClickListener
                     }
                 }
@@ -84,45 +86,44 @@ class ConnectFragment : Fragment() {
     override fun onResume() {
         super.onResume()
 
+        /** Deploying our list of available servers */
         val servers = listOf(
             "syncplay.pl:8995",
             "syncplay.pl:8996",
             "syncplay.pl:8997",
             "syncplay.pl:8998",
             "syncplay.pl:8999",
-            "Enter Custom Server..."
+            getString(R.string.connect_enter_custom_server)
         )
 
+        /** Instantiating the adapter we need for the Material EditText */
         val adapter = ArrayAdapter(requireContext(), R.layout.serverlist_textview, servers)
         binding.spMenuAutocomplete.setAdapter(adapter)
+
+        /** Listening to the event where users click 'Enter Custom Server' or other servers */
+        binding.spMenuAutocomplete.setOnItemClickListener { _, _, i, _ ->
+            if (i == 5) {
+                binding.connectCustomServerAddress.visibility = View.VISIBLE
+                binding.connectCustomServerPort.visibility = View.VISIBLE
+            } else {
+                binding.connectCustomServerAddress.visibility = View.GONE
+                binding.connectCustomServerPort.visibility = View.GONE
+            }
+        }
 
         if (PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getBoolean("save_info", true)
         ) {
             val sp = requireActivity().getPreferences(Context.MODE_PRIVATE)
             binding.spMenuAutocomplete.setText(sp.getString("server", "syncplay.pl:8997"), false)
-            binding.connectUsernameInputText.setText(
-                sp.getString(
-                    "username",
-                    "user_" + (0..9999).random()
-                )
-            )
-            binding.connectRoomnameInputText.setText(
-                sp.getString(
-                    "roomname",
-                    "room_" + (0..9999).random()
-                )
-            )
+            binding.connectUsernameInputText
+                .setText(sp.getString("username", "user_" + (0..9999).random()))
+            binding.connectRoomnameInputText
+                .setText(sp.getString("roomname", "room_" + (0..9999).random()))
         } else {
             binding.spMenuAutocomplete.setText("syncplay.pl:8997")
-            binding.connectUsernameInputText.setText(
-                "user_" + (0..9999).random()
-
-            )
-            binding.connectRoomnameInputText.setText(
-                "room_" + (0..9999).random()
-
-            )
+            binding.connectUsernameInputText.setText("user_" + (0..9999).random())
+            binding.connectRoomnameInputText.setText("room_" + (0..9999).random())
         }
     }
 

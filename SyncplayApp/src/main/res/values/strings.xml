@@ -18,6 +18,10 @@
     <string name="connect_server_c">make sure that you and your\nfriends join the same server.</string>
     <string name="connect_button">JOIN / CREATE ROOM</string>
     <string name="connect_footnote">Syncplay\'s Unofficial Android Client</string>
+    <string name="connect_username_empty_error">Username shouldn\'t be empty</string>
+    <string name="connect_roomname_empty_error">Room name shouldn\'t be empty</string>
+    <string name="connect_enter_custom_server">Enter Custom Server…</string>
+    <string name="connect_port">Port</string>
 
     <!-- Room Activity Strings -->
     <string name="room_startup_hint">"Insert a new video from storage by clicking on the button with the following icon "</string>
