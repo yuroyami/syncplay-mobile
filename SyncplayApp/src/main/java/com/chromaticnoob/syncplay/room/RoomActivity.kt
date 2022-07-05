@@ -148,11 +148,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         /** Now, let's connect to the server, everything should be ready **/
         //val tls = sp.getBoolean("tls", false) /* We're not using this yet */
         if (!protocol.connected) {
-            protocol.connect(
-                protocol.serverHost,
-                protocol.serverPort,
-                protocol.currentPassword
-            )
+            protocol.connect()
         }
 
         /** Let's apply Room UI Settings **/
@@ -240,9 +236,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                                 protocol.currentVideoLength,
                                 protocol.currentVideoName,
                                 protocol.currentVideoSize
-                            ),
-                            protocol.serverHost,
-                            protocol.serverPort
+                            )
                         )
                     }
                 }
@@ -287,9 +281,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                                     1,
                                     play = myExoPlayer?.isPlaying,
                                     protocol
-                                ),
-                                protocol.serverHost,
-                                protocol.serverPort
+                                )
                             )
                         } else receivedSeek = false
                     }
@@ -570,7 +562,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
          ****************/
         roomBinding.syncplayReady.setOnCheckedChangeListener { _, b ->
             protocol.ready = b
-            protocol.sendPacket(sendReadiness(b), protocol.serverHost, protocol.serverPort)
+            protocol.sendPacket(sendReadiness(b))
         }
 
         /*******************
@@ -746,9 +738,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                         protocol.currentVideoLength,
                         protocol.currentVideoName,
                         protocol.currentVideoSize
-                    ),
-                    protocol.serverHost,
-                    protocol.serverPort
+                    )
                 )
             }
             updatePosition = true
@@ -774,9 +764,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     private fun sendPlayback(play: Boolean) {
         val clienttime = System.currentTimeMillis() / 1000.0
         protocol.sendPacket(
-            sendState(null, clienttime, null, 0, 1, play, protocol),
-            protocol.serverHost,
-            protocol.serverPort
+            sendState(null, clienttime, null, 0, 1, play, protocol)
         )
     }
 
@@ -786,9 +774,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
             roomBinding.syncplayVisiblitydelegate.visibility = GONE
         }
         protocol.sendPacket(
-            sendChat(message),
-            protocol.serverHost,
-            protocol.serverPort
+            sendChat(message)
         )
         roomBinding.syncplayINPUTBox.setText("")
     }
@@ -1416,11 +1402,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         broadcastMessage(string(rr.string.room_attempting_reconnection), false)
         disconnectedPopup()
         protocol.connected = false
-        protocol.connect(
-            protocol.serverHost,
-            protocol.serverPort,
-            protocol.currentPassword
-        )
+        protocol.connect()
     }
 
     override fun onJoined() {
@@ -1429,11 +1411,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
     override fun onConnectionFailed() {
         broadcastMessage(string(rr.string.room_connection_failed), false)
-        protocol.connect(
-            protocol.serverHost,
-            protocol.serverPort,
-            protocol.currentPassword
-        )
+        protocol.connect()
     }
 
     override fun onReconnected() {
@@ -1441,14 +1419,21 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         replenishUsers(roomBinding.syncplayOverview)
     }
 
-    override fun onConnectionAttempt(port: String) {
+    override fun onConnectionAttempt() {
         val server =
             if (protocol.serverHost == "151.80.32.178") "syncplay.pl" else protocol.serverHost
-        broadcastMessage(string(rr.string.room_attempting_connect, server, port), false)
+        broadcastMessage(
+            string(
+                rr.string.room_attempting_connect,
+                server,
+                protocol.serverPort.toString()
+            ), false
+        )
     }
 
     override fun onBackPressed() {
         super.onBackPressed()
+        protocol.removeBroadcaster()
         protocol.socket.close()
         finish()
     }

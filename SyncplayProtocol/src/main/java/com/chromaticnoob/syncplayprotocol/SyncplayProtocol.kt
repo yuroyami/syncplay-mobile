@@ -1,21 +1,20 @@
 package com.chromaticnoob.syncplayprotocol
 
-import android.util.Log
+import android.os.Handler
+import android.os.HandlerThread
 import androidx.lifecycle.ViewModel
 import com.chromaticnoob.syncplay.room.Message
 import com.chromaticnoob.syncplayprotocol.SPJsonHandler.extractJson
 import com.chromaticnoob.syncplayprotocol.SPWrappers.sendHello
-import com.chromaticnoob.syncplayutils.SyncplayUtils.loggy
+import com.chromaticnoob.syncplayutils.SyncplayUtils
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import kotlinx.coroutines.*
-import java.io.BufferedInputStream
+import kotlinx.coroutines.Runnable
 import java.io.IOException
 import java.net.Socket
 import java.net.SocketException
 import java.net.UnknownHostException
 
-@OptIn(DelicateCoroutinesApi::class)
 open class SyncplayProtocol : ViewModel() {
 
     /** This refers to the event callback interface */
@@ -59,92 +58,124 @@ open class SyncplayProtocol : ViewModel() {
     /** Instantiating a socket to perform a TCP/IP connection later **/
     var socket: Socket = Socket()
 
-    fun connect(host: String, port: Int, password: String? = null) {
-        syncplayBroadcaster?.onConnectionAttempt(port.toString())
-        sendPacket(sendHello(currentUsername, currentRoom, password), host, port)
+    /** Instantiating the threads that will be responsible for IO socket operations **/
+    private val iThread = HandlerThread("readerThread")
+    private val oThread = HandlerThread("senderThread")
+
+    /** ============================ start of protocol =====================================**/
+    fun connect() {
+        syncplayBroadcaster?.onConnectionAttempt()
+        sendPacket(sendHello(currentUsername, currentRoom, currentPassword))
     }
 
-    fun sendPacket(json: String, host: String, port: Int) {
+    /** The packet sending is fairly simple, we create a socket if it's not connected, then
+     * we try 'n' catch any exceptions that may happen during the creation of the socket, sending
+     * data through the socket, etc... That's literally what takes space in this function. All that
+     * matters in the function below is the socket creation and sending packets through the output
+     * stream of that socket.
+     */
+    fun sendPacket(json: String) {
+        /** First, we check the status of the thread responsible for output operations **/
+        try {
+            if (!oThread.isAlive) {
+                oThread.start()
+            }
+            sendPacketCore(json)
+        } catch (e: IllegalThreadStateException) {
+            sendPacketCore(json)
+        }
+
+    }
+
+    private fun sendPacketCore(json: String) {
+        /** First, we add line separator to our JSON, then encode it to byte array **/
         val jsonEncoded = "$json\r\n".encodeToByteArray()
-        GlobalScope.launch(Dispatchers.IO) {
+
+        /** Second of all, we execute our packet sending runnable through the responsible thread **/
+        Handler(oThread.looper).post {
             try {
                 if (!connected) {
                     try {
-                        socket = Socket(host, port)
+                        socket = Socket(serverHost, serverPort)
                     } catch (e: Exception) {
-                        delay(2000) //Safety-interval delay.
+                        Thread.sleep(2000) //Safety-interval delay.
                         syncplayBroadcaster?.onConnectionFailed()
                         when (e) {
                             is UnknownHostException -> {
-                                loggy("SOCKET UnknownHostException")
+                                SyncplayUtils.loggy("SOCKET UnknownHostException")
                             }
                             is IOException -> {
-                                loggy("SOCKET IOException")
+                                SyncplayUtils.loggy("SOCKET IOException")
                             }
                             is SecurityException -> {
-                                loggy("SOCKET SecurityException")
+                                SyncplayUtils.loggy("SOCKET SecurityException")
                             }
                             else -> {
                                 e.printStackTrace()
                             }
                         }
                     }
-
                     if (!socket.isClosed && socket.isConnected) {
                         syncplayBroadcaster?.onReconnected()
                         connected = true
-                        readPacket(host, port)
+                        readPacket()
                     }
                 }
-                val dOut = socket.outputStream
-                dOut.write(jsonEncoded)
+                socket.outputStream.write(jsonEncoded)
             } catch (s: SocketException) {
-                loggy("Socket: ${s.stackTrace}")
+                SyncplayUtils.loggy("Socket: ${s.stackTrace}")
             }
         }
+
     }
 
-    private fun readPacket(host: String, port: Int) {
-        GlobalScope.launch(Dispatchers.IO) {
-            while (true) {
-                if (socket.isConnected) {
-                    socket.getInputStream().also { input ->
-                        if (!socket.isInputShutdown) {
-                            try {
-                                BufferedInputStream(input).reader(Charsets.UTF_8)
-                                    .forEachLine { json ->
-                                        extractJson(json, host, port, this@SyncplayProtocol)
-                                    }
-                            } catch (s: SocketException) {
-                                connected = false
-                                syncplayBroadcaster?.onDisconnected()
-                                s.printStackTrace()
-                            }
-                        } else {
-                            Log.e("Server:", "STREAMED SHUTDOWN")
-                        }
-                    }
-                } else {
-                    connected = false
-                }
-                delay(300)
-            }
-        }
-    }
-
-    /** Nothing more than a function that binds an interface between two classes
-     * Here's how it works :
-     *
-     * a) You have 2 classes, and 1 interface (used for callback)
-     *
-     * b) One class should fire an interface's functions, and another should respond to them
-     *
-     * c) You put the following addBroadcaster() function in the class that FIRES the events
-     *
-     * d) You add the interface as a variable instance in the responding class, and make it call this function
-     *
-     * e) Voila, you get a callback/listener system between two classes easily.
+    /** This is the 1st/2 part of packet reading function. What we do here is start the reading thret
+     * if it's not started, then we check the status of the socket. If all is OK, we execute our
+     * core packet reading functionality
      */
+    private fun readPacket() {
+        try {
+            if (!iThread.isAlive) {
+                iThread.start()
+            }
+            readPacketCore()
+        } catch (e: IllegalThreadStateException) {
+            readPacketCore()
+        }
+    }
+
+    /** This is the 2nd/2 part of the packet reading function. We will basically read line by line. **/
+    private fun readPacketCore() {
+        val readRunnable = Runnable {
+            try {
+                try {
+                    val line: String? =
+                        socket.getInputStream().bufferedReader(Charsets.UTF_8).readLine()
+                    if (line != null) {
+                        extractJson(line, serverHost, serverPort, this@SyncplayProtocol)
+                        readPacket()
+                    }
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                    disconnected()
+                }
+            } catch (e: SocketException) {
+                e.printStackTrace()
+                disconnected()
+            }
+        }
+        if (socket.isConnected && !socket.isInputShutdown && !socket.isClosed) {
+            Handler(iThread.looper).postDelayed(readRunnable, 50)
+        }
+
+    }
+
+    private fun disconnected() {
+        connected = false
+        syncplayBroadcaster?.onDisconnected()
+    }
+
+    /** Binding function for the callback interface between the the protocol and activity */
     open fun addBroadcaster(broadcaster: SPBroadcaster) {
         this.syncplayBroadcaster = broadcaster
     }

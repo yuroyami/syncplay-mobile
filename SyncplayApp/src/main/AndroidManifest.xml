@@ -32,7 +32,6 @@
         </activity>
 
         <activity
-            android:excludeFromRecents="true"
             android:name=".SplashScreenActivity"
             android:exported="true"
             android:theme="@style/SplashTheme">
@@ -43,7 +42,6 @@
         </activity>
 
         <activity
-            android:excludeFromRecents="true"
             android:name=".room.RoomActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="true"

@@ -34,7 +34,7 @@ interface SPBroadcaster {
 
     fun onJoined()
 
-    fun onConnectionAttempt(port: String)
+    fun onConnectionAttempt()
 
     fun onConnectionFailed()
 }

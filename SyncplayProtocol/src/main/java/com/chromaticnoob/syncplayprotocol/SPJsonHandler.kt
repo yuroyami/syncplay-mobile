@@ -23,12 +23,10 @@ object SPJsonHandler {
                 .getAsJsonObject("Hello")
                 .getAsJsonPrimitive("username").asString
             protocol.currentUsername = trueusername
-            protocol.sendPacket(SPWrappers.sendJoined(protocol.currentRoom), host, port)
-            protocol.sendPacket(SPWrappers.sendEmptyList(), host, port)
+            protocol.sendPacket(SPWrappers.sendJoined(protocol.currentRoom))
+            protocol.sendPacket(SPWrappers.sendEmptyList())
             protocol.sendPacket(
-                SPWrappers.sendReadiness(protocol.ready),
-                host,
-                port
+                SPWrappers.sendReadiness(protocol.ready)
             )
             protocol.connected = true
             protocol.syncplayBroadcaster?.onJoined()
@@ -108,7 +106,7 @@ object SPJsonHandler {
                 }
             }
 
-            protocol.sendPacket(SPWrappers.sendEmptyList(), host, port)
+            protocol.sendPacket(SPWrappers.sendEmptyList())
         }
         /********************
          * Handling Chats *
@@ -179,9 +177,7 @@ object SPJsonHandler {
                                 iChangeState = 0,
                                 play = null,
                                 protocol = protocol
-                            ),
-                            host,
-                            port
+                            )
                         )
                     } else {
                         protocol.clientIgnFly = 0
@@ -193,9 +189,7 @@ object SPJsonHandler {
                                 0,
                                 null,
                                 protocol
-                            ),
-                            host,
-                            port
+                            )
                         )
                     }
                 }
@@ -226,9 +220,7 @@ object SPJsonHandler {
                         0,
                         null,
                         protocol
-                    ),
-                    host,
-                    port
+                    )
                 )
             }
         }
