@@ -127,7 +127,7 @@ object SPWrappers {
             ping["latencyCalculation"] = servertime
         }
         ping["clientLatencyCalculation"] = clienttime
-        ping["clientRtt"] = SyncplayUtils.pingIcmp("151.80.32.178", 32)
+        ping["clientRtt"] = protocol.ping
 
         if (iChangeState == 1) {
             val ignore: HashMap<String, Any?> = hashMapOf()

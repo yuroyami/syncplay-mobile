@@ -6,10 +6,7 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.net.Uri
-import android.os.Build
-import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
+import android.os.*
 import android.text.Html
 import android.util.TypedValue.COMPLEX_UNIT_SP
 import android.view.Gravity.END
@@ -82,8 +79,6 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
     /*-- Declaring ExoPlayer-specific variables --*/
     private var myExoPlayer: ExoPlayer? = null
-//    private lateinit var trackSelec: DefaultTrackSelector
-//    private lateinit var paramBuilder: DefaultTrackSelector.ParametersBuilder
 
     /*-- Declaring Playtracking variables **/
     private var audioTracks: MutableList<Track> = mutableListOf()
@@ -104,6 +99,9 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     private var seekButtonEnable: Boolean? = null
     private var cutOutMode: Boolean = true
     private var ccsize = 18f
+
+    /* Specifying and creating threads for separate periodic tasks such as pinging */
+    private val pingingThread = HandlerThread("pingingThread")
 
     /**********************************************************************************************
      *                                        LIFECYCLE METHODS
@@ -164,7 +162,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         SyncplayUtils.cutoutMode(true, window)
 
         /** Launch the visible ping updater **/
-        pingStatusUpdater()
+        pingUpdater()
 
         /** Inject preference fragment **/
         supportFragmentManager.beginTransaction()
@@ -472,7 +470,10 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
          * OverFlow Menu *
          *****************/
         hudBinding.syncplayMore.setOnClickListener { overflow ->
-            val popup = PopupMenu(this, overflow)
+            val popup = PopupMenu(
+                this,
+                hudBinding.syncplayAddfile
+            ) /* It's more convenient to anchor it on lock button */
 
             val loadsubItem =
                 popup.menu.add(
@@ -1145,36 +1146,44 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         }
     }
 
-    private fun pingStatusUpdater() {
-        GlobalScope.launch(Dispatchers.IO) {
-            while (true) {
-                if (protocol.socket.isConnected && !protocol.socket.isClosed) {
-                    val ping = SyncplayUtils.pingIcmp("151.80.32.178", 32) * 1000.0
-                    GlobalScope.launch(Dispatchers.Main) {
-                        roomBinding.syncplayConnectionInfo.text =
-                            string(rr.string.room_ping_connected, "$ping")
-                        when (ping) {
-                            in (0.0..100.0) -> roomBinding.syncplaySignalIcon.setImageResource(rr.drawable.ping_3)
-                            in (100.0..200.0) -> roomBinding.syncplaySignalIcon.setImageResource(rr.drawable.ping_2)
-                            else -> roomBinding.syncplaySignalIcon.setImageResource(rr.drawable.ping_1)
-                        }
-                    }
-                } else {
-                    GlobalScope.launch(Dispatchers.Main) {
-                        roomBinding.syncplayConnectionInfo.text =
-                            string(rr.string.room_ping_disconnected)
-                        roomBinding.syncplaySignalIcon.setImageDrawable(
-                            getDrawable(
-                                this@RoomActivity,
-                                rr.drawable.ic_unconnected
-                            )
-                        )
+    private fun pingUpdater() {
+        try {
+            if (!pingingThread.isAlive) {
+                pingingThread.start()
+            }
+            pingUpdaterpost()
+        } catch (e: IllegalThreadStateException) {
+            pingUpdaterpost()
+        }
+    }
+
+    private fun pingUpdaterpost() {
+        Handler(pingingThread.looper).postDelayed({
+            if (protocol.socket.isConnected && !protocol.socket.isClosed) {
+                protocol.ping = SyncplayUtils.pingIcmp("151.80.32.178", 32) * 1000.0
+                runOnUiThread {
+                    roomBinding.syncplayConnectionInfo.text =
+                        string(rr.string.room_ping_connected, "${protocol.ping}")
+                    when (protocol.ping) {
+                        in (0.0..100.0) -> roomBinding.syncplaySignalIcon.setImageResource(rr.drawable.ping_3)
+                        in (100.0..200.0) -> roomBinding.syncplaySignalIcon.setImageResource(rr.drawable.ping_2)
+                        else -> roomBinding.syncplaySignalIcon.setImageResource(rr.drawable.ping_1)
                     }
                 }
-                delay(1000)
-
+            } else {
+                runOnUiThread {
+                    roomBinding.syncplayConnectionInfo.text =
+                        string(rr.string.room_ping_disconnected)
+                    roomBinding.syncplaySignalIcon.setImageDrawable(
+                        getDrawable(
+                            this@RoomActivity,
+                            rr.drawable.ic_unconnected
+                        )
+                    )
+                }
             }
-        }
+            pingUpdater()
+        }, 1000)
     }
 
     @UiThread
@@ -1433,8 +1442,9 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     }
 
     override fun onConnectionAttempt(port: String) {
-        broadcastMessage(string(rr.string.room_attempting_connect, port), false)
-
+        val server =
+            if (protocol.serverHost == "151.80.32.178") "syncplay.pl" else protocol.serverHost
+        broadcastMessage(string(rr.string.room_attempting_connect, server, port), false)
     }
 
     override fun onBackPressed() {
@@ -1442,7 +1452,6 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         protocol.socket.close()
         finish()
     }
-
 
     /** Functions to grab a localized string from resources, format it according to arguments **/
     fun string(id: Int, vararg stuff: String): String {

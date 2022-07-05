@@ -37,7 +37,7 @@ class ConnectFragment : Fragment() {
 
         binding.connectFootnoteB.text = "v" + BuildConfig.VERSION_NAME
         binding.connectJoinButton.setOnClickListener {
-            val joiningInfo: MutableList<Any> = mutableListOf()
+            val joiningInfo: MutableList<Any?> = mutableListOf()
 
             val customServerCheck = binding.connectCustomServerAddress.isVisible
 
@@ -75,6 +75,8 @@ class ConnectFragment : Fragment() {
             joiningInfo.add(3, roomname)
             if (customServerCheck && binding.connectCustomServerPassword.text.isNotBlank()) {
                 joiningInfo.add(4, binding.connectCustomServerPassword.text.toString())
+            } else {
+                joiningInfo.add(4, null)
             }
 
             val sharedPref = requireActivity().getPreferences(Context.MODE_PRIVATE)

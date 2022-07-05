@@ -37,7 +37,7 @@
     <string name="room_overflow_msghistory">Message History</string>
     <string name="room_overflow_settings">Settings</string>
     <string name="room_empty_message_error">Type something!</string>
-    <string name="room_attempting_connect">Attempting to connect to syncplay.pl:%s</string>
+    <string name="room_attempting_connect">Attempting to connect to %1s:%2s</string>
     <string name="room_connected_to_server">Connected to the server.</string>
     <string name="room_connection_failed">Connecting failed.</string>
     <string name="room_attempting_reconnection">Lost connection to the server. Attempting to reconnect…</string>

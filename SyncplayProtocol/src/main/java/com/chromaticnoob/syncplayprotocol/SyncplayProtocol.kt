@@ -24,6 +24,7 @@ open class SyncplayProtocol : ViewModel() {
     /** Protocol-exclusive variables **/
     var serverIgnFly: Int = 0
     var clientIgnFly: Int = 0
+    var ping = 0.0
 
     /** Our JSON instance */
     val gson: Gson = GsonBuilder().setPrettyPrinting().create()

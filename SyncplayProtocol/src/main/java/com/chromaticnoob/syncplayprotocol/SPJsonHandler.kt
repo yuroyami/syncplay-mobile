@@ -1,20 +1,18 @@
 package com.chromaticnoob.syncplayprotocol
 
-import android.util.Log
+import com.chromaticnoob.syncplayutils.SyncplayUtils.loggy
 import com.google.gson.JsonObject
 import org.json.JSONObject
 
 object SPJsonHandler {
 
     /** Probably the most important function. This breaks down the JSONs received from the server
-     * and behaves in accordance with the protocol as per the the JSONs received.
-     *
-     * This function is the central nucleus of the protocol. */
+     * and behaves in accordance with the protocol as per the the JSONs received. */
 
     @JvmStatic
     fun extractJson(json: String, host: String, port: Int, protocol: SyncplayProtocol) {
         protocol.connected = true
-        Log.e("Server:", json)
+        loggy("Server: $json")
         val jsoner = protocol.gson.fromJson(json, JsonObject::class.java)
         val jsonHeader = jsoner.keySet().toList()[0]
         /********************
