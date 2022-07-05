@@ -18,7 +18,7 @@
             android:id="@+id/connect_Logo"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:paddingVertical="18dp"
+            android:paddingVertical="6dp"
             app:layout_constraintBottom_toTopOf="@id/connect_Username"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -30,7 +30,7 @@
             android:id="@+id/connect_Username"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="6dp"
+            android:layout_marginBottom="2dp"
             android:fontFamily="@font/directive4bold"
             android:text="@string/connect_username_a"
             android:textAlignment="center"
@@ -45,7 +45,7 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
+            android:layout_marginBottom="8dp"
             android:hint="@string/connect_username_b"
             android:textColorHint="@color/sp_screener"
             app:boxStrokeColor="@color/sp_shade"
@@ -79,7 +79,7 @@
             android:id="@+id/connect_Roomname"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="6dp"
+            android:layout_marginBottom="2dp"
             android:fontFamily="@font/directive4bold"
             android:text="@string/connect_roomname_a"
             android:textAlignment="center"
@@ -129,7 +129,7 @@
             android:id="@+id/connect_serverTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
+            android:layout_marginTop="10dp"
             android:fontFamily="@font/directive4bold"
             android:text="@string/connect_server_a"
             android:textAlignment="center"
@@ -141,11 +141,12 @@
 
         <TextView
             android:id="@+id/connect_serverHint"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
             android:layout_marginBottom="4dp"
             android:fontFamily="@font/directive4bold"
-            android:gravity="center"
             android:text="@string/connect_server_c"
             android:textAlignment="center"
             android:textColor="@color/sp_shade"
@@ -189,7 +190,7 @@
             android:maxLength="50"
             android:singleLine="true"
             android:visibility="gone"
-            app:layout_constraintBottom_toTopOf="@id/connect_JoinButton"
+            app:layout_constraintBottom_toTopOf="@id/connect_customServerPassword"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toLeftOf="@id/connect_customServerPort"
             app:layout_constraintTop_toBottomOf="@id/connect_serverSelect"
@@ -204,11 +205,26 @@
             android:maxLength="5"
             android:singleLine="true"
             android:visibility="gone"
-            app:layout_constraintBottom_toTopOf="@id/connect_JoinButton"
+            app:layout_constraintBottom_toTopOf="@id/connect_customServerPassword"
             app:layout_constraintLeft_toRightOf="@id/connect_customServerAddress"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toBottomOf="@id/connect_serverSelect"
             app:layout_constraintWidth_percent="0.25" />
+
+        <EditText
+            android:id="@+id/connect_customServerPassword"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:hint="@string/connect_custom_server_password"
+            android:inputType="textPassword"
+            android:singleLine="true"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@id/connect_JoinButton"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/connect_customServerAddress"
+            app:layout_constraintWidth_percent="0.8" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/connect_JoinButton"
@@ -225,34 +241,32 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/connect_customServerAddress" />
+            app:layout_constraintTop_toBottomOf="@id/connect_customServerPassword" />
 
         <TextView
             android:id="@+id/connect_Footnote"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_marginBottom="4dp"
+            android:layout_marginStart="8dp"
             android:fontFamily="@font/directive4bold"
             android:text="@string/connect_footnote"
             android:textAlignment="center"
             android:textColor="#BFDADADA"
             android:textSize="12sp"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/connect_JoinButton"
             app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
             android:id="@+id/connect_Footnote_B"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="10dp"
-            android:layout_marginBottom="4dp"
+            android:layout_marginEnd="8dp"
             android:fontFamily="@font/directive4bold"
             android:text="@string/app_version"
             android:textAlignment="center"
             android:textColor="#BFDADADA"
             android:textSize="12sp"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/connect_JoinButton"
             app:layout_constraintEnd_toEndOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.core.widget.NestedScrollView>

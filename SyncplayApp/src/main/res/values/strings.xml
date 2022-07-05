@@ -15,12 +15,13 @@
     <string name="connect_roomname_c">Room where you and your friends watch </string>
     <string name="connect_server_a">Select Syncplay server:</string>
     <string name="connect_server_b">Server address</string>
-    <string name="connect_server_c">make sure that you and your\nfriends join the same server.</string>
+    <string name="connect_server_c">Make sure that you and your friends\njoin the same server.</string>
     <string name="connect_button">JOIN / CREATE ROOM</string>
     <string name="connect_footnote">Syncplay\'s Unofficial Android Client</string>
     <string name="connect_username_empty_error">Username shouldn\'t be empty</string>
     <string name="connect_roomname_empty_error">Room name shouldn\'t be empty</string>
-    <string name="connect_enter_custom_server">Enter Custom Server…</string>
+    <string name="connect_enter_custom_server">Enter Custom Server</string>
+    <string name="connect_custom_server_password">Password (Empty if not required)</string>
     <string name="connect_port">Port</string>
 
     <!-- Room Activity Strings -->
@@ -64,7 +65,7 @@
     <string name="room_details_nofileplayed">(No file being played)</string>
     <string name="room_details_file_properties">Duration: %1s - Size: %2s MBs</string>
     <string name="disconnected_notice_header">DISCONNECTED</string>
-    <string name="disconnected_notice_a">You have been disconnected from the server due to a network problem.</string>
+    <string name="disconnected_notice_a">You have been disconnected from the server.\nThis may be due to a problem in your internet connection or an issue with the server you\'re connecting to. If the problem persists, change the server.</string>
     <string name="disconnected_notice_b">Attempting to reconnect…</string>
 
     <!-- Settings Strings -->

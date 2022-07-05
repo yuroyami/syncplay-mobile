@@ -19,7 +19,7 @@ import java.net.UnknownHostException
 open class SyncplayProtocol : ViewModel() {
 
     /** This refers to the event callback interface */
-    lateinit var syncplayBroadcaster: SPBroadcaster
+    var syncplayBroadcaster: SPBroadcaster? = null
 
     /** Protocol-exclusive variables **/
     var serverIgnFly: Int = 0
@@ -58,7 +58,7 @@ open class SyncplayProtocol : ViewModel() {
     var socket: Socket = Socket()
 
     fun connect(host: String, port: Int) {
-        syncplayBroadcaster.onConnectionAttempt(port.toString())
+        syncplayBroadcaster?.onConnectionAttempt(port.toString())
         sendPacket(sendHello(currentUsername, currentRoom), host, port)
     }
 
@@ -71,7 +71,7 @@ open class SyncplayProtocol : ViewModel() {
                         socket = Socket(host, port)
                     } catch (e: Exception) {
                         delay(2000) //Safety-interval delay.
-                        syncplayBroadcaster.onConnectionFailed()
+                        syncplayBroadcaster?.onConnectionFailed()
                         when (e) {
                             is UnknownHostException -> {
                                 loggy("SOCKET UnknownHostException")
@@ -89,7 +89,7 @@ open class SyncplayProtocol : ViewModel() {
                     }
 
                     if (!socket.isClosed && socket.isConnected) {
-                        syncplayBroadcaster.onReconnected()
+                        syncplayBroadcaster?.onReconnected()
                         connected = true
                         readPacket(host, port)
                     }
@@ -115,7 +115,7 @@ open class SyncplayProtocol : ViewModel() {
                                     }
                             } catch (s: SocketException) {
                                 connected = false
-                                syncplayBroadcaster.onDisconnected()
+                                syncplayBroadcaster?.onDisconnected()
                                 s.printStackTrace()
                             }
                         } else {
@@ -132,13 +132,22 @@ open class SyncplayProtocol : ViewModel() {
 
     /** Nothing more than a function that binds an interface between two classes
      * Here's how it works :
+     *
      * a) You have 2 classes, and 1 interface (used for callback)
+     *
      * b) One class should fire an interface's functions, and another should respond to them
+     *
      * c) You put the following addBroadcaster() function in the class that FIRES the events
+     *
      * d) You add the interface as a variable instance in the responding class, and make it call this function
+     *
      * e) Voila, you get a callback/listener system between two classes easily.
      */
     open fun addBroadcaster(broadcaster: SPBroadcaster) {
         this.syncplayBroadcaster = broadcaster
+    }
+
+    open fun removeBroadcaster() {
+        this.syncplayBroadcaster = null
     }
 }

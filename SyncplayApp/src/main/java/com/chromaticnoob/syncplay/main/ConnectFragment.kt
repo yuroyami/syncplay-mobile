@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
 import com.chromaticnoob.syncplay.R
@@ -36,8 +37,15 @@ class ConnectFragment : Fragment() {
         binding.connectJoinButton.setOnClickListener {
             val joiningInfo: MutableList<Any> = mutableListOf()
 
+            val customServerCheck = binding.connectCustomServerAddress.isVisible
+
+            val serverAddress =
+                if (customServerCheck) binding.connectCustomServerAddress.text.toString() else ""
+
             val serverPort =
-                (binding.spMenuAutocomplete.text).toString().substringAfter("syncplay.pl:").toInt()
+                if (customServerCheck) binding.connectCustomServerPort.text.toString().toInt()
+                else (binding.spMenuAutocomplete.text).toString().substringAfter("syncplay.pl:")
+                    .toInt()
 
             val username = binding.connectUsernameInputText.text.toString().replace("\\", "")
                 .trim().also {
@@ -59,9 +67,11 @@ class ConnectFragment : Fragment() {
                     }
                 }
 
-            joiningInfo.add(0, serverPort)
-            joiningInfo.add(1, username)
-            joiningInfo.add(2, roomname)
+            joiningInfo.add(0, serverAddress)
+            joiningInfo.add(1, serverPort)
+            joiningInfo.add(2, username)
+            joiningInfo.add(3, roomname)
+            joiningInfo.add(4, binding.connectCustomServerPassword.text.toString())
 
             val sharedPref = requireActivity().getPreferences(Context.MODE_PRIVATE)
             with(sharedPref.edit()) {
@@ -97,17 +107,26 @@ class ConnectFragment : Fragment() {
         )
 
         /** Instantiating the adapter we need for the Material EditText */
-        val adapter = ArrayAdapter(requireContext(), R.layout.serverlist_textview, servers)
-        binding.spMenuAutocomplete.setAdapter(adapter)
+        binding.spMenuAutocomplete.setAdapter(
+            ArrayAdapter(
+                requireContext(),
+                R.layout.serverlist_textview,
+                servers
+            )
+        )
 
         /** Listening to the event where users click 'Enter Custom Server' or other servers */
         binding.spMenuAutocomplete.setOnItemClickListener { _, _, i, _ ->
             if (i == 5) {
                 binding.connectCustomServerAddress.visibility = View.VISIBLE
                 binding.connectCustomServerPort.visibility = View.VISIBLE
+                binding.connectCustomServerPassword.visibility = View.VISIBLE
+                binding.pageConnect.scroll
             } else {
                 binding.connectCustomServerAddress.visibility = View.GONE
                 binding.connectCustomServerPort.visibility = View.GONE
+                binding.connectCustomServerPassword.visibility = View.GONE
+
             }
         }
 

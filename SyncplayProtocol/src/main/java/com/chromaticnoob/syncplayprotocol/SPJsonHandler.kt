@@ -33,7 +33,7 @@ object SPJsonHandler {
                 port
             )
             protocol.connected = true
-            protocol.syncplayBroadcaster.onJoined()
+            protocol.syncplayBroadcaster?.onJoined()
         }
         /********************
          * Handling Lists *
@@ -73,7 +73,7 @@ object SPJsonHandler {
 
                 if (protocol.userList.keys.contains(user)) {
                     if (protocol.userList[user]?.get(2) != filename) {
-                        protocol.syncplayBroadcaster.onSomeoneLoadedFile(
+                        protocol.syncplayBroadcaster?.onSomeoneLoadedFile(
                             user,
                             filename,
                             fileduration,
@@ -92,7 +92,7 @@ object SPJsonHandler {
             }
 
             protocol.userList = tempUserList
-            protocol.syncplayBroadcaster.onReceivedList()
+            protocol.syncplayBroadcaster?.onReceivedList()
         }
         /********************
          * Handling Sets *
@@ -103,10 +103,10 @@ object SPJsonHandler {
                     .getAsJsonObject("user").keySet().toList()
                 val user = getuser[0]
                 if (json.contains("\"left\": true")) {
-                    protocol.syncplayBroadcaster.onSomeoneLeft(user)
+                    protocol.syncplayBroadcaster?.onSomeoneLeft(user)
                 }
                 if (json.contains("\"joined\": true")) {
-                    protocol.syncplayBroadcaster.onSomeoneJoined(user)
+                    protocol.syncplayBroadcaster?.onSomeoneJoined(user)
                 }
             }
 
@@ -118,7 +118,7 @@ object SPJsonHandler {
         if (jsonHeader == "Chat") {
             val chatter = JSONObject(JSONObject(json).get("Chat").toString()).optString("username")
             val message = JSONObject(JSONObject(json).get("Chat").toString()).optString("message")
-            protocol.syncplayBroadcaster.onChatReceived(chatter, message)
+            protocol.syncplayBroadcaster?.onChatReceived(chatter, message)
         }
         /********************
          * Handling States *
@@ -145,7 +145,7 @@ object SPJsonHandler {
                         ).get("playstate").toString()
                     ).optString("setBy")
                     if (doSeek == true) {
-                        protocol.syncplayBroadcaster.onSomeoneSeeked(
+                        protocol.syncplayBroadcaster?.onSomeoneSeeked(
                             seeker,
                             seekedPosition
                         )
@@ -154,11 +154,11 @@ object SPJsonHandler {
                         protocol.paused =
                             json.contains("\"paused\": true", true)
                         if (!protocol.paused) {
-                            protocol.syncplayBroadcaster.onSomeonePlayed(
+                            protocol.syncplayBroadcaster?.onSomeonePlayed(
                                 seeker
                             )
                         } else {
-                            protocol.syncplayBroadcaster.onSomeonePaused(
+                            protocol.syncplayBroadcaster?.onSomeonePaused(
                                 seeker
                             )
                         }
@@ -213,7 +213,7 @@ object SPJsonHandler {
                 val threshold = protocol.rewindThreshold
                 if (seeker != (protocol.currentUsername)) {
                     if (seekedPosition < (protocol.currentVideoPosition - threshold)) {
-                        protocol.syncplayBroadcaster.onSomeoneBehind(seeker, seekedPosition)
+                        protocol.syncplayBroadcaster?.onSomeoneBehind(seeker, seekedPosition)
                     }
                 }
                 //Constant Traditional Pinging if no command is received.

@@ -123,14 +123,15 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         val ourInfo = intent.getStringExtra("json")
         val joinInfo = GsonBuilder().create().fromJson(ourInfo, List::class.java) as List<*>
 
+        /** Storing the join info into the protocol directly **/
+        val serverHost = joinInfo[0] as String
+        protocol.serverHost = if (serverHost == "") "151.80.32.178" else serverHost
+        protocol.serverPort = (joinInfo[1] as Double).toInt()
+        protocol.currentUsername = joinInfo[2] as String
+        protocol.currentRoom = joinInfo[3] as String
+
         /** Adding the callback interface so we can respond to multiple syncplay events **/
         protocol.addBroadcaster(this)
-
-        /** Storing the join info into the protocol directly **/
-        protocol.serverHost = "151.80.32.178"
-        protocol.serverPort = (joinInfo[0] as Double).toInt()
-        protocol.currentUsername = joinInfo[1] as String
-        protocol.currentRoom = joinInfo[2] as String
 
         /** Storing SharedPreferences to apply some settings **/
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
@@ -1093,7 +1094,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
             popup.setOnMenuItemClickListener { menuItem: MenuItem ->
 
-                var builder = myExoPlayer?.trackSelector?.parameters?.buildUpon()
+                val builder = myExoPlayer?.trackSelector?.parameters?.buildUpon()
 
                 /* First, clearing our audio track selection */
                 myExoPlayer?.trackSelector?.parameters =
@@ -1431,11 +1432,9 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     }
 
     override fun onBackPressed() {
-        protocol.socket.close()
-        finishAffinity()
-        finish()
-        finishAndRemoveTask()
         super.onBackPressed()
+        protocol.socket.close()
+        finish()
     }
 
 
