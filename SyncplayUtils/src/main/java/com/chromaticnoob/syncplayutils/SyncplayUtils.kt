@@ -21,6 +21,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.preference.PreferenceManager
 import java.io.*
+import java.nio.charset.StandardCharsets.UTF_8
+import java.security.MessageDigest
 import java.sql.Timestamp
 
 
@@ -235,5 +237,12 @@ object SyncplayUtils {
         window.statusBarColor = color
 
     }
+
+    /** Syncplay servers accept passwords in the form of MD5 hashes digested in hexadecimal **/
+    fun md5(str: String): ByteArray =
+        MessageDigest.getInstance("MD5").digest(str.toByteArray(UTF_8))
+
+    fun ByteArray.toHex() = joinToString(separator = "") { byte -> "%02x".format(byte) }
+
 
 }

@@ -9,17 +9,13 @@
     android:fillViewport="true"
     android:orientation="vertical"
     tools:ignore="labelFor, Autofill">
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-
         <ImageView
             android:id="@+id/connect_Logo"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:paddingVertical="6dp"
-            app:layout_constraintBottom_toTopOf="@id/connect_Username"
+            android:layout_width="128dp"
+            android:layout_height="128dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -30,13 +26,12 @@
             android:id="@+id/connect_Username"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="2dp"
             android:fontFamily="@font/directive4bold"
             android:text="@string/connect_username_a"
             android:textAlignment="center"
             android:textColor="@color/sp3"
             android:textSize="20sp"
-            app:layout_constraintBottom_toTopOf="@id/connect_UsernameInput"
+            app:layout_constraintTop_toBottomOf="@id/connect_Logo"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
 
@@ -45,7 +40,6 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
             android:hint="@string/connect_username_b"
             android:textColorHint="@color/sp_screener"
             app:boxStrokeColor="@color/sp_shade"
@@ -56,7 +50,7 @@
             app:helperText="@string/connect_username_c"
             app:helperTextEnabled="true"
             app:helperTextTextColor="@color/sp_shade"
-            app:layout_constraintBottom_toTopOf="@id/connect_Roomname"
+            app:layout_constraintTop_toBottomOf="@id/connect_Username"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintWidth_percent="0.6"
@@ -74,28 +68,26 @@
                 android:textColor="#555555" />
         </com.google.android.material.textfield.TextInputLayout>
 
-
         <TextView
             android:id="@+id/connect_Roomname"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="2dp"
+            android:layout_marginTop="8dp"
             android:fontFamily="@font/directive4bold"
             android:text="@string/connect_roomname_a"
             android:textAlignment="center"
             android:textColor="@color/sp3"
             android:textSize="20sp"
-            app:layout_constraintBottom_toTopOf="@id/connect_RoomnameInput"
+            app:layout_constraintTop_toBottomOf="@id/connect_UsernameInput"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
-
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/connect_RoomnameInput"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="36dp"
+            android:layout_marginTop="2dp"
             android:hint="@string/connect_roomname_b"
             android:textColorHint="@color/sp_screener"
             app:boxStrokeColor="@color/sp_shade"
@@ -106,10 +98,9 @@
             app:helperText="@string/connect_roomname_c"
             app:helperTextEnabled="true"
             app:helperTextTextColor="@color/sp_shade"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/connect_Roomname"
             app:layout_constraintWidth_percent="0.6"
             app:placeholderTextColor="@color/sp_shade"
             app:startIconContentDescription="Username"
@@ -190,7 +181,6 @@
             android:maxLength="50"
             android:singleLine="true"
             android:visibility="gone"
-            app:layout_constraintBottom_toTopOf="@id/connect_customServerPassword"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toLeftOf="@id/connect_customServerPort"
             app:layout_constraintTop_toBottomOf="@id/connect_serverSelect"
@@ -205,7 +195,6 @@
             android:maxLength="5"
             android:singleLine="true"
             android:visibility="gone"
-            app:layout_constraintBottom_toTopOf="@id/connect_customServerPassword"
             app:layout_constraintLeft_toRightOf="@id/connect_customServerAddress"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toBottomOf="@id/connect_serverSelect"
@@ -220,7 +209,6 @@
             android:inputType="textPassword"
             android:singleLine="true"
             android:visibility="gone"
-            app:layout_constraintBottom_toTopOf="@id/connect_JoinButton"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toBottomOf="@id/connect_customServerAddress"
@@ -238,7 +226,6 @@
             android:textColor="@color/white"
             android:textSize="14sp"
             app:backgroundTint="@color/sp_screener"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/connect_customServerPassword" />
@@ -254,7 +241,9 @@
             android:textColor="#BFDADADA"
             android:textSize="12sp"
             app:layout_constraintTop_toBottomOf="@id/connect_JoinButton"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintVertical_bias="1" />
 
         <TextView
             android:id="@+id/connect_Footnote_B"
@@ -262,11 +251,13 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:fontFamily="@font/directive4bold"
-            android:text="@string/app_version"
+            android:text=""
             android:textAlignment="center"
             android:textColor="#BFDADADA"
             android:textSize="12sp"
             app:layout_constraintTop_toBottomOf="@id/connect_JoinButton"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintVertical_bias="1" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.core.widget.NestedScrollView>

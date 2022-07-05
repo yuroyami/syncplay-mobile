@@ -44,6 +44,7 @@ open class SyncplayProtocol : ViewModel() {
     var serverPort: Int = 8999
     var currentUsername: String = "username_${(0..999999999999).random()}"
     var currentRoom: String = "roomname"
+    var currentPassword: String? = null
 
     /** Variable that stores all messages that have been sent/received */
     var messageSequence: MutableList<Message> = mutableListOf()
@@ -57,9 +58,9 @@ open class SyncplayProtocol : ViewModel() {
     /** Instantiating a socket to perform a TCP/IP connection later **/
     var socket: Socket = Socket()
 
-    fun connect(host: String, port: Int) {
+    fun connect(host: String, port: Int, password: String? = null) {
         syncplayBroadcaster?.onConnectionAttempt(port.toString())
-        sendPacket(sendHello(currentUsername, currentRoom), host, port)
+        sendPacket(sendHello(currentUsername, currentRoom, password), host, port)
     }
 
     fun sendPacket(json: String, host: String, port: Int) {

@@ -1,6 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <string name="app_name" translatable="false">Syncplay</string>
-    <string name="app_version" translatable="false">v0.7.0</string>
 
     <!-- Main Activity's most essential strings -->
     <string name="tab_connect">Connect</string>
@@ -74,8 +73,8 @@
     <string name="settings_categ_room">Room Settings</string>
     <string name="settings_categ_video">Video Settings</string>
     <string name="settings_categ_misc">Miscellaneous</string>
-    <string name="setting_remember_join_info_title">Remember join info</string>
-    <string name="setting_remember_join_info_summary">Enabled by default. This will allow SyncPlay to save your connect info for the next time you open the app.</string>
+    <string name="setting_remember_join_info_title">Remember joining info</string>
+    <string name="setting_remember_join_info_summary">Enabled by default. This will allow SyncPlay to save your last connecting info for the next time you open the app.</string>
     <string name="setting_display_language_title">Display Language</string>
     <string name="setting_display_language_summry">Select your language of choice with which Syncplay is displayed.</string>
     <string name="setting_display_language_toast">Changed language to: %s. Restart app for the setting to take full effect.</string>
@@ -90,10 +89,10 @@
     <string name="setting_ready_firsthand_summary">Enable this if you want to be set automatically as ready once you enter the room.</string>
     <string name="setting_ready_firsthand_title">Set as ready first-hand</string>
     <string name="setting_rewind_threshold_summary">If someone is behind with the value you select here, your video will be rewinded to match with the one behind.</string>
-    <string name="setting_rewind_threshold_title">Rewind when someone is X secs behind</string>
+    <string name="setting_rewind_threshold_title">Rewind thresold</string>
     <string name="setting_subtitle_size_summary">Default is 18. This will change the subtitles size.</string>
     <string name="setting_subtitle_size_title">Subtitle Size</string>
-    <string name="setting_tls_summary">Enabled by default. Turn off if you encounter issues connecting to the server. This will tell SyncPlay to connect to the servers with a secure connection (TLSv1.3). It is recommended to use a secure encrypted connection rather than a bare unencrypted connection (Turn off to use unencrypted connection). Unencrypted connection is however, faster.</string>
+    <string name="setting_tls_summary">If a server supports TLS secure connection, Syncplay Android will attempt to connect to it through TLS. (Not available yet)</string>
     <string name="setting_tls_title">Use Secure Connection (TLSv1.3) [Available Soon]</string>
     <string name="setting_resetdefault_title">Reset Default Settings</string>
     <string name="setting_resetdefault_summary">Reset everything to its default value (Recommended)</string>

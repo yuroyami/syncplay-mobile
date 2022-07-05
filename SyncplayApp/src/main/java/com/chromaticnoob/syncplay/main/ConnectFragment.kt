@@ -11,12 +11,13 @@ import android.widget.ArrayAdapter
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
+import com.chromaticnoob.syncplay.BuildConfig
 import com.chromaticnoob.syncplay.R
 import com.chromaticnoob.syncplay.databinding.FragmentConnectBinding
 import com.chromaticnoob.syncplay.room.RoomActivity
 import com.google.gson.GsonBuilder
 
-
+@SuppressLint("SetTextI18n")
 class ConnectFragment : Fragment() {
 
     private var _binding: FragmentConnectBinding? = null
@@ -34,6 +35,7 @@ class ConnectFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         val binding = FragmentConnectBinding.bind(view)
 
+        binding.connectFootnoteB.text = "v" + BuildConfig.VERSION_NAME
         binding.connectJoinButton.setOnClickListener {
             val joiningInfo: MutableList<Any> = mutableListOf()
 
@@ -71,7 +73,9 @@ class ConnectFragment : Fragment() {
             joiningInfo.add(1, serverPort)
             joiningInfo.add(2, username)
             joiningInfo.add(3, roomname)
-            joiningInfo.add(4, binding.connectCustomServerPassword.text.toString())
+            if (customServerCheck && binding.connectCustomServerPassword.text.isNotBlank()) {
+                joiningInfo.add(4, binding.connectCustomServerPassword.text.toString())
+            }
 
             val sharedPref = requireActivity().getPreferences(Context.MODE_PRIVATE)
             with(sharedPref.edit()) {
@@ -92,7 +96,6 @@ class ConnectFragment : Fragment() {
         }
     }
 
-    @SuppressLint("SetTextI18n")
     override fun onResume() {
         super.onResume()
 
@@ -121,7 +124,7 @@ class ConnectFragment : Fragment() {
                 binding.connectCustomServerAddress.visibility = View.VISIBLE
                 binding.connectCustomServerPort.visibility = View.VISIBLE
                 binding.connectCustomServerPassword.visibility = View.VISIBLE
-                binding.pageConnect.scroll
+                binding.pageConnect.smoothScrollBy(0, 10000, 100)
             } else {
                 binding.connectCustomServerAddress.visibility = View.GONE
                 binding.connectCustomServerPort.visibility = View.GONE

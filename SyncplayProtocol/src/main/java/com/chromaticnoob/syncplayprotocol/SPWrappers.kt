@@ -1,6 +1,7 @@
 package com.chromaticnoob.syncplayprotocol
 
 import com.chromaticnoob.syncplayutils.SyncplayUtils
+import com.chromaticnoob.syncplayutils.SyncplayUtils.toHex
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 
@@ -10,9 +11,13 @@ object SPWrappers {
     private val basicgson: Gson = GsonBuilder().create()
 
     @JvmStatic
-    fun sendHello(username: String, roomname: String): String {
+    fun sendHello(username: String, roomname: String, serverPassword: String?): String {
         val hello: HashMap<String, Any> = hashMapOf()
         hello["username"] = username
+        if (serverPassword != null) {
+            /* Syncplay servers accept passwords in MD5-Hexadecimal form.*/
+            hello["password"] = SyncplayUtils.md5(serverPassword).toHex()
+        }
         val room: HashMap<String, String> = hashMapOf()
         room["name"] = roomname
         hello["room"] = room

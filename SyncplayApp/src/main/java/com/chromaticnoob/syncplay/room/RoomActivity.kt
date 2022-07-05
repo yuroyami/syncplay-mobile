@@ -47,6 +47,7 @@ import com.chromaticnoob.syncplayprotocol.SyncplayProtocol
 import com.chromaticnoob.syncplayutils.SyncplayUtils
 import com.chromaticnoob.syncplayutils.SyncplayUtils.getFileName
 import com.chromaticnoob.syncplayutils.SyncplayUtils.hideSystemUI
+import com.chromaticnoob.syncplayutils.SyncplayUtils.loggy
 import com.chromaticnoob.syncplayutils.SyncplayUtils.timeStamper
 import com.chromaticnoob.syncplayutils.utils.Track
 import com.google.android.exoplayer2.*
@@ -110,7 +111,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        /* Inflating and ViewBinding */
+        /** Inflating and ViewBinding */
         roomBinding = ActivityRoomBinding.inflate(layoutInflater)
         val view = roomBinding.root
         setContentView(view)
@@ -129,6 +130,8 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         protocol.serverPort = (joinInfo[1] as Double).toInt()
         protocol.currentUsername = joinInfo[2] as String
         protocol.currentRoom = joinInfo[3] as String
+        protocol.currentPassword = joinInfo[4] as String?
+        loggy("${joinInfo[4]}")
 
         /** Adding the callback interface so we can respond to multiple syncplay events **/
         protocol.addBroadcaster(this)
@@ -138,7 +141,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
         /** Pref No.1 : Should the READY button be initially clicked ? **/
         roomBinding.syncplayReady.isChecked = sp.getBoolean("ready_firsthand", true).also {
-            protocol.ready = it /* Telling our protocol that we're ready */
+            protocol.ready = it /* Telling our protocol about our readiness */
         }
 
         /** Pref No.2 : Rewind threshold **/
@@ -149,7 +152,8 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         if (!protocol.connected) {
             protocol.connect(
                 protocol.serverHost,
-                protocol.serverPort
+                protocol.serverPort,
+                protocol.currentPassword
             )
         }
 
@@ -1405,7 +1409,8 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         protocol.connected = false
         protocol.connect(
             protocol.serverHost,
-            protocol.serverPort
+            protocol.serverPort,
+            protocol.currentPassword
         )
     }
 
@@ -1417,7 +1422,8 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         broadcastMessage(string(rr.string.room_connection_failed), false)
         protocol.connect(
             protocol.serverHost,
-            protocol.serverPort
+            protocol.serverPort,
+            protocol.currentPassword
         )
     }
 
