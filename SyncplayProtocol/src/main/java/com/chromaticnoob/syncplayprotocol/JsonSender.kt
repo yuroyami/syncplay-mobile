@@ -2,10 +2,11 @@ package com.chromaticnoob.syncplayprotocol
 
 import com.chromaticnoob.syncplayutils.SyncplayUtils
 import com.chromaticnoob.syncplayutils.SyncplayUtils.toHex
+import com.chromaticnoob.syncplayutils.utils.MediaFile
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 
-object SPWrappers {
+object JsonSender {
 
     private val gson: Gson = GsonBuilder().serializeNulls().create()
 
@@ -70,11 +71,11 @@ object SPWrappers {
     }
 
     @JvmStatic
-    fun sendFile(length: Double, name: String, size: Int): String {
+    fun sendFile(media: MediaFile): String {
         val fileproperties: HashMap<String, Any> = hashMapOf()
-        fileproperties["duration"] = length
-        fileproperties["name"] = name
-        fileproperties["size"] = size
+        fileproperties["duration"] = media.fileDuration
+        fileproperties["name"] = media.fileName
+        fileproperties["size"] = media.fileSize
 
 
         val file: HashMap<String, Any> = hashMapOf()

@@ -1,6 +1,6 @@
 package com.chromaticnoob.syncplayprotocol
 
-interface SPBroadcaster {
+interface ProtocolBroadcaster {
 
     /** Interface that is used as an intermediate (middle-man) bridge between the protocol and the
      * client itself. This interface broadcasts multiple events to the UI client (RoomActivity) **/

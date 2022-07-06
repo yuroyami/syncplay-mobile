@@ -46,7 +46,7 @@
     <string name="room_connection_failed">Connecting failed.</string>
     <string name="room_attempting_reconnection">Lost connection to the server. Attempting to reconnect…</string>
     <string name="room_guy_played">%s unpaused</string>
-    <string name="room_guy_paused">%s paused</string>
+    <string name="room_guy_paused">%1s paused at %2s</string>
     <string name="room_seeked">%1s jumped from %2s to %3s</string>
     <string name="room_rewinded">Rewinded due to time difference with %s</string>
     <string name="room_guy_left">%s left the room.</string>
@@ -78,7 +78,7 @@
     <string name="settings_categ_video">Video Settings</string>
     <string name="settings_categ_misc">Miscellaneous</string>
     <string name="setting_remember_join_info_title">Remember joining info</string>
-    <string name="setting_remember_join_info_summary">Enabled by default. This will allow SyncPlay to save your last connecting info for the next time you open the app.</string>
+    <string name="setting_remember_join_info_summary">Enabled by default. This will allow SyncPlay to save your last username, roomname, and which official server you last used.</string>
     <string name="setting_display_language_title">Display Language</string>
     <string name="setting_display_language_summry">Select your language of choice with which Syncplay is displayed.</string>
     <string name="setting_display_language_toast">Changed language to: %s. Restart app for the setting to take full effect.</string>
@@ -100,6 +100,10 @@
     <string name="setting_tls_title">Use Secure Connection (TLSv1.3) [Available Soon]</string>
     <string name="setting_resetdefault_title">Reset Default Settings</string>
     <string name="setting_resetdefault_summary">Reset everything to its default value (Recommended)</string>
+    <string name="setting_pause_if_someone_left_title">Pause if someone leaves</string>
+    <string name="setting_pause_if_someone_left_summary">Enable this if you want playback to pause/stop if someone leaves the room while you\'re watching.</string>
+    <string name="setting_warn_file_mismatch_title">File mismatch warning</string>
+    <string name="setting_warn_file_mismatch_summary">Enabled by default. This will warn you in case you load a file that is different from users in the group.</string>
 
     <!-- UI Settings Strings -->
     <string name="uisetting_apply">APPLY</string>

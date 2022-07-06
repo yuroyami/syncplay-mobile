@@ -55,7 +55,7 @@ dependencies {
     /* All dependencies are mentioned in SyncplayUtils module's build.gradle */
     /* Why, you ask ? Because all our modules depend on that one module */
     /* And also, we don't have to mention the same dependencies over and over again in each module */
-    implementation project(':ColorPreference') //ColorPreference library
+    implementation files('libs/ColorPreference.aar') //Getting ColorPreference library
     implementation project(':SyncplayProtocol') //Deploying SyncplayProtocol
     implementation project(':SyncplayUtils') //Deploying our own toolkit
 

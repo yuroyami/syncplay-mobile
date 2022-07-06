@@ -57,7 +57,7 @@ object SyncplayUtils {
         return file.absolutePath
     }
 
-    /* Helps determine the size of a file, needing only its Uri and a context */
+    /** Helps determine the size of a file in bytes, needing only its Uri and a context */
     @JvmStatic
     fun getRealSizeFromUri(context: Context, uri: Uri): String? {
         var cursor: Cursor? = null
@@ -92,9 +92,13 @@ object SyncplayUtils {
         return s
     }
 
-    /**          Helps get the file name from an Uri, it's very useful when we're using              *
-     * the intent ACTION_GET_CONTENT when picking a file. Usually it returns meaningless identifiers *
-     *        such as "msf:6057", the following two functions help get the proper file name          */
+    /** Method responsible for getting the real file name on ALL Android APIs.
+     * This is especially useful when you're using Intent.ACTION_OPEN_DOCUMENT
+     * or Intent.ACTION_GET_CONTENT.
+     *
+     * Usually, they return useless file indexers (such as msf:4285) but with the help of a context
+     * we can get the real file name using this.
+     */
     @JvmStatic
     fun Context.getFileName(uri: Uri): String? = when (uri.scheme) {
         ContentResolver.SCHEME_CONTENT -> getContentFileName(uri)

@@ -4,7 +4,7 @@ import com.chromaticnoob.syncplayutils.SyncplayUtils.loggy
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 
-object SPJsonHandler {
+object JsonHandler {
     /** Handlers that parse JSONs and control callbacks based on the incoming message from server */
 
     @JvmStatic
@@ -31,9 +31,9 @@ object SPJsonHandler {
     @JvmStatic
     private fun handleHello(hello: JsonObject, p: SyncplayProtocol) {
         p.currentUsername = hello.getAsJsonPrimitive("username").asString /* Corrected Username */
-        p.sendPacket(SPWrappers.sendJoined(p.currentRoom))
-        p.sendPacket(SPWrappers.sendEmptyList())
-        p.sendPacket(SPWrappers.sendReadiness(p.ready, false))
+        p.sendPacket(JsonSender.sendJoined(p.currentRoom))
+        p.sendPacket(JsonSender.sendEmptyList())
+        p.sendPacket(JsonSender.sendReadiness(p.ready, false))
         p.connected = true
         p.syncplayBroadcaster?.onJoined()
     }
@@ -52,7 +52,7 @@ object SPJsonHandler {
                 p.syncplayBroadcaster?.onSomeoneJoined(user)
             }
         }
-        p.sendPacket(SPWrappers.sendEmptyList())
+        p.sendPacket(JsonSender.sendEmptyList())
     }
 
     /** TODO: FIXME **/
@@ -145,7 +145,7 @@ object SPJsonHandler {
 
                 if (!(json.contains("client\":"))) {
                     protocol.sendPacket(
-                        SPWrappers.sendState(
+                        JsonSender.sendState(
                             latency,
                             clienttime,
                             null,
@@ -157,7 +157,7 @@ object SPJsonHandler {
                     )
                 } else {
                     protocol.sendPacket(
-                        SPWrappers.sendState(
+                        JsonSender.sendState(
                             latency,
                             clienttime,
                             doSeek,
@@ -183,7 +183,7 @@ object SPJsonHandler {
 
             /* Constant Traditional Pinging if no command is received. */
             protocol.sendPacket(
-                SPWrappers.sendState(
+                JsonSender.sendState(
                     latency,
                     clienttime,
                     false,

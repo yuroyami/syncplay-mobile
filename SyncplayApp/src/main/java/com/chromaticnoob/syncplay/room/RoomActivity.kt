@@ -37,19 +37,20 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
 import com.chromaticnoob.syncplay.databinding.ActivityRoomBinding
-import com.chromaticnoob.syncplayprotocol.SPBroadcaster
-import com.chromaticnoob.syncplayprotocol.SPWrappers.sendChat
-import com.chromaticnoob.syncplayprotocol.SPWrappers.sendEmptyList
-import com.chromaticnoob.syncplayprotocol.SPWrappers.sendFile
-import com.chromaticnoob.syncplayprotocol.SPWrappers.sendReadiness
-import com.chromaticnoob.syncplayprotocol.SPWrappers.sendState
+import com.chromaticnoob.syncplayprotocol.JsonSender.sendChat
+import com.chromaticnoob.syncplayprotocol.JsonSender.sendEmptyList
+import com.chromaticnoob.syncplayprotocol.JsonSender.sendFile
+import com.chromaticnoob.syncplayprotocol.JsonSender.sendReadiness
+import com.chromaticnoob.syncplayprotocol.JsonSender.sendState
+import com.chromaticnoob.syncplayprotocol.ProtocolBroadcaster
 import com.chromaticnoob.syncplayprotocol.SyncplayProtocol
 import com.chromaticnoob.syncplayutils.SyncplayUtils
 import com.chromaticnoob.syncplayutils.SyncplayUtils.getFileName
 import com.chromaticnoob.syncplayutils.SyncplayUtils.hideSystemUI
 import com.chromaticnoob.syncplayutils.SyncplayUtils.loggy
 import com.chromaticnoob.syncplayutils.SyncplayUtils.timeStamper
-import com.chromaticnoob.syncplayutils.utils.Track
+import com.chromaticnoob.syncplayutils.utils.MediaFile
+import com.chromaticnoob.syncplayutils.utils.Message
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.C.SELECTION_FLAG_DEFAULT
 import com.google.android.exoplayer2.C.VIDEO_SCALING_MODE_SCALE_TO_FIT
@@ -70,32 +71,24 @@ import kotlin.collections.set
 import kotlin.math.roundToInt
 import com.chromaticnoob.syncplay.R as rr
 
-class RoomActivity : AppCompatActivity(), SPBroadcaster {
+class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
 
     /* Declaring our ViewBinding global variables (much faster than findViewById) **/
     private lateinit var roomBinding: ActivityRoomBinding
     private lateinit var hudBinding: HudBinding
 
     /* This will initialize our protocol the first time it is needed */
-    lateinit var protocol: SyncplayProtocol
+    lateinit var p: SyncplayProtocol
 
     /*-- Declaring ExoPlayer variable --*/
     private var myExoPlayer: ExoPlayer? = null
 
     /*-- Declaring Playtracking variables **/
-    private var audioTracks: MutableList<Track> = mutableListOf()
-    private var subtitleTracks: MutableList<Track> = mutableListOf()
     private var lastAudioOverride: TrackSelectionOverride? = null
     private var lastSubtitleOverride: TrackSelectionOverride? = null
     private var seekTracker: Double = 0.0
     private var receivedSeek = false
-
-    //private var updatePosition = false
     private var startFromPosition = (-3.0).toLong()
-
-    /*-- Saving video uri and its sub in a global variable allows us to reload them any time --*/
-    private var gottenFile: Uri? = null
-    private var gottenSub: MediaItem.SubtitleConfiguration? = null
 
     /*-- UI-Related --*/
     private var lockedScreen = false
@@ -110,31 +103,28 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     private var disconnectedPopup: DisconnectedPopup? = null
 
     /**********************************************************************************************
-     *                                        LIFECYCLE METHODS
+     *                                  LIFECYCLE METHODS
      *********************************************************************************************/
 
     private val videoPickResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result?.resultCode == Activity.RESULT_OK) {
-                gottenFile = result.data?.data
-                val filename = gottenFile?.let { getFileName(it) }
+                p.file = MediaFile()
+                p.file?.uri = result.data?.data
+                p.file?.collectInfo(this@RoomActivity)
                 Toast.makeText(
                     this,
-                    string(rr.string.room_selected_vid, "$filename"),
+                    string(rr.string.room_selected_vid, "${p.file?.fileName}"),
                     Toast.LENGTH_LONG
                 ).show()
-                Handler(Looper.getMainLooper()).postDelayed(
-                    {
-                        myExoPlayer?.seekTo(0L)
-                    }, 2000
-                )
+                Handler(Looper.getMainLooper()).postDelayed({ myExoPlayer?.seekTo(0L) }, 2000)
             }
         }
 
     private val subtitlePickResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result?.resultCode == Activity.RESULT_OK) {
-                if (gottenFile != null) {
+                if (p.file != null) {
                     val path = result.data?.data!!
                     val filename = getFileName(path).toString()
                     val extension = filename.substring(filename.length - 4)
@@ -146,7 +136,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                         else if (extension.contains("ttml")) MimeTypes.APPLICATION_TTML
                         else if (extension.contains("vtt")) MimeTypes.TEXT_VTT else ""
                     if (mimeType != "") {
-                        gottenSub = MediaItem.SubtitleConfiguration.Builder(path)
+                        p.file!!.externalSub = MediaItem.SubtitleConfiguration.Builder(path)
                             .setUri(path)
                             .setMimeType(mimeType)
                             .setLanguage(null)
@@ -184,7 +174,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         hudBinding = HudBinding.bind(findViewById(rr.id.vidplayerhud))
 
         /** Initializing our ViewModel, which is our protocol at the same time **/
-        protocol = ViewModelProvider(this)[SyncplayProtocol::class.java]
+        p = ViewModelProvider(this)[SyncplayProtocol::class.java]
 
         /** Extracting joining info from our intent **/
         val ourInfo = intent.getStringExtra("json")
@@ -192,31 +182,31 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
         /** Storing the join info into the protocol directly **/
         val serverHost = joinInfo[0] as String
-        protocol.serverHost = if (serverHost == "") "151.80.32.178" else serverHost
-        protocol.serverPort = (joinInfo[1] as Double).toInt()
-        protocol.currentUsername = joinInfo[2] as String
-        protocol.currentRoom = joinInfo[3] as String
-        protocol.currentPassword = joinInfo[4] as String?
+        p.serverHost = if (serverHost == "") "151.80.32.178" else serverHost
+        p.serverPort = (joinInfo[1] as Double).toInt()
+        p.currentUsername = joinInfo[2] as String
+        p.currentRoom = joinInfo[3] as String
+        p.currentPassword = joinInfo[4] as String?
         loggy("${joinInfo[4]}")
 
         /** Adding the callback interface so we can respond to multiple syncplay events **/
-        protocol.addBroadcaster(this)
+        p.addBroadcaster(this)
 
         /** Storing SharedPreferences to apply some settings **/
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
 
         /** Pref No.1 : Should the READY button be initially clicked ? **/
         roomBinding.syncplayReady.isChecked = sp.getBoolean("ready_firsthand", true).also {
-            protocol.ready = it /* Telling our protocol about our readiness */
+            p.ready = it /* Telling our protocol about our readiness */
         }
 
         /** Pref No.2 : Rewind threshold **/
-        protocol.rewindThreshold = sp.getInt("rewind_threshold", 12).toLong()
+        p.rewindThreshold = sp.getInt("rewind_threshold", 12).toLong()
 
         /** Now, let's connect to the server, everything should be ready **/
         //val tls = sp.getBoolean("tls", false) /* We're not using this yet */
-        if (!protocol.connected) {
-            protocol.connect()
+        if (!p.connected) {
+            p.connect()
         }
 
         /** Let's apply Room UI Settings **/
@@ -245,7 +235,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putDouble("last_position", protocol.currentVideoPosition)
+        outState.putDouble("last_position", p.currentVideoPosition)
     }
 
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
@@ -256,7 +246,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     /** Responsible for restoring the session that was destroyed due to background restriction **/
     fun restoreSyncplaySession(sis: Bundle) {
         loggy("Loading saved instance state.")
-        protocol.sendPacket(sendEmptyList())
+        p.sendPacket(sendEmptyList())
     }
 
     override fun onStart() {
@@ -285,7 +275,6 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
         /** Now, on to building Exoplayer itself using the components we have **/
         myExoPlayer = ExoPlayer.Builder(this)
-            //.setTrackSelector(trackSelec) /* We use the trackselector we initialized before */
             .setLoadControl(loadControl) /* We use the custom LoadControl we initialized before */
             .setRenderersFactory(
                 DefaultRenderersFactory(this).setExtensionRendererMode(
@@ -311,17 +300,10 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
             override fun onIsLoadingChanged(isLoading: Boolean) {
                 super.onIsLoadingChanged(isLoading)
                 if (!isLoading) {
-                    val length = (myExoPlayer?.duration!!.toDouble()) / 1000.0
-                    if (length != protocol.currentVideoLength) {
-                        protocol.currentVideoLength =
-                            (myExoPlayer?.duration!!.toDouble()) / 1000.0
-                        protocol.sendPacket(
-                            sendFile(
-                                protocol.currentVideoLength,
-                                protocol.currentVideoName,
-                                protocol.currentVideoSize
-                            )
-                        )
+                    val duration = (myExoPlayer?.duration!!.toDouble()) / 1000.0
+                    if (duration != p.file?.fileDuration) {
+                        p.file?.fileDuration = duration
+                        p.sendPacket(sendFile(p.file!!))
                     }
                 }
             }
@@ -333,13 +315,13 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                         true -> {
                             if (myExoPlayer?.playbackState != ExoPlayer.STATE_BUFFERING) {
                                 sendPlayback(true)
-                                protocol.paused = false
+                                p.paused = false
                             }
                         }
                         false -> {
                             if (myExoPlayer?.playbackState != ExoPlayer.STATE_BUFFERING) {
                                 sendPlayback(false)
-                                protocol.paused = true
+                                p.paused = true
                             }
                         }
                     }
@@ -356,7 +338,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                         if (!receivedSeek) {
                             val clienttime =
                                 (System.currentTimeMillis() / 1000.0)
-                            protocol.sendPacket(
+                            p.sendPacket(
                                 sendState(
                                     null,
                                     clienttime,
@@ -364,7 +346,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                                     newPosition.positionMs,
                                     1,
                                     play = myExoPlayer?.isPlaying,
-                                    protocol
+                                    p
                                 )
                             )
                         } else receivedSeek = false
@@ -375,7 +357,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
             override fun onTracksChanged(tracks: Tracks) {
                 super.onTracksChanged(tracks)
                 /** Repopulate audio and subtitle track lists with the new analysis of tracks **/
-                analyzeTracks()
+                p.file?.analyzeTracks(myExoPlayer!!)
             }
         })
 
@@ -644,8 +626,8 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
          * Ready Button *
          ****************/
         roomBinding.syncplayReady.setOnCheckedChangeListener { _, b ->
-            protocol.ready = b
-            protocol.sendPacket(sendReadiness(b, true))
+            p.ready = b
+            p.sendPacket(sendReadiness(b, true))
         }
 
         /*******************
@@ -691,8 +673,8 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         hideSystemUI(this, false)
 
         /** If there exists a file already, inject it again **/
-        if (gottenFile != null) {
-            injectVideo(roomBinding.vidplayer.player as ExoPlayer, gottenFile!!)
+        if (p.file != null) {
+            injectVideo(roomBinding.vidplayer.player as ExoPlayer, p.file!!.uri!!)
             roomBinding.starterInfo.visibility = GONE
 
             /** And apply track choices again **/
@@ -700,8 +682,8 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         }
 
         /** This is a simple trick to revive a dead socket **/
-        protocol.sendPacket(sendReadiness(protocol.ready, true))
-        protocol.sendPacket(sendEmptyList())
+        p.sendPacket(sendReadiness(p.ready, true))
+        p.sendPacket(sendEmptyList())
     }
 
     override fun onPause() {
@@ -736,8 +718,11 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
      ********************************************************************************************/
     private fun injectVideo(mp: ExoPlayer, mediaPath: Uri) {
         try {
+            /** This is the builder responsible for building a MediaItem component for ExoPlayer **/
             val vidbuilder = MediaItem.Builder()
-            if (gottenSub != null) {
+
+            /** Seeing if we have any loaded external sub **/
+            if (p.file?.externalSub != null) {
                 runOnUiThread {
                     hudBinding.exoSubtitle.setImageDrawable(
                         getDrawable(
@@ -746,57 +731,56 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                         )
                     )
                 }
-                vidbuilder.setUri(mediaPath).setSubtitleConfigurations(singletonList(gottenSub!!))
+                vidbuilder.setUri(mediaPath)
+                    .setSubtitleConfigurations(singletonList(p.file!!.externalSub!!))
             } else {
                 vidbuilder.setUri(mediaPath)
             }
+
+            /** Now finally, we build it **/
             val vid = vidbuilder.build()
+
+            /** Injecting it into ExoPlayer and getting relevant info **/
             runOnUiThread {
-                mp.setMediaItem(vid)
+                mp.setMediaItem(vid) /* This loads the media into ExoPlayer **/
+
                 hudBinding.exoPlay.performClick()
                 hudBinding.exoPause.performClick()
-                val vidtitle = getFileName(mediaPath)!!
-                protocol.currentVideoName = vidtitle
-                protocol.currentVideoPosition = 0.0
-                protocol.currentVideoSize =
-                    SyncplayUtils.getRealSizeFromUri(this, mediaPath)?.toDouble()
-                        ?.roundToInt()!!
+                /** The play/pause trick to fully load the vid **/
+
+                p.currentVideoPosition = 0.0
+                /** Goes back to the beginning */
+
+                /** Seeing if we have to start over **/
                 if (startFromPosition != (-3.0).toLong()) mp.seekTo(startFromPosition)
             }
 
-            if (!protocol.connected) {
-                protocol.sendPacket(
-                    sendFile(
-                        protocol.currentVideoLength,
-                        protocol.currentVideoName,
-                        protocol.currentVideoSize
-                    )
-                )
+            if (!p.connected) {
+                p.sendPacket(sendFile(p.file!!))
             }
-            //updatePosition = true
             vidPosUpdater() //Most important updater to maintain continuity
         } catch (e: IOException) {
             throw RuntimeException("Invalid asset folder")
         }
     }
 
-    private fun pausePlayback(mp: ExoPlayer) {
+    private fun pausePlayback() {
         runOnUiThread {
-            mp.pause()
+            myExoPlayer?.pause()
         }
     }
 
-    private fun playPlayback(mp: ExoPlayer) {
+    private fun playPlayback() {
         runOnUiThread {
-            mp.play()
+            myExoPlayer?.play()
         }
         hideSystemUI(this, false)
     }
 
     private fun sendPlayback(play: Boolean) {
         val clienttime = System.currentTimeMillis() / 1000.0
-        protocol.sendPacket(
-            sendState(null, clienttime, null, 0, 1, play, protocol)
+        p.sendPacket(
+            sendState(null, clienttime, null, 0, 1, play, p)
         )
     }
 
@@ -805,7 +789,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         if (roomBinding.syncplayMESSAGERY.visibility != VISIBLE) {
             roomBinding.syncplayVisiblitydelegate.visibility = GONE
         }
-        protocol.sendPacket(
+        p.sendPacket(
             sendChat(message)
         )
         roomBinding.syncplayINPUTBox.setText("")
@@ -821,7 +805,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                 .getDefaultSharedPreferences(this@RoomActivity)
                 .getInt("msg_count", 12) /* We obtain max count, determined by user */
 
-            val msgs = protocol.messageSequence.takeLast(maxMsgsCount)
+            val msgs = p.messageSequence.takeLast(maxMsgsCount)
 
             for (message in msgs) {
                 val msgPosition: Int = msgs.indexOf(message)
@@ -885,12 +869,12 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         runOnUiThread {
             if (roomBinding.syncplayOverviewcheckbox.isChecked) {
                 linearLayout.removeAllViews()
-                val userList: MutableMap<String, MutableList<String>> = protocol.userList
+                val userList: MutableMap<String, MutableList<String>> = p.userList
 
                 //Creating line for room-name:
                 val roomnameView = TextView(this)
                 roomnameView.text =
-                    string(rr.string.room_details_current_room, protocol.currentRoom)
+                    string(rr.string.room_details_current_room, p.currentRoom)
                 roomnameView.isFocusable = false
                 val linearlayout0 = LinearLayout(this)
                 val linearlayoutParams0: LinearLayout.LayoutParams =
@@ -1013,9 +997,9 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     }
 
     private fun subtitleSelect(ccButton: ImageButton) {
-        analyzeTracks()
-
-        if (subtitleTracks.isEmpty()) {
+        p.file?.analyzeTracks(myExoPlayer!!)
+        if (p.file == null) return
+        if (p.file!!.subtitleTracks.isEmpty()) {
             displayInfo(getString(rr.string.room_sub_track_notfound))
             runOnUiThread {
                 ccButton.setImageDrawable(getDrawable(this, rr.drawable.ic_subtitles_off))
@@ -1023,7 +1007,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         } else {
             val popup = PopupMenu(this, ccButton)
             popup.menu.add(0, -999, 0, getString(rr.string.room_sub_track_disable))
-            for (subtitleTrack in subtitleTracks) {
+            for (subtitleTrack in p.file!!.subtitleTracks) {
                 /* Choosing a name for the sub track, a format's label is a good choice */
                 val name = if (subtitleTrack.format?.label == null) {
                     getString(rr.string.room_track_track)
@@ -1034,7 +1018,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                 /* Now creating the popup menu item corresponding to the audio track */
                 val item = popup.menu.add(
                     0,
-                    subtitleTracks.indexOf(subtitleTrack),
+                    p.file!!.subtitleTracks.indexOf(subtitleTrack),
                     0,
                     "$name [${(subtitleTrack.format?.language).toString().uppercase()}]"
                 )
@@ -1057,8 +1041,8 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                 /* Now, selecting our subtitle track should one be selected */
                 if (menuItem.itemId != -999) {
                     lastSubtitleOverride = TrackSelectionOverride(
-                        subtitleTracks[menuItem.itemId].trackGroup!!,
-                        subtitleTracks[menuItem.itemId].index
+                        p.file!!.subtitleTracks[menuItem.itemId].trackGroup!!,
+                        p.file!!.subtitleTracks[menuItem.itemId].index
                     )
                     myExoPlayer?.trackSelector?.parameters =
                         builder.addOverride(lastSubtitleOverride!!).build()
@@ -1076,15 +1060,16 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     }
 
     private fun audioSelect(audioButton: ImageButton) {
-        analyzeTracks()
-        if (audioTracks.isEmpty()) {
+        p.file?.analyzeTracks(myExoPlayer!!)
+        if (p.file == null) return
+        if (p.file!!.audioTracks.isEmpty()) {
             displayInfo(getString(rr.string.room_audio_track_not_found)) /* Otherwise, no audio track found */
         } else {
             val popup =
                 PopupMenu(this, audioButton) /* Creating a popup menu, anchored on Audio Button */
 
             /** Going through the entire audio track list, and populating the popup menu with each one of them **/
-            for (audioTrack in audioTracks) {
+            for (audioTrack in p.file!!.audioTracks) {
                 /* Choosing a name for the audio track, a format's label is a good choice */
                 val name = if (audioTrack.format?.label == null) {
                     getString(rr.string.room_track_track)
@@ -1095,7 +1080,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                 /* Now creating the popup menu item corresponding to the audio track */
                 val item = popup.menu.add(
                     0,
-                    audioTracks.indexOf(audioTrack),
+                    p.file!!.audioTracks.indexOf(audioTrack),
                     0,
                     "$name [${(audioTrack.format?.language).toString().uppercase()}]"
                 )
@@ -1116,8 +1101,8 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                     builder?.clearOverridesOfType(C.TRACK_TYPE_AUDIO)!!.build()
 
                 lastAudioOverride = TrackSelectionOverride(
-                    audioTracks[menuItem.itemId].trackGroup!!,
-                    audioTracks[menuItem.itemId].index
+                    p.file!!.audioTracks[menuItem.itemId].trackGroup!!,
+                    p.file!!.audioTracks[menuItem.itemId].index
                 )
                 val newParams = builder.addOverride(lastAudioOverride!!).build()
 
@@ -1150,7 +1135,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                 runOnUiThread {
                     val progress = (roomBinding.vidplayer.player?.currentPosition?.div(1000.0))
                     if (progress != null) {
-                        protocol.currentVideoPosition = progress
+                        p.currentVideoPosition = progress
                     }
                 }
             }
@@ -1171,12 +1156,12 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
     private fun pingUpdaterCore() {
         Handler(pingingThread.looper).postDelayed({
-            if (protocol.socket.isConnected && !protocol.socket.isClosed && !protocol.socket.isInputShutdown) {
-                protocol.ping = SyncplayUtils.pingIcmp("151.80.32.178", 32) * 1000.0
+            if (p.socket.isConnected && !p.socket.isClosed && !p.socket.isInputShutdown) {
+                p.ping = SyncplayUtils.pingIcmp("151.80.32.178", 32) * 1000.0
                 runOnUiThread {
                     roomBinding.syncplayConnectionInfo.text =
-                        string(rr.string.room_ping_connected, "${protocol.ping}")
-                    when (protocol.ping) {
+                        string(rr.string.room_ping_connected, "${p.ping}")
+                    when (p.ping) {
                         in (0.0..100.0) -> roomBinding.syncplaySignalIcon.setImageResource(rr.drawable.ping_3)
                         in (100.0..200.0) -> roomBinding.syncplaySignalIcon.setImageResource(rr.drawable.ping_2)
                         else -> roomBinding.syncplaySignalIcon.setImageResource(rr.drawable.ping_1)
@@ -1193,7 +1178,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                         )
                     )
                 }
-                protocol.syncplayBroadcaster?.onDisconnected()
+                p.syncplayBroadcaster?.onDisconnected()
             }
             pingUpdater()
         }, 1000)
@@ -1211,7 +1196,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         }
 
         /** Check if the sender is also the main user, to determine colors **/
-        if (chatter.lowercase() == protocol.currentUsername.lowercase()) {
+        if (chatter.lowercase() == p.currentUsername.lowercase()) {
             msg.isMainUser = true
         }
 
@@ -1220,7 +1205,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
             message /* Assigning the message content to the variable inside our instance */
 
         /** Adding the message instance to our message sequence **/
-        protocol.messageSequence.add(msg)
+        p.messageSequence.add(msg)
 
         /** Refresh views **/
         replenishMsgs(roomBinding.syncplayMESSAGERY)
@@ -1243,7 +1228,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                 setContentView(rr.layout.popup_messages)
                 val rltvLayout = findViewById<RelativeLayout>(rr.id.syncplay_MESSAGEHISTORY)
                 rltvLayout.removeAllViews()
-                val msgs = protocol.messageSequence
+                val msgs = p.messageSequence
                 for (message in msgs) {
                     val msgPosition: Int = msgs.indexOf(message)
 
@@ -1350,14 +1335,19 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     /*********************************************************************************************
      *                                        CALLBACKS                                          *
      ********************************************************************************************/
-
     override fun onSomeonePaused(pauser: String) {
-        if (pauser != protocol.currentUsername) myExoPlayer?.let { pausePlayback(it) }
-        broadcastMessage(string(rr.string.room_guy_paused, pauser), false)
+        if (pauser != p.currentUsername) pausePlayback()
+        broadcastMessage(
+            string(
+                rr.string.room_guy_paused,
+                pauser,
+                timeStamper(p.currentVideoPosition.roundToInt())
+            ), false
+        )
     }
 
     override fun onSomeonePlayed(player: String) {
-        if (player != protocol.currentUsername) myExoPlayer?.let { playPlayback(it) }
+        if (player != p.currentUsername) playPlayback()
         broadcastMessage(string(rr.string.room_guy_played, player), false)
     }
 
@@ -1367,12 +1357,12 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
     override fun onSomeoneSeeked(seeker: String, toPosition: Double) {
         runOnUiThread {
-            if (seeker != protocol.currentUsername) {
+            if (seeker != p.currentUsername) {
                 broadcastMessage(
                     string(
                         rr.string.room_seeked,
                         seeker,
-                        timeStamper((protocol.currentVideoPosition).roundToInt()),
+                        timeStamper((p.currentVideoPosition).roundToInt()),
                         timeStamper(toPosition.roundToInt())
                     ), false
                 )
@@ -1403,9 +1393,16 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         replenishUsers(roomBinding.syncplayOverview)
         broadcastMessage(string(rr.string.room_guy_left, leaver), false)
 
+        /* If the setting is enabled, pause playback **/
+        val pauseOnLeft = PreferenceManager.getDefaultSharedPreferences(this)
+            .getBoolean("pause_if_someone_left", true)
+        if (pauseOnLeft) {
+            pausePlayback()
+        }
+
         /* Rare cases where a user can see his own self disconnected */
-        if (leaver == protocol.currentUsername) {
-            protocol.syncplayBroadcaster?.onDisconnected()
+        if (leaver == p.currentUsername) {
+            p.syncplayBroadcaster?.onDisconnected()
         }
     }
 
@@ -1439,17 +1436,17 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     override fun onDisconnected() {
         broadcastMessage(string(rr.string.room_attempting_reconnection), false)
         disconnectedPopup()
-        protocol.connected = false
-        protocol.connect()
+        p.connected = false
+        p.connect()
     }
 
     override fun onJoined() {
-        broadcastMessage(string(rr.string.room_you_joined_room, protocol.currentRoom), false)
+        broadcastMessage(string(rr.string.room_you_joined_room, p.currentRoom), false)
     }
 
     override fun onConnectionFailed() {
         broadcastMessage(string(rr.string.room_connection_failed), false)
-        protocol.connect()
+        p.connect()
     }
 
     override fun onReconnected() {
@@ -1458,24 +1455,29 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         runOnUiThread {
             disconnectedPopup?.dismiss() /* Dismiss any disconnection popup, if they exist */
         }
+
+        /** Resubmit any ongoing file being played **/
+        if (p.file != null) {
+            p.sendPacket(sendFile(p.file!!))
+        }
     }
 
     override fun onConnectionAttempt() {
         val server =
-            if (protocol.serverHost == "151.80.32.178") "syncplay.pl" else protocol.serverHost
+            if (p.serverHost == "151.80.32.178") "syncplay.pl" else p.serverHost
         broadcastMessage(
             string(
                 rr.string.room_attempting_connect,
                 server,
-                protocol.serverPort.toString()
+                p.serverPort.toString()
             ), false
         )
     }
 
     override fun onBackPressed() {
         super.onBackPressed()
-        protocol.removeBroadcaster()
-        protocol.socket.close()
+        p.removeBroadcaster()
+        p.socket.close()
         finish()
     }
 
@@ -1484,49 +1486,8 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         return String.format(resources.getString(id), *stuff)
     }
 
-    /** In ExoPlayer, a MediaItem consists of TrackGroups
-     * Each TrackGroup can contain one track (format) or more.
-     * Basically, ExoPlayer gathers similar tracks (same language, different bitrate, for example)
-     * into one track group. There can exist for example 4 track groups, 3 of them of audio or text
-     *
-     * Anyway, in order to manipulate track selection, you need to know how to retrieve those trackgroups
-     * and also, how to retrieve the tracks inside them, and check which one is selected...etc
-     *
-     * I do all of this here.
-     */
-
-    fun analyzeTracks() {
-        audioTracks.clear()
-        subtitleTracks.clear()
-        val tracks = myExoPlayer!!.currentTracks
-        for (group in tracks.groups) {
-            val trackGroup = group.mediaTrackGroup
-            val trackType = group.type
-            if (trackType == C.TRACK_TYPE_AUDIO || trackType == C.TRACK_TYPE_TEXT) {
-                for (i in (0 until trackGroup.length)) {
-                    val format = trackGroup.getFormat(i)
-                    val index = trackGroup.indexOf(format)
-
-                    /** Creating a custom Track instance for every track in a track group **/
-                    val track = Track()
-                    track.trackGroup = trackGroup
-                    track.trackType = trackType
-                    track.index = index
-                    track.format = format
-                    track.selected = group.isTrackSelected(index)
-
-                    if (trackType == C.TRACK_TYPE_TEXT) {
-                        subtitleTracks.add(track)
-                    } else {
-                        audioTracks.add(track)
-                    }
-                }
-            }
-        }
-    }
-
     private fun applyLastOverrides() {
-        analyzeTracks()
+        p.file?.analyzeTracks(myExoPlayer!!)
 
         if (myExoPlayer != null) {
             if (myExoPlayer!!.trackSelector != null) {

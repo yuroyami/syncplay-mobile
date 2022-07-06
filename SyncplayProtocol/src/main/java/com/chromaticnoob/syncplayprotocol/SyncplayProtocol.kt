@@ -3,11 +3,11 @@ package com.chromaticnoob.syncplayprotocol
 import android.os.Handler
 import android.os.HandlerThread
 import androidx.lifecycle.ViewModel
-import com.chromaticnoob.syncplay.room.Message
-import com.chromaticnoob.syncplayprotocol.SPJsonHandler.handleJson
-import com.chromaticnoob.syncplayprotocol.SPWrappers.sendHello
+import com.chromaticnoob.syncplayprotocol.JsonHandler.handleJson
+import com.chromaticnoob.syncplayprotocol.JsonSender.sendHello
 import com.chromaticnoob.syncplayutils.SyncplayUtils
-import com.chromaticnoob.syncplayutils.SyncplayUtils.loggy
+import com.chromaticnoob.syncplayutils.utils.MediaFile
+import com.chromaticnoob.syncplayutils.utils.Message
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +22,7 @@ import java.net.UnknownHostException
 open class SyncplayProtocol : ViewModel() {
 
     /** This refers to the event callback interface */
-    var syncplayBroadcaster: SPBroadcaster? = null
+    var syncplayBroadcaster: ProtocolBroadcaster? = null
 
     /** Protocol-exclusive variables **/
     var serverIgnFly: Int = 0
@@ -38,10 +38,8 @@ open class SyncplayProtocol : ViewModel() {
     var connected = false
 
     /** Variables related to current video properties */
+    var file: MediaFile? = null
     var currentVideoPosition: Double = 0.0
-    var currentVideoName: String = ""
-    var currentVideoLength: Double = 0.0
-    var currentVideoSize: Int = 0
 
     /** Variables related to joining info */
     var serverHost: String = "151.80.32.178"
@@ -62,8 +60,7 @@ open class SyncplayProtocol : ViewModel() {
     /** Instantiating a socket to perform a TCP/IP connection later **/
     var socket: Socket = Socket()
 
-    /** Instantiating the threads that will be responsible for IO socket operations **/
-    private val iThread = HandlerThread("readerThread")
+    /** Instantiating a thread that will be responsible for output socket operations **/
     private val oThread = HandlerThread("senderThread")
 
     /** ============================ start of protocol =====================================**/
@@ -125,7 +122,6 @@ open class SyncplayProtocol : ViewModel() {
                         readPacket()
                     }
                 }
-                loggy("Client: $json")
                 socket.outputStream.write(jsonEncoded)
             } catch (s: SocketException) {
                 s.printStackTrace()
@@ -164,7 +160,7 @@ open class SyncplayProtocol : ViewModel() {
     }
 
     /** Binding function for the callback interface between the the protocol and activity */
-    open fun addBroadcaster(broadcaster: SPBroadcaster) {
+    open fun addBroadcaster(broadcaster: ProtocolBroadcaster) {
         this.syncplayBroadcaster = broadcaster
     }
 

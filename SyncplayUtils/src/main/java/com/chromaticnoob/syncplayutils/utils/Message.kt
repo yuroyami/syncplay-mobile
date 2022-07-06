@@ -1,4 +1,4 @@
-package com.chromaticnoob.syncplay.room
+package com.chromaticnoob.syncplayutils.utils
 
 import android.content.Context
 import com.chromaticnoob.syncplayutils.SyncplayUtils.generateTimestamp
@@ -14,7 +14,7 @@ class Message {
     var content: String = ""
     var isMainUser: Boolean = false
 
-    /* Returns a ready-stylized string including/excluding a timestamp based on the boolean property */
+    /** Returns a ready-stylized string including/excluding a timestamp based on the boolean property */
     fun factorize(doTimestamp: Boolean, context: Context): String {
         val timestampHex = getColorCode("timestamp_color", context)
         val selftagHex = getColorCode("selftag_color", context)
