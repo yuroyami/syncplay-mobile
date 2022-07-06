@@ -50,7 +50,6 @@
         app:layout_constraintWidth_percent="0.7"
         app:strokeColor="@color/white"
         app:strokeWidth="1dp">
-
         <androidx.appcompat.widget.LinearLayoutCompat
             android:id="@+id/starter_info"
             android:layout_width="match_parent"
@@ -58,7 +57,6 @@
             android:gravity="center"
             android:orientation="vertical"
             android:padding="8dp">
-
             <TextView
                 android:id="@+id/starter_info_text"
                 android:layout_width="match_parent"
@@ -79,18 +77,30 @@
     </com.google.android.material.card.MaterialCardView>
 
 
-    <RelativeLayout
-        android:id="@+id/syncplay_MESSAGERY"
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/syncplay_MESSAGERY_card"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginStart="4dp"
-        android:layout_marginTop="4dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="8dp"
         android:focusable="false"
-        android:padding="6dp"
-        app:layout_constraintHeight_percent="1"
+        android:padding="2dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="0dp"
+        app:cardPreventCornerOverlap="true"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintWidth_percent="0.43" />
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="4dp"
+        app:layout_constraintWidth_percent="0.43">
+
+        <RelativeLayout
+            android:id="@+id/syncplay_MESSAGERY"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:focusable="false"
+            android:padding="6dp" />
+    </com.google.android.material.card.MaterialCardView>
+
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/syncplay_INPUT"
@@ -181,40 +191,35 @@
         app:layout_constraintTop_toTopOf="@id/syncplay_ready"
         app:srcCompat="@drawable/ic_unconnected" />
 
-    <androidx.cardview.widget.CardView
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/syncplay_overview_card"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="8dp"
-        android:clickable="false"
-        android:focusable="false"
-        app:cardCornerRadius="25dp"
+        android:padding="2dp"
         app:cardElevation="0dp"
+        app:cardCornerRadius="16dp"
+        app:cardPreventCornerOverlap="true"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1"
-        app:layout_constraintStart_toEndOf="@id/syncplay_MESSAGERY"
+        app:layout_constraintStart_toEndOf="@id/syncplay_MESSAGERY_card"
         app:layout_constraintTop_toBottomOf="@id/syncplay_overviewcheckbox">
 
         <androidx.core.widget.NestedScrollView
             android:id="@+id/syncplay_overview_nester"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:clickable="false"
-            android:focusable="false"
             android:padding="4dp">
 
             <LinearLayout
                 android:id="@+id/syncplay_overview"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:clickable="false"
-                android:focusable="false"
                 android:gravity="right"
                 android:orientation="vertical"
                 android:padding="4dp" />
-
         </androidx.core.widget.NestedScrollView>
-    </androidx.cardview.widget.CardView>
+    </com.google.android.material.card.MaterialCardView>
 
 
     <ImageView
@@ -244,7 +249,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="visible"
-        app:constraint_referenced_ids="syncplay_INPUT, syncplay_SEND, syncplay_overview_card, syncplay_overviewcheckbox, syncplay_ready, syncplay_connection_info, syncplay_signal_icon" />
+        app:constraint_referenced_ids="syncplay_INPUT, syncplay_SEND, syncplay_overviewcheckbox, syncplay_ready, syncplay_connection_info, syncplay_signal_icon" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/pseudo_popup_parent"
@@ -274,25 +279,12 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintWidth_percent="0.60">
-
             <androidx.fragment.app.FragmentContainerView
                 android:id="@+id/pseudo_popup_container"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 tools:ignore="HardcodedText" />
         </com.google.android.material.card.MaterialCardView>
-
-        <!--        <Button-->
-        <!--            android:id="@+id/popup_button"-->
-        <!--            android:layout_width="0dp"-->
-        <!--            android:layout_height="56dp"-->
-        <!--            android:fontFamily="@font/directive4bold"-->
-        <!--            android:text="@string/uisetting_apply"-->
-        <!--            app:layout_constraintBottom_toBottomOf="parent"-->
-        <!--            app:layout_constraintLeft_toLeftOf="parent"-->
-        <!--            app:layout_constraintRight_toRightOf="parent"-->
-        <!--            app:layout_constraintTop_toBottomOf="@id/pseudo_popup_containercard"-->
-        <!--            app:layout_constraintWidth_percent="0.2" />-->
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -49,25 +49,27 @@ class ConnectFragment : Fragment() {
                 else (binding.spMenuAutocomplete.text).toString().substringAfter("syncplay.pl:")
                     .toInt()
 
-            val username = binding.connectUsernameInputText.text.toString().replace("\\", "")
-                .trim().also {
-                    if (it.length > 150) it.substring(0, 149)
-                    if (it.isEmpty()) {
-                        binding.connectUsernameInput.error =
-                            getString(R.string.connect_username_empty_error)
-                        return@setOnClickListener
-                    }
-                }
+            var username = binding.connectUsernameInputText.text.toString().replace("\\", "")
+                .trim()
 
-            val roomname = binding.connectRoomnameInputText.text.toString().replace("\\", "")
-                .trim().also {
-                    if (it.length > 35) it.substring(0, 34)
-                    if (it.isEmpty()) {
-                        binding.connectRoomnameInput.error =
-                            getString(R.string.connect_roomname_empty_error)
-                        return@setOnClickListener
-                    }
+            username.also {
+                if (it.length > 150) username = it.substring(0, 149)
+                if (it.isEmpty()) {
+                    username = it.plus("Anonymous${(1000..9999).random()}")
                 }
+            }
+
+            var roomname = binding.connectRoomnameInputText.text.toString().replace("\\", "")
+                .trim()
+
+            roomname.also {
+                if (it.length > 35) roomname = it.substring(0, 34)
+                if (it.isEmpty()) {
+                    binding.connectRoomnameInput.error =
+                        getString(R.string.connect_roomname_empty_error)
+                    return@setOnClickListener
+                }
+            }
 
             joiningInfo.add(0, serverAddress)
             joiningInfo.add(1, serverPort)

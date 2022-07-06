@@ -25,6 +25,10 @@
 
     <!-- Room Activity Strings -->
     <string name="room_startup_hint">"Insert a new video from storage by clicking on the button with the following icon "</string>
+    <string name="room_selected_vid">Selected video file: %s</string>
+    <string name="room_selected_sub">Loaded subtitle file: %s</string>
+    <string name="room_selected_sub_error">Invalid subtitle file. Supported formats are: \'SRT\', \'TTML\', \'ASS\', \'SSA\', \'VTT\'</string>
+    <string name="room_sub_error_load_vid_first">Load video first</string>
     <string name="room_type_message">Type your message…</string>
     <string name="room_send_button">SEND</string>
     <string name="room_ready">Ready</string>
@@ -121,8 +125,6 @@
     <string name="uisetting_system_color_title">System Message Text Color</string>
     <string name="uisetting_human_color_summary">Customize the text color of user messages (Default is White)</string>
     <string name="uisetting_human_color_title">User Message Text Color</string>
-
-
     <string name="uisetting_resetdefault_summary">Reset all of the above settings to default.</string>
     <string name="uisetting_resetdefault_title">Reset Default Settings</string>
 

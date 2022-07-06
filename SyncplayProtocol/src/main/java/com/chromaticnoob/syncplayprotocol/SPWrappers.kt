@@ -7,8 +7,7 @@ import com.google.gson.GsonBuilder
 
 object SPWrappers {
 
-    private val gson: Gson = GsonBuilder().setPrettyPrinting().create()
-    private val basicgson: Gson = GsonBuilder().create()
+    private val gson: Gson = GsonBuilder().serializeNulls().create()
 
     @JvmStatic
     fun sendHello(username: String, roomname: String, serverPassword: String?): String {
@@ -39,6 +38,7 @@ object SPWrappers {
     fun sendJoined(roomname: String): String {
         val event: HashMap<String, Any> = hashMapOf()
         event["joined"] = true
+
         val room: HashMap<String, String> = hashMapOf()
         room["name"] = roomname
 
@@ -55,7 +55,7 @@ object SPWrappers {
     }
 
     @JvmStatic
-    fun sendReadiness(isReady: Boolean): String {
+    fun sendReadiness(isReady: Boolean, manuallyInitiated: Boolean): String {
         val ready: HashMap<String, Boolean> = hashMapOf()
         ready["isReady"] = isReady
         ready["manuallyInitiated"] = true
@@ -83,7 +83,7 @@ object SPWrappers {
         val wrapper: HashMap<String, Any> = hashMapOf()
         wrapper["Set"] = file
 
-        return basicgson.toJson(wrapper)
+        return gson.toJson(wrapper)
     }
 
     @JvmStatic
@@ -91,7 +91,8 @@ object SPWrappers {
         val emptylist: HashMap<String, Any?> = hashMapOf()
         emptylist["List"] = null
 
-        return GsonBuilder().serializeNulls().create().toJson(emptylist)
+        /** TODO: serializeNulls() was on this only. **/
+        return gson.toJson(emptylist)
     }
 
     @JvmStatic

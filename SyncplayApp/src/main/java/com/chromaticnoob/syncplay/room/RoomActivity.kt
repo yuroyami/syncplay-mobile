@@ -16,6 +16,7 @@ import android.view.ViewGroup
 import android.view.animation.AccelerateInterpolator
 import android.widget.*
 import android.widget.LinearLayout.HORIZONTAL
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.ColorInt
 import androidx.annotation.UiThread
 import androidx.appcompat.app.AppCompatActivity
@@ -24,6 +25,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.children
+import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
@@ -37,6 +39,7 @@ import com.bumptech.glide.request.target.Target
 import com.chromaticnoob.syncplay.databinding.ActivityRoomBinding
 import com.chromaticnoob.syncplayprotocol.SPBroadcaster
 import com.chromaticnoob.syncplayprotocol.SPWrappers.sendChat
+import com.chromaticnoob.syncplayprotocol.SPWrappers.sendEmptyList
 import com.chromaticnoob.syncplayprotocol.SPWrappers.sendFile
 import com.chromaticnoob.syncplayprotocol.SPWrappers.sendReadiness
 import com.chromaticnoob.syncplayprotocol.SPWrappers.sendState
@@ -56,14 +59,13 @@ import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.CaptionStyleCompat
 import com.google.android.exoplayer2.ui.CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW
 import com.google.android.exoplayer2.util.MimeTypes
-import com.google.common.collect.Lists
 import com.google.gson.GsonBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import razerdp.basepopup.BasePopupWindow
 import java.io.IOException
+import java.util.Collections.singletonList
 import kotlin.collections.set
 import kotlin.math.roundToInt
 import com.chromaticnoob.syncplay.R as rr
@@ -77,7 +79,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     /* This will initialize our protocol the first time it is needed */
     lateinit var protocol: SyncplayProtocol
 
-    /*-- Declaring ExoPlayer-specific variables --*/
+    /*-- Declaring ExoPlayer variable --*/
     private var myExoPlayer: ExoPlayer? = null
 
     /*-- Declaring Playtracking variables **/
@@ -87,7 +89,8 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     private var lastSubtitleOverride: TrackSelectionOverride? = null
     private var seekTracker: Double = 0.0
     private var receivedSeek = false
-    private var updatePosition = false
+
+    //private var updatePosition = false
     private var startFromPosition = (-3.0).toLong()
 
     /*-- Saving video uri and its sub in a global variable allows us to reload them any time --*/
@@ -103,9 +106,74 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     /* Specifying and creating threads for separate periodic tasks such as pinging */
     private val pingingThread = HandlerThread("pingingThread")
 
+    /* Declaring Popup dialog variables which are used to show/dismiss different popups */
+    private var disconnectedPopup: DisconnectedPopup? = null
+
     /**********************************************************************************************
      *                                        LIFECYCLE METHODS
      *********************************************************************************************/
+
+    private val videoPickResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result?.resultCode == Activity.RESULT_OK) {
+                gottenFile = result.data?.data
+                val filename = gottenFile?.let { getFileName(it) }
+                Toast.makeText(
+                    this,
+                    string(rr.string.room_selected_vid, "$filename"),
+                    Toast.LENGTH_LONG
+                ).show()
+                Handler(Looper.getMainLooper()).postDelayed(
+                    {
+                        myExoPlayer?.seekTo(0L)
+                    }, 2000
+                )
+            }
+        }
+
+    private val subtitlePickResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result?.resultCode == Activity.RESULT_OK) {
+                if (gottenFile != null) {
+                    val path = result.data?.data!!
+                    val filename = getFileName(path).toString()
+                    val extension = filename.substring(filename.length - 4)
+                    val mimeType =
+                        if (extension.contains("srt")) MimeTypes.APPLICATION_SUBRIP
+                        else if ((extension.contains("ass"))
+                            || (extension.contains("ssa"))
+                        ) MimeTypes.TEXT_SSA
+                        else if (extension.contains("ttml")) MimeTypes.APPLICATION_TTML
+                        else if (extension.contains("vtt")) MimeTypes.TEXT_VTT else ""
+                    if (mimeType != "") {
+                        gottenSub = MediaItem.SubtitleConfiguration.Builder(path)
+                            .setUri(path)
+                            .setMimeType(mimeType)
+                            .setLanguage(null)
+                            .setSelectionFlags(SELECTION_FLAG_DEFAULT)
+                            .build()
+                        Toast.makeText(
+                            this,
+                            string(rr.string.room_selected_sub, filename),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    } else {
+                        Toast.makeText(
+                            this,
+                            getString(rr.string.room_selected_sub_error),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                } else {
+                    Toast.makeText(
+                        this,
+                        getString(rr.string.room_sub_error_load_vid_first),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -164,6 +232,31 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         supportFragmentManager.beginTransaction()
             .replace(rr.id.pseudo_popup_container, RoomSettingsFragment())
             .commit()
+
+        /** Leaving the app for too long in the background might destroy the activity.
+         * So, bringing it up back to the foreground would necessite calling onCreate() OR the
+         * other function onRestoreInstanceState in lesser severe cases.
+         */
+
+        if (savedInstanceState != null) {
+            restoreSyncplaySession(savedInstanceState)
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putDouble("last_position", protocol.currentVideoPosition)
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+        restoreSyncplaySession(savedInstanceState)
+    }
+
+    /** Responsible for restoring the session that was destroyed due to background restriction **/
+    fun restoreSyncplaySession(sis: Bundle) {
+        loggy("Loading saved instance state.")
+        protocol.sendPacket(sendEmptyList())
     }
 
     override fun onStart() {
@@ -190,15 +283,6 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
             )
             .build()
 
-//        /** TrackSelector building **/
-//        trackSelec = DefaultTrackSelector(this).also {
-//            it.parameters =
-//                DefaultTrackSelector.ParametersBuilder(this)
-//                    .build()
-//
-//        }
-
-
         /** Now, on to building Exoplayer itself using the components we have **/
         myExoPlayer = ExoPlayer.Builder(this)
             //.setTrackSelector(trackSelec) /* We use the trackselector we initialized before */
@@ -216,8 +300,8 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         /** Customizing ExoPlayer components **/
         myExoPlayer?.videoScalingMode = VIDEO_SCALING_MODE_SCALE_TO_FIT /* Starter scaling */
 
-        roomBinding.vidplayer.subtitleView?.background =
-            null /* Removing any bg color on subtitles */
+//        roomBinding.vidplayer.subtitleView?.background =
+//            null /* Removing any bg color on subtitles */
 
         myExoPlayer?.playWhenReady = true /* Play once the media has been buffered */
 
@@ -318,7 +402,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         /** Listening to ExoPlayer's UI Visibility **/
         roomBinding.vidplayer.setControllerVisibilityListener { visibility ->
             if (visibility == VISIBLE) {
-                roomBinding.syncplayMESSAGERY.also {
+                roomBinding.syncplayMESSAGERYCard.also {
                     it.clearAnimation()
                     it.alpha = 1f
                     it.visibility = VISIBLE
@@ -336,11 +420,9 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                     hudBinding.exoFfwd.visibility = visib
                     hudBinding.exoRew.visibility = visib
                 }, 10)
-
-
             } else {
                 hideSystemUI(this, false)
-                roomBinding.syncplayMESSAGERY.also {
+                roomBinding.syncplayMESSAGERYCard.also {
                     it.clearAnimation()
                     it.alpha = 0f
                     it.visibility = GONE
@@ -350,6 +432,8 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                     hideKb()
                 }
             }
+            roomBinding.syncplayOverviewCard.isVisible =
+                (visibility == VISIBLE) && roomBinding.syncplayOverviewcheckbox.isChecked
         }
 
         /************************
@@ -359,7 +443,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
             val intent1 = Intent()
             intent1.type = "*/*"
             intent1.action = Intent.ACTION_OPEN_DOCUMENT
-            startActivityForResult(intent1, 90909)
+            videoPickResult.launch(intent1)
         }
 
 
@@ -461,7 +545,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         /*****************
          * OverFlow Menu *
          *****************/
-        hudBinding.syncplayMore.setOnClickListener { overflow ->
+        hudBinding.syncplayMore.setOnClickListener { _ ->
             val popup = PopupMenu(
                 this,
                 hudBinding.syncplayAddfile
@@ -514,7 +598,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                         val intent2 = Intent()
                         intent2.type = "*/*"
                         intent2.action = Intent.ACTION_OPEN_DOCUMENT
-                        startActivityForResult(intent2, 80808)
+                        subtitlePickResult.launch(intent2)
                     }
                     cutoutItem -> {
                         cutOutMode = !cutOutMode
@@ -550,10 +634,9 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
          * Room Information *
          ********************/
         roomBinding.syncplayOverviewcheckbox.setOnCheckedChangeListener { _, checked ->
+            roomBinding.syncplayOverviewCard.isVisible = checked
             if (checked) {
                 replenishUsers(roomBinding.syncplayOverview)
-            } else {
-                roomBinding.syncplayOverview.removeAllViews()
             }
         }
 
@@ -562,7 +645,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
          ****************/
         roomBinding.syncplayReady.setOnCheckedChangeListener { _, b ->
             protocol.ready = b
-            protocol.sendPacket(sendReadiness(b))
+            protocol.sendPacket(sendReadiness(b, true))
         }
 
         /*******************
@@ -615,23 +698,22 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
             /** And apply track choices again **/
             applyLastOverrides()
         }
-    }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putDouble("last_position", protocol.currentVideoPosition)
+        /** This is a simple trick to revive a dead socket **/
+        protocol.sendPacket(sendReadiness(protocol.ready, true))
+        protocol.sendPacket(sendEmptyList())
     }
 
     override fun onPause() {
         super.onPause()
         startFromPosition = roomBinding.vidplayer.player?.currentPosition!!
-        updatePosition = false
+        //updatePosition = false
     }
 
     override fun onStop() {
         super.onStop()
 
-        updatePosition = false
+        //updatePosition = false
         myExoPlayer?.stop()
 //        myMediaPlayer?.run {
 //            roomViewModel.currentVideoPosition = this.currentPosition.toDouble()
@@ -645,55 +727,8 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
     override fun onDestroy() {
         super.onDestroy()
-        updatePosition = false
+        //updatePosition = false
         myExoPlayer?.release()
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == Activity.RESULT_OK) {
-            when (requestCode) {
-                90909 -> {
-                    gottenFile = data?.data
-                    val filename = gottenFile?.let { getFileName(it) }
-                    Toast.makeText(this, "Selected video file: $filename", Toast.LENGTH_LONG).show()
-
-                }
-                80808 -> {
-                    if (gottenFile != null) {
-                        val path = data?.data!!
-                        val filename = getFileName(path).toString()
-                        val extension = filename.substring(filename.length - 4)
-                        val mimeType =
-                            if (extension.contains("srt")) MimeTypes.APPLICATION_SUBRIP
-                            else if ((extension.contains("ass"))
-                                || (extension.contains("ssa"))
-                            ) MimeTypes.TEXT_SSA
-                            else if (extension.contains("ttml")) MimeTypes.APPLICATION_TTML
-                            else if (extension.contains("vtt")) MimeTypes.TEXT_VTT else ""
-                        if (mimeType != "") {
-                            gottenSub = MediaItem.SubtitleConfiguration.Builder(path)
-                                .setUri(path)
-                                .setMimeType(mimeType)
-                                .setLanguage(null)
-                                .setSelectionFlags(SELECTION_FLAG_DEFAULT)
-                                .build()
-                            Toast.makeText(
-                                this, "Loaded sub successfully: $filename", Toast.LENGTH_LONG
-                            ).show()
-                        } else {
-                            Toast.makeText(
-                                this,
-                                "Invalid subtitle file. Supported formats are: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    } else {
-                        Toast.makeText(this, "Load video first", Toast.LENGTH_LONG).show()
-                    }
-                }
-            }
-        }
     }
 
     /*********************************************************************************************
@@ -701,7 +736,6 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
      ********************************************************************************************/
     private fun injectVideo(mp: ExoPlayer, mediaPath: Uri) {
         try {
-            //val vid: MediaItem = MediaItem.fromUri(mediaPath)
             val vidbuilder = MediaItem.Builder()
             if (gottenSub != null) {
                 runOnUiThread {
@@ -712,13 +746,11 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                         )
                     )
                 }
-                vidbuilder.setUri(mediaPath)
-                    .setSubtitleConfigurations(Lists.newArrayList(gottenSub!!))
+                vidbuilder.setUri(mediaPath).setSubtitleConfigurations(singletonList(gottenSub!!))
             } else {
                 vidbuilder.setUri(mediaPath)
             }
             val vid = vidbuilder.build()
-            //val file = File(mediaPath.path.toString())
             runOnUiThread {
                 mp.setMediaItem(vid)
                 hudBinding.exoPlay.performClick()
@@ -741,8 +773,8 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                     )
                 )
             }
-            updatePosition = true
-            casualUpdater() //Most important updater to maintain continuity
+            //updatePosition = true
+            vidPosUpdater() //Most important updater to maintain continuity
         } catch (e: IOException) {
             throw RuntimeException("Invalid asset folder")
         }
@@ -806,10 +838,6 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                 }
                 txtview.textSize = PreferenceManager.getDefaultSharedPreferences(this@RoomActivity)
                     .getInt("msg_size", 12).toFloat()
-                val alpha = PreferenceManager.getDefaultSharedPreferences(this@RoomActivity)
-                    .getInt("messagery_alpha", 0) //between 0-255
-                @ColorInt val alphaColor = ColorUtils.setAlphaComponent(Color.DKGRAY, alpha)
-                txtview.setBackgroundColor(alphaColor)
 
                 val rltvParams: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
@@ -979,10 +1007,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                         }
                         roomBinding.syncplayOverview.addView(linearlayout3, linearlayoutParams3)
                     }
-
-
                 }
-
             }
         }
     }
@@ -1052,7 +1077,6 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
     private fun audioSelect(audioButton: ImageButton) {
         analyzeTracks()
-
         if (audioTracks.isEmpty()) {
             displayInfo(getString(rr.string.room_audio_track_not_found)) /* Otherwise, no audio track found */
         } else {
@@ -1114,22 +1138,24 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         roomBinding.syncplayINPUTBox.clearFocus()
     }
 
-    private fun casualUpdater() {
-        //TODO: Change periodic sleep to periodic handler.
-        GlobalScope.launch(Dispatchers.Unconfined) {
-            while (true) {
-                if (updatePosition) {
-                    /* Informing my ViewModel about current vid position so it is retrieved for networking after */
-                    runOnUiThread {
-                        val progress = (roomBinding.vidplayer.player?.currentPosition?.div(1000.0))
-                        if (progress != null) {
-                            protocol.currentVideoPosition = progress
-                        }
+    /** The reason why we didn't create a custom HandlerThread for vidPosUpdater task, is because
+     * the player should not be accessed from a thread other than the thread it is initialized on.
+     *
+     * In this case, I use it always on the main thread.
+     */
+    private fun vidPosUpdater() {
+        Handler(Looper.getMainLooper()).postDelayed({
+            if (myExoPlayer?.isCurrentMediaItemSeekable == true) {
+                /* Informing my ViewModel about current vid position so it is retrieved for networking after */
+                runOnUiThread {
+                    val progress = (roomBinding.vidplayer.player?.currentPosition?.div(1000.0))
+                    if (progress != null) {
+                        protocol.currentVideoPosition = progress
                     }
                 }
-                delay(75)
             }
-        }
+            vidPosUpdater()
+        }, 100)
     }
 
     private fun pingUpdater() {
@@ -1137,15 +1163,15 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
             if (!pingingThread.isAlive) {
                 pingingThread.start()
             }
-            pingUpdaterpost()
+            pingUpdaterCore()
         } catch (e: IllegalThreadStateException) {
-            pingUpdaterpost()
+            pingUpdaterCore()
         }
     }
 
-    private fun pingUpdaterpost() {
+    private fun pingUpdaterCore() {
         Handler(pingingThread.looper).postDelayed({
-            if (protocol.socket.isConnected && !protocol.socket.isClosed) {
+            if (protocol.socket.isConnected && !protocol.socket.isClosed && !protocol.socket.isInputShutdown) {
                 protocol.ping = SyncplayUtils.pingIcmp("151.80.32.178", 32) * 1000.0
                 runOnUiThread {
                     roomBinding.syncplayConnectionInfo.text =
@@ -1167,6 +1193,7 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
                         )
                     )
                 }
+                protocol.syncplayBroadcaster?.onDisconnected()
             }
             pingUpdater()
         }, 1000)
@@ -1251,67 +1278,74 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
         DemoPopup(this).setBlurBackgroundEnable(true).showPopupWindow()
     }
 
-    private fun disconnectedPopup() {
-        class DisconnectedPopup(context: Context) : BasePopupWindow(context) {
-            init {
-                setContentView(rr.layout.popup_disconnected)
-                val gif = findViewById<ImageView>(rr.id.disconnected_gif)
-                Glide.with(context)
-                    .asGif()
-                    .load(rr.raw.spinner)
-                    .apply(RequestOptions.diskCacheStrategyOf(DiskCacheStrategy.NONE))
-                    .listener(object : RequestListener<GifDrawable?> {
-                        override fun onLoadFailed(
-                            e: GlideException?,
-                            model: Any?,
-                            target: Target<GifDrawable?>?,
-                            isFirstResource: Boolean
-                        ): Boolean {
-                            return false
-                        }
+    inner class DisconnectedPopup(context: Context) : BasePopupWindow(context) {
+        init {
+            setContentView(rr.layout.popup_disconnected)
+            val gif = findViewById<ImageView>(rr.id.disconnected_gif)
+            Glide.with(context)
+                .asGif()
+                .load(rr.raw.spinner)
+                .apply(RequestOptions.diskCacheStrategyOf(DiskCacheStrategy.NONE))
+                .listener(object : RequestListener<GifDrawable?> {
+                    override fun onLoadFailed(
+                        e: GlideException?,
+                        model: Any?,
+                        target: Target<GifDrawable?>?,
+                        isFirstResource: Boolean
+                    ): Boolean {
+                        return false
+                    }
 
-                        override fun onResourceReady(
-                            resource: GifDrawable?,
-                            model: Any?,
-                            target: Target<GifDrawable?>?,
-                            dataSource: DataSource?,
-                            isFirstResource: Boolean
-                        ): Boolean {
-                            resource?.setLoopCount(999999999)
-                            return false
-                        }
-                    })
-                    .into(gif)
+                    override fun onResourceReady(
+                        resource: GifDrawable?,
+                        model: Any?,
+                        target: Target<GifDrawable?>?,
+                        dataSource: DataSource?,
+                        isFirstResource: Boolean
+                    ): Boolean {
+                        resource?.setLoopCount(999999999)
+                        return false
+                    }
+                })
+                .into(gif)
 
-                val dismisser = findViewById<FrameLayout>(rr.id.disconnected_popup_dismisser)
-                dismisser.setOnClickListener {
-                    this.dismiss()
-                }
-
+            val dismisser = findViewById<FrameLayout>(rr.id.disconnected_popup_dismisser)
+            dismisser.setOnClickListener {
+                this.dismiss()
             }
-        }
 
+        }
+    }
+
+    private fun disconnectedPopup() {
         runOnUiThread {
-            DisconnectedPopup(this).setBlurBackgroundEnable(true).showPopupWindow()
+            disconnectedPopup = DisconnectedPopup(this).also {
+                it.setBlurBackgroundEnable(true)
+                it.showPopupWindow()
+            }
         }
     }
 
     fun applyUISettings() {
-        /* For settings: Timestamp,Message Count,Message Font Size, Messages alpha */
+        /* For settings: Timestamp,Message Count,Message Font Size */
         replenishMsgs(roomBinding.syncplayMESSAGERY)
 
         /* Holding a reference to SharedPreferences to use it later */
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
 
         /* Applying "overview_alpha" setting */
-        val alpha = sp.getInt("overview_alpha", 30) //between 0-255
-        @ColorInt val alphaColor = ColorUtils.setAlphaComponent(Color.DKGRAY, alpha)
-        roomBinding.syncplayOverviewCard.setBackgroundColor(alphaColor)
+        val alpha1 = sp.getInt("overview_alpha", 30) //between 0-255
+        @ColorInt val alphaColor1 = ColorUtils.setAlphaComponent(Color.DKGRAY, alpha1)
+        roomBinding.syncplayOverviewCard.setCardBackgroundColor(alphaColor1)
+
+        /* Applying MESSAGERY Alpha **/
+        val alpha2 = sp.getInt("messagery_alpha", 0) //between 0-255
+        @ColorInt val alphaColor2 = ColorUtils.setAlphaComponent(Color.DKGRAY, alpha2)
+        roomBinding.syncplayMESSAGERYCard.setCardBackgroundColor(alphaColor2)
 
         /* Applying Subtitle Size setting */
         ccsize = sp.getInt("subtitle_size", 18).toFloat()
     }
-
 
     /*********************************************************************************************
      *                                        CALLBACKS                                          *
@@ -1325,7 +1359,6 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     override fun onSomeonePlayed(player: String) {
         if (player != protocol.currentUsername) myExoPlayer?.let { playPlayback(it) }
         broadcastMessage(string(rr.string.room_guy_played, player), false)
-
     }
 
     override fun onChatReceived(chatter: String, chatmessage: String) {
@@ -1369,6 +1402,11 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     override fun onSomeoneLeft(leaver: String) {
         replenishUsers(roomBinding.syncplayOverview)
         broadcastMessage(string(rr.string.room_guy_left, leaver), false)
+
+        /* Rare cases where a user can see his own self disconnected */
+        if (leaver == protocol.currentUsername) {
+            protocol.syncplayBroadcaster?.onDisconnected()
+        }
     }
 
     override fun onSomeoneJoined(joiner: String) {
@@ -1382,17 +1420,17 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
 
     override fun onSomeoneLoadedFile(
         person: String,
-        file: String,
-        fileduration: String,
-        filesize: String
+        file: String?,
+        fileduration: String?,
+        filesize: String?
     ) {
         replenishUsers(roomBinding.syncplayOverview)
         broadcastMessage(
             string(
                 rr.string.room_isplayingfile,
                 person,
-                file,
-                timeStamper(fileduration.toDouble().roundToInt())
+                file ?: "",
+                timeStamper(fileduration?.toDoubleOrNull()?.roundToInt() ?: 0)
             ),
             false
         )
@@ -1417,6 +1455,9 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     override fun onReconnected() {
         broadcastMessage(string(rr.string.room_connected_to_server), false)
         replenishUsers(roomBinding.syncplayOverview)
+        runOnUiThread {
+            disconnectedPopup?.dismiss() /* Dismiss any disconnection popup, if they exist */
+        }
     }
 
     override fun onConnectionAttempt() {
@@ -1442,7 +1483,6 @@ class RoomActivity : AppCompatActivity(), SPBroadcaster {
     fun string(id: Int, vararg stuff: String): String {
         return String.format(resources.getString(id), *stuff)
     }
-
 
     /** In ExoPlayer, a MediaItem consists of TrackGroups
      * Each TrackGroup can contain one track (format) or more.

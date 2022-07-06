@@ -23,9 +23,9 @@ interface SPBroadcaster {
 
     fun onSomeoneLoadedFile(
         person: String,
-        file: String,
-        fileduration: String,
-        filesize: String
+        file: String?,
+        fileduration: String?,
+        filesize: String?
     )
 
     fun onDisconnected()

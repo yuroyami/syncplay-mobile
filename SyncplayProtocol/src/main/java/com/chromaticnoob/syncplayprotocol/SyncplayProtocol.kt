@@ -4,12 +4,16 @@ import android.os.Handler
 import android.os.HandlerThread
 import androidx.lifecycle.ViewModel
 import com.chromaticnoob.syncplay.room.Message
-import com.chromaticnoob.syncplayprotocol.SPJsonHandler.extractJson
+import com.chromaticnoob.syncplayprotocol.SPJsonHandler.handleJson
 import com.chromaticnoob.syncplayprotocol.SPWrappers.sendHello
 import com.chromaticnoob.syncplayutils.SyncplayUtils
+import com.chromaticnoob.syncplayutils.SyncplayUtils.loggy
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.io.IOException
 import java.net.Socket
 import java.net.SocketException
@@ -26,7 +30,7 @@ open class SyncplayProtocol : ViewModel() {
     var ping = 0.0
 
     /** Our JSON instance */
-    val gson: Gson = GsonBuilder().setPrettyPrinting().create()
+    val gson: Gson = GsonBuilder().create()
 
     /** Variables that track user status */
     var paused: Boolean = true
@@ -42,7 +46,7 @@ open class SyncplayProtocol : ViewModel() {
     /** Variables related to joining info */
     var serverHost: String = "151.80.32.178"
     var serverPort: Int = 8999
-    var currentUsername: String = "username_${(0..999999999999).random()}"
+    var currentUsername: String = "Anonymous${(1000..9999).random()}"
     var currentRoom: String = "roomname"
     var currentPassword: String? = null
 
@@ -121,53 +125,37 @@ open class SyncplayProtocol : ViewModel() {
                         readPacket()
                     }
                 }
+                loggy("Client: $json")
                 socket.outputStream.write(jsonEncoded)
             } catch (s: SocketException) {
-                SyncplayUtils.loggy("Socket: ${s.stackTrace}")
-            }
-        }
-
-    }
-
-    /** This is the 1st/2 part of packet reading function. What we do here is start the reading thret
-     * if it's not started, then we check the status of the socket. If all is OK, we execute our
-     * core packet reading functionality
-     */
-    private fun readPacket() {
-        try {
-            if (!iThread.isAlive) {
-                iThread.start()
-            }
-            readPacketCore()
-        } catch (e: IllegalThreadStateException) {
-            readPacketCore()
-        }
-    }
-
-    /** This is the 2nd/2 part of the packet reading function. We will basically read line by line. **/
-    private fun readPacketCore() {
-        val readRunnable = Runnable {
-            try {
-                try {
-                    val line: String? =
-                        socket.getInputStream().bufferedReader(Charsets.UTF_8).readLine()
-                    if (line != null) {
-                        extractJson(line, serverHost, serverPort, this@SyncplayProtocol)
-                        readPacket()
-                    }
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                    disconnected()
-                }
-            } catch (e: SocketException) {
-                e.printStackTrace()
+                s.printStackTrace()
                 disconnected()
             }
         }
-        if (socket.isConnected && !socket.isInputShutdown && !socket.isClosed) {
-            Handler(iThread.looper).postDelayed(readRunnable, 50)
-        }
+    }
 
+    /** I believe there is no straight forward way to both check a socket's status and read lines at the
+     * same time. So I will stick to this good ol' way which allows to never miss a line.
+     */
+    private fun readPacket() {
+        GlobalScope.launch(Dispatchers.IO) {
+            while (true) {
+                try {
+                    if (socket.isConnected && !socket.isClosed) {
+                        try {
+                            socket.getInputStream().bufferedReader(Charsets.UTF_8).forEachLine {
+                                handleJson(it, this@SyncplayProtocol)
+                            }
+                        } catch (e: SocketException) {
+                            disconnected()
+                        }
+                    }
+                    delay(10)
+                } catch (e: SocketException) {
+                    disconnected()
+                }
+            }
+        }
     }
 
     private fun disconnected() {

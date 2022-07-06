@@ -59,11 +59,9 @@ dependencies {
     implementation project(':SyncplayProtocol') //Deploying SyncplayProtocol
     implementation project(':SyncplayUtils') //Deploying our own toolkit
 
-
     /* As for importing the FFmpeg extension, we cannot add it in another module/submodule that
        represents an Android Library. An error would sho "Direct local .aar are not supported"
        To solve such issue, we just depend on the extension here.
      */
     implementation files('libs/ext.aar')
-
 }

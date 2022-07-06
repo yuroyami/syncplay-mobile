@@ -9,6 +9,7 @@ android {
 
     defaultConfig {
         minSdk 21
+        //noinspection OldTargetApi (I don't wanna use targetSdk 33 until they provide full support for it)
         targetSdk 32
     }
 
@@ -30,7 +31,7 @@ android {
 dependencies {
     /* Since we're mentioning all our dependencies here, we have to use the "api" keyword
        and not 'implementation'. This way, the dependencies are available to ALL modules that depend
-       on this particular module. All our modules depend on SyncplayUtils, so... */
+       on SyncplayUtils module. */
     api 'androidx.core:core-ktx:1.9.0-alpha05'
     api 'androidx.appcompat:appcompat:1.6.0-alpha05'
     api 'com.google.android.material:material:1.7.0-alpha02'
