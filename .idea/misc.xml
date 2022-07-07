@@ -61,6 +61,15 @@
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/ColorPreference/src/main/res/layout/cpv_preference_circle_large.xml" value="0.19067028985507245" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/ColorPreference/src/main/res/layout/cpv_preference_square.xml" value="0.19067028985507245" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/ColorPreference/src/main/res/layout/cpv_preference_square_large.xml" value="0.19067028985507245" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/hud_gradient.xml" value="0.103" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/ic_add_video.xml" value="0.103" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/ic_shared_playlist.xml" value="0.103" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/layout/activity_main.xml" value="0.19157608695652173" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/layout/activity_room.xml" value="0.1" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/layout/fragment_connect.xml" value="0.1" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/layout/popup_disconnected.xml" value="0.1" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/layout/popup_messages.xml" value="0.18342391304347827" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/layout/serverlist_textview.xml" value="0.18342391304347827" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/drawable/hud_gradient.xml" value="0.158" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/layout/about_tab1_content.xml" value="0.18931159420289856" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/layout/about_tab1_header.xml" value="0.196875" />
@@ -85,7 +94,7 @@
       </map>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="Android Studio default JDK" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="11" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectType">

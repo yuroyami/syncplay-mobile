@@ -1,8 +1,11 @@
 <component name="libraryTable">
   <library name="Gradle: F">
+    <ANNOTATIONS>
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-3/ab2aad0e28bb8646a5b228a9ad055598/transformed/jetified-ColorPreference/annotations.zip!/" />
+    </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$USER_HOME$/.gradle/caches/transforms-3/6a33fd08dcde3dc4aeb8edaefd575de9/transformed/jetified-extension-ffmpeg/jars/classes.jar!/" />
-      <root url="file://$USER_HOME$/.gradle/caches/transforms-3/6a33fd08dcde3dc4aeb8edaefd575de9/transformed/jetified-extension-ffmpeg/AndroidManifest.xml" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-3/f3debd322f60beaa4d2bc0e1de527cc5/transformed/jetified-ext/AndroidManifest.xml" />
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-3/f3debd322f60beaa4d2bc0e1de527cc5/transformed/jetified-ext/jars/classes.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

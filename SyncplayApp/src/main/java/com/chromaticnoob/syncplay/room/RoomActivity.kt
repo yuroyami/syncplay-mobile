@@ -1327,6 +1327,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
 
         /* Applying Subtitle Size setting */
         ccsize = sp.getInt("subtitle_size", 18).toFloat()
+
     }
 
     /*********************************************************************************************

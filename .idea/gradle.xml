@@ -7,12 +7,13 @@
         <option name="testRunner" value="GRADLE" />
         <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="gradleJvm" value="11 (2)" />
+        <option name="gradleJvm" value="Embedded JDK" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/ColorPreference" />
             <option value="$PROJECT_DIR$/SyncplayApp" />
+            <option value="$PROJECT_DIR$/SyncplayProtocol" />
+            <option value="$PROJECT_DIR$/SyncplayUtils" />
           </set>
         </option>
       </GradleProjectSettings>
