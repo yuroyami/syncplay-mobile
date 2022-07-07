@@ -5,25 +5,15 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
-import android.net.Uri
 import android.os.*
 import android.text.Html
 import android.util.TypedValue.COMPLEX_UNIT_SP
-import android.view.Gravity.END
-import android.view.MenuItem
 import android.view.View.*
 import android.view.ViewGroup
 import android.view.animation.AccelerateInterpolator
 import android.widget.*
-import android.widget.LinearLayout.HORIZONTAL
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.ColorInt
-import androidx.annotation.UiThread
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.content.res.AppCompatResources.getDrawable
-import androidx.core.graphics.ColorUtils
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.children
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
@@ -37,7 +27,22 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
 import com.chromaticnoob.syncplay.databinding.ActivityRoomBinding
-import com.chromaticnoob.syncplayprotocol.JsonSender.sendChat
+import com.chromaticnoob.syncplay.room.ExoPlayerUtils.applyLastOverrides
+import com.chromaticnoob.syncplay.room.ExoPlayerUtils.audioSelect
+import com.chromaticnoob.syncplay.room.ExoPlayerUtils.injectVideo
+import com.chromaticnoob.syncplay.room.ExoPlayerUtils.pausePlayback
+import com.chromaticnoob.syncplay.room.ExoPlayerUtils.playPlayback
+import com.chromaticnoob.syncplay.room.ExoPlayerUtils.subtitleSelect
+import com.chromaticnoob.syncplay.room.RoomUtils.checkFileMismatches
+import com.chromaticnoob.syncplay.room.RoomUtils.pingUpdater
+import com.chromaticnoob.syncplay.room.RoomUtils.sendMessage
+import com.chromaticnoob.syncplay.room.RoomUtils.sendPlayback
+import com.chromaticnoob.syncplay.room.RoomUtils.string
+import com.chromaticnoob.syncplay.room.UIUtils.applyUISettings
+import com.chromaticnoob.syncplay.room.UIUtils.broadcastMessage
+import com.chromaticnoob.syncplay.room.UIUtils.displayInfo
+import com.chromaticnoob.syncplay.room.UIUtils.hideKb
+import com.chromaticnoob.syncplay.room.UIUtils.replenishUsers
 import com.chromaticnoob.syncplayprotocol.JsonSender.sendEmptyList
 import com.chromaticnoob.syncplayprotocol.JsonSender.sendFile
 import com.chromaticnoob.syncplayprotocol.JsonSender.sendReadiness
@@ -50,7 +55,6 @@ import com.chromaticnoob.syncplayutils.SyncplayUtils.hideSystemUI
 import com.chromaticnoob.syncplayutils.SyncplayUtils.loggy
 import com.chromaticnoob.syncplayutils.SyncplayUtils.timeStamper
 import com.chromaticnoob.syncplayutils.utils.MediaFile
-import com.chromaticnoob.syncplayutils.utils.Message
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.C.SELECTION_FLAG_DEFAULT
 import com.google.android.exoplayer2.C.VIDEO_SCALING_MODE_SCALE_TO_FIT
@@ -61,43 +65,37 @@ import com.google.android.exoplayer2.ui.CaptionStyleCompat
 import com.google.android.exoplayer2.ui.CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW
 import com.google.android.exoplayer2.util.MimeTypes
 import com.google.gson.GsonBuilder
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import razerdp.basepopup.BasePopupWindow
-import java.io.IOException
-import java.util.Collections.singletonList
 import kotlin.collections.set
 import kotlin.math.roundToInt
 import com.chromaticnoob.syncplay.R as rr
 
 class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
-
     /* Declaring our ViewBinding global variables (much faster than findViewById) **/
-    private lateinit var roomBinding: ActivityRoomBinding
-    private lateinit var hudBinding: HudBinding
+    lateinit var roomBinding: ActivityRoomBinding
+    lateinit var hudBinding: HudBinding
 
     /* This will initialize our protocol the first time it is needed */
     lateinit var p: SyncplayProtocol
 
     /*-- Declaring ExoPlayer variable --*/
-    private var myExoPlayer: ExoPlayer? = null
+    var myExoPlayer: ExoPlayer? = null
 
     /*-- Declaring Playtracking variables **/
-    private var lastAudioOverride: TrackSelectionOverride? = null
-    private var lastSubtitleOverride: TrackSelectionOverride? = null
+    var lastAudioOverride: TrackSelectionOverride? = null
+    var lastSubtitleOverride: TrackSelectionOverride? = null
     private var seekTracker: Double = 0.0
     private var receivedSeek = false
-    private var startFromPosition = (-3.0).toLong()
+    var startFromPosition = (-3.0).toLong()
 
     /*-- UI-Related --*/
     private var lockedScreen = false
     private var seekButtonEnable: Boolean? = null
     private var cutOutMode: Boolean = true
-    private var ccsize = 18f
+    var ccsize = 18f
 
     /* Specifying and creating threads for separate periodic tasks such as pinging */
-    private val pingingThread = HandlerThread("pingingThread")
+    val pingingThread = HandlerThread("pingingThread")
 
     /* Declaring Popup dialog variables which are used to show/dismiss different popups */
     private lateinit var disconnectedPopup: DisconnectedPopup
@@ -118,7 +116,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                     Toast.LENGTH_LONG
                 ).show()
                 Handler(Looper.getMainLooper()).postDelayed({ myExoPlayer?.seekTo(0L) }, 2000)
-                checkFileMismatches()
+                checkFileMismatches(p)
             }
         }
 
@@ -713,511 +711,12 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
 
     override fun onDestroy() {
         super.onDestroy()
-        //updatePosition = false
         myExoPlayer?.release()
     }
 
     /*********************************************************************************************
      *                                     CUSTOM FUNCTIONS                                      *
      ********************************************************************************************/
-    private fun injectVideo(mp: ExoPlayer, mediaPath: Uri) {
-        try {
-            /** This is the builder responsible for building a MediaItem component for ExoPlayer **/
-            val vidbuilder = MediaItem.Builder()
-
-            /** Seeing if we have any loaded external sub **/
-            if (p.file?.externalSub != null) {
-                runOnUiThread {
-                    hudBinding.exoSubtitle.setImageDrawable(
-                        getDrawable(
-                            this,
-                            rr.drawable.ic_subtitles
-                        )
-                    )
-                }
-                vidbuilder.setUri(mediaPath)
-                    .setSubtitleConfigurations(singletonList(p.file!!.externalSub!!))
-            } else {
-                vidbuilder.setUri(mediaPath)
-            }
-
-            /** Now finally, we build it **/
-            val vid = vidbuilder.build()
-
-            /** Injecting it into ExoPlayer and getting relevant info **/
-            runOnUiThread {
-                mp.setMediaItem(vid) /* This loads the media into ExoPlayer **/
-
-                hudBinding.exoPlay.performClick()
-                hudBinding.exoPause.performClick()
-                /** The play/pause trick to fully load the vid **/
-
-                p.currentVideoPosition = 0.0
-                /** Goes back to the beginning */
-
-                /** Seeing if we have to start over **/
-                if (startFromPosition != (-3.0).toLong()) mp.seekTo(startFromPosition)
-            }
-
-            if (!p.connected) {
-                p.sendPacket(sendFile(p.file!!, this))
-            }
-            vidPosUpdater() //Most important updater to maintain continuity
-        } catch (e: IOException) {
-            throw RuntimeException("Invalid asset folder")
-        }
-    }
-
-    private fun pausePlayback() {
-        runOnUiThread {
-            myExoPlayer?.pause()
-        }
-    }
-
-    private fun playPlayback() {
-        runOnUiThread {
-            myExoPlayer?.play()
-        }
-        hideSystemUI(this, false)
-    }
-
-    private fun sendPlayback(play: Boolean) {
-        val clienttime = System.currentTimeMillis() / 1000.0
-        p.sendPacket(
-            sendState(null, clienttime, null, 0, 1, play, p)
-        )
-    }
-
-    private fun sendMessage(message: String) {
-        hideKb()
-        if (roomBinding.syncplayMESSAGERY.visibility != VISIBLE) {
-            roomBinding.syncplayVisiblitydelegate.visibility = GONE
-        }
-        p.sendPacket(
-            sendChat(message)
-        )
-        roomBinding.syncplayINPUTBox.setText("")
-    }
-
-    private fun replenishMsgs(rltvLayout: RelativeLayout) {
-        GlobalScope.launch(Dispatchers.Main) {
-            rltvLayout.removeAllViews() /* First, we clean out the current messages */
-            val isTimestampEnabled = PreferenceManager
-                .getDefaultSharedPreferences(this@RoomActivity)
-                .getBoolean("ui_timestamp", true)
-            val maxMsgsCount = PreferenceManager
-                .getDefaultSharedPreferences(this@RoomActivity)
-                .getInt("msg_count", 12) /* We obtain max count, determined by user */
-
-            val msgs = p.session.messageSequence.takeLast(maxMsgsCount)
-
-            for (message in msgs) {
-                val msgPosition: Int = msgs.indexOf(message)
-
-                val txtview = TextView(this@RoomActivity)
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-                    txtview.text =
-                        Html.fromHtml(message.factorize(isTimestampEnabled, this@RoomActivity))
-                } else {
-                    txtview.text = Html.fromHtml(
-                        message.factorize(isTimestampEnabled, this@RoomActivity),
-                        Html.FROM_HTML_MODE_LEGACY
-                    )
-                }
-                txtview.textSize = PreferenceManager.getDefaultSharedPreferences(this@RoomActivity)
-                    .getInt("msg_size", 12).toFloat()
-
-                val rltvParams: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-                rltvParams.addRule(RelativeLayout.ALIGN_PARENT_START, RelativeLayout.TRUE)
-                rltvParams.marginStart = 4
-                txtview.id = generateViewId()
-
-                val msgFadeTimeout =
-                    PreferenceManager.getDefaultSharedPreferences(this@RoomActivity)
-                        .getInt("message_persistance", 3).toLong() * 1000
-                if (message != msgs[0]) {
-                    rltvParams.addRule(
-                        RelativeLayout.BELOW,
-                        rltvLayout.getChildAt(msgPosition - 1).id
-                    )
-                }
-                rltvLayout.addView(txtview, msgPosition, rltvParams)
-
-                //Animate
-                roomBinding.syncplayMESSAGERY.also {
-                    it.clearAnimation()
-                    it.visibility = VISIBLE
-                    it.alpha = 1f
-                }
-                if (!roomBinding.vidplayer.isControllerVisible) {
-                    if (message == msgs.last()) {
-                        txtview.clearAnimation()
-                        txtview.alpha = 1f
-                        txtview.animate()
-                            .alpha(0f)
-                            .setDuration(msgFadeTimeout)
-                            .setInterpolator(AccelerateInterpolator())
-                            .start()
-                    } else {
-                        txtview.clearAnimation()
-                        txtview.alpha = 0f
-                    }
-                }
-            }
-        }
-    }
-
-    private fun replenishUsers(linearLayout: LinearLayout) {
-        runOnUiThread {
-            if (roomBinding.syncplayOverviewcheckbox.isChecked) {
-                linearLayout.removeAllViews()
-                val userList = p.session.userList
-
-                //Creating line for room-name:
-                val roomnameView = TextView(this)
-                roomnameView.text =
-                    string(rr.string.room_details_current_room, p.session.currentRoom)
-                roomnameView.isFocusable = false
-                val linearlayout0 = LinearLayout(this)
-                val linearlayoutParams0: LinearLayout.LayoutParams =
-                    LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                    )
-                linearlayout0.gravity = END
-                linearlayout0.orientation = HORIZONTAL
-                linearlayout0.addView(roomnameView)
-                linearlayout0.isFocusable = false
-                roomBinding.syncplayOverview.addView(linearlayout0, linearlayoutParams0)
-
-                for (user in userList) {
-                    //First line of user
-                    val usernameView = TextView(this)
-                    usernameView.text = user.name
-                    if (user.name == p.session.currentUsername) {
-                        usernameView.setTextColor(0xFFECBF39.toInt())
-                        usernameView.setTypeface(usernameView.typeface, Typeface.BOLD)
-                    }
-                    val usernameReadiness: Boolean = user.readiness ?: false
-                    val userIconette = ImageView(this)
-                    userIconette.setImageResource(rr.drawable.ic_user)
-                    val userReadinessIcon = ImageView(this)
-                    if (usernameReadiness) {
-                        userReadinessIcon.setImageResource(rr.drawable.ready_1)
-                    } else {
-                        userReadinessIcon.setImageResource(rr.drawable.ready_0)
-                    }
-
-                    //Creating Linear Layout for 1st line
-                    val linearlayout = LinearLayout(this)
-                    val linearlayoutParams: LinearLayout.LayoutParams =
-                        LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.WRAP_CONTENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT
-                        )
-                    linearlayout.gravity = END
-                    linearlayout.orientation = HORIZONTAL
-                    linearlayout.addView(usernameView)
-                    linearlayout.addView(userIconette)
-                    linearlayout.addView(userReadinessIcon)
-                    linearlayout.isFocusable = false
-                    usernameView.isFocusable = false
-                    userIconette.isFocusable = false
-                    userReadinessIcon.isFocusable = false
-                    roomBinding.syncplayOverview.addView(linearlayout, linearlayoutParams)
-
-                    //Second line (File name)
-                    val isThereFile = user.file != null
-                    val fileFirstLine =
-                        if (isThereFile) user.file!!.fileName else getString(rr.string.room_details_nofileplayed)
-
-                    val lineArrower = ImageView(this)
-                    lineArrower.setImageResource(rr.drawable.ic_arrowleft)
-
-                    val lineBlanker = ImageView(this)
-                    lineBlanker.setImageResource(rr.drawable.ic_blanker)
-
-                    val lineFile = TextView(this)
-                    lineFile.text = fileFirstLine
-                    lineFile.setTextSize(COMPLEX_UNIT_SP, 11f)
-
-                    val linearlayout2 = LinearLayout(this)
-                    val linearlayoutParams2: LinearLayout.LayoutParams =
-                        LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.WRAP_CONTENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT
-                        )
-                    linearlayout2.gravity = END
-                    linearlayout2.orientation = HORIZONTAL
-                    linearlayout2.addView(lineFile)
-                    linearlayout2.addView(lineArrower)
-                    linearlayout2.addView(lineBlanker)
-                    linearlayout2.isFocusable = false
-                    lineFile.isFocusable = false
-                    lineArrower.isFocusable = false
-                    lineBlanker.isFocusable = false
-                    roomBinding.syncplayOverview.addView(linearlayout2, linearlayoutParams2)
-
-                    //Third Line (file info)
-                    if (isThereFile) {
-                        val fileSize = user.file?.fileSize?.toDoubleOrNull()?.div(1000000.0)
-                        val fileInfoLine = string(
-                            rr.string.room_details_file_properties,
-                            timeStamper(user.file?.fileDuration?.roundToInt()!!),
-                            fileSize?.toString() ?: "???"
-                        )
-                        val lineFileInfo = TextView(this)
-                        lineFileInfo.text = fileInfoLine
-                        lineFileInfo.setTextSize(COMPLEX_UNIT_SP, 11f)
-
-                        val linearlayout3 = LinearLayout(this)
-                        val linearlayoutParams3: LinearLayout.LayoutParams =
-                            LinearLayout.LayoutParams(
-                                ViewGroup.LayoutParams.WRAP_CONTENT,
-                                ViewGroup.LayoutParams.WRAP_CONTENT
-                            )
-                        linearlayout3.gravity = END
-                        linearlayout3.orientation = HORIZONTAL
-                        linearlayout3.addView(lineFileInfo)
-                        linearlayout3.isFocusable = false
-                        lineFileInfo.isFocusable = false
-                        for (f in (0 until 2)) {
-                            val lineBlanker3 = ImageView(this)
-                            lineBlanker3.setImageResource(rr.drawable.ic_blanker)
-                            linearlayout3.addView(lineBlanker3)
-                            lineBlanker3.isFocusable = false
-                        }
-                        roomBinding.syncplayOverview.addView(linearlayout3, linearlayoutParams3)
-                    }
-                }
-            }
-        }
-    }
-
-    private fun subtitleSelect(ccButton: ImageButton) {
-        p.file?.analyzeTracks(myExoPlayer!!)
-        if (p.file == null) return
-        if (p.file!!.subtitleTracks.isEmpty()) {
-            displayInfo(getString(rr.string.room_sub_track_notfound))
-            runOnUiThread {
-                ccButton.setImageDrawable(getDrawable(this, rr.drawable.ic_subtitles_off))
-            }
-        } else {
-            val popup = PopupMenu(this, ccButton)
-            popup.menu.add(0, -999, 0, getString(rr.string.room_sub_track_disable))
-            for (subtitleTrack in p.file!!.subtitleTracks) {
-                /* Choosing a name for the sub track, a format's label is a good choice */
-                val name = if (subtitleTrack.format?.label == null) {
-                    getString(rr.string.room_track_track)
-                } else {
-                    subtitleTrack.format?.label!!
-                }
-
-                /* Now creating the popup menu item corresponding to the audio track */
-                val item = popup.menu.add(
-                    0,
-                    p.file!!.subtitleTracks.indexOf(subtitleTrack),
-                    0,
-                    "$name [${(subtitleTrack.format?.language).toString().uppercase()}]"
-                )
-
-                /* Making the popup menu item checkable */
-                item.isCheckable = true
-
-                /* Now to see whether it should be checked or not (whether it's selected) */
-                item.isChecked = subtitleTrack.selected
-            }
-
-            popup.setOnMenuItemClickListener { menuItem: MenuItem ->
-                val builder = myExoPlayer?.trackSelector?.parameters?.buildUpon()
-
-                /* First, clearing our subtitle track selection (This helps troubleshoot many issues */
-                myExoPlayer?.trackSelector?.parameters =
-                    builder?.clearOverridesOfType(C.TRACK_TYPE_TEXT)!!.build()
-                lastSubtitleOverride = null
-
-                /* Now, selecting our subtitle track should one be selected */
-                if (menuItem.itemId != -999) {
-                    lastSubtitleOverride = TrackSelectionOverride(
-                        p.file!!.subtitleTracks[menuItem.itemId].trackGroup!!,
-                        p.file!!.subtitleTracks[menuItem.itemId].index
-                    )
-                    myExoPlayer?.trackSelector?.parameters =
-                        builder.addOverride(lastSubtitleOverride!!).build()
-                }
-
-                /** Show an info that audio track has been changed **/
-                displayInfo(string(rr.string.room_sub_track_changed, menuItem.title.toString()))
-                return@setOnMenuItemClickListener true
-            }
-
-            // Show the popup menu.
-            popup.show()
-
-        }
-    }
-
-    private fun audioSelect(audioButton: ImageButton) {
-        p.file?.analyzeTracks(myExoPlayer!!)
-        if (p.file == null) return
-        if (p.file!!.audioTracks.isEmpty()) {
-            displayInfo(getString(rr.string.room_audio_track_not_found)) /* Otherwise, no audio track found */
-        } else {
-            val popup =
-                PopupMenu(this, audioButton) /* Creating a popup menu, anchored on Audio Button */
-
-            /** Going through the entire audio track list, and populating the popup menu with each one of them **/
-            for (audioTrack in p.file!!.audioTracks) {
-                /* Choosing a name for the audio track, a format's label is a good choice */
-                val name = if (audioTrack.format?.label == null) {
-                    getString(rr.string.room_track_track)
-                } else {
-                    audioTrack.format?.label!!
-                }
-
-                /* Now creating the popup menu item corresponding to the audio track */
-                val item = popup.menu.add(
-                    0,
-                    p.file!!.audioTracks.indexOf(audioTrack),
-                    0,
-                    "$name [${(audioTrack.format?.language).toString().uppercase()}]"
-                )
-
-                /* Making the popup menu item checkable */
-                item.isCheckable = true
-
-                /* Now to see whether it should be checked or not (whether it's selected) */
-                item.isChecked = audioTrack.selected
-            }
-
-            popup.setOnMenuItemClickListener { menuItem: MenuItem ->
-
-                val builder = myExoPlayer?.trackSelector?.parameters?.buildUpon()
-
-                /* First, clearing our audio track selection */
-                myExoPlayer?.trackSelector?.parameters =
-                    builder?.clearOverridesOfType(C.TRACK_TYPE_AUDIO)!!.build()
-
-                lastAudioOverride = TrackSelectionOverride(
-                    p.file!!.audioTracks[menuItem.itemId].trackGroup!!,
-                    p.file!!.audioTracks[menuItem.itemId].index
-                )
-                val newParams = builder.addOverride(lastAudioOverride!!).build()
-
-                myExoPlayer?.trackSelector?.parameters = newParams
-
-                /** Show an info that audio track has been changed **/
-                displayInfo(string(rr.string.room_audio_track_changed, menuItem.title.toString()))
-                return@setOnMenuItemClickListener true
-            }
-
-            // Show the popup menu.
-            popup.show()
-        }
-    }
-
-    private fun hideKb() {
-        WindowInsetsControllerCompat(window, window.decorView).hide(WindowInsetsCompat.Type.ime())
-        roomBinding.syncplayINPUTBox.clearFocus()
-    }
-
-    /** The reason why we didn't create a custom HandlerThread for vidPosUpdater task, is because
-     * the player should not be accessed from a thread other than the thread it is initialized on.
-     *
-     * In this case, I use it always on the main thread.
-     */
-    private fun vidPosUpdater() {
-        Handler(Looper.getMainLooper()).postDelayed({
-            if (myExoPlayer?.isCurrentMediaItemSeekable == true) {
-                /* Informing my ViewModel about current vid position so it is retrieved for networking after */
-                runOnUiThread {
-                    val progress = (roomBinding.vidplayer.player?.currentPosition?.div(1000.0))
-                    if (progress != null) {
-                        p.currentVideoPosition = progress
-                    }
-                }
-            }
-            vidPosUpdater()
-        }, 100)
-    }
-
-    private fun pingUpdater() {
-        try {
-            if (!pingingThread.isAlive) {
-                pingingThread.start()
-            }
-            pingUpdaterCore()
-        } catch (e: IllegalThreadStateException) {
-            pingUpdaterCore()
-        }
-    }
-
-    private fun pingUpdaterCore() {
-        Handler(pingingThread.looper).postDelayed({
-            if (p.socket.isConnected && !p.socket.isClosed && !p.socket.isInputShutdown) {
-                p.ping = SyncplayUtils.pingIcmp("151.80.32.178", 32) * 1000.0
-                runOnUiThread {
-                    roomBinding.syncplayConnectionInfo.text =
-                        string(rr.string.room_ping_connected, "${p.ping}")
-                    when (p.ping) {
-                        in (0.0..100.0) -> roomBinding.syncplaySignalIcon.setImageResource(rr.drawable.ping_3)
-                        in (100.0..200.0) -> roomBinding.syncplaySignalIcon.setImageResource(rr.drawable.ping_2)
-                        else -> roomBinding.syncplaySignalIcon.setImageResource(rr.drawable.ping_1)
-                    }
-                }
-            } else {
-                runOnUiThread {
-                    roomBinding.syncplayConnectionInfo.text =
-                        string(rr.string.room_ping_disconnected)
-                    roomBinding.syncplaySignalIcon.setImageDrawable(
-                        getDrawable(
-                            this@RoomActivity,
-                            rr.drawable.ic_unconnected
-                        )
-                    )
-                }
-                p.syncplayBroadcaster?.onDisconnected()
-            }
-            pingUpdater()
-        }, 1000)
-    }
-
-    @UiThread
-    private fun broadcastMessage(message: String, isChat: Boolean, chatter: String = "") {
-        /** Messages are just a wrapper class for everything we need about a message
-        So first, we initialize it, customize it, then add it to our long list of messages */
-        val msg = Message()
-
-        /** Check if it's a system or a user message **/
-        if (isChat) msg.sender = chatter
-
-        /** Check if the sender is also the main user, to determine colors **/
-        //if (chatter.lowercase() == p.session.currentUsername.lowercase()) {
-        msg.isMainUser = chatter == p.session.currentUsername
-
-        /** Assigning the message content to the message **/
-        msg.content =
-            message /* Assigning the message content to the variable inside our instance */
-
-        /** Adding the message instance to our message sequence **/
-        p.session.messageSequence.add(msg)
-
-        /** Refresh views **/
-        replenishMsgs(roomBinding.syncplayMESSAGERY)
-    }
-
-    private fun displayInfo(msg: String) {
-        roomBinding.syncplayInfoDelegate.clearAnimation()
-        roomBinding.syncplayInfoDelegate.text = msg
-        roomBinding.syncplayInfoDelegate.alpha = 1f
-        roomBinding.syncplayInfoDelegate.animate()
-            .alpha(0f)
-            .setDuration(750L)
-            .setInterpolator(AccelerateInterpolator())
-            .start()
-    }
 
     private fun messageHistoryPopup() {
         class DemoPopup(context: Context?) : BasePopupWindow(context) {
@@ -1306,28 +805,6 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                 it.showPopupWindow()
             }
         }
-    }
-
-    fun applyUISettings() {
-        /* For settings: Timestamp,Message Count,Message Font Size */
-        replenishMsgs(roomBinding.syncplayMESSAGERY)
-
-        /* Holding a reference to SharedPreferences to use it later */
-        val sp = PreferenceManager.getDefaultSharedPreferences(this)
-
-        /* Applying "overview_alpha" setting */
-        val alpha1 = sp.getInt("overview_alpha", 30) //between 0-255
-        @ColorInt val alphaColor1 = ColorUtils.setAlphaComponent(Color.DKGRAY, alpha1)
-        roomBinding.syncplayOverviewCard.setCardBackgroundColor(alphaColor1)
-
-        /* Applying MESSAGERY Alpha **/
-        val alpha2 = sp.getInt("messagery_alpha", 0) //between 0-255
-        @ColorInt val alphaColor2 = ColorUtils.setAlphaComponent(Color.DKGRAY, alpha2)
-        roomBinding.syncplayMESSAGERYCard.setCardBackgroundColor(alphaColor2)
-
-        /* Applying Subtitle Size setting */
-        ccsize = sp.getInt("subtitle_size", 18).toFloat()
-
     }
 
     /*********************************************************************************************
@@ -1485,77 +962,15 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         )
     }
 
-    override fun onPlaylistUpdated(user: String) {
-    }
+    override fun onPlaylistUpdated(user: String) {}
 
-    override fun onPlaylistIndexChanged(user: String, index: Int) {
-    }
+    override fun onPlaylistIndexChanged(user: String, index: Int) {}
 
     override fun onBackPressed() {
         super.onBackPressed()
         p.removeBroadcaster()
         p.socket.close()
         finish()
-    }
-
-    /** Functions to grab a localized string from resources, format it according to arguments **/
-    fun string(id: Int, vararg stuff: String): String {
-        return String.format(resources.getString(id), *stuff)
-    }
-
-    private fun applyLastOverrides() {
-        p.file?.analyzeTracks(myExoPlayer!!)
-
-        if (myExoPlayer != null) {
-            if (myExoPlayer!!.trackSelector != null) {
-                val builder = myExoPlayer!!.trackSelector!!.parameters.buildUpon()
-
-                var newParams = builder.build()
-
-                if (lastAudioOverride != null) {
-                    newParams = newParams.buildUpon().addOverride(lastAudioOverride!!).build()
-                }
-                if (lastSubtitleOverride != null) {
-                    newParams = newParams.buildUpon().addOverride(lastSubtitleOverride!!).build()
-                }
-
-                myExoPlayer?.trackSelector?.parameters = newParams
-            }
-        }
-    }
-
-    private fun checkFileMismatches() {
-        loggy("1")
-        /** First, we check if user wanna be notified about file mismatchings */
-        if (!PreferenceManager.getDefaultSharedPreferences(this)
-                .getBoolean("warn_file_mismatch", true)
-        ) return /* No need to continue if option is off */
-        loggy("2")
-        val myFile = p.file
-        for (user in p.session.userList) {
-            loggy("3 ${user.name}")
-            val theirFile = user.file ?: continue /* If they have no file, iterate unto next */
-            loggy("4 ${user.name}")
-            val nameMismatch =
-                (myFile?.fileName != theirFile.fileName) && (myFile?.fileNameHashed != theirFile.fileName)
-            val durationMismatch = myFile?.fileDuration != theirFile.fileDuration
-            val sizeMismatch =
-                myFile?.fileSize != theirFile.fileSize && myFile?.fileSizeHashed != theirFile.fileSize
-
-            if (nameMismatch && durationMismatch && sizeMismatch) continue /* 2 mismatches or less */
-            loggy("5 ${user.name}")
-
-            var warning = string(rr.string.room_file_mismatch_warning_core, user.name)
-
-            if (nameMismatch) warning =
-                warning.plus(string(rr.string.room_file_mismatch_warning_name))
-            if (durationMismatch) warning =
-                warning.plus(string(rr.string.room_file_mismatch_warning_duration))
-            if (sizeMismatch) warning =
-                warning.plus(string(rr.string.room_file_mismatch_warning_size))
-
-            broadcastMessage(warning, false)
-        }
     }
 }
 

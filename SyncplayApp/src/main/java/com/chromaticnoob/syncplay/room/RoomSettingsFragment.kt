@@ -6,6 +6,7 @@ import android.os.Looper
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
+import com.chromaticnoob.syncplay.room.UIUtils.applyUISettings
 import com.google.android.material.snackbar.Snackbar
 
 class RoomSettingsFragment : PreferenceFragmentCompat(),
