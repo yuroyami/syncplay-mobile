@@ -26,6 +26,13 @@
             tools:ignore="ContentDescription" />
 
         <ImageButton
+            android:id="@+id/syncplay_shared_playlis"
+            style="@style/ExoMediaButton.FastForward"
+            android:src="@drawable/ic_shared_playlist"
+            app:tint="#FFD66F"
+            tools:ignore="ContentDescription" />
+
+        <ImageButton
             android:id="@id/exo_audio_track"
             style="@style/ExoMediaButton.FastForward"
             android:src="@drawable/exo_ic_audiotrack"

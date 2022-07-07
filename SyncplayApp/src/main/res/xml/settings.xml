@@ -18,6 +18,66 @@
             app:title="@string/setting_display_language_title" />
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="@string/settings_categ_room">
+        <CheckBoxPreference
+            app:defaultValue="true"
+            app:key="ready_firsthand"
+            app:summary="@string/setting_ready_firsthand_summary"
+            app:title="@string/setting_ready_firsthand_title" />
+
+        <CheckBoxPreference
+            app:defaultValue="true"
+            app:key="pause_if_someone_left"
+            app:summary="@string/setting_pause_if_someone_left_summary"
+            app:title="@string/setting_pause_if_someone_left_title" />
+
+        <CheckBoxPreference
+            app:defaultValue="true"
+            app:key="warn_file_mismatch"
+            app:summary="@string/setting_warn_file_mismatch_summary"
+            app:title="@string/setting_warn_file_mismatch_title" />
+
+        <ListPreference
+            app:defaultValue="1"
+            app:entries="@array/fileinfoBehavior"
+            app:entryValues="@array/fileinfoBehaviorValues"
+            app:key="fileinfo_behavior_name"
+            app:summary="@string/setting_fileinfo_behaviour_name_summary"
+            app:title="@string/setting_fileinfo_behaviour_name_title" />
+
+        <ListPreference
+            app:defaultValue="1"
+            app:entries="@array/fileinfoBehavior"
+            app:entryValues="@array/fileinfoBehaviorValues"
+            app:key="fileinfo_behavior_size"
+            app:summary="@string/setting_fileinfo_behaviour_size_summary"
+            app:title="@string/setting_fileinfo_behaviour_size_title" />
+
+        <SeekBarPreference
+            android:max="60"
+            app:defaultValue="12"
+            app:key="rewind_threshold"
+            app:min="3"
+            app:seekBarIncrement="1"
+            app:showSeekBarValue="true"
+            app:summary="@string/setting_rewind_threshold_summary"
+            app:title="@string/setting_rewind_threshold_title"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
+    <!--    <PreferenceCategory app:title="@string/settings_categ_video">-->
+    <!--        <SeekBarPreference-->
+    <!--            android:max="60"-->
+    <!--            app:defaultValue="18"-->
+    <!--            app:key="subtitle_size"-->
+    <!--            app:min="8"-->
+    <!--            app:seekBarIncrement="1"-->
+    <!--            app:showSeekBarValue="true"-->
+    <!--            app:summary="@string/setting_subtitle_size_summary"-->
+    <!--            app:title="@string/setting_subtitle_size_title"-->
+    <!--            app:useSimpleSummaryProvider="true" />-->
+    <!--    </PreferenceCategory>-->
+
     <PreferenceCategory app:title="@string/settings_categ_player">
         <CheckBoxPreference
             app:defaultValue="false"
@@ -60,50 +120,6 @@
             app:useSimpleSummaryProvider="true" />
 
     </PreferenceCategory>
-
-    <PreferenceCategory app:title="@string/settings_categ_room">
-        <CheckBoxPreference
-            app:defaultValue="true"
-            app:key="ready_firsthand"
-            app:summary="@string/setting_ready_firsthand_summary"
-            app:title="@string/setting_ready_firsthand_title" />
-
-        <CheckBoxPreference
-            app:defaultValue="true"
-            app:key="pause_if_someone_left"
-            app:summary="@string/setting_pause_if_someone_left_summary"
-            app:title="@string/setting_pause_if_someone_left_title" />
-
-        <!--        <CheckBoxPreference-->
-        <!--            app:defaultValue="true"-->
-        <!--            app:key="warn_file_mismatch"-->
-        <!--            app:summary="@string/setting_warn_file_mismatch_summary"-->
-        <!--            app:title="@string/setting_warn_file_mismatch_title" />-->
-
-        <SeekBarPreference
-            android:max="60"
-            app:defaultValue="12"
-            app:key="rewind_threshold"
-            app:min="3"
-            app:seekBarIncrement="1"
-            app:showSeekBarValue="true"
-            app:summary="@string/setting_rewind_threshold_summary"
-            app:title="@string/setting_rewind_threshold_title"
-            app:useSimpleSummaryProvider="true" />
-    </PreferenceCategory>
-
-    <!--    <PreferenceCategory app:title="@string/settings_categ_video">-->
-    <!--        <SeekBarPreference-->
-    <!--            android:max="60"-->
-    <!--            app:defaultValue="18"-->
-    <!--            app:key="subtitle_size"-->
-    <!--            app:min="8"-->
-    <!--            app:seekBarIncrement="1"-->
-    <!--            app:showSeekBarValue="true"-->
-    <!--            app:summary="@string/setting_subtitle_size_summary"-->
-    <!--            app:title="@string/setting_subtitle_size_title"-->
-    <!--            app:useSimpleSummaryProvider="true" />-->
-    <!--    </PreferenceCategory>-->
 
     <PreferenceCategory app:title="@string/settings_categ_misc">
 

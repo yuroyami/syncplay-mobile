@@ -6,4 +6,9 @@ package com.chromaticnoob.syncplayutils.utils
 
 class User {
 
+    var index = 0
+    var name = ""
+    var readiness: Boolean? = null
+    var file: MediaFile? = null
+
 }

@@ -100,7 +100,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
     private val pingingThread = HandlerThread("pingingThread")
 
     /* Declaring Popup dialog variables which are used to show/dismiss different popups */
-    private var disconnectedPopup: DisconnectedPopup? = null
+    private lateinit var disconnectedPopup: DisconnectedPopup
 
     /**********************************************************************************************
      *                                  LIFECYCLE METHODS
@@ -118,6 +118,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                     Toast.LENGTH_LONG
                 ).show()
                 Handler(Looper.getMainLooper()).postDelayed({ myExoPlayer?.seekTo(0L) }, 2000)
+                checkFileMismatches()
             }
         }
 
@@ -173,6 +174,9 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         setContentView(view)
         hudBinding = HudBinding.bind(findViewById(rr.id.vidplayerhud))
 
+        /** Preparing our Disconnection popup ahead of time **/
+        disconnectedPopup = DisconnectedPopup(this)
+
         /** Initializing our ViewModel, which is our protocol at the same time **/
         p = ViewModelProvider(this)[SyncplayProtocol::class.java]
 
@@ -182,11 +186,11 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
 
         /** Storing the join info into the protocol directly **/
         val serverHost = joinInfo[0] as String
-        p.serverHost = if (serverHost == "") "151.80.32.178" else serverHost
-        p.serverPort = (joinInfo[1] as Double).toInt()
-        p.currentUsername = joinInfo[2] as String
-        p.currentRoom = joinInfo[3] as String
-        p.currentPassword = joinInfo[4] as String?
+        p.session.serverHost = if (serverHost == "") "151.80.32.178" else serverHost
+        p.session.serverPort = (joinInfo[1] as Double).toInt()
+        p.session.currentUsername = joinInfo[2] as String
+        p.session.currentRoom = joinInfo[3] as String
+        p.session.currentPassword = joinInfo[4] as String?
         loggy("${joinInfo[4]}")
 
         /** Adding the callback interface so we can respond to multiple syncplay events **/
@@ -303,7 +307,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                     val duration = (myExoPlayer?.duration!!.toDouble()) / 1000.0
                     if (duration != p.file?.fileDuration) {
                         p.file?.fileDuration = duration
-                        p.sendPacket(sendFile(p.file!!))
+                        p.sendPacket(sendFile(p.file!!, this@RoomActivity))
                     }
                 }
             }
@@ -756,7 +760,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
             }
 
             if (!p.connected) {
-                p.sendPacket(sendFile(p.file!!))
+                p.sendPacket(sendFile(p.file!!, this))
             }
             vidPosUpdater() //Most important updater to maintain continuity
         } catch (e: IOException) {
@@ -805,7 +809,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                 .getDefaultSharedPreferences(this@RoomActivity)
                 .getInt("msg_count", 12) /* We obtain max count, determined by user */
 
-            val msgs = p.messageSequence.takeLast(maxMsgsCount)
+            val msgs = p.session.messageSequence.takeLast(maxMsgsCount)
 
             for (message in msgs) {
                 val msgPosition: Int = msgs.indexOf(message)
@@ -869,12 +873,12 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         runOnUiThread {
             if (roomBinding.syncplayOverviewcheckbox.isChecked) {
                 linearLayout.removeAllViews()
-                val userList: MutableMap<String, MutableList<String>> = p.userList
+                val userList = p.session.userList
 
                 //Creating line for room-name:
                 val roomnameView = TextView(this)
                 roomnameView.text =
-                    string(rr.string.room_details_current_room, p.currentRoom)
+                    string(rr.string.room_details_current_room, p.session.currentRoom)
                 roomnameView.isFocusable = false
                 val linearlayout0 = LinearLayout(this)
                 val linearlayoutParams0: LinearLayout.LayoutParams =
@@ -888,17 +892,15 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                 linearlayout0.isFocusable = false
                 roomBinding.syncplayOverview.addView(linearlayout0, linearlayoutParams0)
 
-                for (user in userList.keys) {
+                for (user in userList) {
                     //First line of user
-                    val userProperties = userList[user]!!
                     val usernameView = TextView(this)
-                    usernameView.text = user
-                    if (userProperties[0] == "0") {
+                    usernameView.text = user.name
+                    if (user.name == p.session.currentUsername) {
                         usernameView.setTextColor(0xFFECBF39.toInt())
                         usernameView.setTypeface(usernameView.typeface, Typeface.BOLD)
                     }
-                    val usernameReadiness: Boolean =
-                        if (userProperties[1] == "true") true else if (userProperties[1] == "false") false else false
+                    val usernameReadiness: Boolean = user.readiness ?: false
                     val userIconette = ImageView(this)
                     userIconette.setImageResource(rr.drawable.ic_user)
                     val userReadinessIcon = ImageView(this)
@@ -927,9 +929,9 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                     roomBinding.syncplayOverview.addView(linearlayout, linearlayoutParams)
 
                     //Second line (File name)
-                    val isThereFile = userList[user]?.get(2) != ""
+                    val isThereFile = user.file != null
                     val fileFirstLine =
-                        if (isThereFile) userList[user]?.get(2) else getString(rr.string.room_details_nofileplayed)
+                        if (isThereFile) user.file!!.fileName else getString(rr.string.room_details_nofileplayed)
 
                     val lineArrower = ImageView(this)
                     lineArrower.setImageResource(rr.drawable.ic_arrowleft)
@@ -960,13 +962,11 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
 
                     //Third Line (file info)
                     if (isThereFile) {
-                        val filesizegetter = if (userList[user]?.get(4)
-                                ?.toIntOrNull() != null
-                        ) (userList[user]!![4].toDouble() / 1000000.0).toFloat() else 0.0.toFloat()
+                        val fileSize = user.file?.fileSize?.toDoubleOrNull()?.div(1000000.0)
                         val fileInfoLine = string(
                             rr.string.room_details_file_properties,
-                            timeStamper(userList[user]?.get(3)?.toDouble()?.roundToInt()!!),
-                            filesizegetter.toString()
+                            timeStamper(user.file?.fileDuration?.roundToInt()!!),
+                            fileSize?.toString() ?: "???"
                         )
                         val lineFileInfo = TextView(this)
                         lineFileInfo.text = fileInfoLine
@@ -1191,21 +1191,18 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         val msg = Message()
 
         /** Check if it's a system or a user message **/
-        if (isChat) {
-            msg.sender = chatter
-        }
+        if (isChat) msg.sender = chatter
 
         /** Check if the sender is also the main user, to determine colors **/
-        if (chatter.lowercase() == p.currentUsername.lowercase()) {
-            msg.isMainUser = true
-        }
+        //if (chatter.lowercase() == p.session.currentUsername.lowercase()) {
+        msg.isMainUser = chatter == p.session.currentUsername
 
         /** Assigning the message content to the message **/
         msg.content =
             message /* Assigning the message content to the variable inside our instance */
 
         /** Adding the message instance to our message sequence **/
-        p.messageSequence.add(msg)
+        p.session.messageSequence.add(msg)
 
         /** Refresh views **/
         replenishMsgs(roomBinding.syncplayMESSAGERY)
@@ -1228,7 +1225,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                 setContentView(rr.layout.popup_messages)
                 val rltvLayout = findViewById<RelativeLayout>(rr.id.syncplay_MESSAGEHISTORY)
                 rltvLayout.removeAllViews()
-                val msgs = p.messageSequence
+                val msgs = p.session.messageSequence
                 for (message in msgs) {
                     val msgPosition: Int = msgs.indexOf(message)
 
@@ -1304,7 +1301,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
 
     private fun disconnectedPopup() {
         runOnUiThread {
-            disconnectedPopup = DisconnectedPopup(this).also {
+            disconnectedPopup.also {
                 it.setBlurBackgroundEnable(true)
                 it.showPopupWindow()
             }
@@ -1336,7 +1333,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
      *                                        CALLBACKS                                          *
      ********************************************************************************************/
     override fun onSomeonePaused(pauser: String) {
-        if (pauser != p.currentUsername) pausePlayback()
+        if (pauser != p.session.currentUsername) pausePlayback()
         broadcastMessage(
             string(
                 rr.string.room_guy_paused,
@@ -1347,8 +1344,15 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
     }
 
     override fun onSomeonePlayed(player: String) {
-        if (player != p.currentUsername) playPlayback()
-        broadcastMessage(string(rr.string.room_guy_played, player), false)
+        if (player != p.session.currentUsername) playPlayback()
+
+        /* We have to deal with annoying "unpause" message prior to every seek */
+        val m1 = p.session.messageSequence.last().content
+        val m2 = string(rr.string.room_seeked, player, "", "")
+        val m3 = player.length + 5
+        val m4 = (m1.substring(0, m3) == m2.substring(0, m3))
+
+        if (!m4) broadcastMessage(string(rr.string.room_guy_played, player), false)
     }
 
     override fun onChatReceived(chatter: String, chatmessage: String) {
@@ -1357,24 +1361,30 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
 
     override fun onSomeoneSeeked(seeker: String, toPosition: Double) {
         runOnUiThread {
-            if (seeker != p.currentUsername) {
+            if (seeker != p.session.currentUsername) {
+                val oldPos = timeStamper((p.currentVideoPosition).roundToInt())
+                val newPos = timeStamper(toPosition.roundToInt())
+                if (oldPos == newPos) return@runOnUiThread
                 broadcastMessage(
                     string(
                         rr.string.room_seeked,
                         seeker,
-                        timeStamper((p.currentVideoPosition).roundToInt()),
-                        timeStamper(toPosition.roundToInt())
+                        oldPos,
+                        newPos
                     ), false
                 )
                 receivedSeek = true
                 myExoPlayer?.seekTo((toPosition * 1000.0).toLong())
             } else {
+                val oldPos = timeStamper((seekTracker).roundToInt())
+                val newPos = timeStamper(toPosition.roundToInt())
+                if (oldPos == newPos) return@runOnUiThread
                 broadcastMessage(
                     string(
                         rr.string.room_seeked,
                         seeker,
-                        timeStamper((seekTracker).roundToInt()),
-                        timeStamper(toPosition.roundToInt())
+                        oldPos,
+                        newPos
                     ), false
                 )
             }
@@ -1401,7 +1411,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         }
 
         /* Rare cases where a user can see his own self disconnected */
-        if (leaver == p.currentUsername) {
+        if (leaver == p.session.currentUsername) {
             p.syncplayBroadcaster?.onDisconnected()
         }
     }
@@ -1418,7 +1428,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
     override fun onSomeoneLoadedFile(
         person: String,
         file: String?,
-        fileduration: String?,
+        fileduration: Double?,
         filesize: String?
     ) {
         replenishUsers(roomBinding.syncplayOverview)
@@ -1427,7 +1437,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                 rr.string.room_isplayingfile,
                 person,
                 file ?: "",
-                timeStamper(fileduration?.toDoubleOrNull()?.roundToInt() ?: 0)
+                timeStamper(fileduration?.roundToInt() ?: 0)
             ),
             false
         )
@@ -1441,7 +1451,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
     }
 
     override fun onJoined() {
-        broadcastMessage(string(rr.string.room_you_joined_room, p.currentRoom), false)
+        broadcastMessage(string(rr.string.room_you_joined_room, p.session.currentRoom), false)
     }
 
     override fun onConnectionFailed() {
@@ -1453,25 +1463,31 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         broadcastMessage(string(rr.string.room_connected_to_server), false)
         replenishUsers(roomBinding.syncplayOverview)
         runOnUiThread {
-            disconnectedPopup?.dismiss() /* Dismiss any disconnection popup, if they exist */
+            disconnectedPopup.dismiss() /* Dismiss any disconnection popup, if they exist */
         }
 
         /** Resubmit any ongoing file being played **/
         if (p.file != null) {
-            p.sendPacket(sendFile(p.file!!))
+            p.sendPacket(sendFile(p.file!!, this))
         }
     }
 
     override fun onConnectionAttempt() {
         val server =
-            if (p.serverHost == "151.80.32.178") "syncplay.pl" else p.serverHost
+            if (p.session.serverHost == "151.80.32.178") "syncplay.pl" else p.session.serverHost
         broadcastMessage(
             string(
                 rr.string.room_attempting_connect,
                 server,
-                p.serverPort.toString()
+                p.session.serverPort.toString()
             ), false
         )
+    }
+
+    override fun onPlaylistUpdated(user: String) {
+    }
+
+    override fun onPlaylistIndexChanged(user: String, index: Int) {
     }
 
     override fun onBackPressed() {
@@ -1505,7 +1521,40 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                 myExoPlayer?.trackSelector?.parameters = newParams
             }
         }
+    }
 
+    private fun checkFileMismatches() {
+        loggy("1")
+        /** First, we check if user wanna be notified about file mismatchings */
+        if (!PreferenceManager.getDefaultSharedPreferences(this)
+                .getBoolean("warn_file_mismatch", true)
+        ) return /* No need to continue if option is off */
+        loggy("2")
+        val myFile = p.file
+        for (user in p.session.userList) {
+            loggy("3 ${user.name}")
+            val theirFile = user.file ?: continue /* If they have no file, iterate unto next */
+            loggy("4 ${user.name}")
+            val nameMismatch =
+                (myFile?.fileName != theirFile.fileName) && (myFile?.fileNameHashed != theirFile.fileName)
+            val durationMismatch = myFile?.fileDuration != theirFile.fileDuration
+            val sizeMismatch =
+                myFile?.fileSize != theirFile.fileSize && myFile?.fileSizeHashed != theirFile.fileSize
+
+            if (nameMismatch && durationMismatch && sizeMismatch) continue /* 2 mismatches or less */
+            loggy("5 ${user.name}")
+
+            var warning = string(rr.string.room_file_mismatch_warning_core, user.name)
+
+            if (nameMismatch) warning =
+                warning.plus(string(rr.string.room_file_mismatch_warning_name))
+            if (durationMismatch) warning =
+                warning.plus(string(rr.string.room_file_mismatch_warning_duration))
+            if (sizeMismatch) warning =
+                warning.plus(string(rr.string.room_file_mismatch_warning_size))
+
+            broadcastMessage(warning, false)
+        }
     }
 }
 

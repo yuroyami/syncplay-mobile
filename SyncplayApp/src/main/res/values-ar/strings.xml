@@ -15,7 +15,16 @@
     <string name="connect_server_c">تأكد من أنك و أصدقاؤك في نفس السيرفر</string>
     <string name="connect_button">الدخول إلى الغرفة</string>
     <string name="connect_footnote">تطبيق الأندرويد غير الرسمي لـSyncplay</string>
+    <string name="connect_username_empty_error">اسم المستخدم لا يجب أن يكون فارغاً</string>
+    <string name="connect_roomname_empty_error">اسم الغرفة لا يجب أن يكون فارغاً</string>
+    <string name="connect_enter_custom_server">أدخل سيرفر مميز</string>
+    <string name="connect_custom_server_password">كلمة السر (إن تواجدت)</string>
+    <string name="connect_port">منفذ</string>
     <string name="room_startup_hint">اضغط على الزر الذي يشبه الشكل أسفله لإدخال فيديو جديد</string>
+    <string name="room_selected_vid">تم اختيار ملف الفيديو : %s</string>
+    <string name="room_selected_sub">تم إدخال ملف الترجمة : %s</string>
+    <string name="room_selected_sub_error">ملف الترجمة غير صالح. الامتدادات الصالحة هي : SSA, ASS, VTT, SRT, TTML</string>
+    <string name="room_sub_error_load_vid_first">أَدخل فيديو أولاً</string>
     <string name="room_type_message">اكتب رسالتك …</string>
     <string name="room_send_button">إرسال</string>
     <string name="room_ready">مستعد</string>
@@ -52,6 +61,14 @@
     <string name="setting_tls_summary">هذا سيخبر Syncplay من استعمال بروتوكول اتصال أكثر آماناً بدل جيوب اتصال عارية و بحتة. هذه الميزة غير مفعلة حالياً و سيتم إضافتها عن قريب.</string>
     <string name="setting_resetdefault_title">استرداد الحالة الافتراضية للإعدادات</string>
     <string name="setting_resetdefault_summary">إعادة كل شيء إلى قيمته الافتراضية.</string>
+    <string name="setting_pause_if_someone_left_title">جـمـِّـد الفيديو إن غادر أحدهم</string>
+    <string name="setting_pause_if_someone_left_summary">شغِّل هذه الخاصية إن أردتَ إيقاف الفيديو إذ ما غادر أحدهم الغرفة</string>
+    <string name="setting_warn_file_mismatch_title">إنـذار عن عدم توافق الملفات بين المستخدمين</string>
+    <string name="setting_warn_file_mismatch_summary">مشغلة إفتراضاً. هاته الخاصية تنذرك إذا ما تواجدت اختلافات بين ملفات المستخدمين من حيث الاسم ، الحجم أو المدة (و ليس جميعهم معاً)</string>
+    <string name="setting_fileinfo_behaviour_name_title">إرسال معلومات اسم الملف</string>
+    <string name="setting_fileinfo_behaviour_name_summary">اختر الطريقة التي تريد بها إظهار اسم الملف للمستخدمين الآخرين.</string>
+    <string name="setting_fileinfo_behaviour_size_title">إرسال معلومات حجم الملف</string>
+    <string name="setting_fileinfo_behaviour_size_summary">اختر الطريقة التي تريد بها إظهار حجم الملف للمستخدمين الآخرين.</string>
     <string name="uisetting_apply">تطبيق</string>
     <string name="uisetting_timestamp_title">الطوابع الزمنية للرسائل</string>
     <string name="uisetting_timestamp_summary">عطِّل هذه الميزة لإخفاء الطوابع الزمنية في بداية رسائل الغرفة.</string>
@@ -72,6 +89,9 @@
     <string name="settings_categ_room">إعدادات الغرفة</string>
     <string name="settings_categ_video">إعدادات الفيديو</string>
     <string name="settings_categ_misc">إعدادات مميزة</string>
+    <string name="setting_fileinfoBehavior_a">إرسالها أصلية</string>
+    <string name="setting_fileinfoBehavior_b">إرسالها مشفرة</string>
+    <string name="setting_fileinfoBehavior_c">لا ترسل</string>
     <string name="en">الانجليزية</string>
     <string name="ar">العربية</string>
     <string name="room_empty_message_error">اكتب شيئاً !</string>
@@ -85,7 +105,7 @@
     <string name="room_rewinded">الرجوع إلى الوراء بسبب الفرق الزمني مع %s</string>
     <string name="room_guy_left">غادر %s الغرفة</string>
     <string name="room_guy_joined">انضم %s للغرفة</string>
-    <string name="room_isplayingfile">%1s الآن يلعب الفيديو %2s (%3s)</string>
+    <string name="room_isplayingfile">يلعب %1s الفيديو %2s ذو المدة (%3s) الآن</string>
     <string name="room_you_joined_room">لقد انضممت إلى الغرفة: %s</string>
     <string name="room_details_file_properties">المدة: %1s - الحجم : %2s ميغا</string>
     <string name="room_details_nofileplayed">(ما مـِن ملف جاري تشغيله)</string>
@@ -111,6 +131,10 @@
     <string name="uisetting_self_color_summary">يعدل لون خط اسم الذات (أحمر افتراضياً)</string>
     <string name="uisetting_timestamp_color_title">لون خط الطوابع الزمنية</string>
     <string name="uisetting_timestamp_color_summary">يعدل لون خط طوابع الزمن في الرسائل (وردي افتراضياً)</string>
+    <string name="room_file_mismatch_warning_core">ملفك مختلف عن ملف %s بالأوجـه التالية :</string>
+    <string name="room_file_mismatch_warning_name">"الاسم. "</string>
+    <string name="room_file_mismatch_warning_duration">"المدة. "</string>
+    <string name="room_file_mismatch_warning_size">"الحجم. "</string>
 
 
 </resources>

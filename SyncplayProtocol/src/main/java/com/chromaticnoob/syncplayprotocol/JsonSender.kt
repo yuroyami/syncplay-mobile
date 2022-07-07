@@ -1,5 +1,7 @@
 package com.chromaticnoob.syncplayprotocol
 
+import android.content.Context
+import androidx.preference.PreferenceManager
 import com.chromaticnoob.syncplayutils.SyncplayUtils
 import com.chromaticnoob.syncplayutils.SyncplayUtils.toHex
 import com.chromaticnoob.syncplayutils.utils.MediaFile
@@ -71,12 +73,24 @@ object JsonSender {
     }
 
     @JvmStatic
-    fun sendFile(media: MediaFile): String {
+    fun sendFile(media: MediaFile, context: Context): String {
+        /** Checking whether file name or file size have to be hashed **/
+        val sp = PreferenceManager.getDefaultSharedPreferences(context)
+        val nameBehavior = sp.getString("fileinfo_behavior_name", "1")
+        val sizeBehavior = sp.getString("fileinfo_behavior_size", "1")
+
         val fileproperties: HashMap<String, Any> = hashMapOf()
         fileproperties["duration"] = media.fileDuration
-        fileproperties["name"] = media.fileName
-        fileproperties["size"] = media.fileSize
-
+        fileproperties["name"] = when (nameBehavior) {
+            "1" -> media.fileName
+            "2" -> media.fileNameHashed.take(12)
+            else -> ""
+        }
+        fileproperties["size"] = when (sizeBehavior) {
+            "1" -> media.fileSize
+            "2" -> media.fileSizeHashed.take(12)
+            else -> ""
+        }
 
         val file: HashMap<String, Any> = hashMapOf()
         file["file"] = fileproperties

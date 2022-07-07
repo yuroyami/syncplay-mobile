@@ -70,6 +70,10 @@
     <string name="disconnected_notice_header">DISCONNECTED</string>
     <string name="disconnected_notice_a">You have been disconnected from the server.\nThis may be due to a problem in your internet connection or an issue with the server you\'re connecting to. If the problem persists, change the server.</string>
     <string name="disconnected_notice_b">Attempting to reconnect…</string>
+    <string name="room_file_mismatch_warning_core">"Your file is different from %s\'s file in the following ways: "</string>
+    <string name="room_file_mismatch_warning_name">"Name. "</string>
+    <string name="room_file_mismatch_warning_duration">"Duration. "</string>
+    <string name="room_file_mismatch_warning_size">"Size. "</string>
 
     <!-- Settings Strings -->
     <string name="settings_categ_general">General Settings</string>
@@ -103,7 +107,11 @@
     <string name="setting_pause_if_someone_left_title">Pause if someone leaves</string>
     <string name="setting_pause_if_someone_left_summary">Enable this if you want playback to pause/stop if someone leaves the room while you\'re watching.</string>
     <string name="setting_warn_file_mismatch_title">File mismatch warning</string>
-    <string name="setting_warn_file_mismatch_summary">Enabled by default. This will warn you in case you load a file that is different from users in the group.</string>
+    <string name="setting_warn_file_mismatch_summary">Enabled by default. This will warn you in case you load a file that is different from users in the group (in terms of name, duration or size, not all of them).</string>
+    <string name="setting_fileinfo_behaviour_name_title">File name information sending</string>
+    <string name="setting_fileinfo_behaviour_name_summary">Choose the method with which you show your added media file name to other users.</string>
+    <string name="setting_fileinfo_behaviour_size_title">File size information sending</string>
+    <string name="setting_fileinfo_behaviour_size_summary">Choose the method with which you show your added media file size to other users.</string>
 
     <!-- UI Settings Strings -->
     <string name="uisetting_apply">APPLY</string>
@@ -133,7 +141,11 @@
     <string name="uisetting_resetdefault_title">Reset Default Settings</string>
 
 
-    <!--List of Languages identifier strings used for, meh, just a toast... -->
+    <string name="setting_fileinfoBehavior_a">Send raw</string>
+    <string name="setting_fileinfoBehavior_b">Send hashed</string>
+    <string name="setting_fileinfoBehavior_c">Don\'t send</string>
+
+    <!--List of Languages identifier strings used for literally just a toast... -->
     <string name="en">English</string>
     <string name="ar">Arabic</string>
 
@@ -146,5 +158,17 @@
     <string-array name="LangValues">
         <item>"en"</item>
         <item>"ar"</item>
+    </string-array>
+
+    <!--List of options for whether to hash a file's name and size-->
+    <string-array name="fileinfoBehavior">
+        <item>@string/setting_fileinfoBehavior_a</item>
+        <item>@string/setting_fileinfoBehavior_b</item>
+        <item>@string/setting_fileinfoBehavior_c</item>
+    </string-array>
+    <string-array name="fileinfoBehaviorValues">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
     </string-array>
 </resources>

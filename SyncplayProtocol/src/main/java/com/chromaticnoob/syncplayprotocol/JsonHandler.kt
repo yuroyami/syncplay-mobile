@@ -1,6 +1,8 @@
 package com.chromaticnoob.syncplayprotocol
 
 import com.chromaticnoob.syncplayutils.SyncplayUtils.loggy
+import com.chromaticnoob.syncplayutils.utils.MediaFile
+import com.chromaticnoob.syncplayutils.utils.User
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 
@@ -30,86 +32,123 @@ object JsonHandler {
 
     @JvmStatic
     private fun handleHello(hello: JsonObject, p: SyncplayProtocol) {
-        p.currentUsername = hello.getAsJsonPrimitive("username").asString /* Corrected Username */
-        p.sendPacket(JsonSender.sendJoined(p.currentRoom))
+        p.session.currentUsername =
+            hello.getAsJsonPrimitive("username").asString /* Corrected Username */
+        p.sendPacket(JsonSender.sendJoined(p.session.currentRoom))
         p.sendPacket(JsonSender.sendEmptyList())
         p.sendPacket(JsonSender.sendReadiness(p.ready, false))
         p.connected = true
         p.syncplayBroadcaster?.onJoined()
     }
 
-    /** TODO: FIXME **/
     @JvmStatic
     private fun handleSet(set: JsonObject, p: SyncplayProtocol) {
-        val stringSet = set.toString()
-        if (stringSet.contains("event", true)) {
-            val getuser = set.getAsJsonObject("user").keySet().toList()
-            val user = getuser[0]
-            if (stringSet.contains("\"left\": true")) {
-                p.syncplayBroadcaster?.onSomeoneLeft(user)
-            }
-            if (stringSet.contains("\"joined\": true")) {
-                p.syncplayBroadcaster?.onSomeoneJoined(user)
-            }
+        /* Sets can carry a variety of commands: "ready", "user left/joined", shared playlist commands etc */
+        val command = when {
+            set.has("user") -> "user"
+            set.has("room") -> "room"
+            set.has("controllerAuth") -> "controllerAuth"
+            set.has("newControlledRoom") -> "newControlledRoom"
+            set.has("ready") -> "ready"
+            set.has("playlistIndex") -> "playlistIndex"
+            set.has("playlistChange") -> "playlistChange"
+            set.has("features") -> "features"
+            else -> ""
         }
-        p.sendPacket(JsonSender.sendEmptyList())
-    }
 
-    /** TODO: FIXME **/
-    @JvmStatic
-    private fun handleList(list: JsonObject, p: SyncplayProtocol) {
-        val userlist = list.getAsJsonObject(p.currentRoom)
-        val userkeys = userlist.keySet()
-        var indexer = 1
-        val tempUserList: MutableMap<String, MutableList<String>> = mutableMapOf()
-        for (user in userkeys) {
-            val userProperties: MutableList<String> = mutableListOf()
-            var userindex = 0
-            if (user != p.currentUsername) {
-                userindex = indexer
-                indexer += 1
-            }
-            val readiness = if (userlist.getAsJsonObject(user).get("isReady").isJsonNull) {
-                "null"
-            } else {
-                userlist.getAsJsonObject(user).getAsJsonPrimitive("isReady").asString
-            }
+        when (command) {
+            "user" -> {
+                /* a "user" command can mean a user joined, left, or added a file. **/
+                val user = set.getAsJsonObject("user").keySet().toList()[0]
+                val content = set.getAsJsonObject("user").getAsJsonObject(user)
 
-            val file = userlist
-                .getAsJsonObject(user)
-                .getAsJsonObject("file")
+                /* Checking if there is an event in question */
+                if (content.has("event")) {
+                    val event = content["event"].asJsonObject
+                    if (event.has("left")) {
+                        p.syncplayBroadcaster?.onSomeoneLeft(user)
+                    }
+                    if (event.has("joined")) {
+                        p.syncplayBroadcaster?.onSomeoneJoined(user)
+                    }
+                }
 
-            var filename = ""
-            var fileduration = ""
-            var filesize = ""
-
-            if (file.keySet().contains("name")) {
-                filename = file.getAsJsonPrimitive("name").toString()
-                fileduration = file.getAsJsonPrimitive("duration").toString()
-                filesize = file.getAsJsonPrimitive("size").toString()
-            }
-
-            if (p.userList.keys.contains(user)) {
-                if (p.userList[user]?.get(2) != filename) {
+                /* Checking if there is a file addition in question */
+                if (content.has("file")) {
+                    val file = content["file"].asJsonObject
                     p.syncplayBroadcaster?.onSomeoneLoadedFile(
                         user,
-                        filename,
-                        fileduration,
-                        filesize
+                        file.get("name").asString,
+                        file.get("duration").asDouble,
+                        file.get("size").asString
                     )
                 }
             }
-
-            userProperties.add(0, userindex.toString())
-            userProperties.add(1, readiness)
-            userProperties.add(2, filename)
-            userProperties.add(3, fileduration)
-            userProperties.add(4, filesize)
-
-            tempUserList[user] = userProperties
+            "playlistIndex" -> {
+                val playlistIndex = set.getAsJsonObject("playlistIndex")
+                val userMeant = playlistIndex.get("user")
+                val newIndex = playlistIndex.get("index")
+                if (!userMeant.isJsonNull && !newIndex.isJsonNull)
+                    p.syncplayBroadcaster?.onPlaylistIndexChanged(
+                        userMeant.asString,
+                        newIndex.asInt
+                    )
+            }
+            "playlistChange" -> {
+                val playlistChange = set.getAsJsonObject("playlistChange")
+                val userMeant =
+                    if (playlistChange.get("user").isJsonNull) "" else playlistChange.get("user").asString
+                val fileArray = playlistChange.getAsJsonArray("files")
+                p.session.sharedPlaylist.clear()
+                for (file in fileArray) {
+                    p.session.sharedPlaylist.add(file.asString)
+                }
+                if (userMeant != "") p.syncplayBroadcaster?.onPlaylistUpdated(userMeant)
+            }
         }
 
-        p.userList = tempUserList
+        /* Consulting a list of users anyway (their readiness, files..etc) */
+        p.sendPacket(JsonSender.sendEmptyList())
+    }
+
+    @JvmStatic
+    private fun handleList(list: JsonObject, p: SyncplayProtocol) {
+        val userlist = list.getAsJsonObject(p.session.currentRoom)
+        val userkeys = userlist.keySet() /* Getting user list */
+        p.session.userList.clear() /* Clearing the list before populating it again */
+
+        var indexer = 1 /* This indexer is used to put the main user ahead of others in the list */
+        for (user in userkeys) {
+            val USER = User()
+            USER.name = user
+            var userindex = 0
+            if (user != p.session.currentUsername) {
+                userindex = indexer
+                indexer += 1
+            }
+            USER.readiness = if (userlist.getAsJsonObject(user).get("isReady").isJsonNull) {
+                null
+            } else {
+                userlist.getAsJsonObject(user).getAsJsonPrimitive("isReady").asBoolean
+            }
+
+            val file = userlist.getAsJsonObject(user).getAsJsonObject("file")
+
+            var mediaFile: MediaFile? = MediaFile()
+
+            if (file.keySet().contains("name")) {
+                mediaFile?.fileName = file.getAsJsonPrimitive("name").toString()
+                mediaFile?.fileDuration = file.getAsJsonPrimitive("duration").asDouble
+                mediaFile?.fileSize = file.getAsJsonPrimitive("size").asString
+            } else {
+                mediaFile = null
+            }
+
+            USER.file = mediaFile
+            USER.index = userindex
+
+            p.session.userList.add(USER)
+        }
         p.syncplayBroadcaster?.onReceivedList()
     }
 
@@ -126,7 +165,8 @@ object JsonHandler {
                 val doSeek: Boolean? =
                     if (doSeekElement.isJsonNull) null else doSeekElement.asBoolean
                 val seekedPosition = playstate.get("position").asDouble
-                val seeker: String = playstate.get("setBy").asString
+                val seeker: String =
+                    if (playstate.get("setBy").isJsonNull) "" else playstate.get("setBy").asString
                 if (doSeek == true) {
                     protocol.syncplayBroadcaster?.onSomeoneSeeked(seeker, seekedPosition)
                 }
@@ -172,10 +212,11 @@ object JsonHandler {
         } else {
             val playstate = state.getAsJsonObject("playstate")
             val position = playstate.get("position").asDouble
-            val positionOf: String = playstate.get("setBy").toString()
+            val positionOf: String =
+                if (!playstate.get("setBy").isJsonNull) playstate.get("setBy").asString else ""
 
             /* Rewind check if someone is behind */
-            if (positionOf != (protocol.currentUsername)) {
+            if (positionOf != (protocol.session.currentUsername) && positionOf != "") {
                 if (position < (protocol.currentVideoPosition - protocol.rewindThreshold)) {
                     protocol.syncplayBroadcaster?.onSomeoneBehind(positionOf, position)
                 }

@@ -7,7 +7,7 @@ import com.chromaticnoob.syncplayprotocol.JsonHandler.handleJson
 import com.chromaticnoob.syncplayprotocol.JsonSender.sendHello
 import com.chromaticnoob.syncplayutils.SyncplayUtils
 import com.chromaticnoob.syncplayutils.utils.MediaFile
-import com.chromaticnoob.syncplayutils.utils.Message
+import com.chromaticnoob.syncplayutils.utils.Session
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import kotlinx.coroutines.Dispatchers
@@ -24,13 +24,11 @@ open class SyncplayProtocol : ViewModel() {
     /** This refers to the event callback interface */
     var syncplayBroadcaster: ProtocolBroadcaster? = null
 
-    /** Protocol-exclusive variables **/
+    /** Protocol-exclusive variables - should never change these initial values **/
     var serverIgnFly: Int = 0
     var clientIgnFly: Int = 0
     var ping = 0.0
-
-    /** Our JSON instance */
-    val gson: Gson = GsonBuilder().create()
+    var rewindThreshold = 12L /* This is as per official Syncplay, shouldn't be subject to change */
 
     /** Variables that track user status */
     var paused: Boolean = true
@@ -41,21 +39,11 @@ open class SyncplayProtocol : ViewModel() {
     var file: MediaFile? = null
     var currentVideoPosition: Double = 0.0
 
-    /** Variables related to joining info */
-    var serverHost: String = "151.80.32.178"
-    var serverPort: Int = 8999
-    var currentUsername: String = "Anonymous${(1000..9999).random()}"
-    var currentRoom: String = "roomname"
-    var currentPassword: String? = null
+    /** A protocol instance is always defined and accompanied by a session **/
+    var session = Session()
 
-    /** Variable that stores all messages that have been sent/received */
-    var messageSequence: MutableList<Message> = mutableListOf()
-
-    /** Variable that represents the room's user list */
-    var userList: MutableMap<String, MutableList<String>> = mutableMapOf()
-
-    /** Variable that defines rewind threshold **/
-    var rewindThreshold = 12L /* This is as per official Syncplay, shouldn't be subject to change */
+    /** Our JSON instance */
+    val gson: Gson = GsonBuilder().create()
 
     /** Instantiating a socket to perform a TCP/IP connection later **/
     var socket: Socket = Socket()
@@ -66,7 +54,7 @@ open class SyncplayProtocol : ViewModel() {
     /** ============================ start of protocol =====================================**/
     fun connect() {
         syncplayBroadcaster?.onConnectionAttempt()
-        sendPacket(sendHello(currentUsername, currentRoom, currentPassword))
+        sendPacket(sendHello(session.currentUsername, session.currentRoom, session.currentPassword))
     }
 
     /** The packet sending is fairly simple, we create a socket if it's not connected, then
@@ -97,7 +85,7 @@ open class SyncplayProtocol : ViewModel() {
             try {
                 if (!connected) {
                     try {
-                        socket = Socket(serverHost, serverPort)
+                        socket = Socket(session.serverHost, session.serverPort)
                     } catch (e: Exception) {
                         Thread.sleep(2000) //Safety-interval delay.
                         syncplayBroadcaster?.onConnectionFailed()

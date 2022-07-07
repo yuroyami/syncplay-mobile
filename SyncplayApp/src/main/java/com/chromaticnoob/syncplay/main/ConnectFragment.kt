@@ -45,9 +45,14 @@ class ConnectFragment : Fragment() {
                 if (customServerCheck) binding.connectCustomServerAddress.text.toString() else ""
 
             val serverPort =
-                if (customServerCheck) binding.connectCustomServerPort.text.toString().toInt()
+                if (customServerCheck) binding.connectCustomServerPort.text.toString().toIntOrNull()
                 else (binding.spMenuAutocomplete.text).toString().substringAfter("syncplay.pl:")
-                    .toInt()
+                    .toIntOrNull()
+
+            if (serverPort == null) {
+                binding.connectCustomServerPort.error = "Select port !"
+                return@setOnClickListener
+            }
 
             var username = binding.connectUsernameInputText.text.toString().replace("\\", "")
                 .trim()
@@ -71,12 +76,14 @@ class ConnectFragment : Fragment() {
                 }
             }
 
+            var password = ""
             joiningInfo.add(0, serverAddress)
             joiningInfo.add(1, serverPort)
             joiningInfo.add(2, username)
             joiningInfo.add(3, roomname)
             if (customServerCheck && binding.connectCustomServerPassword.text.isNotBlank()) {
-                joiningInfo.add(4, binding.connectCustomServerPassword.text.toString())
+                password = binding.connectCustomServerPassword.text.toString()
+                joiningInfo.add(4, password)
             } else {
                 joiningInfo.add(4, null)
             }
@@ -86,8 +93,14 @@ class ConnectFragment : Fragment() {
                 putString("server", binding.spMenuAutocomplete.text.toString())
                 putString("username", username)
                 putString("roomname", roomname)
+                if (customServerCheck) {
+                    putString("customAddress", serverAddress)
+                    putInt("customPort", serverPort)
+                    putString("customPassord", password)
+                }
                 apply()
             }
+
 
             val json = GsonBuilder().create().toJson(joiningInfo)
             val intent = Intent(requireContext(), RoomActivity::class.java).apply {
@@ -125,15 +138,9 @@ class ConnectFragment : Fragment() {
         /** Listening to the event where users click 'Enter Custom Server' or other servers */
         binding.spMenuAutocomplete.setOnItemClickListener { _, _, i, _ ->
             if (i == 5) {
-                binding.connectCustomServerAddress.visibility = View.VISIBLE
-                binding.connectCustomServerPort.visibility = View.VISIBLE
-                binding.connectCustomServerPassword.visibility = View.VISIBLE
-                binding.pageConnect.smoothScrollBy(0, 10000, 100)
+                toggleCustomServer(true)
             } else {
-                binding.connectCustomServerAddress.visibility = View.GONE
-                binding.connectCustomServerPort.visibility = View.GONE
-                binding.connectCustomServerPassword.visibility = View.GONE
-
+                toggleCustomServer(false)
             }
         }
 
@@ -141,11 +148,26 @@ class ConnectFragment : Fragment() {
                 .getBoolean("save_info", true)
         ) {
             val sp = requireActivity().getPreferences(Context.MODE_PRIVATE)
-            binding.spMenuAutocomplete.setText(sp.getString("server", "syncplay.pl:8997"), false)
-            binding.connectUsernameInputText
-                .setText(sp.getString("username", "user_" + (0..9999).random()))
-            binding.connectRoomnameInputText
-                .setText(sp.getString("roomname", "room_" + (0..9999).random()))
+            val savedServer = sp.getString("server", "syncplay.pl:8997")
+            binding.spMenuAutocomplete.setText(savedServer, false)
+            if (savedServer == getString(R.string.connect_enter_custom_server)) {
+                toggleCustomServer(true)
+                binding.connectCustomServerAddress.setText(sp.getString("customAddress", ""))
+                binding.connectCustomServerPort.setText(sp.getInt("customPort", 0).toString())
+                binding.connectCustomServerPassword.setText(sp.getString("customPassword", ""))
+            }
+            binding.connectUsernameInputText.setText(
+                sp.getString(
+                    "username",
+                    "user_" + (0..9999).random()
+                )
+            )
+            binding.connectRoomnameInputText.setText(
+                sp.getString(
+                    "roomname",
+                    "room_" + (0..9999).random()
+                )
+            )
         } else {
             binding.spMenuAutocomplete.setText("syncplay.pl:8997")
             binding.connectUsernameInputText.setText("user_" + (0..9999).random())
@@ -153,5 +175,19 @@ class ConnectFragment : Fragment() {
         }
     }
 
-
+    private fun toggleCustomServer(show: Boolean) {
+        when (show) {
+            true -> {
+                binding.connectCustomServerAddress.visibility = View.VISIBLE
+                binding.connectCustomServerPort.visibility = View.VISIBLE
+                binding.connectCustomServerPassword.visibility = View.VISIBLE
+                binding.pageConnect.smoothScrollBy(0, 10000, 100)
+            }
+            false -> {
+                binding.connectCustomServerAddress.visibility = View.GONE
+                binding.connectCustomServerPort.visibility = View.GONE
+                binding.connectCustomServerPassword.visibility = View.GONE
+            }
+        }
+    }
 }

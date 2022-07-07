@@ -24,7 +24,7 @@ interface ProtocolBroadcaster {
     fun onSomeoneLoadedFile(
         person: String,
         file: String?,
-        fileduration: String?,
+        fileduration: Double?,
         filesize: String?
     )
 
@@ -37,4 +37,8 @@ interface ProtocolBroadcaster {
     fun onConnectionAttempt()
 
     fun onConnectionFailed()
+
+    fun onPlaylistUpdated(user: String)
+
+    fun onPlaylistIndexChanged(user: String, index: Int)
 }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import com.chromaticnoob.syncplayutils.SyncplayUtils
 import com.chromaticnoob.syncplayutils.SyncplayUtils.getFileName
+import com.chromaticnoob.syncplayutils.SyncplayUtils.toHex
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
@@ -20,9 +21,11 @@ class MediaFile {
 
     /** The name of the file with its extension **/
     var fileName = ""
+    var fileNameHashed = ""
 
     /** The size of the file in bytes **/
-    var fileSize: Int = 0
+    var fileSize: String = ""
+    var fileSizeHashed = ""
 
     /** The duration of the file in hh:mm:ss format **/
     var fileDuration: Double = 0.0
@@ -84,7 +87,11 @@ class MediaFile {
     fun collectInfo(context: Context) {
         /** Using SyncplayUtils **/
         fileName = context.getFileName(uri!!)!!
+        fileSize =
+            SyncplayUtils.getRealSizeFromUri(context, uri!!)?.toDouble()?.roundToInt().toString()
 
-        fileSize = SyncplayUtils.getRealSizeFromUri(context, uri!!)?.toDouble()?.roundToInt()!!
+        /** Hashing name and size in case they're used **/
+        fileNameHashed = SyncplayUtils.sha256(fileName).toHex()
+        fileSizeHashed = SyncplayUtils.sha256(fileSize).toHex()
     }
 }
