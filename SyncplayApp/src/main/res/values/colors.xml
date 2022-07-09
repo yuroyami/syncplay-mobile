@@ -17,5 +17,6 @@
     <color name="friendtag_default">#6082B6</color>
     <color name="systemmsg_default">#eeeee1</color>
     <color name="usermsg_default">#ffffff</color>
+    <color name="shared_playlist_bg">#4C4C4C</color>
 
 </resources>

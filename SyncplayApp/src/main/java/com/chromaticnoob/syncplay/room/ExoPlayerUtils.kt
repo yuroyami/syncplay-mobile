@@ -4,16 +4,13 @@ import android.net.Uri
 import android.view.MenuItem
 import android.widget.ImageButton
 import android.widget.PopupMenu
-import androidx.annotation.UiThread
 import androidx.appcompat.content.res.AppCompatResources
 import com.chromaticnoob.syncplay.R
 import com.chromaticnoob.syncplay.room.RoomUtils.string
-import com.chromaticnoob.syncplay.room.RoomUtils.vidPosUpdater
 import com.chromaticnoob.syncplay.room.UIUtils.displayInfo
 import com.chromaticnoob.syncplayprotocol.JsonSender
 import com.chromaticnoob.syncplayutils.SyncplayUtils
 import com.google.android.exoplayer2.C
-import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.trackselection.TrackSelectionOverride
 import java.io.IOException
@@ -27,7 +24,7 @@ object ExoPlayerUtils {
 
     /** Injects a certain media file into ExoPlayer **/
     @JvmStatic
-    fun RoomActivity.injectVideo(mp: ExoPlayer, mediaPath: Uri) {
+    fun RoomActivity.injectVideo(mediaPath: Uri) {
         try {
             /** This is the builder responsible for building a MediaItem component for ExoPlayer **/
             val vidbuilder = MediaItem.Builder()
@@ -53,7 +50,7 @@ object ExoPlayerUtils {
 
             /** Injecting it into ExoPlayer and getting relevant info **/
             runOnUiThread {
-                mp.setMediaItem(vid) /* This loads the media into ExoPlayer **/
+                myExoPlayer?.setMediaItem(vid) /* This loads the media into ExoPlayer **/
 
                 hudBinding.exoPlay.performClick()
                 hudBinding.exoPause.performClick()
@@ -63,13 +60,15 @@ object ExoPlayerUtils {
                 /** Goes back to the beginning */
 
                 /** Seeing if we have to start over **/
-                if (startFromPosition != (-3.0).toLong()) mp.seekTo(startFromPosition)
+                if (startFromPosition != (-3.0).toLong()) myExoPlayer?.seekTo(startFromPosition)
             }
 
             if (!p.connected) {
                 p.sendPacket(JsonSender.sendFile(p.file!!, this))
             }
-            vidPosUpdater() //Most important updater to maintain continuity
+            for (i in (0..5)) {
+                sharedplaylistPopup.update()
+            }
         } catch (e: IOException) {
             throw RuntimeException("Invalid asset folder")
         }
@@ -98,18 +97,20 @@ object ExoPlayerUtils {
     }
 
     /** This pauses playback on the right thread **/
-    @UiThread
     @JvmStatic
     fun RoomActivity.pausePlayback() {
-        myExoPlayer?.pause()
+        runOnUiThread {
+            myExoPlayer?.pause()
+        }
     }
 
     /** This resumes playback on the right thread, and hides ExoPlayer's HUD/Controller UI**/
-    @UiThread
     @JvmStatic
     fun RoomActivity.playPlayback() {
-        myExoPlayer?.play()
-        SyncplayUtils.hideSystemUI(this, false)
+        runOnUiThread {
+            myExoPlayer?.play()
+            SyncplayUtils.hideSystemUI(this, false)
+        }
     }
 
     /** Checks for available sub tracks, shows 'em in a popup, then applies a selection **/

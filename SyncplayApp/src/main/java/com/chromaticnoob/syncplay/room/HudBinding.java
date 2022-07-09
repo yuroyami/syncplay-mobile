@@ -21,33 +21,48 @@ import com.chromaticnoob.syncplay.R;
  * ViewBinding ends up throwing NullPointerException. I had to edit the generated class (this one)
  * in order to get rid of that problem.
  */
-
 public final class HudBinding implements ViewBinding {
     @NonNull
+    public final ImageButton syncplaySharedPlaylist;
+
+    @NonNull
     public final ImageButton exoAudioTrack;
+
     @NonNull
     public final TextView exoDuration;
+
     @NonNull
     public final ImageButton exoFfwd;
+
     @NonNull
     public final ImageButton exoPause;
+
     @NonNull
     public final ImageButton exoPlay;
+
     @NonNull
     public final TextView exoPosition;
+
     public final View exoProgressPlaceholder;
+
     @NonNull
     public final ImageButton exoRepeatToggle;
+
     @NonNull
     public final ImageButton exoRew;
+
     @NonNull
     public final ImageButton exoSubtitle;
+
     @NonNull
     public final ImageButton syncplayAddfile;
+
     @NonNull
     public final ImageButton syncplayLock;
+
     @NonNull
     public final ImageButton syncplayMore;
+
     @NonNull
     public final ImageButton syncplayScreen;
     @NonNull
@@ -62,7 +77,7 @@ public final class HudBinding implements ViewBinding {
                        @NonNull ImageButton exoRew, @NonNull ImageButton exoSubtitle,
                        @NonNull ImageButton syncplayAddfile, @NonNull ImageButton syncplayLock,
                        @NonNull ImageButton syncplayMore, @NonNull ImageButton syncplayScreen,
-                       @NonNull LinearLayout vidplayerhud) {
+                       @NonNull ImageButton syncplaySharedPlaylist, @NonNull LinearLayout vidplayerhud) {
         this.rootView = rootView;
         this.exoAudioTrack = exoAudioTrack;
         this.exoDuration = exoDuration;
@@ -78,22 +93,8 @@ public final class HudBinding implements ViewBinding {
         this.syncplayLock = syncplayLock;
         this.syncplayMore = syncplayMore;
         this.syncplayScreen = syncplayScreen;
+        this.syncplaySharedPlaylist = syncplaySharedPlaylist;
         this.vidplayerhud = vidplayerhud;
-    }
-
-    @NonNull
-    public static HudBinding inflate(@NonNull LayoutInflater inflater) {
-        return inflate(inflater, null, false);
-    }
-
-    @NonNull
-    public static HudBinding inflate(@NonNull LayoutInflater inflater, @Nullable ViewGroup parent,
-                                     boolean attachToParent) {
-        View root = inflater.inflate(R.layout.hud, parent, false);
-        if (attachToParent) {
-            parent.addView(root);
-        }
-        return bind(root);
     }
 
     @NonNull
@@ -141,8 +142,6 @@ public final class HudBinding implements ViewBinding {
 
             id = com.google.android.exoplayer2.R.id.exo_progress_placeholder;
             View exoProgressPlaceholder = ViewBindings.findChildViewById(rootView, id);
-            if (exoProgressPlaceholder == null) {
-            }
 
             id = com.google.android.exoplayer2.R.id.exo_repeat_toggle;
             ImageButton exoRepeatToggle = ViewBindings.findChildViewById(rootView, id);
@@ -186,14 +185,36 @@ public final class HudBinding implements ViewBinding {
                 break missingId;
             }
 
+            id = R.id.syncplay_shared_playlist;
+            ImageButton syncplaySharedPlaylist = ViewBindings.findChildViewById(rootView, id);
+            if (syncplayScreen == null) {
+                break missingId;
+            }
+
             LinearLayout vidplayerhud = (LinearLayout) rootView;
 
             return new HudBinding((LinearLayout) rootView, exoAudioTrack, exoDuration, exoFfwd, exoPause,
                     exoPlay, exoPosition, exoProgressPlaceholder, exoRepeatToggle, exoRew, exoSubtitle,
-                    syncplayAddfile, syncplayLock, syncplayMore, syncplayScreen, vidplayerhud);
+                    syncplayAddfile, syncplayLock, syncplayMore, syncplayScreen, syncplaySharedPlaylist,
+                    vidplayerhud);
         }
         String missingId = rootView.getResources().getResourceName(id);
         throw new NullPointerException("Missing required view with ID: ".concat(missingId));
+    }
+
+    @NonNull
+    public static HudBinding inflate(@NonNull LayoutInflater inflater) {
+        return inflate(inflater, null, false);
+    }
+
+    @NonNull
+    public static HudBinding inflate(@NonNull LayoutInflater inflater, @Nullable ViewGroup parent,
+                                     boolean attachToParent) {
+        View root = inflater.inflate(R.layout.hud, parent, false);
+        if (attachToParent) {
+            parent.addView(root);
+        }
+        return bind(root);
     }
 
     @Override

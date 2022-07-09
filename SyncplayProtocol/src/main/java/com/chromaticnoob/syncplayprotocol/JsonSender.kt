@@ -167,7 +167,35 @@ object JsonSender {
         statewrapper["State"] = state
 
         return gson.toJson(statewrapper)
-
     }
+
+    @JvmStatic
+    fun sendPlaylistChange(list: List<String>): String {
+        val files: HashMap<String, Any?> = hashMapOf()
+        files["files"] = list
+
+        val playlistChange: HashMap<String, Any?> = hashMapOf()
+        playlistChange["playlistChange"] = files
+
+        val set: HashMap<String, Any?> = hashMapOf()
+        set["Set"] = playlistChange
+
+        return gson.toJson(set)
+    }
+
+    @JvmStatic
+    fun sendPlaylistIndex(i: Int): String {
+        val index: HashMap<String, Any?> = hashMapOf()
+        index["index"] = i
+
+        val playlistIndex: HashMap<String, Any?> = hashMapOf()
+        playlistIndex["playlistIndex"] = index
+
+        val set: HashMap<String, Any?> = hashMapOf()
+        set["Set"] = playlistIndex
+
+        return gson.toJson(set)
+    }
+
 
 }

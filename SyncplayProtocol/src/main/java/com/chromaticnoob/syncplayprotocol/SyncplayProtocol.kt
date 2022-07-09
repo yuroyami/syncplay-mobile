@@ -30,6 +30,7 @@ open class SyncplayProtocol : ViewModel() {
     var ping = 0.0
     var rewindThreshold = 12L /* This is as per official Syncplay, shouldn't be subject to change */
 
+
     /** Variables that track user status */
     var paused: Boolean = true
     var ready = false
@@ -73,7 +74,6 @@ open class SyncplayProtocol : ViewModel() {
         } catch (e: IllegalThreadStateException) {
             sendPacketCore(json)
         }
-
     }
 
     private fun sendPacketCore(json: String) {

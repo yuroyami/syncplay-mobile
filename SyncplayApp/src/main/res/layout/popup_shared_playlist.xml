@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/shP_dismisser"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:cardCornerRadius="32dp"
+        app:cardElevation="12dp"
+        app:contentPadding="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.9"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth_percent="0.65">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/shP_child_constraintlayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/shP_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/directive4bold"
+                android:gravity="center"
+                android:text="@string/room_shared_playlist"
+                android:textAlignment="center"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/shP_subheader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/room_shared_playlist_brief"
+                android:textAlignment="center"
+                android:textSize="12sp"
+                app:layout_constraintTop_toBottomOf="@id/shP_header" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/shP_playlist"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_margin="6dp"
+                android:background="@color/shared_playlist_bg"
+                android:elevation="6dp"
+                android:orientation="vertical"
+                android:padding="2dp"
+                app:layoutManager="LinearLayoutManager"
+                app:layout_constraintBottom_toTopOf="@id/shP_save"
+                app:layout_constraintTop_toBottomOf="@id/shP_subheader"
+                tools:listitem="@layout/popup_shared_playlist_line" />
+
+            <ImageButton
+                android:id="@+id/shP_add_file"
+                style="@style/ExoMediaButton.FastForward"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_margin="12dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/ic_shared_playlist_add"
+                app:layout_constraintBottom_toBottomOf="@id/shP_save"
+                app:layout_constraintStart_toEndOf="@id/shP_add_directory"
+                app:layout_constraintTop_toTopOf="@id/shP_save"
+                app:tint="#FFD66F" />
+
+            <ImageButton
+                android:id="@+id/shP_add_directory"
+                style="@style/ExoMediaButton.FastForward"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_margin="12dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/ic_add_folder"
+                app:layout_constraintBottom_toBottomOf="@id/shP_save"
+                app:layout_constraintStart_toEndOf="@id/shP_save"
+                app:layout_constraintTop_toTopOf="@id/shP_save"
+                app:tint="#FFD66F" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/shP_save"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/uisetting_apply"
+                app:backgroundTint="#FFD66F"
+                app:icon="@drawable/ic_right"
+                app:iconSize="24dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </com.google.android.material.card.MaterialCardView>
+</androidx.constraintlayout.widget.ConstraintLayout>

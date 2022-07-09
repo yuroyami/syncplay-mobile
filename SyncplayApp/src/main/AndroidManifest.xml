@@ -51,6 +51,11 @@
             android:windowSoftInputMode="adjustNothing"
             tools:ignore="LockedOrientationActivity" />
 
+        <activity
+            android:name=".main.DirectoriesActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:exported="true"></activity>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"

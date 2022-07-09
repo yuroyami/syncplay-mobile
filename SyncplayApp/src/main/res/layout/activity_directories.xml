@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/directories"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/cosmik_gradient"
+    android:keepScreenOn="true"
+    tools:context=".main.DirectoriesActivity">
+
+    <TextView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:fontFamily="@font/directive4bold"
+        android:gravity="center"
+        android:text="@string/media_directories"
+        android:textAlignment="center"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/subheader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="8dp"
+        android:gravity="center"
+        android:text="@string/media_directories_brief"
+        android:textAlignment="center"
+        android:textSize="12sp"
+        app:layout_constraintTop_toBottomOf="@id/header" />
+
+    <GridView
+        android:id="@+id/folders"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_margin="6dp"
+        android:background="#aaaaaa"
+        android:elevation="6dp"
+        android:numColumns="4"
+        android:orientation="vertical"
+        android:padding="2dp"
+        android:verticalSpacing="26dp"
+        app:layout_constraintBottom_toTopOf="@id/add_element"
+        app:layout_constraintTop_toBottomOf="@id/subheader"
+        tools:listitem="@layout/activity_directories_item" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/add_element"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:fontFamily="@font/directive4bold"
+        android:padding="16dp"
+        android:text="@string/media_directories_add_folder"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        app:backgroundTint="#FFD66F"
+        app:icon="@drawable/ic_add_folder"
+        app:iconSize="24dp"
+        app:layout_constraintBottom_toTopOf="@id/directories_save"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/clear_all"
+        app:layout_constraintTop_toBottomOf="@id/folders" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/clear_all"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:fontFamily="@font/directive4bold"
+        android:padding="16dp"
+        android:text="@string/media_directories_clear_all"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        app:backgroundTint="#FFD66F"
+        app:icon="@drawable/ic_clear_all"
+        app:iconSize="24dp"
+        app:layout_constraintBottom_toTopOf="@id/directories_save"
+        app:layout_constraintEnd_toStartOf="@id/add_element"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/folders" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/directories_save"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:fontFamily="@font/directive4bold"
+        android:padding="16dp"
+        android:text="@string/media_directories_save"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        app:backgroundTint="#FFD66F"
+        app:icon="@drawable/ic_right"
+        app:iconSize="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

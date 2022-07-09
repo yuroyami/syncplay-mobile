@@ -91,9 +91,7 @@ object RoomUtils {
         if (roomBinding.syncplayMESSAGERY.visibility != View.VISIBLE) {
             roomBinding.syncplayVisiblitydelegate.visibility = View.GONE
         }
-        p.sendPacket(
-            JsonSender.sendChat(message)
-        )
+        p.sendPacket(JsonSender.sendChat(message))
         roomBinding.syncplayINPUTBox.setText("")
     }
 

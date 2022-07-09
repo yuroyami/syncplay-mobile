@@ -26,7 +26,7 @@
             tools:ignore="ContentDescription" />
 
         <ImageButton
-            android:id="@+id/syncplay_shared_playlis"
+            android:id="@+id/syncplay_shared_playlist"
             style="@style/ExoMediaButton.FastForward"
             android:src="@drawable/ic_shared_playlist"
             app:tint="#FFD66F"

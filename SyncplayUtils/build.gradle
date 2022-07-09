@@ -15,7 +15,7 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -46,9 +46,7 @@ dependencies {
     api 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.0-alpha01'
     api 'com.google.code.gson:gson:2.9.0' //JSON operations
     api("com.google.android.exoplayer:exoplayer:2.18.0") { exclude group: 'com.android.support' }
-
+    api "androidx.documentfile:documentfile:1.0.1" //Dealing with Folders, Files, Uris
     //implementation 'com.blankj:utilcodex:1.31.0' //CustomUtils, didn't use any til now
     //implementation 'org.conscrypt:conscrypt-android:2.5.2' //Will use for TLSv1.3
-
-
 }

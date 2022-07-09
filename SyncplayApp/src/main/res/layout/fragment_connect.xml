@@ -214,7 +214,7 @@
             app:layout_constraintTop_toBottomOf="@id/connect_customServerAddress"
             app:layout_constraintWidth_percent="0.8" />
 
-        <com.google.android.material.button.MaterialButton
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/connect_JoinButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -223,9 +223,10 @@
             android:padding="16dp"
             android:text="@string/connect_button"
             android:textAlignment="center"
+            android:layout_marginTop="4dp"
             android:textColor="@color/white"
             android:textSize="14sp"
-            app:backgroundTint="@color/sp_screener"
+            android:background="@drawable/bg3_gradient"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/connect_customServerPassword" />

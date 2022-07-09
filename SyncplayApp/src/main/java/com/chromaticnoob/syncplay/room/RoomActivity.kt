@@ -14,10 +14,12 @@ import android.view.animation.AccelerateInterpolator
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.AppCompatImageButton
 import androidx.core.view.children
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import androidx.preference.PreferenceManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.DiskCacheStrategy
@@ -38,11 +40,17 @@ import com.chromaticnoob.syncplay.room.RoomUtils.pingUpdater
 import com.chromaticnoob.syncplay.room.RoomUtils.sendMessage
 import com.chromaticnoob.syncplay.room.RoomUtils.sendPlayback
 import com.chromaticnoob.syncplay.room.RoomUtils.string
+import com.chromaticnoob.syncplay.room.RoomUtils.vidPosUpdater
+import com.chromaticnoob.syncplay.room.SharedPlaylistUtils.addFileToPlaylist
+import com.chromaticnoob.syncplay.room.SharedPlaylistUtils.addFolderToPlaylist
+import com.chromaticnoob.syncplay.room.SharedPlaylistUtils.changePlaylistSelection
 import com.chromaticnoob.syncplay.room.UIUtils.applyUISettings
 import com.chromaticnoob.syncplay.room.UIUtils.broadcastMessage
 import com.chromaticnoob.syncplay.room.UIUtils.displayInfo
 import com.chromaticnoob.syncplay.room.UIUtils.hideKb
 import com.chromaticnoob.syncplay.room.UIUtils.replenishUsers
+import com.chromaticnoob.syncplay.room.UIUtils.showPopup
+import com.chromaticnoob.syncplay.room.UIUtils.toasty
 import com.chromaticnoob.syncplayprotocol.JsonSender.sendEmptyList
 import com.chromaticnoob.syncplayprotocol.JsonSender.sendFile
 import com.chromaticnoob.syncplayprotocol.JsonSender.sendReadiness
@@ -64,6 +72,7 @@ import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.CaptionStyleCompat
 import com.google.android.exoplayer2.ui.CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW
 import com.google.android.exoplayer2.util.MimeTypes
+import com.google.android.material.button.MaterialButton
 import com.google.gson.GsonBuilder
 import razerdp.basepopup.BasePopupWindow
 import kotlin.collections.set
@@ -99,6 +108,9 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
 
     /* Declaring Popup dialog variables which are used to show/dismiss different popups */
     private lateinit var disconnectedPopup: DisconnectedPopup
+    lateinit var sharedplaylistPopup: SharedPlaylistPopup
+    lateinit var messageHistoryPopup: MessageHistoryPopup
+
 
     /**********************************************************************************************
      *                                  LIFECYCLE METHODS
@@ -110,11 +122,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                 p.file = MediaFile()
                 p.file?.uri = result.data?.data
                 p.file?.collectInfo(this@RoomActivity)
-                Toast.makeText(
-                    this,
-                    string(rr.string.room_selected_vid, "${p.file?.fileName}"),
-                    Toast.LENGTH_LONG
-                ).show()
+                toasty(string(rr.string.room_selected_vid, "${p.file?.fileName}"))
                 Handler(Looper.getMainLooper()).postDelayed({ myExoPlayer?.seekTo(0L) }, 2000)
                 checkFileMismatches(p)
             }
@@ -141,27 +149,36 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                             .setLanguage(null)
                             .setSelectionFlags(SELECTION_FLAG_DEFAULT)
                             .build()
-                        Toast.makeText(
-                            this,
-                            string(rr.string.room_selected_sub, filename),
-                            Toast.LENGTH_LONG
-                        ).show()
+                        toasty(string(rr.string.room_selected_sub, filename))
                     } else {
-                        Toast.makeText(
-                            this,
-                            getString(rr.string.room_selected_sub_error),
-                            Toast.LENGTH_LONG
-                        ).show()
+                        toasty(getString(rr.string.room_selected_sub_error))
                     }
                 } else {
-                    Toast.makeText(
-                        this,
-                        getString(rr.string.room_sub_error_load_vid_first),
-                        Toast.LENGTH_LONG
-                    ).show()
+                    toasty(getString(rr.string.room_sub_error_load_vid_first))
                 }
             }
 
+        }
+
+    val sharedFileResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result?.resultCode == Activity.RESULT_OK) {
+                val uri = result.data?.data ?: return@registerForActivityResult
+                val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                applicationContext.contentResolver.takePersistableUriPermission(uri, takeFlags)
+                addFileToPlaylist(uri)
+            }
+        }
+
+    val sharedFolderResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result?.resultCode == Activity.RESULT_OK) {
+                val uri = result.data?.data ?: return@registerForActivityResult
+                val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                applicationContext.contentResolver.takePersistableUriPermission(uri, takeFlags)
+                addFolderToPlaylist(uri)
+                //sharedplaylistPopup.update()
+            }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -171,9 +188,6 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         val view = roomBinding.root
         setContentView(view)
         hudBinding = HudBinding.bind(findViewById(rr.id.vidplayerhud))
-
-        /** Preparing our Disconnection popup ahead of time **/
-        disconnectedPopup = DisconnectedPopup(this)
 
         /** Initializing our ViewModel, which is our protocol at the same time **/
         p = ViewModelProvider(this)[SyncplayProtocol::class.java]
@@ -211,6 +225,18 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
             p.connect()
         }
 
+        /** Preparing our popups ahead of time **/
+        disconnectedPopup = DisconnectedPopup(this)
+        sharedplaylistPopup = SharedPlaylistPopup(this)
+        sharedplaylistPopup.update()
+        messageHistoryPopup = MessageHistoryPopup(this)
+
+        /** Showing starter hint if it's not permanently disabled */
+        val dontShowHint = sp.getBoolean("dont_show_starter_hint", false)
+        if (!dontShowHint) {
+            showPopup(StarterHintPopup(this), true)
+        }
+
         /** Let's apply Room UI Settings **/
         applyUISettings()
 
@@ -231,7 +257,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
          */
 
         if (savedInstanceState != null) {
-            restoreSyncplaySession(savedInstanceState)
+            p.sendPacket(sendEmptyList())
         }
     }
 
@@ -242,12 +268,6 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
 
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
         super.onRestoreInstanceState(savedInstanceState)
-        restoreSyncplaySession(savedInstanceState)
-    }
-
-    /** Responsible for restoring the session that was destroyed due to background restriction **/
-    fun restoreSyncplaySession(sis: Bundle) {
-        loggy("Loading saved instance state.")
         p.sendPacket(sendEmptyList())
     }
 
@@ -302,7 +322,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
             override fun onIsLoadingChanged(isLoading: Boolean) {
                 super.onIsLoadingChanged(isLoading)
                 if (!isLoading) {
-                    val duration = (myExoPlayer?.duration!!.toDouble()) / 1000.0
+                    val duration = ((myExoPlayer?.duration?.toDouble())?.div(1000.0)) ?: 0.0
                     if (duration != p.file?.fileDuration) {
                         p.file?.fileDuration = duration
                         p.sendPacket(sendFile(p.file!!, this@RoomActivity))
@@ -454,7 +474,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                     it.replace("\\", "")
                     if (it.length > 150) it.substring(0, 149)
                 }
-            if (msg != "" && msg != " ") {
+            if (msg.trim().isNotEmpty()) {
                 sendMessage(msg)
                 roomBinding.syncplayINPUT.isErrorEnabled = false
             } else {
@@ -602,7 +622,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                         }
                     }
                     messagesItem -> {
-                        messageHistoryPopup()
+                        showPopup(messageHistoryPopup, true)
                     }
                     uiItem -> {
                         roomBinding.pseudoPopupParent.visibility = VISIBLE
@@ -662,11 +682,19 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
             roomBinding.vidplayer.performClick()
         }
 
+        /** Shared Playlist */
+        hudBinding.syncplaySharedPlaylist.setOnClickListener {
+            showPopup(sharedplaylistPopup, true)
+        }
+
         /** UI Settings' Popup Click Controllers **/
         roomBinding.popupDismisser.setOnClickListener {
             roomBinding.pseudoPopupParent.visibility = GONE
             applyUISettings()
         }
+
+        vidPosUpdater() //Most important updater to maintain continuity
+
     }
 
     override fun onResume() {
@@ -676,8 +704,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
 
         /** If there exists a file already, inject it again **/
         if (p.file != null) {
-            injectVideo(roomBinding.vidplayer.player as ExoPlayer, p.file!!.uri!!)
-            roomBinding.starterInfo.visibility = GONE
+            injectVideo(p.file!!.uri!!)
 
             /** And apply track choices again **/
             applyLastOverrides()
@@ -718,45 +745,57 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
      *                                     CUSTOM FUNCTIONS                                      *
      ********************************************************************************************/
 
-    private fun messageHistoryPopup() {
-        class DemoPopup(context: Context?) : BasePopupWindow(context) {
-            init {
-                setContentView(rr.layout.popup_messages)
-                val rltvLayout = findViewById<RelativeLayout>(rr.id.syncplay_MESSAGEHISTORY)
-                rltvLayout.removeAllViews()
-                val msgs = p.session.messageSequence
-                for (message in msgs) {
-                    val msgPosition: Int = msgs.indexOf(message)
+    inner class StarterHintPopup(context: Context) : BasePopupWindow(context) {
+        init {
+            setContentView(rr.layout.popup_starter_hint)
+            findViewById<MaterialButton>(rr.id.dont_show_again).setOnClickListener {
+                PreferenceManager.getDefaultSharedPreferences(this@RoomActivity)
+                    .edit().putBoolean("dont_show_starter_hint", true).apply()
+                this.dismiss()
+            }
 
-                    val txtview = TextView(this@RoomActivity)
-                    txtview.text = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-                        Html.fromHtml(
-                            message.factorize(true, this@RoomActivity),
-                            Html.FROM_HTML_MODE_LEGACY
-                        ) else Html.fromHtml(message.factorize(true, this@RoomActivity))
-                    txtview.textSize = 9F
-                    val rltvParams: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            findViewById<FrameLayout>(rr.id.starter_hint_dismisser).setOnClickListener {
+                this.dismiss()
+            }
+
+        }
+    }
+
+    inner class MessageHistoryPopup(context: Context) : BasePopupWindow(context) {
+        init {
+            setContentView(rr.layout.popup_messages)
+            val rltvLayout = findViewById<RelativeLayout>(rr.id.syncplay_MESSAGEHISTORY)
+            rltvLayout.removeAllViews()
+            val msgs = p.session.messageSequence
+            for (message in msgs) {
+                val msgPosition: Int = msgs.indexOf(message)
+
+                val txtview = TextView(this@RoomActivity)
+                txtview.text = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+                    Html.fromHtml(
+                        message.factorize(true, this@RoomActivity),
+                        Html.FROM_HTML_MODE_LEGACY
+                    ) else Html.fromHtml(message.factorize(true, this@RoomActivity))
+                txtview.textSize = 9F
+                val rltvParams: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+                rltvParams.addRule(RelativeLayout.ALIGN_PARENT_START, RelativeLayout.TRUE)
+                txtview.id = generateViewId()
+                if (message != msgs[0]) {
+                    rltvParams.addRule(
+                        RelativeLayout.BELOW,
+                        rltvLayout.getChildAt(msgPosition - 1).id
                     )
-                    rltvParams.addRule(RelativeLayout.ALIGN_PARENT_START, RelativeLayout.TRUE)
-                    txtview.id = generateViewId()
-                    if (message != msgs[0]) {
-                        rltvParams.addRule(
-                            RelativeLayout.BELOW,
-                            rltvLayout.getChildAt(msgPosition - 1).id
-                        )
-                    }
-                    rltvLayout.addView(txtview, msgPosition, rltvParams)
                 }
+                rltvLayout.addView(txtview, msgPosition, rltvParams)
+            }
 
-                val dismisser = findViewById<FrameLayout>(rr.id.messages_popup_dismisser)
-                dismisser.setOnClickListener {
-                    this.dismiss()
-                }
+            val dismisser = findViewById<FrameLayout>(rr.id.messages_popup_dismisser)
+            dismisser.setOnClickListener {
+                this.dismiss()
             }
         }
-
-        DemoPopup(this).setBlurBackgroundEnable(true).showPopupWindow()
     }
 
     inner class DisconnectedPopup(context: Context) : BasePopupWindow(context) {
@@ -798,11 +837,46 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         }
     }
 
-    private fun disconnectedPopup() {
-        runOnUiThread {
-            disconnectedPopup.also {
-                it.setBlurBackgroundEnable(true)
-                it.showPopupWindow()
+    inner class SharedPlaylistPopup(context: Context) : BasePopupWindow(context) {
+        init {
+            val v = setContentView(rr.layout.popup_shared_playlist)
+
+            /* Dismissal */
+            val dismisser = this.findViewById<FrameLayout>(rr.id.shP_dismisser)
+            dismisser.setOnClickListener {
+                this.dismiss()
+            }
+
+            /* Reacting to button clicking for adding a file and a folder */
+            this.findViewById<AppCompatImageButton>(rr.id.shP_add_file).setOnClickListener {
+                val intent = Intent()
+                intent.type = "*/*"
+                intent.action = Intent.ACTION_OPEN_DOCUMENT
+                sharedFileResult.launch(intent)
+            }
+            this.findViewById<AppCompatImageButton>(rr.id.shP_add_directory).setOnClickListener {
+                val intent = Intent().apply { action = Intent.ACTION_OPEN_DOCUMENT_TREE }
+                sharedFolderResult.launch(intent)
+            }
+
+            this.findViewById<RecyclerView>(rr.id.shP_playlist).apply {
+                adapter = SharedPlaylistRecycAdapter(this@RoomActivity, p.session.sharedPlaylist)
+                (adapter as SharedPlaylistRecycAdapter).notifyDataSetChanged()
+            }
+
+            this.findViewById<MaterialButton>(rr.id.shP_save).setOnClickListener {
+                dismiss()
+            }
+        }
+
+        override fun update() {
+            runOnUiThread {
+                this.findViewById<RecyclerView>(rr.id.shP_playlist)?.apply {
+                    adapter =
+                        SharedPlaylistRecycAdapter(this@RoomActivity, p.session.sharedPlaylist)
+                    (adapter as SharedPlaylistRecycAdapter).notifyDataSetChanged()
+                }
+                super.update()
             }
         }
     }
@@ -825,12 +899,12 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         if (player != p.session.currentUsername) playPlayback()
 
         /* We have to deal with annoying "unpause" message prior to every seek */
-        val m1 = p.session.messageSequence.last().content
-        val m2 = string(rr.string.room_seeked, player, "", "")
-        val m3 = player.length + 5
-        val m4 = (m1.substring(0, m3) == m2.substring(0, m3))
+//        val m1 = p.session.messageSequence.last().content
+//        val m2 = string(rr.string.room_seeked, player, "", "")
+//        val m3 = player.length + 5
+//        val m4 = (m1.substring(0, m3) == m2.substring(0, m3))
 
-        if (!m4) broadcastMessage(string(rr.string.room_guy_played, player), false)
+        broadcastMessage(string(rr.string.room_guy_played, player), false)
     }
 
     override fun onChatReceived(chatter: String, chatmessage: String) {
@@ -923,7 +997,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
 
     override fun onDisconnected() {
         broadcastMessage(string(rr.string.room_attempting_reconnection), false)
-        disconnectedPopup()
+        showPopup(disconnectedPopup, true)
         p.connected = false
         p.connect()
     }
@@ -962,9 +1036,19 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         )
     }
 
-    override fun onPlaylistUpdated(user: String) {}
+    override fun onPlaylistUpdated(user: String) {
+        broadcastMessage(string(rr.string.room_shared_playlist_updated, user), isChat = false)
+        sharedplaylistPopup.update()
+        if (p.session.sharedPlaylist.size != 0 && p.session.sharedPlaylistIndex == -1) {
+            changePlaylistSelection(0)
+        }
+    }
 
-    override fun onPlaylistIndexChanged(user: String, index: Int) {}
+    override fun onPlaylistIndexChanged(user: String, index: Int) {
+        broadcastMessage(string(rr.string.room_shared_playlist_changed, user), isChat = false)
+        changePlaylistSelection(index)
+        sharedplaylistPopup.update()
+    }
 
     override fun onBackPressed() {
         super.onBackPressed()
@@ -972,5 +1056,6 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         p.socket.close()
         finish()
     }
+
 }
 

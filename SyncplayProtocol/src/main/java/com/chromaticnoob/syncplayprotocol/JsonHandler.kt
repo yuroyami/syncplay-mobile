@@ -5,6 +5,7 @@ import com.chromaticnoob.syncplayutils.utils.MediaFile
 import com.chromaticnoob.syncplayutils.utils.User
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import com.google.gson.JsonSyntaxException
 
 object JsonHandler {
     /** Handlers that parse JSONs and control callbacks based on the incoming message from server */
@@ -14,9 +15,15 @@ object JsonHandler {
         /* First, we tell our protocol that we're connected if we're receiving JSONs */
         protocol.connected = true
         loggy("Server: $json")
+
         /* Second, we check what kind of JSON message we received from the first Json Object */
-        val jsonElement = protocol.gson.fromJson(json, JsonElement::class.java)
-        if (!jsonElement.isJsonObject) return /* Just making sure server doesn't send malformed JSON */
+        var jsonElement: JsonElement?
+        try {
+            jsonElement = protocol.gson.fromJson(json, JsonElement::class.java)
+            if (!jsonElement.isJsonObject) return /* Just making sure server doesn't send malformed JSON */
+        } catch (e: JsonSyntaxException) {
+            return
+        }
         val message = jsonElement.asJsonObject
         when (message.keySet().toList()[0]) {
             "Hello" -> handleHello(message.getAsJsonObject("Hello"), protocol)
@@ -88,11 +95,13 @@ object JsonHandler {
                 val playlistIndex = set.getAsJsonObject("playlistIndex")
                 val userMeant = playlistIndex.get("user")
                 val newIndex = playlistIndex.get("index")
-                if (!userMeant.isJsonNull && !newIndex.isJsonNull)
+                if (!userMeant.isJsonNull && !newIndex.isJsonNull) {
                     p.syncplayBroadcaster?.onPlaylistIndexChanged(
                         userMeant.asString,
                         newIndex.asInt
                     )
+                    p.session.sharedPlaylistIndex = newIndex.asInt
+                } else return
             }
             "playlistChange" -> {
                 val playlistChange = set.getAsJsonObject("playlistChange")
@@ -103,7 +112,8 @@ object JsonHandler {
                 for (file in fileArray) {
                     p.session.sharedPlaylist.add(file.asString)
                 }
-                if (userMeant != "") p.syncplayBroadcaster?.onPlaylistUpdated(userMeant)
+//                if (userMeant != "")
+                p.syncplayBroadcaster?.onPlaylistUpdated(userMeant)
             }
         }
 

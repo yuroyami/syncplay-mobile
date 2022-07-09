@@ -27,6 +27,10 @@ class Session {
     var messageSequence: MutableList<Message> = mutableListOf()
 
     /** Variable that stores the shared playlist for the session */
-    var sharedPlaylist = mutableListOf<String>()
+    var sharedPlaylist = mutableListOf<String>() /* List of files */
+    var sharedPlaylistIndex = -1 /* Index of the currently playing file for the session */
+
+//    /** A list of media directories to look for shared playlist file names */
+//    var mediaDirectories = mutableListOf<String>()
 
 }

@@ -1,6 +1,16 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <string name="app_name" translatable="false">Syncplay</string>
 
+    <!-- Contextless Strings -->
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="okay">Okay</string>
+    <string name="cancel">Cancel</string>
+    <string name="dont_show_again">Don\'t show this again</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
+    <string name="delete">Delete</string>
+
     <!-- Main Activity's most essential strings -->
     <string name="tab_connect">Connect</string>
     <string name="tab_settings">Settings</string>
@@ -74,6 +84,24 @@
     <string name="room_file_mismatch_warning_name">"Name. "</string>
     <string name="room_file_mismatch_warning_duration">"Duration. "</string>
     <string name="room_file_mismatch_warning_size">"Size. "</string>
+    <string name="room_shared_playlist">Room\'s Shared Playlist</string>
+    <string name="room_shared_playlist_brief">Import a file or a directory to include file name(s) into the playlist.\n Click on a file line to get all users to play it.</string>
+    <string name="room_shared_playlist_updated">%s updated the playlist</string>
+    <string name="room_shared_playlist_changed">%s changed the playlist current selection</string>
+    <string name="room_shared_playlist_no_directories">You have not specified any media directories for shared playlists. Manually add the files.</string>
+    <string name="room_shared_playlist_not_found">Syncplay couldn\'t find the file that is currently playing in the shared playlist in your media directories.</string>
+    <string name="room_shared_playlist_not_featured">This room or server do not have Shared Playlists feature on.</string>
+
+    <!-- Directories Activity Strings -->
+    <string name="media_directories">Shared Playlist\'s Media Directories</string>
+    <string name="media_directories_brief">Syncplay will search any media directories you specify here in order to find a name that a shared playlist is playing. It is much better if you specify small directories as the searching operation can throttle and be very slow.</string>
+    <string name="media_directories_setting_summary">Syncplay will search any media directories you specify here in order to find a name that a shared playlist is playing.</string>
+    <string name="media_directories_save">Save &amp; Exit</string>
+    <string name="media_directories_clear_all">Clear all</string>
+    <string name="media_directories_clear_all_confirm">Are you sure you want to clear the list ?</string>
+    <string name="media_directories_add_folder">Add folder</string>
+    <string name="media_directories_delete">Remove from list</string>
+    <string name="media_directories_show_full_path">Show full path</string>
 
     <!-- Settings Strings -->
     <string name="settings_categ_general">General Settings</string>

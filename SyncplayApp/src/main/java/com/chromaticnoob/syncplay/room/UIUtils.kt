@@ -1,5 +1,6 @@
 package com.chromaticnoob.syncplay.room
 
+import android.app.Activity
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Build
@@ -9,10 +10,7 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateInterpolator
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.RelativeLayout
-import android.widget.TextView
+import android.widget.*
 import androidx.annotation.ColorInt
 import androidx.annotation.UiThread
 import androidx.core.graphics.ColorUtils
@@ -23,6 +21,8 @@ import com.chromaticnoob.syncplay.R
 import com.chromaticnoob.syncplay.room.RoomUtils.string
 import com.chromaticnoob.syncplayutils.SyncplayUtils
 import com.chromaticnoob.syncplayutils.utils.Message
+import com.chromaticnoob.syncplayutils.utils.User
+import razerdp.basepopup.BasePopupWindow
 import kotlin.math.roundToInt
 
 /** Wrapping any UI-related functionality for RoomActivity here to reduce redundant code space **/
@@ -74,7 +74,9 @@ object UIUtils {
         runOnUiThread {
             if (roomBinding.syncplayOverviewcheckbox.isChecked) {
                 linearLayout.removeAllViews()
-                val userList = p.session.userList
+                val userList = mutableListOf<User>().also {
+                    it.addAll(p.session.userList)
+                }
 
                 //Creating line for room-name:
                 val roomnameView = TextView(this)
@@ -301,6 +303,29 @@ object UIUtils {
         /* Applying Subtitle Size setting */
         ccsize = sp.getInt("subtitle_size", 18).toFloat()
 
+    }
+
+    /** Convenience method to save code space */
+    @JvmStatic
+    fun Activity.toasty(string: String) {
+        runOnUiThread {
+            Toast.makeText(this, string, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    /** Used to save code space to show a popup with a few settings */
+    @JvmStatic
+    fun RoomActivity.showPopup(popup: BasePopupWindow, animate: Boolean) {
+        runOnUiThread {
+            popup
+                .setBlurBackgroundEnable(true)
+                .setOutSideTouchable(true)
+                .setOutSideDismiss(true)
+            if (!animate) {
+                popup.showAnimation = null
+            }
+            popup.showPopupWindow()
+        }
     }
 
 }

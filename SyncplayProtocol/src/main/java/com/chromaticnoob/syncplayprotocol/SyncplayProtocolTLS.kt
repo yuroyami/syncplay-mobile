@@ -1,4 +1,7 @@
 package com.chromaticnoob.syncplayprotocol
+
+import androidx.lifecycle.ViewModel
+
 //
 //import android.util.Log
 //import androidx.lifecycle.ViewModel
@@ -20,7 +23,7 @@ package com.chromaticnoob.syncplayprotocol
 //
 //
 //@OptIn(DelicateCoroutinesApi::class)
-//open class SyncplayProtocolTLS : ViewModel() {
+open class SyncplayProtocolTLS : ViewModel() {
 //
 //    var paused: Boolean = true
 //    private var serverIgnFly: Int = 0
@@ -560,4 +563,4 @@ package com.chromaticnoob.syncplayprotocol
 //    open fun addBroadcaster(broadcaster: SyncplayBroadcaster) {
 //        this.syncplayBroadcaster = broadcaster
 //    }
-//}
+}

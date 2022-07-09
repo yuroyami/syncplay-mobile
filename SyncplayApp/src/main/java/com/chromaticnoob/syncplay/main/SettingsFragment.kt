@@ -1,5 +1,6 @@
 package com.chromaticnoob.syncplay.main
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -76,6 +77,10 @@ class SettingsFragment : PreferenceFragmentCompat(),
                     50
                 )
                 return true
+            }
+            "media_directories" -> {
+                val intent = Intent(requireContext(), DirectoriesActivity::class.java)
+                startActivity(intent)
             }
         }
         return super.onPreferenceTreeClick(preference)

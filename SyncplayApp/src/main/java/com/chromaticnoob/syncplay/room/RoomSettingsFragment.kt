@@ -44,12 +44,8 @@ class RoomSettingsFragment : PreferenceFragmentCompat(),
     /** This list will serve a double purpose after we add our UI Prefs to it :
      *   - First, it allows us to add pref change listeners to each one of them to get callbacks.
      *   - Second, it allows us to reset only the UI prefs to default when we need so, not all sharedprefs.*/
-
-    val roomPrefs: MutableList<Preference> = mutableListOf()
-
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(com.chromaticnoob.syncplay.R.xml.ui_settings, rootKey)
-
 
         /** Applying settings as they change, according to Choice "D" from above **/
         for (i in (0 until preferenceScreen.preferenceCount)) {

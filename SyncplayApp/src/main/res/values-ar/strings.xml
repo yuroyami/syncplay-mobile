@@ -2,6 +2,14 @@
 <resources>
     <string name="disconnected_notice_header">انقطع الاتصال</string>
     <string name="connect_username_a">اكتب اسم مستخدمك:</string>
+    <string name="yes">نعم</string>
+    <string name="no">لا</string>
+    <string name="okay">حسناً</string>
+    <string name="cancel">إلـغاء</string>
+    <string name="dont_show_again">لا تخبرني مجدداً</string>
+    <string name="play">تشغيل</string>
+    <string name="pause">إيقاف</string>
+    <string name="delete">حذف</string>
     <string name="tab_connect">اتصال</string>
     <string name="tab_settings">إعدادات</string>
     <string name="tab_about">حول</string>
@@ -84,6 +92,22 @@
     <string name="uisetting_msglife_summary">عند استلام رسالة غرفة أو دردشة ، ستبدأ بالتلاشي تدريجياً لمدة زمنية هي التي تحددها هنا.</string>
     <string name="uisetting_resetdefault_title">استرداد الإعدادات الافتراضية</string>
     <string name="uisetting_resetdefault_summary">إعادة كل الإعدادات أعلاه إلى حالتها الافتراضية.</string>
+    <string name="room_shared_playlist">قائمة التشغيل المشتركة للغرفة</string>
+    <string name="room_shared_playlist_brief">أدخل ملفاً أو مجلداً لإرفاق أسماء الملفات إلى القائمة</string>
+    <string name="room_shared_playlist_updated">%s جدّدَ القئمة</string>
+    <string name="room_shared_playlist_changed">%s غيَّـر موضع القائمة</string>
+    <string name="room_shared_playlist_no_directories">لم تحدد أي مسارات ميديا لقوائم التشغيل المشتركة. يرجى إضافة الملف يدوياً.</string>
+    <string name="room_shared_playlist_not_found">لم يستطع البرنامج إيجاد الملف الجاري تشغيله في القائمة.</string>
+    <string name="room_shared_playlist_not_featured">الغرفة أو السيرفر لا يدعمان خاصية قوائم التشغيل المشتركة.</string>
+    <string name="media_directories">مسارات الميديا لـقوائم التشغيل المشتركة</string>
+    <string name="media_directories_brief">سيبحث التطبيق في مسارات الميديا التي تعينها هنا من أجل إيجاد اسم ملف في قائمة التشغيل. اتنبه أن العملية قد تطول إذا ما حددت مجلدات ذات ملفات كثيرة.</string>
+    <string name="media_directories_setting_summary">سيبحث التطبيق في مسارات الميديا التي تعينها هنا من أجل إيجاد اسم ملف في قائمة التشغيل.</string>
+    <string name="media_directories_save">حفظ و خروج</string>
+    <string name="media_directories_clear_all">مسح الكـل</string>
+    <string name="media_directories_clear_all_confirm">هل أنت متأكد من مسح القائمة ؟</string>
+    <string name="media_directories_add_folder">إضافة مجلد</string>
+    <string name="media_directories_delete">حذف من القائمة</string>
+    <string name="media_directories_show_full_path">إظـهار المسـار الكامل</string>
     <string name="settings_categ_general">إعدادات عـامة</string>
     <string name="settings_categ_player">إعدادات المشغل</string>
     <string name="settings_categ_room">إعدادات الغرفة</string>
