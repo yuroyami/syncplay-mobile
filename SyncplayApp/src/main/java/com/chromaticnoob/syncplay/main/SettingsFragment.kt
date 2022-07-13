@@ -20,7 +20,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(X.xml.settings, rootKey)
 
-        findPreference<ListPreference>("lang")?.setOnPreferenceChangeListener { _, newVal ->
+        findPreference<ListPreference>("lang")?.setOnPreferenceChangeListener { pref, newVal ->
 
             /** AndroidX allows us now to change app language via just one line of code. This would *
              * work without issues for Android 13 and higher. But on lower Android versions, there *
@@ -33,14 +33,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
             /* Let's show a toast to the user that the language has been changed */
             val toast = String.format(
-                requireContext().resources.getString(X.string.setting_display_language_toast),
-                requireContext().resources.getString(
-                    resources.getIdentifier(
-                        newVal as String?,
-                        "string",
-                        requireContext().packageName
-                    )
-                )
+                requireContext().resources.getString(X.string.setting_display_language_toast)
             )
 
             Toast.makeText(

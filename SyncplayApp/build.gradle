@@ -10,7 +10,7 @@ android {
     signingConfigs {
         github {
             storeFile file("${rootDir}/keystore/keystore.jks")
-            keyAlias 'keystore  '
+            keyAlias 'keystore'
             keyPassword 'az90az09'
             storePassword 'az90az09'
         }
@@ -19,8 +19,9 @@ android {
         applicationId "com.chromaticnoob.syncplay"
         minSdk 21
         targetSdk 32
-        versionCode 100008000
-        versionName "0.8.0"
+        versionCode 100009000
+        versionName "0.9.0"
+        resConfigs "en", "ar", "zh"
         signingConfig signingConfigs.github
     }
 

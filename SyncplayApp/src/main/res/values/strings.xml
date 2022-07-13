@@ -113,7 +113,7 @@
     <string name="setting_remember_join_info_summary">Enabled by default. This will allow SyncPlay to save your last username, roomname, and which official server you last used.</string>
     <string name="setting_display_language_title">Display Language</string>
     <string name="setting_display_language_summry">Select your language of choice with which Syncplay is displayed.</string>
-    <string name="setting_display_language_toast">Changed language to: %s. Restart app for the setting to take full effect.</string>
+    <string name="setting_display_language_toast">Changed language. Restart app for the setting to take full effect.</string>
     <string name="setting_use_buffer_title">Use Custom Buffer Sizes</string>
     <string name="setting_use_buffer_summary">If you are not satisfied with the player\'s video load times before and during playback, you can use custom buffer sizes (Use at your own risk).</string>
     <string name="setting_max_buffer_title">Custom max buffer size</string>
@@ -176,16 +176,19 @@
     <!--List of Languages identifier strings used for literally just a toast... -->
     <string name="en">English</string>
     <string name="ar">Arabic</string>
+    <string name="zh">Chinese</string>
 
     <!--List of Languages and their Tags-->
     <string-array name="Lang">
         <item>English</item>
         <item>العربية</item>
+        <item>中文</item>
     </string-array>
 
     <string-array name="LangValues">
         <item>"en"</item>
         <item>"ar"</item>
+        <item>"zh"</item>
     </string-array>
 
     <!--List of options for whether to hash a file's name and size-->

@@ -54,7 +54,7 @@
         <activity
             android:name=".main.DirectoriesActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
-            android:exported="true"></activity>
+            android:exported="true" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
