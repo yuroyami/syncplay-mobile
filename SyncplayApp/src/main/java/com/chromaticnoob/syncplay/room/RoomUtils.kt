@@ -45,10 +45,10 @@ object RoomUtils {
             if (!pingingThread.isAlive) {
                 pingingThread.start()
             }
-            pingUpdaterCore()
         } catch (e: IllegalThreadStateException) {
-            pingUpdaterCore()
+            e.printStackTrace()
         }
+        pingUpdaterCore() //TODO:LOL
     }
 
     /** Periodic task method with the help of a HandlerThread to execute ping commands every 1 sec
@@ -88,7 +88,7 @@ object RoomUtils {
     @JvmStatic
     fun RoomActivity.sendMessage(message: String) {
         hideKb()
-        if (roomBinding.syncplayMESSAGERY.visibility != View.VISIBLE) {
+        if (roomBinding.syncplayMESSAGERYCard.visibility != View.VISIBLE) {
             roomBinding.syncplayVisiblitydelegate.visibility = View.GONE
         }
         p.sendPacket(JsonSender.sendChat(message))

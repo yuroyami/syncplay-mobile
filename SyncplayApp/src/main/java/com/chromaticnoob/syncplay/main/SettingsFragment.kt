@@ -33,7 +33,8 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
             /* Let's show a toast to the user that the language has been changed */
             val toast = String.format(
-                requireContext().resources.getString(X.string.setting_display_language_toast)
+                requireContext().resources.getString(X.string.setting_display_language_toast),
+                ""
             )
 
             Toast.makeText(

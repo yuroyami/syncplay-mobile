@@ -249,7 +249,7 @@ object UIUtils {
                 rltvLayout.addView(txtview, msgPosition, rltvParams)
 
                 //Animate
-                roomBinding.syncplayMESSAGERY.also {
+                roomBinding.syncplayMESSAGERYCard.also {
                     it.clearAnimation()
                     it.visibility = View.VISIBLE
                     it.alpha = 1f

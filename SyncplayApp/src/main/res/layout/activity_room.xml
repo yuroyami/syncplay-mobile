@@ -207,7 +207,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="visible"
-        app:constraint_referenced_ids="syncplay_INPUT, syncplay_SEND, syncplay_overviewcheckbox, syncplay_ready, syncplay_connection_info, syncplay_signal_icon" />
+        app:constraint_referenced_ids="syncplay_INPUT, syncplay_SEND, syncplay_overview_card, syncplay_overviewcheckbox, syncplay_ready, syncplay_connection_info, syncplay_signal_icon" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/pseudo_popup_parent"
