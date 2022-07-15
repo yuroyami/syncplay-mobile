@@ -6,7 +6,7 @@ plugins {
 android {
     compileSdk 33
     buildToolsVersion "33.0.0"
-
+    namespace "com.reddnek.syncplay"
     signingConfigs {
         github {
             storeFile file("${rootDir}/keystore/keystore.jks")
@@ -16,7 +16,7 @@ android {
         }
     }
     defaultConfig {
-        applicationId "com.chromaticnoob.syncplay"
+        applicationId "com.reddnek.syncplay"
         minSdk 21
         targetSdk 32
         versionCode 100009000
@@ -56,8 +56,6 @@ dependencies {
     /* All dependencies are mentioned in SyncplayUtils module's build.gradle */
     /* Why, you ask ? Because all our modules depend on that one module */
     /* And also, we don't have to mention the same dependencies over and over again in each module */
-    //implementation files('libs/ColorPreference.aar') //Getting ColorPreference library
-    implementation 'com.jaredrummler:colorpicker:1.1.0'
     implementation project(':SyncplayProtocol') //Deploying SyncplayProtocol
     implementation project(':SyncplayUtils') //Deploying our own toolkit
 

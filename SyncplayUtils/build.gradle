@@ -49,4 +49,6 @@ dependencies {
     api "androidx.documentfile:documentfile:1.0.1" //Dealing with Folders, Files, Uris
     //implementation 'com.blankj:utilcodex:1.31.0' //CustomUtils, didn't use any til now
     //implementation 'org.conscrypt:conscrypt-android:2.5.2' //Will use for TLSv1.3
+    api 'com.jaredrummler:colorpicker:1.1.0'
+
 }

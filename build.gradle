@@ -7,19 +7,8 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:7.4.0-alpha07'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.0"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.21"
     }
-}
-
-allprojects {
-    //Support @JvmDefault
-//    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
-//        kotlinOptions {
-//            freeCompilerArgs = ['-Xjvm-default=enable', '-Xopt-in=kotlin.RequiresOptIn']
-//            //enable or compatibility
-//            jvmTarget = "1.8"
-//        }
-//    }
 }
 
 task clean(type: Delete) {

@@ -29,5 +29,5 @@ android {
 
 dependencies {
 
-    implementation project(':SyncplayUtils') //Deploying our own toolkit
+    implementation project(':SyncplayUtils')
 }

@@ -64,7 +64,7 @@
                 app:layout_constraintStart_toEndOf="@id/disconnected_gif"
                 app:layout_constraintTop_toTopOf="@id/disconnected_gif" />
 
-            <ImageView
+            <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/disconnected_gif"
                 android:layout_width="48dp"
                 android:layout_height="48dp"

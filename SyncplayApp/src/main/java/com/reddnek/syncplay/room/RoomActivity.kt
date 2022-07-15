@@ -1,5 +1,6 @@
 package com.chromaticnoob.syncplay.room
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -11,10 +12,12 @@ import android.util.TypedValue.COMPLEX_UNIT_SP
 import android.view.View.*
 import android.view.ViewGroup
 import android.view.animation.AccelerateInterpolator
-import android.widget.*
+import android.widget.FrameLayout
+import android.widget.RelativeLayout
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatImageButton
+import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.children
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
@@ -77,6 +80,8 @@ import com.google.gson.GsonBuilder
 import razerdp.basepopup.BasePopupWindow
 import kotlin.collections.set
 import kotlin.math.roundToInt
+import androidx.appcompat.widget.AppCompatImageView as ImageView
+import androidx.appcompat.widget.AppCompatTextView as TextView
 import com.chromaticnoob.syncplay.R as rr
 
 class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
@@ -489,7 +494,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
          *******************/
         hudBinding.exoSubtitle.setOnClickListener {
             if (myExoPlayer?.mediaItemCount != 0) {
-                subtitleSelect(it as ImageButton)
+                subtitleSelect(it as android.widget.ImageButton)
             }
         }
 
@@ -498,7 +503,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
          ***************/
         hudBinding.exoAudioTrack.setOnClickListener {
             if (myExoPlayer?.mediaItemCount != 0) {
-                audioSelect(it as ImageButton)
+                audioSelect(it as android.widget.ImageButton)
             }
         }
 
@@ -553,7 +558,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
             val popup = PopupMenu(
                 this,
                 hudBinding.syncplayAddfile
-            ) /* It's more convenient to anchor it on lock button */
+            )
 
             val loadsubItem =
                 popup.menu.add(
@@ -798,6 +803,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         }
     }
 
+    @SuppressLint("WrongViewCast")
     inner class DisconnectedPopup(context: Context) : BasePopupWindow(context) {
         init {
             setContentView(rr.layout.popup_disconnected)
