@@ -1,18 +1,18 @@
-package com.chromaticnoob.syncplay.room
+package com.reddnek.syncplay.room
 
 import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.documentfile.provider.DocumentFile
 import androidx.preference.PreferenceManager
-import com.chromaticnoob.syncplay.R
-import com.chromaticnoob.syncplay.room.ExoPlayerUtils.injectVideo
-import com.chromaticnoob.syncplay.room.UIUtils.broadcastMessage
-import com.chromaticnoob.syncplay.room.UIUtils.toasty
-import com.chromaticnoob.syncplayprotocol.JsonSender.sendPlaylistChange
-import com.chromaticnoob.syncplayprotocol.JsonSender.sendPlaylistIndex
-import com.chromaticnoob.syncplayutils.SyncplayUtils.getFileName
-import com.chromaticnoob.syncplayutils.utils.MediaFile
-import com.chromaticnoob.syncplay.main.DirectoriesActivity as DA
+import com.reddnek.syncplay.R
+import com.reddnek.syncplay.room.ExoPlayerUtils.injectVideo
+import com.reddnek.syncplay.room.UIUtils.broadcastMessage
+import com.reddnek.syncplay.room.UIUtils.toasty
+import com.reddnek.syncplayprotocol.JsonSender.sendPlaylistChange
+import com.reddnek.syncplayprotocol.JsonSender.sendPlaylistIndex
+import com.reddnek.syncplayutils.SyncplayUtils.getFileName
+import com.reddnek.syncplayutils.utils.MediaFile
+import com.reddnek.syncplay.main.DirectoriesActivity as DA
 
 /** Shared Playlists also have their fair amount of methods related to it which I believe can be
  * wrapped into their own class. This is to cler any ambiguity or confusion as it makes it hard to

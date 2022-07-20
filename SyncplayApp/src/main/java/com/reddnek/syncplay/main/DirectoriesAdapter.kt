@@ -1,4 +1,4 @@
-package com.chromaticnoob.syncplay.main
+package com.reddnek.syncplay.main
 
 import android.view.View
 import android.view.ViewGroup
@@ -6,9 +6,9 @@ import android.widget.BaseAdapter
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.net.toUri
-import com.chromaticnoob.syncplay.R
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.reddnek.syncplay.R
 
 class DirectoriesAdapter(private val activity: DirectoriesActivity, var uris: MutableList<String>) :
     BaseAdapter() {

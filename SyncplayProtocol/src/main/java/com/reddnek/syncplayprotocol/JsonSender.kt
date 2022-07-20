@@ -1,12 +1,12 @@
-package com.chromaticnoob.syncplayprotocol
+package com.reddnek.syncplayprotocol
 
 import android.content.Context
 import androidx.preference.PreferenceManager
-import com.chromaticnoob.syncplayutils.SyncplayUtils
-import com.chromaticnoob.syncplayutils.SyncplayUtils.toHex
-import com.chromaticnoob.syncplayutils.utils.MediaFile
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.reddnek.syncplayutils.SyncplayUtils
+import com.reddnek.syncplayutils.SyncplayUtils.toHex
+import com.reddnek.syncplayutils.utils.MediaFile
 
 object JsonSender {
 

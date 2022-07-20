@@ -1,4 +1,4 @@
-package com.chromaticnoob.syncplayprotocol
+package com.reddnek.syncplayprotocol
 
 interface ProtocolBroadcaster {
 
@@ -21,12 +21,7 @@ interface ProtocolBroadcaster {
 
     fun onReceivedList()
 
-    fun onSomeoneLoadedFile(
-        person: String,
-        file: String?,
-        fileduration: Double?,
-        filesize: String?
-    )
+    fun onSomeoneLoadedFile(person: String, file: String?, fileduration: Double?)
 
     fun onDisconnected()
 

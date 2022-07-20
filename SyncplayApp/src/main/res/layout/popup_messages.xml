@@ -12,8 +12,10 @@
         android:focusable="true" />
 
     <com.google.android.material.card.MaterialCardView
-        android:layout_width="350dp"
-        android:layout_height="200dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintHeight_percent="0.4"
+        app:layout_constraintWidth_percent="0.6"
         app:cardCornerRadius="12dp"
         app:cardElevation="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -23,13 +25,14 @@
 
         <androidx.core.widget.NestedScrollView
             android:id="@+id/syncplay_MH_nester"
-            android:layout_width="350dp"
-            android:layout_height="200dp">
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-            <RelativeLayout
+            <androidx.appcompat.widget.LinearLayoutCompat
                 android:id="@+id/syncplay_MESSAGEHISTORY"
-                android:layout_width="350dp"
-                android:layout_height="200dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
                 android:padding="6dp" />
         </androidx.core.widget.NestedScrollView>
     </com.google.android.material.card.MaterialCardView>

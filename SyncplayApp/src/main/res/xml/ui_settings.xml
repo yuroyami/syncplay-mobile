@@ -9,7 +9,7 @@
 
     <SeekBarPreference
         android:max="255"
-        app:defaultValue="30"
+        app:defaultValue="40"
         app:key="overview_alpha"
         app:min="0"
         app:seekBarIncrement="1"
@@ -20,7 +20,7 @@
 
     <SeekBarPreference
         android:max="255"
-        app:defaultValue="0"
+        app:defaultValue="40"
         app:key="messagery_alpha"
         app:min="0"
         app:seekBarIncrement="1"

@@ -1,4 +1,4 @@
-package com.chromaticnoob.syncplayutils.utils
+package com.reddnek.syncplayutils.utils
 
 
 /*********************************************************************************************

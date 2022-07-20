@@ -1,4 +1,4 @@
-package com.chromaticnoob.syncplay.room
+package com.reddnek.syncplay.room
 
 import android.view.LayoutInflater
 import android.view.View
@@ -8,9 +8,9 @@ import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.chromaticnoob.syncplay.R
-import com.chromaticnoob.syncplay.room.SharedPlaylistUtils.deleteItemFromPlaylist
-import com.chromaticnoob.syncplay.room.SharedPlaylistUtils.sendPlaylistSelection
+import com.reddnek.syncplay.R
+import com.reddnek.syncplay.room.SharedPlaylistUtils.deleteItemFromPlaylist
+import com.reddnek.syncplay.room.SharedPlaylistUtils.sendPlaylistSelection
 
 class SharedPlaylistRecycAdapter(private val act: RoomActivity, var list: MutableList<String>) :
     RecyclerView.Adapter<SharedPlaylistRecycAdapter.ViewHolder>() {

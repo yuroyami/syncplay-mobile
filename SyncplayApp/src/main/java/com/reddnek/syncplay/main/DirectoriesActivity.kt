@@ -1,4 +1,4 @@
-package com.chromaticnoob.syncplay.main
+package com.reddnek.syncplay.main
 
 import android.app.Activity
 import android.content.Context
@@ -14,11 +14,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.net.toUri
 import androidx.preference.PreferenceManager
-import com.chromaticnoob.syncplay.R
-import com.chromaticnoob.syncplay.databinding.ActivityDirectoriesBinding
-import com.chromaticnoob.syncplayutils.SyncplayUtils
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.reddnek.syncplay.R
+import com.reddnek.syncplay.databinding.ActivityDirectoriesBinding
+import com.reddnek.syncplayutils.SyncplayUtils
 
 
 class DirectoriesActivity : AppCompatActivity() {

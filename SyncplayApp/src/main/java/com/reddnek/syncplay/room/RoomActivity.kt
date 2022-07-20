@@ -1,4 +1,4 @@
-package com.chromaticnoob.syncplay.room
+package com.reddnek.syncplay.room
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -9,14 +9,15 @@ import android.graphics.Typeface
 import android.os.*
 import android.text.Html
 import android.util.TypedValue.COMPLEX_UNIT_SP
-import android.view.View.*
-import android.view.ViewGroup
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.view.animation.AccelerateInterpolator
 import android.widget.FrameLayout
-import android.widget.RelativeLayout
+import android.widget.ImageButton
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatImageButton
+import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.children
 import androidx.core.view.isVisible
@@ -31,41 +32,6 @@ import com.bumptech.glide.load.resource.gif.GifDrawable
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
-import com.chromaticnoob.syncplay.databinding.ActivityRoomBinding
-import com.chromaticnoob.syncplay.room.ExoPlayerUtils.applyLastOverrides
-import com.chromaticnoob.syncplay.room.ExoPlayerUtils.audioSelect
-import com.chromaticnoob.syncplay.room.ExoPlayerUtils.injectVideo
-import com.chromaticnoob.syncplay.room.ExoPlayerUtils.pausePlayback
-import com.chromaticnoob.syncplay.room.ExoPlayerUtils.playPlayback
-import com.chromaticnoob.syncplay.room.ExoPlayerUtils.subtitleSelect
-import com.chromaticnoob.syncplay.room.RoomUtils.checkFileMismatches
-import com.chromaticnoob.syncplay.room.RoomUtils.pingUpdater
-import com.chromaticnoob.syncplay.room.RoomUtils.sendMessage
-import com.chromaticnoob.syncplay.room.RoomUtils.sendPlayback
-import com.chromaticnoob.syncplay.room.RoomUtils.string
-import com.chromaticnoob.syncplay.room.RoomUtils.vidPosUpdater
-import com.chromaticnoob.syncplay.room.SharedPlaylistUtils.addFileToPlaylist
-import com.chromaticnoob.syncplay.room.SharedPlaylistUtils.addFolderToPlaylist
-import com.chromaticnoob.syncplay.room.SharedPlaylistUtils.changePlaylistSelection
-import com.chromaticnoob.syncplay.room.UIUtils.applyUISettings
-import com.chromaticnoob.syncplay.room.UIUtils.broadcastMessage
-import com.chromaticnoob.syncplay.room.UIUtils.displayInfo
-import com.chromaticnoob.syncplay.room.UIUtils.hideKb
-import com.chromaticnoob.syncplay.room.UIUtils.replenishUsers
-import com.chromaticnoob.syncplay.room.UIUtils.showPopup
-import com.chromaticnoob.syncplay.room.UIUtils.toasty
-import com.chromaticnoob.syncplayprotocol.JsonSender.sendEmptyList
-import com.chromaticnoob.syncplayprotocol.JsonSender.sendFile
-import com.chromaticnoob.syncplayprotocol.JsonSender.sendReadiness
-import com.chromaticnoob.syncplayprotocol.JsonSender.sendState
-import com.chromaticnoob.syncplayprotocol.ProtocolBroadcaster
-import com.chromaticnoob.syncplayprotocol.SyncplayProtocol
-import com.chromaticnoob.syncplayutils.SyncplayUtils
-import com.chromaticnoob.syncplayutils.SyncplayUtils.getFileName
-import com.chromaticnoob.syncplayutils.SyncplayUtils.hideSystemUI
-import com.chromaticnoob.syncplayutils.SyncplayUtils.loggy
-import com.chromaticnoob.syncplayutils.SyncplayUtils.timeStamper
-import com.chromaticnoob.syncplayutils.utils.MediaFile
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.C.SELECTION_FLAG_DEFAULT
 import com.google.android.exoplayer2.C.VIDEO_SCALING_MODE_SCALE_TO_FIT
@@ -77,12 +43,48 @@ import com.google.android.exoplayer2.ui.CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW
 import com.google.android.exoplayer2.util.MimeTypes
 import com.google.android.material.button.MaterialButton
 import com.google.gson.GsonBuilder
+import com.reddnek.syncplay.databinding.ActivityRoomBinding
+import com.reddnek.syncplay.room.ExoPlayerUtils.applyLastOverrides
+import com.reddnek.syncplay.room.ExoPlayerUtils.audioSelect
+import com.reddnek.syncplay.room.ExoPlayerUtils.injectVideo
+import com.reddnek.syncplay.room.ExoPlayerUtils.pausePlayback
+import com.reddnek.syncplay.room.ExoPlayerUtils.playPlayback
+import com.reddnek.syncplay.room.ExoPlayerUtils.subtitleSelect
+import com.reddnek.syncplay.room.RoomUtils.checkFileMismatches
+import com.reddnek.syncplay.room.RoomUtils.pingUpdater
+import com.reddnek.syncplay.room.RoomUtils.sendMessage
+import com.reddnek.syncplay.room.RoomUtils.sendPlayback
+import com.reddnek.syncplay.room.RoomUtils.string
+import com.reddnek.syncplay.room.RoomUtils.vidPosUpdater
+import com.reddnek.syncplay.room.SharedPlaylistUtils.addFileToPlaylist
+import com.reddnek.syncplay.room.SharedPlaylistUtils.addFolderToPlaylist
+import com.reddnek.syncplay.room.SharedPlaylistUtils.changePlaylistSelection
+import com.reddnek.syncplay.room.UIUtils.applyUISettings
+import com.reddnek.syncplay.room.UIUtils.attachTooltip
+import com.reddnek.syncplay.room.UIUtils.broadcastMessage
+import com.reddnek.syncplay.room.UIUtils.displayInfo
+import com.reddnek.syncplay.room.UIUtils.hideKb
+import com.reddnek.syncplay.room.UIUtils.replenishUsers
+import com.reddnek.syncplay.room.UIUtils.showPopup
+import com.reddnek.syncplay.room.UIUtils.toasty
+import com.reddnek.syncplayprotocol.JsonSender.sendEmptyList
+import com.reddnek.syncplayprotocol.JsonSender.sendFile
+import com.reddnek.syncplayprotocol.JsonSender.sendReadiness
+import com.reddnek.syncplayprotocol.JsonSender.sendState
+import com.reddnek.syncplayprotocol.ProtocolBroadcaster
+import com.reddnek.syncplayprotocol.SyncplayProtocol
+import com.reddnek.syncplayutils.SyncplayUtils
+import com.reddnek.syncplayutils.SyncplayUtils.getFileName
+import com.reddnek.syncplayutils.SyncplayUtils.hideSystemUI
+import com.reddnek.syncplayutils.SyncplayUtils.loggy
+import com.reddnek.syncplayutils.SyncplayUtils.timeStamper
+import com.reddnek.syncplayutils.utils.MediaFile
 import razerdp.basepopup.BasePopupWindow
 import kotlin.collections.set
 import kotlin.math.roundToInt
 import androidx.appcompat.widget.AppCompatImageView as ImageView
 import androidx.appcompat.widget.AppCompatTextView as TextView
-import com.chromaticnoob.syncplay.R as rr
+import com.reddnek.syncplay.R as rr
 
 class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
     /* Declaring our ViewBinding global variables (much faster than findViewById) **/
@@ -251,16 +253,22 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         /** Launch the visible ping updater **/
         pingUpdater()
 
-        /** Inject preference fragment **/
+        /** Inject in-room settings fragment **/
         supportFragmentManager.beginTransaction()
             .replace(rr.id.pseudo_popup_container, RoomSettingsFragment())
             .commit()
+
+        /** Attaching tooltip longclick listeners to all the buttons using an extensive method */
+        for (child in hudBinding.buttonRowOne.children) {
+            if (child is ImageButton) {
+                child.attachTooltip(child.contentDescription.toString())
+            }
+        }
 
         /** Leaving the app for too long in the background might destroy the activity.
          * So, bringing it up back to the foreground would necessite calling onCreate() OR the
          * other function onRestoreInstanceState in lesser severe cases.
          */
-
         if (savedInstanceState != null) {
             p.sendPacket(sendEmptyList())
         }
@@ -315,9 +323,6 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
 
         /** Customizing ExoPlayer components **/
         myExoPlayer?.videoScalingMode = VIDEO_SCALING_MODE_SCALE_TO_FIT /* Starter scaling */
-
-//        roomBinding.vidplayer.subtitleView?.background =
-//            null /* Removing any bg color on subtitles */
 
         myExoPlayer?.playWhenReady = true /* Play once the media has been buffered */
 
@@ -411,7 +416,12 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         /** Listening to ExoPlayer's UI Visibility **/
         roomBinding.vidplayer.setControllerVisibilityListener { visibility ->
             if (visibility == VISIBLE) {
-                roomBinding.syncplayMESSAGERYCard.also {
+                roomBinding.syncplayMESSAGERYOpacitydelegate.also {
+                    it.clearAnimation()
+                    it.alpha = 1f
+                    it.visibility = VISIBLE
+                }
+                roomBinding.syncplayMESSAGERY.also {
                     it.clearAnimation()
                     it.alpha = 1f
                     it.visibility = VISIBLE
@@ -431,12 +441,19 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                 }, 10)
             } else {
                 hideSystemUI(this, false)
-                roomBinding.syncplayMESSAGERYCard.also {
+                roomBinding.syncplayMESSAGERYOpacitydelegate.also {
                     it.clearAnimation()
                     it.alpha = 0f
                     it.visibility = GONE
                 }
-                if (!roomBinding.syncplayINPUTBox.hasFocus()) {
+                roomBinding.syncplayMESSAGERY.also {
+                    it.clearAnimation()
+                    it.alpha = 0f
+                    it.visibility = GONE
+                }
+                if ((!roomBinding.syncplayINPUTBox.hasFocus())
+                    || roomBinding.syncplayINPUTBox.text.toString().trim() == ""
+                ) {
                     roomBinding.syncplayVisiblitydelegate.visibility = GONE
                     hideKb()
                 }
@@ -485,7 +502,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
             } else {
                 roomBinding.syncplayINPUT.isErrorEnabled = true
                 roomBinding.syncplayINPUT.error =
-                    getString(com.chromaticnoob.syncplay.R.string.room_empty_message_error)
+                    getString(com.reddnek.syncplay.R.string.room_empty_message_error)
             }
         }
 
@@ -565,14 +582,14 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                     0,
                     0,
                     0,
-                    getString(com.chromaticnoob.syncplay.R.string.room_overflow_sub)
+                    getString(com.reddnek.syncplay.R.string.room_overflow_sub)
                 )
 
             val cutoutItem = popup.menu.add(
                 0,
                 1,
                 1,
-                getString(com.chromaticnoob.syncplay.R.string.room_overflow_cutout)
+                getString(com.reddnek.syncplay.R.string.room_overflow_cutout)
             )
             cutoutItem.isCheckable = true
             cutoutItem.isChecked = cutOutMode
@@ -581,7 +598,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                 0,
                 2,
                 2,
-                getString(com.chromaticnoob.syncplay.R.string.room_overflow_ff)
+                getString(com.reddnek.syncplay.R.string.room_overflow_ff)
             )
             seekbuttonsItem.isCheckable = true
             val ffwdButton = hudBinding.exoFfwd
@@ -591,13 +608,13 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                 0,
                 3,
                 3,
-                getString(com.chromaticnoob.syncplay.R.string.room_overflow_msghistory)
+                getString(com.reddnek.syncplay.R.string.room_overflow_msghistory)
             )
             val uiItem = popup.menu.add(
                 0,
                 4,
                 4,
-                getString(com.chromaticnoob.syncplay.R.string.room_overflow_settings)
+                getString(com.reddnek.syncplay.R.string.room_overflow_settings)
             )
             //val adjustItem = popup.menu.add(0,5,5,"Change Username or Room")
 
@@ -746,9 +763,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         myExoPlayer?.release()
     }
 
-    /*********************************************************************************************
-     *                                     CUSTOM FUNCTIONS                                      *
-     ********************************************************************************************/
+    /****************************      CUSTOM FUNCTIONS      *************************************/
 
     inner class StarterHintPopup(context: Context) : BasePopupWindow(context) {
         init {
@@ -769,12 +784,14 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
     inner class MessageHistoryPopup(context: Context) : BasePopupWindow(context) {
         init {
             setContentView(rr.layout.popup_messages)
-            val rltvLayout = findViewById<RelativeLayout>(rr.id.syncplay_MESSAGEHISTORY)
-            rltvLayout.removeAllViews()
+
+            /* Getting parent and clearing it */
+            val parent = findViewById<LinearLayoutCompat>(rr.id.syncplay_MESSAGEHISTORY)
+            parent.removeAllViews()
+
             val msgs = p.session.messageSequence
             for (message in msgs) {
-                val msgPosition: Int = msgs.indexOf(message)
-
+                /* Creating 1 TextView for each message */
                 val txtview = TextView(this@RoomActivity)
                 txtview.text = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
                     Html.fromHtml(
@@ -782,18 +799,8 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                         Html.FROM_HTML_MODE_LEGACY
                     ) else Html.fromHtml(message.factorize(true, this@RoomActivity))
                 txtview.textSize = 9F
-                val rltvParams: RelativeLayout.LayoutParams = RelativeLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-                rltvParams.addRule(RelativeLayout.ALIGN_PARENT_START, RelativeLayout.TRUE)
-                txtview.id = generateViewId()
-                if (message != msgs[0]) {
-                    rltvParams.addRule(
-                        RelativeLayout.BELOW,
-                        rltvLayout.getChildAt(msgPosition - 1).id
-                    )
-                }
-                rltvLayout.addView(txtview, msgPosition, rltvParams)
+
+                parent.addView(txtview)
             }
 
             val dismisser = findViewById<FrameLayout>(rr.id.messages_popup_dismisser)
@@ -887,9 +894,8 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         }
     }
 
-    /*********************************************************************************************
-     *                                        CALLBACKS                                          *
-     ********************************************************************************************/
+    /*********************************      CALLBACKS      ****************************************/
+
     override fun onSomeonePaused(pauser: String) {
         if (pauser != p.session.currentUsername) pausePlayback()
         broadcastMessage(
@@ -983,12 +989,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         replenishUsers(roomBinding.syncplayOverview)
     }
 
-    override fun onSomeoneLoadedFile(
-        person: String,
-        file: String?,
-        fileduration: Double?,
-        filesize: String?
-    ) {
+    override fun onSomeoneLoadedFile(person: String, file: String?, fileduration: Double?) {
         replenishUsers(roomBinding.syncplayOverview)
         broadcastMessage(
             string(
@@ -1043,17 +1044,20 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
     }
 
     override fun onPlaylistUpdated(user: String) {
-        broadcastMessage(string(rr.string.room_shared_playlist_updated, user), isChat = false)
         sharedplaylistPopup.update()
         if (p.session.sharedPlaylist.size != 0 && p.session.sharedPlaylistIndex == -1) {
             changePlaylistSelection(0)
         }
+        if (user == "") return
+        broadcastMessage(string(rr.string.room_shared_playlist_updated, user), isChat = false)
+
     }
 
     override fun onPlaylistIndexChanged(user: String, index: Int) {
-        broadcastMessage(string(rr.string.room_shared_playlist_changed, user), isChat = false)
-        changePlaylistSelection(index)
         sharedplaylistPopup.update()
+        changePlaylistSelection(index)
+        if (user == "") return
+        broadcastMessage(string(rr.string.room_shared_playlist_changed, user), isChat = false)
     }
 
     override fun onBackPressed() {

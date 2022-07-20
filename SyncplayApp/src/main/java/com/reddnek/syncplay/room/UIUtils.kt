@@ -1,11 +1,14 @@
-package com.chromaticnoob.syncplay.room
+package com.reddnek.syncplay.room
 
 import android.app.Activity
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Build
+import android.os.Build.VERSION
+import android.os.Build.VERSION_CODES
 import android.text.Html
 import android.util.TypedValue
+import android.util.TypedValue.COMPLEX_UNIT_SP
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -13,15 +16,16 @@ import android.view.animation.AccelerateInterpolator
 import android.widget.*
 import androidx.annotation.ColorInt
 import androidx.annotation.UiThread
+import androidx.appcompat.widget.TooltipCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.preference.PreferenceManager
-import com.chromaticnoob.syncplay.R
-import com.chromaticnoob.syncplay.room.RoomUtils.string
-import com.chromaticnoob.syncplayutils.SyncplayUtils
-import com.chromaticnoob.syncplayutils.utils.Message
-import com.chromaticnoob.syncplayutils.utils.User
+import com.reddnek.syncplay.R
+import com.reddnek.syncplay.room.RoomUtils.string
+import com.reddnek.syncplayutils.SyncplayUtils
+import com.reddnek.syncplayutils.utils.Message
+import com.reddnek.syncplayutils.utils.User
 import razerdp.basepopup.BasePopupWindow
 import kotlin.math.roundToInt
 
@@ -38,7 +42,7 @@ object UIUtils {
         roomBinding.syncplayInfoDelegate.alpha = 1f
         roomBinding.syncplayInfoDelegate.animate()
             .alpha(0f)
-            .setDuration(750L)
+            .setDuration(1000L)
             .setInterpolator(AccelerateInterpolator())
             .start()
     }
@@ -249,7 +253,7 @@ object UIUtils {
                 rltvLayout.addView(txtview, msgPosition, rltvParams)
 
                 //Animate
-                roomBinding.syncplayMESSAGERYCard.also {
+                roomBinding.syncplayMESSAGERY.also {
                     it.clearAnimation()
                     it.visibility = View.VISIBLE
                     it.alpha = 1f
@@ -291,18 +295,18 @@ object UIUtils {
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
 
         /* Applying "overview_alpha" setting */
-        val alpha1 = sp.getInt("overview_alpha", 30) //between 0-255
+        val alpha1 = sp.getInt("overview_alpha", 40) //between 0-255
         @ColorInt val alphaColor1 = ColorUtils.setAlphaComponent(Color.DKGRAY, alpha1)
         roomBinding.syncplayOverviewCard.setCardBackgroundColor(alphaColor1)
 
         /* Applying MESSAGERY Alpha **/
-        val alpha2 = sp.getInt("messagery_alpha", 0) //between 0-255
+        val alpha2 = sp.getInt("messagery_alpha", 40) //between 0-255
         @ColorInt val alphaColor2 = ColorUtils.setAlphaComponent(Color.DKGRAY, alpha2)
-        roomBinding.syncplayMESSAGERYCard.setCardBackgroundColor(alphaColor2)
+        roomBinding.syncplayMESSAGERYOpacitydelegate.setCardBackgroundColor(alphaColor2)
 
         /* Applying Subtitle Size setting */
         ccsize = sp.getInt("subtitle_size", 18).toFloat()
-
+        roomBinding.vidplayer.subtitleView?.setFixedTextSize(COMPLEX_UNIT_SP, ccsize)
     }
 
     /** Convenience method to save code space */
@@ -325,6 +329,18 @@ object UIUtils {
                 popup.showAnimation = null
             }
             popup.showPopupWindow()
+        }
+    }
+
+
+    /** Shows a tooltip above every button to define its functionality after a long-press
+     * This should not be called on Android L & M as it would freeze the device if done twice
+     */
+    @JvmStatic
+    fun ImageButton.attachTooltip(string: String) {
+        if (VERSION.SDK_INT > VERSION_CODES.M) {
+            this.isLongClickable = true
+            TooltipCompat.setTooltipText(this, string)
         }
     }
 

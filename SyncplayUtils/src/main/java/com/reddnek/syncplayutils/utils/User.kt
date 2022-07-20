@@ -1,4 +1,4 @@
-package com.chromaticnoob.syncplayutils.utils
+package com.reddnek.syncplayutils.utils
 
 /**************************************************************************************
  * User wrapper class. It encapsulates all information and data we need about a user  *

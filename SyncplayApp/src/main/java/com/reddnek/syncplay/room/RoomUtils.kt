@@ -1,4 +1,4 @@
-package com.chromaticnoob.syncplay.room
+package com.reddnek.syncplay.room
 
 import android.content.Context
 import android.os.Handler
@@ -6,12 +6,12 @@ import android.os.Looper
 import android.view.View
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.preference.PreferenceManager
-import com.chromaticnoob.syncplay.R
-import com.chromaticnoob.syncplay.room.UIUtils.broadcastMessage
-import com.chromaticnoob.syncplay.room.UIUtils.hideKb
-import com.chromaticnoob.syncplayprotocol.JsonSender
-import com.chromaticnoob.syncplayprotocol.SyncplayProtocol
-import com.chromaticnoob.syncplayutils.SyncplayUtils
+import com.reddnek.syncplay.R
+import com.reddnek.syncplay.room.UIUtils.broadcastMessage
+import com.reddnek.syncplay.room.UIUtils.hideKb
+import com.reddnek.syncplayprotocol.JsonSender
+import com.reddnek.syncplayprotocol.SyncplayProtocol
+import com.reddnek.syncplayutils.SyncplayUtils
 
 /** Wrapping functions that need no further coding here, to reduce code space in RoomActivity
  * for things that cannot be separated (like lifecycle methods, broadcaster overridden methods...etc).
@@ -88,7 +88,7 @@ object RoomUtils {
     @JvmStatic
     fun RoomActivity.sendMessage(message: String) {
         hideKb()
-        if (roomBinding.syncplayMESSAGERYCard.visibility != View.VISIBLE) {
+        if (roomBinding.syncplayMESSAGERY.visibility != View.VISIBLE) {
             roomBinding.syncplayVisiblitydelegate.visibility = View.GONE
         }
         p.sendPacket(JsonSender.sendChat(message))

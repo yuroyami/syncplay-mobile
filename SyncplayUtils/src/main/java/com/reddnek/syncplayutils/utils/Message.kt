@@ -1,8 +1,8 @@
-package com.chromaticnoob.syncplayutils.utils
+package com.reddnek.syncplayutils.utils
 
 import android.content.Context
-import com.chromaticnoob.syncplayutils.SyncplayUtils.generateTimestamp
-import com.chromaticnoob.syncplayutils.SyncplayUtils.getColorCode
+import com.reddnek.syncplayutils.SyncplayUtils.generateTimestamp
+import com.reddnek.syncplayutils.SyncplayUtils.getColorCode
 
 /********************************************************************************************
  * Message wrapper class. It encapsulates all information and data we need about a message  *
@@ -40,7 +40,9 @@ class Message {
             val timestampStylized = "<font color=\"${timestampHex}\">[${timestamp}] </font>"
             "$timestampStylized$stylizedContent"
         } else {
-            stylizedContent
+            val timestampStylized = "<font color=\"${timestampHex}\">-</font>"
+            "$timestampStylized$stylizedContent"
+
         }
     }
 

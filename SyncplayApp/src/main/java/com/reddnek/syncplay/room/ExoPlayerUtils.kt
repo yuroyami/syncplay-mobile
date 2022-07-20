@@ -1,18 +1,18 @@
-package com.chromaticnoob.syncplay.room
+package com.reddnek.syncplay.room
 
 import android.net.Uri
 import android.view.MenuItem
 import android.widget.ImageButton
-import android.widget.PopupMenu
 import androidx.appcompat.content.res.AppCompatResources
-import com.chromaticnoob.syncplay.R
-import com.chromaticnoob.syncplay.room.RoomUtils.string
-import com.chromaticnoob.syncplay.room.UIUtils.displayInfo
-import com.chromaticnoob.syncplayprotocol.JsonSender
-import com.chromaticnoob.syncplayutils.SyncplayUtils
+import androidx.appcompat.widget.PopupMenu
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.trackselection.TrackSelectionOverride
+import com.reddnek.syncplay.R
+import com.reddnek.syncplay.room.RoomUtils.string
+import com.reddnek.syncplay.room.UIUtils.displayInfo
+import com.reddnek.syncplayprotocol.JsonSender
+import com.reddnek.syncplayutils.SyncplayUtils
 import java.io.IOException
 import java.util.*
 
@@ -129,6 +129,14 @@ object ExoPlayerUtils {
                 )
             }
         } else {
+            runOnUiThread {
+                ccButton.setImageDrawable(
+                    AppCompatResources.getDrawable(
+                        this,
+                        R.drawable.ic_subtitles
+                    )
+                )
+            }
             val popup = PopupMenu(this, ccButton)
             popup.menu.add(0, -999, 0, getString(R.string.room_sub_track_disable))
             for (subtitleTrack in p.file!!.subtitleTracks) {

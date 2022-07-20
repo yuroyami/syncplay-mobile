@@ -1,4 +1,4 @@
-package com.chromaticnoob.syncplayprotocol
+package com.reddnek.syncplayprotocol
 
 import androidx.lifecycle.ViewModel
 

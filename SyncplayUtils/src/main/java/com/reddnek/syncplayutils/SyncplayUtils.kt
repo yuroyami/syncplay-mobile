@@ -1,4 +1,4 @@
-package com.chromaticnoob.syncplayutils
+package com.reddnek.syncplayutils
 
 import android.annotation.TargetApi
 import android.app.Activity
@@ -20,11 +20,12 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.preference.PreferenceManager
+import com.google.android.exoplayer2.BuildConfig
 import java.io.*
 import java.nio.charset.StandardCharsets.UTF_8
 import java.security.MessageDigest
 import java.sql.Timestamp
-
+import kotlin.math.roundToInt
 
 object SyncplayUtils {
 
@@ -117,15 +118,14 @@ object SyncplayUtils {
 
     /* This one converts screen resolution units. DP to PX (Pixel), not used yet */
     @JvmStatic
-    fun convertUnit(dp: Float, contexT: Context?): Float {
-        val resources = contexT?.resources
-        val metrics = resources?.displayMetrics
+    fun convertUnit(dp: Float, context: Context?): Float {
+        val metrics = context?.resources?.displayMetrics
         return dp * (metrics?.densityDpi?.toFloat()?.div(DisplayMetrics.DENSITY_DEFAULT)!!)
     }
 
     /** This function is used to calculate the ICMP Ping to a certain server or end host **/
     @JvmStatic
-    fun pingIcmp(host: String, packet: Int): Double {
+    fun pingIcmp(host: String, packet: Int): Int {
         var result = 0.13
         try {
             val pingprocess: Process? =
@@ -154,7 +154,7 @@ object SyncplayUtils {
         } catch (e: IOException) {
 
         }
-        return result
+        return result.roundToInt()
     }
 
     /** Basically a convenience log function that will log stuff to error pool if it's a debug build **/
@@ -207,7 +207,12 @@ object SyncplayUtils {
     @Suppress("DEPRECATION")
     @JvmStatic
     fun showSystemUI(window: Window) {
-        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_VISIBLE)
+        window.decorView.systemUiVisibility =
+            (View.SYSTEM_UI_FLAG_VISIBLE or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
+        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+
     }
 
 

@@ -1,4 +1,4 @@
-package com.chromaticnoob.syncplay.main
+package com.reddnek.syncplay.main
 
 import android.os.Bundle
 import android.util.DisplayMetrics
@@ -6,7 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.chromaticnoob.syncplay.databinding.FragmentAboutBinding
+import com.reddnek.syncplay.databinding.FragmentAboutBinding
 import kotlin.math.roundToInt
 
 class AboutFragment : Fragment() {

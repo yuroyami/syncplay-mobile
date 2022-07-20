@@ -1,4 +1,4 @@
-package com.chromaticnoob.syncplayutils.utils
+package com.reddnek.syncplayutils.utils
 
 import com.google.android.exoplayer2.Format
 import com.google.android.exoplayer2.source.TrackGroup

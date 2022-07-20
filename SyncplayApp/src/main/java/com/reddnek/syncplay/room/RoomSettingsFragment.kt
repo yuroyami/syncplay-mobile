@@ -1,4 +1,4 @@
-package com.chromaticnoob.syncplay.room
+package com.reddnek.syncplay.room
 
 import android.os.Bundle
 import android.os.Handler
@@ -6,8 +6,8 @@ import android.os.Looper
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
-import com.chromaticnoob.syncplay.room.UIUtils.applyUISettings
 import com.google.android.material.snackbar.Snackbar
+import com.reddnek.syncplay.room.UIUtils.applyUISettings
 
 class RoomSettingsFragment : PreferenceFragmentCompat(),
     PreferenceManager.OnPreferenceTreeClickListener {
@@ -45,7 +45,7 @@ class RoomSettingsFragment : PreferenceFragmentCompat(),
      *   - First, it allows us to add pref change listeners to each one of them to get callbacks.
      *   - Second, it allows us to reset only the UI prefs to default when we need so, not all sharedprefs.*/
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        setPreferencesFromResource(com.chromaticnoob.syncplay.R.xml.ui_settings, rootKey)
+        setPreferencesFromResource(com.reddnek.syncplay.R.xml.ui_settings, rootKey)
 
         /** Applying settings as they change, according to Choice "D" from above **/
         for (i in (0 until preferenceScreen.preferenceCount)) {
@@ -75,7 +75,7 @@ class RoomSettingsFragment : PreferenceFragmentCompat(),
 
                 /** Let's re-inflate the new default state of preferences again **/
                 setPreferencesFromResource(
-                    com.chromaticnoob.syncplay.R.xml.ui_settings,
+                    com.reddnek.syncplay.R.xml.ui_settings,
                     "syncplay_ui_settings"
                 )
 

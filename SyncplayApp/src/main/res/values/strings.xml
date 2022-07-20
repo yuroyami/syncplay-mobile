@@ -54,7 +54,7 @@
     <string name="room_attempting_connect">Attempting to connect to %1s:%2s</string>
     <string name="room_connected_to_server">Connected to the server.</string>
     <string name="room_connection_failed">Connecting failed.</string>
-    <string name="room_attempting_reconnection">Lost connection to the server. Attempting to reconnect…</string>
+    <string name="room_attempting_reconnection">Lost connection to the server.</string>
     <string name="room_guy_played">%s unpaused</string>
     <string name="room_guy_paused">%1s paused at %2s</string>
     <string name="room_seeked">%1s jumped from %2s to %3s</string>
@@ -91,6 +91,19 @@
     <string name="room_shared_playlist_no_directories">You have not specified any media directories for shared playlists. Manually add the files.</string>
     <string name="room_shared_playlist_not_found">Syncplay couldn\'t find the file that is currently playing in the shared playlist in your media directories.</string>
     <string name="room_shared_playlist_not_featured">This room or server do not have Shared Playlists feature on.</string>
+    <string name="room_button_desc_aspect_ratio">Aspect Ratio</string>
+    <string name="room_button_desc_shared_playlist">Shared Playlist</string>
+    <string name="room_button_desc_audio_tracks">Audio Tracks</string>
+    <string name="room_button_desc_subtitle_tracks">Subtitle Tracks</string>
+    <string name="room_button_desc_rewind">Rewind</string>
+    <string name="room_button_desc_toggle">.</string>
+    <string name="room_button_desc_play">Play</string>
+    <string name="room_button_desc_pause">Pause</string>
+    <string name="room_button_desc_ffwd">Fast-forward</string>
+    <string name="room_button_desc_add">Add Media File</string>
+    <string name="room_button_desc_lock">Touch-lock</string>
+    <string name="room_button_desc_more">More Settings</string>
+
 
     <!-- Directories Activity Strings -->
     <string name="media_directories">Shared Playlist\'s Media Directories</string>
@@ -145,9 +158,9 @@
     <string name="uisetting_apply">APPLY</string>
     <string name="uisetting_timestamp_summary">Disable this to hide the timestamps at the beginning of chat messages.</string>
     <string name="uisetting_timestamp_title">Chat timestamps</string>
-    <string name="uisetting_overview_alpha_summary">Default is 30 (Almost transparent), change this if you want to make the room details\' panel more readable by increasing opacity.</string>
+    <string name="uisetting_overview_alpha_summary">Default is 40 (Almost transparent), change this if you want to make the room details\' panel more readable by increasing opacity.</string>
     <string name="uisetting_overview_alpha_title">Room Details Background Opacity</string>
-    <string name="uisetting_messagery_alpha_summary">Default is 0 (Transparent). Maximum is 255 (100% Opaque). Increase readability of the messages by making background more opaque.</string>
+    <string name="uisetting_messagery_alpha_summary">Default is 40 (Almost transparent). Maximum is 255 (100% Opaque). Increase readability of the messages by making background more opaque.</string>
     <string name="uisetting_messagery_alpha_title">Messages\' background opacity</string>
     <string name="uisetting_msgsize_summary">Changes message text size. Default is 11.</string>
     <string name="uisetting_msgsize_title">Message font size</string>
@@ -177,18 +190,21 @@
     <string name="en">English</string>
     <string name="ar">Arabic</string>
     <string name="zh">Chinese</string>
+    <string name="fr">French</string>
 
     <!--List of Languages and their Tags-->
     <string-array name="Lang">
         <item>English</item>
         <item>العربية</item>
         <item>中文</item>
+        <item>Francais</item>
     </string-array>
 
     <string-array name="LangValues">
         <item>"en"</item>
         <item>"ar"</item>
         <item>"zh"</item>
+        <item>"fr"</item>
     </string-array>
 
     <!--List of options for whether to hash a file's name and size-->

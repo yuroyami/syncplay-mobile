@@ -1,15 +1,15 @@
-package com.chromaticnoob.syncplayprotocol
+package com.reddnek.syncplayprotocol
 
 import android.os.Handler
 import android.os.HandlerThread
 import androidx.lifecycle.ViewModel
-import com.chromaticnoob.syncplayprotocol.JsonHandler.handleJson
-import com.chromaticnoob.syncplayprotocol.JsonSender.sendHello
-import com.chromaticnoob.syncplayutils.SyncplayUtils
-import com.chromaticnoob.syncplayutils.utils.MediaFile
-import com.chromaticnoob.syncplayutils.utils.Session
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.reddnek.syncplayprotocol.JsonHandler.handleJson
+import com.reddnek.syncplayprotocol.JsonSender.sendHello
+import com.reddnek.syncplayutils.SyncplayUtils
+import com.reddnek.syncplayutils.utils.MediaFile
+import com.reddnek.syncplayutils.utils.Session
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay

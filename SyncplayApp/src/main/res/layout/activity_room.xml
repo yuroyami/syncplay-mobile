@@ -5,7 +5,7 @@
     android:id="@+id/room"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000"
+    android:background="@drawable/cosmik_gradient"
     android:keepScreenOn="true"
     android:layoutDirection="ltr"
     tools:context=".room.RoomActivity"
@@ -36,28 +36,30 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.card.MaterialCardView
-        android:id="@+id/syncplay_MESSAGERY_card"
+        android:id="@+id/syncplay_MESSAGERY_opacitydelegate"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="8dp"
+        android:layout_height="0dp"
         android:focusable="false"
-        android:padding="2dp"
         app:cardCornerRadius="8dp"
         app:cardElevation="0dp"
         app:cardPreventCornerOverlap="true"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/syncplay_MESSAGERY"
+        app:layout_constraintLeft_toLeftOf="@id/syncplay_MESSAGERY"
+        app:layout_constraintRight_toRightOf="@id/syncplay_MESSAGERY"
+        app:layout_constraintTop_toTopOf="@id/syncplay_MESSAGERY"></com.google.android.material.card.MaterialCardView>
+
+    <RelativeLayout
+        android:id="@+id/syncplay_MESSAGERY"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="8dp"
         android:layout_marginStart="4dp"
         android:layout_marginTop="4dp"
-        app:layout_constraintWidth_percent="0.43">
-
-        <RelativeLayout
-            android:id="@+id/syncplay_MESSAGERY"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:focusable="false"
-            android:padding="6dp" />
-    </com.google.android.material.card.MaterialCardView>
+        android:focusable="false"
+        android:padding="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth_percent="0.43" />
 
 
     <com.google.android.material.textfield.TextInputLayout
@@ -160,7 +162,7 @@
         app:cardPreventCornerOverlap="true"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1"
-        app:layout_constraintStart_toEndOf="@id/syncplay_MESSAGERY_card"
+        app:layout_constraintStart_toEndOf="@id/syncplay_MESSAGERY"
         app:layout_constraintTop_toBottomOf="@id/syncplay_overviewcheckbox">
 
         <androidx.core.widget.NestedScrollView

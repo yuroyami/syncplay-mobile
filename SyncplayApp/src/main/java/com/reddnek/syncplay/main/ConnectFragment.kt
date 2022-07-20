@@ -1,4 +1,4 @@
-package com.chromaticnoob.syncplay.main
+package com.reddnek.syncplay.main
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -11,11 +11,11 @@ import android.widget.ArrayAdapter
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
-import com.chromaticnoob.syncplay.BuildConfig
-import com.chromaticnoob.syncplay.R
-import com.chromaticnoob.syncplay.databinding.FragmentConnectBinding
-import com.chromaticnoob.syncplay.room.RoomActivity
 import com.google.gson.GsonBuilder
+import com.reddnek.syncplay.BuildConfig
+import com.reddnek.syncplay.R
+import com.reddnek.syncplay.databinding.FragmentConnectBinding
+import com.reddnek.syncplay.room.RoomActivity
 
 @SuppressLint("SetTextI18n")
 class ConnectFragment : Fragment() {
@@ -137,11 +137,7 @@ class ConnectFragment : Fragment() {
 
         /** Listening to the event where users click 'Enter Custom Server' or other servers */
         binding.spMenuAutocomplete.setOnItemClickListener { _, _, i, _ ->
-            if (i == 5) {
-                toggleCustomServer(true)
-            } else {
-                toggleCustomServer(false)
-            }
+            toggleCustomServer(i == 5) //if i=5, toggle custom server.
         }
 
         if (PreferenceManager.getDefaultSharedPreferences(requireContext())

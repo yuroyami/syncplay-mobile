@@ -1,4 +1,4 @@
-package com.chromaticnoob.syncplay
+package com.reddnek.syncplay
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -6,8 +6,8 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
-import com.chromaticnoob.syncplay.main.MainActivity
-import com.chromaticnoob.syncplayutils.SyncplayUtils
+import com.reddnek.syncplay.main.MainActivity
+import com.reddnek.syncplayutils.SyncplayUtils
 
 @SuppressLint("CustomSplashScreen") /* Don't trust Google's SplashScreen API, we make our own */
 class SplashScreenActivity : AppCompatActivity() {

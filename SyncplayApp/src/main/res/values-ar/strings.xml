@@ -80,10 +80,10 @@
     <string name="uisetting_apply">تطبيق</string>
     <string name="uisetting_timestamp_title">الطوابع الزمنية للرسائل</string>
     <string name="uisetting_timestamp_summary">عطِّل هذه الميزة لإخفاء الطوابع الزمنية في بداية رسائل الغرفة.</string>
-    <string name="uisetting_overview_alpha_summary">القيمة الافتراضية هي 30(تقريباً شفاف). غير هذه القيمة لتغيير شفافية خلفية تفاصيل الغرفة.</string>
+    <string name="uisetting_overview_alpha_summary">القيمة الافتراضية هي 40(شبه شفاف). غير هذه القيمة لتغيير شفافية خلفية تفاصيل الغرفة.</string>
     <string name="uisetting_overview_alpha_title">شفافية خلفية تفاصيل الغرفة</string>
     <string name="uisetting_messagery_alpha_title">شفافية خلفية الرسائل</string>
-    <string name="uisetting_messagery_alpha_summary">افتراضياً قيمتها 0 (شفاف). أقصى قيمة ممكنة هي 255 (غير شفاف تماماً). ارفع من هذه القيمة لخفض شفافية خلفية الرسائل من أجل جعلها أكثر قابلية للقراءة</string>
+    <string name="uisetting_messagery_alpha_summary">افتراضياً قيمتها 40 (شبه شفاف). أقصى قيمة ممكنة هي 255 (غير شفاف تماماً). ارفع من هذه القيمة لخفض شفافية خلفية الرسائل من أجل جعلها أكثر قابلية للقراءة</string>
     <string name="uisetting_msgsize_summary">يغير هذا الإعداد من حجم خط الرسائل. افتراضياً 11.</string>
     <string name="uisetting_msgsize_title">حجم خط الرسائل</string>
     <string name="uisetting_msgcount_summary">افتراضياً 12. يحدُّ هذا الإعداد من عدد الرسائل الممكن إظهارها في نفس الوقت.</string>

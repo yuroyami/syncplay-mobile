@@ -1,9 +1,9 @@
-package com.chromaticnoob.syncplay.main
+package com.reddnek.syncplay.main
 
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
-import com.chromaticnoob.syncplay.R
+import com.reddnek.syncplay.R
 
 class MainPagerAdapter(fa: FragmentActivity) : FragmentStateAdapter(fa) {
 

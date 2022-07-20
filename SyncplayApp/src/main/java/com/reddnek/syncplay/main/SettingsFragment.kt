@@ -1,4 +1,4 @@
-package com.chromaticnoob.syncplay.main
+package com.reddnek.syncplay.main
 
 import android.content.Intent
 import android.os.Bundle
@@ -12,7 +12,7 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import com.google.android.material.snackbar.Snackbar
-import com.chromaticnoob.syncplay.R as X
+import com.reddnek.syncplay.R as X
 
 class SettingsFragment : PreferenceFragmentCompat(),
     PreferenceManager.OnPreferenceTreeClickListener {
@@ -61,7 +61,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
                 /** To visually see the default-ation, we inflate our preference screen again **/
                 setPreferencesFromResource(
-                    com.chromaticnoob.syncplay.R.xml.settings,
+                    com.reddnek.syncplay.R.xml.settings,
                     "syncplay_settings"
                 )
 

@@ -12,6 +12,7 @@
     tools:ignore="ContentDescription">
 
     <LinearLayout
+        android:id="@+id/button_row_one"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
@@ -23,6 +24,7 @@
             style="@style/ExoMediaButton.FastForward"
             android:src="@drawable/ic_screen"
             app:tint="#FFD66F"
+            android:contentDescription="@string/room_button_desc_aspect_ratio"
             tools:ignore="ContentDescription" />
 
         <ImageButton
@@ -30,61 +32,72 @@
             style="@style/ExoMediaButton.FastForward"
             android:src="@drawable/ic_shared_playlist"
             app:tint="#FFD66F"
+            android:contentDescription="@string/room_button_desc_shared_playlist"
             tools:ignore="ContentDescription" />
 
         <ImageButton
             android:id="@id/exo_audio_track"
             style="@style/ExoMediaButton.FastForward"
             android:src="@drawable/exo_ic_audiotrack"
+            android:contentDescription="@string/room_button_desc_audio_tracks"
             app:tint="#FFD66F" />
 
         <ImageButton
             android:id="@id/exo_subtitle"
             style="@style/ExoMediaButton.FastForward"
             android:src="@drawable/ic_subtitles"
+            android:contentDescription="@string/room_button_desc_subtitle_tracks"
             app:tint="#FFD66F" />
 
         <ImageButton
             android:id="@id/exo_rew"
             style="@style/ExoMediaButton.Rewind"
+            android:contentDescription="@string/room_button_desc_rewind"
             app:tint="#FFD66F" />
 
         <ImageButton
             android:id="@id/exo_repeat_toggle"
             style="@style/ExoMediaButton"
+            android:contentDescription="@string/room_button_desc_toggle"
             app:tint="#FFD66F" />
 
         <ImageButton
             android:id="@id/exo_play"
             style="@style/ExoMediaButton.Play"
+            android:contentDescription="@string/room_button_desc_play"
             app:tint="#FFD66F" />
 
         <ImageButton
             android:id="@id/exo_pause"
             style="@style/ExoMediaButton.Pause"
+            android:contentDescription="@string/room_button_desc_pause"
             app:tint="#FFD66F" />
 
         <ImageButton
             android:id="@id/exo_ffwd"
             style="@style/ExoMediaButton.FastForward"
+            android:contentDescription="@string/room_button_desc_ffwd"
             app:tint="#FFD66F" />
 
         <ImageButton
             android:id="@+id/syncplay_addfile"
             style="@style/ExoMediaButton.FastForward"
             android:src="@drawable/ic_add_video"
+            android:contentDescription="@string/room_button_desc_add"
             app:tint="#FFD66F" />
 
         <ImageButton
             android:id="@+id/syncplay_lock"
             style="@style/ExoMediaButton.FastForward"
             android:src="@drawable/ic_locked"
+            android:contentDescription="@string/room_button_desc_lock"
             app:tint="#FFD66F" />
 
         <ImageButton
             android:id="@+id/syncplay_more"
             style="@style/ExoMediaButton.FastForward"
             android:src="@drawable/ic_more"
+            android:contentDescription="@string/room_button_desc_more"
             app:tint="#FFD66F" />
 
 

@@ -1,11 +1,11 @@
-package com.chromaticnoob.syncplayprotocol
+package com.reddnek.syncplayprotocol
 
-import com.chromaticnoob.syncplayutils.SyncplayUtils.loggy
-import com.chromaticnoob.syncplayutils.utils.MediaFile
-import com.chromaticnoob.syncplayutils.utils.User
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
+import com.reddnek.syncplayutils.SyncplayUtils.loggy
+import com.reddnek.syncplayutils.utils.MediaFile
+import com.reddnek.syncplayutils.utils.User
 
 object JsonHandler {
     /** Handlers that parse JSONs and control callbacks based on the incoming message from server */

@@ -1,4 +1,4 @@
-package com.chromaticnoob.syncplay.room;
+package com.reddnek.syncplay.room;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,7 +12,7 @@ import androidx.annotation.Nullable;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
 
-import com.chromaticnoob.syncplay.R;
+import com.reddnek.syncplay.R;
 
 /**
  * Android Studio auto-generates such classes for any layout file you have if you turn on ViewBinding
@@ -21,7 +21,10 @@ import com.chromaticnoob.syncplay.R;
  * ViewBinding ends up throwing NullPointerException. I had to edit the generated class (this one)
  * in order to get rid of that problem.
  */
+
 public final class HudBinding implements ViewBinding {
+    @NonNull
+    public final LinearLayout buttonRowOne;
     @NonNull
     public final ImageButton syncplaySharedPlaylist;
 
@@ -70,15 +73,17 @@ public final class HudBinding implements ViewBinding {
     @NonNull
     private final LinearLayout rootView;
 
-    private HudBinding(@NonNull LinearLayout rootView, @NonNull ImageButton exoAudioTrack,
-                       @NonNull TextView exoDuration, @NonNull ImageButton exoFfwd, @NonNull ImageButton exoPause,
-                       @NonNull ImageButton exoPlay, @NonNull TextView exoPosition,
-                       View exoProgressPlaceholder, @NonNull ImageButton exoRepeatToggle,
-                       @NonNull ImageButton exoRew, @NonNull ImageButton exoSubtitle,
-                       @NonNull ImageButton syncplayAddfile, @NonNull ImageButton syncplayLock,
-                       @NonNull ImageButton syncplayMore, @NonNull ImageButton syncplayScreen,
-                       @NonNull ImageButton syncplaySharedPlaylist, @NonNull LinearLayout vidplayerhud) {
+    private HudBinding(@NonNull LinearLayout rootView, @NonNull LinearLayout buttonRowOne,
+                       @NonNull ImageButton exoAudioTrack, @NonNull TextView exoDuration,
+                       @NonNull ImageButton exoFfwd, @NonNull ImageButton exoPause, @NonNull ImageButton exoPlay,
+                       @NonNull TextView exoPosition, View exoProgressPlaceholder,
+                       @NonNull ImageButton exoRepeatToggle, @NonNull ImageButton exoRew,
+                       @NonNull ImageButton exoSubtitle, @NonNull ImageButton syncplayAddfile,
+                       @NonNull ImageButton syncplayLock, @NonNull ImageButton syncplayMore,
+                       @NonNull ImageButton syncplayScreen, @NonNull ImageButton syncplaySharedPlaylist,
+                       @NonNull LinearLayout vidplayerhud) {
         this.rootView = rootView;
+        this.buttonRowOne = buttonRowOne;
         this.exoAudioTrack = exoAudioTrack;
         this.exoDuration = exoDuration;
         this.exoFfwd = exoFfwd;
@@ -98,12 +103,33 @@ public final class HudBinding implements ViewBinding {
     }
 
     @NonNull
+    public static HudBinding inflate(@NonNull LayoutInflater inflater) {
+        return inflate(inflater, null, false);
+    }
+
+    @NonNull
+    public static HudBinding inflate(@NonNull LayoutInflater inflater, @Nullable ViewGroup parent,
+                                     boolean attachToParent) {
+        View root = inflater.inflate(R.layout.hud, parent, false);
+        if (attachToParent) {
+            parent.addView(root);
+        }
+        return bind(root);
+    }
+
+    @NonNull
     public static HudBinding bind(@NonNull View rootView) {
         // The body of this method is generated in a way you would not otherwise write.
         // This is done to optimize the compiled bytecode for size and performance.
         int id;
         missingId:
         {
+            id = R.id.button_row_one;
+            LinearLayout buttonRowOne = ViewBindings.findChildViewById(rootView, id);
+            if (buttonRowOne == null) {
+                break missingId;
+            }
+
             id = com.google.android.exoplayer2.R.id.exo_audio_track;
             ImageButton exoAudioTrack = ViewBindings.findChildViewById(rootView, id);
             if (exoAudioTrack == null) {
@@ -187,34 +213,19 @@ public final class HudBinding implements ViewBinding {
 
             id = R.id.syncplay_shared_playlist;
             ImageButton syncplaySharedPlaylist = ViewBindings.findChildViewById(rootView, id);
-            if (syncplayScreen == null) {
+            if (syncplaySharedPlaylist == null) {
                 break missingId;
             }
 
             LinearLayout vidplayerhud = (LinearLayout) rootView;
 
-            return new HudBinding((LinearLayout) rootView, exoAudioTrack, exoDuration, exoFfwd, exoPause,
-                    exoPlay, exoPosition, exoProgressPlaceholder, exoRepeatToggle, exoRew, exoSubtitle,
-                    syncplayAddfile, syncplayLock, syncplayMore, syncplayScreen, syncplaySharedPlaylist,
-                    vidplayerhud);
+            return new HudBinding((LinearLayout) rootView, buttonRowOne, exoAudioTrack, exoDuration,
+                    exoFfwd, exoPause, exoPlay, exoPosition, exoProgressPlaceholder, exoRepeatToggle, exoRew,
+                    exoSubtitle, syncplayAddfile, syncplayLock, syncplayMore, syncplayScreen,
+                    syncplaySharedPlaylist, vidplayerhud);
         }
         String missingId = rootView.getResources().getResourceName(id);
         throw new NullPointerException("Missing required view with ID: ".concat(missingId));
-    }
-
-    @NonNull
-    public static HudBinding inflate(@NonNull LayoutInflater inflater) {
-        return inflate(inflater, null, false);
-    }
-
-    @NonNull
-    public static HudBinding inflate(@NonNull LayoutInflater inflater, @Nullable ViewGroup parent,
-                                     boolean attachToParent) {
-        View root = inflater.inflate(R.layout.hud, parent, false);
-        if (attachToParent) {
-            parent.addView(root);
-        }
-        return bind(root);
     }
 
     @Override

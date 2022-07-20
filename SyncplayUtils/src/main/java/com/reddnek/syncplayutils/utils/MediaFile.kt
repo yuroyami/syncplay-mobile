@@ -1,13 +1,13 @@
-package com.chromaticnoob.syncplayutils.utils
+package com.reddnek.syncplayutils.utils
 
 import android.content.Context
 import android.net.Uri
-import com.chromaticnoob.syncplayutils.SyncplayUtils
-import com.chromaticnoob.syncplayutils.SyncplayUtils.getFileName
-import com.chromaticnoob.syncplayutils.SyncplayUtils.toHex
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
+import com.reddnek.syncplayutils.SyncplayUtils
+import com.reddnek.syncplayutils.SyncplayUtils.getFileName
+import com.reddnek.syncplayutils.SyncplayUtils.toHex
 import kotlin.math.roundToInt
 
 /**************************************************************************************
