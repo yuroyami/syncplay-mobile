@@ -10,4 +10,5 @@
         android:gradientRadius="250dp"
         android:startColor="#FFC604"
         android:type="radial" />
+    <corners android:radius="18dp" />
 </shape>

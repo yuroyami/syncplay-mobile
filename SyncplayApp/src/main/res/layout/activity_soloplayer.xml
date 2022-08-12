@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/room"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:keepScreenOn="true"
+    android:layoutDirection="ltr"
+    tools:context=".room.RoomActivity"
+    tools:ignore="ContentDescription, DuplicateSpeakableTextCheck">
+
+    <ImageView
+        android:id="@+id/syncplay_artwork_bg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:srcCompat="@drawable/cosmik_gradient"
+        tools:ignore="ContentDescription" />
+
+    <ImageView
+        android:id="@+id/syncplay_artwork_fg"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/syncplay_logo"
+        tools:ignore="ContentDescription" />
+
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/syncplay_artwork_delegate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="visible"
+        app:constraint_referenced_ids="syncplay_artwork_bg, syncplay_artwork_fg" />
+
+    <com.google.android.exoplayer2.ui.PlayerView
+        android:id="@+id/vidplayer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:controller_layout_id="@layout/hud"
+        app:keep_content_on_player_reset="true"
+        app:show_buffering="never"
+        app:show_shuffle_button="false" />
+
+    <TextView
+        android:id="@+id/syncplay_infoDelegate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clickable="false"
+        android:focusable="false"
+        android:text=""
+        android:textAlignment="center"
+        android:textColor="#ffffee"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/syncplayer_lockoverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clickable="false"
+        android:focusable="false"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/syncplayer_unlock"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_margin="22dp"
+        android:alpha="0.35"
+        android:clickable="false"
+        android:focusable="false"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_unlocked"
+        app:tint="#959595" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/pseudo_popup_parent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:elevation="16dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/popup_dismisser"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0.3"
+            android:clickable="true"
+            android:focusable="true"
+            android:src="@color/black" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/pseudo_popup_containercard"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHeight_percent="0.75"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintWidth_percent="0.60">
+
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/pseudo_popup_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:ignore="HardcodedText" />
+        </com.google.android.material.card.MaterialCardView>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

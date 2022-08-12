@@ -5,11 +5,37 @@
     android:id="@+id/room"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/cosmik_gradient"
     android:keepScreenOn="true"
     android:layoutDirection="ltr"
     tools:context=".room.RoomActivity"
     tools:ignore="ContentDescription, DuplicateSpeakableTextCheck">
+
+    <ImageView
+        android:id="@+id/syncplay_artwork_bg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:srcCompat="@drawable/cosmik_gradient"
+        tools:ignore="ContentDescription" />
+
+    <ImageView
+        android:id="@+id/syncplay_artwork_fg"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/syncplay_logo"
+        tools:ignore="ContentDescription" />
+
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/syncplay_artwork_delegate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="visible"
+        app:constraint_referenced_ids="syncplay_artwork_bg, syncplay_artwork_fg" />
 
     <com.google.android.exoplayer2.ui.PlayerView
         android:id="@+id/vidplayer"
@@ -46,7 +72,7 @@
         app:layout_constraintBottom_toBottomOf="@id/syncplay_MESSAGERY"
         app:layout_constraintLeft_toLeftOf="@id/syncplay_MESSAGERY"
         app:layout_constraintRight_toRightOf="@id/syncplay_MESSAGERY"
-        app:layout_constraintTop_toTopOf="@id/syncplay_MESSAGERY"></com.google.android.material.card.MaterialCardView>
+        app:layout_constraintTop_toTopOf="@id/syncplay_MESSAGERY" />
 
     <RelativeLayout
         android:id="@+id/syncplay_MESSAGERY"
@@ -66,23 +92,25 @@
         android:id="@+id/syncplay_INPUT"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="0dp"
-        android:layout_height="48dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="@id/syncplay_SEND"
         android:layout_marginHorizontal="8dp"
-        android:layout_marginTop="6dp"
         android:focusable="true"
         android:hint="@string/room_type_message"
         app:layout_constraintEnd_toStartOf="@id/syncplay_SEND"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintWidth_percent="0.40"
+        app:layout_constraintHeight_percent="0.15"
+        app:layout_constraintStart_toEndOf="@id/syncplay_MESSAGERY_opacitydelegate"
+        app:layout_constraintTop_toTopOf="@id/syncplay_SEND"
         tools:ignore="HardcodedText">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/syncplay_INPUT_box"
             android:layout_width="match_parent"
-            android:layout_height="43dp"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="2dp"
+            android:paddingVertical="2dp"
             android:imeOptions="flagNoExtractUi"
             android:includeFontPadding="false"
-            android:padding="8dp"
             android:singleLine="true"
             android:textSize="12sp" />
     </com.google.android.material.textfield.TextInputLayout>
@@ -90,7 +118,8 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/syncplay_SEND"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        app:layout_constraintHeight_percent="0.15"
         android:layout_marginTop="2dp"
         android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"

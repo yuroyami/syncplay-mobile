@@ -59,17 +59,18 @@
                 android:text="@string/disconnected_notice_b"
                 android:textAlignment="center"
                 android:textSize="13sp"
-                app:layout_constraintBottom_toBottomOf="@id/disconnected_gif"
+                app:layout_constraintBottom_toBottomOf="@id/disconnected_animation"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@id/disconnected_gif"
-                app:layout_constraintTop_toTopOf="@id/disconnected_gif" />
+                app:layout_constraintStart_toEndOf="@id/disconnected_animation"
+                app:layout_constraintTop_toTopOf="@id/disconnected_animation" />
 
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/disconnected_gif"
+            <ProgressBar
+                android:id="@+id/disconnected_animation"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:layout_marginTop="6dp"
-                android:scaleType="fitXY"
+                android:indeterminate="true"
+                android:indeterminateBehavior="cycle"
                 app:layout_constraintEnd_toStartOf="@id/disconnected_notice_b"
                 app:layout_constraintHorizontal_bias="1"
                 app:layout_constraintStart_toStartOf="parent"

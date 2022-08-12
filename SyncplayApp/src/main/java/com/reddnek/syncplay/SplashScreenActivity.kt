@@ -7,7 +7,7 @@ import android.os.Handler
 import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
 import com.reddnek.syncplay.main.MainActivity
-import com.reddnek.syncplayutils.SyncplayUtils
+import com.reddnek.syncplay.utils.SyncplayUtils
 
 @SuppressLint("CustomSplashScreen") /* Don't trust Google's SplashScreen API, we make our own */
 class SplashScreenActivity : AppCompatActivity() {

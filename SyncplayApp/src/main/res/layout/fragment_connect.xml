@@ -12,6 +12,29 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/connect_nightswitch"
+            style="@style/ClickEffectBL"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_margin="26dp"
+            android:contentDescription="@string/connect_nightmodeswitch"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic_crescent" />
+
+        <ImageView
+            android:id="@+id/connect_solomode"
+            style="@style/ClickEffectBL"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_margin="26dp"
+            android:contentDescription="@string/connect_solomode"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/ic_solo" />
+
         <ImageView
             android:id="@+id/connect_Logo"
             android:layout_width="128dp"
@@ -214,19 +237,22 @@
             app:layout_constraintTop_toBottomOf="@id/connect_customServerAddress"
             app:layout_constraintWidth_percent="0.8" />
 
-        <androidx.appcompat.widget.AppCompatButton
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/connect_JoinButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
             android:fontFamily="@font/directive4bold"
-            android:padding="16dp"
+            android:layout_marginTop="8dp"
+            android:foreground="@drawable/click_effect_drawable"
             android:text="@string/connect_button"
             android:textAlignment="center"
-            android:layout_marginTop="4dp"
+            android:paddingHorizontal="16dp"
             android:textColor="@color/white"
             android:textSize="14sp"
             android:background="@drawable/bg3_gradient"
+            android:paddingVertical="8dp"
+            app:backgroundTint="@null"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/connect_customServerPassword" />

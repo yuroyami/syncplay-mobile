@@ -7,7 +7,7 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import com.google.android.material.snackbar.Snackbar
-import com.reddnek.syncplay.room.UIUtils.applyUISettings
+import com.reddnek.syncplay.utils.UIUtils.applyUISettings
 
 class RoomSettingsFragment : PreferenceFragmentCompat(),
     PreferenceManager.OnPreferenceTreeClickListener {

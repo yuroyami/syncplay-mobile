@@ -32,6 +32,9 @@
     <string name="connect_enter_custom_server">Enter Custom Server</string>
     <string name="connect_custom_server_password">Password (Empty if not required)</string>
     <string name="connect_port">Port</string>
+    <string name="connect_nightmodeswitch">Switch the day/night mode.</string>
+    <string name="connect_solomode">Enter solo mode (video-player only)</string>
+
 
     <!-- Room Activity Strings -->
     <string name="room_startup_hint">"Insert a new video from storage by clicking on the button with the following icon "</string>
@@ -122,6 +125,8 @@
     <string name="settings_categ_room">Room Settings</string>
     <string name="settings_categ_video">Video Settings</string>
     <string name="settings_categ_misc">Miscellaneous</string>
+    <string name="setting_night_mode_title">Night Mode</string>
+    <string name="setting_night_mode_summary">Select the night mode behavior.</string>
     <string name="setting_remember_join_info_title">Remember joining info</string>
     <string name="setting_remember_join_info_summary">Enabled by default. This will allow SyncPlay to save your last username, roomname, and which official server you last used.</string>
     <string name="setting_display_language_title">Display Language</string>
@@ -186,6 +191,10 @@
     <string name="setting_fileinfoBehavior_b">Send hashed</string>
     <string name="setting_fileinfoBehavior_c">Don\'t send</string>
 
+    <string name="setting_night_mode_a">OFF</string>
+    <string name="setting_night_mode_b">AUTO (System)</string>
+    <string name="setting_night_mode_c">ON</string>
+
     <!--List of Languages identifier strings used for literally just a toast... -->
     <string name="en">English</string>
     <string name="ar">Arabic</string>
@@ -199,7 +208,6 @@
         <item>中文</item>
         <item>Francais</item>
     </string-array>
-
     <string-array name="LangValues">
         <item>"en"</item>
         <item>"ar"</item>
@@ -214,6 +222,18 @@
         <item>@string/setting_fileinfoBehavior_c</item>
     </string-array>
     <string-array name="fileinfoBehaviorValues">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+
+    <!-- List of options for night mode -->
+    <string-array name="nightModeEntries">
+        <item>@string/setting_night_mode_a</item>
+        <item>@string/setting_night_mode_b</item>
+        <item>@string/setting_night_mode_c</item>
+    </string-array>
+    <string-array name="nightModeValues">
         <item>1</item>
         <item>2</item>
         <item>3</item>

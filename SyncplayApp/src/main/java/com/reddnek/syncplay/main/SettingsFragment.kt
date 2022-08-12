@@ -12,6 +12,7 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import com.google.android.material.snackbar.Snackbar
+import com.reddnek.syncplay.utils.NightmodeUtils.setNightMode
 import com.reddnek.syncplay.R as X
 
 class SettingsFragment : PreferenceFragmentCompat(),
@@ -21,27 +22,22 @@ class SettingsFragment : PreferenceFragmentCompat(),
         setPreferencesFromResource(X.xml.settings, rootKey)
 
         findPreference<ListPreference>("lang")?.setOnPreferenceChangeListener { pref, newVal ->
-
-            /** AndroidX allows us now to change app language via just one line of code. This would *
-             * work without issues for Android 13 and higher. But on lower Android versions, there *
-             * needs to be a service to be added in AndroidManifest.xml                            *
-             *                                                                                     *
-             * For more info: https://developer.android.com/reference/androidx/appcompat/app/AppCompatDelegate#setApplicationLocales(androidx.core.os.LocaleListCompat) **/
-
             val localesList: LocaleListCompat = LocaleListCompat.forLanguageTags(newVal.toString())
             AppCompatDelegate.setApplicationLocales(localesList) /* One line of code, capable of localizing the app at runtime */
 
             /* Let's show a toast to the user that the language has been changed */
-            val toast = String.format(
-                requireContext().resources.getString(X.string.setting_display_language_toast),
-                ""
-            )
-
             Toast.makeText(
-                requireContext(),
-                toast,
+                requireContext(), String.format(
+                    requireContext().resources.getString(X.string.setting_display_language_toast),
+                    ""
+                ),
                 Toast.LENGTH_SHORT
             ).show()
+            true
+        }
+
+        findPreference<ListPreference>("night_mode")?.setOnPreferenceChangeListener { pref, newVal ->
+            setNightMode(newVal.toString())
             true
         }
     }

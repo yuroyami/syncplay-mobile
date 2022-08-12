@@ -1,3 +1,9 @@
 <resources>
 
+    <!-- Adds a nice circular click (ripple) effect and also the clickability-->
+    <style name="ClickEffectBL">
+        <item name="android:background">?android:attr/selectableItemBackgroundBorderless</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
 </resources>

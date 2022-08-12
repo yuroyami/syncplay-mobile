@@ -10,7 +10,6 @@ class MainActivity : AppCompatActivity() {
     //Declaring the ViewBinding global variables :
     private lateinit var binding: ActivityMainBinding
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -26,6 +25,5 @@ class MainActivity : AppCompatActivity() {
         TabLayoutMediator(myPagerTabs, mymainPager) { tab, position ->
             tab.text = (mymainPager.adapter as MainPagerAdapter).mFragmentNames[position]
         }.attach()
-
     }
 }

@@ -9,8 +9,8 @@ import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.reddnek.syncplay.R
-import com.reddnek.syncplay.room.SharedPlaylistUtils.deleteItemFromPlaylist
-import com.reddnek.syncplay.room.SharedPlaylistUtils.sendPlaylistSelection
+import com.reddnek.syncplay.utils.SharedPlaylistUtils.deleteItemFromPlaylist
+import com.reddnek.syncplay.utils.SharedPlaylistUtils.sendPlaylistSelection
 
 class SharedPlaylistRecycAdapter(private val act: RoomActivity, var list: MutableList<String>) :
     RecyclerView.Adapter<SharedPlaylistRecycAdapter.ViewHolder>() {

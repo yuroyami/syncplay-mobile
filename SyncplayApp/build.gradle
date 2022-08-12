@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    compileSdk 33
+    compileSdk 33 /* Not gonna use 33 until they fix "Unknown attributes" bug */
     buildToolsVersion "33.0.0"
     namespace "com.reddnek.syncplay"
     signingConfigs {
@@ -21,8 +21,7 @@ android {
         targetSdk 32
         versionCode 100009000
         versionName "0.9.0"
-        resConfigs "en", "ar", "zh", "fr"
-        /* Necessary to use with AppCompatDelegate.setApplicationLocale */
+        resConfigs "en", "ar", "zh", "fr" //To use with AppCompatDelegate.setApplicationLocale
         signingConfig signingConfigs.github
     }
 
@@ -54,15 +53,30 @@ android {
 }
 
 dependencies {
-    /* All dependencies are mentioned in SyncplayUtils module's build.gradle */
-    /* Why, you ask ? Because all our modules depend on that one module */
-    /* And also, we don't have to mention the same dependencies over and over again in each module */
-    implementation project(':SyncplayProtocol') //Deploying SyncplayProtocol
-    implementation project(':SyncplayUtils') //Deploying our own toolkit
+    implementation 'androidx.core:core-ktx:1.9.0-alpha05' /* Android core library - Kotlin ver */
+    implementation 'androidx.appcompat:appcompat:1.6.0-alpha05' /* AndroidX's AppCompat library */
+    implementation 'com.google.android.material:material:1.7.0-alpha03'
+    /* Google's MaterialComponents */
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.0-alpha03'
+    /* AndroidX's ConstraintLayout */
+    implementation 'androidx.viewpager2:viewpager2:1.1.0-beta01' /* AndroidX's ViewPager2 */
+    implementation 'androidx.preference:preference-ktx:1.2.0'
+    /* AndroidX's Preferences - Kotlin ver*/
+    implementation 'io.github.razerdp:BasePopup:3.2.0' /* Customizable Popup Dialog */
+    //implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.5.0-rc02'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.0-alpha01' /* ViewModel */
+    implementation 'com.google.code.gson:gson:2.9.0' /* Google's GSON for Json operations */
+    implementation("com.google.android.exoplayer:exoplayer:2.18.1") { /* ExoPlayer */
+        exclude group: 'com.android.support'
+    }
+    implementation "androidx.documentfile:documentfile:1.0.1" /* Helps with SAF */
+    implementation 'com.jaredrummler:colorpicker:1.1.0' /* ColorPreference */
+    implementation files('libs/ext.aar') /* ExoPlayer's FFmpeg extension */
 
-    /* As for importing the FFmpeg extension, we cannot add it in another module/submodule that
-       represents an Android Library. An error would sho "Direct local .aar are not supported"
-       To solve such issue, we just depend on the extension here.
-     */
-    implementation files('libs/ext.aar')
+    /** Unnecessary-for-functionality Libraries */
+    implementation "com.github.skydoves:expandablelayout:1.0.7" /* ExpandableLayout */
+    implementation 'com.github.jorgecastilloprz:fillableloaders:1.03@aar' /* FillableLoader */
+    //implementation 'com.blankj:utilcodex:1.31.0' //CustomUtils, didn't use any til now
+    //implementation 'org.conscrypt:conscrypt-android:2.5.2' //Will use for TLSv1.3
+
 }

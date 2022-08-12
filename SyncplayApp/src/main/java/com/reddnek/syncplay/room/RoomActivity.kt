@@ -1,37 +1,23 @@
 package com.reddnek.syncplay.room
 
-import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.*
-import android.text.Html
 import android.util.TypedValue.COMPLEX_UNIT_SP
+import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.view.animation.AccelerateInterpolator
-import android.widget.FrameLayout
 import android.widget.ImageButton
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.AppCompatImageButton
-import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.children
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import androidx.preference.PreferenceManager
-import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.DataSource
-import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.load.engine.GlideException
-import com.bumptech.glide.load.resource.gif.GifDrawable
-import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.RequestOptions
-import com.bumptech.glide.request.target.Target
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.C.SELECTION_FLAG_DEFAULT
 import com.google.android.exoplayer2.C.VIDEO_SCALING_MODE_SCALE_TO_FIT
@@ -41,54 +27,54 @@ import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.CaptionStyleCompat
 import com.google.android.exoplayer2.ui.CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW
 import com.google.android.exoplayer2.util.MimeTypes
-import com.google.android.material.button.MaterialButton
 import com.google.gson.GsonBuilder
 import com.reddnek.syncplay.databinding.ActivityRoomBinding
-import com.reddnek.syncplay.room.ExoPlayerUtils.applyLastOverrides
-import com.reddnek.syncplay.room.ExoPlayerUtils.audioSelect
-import com.reddnek.syncplay.room.ExoPlayerUtils.injectVideo
-import com.reddnek.syncplay.room.ExoPlayerUtils.pausePlayback
-import com.reddnek.syncplay.room.ExoPlayerUtils.playPlayback
-import com.reddnek.syncplay.room.ExoPlayerUtils.subtitleSelect
-import com.reddnek.syncplay.room.RoomUtils.checkFileMismatches
-import com.reddnek.syncplay.room.RoomUtils.pingUpdater
-import com.reddnek.syncplay.room.RoomUtils.sendMessage
-import com.reddnek.syncplay.room.RoomUtils.sendPlayback
-import com.reddnek.syncplay.room.RoomUtils.string
-import com.reddnek.syncplay.room.RoomUtils.vidPosUpdater
-import com.reddnek.syncplay.room.SharedPlaylistUtils.addFileToPlaylist
-import com.reddnek.syncplay.room.SharedPlaylistUtils.addFolderToPlaylist
-import com.reddnek.syncplay.room.SharedPlaylistUtils.changePlaylistSelection
-import com.reddnek.syncplay.room.UIUtils.applyUISettings
-import com.reddnek.syncplay.room.UIUtils.attachTooltip
-import com.reddnek.syncplay.room.UIUtils.broadcastMessage
-import com.reddnek.syncplay.room.UIUtils.displayInfo
-import com.reddnek.syncplay.room.UIUtils.hideKb
-import com.reddnek.syncplay.room.UIUtils.replenishUsers
-import com.reddnek.syncplay.room.UIUtils.showPopup
-import com.reddnek.syncplay.room.UIUtils.toasty
-import com.reddnek.syncplayprotocol.JsonSender.sendEmptyList
-import com.reddnek.syncplayprotocol.JsonSender.sendFile
-import com.reddnek.syncplayprotocol.JsonSender.sendReadiness
-import com.reddnek.syncplayprotocol.JsonSender.sendState
-import com.reddnek.syncplayprotocol.ProtocolBroadcaster
-import com.reddnek.syncplayprotocol.SyncplayProtocol
-import com.reddnek.syncplayutils.SyncplayUtils
-import com.reddnek.syncplayutils.SyncplayUtils.getFileName
-import com.reddnek.syncplayutils.SyncplayUtils.hideSystemUI
-import com.reddnek.syncplayutils.SyncplayUtils.loggy
-import com.reddnek.syncplayutils.SyncplayUtils.timeStamper
-import com.reddnek.syncplayutils.utils.MediaFile
-import razerdp.basepopup.BasePopupWindow
+import com.reddnek.syncplay.popups.DisconnectedPopup
+import com.reddnek.syncplay.popups.MessageHistoryPopup
+import com.reddnek.syncplay.popups.SharedPlaylistPopup
+import com.reddnek.syncplay.popups.StarterHintPopup
+import com.reddnek.syncplay.protocol.JsonSender.sendEmptyList
+import com.reddnek.syncplay.protocol.JsonSender.sendFile
+import com.reddnek.syncplay.protocol.JsonSender.sendReadiness
+import com.reddnek.syncplay.protocol.JsonSender.sendState
+import com.reddnek.syncplay.protocol.ProtocolBroadcaster
+import com.reddnek.syncplay.protocol.SyncplayProtocol
+import com.reddnek.syncplay.utils.ExoPlayerUtils.applyLastOverrides
+import com.reddnek.syncplay.utils.ExoPlayerUtils.audioSelect
+import com.reddnek.syncplay.utils.ExoPlayerUtils.injectVideo
+import com.reddnek.syncplay.utils.ExoPlayerUtils.pausePlayback
+import com.reddnek.syncplay.utils.ExoPlayerUtils.playPlayback
+import com.reddnek.syncplay.utils.ExoPlayerUtils.subtitleSelect
+import com.reddnek.syncplay.utils.RoomUtils.checkFileMismatches
+import com.reddnek.syncplay.utils.RoomUtils.pingUpdater
+import com.reddnek.syncplay.utils.RoomUtils.sendMessage
+import com.reddnek.syncplay.utils.RoomUtils.sendPlayback
+import com.reddnek.syncplay.utils.RoomUtils.string
+import com.reddnek.syncplay.utils.RoomUtils.vidPosUpdater
+import com.reddnek.syncplay.utils.SharedPlaylistUtils.addFileToPlaylist
+import com.reddnek.syncplay.utils.SharedPlaylistUtils.addFolderToPlaylist
+import com.reddnek.syncplay.utils.SharedPlaylistUtils.changePlaylistSelection
+import com.reddnek.syncplay.utils.SyncplayUtils
+import com.reddnek.syncplay.utils.SyncplayUtils.getFileName
+import com.reddnek.syncplay.utils.SyncplayUtils.hideSystemUI
+import com.reddnek.syncplay.utils.SyncplayUtils.loggy
+import com.reddnek.syncplay.utils.SyncplayUtils.timeStamper
+import com.reddnek.syncplay.utils.UIUtils.applyUISettings
+import com.reddnek.syncplay.utils.UIUtils.attachTooltip
+import com.reddnek.syncplay.utils.UIUtils.broadcastMessage
+import com.reddnek.syncplay.utils.UIUtils.displayInfo
+import com.reddnek.syncplay.utils.UIUtils.hideKb
+import com.reddnek.syncplay.utils.UIUtils.replenishUsers
+import com.reddnek.syncplay.utils.UIUtils.showPopup
+import com.reddnek.syncplay.utils.UIUtils.toasty
+import com.reddnek.syncplay.wrappers.MediaFile
 import kotlin.collections.set
 import kotlin.math.roundToInt
-import androidx.appcompat.widget.AppCompatImageView as ImageView
-import androidx.appcompat.widget.AppCompatTextView as TextView
 import com.reddnek.syncplay.R as rr
 
-class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
+open class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
     /* Declaring our ViewBinding global variables (much faster than findViewById) **/
-    lateinit var roomBinding: ActivityRoomBinding
+    lateinit var binding: ActivityRoomBinding
     lateinit var hudBinding: HudBinding
 
     /* This will initialize our protocol the first time it is needed */
@@ -191,8 +177,8 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         /** Inflating and ViewBinding */
-        roomBinding = ActivityRoomBinding.inflate(layoutInflater)
-        val view = roomBinding.root
+        binding = ActivityRoomBinding.inflate(layoutInflater)
+        val view = binding.root
         setContentView(view)
         hudBinding = HudBinding.bind(findViewById(rr.id.vidplayerhud))
 
@@ -219,7 +205,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         val sp = PreferenceManager.getDefaultSharedPreferences(this)
 
         /** Pref No.1 : Should the READY button be initially clicked ? **/
-        roomBinding.syncplayReady.isChecked = sp.getBoolean("ready_firsthand", true).also {
+        binding.syncplayReady.isChecked = sp.getBoolean("ready_firsthand", true).also {
             p.ready = it /* Telling our protocol about our readiness */
         }
 
@@ -318,13 +304,16 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
             )
             .build()
             .also { exoPlayer ->
-                roomBinding.vidplayer.player = exoPlayer
+                binding.vidplayer.player = exoPlayer
             }
 
         /** Customizing ExoPlayer components **/
         myExoPlayer?.videoScalingMode = VIDEO_SCALING_MODE_SCALE_TO_FIT /* Starter scaling */
 
         myExoPlayer?.playWhenReady = true /* Play once the media has been buffered */
+
+        binding.vidplayer.setShutterBackgroundColor(Color.TRANSPARENT)
+        binding.vidplayer.videoSurfaceView?.visibility = View.GONE
 
         /** This listener is very important, without it, syncplay is nothing but a video player */
         /** TODO: Seperate the interface from the activity **/
@@ -402,38 +391,38 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
             Color.BLACK,
             Typeface.DEFAULT_BOLD
         )
-        roomBinding.vidplayer.subtitleView?.also {
+        binding.vidplayer.subtitleView?.also {
             it.setStyle(captionStyle)
             it.setFixedTextSize(COMPLEX_UNIT_SP, ccsize)
         }
 
         /** Clicking on the player hides the keyboard, and loses focus from the message box **/
-        roomBinding.vidplayer.setOnClickListener {
+        binding.vidplayer.setOnClickListener {
             hideKb()
-            roomBinding.syncplayINPUTBox.clearFocus()
+            binding.syncplayINPUTBox.clearFocus()
         }
 
         /** Listening to ExoPlayer's UI Visibility **/
-        roomBinding.vidplayer.setControllerVisibilityListener { visibility ->
+        binding.vidplayer.setControllerVisibilityListener { visibility ->
             if (visibility == VISIBLE) {
-                roomBinding.syncplayMESSAGERYOpacitydelegate.also {
+                binding.syncplayMESSAGERYOpacitydelegate.also {
                     it.clearAnimation()
                     it.alpha = 1f
                     it.visibility = VISIBLE
                 }
-                roomBinding.syncplayMESSAGERY.also {
+                binding.syncplayMESSAGERY.also {
                     it.clearAnimation()
                     it.alpha = 1f
                     it.visibility = VISIBLE
                 }
-                for (c in roomBinding.syncplayMESSAGERY.children) {
+                for (c in binding.syncplayMESSAGERY.children) {
                     c.animate()
                         .alpha(1f)
                         .setDuration(1L)
                         .setInterpolator(AccelerateInterpolator())
                         .start()
                 }
-                roomBinding.syncplayVisiblitydelegate.visibility = VISIBLE
+                binding.syncplayVisiblitydelegate.visibility = VISIBLE
                 val visib = if (seekButtonEnable == false) GONE else VISIBLE
                 Handler(Looper.getMainLooper()).postDelayed({
                     hudBinding.exoFfwd.visibility = visib
@@ -441,25 +430,25 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                 }, 10)
             } else {
                 hideSystemUI(this, false)
-                roomBinding.syncplayMESSAGERYOpacitydelegate.also {
+                binding.syncplayMESSAGERYOpacitydelegate.also {
                     it.clearAnimation()
                     it.alpha = 0f
                     it.visibility = GONE
                 }
-                roomBinding.syncplayMESSAGERY.also {
+                binding.syncplayMESSAGERY.also {
                     it.clearAnimation()
                     it.alpha = 0f
                     it.visibility = GONE
                 }
-                if ((!roomBinding.syncplayINPUTBox.hasFocus())
-                    || roomBinding.syncplayINPUTBox.text.toString().trim() == ""
+                if ((!binding.syncplayINPUTBox.hasFocus())
+                    || binding.syncplayINPUTBox.text.toString().trim() == ""
                 ) {
-                    roomBinding.syncplayVisiblitydelegate.visibility = GONE
+                    binding.syncplayVisiblitydelegate.visibility = GONE
                     hideKb()
                 }
             }
-            roomBinding.syncplayOverviewCard.isVisible =
-                (visibility == VISIBLE) && roomBinding.syncplayOverviewcheckbox.isChecked
+            binding.syncplayOverviewCard.isVisible =
+                (visibility == VISIBLE) && binding.syncplayOverviewcheckbox.isChecked
         }
 
         /************************
@@ -476,32 +465,32 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         /**************************
          * Message Focus Listener *
          **************************/
-        roomBinding.syncplayINPUTBox.setOnFocusChangeListener { _, hasFocus ->
+        binding.syncplayINPUTBox.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus) {
-                roomBinding.syncplayINPUT.clearAnimation()
-                roomBinding.syncplayINPUT.alpha = 1f
-                roomBinding.syncplaySEND.clearAnimation()
-                roomBinding.syncplaySEND.alpha = 1f
-                roomBinding.syncplayINPUTBox.clearAnimation()
-                roomBinding.syncplayINPUTBox.alpha = 1f
+                binding.syncplayINPUT.clearAnimation()
+                binding.syncplayINPUT.alpha = 1f
+                binding.syncplaySEND.clearAnimation()
+                binding.syncplaySEND.alpha = 1f
+                binding.syncplayINPUTBox.clearAnimation()
+                binding.syncplayINPUTBox.alpha = 1f
             }
         }
 
         /*****************
          * Send Messages *
          *****************/
-        roomBinding.syncplaySEND.setOnClickListener {
-            val msg: String = roomBinding.syncplayINPUTBox.text.toString()
+        binding.syncplaySEND.setOnClickListener {
+            val msg: String = binding.syncplayINPUTBox.text.toString()
                 .also {
                     it.replace("\\", "")
                     if (it.length > 150) it.substring(0, 149)
                 }
             if (msg.trim().isNotEmpty()) {
                 sendMessage(msg)
-                roomBinding.syncplayINPUT.isErrorEnabled = false
+                binding.syncplayINPUT.isErrorEnabled = false
             } else {
-                roomBinding.syncplayINPUT.isErrorEnabled = true
-                roomBinding.syncplayINPUT.error =
+                binding.syncplayINPUT.isErrorEnabled = true
+                binding.syncplayINPUT.error =
                     getString(com.reddnek.syncplay.R.string.room_empty_message_error)
             }
         }
@@ -511,7 +500,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
          *******************/
         hudBinding.exoSubtitle.setOnClickListener {
             if (myExoPlayer?.mediaItemCount != 0) {
-                subtitleSelect(it as android.widget.ImageButton)
+                subtitleSelect(it as ImageButton)
             }
         }
 
@@ -520,7 +509,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
          ***************/
         hudBinding.exoAudioTrack.setOnClickListener {
             if (myExoPlayer?.mediaItemCount != 0) {
-                audioSelect(it as android.widget.ImageButton)
+                audioSelect(it as ImageButton)
             }
         }
 
@@ -533,37 +522,37 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
             } else {
                 lockedScreen = true
                 runOnUiThread {
-                    roomBinding.syncplayVisiblitydelegate.visibility = GONE
-                    roomBinding.vidplayer.controllerHideOnTouch = false
-                    roomBinding.vidplayer.controllerAutoShow = false
-                    roomBinding.vidplayer.hideController()
-                    roomBinding.syncplayerLockoverlay.visibility = VISIBLE
-                    roomBinding.syncplayerLockoverlay.isFocusable = true
-                    roomBinding.syncplayerLockoverlay.isClickable = true
-                    roomBinding.syncplayerUnlock.visibility = VISIBLE
-                    roomBinding.syncplayerUnlock.isFocusable = true
-                    roomBinding.syncplayerUnlock.isClickable = true
+                    binding.syncplayVisiblitydelegate.visibility = GONE
+                    binding.vidplayer.controllerHideOnTouch = false
+                    binding.vidplayer.controllerAutoShow = false
+                    binding.vidplayer.hideController()
+                    binding.syncplayerLockoverlay.visibility = VISIBLE
+                    binding.syncplayerLockoverlay.isFocusable = true
+                    binding.syncplayerLockoverlay.isClickable = true
+                    binding.syncplayerUnlock.visibility = VISIBLE
+                    binding.syncplayerUnlock.isFocusable = true
+                    binding.syncplayerUnlock.isClickable = true
                 }
             }
         }
 
-        roomBinding.syncplayerUnlock.setOnClickListener {
+        binding.syncplayerUnlock.setOnClickListener {
             lockedScreen = false
             runOnUiThread {
-                roomBinding.vidplayer.controllerHideOnTouch = true
-                roomBinding.vidplayer.showController()
-                roomBinding.vidplayer.controllerAutoShow = true
-                roomBinding.syncplayerLockoverlay.visibility = GONE
-                roomBinding.syncplayerLockoverlay.isFocusable = false
-                roomBinding.syncplayerLockoverlay.isClickable = false
-                roomBinding.syncplayerUnlock.visibility = GONE
-                roomBinding.syncplayerUnlock.isFocusable = false
-                roomBinding.syncplayerUnlock.isClickable = false
+                binding.vidplayer.controllerHideOnTouch = true
+                binding.vidplayer.showController()
+                binding.vidplayer.controllerAutoShow = true
+                binding.syncplayerLockoverlay.visibility = GONE
+                binding.syncplayerLockoverlay.isFocusable = false
+                binding.syncplayerLockoverlay.isClickable = false
+                binding.syncplayerUnlock.visibility = GONE
+                binding.syncplayerUnlock.isFocusable = false
+                binding.syncplayerUnlock.isClickable = false
             }
         }
 
-        roomBinding.syncplayerLockoverlay.setOnClickListener {
-            roomBinding.syncplayerUnlock.also {
+        binding.syncplayerLockoverlay.setOnClickListener {
+            binding.syncplayerUnlock.also {
                 it.alpha = if (it.alpha == 0.35f) 0.05f else 0.35f
             }
         }
@@ -629,8 +618,8 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                     cutoutItem -> {
                         cutOutMode = !cutOutMode
                         SyncplayUtils.cutoutMode(cutOutMode, window)
-                        roomBinding.vidplayer.performClick()
-                        roomBinding.vidplayer.performClick() /* Double click to apply cut-out */
+                        binding.vidplayer.performClick()
+                        binding.vidplayer.performClick() /* Double click to apply cut-out */
                     }
                     seekbuttonsItem -> {
                         if (seekButtonEnable == true || seekButtonEnable == null) {
@@ -647,7 +636,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                         showPopup(messageHistoryPopup, true)
                     }
                     uiItem -> {
-                        roomBinding.pseudoPopupParent.visibility = VISIBLE
+                        binding.pseudoPopupParent.visibility = VISIBLE
                     }
                 }
                 return@setOnMenuItemClickListener true
@@ -659,17 +648,17 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         /********************
          * Room Information *
          ********************/
-        roomBinding.syncplayOverviewcheckbox.setOnCheckedChangeListener { _, checked ->
-            roomBinding.syncplayOverviewCard.isVisible = checked
+        binding.syncplayOverviewcheckbox.setOnCheckedChangeListener { _, checked ->
+            binding.syncplayOverviewCard.isVisible = checked
             if (checked) {
-                replenishUsers(roomBinding.syncplayOverview)
+                replenishUsers(binding.syncplayOverview)
             }
         }
 
         /****************
          * Ready Button *
          ****************/
-        roomBinding.syncplayReady.setOnCheckedChangeListener { _, b ->
+        binding.syncplayReady.setOnCheckedChangeListener { _, b ->
             p.ready = b
             p.sendPacket(sendReadiness(b, true))
         }
@@ -678,7 +667,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
          * Change Fit Mode *
          *******************/
         hudBinding.syncplayScreen.setOnClickListener {
-            val currentresolution = roomBinding.vidplayer.resizeMode
+            val currentresolution = binding.vidplayer.resizeMode
             val resolutions = mutableMapOf<Int, String>()
             resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIT] =
                 getString(rr.string.room_scaling_fit_screen)
@@ -693,15 +682,15 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
 
             val nextRes = currentresolution + 1
             if (nextRes == 5) {
-                roomBinding.vidplayer.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                binding.vidplayer.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
                 displayInfo(resolutions[0]!!)
             } else {
-                roomBinding.vidplayer.resizeMode = nextRes
+                binding.vidplayer.resizeMode = nextRes
                 displayInfo(resolutions[nextRes]!!)
             }
 
-            roomBinding.vidplayer.performClick()
-            roomBinding.vidplayer.performClick()
+            binding.vidplayer.performClick()
+            binding.vidplayer.performClick()
         }
 
         /** Shared Playlist */
@@ -710,8 +699,8 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         }
 
         /** UI Settings' Popup Click Controllers **/
-        roomBinding.popupDismisser.setOnClickListener {
-            roomBinding.pseudoPopupParent.visibility = GONE
+        binding.popupDismisser.setOnClickListener {
+            binding.pseudoPopupParent.visibility = GONE
             applyUISettings()
         }
 
@@ -739,7 +728,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
 
     override fun onPause() {
         super.onPause()
-        startFromPosition = roomBinding.vidplayer.player?.currentPosition!!
+        startFromPosition = binding.vidplayer.player?.currentPosition!!
         //updatePosition = false
     }
 
@@ -762,138 +751,6 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         super.onDestroy()
         myExoPlayer?.release()
     }
-
-    /****************************      CUSTOM FUNCTIONS      *************************************/
-
-    inner class StarterHintPopup(context: Context) : BasePopupWindow(context) {
-        init {
-            setContentView(rr.layout.popup_starter_hint)
-            findViewById<MaterialButton>(rr.id.dont_show_again).setOnClickListener {
-                PreferenceManager.getDefaultSharedPreferences(this@RoomActivity)
-                    .edit().putBoolean("dont_show_starter_hint", true).apply()
-                this.dismiss()
-            }
-
-            findViewById<FrameLayout>(rr.id.starter_hint_dismisser).setOnClickListener {
-                this.dismiss()
-            }
-
-        }
-    }
-
-    inner class MessageHistoryPopup(context: Context) : BasePopupWindow(context) {
-        init {
-            setContentView(rr.layout.popup_messages)
-
-            /* Getting parent and clearing it */
-            val parent = findViewById<LinearLayoutCompat>(rr.id.syncplay_MESSAGEHISTORY)
-            parent.removeAllViews()
-
-            val msgs = p.session.messageSequence
-            for (message in msgs) {
-                /* Creating 1 TextView for each message */
-                val txtview = TextView(this@RoomActivity)
-                txtview.text = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-                    Html.fromHtml(
-                        message.factorize(true, this@RoomActivity),
-                        Html.FROM_HTML_MODE_LEGACY
-                    ) else Html.fromHtml(message.factorize(true, this@RoomActivity))
-                txtview.textSize = 9F
-
-                parent.addView(txtview)
-            }
-
-            val dismisser = findViewById<FrameLayout>(rr.id.messages_popup_dismisser)
-            dismisser.setOnClickListener {
-                this.dismiss()
-            }
-        }
-    }
-
-    @SuppressLint("WrongViewCast")
-    inner class DisconnectedPopup(context: Context) : BasePopupWindow(context) {
-        init {
-            setContentView(rr.layout.popup_disconnected)
-            val gif = findViewById<ImageView>(rr.id.disconnected_gif)
-            Glide.with(context)
-                .asGif()
-                .load(rr.raw.spinner)
-                .apply(RequestOptions.diskCacheStrategyOf(DiskCacheStrategy.NONE))
-                .listener(object : RequestListener<GifDrawable?> {
-                    override fun onLoadFailed(
-                        e: GlideException?,
-                        model: Any?,
-                        target: Target<GifDrawable?>?,
-                        isFirstResource: Boolean
-                    ): Boolean {
-                        return false
-                    }
-
-                    override fun onResourceReady(
-                        resource: GifDrawable?,
-                        model: Any?,
-                        target: Target<GifDrawable?>?,
-                        dataSource: DataSource?,
-                        isFirstResource: Boolean
-                    ): Boolean {
-                        resource?.setLoopCount(999999999)
-                        return false
-                    }
-                })
-                .into(gif)
-
-            val dismisser = findViewById<FrameLayout>(rr.id.disconnected_popup_dismisser)
-            dismisser.setOnClickListener {
-                this.dismiss()
-            }
-
-        }
-    }
-
-    inner class SharedPlaylistPopup(context: Context) : BasePopupWindow(context) {
-        init {
-            val v = setContentView(rr.layout.popup_shared_playlist)
-
-            /* Dismissal */
-            val dismisser = this.findViewById<FrameLayout>(rr.id.shP_dismisser)
-            dismisser.setOnClickListener {
-                this.dismiss()
-            }
-
-            /* Reacting to button clicking for adding a file and a folder */
-            this.findViewById<AppCompatImageButton>(rr.id.shP_add_file).setOnClickListener {
-                val intent = Intent()
-                intent.type = "*/*"
-                intent.action = Intent.ACTION_OPEN_DOCUMENT
-                sharedFileResult.launch(intent)
-            }
-            this.findViewById<AppCompatImageButton>(rr.id.shP_add_directory).setOnClickListener {
-                val intent = Intent().apply { action = Intent.ACTION_OPEN_DOCUMENT_TREE }
-                sharedFolderResult.launch(intent)
-            }
-
-            this.findViewById<RecyclerView>(rr.id.shP_playlist).apply {
-                adapter = SharedPlaylistRecycAdapter(this@RoomActivity, p.session.sharedPlaylist)
-                (adapter as SharedPlaylistRecycAdapter).notifyDataSetChanged()
-            }
-
-            this.findViewById<MaterialButton>(rr.id.shP_save).setOnClickListener {
-                dismiss()
-            }
-        }
-
-        override fun update() {
-            runOnUiThread {
-                this.findViewById<RecyclerView>(rr.id.shP_playlist)?.apply {
-                    adapter =
-                        SharedPlaylistRecycAdapter(this@RoomActivity, p.session.sharedPlaylist)
-                    (adapter as SharedPlaylistRecycAdapter).notifyDataSetChanged()
-                }
-                super.update()
-            }
-        }
-    }
-
     /*********************************      CALLBACKS      ****************************************/
 
     override fun onSomeonePaused(pauser: String) {
@@ -964,7 +821,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
     }
 
     override fun onSomeoneLeft(leaver: String) {
-        replenishUsers(roomBinding.syncplayOverview)
+        replenishUsers(binding.syncplayOverview)
         broadcastMessage(string(rr.string.room_guy_left, leaver), false)
 
         /* If the setting is enabled, pause playback **/
@@ -981,16 +838,16 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
     }
 
     override fun onSomeoneJoined(joiner: String) {
-        replenishUsers(roomBinding.syncplayOverview)
+        replenishUsers(binding.syncplayOverview)
         broadcastMessage(string(rr.string.room_guy_joined, joiner), false)
     }
 
     override fun onReceivedList() {
-        replenishUsers(roomBinding.syncplayOverview)
+        replenishUsers(binding.syncplayOverview)
     }
 
     override fun onSomeoneLoadedFile(person: String, file: String?, fileduration: Double?) {
-        replenishUsers(roomBinding.syncplayOverview)
+        replenishUsers(binding.syncplayOverview)
         broadcastMessage(
             string(
                 rr.string.room_isplayingfile,
@@ -1020,7 +877,7 @@ class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
 
     override fun onReconnected() {
         broadcastMessage(string(rr.string.room_connected_to_server), false)
-        replenishUsers(roomBinding.syncplayOverview)
+        replenishUsers(binding.syncplayOverview)
         runOnUiThread {
             disconnectedPopup.dismiss() /* Dismiss any disconnection popup, if they exist */
         }

@@ -18,7 +18,7 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.reddnek.syncplay.R
 import com.reddnek.syncplay.databinding.ActivityDirectoriesBinding
-import com.reddnek.syncplayutils.SyncplayUtils
+import com.reddnek.syncplay.utils.SyncplayUtils
 
 
 class DirectoriesActivity : AppCompatActivity() {

@@ -22,6 +22,13 @@
             app:key="media_directories"
             app:title="@string/media_directories" />
 
+        <ListPreference
+            app:defaultValue="3"
+            app:entries="@array/nightModeEntries"
+            app:entryValues="@array/nightModeValues"
+            app:key="night_mode"
+            app:summary="@string/setting_night_mode_summary"
+            app:title="@string/setting_night_mode_title" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/settings_categ_room">

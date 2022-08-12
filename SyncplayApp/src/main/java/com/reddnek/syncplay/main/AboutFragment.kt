@@ -24,7 +24,6 @@ class AboutFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val binding = FragmentAboutBinding.bind(view)
         binding.aboutTab1.parentLayout.setOnClickListener { binding.aboutTab1.toggleLayout() }
         binding.aboutTab2.parentLayout.setOnClickListener { binding.aboutTab2.toggleLayout() }
         binding.aboutTab3.parentLayout.setOnClickListener { binding.aboutTab3.toggleLayout() }

@@ -1,6 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.SyncPlay" parent="Theme.MaterialComponents.NoActionBar">
+    <style name="Theme.SyncPlay" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/sp1</item>
         <item name="colorPrimaryVariant">@color/sp2</item>

@@ -16,26 +16,30 @@ import com.reddnek.syncplay.BuildConfig
 import com.reddnek.syncplay.R
 import com.reddnek.syncplay.databinding.FragmentConnectBinding
 import com.reddnek.syncplay.room.RoomActivity
+import com.reddnek.syncplay.solo.SoloActivity
+import com.reddnek.syncplay.utils.NightmodeUtils.setNightMode
+import com.reddnek.syncplay.utils.UIUtils.attachTooltip
 
 @SuppressLint("SetTextI18n")
 class ConnectFragment : Fragment() {
 
-    private var _binding: FragmentConnectBinding? = null
-    private val binding get() = _binding!!
+    lateinit var binding: FragmentConnectBinding
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentConnectBinding.inflate(inflater, container, false)
+        binding = FragmentConnectBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val binding = FragmentConnectBinding.bind(view)
 
+        /* Changing the footnote version according to the version name used in buid.gradle */
         binding.connectFootnoteB.text = "v" + BuildConfig.VERSION_NAME
+
+        /* Responding to the Join Button clicking */
         binding.connectJoinButton.setOnClickListener {
             val joiningInfo: MutableList<Any?> = mutableListOf()
 
@@ -96,7 +100,7 @@ class ConnectFragment : Fragment() {
                 if (customServerCheck) {
                     putString("customAddress", serverAddress)
                     putInt("customPort", serverPort)
-                    putString("customPassord", password)
+                    putString("customPassword", password)
                 }
                 apply()
             }
@@ -110,6 +114,21 @@ class ConnectFragment : Fragment() {
             startActivity(intent)
 
 
+        }
+
+        /* Checking whether the app should run in night mode */
+        setNightMode("0") /* 0 = apply from settings */
+
+        /* Responding to the Night/Day mode switching + adding a long-press tooltip*/
+        binding.connectNightswitch.apply {
+            setOnClickListener { setNightMode(null) /* null = switch mode */ }
+            attachTooltip(this.contentDescription.toString())
+        }
+
+        /* Responding to clicking the solo mode button + adding a long-pres tooltip */
+        binding.connectSolomode.apply {
+            setOnClickListener { enterSoloMode() }
+            attachTooltip(this.contentDescription.toString())
         }
     }
 
@@ -185,5 +204,12 @@ class ConnectFragment : Fragment() {
                 binding.connectCustomServerPassword.visibility = View.GONE
             }
         }
+    }
+
+
+    private fun enterSoloMode() {
+        val intent = Intent(requireContext(), SoloActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        startActivity(intent)
     }
 }
