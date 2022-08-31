@@ -23,18 +23,13 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <androidx.core.widget.NestedScrollView
-            android:id="@+id/syncplay_MH_nester"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/syncplay_MESSAGEHISTORY_recyc"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <LinearLayout
-                android:id="@+id/syncplay_MESSAGEHISTORY"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="6dp" />
-        </androidx.core.widget.NestedScrollView>
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="6dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
     </com.google.android.material.card.MaterialCardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

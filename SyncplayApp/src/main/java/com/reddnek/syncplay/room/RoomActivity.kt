@@ -5,7 +5,10 @@ import android.content.Intent
 import android.content.Intent.createChooser
 import android.graphics.Color
 import android.graphics.Typeface
-import android.os.*
+import android.os.Build
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.TypedValue.COMPLEX_UNIT_SP
 import android.view.View
 import android.view.View.GONE
@@ -93,9 +96,6 @@ open class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
     private var seekButtonEnable: Boolean? = null
     private var cutOutMode: Boolean = true
     var ccsize = 18f
-
-    /* Specifying and creating threads for separate periodic tasks such as pinging */
-    val pingingThread = HandlerThread("pingingThread")
 
     /* Declaring Popup dialog variables which are used to show/dismiss different popups */
     private lateinit var disconnectedPopup: DisconnectedPopup
@@ -236,9 +236,6 @@ open class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         /** Let's apply Cut-Out Mode on the get-go, user can turn it off later **/
         SyncplayUtils.cutoutMode(true, window)
 
-        /** Launch the visible ping updater **/
-        pingUpdate()
-
         /** Inject in-room settings fragment **/
         supportFragmentManager.beginTransaction()
             .replace(rr.id.pseudo_popup_container, RoomSettingsFragment())
@@ -250,6 +247,9 @@ open class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                 child.attachTooltip(child.contentDescription.toString())
             }
         }
+
+        /** Launch the visible ping updater **/
+        pingUpdate()
 
         /** Leaving the app for too long in the background might destroy the activity.
          * So, bringing it up back to the foreground would necessite calling onCreate() OR the
@@ -265,10 +265,10 @@ open class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         outState.putDouble("last_position", p.currentVideoPosition)
     }
 
-    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
-        super.onRestoreInstanceState(savedInstanceState)
-        p.sendPacket(sendEmptyList())
-    }
+//    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+//        super.onRestoreInstanceState(savedInstanceState)
+//        p.sendPacket(sendEmptyList())
+//    }
 
     override fun onStart() {
         super.onStart()
@@ -459,7 +459,7 @@ open class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
 
             val offlineItem = popup.menu.add(0, 0, 0, getString(rr.string.room_addmedia_offline))
 
-            val onlineItem = popup.menu.add(0, 1, 1, getString(rr.string.room_addmedia_online))
+            //val onlineItem = popup.menu.add(0, 1, 1, getString(rr.string.room_addmedia_online))
 
             popup.setOnMenuItemClickListener {
                 when (it) {
@@ -470,9 +470,9 @@ open class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                         val intentWrapper = createChooser(intent1, "Select a video with")
                         videoPickResult.launch(intentWrapper)
                     }
-                    onlineItem -> {
-                        showPopup(urlPopup, true)
-                    }
+//                    onlineItem -> {
+//                        showPopup(urlPopup, true)
+//                    }
                 }
                 return@setOnMenuItemClickListener true
             }
@@ -912,10 +912,10 @@ open class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
     }
 
     override fun onBackPressed() {
-        super.onBackPressed()
         p.removeBroadcaster()
         p.socket.close()
-        finish()
+        finishAndRemoveTask()
+        super.onBackPressed()
     }
 
 }

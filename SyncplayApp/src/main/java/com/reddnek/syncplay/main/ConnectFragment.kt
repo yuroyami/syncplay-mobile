@@ -110,10 +110,7 @@ class ConnectFragment : Fragment() {
             val intent = Intent(requireContext(), RoomActivity::class.java).apply {
                 putExtra("json", json)
             }
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             startActivity(intent)
-
-
         }
 
         /* Checking whether the app should run in night mode */

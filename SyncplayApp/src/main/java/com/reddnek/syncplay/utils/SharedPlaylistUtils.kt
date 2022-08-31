@@ -3,6 +3,7 @@ package com.reddnek.syncplay.utils
 import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.documentfile.provider.DocumentFile
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.reddnek.syncplay.R
 import com.reddnek.syncplay.protocol.JsonSender.sendPlaylistChange
@@ -13,6 +14,8 @@ import com.reddnek.syncplay.utils.SyncplayUtils.getFileName
 import com.reddnek.syncplay.utils.UIUtils.broadcastMessage
 import com.reddnek.syncplay.utils.UIUtils.toasty
 import com.reddnek.syncplay.wrappers.MediaFile
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import com.reddnek.syncplay.main.DirectoriesActivity as DA
 
 /** Shared Playlists also have their fair amount of methods related to it which I believe can be
@@ -25,22 +28,22 @@ object SharedPlaylistUtils {
      * adds the parent directory to the known media directories, after that, it informs the server
      * about it. The server will send back the new playlist which will invoke playlist updating */
     fun RoomActivity.addFileToPlaylist(uri: Uri) {
-        Thread {
+        lifecycleScope.launch(Dispatchers.IO) {
             if (p.session.sharedPlaylist.isEmpty() && p.session.sharedPlaylistIndex == -1) {
                 p.file = MediaFile()
                 p.file!!.uri = uri
-                p.file!!.collectInfo(this)
+                p.file!!.collectInfo(this@addFileToPlaylist)
                 injectVideo(uri.toString())
                 p.sendPacket(sendPlaylistIndex(0))
             }
             val newList = p.session.sharedPlaylist
-            newList.add(getFileName(uri) ?: return@Thread)
+            newList.add(getFileName(uri) ?: return@launch)
             p.sendPacket(sendPlaylistChange(newList))
-        }.start()
+        }
     }
 
     fun RoomActivity.addFolderToPlaylist(uri: Uri) {
-        Thread {
+        lifecycleScope.launch(Dispatchers.IO) {
             /* First, we save it in our media directories as a common directory */
             saveFolderPathAsMediaDirectory(uri)
 
@@ -51,12 +54,14 @@ object SharedPlaylistUtils {
             )
 
             /** Obtaining the children tree from the path **/
-            val tree = DocumentFile.fromTreeUri(this, childrenUri) ?: return@Thread
+            val tree =
+                DocumentFile.fromTreeUri(this@addFolderToPlaylist, childrenUri) ?: return@launch
             val files = tree.listFiles()
 
             /** We iterate through the children file tree and add them to playlist */
             val newList = mutableListOf<String>()
             for (file in files) {
+                if (file.isDirectory) continue;
                 val filename = file.name!!
                 newList.add(filename)
             }
@@ -68,7 +73,7 @@ object SharedPlaylistUtils {
             } else {
                 p.sendPacket(sendPlaylistChange(p.session.sharedPlaylist + newList))
             }
-        }.start()
+        }
     }
 
     fun RoomActivity.saveFolderPathAsMediaDirectory(uri: Uri) {
@@ -96,9 +101,9 @@ object SharedPlaylistUtils {
      * is heavy.
      */
     fun RoomActivity.retrieveFile(fileName: String) {
-        Thread {
+        lifecycleScope.launch(Dispatchers.IO) {
             /** First, we search our media directories which were added by the user in settings */
-            val sp = PreferenceManager.getDefaultSharedPreferences(this)
+            val sp = PreferenceManager.getDefaultSharedPreferences(this@retrieveFile)
             val folderJson = sp.getString("SHARED_PLAYLIST_MEDIA_DIRECTORIES", "[]")
             val paths = p.gson.fromJson<List<String>>(folderJson, List::class.java).toMutableList()
 
@@ -112,21 +117,21 @@ object SharedPlaylistUtils {
                 val uri = Uri.parse(path)
 
                 /** Will NOT work if Uri hasn't been declared persistent upon retrieving it.
-                 * @see [com.chromaticnoob.syncplay.main.DirectoriesActivity] */
+                 * @see [com.reddnek.syncplay.main.DirectoriesActivity] */
                 val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
                     uri,
                     DocumentsContract.getTreeDocumentId(uri)
                 )
 
                 /** Obtaining the children tree from the path **/
-                val tree = DocumentFile.fromTreeUri(this, childrenUri) ?: return@Thread
+                val tree = DocumentFile.fromTreeUri(this@retrieveFile, childrenUri) ?: return@launch
                 val files = tree.listFiles()
 
                 /** We iterate through the children file tree, and we search for the specific file */
                 for (file in files) {
                     val filename = file.name!!
                     if (filename == fileName) {
-                        fileUri2Play = tree.findFile(filename)?.uri ?: return@Thread
+                        fileUri2Play = tree.findFile(filename)?.uri ?: return@launch
                         /** Changing current file variable **/
                         p.file = MediaFile()
                         p.file?.uri = fileUri2Play
@@ -145,7 +150,7 @@ object SharedPlaylistUtils {
                     broadcastMessage(getString(R.string.room_shared_playlist_not_found), false)
                 }
             }
-        }.start()
+        }
     }
 
     fun RoomActivity.deleteItemFromPlaylist(i: Int) {

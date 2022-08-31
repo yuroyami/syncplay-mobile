@@ -65,7 +65,7 @@ open class SyncplayProtocol : ViewModel() {
                     try {
                         socket = Socket(session.serverHost, session.serverPort)
                     } catch (e: Exception) {
-                        Thread.sleep(2000) //Safety-interval delay.
+                        delay(2000) //Safety-interval delay.
                         syncplayBroadcaster?.onConnectionFailed()
                         when (e) {
                             is UnknownHostException -> {

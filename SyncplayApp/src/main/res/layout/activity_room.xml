@@ -99,7 +99,7 @@
         android:hint="@string/room_type_message"
         app:layout_constraintEnd_toStartOf="@id/syncplay_SEND"
         app:layout_constraintHeight_percent="0.15"
-        app:layout_constraintStart_toEndOf="@id/syncplay_MESSAGERY_opacitydelegate"
+        app:layout_constraintWidth_percent="0.35"
         app:layout_constraintTop_toTopOf="@id/syncplay_SEND"
         tools:ignore="HardcodedText">
 

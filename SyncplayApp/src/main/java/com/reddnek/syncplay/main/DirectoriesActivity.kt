@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.net.toUri
 import androidx.preference.PreferenceManager
+import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.reddnek.syncplay.R
@@ -109,9 +110,10 @@ class DirectoriesActivity : AppCompatActivity() {
 
                 when (it) {
                     fullPath -> {
-                        Toast.makeText(
+                        Snackbar.make(
                             this,
-                            uris[i].toUri().path?.replace("/tree/primary:", "Storage//"),
+                            binding.root,
+                            uris[i].toUri().path?.replace("/tree/primary:", "Storage//").toString(),
                             Toast.LENGTH_LONG
                         ).show()
                     }

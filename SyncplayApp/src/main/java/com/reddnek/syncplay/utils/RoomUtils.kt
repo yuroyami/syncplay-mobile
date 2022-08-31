@@ -68,7 +68,9 @@ object RoomUtils {
                             )
                         )
                     }
-                    p.syncplayBroadcaster?.onDisconnected()
+                    if (p.connected) {
+                        p.syncplayBroadcaster?.onDisconnected()
+                    }
                 }
                 delay(1000)
             }
