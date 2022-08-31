@@ -89,6 +89,7 @@ These are the things I am willing to add/adjust in the future :
 - [x] Support for custom/private servers (as of 0.8.0)
 - [x] Night Mode (as of 0.9.0)
 - [x] Solo Mode (Offline video player) (as of 0.9.0)
+- [ ] Deployment to Google Play Store
 - [ ] URL Support
 - [ ] Fix TLS/SSL Secure Connection
 - [ ] Self-Updater
@@ -100,11 +101,11 @@ These are the things I am willing to add/adjust in the future :
   - [x] French (as of 0.9.0)
   - [x] Chinese (as of 0.9.0 by [Zhaodaidai](https://github.com/Zhaodaidai))
   - [ ] Spanish
-    - [ ] Portuguese
-    - [ ] Japanese
-    - [ ] German
-    - [ ] Italian
-    - [ ] Russian
+  - [ ] Portuguese
+  - [ ] Japanese
+  - [ ] German
+  - [ ] Italian
+  - [ ] Russian
 
 ## F.A.Q
 
