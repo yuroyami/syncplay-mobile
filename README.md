@@ -28,7 +28,7 @@
 ## Introduction
 
 [![OS - Android](https://img.shields.io/badge/OS-Android-yellowgreen?style=for-the-badge&logo=android)]()
-[![Version Release](https://img.shields.io/badge/Version-0.9.0-yellow?style=for-the-badge&logo=v)]()
+[![Version Release](https://img.shields.io/badge/Version-0.9.0-b00b69?style=for-the-badge&logo=v)]()
 [![Written Language](https://img.shields.io/badge/Made%20with-Kotlin-lightgrey?style=for-the-badge&logo=kotlin)]()
 [![is Maintained?](https://img.shields.io/badge/Maintained-YES-green?style=for-the-badge)]()
 [![License](https://img.shields.io/badge/License-AGPL--3.0-brightgreen?style=for-the-badge)]()
@@ -114,6 +114,11 @@ These are the things I am willing to add/adjust in the future :
 * I get an error saying "App not installed" upon installing the app. What's wrong ?
   -> Uninstall the older version before installing the new one.
 
+## Translating
+
+* If you want to contribute with a translation in a language that isn't available in Syncplay, or
+  enhance the actual translations, please refer to #30
+
 ## Feedback
 
 Feel free to [file an issue](https://github.com/chromaticnoob/syncplay-android/issues/new).
@@ -122,7 +127,7 @@ If there's anything you'd like to chat about, please feel free to open a new dis
 
 ## Build Process
 
-The project is developed under Android Studio Dolphin | 2021.3.1 Beta 4
+The project is developed under Android Studio Electric Eel | 2022.1.1 Canary 7
 Make sure you have a version equal or later than the one I am using. Dowload the source code ZIP and
 extract it somewhere, then open it using Android Studio. Then you can just build the app using a
 custom JKS keystore of your choice (Edit the keystore information on the
