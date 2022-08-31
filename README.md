@@ -87,16 +87,19 @@ These are the things I am willing to add/adjust in the future :
 - [x] Add Color preferences and in-room settings (as of 0.7.0)
 - [x] Shared Playlists (as of 0.8.0)
 - [x] Support for custom/private servers (as of 0.8.0)
+- [x] Night Mode (as of 0.9.0)
+- [x] Solo Mode (Offline video player) (as of 0.9.0)
+- [ ] URL Support
 - [ ] Fix TLS/SSL Secure Connection
 - [ ] Self-Updater
 - [ ] Support for LibVLC plugin integration to play all possible video formats without depencing on
   device capabilities
 - [x] Multi-language Support
-    - [x] English (as of 0.7.0)
-    - [x] Arabic (as of 0.7.0)
-    - [x] French (as of 0.9.0)
-    - [x] Chinese (as of 0.9.0 by Zhaodaidai)
-    - [ ] Spanish
+  - [x] English (as of 0.7.0)
+  - [x] Arabic (as of 0.7.0)
+  - [x] French (as of 0.9.0)
+  - [x] Chinese (as of 0.9.0 by [Zhaodaidai](https://github.com/Zhaodaidai))
+  - [ ] Spanish
     - [ ] Portuguese
     - [ ] Japanese
     - [ ] German
@@ -133,7 +136,7 @@ amazing software.
 Thanks to [Et0h](https://www.github.com/Et0h/) for his amazing hard work on official Syncplay and
 for lending a hand in our issues tracker section.
 
-Thanks to [Zhaodaidai](https://www.github.com/Zhaodaidai) for their contribution with a Chinese
+Thanks to [Zhaodaidai](https://www.github.com/Zhaodaidai) for their contribution with the Chinese
 translation for the app.
 
 ## License

@@ -53,13 +53,10 @@ object ExoPlayerUtils {
             /** Injecting it into ExoPlayer and getting relevant info **/
             runOnUiThread {
                 myExoPlayer?.setMediaItem(vid) /* This loads the media into ExoPlayer **/
+                myExoPlayer?.prepare()
 
-                hudBinding.exoPlay.performClick()
-                hudBinding.exoPause.performClick()
-                /** The play/pause trick to fully load the vid **/
-
-                p.currentVideoPosition = 0.0
                 /** Goes back to the beginning */
+                p.currentVideoPosition = 0.0
 
                 /** Seeing if we have to start over **/
                 if (startFromPosition != (-3.0).toLong()) myExoPlayer?.seekTo(startFromPosition)

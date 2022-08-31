@@ -88,7 +88,7 @@
                 android:layout_height="wrap_content"
                 android:maxLength="150"
                 android:singleLine="true"
-                android:textColor="#555555" />
+                android:textColor="@color/text1" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <TextView
@@ -135,7 +135,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:singleLine="true"
-                android:textColor="#555555" />
+                android:textColor="@color/text1" />
         </com.google.android.material.textfield.TextInputLayout>
 
 
@@ -191,7 +191,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="none"
-                android:textColor="#555555" />
+                android:textColor="@color/text1" />
         </com.google.android.material.textfield.TextInputLayout>
 
 

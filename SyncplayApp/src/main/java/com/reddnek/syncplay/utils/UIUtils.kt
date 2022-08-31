@@ -23,7 +23,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.reddnek.syncplay.R
 import com.reddnek.syncplay.room.RoomActivity
-import com.reddnek.syncplay.solo.SoloActivity
 import com.reddnek.syncplay.utils.RoomUtils.string
 import com.reddnek.syncplay.wrappers.Message
 import com.reddnek.syncplay.wrappers.User
@@ -290,10 +289,10 @@ object UIUtils {
     }
 
     /** Applies UI settings that are being changed through the in-room settings dialog **/
-    fun AppCompatActivity.applyUISettings() {
+    fun RoomActivity.applyUISettings() {
         lifecycleScope.launch(Dispatchers.Main) {
             /* For settings: Timestamp,Message Count,Message Font Size */
-            if (this is RoomActivity) replenishMsgs(binding.syncplayMESSAGERY)
+            replenishMsgs(binding.syncplayMESSAGERY)
 
             /* Holding a reference to SharedPreferences to use it later */
             val sp = PreferenceManager.getDefaultSharedPreferences(this@applyUISettings)
@@ -301,26 +300,16 @@ object UIUtils {
             /* Applying "overview_alpha" setting */
             val alpha1 = sp.getInt("overview_alpha", 40) //between 0-255
             @ColorInt val alphaColor1 = ColorUtils.setAlphaComponent(Color.DKGRAY, alpha1)
-            if (this is RoomActivity) binding.syncplayOverviewCard.setCardBackgroundColor(
-                alphaColor1
-            )
+            binding.syncplayOverviewCard.setCardBackgroundColor(alphaColor1)
 
             /* Applying MESSAGERY Alpha **/
             val alpha2 = sp.getInt("messagery_alpha", 40) //between 0-255
             @ColorInt val alphaColor2 = ColorUtils.setAlphaComponent(Color.DKGRAY, alpha2)
-            if (this is RoomActivity) binding.syncplayMESSAGERYOpacitydelegate.setCardBackgroundColor(
-                alphaColor2
-            )
+            binding.syncplayMESSAGERYOpacitydelegate.setCardBackgroundColor(alphaColor2)
 
             /* Applying Subtitle Size setting */
-            if (this@applyUISettings is RoomActivity) this@applyUISettings.ccsize =
-                sp.getInt("subtitle_size", 18).toFloat()
-            if (this@applyUISettings is SoloActivity) this@applyUISettings.ccsize =
-                sp.getInt("subtitle_size", 18).toFloat()
-            if (this is RoomActivity) binding.vidplayer.subtitleView?.setFixedTextSize(
-                COMPLEX_UNIT_SP,
-                ccsize
-            )
+            this@applyUISettings.ccsize = sp.getInt("subtitle_size", 18).toFloat()
+            binding.vidplayer.subtitleView?.setFixedTextSize(COMPLEX_UNIT_SP, ccsize)
         }
     }
 

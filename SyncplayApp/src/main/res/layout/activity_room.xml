@@ -7,6 +7,7 @@
     android:layout_height="match_parent"
     android:keepScreenOn="true"
     android:layoutDirection="ltr"
+    android:background="#000000"
     tools:context=".room.RoomActivity"
     tools:ignore="ContentDescription, DuplicateSpeakableTextCheck">
 

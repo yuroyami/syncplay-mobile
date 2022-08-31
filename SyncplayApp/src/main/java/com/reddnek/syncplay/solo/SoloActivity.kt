@@ -34,7 +34,6 @@ import com.reddnek.syncplay.room.RoomSettingsFragment
 import com.reddnek.syncplay.utils.RoomUtils.string
 import com.reddnek.syncplay.utils.SyncplayUtils
 import com.reddnek.syncplay.utils.SyncplayUtils.getFileName
-import com.reddnek.syncplay.utils.UIUtils.applyUISettings
 import com.reddnek.syncplay.utils.UIUtils.attachTooltip
 import com.reddnek.syncplay.utils.UIUtils.hideKb
 import com.reddnek.syncplay.utils.UIUtils.showPopup
@@ -665,6 +664,18 @@ class SoloActivity : AppCompatActivity() {
                 }
                 myExoPlayer?.trackSelector?.parameters = newParams
             }
+        }
+    }
+
+    /** Applies UI settings that are being changed through the in-room settings dialog **/
+    fun applyUISettings() {
+        lifecycleScope.launch(Dispatchers.Main) {
+            /* Holding a reference to SharedPreferences to use it later */
+            val sp = PreferenceManager.getDefaultSharedPreferences(this@SoloActivity)
+
+            /* Applying Subtitle Size setting */
+            ccsize = sp.getInt("subtitle_size", 18).toFloat()
+            binding.vidplayer.subtitleView?.setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, ccsize)
         }
     }
 }

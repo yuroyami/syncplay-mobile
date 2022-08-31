@@ -4,16 +4,16 @@
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/sp1</item>
         <item name="colorPrimaryVariant">@color/sp2</item>
-        <item name="colorOnPrimary">#7A7A7A</item>
+        <item name="colorOnPrimary">@color/text1</item>
         <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/sp2</item>
         <item name="colorSecondaryVariant">@color/sp3</item>
-        <item name="colorOnSecondary">#7A7A7A</item>
+        <item name="colorOnSecondary">@color/text1</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">@color/black</item>
         <!-- Globalizing text colors. -->
         <item name="android:textColor">@color/sp_shade</item>
-        <item name="android:textColorSecondary">#555555</item>
+        <item name="android:textColorSecondary">@color/text2</item>
         <item name="android:fontFamily">@font/inter_regular</item>
         <!-- Customize your theme here. -->
         <item name="windowNoTitle">true</item>
@@ -35,13 +35,13 @@
     <style name="MainScreenTheme" parent="Theme.MaterialComponents.NoActionBar">
         <item name="colorPrimary">@color/sp1</item>
         <item name="colorPrimaryVariant">@color/sp2</item>
-        <item name="colorOnPrimary">#7A7A7A</item>
+        <item name="colorOnPrimary">@color/text1</item>
         <item name="colorSecondary">@color/sp2</item>
         <item name="colorSecondaryVariant">@color/sp3</item>
-        <item name="colorOnSecondary">#7A7A7A</item>
+        <item name="colorOnSecondary">@color/text1</item>
         <item name="android:statusBarColor">#2d2d2d</item>
         <item name="android:textColor">@color/sp_shade</item>
-        <item name="android:textColorSecondary">#555555</item>
+        <item name="android:textColorSecondary">@color/text2</item>
         <item name="android:windowNoTitle">true</item>
         <item name="windowActionBar">false</item>
         <item name="android:windowFullscreen">false</item>
