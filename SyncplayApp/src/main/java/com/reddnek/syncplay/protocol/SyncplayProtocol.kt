@@ -1,8 +1,7 @@
 package com.reddnek.syncplay.protocol
 
-import android.os.Handler
-import android.os.HandlerThread
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.reddnek.syncplay.protocol.JsonHandler.handleJson
@@ -11,7 +10,6 @@ import com.reddnek.syncplay.utils.SyncplayUtils
 import com.reddnek.syncplay.wrappers.MediaFile
 import com.reddnek.syncplay.wrappers.Session
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -49,39 +47,19 @@ open class SyncplayProtocol : ViewModel() {
     /** Instantiating a socket to perform a TCP/IP connection later **/
     var socket: Socket = Socket()
 
-    /** Instantiating a thread that will be responsible for output socket operations **/
-    private val oThread = HandlerThread("senderThread")
-
     /** ============================ start of protocol =====================================**/
     fun connect() {
         syncplayBroadcaster?.onConnectionAttempt()
         sendPacket(sendHello(session.currentUsername, session.currentRoom, session.currentPassword))
     }
 
-    /** The packet sending is fairly simple, we create a socket if it's not connected, then
-     * we try 'n' catch any exceptions that may happen during the creation of the socket, sending
-     * data through the socket, etc... That's literally what takes space in this function. All that
-     * matters in the function below is the socket creation and sending packets through the output
-     * stream of that socket.
-     */
-    fun sendPacket(json: String) {
-        /** First, we check the status of the thread responsible for output operations **/
-        try {
-            if (!oThread.isAlive) {
-                oThread.start()
-            }
-            sendPacketCore(json)
-        } catch (e: IllegalThreadStateException) {
-            sendPacketCore(json)
-        }
-    }
 
-    private fun sendPacketCore(json: String) {
+    fun sendPacket(json: String) {
         /** First, we add line separator to our JSON, then encode it to byte array **/
         val jsonEncoded = "$json\r\n".encodeToByteArray()
 
         /** Second of all, we execute our packet sending runnable through the responsible thread **/
-        Handler(oThread.looper).post {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 if (!connected) {
                     try {
@@ -122,7 +100,7 @@ open class SyncplayProtocol : ViewModel() {
      * same time. So I will stick to this good ol' way which allows to never miss a line.
      */
     private fun readPacket() {
-        GlobalScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO) {
             while (true) {
                 try {
                     if (socket.isConnected && !socket.isClosed) {

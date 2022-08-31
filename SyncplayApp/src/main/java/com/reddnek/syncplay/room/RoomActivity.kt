@@ -2,6 +2,7 @@ package com.reddnek.syncplay.room
 
 import android.app.Activity
 import android.content.Intent
+import android.content.Intent.createChooser
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.*
@@ -29,10 +30,7 @@ import com.google.android.exoplayer2.ui.CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW
 import com.google.android.exoplayer2.util.MimeTypes
 import com.google.gson.GsonBuilder
 import com.reddnek.syncplay.databinding.ActivityRoomBinding
-import com.reddnek.syncplay.popups.DisconnectedPopup
-import com.reddnek.syncplay.popups.MessageHistoryPopup
-import com.reddnek.syncplay.popups.SharedPlaylistPopup
-import com.reddnek.syncplay.popups.StarterHintPopup
+import com.reddnek.syncplay.popups.*
 import com.reddnek.syncplay.protocol.JsonSender.sendEmptyList
 import com.reddnek.syncplay.protocol.JsonSender.sendFile
 import com.reddnek.syncplay.protocol.JsonSender.sendReadiness
@@ -46,7 +44,7 @@ import com.reddnek.syncplay.utils.ExoPlayerUtils.pausePlayback
 import com.reddnek.syncplay.utils.ExoPlayerUtils.playPlayback
 import com.reddnek.syncplay.utils.ExoPlayerUtils.subtitleSelect
 import com.reddnek.syncplay.utils.RoomUtils.checkFileMismatches
-import com.reddnek.syncplay.utils.RoomUtils.pingUpdater
+import com.reddnek.syncplay.utils.RoomUtils.pingUpdate
 import com.reddnek.syncplay.utils.RoomUtils.sendMessage
 import com.reddnek.syncplay.utils.RoomUtils.sendPlayback
 import com.reddnek.syncplay.utils.RoomUtils.string
@@ -103,6 +101,7 @@ open class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
     private lateinit var disconnectedPopup: DisconnectedPopup
     lateinit var sharedplaylistPopup: SharedPlaylistPopup
     lateinit var messageHistoryPopup: MessageHistoryPopup
+    lateinit var urlPopup: LoadURLPopup
 
 
     /**********************************************************************************************
@@ -223,6 +222,7 @@ open class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         sharedplaylistPopup = SharedPlaylistPopup(this)
         sharedplaylistPopup.update()
         messageHistoryPopup = MessageHistoryPopup(this)
+        urlPopup = LoadURLPopup(this)
 
         /** Showing starter hint if it's not permanently disabled */
         val dontShowHint = sp.getBoolean("dont_show_starter_hint", false)
@@ -237,7 +237,7 @@ open class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
         SyncplayUtils.cutoutMode(true, window)
 
         /** Launch the visible ping updater **/
-        pingUpdater()
+        pingUpdate()
 
         /** Inject in-room settings fragment **/
         supportFragmentManager.beginTransaction()
@@ -324,7 +324,7 @@ open class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
                     val duration = ((myExoPlayer?.duration?.toDouble())?.div(1000.0)) ?: 0.0
                     if (duration != p.file?.fileDuration) {
                         p.file?.fileDuration = duration
-                        p.sendPacket(sendFile(p.file!!, this@RoomActivity))
+                        p.sendPacket(sendFile(p.file ?: return, this@RoomActivity))
                     }
                 }
             }
@@ -455,10 +455,28 @@ open class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
          * Adding a  Video File *
          ************************/
         hudBinding.syncplayAddfile.setOnClickListener {
-            val intent1 = Intent()
-            intent1.type = "*/*"
-            intent1.action = Intent.ACTION_OPEN_DOCUMENT
-            videoPickResult.launch(intent1)
+            val popup = PopupMenu(this, hudBinding.syncplayAddfile)
+
+            val offlineItem = popup.menu.add(0, 0, 0, getString(rr.string.room_addmedia_offline))
+
+            val onlineItem = popup.menu.add(0, 1, 1, getString(rr.string.room_addmedia_online))
+
+            popup.setOnMenuItemClickListener {
+                when (it) {
+                    offlineItem -> {
+                        val intent1 = Intent()
+                        intent1.type = "video/*"
+                        intent1.action = Intent.ACTION_OPEN_DOCUMENT
+                        val intentWrapper = createChooser(intent1, "Select a video with")
+                        videoPickResult.launch(intentWrapper)
+                    }
+                    onlineItem -> {
+                        showPopup(urlPopup, true)
+                    }
+                }
+                return@setOnMenuItemClickListener true
+            }
+            popup.show()
         }
 
 
@@ -561,50 +579,26 @@ open class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
          * OverFlow Menu *
          *****************/
         hudBinding.syncplayMore.setOnClickListener { _ ->
-            val popup = PopupMenu(
-                this,
-                hudBinding.syncplayAddfile
-            )
+            val popup = PopupMenu(this, hudBinding.syncplayAddfile)
 
-            val loadsubItem =
-                popup.menu.add(
-                    0,
-                    0,
-                    0,
-                    getString(com.reddnek.syncplay.R.string.room_overflow_sub)
-                )
+            val loadsubItem = popup.menu.add(0, 0, 0, getString(rr.string.room_overflow_sub))
 
-            val cutoutItem = popup.menu.add(
-                0,
-                1,
-                1,
-                getString(com.reddnek.syncplay.R.string.room_overflow_cutout)
-            )
+            val cutoutItem = popup.menu.add(0, 1, 1, getString(rr.string.room_overflow_cutout))
             cutoutItem.isCheckable = true
             cutoutItem.isChecked = cutOutMode
             cutoutItem.isEnabled = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
-            val seekbuttonsItem = popup.menu.add(
-                0,
-                2,
-                2,
-                getString(com.reddnek.syncplay.R.string.room_overflow_ff)
-            )
+
+            val seekbuttonsItem = popup.menu.add(0, 2, 2, getString(rr.string.room_overflow_ff))
             seekbuttonsItem.isCheckable = true
             val ffwdButton = hudBinding.exoFfwd
             val rwndButton = hudBinding.exoRew
             seekbuttonsItem.isChecked = seekButtonEnable != false
-            val messagesItem = popup.menu.add(
-                0,
-                3,
-                3,
-                getString(com.reddnek.syncplay.R.string.room_overflow_msghistory)
-            )
-            val uiItem = popup.menu.add(
-                0,
-                4,
-                4,
-                getString(com.reddnek.syncplay.R.string.room_overflow_settings)
-            )
+
+            val messagesItem =
+                popup.menu.add(0, 3, 3, getString(rr.string.room_overflow_msghistory))
+
+            val uiItem = popup.menu.add(0, 4, 4, getString(rr.string.room_overflow_settings))
+
             //val adjustItem = popup.menu.add(0,5,5,"Change Username or Room")
 
             popup.setOnMenuItemClickListener {
@@ -715,7 +709,7 @@ open class RoomActivity : AppCompatActivity(), ProtocolBroadcaster {
 
         /** If there exists a file already, inject it again **/
         if (p.file != null) {
-            injectVideo(p.file!!.uri!!)
+            injectVideo(p.file!!.uri!!.toString())
 
             /** And apply track choices again **/
             applyLastOverrides()

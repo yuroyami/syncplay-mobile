@@ -30,7 +30,7 @@ object SharedPlaylistUtils {
                 p.file = MediaFile()
                 p.file!!.uri = uri
                 p.file!!.collectInfo(this)
-                injectVideo(uri)
+                injectVideo(uri.toString())
                 p.sendPacket(sendPlaylistIndex(0))
             }
             val newList = p.session.sharedPlaylist
@@ -133,7 +133,7 @@ object SharedPlaylistUtils {
                         p.file?.collectInfo(this@retrieveFile)
                         /** Loading the file into our player **/
                         runOnUiThread {
-                            injectVideo(fileUri2Play)
+                            injectVideo(fileUri2Play.toString())
                         }
                         break
                     }

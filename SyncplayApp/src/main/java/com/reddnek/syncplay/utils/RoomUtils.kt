@@ -5,6 +5,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.View
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.reddnek.syncplay.R
 import com.reddnek.syncplay.protocol.JsonSender
@@ -12,6 +13,9 @@ import com.reddnek.syncplay.protocol.SyncplayProtocol
 import com.reddnek.syncplay.room.RoomActivity
 import com.reddnek.syncplay.utils.UIUtils.broadcastMessage
 import com.reddnek.syncplay.utils.UIUtils.hideKb
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 /** Wrapping functions that need no further coding here, to reduce code space in RoomActivity
@@ -36,50 +40,39 @@ object RoomUtils {
         }, 100)
     }
 
-    /** Launches a HandlerThread ato execute ping updating periodic task
-     *
-     * @see [pingUpdaterCore]**/
-    fun RoomActivity.pingUpdater() {
-        try {
-            if (!pingingThread.isAlive) {
-                pingingThread.start()
-            }
-        } catch (e: IllegalThreadStateException) {
-            e.printStackTrace()
-        }
-        pingUpdaterCore() //TODO:LOL
-    }
 
-    /** Periodic task method with the help of a HandlerThread to execute ping commands every 1 sec
+    /** Periodic task method to execute ping commands every 1 sec
      * to update the ping which is used in syncplay's protocol and to show ping to the user UI */
-    fun RoomActivity.pingUpdaterCore() {
-        Handler(pingingThread.looper).postDelayed({
-            if (p.socket.isConnected && !p.socket.isClosed && !p.socket.isInputShutdown) {
-                p.ping = SyncplayUtils.pingIcmp("151.80.32.178", 32) * 1000.0
-                runOnUiThread {
-                    binding.syncplayConnectionInfo.text =
-                        string(R.string.room_ping_connected, "${p.ping.roundToInt()}")
-                    when (p.ping) {
-                        in (0.0..100.0) -> binding.syncplaySignalIcon.setImageResource(R.drawable.ping_3)
-                        in (100.0..200.0) -> binding.syncplaySignalIcon.setImageResource(R.drawable.ping_2)
-                        else -> binding.syncplaySignalIcon.setImageResource(R.drawable.ping_1)
+    fun RoomActivity.pingUpdate() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            while (true) {
+                if (p.socket.isConnected && !p.socket.isClosed && !p.socket.isInputShutdown) {
+                    p.ping = SyncplayUtils.pingIcmp("151.80.32.178", 32) * 1000.0
+                    runOnUiThread {
+                        binding.syncplayConnectionInfo.text =
+                            string(R.string.room_ping_connected, "${p.ping.roundToInt()}")
+                        when (p.ping) {
+                            in (0.0..100.0) -> binding.syncplaySignalIcon.setImageResource(R.drawable.ping_3)
+                            in (100.0..200.0) -> binding.syncplaySignalIcon.setImageResource(R.drawable.ping_2)
+                            else -> binding.syncplaySignalIcon.setImageResource(R.drawable.ping_1)
+                        }
                     }
-                }
-            } else {
-                runOnUiThread {
-                    binding.syncplayConnectionInfo.text =
-                        string(R.string.room_ping_disconnected)
-                    binding.syncplaySignalIcon.setImageDrawable(
-                        AppCompatResources.getDrawable(
-                            this@pingUpdaterCore,
-                            R.drawable.ic_unconnected
+                } else {
+                    runOnUiThread {
+                        binding.syncplayConnectionInfo.text =
+                            string(R.string.room_ping_disconnected)
+                        binding.syncplaySignalIcon.setImageDrawable(
+                            AppCompatResources.getDrawable(
+                                this@pingUpdate,
+                                R.drawable.ic_unconnected
+                            )
                         )
-                    )
+                    }
+                    p.syncplayBroadcaster?.onDisconnected()
                 }
-                p.syncplayBroadcaster?.onDisconnected()
+                delay(1000)
             }
-            pingUpdater()
-        }, 1000)
+        }
     }
 
     /** Sends a chat message to the server **/

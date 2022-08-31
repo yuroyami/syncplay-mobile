@@ -10,6 +10,7 @@
     <string name="play">Play</string>
     <string name="pause">Pause</string>
     <string name="delete">Delete</string>
+    <string name="confirm">Confirm</string>
 
     <!-- Main Activity's most essential strings -->
     <string name="tab_connect">Connect</string>
@@ -106,6 +107,9 @@
     <string name="room_button_desc_add">Add Media File</string>
     <string name="room_button_desc_lock">Touch-lock</string>
     <string name="room_button_desc_more">More Settings</string>
+    <string name="room_addmedia_offline">From phone storage</string>
+    <string name="room_addmedia_online">From a network URL</string>
+    <string name="room_addmedia_online_url">URL address</string>
 
 
     <!-- Directories Activity Strings -->
@@ -206,7 +210,7 @@
         <item>English</item>
         <item>العربية</item>
         <item>中文</item>
-        <item>Francais</item>
+        <item>Français</item>
     </string-array>
     <string-array name="LangValues">
         <item>"en"</item>

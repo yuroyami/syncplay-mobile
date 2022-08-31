@@ -49,9 +49,17 @@
             android:imeOptions="flagNoExtractUi"
             android:launchMode="singleInstance"
             android:screenOrientation="sensorLandscape"
-            android:windowSoftInputMode="adjustNothing"
-            tools:ignore="LockedOrientationActivity" />
+            android:windowSoftInputMode="adjustNothing" />
 
+        <activity
+            android:name=".solo.SoloActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:exported="true"
+            android:imeOptions="flagNoExtractUi"
+            android:launchMode="singleInstance"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.SyncPlay"
+            android:windowSoftInputMode="adjustNothing" />
         <activity
             android:name=".main.DirectoriesActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"

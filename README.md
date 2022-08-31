@@ -17,7 +17,7 @@
 - [Features](#features)
 - [How to use](#how-to-use)
 - [Roadmap](#roadmap)
-- [F.A.Q](#f.a.q)
+- [F.A.Q](#F.A.Q)
 - [Feedback](#feedback)
 - [Build Process](#build-process)
 - [Acknowledgments](#acknowledgments)
@@ -28,7 +28,7 @@
 ## Introduction
 
 [![OS - Android](https://img.shields.io/badge/OS-Android-yellowgreen?style=for-the-badge&logo=android)]()
-[![Version Release](https://img.shields.io/badge/Version-0.8.0-yellow?style=for-the-badge&logo=v)]()
+[![Version Release](https://img.shields.io/badge/Version-0.9.0-yellow?style=for-the-badge&logo=v)]()
 [![Written Language](https://img.shields.io/badge/Made%20with-Kotlin-lightgrey?style=for-the-badge&logo=kotlin)]()
 [![is Maintained?](https://img.shields.io/badge/Maintained-YES-green?style=for-the-badge)]()
 [![License](https://img.shields.io/badge/License-AGPL--3.0-brightgreen?style=for-the-badge)]()
@@ -91,17 +91,17 @@ These are the things I am willing to add/adjust in the future :
 - [ ] Self-Updater
 - [ ] Support for LibVLC plugin integration to play all possible video formats without depencing on
   device capabilities
-- [ ] Possibility of officializing the app after becoming a successful bug-less port
 - [x] Multi-language Support
-  - [x] English (as of 0.7.0)
-  - [x] Arabic (as of 0.7.0)
-  - [ ] French
-  - [ ] Spanish
-  - [ ] Portuguese
-  - [ ] Japanese
-  - [ ] German
-  - [ ] Italian
-  - [ ] Russian
+    - [x] English (as of 0.7.0)
+    - [x] Arabic (as of 0.7.0)
+    - [x] French (as of 0.9.0)
+    - [x] Chinese (as of 0.9.0 by Zhaodaidai)
+    - [ ] Spanish
+    - [ ] Portuguese
+    - [ ] Japanese
+    - [ ] German
+    - [ ] Italian
+    - [ ] Russian
 
 ## F.A.Q
 

@@ -1,7 +1,7 @@
 package com.reddnek.syncplay.utils
 
 import android.graphics.Color
-import android.net.Uri
+import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.ImageButton
@@ -25,8 +25,9 @@ import java.util.*
 object ExoPlayerUtils {
 
     /** Injects a certain media file into ExoPlayer **/
-    fun RoomActivity.injectVideo(mediaPath: Uri) {
+    fun RoomActivity.injectVideo(mediaPath: String) {
         try {
+            Log.e("j", "jjjj")
             /** This is the builder responsible for building a MediaItem component for ExoPlayer **/
             val vidbuilder = MediaItem.Builder()
 
