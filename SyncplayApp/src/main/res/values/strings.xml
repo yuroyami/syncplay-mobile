@@ -1,4 +1,4 @@
-<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+<resources>
     <string name="app_name" translatable="false">Syncplay</string>
 
     <!-- Contextless Strings -->

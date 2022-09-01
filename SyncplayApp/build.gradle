@@ -6,7 +6,7 @@ plugins {
 android {
     compileSdk 33 /* Not gonna use 33 until they fix "Unknown attributes" bug */
     buildToolsVersion "33.0.0"
-    namespace "com.reddnek.syncplay"
+    namespace "app"
     signingConfigs {
         github {
             storeFile file("${rootDir}/keystore/keystore.jks")
@@ -18,9 +18,9 @@ android {
     defaultConfig {
         applicationId "com.reddnek.syncplay"
         minSdk 21
-        targetSdk 32
-        versionCode 100009000
-        versionName "0.9.0"
+        targetSdk 33
+        versionCode 1000010000
+        versionName "0.10.0"
         resConfigs "en", "ar", "zh", "fr" //To use with AppCompatDelegate.setApplicationLocale
         signingConfig signingConfigs.github
     }

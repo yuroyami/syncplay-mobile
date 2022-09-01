@@ -7,6 +7,10 @@
 <p align="center">
   <b> Syncplay BETA - The Unofficial Android Client </b>
 </p>
+<p align="center">
+  <a href="https://apt.izzysoft.de/fdroid/index/apk/com.reddnek.syncplay">
+    <img alt="Syncplay Android on IzzyOnDroid Repo" title="Syncplay Android" src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" width="170">
+  </a></p>
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
