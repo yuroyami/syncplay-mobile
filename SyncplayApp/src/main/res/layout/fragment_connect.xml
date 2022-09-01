@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/pageConnect"
-    tools:context=".main.ConnectFragment"
+    tools:context=".controllers.fragment.ConnectFragment"
     android:fillViewport="true"
     android:orientation="vertical"
     tools:ignore="labelFor, Autofill">

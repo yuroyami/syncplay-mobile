@@ -139,7 +139,7 @@
         <SwitchPreference
             app:defaultValue="false"
             app:key="tls"
-            android:enabled="false"
+            android:enabled="true"
             app:summary="@string/setting_tls_summary"
             app:title="@string/setting_tls_title" />
 

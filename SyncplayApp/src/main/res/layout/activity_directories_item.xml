@@ -5,7 +5,7 @@
     android:layout_width="65dp"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    tools:context=".main.DirectoriesActivity">
+    tools:context=".controllers.activity.DirectoriesActivity">
 
     <!--    android:clickable="true"-->
     <!--    android:focusable="true"-->

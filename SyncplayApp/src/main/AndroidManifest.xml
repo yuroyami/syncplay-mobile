@@ -18,7 +18,7 @@
         android:localeConfig="@xml/locales_config"
         android:theme="@style/Theme.SyncPlay">
         <activity
-            android:name=".main.MainActivity"
+            android:name=".controllers.activity.MainActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="true"
             android:theme="@style/MainScreenTheme"
@@ -32,7 +32,7 @@
         </activity>
 
         <activity
-            android:name=".SplashScreenActivity"
+            android:name=".controllers.activity.SplashScreenActivity"
             android:exported="true"
             android:theme="@style/SplashTheme">
             <intent-filter>
@@ -42,7 +42,7 @@
         </activity>
 
         <activity
-            android:name=".room.RoomActivity"
+            android:name=".controllers.activity.RoomActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="true"
             android:theme="@style/Theme.SyncPlay"
@@ -52,7 +52,7 @@
             android:windowSoftInputMode="adjustNothing" />
 
         <activity
-            android:name=".solo.SoloActivity"
+            android:name=".controllers.activity.SoloActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="true"
             android:imeOptions="flagNoExtractUi"
@@ -61,7 +61,7 @@
             android:theme="@style/Theme.SyncPlay"
             android:windowSoftInputMode="adjustNothing" />
         <activity
-            android:name=".main.DirectoriesActivity"
+            android:name=".controllers.activity.DirectoriesActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="true" />
 

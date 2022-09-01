@@ -8,7 +8,7 @@
     android:keepScreenOn="true"
     android:layoutDirection="ltr"
     android:background="#000000"
-    tools:context=".room.RoomActivity"
+    tools:context=".controllers.activity.RoomActivity"
     tools:ignore="ContentDescription, DuplicateSpeakableTextCheck">
 
     <ImageView
