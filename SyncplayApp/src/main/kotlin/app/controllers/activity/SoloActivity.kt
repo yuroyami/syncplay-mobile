@@ -22,10 +22,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import app.HudBinding
 import app.R
-import app.controllers.fragment.RoomSettingsFragment
 import app.databinding.ActivitySoloplayerBinding
 import app.popups.LoadURLPopup
 import app.popups.StarterHintPopup
+import app.pseudopopups.RoomSettingsFragment
 import app.utils.MiscUtils
 import app.utils.MiscUtils.getFileName
 import app.utils.RoomUtils.string

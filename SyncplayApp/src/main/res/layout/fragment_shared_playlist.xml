@@ -59,7 +59,7 @@
                 app:layoutManager="LinearLayoutManager"
                 app:layout_constraintBottom_toTopOf="@id/shP_add_file"
                 app:layout_constraintTop_toBottomOf="@id/shP_subheader"
-                tools:listitem="@layout/popup_shared_playlist_line" />
+                tools:listitem="@layout/item_shared_playlist_line" />
 
             <ImageButton
                 android:id="@+id/shP_add_url"
@@ -108,7 +108,7 @@
                 android:layout_width="38dp"
                 android:layout_height="38dp"
                 android:layout_margin="12dp"
-                android:contentDescription="@string/room_shared_playlist_button_overflow"
+                android:contentDescription="@string/room_shared_playlist_button_shuffle"
                 android:scaleType="fitXY"
                 android:src="@drawable/ic_shuffle"
                 app:layout_constraintBottom_toBottomOf="parent"

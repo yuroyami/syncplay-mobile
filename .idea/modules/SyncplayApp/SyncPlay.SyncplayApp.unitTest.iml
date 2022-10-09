@@ -3,7 +3,7 @@
   <component name="FacetManager">
     <facet type="android" name="Android">
       <configuration>
-        <option name="SELECTED_BUILD_VARIANT" value="debug" />
+        <option name="SELECTED_BUILD_VARIANT" value="releaseGplay" />
         <option name="ALLOW_USER_CONFIGURATION" value="false" />
         <option name="MANIFEST_FILE_RELATIVE_PATH" value="/src/main/AndroidManifest.xml" />
         <option name="RES_FOLDER_RELATIVE_PATH" value="/src/main/res" />
@@ -25,7 +25,7 @@
           <stringArguments>
             <stringArg name="classpath">
               <args>
-                <arg>$MODULE_DIR$/../../../SyncplayApp/build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/debug/R.jar</arg>
+                <arg>$MODULE_DIR$/../../../SyncplayApp/build/intermediates/compile_and_runtime_not_namespaced_r_class_jar/releaseGplay/R.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/4d28a1a59a1ca4f7e739fae71d19e65c/transformed/jetified-ext-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/407c5b9225e3f944b49809a5e0c083a8/transformed/jetified-expandablelayout-1.0.7-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/27dead7eb0dc28e6ab5df8a9e339961b/transformed/jetified-viewbinding-8.0.0-alpha02-api.jar</arg>
@@ -61,9 +61,17 @@
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/a14a1c5fd4094a0ed7b4bf1b3e8952e1/transformed/jetified-kotlinx-coroutines-android-1.6.4.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/94feee2735e03b34f87c00c3ac1536c2/transformed/jetified-kotlin-stdlib-jdk8-1.7.10.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/9a69c6114de906c566ecfcd75b39b2fe/transformed/jetified-core-ktx-1.9.0-api.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/transforms-3/1c2e701b1e4719702868911d1d171532/transformed/constraintlayout-2.2.0-alpha04-api.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/transforms-3/33cb69fba556d7a60360c8eb7791c049/transformed/jetified-BasePopup-3.2.0-api.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/transforms-3/4be8c1a1378263c13e8a3462664e824b/transformed/jetified-gson-2.9.1.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/transforms-3/78ad099d32b950d3a9dae3e6dad63162/transformed/jetified-exoplayer-2.18.1-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/f3b04d3204013a4ccac4bb85389bfba3/transformed/dynamicanimation-1.0.0-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/3ede086dce4bccf091b883c51031bd1a/transformed/legacy-support-core-utils-1.0.0-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/eb18efb7f3a952deaed30d4c390886ee/transformed/documentfile-1.0.1-api.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/transforms-3/ad7dcc7fffedc51d08dcf24d6522ecde/transformed/jetified-netty-all-4.1.82.Final.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/transforms-3/7c34d4930c848c35b253d3f3c445260a/transformed/jetified-lottie-5.2.0-api.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/transforms-3/c693706af7600585987959f5e161cac3/transformed/jetified-fillableloaders-1.03-api.jar</arg>
+                <arg>$USER_HOME$/.gradle/caches/transforms-3/5143c627db9d40602dec36042b7d94dc/transformed/jetified-utilcodex-1.31.0-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/b7938f8bf53a05ca5dc9b7a10fb9967a/transformed/jetified-appcompat-resources-1.7.0-alpha01-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/e2e5b6c825e7eaaef47bcbed075e32ba/transformed/drawerlayout-1.1.1-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/fd2a2b2e73dcab1c94e154d789db25bf/transformed/coordinatorlayout-1.1.0-api.jar</arg>
@@ -75,7 +83,6 @@
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/f5aaa8d7197a17fc91bfadcf268c2d91/transformed/slidingpanelayout-1.2.0-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/f611a169d970b3094e27a845207fa74b/transformed/customview-1.1.0-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/c5ab5bf44154843b87955554ed5083d5/transformed/loader-1.0.0-api.jar</arg>
-                <arg>$USER_HOME$/.gradle/caches/transforms-3/78ad099d32b950d3a9dae3e6dad63162/transformed/jetified-exoplayer-2.18.1-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/c30306eb33d27a0f7a064f6a0df9f968/transformed/jetified-exoplayer-ui-2.18.1-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/9dce1bf031e1f3e6d624f34f028404b7/transformed/media-1.4.3-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/52f98b226707c6288d428065aaa9e112/transformed/core-1.9.0-api.jar</arg>
@@ -111,9 +118,6 @@
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/c6a3fcce393b7615a2351b139b680d3e/transformed/jetified-exoplayer-common-2.18.1-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/7123a5a2cba97c9493b6eb14a0fb6f9e/transformed/jetified-guava-31.0.1-android.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/1124b33e4d643cd1edc8da3c4def8969/transformed/jetified-listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar</arg>
-                <arg>$USER_HOME$/.gradle/caches/transforms-3/1c2e701b1e4719702868911d1d171532/transformed/constraintlayout-2.2.0-alpha04-api.jar</arg>
-                <arg>$USER_HOME$/.gradle/caches/transforms-3/33cb69fba556d7a60360c8eb7791c049/transformed/jetified-BasePopup-3.2.0-api.jar</arg>
-                <arg>$USER_HOME$/.gradle/caches/transforms-3/4be8c1a1378263c13e8a3462664e824b/transformed/jetified-gson-2.9.1.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/dbec4cdcd87e98d70c6fe3cecb3a1ceb/transformed/jetified-failureaccess-1.0.1.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/a08d375da68552d6deb529b9dc09abf7/transformed/jetified-exoplayer-database-2.18.1-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/74eff448f6757425c2b926d052434b4a/transformed/jetified-exoplayer-datasource-2.18.1-api.jar</arg>
@@ -123,7 +127,6 @@
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/d21b8fcc26b112c22f567dc24f58d505/transformed/jetified-exoplayer-hls-2.18.1-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/788b0d46eb3c3a071b414050706d46c0/transformed/jetified-exoplayer-rtsp-2.18.1-api.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/4bed2ae9180fe177efc41cd400a7eecb/transformed/jetified-exoplayer-smoothstreaming-2.18.1-api.jar</arg>
-                <arg>$USER_HOME$/.gradle/caches/transforms-3/ad7dcc7fffedc51d08dcf24d6522ecde/transformed/jetified-netty-all-4.1.82.Final.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/6f891cb2793f0697f6ca4f9d89c71461/transformed/jetified-netty-buffer-4.1.82.Final.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/2e7072dbda96d21ebab243b9d6d0b61e/transformed/jetified-netty-common-4.1.82.Final.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/d19759c803dfb89cafd2195bb5e39660/transformed/jetified-netty-codec-4.1.82.Final.jar</arg>
@@ -150,26 +153,22 @@
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/9ffeeb892c3669042622f21bb1c7ed33/transformed/jetified-netty-transport-classes-epoll-4.1.82.Final.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/cc7029e2a2373f6dbe3734c4f0278682/transformed/jetified-netty-transport-classes-kqueue-4.1.82.Final.jar</arg>
                 <arg>$USER_HOME$/.gradle/caches/transforms-3/091703801276740c550efff29c8dca1d/transformed/jetified-netty-resolver-dns-classes-macos-4.1.82.Final.jar</arg>
-                <arg>$USER_HOME$/.gradle/caches/transforms-3/7c34d4930c848c35b253d3f3c445260a/transformed/jetified-lottie-5.2.0-api.jar</arg>
-                <arg>$USER_HOME$/.gradle/caches/transforms-3/c693706af7600585987959f5e161cac3/transformed/jetified-fillableloaders-1.03-api.jar</arg>
-                <arg>$USER_HOME$/.gradle/caches/transforms-3/5143c627db9d40602dec36042b7d94dc/transformed/jetified-utilcodex-1.31.0-api.jar</arg>
-                <arg>$USER_HOME$/.gradle/caches/transforms-3/e1eb6879567dbbc6863afc87f717de1a/transformed/jetified-conscrypt-android-2.5.2-api.jar</arg>
                 <arg>$MODULE_DIR$/../../../../../#IDE_Environment/Android-SDK/platforms/android-33/android.jar</arg>
                 <arg>$MODULE_DIR$/../../../../../#IDE_Environment/Android-SDK/build-tools/33.0.0/core-lambda-stubs.jar</arg>
               </args>
             </stringArg>
-            <stringArg name="destination" arg="$MODULE_DIR$/../../../SyncplayApp/build/tmp/kotlin-classes/debugUnitTest" />
+            <stringArg name="destination" arg="$MODULE_DIR$/../../../SyncplayApp/build/tmp/kotlin-classes/releaseGplayUnitTest" />
             <stringArg name="jvmTarget" arg="1.8" />
-            <stringArg name="moduleName" arg="SyncplayApp_debug" />
+            <stringArg name="moduleName" arg="SyncplayApp_releaseGplay" />
             <stringArg name="apiVersion" arg="1.7" />
             <stringArg name="languageVersion" arg="1.7" />
           </stringArguments>
           <arrayArguments>
             <arrayArg name="friendPaths">
               <args>
-                <arg>$MODULE_DIR$/../../../SyncplayApp/build/tmp/kotlin-classes/debug</arg>
-                <arg>$MODULE_DIR$/../../../SyncplayApp/build/intermediates/javac/debug/classes</arg>
-                <arg>$MODULE_DIR$/../../../SyncplayApp/build/intermediates/compile_app_classes_jar/debug/classes.jar</arg>
+                <arg>$MODULE_DIR$/../../../SyncplayApp/build/tmp/kotlin-classes/releaseGplay</arg>
+                <arg>$MODULE_DIR$/../../../SyncplayApp/build/intermediates/javac/releaseGplay/classes</arg>
+                <arg>$MODULE_DIR$/../../../SyncplayApp/build/intermediates/compile_app_classes_jar/releaseGplay/classes.jar</arg>
               </args>
             </arrayArg>
             <arrayArg name="pluginClasspaths" />
@@ -180,12 +179,12 @@
     </facet>
   </component>
   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8">
-    <output url="file://$MODULE_DIR$/../../../SyncplayApp/build/intermediates/javac/debug/classes" />
-    <output-test url="file://$MODULE_DIR$/../../../SyncplayApp/build/intermediates/javac/debugUnitTest/classes" />
+    <output url="file://$MODULE_DIR$/../../../SyncplayApp/build/intermediates/javac/releaseGplay/classes" />
+    <output-test url="file://$MODULE_DIR$/../../../SyncplayApp/build/intermediates/javac/releaseGplayUnitTest/classes" />
     <exclude-output />
-    <content url="file://$MODULE_DIR$/../../../SyncplayApp/build/generated/ap_generated_sources/debugUnitTest/out" />
+    <content url="file://$MODULE_DIR$/../../../SyncplayApp/build/generated/ap_generated_sources/releaseGplayUnitTest/out" />
     <content url="file://$MODULE_DIR$/../../../SyncplayApp/src/test" />
-    <content url="file://$MODULE_DIR$/../../../SyncplayApp/src/testDebug" />
+    <content url="file://$MODULE_DIR$/../../../SyncplayApp/src/testReleaseGplay" />
     <orderEntry type="jdk" jdkName="Android API 33, extension level 3 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="SyncPlay.SyncplayApp.main" scope="TEST" />
@@ -315,7 +314,6 @@
     <orderEntry type="library" scope="TEST" name="Gradle: com.github.skydoves:expandablelayout:1.0.7@aar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: com.github.jorgecastilloprz:fillableloaders:1.03@aar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: com.blankj:utilcodex:1.31.0@aar" level="project" />
-    <orderEntry type="library" scope="TEST" name="Gradle: org.conscrypt:conscrypt-android:2.5.2@aar" level="project" />
     <orderEntry type="library" scope="TEST" name="Gradle: F" level="project" />
   </component>
   <component name="TestModuleProperties" production-module="SyncPlay.SyncplayApp.main" />

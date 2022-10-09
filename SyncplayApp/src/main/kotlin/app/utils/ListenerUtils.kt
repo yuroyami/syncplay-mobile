@@ -19,6 +19,7 @@ import app.utils.UIUtils.insertPopup
 import app.utils.UIUtils.replenishUsers
 import app.utils.UIUtils.showPopup
 import app.wrappers.Constants.POPUP_INROOM_SETTINGS
+import app.wrappers.Constants.POPUP_MESSAGE_HISTORY
 import app.wrappers.Constants.POPUP_SHARED_PLAYLIST
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 
@@ -212,7 +213,7 @@ object ListenerUtils {
                     }
 
                     messagesItem -> {
-                        showPopup(messageHistoryPopup, true)
+                        insertPopup(POPUP_MESSAGE_HISTORY)
                     }
 
                     uiItem -> {
@@ -278,13 +279,14 @@ object ListenerUtils {
             insertPopup(POPUP_SHARED_PLAYLIST)
         }
 
-        /** Pseudo Popup Click Controllers **/
+        /** Pseudo Popup dismissal **/
         binding.pseudoPopupDismisser.setOnClickListener {
             binding.pseudoPopupParent.visibility = View.GONE
             when (activePseudoPopup) {
                 POPUP_INROOM_SETTINGS -> applyUISettings()
             }
 
+            activePseudoPopup = 0
         }
     }
 }

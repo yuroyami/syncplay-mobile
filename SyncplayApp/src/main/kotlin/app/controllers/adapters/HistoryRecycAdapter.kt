@@ -16,7 +16,7 @@ class HistoryRecycAdapter(var list: MutableList<Message>, val context: Context) 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.popup_messages_item, parent, false)
+            .inflate(R.layout.item_message_history_line, parent, false)
         return ViewHolder(view)
     }
 

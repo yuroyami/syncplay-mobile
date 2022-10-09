@@ -10,15 +10,15 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import app.R
 import app.controllers.activity.RoomActivity
-import app.utils.SharedPlaylistUtils.deleteItemFromPlaylist
-import app.utils.SharedPlaylistUtils.sendPlaylistSelection
+import app.sharedplaylist.SharedPlaylistUtils.deleteItemFromPlaylist
+import app.sharedplaylist.SharedPlaylistUtils.sendPlaylistSelection
 
 class SharedPlaylistRecycAdapter(private val act: RoomActivity, var list: MutableList<String>) :
     RecyclerView.Adapter<SharedPlaylistRecycAdapter.ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.popup_shared_playlist_line, parent, false)
+            .inflate(R.layout.item_shared_playlist_line, parent, false)
         return ViewHolder(view, act)
     }
 

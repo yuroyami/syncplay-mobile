@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/cosmik_gradient"
     android:keepScreenOn="true"
-    tools:context=".controllers.activity.DirectoriesActivity">
+    tools:context=".sharedplaylist.DirectoriesActivity">
 
     <TextView
         android:id="@+id/header"

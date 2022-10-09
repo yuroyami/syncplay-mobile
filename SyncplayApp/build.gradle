@@ -14,6 +14,12 @@ android {
             keyPassword 'az90az09'
             storePassword 'az90az09'
         }
+        gplay {
+            storeFile file("${rootDir}/keystore/gplay.jks")
+            keyAlias 'reddnekgplay'
+            keyPassword 'az90az09'
+            storePassword 'az90az09'
+        }
     }
     defaultConfig {
         applicationId "com.reddnek.syncplay"
@@ -22,21 +28,32 @@ android {
         versionCode 1000010000 /* 1 000 010 000 */
         versionName "0.10.0"
         resConfigs "en", "ar", "zh", "fr" //To use with AppCompatDelegate.setApplicationLocale
-        signingConfig signingConfigs.github
     }
 
     buildTypes {
-        getByName("release") {
-            minifyEnabled true
-            shrinkResources = false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-        getByName("debug") {
+        releaseGplay {
             minifyEnabled false
             shrinkResources = false
+            debuggable false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.gplay
+        }
+        releaseGithub {
+            minifyEnabled false
+            shrinkResources = false
+            debuggable false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.github
+        }
+        debug {
+            minifyEnabled false
+            shrinkResources = false
+            debuggable true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.github
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -94,6 +111,6 @@ dependencies {
     implementation "com.github.skydoves:expandablelayout:1.0.7" /* ExpandableLayout */
     implementation 'com.github.jorgecastilloprz:fillableloaders:1.03@aar' /* FillableLoader */
     implementation 'com.blankj:utilcodex:1.31.0' //CustomUtils, didn't use any til now
-    implementation 'org.conscrypt:conscrypt-android:2.5.2' //Will use for TLSv1.3
+    //implementation 'org.conscrypt:conscrypt-android:2.5.2' //Will use for TLSv1.3
 
 }

@@ -7,7 +7,7 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.net.toUri
 import app.R
-import app.controllers.activity.DirectoriesActivity
+import app.sharedplaylist.DirectoriesActivity
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 

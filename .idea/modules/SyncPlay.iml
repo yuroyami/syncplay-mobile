@@ -5,6 +5,10 @@
     <content url="file://$MODULE_DIR$/../..">
       <excludeFolder url="file://$MODULE_DIR$/../../.gradle" />
       <excludeFolder url="file://$MODULE_DIR$/../../build" />
+      <excludeFolder url="file://$MODULE_DIR$/app" />
+      <excludeFolder url="file://$MODULE_DIR$/ColorPreference" />
+      <excludeFolder url="file://$MODULE_DIR$/SyncplayProtocol" />
+      <excludeFolder url="file://$MODULE_DIR$/SyncplayUtils" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

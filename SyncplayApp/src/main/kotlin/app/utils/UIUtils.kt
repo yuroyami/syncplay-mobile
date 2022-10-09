@@ -27,8 +27,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import app.R
 import app.controllers.activity.RoomActivity
-import app.controllers.fragment.RoomSettingsHosterFragment
-import app.popups.SharedPlaylistPopup
+import app.pseudopopups.MessageHistoryPopup
+import app.pseudopopups.RoomSettingsHosterFragment
+import app.sharedplaylist.SharedPlaylistPopup
 import app.utils.RoomUtils.string
 import app.wrappers.Constants
 import app.wrappers.Message
@@ -358,7 +359,15 @@ object UIUtils {
                     .commit()
 
             }
+
+            Constants.POPUP_MESSAGE_HISTORY -> {
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.pseudo_popup_container, MessageHistoryPopup())
+                    .commit()
+
+            }
         }
+        activePseudoPopup = int
         binding.pseudoPopupParent.visibility = View.VISIBLE
     }
 

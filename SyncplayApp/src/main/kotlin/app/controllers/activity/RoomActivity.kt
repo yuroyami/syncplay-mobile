@@ -14,12 +14,14 @@ import app.HudBinding
 import app.databinding.ActivityRoomBinding
 import app.popups.DisconnectedPopup
 import app.popups.LoadURLPopup
-import app.popups.MessageHistoryPopup
 import app.popups.StarterHintPopup
 import app.protocol.JsonSender
 import app.protocol.JsonSender.sendFile
 import app.protocol.ProtocolCallback
 import app.protocol.SyncplayProtocol
+import app.sharedplaylist.SharedPlaylistUtils.addFileToPlaylist
+import app.sharedplaylist.SharedPlaylistUtils.addFolderToPlaylist
+import app.sharedplaylist.SharedPlaylistUtils.changePlaylistSelection
 import app.utils.ExoPlayerUtils.applyLastOverrides
 import app.utils.ExoPlayerUtils.initializeExo
 import app.utils.ExoPlayerUtils.injectVideo
@@ -35,9 +37,6 @@ import app.utils.RoomUtils.checkFileMismatches
 import app.utils.RoomUtils.pingUpdate
 import app.utils.RoomUtils.string
 import app.utils.RoomUtils.vidPosUpdater
-import app.utils.SharedPlaylistUtils.addFileToPlaylist
-import app.utils.SharedPlaylistUtils.addFolderToPlaylist
-import app.utils.SharedPlaylistUtils.changePlaylistSelection
 import app.utils.UIUtils.applyUISettings
 import app.utils.UIUtils.attachTooltip
 import app.utils.UIUtils.broadcastMessage
@@ -81,13 +80,11 @@ open class RoomActivity : AppCompatActivity(), ProtocolCallback {
     var seekButtonEnable: Boolean? = null
     var cutOutMode: Boolean = true
     var ccsize = 18f
-    var activePseudoPopup = 0 /* 0 = NONE || 1 = In-room Settings || 2 = Shared Playlists */
+    var activePseudoPopup = 0 /* See 'Constants' class for enum values */
 
     /* Declaring Popup dialog variables which are used to show/dismiss different popups */
     private lateinit var disconnectedPopup: DisconnectedPopup
-    lateinit var messageHistoryPopup: MessageHistoryPopup
     lateinit var urlPopup: LoadURLPopup
-
 
     /**********************************************************************************************
      *                                  LIFECYCLE METHODS
@@ -147,7 +144,6 @@ open class RoomActivity : AppCompatActivity(), ProtocolCallback {
 
         /** Preparing our popups ahead of time **/
         disconnectedPopup = DisconnectedPopup(this)
-        messageHistoryPopup = MessageHistoryPopup(this)
         urlPopup = LoadURLPopup(this, null)
 
         /** Showing starter hint if it's not permanently disabled */

@@ -4,7 +4,6 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/SyncPlay.iml" filepath="$PROJECT_DIR$/.idea/modules/SyncPlay.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/SyncplayApp/SyncPlay.SyncplayApp.iml" filepath="$PROJECT_DIR$/.idea/modules/SyncplayApp/SyncPlay.SyncplayApp.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SyncplayApp/SyncPlay.SyncplayApp.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/SyncplayApp/SyncPlay.SyncplayApp.androidTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/SyncplayApp/SyncPlay.SyncplayApp.main.iml" filepath="$PROJECT_DIR$/.idea/modules/SyncplayApp/SyncPlay.SyncplayApp.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/SyncplayApp/SyncPlay.SyncplayApp.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/SyncplayApp/SyncPlay.SyncplayApp.unitTest.iml" />
     </modules>

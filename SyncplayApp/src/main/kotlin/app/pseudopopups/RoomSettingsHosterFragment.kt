@@ -1,4 +1,4 @@
-package app.controllers.fragment
+package app.pseudopopups
 
 import android.os.Bundle
 import android.view.LayoutInflater

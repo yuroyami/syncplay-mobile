@@ -1,4 +1,4 @@
-package app.controllers.activity
+package app.sharedplaylist
 
 import android.app.Activity
 import android.content.Context

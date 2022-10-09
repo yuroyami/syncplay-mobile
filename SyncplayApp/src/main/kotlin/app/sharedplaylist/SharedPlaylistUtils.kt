@@ -1,4 +1,4 @@
-package app.utils
+package app.sharedplaylist
 
 import android.net.Uri
 import android.provider.DocumentsContract
@@ -6,10 +6,10 @@ import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import app.R
-import app.controllers.activity.DirectoriesActivity
 import app.controllers.activity.RoomActivity
 import app.protocol.JsonSender.sendPlaylistChange
 import app.protocol.JsonSender.sendPlaylistIndex
+import app.sharedplaylist.DirectoriesActivity
 import app.utils.ExoPlayerUtils.injectVideo
 import app.utils.MiscUtils.getFileName
 import app.utils.UIUtils.broadcastMessage

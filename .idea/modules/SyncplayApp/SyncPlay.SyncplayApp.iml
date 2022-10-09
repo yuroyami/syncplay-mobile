@@ -10,7 +10,7 @@
     </facet>
     <facet type="android" name="Android">
       <configuration>
-        <option name="SELECTED_BUILD_VARIANT" value="debug" />
+        <option name="SELECTED_BUILD_VARIANT" value="releaseGplay" />
         <option name="ALLOW_USER_CONFIGURATION" value="false" />
         <option name="MANIFEST_FILE_RELATIVE_PATH" value="/src/main/AndroidManifest.xml" />
         <option name="RES_FOLDER_RELATIVE_PATH" value="/src/main/res" />
@@ -21,8 +21,8 @@
     </facet>
   </component>
   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8">
-    <output url="file://$MODULE_DIR$/../../../SyncplayApp/build/intermediates/javac/debug/classes" />
-    <output-test url="file://$MODULE_DIR$/../../../SyncplayApp/build/intermediates/javac/debugUnitTest/classes" />
+    <output url="file://$MODULE_DIR$/../../../SyncplayApp/build/intermediates/javac/releaseGplay/classes" />
+    <output-test url="file://$MODULE_DIR$/../../../SyncplayApp/build/intermediates/javac/releaseGplayUnitTest/classes" />
     <exclude-output />
     <content url="file://$MODULE_DIR$/../../../SyncplayApp">
       <excludeFolder url="file://$MODULE_DIR$/../../../SyncplayApp/.gradle" />

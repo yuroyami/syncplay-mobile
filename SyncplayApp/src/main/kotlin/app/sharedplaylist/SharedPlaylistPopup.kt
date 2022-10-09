@@ -1,4 +1,4 @@
-package app.popups
+package app.sharedplaylist
 
 import android.content.Intent
 import android.os.Bundle
@@ -8,15 +8,15 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import app.controllers.activity.RoomActivity
 import app.controllers.adapters.SharedPlaylistRecycAdapter
-import app.databinding.PopupSharedPlaylistBinding
+import app.databinding.FragmentSharedPlaylistBinding
 import app.utils.UIUtils.bindTooltip
 
 class SharedPlaylistPopup : Fragment() {
 
-    private lateinit var binding: PopupSharedPlaylistBinding
+    private lateinit var binding: FragmentSharedPlaylistBinding
 
     override fun onCreateView(i: LayoutInflater, c: ViewGroup?, sis: Bundle?): View {
-        binding = PopupSharedPlaylistBinding.inflate(i, c, false)
+        binding = FragmentSharedPlaylistBinding.inflate(i, c, false)
         return binding.root
     }
 

@@ -11,7 +11,7 @@ import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
-import app.controllers.activity.DirectoriesActivity
+import app.sharedplaylist.DirectoriesActivity
 import app.utils.NightmodeUtils.setNightMode
 import com.google.android.material.snackbar.Snackbar
 import app.R as X
