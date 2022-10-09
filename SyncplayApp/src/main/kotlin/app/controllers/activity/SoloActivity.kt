@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -25,16 +24,22 @@ import app.HudBinding
 import app.R
 import app.controllers.fragment.RoomSettingsFragment
 import app.databinding.ActivitySoloplayerBinding
+import app.popups.LoadURLPopup
 import app.popups.StarterHintPopup
+import app.utils.MiscUtils
+import app.utils.MiscUtils.getFileName
 import app.utils.RoomUtils.string
-import app.utils.SyncplayUtils
-import app.utils.SyncplayUtils.getFileName
 import app.utils.UIUtils.attachTooltip
-import app.utils.UIUtils.hideKb
 import app.utils.UIUtils.showPopup
 import app.utils.UIUtils.toasty
 import app.wrappers.MediaFile
-import com.google.android.exoplayer2.*
+import com.google.android.exoplayer2.C
+import com.google.android.exoplayer2.DefaultLoadControl
+import com.google.android.exoplayer2.DefaultRenderersFactory
+import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.Player
+import com.google.android.exoplayer2.Tracks
 import com.google.android.exoplayer2.trackselection.TrackSelectionOverride
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.CaptionStyleCompat
@@ -42,7 +47,7 @@ import com.google.android.exoplayer2.util.MimeTypes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.IOException
-import java.util.*
+import java.util.Collections
 
 class SoloActivity : AppCompatActivity() {
 
@@ -64,6 +69,9 @@ class SoloActivity : AppCompatActivity() {
     private var seekButtonEnable: Boolean? = null
     private var cutOutMode: Boolean = true
     var ccsize = 18f
+
+    /* Popup init */
+    lateinit var urlPopup: LoadURLPopup
 
     /**********************************************************************************************
      *                                  LIFECYCLE METHODS
@@ -132,7 +140,7 @@ class SoloActivity : AppCompatActivity() {
         applyUISettings()
 
         /** Let's apply Cut-Out Mode on the get-go, user can turn it off later **/
-        SyncplayUtils.cutoutMode(true, window)
+        MiscUtils.cutoutMode(true, window)
 
         /** Inject in-room settings fragment **/
         supportFragmentManager.beginTransaction()
@@ -145,6 +153,9 @@ class SoloActivity : AppCompatActivity() {
                 child.attachTooltip(child.contentDescription.toString())
             }
         }
+
+        /** Initializing video loading popup */
+        urlPopup = LoadURLPopup(null, this)
     }
 
     override fun onStart() {
@@ -214,10 +225,6 @@ class SoloActivity : AppCompatActivity() {
             it.setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, ccsize)
         }
 
-        /** Clicking on the player hides the keyboard, and loses focus from the message box **/
-        binding.vidplayer.setOnClickListener {
-            hideKb()
-        }
 
         /** Listening to ExoPlayer's UI Visibility **/
         binding.vidplayer.setControllerVisibilityListener { visibility ->
@@ -228,7 +235,7 @@ class SoloActivity : AppCompatActivity() {
                     hudBinding.exoRew.visibility = visib
                 }, 10)
             } else {
-                SyncplayUtils.hideSystemUI(this, false)
+                MiscUtils.hideSystemUI(this, false)
             }
         }
 
@@ -236,10 +243,34 @@ class SoloActivity : AppCompatActivity() {
          * Adding a  Video File *
          ************************/
         hudBinding.syncplayAddfile.setOnClickListener {
-            val intent1 = Intent()
-            intent1.type = "*/*"
-            intent1.action = Intent.ACTION_OPEN_DOCUMENT
-            videoPickResult.launch(intent1)
+//            val intent1 = Intent()
+//            intent1.type = "*/*"
+//            intent1.action = Intent.ACTION_OPEN_DOCUMENT
+//            videoPickResult.launch(intent1)
+
+            val popup = PopupMenu(this, hudBinding.syncplayAddfile)
+
+            val offlineItem = popup.menu.add(0, 0, 0, getString(R.string.room_addmedia_offline))
+
+            val onlineItem = popup.menu.add(0, 1, 1, getString(R.string.room_addmedia_online))
+
+            popup.setOnMenuItemClickListener {
+                when (it) {
+                    offlineItem -> {
+                        val intent1 = Intent()
+                        intent1.type = "video/*"
+                        intent1.action = Intent.ACTION_OPEN_DOCUMENT
+                        val intentWrapper = Intent.createChooser(intent1, "Select a video with")
+                        videoPickResult.launch(intentWrapper)
+                    }
+
+                    onlineItem -> {
+                        showPopup(urlPopup, true)
+                    }
+                }
+                return@setOnMenuItemClickListener true
+            }
+            popup.show()
         }
 
 
@@ -351,7 +382,7 @@ class SoloActivity : AppCompatActivity() {
                     }
                     cutoutItem -> {
                         cutOutMode = !cutOutMode
-                        SyncplayUtils.cutoutMode(cutOutMode, window)
+                        MiscUtils.cutoutMode(cutOutMode, window)
                         binding.vidplayer.performClick()
                         binding.vidplayer.performClick() /* Double click to apply cut-out */
                     }
@@ -413,10 +444,10 @@ class SoloActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         /** Activating Immersive Mode **/
-        SyncplayUtils.hideSystemUI(this, false)
+        MiscUtils.hideSystemUI(this, false)
 
         /** If there exists a file already, inject it again **/
-        injectVideo(file?.uri ?: return)
+        injectVideo(file?.uri.toString())
 
         /** And apply track choices again **/
         applyLastOverrides()
@@ -466,7 +497,7 @@ class SoloActivity : AppCompatActivity() {
         }
     }
 
-    private fun injectVideo(mediaPath: Uri) {
+    fun injectVideo(mediaPath: String) {
         try {
             /** This is the builder responsible for building a MediaItem component for ExoPlayer **/
             val vidbuilder = MediaItem.Builder()

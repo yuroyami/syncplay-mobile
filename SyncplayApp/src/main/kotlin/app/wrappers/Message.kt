@@ -1,8 +1,8 @@
 package app.wrappers
 
 import android.content.Context
-import app.utils.SyncplayUtils.generateTimestamp
-import app.utils.SyncplayUtils.getColorCode
+import app.utils.MiscUtils.generateTimestamp
+import app.utils.MiscUtils.getColorCode
 
 /********************************************************************************************
  * Message wrapper class. It encapsulates all information and data we need about a message  *

@@ -3,18 +3,10 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/SyncPlay.iml" filepath="$PROJECT_DIR$/.idea/modules/SyncPlay.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/SyncPlay.SyncplayApp.iml" filepath="$PROJECT_DIR$/.idea/modules/app/SyncPlay.SyncplayApp.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SyncplayApp/SyncPlay.SyncplayApp.iml" filepath="$PROJECT_DIR$/.idea/modules/SyncplayApp/SyncPlay.SyncplayApp.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/SyncplayApp/SyncPlay.SyncplayApp.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/SyncplayApp/SyncPlay.SyncplayApp.androidTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/SyncplayApp/SyncPlay.SyncplayApp.main.iml" filepath="$PROJECT_DIR$/.idea/modules/SyncplayApp/SyncPlay.SyncplayApp.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/SyncplayApp/SyncPlay.SyncplayApp.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/SyncplayApp/SyncPlay.SyncplayApp.unitTest.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SyncplayProtocol/SyncPlay.SyncplayProtocol.iml" filepath="$PROJECT_DIR$/.idea/modules/SyncplayProtocol/SyncPlay.SyncplayProtocol.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SyncplayProtocol/SyncPlay.SyncplayProtocol.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/SyncplayProtocol/SyncPlay.SyncplayProtocol.androidTest.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SyncplayProtocol/SyncPlay.SyncplayProtocol.main.iml" filepath="$PROJECT_DIR$/.idea/modules/SyncplayProtocol/SyncPlay.SyncplayProtocol.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SyncplayProtocol/SyncPlay.SyncplayProtocol.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/SyncplayProtocol/SyncPlay.SyncplayProtocol.unitTest.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SyncplayUtils/SyncPlay.SyncplayUtils.iml" filepath="$PROJECT_DIR$/.idea/modules/SyncplayUtils/SyncPlay.SyncplayUtils.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SyncplayUtils/SyncPlay.SyncplayUtils.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/SyncplayUtils/SyncPlay.SyncplayUtils.androidTest.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SyncplayUtils/SyncPlay.SyncplayUtils.main.iml" filepath="$PROJECT_DIR$/.idea/modules/SyncplayUtils/SyncPlay.SyncplayUtils.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SyncplayUtils/SyncPlay.SyncplayUtils.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/SyncplayUtils/SyncPlay.SyncplayUtils.unitTest.iml" />
     </modules>
   </component>
 </project>

@@ -95,6 +95,12 @@
     <string name="room_shared_playlist_no_directories">You have not specified any media directories for shared playlists. Manually add the files.</string>
     <string name="room_shared_playlist_not_found">Syncplay couldn\'t find the file that is currently playing in the shared playlist in your media directories.</string>
     <string name="room_shared_playlist_not_featured">This room or server do not have Shared Playlists feature on.</string>
+    <string name="room_shared_playlist_button_add_file">Add file(s) to bottom of playlist</string>
+    <string name="room_shared_playlist_button_add_folder">Add folder to playlist (and media directories)</string>
+    <string name="room_shared_playlist_button_add_url">Add URL(s) to bottom of playlist</string>
+    <string name="room_shared_playlist_button_shuffle">Shuffle entire playlist</string>
+    <string name="room_shared_playlist_button_shuffle_rest">Shuffle remaining playlist</string>
+    <string name="room_shared_playlist_button_overflow">More Shared Playlist settings</string>
     <string name="room_button_desc_aspect_ratio">Aspect Ratio</string>
     <string name="room_button_desc_shared_playlist">Shared Playlist</string>
     <string name="room_button_desc_audio_tracks">Audio Tracks</string>

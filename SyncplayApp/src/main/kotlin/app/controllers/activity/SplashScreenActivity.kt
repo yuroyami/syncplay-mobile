@@ -6,7 +6,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
-import app.utils.SyncplayUtils
+import app.utils.MiscUtils
 
 @SuppressLint("CustomSplashScreen") /* Don't trust Google's SplashScreen API, we make our own */
 class SplashScreenActivity : AppCompatActivity() {
@@ -15,7 +15,7 @@ class SplashScreenActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         /* Enable IMMERSIVE MODE right off the bat */
-        SyncplayUtils.hideSystemUI(this, false)
+        MiscUtils.hideSystemUI(this, false)
 
         /* Delaying transition */
         Handler(Looper.getMainLooper()).postDelayed({

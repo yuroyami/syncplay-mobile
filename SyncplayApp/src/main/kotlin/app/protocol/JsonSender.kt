@@ -2,12 +2,13 @@ package app.protocol
 
 import android.content.Context
 import androidx.preference.PreferenceManager
-import app.utils.SyncplayUtils
-import app.utils.SyncplayUtils.toHex
+import app.utils.MiscUtils
+import app.utils.MiscUtils.toHex
 import app.wrappers.MediaFile
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 
+/** This class does not actually send anything but what it actually does is compose JSON strings which will be sent later */
 object JsonSender {
 
     private val gson: Gson = GsonBuilder().serializeNulls().create()
@@ -17,7 +18,7 @@ object JsonSender {
         hello["username"] = username
         if (serverPassword != null) {
             /* Syncplay servers accept passwords in MD5-Hexadecimal form.*/
-            hello["password"] = SyncplayUtils.md5(serverPassword).toHex()
+            hello["password"] = MiscUtils.md5(serverPassword).toHex()
         }
         val room: HashMap<String, String> = hashMapOf()
         room["name"] = roomname
@@ -99,7 +100,7 @@ object JsonSender {
 
     fun sendEmptyList(): String {
         val emptylist: HashMap<String, Any?> = hashMapOf()
-        emptylist["List"] = null
+        emptylist["List"] = listOf<String>() //TODO:Check
 
         return gson.toJson(emptylist)
     }
@@ -185,6 +186,16 @@ object JsonSender {
         set["Set"] = playlistIndex
 
         return gson.toJson(set)
+    }
+
+    fun sendTLS(): String {
+        val tls: HashMap<String, String> = hashMapOf()
+        tls["startTLS"] = "send"
+
+        val wrapper: HashMap<String, Any> = hashMapOf()
+        wrapper["TLS"] = tls
+
+        return gson.toJson(wrapper)
     }
 
 

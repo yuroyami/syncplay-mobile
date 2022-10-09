@@ -329,7 +329,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="jar:file:/F:/ANDROID%20Workshop/%23-Android-Studio/android-studio-2022.1.1.7/android-studio/plugins/android/lib/android.jar!/images/material/icons/materialicons/list_alt/baseline_list_alt_24.xml" />
+                                      <entry key="url" value="file:/$PROJECT_DIR$/../../%23IDE_Environment/Android-SDK/icons/material/materialicons/shuffle/baseline_shuffle_24.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -339,7 +339,8 @@
                         </option>
                         <option name="values">
                           <map>
-                            <entry key="outputName" value="ic_shared_playlist" />
+                            <entry key="color" value="e91e63" />
+                            <entry key="outputName" value="ic_shuffle" />
                             <entry key="sourceFile" value="F:\ANDROID Workshop\# PROJECTS\SYNCPLAY" />
                           </map>
                         </option>

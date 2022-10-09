@@ -11,14 +11,10 @@ import kotlin.math.roundToInt
 
 class AboutFragment : Fragment() {
 
-    private var _binding: FragmentAboutBinding? = null
-    private val binding get() = _binding!!
+    private lateinit var binding: FragmentAboutBinding
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentAboutBinding.inflate(inflater, container, false)
+    override fun onCreateView(i: LayoutInflater, c: ViewGroup?, sis: Bundle?): View {
+        binding = FragmentAboutBinding.inflate(i, c, false)
         return binding.root
     }
 

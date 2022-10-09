@@ -9,20 +9,22 @@
     android:fillViewport="true"
     android:orientation="vertical"
     tools:ignore="labelFor, Autofill">
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <ImageView
+        <com.airbnb.lottie.LottieAnimationView
             android:id="@+id/connect_nightswitch"
-            style="@style/ClickEffectBL"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_margin="26dp"
+            android:layout_width="86dp"
+            android:layout_height="86dp"
+            android:layout_margin="6dp"
+            android:clickable="true"
+            android:focusable="true"
             android:contentDescription="@string/connect_nightmodeswitch"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_crescent" />
+            app:lottie_fileName="daynight_toggle.json" />
 
         <ImageView
             android:id="@+id/connect_solomode"
@@ -30,6 +32,7 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_margin="26dp"
+            android:visibility="visible"
             android:contentDescription="@string/connect_solomode"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintTop_toTopOf="parent"

@@ -1,6 +1,6 @@
 package app.protocol
 
-import app.utils.SyncplayUtils.loggy
+import app.utils.MiscUtils.loggy
 import app.wrappers.MediaFile
 import app.wrappers.User
 import com.google.gson.JsonElement
@@ -11,12 +11,10 @@ object JsonHandler {
     /** Handlers that parse JSONs and control callbacks based on the incoming message from server */
 
     fun handleJson(json: String, protocol: SyncplayProtocol) {
-        /* First, we tell our protocol that we're connected if we're receiving JSONs */
-        protocol.connected = true
         loggy("Server: $json")
 
         /* Second, we check what kind of JSON message we received from the first Json Object */
-        var jsonElement: JsonElement?
+        val jsonElement: JsonElement?
         try {
             jsonElement = protocol.gson.fromJson(json, JsonElement::class.java)
             if (!jsonElement.isJsonObject) return /* Just making sure server doesn't send malformed JSON */
@@ -42,8 +40,7 @@ object JsonHandler {
         p.sendPacket(JsonSender.sendJoined(p.session.currentRoom))
         p.sendPacket(JsonSender.sendEmptyList())
         p.sendPacket(JsonSender.sendReadiness(p.ready, false))
-        p.connected = true
-        p.syncplayBroadcaster?.onJoined()
+        p.syncplayBroadcaster?.onConnected()
     }
 
     private fun handleSet(set: JsonObject, p: SyncplayProtocol) {
@@ -250,12 +247,14 @@ object JsonHandler {
         )
     }
 
+    private fun handleTLS(tls: JsonObject, p: SyncplayProtocol) {
+        p.syncplayBroadcaster?.onReceivedTLS(tls.get("startTLS").asBoolean)
+    }
+
     /** The following functions are not made yet cuz I see them almost unnecessary ATM */
     private fun handleError(error: JsonObject, p: SyncplayProtocol) {
     }
 
-    private fun handleTLS(hello: JsonObject, p: SyncplayProtocol) {
-    }
 
     private fun dropError(error: String) {
     }

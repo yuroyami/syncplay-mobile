@@ -25,41 +25,34 @@ class ConnectFragment : Fragment() {
 
     lateinit var binding: FragmentConnectBinding
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentConnectBinding.inflate(inflater, container, false)
+    override fun onCreateView(i: LayoutInflater, c: ViewGroup?, sis: Bundle?): View {
+        binding = FragmentConnectBinding.inflate(i, c, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        /* Changing the footnote version according to the version name used in buid.gradle */
+        /* Changing the footnote version according to the version name used in build.gradle */
         binding.connectFootnoteB.text = "v" + BuildConfig.VERSION_NAME
 
         /* Responding to the Join Button clicking */
         binding.connectJoinButton.setOnClickListener {
-            val joiningInfo: MutableList<Any?> = mutableListOf()
+            val joiningInfo = mutableListOf<Any?>()
 
             val customServerCheck = binding.connectCustomServerAddress.isVisible
 
-            val serverAddress =
-                if (customServerCheck) binding.connectCustomServerAddress.text.toString() else ""
+            val serverAddress = if (customServerCheck) binding.connectCustomServerAddress.text.toString() else ""
 
-            val serverPort =
-                if (customServerCheck) binding.connectCustomServerPort.text.toString().toIntOrNull()
-                else (binding.spMenuAutocomplete.text).toString().substringAfter("syncplay.pl:")
-                    .toIntOrNull()
+            val serverPort = if (customServerCheck) binding.connectCustomServerPort.text.toString().toIntOrNull()
+            else (binding.spMenuAutocomplete.text).toString().substringAfter("syncplay.pl:").toIntOrNull()
 
             if (serverPort == null) {
                 binding.connectCustomServerPort.error = "Select port !"
                 return@setOnClickListener
             }
 
-            var username = binding.connectUsernameInputText.text.toString().replace("\\", "")
-                .trim()
+            var username = binding.connectUsernameInputText.text.toString().replace("\\", "").trim()
 
             username.also {
                 if (it.length > 150) username = it.substring(0, 149)
@@ -68,8 +61,7 @@ class ConnectFragment : Fragment() {
                 }
             }
 
-            var roomname = binding.connectRoomnameInputText.text.toString().replace("\\", "")
-                .trim()
+            var roomname = binding.connectRoomnameInputText.text.toString().replace("\\", "").trim()
 
             roomname.also {
                 if (it.length > 35) roomname = it.substring(0, 34)
@@ -108,6 +100,7 @@ class ConnectFragment : Fragment() {
 
             val json = GsonBuilder().create().toJson(joiningInfo)
             val intent = Intent(requireContext(), RoomActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
                 putExtra("json", json)
             }
             startActivity(intent)
@@ -122,7 +115,7 @@ class ConnectFragment : Fragment() {
             attachTooltip(this.contentDescription.toString())
         }
 
-        /* Responding to clicking the solo mode button + adding a long-pres tooltip */
+        /* Responding to clicking the solo mode button + adding a long-press tooltip */
         binding.connectSolomode.apply {
             setOnClickListener { enterSoloMode() }
             attachTooltip(this.contentDescription.toString())

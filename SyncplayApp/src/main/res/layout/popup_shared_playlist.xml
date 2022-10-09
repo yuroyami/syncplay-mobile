@@ -5,13 +5,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <FrameLayout
-        android:id="@+id/shP_dismisser"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clickable="true"
-        android:focusable="true" />
-
     <com.google.android.material.card.MaterialCardView
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -64,9 +57,22 @@
                 android:orientation="vertical"
                 android:padding="2dp"
                 app:layoutManager="LinearLayoutManager"
-                app:layout_constraintBottom_toTopOf="@id/shP_save"
+                app:layout_constraintBottom_toTopOf="@id/shP_add_file"
                 app:layout_constraintTop_toBottomOf="@id/shP_subheader"
                 tools:listitem="@layout/popup_shared_playlist_line" />
+
+            <ImageButton
+                android:id="@+id/shP_add_url"
+                style="@style/ExoMediaButton.FastForward"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_margin="12dp"
+                android:contentDescription="@string/room_shared_playlist_button_add_url"
+                android:scaleType="fitXY"
+                android:src="@drawable/ic_url"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/shP_add_file"
+                app:tint="#FFD66F" />
 
             <ImageButton
                 android:id="@+id/shP_add_file"
@@ -76,9 +82,10 @@
                 android:layout_margin="12dp"
                 android:scaleType="fitXY"
                 android:src="@drawable/ic_shared_playlist_add"
-                app:layout_constraintBottom_toBottomOf="@id/shP_save"
-                app:layout_constraintStart_toEndOf="@id/shP_add_directory"
-                app:layout_constraintTop_toTopOf="@id/shP_save"
+                android:contentDescription="@string/room_shared_playlist_button_add_file"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
                 app:tint="#FFD66F" />
 
             <ImageButton
@@ -89,22 +96,38 @@
                 android:layout_margin="12dp"
                 android:scaleType="fitXY"
                 android:src="@drawable/ic_add_folder"
-                app:layout_constraintBottom_toBottomOf="@id/shP_save"
-                app:layout_constraintStart_toEndOf="@id/shP_save"
-                app:layout_constraintTop_toTopOf="@id/shP_save"
+                android:contentDescription="@string/room_shared_playlist_button_add_folder"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@id/shP_add_file"
                 app:tint="#FFD66F" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/shP_save"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/uisetting_apply"
-                app:backgroundTint="#FFD66F"
-                app:icon="@drawable/ic_right"
-                app:iconSize="24dp"
+
+            <ImageButton
+                android:id="@+id/shP_shuffle"
+                style="@style/ExoMediaButton.FastForward"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_margin="12dp"
+                android:contentDescription="@string/room_shared_playlist_button_overflow"
+                android:scaleType="fitXY"
+                android:src="@drawable/ic_shuffle"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/shP_overflow"
+                app:tint="#FFD66F" />
+
+            <ImageButton
+                android:id="@+id/shP_overflow"
+                style="@style/ExoMediaButton.FastForward"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_margin="12dp"
+                android:contentDescription="@string/room_shared_playlist_button_overflow"
+                android:scaleType="fitXY"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
+                android:src="@drawable/ic_more"
+                app:tint="#FFD66F" />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.card.MaterialCardView>
 </androidx.constraintlayout.widget.ConstraintLayout>

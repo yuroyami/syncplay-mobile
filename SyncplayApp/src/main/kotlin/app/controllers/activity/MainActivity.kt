@@ -16,15 +16,12 @@ class MainActivity : AppCompatActivity() {
 
         //Inflating the UI as per the ViewBinding method :
         binding = ActivityMainBinding.inflate(layoutInflater)
-        val view = binding.root
-        setContentView(view)
+        setContentView(binding.root)
 
         /* Putting together the components of our ViewPager */
-        val mymainPager = binding.mainPager
-        mymainPager.adapter = MainPagerAdapter(this)
-        val myPagerTabs = binding.mainPagerTabs
-        TabLayoutMediator(myPagerTabs, mymainPager) { tab, position ->
-            tab.text = (mymainPager.adapter as MainPagerAdapter).mFragmentNames[position]
+        binding.mainPager.adapter = MainPagerAdapter(this)
+        TabLayoutMediator(binding.mainPagerTabs, binding.mainPager) { tab, position ->
+            tab.text = (binding.mainPager.adapter as MainPagerAdapter).mFragmentNames[position]
         }.attach()
     }
 }

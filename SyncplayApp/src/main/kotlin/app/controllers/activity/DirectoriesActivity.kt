@@ -7,7 +7,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.PopupMenu
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -17,11 +16,10 @@ import androidx.preference.PreferenceManager
 import app.R
 import app.controllers.adapters.DirectoriesAdapter
 import app.databinding.ActivityDirectoriesBinding
-import app.utils.SyncplayUtils
+import app.utils.MiscUtils
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-
 
 class DirectoriesActivity : AppCompatActivity() {
 
@@ -80,7 +78,7 @@ class DirectoriesActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         /* Immersive Mode */
-        SyncplayUtils.hideSystemUI(this, false)
+        MiscUtils.hideSystemUI(this, false)
 
         /** Opening the file picker activity, but with a folder pick intent */
         binding.addElement.setOnClickListener {
@@ -115,7 +113,7 @@ class DirectoriesActivity : AppCompatActivity() {
                             this,
                             binding.root,
                             uris[i].toUri().path?.replace("/tree/primary:", "Storage//").toString(),
-                            Toast.LENGTH_LONG
+                            -1
                         ).show()
                     }
                     delete -> {

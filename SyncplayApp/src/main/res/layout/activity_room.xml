@@ -249,32 +249,19 @@
         android:visibility="gone">
 
         <ImageView
-            android:id="@+id/popup_dismisser"
+            android:id="@+id/pseudo_popup_dismisser"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:alpha="0.3"
-            android:clickable="true"
+            android:alpha="0.45"
             android:focusable="true"
+            android:clickable="true"
             android:src="@color/black" />
 
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/pseudo_popup_containercard"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="8dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHeight_percent="0.75"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintWidth_percent="0.60">
-            <androidx.fragment.app.FragmentContainerView
-                android:id="@+id/pseudo_popup_container"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                tools:ignore="HardcodedText" />
-        </com.google.android.material.card.MaterialCardView>
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/pseudo_popup_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:ignore="HardcodedText" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

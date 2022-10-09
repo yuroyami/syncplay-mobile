@@ -61,14 +61,38 @@
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/ColorPreference/src/main/res/layout/cpv_preference_circle_large.xml" value="0.19067028985507245" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/ColorPreference/src/main/res/layout/cpv_preference_square.xml" value="0.19067028985507245" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/ColorPreference/src/main/res/layout/cpv_preference_square_large.xml" value="0.19067028985507245" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/bg2_gradient.xml" value="0.1045" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/bg3_gradient.xml" value="0.132" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/bg_gradient.xml" value="0.132" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/click_effect_drawable.xml" value="0.1165" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/click_ripple.xml" value="0.1165" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/cosmik_gradient.xml" value="0.1045" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/hud_gradient.xml" value="0.103" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/ic_add_folder.xml" value="0.1355" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/ic_add_video.xml" value="0.103" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/ic_clear_all.xml" value="0.1355" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/ic_crescent.xml" value="0.1" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/ic_delete.xml" value="0.1355" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/ic_delete_folder.xml" value="0.1355" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/ic_folder.xml" value="0.1285" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/ic_path.xml" value="0.1355" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/ic_play_arrow.xml" value="0.1285" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/ic_send.xml" value="0.103" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/ic_shared_playlist.xml" value="0.103" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/ic_shared_playlist_add.xml" value="0.1355" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/ic_sun.xml" value="0.1" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/drawable/ic_username.xml" value="0.1355" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/layout/activity_directories.xml" value="0.18" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/layout/activity_directories_item.xml" value="0.1616075245831552" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/layout/activity_main.xml" value="0.19157608695652173" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/layout/activity_room.xml" value="0.1" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/layout/fragment_connect.xml" value="0.1" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/layout/hud.xml" value="0.18" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/layout/popup_disconnected.xml" value="0.1" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/layout/popup_messages.xml" value="0.18342391304347827" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/layout/popup_shared_playlist.xml" value="0.14" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/layout/popup_shared_playlist_line.xml" value="0.16" />
+        <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/layout/popup_starter_hint.xml" value="0.1616075245831552" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/SyncplayApp/src/main/res/layout/serverlist_textview.xml" value="0.18342391304347827" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/drawable/hud_gradient.xml" value="0.158" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/layout/about_tab1_content.xml" value="0.18931159420289856" />
@@ -91,6 +115,22 @@
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.1" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/xml/settings.xml" value="0.11" />
         <entry key="..\:/ANDROID Workshop/# PROJECTS/SYNCPLAY/app/src/main/res/xml/ui_settings.xml" value="0.10472659870250231" />
+        <entry key="..\:/ANDROID-Dev-Workshop/#FOSS Projects/SYNCPLAY/SyncplayApp/src/main/res/drawable-night/bg2_gradient.xml" value="0.1045" />
+        <entry key="..\:/ANDROID-Dev-Workshop/#FOSS Projects/SYNCPLAY/SyncplayApp/src/main/res/drawable-night/cosmik_gradient.xml" value="0.1" />
+        <entry key="..\:/ANDROID-Dev-Workshop/#FOSS Projects/SYNCPLAY/SyncplayApp/src/main/res/drawable/bg_gradient.xml" value="0.75" />
+        <entry key="..\:/ANDROID-Dev-Workshop/#FOSS Projects/SYNCPLAY/SyncplayApp/src/main/res/drawable/click_ripple.xml" value="0.1135" />
+        <entry key="..\:/ANDROID-Dev-Workshop/#FOSS Projects/SYNCPLAY/SyncplayApp/src/main/res/drawable/cosmik_gradient.xml" value="0.1045" />
+        <entry key="..\:/ANDROID-Dev-Workshop/#FOSS Projects/SYNCPLAY/SyncplayApp/src/main/res/drawable/ic_solo.xml" value="0.1" />
+        <entry key="..\:/ANDROID-Dev-Workshop/#FOSS Projects/SYNCPLAY/SyncplayApp/src/main/res/drawable/splash_screen_activity.xml" value="0.1195" />
+        <entry key="..\:/ANDROID-Dev-Workshop/#FOSS Projects/SYNCPLAY/SyncplayApp/src/main/res/drawable/syncplay_gradient_bitmap.xml" value="0.1195" />
+        <entry key="..\:/ANDROID-Dev-Workshop/#FOSS Projects/SYNCPLAY/SyncplayApp/src/main/res/drawable/syncplay_gradient_layer.xml" value="0.1195" />
+        <entry key="..\:/ANDROID-Dev-Workshop/#FOSS Projects/SYNCPLAY/SyncplayApp/src/main/res/layout/activity_main.xml" value="0.1" />
+        <entry key="..\:/ANDROID-Dev-Workshop/#FOSS Projects/SYNCPLAY/SyncplayApp/src/main/res/layout/activity_room.xml" value="0.10834088848594742" />
+        <entry key="..\:/ANDROID-Dev-Workshop/#FOSS Projects/SYNCPLAY/SyncplayApp/src/main/res/layout/activity_soloplayer.xml" value="0.1616075245831552" />
+        <entry key="..\:/ANDROID-Dev-Workshop/#FOSS Projects/SYNCPLAY/SyncplayApp/src/main/res/layout/popup_disconnected.xml" value="0.1616075245831552" />
+        <entry key="..\:/ANDROID-Dev-Workshop/#FOSS Projects/SYNCPLAY/SyncplayApp/src/main/res/layout/popup_load_url.xml" value="0.1616075245831552" />
+        <entry key="..\:/ANDROID-Dev-Workshop/#FOSS Projects/SYNCPLAY/SyncplayApp/src/main/res/layout/popup_messages_item.xml" value="0.17" />
+        <entry key="..\:/ANDROID-Dev-Workshop/#FOSS Projects/SYNCPLAY/SyncplayApp/src/main/res/xml/ui_settings.xml" value="0.21804189824711415" />
       </map>
     </option>
   </component>

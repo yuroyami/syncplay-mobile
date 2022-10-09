@@ -9,7 +9,7 @@
 </p>
 <p align="center">
   <a href="https://apt.izzysoft.de/fdroid/index/apk/com.reddnek.syncplay">
-    <img alt="Syncplay Android on IzzyOnDroid Repo" title="Syncplay Android" src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" width="170">
+    <img alt="Syncplay Android on IzzyOnDroid Repo" title="Syncplay Android" src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" width="200">
   </a></p>
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->

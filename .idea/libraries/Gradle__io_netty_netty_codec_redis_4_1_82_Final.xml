@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Gradle: io.netty:netty-codec-redis:4.1.82.Final">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec-redis/4.1.82.Final/b28f76af055cc658c5ce7e6eae8b56f1406529f1/netty-codec-redis-4.1.82.Final.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec-redis/4.1.82.Final/f1902eb41d1f3d813be6bd0dde503dc04a5f304e/netty-codec-redis-4.1.82.Final-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.netty/netty-codec-redis/4.1.82.Final/9d546c4aedf8e14720b2d5297242ae46e9f76ace/netty-codec-redis-4.1.82.Final-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

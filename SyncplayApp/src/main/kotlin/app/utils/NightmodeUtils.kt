@@ -2,21 +2,20 @@ package app.utils
 
 import android.view.View
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
-import app.R
 import app.controllers.fragment.ConnectFragment
 
 /** A small class that delegates night mode settings */
 object NightmodeUtils {
+
 
     /** This simple function will set the night mode as per the value specified.
      * 0 means apply the night mode from prefs.
      * 1 means OFF
      * 2 means AUTO (Follows the system)
      * 3 means ON
-     * null means switch the mode from ON to OFF or OFF to ON
+     * null means reverse the current mode (response to clicking the toggle button)
      *
      * This method also saves the value in the SharedPreferences (if value == null) */
     fun Fragment.setNightMode(value: String?) {
@@ -30,8 +29,8 @@ object NightmodeUtils {
             "1" -> {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
                 if (this is ConnectFragment) {
-                    val d = ResourcesCompat.getDrawable(resources, R.drawable.ic_sun, null)
-                    binding.connectNightswitch.setImageDrawable(d)
+                    binding.connectNightswitch.setMinAndMaxFrame(0, 70)
+                    binding.connectNightswitch.playAnimation()
                     binding.connectNightswitch.visibility = View.VISIBLE
 
                 }
@@ -45,8 +44,8 @@ object NightmodeUtils {
             "3" -> {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
                 if (this is ConnectFragment) {
-                    val d = ResourcesCompat.getDrawable(resources, R.drawable.ic_crescent, null)
-                    binding.connectNightswitch.setImageDrawable(d)
+                    binding.connectNightswitch.setMinAndMaxFrame(70, 141)
+                    binding.connectNightswitch.playAnimation()
                     binding.connectNightswitch.visibility = View.VISIBLE
 
                 }

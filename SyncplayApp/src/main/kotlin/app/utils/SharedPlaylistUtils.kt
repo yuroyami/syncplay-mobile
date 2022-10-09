@@ -11,7 +11,7 @@ import app.controllers.activity.RoomActivity
 import app.protocol.JsonSender.sendPlaylistChange
 import app.protocol.JsonSender.sendPlaylistIndex
 import app.utils.ExoPlayerUtils.injectVideo
-import app.utils.SyncplayUtils.getFileName
+import app.utils.MiscUtils.getFileName
 import app.utils.UIUtils.broadcastMessage
 import app.utils.UIUtils.toasty
 import app.wrappers.MediaFile
@@ -164,7 +164,7 @@ object SharedPlaylistUtils {
 
     fun RoomActivity.deleteItemFromPlaylist(i: Int) {
         p.session.sharedPlaylist.removeAt(i)
-        sharedplaylistPopup.update()
+        //sharedplaylistPopup.update()
         p.sendPacket(sendPlaylistChange(p.session.sharedPlaylist))
         if (p.session.sharedPlaylist.isEmpty()) {
             p.session.sharedPlaylistIndex = -1

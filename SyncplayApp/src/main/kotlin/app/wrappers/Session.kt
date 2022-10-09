@@ -26,6 +26,11 @@ class Session {
     /** Variable that stores all messages that have been sent/received */
     var messageSequence: MutableList<Message> = mutableListOf()
 
+    /** Outbound messages queue (When the connection is lost):
+     *   This basically works like a waiting queue that stacks outgoing messages (JSONs)
+     *   during disconnections, then it will be iterated-through and then cleared. */
+    var outboundQueue: MutableList<String> = mutableListOf()
+
     /** Variable that stores the shared playlist for the session */
     var sharedPlaylist = mutableListOf<String>() /* List of files */
     var sharedPlaylistIndex = -1 /* Index of the currently playing file for the session */

@@ -5,9 +5,9 @@ pluginManagement {
         mavenCentral()
     }
     plugins {
-        id 'com.android.application' version '7.4.0-alpha07'
-        id 'com.android.library' version '7.4.0-alpha07'
-        id 'org.jetbrains.kotlin.android' version '1.6.21'
+        id 'com.android.application' version '8.0.0-alpha02'
+        id 'com.android.library' version '8.0.0-alpha02'
+        id 'org.jetbrains.kotlin.android' version '1.7.10'
     }
 }
 
@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "SyncpPlay"
+rootProject.name = "SyncPlay"
 include ':SyncplayApp'

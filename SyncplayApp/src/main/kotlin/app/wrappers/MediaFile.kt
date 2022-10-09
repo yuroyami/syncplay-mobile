@@ -2,12 +2,13 @@ package app.wrappers
 
 import android.content.Context
 import android.net.Uri
-import app.utils.SyncplayUtils
-import app.utils.SyncplayUtils.getFileName
-import app.utils.SyncplayUtils.toHex
+import app.utils.MiscUtils
+import app.utils.MiscUtils.getFileName
+import app.utils.MiscUtils.toHex
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
+import java.net.URL
 import kotlin.math.roundToInt
 
 /**************************************************************************************
@@ -18,6 +19,9 @@ class MediaFile {
 
     /** The path Uri of the file **/
     var uri: Uri? = null
+
+    /** The URL of the file **/
+    var url: String? = null
 
     /** The name of the file with its extension **/
     var fileName = ""
@@ -83,15 +87,26 @@ class MediaFile {
     }
 
 
-    /** This method is responsible for getting the size and filename of our media **/
+    /** This method is responsible for getting the size and filename of our media file **/
     fun collectInfo(context: Context) {
-        /** Using SyncplayUtils **/
+        /** Using MiscUtils **/
         fileName = context.getFileName(uri!!)!!
         fileSize =
-            SyncplayUtils.getRealSizeFromUri(context, uri!!)?.toDouble()?.roundToInt().toString()
+            MiscUtils.getRealSizeFromUri(context, uri!!)?.toDouble()?.roundToInt().toString()
 
         /** Hashing name and size in case they're used **/
-        fileNameHashed = SyncplayUtils.sha256(fileName).toHex()
-        fileSizeHashed = SyncplayUtils.sha256(fileSize).toHex()
+        fileNameHashed = MiscUtils.sha256(fileName).toHex()
+        fileSizeHashed = MiscUtils.sha256(fileSize).toHex()
+    }
+
+    /** This method is responsible for getting the size and filename of our media URL source **/
+    fun collectInfoURL() {
+        /** Using SyncplayUtils **/
+        fileName = URL(url).path.substringAfterLast("/")
+        fileSize = 0L.toString()
+
+        /** Hashing name and size in case they're used **/
+        fileNameHashed = MiscUtils.sha256(fileName).toHex()
+        fileSizeHashed = MiscUtils.sha256(fileSize).toHex()
     }
 }

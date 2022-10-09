@@ -27,6 +27,6 @@
         android:singleLine="true"
         android:text=""
         android:textAlignment="viewStart"
-        android:textSize="18sp" />
+        android:textSize="16sp" />
 
 </LinearLayout>

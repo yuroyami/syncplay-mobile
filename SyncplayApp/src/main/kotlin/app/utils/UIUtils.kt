@@ -12,7 +12,11 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateInterpolator
-import android.widget.*
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.RelativeLayout
+import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.TooltipCompat
@@ -23,7 +27,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import app.R
 import app.controllers.activity.RoomActivity
+import app.controllers.fragment.RoomSettingsHosterFragment
+import app.popups.SharedPlaylistPopup
 import app.utils.RoomUtils.string
+import app.wrappers.Constants
 import app.wrappers.Message
 import app.wrappers.User
 import kotlinx.coroutines.Dispatchers
@@ -174,7 +181,7 @@ object UIUtils {
                         val fileSize = user.file?.fileSize?.toDoubleOrNull()?.div(1000000.0)
                         val fileInfoLine = string(
                             R.string.room_details_file_properties,
-                            SyncplayUtils.timeStamper(user.file?.fileDuration?.roundToInt()!!),
+                            MiscUtils.timeStamper(user.file?.fileDuration?.roundToInt()!!),
                             fileSize?.toString() ?: "???"
                         )
                         val lineFileInfo = TextView(this@replenishUsers)
@@ -278,13 +285,13 @@ object UIUtils {
     }
 
     /** Hides the keyboard and loses message typing focus **/
-    fun AppCompatActivity.hideKb() {
+    fun RoomActivity.hideKb() {
         lifecycleScope.launch(Dispatchers.Main) {
             WindowInsetsControllerCompat(
                 window,
                 window.decorView
             ).hide(WindowInsetsCompat.Type.ime())
-            if (this is RoomActivity) binding.syncplayINPUTBox.clearFocus()
+            binding.syncplayINPUTBox.clearFocus()
         }
     }
 
@@ -334,6 +341,27 @@ object UIUtils {
         }
     }
 
+    /** Inserts a popup into the pseudo popup container (Which is not really a popup but a fragment
+     * @param int The popup index to show (1 = In-room Settings | 2 = Shared Playlist) */
+    fun RoomActivity.insertPopup(int: Int) {
+        when (int) {
+            Constants.POPUP_INROOM_SETTINGS -> {
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.pseudo_popup_container, RoomSettingsHosterFragment())
+                    .commit()
+
+            }
+
+            Constants.POPUP_SHARED_PLAYLIST -> {
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.pseudo_popup_container, SharedPlaylistPopup())
+                    .commit()
+
+            }
+        }
+        binding.pseudoPopupParent.visibility = View.VISIBLE
+    }
+
 
     /** Shows a tooltip above every button to define its functionality after a long-press
      * This should not be called on Android L & M as it would freeze the device if done twice
@@ -342,6 +370,14 @@ object UIUtils {
         if (VERSION.SDK_INT > VERSION_CODES.M) {
             this.isLongClickable = true
             TooltipCompat.setTooltipText(this, string)
+        }
+    }
+
+    fun View.bindTooltip() {
+        if (VERSION.SDK_INT > VERSION_CODES.M) {
+            this.isLongClickable = true
+            val tooltip = this.contentDescription
+            TooltipCompat.setTooltipText(this, tooltip)
         }
     }
 

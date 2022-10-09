@@ -1,8 +1,6 @@
 package app.utils
 
 import android.content.Context
-import android.os.Handler
-import android.os.Looper
 import android.view.View
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.lifecycle.lifecycleScope
@@ -26,28 +24,25 @@ object RoomUtils {
 
     /** Updates the protocol with the current position of the video playback **/
     fun RoomActivity.vidPosUpdater() {
-        Handler(Looper.getMainLooper()).postDelayed({
+        lifecycleScope.launch(Dispatchers.Main) {
             if (myExoPlayer?.isCurrentMediaItemSeekable == true) {
                 /* Informing my ViewModel about current vid position so it is retrieved for networking after */
-                runOnUiThread {
-                    val progress = (binding.vidplayer.player?.currentPosition?.div(1000.0))
-                    if (progress != null) {
-                        p.currentVideoPosition = progress
-                    }
+                val progress = (binding.vidplayer.player?.currentPosition?.div(1000.0))
+                if (progress != null) {
+                    p.currentVideoPosition = progress
                 }
             }
-            vidPosUpdater()
-        }, 100)
+            delay(100)
+        }
     }
-
 
     /** Periodic task method to execute ping commands every 1 sec
      * to update the ping which is used in syncplay's protocol and to show ping to the user UI */
     fun RoomActivity.pingUpdate() {
         lifecycleScope.launch(Dispatchers.IO) {
             while (true) {
-                if (p.socket.isConnected && !p.socket.isClosed && !p.socket.isInputShutdown) {
-                    p.ping = SyncplayUtils.pingIcmp("151.80.32.178", 32) * 1000.0
+                if (p.channel?.isActive == true) {
+                    p.ping = MiscUtils.pingIcmp("151.80.32.178", 32) * 1000.0
                     runOnUiThread {
                         binding.syncplayConnectionInfo.text =
                             string(R.string.room_ping_connected, "${p.ping.roundToInt()}")
@@ -59,17 +54,9 @@ object RoomUtils {
                     }
                 } else {
                     runOnUiThread {
-                        binding.syncplayConnectionInfo.text =
-                            string(R.string.room_ping_disconnected)
-                        binding.syncplaySignalIcon.setImageDrawable(
-                            AppCompatResources.getDrawable(
-                                this@pingUpdate,
-                                R.drawable.ic_unconnected
-                            )
-                        )
-                    }
-                    if (p.connected) {
-                        p.syncplayBroadcaster?.onDisconnected()
+                        binding.syncplayConnectionInfo.text = string(R.string.room_ping_disconnected)
+                        binding.syncplaySignalIcon
+                            .setImageDrawable(AppCompatResources.getDrawable(this@pingUpdate, R.drawable.ic_unconnected))
                     }
                 }
                 delay(1000)
