@@ -9,6 +9,9 @@
       <excludeFolder url="file://$MODULE_DIR$/ColorPreference" />
       <excludeFolder url="file://$MODULE_DIR$/SyncplayProtocol" />
       <excludeFolder url="file://$MODULE_DIR$/SyncplayUtils" />
+      <excludeFolder url="file://$MODULE_DIR$/.." />
+      <excludeFolder url="file://$MODULE_DIR$/../../art" />
+      <excludeFolder url="file://$MODULE_DIR$/../../keystore" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
