@@ -101,6 +101,11 @@
     <string name="room_shared_playlist_button_shuffle">Shuffle entire playlist</string>
     <string name="room_shared_playlist_button_shuffle_rest">Shuffle remaining playlist</string>
     <string name="room_shared_playlist_button_overflow">More Shared Playlist settings</string>
+    <string name="room_shared_playlist_button_playlist_import">Load playlist from file</string>
+    <string name="room_shared_playlist_button_playlist_import_n_shuffle">Load and shuffle playlist from file</string>
+    <string name="room_shared_playlist_button_playlist_export">Save playlist to file</string>
+    <string name="room_shared_playlist_button_set_media_directories">Set media directories</string>
+    <string name="room_shared_playlist_button_set_trusted_domains">Set trusted domains</string>
     <string name="room_button_desc_aspect_ratio">Aspect Ratio</string>
     <string name="room_button_desc_shared_playlist">Shared Playlist</string>
     <string name="room_button_desc_audio_tracks">Audio Tracks</string>
@@ -145,7 +150,7 @@
     <string name="setting_use_buffer_title">Use Custom Buffer Sizes</string>
     <string name="setting_use_buffer_summary">If you are not satisfied with the player\'s video load times before and during playback, you can use custom buffer sizes (Use at your own risk).</string>
     <string name="setting_max_buffer_title">Custom max buffer size</string>
-    <string name="setting_max_buffer_summary">Default is 50 (50000 milliseconds). This determines the maximum buffer size before starting to play the video. If you don\'t know what this is, don\'t change it.</string>
+    <string name="setting_max_buffer_summary">Default is 30 (30000 milliseconds). This determines the maximum buffer size before starting to play the video. If you don\'t know what this is, don\'t change it.</string>
     <string name="setting_min_buffer_summary">Default is 15 (15000 milliseconds). Decrease this value to play video faster but there is a possibility that the player may fail or even crash. Change at your own risk.</string>
     <string name="setting_min_buffer_title">Custom min buffer size</string>
     <string name="setting_playback_buffer_summary">Default is 2500 milliseconds. This represents the buffer size when SEEKING or UNPAUSING the video. Change this if you\'re not satisfied with the small delay when seeking video.</string>

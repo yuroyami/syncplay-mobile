@@ -5,7 +5,7 @@
     android:layout_height="match_parent">
 
     <FrameLayout
-        android:id="@+id/loadurl_popup_dismisser"
+        android:id="@+id/addurls_popup_dismisser"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clickable="true"
@@ -26,43 +26,44 @@
         app:layout_constraintWidth_percent="0.75">
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/loadurl_constraintlayout"
+            android:id="@+id/addurls_constraintlayout"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/url_container"
+                android:id="@+id/urls_container"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
-                android:hint="@string/room_addmedia_online_url"
+                android:hint="One URL Per Line"
                 android:textColorHint="@color/sp_shade"
                 app:boxStrokeColor="@color/sp_shade"
                 app:endIconMode="clear_text"
-                app:helperText="@string/room_addmedia_online_url"
+                app:helperText="Please add one URL per line"
                 app:helperTextEnabled="true"
                 app:helperTextTextColor="@color/sp_shade"
-                app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintRight_toLeftOf="@id/url_paste"
+                app:layout_constraintRight_toLeftOf="@id/urls_paste"
+                app:layout_constraintTop_toTopOf="parent"
                 app:placeholderTextColor="@color/sp_shade"
                 app:startIconContentDescription="@string/room_addmedia_online_url"
                 app:startIconDrawable="@drawable/ic_url"
                 app:startIconTint="@color/preroom_ic_color">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/url_edittext"
+                    android:id="@+id/urls_edittext"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:imeOptions="flagNoExtractUi"
                     android:includeFontPadding="false"
-                    android:singleLine="true"
+                    android:minHeight="120dp"
+                    android:singleLine="false"
                     android:textColor="#555555" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <ImageButton
-                android:id="@+id/url_paste"
+                android:id="@+id/urls_paste"
                 style="@style/ExoMediaButton.FastForward"
                 android:layout_width="38dp"
                 android:layout_height="38dp"
@@ -70,13 +71,13 @@
                 android:contentDescription="Paste from Clipboard"
                 android:scaleType="fitXY"
                 android:src="@drawable/ic_paste"
-                app:layout_constraintBottom_toBottomOf="@id/url_container"
+                app:layout_constraintBottom_toBottomOf="@id/urls_container"
                 app:layout_constraintRight_toRightOf="parent"
-                app:layout_constraintTop_toTopOf="@id/url_container"
+                app:layout_constraintTop_toTopOf="@id/urls_container"
                 app:tint="#FFD66F" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/url_confirm"
+                android:id="@+id/urls_confirm"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
@@ -91,7 +92,7 @@
                 app:iconSize="24dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/url_container" />
+                app:layout_constraintTop_toBottomOf="@id/urls_container" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.card.MaterialCardView>

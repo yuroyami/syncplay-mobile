@@ -10,7 +10,11 @@
 <p align="center">
   <a href="https://apt.izzysoft.de/fdroid/index/apk/com.reddnek.syncplay">
     <img alt="Syncplay Android on IzzyOnDroid Repo" title="Syncplay Android" src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" width="200">
-  </a></p>
+  </a>
+  <a href="https://play.google.com/store/apps/details?id=com.reddnek.syncplay">
+    <img alt="Download it on Play store" title="Syncplay Android" src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" width="200">
+  </a>
+</p> 
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->

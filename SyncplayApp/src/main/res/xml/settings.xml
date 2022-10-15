@@ -99,7 +99,7 @@
             app:title="@string/setting_use_buffer_title" />
         <SeekBarPreference
             android:max="60"
-            app:defaultValue="50"
+            app:defaultValue="30"
             app:dependency="use_custom_buffer_boolean"
             app:key="player_max_buffer"
             app:min="1"

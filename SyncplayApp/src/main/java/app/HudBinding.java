@@ -16,36 +16,25 @@ import androidx.viewbinding.ViewBindings;
 public final class HudBinding implements ViewBinding {
     @NonNull
     public final ImageButton syncplaySharedPlaylist;
-
     @NonNull
     public final LinearLayout buttonRowOne;
-
     @NonNull
     public final ImageButton exoAudioTrack;
-
     @NonNull
     public final TextView exoDuration;
-
     @NonNull
     public final ImageButton exoFfwd;
-
     @NonNull
     public final ImageButton exoPause;
-
     @NonNull
     public final ImageButton exoPlay;
-
     @NonNull
     public final TextView exoPosition;
-
     public final View exoProgressPlaceholder;
-
     @NonNull
     public final ImageButton exoRepeatToggle;
-
     @NonNull
     public final ImageButton exoRew;
-
     @NonNull
     public final ImageButton exoSubtitle;
 
