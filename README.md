@@ -73,7 +73,7 @@ Syncplay on Desktop has, and ports it to Android flawlessly, such as real-time c
 
 <p align="center">
   <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS2.png" width="30%">
-  <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS3.png" width="30%"><br>
+  <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS4.png" width="30%"><br>
   <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS3.png" width="80%">
 </p>
 
