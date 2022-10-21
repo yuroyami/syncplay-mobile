@@ -31,7 +31,7 @@ import app.R
 import app.controllers.activity.RoomActivity
 import app.pseudopopups.MessageHistoryPopup
 import app.pseudopopups.RoomSettingsHosterFragment
-import app.sharedplaylist.SharedPlaylistPopup
+import app.sharedplaylist.SHPFragment
 import app.utils.RoomUtils.string
 import app.wrappers.Constants
 import app.wrappers.Message
@@ -70,12 +70,10 @@ object UIUtils {
             if (isChat) msg.sender = chatter
 
             /** Check if the sender is also the main user, to determine colors **/
-            //if (chatter.lowercase() == p.session.currentUsername.lowercase()) {
             msg.isMainUser = chatter == p.session.currentUsername
 
             /** Assigning the message content to the message **/
-            msg.content =
-                message /* Assigning message content to the variable inside our instance */
+            msg.content = message /* Assigning message content to the variable inside our instance */
 
             /** Adding the message instance to our message sequence **/
             p.session.messageSequence.add(msg)
@@ -346,23 +344,23 @@ object UIUtils {
 
     /** Inserts a popup into the pseudo popup container (Which is not really a popup but a fragment
      * @param int The popup index to show (1 = In-room Settings | 2 = Shared Playlist) */
-    fun RoomActivity.insertPopup(int: Int) {
+    fun RoomActivity.insertPopup(int: Constants.POPUP) {
         when (int) {
-            Constants.POPUP_INROOM_SETTINGS -> {
+            Constants.POPUP.POPUP_INROOM_SETTINGS -> {
                 supportFragmentManager.beginTransaction()
                     .replace(R.id.pseudo_popup_container, RoomSettingsHosterFragment())
                     .commitNowAllowingStateLoss()
 
             }
 
-            Constants.POPUP_SHARED_PLAYLIST -> {
+            Constants.POPUP.POPUP_SHARED_PLAYLIST -> {
                 supportFragmentManager.beginTransaction()
-                    .replace(R.id.pseudo_popup_container, SharedPlaylistPopup())
+                    .replace(R.id.pseudo_popup_container, SHPFragment())
                     .commitNowAllowingStateLoss()
 
             }
 
-            Constants.POPUP_MESSAGE_HISTORY -> {
+            Constants.POPUP.POPUP_MESSAGE_HISTORY -> {
                 supportFragmentManager.beginTransaction()
                     .replace(R.id.pseudo_popup_container, MessageHistoryPopup())
                     .commitNowAllowingStateLoss()

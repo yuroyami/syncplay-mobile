@@ -10,8 +10,8 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import app.R
 import app.controllers.activity.RoomActivity
-import app.sharedplaylist.SharedPlaylistUtils.deleteItemFromPlaylist
-import app.sharedplaylist.SharedPlaylistUtils.sendPlaylistSelection
+import app.sharedplaylist.SHPUtils.deleteItemFromPlaylist
+import app.sharedplaylist.SHPUtils.sendPlaylistSelection
 
 class SharedPlaylistRecycAdapter(private val act: RoomActivity, var list: MutableList<String>) :
     RecyclerView.Adapter<SharedPlaylistRecycAdapter.ViewHolder>() {
@@ -53,6 +53,8 @@ class SharedPlaylistRecycAdapter(private val act: RoomActivity, var list: Mutabl
         holder.name.text = text
         if (act.p.session.sharedPlaylist.indexOf(text) == act.p.session.sharedPlaylistIndex) {
             holder.playStatus.visibility = View.VISIBLE
+        } else {
+            holder.playStatus.visibility = View.GONE
         }
     }
 }

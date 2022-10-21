@@ -1,6 +1,6 @@
 <h1 align="center"> Syncplay for Android </h1> <br>
 <p align="center">
-  <a href="https://gitpoint.co/">
+  <a href="">
     <img alt="Syncplay BETA for Android" title="Syncplay Android" src="https://github.com/chromaticnoob/syncplay-android/blob/master/art/LOGO.png?raw=true" width="250">
   </a>
 </p>
@@ -72,8 +72,9 @@ Syncplay on Desktop has, and ports it to Android flawlessly, such as real-time c
 * Supports Android 5.0 Lollipop up to Android 13 Tiramisu.
 
 <p align="center">
-  <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS2.png" width=200>
-  <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS3.png" width=550>
+  <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS2.png" width="30%">
+  <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS3.png" width="30%"><br>
+  <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS3.png" width="80%">
 </p>
 
 ## How to use
@@ -90,24 +91,17 @@ Usage is fairly simple:
 ## Roadmap
 These are the things I am willing to add/adjust in the future :
 
-- [x] Adopt original Syncplay's Chat functionality (as of 0.1.0)
-- [x] Enable FFmpeg Audio extension to play all possible audio track formats. (as of 0.6.3j)
-- [x] Add Color preferences and in-room settings (as of 0.7.0)
-- [x] Shared Playlists (as of 0.8.0)
-- [x] Support for custom/private servers (as of 0.8.0)
-- [x] Night Mode (as of 0.9.0)
-- [x] Solo Mode (Offline video player) (as of 0.9.0)
-- [ ] Deployment to Google Play Store
-- [ ] URL Support
-- [ ] Fix TLS/SSL Secure Connection
-- [ ] Self-Updater
-- [ ] Support for LibVLC plugin integration to play all possible video formats without depencing on
-  device capabilities
+- [x] Adopt original Syncplay's Chat functionality
+- [x] Shared Playlists
+- [x] Support for custom/private servers
+- [x] Night Mode
+- [x] URL Support (as of 0.11.0, unreleased)
+- [ ] TLS/SSL Secure Connection Support
 - [x] Multi-language Support
-  - [x] English (as of 0.7.0)
-  - [x] Arabic (as of 0.7.0)
-  - [x] French (as of 0.9.0)
-  - [x] Chinese (as of 0.9.0 by [Zhaodaidai](https://github.com/Zhaodaidai))
+  - [x] English
+  - [x] Arabic
+  - [x] French
+  - [x] Chinese (by [Zhaodaidai](https://github.com/Zhaodaidai))
   - [ ] Spanish
   - [ ] Portuguese
   - [ ] Japanese
@@ -136,7 +130,7 @@ If there's anything you'd like to chat about, please feel free to open a new dis
 
 ## Build Process
 
-The project is developed under Android Studio Electric Eel | 2022.1.1 Canary 7
+The project is developed under Android Studio Flamingo | 2022.2.1 Canary 3
 Make sure you have a version equal or later than the one I am using. Dowload the source code ZIP and
 extract it somewhere, then open it using Android Studio. Then you can just build the app using a
 custom JKS keystore of your choice (Edit the keystore information on the

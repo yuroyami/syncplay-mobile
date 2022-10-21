@@ -6,4 +6,10 @@
         <item name="android:clickable">true</item>
         <item name="android:focusable">true</item>
     </style>
+
+    <!-- Customized popup theme with smaller item and text heights -->
+    <style name="MenuStyle" parent="Widget.MaterialComponents.PopupMenu">
+        <item name="android:textSize">13sp</item>
+        <item name="android:listPreferredItemHeightSmall">40dp</item>
+    </style>
 </resources>

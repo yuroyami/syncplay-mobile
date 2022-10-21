@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 
 /** Shared Playlists also have their fair amount of methods related to it which I believe can be
  * wrapped into their own class.**/
-object SharedPlaylistUtils {
+object SHPUtils {
 
     /** Adding a file to the playlist: This basically adds one file name to the playlist, then,
      * adds the parent directory to the known media directories, after that, it informs the server

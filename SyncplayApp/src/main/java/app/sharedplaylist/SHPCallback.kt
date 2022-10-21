@@ -1,5 +1,5 @@
 package app.sharedplaylist
 
-interface SharedPlaylistCallback {
+interface SHPCallback {
     fun onUpdate()
 }

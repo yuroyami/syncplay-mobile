@@ -4,10 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.protocol.JsonHandler.handleJson
 import app.protocol.JsonSender.sendHello
-import app.wrappers.Constants.STATE_CONNECTED
-import app.wrappers.Constants.STATE_CONNECTING
-import app.wrappers.Constants.STATE_DISCONNECTED
-import app.wrappers.Constants.STATE_SCHEDULING_RECONNECT
+import app.protocol.JsonSender.sendTLS
+import app.wrappers.Constants
+import app.wrappers.Constants.CONNECTIONSTATE.*
 import app.wrappers.MediaFile
 import app.wrappers.Session
 import com.google.gson.Gson
@@ -28,10 +27,13 @@ import io.netty.handler.codec.DelimiterBasedFrameDecoder
 import io.netty.handler.codec.Delimiters
 import io.netty.handler.codec.string.StringDecoder
 import io.netty.handler.codec.string.StringEncoder
+import io.netty.handler.ssl.SslHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.InputStream
+import javax.net.ssl.SSLEngine
+
 
 open class SyncplayProtocol : ViewModel() {
 
@@ -61,21 +63,25 @@ open class SyncplayProtocol : ViewModel() {
 
     /** Late-initialized socket channel which will host all incoming and outcoming data **/
     var channel: Channel? = null
-    var state: Int = STATE_DISCONNECTED
-    var useTLS: Boolean = false
+    var state: Constants.CONNECTIONSTATE = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
+    var tls: Constants.TLS = Constants.TLS.TLS_NO
 
     /** Storing certificate without having to pass context **/
     lateinit var cert: InputStream
 
     /** ============================ start of protocol =====================================**/
 
-    /** This method is responsible for bootstrapping (initializing) the Netty TCP socket client */
+    /** This method is responsible for bootstrapping (initializing) the Netty TCP socket client
+     *
+     * @param tlsMode Indicates how the client will behave on first initialization.
+     * Using 'null' will set up */
     fun connect() {
         /** Informing UI controllers that we are starting a connection attempt */
         syncplayBroadcaster?.onConnectionAttempt()
         state = STATE_CONNECTING
 
-        /** Bootstrapping our Netty client. Bootstrapping basically means initializing and it has to be done once per connection. */
+        /** Bootstrapping our Netty client. Bootstrapping basically means initializing
+         * and it has to be done once per connection. */
         viewModelScope.launch(Dispatchers.IO) {
             /** 1- Specifiying that we want the NIO event loop group. */
             val group: EventLoopGroup = NioEventLoopGroup()
@@ -89,14 +95,14 @@ open class SyncplayProtocol : ViewModel() {
                         val p: ChannelPipeline =
                             ch.pipeline() /* Getting the pipeline related to the channel */
 
-                        /** All of the above repeats for every TCP client there is in the world. But below are parameters
-                         * specific to our Android-to-SyncplayServer configuration. Most notably, the line delimiters.
-                         *
-                         * Syncplay servers run on Python's Twisted, which uses '\r\n' as line delimiters.
-                         * Here, we tell Netty that it should divide every message when it encounters these delimiters.
-                         *
-                         * Note: This decoder should be added to the HEAD of the pipeline
-                         */
+                        /** Should be establish a TLS connection ? */
+                        if (tls == Constants.TLS.TLS_YES) {
+                            val engine: SSLEngine? = null
+                            engine?.useClientMode = true
+                            p.addLast("ssl", SslHandler(engine))
+                        }
+
+                        /** We should never forget \r\n delimiters, or we would get no input */
                         p.addLast(
                             "framer",
                             DelimiterBasedFrameDecoder(8192, *Delimiters.lineDelimiter())
@@ -121,17 +127,23 @@ open class SyncplayProtocol : ViewModel() {
                 if (!future.isSuccess) {
                     syncplayBroadcaster?.onConnectionFailed()
                 } else {
-                    channel =
-                        f.channel() /* This is the channel, only variable we should memorize from the entire bootstrap/connection phase */
-                    /** At this point, the connection should be made but we shouldn't as everything is chained and scheduled */
-                    /** Now, we send a hello through the created channel */
-                    sendPacket(
-                        sendHello(
-                            session.currentUsername,
-                            session.currentRoom,
-                            session.currentPassword
+                    /* This is the channel, only variable we should memorize from the entire bootstrap/connection phase */
+                    channel = f.channel()
+
+
+                    /** if the TLS mode is [Constants.TLS.TLS_ASK], then the the first packet to send
+                     * concerns an opportunistic TLS check with the server, otherwise, a Hello would be first */
+                    if (tls == Constants.TLS.TLS_ASK) {
+                        sendPacket(sendTLS())
+                    } else {
+                        sendPacket(
+                            sendHello(
+                                session.currentUsername,
+                                session.currentRoom,
+                                session.currentPassword
+                            )
                         )
-                    )
+                    }
                 }
             })
             f.await(5000)
@@ -196,9 +208,5 @@ open class SyncplayProtocol : ViewModel() {
     /** Binding function for the callback interface between the the protocol and activity */
     open fun setBroadcaster(broadcaster: ProtocolCallback?) {
         this.syncplayBroadcaster = broadcaster
-    }
-
-    companion object {
-
     }
 }

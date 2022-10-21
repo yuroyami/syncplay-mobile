@@ -21,10 +21,10 @@ import app.protocol.JsonSender.sendFile
 import app.protocol.ProtocolCallback
 import app.protocol.SyncplayProtocol
 import app.pseudopopups.RoomSettingsHosterFragment
-import app.sharedplaylist.SharedPlaylistCallback
-import app.sharedplaylist.SharedPlaylistUtils.addFileToPlaylist
-import app.sharedplaylist.SharedPlaylistUtils.addFolderToPlaylist
-import app.sharedplaylist.SharedPlaylistUtils.changePlaylistSelection
+import app.sharedplaylist.SHPCallback
+import app.sharedplaylist.SHPUtils.addFileToPlaylist
+import app.sharedplaylist.SHPUtils.addFolderToPlaylist
+import app.sharedplaylist.SHPUtils.changePlaylistSelection
 import app.utils.ExoPlayerUtils.applyLastOverrides
 import app.utils.ExoPlayerUtils.initializeExo
 import app.utils.ExoPlayerUtils.injectVideo
@@ -46,8 +46,9 @@ import app.utils.UIUtils.broadcastMessage
 import app.utils.UIUtils.replenishUsers
 import app.utils.UIUtils.showPopup
 import app.utils.UIUtils.toasty
-import app.wrappers.Constants.STATE_CONNECTED
-import app.wrappers.Constants.STATE_DISCONNECTED
+import app.wrappers.Constants
+import app.wrappers.Constants.CONNECTIONSTATE.STATE_CONNECTED
+import app.wrappers.Constants.CONNECTIONSTATE.STATE_DISCONNECTED
 import app.wrappers.MediaFile
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.ExoPlayer
@@ -83,14 +84,14 @@ open class RoomActivity : AppCompatActivity(), ProtocolCallback {
     var seekButtonEnable: Boolean? = null
     var cutOutMode: Boolean = true
     var ccsize = 18f
-    var activePseudoPopup = 0 /* See 'Constants' class for enum values */
+    var activePseudoPopup: Constants.POPUP? = null /* See 'Constants' class for enum values */
 
     /* Declaring Popup dialog variables which are used to show/dismiss different popups */
     private lateinit var disconnectedPopup: DisconnectedPopup
     lateinit var urlPopup: LoadURLPopup
 
     /* Shared Playlist Callback */
-    var sharedPlaylistCallback: SharedPlaylistCallback? = null
+    var sharedPlaylistCallback: SHPCallback? = null
 
     /**********************************************************************************************
      *                                  LIFECYCLE METHODS
@@ -141,11 +142,9 @@ open class RoomActivity : AppCompatActivity(), ProtocolCallback {
             /* If user has TLS on, we check for TLS from the server (Opportunistic TLS) */
             if (tls) {
                 p.syncplayBroadcaster?.onTLSCheck()
-                p.sendPacket(JsonSender.sendTLS())
-            } else {
-                /* Otherwise, just a plain connection will suffice */
-                p.connect()
+                p.tls = Constants.TLS.TLS_ASK
             }
+            p.connect()
         }
 
         /** Preparing our popups ahead of time **/
@@ -211,7 +210,7 @@ open class RoomActivity : AppCompatActivity(), ProtocolCallback {
 
         /** If there exists a file already, prepare it for playback **/
         if (p.file != null) {
-            myExoPlayer?.prepare()
+            //myExoPlayer?.prepare()
 
             /** Applying track choices again so the player doesn't forget about track choices **/
             applyLastOverrides()
@@ -490,14 +489,21 @@ open class RoomActivity : AppCompatActivity(), ProtocolCallback {
     override fun onReceivedTLS(supported: Boolean) {
         /** Deciding next step based on whether the server supports TLS or not **/
         if (supported) {
-            p.cert = resources.openRawResource(app.R.raw.cert)
+            p.cert = resources.openRawResource(R.raw.cert)
             broadcastMessage("Server supports TLS !", isChat = false)
+            p.tls = Constants.TLS.TLS_YES
+            p.connect()
         } else {
             broadcastMessage("Server does not support TLS.", isChat = false)
+            p.tls = Constants.TLS.TLS_NO
+            p.sendPacket(
+                JsonSender.sendHello(
+                    p.session.currentUsername,
+                    p.session.currentRoom,
+                    p.session.currentPassword
+                )
+            )
         }
-        p.useTLS = supported
-        p.connect()
-
     }
 
     @Deprecated("Deprecated in Java")
@@ -509,7 +515,7 @@ open class RoomActivity : AppCompatActivity(), ProtocolCallback {
         finishAndRemoveTask()
     }
 
-    fun bindSHPCallback(callback: SharedPlaylistCallback?) {
+    fun bindSHPCallback(callback: SHPCallback?) {
         this.sharedPlaylistCallback = callback
     }
 }

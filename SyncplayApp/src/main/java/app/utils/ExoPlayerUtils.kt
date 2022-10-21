@@ -10,6 +10,7 @@ import android.view.View
 import android.view.animation.AccelerateInterpolator
 import android.widget.ImageButton
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.children
 import androidx.core.view.isVisible
@@ -153,7 +154,8 @@ object ExoPlayerUtils {
                     )
                 )
             }
-            val popup = PopupMenu(this, ccButton)
+            val ctx = ContextThemeWrapper(this, R.style.MenuStyle)
+            val popup = PopupMenu(ctx, ccButton)
             popup.menu.add(0, -999, 0, getString(R.string.room_sub_track_disable))
             for (subtitleTrack in p.file!!.subtitleTracks) {
                 /* Choosing a name for the sub track, a format's label is a good choice */
@@ -214,8 +216,8 @@ object ExoPlayerUtils {
         if (p.file!!.audioTracks.isEmpty()) {
             displayInfo(getString(R.string.room_audio_track_not_found)) /* Otherwise, no audio track found */
         } else {
-            val popup =
-                PopupMenu(this, audioButton) /* Creating a popup menu, anchored on Audio Button */
+            val ctx = ContextThemeWrapper(this, R.style.MenuStyle)
+            val popup = PopupMenu(ctx, audioButton) /* Creating a popup menu, anchored on Audio Button */
 
             /** Going through the entire audio track list, and populating the popup menu with each one of them **/
             for (audioTrack in p.file!!.audioTracks) {

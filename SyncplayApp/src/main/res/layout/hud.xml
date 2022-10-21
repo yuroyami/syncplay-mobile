@@ -35,7 +35,7 @@
                 android:id="@+id/syncplay_shared_playlist"
                 style="@style/ExoMediaButton.FastForward"
                 android:contentDescription="@string/room_button_desc_shared_playlist"
-                android:src="@drawable/ic_shared_playlist"
+                android:src="@drawable/playlist"
                 app:tint="#FFD66F"
                 tools:ignore="ContentDescription" />
 

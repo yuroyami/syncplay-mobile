@@ -52,7 +52,7 @@ class DirectoriesActivity : AppCompatActivity() {
             if (result?.resultCode == Activity.RESULT_OK) {
                 val folderUri = result.data?.data
 
-                /** These tow lines are super-important, especially on SAF (Storage Access Frameork)
+                /** These tow lines are super-important, especially on SAF (Storage Access Framework)
                  * Why ? Because Uris have such a short lifespan that you can't use them even seconds
                  * after having been offered the Uris, and using it is like using a piece of random
                  * string. Therefore, you need to use the takePersistableUriPermission in order
@@ -171,11 +171,6 @@ class DirectoriesActivity : AppCompatActivity() {
         /* Adapters giving the position of some item can be really buggy -
             According to my experience, it's much better and bug-free to reassign a whole new adapter
          */
-        binding.folders.adapter = DirectoriesAdapter(
-            this, getFolderList(
-                gson,
-                prefKey, this
-            )
-        )
+        binding.folders.adapter = DirectoriesAdapter(this, getFolderList(gson, prefKey, this))
     }
 }

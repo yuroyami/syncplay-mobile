@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Build
 import android.view.View
 import android.widget.ImageButton
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.isVisible
 import app.R
@@ -18,9 +19,9 @@ import app.utils.UIUtils.hideKb
 import app.utils.UIUtils.insertPopup
 import app.utils.UIUtils.replenishUsers
 import app.utils.UIUtils.showPopup
-import app.wrappers.Constants.POPUP_INROOM_SETTINGS
-import app.wrappers.Constants.POPUP_MESSAGE_HISTORY
-import app.wrappers.Constants.POPUP_SHARED_PLAYLIST
+import app.wrappers.Constants
+import app.wrappers.Constants.POPUP.POPUP_INROOM_SETTINGS
+import app.wrappers.Constants.POPUP.POPUP_MESSAGE_HISTORY
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 
 /** Our RoomActivity contains a LOT of click listeners, why not just bundle them all here ? */
@@ -31,7 +32,9 @@ object ListenerUtils {
          * Adding a  Video File *
          ************************/
         hudBinding.syncplayAddfile.setOnClickListener {
-            val popup = PopupMenu(this, hudBinding.syncplayAddfile)
+            val ctx = ContextThemeWrapper(this, R.style.MenuStyle)
+
+            val popup = PopupMenu(ctx, hudBinding.syncplayAddfile)
 
             val offlineItem = popup.menu.add(0, 0, 0, getString(R.string.room_addmedia_offline))
 
@@ -162,7 +165,8 @@ object ListenerUtils {
          * OverFlow Menu *
          *****************/
         hudBinding.syncplayMore.setOnClickListener { _ ->
-            val popup = PopupMenu(this, hudBinding.syncplayAddfile)
+            val ctx = ContextThemeWrapper(this, R.style.MenuStyle)
+            val popup = PopupMenu(ctx, hudBinding.syncplayAddfile)
 
             val loadsubItem = popup.menu.add(0, 0, 0, getString(R.string.room_overflow_sub))
 
@@ -276,17 +280,18 @@ object ListenerUtils {
 
         /** Shared Playlist */
         hudBinding.syncplaySharedPlaylist.setOnClickListener {
-            insertPopup(POPUP_SHARED_PLAYLIST)
+            insertPopup(Constants.POPUP.POPUP_SHARED_PLAYLIST)
         }
 
         /** Pseudo Popup dismissal **/
         binding.pseudoPopupDismisser.setOnClickListener {
             binding.pseudoPopupParent.visibility = View.GONE
             when (activePseudoPopup) {
-                POPUP_INROOM_SETTINGS -> applyUISettings()
+                Constants.POPUP.POPUP_INROOM_SETTINGS -> applyUISettings()
+                else -> {}
             }
 
-            activePseudoPopup = 0
+            activePseudoPopup = null
         }
     }
 }

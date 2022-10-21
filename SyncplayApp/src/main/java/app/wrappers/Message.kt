@@ -4,9 +4,9 @@ import android.content.Context
 import app.utils.MiscUtils.generateTimestamp
 import app.utils.MiscUtils.getColorCode
 
-/********************************************************************************************
- * Message wrapper class. It encapsulates all information and data we need about a message  *
- ********************************************************************************************/
+/***************************************************************************************************
+ * Message wrapper class. It encapsulates all information and data we need about a single message  *
+ ***************************************************************************************************/
 
 class Message {
     var sender: String? = null

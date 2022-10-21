@@ -106,6 +106,7 @@
     <string name="room_shared_playlist_button_playlist_export">Save playlist to file</string>
     <string name="room_shared_playlist_button_set_media_directories">Set media directories</string>
     <string name="room_shared_playlist_button_set_trusted_domains">Set trusted domains</string>
+    <string name="room_shared_playlist_button_undo">Undo last change</string>
     <string name="room_button_desc_aspect_ratio">Aspect Ratio</string>
     <string name="room_button_desc_shared_playlist">Shared Playlist</string>
     <string name="room_button_desc_audio_tracks">Audio Tracks</string>

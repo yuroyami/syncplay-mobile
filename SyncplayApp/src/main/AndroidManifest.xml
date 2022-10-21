@@ -29,6 +29,7 @@
             android:exported="true"
             android:theme="@style/MainScreenTheme"
             android:imeOptions="flagNoExtractUi"
+            android:taskAffinity=""
             android:screenOrientation="userPortrait"
             android:windowSoftInputMode="adjustNothing"
             tools:ignore="LockedOrientationActivity">
@@ -60,6 +61,7 @@
             android:name=".controllers.activity.SoloActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="true"
+            android:taskAffinity=""
             android:imeOptions="flagNoExtractUi"
             android:launchMode="singleInstance"
             android:screenOrientation="sensorLandscape"

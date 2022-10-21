@@ -1,4 +1,4 @@
-package app.popups
+package app.sharedplaylist
 
 import android.content.ClipboardManager
 import android.content.Context.CLIPBOARD_SERVICE
@@ -6,13 +6,12 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import app.R
-import app.sharedplaylist.SharedPlaylistPopup
 import app.utils.UIUtils.toasty
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import razerdp.basepopup.BasePopupWindow
 
-class SHPAddURLsPopup(val fragment: SharedPlaylistPopup) : BasePopupWindow(fragment) {
+class SHPAddURLsPopup(val fragment: SHPFragment) : BasePopupWindow(fragment) {
     init {
         setContentView(R.layout.popup_shp_add_urls)
 
