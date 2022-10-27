@@ -64,6 +64,7 @@
         app:backgroundTint="#FFD66F"
         app:icon="@drawable/ic_add_folder"
         app:iconSize="24dp"
+        app:iconTint="@color/black"
         app:layout_constraintBottom_toTopOf="@id/directories_save"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/clear_all"
@@ -83,6 +84,7 @@
         app:backgroundTint="#FFD66F"
         app:icon="@drawable/ic_clear_all"
         app:iconSize="24dp"
+        app:iconTint="@color/black"
         app:layout_constraintBottom_toTopOf="@id/directories_save"
         app:layout_constraintEnd_toStartOf="@id/add_element"
         app:layout_constraintStart_toStartOf="parent"
@@ -102,6 +104,7 @@
         app:backgroundTint="#FFD66F"
         app:icon="@drawable/ic_right"
         app:iconSize="24dp"
+        app:iconTint="@color/black"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

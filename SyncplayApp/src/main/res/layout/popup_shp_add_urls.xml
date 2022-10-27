@@ -45,7 +45,7 @@
                 app:helperTextTextColor="@color/sp_shade"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toLeftOf="@id/urls_paste"
-                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/urls_confirm"
                 app:placeholderTextColor="@color/sp_shade"
                 app:startIconContentDescription="@string/room_addmedia_online_url"
                 app:startIconDrawable="@drawable/ic_url"
@@ -82,7 +82,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 android:fontFamily="@font/directive4bold"
-                android:padding="16dp"
+                android:paddingHorizontal="16dp"
                 android:text="@string/confirm"
                 android:textAlignment="center"
                 android:textColor="@color/black"
@@ -90,9 +90,10 @@
                 app:backgroundTint="#FFD66F"
                 app:icon="@drawable/ic_right"
                 app:iconSize="24dp"
+                app:iconTint="@color/black"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/urls_container" />
+                app:layout_constraintBottom_toTopOf="@id/urls_container" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.card.MaterialCardView>

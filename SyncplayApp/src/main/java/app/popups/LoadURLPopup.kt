@@ -17,8 +17,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import razerdp.basepopup.BasePopupWindow
 
-class LoadURLPopup(val act1: RoomActivity?, val act2: SoloActivity?) :
-    BasePopupWindow(act1 ?: act2) {
+class LoadURLPopup(val act1: RoomActivity?, val act2: SoloActivity?) : BasePopupWindow(act1 ?: act2) {
     init {
         setContentView(R.layout.popup_load_url)
 
@@ -31,7 +30,7 @@ class LoadURLPopup(val act1: RoomActivity?, val act2: SoloActivity?) :
                 if (act1 == null) {
                     act2?.injectVideo(url)
                 } else {
-                    act1.injectVideo(url)
+                    act1.injectVideo(url, true)
                     act1.p.file = MediaFile()
                     act1.p.file?.uri = url.toUri()
                     act1.p.file?.url = url

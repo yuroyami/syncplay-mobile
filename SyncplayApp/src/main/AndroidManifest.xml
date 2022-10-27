@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
@@ -30,9 +29,8 @@
             android:theme="@style/MainScreenTheme"
             android:imeOptions="flagNoExtractUi"
             android:taskAffinity=""
-            android:screenOrientation="userPortrait"
-            android:windowSoftInputMode="adjustNothing"
-            tools:ignore="LockedOrientationActivity">
+            android:screenOrientation="fullSensor"
+            android:windowSoftInputMode="adjustNothing">
 
         </activity>
 

@@ -43,7 +43,7 @@ import java.util.Collections
 object ExoPlayerUtils {
 
     /** Injects a certain media file into ExoPlayer **/
-    fun RoomActivity.injectVideo(mediaPath: String) {
+    fun RoomActivity.injectVideo(mediaPath: String, tellServer: Boolean) {
         lifecycleScope.launch(Dispatchers.Main) {
             try {
                 /** This is the builder responsible for building a MediaItem component for ExoPlayer **/
@@ -83,12 +83,8 @@ object ExoPlayerUtils {
                 binding.vidplayer.videoSurfaceView?.visibility = View.VISIBLE
                 binding.vidplayer.setShutterBackgroundColor(Color.BLACK)
 
-//            if (!p.connected) {
-//                p.sendPacket(JsonSender.sendFile(p.file!!, this))
-//            }
-
-                //TODO: This shit gotta be fixed
-                //sharedplaylistPopup.update()
+                /** Updating our Shared Playlist fragment content (if it exists on foreground) */
+                sharedPlaylistCallback?.onUpdate()
             } catch (e: IOException) {
                 e.printStackTrace()
             }

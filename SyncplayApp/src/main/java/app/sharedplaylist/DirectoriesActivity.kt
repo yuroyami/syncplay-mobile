@@ -65,7 +65,7 @@ class DirectoriesActivity : AppCompatActivity() {
                 )
 
                 val folders = getFolderList(gson, prefKey, this)
-                folders.add(folderUri.toString())
+                if (!folders.contains(folderUri.toString())) folders.add(folderUri.toString())
                 writeFolderList(folders, gson, prefKey, this)
 
                 refreshList()

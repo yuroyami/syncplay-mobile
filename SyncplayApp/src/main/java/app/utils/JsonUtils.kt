@@ -1,6 +1,6 @@
 package app.utils
 
-class JsonUtils {
+object JsonUtils {
     /** The goal of this class is to encapsulate some of the methods that really take some unnecessary
      * amount of code lines/space. The main goal is to refer to JsonNull as a null itself. The library
      * from Google (Gson) calls a "null" value in a json a "JsonNull", this should be translated to

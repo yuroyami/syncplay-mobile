@@ -1,12 +1,14 @@
 package app.sharedplaylist
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.view.menu.MenuBuilder
 import androidx.appcompat.widget.PopupMenu
@@ -15,11 +17,20 @@ import app.R
 import app.controllers.activity.RoomActivity
 import app.controllers.adapters.SharedPlaylistRecycAdapter
 import app.databinding.FragmentSharedPlaylistBinding
+import app.sharedplaylist.SHPUtils.clearPlaylist
+import app.sharedplaylist.SHPUtils.loadSHP
+import app.sharedplaylist.SHPUtils.saveSHP
+import app.sharedplaylist.SHPUtils.shuffle
+import app.utils.MiscUtils.getFileName
 import app.utils.UIUtils.bindTooltip
+import app.utils.UIUtils.toasty
 
 class SHPFragment : Fragment(), SHPCallback {
 
     private lateinit var binding: FragmentSharedPlaylistBinding
+
+    /** Set to true when the [SHPUtils.loadSHP] method should know that it should shuffle the txt file */
+    var shuffle = false
 
     override fun onCreateView(i: LayoutInflater, c: ViewGroup?, sis: Bundle?): View {
         binding = FragmentSharedPlaylistBinding.inflate(i, c, false)
@@ -87,9 +98,10 @@ class SHPFragment : Fragment(), SHPCallback {
             val playlistExport = popup.menu.add(2, 7, 7, getString(R.string.room_shared_playlist_button_playlist_export))
 
             val setMD = popup.menu.add(3, 8, 8, getString(R.string.room_shared_playlist_button_set_media_directories))
-            val setTD = popup.menu.add(3, 9, 9, getString(R.string.room_shared_playlist_button_set_trusted_domains))
+            //val setTD = popup.menu.add(3, 9, 9, getString(R.string.room_shared_playlist_button_set_trusted_domains))
 
-            val undo = popup.menu.add(4, 10, 10, getString(R.string.room_shared_playlist_button_undo))
+            //val undo = popup.menu.add(4, 10, 10, getString(R.string.room_shared_playlist_button_undo))
+            val clearList = popup.menu.add(4, 11, 11, "Clear the playlist")
 
             /** Assigning some icons to the menu items */
             shuffleAll.setIcon(R.drawable.ic_shuffle)
@@ -101,8 +113,9 @@ class SHPFragment : Fragment(), SHPCallback {
             playlistImportShf.setIcon(R.drawable.file_import_shf)
             playlistExport.setIcon(R.drawable.save)
             setMD.setIcon(R.drawable.ic_folder)
-            setTD.setIcon(R.drawable.ic_domain)
-            undo.setIcon(R.drawable.ic_undo)
+            //setTD.setIcon(R.drawable.ic_domain)
+            //undo.setIcon(R.drawable.ic_undo)
+            clearList.setIcon(R.drawable.ic_clear_all)
 
             popup.setOnMenuItemClickListener {
                 when (it) {
@@ -115,8 +128,9 @@ class SHPFragment : Fragment(), SHPCallback {
                     playlistImportShf -> actionPlaylistImport(true)
                     playlistExport -> actionPlaylistExport()
                     setMD -> actionSetMD()
-                    setTD -> actionsetTD()
-                    undo -> actionUndo()
+                    //setTD -> actionsetTD()
+                    //undo -> actionUndo()
+                    clearList -> activity().clearPlaylist()
                 }
                 return@setOnMenuItemClickListener true
             }
@@ -125,11 +139,11 @@ class SHPFragment : Fragment(), SHPCallback {
 
     }
 
+    @SuppressLint("NotifyDataSetChanged")
+    /** Our data set is light-weight, this will cause no issues */
     override fun onUpdate() {
-        activity().runOnUiThread {
-            binding.shPPlaylist.adapter =
-                SharedPlaylistRecycAdapter(activity(), activity().p.session.sharedPlaylist)
-            (binding.shPPlaylist.adapter as SharedPlaylistRecycAdapter).notifyDataSetChanged()
+        requireActivity().runOnUiThread {
+            binding.shPPlaylist.adapter?.notifyDataSetChanged()
         }
     }
 
@@ -160,22 +174,35 @@ class SHPFragment : Fragment(), SHPCallback {
 
     /** This will shuffle the entire playlist */
     fun actionShuffleAll() {
-
+        activity().shuffle(false)
     }
 
     /** This will shuffle the remaining items of the playlist */
     fun actionShuffleRest() {
-
+        activity().shuffle(true)
     }
 
     /** This will import a playlist from a txt or m3u8 file, with shuffling as a boolean option */
     fun actionPlaylistImport(shuffle: Boolean) {
-
+        val intent = Intent()
+        intent.type = "text/plain"
+        intent.action = Intent.ACTION_OPEN_DOCUMENT
+        this.shuffle = shuffle
+        loadResult.launch(intent)
     }
 
-    /** This will export the current playlist to the storage, needs full storage access */
+    /** This will export the current playlist to the storage, doesn't need full storage access */
     fun actionPlaylistExport() {
+        /** Checking whether the shared playlist is empty, if so, no need to proceed */
+        if (activity().p.session.sharedPlaylist.isEmpty()) {
+            requireContext().toasty("Shared Playlist is empty. Nothing to save.")
+            return
+        }
 
+        /** Launching intent to select destination folder */
+        val intent = Intent()
+        intent.action = Intent.ACTION_OPEN_DOCUMENT_TREE
+        saveResult.launch(intent)
     }
 
     /** Executes the action of modifying media directories */
@@ -193,5 +220,28 @@ class SHPFragment : Fragment(), SHPCallback {
 
     }
 
+    val saveResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result?.resultCode == Activity.RESULT_OK) {
+                val uri = result.data?.data ?: return@registerForActivityResult
+                val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                activity().contentResolver.takePersistableUriPermission(uri, takeFlags)
+                activity().saveSHP(uri)
+            }
+        }
 
+    val loadResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result?.resultCode == Activity.RESULT_OK) {
+                val path = result.data?.data!!
+                val filename = activity().getFileName(path).toString()
+                val extension = filename.substring(filename.length - 4)
+                if (extension == ".txt") {
+                    activity().loadSHP(path, shuffle)
+                    shuffle = false
+                } else {
+                    requireActivity().toasty("Error: Not a valid plain text file (.txt)")
+                }
+            }
+        }
 }

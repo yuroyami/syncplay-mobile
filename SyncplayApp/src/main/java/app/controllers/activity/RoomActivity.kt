@@ -210,7 +210,8 @@ open class RoomActivity : AppCompatActivity(), ProtocolCallback {
 
         /** If there exists a file already, prepare it for playback **/
         if (p.file != null) {
-            //myExoPlayer?.prepare()
+            injectVideo(p.file?.uri?.toString() ?: return, false)
+
 
             /** Applying track choices again so the player doesn't forget about track choices **/
             applyLastOverrides()
@@ -233,7 +234,6 @@ open class RoomActivity : AppCompatActivity(), ProtocolCallback {
         myExoPlayer?.release()
     }
 
-
     val videoPickResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result?.resultCode == Activity.RESULT_OK) {
@@ -242,7 +242,7 @@ open class RoomActivity : AppCompatActivity(), ProtocolCallback {
                     p.file?.uri = result.data?.data
                     p.file?.collectInfo(this@RoomActivity)
                     checkFileMismatches(p)
-                    injectVideo(p.file!!.uri!!.toString())
+                    //injectVideo(p.file?.uri?.toString() ?: return@launch, true)
                     toasty(string(rr.string.room_selected_vid, "${p.file?.fileName}"))
                 }
             }
@@ -518,5 +518,6 @@ open class RoomActivity : AppCompatActivity(), ProtocolCallback {
     fun bindSHPCallback(callback: SHPCallback?) {
         this.sharedPlaylistCallback = callback
     }
+
 }
 
