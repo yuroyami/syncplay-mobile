@@ -36,7 +36,7 @@
 ## Introduction
 
 [![OS - Android](https://img.shields.io/badge/OS-Android-yellowgreen?style=for-the-badge&logo=android)]()
-[![Version Release](https://img.shields.io/badge/Version-0.9.0-b00b69?style=for-the-badge&logo=v)]()
+[![Version Release](https://img.shields.io/badge/Version-0.10.0-b00b00?style=for-the-badge&logo=v)]()
 [![Written Language](https://img.shields.io/badge/Made%20with-Kotlin-lightgrey?style=for-the-badge&logo=kotlin)]()
 [![is Maintained?](https://img.shields.io/badge/Maintained-YES-green?style=for-the-badge)]()
 [![License](https://img.shields.io/badge/License-AGPL--3.0-brightgreen?style=for-the-badge)]()
@@ -95,7 +95,7 @@ These are the things I am willing to add/adjust in the future :
 - [x] Shared Playlists
 - [x] Support for custom/private servers
 - [x] Night Mode
-- [x] URL Support (as of 0.11.0, unreleased)
+- [x] URL Support (as of 0.10.0)
 - [ ] TLS/SSL Secure Connection Support
 - [x] Multi-language Support
   - [x] English
@@ -112,10 +112,10 @@ These are the things I am willing to add/adjust in the future :
 ## F.A.Q
 
 * If my friend uses Syncplay on PC, can I watch with them ?
-  -> Yes, you can. Syncplay for Android works perfectly even if there are 100 people in the room,
+  <br>-> Yes, you can. Syncplay for Android works perfectly even if there are 100 people in the room,
   with clients for PC or Android.
 * I get an error saying "App not installed" upon installing the app. What's wrong ?
-  -> Uninstall the older version before installing the new one.
+  <br>-> Uninstall the older version before installing the new one.
 
 ## Translating
 
