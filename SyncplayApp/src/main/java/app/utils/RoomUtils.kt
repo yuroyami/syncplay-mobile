@@ -25,14 +25,17 @@ object RoomUtils {
     /** Updates the protocol with the current position of the video playback **/
     fun RoomActivity.vidPosUpdater() {
         lifecycleScope.launch(Dispatchers.Main) {
-            if (myExoPlayer?.isCurrentMediaItemSeekable == true) {
-                /* Informing my ViewModel about current vid position so it is retrieved for networking after */
-                val progress = (binding.vidplayer.player?.currentPosition?.div(1000.0))
-                if (progress != null) {
-                    p.currentVideoPosition = progress
+            while (true) {
+                if (myExoPlayer?.isCurrentMediaItemSeekable == true) {
+                    /* Informing my ViewModel about current vid position so it is retrieved for networking after */
+                    val progress = (binding.vidplayer.player?.currentPosition?.div(1000.0))
+                    if (progress != null) {
+                        p.currentVideoPosition = progress
+                    }
                 }
+                delay(100)
             }
-            delay(100)
+
         }
     }
 

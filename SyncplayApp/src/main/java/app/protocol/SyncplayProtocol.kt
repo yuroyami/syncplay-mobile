@@ -1,5 +1,6 @@
 package app.protocol
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.protocol.JsonHandler.handleJson
@@ -27,12 +28,12 @@ import io.netty.handler.codec.DelimiterBasedFrameDecoder
 import io.netty.handler.codec.Delimiters
 import io.netty.handler.codec.string.StringDecoder
 import io.netty.handler.codec.string.StringEncoder
-import io.netty.handler.ssl.SslHandler
+import io.netty.handler.ssl.SslContextBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.InputStream
-import javax.net.ssl.SSLEngine
+import javax.net.ssl.TrustManagerFactory
 
 
 open class SyncplayProtocol : ViewModel() {
@@ -95,11 +96,19 @@ open class SyncplayProtocol : ViewModel() {
                         val p: ChannelPipeline =
                             ch.pipeline() /* Getting the pipeline related to the channel */
 
-                        /** Should be establish a TLS connection ? */
+                        /** Should we establish a TLS connection ? */
                         if (tls == Constants.TLS.TLS_YES) {
-                            val engine: SSLEngine? = null
-                            engine?.useClientMode = true
-                            p.addLast("ssl", SslHandler(engine))
+                            Log.e("TLS", "Attempting TLS")
+                            val c = SslContextBuilder
+                                .forClient()
+                                .trustManager(TrustManagerFactory.getInstance("TLSv1.2"))
+                                .build()
+                            val h = c.newHandler(ch.alloc(), session.serverHost, session.serverPort)
+                            p.addLast(h)
+
+                            //val engine: SSLEngine? = SSLContext.getDefault().createSSLEngine()
+                            //engine?.useClientMode = true
+                            //p.addLast("ssl", SslHandler(engine))
                         }
 
                         /** We should never forget \r\n delimiters, or we would get no input */
