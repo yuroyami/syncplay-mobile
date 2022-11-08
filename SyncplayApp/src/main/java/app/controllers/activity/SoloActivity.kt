@@ -258,7 +258,7 @@ class SoloActivity : AppCompatActivity() {
                 when (it) {
                     offlineItem -> {
                         val intent1 = Intent()
-                        intent1.type = "video/*"
+                        intent1.type = "*/*"
                         intent1.action = Intent.ACTION_OPEN_DOCUMENT
                         val intentWrapper = Intent.createChooser(intent1, "Select a video with")
                         videoPickResult.launch(intentWrapper)
