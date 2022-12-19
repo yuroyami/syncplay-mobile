@@ -14,43 +14,30 @@ android {
             keyPassword 'az90az09'
             storePassword 'az90az09'
         }
-        gplay {
-            storeFile file("${rootDir}/keystore/gplay.jks")
-            keyAlias 'reddnekgplay'
-            keyPassword 'az90az09'
-            storePassword 'az90az09'
-        }
     }
     defaultConfig {
         applicationId "com.reddnek.syncplay"
         minSdk 21
-        targetSdk 33
+        targetSdk 32
         versionCode 1000011000 /* 1 000 011 000 */
         versionName "0.11.0"
         resConfigs "en", "ar", "zh", "fr" //To use with AppCompatDelegate.setApplicationLocale
+        signingConfig signingConfigs.github
     }
 
     buildTypes {
-        releaseGplay {
+        release {
             minifyEnabled false
             shrinkResources = false
             debuggable false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.gplay
-        }
-        releaseGithub {
-            minifyEnabled false
-            shrinkResources = false
-            debuggable false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.github
         }
         debug {
+            applicationIdSuffix ".revamp"
             minifyEnabled false
             shrinkResources = false
             debuggable true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.github
         }
     }
 
@@ -63,11 +50,11 @@ android {
     }
     buildFeatures {
         viewBinding true
-        //compose true
+        compose true
     }
-//    composeOptions {
-//        kotlinCompilerExtensionVersion '1.3.0-rc02'
-//    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.4.0-alpha02"
+    }
     lintOptions {
         abortOnError true
     }
@@ -78,39 +65,63 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.9.0' /* Android core library - Kotlin ver */
+    /* Related to Android APIs and functionality */
+    implementation 'androidx.core:core-ktx:1.9.0' /* AndroidX core library - Kotlin ver */
     implementation 'androidx.appcompat:appcompat:1.7.0-alpha01' /* AndroidX's AppCompat library */
-    implementation 'com.google.android.material:material:1.8.0-alpha02'/* Google's MaterialComponents */
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.0-alpha03' /* ViewModel */
+    implementation "androidx.documentfile:documentfile:1.0.1" /* Managing Scoped Storage */
+
+    /* Related to UI */
+    implementation 'androidx.core:core-splashscreen:1.0.0' /* AndroidX's SplashScreen API */
+    implementation 'com.airbnb.android:lottie:5.2.0' /* Lottie Animation */
+    implementation 'com.airbnb.android:lottie-compose:5.2.0' /* Lottie Animation */
+
+    /* Related to Syncplay's functionality */
+    implementation 'com.google.code.gson:gson:2.10' /* Google's GSON for Json operations */
+    implementation 'io.netty:netty-all:4.1.82.Final' /* TCP Network Client library */
+    implementation("com.google.android.exoplayer:exoplayer:2.18.2") /* The video player */
+    implementation files('libs/ext.aar') /* ExoPlayer's FFmpeg extension  */
+
+    implementation 'androidx.datastore:datastore-preferences:1.1.0-alpha01'
+
+    /* Related to miscellaneous functionality */
+    implementation 'com.blankj:utilcodex:1.31.1' //Bunch of useful Android utils
+
+    /* Related to Jetpack Compose (the UI declarative builder) */
+    //implementation platform('androidx.compose:compose-bom:2022.11.00') /* Compose libs version manager */
+
+    def compose = '1.4.0-alpha03'
+    implementation "androidx.compose.material:material-icons-core:$compose" //Material3 doesn't have icons (BOM)
+    implementation "androidx.compose.material:material-icons-extended:$compose" //More Icons (BOM)
+    implementation "androidx.compose.material:material-ripple:$compose" //Ripple effects (BOM)
+    implementation "androidx.compose.ui:ui-tooling-preview:$compose" // LiveEdit preview (BOM)
+    debugImplementation "androidx.compose.ui:ui-tooling:$compose" //(BOM)
+    debugImplementation "androidx.compose.ui:ui-test-manifest:$compose" // (BOM)
+    implementation "androidx.compose.runtime:runtime-livedata:$compose" //LiveData compatibility (BOM)
+
+    def material3 = '1.1.0-alpha03'
+    implementation "androidx.compose.material3:material3:$material3" //Material3 + Foundation + UI (core)
+    implementation "androidx.compose.material3:material3-window-size-class:$material3" //Window size utils (BOM)
+    //implementation "com.google.android.material:compose-theme-adapter-3:$material3" //Theme adapter
+
+    /* More compose add-ons */
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.0-alpha03' //ViewModel for compose
+    implementation 'androidx.activity:activity-compose:1.7.0-alpha02' //Activity compatibility
+    implementation "androidx.constraintlayout:constraintlayout-compose:1.1.0-alpha05" /* ConstraintLayout */
+    implementation "com.google.accompanist:accompanist-flowlayout:0.28.0"
+
+
+    implementation 'com.google.android.material:material:1.8.0-beta01'/* Google's MaterialComponents */
     implementation 'androidx.constraintlayout:constraintlayout:2.2.0-alpha04'/* AndroidX's ConstraintLayout */
     implementation 'androidx.viewpager2:viewpager2:1.1.0-beta01' /* AndroidX's ViewPager2 */
-    implementation 'androidx.preference:preference-ktx:1.2.0'/* AndroidX's Preferences - Kotlin ver*/
+    implementation 'androidx.preference:preference-ktx:1.2.0'/* AndroidX's Preferences - Kotlin ver */
     implementation 'io.github.razerdp:BasePopup:3.2.0' /* Customizable Popup Dialog */
     //implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.5.0-rc02'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.0-alpha03' /* ViewModel */
-    implementation 'com.google.code.gson:gson:2.9.1' /* Google's GSON for Json operations */
-    implementation("com.google.android.exoplayer:exoplayer:2.18.1") { /* ExoPlayer */ exclude group: 'com.android.support' }
-    implementation "androidx.documentfile:documentfile:1.0.1" /* Helps with SAF */
     implementation 'com.jaredrummler:colorpicker:1.1.0' /* ColorPreference */
-    implementation files('libs/ext.aar') /* ExoPlayer's FFmpeg extension */
-    implementation 'io.netty:netty-all:4.1.82.Final' /* TCP/IP client */
-
-//    /* Jetpack Compose */
-//    def compose = "1.3.0-beta03"
-//    implementation "androidx.compose.runtime:runtime:$compose"
-//    implementation "androidx.compose.ui:ui:$compose"
-//    implementation "androidx.compose.foundation:foundation:$compose"
-//    implementation "androidx.compose.foundation:foundation-layout:$compose"
-//    implementation "androidx.compose.material:material:$compose"
-//    implementation "androidx.compose.runtime:runtime-livedata:$compose"
-//    implementation "androidx.compose.ui:ui-tooling:$compose"
-//    implementation "androidx.compose.ui:ui-tooling-preview:$compose"
-//    implementation "com.google.android.material:compose-theme-adapter:1.1.19"
 
     /** Unnecessary-for-functionality Libraries */
-    implementation 'com.airbnb.android:lottie:5.2.0' /* Lottie Animation */
     implementation "com.github.skydoves:expandablelayout:1.0.7" /* ExpandableLayout */
     implementation 'com.github.jorgecastilloprz:fillableloaders:1.03@aar' /* FillableLoader */
-    implementation 'com.blankj:utilcodex:1.31.0' //CustomUtils, didn't use any til now
     //implementation 'org.conscrypt:conscrypt-android:2.5.2' //Will use for TLSv1.3
 
 }

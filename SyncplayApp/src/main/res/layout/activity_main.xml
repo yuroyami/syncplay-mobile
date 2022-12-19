@@ -24,6 +24,6 @@
         android:layout_marginBottom="2dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:context=".ui.main.MainFragment" />
+        tools:context=".home.main.MainFragment" />
 
 </LinearLayout>

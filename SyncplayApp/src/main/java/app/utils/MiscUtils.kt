@@ -238,4 +238,6 @@ object MiscUtils {
     /** Syncplay uses SHA256 hex-digested to hash file names and sizes **/
     fun sha256(str: String): ByteArray =
         MessageDigest.getInstance("SHA-256").digest(str.toByteArray(UTF_8))
+
+
 }

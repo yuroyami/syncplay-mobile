@@ -125,7 +125,7 @@
 
 
     <!-- Directories Activity Strings -->
-    <string name="media_directories">Shared Playlist\'s Media Directories</string>
+    <string name="media_directories">Media Directories for Shared Playlist</string>
     <string name="media_directories_brief">Syncplay will search any media directories you specify here in order to find a name that a shared playlist is playing. It is much better if you specify small directories as the searching operation can throttle and be very slow.</string>
     <string name="media_directories_setting_summary">Syncplay will search any media directories you specify here in order to find a name that a shared playlist is playing.</string>
     <string name="media_directories_save">Save &amp; Exit</string>
@@ -148,13 +148,24 @@
     <string name="setting_display_language_title">Display Language</string>
     <string name="setting_display_language_summry">Select your language of choice with which Syncplay is displayed.</string>
     <string name="setting_display_language_toast">Changed language. Restart app for the setting to take full effect.</string>
+    <string name="setting_audio_default_language_title">Preferred Audio Track Language</string>
+    <string name="setting_audio_default_language_summry">Automatically prefer and select an audio language when found in audio
+        tracks.</string>
+    <string name="setting_cc_default_language_title">Preferred Subtitle Language</string>
+    <string name="setting_cc_default_language_summry">Automatically prefer and select a subtitle language when found in
+        subtitle tracks
+        .</string>
     <string name="setting_use_buffer_title">Use Custom Buffer Sizes</string>
-    <string name="setting_use_buffer_summary">If you are not satisfied with the player\'s video load times before and during playback, you can use custom buffer sizes (Use at your own risk).</string>
+    <string name="setting_use_buffer_summary">If you are not satisfied with the player\'s video load times before and during
+        playback, you can use custom buffer sizes (Use at your own risk).</string>
     <string name="setting_max_buffer_title">Custom max buffer size</string>
-    <string name="setting_max_buffer_summary">Default is 30 (30000 milliseconds). This determines the maximum buffer size before starting to play the video. If you don\'t know what this is, don\'t change it.</string>
-    <string name="setting_min_buffer_summary">Default is 15 (15000 milliseconds). Decrease this value to play video faster but there is a possibility that the player may fail or even crash. Change at your own risk.</string>
+    <string name="setting_max_buffer_summary">Default is 30 (30000 milliseconds). This determines the maximum buffer size
+        before starting to play the video. If you don\'t know what this is, don\'t change it.</string>
+    <string name="setting_min_buffer_summary">Default is 15 (15000 milliseconds). Decrease this value to play video faster but
+        there is a possibility that the player may fail or even crash. Change at your own risk.</string>
     <string name="setting_min_buffer_title">Custom min buffer size</string>
-    <string name="setting_playback_buffer_summary">Default is 2500 milliseconds. This represents the buffer size when SEEKING or UNPAUSING the video. Change this if you\'re not satisfied with the small delay when seeking video.</string>
+    <string name="setting_playback_buffer_summary">Default is 2500 milliseconds. This represents the buffer size when SEEKING
+        or UNPAUSING the video. Change this if you\'re not satisfied with the small delay when seeking video.</string>
     <string name="setting_playback_buffer_title">Custom playback buffer size (ms)</string>
     <string name="setting_ready_firsthand_summary">Enable this if you want to be set automatically as ready once you enter the room.</string>
     <string name="setting_ready_firsthand_title">Set as ready first-hand</string>

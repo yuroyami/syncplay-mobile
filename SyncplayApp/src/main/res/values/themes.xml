@@ -23,13 +23,10 @@
         <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="p">default</item>
     </style>
 
-    <style name="SplashTheme" parent="Theme.MaterialComponents.NoActionBar">
-        <item name="android:windowBackground">@drawable/splash_screen_activity</item>
-        <item name="android:windowNoTitle">true</item>
-        <item name="windowActionBar">false</item>
-        <item name="android:windowFullscreen">true</item>
-        <item name="android:windowContentOverlay">@null</item>
-        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="p">shortEdges</item>
+    <style name="Theme.splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenAnimatedIcon">@drawable/syncplay_splash1</item>
+        <item name="windowSplashScreenBackground">@color/sp3</item>
+        <item name="postSplashScreenTheme">@style/MainScreenTheme</item>
     </style>
 
     <style name="MainScreenTheme" parent="Theme.MaterialComponents.NoActionBar">
@@ -39,14 +36,13 @@
         <item name="colorSecondary">@color/sp2</item>
         <item name="colorSecondaryVariant">@color/sp3</item>
         <item name="colorOnSecondary">@color/text1</item>
-        <item name="android:statusBarColor">#2d2d2d</item>
+        <item name="android:windowLightStatusBar" tools:ignore="NewApi">true</item>
         <item name="android:textColor">@color/sp_shade</item>
         <item name="android:textColorSecondary">@color/text2</item>
         <item name="android:windowNoTitle">true</item>
         <item name="windowActionBar">false</item>
         <item name="android:windowFullscreen">false</item>
         <item name="android:windowContentOverlay">@null</item>
-        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="p">default</item>
         <item name="android:fontFamily">@font/inter_regular</item>
     </style>
 </resources>
