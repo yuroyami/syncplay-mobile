@@ -16,7 +16,6 @@ import androidx.preference.PreferenceManager
 import app.R
 import app.controllers.adapters.DirectoriesAdapter
 import app.databinding.ActivityDirectoriesBinding
-import app.utils.MiscUtils
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -78,7 +77,7 @@ class DirectoriesActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         /* Immersive Mode */
-        MiscUtils.hideSystemUI(this, false)
+        //MiscUtils.hideSystemUI(this, false)
 
         /** Opening the file picker activity, but with a folder pick intent */
         binding.addElement.setOnClickListener {

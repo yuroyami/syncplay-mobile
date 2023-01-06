@@ -13,10 +13,10 @@ object JsonSender {
 
     private val gson: Gson = GsonBuilder().serializeNulls().create()
 
-    fun sendHello(username: String, roomname: String, serverPassword: String?): String {
+    fun sendHello(username: String, roomname: String, serverPassword: String): String {
         val hello: HashMap<String, Any> = hashMapOf()
         hello["username"] = username
-        if (serverPassword != null) {
+        if (serverPassword != "") {
             /* Syncplay servers accept passwords in MD5-Hexadecimal form.*/
             hello["password"] = MiscUtils.md5(serverPassword).toHex()
         }

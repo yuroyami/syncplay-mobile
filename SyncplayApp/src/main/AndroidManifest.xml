@@ -20,14 +20,14 @@
         android:usesCleartextTraffic="true">
 
         <activity
-            android:name=".home.HomeActivity"
+            android:name=".ui.activities.HomeActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="true"
             android:imeOptions="flagNoExtractUi"
             android:screenOrientation="fullSensor"
             android:taskAffinity=""
-            android:theme="@style/MainScreenTheme"
-            android:windowSoftInputMode="adjustNothing">
+            android:theme="@style/Theme.splash"
+            android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -35,7 +35,7 @@
         </activity>
 
         <activity
-            android:name=".controllers.activity.RoomActivity"
+            android:name=".ui.activities.WatchActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="true"
             android:imeOptions="flagNoExtractUi"

@@ -75,7 +75,7 @@ class MediaFile {
                     track.trackType = trackType
                     track.index = index
                     track.format = format
-                    track.selected = group.isTrackSelected(index)
+                    track.selected.value = group.isTrackSelected(index)
 
                     if (trackType == C.TRACK_TYPE_TEXT) {
                         subtitleTracks.add(track)

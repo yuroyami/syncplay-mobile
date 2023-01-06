@@ -6,7 +6,6 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import app.R
-import app.sharedplaylist.SHPUtils.addURLs
 import app.utils.UIUtils.toasty
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
@@ -22,7 +21,7 @@ class SHPAddURLsPopup(val fragment: SHPFragment) : BasePopupWindow(fragment) {
             it.visibility = View.GONE
             val url = edittext.text.toString().trim()
             if (url.isNotBlank()) {
-                fragment.activity().addURLs(url.split("\n"))
+                fragment.activity() //.addURLs(url.split("\n"))
                 dismiss()
             }
         }

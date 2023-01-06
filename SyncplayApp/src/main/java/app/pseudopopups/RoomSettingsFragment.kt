@@ -6,7 +6,7 @@ import android.os.Looper
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
-import app.controllers.activity.RoomActivity
+import app.ui.activities.RoomActivity
 import app.utils.UIUtils.applyUISettings
 import com.google.android.material.snackbar.Snackbar
 

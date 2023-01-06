@@ -17,7 +17,7 @@ android {
     }
     defaultConfig {
         applicationId "com.reddnek.syncplay"
-        minSdk 21
+        minSdk 24
         targetSdk 32
         versionCode 1000011000 /* 1 000 011 000 */
         versionName "0.11.0"
@@ -68,7 +68,6 @@ dependencies {
     /* Related to Android APIs and functionality */
     implementation 'androidx.core:core-ktx:1.9.0' /* AndroidX core library - Kotlin ver */
     implementation 'androidx.appcompat:appcompat:1.7.0-alpha01' /* AndroidX's AppCompat library */
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.0-alpha03' /* ViewModel */
     implementation "androidx.documentfile:documentfile:1.0.1" /* Managing Scoped Storage */
 
     /* Related to UI */
@@ -78,7 +77,7 @@ dependencies {
 
     /* Related to Syncplay's functionality */
     implementation 'com.google.code.gson:gson:2.10' /* Google's GSON for Json operations */
-    implementation 'io.netty:netty-all:4.1.82.Final' /* TCP Network Client library */
+    implementation 'io.netty:netty-all:4.1.86.Final' /* TCP Network Client library */
     implementation("com.google.android.exoplayer:exoplayer:2.18.2") /* The video player */
     implementation files('libs/ext.aar') /* ExoPlayer's FFmpeg extension  */
 
@@ -109,19 +108,16 @@ dependencies {
     implementation 'androidx.activity:activity-compose:1.7.0-alpha02' //Activity compatibility
     implementation "androidx.constraintlayout:constraintlayout-compose:1.1.0-alpha05" /* ConstraintLayout */
     implementation "com.google.accompanist:accompanist-flowlayout:0.28.0"
-
+    implementation "com.godaddy.android.colorpicker:compose-color-picker:0.5.1"
 
     implementation 'com.google.android.material:material:1.8.0-beta01'/* Google's MaterialComponents */
-    implementation 'androidx.constraintlayout:constraintlayout:2.2.0-alpha04'/* AndroidX's ConstraintLayout */
-    implementation 'androidx.viewpager2:viewpager2:1.1.0-beta01' /* AndroidX's ViewPager2 */
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.0-alpha05'/* AndroidX's ConstraintLayout */
     implementation 'androidx.preference:preference-ktx:1.2.0'/* AndroidX's Preferences - Kotlin ver */
     implementation 'io.github.razerdp:BasePopup:3.2.0' /* Customizable Popup Dialog */
     //implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.5.0-rc02'
     implementation 'com.jaredrummler:colorpicker:1.1.0' /* ColorPreference */
 
     /** Unnecessary-for-functionality Libraries */
-    implementation "com.github.skydoves:expandablelayout:1.0.7" /* ExpandableLayout */
-    implementation 'com.github.jorgecastilloprz:fillableloaders:1.03@aar' /* FillableLoader */
     //implementation 'org.conscrypt:conscrypt-android:2.5.2' //Will use for TLSv1.3
 
 }

@@ -9,9 +9,7 @@ import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import app.R
-import app.controllers.activity.RoomActivity
-import app.sharedplaylist.SHPUtils.deleteItemFromPlaylist
-import app.sharedplaylist.SHPUtils.sendPlaylistSelection
+import app.ui.activities.RoomActivity
 
 class SharedPlaylistRecycAdapter(private val act: RoomActivity, var list: MutableList<String>) :
     RecyclerView.Adapter<SharedPlaylistRecycAdapter.ViewHolder>() {
@@ -38,8 +36,8 @@ class SharedPlaylistRecycAdapter(private val act: RoomActivity, var list: Mutabl
                 val deleteitem = popup.menu.add(0, 1, 0, it.context.getString(R.string.delete))
                 popup.setOnMenuItemClickListener { it2 ->
                     when (it2) {
-                        playitem -> activity.sendPlaylistSelection(bindingAdapterPosition)
-                        deleteitem -> activity.deleteItemFromPlaylist(bindingAdapterPosition)
+                        playitem -> activity //.sendPlaylistSelection(bindingAdapterPosition)
+                        deleteitem -> activity// .deleteItemFromPlaylist(bindingAdapterPosition)
                     }
                     return@setOnMenuItemClickListener true
                 }

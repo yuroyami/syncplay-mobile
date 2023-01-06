@@ -5,9 +5,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import app.controllers.activity.RoomActivity
 import app.controllers.adapters.HistoryRecycAdapter
 import app.databinding.FragmentMessageHistoryBinding
+import app.ui.activities.RoomActivity
 
 class MessageHistoryPopup : Fragment() {
 

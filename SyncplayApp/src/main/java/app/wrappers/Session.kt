@@ -1,5 +1,7 @@
 package app.wrappers
 
+import androidx.compose.runtime.mutableStateListOf
+
 /*************************************************************************************************
  * Session wrapper class. It encapsulates all information and data we need about a session.
  *
@@ -18,21 +20,21 @@ class Session {
     var serverPort: Int = 8997
     var currentUsername: String = "Anonymous${(1000..9999).random()}"
     var currentRoom: String = "roomname"
-    var currentPassword: String? = null
+    var currentPassword: String = ""
 
     /** Variable that stores all users that exist within the room */
-    var userList: MutableList<User> = mutableListOf()
+    var userList = mutableStateListOf<User>()
 
     /** Variable that stores all messages that have been sent/received */
-    var messageSequence: MutableList<Message> = mutableListOf()
+    var messageSequence = mutableStateListOf<Message>()
 
     /** Outbound messages queue (When the connection is lost):
      *   This basically works like a waiting queue that stacks outgoing messages (JSONs)
      *   during disconnections, then it will be iterated-through and then cleared. */
-    var outboundQueue: MutableList<String> = mutableListOf()
+    var outboundQueue = mutableListOf<String>()
 
     /** Variable that stores the shared playlist for the session */
-    var sharedPlaylist = mutableListOf<String>() /* List of files */
+    var sharedPlaylist = mutableStateListOf<String>() /* List of files */
     var sharedPlaylistIndex = -1 /* Index of the currently playing file for the session */
 
 //    /** A list of media directories to look for shared playlist file names */

@@ -1,5 +1,6 @@
 package app.wrappers
 
+import androidx.compose.runtime.mutableStateOf
 import com.google.android.exoplayer2.Format
 import com.google.android.exoplayer2.source.TrackGroup
 
@@ -9,7 +10,7 @@ import com.google.android.exoplayer2.source.TrackGroup
 
 class Track {
 
-    /** The corresponding format (ExoPlayer calls every track a format for some reason **/
+    /** The corresponding format (ExoPlayer calls track a format for some reason) **/
     var format: Format? = null
 
     /** The index of the format (track) **/
@@ -22,5 +23,5 @@ class Track {
     var trackType: Int? = null
 
     /** The current status of the track **/
-    var selected: Boolean = false
+    var selected = mutableStateOf(false)
 }

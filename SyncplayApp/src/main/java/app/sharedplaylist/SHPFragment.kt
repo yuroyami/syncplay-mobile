@@ -14,13 +14,10 @@ import androidx.appcompat.view.menu.MenuBuilder
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import app.R
-import app.controllers.activity.RoomActivity
 import app.controllers.adapters.SharedPlaylistRecycAdapter
 import app.databinding.FragmentSharedPlaylistBinding
-import app.sharedplaylist.SHPUtils.clearPlaylist
 import app.sharedplaylist.SHPUtils.loadSHP
-import app.sharedplaylist.SHPUtils.saveSHP
-import app.sharedplaylist.SHPUtils.shuffle
+import app.ui.activities.RoomActivity
 import app.utils.MiscUtils.getFileName
 import app.utils.UIUtils.bindTooltip
 import app.utils.UIUtils.toasty
@@ -130,7 +127,7 @@ class SHPFragment : Fragment(), SHPCallback {
                     setMD -> actionSetMD()
                     //setTD -> actionsetTD()
                     //undo -> actionUndo()
-                    clearList -> activity().clearPlaylist()
+                    clearList -> activity() //.clearPlaylist()
                 }
                 return@setOnMenuItemClickListener true
             }
@@ -174,12 +171,12 @@ class SHPFragment : Fragment(), SHPCallback {
 
     /** This will shuffle the entire playlist */
     fun actionShuffleAll() {
-        activity().shuffle(false)
+        activity() //.shuffle(false)
     }
 
     /** This will shuffle the remaining items of the playlist */
     fun actionShuffleRest() {
-        activity().shuffle(true)
+        activity()//.shuffle(true)
     }
 
     /** This will import a playlist from a txt or m3u8 file, with shuffling as a boolean option */
@@ -226,7 +223,7 @@ class SHPFragment : Fragment(), SHPCallback {
                 val uri = result.data?.data ?: return@registerForActivityResult
                 val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 activity().contentResolver.takePersistableUriPermission(uri, takeFlags)
-                activity().saveSHP(uri)
+                activity()//.saveSHP(uri)
             }
         }
 
@@ -237,7 +234,7 @@ class SHPFragment : Fragment(), SHPCallback {
                 val filename = activity().getFileName(path).toString()
                 val extension = filename.substring(filename.length - 4)
                 if (extension == ".txt") {
-                    activity().loadSHP(path, shuffle)
+                    activity()//.loadSHP(path, shuffle)
                     shuffle = false
                 } else {
                     requireActivity().toasty("Error: Not a valid plain text file (.txt)")

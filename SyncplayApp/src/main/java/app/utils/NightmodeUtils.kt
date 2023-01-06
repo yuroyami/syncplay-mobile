@@ -1,10 +1,8 @@
 package app.utils
 
-import android.view.View
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
-import app.controllers.fragment.ConnectFragment
 
 /** A small class that delegates night mode settings */
 object NightmodeUtils {
@@ -29,29 +27,21 @@ object NightmodeUtils {
 
             "1" -> {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-                if (this is ConnectFragment) {
-                    binding.connectNightswitch.setMinAndMaxFrame(0, 70)
-                    binding.connectNightswitch.playAnimation()
-                    binding.connectNightswitch.visibility = View.VISIBLE
-
-                }
+//                    binding.connectNightswitch.setMinAndMaxFrame(0, 70)
+//                    binding.connectNightswitch.playAnimation()
+//                    binding.connectNightswitch.visibility = View.VISIBLE
             }
 
             "2" -> {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-                if (this is ConnectFragment) {
-                    binding.connectNightswitch.visibility = View.GONE
-                }
+                //   binding.connectNightswitch.visibility = View.GONE
             }
 
             "3" -> {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-                if (this is ConnectFragment) {
-                    binding.connectNightswitch.setMinAndMaxFrame(70, 141)
-                    binding.connectNightswitch.playAnimation()
-                    binding.connectNightswitch.visibility = View.VISIBLE
-
-                }
+                //binding.connectNightswitch.setMinAndMaxFrame(70, 141)
+                //binding.connectNightswitch.playAnimation()
+                //binding.connectNightswitch.visibility = View.VISIBLE
             }
 
             null -> {

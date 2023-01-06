@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.exoplayer2.ui.PlayerView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/vidplayer"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black"
+    app:keep_content_on_player_reset="true"
+    app:show_buffering="never"
+    app:show_shuffle_button="false"
+    app:shutter_background_color="@color/black"
+    app:surface_type="surface_view"
+    app:use_artwork="false"
+    app:use_controller="false" />

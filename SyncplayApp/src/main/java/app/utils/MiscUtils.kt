@@ -1,7 +1,6 @@
 package app.utils
 
 import android.annotation.TargetApi
-import android.app.Activity
 import android.content.ContentResolver
 import android.content.Context
 import android.database.Cursor
@@ -10,11 +9,11 @@ import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.provider.OpenableColumns
-import android.util.DisplayMetrics
 import android.util.Log
 import android.view.View
 import android.view.Window
 import android.view.WindowManager
+import androidx.activity.ComponentActivity
 import androidx.annotation.ColorInt
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -27,52 +26,15 @@ import java.sql.Timestamp
 
 object MiscUtils {
 
-    /** Usually, the following set of operations were pretty hard to refine to the best shape possible
-     * In short, this class represents a bunch of functions that do a certain job, and their code is at
-     * its best shape and state, which means, it's maintainable, clean, and requires no longer tweaking.
-     * Why ? because they do what they're supposed to do. There is no absolute need to include 'em directly
-     * in my activity classes. So if a function is fully working and can be separated from the main classes,
-     * I just put it here. This is like a small codex for functions often hard to find on the internet. *
-     */
-
-    /** This function helps convert Uris to Paths. Not yet used.*/
-    fun alternativeUriToPath(context: Context, uri: Uri): String? {
-        val contentResolver = context.contentResolver
-        // Create file path inside app's data dir
-        val filePath = "${context.applicationInfo.dataDir}${File.separator}temp_file"
-        val file = File(filePath)
-        try {
-            val inputStream = contentResolver.openInputStream(uri) ?: return null
-            val outputStream: OutputStream = FileOutputStream(file)
-            val buf = ByteArray(1024)
-            var len: Int
-            while (inputStream.read(buf).also { len = it } > 0) outputStream.write(buf, 0, len)
-            outputStream.close()
-            inputStream.close()
-        } catch (ignore: IOException) {
-            return null
-        }
-        return file.absolutePath
-    }
-
-    /** Helps determine the size of a file in bytes, needing only its Uri and a context */
-    fun getRealSizeFromUri(context: Context, uri: Uri): String? {
-        var cursor: Cursor? = null
-        return try {
-            val proj = arrayOf(MediaStore.Video.Media.SIZE)
-            cursor = context.contentResolver.query(uri, proj, null, null, null)
-            val columnindex: Int = cursor?.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)!!
-            cursor.moveToFirst()
-            cursor.getString(columnindex)
-        } finally {
-            cursor?.close()
-        }
+    /** Functions to grab a localized string from resources, format it according to arguments **/
+    fun Context.string(id: Int, vararg stuff: String): String {
+        return String.format(resources.getString(id), *stuff)
     }
 
     /** This function is used to print/format the timestamp used in determining video values
      * @param seconds Unix epoch timestamp in seconds
      ***/
-    fun timeStamper(seconds: Int): String {
+    fun timeStamper(seconds: Long): String {
         return if (seconds < 3600) {
             String.format("%02d:%02d", (seconds / 60) % 60, seconds % 60)
         } else {
@@ -94,6 +56,21 @@ object MiscUtils {
      * Usually, they return useless file indexers (such as msf:4285) but with the help of a context
      * we can get the real file name using this.
      */
+
+    /** Helps determine the size of a file in bytes, needing only its Uri and a context */
+    fun getRealSizeFromUri(context: Context, uri: Uri): String? {
+        var cursor: Cursor? = null
+        return try {
+            val proj = arrayOf(MediaStore.Video.Media.SIZE)
+            cursor = context.contentResolver.query(uri, proj, null, null, null)
+            val columnindex: Int = cursor?.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)!!
+            cursor.moveToFirst()
+            cursor.getString(columnindex)
+        } finally {
+            cursor?.close()
+        }
+    }
+
     fun Context.getFileName(uri: Uri): String? = when (uri.scheme) {
         ContentResolver.SCHEME_CONTENT -> getContentFileName(uri)
         else -> uri.path?.let(::File)?.name
@@ -107,14 +84,8 @@ object MiscUtils {
         }
     }.getOrNull()
 
-
-    /** This one converts screen resolution units. DP to PX (Pixel), not used yet */
-    fun convertUnit(dp: Float, context: Context?): Float {
-        val metrics = context?.resources?.displayMetrics
-        return dp * (metrics?.densityDpi?.toFloat()?.div(DisplayMetrics.DENSITY_DEFAULT)!!)
-    }
-
-    /** This function is used to calculate the ICMP Ping to a certain server or end host **/
+    /** This function is used to calculate the ICMP Ping to a certain server or end host.
+     * This is a long blocking call, therefore it should be executed on a background IO thread. **/
     fun pingIcmp(host: String, packet: Int): Double {
         var result = 0.13
         try {
@@ -148,26 +119,20 @@ object MiscUtils {
         return result
     }
 
-    /** Basically a convenience log function that will log stuff to error pool if it's a debug build **/
+    /** Convenience log function **/
     fun loggy(string: String) {
-        Log.e("STUFF", string)
+        Log.e("Syncplay", string)
     }
 
-
     /** Completely revised and working versions for "System UI" manipulators. **/
-    @Suppress("DEPRECATION") //We know they're deprecated. Yet they work better than stupid modern functions.
-    fun hideSystemUI(activity: Activity, newTrick: Boolean) {
-        val window = activity.window
-        activity.runOnUiThread {
-            if (newTrick) {
+    @Suppress("DEPRECATION")
+    fun ComponentActivity.hideSystemUI(useDeprecated: Boolean) {
+        runOnUiThread {
+            if (!useDeprecated) {
                 WindowCompat.setDecorFitsSystemWindows(window, false)
                 WindowInsetsControllerCompat(window, window.decorView).let { controller ->
                     controller.hide(WindowInsetsCompat.Type.systemBars())
-                    controller.systemBarsBehavior =
-                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                    controller.systemBarsBehavior =
-                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-
+                    controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                 }
             } else {
                 val decorView: View = window.decorView
@@ -181,7 +146,7 @@ object MiscUtils {
                 decorView.systemUiVisibility = newUiOptions
                 View.OnSystemUiVisibilityChangeListener { newmode ->
                     if (newmode != newUiOptions) {
-                        hideSystemUI(activity, false)
+                        hideSystemUI(false)
                     }
                 }
                 window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
@@ -201,16 +166,13 @@ object MiscUtils {
 
     }
 
-
-    /** A function to control cutout mode **/
+    /** A function to control cutout mode (expanding window content beyond notch (front camera) **/
     @TargetApi(Build.VERSION_CODES.P)
-    fun cutoutMode(enable: Boolean, window: Window) {
+    fun ComponentActivity.cutoutMode(enable: Boolean) {
         if (enable) {
-            window.attributes?.layoutInDisplayCutoutMode =
-                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            window.attributes?.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
         } else {
-            window.attributes?.layoutInDisplayCutoutMode =
-                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER
+            window.attributes?.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER
         }
     }
 
@@ -221,11 +183,10 @@ object MiscUtils {
         return String.format("#%06X", 0xFFFFFF and color)
     }
 
-    /** This basically just changes the Status Bar color [Unused]*/
+    /** This basically just changes the Status Bar color */
     fun setStatusBarColor(@ColorInt color: Int, window: Window) {
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
         window.statusBarColor = color
-
     }
 
     /** Syncplay servers accept passwords in the form of MD5 hashes digested in hexadecimal **/

@@ -8,7 +8,6 @@ import app.protocol.JsonSender.sendHello
 import app.protocol.JsonSender.sendTLS
 import app.wrappers.Constants
 import app.wrappers.Constants.CONNECTIONSTATE.*
-import app.wrappers.MediaFile
 import app.wrappers.Session
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -45,15 +44,13 @@ open class SyncplayProtocol : ViewModel() {
     var serverIgnFly: Int = 0
     var clientIgnFly: Int = 0
     var ping = 0.0
-    var rewindThreshold = 12L /* This is as per official Syncplay, shouldn't be subject to change */
-
+    val rewindThreshold = 12L /* This is as per official Syncplay, shouldn't be subject to change */
 
     /** Variables that track user status */
     var paused: Boolean = true
     var ready = false
 
-    /** Variables related to current video properties */
-    var file: MediaFile? = null
+    /** Variables related to current video properties which will be fed to Syncplay Server for syncing */
     var currentVideoPosition: Double = 0.0
 
     /** A protocol instance is always defined and accompanied by a session **/

@@ -3,9 +3,6 @@ package app.utils
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
-import android.os.Build
-import android.os.Build.VERSION
-import android.os.Build.VERSION_CODES
 import android.os.Handler
 import android.os.Looper
 import android.text.Html
@@ -28,18 +25,14 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import app.R
-import app.controllers.activity.RoomActivity
-import app.pseudopopups.MessageHistoryPopup
-import app.pseudopopups.RoomSettingsHosterFragment
-import app.sharedplaylist.SHPFragment
-import app.utils.RoomUtils.string
+import app.ui.activities.RoomActivity
+import app.ui.activities.WatchActivity
+import app.utils.MiscUtils.string
 import app.wrappers.Constants
-import app.wrappers.Message
 import app.wrappers.User
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import razerdp.basepopup.BasePopupWindow
-import kotlin.math.roundToInt
 
 /** Wrapping any UI-related functionality for RoomActivity here to reduce redundant code space **/
 
@@ -48,45 +41,22 @@ object UIUtils {
     /** This shows an OSD (On-screen Display) system/console information such as changing aspect ratio **/
     fun RoomActivity.displayInfo(msg: String) {
         lifecycleScope.launch(Dispatchers.Main) {
-            binding.syncplayInfoDelegate.clearAnimation()
-            binding.syncplayInfoDelegate.text = msg
-            binding.syncplayInfoDelegate.alpha = 1f
-            binding.syncplayInfoDelegate.animate()
-                .alpha(0f)
-                .setDuration(1000L)
-                .setInterpolator(AccelerateInterpolator())
-                .start()
+//            binding.syncplayInfoDelegate.clearAnimation()
+//            binding.syncplayInfoDelegate.text = msg
+//            binding.syncplayInfoDelegate.alpha = 1f
+//            binding.syncplayInfoDelegate.animate()
+//                .alpha(0f)
+//                .setDuration(1000L)
+//                .setInterpolator(AccelerateInterpolator())
+//                .start()
         }
     }
 
-    /** This broadcasts a message to show it in the message section **/
-    fun RoomActivity.broadcastMessage(message: String, isChat: Boolean, chatter: String = "") {
-        lifecycleScope.launch(Dispatchers.Main) {
-            /** Messages are just a wrapper class for everything we need about a message
-            So first, we initialize it, customize it, then add it to our long list of messages */
-            val msg = Message()
-
-            /** Check if it's a system or a user message **/
-            if (isChat) msg.sender = chatter
-
-            /** Check if the sender is also the main user, to determine colors **/
-            msg.isMainUser = chatter == p.session.currentUsername
-
-            /** Assigning the message content to the message **/
-            msg.content = message /* Assigning message content to the variable inside our instance */
-
-            /** Adding the message instance to our message sequence **/
-            p.session.messageSequence.add(msg)
-
-            /** Refresh views **/
-            replenishMsgs(binding.syncplayMESSAGERY)
-        }
-    }
 
     /** Populates the Room Details section with users, their files, and their readiness */
     fun RoomActivity.replenishUsers(linearLayout: LinearLayout) {
         lifecycleScope.launch(Dispatchers.Main) {
-            if (binding.syncplayOverviewcheckbox.isChecked) {
+            if (true /*binding.syncplayOverviewcheckbox.isChecked*/) {
                 linearLayout.removeAllViews()
                 val userList = mutableListOf<User>().also {
                     it.addAll(p.session.userList)
@@ -107,7 +77,7 @@ object UIUtils {
                 linearlayout0.orientation = LinearLayout.HORIZONTAL
                 linearlayout0.addView(roomnameView)
                 linearlayout0.isFocusable = false
-                binding.syncplayOverview.addView(linearlayout0, linearlayoutParams0)
+                //binding.syncplayOverview.addView(linearlayout0, linearlayoutParams0)
 
                 for (user in userList) {
                     //First line of user
@@ -143,7 +113,7 @@ object UIUtils {
                     usernameView.isFocusable = false
                     userIconette.isFocusable = false
                     userReadinessIcon.isFocusable = false
-                    binding.syncplayOverview.addView(linearlayout, linearlayoutParams)
+                    //binding.syncplayOverview.addView(linearlayout, linearlayoutParams)
 
                     //Second line (File name)
                     val isThereFile = user.file != null
@@ -175,14 +145,14 @@ object UIUtils {
                     lineFile.isFocusable = false
                     lineArrower.isFocusable = false
                     lineBlanker.isFocusable = false
-                    binding.syncplayOverview.addView(linearlayout2, linearlayoutParams2)
+                    //binding.syncplayOverview.addView(linearlayout2, linearlayoutParams2)
 
                     //Third Line (file info)
                     if (isThereFile) {
                         val fileSize = user.file?.fileSize?.toDoubleOrNull()?.div(1000000.0)
                         val fileInfoLine = string(
                             R.string.room_details_file_properties,
-                            MiscUtils.timeStamper(user.file?.fileDuration?.roundToInt()!!),
+                            MiscUtils.timeStamper(user.file!!.fileDuration.toLong()),
                             fileSize?.toString() ?: "???"
                         )
                         val lineFileInfo = TextView(this@replenishUsers)
@@ -206,7 +176,7 @@ object UIUtils {
                             linearlayout3.addView(lineBlanker3)
                             lineBlanker3.isFocusable = false
                         }
-                        binding.syncplayOverview.addView(linearlayout3, linearlayoutParams3)
+                        //binding.syncplayOverview.addView(linearlayout3, linearlayoutParams3)
                     }
                 }
             }
@@ -231,15 +201,10 @@ object UIUtils {
                 val msgPosition: Int = msgs.indexOf(message)
 
                 val txtview = TextView(this@replenishMsgs)
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-                    txtview.text =
-                        Html.fromHtml(message.factorize(isTimestampEnabled, this@replenishMsgs))
-                } else {
-                    txtview.text = Html.fromHtml(
-                        message.factorize(isTimestampEnabled, this@replenishMsgs),
-                        Html.FROM_HTML_MODE_LEGACY
-                    )
-                }
+                txtview.text = Html.fromHtml(
+                    message.factorize(isTimestampEnabled, this@replenishMsgs),
+                    Html.FROM_HTML_MODE_LEGACY
+                )
                 txtview.textSize = PreferenceManager.getDefaultSharedPreferences(this@replenishMsgs)
                     .getInt("msg_size", 12).toFloat()
 
@@ -262,12 +227,12 @@ object UIUtils {
                 rltvLayout.addView(txtview, msgPosition, rltvParams)
 
                 //Animate
-                binding.syncplayMESSAGERY.also {
-                    it.clearAnimation()
-                    it.visibility = View.VISIBLE
-                    it.alpha = 1f
-                }
-                if (!binding.vidplayer.isControllerVisible) {
+                //binding.syncplayMESSAGERY.also {
+                //it.clearAnimation()
+                //it.visibility = View.VISIBLE
+                //it.alpha = 1f
+                //}
+                if (true /* !binding.vidplayer.isControllerVisible */) {
                     if (message == msgs.last()) {
                         txtview.clearAnimation()
                         txtview.alpha = 1f
@@ -286,13 +251,9 @@ object UIUtils {
     }
 
     /** Hides the keyboard and loses message typing focus **/
-    fun RoomActivity.hideKb() {
+    fun WatchActivity.hideKb() {
         lifecycleScope.launch(Dispatchers.Main) {
-            WindowInsetsControllerCompat(
-                window,
-                window.decorView
-            ).hide(WindowInsetsCompat.Type.ime())
-            binding.syncplayINPUTBox.clearFocus()
+            WindowInsetsControllerCompat(window, window.decorView).hide(WindowInsetsCompat.Type.ime())
         }
     }
 
@@ -300,7 +261,7 @@ object UIUtils {
     fun RoomActivity.applyUISettings() {
         lifecycleScope.launch(Dispatchers.Main) {
             /* For settings: Timestamp,Message Count,Message Font Size */
-            replenishMsgs(binding.syncplayMESSAGERY)
+            //replenishMsgs(binding.syncplayMESSAGERY)
 
             /* Holding a reference to SharedPreferences to use it later */
             val sp = PreferenceManager.getDefaultSharedPreferences(this@applyUISettings)
@@ -308,23 +269,23 @@ object UIUtils {
             /* Applying "overview_alpha" setting */
             val alpha1 = sp.getInt("overview_alpha", 40) //between 0-255
             @ColorInt val alphaColor1 = ColorUtils.setAlphaComponent(Color.DKGRAY, alpha1)
-            binding.syncplayOverviewCard.setCardBackgroundColor(alphaColor1)
+            //binding.syncplayOverviewCard.setCardBackgroundColor(alphaColor1)
 
             /* Applying MESSAGERY Alpha **/
             val alpha2 = sp.getInt("messagery_alpha", 40) //between 0-255
             @ColorInt val alphaColor2 = ColorUtils.setAlphaComponent(Color.DKGRAY, alpha2)
-            binding.syncplayMESSAGERYOpacitydelegate.setCardBackgroundColor(alphaColor2)
+            //binding.syncplayMESSAGERYOpacitydelegate.setCardBackgroundColor(alphaColor2)
 
             /* Applying Subtitle Size setting */
             this@applyUISettings.ccsize = sp.getInt("subtitle_size", 18).toFloat()
-            binding.vidplayer.subtitleView?.setFixedTextSize(COMPLEX_UNIT_SP, ccsize)
+            //binding.vidplayer.subtitleView?.setFixedTextSize(COMPLEX_UNIT_SP, ccsize)
         }
     }
 
     /** Convenience method to save code space */
     fun Context.toasty(string: String) {
         Handler(Looper.getMainLooper()).post {
-            Toast.makeText(this@toasty, string, Toast.LENGTH_LONG).show()
+            Toast.makeText(this@toasty, string, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -347,28 +308,28 @@ object UIUtils {
     fun RoomActivity.insertPopup(int: Constants.POPUP) {
         when (int) {
             Constants.POPUP.POPUP_INROOM_SETTINGS -> {
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.pseudo_popup_container, RoomSettingsHosterFragment())
-                    .commitNowAllowingStateLoss()
+//                supportFragmentManager.beginTransaction()
+//                    .replace(R.id.pseudo_popup_container, RoomSettingsHosterFragment())
+//                    .commitNowAllowingStateLoss()
 
             }
 
             Constants.POPUP.POPUP_SHARED_PLAYLIST -> {
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.pseudo_popup_container, SHPFragment())
-                    .commitNowAllowingStateLoss()
+//                supportFragmentManager.beginTransaction()
+//                    .replace(R.id.pseudo_popup_container, SHPFragment())
+//                    .commitNowAllowingStateLoss()
 
             }
 
             Constants.POPUP.POPUP_MESSAGE_HISTORY -> {
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.pseudo_popup_container, MessageHistoryPopup())
-                    .commitNowAllowingStateLoss()
+//                supportFragmentManager.beginTransaction()
+//                    .replace(R.id.pseudo_popup_container, MessageHistoryPopup())
+//                    .commitNowAllowingStateLoss()
 
             }
         }
         activePseudoPopup = int
-        binding.pseudoPopupParent.visibility = View.VISIBLE
+        //binding.pseudoPopupParent.visibility = View.VISIBLE
     }
 
 
@@ -376,18 +337,14 @@ object UIUtils {
      * This should not be called on Android L & M as it would freeze the device if done twice
      */
     fun View.attachTooltip(string: String) {
-        if (VERSION.SDK_INT > VERSION_CODES.M) {
-            this.isLongClickable = true
-            TooltipCompat.setTooltipText(this, string)
-        }
+        this.isLongClickable = true
+        TooltipCompat.setTooltipText(this, string)
     }
 
     fun View.bindTooltip() {
-        if (VERSION.SDK_INT > VERSION_CODES.M) {
-            this.isLongClickable = true
-            val tooltip = this.contentDescription
-            TooltipCompat.setTooltipText(this, tooltip)
-        }
+        this.isLongClickable = true
+        val tooltip = this.contentDescription
+        TooltipCompat.setTooltipText(this, tooltip)
     }
 
 }

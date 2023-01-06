@@ -7,12 +7,10 @@ import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import app.R
-import app.controllers.activity.RoomActivity
 import app.protocol.JsonSender.sendPlaylistChange
 import app.protocol.JsonSender.sendPlaylistIndex
-import app.utils.ExoPlayerUtils.injectVideo
+import app.ui.activities.WatchActivity
 import app.utils.MiscUtils.getFileName
-import app.utils.UIUtils.broadcastMessage
 import app.utils.UIUtils.toasty
 import app.wrappers.MediaFile
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +23,7 @@ object SHPUtils {
     /** Adding a file to the playlist: This basically adds one file name to the playlist, then,
      * adds the parent directory to the known media directories, after that, it informs the server
      * about it. The server will send back the new playlist which will invoke playlist updating */
-    fun RoomActivity.addFileToPlaylist(uri: Uri) {
+    fun WatchActivity.addFileToPlaylist(uri: Uri) {
         lifecycleScope.launch(Dispatchers.IO) {
             /** We get the file name */
             val filename = getFileName(uri) ?: return@launch
@@ -39,10 +37,10 @@ object SHPUtils {
             /** If there is no duplicate, then we proceed, we check if the list is empty */
             if (p.session.sharedPlaylist.isEmpty() && p.session.sharedPlaylistIndex == -1) {
                 /* If it is empty, then we load the media file */
-                p.file = MediaFile()
-                p.file!!.uri = uri
-                p.file!!.collectInfo(this@addFileToPlaylist)
-                injectVideo(uri.toString(), true)
+                media = MediaFile()
+                media!!.uri = uri
+                media!!.collectInfo(this@addFileToPlaylist)
+                //injectVideo(uri.toString(), true)
                 p.sendPacket(sendPlaylistIndex(0))
             }
             val newList = p.session.sharedPlaylist
@@ -51,7 +49,7 @@ object SHPUtils {
         }
     }
 
-    fun RoomActivity.addFolderToPlaylist(uri: Uri) {
+    fun WatchActivity.addFolderToPlaylist(uri: Uri) {
         lifecycleScope.launch(Dispatchers.IO) {
             /* First, we save it in our media directories as a common directory */
             saveFolderPathAsMediaDirectory(uri)
@@ -83,7 +81,7 @@ object SHPUtils {
         }
     }
 
-    fun RoomActivity.saveFolderPathAsMediaDirectory(uri: Uri) {
+    fun WatchActivity.saveFolderPathAsMediaDirectory(uri: Uri) {
         val list = DirectoriesActivity.getFolderList(
             p.gson,
             DirectoriesActivity.prefKey,
@@ -99,12 +97,12 @@ object SHPUtils {
     }
 
     /** This is to send a playlist selection change to the server */
-    fun RoomActivity.sendPlaylistSelection(index: Int) {
+    fun WatchActivity.sendPlaylistSelection(index: Int) {
         p.sendPacket(sendPlaylistIndex(index))
     }
 
     /** This is to change playlist selection in response other users' selection */
-    fun RoomActivity.changePlaylistSelection(index: Int) {
+    fun WatchActivity.changePlaylistSelection(index: Int) {
         if (p.session.sharedPlaylist.size < (index + 1)) return /* In case this was called on an empty list */
         if (index != p.session.sharedPlaylistIndex) {
             /* If the file on that index isn't playing, play the file */
@@ -116,7 +114,7 @@ object SHPUtils {
      * name and load it into ExoPlayer. This is executed on a separate thread since the IO operation
      * is heavy.
      */
-    fun RoomActivity.retrieveFile(fileName: String) {
+    fun WatchActivity.retrieveFile(fileName: String) {
         lifecycleScope.launch(Dispatchers.IO) {
             /** We have to know whether the file name is an URL or just a file name */
             if (fileName.contains("http://", true) ||
@@ -125,11 +123,11 @@ object SHPUtils {
             ) {
 
                 /** Fetching the file as it is a URL */
-                injectVideo(fileName, true)
-                p.file = MediaFile()
-                p.file?.uri = fileName.toUri()
-                p.file?.url = fileName
-                p.file?.collectInfoURL()
+                //injectVideo(fileName, true)
+                media = MediaFile()
+                media?.uri = fileName.toUri()
+                media?.url = fileName
+                media?.collectInfoURL()
             } else {
                 /** We search our media directories which were added by the user in settings */
                 val sp = PreferenceManager.getDefaultSharedPreferences(this@retrieveFile)
@@ -137,7 +135,7 @@ object SHPUtils {
                 val paths = p.gson.fromJson<List<String>>(folderJson, List::class.java).toMutableList()
 
                 if (paths.isEmpty()) {
-                    broadcastMessage(getString(R.string.room_shared_playlist_no_directories), false)
+                    //broadcastMessage(getString(R.string.room_shared_playlist_no_directories), false)
                 }
 
                 var fileUri2Play: Uri? = null
@@ -162,21 +160,21 @@ object SHPUtils {
                         if (filename == fileName) {
                             fileUri2Play = tree.findFile(filename)?.uri ?: return@launch
                             /** Changing current file variable **/
-                            p.file = MediaFile()
-                            p.file?.uri = fileUri2Play
-                            p.file?.collectInfo(this@retrieveFile)
+                            media = MediaFile()
+                            media?.uri = fileUri2Play
+                            media?.collectInfo(this@retrieveFile)
                             /** Loading the file into our player **/
                             runOnUiThread {
-                                injectVideo(fileUri2Play.toString(), true)
+                                //injectVideo(fileUri2Play.toString(), true)
                             }
                             break
                         }
                     }
                 }
                 if (fileUri2Play == null) {
-                    if (p.file?.fileName != fileName) {
+                    if (media?.fileName != fileName) {
                         toasty(getString(R.string.room_shared_playlist_not_found))
-                        broadcastMessage(getString(R.string.room_shared_playlist_not_found), false)
+                        //broadcastMessage(getString(R.string.room_shared_playlist_not_found), false)
                     }
                 }
             }
@@ -184,9 +182,9 @@ object SHPUtils {
     }
 
     /** This will delete an item from playlist at a given index 'i' */
-    fun RoomActivity.deleteItemFromPlaylist(i: Int) {
+    fun WatchActivity.deleteItemFromPlaylist(i: Int) {
         p.session.sharedPlaylist.removeAt(i)
-        sharedPlaylistCallback?.onUpdate()
+        //sharedPlaylistCallback?.onUpdate()
         p.sendPacket(sendPlaylistChange(p.session.sharedPlaylist))
         if (p.session.sharedPlaylist.isEmpty()) {
             p.session.sharedPlaylistIndex = -1
@@ -196,7 +194,7 @@ object SHPUtils {
     /** Shuffles the playlist
      * @param mode False to shuffle all playlist, True to shuffle only the rest
      */
-    fun RoomActivity.shuffle(mode: Boolean) {
+    fun WatchActivity.shuffle(mode: Boolean) {
         /** If the shared playlist is empty, do nothing */
         if (p.session.sharedPlaylistIndex < 0 || p.session.sharedPlaylist.isEmpty()) return
 
@@ -209,7 +207,8 @@ object SHPUtils {
             val grp1 = p.session.sharedPlaylist.take(p.session.sharedPlaylistIndex + 1).toMutableList()
             val grp2 = p.session.sharedPlaylist.takeLast(p.session.sharedPlaylist.size - grp1.size).shuffled()
             grp1.addAll(grp2)
-            p.session.sharedPlaylist = grp1
+            p.session.sharedPlaylist.clear()
+            p.session.sharedPlaylist.addAll(grp1)
         } else {
             /** Shuffling everything is easy as Kotlin gives us the 'shuffle()' method */
             p.session.sharedPlaylist.shuffle()
@@ -224,7 +223,7 @@ object SHPUtils {
 
     /** Saves the playlist as a plain text file (.txt) to the designated folder with a timestamp of the current time
      * @param folderUri The uri of the save folder */
-    fun RoomActivity.saveSHP(folderUri: Uri) {
+    fun WatchActivity.saveSHP(folderUri: Uri) {
         val folder = DocumentFile.fromTreeUri(this, folderUri)
         val txt = folder?.createFile("text/plain", "SharedPlaylist_${System.currentTimeMillis()}.txt")
 
@@ -251,7 +250,7 @@ object SHPUtils {
      * @param fileUri Uri of the selected txt file
      * @param shuffle Determines whether the content of the file should be shuffled or not
      */
-    fun RoomActivity.loadSHP(fileUri: Uri, shuffle: Boolean) {
+    fun WatchActivity.loadSHP(fileUri: Uri, shuffle: Boolean) {
         /** Opening the input stream of the file */
         val s = contentResolver.openInputStream(fileUri) ?: return
         val string = s.readBytes().decodeToString()
@@ -270,7 +269,7 @@ object SHPUtils {
     }
 
     /** Adds URLs from the url adding popup */
-    fun RoomActivity.addURLs(string: List<String>) {
+    fun WatchActivity.addURLs(string: List<String>) {
         val l = mutableListOf<String>()
         l.addAll(p.session.sharedPlaylist)
         for (s in string) {
@@ -280,7 +279,7 @@ object SHPUtils {
     }
 
     /** Clears the shared playlist */
-    fun RoomActivity.clearPlaylist() {
+    fun WatchActivity.clearPlaylist() {
         if (p.session.sharedPlaylist.isEmpty()) return
         p.sendPacket(sendPlaylistChange(emptyList()))
     }

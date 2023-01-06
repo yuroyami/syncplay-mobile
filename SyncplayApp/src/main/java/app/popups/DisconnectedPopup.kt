@@ -2,7 +2,7 @@ package app.popups
 
 import android.widget.FrameLayout
 import app.R
-import app.controllers.activity.RoomActivity
+import app.ui.activities.RoomActivity
 import razerdp.basepopup.BasePopupWindow
 
 class DisconnectedPopup(val activity: RoomActivity) : BasePopupWindow(activity) {
