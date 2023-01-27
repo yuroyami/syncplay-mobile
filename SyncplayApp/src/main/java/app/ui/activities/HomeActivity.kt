@@ -35,7 +35,6 @@ import androidx.compose.material.icons.filled.PersonPin
 import androidx.compose.material.icons.filled.Redo
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -93,8 +92,8 @@ import app.datastore.DataStoreUtils.writeString
 import app.datastore.MySettings.globalSettings
 import app.settings.SettingsUI
 import app.ui.Paletting
-import app.ui.compose.ComposeUtils.FancyText
-import app.ui.compose.ComposeUtils.syncplayGradient
+import app.utils.ComposeUtils.FancyText
+import app.utils.ComposeUtils.syncplayGradient
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieClipSpec
 import com.airbnb.lottie.compose.LottieCompositionSpec
@@ -493,9 +492,15 @@ class HomeActivity : ComponentActivity() {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                                 TextField(
                                     modifier = Modifier.fillMaxWidth(0.65f),
+                                    shape = RoundedCornerShape(16.dp),
                                     singleLine = true,
                                     value = serverAddress.value,
-                                    colors = TextFieldDefaults.textFieldColors(containerColor = Color.DarkGray),
+                                    colors = TextFieldDefaults.textFieldColors(
+                                        focusedIndicatorColor = Color.Transparent,
+                                        unfocusedIndicatorColor = Color.Transparent,
+                                        disabledIndicatorColor = Color.Transparent,
+                                        containerColor = Color.DarkGray
+                                    ),
                                     onValueChange = { serverAddress.value = it },
                                     textStyle = TextStyle(
                                         brush = Brush.linearGradient(
@@ -511,10 +516,16 @@ class HomeActivity : ComponentActivity() {
 
                                 TextField(
                                     modifier = Modifier.fillMaxWidth(0.8f),
+                                    shape = RoundedCornerShape(16.dp),
                                     singleLine = true,
                                     value = serverPort.value,
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                    colors = TextFieldDefaults.textFieldColors(containerColor = Color.DarkGray),
+                                    colors = TextFieldDefaults.textFieldColors(
+                                        focusedIndicatorColor = Color.Transparent,
+                                        unfocusedIndicatorColor = Color.Transparent,
+                                        disabledIndicatorColor = Color.Transparent,
+                                        containerColor = Color.DarkGray
+                                    ),
                                     onValueChange = { serverPort.value = it.toString() },
                                     textStyle = TextStyle(
                                         brush = Brush.linearGradient(
@@ -532,11 +543,17 @@ class HomeActivity : ComponentActivity() {
 
                             TextField(
                                 modifier = Modifier.fillMaxWidth(0.8f),
+                                shape = RoundedCornerShape(16.dp),
                                 singleLine = true,
                                 enabled = !serverIsPublic.value,
                                 value = serverPassword.value,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                                colors = TextFieldDefaults.textFieldColors(containerColor = Color.DarkGray),
+                                colors = TextFieldDefaults.textFieldColors(
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent,
+                                    disabledIndicatorColor = Color.Transparent,
+                                    containerColor = Color.DarkGray
+                                ),
                                 onValueChange = { serverPassword.value = it },
                                 textStyle = TextStyle(
                                     brush = Brush.linearGradient(
@@ -554,7 +571,6 @@ class HomeActivity : ComponentActivity() {
                         /** Join Button */
                         Button(
                             border = BorderStroke(width = 2.dp, color = MaterialTheme.colorScheme.primary),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                             modifier = Modifier.fillMaxWidth(0.7f),
                             onClick = {
                                 /** Trimming whitespaces */
@@ -624,7 +640,6 @@ class HomeActivity : ComponentActivity() {
                                 )
                             },
                         ) {
-                            Box(modifier = Modifier.background(brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT)))
                             Icon(imageVector = Icons.Filled.Api, "")
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(stringResource(R.string.connect_button), fontSize = 18.sp)

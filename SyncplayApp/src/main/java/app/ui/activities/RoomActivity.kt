@@ -3,19 +3,14 @@ package app.ui.activities
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import app.HudBinding
-import app.popups.DisconnectedPopup
-import app.popups.LoadURLPopup
 import app.protocol.SyncplayProtocol
 import app.sharedplaylist.SHPCallback
 import app.utils.ExoUtils.buildExo
 import app.utils.ListenerUtils.initListeners
-import app.utils.RoomUtils.pingUpdate
 import app.utils.UIUtils.applyUISettings
 import app.wrappers.Constants
 import com.google.android.exoplayer2.ExoPlayer
@@ -26,7 +21,7 @@ import kotlinx.coroutines.launch
 class RoomActivity : ComponentActivity() {
 
     /* Declaring our ViewBinding global variables (much faster than findViewById) **/
-    lateinit var hudBinding: HudBinding
+    lateinit var hudBinding: Any
 
     /* This will initialize our protocol the first time it is needed */
     lateinit var p: SyncplayProtocol
@@ -48,10 +43,6 @@ class RoomActivity : ComponentActivity() {
     var ccsize = 18f
     var activePseudoPopup: Constants.POPUP? = null /* See 'Constants' class for enum values */
 
-    /* Declaring Popup dialog variables which are used to show/dismiss different popups */
-    private lateinit var disconnectedPopup: DisconnectedPopup
-    lateinit var urlPopup: LoadURLPopup
-
     /* Shared Playlist Callback */
     var sharedPlaylistCallback: SHPCallback? = null
 
@@ -61,8 +52,6 @@ class RoomActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        /** Telling Android that it should keep the screen on */
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         /** Initializing our ViewModel, which is our protocol at the same time **/
         p = ViewModelProvider(this)[SyncplayProtocol::class.java]
@@ -95,10 +84,6 @@ class RoomActivity : ComponentActivity() {
             p.connect()
         }
 
-        /** Preparing our popups ahead of time **/
-        disconnectedPopup = DisconnectedPopup(this)
-        urlPopup = LoadURLPopup(this, null)
-
         /** Showing starter hint if it's not permanently disabled */
 //        val dontShowHint = sp.getBoolean("dont_show_starter_hint", false)
 //        if (!dontShowHint) {
@@ -117,9 +102,6 @@ class RoomActivity : ComponentActivity() {
 //                child.attachTooltip(child.contentDescription.toString())
 //            }
 //        }
-
-        /** Launch the visible ping updater **/
-        pingUpdate()
     }
 
     override fun onStart() {

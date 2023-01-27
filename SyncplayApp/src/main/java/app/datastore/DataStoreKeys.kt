@@ -16,16 +16,13 @@ object DataStoreKeys {
 
     /** ---------- Global Settings ----------- */
     const val DATASTORE_GLOBAL_SETTINGS = "syncplay_global_settings"
-
     /* General */
     const val PREF_REMEMBER_INFO = "pref_remember_info"
     const val PREF_SP_MEDIA_DIRS = "pref_syncplay_media_directories"
-
     /* Language */
     const val PREF_DISPLAY_LANG = "pref_lang"
     const val PREF_AUDIO_LANG = "pref_audio_preferred_lang"
     const val PREF_CC_LANG = "pref_cc_preferred_lang"
-
     /* Syncing */
     const val PREF_READY_FIRST_HAND = "pref_ready_first_hand"
     const val PREF_PAUSE_ON_SOMEONE_LEAVE = "pref_pause_if_someone_left"
@@ -44,4 +41,31 @@ object DataStoreKeys {
 
     /* Advanced */
     const val PREF_GLOBAL_CLEAR_ALL = "pref_global_clear_all"
+
+    /** ---------- In-room Preferences ----------- */
+    const val DATASTORE_INROOM_PREFERENCES = "syncplay_in_room_preferences"
+
+    /* Message Colors */
+    const val PREF_INROOM_COLOR_TIMESTAMP = "pref_inroom_color_timestamp"
+    const val PREF_INROOM_COLOR_SELFTAG = "pref_inroom_color_selftag"
+    const val PREF_INROOM_COLOR_FRIENDTAG = "pref_inroom_color_friendtag"
+    const val PREF_INROOM_COLOR_SYSTEMMSG = "pref_inroom_color_systemmsg"
+    const val PREF_INROOM_COLOR_USERMSG = "pref_inroom_color_usermsg"
+    const val PREF_INROOM_COLOR_ERRORMSG = "pref_inroom_color_errormsg"
+
+    /* Message Properties */
+    const val PREF_INROOM_MSG_ACTIVATE_STAMP = "pref_inroom_msg_activate_stamp"
+    const val PREF_INROOM_MSG_BG_OPACITY = "pref_inroom_msg_bg_opacity"
+    const val PREF_INROOM_MSG_FONTSIZE = "pref_inroom_msg_fontsize"
+    const val PREF_INROOM_MSG_MAXCOUNT = "pref_inroom_msg_maxcount"
+    const val PREF_INROOM_MSG_FADING_DURATION = "pref_inroom_fading_msg_duration"
+
+    /* Player Settings */
+    const val PREF_INROOM_PLAYER_SUBTITLE_SIZE = "pref_inroom_subtitle_size"
+    const val PREF_INROOM_PLAYER_AUDIO_DELAY = "pref_inroom_audio_delay"
+    const val PREF_INROOM_PLAYER_SUBTITLE_DELAY = "pref_inroom_subtitle_delay"
+    const val PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP = "pref_inroom_seek_forward_jump"
+    const val PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP = "pref_inroom_seek_backward_jump"
+
+
 }

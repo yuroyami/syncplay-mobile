@@ -5,7 +5,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import app.controllers.adapters.HistoryRecycAdapter
 import app.databinding.FragmentMessageHistoryBinding
 import app.ui.activities.RoomActivity
 
@@ -21,7 +20,6 @@ class MessageHistoryPopup : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val a = (requireActivity() as RoomActivity)
-        binding.syncplayMESSAGEHISTORYRecyc.adapter =
-            HistoryRecycAdapter(a.p.session.messageSequence, requireContext())
+        //binding.syncplayMESSAGEHISTORYRecyc.adapter = HistoryRecycAdapter(a.p.session.messageSequence, requireContext())
     }
 }

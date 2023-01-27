@@ -2,37 +2,27 @@ package app.utils
 
 import android.content.Context
 import android.graphics.Color
-import android.graphics.Typeface
 import android.os.Handler
 import android.os.Looper
 import android.text.Html
-import android.util.TypedValue.COMPLEX_UNIT_SP
-import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateInterpolator
-import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.ColorInt
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.TooltipCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import app.R
 import app.ui.activities.RoomActivity
 import app.ui.activities.WatchActivity
-import app.utils.MiscUtils.string
 import app.wrappers.Constants
-import app.wrappers.User
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import razerdp.basepopup.BasePopupWindow
 
 /** Wrapping any UI-related functionality for RoomActivity here to reduce redundant code space **/
 
@@ -49,137 +39,6 @@ object UIUtils {
 //                .setDuration(1000L)
 //                .setInterpolator(AccelerateInterpolator())
 //                .start()
-        }
-    }
-
-
-    /** Populates the Room Details section with users, their files, and their readiness */
-    fun RoomActivity.replenishUsers(linearLayout: LinearLayout) {
-        lifecycleScope.launch(Dispatchers.Main) {
-            if (true /*binding.syncplayOverviewcheckbox.isChecked*/) {
-                linearLayout.removeAllViews()
-                val userList = mutableListOf<User>().also {
-                    it.addAll(p.session.userList)
-                }
-
-                //Creating line for room-name:
-                val roomnameView = TextView(this@replenishUsers)
-                roomnameView.text =
-                    string(R.string.room_details_current_room, p.session.currentRoom)
-                roomnameView.isFocusable = false
-                val linearlayout0 = LinearLayout(this@replenishUsers)
-                val linearlayoutParams0: LinearLayout.LayoutParams =
-                    LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                    )
-                linearlayout0.gravity = Gravity.END
-                linearlayout0.orientation = LinearLayout.HORIZONTAL
-                linearlayout0.addView(roomnameView)
-                linearlayout0.isFocusable = false
-                //binding.syncplayOverview.addView(linearlayout0, linearlayoutParams0)
-
-                for (user in userList) {
-                    //First line of user
-                    val usernameView = TextView(this@replenishUsers)
-                    usernameView.text = user.name
-                    if (user.name == p.session.currentUsername) {
-                        usernameView.setTextColor(0xFFECBF39.toInt())
-                        usernameView.setTypeface(usernameView.typeface, Typeface.BOLD)
-                    }
-                    val usernameReadiness: Boolean = user.readiness ?: false
-                    val userIconette = ImageView(this@replenishUsers)
-                    userIconette.setImageResource(R.drawable.ic_user)
-                    val userReadinessIcon = ImageView(this@replenishUsers)
-                    if (usernameReadiness) {
-                        userReadinessIcon.setImageResource(R.drawable.ready_1)
-                    } else {
-                        userReadinessIcon.setImageResource(R.drawable.ready_0)
-                    }
-
-                    //Creating Linear Layout for 1st line
-                    val linearlayout = LinearLayout(this@replenishUsers)
-                    val linearlayoutParams: LinearLayout.LayoutParams =
-                        LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.WRAP_CONTENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT
-                        )
-                    linearlayout.gravity = Gravity.END
-                    linearlayout.orientation = LinearLayout.HORIZONTAL
-                    linearlayout.addView(usernameView)
-                    linearlayout.addView(userIconette)
-                    linearlayout.addView(userReadinessIcon)
-                    linearlayout.isFocusable = false
-                    usernameView.isFocusable = false
-                    userIconette.isFocusable = false
-                    userReadinessIcon.isFocusable = false
-                    //binding.syncplayOverview.addView(linearlayout, linearlayoutParams)
-
-                    //Second line (File name)
-                    val isThereFile = user.file != null
-                    val fileFirstLine =
-                        if (isThereFile) user.file!!.fileName else getString(R.string.room_details_nofileplayed)
-
-                    val lineArrower = ImageView(this@replenishUsers)
-                    lineArrower.setImageResource(R.drawable.ic_arrowleft)
-
-                    val lineBlanker = ImageView(this@replenishUsers)
-                    lineBlanker.setImageResource(R.drawable.ic_blanker)
-
-                    val lineFile = TextView(this@replenishUsers)
-                    lineFile.text = fileFirstLine
-                    lineFile.setTextSize(COMPLEX_UNIT_SP, 11f)
-
-                    val linearlayout2 = LinearLayout(this@replenishUsers)
-                    val linearlayoutParams2: LinearLayout.LayoutParams =
-                        LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.WRAP_CONTENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT
-                        )
-                    linearlayout2.gravity = Gravity.END
-                    linearlayout2.orientation = LinearLayout.HORIZONTAL
-                    linearlayout2.addView(lineFile)
-                    linearlayout2.addView(lineArrower)
-                    linearlayout2.addView(lineBlanker)
-                    linearlayout2.isFocusable = false
-                    lineFile.isFocusable = false
-                    lineArrower.isFocusable = false
-                    lineBlanker.isFocusable = false
-                    //binding.syncplayOverview.addView(linearlayout2, linearlayoutParams2)
-
-                    //Third Line (file info)
-                    if (isThereFile) {
-                        val fileSize = user.file?.fileSize?.toDoubleOrNull()?.div(1000000.0)
-                        val fileInfoLine = string(
-                            R.string.room_details_file_properties,
-                            MiscUtils.timeStamper(user.file!!.fileDuration.toLong()),
-                            fileSize?.toString() ?: "???"
-                        )
-                        val lineFileInfo = TextView(this@replenishUsers)
-                        lineFileInfo.text = fileInfoLine
-                        lineFileInfo.setTextSize(COMPLEX_UNIT_SP, 11f)
-
-                        val linearlayout3 = LinearLayout(this@replenishUsers)
-                        val linearlayoutParams3: LinearLayout.LayoutParams =
-                            LinearLayout.LayoutParams(
-                                ViewGroup.LayoutParams.WRAP_CONTENT,
-                                ViewGroup.LayoutParams.WRAP_CONTENT
-                            )
-                        linearlayout3.gravity = Gravity.END
-                        linearlayout3.orientation = LinearLayout.HORIZONTAL
-                        linearlayout3.addView(lineFileInfo)
-                        linearlayout3.isFocusable = false
-                        lineFileInfo.isFocusable = false
-                        for (f in (0 until 2)) {
-                            val lineBlanker3 = ImageView(this@replenishUsers)
-                            lineBlanker3.setImageResource(R.drawable.ic_blanker)
-                            linearlayout3.addView(lineBlanker3)
-                            lineBlanker3.isFocusable = false
-                        }
-                        //binding.syncplayOverview.addView(linearlayout3, linearlayoutParams3)
-                    }
-                }
-            }
         }
     }
 
@@ -202,7 +61,7 @@ object UIUtils {
 
                 val txtview = TextView(this@replenishMsgs)
                 txtview.text = Html.fromHtml(
-                    message.factorize(isTimestampEnabled, this@replenishMsgs),
+                    message.factorize(includeTimestamp = isTimestampEnabled, context = this@replenishMsgs).toString(),
                     Html.FROM_HTML_MODE_LEGACY
                 )
                 txtview.textSize = PreferenceManager.getDefaultSharedPreferences(this@replenishMsgs)
@@ -286,20 +145,6 @@ object UIUtils {
     fun Context.toasty(string: String) {
         Handler(Looper.getMainLooper()).post {
             Toast.makeText(this@toasty, string, Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    /** Used to save code space to show a popup with a few settings */
-    fun AppCompatActivity.showPopup(popup: BasePopupWindow, animate: Boolean) {
-        lifecycleScope.launch(Dispatchers.Main) {
-            popup
-                .setBlurBackgroundEnable(true)
-                .setOutSideTouchable(true)
-                .setOutSideDismiss(true)
-            if (!animate) {
-                popup.showAnimation = null
-            }
-            popup.showPopupWindow()
         }
     }
 

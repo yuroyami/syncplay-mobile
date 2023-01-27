@@ -6,10 +6,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -17,6 +20,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,8 +50,8 @@ import app.datastore.DataStoreUtils.writeBoolean
 import app.datastore.DataStoreUtils.writeInt
 import app.datastore.DataStoreUtils.writeString
 import app.ui.Paletting
-import app.ui.compose.ComposeUtils.FancyIcon
-import app.ui.compose.ComposeUtils.MultiChoiceDialog
+import app.utils.ComposeUtils.FancyIcon
+import app.utils.ComposeUtils.MultiChoiceDialog
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalTextApi::class)
@@ -65,7 +69,9 @@ import kotlinx.coroutines.launch
  * @param entryKeys When working with multi choice setting for example, pass a list of the visible key texts
  * @param entryValues The under-the-hood values for each entryKey. It must be of same size as entryKeys.
  * @param onClick Lambda to be triggered upon clicking the setting, typically used for [SettingType.OneClickSetting]
- * @param onItemChosen Lambda to be triggered upon choosing an elemnt for a [SettingType.MultiChoicePopupSetting]*/
+ * @param onItemChosen Lambda to be triggered upon choosing an elemnt for a [SettingType.MultiChoicePopupSetting]
+ * @param popupComposable For a [SettingType.PopupSetting], this is a composable popup to show upon clicking
+ * */
 class Setting(
     val datastorekey: String,
     val type: SettingType, val key: String, val title: String, val summary: String,
@@ -74,20 +80,26 @@ class Setting(
     val maxValue: Int = 100, val minValue: Int = 0,
     val entryKeys: List<String> = listOf(), val entryValues: List<String> = listOf(),
     val onClick: (() -> Unit)? = null, val onItemChosen: ((index: Int, value: String) -> Unit)? = null,
+    val popupComposable: (@Composable (MutableState<Boolean>) -> Unit)? = null,
 ) {
 
     private val pdng = 12
     private val icsize = 28
+
+    private val ttlClr = Paletting.OLD_SP_YELLOW
+    private val smryClr = Color(155, 155, 155)
 
     /** The Composable function that creates the UI element for the setting. */
     @Composable
     fun SettingSingleton(modifier: Modifier = Modifier) {
         when (type) {
             SettingType.OneClickSetting -> OneClickSettingUI(modifier)
+            SettingType.PopupSetting -> PopupSettingUI(modifier)
             SettingType.MultiChoicePopupSetting -> ListSettingUI(modifier)
             SettingType.CheckboxSetting -> BooleanSettingUI(modifier = modifier, true)
             SettingType.ToggleSetting -> BooleanSettingUI(modifier = modifier, false)
             SettingType.SliderSetting -> SliderSettingUI(modifier = modifier)
+            SettingType.ColorSetting -> ColorSettingUI(modifier = modifier)
         }
     }
 
@@ -106,7 +118,7 @@ class Setting(
         ) {
             val (ic, ttl, smry, spacer) = createRefs()
 
-            FancyIcon(icon = icon, size = icsize, modifier = Modifier.constrainAs(ic) {
+            FancyIcon(color = ttlClr, icon = icon, size = icsize, modifier = Modifier.constrainAs(ic) {
                 top.linkTo(parent.top, pdng.dp)
                 start.linkTo(parent.start, pdng.dp)
             })
@@ -134,7 +146,7 @@ class Setting(
                 },
                 text = title,
                 style = TextStyle(
-                    color = Color.DarkGray,
+                    color = ttlClr,
                     fontFamily = FontFamily(Font(R.font.directive4bold)), fontSize = 15.sp,
                 )
             )
@@ -148,7 +160,7 @@ class Setting(
                 },
                 text = summary,
                 style = TextStyle(
-                    color = Color(40, 40, 40, 150),
+                    color = smryClr,
                     fontFamily = FontFamily(Font(R.font.inter)), fontSize = 12.sp,
                 )
             )
@@ -159,6 +171,81 @@ class Setting(
                     top.linkTo(smry.bottom)
                 })
         }
+    }
+
+    @Composable
+    private fun PopupSettingUI(modifier: Modifier = Modifier) {
+        val popupVisibility = remember { mutableStateOf(false) }
+
+        ConstraintLayout(
+            modifier = modifier
+                .fillMaxWidth()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
+
+                ) {
+                    popupVisibility.value = true
+                }
+        ) {
+            val (ic, ttl, smry, spacer) = createRefs()
+
+            FancyIcon(color = ttlClr, icon = icon, size = icsize, modifier = Modifier.constrainAs(ic) {
+                top.linkTo(parent.top, pdng.dp)
+                start.linkTo(parent.start, pdng.dp)
+            })
+
+            Text(
+                modifier = Modifier.constrainAs(ttl) {
+                    top.linkTo(ic.top)
+                    start.linkTo(ic.end, 6.dp)
+                    end.linkTo(parent.end, pdng.dp)
+                    width = Dimension.fillToConstraints
+                },
+                text = title,
+                style = TextStyle(
+                    brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT),
+                    shadow = Shadow(offset = Offset(0f, 0f), blurRadius = 1f),
+                    fontFamily = FontFamily(Font(R.font.directive4bold)), fontSize = (15.5).sp
+                )
+            )
+            Text(
+                modifier = Modifier.constrainAs(ttl) {
+                    top.linkTo(ic.top)
+                    start.linkTo(ic.end, 6.dp)
+                    end.linkTo(parent.end, pdng.dp)
+                    width = Dimension.fillToConstraints
+                },
+                text = title,
+                style = TextStyle(
+                    color = ttlClr,
+                    fontFamily = FontFamily(Font(R.font.directive4bold)), fontSize = 15.sp,
+                )
+            )
+
+            Text(
+                modifier = Modifier.constrainAs(smry) {
+                    top.linkTo(ttl.bottom)
+                    start.linkTo(ttl.start)
+                    end.linkTo(parent.end, pdng.dp)
+                    width = Dimension.fillToConstraints
+                },
+                text = summary,
+                style = TextStyle(
+                    color = smryClr,
+                    fontFamily = FontFamily(Font(R.font.inter)), fontSize = 12.sp,
+                )
+            )
+
+            Spacer(modifier = Modifier
+                .height(pdng.dp)
+                .constrainAs(spacer) {
+                    top.linkTo(smry.bottom)
+                })
+        }
+
+
+        popupComposable?.invoke(popupVisibility)
     }
 
     /** A boolean setting UI composable function. This either creates a CheckboxSetting or a ToggleSetting
@@ -184,7 +271,7 @@ class Setting(
 
             val (ic, ttl, smry, utility, spacer) = createRefs()
 
-            FancyIcon(icon = icon, size = icsize, modifier = Modifier.constrainAs(ic) {
+            FancyIcon(color = ttlClr, icon = icon, size = icsize, modifier = Modifier.constrainAs(ic) {
                 top.linkTo(parent.top, pdng.dp)
                 start.linkTo(parent.start, pdng.dp)
             })
@@ -240,7 +327,7 @@ class Setting(
                 },
                 text = title,
                 style = TextStyle(
-                    color = Color.DarkGray,
+                    color = ttlClr,
                     fontFamily = FontFamily(Font(R.font.directive4bold)), fontSize = 15.sp,
                 )
             )
@@ -254,7 +341,7 @@ class Setting(
                 },
                 text = summary,
                 style = TextStyle(
-                    color = Color(40, 40, 40, 150),
+                    color = smryClr,
                     fontFamily = FontFamily(Font(R.font.inter)), fontSize = 12.sp,
                 )
             )
@@ -303,7 +390,7 @@ class Setting(
 
             val (ic, ttl, smry, utility, spacer) = createRefs()
 
-            FancyIcon(icon = icon, size = icsize, modifier = Modifier.constrainAs(ic) {
+            FancyIcon(color = ttlClr, icon = icon, size = icsize, modifier = Modifier.constrainAs(ic) {
                 top.linkTo(parent.top, pdng.dp)
                 start.linkTo(parent.start, pdng.dp)
             })
@@ -337,7 +424,7 @@ class Setting(
                 },
                 text = title,
                 style = TextStyle(
-                    color = Color.DarkGray,
+                    color = ttlClr,
                     fontFamily = FontFamily(Font(R.font.directive4bold)), fontSize = 15.sp,
                 )
             )
@@ -351,7 +438,7 @@ class Setting(
                 },
                 text = summary,
                 style = TextStyle(
-                    color = Color(40, 40, 40, 150),
+                    color = smryClr,
                     fontFamily = FontFamily(Font(R.font.inter)), fontSize = 12.sp,
                 )
             )
@@ -385,7 +472,7 @@ class Setting(
 
             val (ic, ttl, smry, slider, slidervalue, spacer) = createRefs()
 
-            FancyIcon(icon = icon, size = icsize, modifier = Modifier.constrainAs(ic) {
+            FancyIcon(color = ttlClr, icon = icon, size = icsize, modifier = Modifier.constrainAs(ic) {
                 top.linkTo(parent.top, pdng.dp)
                 start.linkTo(parent.start, pdng.dp)
             })
@@ -414,7 +501,7 @@ class Setting(
                 },
                 text = title,
                 style = TextStyle(
-                    color = Color.DarkGray,
+                    color = ttlClr,
                     fontFamily = FontFamily(Font(R.font.directive4bold)), fontSize = 15.sp,
                 )
             )
@@ -428,7 +515,7 @@ class Setting(
                 },
                 text = summary,
                 style = TextStyle(
-                    color = Color(40, 40, 40, 150),
+                    color = smryClr,
                     fontFamily = FontFamily(Font(R.font.inter)), fontSize = 12.sp,
                 )
             )
@@ -473,7 +560,99 @@ class Setting(
         }
     }
 
+    /** A color setting UI composable function. Clicking this would displays a popup to the user. */
+    @Composable
+    private fun ColorSettingUI(modifier: Modifier = Modifier) {
+        val color = datastore().stringFlow(key, defaultValue as String).collectAsState(initial = defaultValue)
+        val scope = rememberCoroutineScope()
+        val colorDialogState = remember { mutableStateOf(false) }
 
+        ConstraintLayout(
+            modifier = modifier
+                .fillMaxWidth()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
+
+                ) {
+                    colorDialogState.value = true
+                }
+        ) {
+
+            val (ic, ttl, smry, utility, spacer) = createRefs()
+
+            FancyIcon(color = ttlClr, icon = icon, size = icsize, modifier = Modifier.constrainAs(ic) {
+                top.linkTo(parent.top, pdng.dp)
+                start.linkTo(parent.start, pdng.dp)
+            })
+
+
+            Button(onClick = { colorDialogState.value = true },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Cyan),
+                modifier = Modifier
+                    .size(24.dp)
+                    .constrainAs(utility) {
+                        top.linkTo(ttl.top)
+                        bottom.linkTo(smry.bottom)
+                        end.linkTo(parent.end, pdng.dp)
+                    }) {
+
+            }
+
+            Text(
+                modifier = Modifier.constrainAs(ttl) {
+                    top.linkTo(ic.top)
+                    start.linkTo(ic.end, 6.dp)
+                    end.linkTo(utility.start, 6.dp)
+                    width = Dimension.fillToConstraints
+                },
+                text = title,
+                style = TextStyle(
+                    brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT),
+                    shadow = Shadow(offset = Offset(0f, 0f), blurRadius = 1f),
+                    fontFamily = FontFamily(Font(R.font.directive4bold)), fontSize = (15.5).sp
+                )
+            )
+            Text(
+                modifier = Modifier.constrainAs(ttl) {
+                    top.linkTo(ic.top)
+                    start.linkTo(ic.end, 6.dp)
+                    end.linkTo(utility.start, 6.dp)
+                    width = Dimension.fillToConstraints
+                },
+                text = title,
+                style = TextStyle(
+                    color = ttlClr,
+                    fontFamily = FontFamily(Font(R.font.directive4bold)), fontSize = 15.sp,
+                )
+            )
+
+            Text(
+                modifier = Modifier.constrainAs(smry) {
+                    top.linkTo(ttl.bottom)
+                    start.linkTo(ttl.start)
+                    end.linkTo(utility.start, 6.dp)
+                    width = Dimension.fillToConstraints
+                },
+                text = summary,
+                style = TextStyle(
+                    color = smryClr,
+                    fontFamily = FontFamily(Font(R.font.inter)), fontSize = 12.sp,
+                )
+            )
+
+            Spacer(modifier = Modifier
+                .height(pdng.dp)
+                .constrainAs(spacer) {
+                    top.linkTo(smry.bottom)
+                })
+        }
+
+        ColorPickingPopup(colorDialogState)
+    }
+
+
+    /** Returns the global instance of the datastore that stores this setting */
     fun datastore(): DataStore<Preferences> {
         return DataStoreUtils.datastores[datastorekey]!!
     }

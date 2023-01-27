@@ -1,6 +1,7 @@
 package app.ui.activities
 
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.mutableStateOf
@@ -25,6 +26,8 @@ import app.utils.MiscUtils.hideSystemUI
 import app.utils.MiscUtils.string
 import app.utils.MiscUtils.timeStamper
 import app.utils.RoomUtils.broadcastMessage
+import app.utils.RoomUtils.pingUpdate
+import app.utils.SharedPlaylistUtils.changePlaylistSelection
 import app.wrappers.Constants
 import app.wrappers.MediaFile
 import com.google.android.exoplayer2.ExoPlayer
@@ -34,6 +37,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class WatchActivity : ComponentActivity(), ProtocolCallback {
+
+    /* Global UI variables */
+    val hasVideoG = mutableStateOf(false)
 
     /*-- Our main exoplayer --*/
     lateinit var myExoPlayer: ExoPlayer
@@ -48,10 +54,10 @@ class WatchActivity : ComponentActivity(), ProtocolCallback {
     /* Our syncplay protocol (which extends a ViewModel to control LiveData) */
     lateinit var p: SyncplayProtocol //If it is not initialized, it means we're in Solo Mode
 
-    val videoSurfaceVisibility = mutableStateOf(false)
-
     var lastAudioOverride: TrackSelectionOverride? = null
     var lastSubtitleOverride: TrackSelectionOverride? = null
+
+    val fadingMsg = mutableStateOf(false)
 
     /** Returns whether we're in Solo Mode, by checking if our protocol is initialized */
     fun isSoloMode(): Boolean {
@@ -61,6 +67,9 @@ class WatchActivity : ComponentActivity(), ProtocolCallback {
     /** Now, onto overriding lifecycle methods */
     override fun onCreate(sis: Bundle?) {
         super.onCreate(sis)
+
+        /** Telling Android that it should keep the screen on */
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         /** Initializing our ViewModel, which is our protocol at the same time **/
         p = ViewModelProvider(this)[SyncplayProtocol::class.java]
@@ -89,7 +98,9 @@ class WatchActivity : ComponentActivity(), ProtocolCallback {
         //TODO: show hint on how to add video
         //TODO: Apply in-room settings
         //TODO: attach tooltips to buttons
-        //TODO: start ping update
+
+        /** Starting ping update */
+        pingUpdate()
 
         /** Now connecting to the server */
         val tls = false /* sp.getBoolean("tls", false) */ //Fetching the TLS setting (whether the user wanna connect via TLS)
@@ -157,6 +168,9 @@ class WatchActivity : ComponentActivity(), ProtocolCallback {
 
     override fun onChatReceived(chatter: String, chatmessage: String) {
         broadcastMessage(message = chatmessage, isChat = true, chatter = chatter)
+
+        /** We animate the fading message when the HUD is locked or hidden */
+        fadingMsg.value = true
     }
 
     override fun onSomeoneSeeked(seeker: String, toPosition: Double) {
@@ -199,7 +213,6 @@ class WatchActivity : ComponentActivity(), ProtocolCallback {
     }
 
     override fun onSomeoneJoined(joiner: String) {
-        //replenishUsers(binding.syncplayOverview)
         broadcastMessage(string(R.string.room_guy_joined, joiner), false)
     }
 
@@ -305,11 +318,8 @@ class WatchActivity : ComponentActivity(), ProtocolCallback {
     }
 
     override fun onPlaylistIndexChanged(user: String, index: Int) {
-        /** Updating Shared Playlist UI **/
-        //sharedPlaylistCallback?.onUpdate()
-
         /** Changing the selection for the user, to load the file at the given index **/
-        //changePlaylistSelection(index)
+        changePlaylistSelection(index)
 
         /** Telling user that the playlist selection/index has been changed **/
         if (user == "") return

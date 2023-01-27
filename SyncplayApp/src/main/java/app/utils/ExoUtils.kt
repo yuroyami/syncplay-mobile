@@ -4,6 +4,8 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
+import android.net.Uri
+import android.util.Log
 import android.util.TypedValue
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
@@ -11,11 +13,16 @@ import app.R
 import app.protocol.JsonSender
 import app.ui.activities.WatchActivity
 import app.utils.MiscUtils.hideSystemUI
+import app.utils.MiscUtils.string
 import app.utils.RoomUtils.sendPlayback
+import app.utils.UIUtils.toasty
+import app.wrappers.MediaFile
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.DefaultLoadControl
 import com.google.android.exoplayer2.DefaultRenderersFactory
 import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.Tracks
 import com.google.android.exoplayer2.trackselection.TrackSelectionOverride
@@ -24,6 +31,9 @@ import com.google.android.exoplayer2.ui.CaptionStyleCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.IOException
+import java.util.Collections
+
 
 /** Methods exclusive to ExoPlayer functionality */
 object ExoUtils {
@@ -65,7 +75,7 @@ object ExoUtils {
 
                     /* Updating our timeFull */
                     val duration = myExoPlayer.duration / 1000.0
-                    timeFull.value = duration.toLong()
+                    timeFull.value = kotlin.math.abs(duration.toLong())
 
                     if (isSoloMode()) return
                     if (duration != media?.fileDuration) {
@@ -105,11 +115,15 @@ object ExoUtils {
                 super.onTracksChanged(tracks)
 
                 /* Updating our HUD's timeFull here again, just in case. */
-                val duration = myExoPlayer.duration / 1000.0
-                timeFull.value = duration.toLong()
+//                val duration = myExoPlayer.duration / 1000.0
+//                timeFull.value = kotlin.math.abs(duration.toLong())
 
                 /* Repopulate audio and subtitle track lists with the new analysis of tracks **/
                 media?.analyzeTracks(myExoPlayer)
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                Log.e("PLAYER", error.message ?: "")
             }
         })
     }
@@ -145,7 +159,7 @@ object ExoUtils {
         resolutions[AspectRatioFrameLayout.RESIZE_MODE_ZOOM] = getString(R.string.room_scaling_zoom)
 
         var nextRes = (playerView.resizeMode + 1)
-        if (nextRes == 5) nextRes = 0;
+        if (nextRes == 5) nextRes = 0
         playerView.resizeMode = nextRes
 
         return resolutions[nextRes]!!
@@ -228,7 +242,59 @@ object ExoUtils {
         myExoPlayer.videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT /* Starter scaling */
         myExoPlayer.playWhenReady = false
 
-
         return myExoPlayer
+    }
+
+    fun WatchActivity.injectVideo(uri: Uri) {
+        /* Changing UI (hiding artwork, showing media controls) */
+        hasVideoG.value = true
+
+        lifecycleScope.launch(Dispatchers.Main) {
+            /* Creating a media file from the selected file */
+            media = MediaFile()
+            media?.uri = uri
+
+            /* Obtaining info from it (size and name) */
+            media?.collectInfo(applicationContext)
+
+            /* Checking mismatches with others in room */
+            //checkFileMismatches(p) TODO
+
+            /* Injecting the media into exoplayer */
+            try {
+                /* This is the builder responsible for building a MediaItem component for ExoPlayer **/
+                val vid = MediaItem.Builder().setUri(uri).also {
+                    /* Seeing if we have any loaded external sub **/
+                    if (media?.externalSub != null) {
+                        it.setSubtitleConfigurations(Collections.singletonList(media!!.externalSub!!))
+                    }
+                }.build()
+
+                /* Injecting it into ExoPlayer and getting relevant info **/
+                myExoPlayer.setMediaItem(vid) /* This loads the media into ExoPlayer **/
+                myExoPlayer.prepare() /* This prepares it and makes the first frame visible */
+
+                /* Goes back to the beginning for everyone */
+                if (!isSoloMode()) {
+                    p.currentVideoPosition = 0.0
+                }
+
+                /* Updating play button */
+                timeFull.value = if (myExoPlayer.duration < 0) 0 else myExoPlayer.duration
+
+                /* Seeing if we have to start over TODO **/
+                //if (startFromPosition != (-3.0).toLong()) myExoPlayer?.seekTo(startFromPosition)
+
+            } catch (e: IOException) {
+                /* If, for some reason, the video didn't wanna load */
+                e.printStackTrace()
+                toasty("There was a problem loading this file.")
+            }
+
+            /* Finally, show a a toast to the user that the media file has been added */
+            delay(1000)
+            toasty(string(R.string.room_selected_vid, "${media?.fileName}"))
+        }
+
     }
 }

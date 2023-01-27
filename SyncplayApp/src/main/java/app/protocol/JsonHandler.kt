@@ -113,7 +113,7 @@ object JsonHandler {
             }
         }
 
-        /* Consulting a list of users anyway (their readiness, files..etc) */
+        /* Fetching a list of users anyway (their readiness, files..etc) */
         p.sendPacket(JsonSender.sendEmptyList())
     }
 
@@ -131,7 +131,7 @@ object JsonHandler {
                 userindex = indexer
                 indexer += 1
             }
-            USER.readiness = if (userlist.getAsJsonObject(user).get("isReady").isJsonNull) {
+            USER.readiness.value = if (userlist.getAsJsonObject(user).get("isReady").isJsonNull) {
                 null
             } else {
                 userlist.getAsJsonObject(user).getAsJsonPrimitive("isReady").asBoolean
@@ -149,7 +149,7 @@ object JsonHandler {
                 mediaFile = null
             }
 
-            USER.file = mediaFile
+            USER.file.value = mediaFile
             USER.index = userindex
 
             p.session.userList.add(USER)

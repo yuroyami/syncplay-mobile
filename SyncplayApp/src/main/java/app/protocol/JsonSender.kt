@@ -136,7 +136,7 @@ object JsonSender {
             ping["latencyCalculation"] = servertime
         }
         ping["clientLatencyCalculation"] = clienttime
-        ping["clientRtt"] = protocol.ping
+        ping["clientRtt"] = protocol.ping.value
 
         if (iChangeState == 1) {
             val ignore: HashMap<String, Any?> = hashMapOf()

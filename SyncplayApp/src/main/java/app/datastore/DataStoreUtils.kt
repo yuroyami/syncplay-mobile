@@ -10,6 +10,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStoreFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,8 +20,12 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 object DataStoreUtils {
+
+    /** The static datastore list that holds all datastore instances throughout the app's lifetime */
     val datastores: MutableMap<String, DataStore<Preferences>> = mutableMapOf()
 
+    /** Creates an instance of the datastore which are saved in a file with the given string
+     * @param filekey The file name that'll be created, which holds datastore data */
     fun Context.createDataStore(filekey: String): DataStore<Preferences> {
         return PreferenceDataStoreFactory.create(
             corruptionHandler = ReplaceFileCorruptionHandler(produceNewData = { emptyPreferences() }),
@@ -30,6 +35,8 @@ object DataStoreUtils {
         )
     }
 
+
+    /** Flow obtainers, these are the ones that are gonna return flows to read from */
     fun DataStore<Preferences>.stringFlow(key: String, default: String): Flow<String> {
         return this.data.map { preferences ->
             preferences[stringPreferencesKey(key)] ?: default
@@ -48,7 +55,14 @@ object DataStoreUtils {
         }
     }
 
-    /** Now onto the writing functions will store data */
+    fun DataStore<Preferences>.stringSetFlow(key: String, default: Set<String>): Flow<Collection<String>> {
+        return this.data.map { preferences ->
+            preferences[stringSetPreferencesKey(key)] ?: default
+        }
+    }
+
+
+    /** Methods that write to flows (low level) */
     suspend fun DataStore<Preferences>.writeString(key: String, value: String) {
         this.edit { preferences ->
             preferences[stringPreferencesKey(key)] = value
@@ -67,8 +81,16 @@ object DataStoreUtils {
         }
     }
 
+    suspend fun DataStore<Preferences>.writeStringSet(key: String, value: Set<String>) {
+        this.edit { preferences ->
+            preferences[stringSetPreferencesKey(key)] = value
+        }
+    }
 
-    /** The rest are convenience methods */
+
+    /** The rest are convenience methods which we will be using when fetching or writing data outside settings */
+
+    /** Returns the datastore instance corresponding to the given key */
     fun String.ds(): DataStore<Preferences> {
         return datastores[this]!!
     }
@@ -83,5 +105,33 @@ object DataStoreUtils {
 
     suspend fun String.obtainInt(key: String, default: Int): Int {
         return this.ds().intFlow(key, default).first()
+    }
+
+    suspend fun String.obtainStringSet(key: String, default: Set<String>): Set<String> {
+        return this.ds().stringSetFlow(key, default).first().toSet()
+    }
+
+    suspend fun String.writeString(key: String, value: String) {
+        this.ds().edit { preferences ->
+            preferences[stringPreferencesKey(key)] = value
+        }
+    }
+
+    suspend fun String.writeBoolean(key: String, value: Boolean) {
+        this.ds().edit { preferences ->
+            preferences[booleanPreferencesKey(key)] = value
+        }
+    }
+
+    suspend fun String.writeInt(key: String, value: Int) {
+        this.ds().edit { preferences ->
+            preferences[intPreferencesKey(key)] = value
+        }
+    }
+
+    suspend fun String.writeStringSet(key: String, value: Set<String>) {
+        this.ds().edit { preferences ->
+            preferences[stringSetPreferencesKey(key)] = value
+        }
     }
 }

@@ -2,19 +2,16 @@ package app.sharedplaylist
 
 import android.app.Activity
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.net.toUri
 import androidx.preference.PreferenceManager
 import app.R
-import app.controllers.adapters.DirectoriesAdapter
 import app.databinding.ActivityDirectoriesBinding
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
@@ -104,7 +101,7 @@ class DirectoriesActivity : AppCompatActivity() {
             delete.icon = AppCompatResources.getDrawable(this, R.drawable.ic_delete)
 
             itemPopup.setOnMenuItemClickListener {
-                val uris = (binding.folders.adapter as DirectoriesAdapter).uris
+                val uris = mutableListOf<String>() // (binding.folders.adapter as DirectoriesAdapter).uris
 
                 when (it) {
                     fullPath -> {
@@ -140,29 +137,7 @@ class DirectoriesActivity : AppCompatActivity() {
 
         /** Clear All replaces the set of uris in our SharedPreferences with an empty set */
         binding.clearAll.setOnClickListener {
-            val clearDialog = AlertDialog.Builder(this)
-            val dialogClickListener = DialogInterface.OnClickListener { dialog, which ->
-                when (which) {
-                    DialogInterface.BUTTON_POSITIVE -> {
-                        dialog.dismiss()
-                        PreferenceManager
-                            .getDefaultSharedPreferences(this)
-                            .edit()
-                            .putString(prefKey, "[]")
-                            .apply()
-                        refreshList()
-                    }
 
-                    DialogInterface.BUTTON_NEGATIVE -> {
-                        dialog.dismiss()
-                    }
-                }
-            }
-
-            clearDialog.setMessage(getString(R.string.media_directories_clear_all_confirm))
-                .setPositiveButton(getString(R.string.yes), dialogClickListener)
-                .setNegativeButton(getString(R.string.no), dialogClickListener)
-                .show()
         }
     }
 
@@ -170,6 +145,6 @@ class DirectoriesActivity : AppCompatActivity() {
         /* Adapters giving the position of some item can be really buggy -
             According to my experience, it's much better and bug-free to reassign a whole new adapter
          */
-        binding.folders.adapter = DirectoriesAdapter(this, getFolderList(gson, prefKey, this))
+        //binding.folders.adapter = DirectoriesAdapter(this, getFolderList(gson, prefKey, this))
     }
 }

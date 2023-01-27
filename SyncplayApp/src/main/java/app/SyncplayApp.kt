@@ -18,6 +18,7 @@ class SyncplayApp : Application() {
          * We can use one single datastore for everything, but it's best to separate concerns */
         val datastorekeys = listOf(
             DataStoreKeys.DATASTORE_GLOBAL_SETTINGS,
+            DataStoreKeys.DATASTORE_INROOM_PREFERENCES,
             DataStoreKeys.DATASTORE_MISC_PREFS
         )
 

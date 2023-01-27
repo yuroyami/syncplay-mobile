@@ -1,4 +1,4 @@
-package app.ui.compose
+package app.utils
 
 import androidx.annotation.FloatRange
 import androidx.annotation.IntRange
@@ -63,7 +63,13 @@ object ComposeUtils {
 
     /** Creates a fancy Syncplay-themed icon (solid foreground and gradient trailing shadow) */
     @Composable
-    fun FancyIcon(modifier: Modifier = Modifier, icon: ImageVector?, size: Int, onClick: () -> Unit = {}) {
+    fun FancyIcon(
+        modifier: Modifier = Modifier,
+        icon: ImageVector?,
+        color: Color = Color.DarkGray,
+        size: Int,
+        onClick: () -> Unit = {},
+    ) {
         Box(modifier = modifier) {
             if (icon != null) {
                 Icon(
@@ -80,7 +86,7 @@ object ComposeUtils {
                     modifier = modifier
                         .size((size - 2).dp)
                         .align(Alignment.Center),
-                    tint = Color.DarkGray
+                    tint = color
                 )
 
             } else {
@@ -320,7 +326,9 @@ object ComposeUtils {
     ) {
         if (dialogOpen) {
             Dialog(
-                onDismissRequest = { onDismiss() },
+                onDismissRequest = {
+                    onDismiss()
+                },
                 properties = DialogProperties(
                     usePlatformDefaultWidth = false,
                     decorFitsSystemWindows = false,

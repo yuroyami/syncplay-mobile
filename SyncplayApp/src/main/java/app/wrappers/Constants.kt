@@ -3,6 +3,15 @@ package app.wrappers
 /* A couple of Enum-class constants that will regulate some of the things here and there */
 object Constants {
 
+    /** The 4 States of Ping - Needed to show the right ping icon */
+    enum class PINGSTATE {
+        PING_GREEN,
+        PING_YELLOW,
+        PING_RED,
+        PING_GRAY
+    }
+
+
     /** The 4 States of Connection - Needed for the protocol to function seamlessly */
     enum class CONNECTIONSTATE {
         STATE_DISCONNECTED,

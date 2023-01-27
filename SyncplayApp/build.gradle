@@ -4,9 +4,10 @@ plugins {
 }
 
 android {
+
     compileSdk 33
-    buildToolsVersion "33.0.0"
     namespace "app"
+
     signingConfigs {
         github {
             storeFile file("${rootDir}/keystore/keystore.jks")
@@ -16,8 +17,8 @@ android {
         }
     }
     defaultConfig {
-        applicationId "com.reddnek.syncplay"
-        minSdk 24
+        applicationId "com.reddnek.syncplay.revamp"
+        minSdk 26
         targetSdk 32
         versionCode 1000011000 /* 1 000 011 000 */
         versionName "0.11.0"
@@ -27,15 +28,14 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
-            shrinkResources = false
+            minifyEnabled true
+            shrinkResources true
             debuggable false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
-            applicationIdSuffix ".revamp"
             minifyEnabled false
-            shrinkResources = false
+            shrinkResources false
             debuggable true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
@@ -53,12 +53,9 @@ android {
         compose true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.4.0-alpha02"
+        kotlinCompilerExtensionVersion = "1.4.0"
     }
-    lintOptions {
-        abortOnError true
-    }
-    packagingOptions {
+    packaging {
         pickFirst 'META-INF/INDEX.LIST'
         pickFirst 'META-INF/io.netty.versions.properties'
     }
@@ -66,54 +63,46 @@ android {
 
 dependencies {
     /* Related to Android APIs and functionality */
-    implementation 'androidx.core:core-ktx:1.9.0' /* AndroidX core library - Kotlin ver */
+    implementation 'androidx.core:core-ktx:1.10.0-alpha02' /* AndroidX core library - Kotlin ver */
     implementation 'androidx.appcompat:appcompat:1.7.0-alpha01' /* AndroidX's AppCompat library */
     implementation "androidx.documentfile:documentfile:1.0.1" /* Managing Scoped Storage */
-
-    /* Related to UI */
     implementation 'androidx.core:core-splashscreen:1.0.0' /* AndroidX's SplashScreen API */
-    implementation 'com.airbnb.android:lottie:5.2.0' /* Lottie Animation */
     implementation 'com.airbnb.android:lottie-compose:5.2.0' /* Lottie Animation */
 
-    /* Related to Syncplay's functionality */
-    implementation 'com.google.code.gson:gson:2.10' /* Google's GSON for Json operations */
-    implementation 'io.netty:netty-all:4.1.86.Final' /* TCP Network Client library */
+    implementation 'com.google.code.gson:gson:2.10.1' /* Google's GSON for Json operations */
+    implementation 'io.netty:netty-all:4.1.87.Final' /* TCP Network Client library */
     implementation("com.google.android.exoplayer:exoplayer:2.18.2") /* The video player */
     implementation files('libs/ext.aar') /* ExoPlayer's FFmpeg extension  */
 
-    implementation 'androidx.datastore:datastore-preferences:1.1.0-alpha01'
+    implementation 'androidx.datastore:datastore-preferences:1.1.0-alpha01' /* Jetpack Datastore */
 
     /* Related to miscellaneous functionality */
-    implementation 'com.blankj:utilcodex:1.31.1' //Bunch of useful Android utils
+    //implementation 'com.blankj:utilcodex:1.31.1' //Bunch of useful Android utils
 
     /* Related to Jetpack Compose (the UI declarative builder) */
     //implementation platform('androidx.compose:compose-bom:2022.11.00') /* Compose libs version manager */
 
-    def compose = '1.4.0-alpha03'
+    def compose = '1.4.0-alpha04'
     implementation "androidx.compose.material:material-icons-core:$compose" //Material3 doesn't have icons (BOM)
     implementation "androidx.compose.material:material-icons-extended:$compose" //More Icons (BOM)
     implementation "androidx.compose.material:material-ripple:$compose" //Ripple effects (BOM)
-    implementation "androidx.compose.ui:ui-tooling-preview:$compose" // LiveEdit preview (BOM)
-    debugImplementation "androidx.compose.ui:ui-tooling:$compose" //(BOM)
-    debugImplementation "androidx.compose.ui:ui-test-manifest:$compose" // (BOM)
     implementation "androidx.compose.runtime:runtime-livedata:$compose" //LiveData compatibility (BOM)
 
-    def material3 = '1.1.0-alpha03'
+    def material3 = '1.1.0-alpha05'
     implementation "androidx.compose.material3:material3:$material3" //Material3 + Foundation + UI (core)
     implementation "androidx.compose.material3:material3-window-size-class:$material3" //Window size utils (BOM)
     //implementation "com.google.android.material:compose-theme-adapter-3:$material3" //Theme adapter
 
     /* More compose add-ons */
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.0-alpha03' //ViewModel for compose
-    implementation 'androidx.activity:activity-compose:1.7.0-alpha02' //Activity compatibility
-    implementation "androidx.constraintlayout:constraintlayout-compose:1.1.0-alpha05" /* ConstraintLayout */
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.0-alpha05' //ViewModel for compose
+    implementation 'androidx.activity:activity-compose:1.7.0-alpha04' //Activity compatibility
+    implementation "androidx.constraintlayout:constraintlayout-compose:1.1.0-alpha06" /* ConstraintLayout */
     implementation "com.google.accompanist:accompanist-flowlayout:0.28.0"
-    implementation "com.godaddy.android.colorpicker:compose-color-picker:0.5.1"
+    //implementation "com.godaddy.android.colorpicker:compose-color-picker:0.6.0"
+    implementation "com.godaddy.android.colorpicker:compose-color-picker-android:0.6.0"
 
-    implementation 'com.google.android.material:material:1.8.0-beta01'/* Google's MaterialComponents */
-    implementation 'androidx.constraintlayout:constraintlayout:2.2.0-alpha05'/* AndroidX's ConstraintLayout */
+    implementation 'com.google.android.material:material:1.9.0-alpha01'/* Google's MaterialComponents */
     implementation 'androidx.preference:preference-ktx:1.2.0'/* AndroidX's Preferences - Kotlin ver */
-    implementation 'io.github.razerdp:BasePopup:3.2.0' /* Customizable Popup Dialog */
     //implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.5.0-rc02'
     implementation 'com.jaredrummler:colorpicker:1.1.0' /* ColorPreference */
 

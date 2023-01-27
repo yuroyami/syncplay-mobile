@@ -1,4 +1,4 @@
-package app.sharedplaylist
+package app.utils
 
 import android.net.Uri
 import android.provider.DocumentsContract
@@ -9,7 +9,9 @@ import androidx.preference.PreferenceManager
 import app.R
 import app.protocol.JsonSender.sendPlaylistChange
 import app.protocol.JsonSender.sendPlaylistIndex
+import app.sharedplaylist.DirectoriesActivity
 import app.ui.activities.WatchActivity
+import app.utils.ExoUtils.injectVideo
 import app.utils.MiscUtils.getFileName
 import app.utils.UIUtils.toasty
 import app.wrappers.MediaFile
@@ -18,34 +20,33 @@ import kotlinx.coroutines.launch
 
 /** Shared Playlists also have their fair amount of methods related to it which I believe can be
  * wrapped into their own class.**/
-object SHPUtils {
+object SharedPlaylistUtils {
 
     /** Adding a file to the playlist: This basically adds one file name to the playlist, then,
      * adds the parent directory to the known media directories, after that, it informs the server
      * about it. The server will send back the new playlist which will invoke playlist updating */
-    fun WatchActivity.addFileToPlaylist(uri: Uri) {
+    fun WatchActivity.addFilesToPlaylist(uris: List<Uri>) {
         lifecycleScope.launch(Dispatchers.IO) {
-            /** We get the file name */
-            val filename = getFileName(uri) ?: return@launch
+            for (uri in uris) {
+                /** We get the file name */
+                val filename = getFileName(uri) ?: return@launch
 
-            /** If the playlist already contains this file name, prevent adding it */
-            if (p.session.sharedPlaylist.contains(filename)) {
-                toasty("Duplicates are not allowed.")
-                return@launch
-            }
+                /** If the playlist already contains this file name, prevent adding it */
+                if (p.session.sharedPlaylist.contains(filename)) return@launch
 
-            /** If there is no duplicate, then we proceed, we check if the list is empty */
-            if (p.session.sharedPlaylist.isEmpty() && p.session.sharedPlaylistIndex == -1) {
-                /* If it is empty, then we load the media file */
-                media = MediaFile()
-                media!!.uri = uri
-                media!!.collectInfo(this@addFileToPlaylist)
-                //injectVideo(uri.toString(), true)
-                p.sendPacket(sendPlaylistIndex(0))
+                /** If there is no duplicate, then we proceed, we check if the list is empty */
+                if (p.session.sharedPlaylist.isEmpty() && p.session.sharedPlaylistIndex == -1) {
+                    /* If it is empty, then we load the media file */
+                    media = MediaFile()
+                    media!!.uri = uri
+                    media!!.collectInfo(this@addFilesToPlaylist)
+                    //TODO: injectVideo(uri.toString(), true)
+                    p.sendPacket(sendPlaylistIndex(0))
+                }
+                p.session.sharedPlaylist.add(filename)
             }
-            val newList = p.session.sharedPlaylist
-            newList.add(filename)
-            p.sendPacket(sendPlaylistChange(newList))
+            p.sendPacket(sendPlaylistChange(p.session.sharedPlaylist))
+
         }
     }
 
@@ -61,14 +62,13 @@ object SHPUtils {
             )
 
             /** Obtaining the children tree from the path **/
-            val tree =
-                DocumentFile.fromTreeUri(this@addFolderToPlaylist, childrenUri) ?: return@launch
+            val tree = DocumentFile.fromTreeUri(this@addFolderToPlaylist, childrenUri) ?: return@launch
             val files = tree.listFiles()
 
             /** We iterate through the children file tree and add them to playlist */
             val newList = mutableListOf<String>()
             for (file in files) {
-                if (file.isDirectory) continue;
+                if (file.isDirectory) continue
                 val filename = file.name!!
                 if (!p.session.sharedPlaylist.contains(filename)) newList.add(filename)
             }
@@ -103,7 +103,7 @@ object SHPUtils {
 
     /** This is to change playlist selection in response other users' selection */
     fun WatchActivity.changePlaylistSelection(index: Int) {
-        if (p.session.sharedPlaylist.size < (index + 1)) return /* In case this was called on an empty list */
+        if (p.session.sharedPlaylist.size < (index + 1)) return /* In rare cases when this was called on an empty list */
         if (index != p.session.sharedPlaylistIndex) {
             /* If the file on that index isn't playing, play the file */
             retrieveFile(p.session.sharedPlaylist[index])
@@ -123,7 +123,7 @@ object SHPUtils {
             ) {
 
                 /** Fetching the file as it is a URL */
-                //injectVideo(fileName, true)
+                injectVideo(fileName.toUri())
                 media = MediaFile()
                 media?.uri = fileName.toUri()
                 media?.url = fileName
@@ -135,7 +135,7 @@ object SHPUtils {
                 val paths = p.gson.fromJson<List<String>>(folderJson, List::class.java).toMutableList()
 
                 if (paths.isEmpty()) {
-                    //broadcastMessage(getString(R.string.room_shared_playlist_no_directories), false)
+                    //TODO: broadcastMessage(getString(R.string.room_shared_playlist_no_directories), false)
                 }
 
                 var fileUri2Play: Uri? = null
@@ -164,9 +164,8 @@ object SHPUtils {
                             media?.uri = fileUri2Play
                             media?.collectInfo(this@retrieveFile)
                             /** Loading the file into our player **/
-                            runOnUiThread {
-                                //injectVideo(fileUri2Play.toString(), true)
-                            }
+                            injectVideo(fileUri2Play)
+
                             break
                         }
                     }
@@ -184,7 +183,6 @@ object SHPUtils {
     /** This will delete an item from playlist at a given index 'i' */
     fun WatchActivity.deleteItemFromPlaylist(i: Int) {
         p.session.sharedPlaylist.removeAt(i)
-        //sharedPlaylistCallback?.onUpdate()
         p.sendPacket(sendPlaylistChange(p.session.sharedPlaylist))
         if (p.session.sharedPlaylist.isEmpty()) {
             p.session.sharedPlaylistIndex = -1
@@ -192,8 +190,7 @@ object SHPUtils {
     }
 
     /** Shuffles the playlist
-     * @param mode False to shuffle all playlist, True to shuffle only the rest
-     */
+     * @param mode False to shuffle all playlist, True to shuffle only the rest*/
     fun WatchActivity.shuffle(mode: Boolean) {
         /** If the shared playlist is empty, do nothing */
         if (p.session.sharedPlaylistIndex < 0 || p.session.sharedPlaylist.isEmpty()) return
@@ -224,32 +221,33 @@ object SHPUtils {
     /** Saves the playlist as a plain text file (.txt) to the designated folder with a timestamp of the current time
      * @param folderUri The uri of the save folder */
     fun WatchActivity.saveSHP(folderUri: Uri) {
-        val folder = DocumentFile.fromTreeUri(this, folderUri)
-        val txt = folder?.createFile("text/plain", "SharedPlaylist_${System.currentTimeMillis()}.txt")
+        lifecycleScope.launch(Dispatchers.IO) {
+            val folder = DocumentFile.fromTreeUri(this@saveSHP, folderUri)
+            val txt = folder?.createFile("text/plain", "SharedPlaylist_${System.currentTimeMillis()}.txt")
 
-        /** Converting the shared playlist to a text string, line by line */
-        var string = ""
-        for (f in p.session.sharedPlaylist) {
-            string += f
-            if (p.session.sharedPlaylist.indexOf(f) != p.session.sharedPlaylist.size - 1) {
-                string += "\n"
+            /** Converting the shared playlist to a text string, line by line */
+            var string = ""
+            for (f in p.session.sharedPlaylist) {
+                string += f
+                if (p.session.sharedPlaylist.indexOf(f) != p.session.sharedPlaylist.size - 1) {
+                    string += "\n"
+                }
             }
-        }
-        string = string.trim()
+            string = string.trim()
 
-        /** Writing to the file */
-        val s = contentResolver.openOutputStream(txt?.uri ?: return)
-        s?.write(string.toByteArray(Charsets.UTF_8))
-        s?.flush()
-        s?.close()
+            /** Writing to the file */
+            val s = contentResolver.openOutputStream(txt?.uri ?: return@launch)
+            s?.write(string.toByteArray(Charsets.UTF_8))
+            s?.flush()
+            s?.close()
+        }
 
     }
 
     /** After selecting a txt file, this will attempt to load the contents of the plain text file
-     * line by line as separate individiual file name entries.
+     * line by line as separate individual file name entries.
      * @param fileUri Uri of the selected txt file
-     * @param shuffle Determines whether the content of the file should be shuffled or not
-     */
+     * @param shuffle Determines whether the content of the file should be shuffled or not */
     fun WatchActivity.loadSHP(fileUri: Uri, shuffle: Boolean) {
         /** Opening the input stream of the file */
         val s = contentResolver.openInputStream(fileUri) ?: return
@@ -283,4 +281,5 @@ object SHPUtils {
         if (p.session.sharedPlaylist.isEmpty()) return
         p.sendPacket(sendPlaylistChange(emptyList()))
     }
+
 }

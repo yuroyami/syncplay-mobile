@@ -45,21 +45,6 @@
             android:theme="@style/Theme.SyncPlay"
             android:windowSoftInputMode="adjustNothing" />
 
-        <activity
-            android:name=".controllers.activity.SoloActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:exported="true"
-            android:imeOptions="flagNoExtractUi"
-            android:launchMode="singleInstance"
-            android:screenOrientation="sensorLandscape"
-            android:taskAffinity=""
-            android:theme="@style/Theme.SyncPlay"
-            android:windowSoftInputMode="adjustNothing" />
-        <activity
-            android:name=".sharedplaylist.DirectoriesActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:exported="true" />
-
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"

@@ -6,8 +6,10 @@ import androidx.preference.Preference
 import androidx.preference.SeekBarPreference
 import androidx.preference.SwitchPreference
 import app.settings.SettingType.CheckboxSetting
+import app.settings.SettingType.ColorSetting
 import app.settings.SettingType.MultiChoicePopupSetting
 import app.settings.SettingType.OneClickSetting
+import app.settings.SettingType.PopupSetting
 import app.settings.SettingType.SliderSetting
 import app.settings.SettingType.ToggleSetting
 
@@ -17,6 +19,8 @@ import app.settings.SettingType.ToggleSetting
  * @property [CheckboxSetting]
  * @property [ToggleSetting]
  * @property [SliderSetting]
+ * @property [PopupSetting]
+ * @property [ColorSetting]
  */
 enum class SettingType {
     /** OneClickSetting is a [SettingType] for a setting whose function is based upon one click only.
@@ -48,4 +52,17 @@ enum class SettingType {
      * In XML preferences, this is equivalent to [SeekBarPreference] setting. */
     SliderSetting,
 
+    /** PopupSetting is a [SettingType] for a setting whose function is to show a popup.
+     * The popup does not return any value, and has custom content (Composable).
+     * This is entirely different from [MultiChoicePopupSetting], this is closer in nature
+     * to [OneClickSetting] but takes a [Composable] parameter rather than an [onClick].
+     *
+     * This has no direct counterpart in XML preferences. */
+    PopupSetting,
+
+    /** Allows the user to choose/pick a color, which is saved as a hex code string.
+     *
+     * This has no direct counterpart in XML preferences, but exists in various libraries
+     * such as jaredrummler's colorpicker library (which was used in Syncplay-android version 0.10.1 */
+    ColorSetting
 }

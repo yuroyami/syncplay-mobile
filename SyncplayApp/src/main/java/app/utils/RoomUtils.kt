@@ -2,12 +2,9 @@ package app.utils
 
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import app.R
 import app.protocol.JsonSender
 import app.protocol.SyncplayProtocol
-import app.ui.activities.RoomActivity
 import app.ui.activities.WatchActivity
-import app.utils.MiscUtils.string
 import app.wrappers.Message
 import com.google.android.exoplayer2.Player
 import kotlinx.coroutines.Dispatchers
@@ -59,27 +56,14 @@ object RoomUtils {
         p.sendPacket(JsonSender.sendChat(message))
     }
 
-
-    /** Periodic task method to execute ping commands every 1 sec
-     * to update the ping which is used in syncplay's protocol and to show ping to the user UI */
-    fun RoomActivity.pingUpdate() {
+    /** Periodic ping calculator (for UI and Protocol uses) */
+    fun WatchActivity.pingUpdate() {
         lifecycleScope.launch(Dispatchers.IO) {
-            while (true) {
+            while (!isSoloMode()) {
                 if (p.channel?.isActive == true) {
-                    p.ping = MiscUtils.pingIcmp("151.80.32.178", 32) * 1000.0
-                    runOnUiThread {
-                        //binding.syncplayConnectionInfo.text = string(R.string.room_ping_connected, "${p.ping.roundToInt()}")
-                        when (p.ping) {
-                            in (0.0..100.0) -> {} //binding.syncplaySignalIcon.setImageResource(R.drawable.ping_3)
-                            in (100.0..200.0) -> {} //binding.syncplaySignalIcon.setImageResource(R.drawable.ping_2)
-                            else -> {} //binding.syncplaySignalIcon.setImageResource(R.drawable.ping_1)
-                        }
-                    }
+                    p.ping.value = MiscUtils.pingIcmp("151.80.32.178", 32) * 1000.0
                 } else {
-                    runOnUiThread {
-                        //binding.syncplayConnectionInfo.text = string(R.string.room_ping_disconnected)
-                        //binding.syncplaySignalIcon.setImageDrawable(AppCompatResources.getDrawable(this@pingUpdate, R.drawable.ic_unconnected))
-                    }
+                    p.ping.value = -1.0
                 }
                 delay(1000)
             }
@@ -96,21 +80,21 @@ object RoomUtils {
         ) return
 
         for (user in p.session.userList) {
-            val theirFile = user.file ?: continue /* If they have no file, iterate unto next */
-            val nameMismatch =
-                (media?.fileName != theirFile.fileName) && (media?.fileNameHashed != theirFile.fileName)
-            val durationMismatch = media?.fileDuration != theirFile.fileDuration
-            val sizeMismatch =
-                media?.fileSize != theirFile.fileSize && media?.fileSizeHashed != theirFile.fileSize
-
-            if (nameMismatch && durationMismatch && sizeMismatch) continue /* 2 mismatches or less */
-            var warning = string(R.string.room_file_mismatch_warning_core, user.name)
-            if (nameMismatch) warning =
-                warning.plus(string(R.string.room_file_mismatch_warning_name))
-            if (durationMismatch) warning =
-                warning.plus(string(R.string.room_file_mismatch_warning_duration))
-            if (sizeMismatch) warning =
-                warning.plus(string(R.string.room_file_mismatch_warning_size))
+//            val theirFile = user.file ?: continue /* If they have no file, iterate unto next */
+//            val nameMismatch =
+//                (media?.fileName != theirFile.fileName) && (media?.fileNameHashed != theirFile.fileName)
+//            val durationMismatch = media?.fileDuration != theirFile.fileDuration
+//            val sizeMismatch =
+//                media?.fileSize != theirFile.fileSize && media?.fileSizeHashed != theirFile.fileSize
+//
+//            if (nameMismatch && durationMismatch && sizeMismatch) continue /* 2 mismatches or less */
+//            var warning = string(R.string.room_file_mismatch_warning_core, user.name)
+//            if (nameMismatch) warning =
+//                warning.plus(string(R.string.room_file_mismatch_warning_name))
+//            if (durationMismatch) warning =
+//                warning.plus(string(R.string.room_file_mismatch_warning_duration))
+//            if (sizeMismatch) warning =
+//                warning.plus(string(R.string.room_file_mismatch_warning_size))
 
             //broadcastMessage(warning, false)
         }

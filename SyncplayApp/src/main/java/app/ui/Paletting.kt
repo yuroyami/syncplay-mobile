@@ -10,6 +10,23 @@ object Paletting {
     val SP_PINK = Color(255, 40, 97)
     val SP_GRADIENT = listOf(SP_YELLOW, SP_ORANGE, SP_PINK)
 
+    /** Default in-room colors for messages */
+    val MSG_SELF_TAG = Color(204, 36, 36, 255)
+    val MSG_FRIEND_TAG = Color(96, 130, 182)
+    val MSG_SYSTEM = Color(220, 220, 220)
+    val MSG_ERROR = Color(150, 20, 20, 255)
+    val MSG_CHAT = Color.White
+    val MSG_TIMESTAMP = Color(255, 95, 135)
+
+    /** Some room widget colors */
+    val ROOM_USER_READY_ICON = Color(130, 203, 120, 255)
+    val ROOM_USER_UNREADY_ICON = Color(247, 92, 94, 255)
+    val ROOM_USER_USER_TEXT_SELF = Color(236, 191, 57)
+
+
+    val OLD_SP_YELLOW = Color(255, 214, 111)
+    val OLD_SP_PINK = Color(239, 100, 147)
+
     /** More Colors */
     val SP_PALE = Color(255, 233, 166)
     val SP_CUTE_PINK = Color(255, 92, 135)
@@ -40,5 +57,7 @@ object Paletting {
 
     /** dimensions */
     const val ROOM_ICON_SIZE = 38
+    const val USER_INFO_IC_SIZE = 16
+    const val USER_INFO_TXT_SIZE = 11
 
 }

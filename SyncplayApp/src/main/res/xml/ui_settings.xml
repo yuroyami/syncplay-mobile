@@ -67,8 +67,8 @@
         app:min="8"
         app:seekBarIncrement="1"
         app:showSeekBarValue="true"
-        app:summary="@string/setting_subtitle_size_summary"
-        app:title="@string/setting_subtitle_size_title"
+        app:summary="@string/uisetting_subtitle_size_summary"
+        app:title="@string/uisetting_subtitle_size_title"
         app:useSimpleSummaryProvider="true" />
 
     <com.jaredrummler.android.colorpicker.ColorPreferenceCompat

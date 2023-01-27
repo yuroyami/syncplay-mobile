@@ -14,11 +14,10 @@ import androidx.appcompat.view.menu.MenuBuilder
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import app.R
-import app.controllers.adapters.SharedPlaylistRecycAdapter
 import app.databinding.FragmentSharedPlaylistBinding
-import app.sharedplaylist.SHPUtils.loadSHP
 import app.ui.activities.RoomActivity
 import app.utils.MiscUtils.getFileName
+import app.utils.SharedPlaylistUtils.loadSHP
 import app.utils.UIUtils.bindTooltip
 import app.utils.UIUtils.toasty
 
@@ -26,7 +25,7 @@ class SHPFragment : Fragment(), SHPCallback {
 
     private lateinit var binding: FragmentSharedPlaylistBinding
 
-    /** Set to true when the [SHPUtils.loadSHP] method should know that it should shuffle the txt file */
+    /** Set to true when the [SharedPlaylistUtils.loadSHP] method should know that it should shuffle the txt file */
     var shuffle = false
 
     override fun onCreateView(i: LayoutInflater, c: ViewGroup?, sis: Bundle?): View {
@@ -41,7 +40,7 @@ class SHPFragment : Fragment(), SHPCallback {
         activity().bindSHPCallback(this)
 
         /** Setting the adapter */
-        binding.shPPlaylist.adapter = SharedPlaylistRecycAdapter(activity(), activity().p.session.sharedPlaylist)
+        //binding.shPPlaylist.adapter = SharedPlaylistRecycAdapter(activity(), activity().p.session.sharedPlaylist)
 
         /** Reacting to button clicking for adding file(s) */
         binding.shPAddFile.bindTooltip()
@@ -90,8 +89,7 @@ class SHPFragment : Fragment(), SHPCallback {
             val addDirectory = popup.menu.add(1, 4, 4, getString(R.string.room_shared_playlist_button_add_folder))
 
             val playlistImport = popup.menu.add(2, 5, 5, getString(R.string.room_shared_playlist_button_playlist_import))
-            val playlistImportShf =
-                popup.menu.add(2, 6, 6, getString(R.string.room_shared_playlist_button_playlist_import_n_shuffle))
+            val playlistImportShf = popup.menu.add(2, 6, 6, getString(R.string.room_shared_playlist_button_playlist_import_n_shuffle))
             val playlistExport = popup.menu.add(2, 7, 7, getString(R.string.room_shared_playlist_button_playlist_export))
 
             val setMD = popup.menu.add(3, 8, 8, getString(R.string.room_shared_playlist_button_set_media_directories))
@@ -102,13 +100,17 @@ class SHPFragment : Fragment(), SHPCallback {
 
             /** Assigning some icons to the menu items */
             shuffleAll.setIcon(R.drawable.ic_shuffle)
+
             shuffleRest.setIcon(R.drawable.ic_shuffle)
+
             addFiles.setIcon(R.drawable.ic_shared_playlist_add)
             addURLs.setIcon(R.drawable.ic_url)
             addDirectory.setIcon(R.drawable.ic_add_folder)
+
             playlistImport.setIcon(R.drawable.file_import)
             playlistImportShf.setIcon(R.drawable.file_import_shf)
             playlistExport.setIcon(R.drawable.save)
+
             setMD.setIcon(R.drawable.ic_folder)
             //setTD.setIcon(R.drawable.ic_domain)
             //undo.setIcon(R.drawable.ic_undo)
@@ -159,7 +161,7 @@ class SHPFragment : Fragment(), SHPCallback {
 
     /** Adding one or multiple URLs to the playlist (this opens a popup) */
     fun actionAddURLs() {
-        SHPAddURLsPopup(this).setBlurBackgroundEnable(true).showPopupWindow()
+        //SHPAddURLsPopup(this).setBlurBackgroundEnable(true).showPopupWindow()
     }
 
     /** Follows the action of clicking add folder */
