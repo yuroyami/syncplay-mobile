@@ -1,12 +1,16 @@
 package app.protocol
 
 import android.content.Context
-import androidx.preference.PreferenceManager
+import app.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
+import app.datastore.DataStoreKeys.PREF_HASH_FILENAME
+import app.datastore.DataStoreKeys.PREF_HASH_FILESIZE
+import app.datastore.DataStoreUtils.obtainString
 import app.utils.MiscUtils
 import app.utils.MiscUtils.toHex
 import app.wrappers.MediaFile
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import kotlinx.coroutines.runBlocking
 
 /** This class does not actually send anything but what it actually does is compose JSON strings which will be sent later */
 object JsonSender {
@@ -72,9 +76,8 @@ object JsonSender {
 
     fun sendFile(media: MediaFile, context: Context): String {
         /** Checking whether file name or file size have to be hashed **/
-        val sp = PreferenceManager.getDefaultSharedPreferences(context)
-        val nameBehavior = sp.getString("fileinfo_behavior_name", "1")
-        val sizeBehavior = sp.getString("fileinfo_behavior_size", "1")
+        val nameBehavior = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainString(PREF_HASH_FILENAME, "1") }
+        val sizeBehavior = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainString(PREF_HASH_FILESIZE, "1") }
 
         val fileproperties: HashMap<String, Any> = hashMapOf()
         fileproperties["duration"] = media.fileDuration

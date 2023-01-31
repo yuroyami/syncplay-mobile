@@ -11,6 +11,7 @@ import app.settings.SettingType.MultiChoicePopupSetting
 import app.settings.SettingType.OneClickSetting
 import app.settings.SettingType.PopupSetting
 import app.settings.SettingType.SliderSetting
+import app.settings.SettingType.TextFieldSetting
 import app.settings.SettingType.ToggleSetting
 
 /** Defines the type of a setting (preference).
@@ -21,6 +22,7 @@ import app.settings.SettingType.ToggleSetting
  * @property [SliderSetting]
  * @property [PopupSetting]
  * @property [ColorSetting]
+ * @property [TextFieldSetting]
  */
 enum class SettingType {
     /** OneClickSetting is a [SettingType] for a setting whose function is based upon one click only.
@@ -64,5 +66,8 @@ enum class SettingType {
      *
      * This has no direct counterpart in XML preferences, but exists in various libraries
      * such as jaredrummler's colorpicker library (which was used in Syncplay-android version 0.10.1 */
-    ColorSetting
+    ColorSetting,
+
+    /** Allows the user to input a string  */
+    TextFieldSetting
 }

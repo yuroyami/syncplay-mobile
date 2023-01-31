@@ -28,8 +28,8 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled true
-            shrinkResources true
+            minifyEnabled false
+            shrinkResources false
             debuggable false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
@@ -103,8 +103,6 @@ dependencies {
 
     implementation 'com.google.android.material:material:1.9.0-alpha01'/* Google's MaterialComponents */
     implementation 'androidx.preference:preference-ktx:1.2.0'/* AndroidX's Preferences - Kotlin ver */
-    //implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.5.0-rc02'
-    implementation 'com.jaredrummler:colorpicker:1.1.0' /* ColorPreference */
 
     /** Unnecessary-for-functionality Libraries */
     //implementation 'org.conscrypt:conscrypt-android:2.5.2' //Will use for TLSv1.3

@@ -1,6 +1,5 @@
 package app.wrappers
 
-
 /*********************************************************************************************
  *                                  MediaInfo parser class
  * This class is responsible for reading and parsing the media information of a video/audio
@@ -11,4 +10,6 @@ package app.wrappers
 
 class MediaInfo {
     /** Not yet constructed **/
+
+
 }

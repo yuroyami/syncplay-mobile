@@ -2,9 +2,9 @@ package app.utils
 
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
+import app.activities.WatchActivity
 import app.protocol.JsonSender
 import app.protocol.SyncplayProtocol
-import app.ui.activities.WatchActivity
 import app.wrappers.Message
 import com.google.android.exoplayer2.Player
 import kotlinx.coroutines.Dispatchers
@@ -14,22 +14,10 @@ import kotlinx.coroutines.launch
 /** Methods exclusive to Room functionality (messages, sending data to server, etc) */
 object RoomUtils {
 
-    /** This broadcasts a message to show it in the message section **/
-    fun WatchActivity.broadcastMessage(message: String, isChat: Boolean, chatter: String = "") {
-        /** Messages are just a wrapper class for everything we need about a message
-        So first, we initialize it, customize it, then add it to our long list of messages */
-        val msg = Message()
-        if (isChat) msg.sender = chatter
-        msg.isMainUser = chatter == p.session.currentUsername
-        msg.content = message
-
-        /** Adding the message instance to our message sequence **/
-        p.session.messageSequence.add(msg)
-    }
-
     /** Sends a play/pause playback to the server **/
     fun WatchActivity.sendPlayback(play: Boolean) {
-        if (isSoloMode()) return;
+        if (isSoloMode()) return
+
         p.sendPacket(
             JsonSender.sendState(
                 servertime = null, clienttime = System.currentTimeMillis() / 1000.0,
@@ -39,7 +27,7 @@ object RoomUtils {
     }
 
     fun WatchActivity.sendSeek(newpos: Long) {
-        if (isSoloMode()) return;
+        if (isSoloMode()) return
 
         p.sendPacket(
             JsonSender.sendState(
@@ -53,6 +41,8 @@ object RoomUtils {
 
     /** Sends a chat message to the server **/
     fun WatchActivity.sendMessage(message: String) {
+        if (isSoloMode()) return
+
         p.sendPacket(JsonSender.sendChat(message))
     }
 
@@ -70,10 +60,27 @@ object RoomUtils {
         }
     }
 
-    /** Method to verify mismatches of files with different users in the room.
+    /** This broadcasts a message to show it in the chat section **/
+    fun WatchActivity.broadcastMessage(message: String, isChat: Boolean, chatter: String = "") {
+        if (isSoloMode()) return
+
+        /** Messages are just a wrapper class for everything we need about a message
+        So first, we initialize it, customize it, then add it to our long list of messages */
+        val msg = Message()
+        if (isChat) msg.sender = chatter
+        msg.isMainUser = chatter == p.session.currentUsername
+        msg.content = message
+
+        /** Adding the message instance to our message sequence **/
+        p.session.messageSequence.add(msg)
+    }
+
+    /** TODO: Method to verify mismatches of files with different users in the room.
      * Mismatches are: Name, Size, Duration. If 3 mismatches are detected, no error is thrown
      * since that would mean that the two files are completely and obviously different.*/
     fun WatchActivity.checkFileMismatches(p: SyncplayProtocol) {
+        if (isSoloMode()) return
+
         /** First, we check if user wanna be notified about file mismatchings */
         if (!PreferenceManager.getDefaultSharedPreferences(this)
                 .getBoolean("warn_file_mismatch", true)

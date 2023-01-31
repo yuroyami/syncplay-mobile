@@ -8,14 +8,18 @@ import android.net.Uri
 import android.util.Log
 import android.util.TypedValue
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.PreferenceManager
 import app.R
+import app.activities.WatchActivity
+import app.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
+import app.datastore.DataStoreKeys.PREF_MAX_BUFFER
+import app.datastore.DataStoreKeys.PREF_MIN_BUFFER
+import app.datastore.DataStoreKeys.PREF_SEEK_BUFFER
+import app.datastore.DataStoreUtils.obtainInt
 import app.protocol.JsonSender
-import app.ui.activities.WatchActivity
 import app.utils.MiscUtils.hideSystemUI
 import app.utils.MiscUtils.string
+import app.utils.MiscUtils.toasty
 import app.utils.RoomUtils.sendPlayback
-import app.utils.UIUtils.toasty
 import app.wrappers.MediaFile
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.DefaultLoadControl
@@ -31,6 +35,7 @@ import com.google.android.exoplayer2.ui.CaptionStyleCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.util.Collections
 
@@ -218,14 +223,11 @@ object ExoUtils {
 
     }
 
-    /** TODO: Get LoadControl through datastore */
     fun Context.buildExo(): ExoPlayer {
         /** LoadControl variables and building (Buffering Controller) **/
-        val sp = PreferenceManager.getDefaultSharedPreferences(this)
-        val useCustomBuffer = sp.getBoolean("use_custom_buffer_boolean", false)
-        val maxBuffer = if (useCustomBuffer) (sp.getInt("player_max_buffer", 50) * 1000) else 30000
-        var minBuffer = if (useCustomBuffer) (sp.getInt("player_min_buffer", 15) * 1000) else 15000
-        val playbackBuffer = if (useCustomBuffer) (sp.getInt("player_playback_buffer", 2500)) else 2000
+        val maxBuffer = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainInt(PREF_MAX_BUFFER, 30) } * 1000
+        var minBuffer = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainInt(PREF_MIN_BUFFER, 30) } * 1000
+        val playbackBuffer = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainInt(PREF_SEEK_BUFFER, 2000) }
         if (minBuffer < (playbackBuffer + 500)) minBuffer = playbackBuffer + 500
         val loadControl = DefaultLoadControl.Builder().setBufferDurationsMs(minBuffer, maxBuffer, playbackBuffer, playbackBuffer + 500).build()
 
@@ -245,30 +247,38 @@ object ExoUtils {
         return myExoPlayer
     }
 
-    fun WatchActivity.injectVideo(uri: Uri) {
+    /** Injects a media into the player. If no uri is provided, the method will re-inject the current media */
+    fun WatchActivity.injectVideo(uri: Uri? = null, isUrl: Boolean = false) {
         /* Changing UI (hiding artwork, showing media controls) */
         hasVideoG.value = true
 
         lifecycleScope.launch(Dispatchers.Main) {
             /* Creating a media file from the selected file */
-            media = MediaFile()
-            media?.uri = uri
+            if (uri != null || media == null) {
+                media = MediaFile()
+                media?.uri = uri
 
-            /* Obtaining info from it (size and name) */
-            media?.collectInfo(applicationContext)
+                /* Obtaining info from it (size and name) */
+                if (isUrl) {
+                    media?.url = uri.toString()
+                    media?.collectInfoURL()
+                } else {
+                    media?.collectInfo(applicationContext)
+                }
 
-            /* Checking mismatches with others in room */
-            //checkFileMismatches(p) TODO
+                /* Checking mismatches with others in room */
+                //checkFileMismatches(p) TODO
+            }
 
             /* Injecting the media into exoplayer */
             try {
                 /* This is the builder responsible for building a MediaItem component for ExoPlayer **/
-                val vid = MediaItem.Builder().setUri(uri).also {
-                    /* Seeing if we have any loaded external sub **/
-                    if (media?.externalSub != null) {
-                        it.setSubtitleConfigurations(Collections.singletonList(media!!.externalSub!!))
-                    }
-                }.build()
+                val vid = if (media?.externalSub == null) {
+                    MediaItem.Builder().setUri(media?.uri).build()
+                } else {
+                    MediaItem.Builder()
+                        .setUri(media?.uri).setSubtitleConfigurations(Collections.singletonList(media!!.externalSub!!)).build()
+                }
 
                 /* Injecting it into ExoPlayer and getting relevant info **/
                 myExoPlayer.setMediaItem(vid) /* This loads the media into ExoPlayer **/
@@ -292,7 +302,7 @@ object ExoUtils {
             }
 
             /* Finally, show a a toast to the user that the media file has been added */
-            delay(1000)
+            delay(700)
             toasty(string(R.string.room_selected_vid, "${media?.fileName}"))
         }
 

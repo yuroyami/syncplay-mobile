@@ -24,7 +24,7 @@
     </style>
 
     <style name="Theme.splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenAnimatedIcon">@mipmap/syncplay_logo_insetter</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_splash</item>
         <item name="windowSplashScreenBackground">#444444</item>
         <item name="postSplashScreenTheme">@style/MainScreenTheme</item>
     </style>

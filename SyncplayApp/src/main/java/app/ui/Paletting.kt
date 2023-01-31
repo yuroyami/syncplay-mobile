@@ -1,5 +1,7 @@
 package app.ui
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 object Paletting {
@@ -13,7 +15,7 @@ object Paletting {
     /** Default in-room colors for messages */
     val MSG_SELF_TAG = Color(204, 36, 36, 255)
     val MSG_FRIEND_TAG = Color(96, 130, 182)
-    val MSG_SYSTEM = Color(220, 220, 220)
+    val MSG_SYSTEM = Color(230, 230, 230)
     val MSG_ERROR = Color(150, 20, 20, 255)
     val MSG_CHAT = Color.White
     val MSG_TIMESTAMP = Color(255, 95, 135)
@@ -39,7 +41,7 @@ object Paletting {
     val BG_DARK_2 = Color(50, 50, 50)
     val BG_Gradient_DARK = listOf(BG_DARK_1, BG_DARK_2, BG_DARK_1)
 
-    val BG_LIGHT_1 = Color(150, 150, 150)
+    val BG_LIGHT_1 = Color(180, 180, 180)
     val BG_LIGHT_2 = Color(247, 247, 247)
     val BG_Gradient_LIGHT = listOf(BG_LIGHT_1, BG_LIGHT_2, BG_LIGHT_1)
 
@@ -60,4 +62,18 @@ object Paletting {
     const val USER_INFO_IC_SIZE = 16
     const val USER_INFO_TXT_SIZE = 11
 
+
+    @Composable
+    fun backgroundGradient(): List<Color> {
+        return listOf(
+            MaterialTheme.colorScheme.background,
+            MaterialTheme.colorScheme.surface,
+            MaterialTheme.colorScheme.background
+        )
+    }
+
+    @Composable
+    fun isInDarkMode(): Boolean {
+        return MaterialTheme.colorScheme.primary == md_theme_dark_primary
+    }
 }

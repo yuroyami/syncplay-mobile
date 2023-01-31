@@ -123,8 +123,8 @@
     <string name="setting_ready_firsthand_title">自动将我设为已准备</string>
     <string name="setting_rewind_threshold_summary">进度过快时,倒退视频与其他人同步.</string>
     <string name="setting_rewind_threshold_title">倒退阈值</string>
-    <string name="setting_subtitle_size_summary">默认为 18. 这将改变字幕的大小.</string>
-    <string name="setting_subtitle_size_title">字幕大小</string>
+    <string name="uisetting_subtitle_size_summary">默认为 18. 这将改变字幕的大小.</string>
+    <string name="uisetting_subtitle_size_title">字幕大小</string>
     <string name="setting_tls_summary">如果服务器支持TLS安全连接, Android将尝试通过TLS连接到它。(未提供)</string>
     <string name="setting_tls_title">使用安全连接(TLSv1.3)[即将推出]</string>
     <string name="setting_resetdefault_title">调回默认设置</string>

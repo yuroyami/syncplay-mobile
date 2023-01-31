@@ -3,28 +3,57 @@ package app.utils
 import android.annotation.TargetApi
 import android.content.ContentResolver
 import android.content.Context
+import android.content.res.Configuration
 import android.database.Cursor
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.util.Log
 import android.view.View
 import android.view.Window
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.annotation.ColorInt
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
+import app.R
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.*
 import java.nio.charset.StandardCharsets.UTF_8
 import java.security.MessageDigest
 import java.sql.Timestamp
+import java.util.Locale
 
 object MiscUtils {
+
+    /** Language changer at runtime */
+    fun ComponentActivity.changeLanguage(lang: String, appCompatWay: Boolean, recreateActivity: Boolean, showToast: Boolean) {
+        if (appCompatWay) {
+            val localesList: LocaleListCompat = LocaleListCompat.forLanguageTags(lang)
+            AppCompatDelegate.setApplicationLocales(localesList)
+        } else {
+            val locale = Locale(lang)
+            Locale.setDefault(locale)
+            val config = Configuration()
+            config.setLocale(locale)
+            resources.updateConfiguration(config, resources.displayMetrics)
+        }
+
+        if (recreateActivity) recreate();
+
+        if (showToast) Toast.makeText(this, String.format(resources.getString(R.string.setting_display_language_toast), ""), Toast.LENGTH_SHORT).show()
+    }
 
     /** Functions to grab a localized string from resources, format it according to arguments **/
     fun Context.string(id: Int, vararg stuff: String): String {
@@ -157,12 +186,16 @@ object MiscUtils {
     }
 
     @Suppress("DEPRECATION")
-    fun showSystemUI(window: Window) {
-        window.decorView.systemUiVisibility =
-            (View.SYSTEM_UI_FLAG_VISIBLE or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+    fun ComponentActivity.showSystemUI(useDeprecated: Boolean) {
+        if (useDeprecated) {
+            window.decorView.systemUiVisibility =
+                (View.SYSTEM_UI_FLAG_VISIBLE or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+        } else {
+            WindowInsetsControllerCompat(window, window.decorView).show(WindowInsetsCompat.Type.systemBars())
+        }
 
     }
 
@@ -202,4 +235,17 @@ object MiscUtils {
     fun sha256(str: String): ByteArray =
         MessageDigest.getInstance("SHA-256").digest(str.toByteArray(UTF_8))
 
+    /** Hides the keyboard and loses message typing focus **/
+    fun ComponentActivity.hideKb() {
+        lifecycleScope.launch(Dispatchers.Main) {
+            WindowInsetsControllerCompat(window, window.decorView).hide(WindowInsetsCompat.Type.ime())
+        }
+    }
+
+    /** Convenience method to save code space */
+    fun Context.toasty(string: String) {
+        Handler(Looper.getMainLooper()).post {
+            Toast.makeText(this@toasty, string, Toast.LENGTH_SHORT).show()
+        }
+    }
 }

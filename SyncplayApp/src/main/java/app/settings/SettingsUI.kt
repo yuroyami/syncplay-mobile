@@ -13,6 +13,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridScope
+import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -33,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import app.R
 import app.ui.Paletting
 import app.utils.ComposeUtils.FancyText2
-import app.utils.ComposeUtils.syncplayGradient
+import app.utils.ComposeUtils.gradientOverlay
 import com.google.accompanist.flowlayout.FlowColumn
 import com.google.accompanist.flowlayout.FlowCrossAxisAlignment
 import com.google.accompanist.flowlayout.FlowMainAxisAlignment
@@ -43,8 +48,10 @@ import com.google.accompanist.flowlayout.FlowRow
 object SettingsUI {
 
     enum class SettingsGridLayout {
-        SETTINGS_GRID_HORIZONTAL,
-        SETTINGS_GRID_VERTICAL
+        SETTINGS_GRID_HORIZONTAL_FLOW,
+        SETTINGS_GRID_VERTICAL_FLOW,
+        SETTINGS_GRID_HORIZONTAL_GRID,
+        SETTINGS_GRID_VERTICAL_GRID
     }
 
     @Composable
@@ -52,9 +59,11 @@ object SettingsUI {
         modifier: Modifier = Modifier,
         settingcategories: List<SettingCategory>,
         state: MutableState<Int>,
-        layoutOrientation: SettingsGridLayout = SettingsGridLayout.SETTINGS_GRID_HORIZONTAL,
+        layoutOrientation: SettingsGridLayout = SettingsGridLayout.SETTINGS_GRID_HORIZONTAL_FLOW,
         titleSize: Float = 13f,
         cardSize: Float = 64f,
+        gridRows: Int = 2,
+        gridColumns: Int = 3,
         onCardClicked: (Int) -> Unit = {},
     ) {
         /** Variable to store which card is currently clicked */
@@ -64,59 +73,45 @@ object SettingsUI {
         AnimatedVisibility(modifier = modifier, visible = state.value == 1, exit = fadeOut(), enter = fadeIn()) {
 
             when (layoutOrientation) {
-                SettingsGridLayout.SETTINGS_GRID_VERTICAL -> {
+                SettingsGridLayout.SETTINGS_GRID_VERTICAL_FLOW -> {
                     /** FlowColumn basically arranges cards vertically, then creates another column when space doesn't suffice */
                     FlowColumn(
-                        modifier = modifier,
                         mainAxisAlignment = FlowMainAxisAlignment.SpaceEvenly,
                         crossAxisAlignment = FlowCrossAxisAlignment.Center,
                         crossAxisSpacing = 12.dp,
                         mainAxisSpacing = 12.dp
                     ) {
-
-                        /** Iterating through our cards and invoking them one by one */
-                        for ((index, category) in settingcategories.withIndex()) {
-                            SettingCategoryCard(
-                                categ = category,
-                                titleSize = titleSize,
-                                cardSize = cardSize,
-                                onClick = {
-                                    clickedCardIndex.value = settingcategories[index]
-                                    onCardClicked(index)
-                                }
-                            )
-                        }
+                        SettingCategoryIterator(clickedCardIndex, settingcategories, titleSize, cardSize, onCardClicked)
                     }
                 }
 
-                SettingsGridLayout.SETTINGS_GRID_HORIZONTAL -> {
-                    /** FlowRow basically arranges cards horizontally, then creates another row when space doesn't suffice */
+                SettingsGridLayout.SETTINGS_GRID_HORIZONTAL_FLOW -> {
+                    /** FlowRow arranges cards horizontally, then creates another row when space doesn't suffice */
                     FlowRow(
-                        modifier = modifier,
                         mainAxisAlignment = FlowMainAxisAlignment.SpaceEvenly,
                         crossAxisAlignment = FlowCrossAxisAlignment.Center,
                         mainAxisSpacing = 12.dp
                     ) {
+                        SettingCategoryIterator(clickedCardIndex, settingcategories, titleSize, cardSize, onCardClicked)
+                    }
+                }
 
-                        /** Iterating through our cards and invoking them one by one */
-                        for ((index, category) in settingcategories.withIndex()) {
-                            SettingCategoryCard(
-                                categ = category,
-                                titleSize = titleSize,
-                                cardSize = cardSize,
-                                onClick = {
-                                    clickedCardIndex.value = settingcategories[index]
-                                    onCardClicked(index)
-                                }
-                            )
-                        }
+                SettingsGridLayout.SETTINGS_GRID_HORIZONTAL_GRID -> {
+                    LazyHorizontalGrid(rows = GridCells.Fixed(gridRows)) {
+                        SettingCategoryGridIterator(clickedCardIndex, settingcategories, titleSize, cardSize, onCardClicked)
+                    }
+                }
+
+                SettingsGridLayout.SETTINGS_GRID_VERTICAL_GRID -> {
+                    LazyVerticalGrid(columns = GridCells.Fixed(gridColumns)) {
+                        SettingCategoryGridIterator(clickedCardIndex, settingcategories, titleSize, cardSize, onCardClicked)
                     }
                 }
             }
         }
 
-        AnimatedVisibility(visible = state.value == 2, exit = fadeOut(), enter = fadeIn()) {
-            SettingScreen(modifier = modifier.verticalScroll(rememberScrollState()), clickedCardIndex.value)
+        AnimatedVisibility(modifier = modifier, visible = state.value == 2, exit = fadeOut(), enter = fadeIn()) {
+            SettingScreen(modifier = Modifier.verticalScroll(rememberScrollState()), clickedCardIndex.value)
         }
     }
 
@@ -151,7 +146,7 @@ object SettingsUI {
                         modifier = modifier
                             .size((cardSize * 0.81f).dp)
                             .align(Alignment.Center)
-                            .syncplayGradient()
+                            .gradientOverlay()
                     )
                     Icon(
                         imageVector = categ.icon,
@@ -184,6 +179,49 @@ object SettingsUI {
                     Divider(Modifier.padding(horizontal = 32.dp))
                 }
             }
+        }
+    }
+
+    @Composable
+    private fun SettingCategoryIterator(
+        clickedCardIndex: MutableState<SettingCategory>,
+        settingcategories: List<SettingCategory>,
+        titleSize: Float = 13f,
+        cardSize: Float = 64f,
+        onCardClicked: (Int) -> Unit = {},
+    ) {
+        /** Iterating through our cards and invoking them one by one */
+        for ((index, category) in settingcategories.withIndex()) {
+            SettingCategoryCard(
+                categ = category,
+                titleSize = titleSize,
+                cardSize = cardSize,
+                onClick = {
+                    clickedCardIndex.value = settingcategories[index]
+                    onCardClicked(index)
+                }
+            )
+        }
+    }
+
+    private fun LazyGridScope.SettingCategoryGridIterator(
+        clickedCardIndex: MutableState<SettingCategory>,
+        settingcategories: List<SettingCategory>,
+        titleSize: Float = 13f,
+        cardSize: Float = 64f,
+        onCardClicked: (Int) -> Unit = {},
+    ) {
+
+        itemsIndexed(settingcategories) { i, sg ->
+            SettingCategoryCard(
+                categ = sg,
+                titleSize = titleSize,
+                cardSize = cardSize,
+                onClick = {
+                    clickedCardIndex.value = settingcategories[i]
+                    onCardClicked(i)
+                }
+            )
         }
     }
 }

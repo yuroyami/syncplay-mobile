@@ -1,7 +1,7 @@
 <h1 align="center"> Syncplay for Android </h1> <br>
 <p align="center">
   <a href="">
-    <img alt="Syncplay BETA for Android" title="Syncplay Android" src="https://github.com/chromaticnoob/syncplay-android/blob/master/art/LOGO.png?raw=true" width="250">
+    <img alt="Syncplay for Android" title="Syncplay Android" src="https://github.com/chromaticnoob/syncplay-android/blob/master/art/LOGO.png?raw=true" width="250">
   </a>
 </p>
 <p align="center">
@@ -10,9 +10,6 @@
 <p align="center">
   <a href="https://apt.izzysoft.de/fdroid/index/apk/com.reddnek.syncplay">
     <img alt="Syncplay Android on IzzyOnDroid Repo" title="Syncplay Android" src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" width="200">
-  </a>
-  <a href="https://play.google.com/store/apps/details?id=com.reddnek.syncplay">
-    <img alt="Download it on Play store" title="Syncplay Android" src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" width="200">
   </a>
 </p> 
 
@@ -36,7 +33,7 @@
 ## Introduction
 
 [![OS - Android](https://img.shields.io/badge/OS-Android-yellowgreen?style=for-the-badge&logo=android)]()
-[![Version Release](https://img.shields.io/badge/Version-0.10.1-7c26ab?style=for-the-badge&logo=v)]()
+[![Version Release](https://img.shields.io/badge/Version-0.11.0-ffd700?style=for-the-badge&logo=v)]()
 [![Written Language](https://img.shields.io/badge/Made%20with-Kotlin-lightgrey?style=for-the-badge&logo=kotlin)]()
 [![is Maintained?](https://img.shields.io/badge/Maintained-YES-green?style=for-the-badge)]()
 [![License](https://img.shields.io/badge/License-AGPL--3.0-brightgreen?style=for-the-badge)]()
@@ -49,10 +46,11 @@ media players so that faraway friends can watch videos together, Syncplay.
 Syncplay Android, which is still in its beta release, brings the most important functions that
 Syncplay on Desktop has, and ports it to Android flawlessly, such as real-time chat functionality.
 
-**Cannot run on Android versions below Android 5.0 (Codename: Lollipop)**
+**Cannot run on Android versions below Android 8.0 (Codename: Oreo)**
 
 <p align="center">
   <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS1.png" width=150>
+  <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS3.png" width=150>
 </p>
 
 ## Features
@@ -69,12 +67,11 @@ Syncplay on Desktop has, and ports it to Android flawlessly, such as real-time c
 * No delay or latency opening the app or the room.
 * App written in efficient native Kotlin code, reassurring the optimal performance.
 * Multi-language support (Available Language: English, Arabic. More languages on the way)
-* Supports Android 5.0 Lollipop up to Android 13 Tiramisu.
+* Supports Android 8.0 Oreo up to Android 13 Tiramisu.
 
 <p align="center">
   <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS2.png" width="30%">
-  <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS4.png" width="30%"><br>
-  <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS3.png" width="80%">
+  <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS4.png" width="30%">
 </p>
 
 ## How to use
@@ -94,20 +91,13 @@ These are the things I am willing to add/adjust in the future :
 - [x] Adopt original Syncplay's Chat functionality
 - [x] Shared Playlists
 - [x] Support for custom/private servers
-- [x] Night Mode
 - [x] URL Support (as of 0.10.0)
 - [ ] TLS/SSL Secure Connection Support
-- [x] Multi-language Support
+- [x] Multi-language Support (WIP)
   - [x] English
   - [x] Arabic
   - [x] French
   - [x] Chinese (by [Zhaodaidai](https://github.com/Zhaodaidai))
-  - [ ] Spanish
-  - [ ] Portuguese
-  - [ ] Japanese
-  - [ ] German
-  - [ ] Italian
-  - [ ] Russian
 
 ## F.A.Q
 
@@ -130,7 +120,7 @@ If there's anything you'd like to chat about, please feel free to open a new dis
 
 ## Build Process
 
-The project is developed under Android Studio Flamingo | 2022.2.1 Canary 3
+The project is developed under Android Studio Giraffe | 2022.3.1
 Make sure you have a version equal or later than the one I am using. Dowload the source code ZIP and
 extract it somewhere, then open it using Android Studio. Then you can just build the app using a
 custom JKS keystore of your choice (Edit the keystore information on the

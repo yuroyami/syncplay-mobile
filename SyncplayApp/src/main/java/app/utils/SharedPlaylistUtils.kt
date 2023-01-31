@@ -5,15 +5,17 @@ import android.provider.DocumentsContract
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.PreferenceManager
 import app.R
+import app.activities.WatchActivity
+import app.datastore.DataStoreKeys
+import app.datastore.DataStoreUtils.obtainStringSet
+import app.datastore.DataStoreUtils.writeStringSet
 import app.protocol.JsonSender.sendPlaylistChange
 import app.protocol.JsonSender.sendPlaylistIndex
-import app.sharedplaylist.DirectoriesActivity
-import app.ui.activities.WatchActivity
 import app.utils.ExoUtils.injectVideo
 import app.utils.MiscUtils.getFileName
-import app.utils.UIUtils.toasty
+import app.utils.MiscUtils.toasty
+import app.utils.RoomUtils.broadcastMessage
 import app.wrappers.MediaFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -82,18 +84,13 @@ object SharedPlaylistUtils {
     }
 
     fun WatchActivity.saveFolderPathAsMediaDirectory(uri: Uri) {
-        val list = DirectoriesActivity.getFolderList(
-            p.gson,
-            DirectoriesActivity.prefKey,
-            this
-        )
-        if (!list.contains(uri.toString())) list.add(uri.toString())
-        DirectoriesActivity.writeFolderList(
-            list,
-            p.gson,
-            DirectoriesActivity.prefKey,
-            this
-        )
+        lifecycleScope.launch {
+            val paths = DataStoreKeys.DATASTORE_GLOBAL_SETTINGS.obtainStringSet(DataStoreKeys.PREF_SP_MEDIA_DIRS, emptySet()).toMutableSet()
+
+            if (!paths.contains(uri.toString())) paths.add(uri.toString())
+
+            DataStoreKeys.DATASTORE_GLOBAL_SETTINGS.writeStringSet(DataStoreKeys.PREF_SP_MEDIA_DIRS, paths)
+        }
     }
 
     /** This is to send a playlist selection change to the server */
@@ -110,7 +107,7 @@ object SharedPlaylistUtils {
         }
     }
 
-    /** This will search all media directories specified by the user in settings to look for a file
+    /** TODO: This will search all media directories specified by the user in settings to look for a file
      * name and load it into ExoPlayer. This is executed on a separate thread since the IO operation
      * is heavy.
      */
@@ -121,21 +118,13 @@ object SharedPlaylistUtils {
                 fileName.contains("https://", true) ||
                 fileName.contains("ftp://", true)
             ) {
-
-                /** Fetching the file as it is a URL */
-                injectVideo(fileName.toUri())
-                media = MediaFile()
-                media?.uri = fileName.toUri()
-                media?.url = fileName
-                media?.collectInfoURL()
+                injectVideo(fileName.toUri(), isUrl = true)
             } else {
                 /** We search our media directories which were added by the user in settings */
-                val sp = PreferenceManager.getDefaultSharedPreferences(this@retrieveFile)
-                val folderJson = sp.getString("SHARED_PLAYLIST_MEDIA_DIRECTORIES", "[]")
-                val paths = p.gson.fromJson<List<String>>(folderJson, List::class.java).toMutableList()
+                val paths = DataStoreKeys.DATASTORE_GLOBAL_SETTINGS.obtainStringSet(DataStoreKeys.PREF_SP_MEDIA_DIRS, emptySet()).toMutableSet()
 
                 if (paths.isEmpty()) {
-                    //TODO: broadcastMessage(getString(R.string.room_shared_playlist_no_directories), false)
+                    broadcastMessage(getString(R.string.room_shared_playlist_no_directories), false)
                 }
 
                 var fileUri2Play: Uri? = null
@@ -173,7 +162,7 @@ object SharedPlaylistUtils {
                 if (fileUri2Play == null) {
                     if (media?.fileName != fileName) {
                         toasty(getString(R.string.room_shared_playlist_not_found))
-                        //broadcastMessage(getString(R.string.room_shared_playlist_not_found), false)
+                        broadcastMessage(getString(R.string.room_shared_playlist_not_found), false)
                     }
                 }
             }

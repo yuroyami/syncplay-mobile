@@ -63,8 +63,8 @@
     <string name="setting_ready_firsthand_summary">شغِّل هذا الخيار إذا أردت أن تُحدد مستعداً اوتوماتيكياً فورَ انضمامك لغرفةٍ مـا</string>
     <string name="setting_rewind_threshold_title">أرجِعني للوراء إن كان أحدهم متأخراً بـ x ثانية</string>
     <string name="setting_rewind_threshold_summary">إذا ما كان أحدهم متأخراً بالقيمة المحددة هنا ، سيعود الفيديو خاصتك ليزامنه.</string>
-    <string name="setting_subtitle_size_title">حجم الترجمة</string>
-    <string name="setting_subtitle_size_summary">ستغير هذه القيمة حجم خط ترجمة الفيديوهات. القيمة الافتراضية هي 18.</string>
+    <string name="uisetting_subtitle_size_title">حجم الترجمة</string>
+    <string name="uisetting_subtitle_size_summary">ستغير هذه القيمة حجم خط ترجمة الفيديوهات. القيمة الافتراضية هي 18.</string>
     <string name="setting_tls_title">" اتصال آمن (TLSv1,3) -متوفر قريباً- "</string>
     <string name="setting_tls_summary">هذا سيخبر Syncplay من استعمال بروتوكول اتصال أكثر آماناً بدل جيوب اتصال عارية و بحتة. هذه الميزة غير مفعلة حالياً و سيتم إضافتها عن قريب.</string>
     <string name="setting_resetdefault_title">استرداد الحالة الافتراضية للإعدادات</string>

@@ -1,12 +1,10 @@
 package app.wrappers
 
-import android.content.Context
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
-import app.ui.Paletting
 import app.utils.MiscUtils.generateTimestamp
-import app.utils.MiscUtils.getColorCode
 
 /***************************************************************************************************
  * Message wrapper class. It encapsulates all information and data we need about a single message  *
@@ -30,7 +28,12 @@ class Message {
      * @param context Context to fetch color preferences from
      * @param isError Whether the system refers to an error, to display it in the corresponding error color */
     fun factorize(
-        context: Context,
+        timestampColor: Color,
+        selftagColor: Color,
+        friendtagColor: Color,
+        systemmsgColor: Color,
+        usermsgColor: Color,
+        errormsgColor: Color,
         includeTimestamp: Boolean = true,
         isError: Boolean = false,
     ): AnnotatedString {
@@ -38,16 +41,10 @@ class Message {
         /* An AnnotatedString builder that will append child AnnotatedStings together */
         val builder = AnnotatedString.Builder()
 
-        val timestampHex = getColorCode("timestamp_color", context)
-        val selftagHex = getColorCode("selftag_color", context)
-        val friendtagHex = getColorCode("friendtag_color", context)
-        val systemHex = getColorCode("systemtext_color", context)
-        val userHex = getColorCode("usertext_color", context)
-
         /* First, an AnnotatedString instance of the timestamp */
         val timestampAS = AnnotatedString(
-            text = if (includeTimestamp) "[$timestamp] " else "",
-            spanStyle = SpanStyle(Paletting.MSG_TIMESTAMP /* Color(Colour.parseColor(timestampHex) */)
+            text = if (includeTimestamp) "[$timestamp] " else "- ",
+            spanStyle = SpanStyle(timestampColor)
         )
 
         /* Now, the AnnotatedString instance of the message content */
@@ -55,20 +52,18 @@ class Message {
             val minibuilder = AnnotatedString.Builder()
 
             val tag = AnnotatedString(
-                text = ("$sender: ") ?: "",
+                text = ("$sender: "),
                 spanStyle = SpanStyle(
-                    color = if (isMainUser) Paletting.MSG_SELF_TAG else Paletting.MSG_FRIEND_TAG,
-                    /* Color(Colour.parseColor(if (isMainUser) selftagHex else friendtagHex)), */
+                    color = if (isMainUser) selftagColor else friendtagColor,
                     fontWeight = FontWeight.SemiBold
                 )
             )
             minibuilder.append(tag)
 
-
             val chatTEXT = AnnotatedString(
                 text = content,
                 spanStyle = SpanStyle(
-                    color = Paletting.MSG_CHAT /* Color(Colour.parseColor(userHex)) */,
+                    color = usermsgColor,
                     fontWeight = FontWeight.Medium
                 )
             )
@@ -79,8 +74,7 @@ class Message {
             AnnotatedString(
                 text = content,
                 spanStyle = SpanStyle(
-                    if (isError) Paletting.MSG_ERROR else Paletting.MSG_SYSTEM
-                    /* Color(Colour.parseColor(systemHex)) */
+                    if (isError) errormsgColor else systemmsgColor
                 )
             )
         }

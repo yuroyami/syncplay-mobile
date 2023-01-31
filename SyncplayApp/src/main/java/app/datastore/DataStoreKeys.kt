@@ -12,13 +12,17 @@ object DataStoreKeys {
     const val MISC_JOIN_SERVER_PORT = "misc_join_info_server_port"
     const val MISC_JOIN_SERVER_PW = "misc_join_info_server_password"
 
+    const val MISC_NIGHTMODE = "misc_nightmode"
+
     const val MISC_DISCARD_HINT_POPUP = "misc_discard_hint_popup"
 
     /** ---------- Global Settings ----------- */
     const val DATASTORE_GLOBAL_SETTINGS = "syncplay_global_settings"
+
     /* General */
     const val PREF_REMEMBER_INFO = "pref_remember_info"
     const val PREF_SP_MEDIA_DIRS = "pref_syncplay_media_directories"
+
     /* Language */
     const val PREF_DISPLAY_LANG = "pref_lang"
     const val PREF_AUDIO_LANG = "pref_audio_preferred_lang"
@@ -59,6 +63,7 @@ object DataStoreKeys {
     const val PREF_INROOM_MSG_FONTSIZE = "pref_inroom_msg_fontsize"
     const val PREF_INROOM_MSG_MAXCOUNT = "pref_inroom_msg_maxcount"
     const val PREF_INROOM_MSG_FADING_DURATION = "pref_inroom_fading_msg_duration"
+    const val PREF_INROOM_MSG_BOX_ACTION = "pref_inroom_msg_box_action"
 
     /* Player Settings */
     const val PREF_INROOM_PLAYER_SUBTITLE_SIZE = "pref_inroom_subtitle_size"

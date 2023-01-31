@@ -16,11 +16,11 @@
         android:localeConfig="@xml/locales_config"
         android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
+        android:supportsRtl="false"
         android:usesCleartextTraffic="true">
 
         <activity
-            android:name=".ui.activities.HomeActivity"
+            android:name="app.activities.HomeActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="true"
             android:imeOptions="flagNoExtractUi"
@@ -35,7 +35,7 @@
         </activity>
 
         <activity
-            android:name=".ui.activities.WatchActivity"
+            android:name="app.activities.WatchActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="true"
             android:imeOptions="flagNoExtractUi"

@@ -11,6 +11,8 @@
     <string name="pause">Pause</string>
     <string name="delete">Delete</string>
     <string name="confirm">Confirm</string>
+    <string name="done">Done</string>
+    <string name="close">Close</string>
 
     <!-- Main Activity's most essential strings -->
     <string name="tab_connect">Connect</string>
@@ -152,12 +154,9 @@
     <string name="setting_display_language_summry">Select your language of choice with which Syncplay is displayed.</string>
     <string name="setting_display_language_toast">Changed language. Restart app for the setting to take full effect.</string>
     <string name="setting_audio_default_language_title">Preferred Audio Track Language</string>
-    <string name="setting_audio_default_language_summry">Automatically prefer and select an audio language when found in audio
-        tracks.</string>
+    <string name="setting_audio_default_language_summry">Automatically load a audio track with the language code you set here.\nFor example, English code is \'ENG\', Japanese is \'JPN\'.\nGoogle \'ISO 639–2 codes\' for more information.</string>
     <string name="setting_cc_default_language_title">Preferred Subtitle Language</string>
-    <string name="setting_cc_default_language_summry">Automatically prefer and select a subtitle language when found in
-        subtitle tracks
-        .</string>
+    <string name="setting_cc_default_language_summry">Automatically load a subtitle track with the language code you set here.\nFor example, English code is \'ENG\', Japanese is \'JPN\'.\nGoogle \'ISO 639–2 codes\' for more information.</string>
     <string name="setting_use_buffer_title">Use Custom Buffer Sizes</string>
     <string name="setting_use_buffer_summary">If you are not satisfied with the player\'s video load times before and during
         playback, you can use custom buffer sizes (Use at your own risk).</string>
@@ -178,6 +177,7 @@
     <string name="setting_tls_title">Use Secure Connection (TLSv1.3) [Available Soon]</string>
     <string name="setting_resetdefault_title">Reset Default Settings</string>
     <string name="setting_resetdefault_summary">Reset everything to its default value (Recommended)</string>
+    <string name="setting_resetdefault_dialog">Are you sure to clear settings for this screen ?</string>
     <string name="setting_pause_if_someone_left_title">Pause if someone leaves</string>
     <string name="setting_pause_if_someone_left_summary">Enable this if you want playback to pause/stop if someone leaves the room while you\'re watching.</string>
     <string name="setting_warn_file_mismatch_title">File mismatch warning</string>
@@ -191,13 +191,15 @@
     <string name="uisetting_apply">APPLY</string>
     <string name="uisetting_timestamp_summary">Disable this to hide the timestamps at the beginning of chat messages.</string>
     <string name="uisetting_timestamp_title">Chat timestamps</string>
+    <string name="uisetting_msgboxaction_summary">When enabled, clicking on the \'OK\' button on your keyboard will send the message. When this is disabled, it will simply close the keyboard without doing anything.</string>
+    <string name="uisetting_msgboxaction_title">Keyboard\'s OK button function </string>
     <string name="uisetting_overview_alpha_summary">Default is 40 (Almost transparent), change this if you want to make the room details\' panel more readable by increasing opacity.</string>
     <string name="uisetting_overview_alpha_title">Room Details Background Opacity</string>
-    <string name="uisetting_messagery_alpha_summary">Default is 40 (Almost transparent). Maximum is 255 (100% Opaque). Increase readability of the messages by making background more opaque.</string>
+    <string name="uisetting_messagery_alpha_summary">Default is 100 (Half transparent). Maximum is 255 (100% Opaque). Increase readability of the messages by making background more opaque.</string>
     <string name="uisetting_messagery_alpha_title">Messages\' background opacity</string>
-    <string name="uisetting_msgsize_summary">Changes message text size. Default is 11.</string>
+    <string name="uisetting_msgsize_summary">Changes message text size. Default is 10.</string>
     <string name="uisetting_msgsize_title">Message font size</string>
-    <string name="uisetting_msgcount_summary">Default is 12. Limits the message number count to this value.</string>
+    <string name="uisetting_msgcount_summary">Default is 10. Limits the message number count to this value.</string>
     <string name="uisetting_msgcount_title">Message max count</string>
     <string name="uisetting_msglife_summary">When receiving a chat message or room message, it will begin fading out for the amount of time set below.</string>
     <string name="uisetting_msglife_title">Display duration for Chat messages</string>
@@ -213,7 +215,7 @@
     <string name="uisetting_human_color_title">User Message Text Color</string>
     <string name="uisetting_error_color_summary">Customize the text color of error messages (Default is Red)</string>
     <string name="uisetting_error_color_title">Error Message Text Color</string>
-    <string name="uisetting_subtitle_size_summary">Default is 16. This will change the subtitles size.</string>
+    <string name="uisetting_subtitle_size_summary">This changes subtitle size for sideloaded subtitles (when you load them from a file). Default is 16. Subtitle size for built-in subtitles cannot be changed.</string>
     <string name="uisetting_subtitle_size_title">Subtitle Size</string>
     <string name="uisetting_subtitle_delay_summary">Default is 0. This will delay or advance the subtitle track. Use negative values to advance it.</string>
     <string name="uisetting_subtitle_delay_title">Subtitle delay (milliseconds)</string>
@@ -226,7 +228,6 @@
 
     <string name="uisetting_resetdefault_summary">Reset all of the above settings to default.</string>
     <string name="uisetting_resetdefault_title">Reset Default Settings</string>
-
 
     <string name="setting_fileinfoBehavior_a">Send raw</string>
     <string name="setting_fileinfoBehavior_b">Send hashed</string>
