@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.VideoLabel
 import androidx.compose.material.icons.filled.VideoSettings
+import androidx.compose.material.icons.filled.Web
 import androidx.compose.ui.graphics.toArgb
 import app.R
 import app.activities.WatchActivity
@@ -528,6 +529,18 @@ object MySettings {
                 title = "Advanced",
                 icon = Icons.Filled.Stream,
                 settingList = listOf(
+                    Setting(
+                        type = SettingType.SliderSetting,
+                        title = resources.getString(R.string.uisetting_reconnect_interval_title),
+                        summary = resources.getString(R.string.uisetting_reconnect_interval_summary),
+                        defaultValue = 2,
+                        minValue = 0,
+                        maxValue = 15,
+                        key = DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL,
+                        icon = Icons.Filled.Web,
+                        datastorekey = ds,
+                        styling = ss,
+                    ),
                     Setting(
                         type = SettingType.OneClickSetting,
                         title = resources.getString(R.string.uisetting_resetdefault_title),

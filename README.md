@@ -33,7 +33,7 @@
 ## Introduction
 
 [![OS - Android](https://img.shields.io/badge/OS-Android-yellowgreen?style=for-the-badge&logo=android)]()
-[![Version Release](https://img.shields.io/badge/Version-0.11.0-ffd700?style=for-the-badge&logo=v)]()
+[![Version Release](https://img.shields.io/badge/Version-0.11.1-ffd700?style=for-the-badge&logo=v)]()
 [![Written Language](https://img.shields.io/badge/Made%20with-Kotlin-lightgrey?style=for-the-badge&logo=kotlin)]()
 [![is Maintained?](https://img.shields.io/badge/Maintained-YES-green?style=for-the-badge)]()
 [![License](https://img.shields.io/badge/License-AGPL--3.0-brightgreen?style=for-the-badge)]()

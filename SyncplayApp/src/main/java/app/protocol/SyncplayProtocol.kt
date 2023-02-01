@@ -4,6 +4,9 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.datastore.DataStoreKeys
+import app.datastore.DataStoreKeys.DATASTORE_INROOM_PREFERENCES
+import app.datastore.DataStoreUtils.obtainInt
 import app.protocol.JsonHandler.handleJson
 import app.protocol.JsonSender.sendHello
 import app.protocol.JsonSender.sendTLS
@@ -32,6 +35,7 @@ import io.netty.handler.ssl.SslContextBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.InputStream
 import javax.net.ssl.TrustManagerFactory
 
@@ -206,7 +210,9 @@ open class SyncplayProtocol : ViewModel() {
         if (state == STATE_DISCONNECTED) {
             viewModelScope.launch(Dispatchers.IO) {
                 state = STATE_SCHEDULING_RECONNECT
-                delay(3000)
+                val reconnectionInterval =
+                    runBlocking { DATASTORE_INROOM_PREFERENCES.obtainInt(DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL, 2) } * 1000
+                delay(reconnectionInterval.toLong())
                 connect()
             }
         }

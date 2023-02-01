@@ -72,5 +72,9 @@ object DataStoreKeys {
     const val PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP = "pref_inroom_seek_forward_jump"
     const val PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP = "pref_inroom_seek_backward_jump"
 
+    /* Advanced */
+    const val PREF_INROOM_RECONNECTION_INTERVAL = "pref_inroom_reconnection_interval"
+    const val PREF_INROOM_PERFORMANCE_UI_MODE = "pref_inroom_performance_ui_mode"
+    const val PREF_INROOM_RESET_DEFAULT = "pref_inroom_reset_default"
 
 }

@@ -154,9 +154,9 @@
     <string name="setting_display_language_summry">Select your language of choice with which Syncplay is displayed.</string>
     <string name="setting_display_language_toast">Changed language. Restart app for the setting to take full effect.</string>
     <string name="setting_audio_default_language_title">Preferred Audio Track Language</string>
-    <string name="setting_audio_default_language_summry">Automatically load a audio track with the language code you set here.\nFor example, English code is \'ENG\', Japanese is \'JPN\'.\nGoogle \'ISO 639–2 codes\' for more information.</string>
+    <string name="setting_audio_default_language_summry">Automatically load a audio track with the language code you set here.\nFor example, English code is \'en-US\', Japanese is \'ja-JP\'.\nGoogle \'IETF BCP 47 codes\' for more information.</string>
     <string name="setting_cc_default_language_title">Preferred Subtitle Language</string>
-    <string name="setting_cc_default_language_summry">Automatically load a subtitle track with the language code you set here.\nFor example, English code is \'ENG\', Japanese is \'JPN\'.\nGoogle \'ISO 639–2 codes\' for more information.</string>
+    <string name="setting_cc_default_language_summry">Automatically load a subtitle track with the language code you set here.\nFor example, English code is \'en-US\', Japanese is \'ja-JP\'.\nGoogle \'IETF BCP 47 codes\' for more information.</string>
     <string name="setting_use_buffer_title">Use Custom Buffer Sizes</string>
     <string name="setting_use_buffer_summary">If you are not satisfied with the player\'s video load times before and during
         playback, you can use custom buffer sizes (Use at your own risk).</string>
@@ -225,6 +225,8 @@
     <string name="uisetting_seek_forward_jump_title">Seek forward jump amount (seconds) </string>
     <string name="uisetting_seek_backward_jump_summary">Specifies how many seconds a seek-backward should rewind. Default is 10 seconds.</string>
     <string name="uisetting_seek_backward_jump_title">Seek backward jump amount (seconds) </string>
+    <string name="uisetting_reconnect_interval_summary">How many seconds to wait for reconnection on each failure of connection or disconneciton. Default is 2 seconds.</string>
+    <string name="uisetting_reconnect_interval_title">Reconnection interval</string>
 
     <string name="uisetting_resetdefault_summary">Reset all of the above settings to default.</string>
     <string name="uisetting_resetdefault_title">Reset Default Settings</string>

@@ -11,10 +11,13 @@ import androidx.lifecycle.lifecycleScope
 import app.R
 import app.activities.WatchActivity
 import app.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
+import app.datastore.DataStoreKeys.PREF_AUDIO_LANG
+import app.datastore.DataStoreKeys.PREF_CC_LANG
 import app.datastore.DataStoreKeys.PREF_MAX_BUFFER
 import app.datastore.DataStoreKeys.PREF_MIN_BUFFER
 import app.datastore.DataStoreKeys.PREF_SEEK_BUFFER
 import app.datastore.DataStoreUtils.obtainInt
+import app.datastore.DataStoreUtils.obtainString
 import app.protocol.JsonSender
 import app.utils.MiscUtils.hideSystemUI
 import app.utils.MiscUtils.string
@@ -29,6 +32,7 @@ import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.Tracks
+import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.trackselection.TrackSelectionOverride
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.CaptionStyleCompat
@@ -231,9 +235,20 @@ object ExoUtils {
         if (minBuffer < (playbackBuffer + 500)) minBuffer = playbackBuffer + 500
         val loadControl = DefaultLoadControl.Builder().setBufferDurationsMs(minBuffer, maxBuffer, playbackBuffer, playbackBuffer + 500).build()
 
+        /** Track language preferences */
+        val audioPreference = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainString(PREF_AUDIO_LANG, "und") }
+        val ccPreference = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainString(PREF_CC_LANG, "eng") }
+
+        val trackSelector = DefaultTrackSelector(this)
+        val params = trackSelector.buildUponParameters().setPreferredAudioLanguage(audioPreference)
+            .setPreferredTextLanguage(ccPreference)
+            .build()
+        trackSelector.parameters = params
+
         /** Building EXOPLAYER with that loadcontrol **/
         val myExoPlayer = ExoPlayer.Builder(this)
             .setLoadControl(loadControl) /* We use the custom LoadControl we initialized before */
+            .setTrackSelector(trackSelector)
             .setRenderersFactory(
                 DefaultRenderersFactory(this).setExtensionRendererMode(
                     DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER /* We prefer extensions, such as FFmpeg */

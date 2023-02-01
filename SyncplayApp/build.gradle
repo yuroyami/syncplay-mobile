@@ -17,11 +17,11 @@ android {
         }
     }
     defaultConfig {
-        applicationId "com.reddnek.syncplay.revamp"
+        applicationId "com.reddnek.syncplay"
         minSdk 26
         targetSdk 32
-        versionCode 1000011000 /* 1 000 011 000 */
-        versionName "0.11.0"
+        versionCode 1000011001 /* 1 000 011 000 */
+        versionName "0.11.1"
         resConfigs "en", "ar", "zh", "fr" //To use with AppCompatDelegate.setApplicationLocale
         signingConfig signingConfigs.github
     }
