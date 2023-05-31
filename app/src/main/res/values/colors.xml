@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="sp1">#FFFFC604</color>
+    <color name="sp2">#FFFF7136</color>
+    <color name="sp3">#FFFF2861</color>
+    <color name="sp_highlight">#FFE9A6</color>
+    <color name="sp_shade">#FF5C87</color>
+    <color name="sp_screener">#FF1530</color>
+</resources>

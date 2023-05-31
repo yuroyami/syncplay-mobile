@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/exoview"
+        android:alpha="0"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000"
+        app:keep_content_on_player_reset="true"
+        app:show_buffering="never"
+        app:show_shuffle_button="false"
+        app:shutter_background_color="#000000"
+        app:surface_type="surface_view"
+        app:use_artwork="false"
+        app:use_controller="false" />
+
+    <app.player.mpv.MPVView
+        android:id="@+id/mpvview"
+        android:alpha="0"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/compose"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+</FrameLayout>
