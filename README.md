@@ -5,7 +5,7 @@
   </a>
 </p>
 <p align="center">
-  <b> Syncplay BETA - The Unofficial Android Client </b>
+  <b> Syncplay - The Unofficial Android Client </b>
 </p>
 <p align="center">
   <a href="https://apt.izzysoft.de/fdroid/index/apk/com.reddnek.syncplay">
@@ -33,18 +33,18 @@
 ## Introduction
 
 [![OS - Android](https://img.shields.io/badge/OS-Android-yellowgreen?style=for-the-badge&logo=android)]()
-[![Version Release](https://img.shields.io/badge/Version-0.11.1-ffd700?style=for-the-badge&logo=v)]()
+[![Version Release](https://img.shields.io/badge/Version-0.12.0-f6abb6?style=for-the-badge&logo=v)]()
 [![Written Language](https://img.shields.io/badge/Made%20with-Kotlin-lightgrey?style=for-the-badge&logo=kotlin)]()
 [![is Maintained?](https://img.shields.io/badge/Maintained-YES-green?style=for-the-badge)]()
 [![License](https://img.shields.io/badge/License-AGPL--3.0-brightgreen?style=for-the-badge)]()
 [![Status](https://img.shields.io/badge/Status-BETA-0cf?style=for-the-badge&logo=statuspage)]()
 [![Requirement](https://img.shields.io/badge/REQUIREMENT-Android%205.0%20and%20later-blueviolet?style=for-the-badge&logo=android%20studio)]()
 
-Syncplay Android is the unofficial Android port for the amazing free software that synchronises
-media players so that faraway friends can watch videos together, Syncplay.
+Introducing Syncplay Android, an app that brings the remarkable functionality of Syncplay PC to the Android platform. With Syncplay Android, you can synchronize media playback with your friends, allowing you to watch videos together, even when you're physically apart.
 
-Syncplay Android, which is still in its beta release, brings the most important functions that
-Syncplay on Desktop has, and ports it to Android flawlessly, such as real-time chat functionality.
+In its beta release, Syncplay Android faithfully replicates the core features found in the desktop version of Syncplay. This includes real-time chat functionality, enabling seamless communication while enjoying synchronized playback on your Android device.
+
+Experience the convenience of Syncplay on your Android device and enjoy shared video watching with friends. Embrace the joy of shared entertainment with Syncplay Android.
 
 **Cannot run on Android versions below Android 8.0 (Codename: Oreo)**
 
@@ -55,19 +55,16 @@ Syncplay on Desktop has, and ports it to Android flawlessly, such as real-time c
 
 ## Features
 
-* Flawless interoperability with Syncplay's official desktop client and other Syncplay BETA Android
-  clients.
-* Same base functionality as Syncplay for Desktop. The Syncplay protocol was re-written from Python
-  to Kotlin line by line.
-* Integrated lightning-speed video player, whose capabilities depend on your device.
-* Real-time chat functionality, with emojis support.
-* A huge set of settings and preferences to tweak and customize your client.
-* Supports all audio track formats.
-* Supports loading custom external subtitle files.
-* No delay or latency opening the app or the room.
-* App written in efficient native Kotlin code, reassurring the optimal performance.
-* Multi-language support (Available Language: English, Arabic. More languages on the way)
-* Supports Android 8.0 Oreo up to Android 13 Tiramisu.
+* Seamless compatibility with Syncplay's official PC client and other Syncplay Android clients.
+* Offers the same core functionality as Syncplay for PC, with a meticulously rewritten Syncplay protocol from Python to Kotlin.
+* Integrated 2 high-performance video players (ExoPlayer and mpv) tailored to your device's capabilities and beyond.
+* Real-time colorful chat functionality, including support for emojis.
+* Extensive range of settings and preferences for customization.
+* Supports all audio track formats and most video formats.
+* Ability to load custom external subtitle files.
+* Efficient native Kotlin codebase for optimal performance.
+* Multi-language support (Currently available in English, Chinese, French and Arabic, with more languages coming soon).
+* Compatible with Android 8.0 Oreo up to the latest Android 14 UpsideDownCake release.
 
 <p align="center">
   <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS2.png" width="30%">
@@ -78,11 +75,10 @@ Syncplay on Desktop has, and ports it to Android flawlessly, such as real-time c
 
 Usage is fairly simple:
 - Download the latest release APK from [here](https://github.com/chromaticnoob/syncplay-android/releases/latest).
-- Uninstall any old version you have, then install the latest release APK you downloaded (To make sure installation goes smoothly).
-- Open Syncplay.
-- Specify a username of your choice, a room name of your choice (Tell your friends about it)
+- Install the APK. If any installation issues arise, uninstall the previous version of the app before installing the new one.
+- Open Syncplay. Specify a username of your choice, a room name of your choice (Tell your friends about it)
 - Select a server from the list (Tell your friends about this one too)
-- Click JOIN/CREATE Room. You will be taken to the Room screen. You're all set. Tell your friends to join the same room and server.
+- Click "Join Room". You will be taken to the Room screen. You're all set. Tell your friends to join the same room and server.
 - Ta-Dah ! Just load the same video file as your friends and enjoy the synchronized playback.
 
 ## Roadmap
@@ -99,18 +95,25 @@ These are the things I am willing to add/adjust in the future :
   - [x] French
   - [x] Chinese (by [Zhaodaidai](https://github.com/Zhaodaidai))
 
+## Components and architecture
+
+* <b>UI:</b> Jetpack Compose
+* <b>Architecture:</b> modular (mostly MVVM)
+* <b>Network backbone:</b> Netty
+* <b>Preferences:</b> Jetpack Datastore
+* <b>Integrated media players:</b> Exoplayer + mpv (Switchable)
+
 ## F.A.Q
 
 * If my friend uses Syncplay on PC, can I watch with them ?
-  <br>-> Yes, you can. Syncplay for Android works perfectly even if there are 100 people in the room,
-  with clients for PC or Android.
+  <br>-> Yes, you can. Syncplay Android is made to be interoperable.
 * I get an error saying "App not installed" upon installing the app. What's wrong ?
   <br>-> Uninstall the older version before installing the new one.
 
 ## Translating
 
 * If you want to contribute with a translation in a language that isn't available in Syncplay, or
-  enhance the actual translations, please refer to #30
+  enhance the actual translations, please refer to [#30](https://github.com/chromaticnoob/syncplay-android/issues/30)
 
 ## Feedback
 
@@ -120,11 +123,11 @@ If there's anything you'd like to chat about, please feel free to open a new dis
 
 ## Build Process
 
-The project is developed under Android Studio Giraffe | 2022.3.1
-Make sure you have a version equal or later than the one I am using. Dowload the source code ZIP and
+The project is developed under Android Studio Hedgehog | 2023.3.1
+Make sure you have a version equal or later than the one I am using (Or you will need to downgrade Gradle plugins). Download the source code ZIP and
 extract it somewhere, then open it using Android Studio. Then you can just build the app using a
 custom JKS keystore of your choice (Edit the keystore information on the
-module's ```build.gradle```).
+module's ```build.gradle.kts```).
 
 ## Acknowledgments
 
@@ -136,6 +139,8 @@ for lending a hand in our issues tracker section.
 
 Thanks to [Zhaodaidai](https://www.github.com/Zhaodaidai) for their contribution with the Chinese
 translation for the app.
+
+Thanks to [soredake](https://www.github.com/soredake) for their thorough testing.
 
 ## License
 
