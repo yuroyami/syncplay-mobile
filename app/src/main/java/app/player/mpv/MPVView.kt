@@ -23,6 +23,7 @@ import kotlin.math.abs
 import kotlin.reflect.KProperty
 
 class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(context, attrs), SurfaceHolder.Callback {
+
     fun initialize(configDir: String) {
         MPVLib.create(this.context)
         MPVLib.setOptionString("config", "yes")
@@ -210,7 +211,8 @@ class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(context, attr
             Property("loop-playlist"),
             Property("loop-file"),
             Property("shuffle", MPV_FORMAT_FLAG),
-            Property("hwdec-current")
+            Property("hwdec-current"),
+            Property("file-size", MPV_FORMAT_INT64)
         )
 
         for ((name, format) in p)
@@ -223,48 +225,6 @@ class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(context, attr
 
     fun removeObserver(o: MPVLib.EventObserver) {
         MPVLib.removeObserver(o)
-    }
-
-    data class Track(val mpvId: Int, val name: String)
-
-    var tracks = mapOf<String, MutableList<Track>>(
-        "audio" to arrayListOf(),
-        "video" to arrayListOf(),
-        "sub" to arrayListOf()
-    )
-
-    fun loadTracks() {
-        for (list in tracks.values) {
-            list.clear()
-            // pseudo-track to allow disabling audio/subs
-            list.add(Track(-1, context.getString(R.string.off)))
-        }
-        val count = MPVLib.getPropertyInt("track-list/count")!!
-        // Note that because events are async, properties might disappear at any moment
-        // so use ?: continue instead of !!
-        for (i in 0 until count) {
-            val type = MPVLib.getPropertyString("track-list/$i/type") ?: continue
-            if (!tracks.containsKey(type)) {
-                Log.w(TAG, "Got unknown track type: $type")
-                continue
-            }
-            val mpvId = MPVLib.getPropertyInt("track-list/$i/id") ?: continue
-            val lang = MPVLib.getPropertyString("track-list/$i/lang")
-            val title = MPVLib.getPropertyString("track-list/$i/title")
-
-            val trackName = if (!lang.isNullOrEmpty() && !title.isNullOrEmpty())
-                context.getString(R.string.ui_track_title_lang, mpvId, title, lang)
-            else if (!lang.isNullOrEmpty() || !title.isNullOrEmpty())
-                context.getString(R.string.ui_track_text, mpvId, (lang ?: "") + (title ?: ""))
-            else
-                context.getString(R.string.ui_track, mpvId)
-            tracks.getValue(type).add(
-                Track(
-                    mpvId = mpvId,
-                    name = trackName
-                )
-            )
-        }
     }
 
     data class PlaylistItem(val index: Int, val filename: String, val title: String?)
@@ -323,25 +283,6 @@ class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(context, attr
 
     val videoAspect: Double?
         get() = MPVLib.getPropertyDouble("video-params/aspect")
-
-    class TrackDelegate {
-        operator fun getValue(thisRef: Any?, property: KProperty<*>): Int {
-            val v = MPVLib.getPropertyString(property.name)
-            // we can get null here for "no" or other invalid value
-            return v?.toIntOrNull() ?: -1
-        }
-
-        operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Int) {
-            if (value == -1)
-                MPVLib.setPropertyString(property.name, "no")
-            else
-                MPVLib.setPropertyInt(property.name, value)
-        }
-    }
-
-    var vid: Int by TrackDelegate()
-    var sid: Int by TrackDelegate()
-    var aid: Int by TrackDelegate()
 
     // Commands
 

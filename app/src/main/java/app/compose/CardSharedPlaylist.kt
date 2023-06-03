@@ -98,6 +98,8 @@ object CardSharedPlaylist {
         val spAddFile = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.OpenMultipleDocuments(),
             onResult = { uris ->
+                wentForFilePick = false
+
                 if (uris.isEmpty()) return@rememberLauncherForActivityResult
 
                 for (uri in uris) {
@@ -111,6 +113,8 @@ object CardSharedPlaylist {
         val spAddFolder = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.OpenDocumentTree(),
             onResult = { treeUri ->
+                wentForFilePick = false
+
                 if (treeUri == null) return@rememberLauncherForActivityResult
 
                 contentResolver.takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -121,6 +125,8 @@ object CardSharedPlaylist {
         val spLoadFileNoShuffle = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.OpenDocument(),
             onResult = { uri ->
+                wentForFilePick = false
+
                 if (uri == null) return@rememberLauncherForActivityResult
 
                 val filename = getFileName(uri).toString()
@@ -136,6 +142,8 @@ object CardSharedPlaylist {
         val spLoadFileWithShuffle = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.OpenDocument(),
             onResult = { uri ->
+                wentForFilePick = false
+
                 if (uri == null) return@rememberLauncherForActivityResult
 
                 val filename = getFileName(uri).toString()
@@ -151,6 +159,8 @@ object CardSharedPlaylist {
         val spSaveToFile = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.OpenDocumentTree(),
             onResult = { uri ->
+                wentForFilePick = false
+
                 if (uri == null) return@rememberLauncherForActivityResult
 
                 val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
@@ -199,6 +209,7 @@ object CardSharedPlaylist {
                     ComposeUtils.FancyIcon2(
                         icon = Icons.Filled.NoteAdd, size = Paletting.ROOM_ICON_SIZE, shadowColor = Color.Black,
                         onClick = {
+                            wentForFilePick = true
                             spAddFile.launch(arrayOf("video/*"))
                         }
                     )
@@ -215,6 +226,7 @@ object CardSharedPlaylist {
                     ComposeUtils.FancyIcon2(
                         icon = Icons.Filled.CreateNewFolder, size = Paletting.ROOM_ICON_SIZE, shadowColor = Color.Black,
                         onClick = {
+                            wentForFilePick = true
                             spAddFolder.launch(null)
                         }
                     )
@@ -296,6 +308,7 @@ object CardSharedPlaylist {
                                 leadingIcon = { Icon(imageVector = Icons.Filled.NoteAdd, "", tint = Color.LightGray) },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
+                                    wentForFilePick = true
                                     spAddFile.launch(arrayOf("video/*"))
                                 }
                             )
@@ -328,6 +341,7 @@ object CardSharedPlaylist {
                                 leadingIcon = { Icon(imageVector = Icons.Filled.CreateNewFolder, "", tint = Color.LightGray) },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
+                                    wentForFilePick = true
                                     spAddFolder.launch(null)
                                 }
                             )
@@ -346,6 +360,7 @@ object CardSharedPlaylist {
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Download, "", tint = Color.LightGray) },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
+                                    wentForFilePick = true
                                     spLoadFileNoShuffle.launch(arrayOf("text/plain"))
                                 }
                             )
@@ -362,6 +377,7 @@ object CardSharedPlaylist {
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Download, "", tint = Color.LightGray) },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
+                                    wentForFilePick = true
                                     spLoadFileWithShuffle.launch(arrayOf("text/plain"))
                                 }
                             )
@@ -382,6 +398,8 @@ object CardSharedPlaylist {
                                         toasty("Shared Playlist is empty. Nothing to save.")
                                         return@DropdownMenuItem
                                     }
+
+                                    wentForFilePick = true
 
                                     spSaveToFile.launch(null)
                                 }

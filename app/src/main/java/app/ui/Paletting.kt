@@ -41,8 +41,8 @@ object Paletting {
     val BG_DARK_2 = Color(50, 50, 50)
     val BG_Gradient_DARK = listOf(BG_DARK_1, BG_DARK_2, BG_DARK_1)
 
-    val BG_LIGHT_1 = Color(180, 180, 180)
-    val BG_LIGHT_2 = Color(247, 247, 247)
+    val BG_LIGHT_1 = Color(141, 141, 141, 255)
+    val BG_LIGHT_2 = Color(223, 220, 220, 255)
     val BG_Gradient_LIGHT = listOf(BG_LIGHT_1, BG_LIGHT_2, BG_LIGHT_1)
 
     val SHADER_GRADIENT = listOf(

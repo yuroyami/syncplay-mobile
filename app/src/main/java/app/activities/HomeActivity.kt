@@ -2,6 +2,7 @@ package app.activities
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -92,6 +93,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.core.content.pm.ShortcutInfoCompat
+import androidx.core.content.pm.ShortcutManagerCompat
+import androidx.core.graphics.drawable.IconCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -561,7 +565,6 @@ class HomeActivity : ComponentActivity() {
 
                                 Spacer(modifier = Modifier.height(12.dp))
 
-
                                 if (!serverIsPublic) {
                                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                                         TextField(
@@ -659,13 +662,45 @@ class HomeActivity : ComponentActivity() {
                             }
 
                             /* Buttons */
-                            Row(horizontalArrangement = Arrangement.Center) {
-
+                            Column {
                                 /* shortcut button */
                                 Button(
                                     border = BorderStroke(width = 2.dp, color = MaterialTheme.colorScheme.primary),
-                                    modifier = Modifier.fillMaxWidth(0.5f).padding(8.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.7f)
+                                        .padding(8.dp),
                                     onClick = {
+
+                                        val shortcutIntent = Intent(this@HomeActivity, HomeActivity::class.java)
+                                        shortcutIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        shortcutIntent.action = Intent.ACTION_MAIN
+                                        shortcutIntent.putExtra("quickLaunch", true)
+                                        shortcutIntent.putExtra("name", textUsername.trim())
+                                        shortcutIntent.putExtra("room", textRoomname.trim())
+                                        shortcutIntent.putExtra("serverip", serverAddress.trim())
+                                        shortcutIntent.putExtra("serverport", serverPort.toIntOrNull() ?: 0)
+                                        shortcutIntent.putExtra("serverpw", serverPassword)
+
+                                        val shortcutId = "$textUsername$textRoomname$serverAddress"
+                                        val shortcutLabel = textRoomname
+                                        val shortcutIcon = IconCompat.createWithResource(this@HomeActivity, R.mipmap.ic_launcher)
+
+                                        val shortcutInfo = ShortcutInfoCompat.Builder(this@HomeActivity, shortcutId)
+                                            .setShortLabel(shortcutLabel)
+                                            .setIcon(shortcutIcon)
+                                            .setIntent(shortcutIntent)
+                                            .build()
+
+                                        ShortcutManagerCompat.addDynamicShortcuts(
+                                            this@HomeActivity,
+                                            listOf(shortcutInfo)
+                                        )
+                                        ShortcutManagerCompat.requestPinShortcut(
+                                            this@HomeActivity,
+                                            shortcutInfo,
+                                            null
+                                        )
+
                                     }
                                 ) {
                                     Icon(imageVector = Icons.Filled.SwitchAccessShortcutAdd, "")
@@ -679,12 +714,17 @@ class HomeActivity : ComponentActivity() {
                                     )
                                 }
 
+                                Spacer(modifier = Modifier.height(10.dp))
+
+
                                 /* Switch player button */
-                                val player = DATASTORE_MISC_PREFS.ds().stringFlow(MISC_PLAYER_ENGINE, "exo").collectAsState(initial = "exo")
+                                val player = DATASTORE_MISC_PREFS.ds().stringFlow(MISC_PLAYER_ENGINE, "mpv").collectAsState(initial = "mpv")
 
                                 Button(
                                     border = BorderStroke(width = 2.dp, color = MaterialTheme.colorScheme.primary),
-                                    modifier = Modifier.fillMaxWidth(0.99f).padding(8.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth(0.7f)
+                                        .padding(8.dp),
                                     onClick = {
                                         lifecycleScope.launch {
                                             DATASTORE_MISC_PREFS.ds().writeString(
@@ -699,7 +739,9 @@ class HomeActivity : ComponentActivity() {
                                             Image(
                                                 painter = painterResource(id = R.drawable.exoplayer),
                                                 contentDescription = "",
-                                                modifier = Modifier.size(24.dp).padding(2.dp)
+                                                modifier = Modifier
+                                                    .size(24.dp)
+                                                    .padding(2.dp)
                                             )
 
                                             Text(
@@ -709,11 +751,14 @@ class HomeActivity : ComponentActivity() {
                                                 fontSize = 10.sp
                                             )
                                         }
-                                        "mpv" ->  {
+
+                                        "mpv" -> {
                                             Image(
                                                 painter = painterResource(id = R.drawable.mpv),
                                                 contentDescription = "",
-                                                modifier = Modifier.size(24.dp).padding(2.dp)
+                                                modifier = Modifier
+                                                    .size(24.dp)
+                                                    .padding(2.dp)
                                             )
 
                                             Text(
@@ -732,7 +777,7 @@ class HomeActivity : ComponentActivity() {
                             /* join button */
                             Button(
                                 border = BorderStroke(width = 2.dp, color = MaterialTheme.colorScheme.primary),
-                                modifier = Modifier.fillMaxWidth(0.48f),
+                                modifier = Modifier.fillMaxWidth(0.8f),
                                 onClick = {
                                     /* Trimming whitespaces */
                                     textUsername = textUsername.trim()
@@ -804,11 +849,26 @@ class HomeActivity : ComponentActivity() {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(stringResource(R.string.connect_button_join), fontSize = 18.sp)
                             }
+
+                            Spacer(modifier = Modifier.height(10.dp))
                         }
                     }
                 )
 
                 AProposPopup(aboutpopupState)
+            }
+        }
+
+        /** Maybe there is a shortcut intent */
+        if (intent?.getBooleanExtra("quickLaunch", false) == true) {
+            intent.apply {
+                join(
+                    username = getStringExtra("name") ?: "",
+                    roomname = getStringExtra("room") ?: "",
+                    address = getStringExtra("serverip") ?: "",
+                    port = getIntExtra("serverport", 80),
+                    password = getStringExtra("serverpw") ?: ""
+                )
             }
         }
     }

@@ -60,7 +60,7 @@ object SettingsUI {
         settingcategories: List<SettingCategory>,
         state: MutableState<Int>,
         layoutOrientation: SettingsGridLayout = SettingsGridLayout.SETTINGS_GRID_HORIZONTAL_FLOW,
-        titleSize: Float = 13f,
+        titleSize: Float = 12f,
         cardSize: Float = 64f,
         gridRows: Int = 2,
         gridColumns: Int = 3,

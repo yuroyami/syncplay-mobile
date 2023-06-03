@@ -3,6 +3,13 @@ plugins {
     id("kotlin-android")
 }
 
+val abiCodes = mapOf(
+    "armeabi-v7a" to 1,
+    "arm64-v8a" to 2,
+    "x86" to 3,
+    "x86_64" to 4
+)
+
 android {
 
     compileSdk = 33
@@ -18,7 +25,7 @@ android {
     }
     defaultConfig {
         applicationId = "com.reddnek.syncplay"
-        minSdk = 26
+        minSdk = 23
         targetSdk = 32
         versionCode = 1000012000 /* 1 000 012 000 */
         versionName = "0.12.0"
@@ -28,11 +35,11 @@ android {
     }
     buildTypes {
         release {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
         }
         debug {
             isDebuggable = true
-            applicationIdSuffix = ".debug"
+            applicationIdSuffix = ".new"
         }
     }
     compileOptions {
@@ -49,51 +56,116 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.4.7"
     }
+
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            abiCodes.forEach { (abi, _) ->
+                if (file("$projectDir/src/main/jniLibs/$abi").exists())
+                    include(abi)
+            }
+            isUniversalApk = true
+        }
+    }
+
     packaging {
-        pickFirst("META-INF/LICENSE")
-        pickFirst("META-INF/*.properties")
-        pickFirst("META-INF/AL2.0")
-        pickFirst("META-INF/LGPL2.1")
         pickFirst("META-INF/INDEX.LIST")
-        pickFirst("META-INF/*")
         pickFirst("META-INF/io.netty.versions.properties")
     }
+
+    tasks.register("stripNativeLibs", Exec::class) {
+        /*commandLine("arm64-linux-android-strip")
+        workingDir(file("$projectDir/src/main/jniLibs"))
+        args("-r", "-u", "*.so")*/
+
+        val stripToolMap: Map<String, String> = mapOf(
+            "armeabi-v7a" to "arm-linux-androideabi-strip",
+            "arm64-v8a" to "aarch64-linux-android-strip",
+            "x86" to "i686-linux-android-strip",
+            "x86_64" to "x86_64-linux-android-strip"
+        )
+
+        // Set the working directory where the task will be executed
+        workingDir(file("$projectDir/src/main/jniLibs"))
+
+        // Iterate over each target architecture and create a strip command for it
+        abiCodes.keys.forEach { abi ->
+            val stripTool: String? = stripToolMap[abi]
+            if (stripTool != null) {
+                val stripCommand = project.exec {
+                    // Set the command to the appropriate strip tool for the current target architecture
+                    commandLine(stripTool)
+
+                    // Add arguments to specify the native library files to strip
+                    args("-r", "-u", "$abi/*.so")
+                }
+
+                // Execute the strip command
+                dependsOn(stripCommand)
+            }
+        }
+    }
+
 }
 
 dependencies {
     /* Related to Android APIs and functionality */
-    implementation("androidx.core:core-ktx:1.10.1") /* AndroidX core library - Kotlin ver */
-    implementation("androidx.appcompat:appcompat:1.7.0-alpha02") /* AndroidX's AppCompat library */
-    implementation("androidx.documentfile:documentfile:1.0.1") /* Managing Scoped Storage */
-    implementation("androidx.core:core-splashscreen:1.0.1") /* AndroidX's SplashScreen API */
-    implementation("com.airbnb.android:lottie-compose:6.0.0") /* Lottie Animation */
+    implementation("androidx.core:core-ktx:1.10.1")
 
-    implementation("com.google.code.gson:gson:2.10.1") /* Google's GSON for Json operations */
+    implementation("androidx.appcompat:appcompat:1.7.0-alpha02") {
+        exclude(group = "androidx.core", module = "core")
+    }
+
+    implementation("androidx.documentfile:documentfile:1.0.1") /* Managing Scoped Storage */
+
+    /* AndroidX's SplashScreen API */
+    implementation("androidx.core:core-splashscreen:1.0.1")  {
+        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
+    }
+
+    /* Lottie Animation */
+    implementation("com.airbnb.android:lottie-compose:6.0.0") {
+        exclude(group ="androidx.compose.foundation", module =  "foundation")
+        exclude(group ="androidx.compose.ui", module =  "ui")
+    }
+
+    implementation("com.google.code.gson:gson:2.10.1")
+
     implementation("io.netty:netty-all:4.1.92.Final") /* TCP Network Client library */
 
-    implementation("androidx.datastore:datastore-preferences:1.1.0-alpha04") /* Jetpack Datastore */
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.7.1") //1.6.4
+    implementation("androidx.core:core-google-shortcuts:1.1.0") {
+        exclude(group = "androidx.core", module = "core")
+        exclude(group = "com.google.crypto.tink", module = "tink-android")
+    }
+
+    implementation("androidx.datastore:datastore-preferences:1.1.0-alpha04") {/* Jetpack Datastore */
+        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+    }
 
     val compose = "1.5.0-beta01"
     implementation("androidx.compose.material:material-icons-core:$compose") //Material3 doesn't have icons (BOM)
     implementation("androidx.compose.material:material-icons-extended:$compose") //More Icons (BOM)
-    implementation("androidx.compose.material:material-ripple:$compose") //Ripple effects (BOM)
-    //implementation("androidx.compose.runtime:runtime-livedata:$compose") //LiveData compatibility (BOM)
 
     val material3 = "1.1.0"
     implementation("androidx.compose.material3:material3:$material3") //Material3 + Foundation + UI (core)
-    implementation("androidx.compose.material3:material3-window-size-class:$material3") //Window size utils (BOM)
+    //implementation("androidx.compose.material3:material3-window-size-class:$material3") //Window size utils (BOM)
     //implementation("androidx.constraintlayout:constraintlayout-compose:$material3") /* ConstraintLayout */
 
     /* More compose add-ons */
-    implementation("androidx.constraintlayout:constraintlayout-compose:1.1.0-alpha10") /* ConstraintLayout */
-    //implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.0") //ViewModel for compose
-    implementation("androidx.activity:activity-compose:1.7.2") //Activity compatibility
+    implementation("androidx.constraintlayout:constraintlayout-compose:1.1.0-alpha10")
+    implementation("androidx.activity:activity-compose:1.7.2") {
+        exclude(group ="androidx.compose.ui", module =  "ui")
+    }
     implementation("com.godaddy.android.colorpicker:compose-color-picker-android:0.7.0")
     implementation("com.google.accompanist:accompanist-flowlayout:0.30.1")
 
     //implementation("com.google.android.material:material:1.9.0-alpha02")/* Google's MaterialComponents */
-    implementation("androidx.preference:preference-ktx:1.2.0")/* AndroidX's Preferences - Kotlin ver */
+    implementation("androidx.preference:preference-ktx:1.2.0") {
+        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
+        exclude(group = "androidx.core", module = "core")
+    }
 
     /* Media3 (ExoPlayer + MediaSession etc) */
     val media3_version = "1.0.2"
@@ -105,14 +177,14 @@ dependencies {
     //api("androidx.media3:media3-exoplayer-ima:$media3_version")
     //api("androidx.media3:media3-datasource-cronet:$media3_version")
     implementation("androidx.media3:media3-datasource-okhttp:$media3_version")
-    implementation("androidx.media3:media3-datasource-rtmp:$media3_version")
+    //implementation("androidx.media3:media3-datasource-rtmp:$media3_version")
     implementation("androidx.media3:media3-ui:$media3_version")
-    implementation("androidx.media3:media3-ui-leanback:$media3_version")
+    //implementation("androidx.media3:media3-ui-leanback:$media3_version")
     implementation("androidx.media3:media3-session:$media3_version")
     implementation("androidx.media3:media3-extractor:$media3_version")
-    implementation("androidx.media3:media3-cast:$media3_version")
-    implementation("androidx.media3:media3-exoplayer-workmanager:$media3_version")
-    implementation("androidx.media3:media3-transformer:$media3_version")
+    //implementation("androidx.media3:media3-cast:$media3_version")
+    //implementation("androidx.media3:media3-exoplayer-workmanager:$media3_version")
+    //implementation("androidx.media3:media3-transformer:$media3_version")
     //api("androidx.media3:media3-test-utils:$media3_version")
     //api("androidx.media3:media3-test-utils-robolectric:$media3_version")
     //api("androidx.media3:media3-database:$media3_version")
@@ -122,12 +194,4 @@ dependencies {
 
     /** Unnecessary-for-functionality Libraries */
     //implementation 'org.conscrypt:conscrypt-android:2.5.2' //Will use for TLSv1.3
-
-    /* Related to miscellaneous functionality */
-    //implementation 'com.blankj:utilcodex:1.31.1' //Bunch of useful Android utils
-
-
-    /** Debugging tools */
-    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.11")
-
 }

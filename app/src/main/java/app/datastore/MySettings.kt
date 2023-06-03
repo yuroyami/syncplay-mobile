@@ -4,6 +4,7 @@ import android.util.TypedValue
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BorderColor
 import androidx.compose.material.icons.filled.Brush
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.ClearAll
@@ -26,6 +27,7 @@ import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Opacity
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.PictureInPicture
 import androidx.compose.material.icons.filled.Pin
 import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.SettingsSuggest
@@ -53,6 +55,8 @@ import app.datastore.DataStoreKeys.PREF_INROOM_MSG_BOX_ACTION
 import app.datastore.DataStoreKeys.PREF_INROOM_MSG_FADING_DURATION
 import app.datastore.DataStoreKeys.PREF_INROOM_MSG_FONTSIZE
 import app.datastore.DataStoreKeys.PREF_INROOM_MSG_MAXCOUNT
+import app.datastore.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
+import app.datastore.DataStoreKeys.PREF_INROOM_PIP
 import app.datastore.DataStoreKeys.PREF_REMEMBER_INFO
 import app.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
 import app.settings.Setting
@@ -212,7 +216,7 @@ object MySettings {
 
 
             SettingCategory(
-                title = "Video Player",
+                title = "Exoplayer",
                 icon = Icons.Filled.VideoSettings,
                 settingList = listOf(
                     Setting(
@@ -385,7 +389,7 @@ object MySettings {
                         Setting(
                             type = SettingType.ToggleSetting,
                             title = resources.getString(R.string.uisetting_timestamp_title),
-                            summary = resources.getString(R.string.uisetting_timestamp_title),
+                            summary = resources.getString(R.string.uisetting_timestamp_summary),
                             defaultValue = true,
                             key = PREF_INROOM_MSG_ACTIVATE_STAMP,
                             icon = Icons.Filled.Pin,
@@ -393,10 +397,20 @@ object MySettings {
                             styling = ss,
                         ),
                         Setting(
+                            type = SettingType.ToggleSetting,
+                            title = resources.getString(R.string.uisetting_msgoutline_title),
+                            summary = resources.getString(R.string.uisetting_msgoutline_title),
+                            defaultValue = true,
+                            key = PREF_INROOM_MSG_OUTLINE,
+                            icon = Icons.Filled.BorderColor,
+                            datastorekey = ds,
+                            styling = ss,
+                        ),
+                        Setting(
                             type = SettingType.SliderSetting,
                             title = resources.getString(R.string.uisetting_messagery_alpha_title),
                             summary = resources.getString(R.string.uisetting_messagery_alpha_summary),
-                            defaultValue = 100,
+                            defaultValue = 0,
                             minValue = 0,
                             maxValue = 255,
                             key = PREF_INROOM_MSG_BG_OPACITY,
@@ -410,7 +424,7 @@ object MySettings {
                             summary = resources.getString(R.string.uisetting_msgsize_summary),
                             defaultValue = 10,
                             minValue = 6,
-                            maxValue = 48,
+                            maxValue = 28,
                             key = PREF_INROOM_MSG_FONTSIZE,
                             icon = Icons.Filled.FormatSize,
                             datastorekey = ds,
@@ -434,7 +448,7 @@ object MySettings {
                             summary = resources.getString(R.string.uisetting_msglife_summary),
                             defaultValue = 3,
                             minValue = 1,
-                            maxValue = 30,
+                            maxValue = 10,
                             key = PREF_INROOM_MSG_FADING_DURATION,
                             icon = Icons.Filled.Timer,
                             datastorekey = ds,
@@ -533,6 +547,16 @@ object MySettings {
                 title = "Advanced",
                 icon = Icons.Filled.Stream,
                 settingList = listOf(
+                    Setting(
+                        type = SettingType.ToggleSetting,
+                        title = resources.getString(R.string.uisetting_pip_title),
+                        summary = resources.getString(R.string.uisetting_pip_title),
+                        defaultValue = true,
+                        key = PREF_INROOM_PIP,
+                        icon = Icons.Filled.PictureInPicture,
+                        datastorekey = ds,
+                        styling = ss,
+                    ),
                     Setting(
                         type = SettingType.SliderSetting,
                         title = resources.getString(R.string.uisetting_reconnect_interval_title),

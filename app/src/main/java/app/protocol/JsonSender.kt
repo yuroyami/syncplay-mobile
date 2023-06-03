@@ -62,7 +62,7 @@ object JsonSender {
     fun sendReadiness(isReady: Boolean, manuallyInitiated: Boolean): String {
         val ready: HashMap<String, Boolean> = hashMapOf()
         ready["isReady"] = isReady
-        ready["manuallyInitiated"] = true
+        ready["manuallyInitiated"] = manuallyInitiated
 
         val setting: HashMap<String, Any> = hashMapOf()
         setting["ready"] = ready

@@ -59,6 +59,7 @@ import androidx.constraintlayout.compose.Dimension
 import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import app.R
+import app.activities.WatchActivity
 import app.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
 import app.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
 import app.datastore.DataStoreUtils.ds
@@ -91,6 +92,12 @@ object PopupMediaDirs {
             val dirResult = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.OpenDocumentTree(),
                 onResult = { uri ->
+                    if (this@MediaDirsPopup is WatchActivity) {
+                        this@MediaDirsPopup.apply {
+                            wentForFilePick = false
+                        }
+                    }
+
                     if (uri == null) return@rememberLauncherForActivityResult
 
                     lifecycleScope.launch(Dispatchers.IO) {
@@ -301,6 +308,11 @@ object PopupMediaDirs {
                         border = BorderStroke(width = 1.dp, color = Color.Black),
                         modifier = Modifier.wrapContentWidth(),
                         onClick = {
+                            if (this@MediaDirsPopup is WatchActivity) {
+                                this@MediaDirsPopup.apply {
+                                    wentForFilePick = true
+                                }
+                            }
                             dirResult.launch(null)
                         },
                     ) {

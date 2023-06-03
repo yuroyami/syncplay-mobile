@@ -1,3 +1,5 @@
+-keep class is.xyz.mpv.MPVLib {  *; }
+
 -keep class io.netty.**{*;}
 # netty
 # Get rid of warnings about unreachable but unused classes referred to by Netty

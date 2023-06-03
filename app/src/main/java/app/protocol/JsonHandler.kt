@@ -1,5 +1,6 @@
 package app.protocol
 
+import androidx.compose.runtime.mutableStateOf
 import app.utils.MiscUtils.loggy
 import app.wrappers.MediaFile
 import app.wrappers.User
@@ -39,7 +40,7 @@ object JsonHandler {
             hello.getAsJsonPrimitive("username").asString /* Corrected Username */
         p.sendPacket(JsonSender.sendJoined(p.session.currentRoom))
         p.sendPacket(JsonSender.sendEmptyList())
-        p.sendPacket(JsonSender.sendReadiness(p.ready, false))
+        //p.sendPacket(JsonSender.sendReadiness(p.ready, false))
         p.syncplayBroadcaster?.onConnected()
     }
 
@@ -124,33 +125,37 @@ object JsonHandler {
 
         var indexer = 1 /* This indexer is used to put the main user ahead of others in the list */
         for (user in userkeys) {
-            val USER = User()
-            USER.name = user
-            var userindex = 0
-            if (user != p.session.currentUsername) {
-                userindex = indexer
-                indexer += 1
-            }
-            USER.readiness.value = if (userlist.getAsJsonObject(user).get("isReady").isJsonNull) {
-                null
-            } else {
-                userlist.getAsJsonObject(user).getAsJsonPrimitive("isReady").asBoolean
-            }
+            val USER = User(
+                name = user,
+                index = run {
+                    var userindex = 0
+                    if (user != p.session.currentUsername) {
+                        userindex = indexer
+                        indexer += 1
+                    }
+                    userindex
+                },
+                readiness = if (userlist.getAsJsonObject(user).get("isReady").isJsonNull) {
+                    false
+                } else {
+                    userlist.getAsJsonObject(user).getAsJsonPrimitive("isReady").asBoolean
+                },
+                file = run {
+                    val file = userlist.getAsJsonObject(user).getAsJsonObject("file")
 
-            val file = userlist.getAsJsonObject(user).getAsJsonObject("file")
+                    var mediaFile: MediaFile? = MediaFile()
 
-            var mediaFile: MediaFile? = MediaFile()
+                    if (file.keySet().contains("name")) {
+                        mediaFile?.fileName = file.getAsJsonPrimitive("name").toString()
+                        mediaFile?.fileDuration = file.getAsJsonPrimitive("duration").asDouble
+                        mediaFile?.fileSize = file.getAsJsonPrimitive("size").asString
+                    } else {
+                        mediaFile = null
+                    }
 
-            if (file.keySet().contains("name")) {
-                mediaFile?.fileName = file.getAsJsonPrimitive("name").toString()
-                mediaFile?.fileDuration = file.getAsJsonPrimitive("duration").asDouble
-                mediaFile?.fileSize = file.getAsJsonPrimitive("size").asString
-            } else {
-                mediaFile = null
-            }
-
-            USER.file.value = mediaFile
-            USER.index = userindex
+                    mediaFile
+                }
+            )
 
             p.session.userList.add(USER)
         }

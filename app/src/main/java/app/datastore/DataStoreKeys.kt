@@ -62,6 +62,7 @@ object DataStoreKeys {
 
     /* Message Properties */
     const val PREF_INROOM_MSG_ACTIVATE_STAMP = "pref_inroom_msg_activate_stamp"
+    const val PREF_INROOM_MSG_OUTLINE = "pref_inroom_msg_outline"
     const val PREF_INROOM_MSG_BG_OPACITY = "pref_inroom_msg_bg_opacity"
     const val PREF_INROOM_MSG_FONTSIZE = "pref_inroom_msg_fontsize"
     const val PREF_INROOM_MSG_MAXCOUNT = "pref_inroom_msg_maxcount"
@@ -76,6 +77,7 @@ object DataStoreKeys {
     const val PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP = "pref_inroom_seek_backward_jump"
 
     /* Advanced */
+    const val PREF_INROOM_PIP = "pref_inroom_pip"
     const val PREF_INROOM_RECONNECTION_INTERVAL = "pref_inroom_reconnection_interval"
     const val PREF_INROOM_PERFORMANCE_UI_MODE = "pref_inroom_performance_ui_mode"
     const val PREF_INROOM_RESET_DEFAULT = "pref_inroom_reset_default"

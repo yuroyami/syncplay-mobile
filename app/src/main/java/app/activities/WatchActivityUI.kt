@@ -3,6 +3,7 @@ package app.activities
 import android.annotation.SuppressLint
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.expandIn
@@ -44,6 +45,7 @@ import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.AutoFixHigh
 import androidx.compose.material.icons.filled.BrowseGallery
 import androidx.compose.material.icons.filled.CreateNewFolder
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.DoNotTouch
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FastRewind
@@ -84,10 +86,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -96,6 +100,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.DrawStyle
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
@@ -109,7 +115,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import androidx.constraintlayout.compose.ConstraintLayout
@@ -122,11 +127,15 @@ import app.R
 import app.compose.CardRoomPrefs.InRoomSettingsCard
 import app.compose.CardSharedPlaylist.SharedPlaylistCard
 import app.compose.CardUserInfo.UserInfoCard
+import app.compose.MyComposables.AddVideoButton
+import app.compose.MyComposables.RoomTab
 import app.compose.PopupAddUrl.AddUrlPopup
 import app.compose.PopupChatHistory.ChatHistoryPopup
 import app.compose.PopupSeekToPosition.SeekToPositionPopup
-import app.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
+import app.datastore.DataStoreKeys
 import app.datastore.DataStoreKeys.DATASTORE_INROOM_PREFERENCES
+import app.datastore.DataStoreKeys.DATASTORE_MISC_PREFS
+import app.datastore.DataStoreKeys.MISC_NIGHTMODE
 import app.datastore.DataStoreKeys.PREF_INROOM_COLOR_ERRORMSG
 import app.datastore.DataStoreKeys.PREF_INROOM_COLOR_FRIENDTAG
 import app.datastore.DataStoreKeys.PREF_INROOM_COLOR_SELFTAG
@@ -139,18 +148,22 @@ import app.datastore.DataStoreKeys.PREF_INROOM_MSG_BOX_ACTION
 import app.datastore.DataStoreKeys.PREF_INROOM_MSG_FADING_DURATION
 import app.datastore.DataStoreKeys.PREF_INROOM_MSG_FONTSIZE
 import app.datastore.DataStoreKeys.PREF_INROOM_MSG_MAXCOUNT
+import app.datastore.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
 import app.datastore.DataStoreKeys.PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP
 import app.datastore.DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP
-import app.datastore.DataStoreKeys.PREF_READY_FIRST_HAND
 import app.datastore.DataStoreUtils.booleanFlow
 import app.datastore.DataStoreUtils.ds
 import app.datastore.DataStoreUtils.intFlow
+import app.datastore.DataStoreUtils.obtainBoolean
+import app.datastore.DataStoreUtils.writeBoolean
 import app.protocol.JsonSender
 import app.ui.Paletting
 import app.ui.Paletting.ROOM_ICON_SIZE
 import app.ui.Paletting.backgroundGradient
 import app.utils.ComposeUtils
 import app.utils.ComposeUtils.FancyIcon2
+import app.utils.ComposeUtils.FlexibleFancyAnnotatedText
+import app.utils.ComposeUtils.FlexibleFancyText
 import app.utils.ComposeUtils.gradientOverlay
 import app.utils.MiscUtils.getFileName
 import app.utils.MiscUtils.string
@@ -158,7 +171,6 @@ import app.utils.MiscUtils.timeStamper
 import app.utils.MiscUtils.toasty
 import app.utils.PlayerUtils.pausePlayback
 import app.utils.PlayerUtils.playPlayback
-import app.utils.PlayerUtils.selectTrack
 import app.utils.RoomUtils.sendMessage
 import app.utils.RoomUtils.sendSeek
 import com.google.accompanist.flowlayout.FlowColumn
@@ -166,6 +178,7 @@ import com.google.accompanist.flowlayout.FlowCrossAxisAlignment
 import com.google.accompanist.flowlayout.FlowMainAxisAlignment
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlin.math.roundToInt
 
 object WatchActivityUI {
@@ -184,7 +197,7 @@ object WatchActivityUI {
 
         val hasVideo = remember { hasVideoG }
         val hudVisibility = remember { hudVisibilityState }
-
+        var pipModeObserver by remember { pipMode }
         val locked = remember { mutableStateOf(false) }
 
         val addurlpopupstate = remember { mutableStateOf(false) }
@@ -204,27 +217,23 @@ object WatchActivityUI {
         val colorError = DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_COLOR_ERRORMSG, Paletting.MSG_ERROR.toArgb())
             .collectAsState(initial = Paletting.MSG_ERROR.toArgb())
         val msgIncludeTimestamp = DATASTORE_INROOM_PREFERENCES.ds().booleanFlow(PREF_INROOM_MSG_ACTIVATE_STAMP, true).collectAsState(initial = true)
-        val fadingTimeout = DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_MSG_FADING_DURATION, 3).collectAsState(initial = 3)
-        val msgBoxOpacity = DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_MSG_BG_OPACITY, 100).collectAsState(initial = 100)
+        val fadingTimeout = DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_MSG_FADING_DURATION, 2).collectAsState(initial = 3)
+        val msgBoxOpacity = DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_MSG_BG_OPACITY, 0).collectAsState(initial = 0)
+        val msgOutline = DATASTORE_INROOM_PREFERENCES.ds().booleanFlow(PREF_INROOM_MSG_OUTLINE, true).collectAsState(initial = true)
         val msgFontSize = DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_MSG_FONTSIZE, 9).collectAsState(initial = 9)
         val msgMaxCount by DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_MSG_MAXCOUNT, 10).collectAsState(initial = 0)
         val keyboardOkFunction by DATASTORE_INROOM_PREFERENCES.ds().booleanFlow(PREF_INROOM_MSG_BOX_ACTION, true).collectAsState(initial = true)
         val seekIncrement = DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP, 10).collectAsState(initial = 10)
         val seekDecrement = DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP, 10).collectAsState(initial = 10)
 
-        val setAsReadyFirstHand = DATASTORE_GLOBAL_SETTINGS.ds().booleanFlow(PREF_READY_FIRST_HAND, true).collectAsState(initial = true)
-
-        LaunchedEffect(Unit) {
-            if (!isSoloMode()) {
-                p.sendPacket(JsonSender.sendReadiness(setAsReadyFirstHand.value, true))
-            }
-        }
 
         val seekBckwd = fun() {
             if (player == null) return
 
-            val newPos = (player!!.getPositionMs()) - seekDecrement.value * 1000
-
+            var newPos = (player!!.getPositionMs()) - seekDecrement.value * 1000
+            if (newPos < 0) {
+                newPos = 0
+            }
             if (isSoloMode()) {
                 seeks.add(Pair(player!!.getPositionMs(), newPos * 1000))
             }
@@ -237,8 +246,12 @@ object WatchActivityUI {
         val seekFwd = fun() {
             if (player == null) return
 
-            val newPos = (player!!.getPositionMs()) + seekIncrement.value * 1000
-
+            var newPos = (player!!.getPositionMs()) + seekIncrement.value * 1000
+            if (media != null) {
+                if (newPos > media?.fileDuration!!.toLong()) {
+                    newPos = media?.fileDuration!!.toLong()
+                }
+            }
             if (isSoloMode()) {
                 seeks.add(Pair((player!!.getPositionMs()), newPos * 1000))
             }
@@ -268,7 +281,7 @@ object WatchActivityUI {
                     Image(
                         painter = painterResource(R.drawable.syncplay_logo_gradient), contentDescription = "",
                         modifier = Modifier
-                            .height(84.dp)
+                            .height(if (pipModeObserver) 40.dp else 84.dp)
                             .aspectRatio(1f)
                     )
 
@@ -291,7 +304,7 @@ object WatchActivityUI {
                                     blurRadius = 5f
                                 ),
                                 fontFamily = FontFamily(Font(R.font.directive4bold)),
-                                fontSize = 26.sp,
+                                fontSize = if (pipModeObserver) 8.sp else 26.sp,
                             )
                         )
                         Text(
@@ -302,7 +315,7 @@ object WatchActivityUI {
                                     colors = Paletting.SP_GRADIENT
                                 ),
                                 fontFamily = FontFamily(Font(R.font.directive4bold)),
-                                fontSize = 26.sp,
+                                fontSize = if (pipModeObserver) 8.sp else 26.sp,
                             )
                         )
                     }
@@ -341,7 +354,7 @@ object WatchActivityUI {
                 horizontalAlignment = Alignment.End
             ) {
                 /** Unlock Card */
-                if (unlockButtonVisibility.value) {
+                if (unlockButtonVisibility.value && !pipModeObserver) {
                     Card(
                         modifier = Modifier
                             .width(48.dp)
@@ -394,11 +407,11 @@ object WatchActivityUI {
                 val msg = remember { mutableStateOf("") }
                 val msgCanSend = remember { mutableStateOf(false) }
                 val msgs = if (!isSoloMode()) remember { p.session.messageSequence } else remember { mutableStateListOf() }
-                val ready = remember { mutableStateOf(setAsReadyFirstHand.value) }
+                val ready = remember { mutableStateOf(setReadyDirectly) }
                 val controlcardvisible = remember { mutableStateOf(false) }
                 val addmediacardvisible = remember { mutableStateOf(false) }
 
-                val gestures = remember { mutableStateOf(true) }
+                val gestures = remember { mutableStateOf(false) }
                 val userinfoVisibility = remember { mutableStateOf(false) }
                 val sharedplaylistVisibility = remember { mutableStateOf(false) }
                 val inroomprefsVisibility = remember { mutableStateOf(false) }
@@ -417,6 +430,8 @@ object WatchActivityUI {
                 val mediaPicker = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.OpenDocument(),
                     onResult = { uri ->
+                        wentForFilePick = false
+
                         if (uri == null) return@rememberLauncherForActivityResult
                         addmediacardvisible.value = false
 
@@ -427,37 +442,13 @@ object WatchActivityUI {
                 val subtitlePicker = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.OpenDocument(),
                     onResult = { uri ->
+                        wentForFilePick = false
+
                         if (uri == null) return@rememberLauncherForActivityResult
                         if (media == null) return@rememberLauncherForActivityResult
 
-
-                        if (player?.hasAnyMedia() == true) {
-                            val filename = getFileName(uri = uri).toString()
-                            val extension = filename.substring(filename.length - 4)
-
-                            val mimeType =
-                                if (extension.contains("srt")) MimeTypes.APPLICATION_SUBRIP
-                                else if ((extension.contains("ass"))
-                                    || (extension.contains("ssa"))
-                                ) MimeTypes.TEXT_SSA
-                                else if (extension.contains("ttml")) MimeTypes.APPLICATION_TTML
-                                else if (extension.contains("vtt")) MimeTypes.TEXT_VTT else ""
-
-                            if (mimeType != "") {
-                                media?.externalSub = MediaItem.SubtitleConfiguration.Builder(uri)
-                                    .setUri(uri)
-                                    .setMimeType(mimeType)
-                                    .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
-                                    .build()
-
-                                player?.injectVideo(this@RoomUI)
-
-                                toasty(string(R.string.room_selected_sub, filename))
-                            } else {
-                                toasty(getString(R.string.room_selected_sub_error))
-                            }
-                        } else {
-                            toasty(getString(R.string.room_sub_error_load_vid_first))
+                        with(player ?: return@rememberLauncherForActivityResult) {
+                            loadExternalSub(uri)
                         }
                     }
                 )
@@ -492,13 +483,13 @@ object WatchActivityUI {
                             //TODO: Show errors in red
                             val lastMessages = msgs.toList().takeLast(msgMaxCount)
                             items(lastMessages) {
-                                Text(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable(enabled = false) {}
-                                        .focusable(false),
-                                    overflow = TextOverflow.Ellipsis,
-                                    text = it.factorize(
+                                LaunchedEffect(null) {
+                                    /* If this msg is composed then it's seen, don't use it in fading message */
+                                    it.seen = true
+                                }
+
+                                Box {
+                                    val text = it.factorize(
                                         timestampColor = Color(colorTimestamp.value),
                                         selftagColor = Color(colorSelftag.value),
                                         friendtagColor = Color(colorFriendtag.value),
@@ -506,10 +497,32 @@ object WatchActivityUI {
                                         usermsgColor = Color(colorUserchat.value),
                                         errormsgColor = Color(colorError.value),
                                         includeTimestamp = msgIncludeTimestamp.value
-                                    ),
-                                    lineHeight = (msgFontSize.value + 4).sp,
-                                    fontSize = (msgFontSize.value).sp,
-                                )
+                                    )
+
+                                    FlexibleFancyAnnotatedText(
+                                        modifier =  Modifier.fillMaxWidth().clickable(enabled = false) {}.focusable(false),
+                                        text = text,
+                                        size = if (pipModeObserver) 6f else (msgFontSize.value.toFloat()),
+                                        font = Font(R.font.inter),
+                                        lineHeight = (msgFontSize.value + 4).sp,
+                                        overflow = TextOverflow.Ellipsis,
+                                        shadowSize = 1.5f,
+                                        shadowColors = if (msgOutline.value) listOf(Color.Black) else listOf()
+                                    )
+
+                                    /*
+                                        Text(
+                                            text = text.toString(),
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable(enabled = false) {}
+                                                .focusable(false),
+                                            lineHeight = (msgFontSize.value + 4).sp,
+                                            fontSize = if (pipModeObserver) 6.sp else (msgFontSize.value).sp
+                                        ) */
+                                }
+
                             }
                         }
                     }
@@ -604,7 +617,7 @@ object WatchActivityUI {
                 }
 
                 /** Message input box */
-                if (hudVisibility.value && !isSoloMode()) {
+                if (hudVisibility.value && !isSoloMode() && !pipModeObserver) {
                     OutlinedTextField(
                         modifier = Modifier
                             .alpha(0.75f)
@@ -657,7 +670,7 @@ object WatchActivityUI {
                 }
 
                 /** Overall info (PING + ROOMNAME + OSD Messages) */
-                if (hudVisibility.value && !isSoloMode()) {
+                if (hudVisibility.value && !isSoloMode() && !pipModeObserver) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
@@ -671,16 +684,16 @@ object WatchActivityUI {
                         if (!isSoloMode()) {
                             Row {
                                 Text(
-                                    text = if (p.ping.value < 0) {
+                                    text = if (p.ping.doubleValue < 0) {
                                         "Disconnected"
                                     } else {
-                                        "Connected - ${p.ping.value.toInt()}ms"
+                                        "Connected - ${p.ping.doubleValue.toInt()}ms"
                                     },
                                     color = Paletting.OLD_SP_PINK
                                 )
                                 Spacer(Modifier.width(4.dp))
                                 Image(
-                                    when (p.ping.value) {
+                                    when (p.ping.doubleValue) {
                                         (-1.0) -> painterResource(R.drawable.icon_unconnected)
                                         in (0.0..100.0) -> painterResource(R.drawable.ping_3)
                                         in (100.0..199.0) -> painterResource(R.drawable.ping_2)
@@ -793,8 +806,8 @@ object WatchActivityUI {
                     if (!gestures.value) {
                         Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.constrainAs(fast_seek_buttons) {
                             bottom.linkTo(slider.top, 2.dp)
-                            absoluteLeft.linkTo(slider.absoluteLeft)
-                            absoluteRight.linkTo(slider.absoluteRight)
+                            absoluteLeft.linkTo(play_button.absoluteLeft)
+                            absoluteRight.linkTo(play_button.absoluteRight)
                         }) {
                             FancyIcon2(icon = Icons.Filled.FastRewind, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black) {
                                 seekBckwd()
@@ -805,6 +818,8 @@ object WatchActivityUI {
                             }
                         }
                     }
+
+                    /** PLAY BUTTON */
                     val playing = remember { isNowPlaying }
                     FancyIcon2(icon = when (playing.value) {
                         true -> Icons.Filled.Pause
@@ -970,6 +985,7 @@ object WatchActivityUI {
                                                 }
                                             },
                                             onClick = {
+                                                wentForFilePick = true
                                                 subtitlePicker.launch(arrayOf("*/*"))
                                                 tracksPopup.value = false
                                                 controlcardvisible.value = false
@@ -989,31 +1005,36 @@ object WatchActivityUI {
                                                 }
                                             },
                                             onClick = {
-                                                selectTrack(C.TRACK_TYPE_TEXT, -1)
+                                                with(player ?: return@DropdownMenuItem) {
+                                                    selectTrack(C.TRACK_TYPE_TEXT, -1)
+                                                }
                                                 tracksPopup.value = false
                                                 controlcardvisible.value = false
 
                                             }
                                         )
 
-                                        for ((index, track) in (media?.subtitleExoTracks)?.withIndex() ?: listOf()) {
+                                        for (track in (media?.subtitleTracks) ?: listOf()) {
                                             DropdownMenuItem(
                                                 text = {
                                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                                         Checkbox(checked = track.selected.value, onCheckedChange = {
-                                                            selectTrack(C.TRACK_TYPE_TEXT, index)
+                                                            with(player ?: return@Checkbox) {
+                                                                selectTrack(C.TRACK_TYPE_TEXT, track.index)
+                                                            }
                                                             tracksPopup.value = false
                                                         })
 
-                                                        val trackName = track.format?.label ?: getString(R.string.room_track_track)
                                                         Text(
                                                             color = Color.LightGray,
-                                                            text = "$trackName [${track.format?.language?.uppercase() ?: "UND"}]"
+                                                            text = track.name
                                                         )
                                                     }
                                                 },
                                                 onClick = {
-                                                    selectTrack(C.TRACK_TYPE_TEXT, index)
+                                                    with(player ?: return@DropdownMenuItem) {
+                                                        selectTrack(C.TRACK_TYPE_TEXT, track.index)
+                                                    }
                                                     tracksPopup.value = false
                                                     controlcardvisible.value = false
 
@@ -1050,23 +1071,26 @@ object WatchActivityUI {
                                             font = Font(R.font.directive4bold)
                                         )
 
-                                        for ((index, track) in (media?.audioExoTracks)?.withIndex() ?: listOf()) {
+                                        for (track in (media?.audioTracks ?: listOf())) {
                                             DropdownMenuItem(text = {
                                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                                     Checkbox(checked = track.selected.value, onCheckedChange = {
-                                                        selectTrack(C.TRACK_TYPE_AUDIO, index)
+                                                        with(player ?: return@Checkbox) {
+                                                            selectTrack(C.TRACK_TYPE_AUDIO, track.index)
+                                                        }
                                                         tracksPopup.value = false
                                                     })
 
-                                                    val trackName = track.format?.label ?: getString(R.string.room_track_track)
                                                     Text(
                                                         color = Color.LightGray,
-                                                        text = "$trackName [${track.format?.language?.uppercase() ?: "UND"}]"
+                                                        text = track.name
                                                     )
                                                 }
                                             },
                                                 onClick = {
-                                                    selectTrack(C.TRACK_TYPE_AUDIO, index)
+                                                    with(player ?: return@DropdownMenuItem) {
+                                                        selectTrack(C.TRACK_TYPE_AUDIO, track.index)
+                                                    }
                                                     tracksPopup.value = false
                                                 }
                                             )
@@ -1080,16 +1104,16 @@ object WatchActivityUI {
 
                 if (hudVisibility.value) {
                     /** The button of adding media and its card */
-                    FancyIcon2(
-                        modifier = Modifier.constrainAs(addmediabutton) {
+                    AddVideoButton(
+                        Modifier.constrainAs(addmediabutton) {
                             bottom.linkTo(parent.bottom, 8.dp)
                             end.linkTo(parent.end, 12.dp)
                         },
-                        icon = Icons.Filled.AddToQueue, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black,
                         onClick = {
                             addmediacardvisible.value = !addmediacardvisible.value
                             controlcardvisible.value = false
-                        })
+                        }
+                    )
 
                     AnimatedVisibility(addmediacardvisible.value,
                         modifier = Modifier
@@ -1107,6 +1131,7 @@ object WatchActivityUI {
                             Column(modifier = Modifier.padding(6.dp)) {
                                 /* Add file from storage */
                                 FancyIcon2(icon = Icons.Filled.CreateNewFolder, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
+                                    wentForFilePick = true
                                     mediaPicker.launch(arrayOf("video/*"))
                                 }
 
@@ -1129,179 +1154,31 @@ object WatchActivityUI {
                             }) {
 
                         /** In-room settings */
-                        Card(
-                            modifier = Modifier
-                                .width(48.dp)
-                                .aspectRatio(1f)
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = rememberRipple(color = Paletting.SP_ORANGE)
-                                ) {
-                                    sharedplaylistVisibility.value = false
-                                    userinfoVisibility.value = false
-                                    inroomprefsVisibility.value = !inroomprefsVisibility.value
-
-                                },
-                            shape = RoundedCornerShape(6.dp),
-                            border = if (inroomprefsVisibility.value) {
-                                null
-                            } else {
-                                BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT))
-                            },
-                            colors = CardDefaults.cardColors(containerColor = if (inroomprefsVisibility.value) Color.Transparent else MaterialTheme.colorScheme.tertiaryContainer),
-                            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 6.dp),
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(
-                                        brush = if (inroomprefsVisibility.value) {
-                                            Brush.linearGradient(colors = Paletting.SP_GRADIENT)
-                                        } else {
-                                            Brush.Companion.linearGradient(listOf(Color.Transparent, Color.Transparent))
-                                        }
-                                    )
-                            ) {
-                                if (inroomprefsVisibility.value) {
-                                    Icon(
-                                        tint = Color.DarkGray,
-                                        imageVector = Icons.Filled.AutoFixHigh,
-                                        contentDescription = "",
-                                        modifier = Modifier
-                                            .size(32.dp)
-                                            .align(Alignment.Center)
-                                    )
-                                } else {
-                                    Icon(
-                                        imageVector = Icons.Filled.AutoFixHigh,
-                                        contentDescription = "",
-                                        modifier = Modifier
-                                            .size(32.dp)
-                                            .align(Alignment.Center)
-                                            .gradientOverlay()
-                                    )
-                                }
-
-                            }
+                       RoomTab(icon = Icons.Filled.AutoFixHigh, visibilityState = inroomprefsVisibility.value) {
+                            sharedplaylistVisibility.value = false
+                            userinfoVisibility.value = false
+                            inroomprefsVisibility.value = !inroomprefsVisibility.value
                         }
 
                         Spacer(Modifier.width(12.dp))
 
                         /** Shared Playlist */
                         if (!isSoloMode()) {
-                            Card(
-                                modifier = Modifier
-                                    .width(48.dp)
-                                    .aspectRatio(1f)
-                                    .clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = rememberRipple(color = Paletting.SP_ORANGE)
-                                    ) {
-                                        sharedplaylistVisibility.value = !sharedplaylistVisibility.value
-                                        userinfoVisibility.value = false
-                                        inroomprefsVisibility.value = false
-                                    },
-                                shape = RoundedCornerShape(6.dp),
-                                border = if (sharedplaylistVisibility.value) {
-                                    null
-                                } else {
-                                    BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT))
-                                },
-                                colors = CardDefaults.cardColors(containerColor = if (sharedplaylistVisibility.value) Color.Transparent else MaterialTheme.colorScheme.tertiaryContainer),
-                                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 6.dp),
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(
-                                            brush = if (sharedplaylistVisibility.value) {
-                                                Brush.linearGradient(colors = Paletting.SP_GRADIENT)
-                                            } else {
-                                                Brush.Companion.linearGradient(listOf(Color.Transparent, Color.Transparent))
-                                            }
-                                        )
-                                ) {
-                                    if (sharedplaylistVisibility.value) {
-                                        Icon(
-                                            tint = Color.DarkGray,
-                                            imageVector = Icons.Filled.PlaylistPlay,
-                                            contentDescription = "",
-                                            modifier = Modifier
-                                                .size(32.dp)
-                                                .align(Alignment.Center)
-                                        )
-                                    } else {
-                                        Icon(
-                                            imageVector = Icons.Filled.PlaylistPlay,
-                                            contentDescription = "",
-                                            modifier = Modifier
-                                                .size(32.dp)
-                                                .align(Alignment.Center)
-                                                .gradientOverlay()
-                                        )
-                                    }
-
-                                }
+                            RoomTab(icon = Icons.Filled.PlaylistPlay, visibilityState = sharedplaylistVisibility.value) {
+                                sharedplaylistVisibility.value = !sharedplaylistVisibility.value
+                                userinfoVisibility.value = false
+                                inroomprefsVisibility.value = false
                             }
 
                             Spacer(Modifier.width(12.dp))
-
                         }
+
                         /** User Info card tab */
                         if (!isSoloMode()) {
-                            Card(
-                                modifier = Modifier
-                                    .width(48.dp)
-                                    .aspectRatio(1f)
-                                    .clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = rememberRipple(color = Paletting.SP_ORANGE)
-                                    ) {
-                                        userinfoVisibility.value = !userinfoVisibility.value
-                                        sharedplaylistVisibility.value = false
-                                        inroomprefsVisibility.value = false
-
-                                    },
-                                shape = RoundedCornerShape(6.dp),
-                                border = if (userinfoVisibility.value) {
-                                    null
-                                } else {
-                                    BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT))
-                                },
-                                colors = CardDefaults.cardColors(containerColor = if (userinfoVisibility.value) Color.Transparent else MaterialTheme.colorScheme.tertiaryContainer),
-                                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 6.dp),
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(
-                                            brush = if (userinfoVisibility.value) {
-                                                Brush.linearGradient(colors = Paletting.SP_GRADIENT)
-                                            } else {
-                                                Brush.Companion.linearGradient(listOf(Color.Transparent, Color.Transparent))
-                                            }
-                                        )
-                                ) {
-                                    if (userinfoVisibility.value) {
-                                        Icon(
-                                            tint = Color.DarkGray,
-                                            imageVector = Icons.Filled.Groups,
-                                            contentDescription = "",
-                                            modifier = Modifier
-                                                .size(32.dp)
-                                                .align(Alignment.Center)
-                                        )
-                                    } else {
-                                        Icon(
-                                            imageVector = Icons.Filled.Groups,
-                                            contentDescription = "",
-                                            modifier = Modifier
-                                                .size(32.dp)
-                                                .align(Alignment.Center)
-                                                .gradientOverlay()
-                                        )
-                                    }
-                                }
+                            RoomTab(icon = Icons.Filled.Groups, visibilityState = userinfoVisibility.value) {
+                                userinfoVisibility.value = !userinfoVisibility.value
+                                sharedplaylistVisibility.value = false
+                                inroomprefsVisibility.value = false
                             }
 
                             Spacer(Modifier.width(12.dp))
@@ -1309,32 +1186,9 @@ object WatchActivityUI {
 
 
                         /** Lock card */
-                        Card(
-                            modifier = Modifier
-                                .width(48.dp)
-                                .aspectRatio(1f)
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = rememberRipple(color = Paletting.SP_ORANGE)
-                                ) {
-                                    locked.value = true
-                                },
-                            shape = RoundedCornerShape(6.dp),
-                            border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT)),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
-                            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 6.dp),
-                        ) {
-                            Box(modifier = Modifier.fillMaxSize()) {
-                                Icon(
-                                    imageVector = Icons.Filled.Lock,
-                                    contentDescription = "",
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .align(Alignment.Center)
-                                        .gradientOverlay()
-                                )
-
-                            }
+                        RoomTab(icon = Icons.Filled.Lock, visibilityState = false) {
+                            locked.value = true
+                            hudVisibility.value = false
                         }
 
                         Spacer(Modifier.width(6.dp))
@@ -1390,6 +1244,43 @@ object WatchActivityUI {
                                         }
                                     )
                                 }
+
+                                /* Toggle Dark mode */
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(
+                                                modifier = Modifier.padding(2.dp),
+                                                imageVector = Icons.Filled.DarkMode, contentDescription = "",
+                                                 tint = Color.LightGray
+                                            )
+
+                                            Spacer(Modifier.width(8.dp))
+
+                                            Text(
+                                                color = Color.LightGray,
+                                                text = "Toggle night-mode"
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        overflowmenustate.value = false
+
+                                        val newMode = runBlocking {
+                                            !DATASTORE_MISC_PREFS.obtainBoolean(MISC_NIGHTMODE, true)
+                                        }
+
+                                        if (newMode) {
+                                            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+                                        } else {
+                                            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+                                        }
+
+                                        lifecycleScope.launch {
+                                            DATASTORE_MISC_PREFS.writeBoolean(MISC_NIGHTMODE, newMode)
+                                        }
+                                    }
+                                )
 
                                 /* Leave room item */
                                 DropdownMenuItem(
@@ -1483,33 +1374,35 @@ object WatchActivityUI {
 
         /** The layout for the fading messages & OSD messages (when HUD is hidden, or when screen is locked) */
         if (!isSoloMode()) {
-            if (locked.value || (!locked.value && !hudVisibility.value)) {
+            if (!hudVisibility.value) {
                 ConstraintLayout(modifier = Modifier.fillMaxSize()) {
 
-                    val (fadingmsg, osdmsg) = createRefs()
+                    val (fadingmsg) = createRefs()
 
-                    val fadingMsgVisibility = remember { fadingMsg }
+                    var visibility by remember { mutableStateOf(false) }
+
+                    LaunchedEffect(p.session.messageSequence.size) {
+                        val lastMsg = p.session.messageSequence.last()
+
+                        if (!lastMsg.isMainUser && !lastMsg.seen) {
+                            visibility = true
+                            delay(fadingTimeout.value.toLong() * 1000L)
+                            visibility = false
+                        }
+                    }
 
                     AnimatedVisibility(
                         enter = fadeIn(animationSpec = keyframes { durationMillis = 100 }),
                         exit = fadeOut(animationSpec = keyframes { durationMillis = 500 }),
-                        visible = fadingMsgVisibility.value,
+                        visible = visibility,
                         modifier = Modifier.constrainAs(fadingmsg) {
                             top.linkTo(parent.top, 12.dp)
                             absoluteLeft.linkTo(parent.absoluteLeft, 14.dp)
                         }
                     ) {
-
-                        if (fadingMsg.value) {
-                            LaunchedEffect(null) {
-                                delay(fadingTimeout.value.toLong() * 1000L)
-                                fadingMsg.value = false
-                            }
-                        }
-
                         Text(
                             modifier = Modifier
-                                .fillMaxWidth(0.3f)
+                                .fillMaxWidth(0.8f)
                                 .focusable(false),
                             overflow = TextOverflow.Ellipsis,
                             text = p.session.messageSequence.last().factorize(
@@ -1521,7 +1414,8 @@ object WatchActivityUI {
                                 errormsgColor = Color(colorError.value),
                                 includeTimestamp = msgIncludeTimestamp.value
                             ),
-                            fontSize = 13.sp
+                            lineHeight = if (pipModeObserver) 9.sp else 15.sp,
+                            fontSize = if (pipModeObserver) 8.sp else 13.sp
                         )
                     }
                 }

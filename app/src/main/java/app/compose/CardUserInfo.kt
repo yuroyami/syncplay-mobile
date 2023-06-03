@@ -23,7 +23,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -70,16 +72,14 @@ object CardUserInfo {
                 for (user in userlist) {
                     /* A row for Username, Filename, and File properties */
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-
                         /* User's readiness icon */
                         Icon(
                             modifier = Modifier.size(Paletting.USER_INFO_IC_SIZE.dp),
-                            imageVector = if (user.readiness.value == true) Icons.Filled.Check else Icons.Filled.Clear,
+                            imageVector = if (user.readiness) Icons.Filled.Check else Icons.Filled.Clear,
                             contentDescription = "",
-                            tint = when (user.readiness.value) {
+                            tint = when (user.readiness) {
                                 true -> Paletting.ROOM_USER_READY_ICON
                                 false -> Paletting.ROOM_USER_UNREADY_ICON
-                                null -> Color.Transparent
                             }
                         )
 
@@ -128,24 +128,24 @@ object CardUserInfo {
                             fontSize = Paletting.USER_INFO_TXT_SIZE.sp,
                             lineHeight = (Paletting.USER_INFO_TXT_SIZE + 4).sp,
                             color = Paletting.SP_CUTE_PINK,
-                            text = user.file.value?.fileName ?: stringResource(R.string.room_details_nofileplayed),
+                            text = user.file?.fileName ?: stringResource(R.string.room_details_nofileplayed),
                             fontWeight = FontWeight.W300
                         )
                     }
 
                     /* File properties row (only if file does exist) */
-                    if (user.file.value != null) {
+                    if (user.file != null) {
                         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
 
                             /* Small spacer to align texts together */
                             Spacer(Modifier.width((Paletting.USER_INFO_IC_SIZE * 2.5).dp))
 
                             /* File properties */
-                            val fileSize = user.file.value?.fileSize?.toDoubleOrNull()?.div(1000000.0)?.toString() ?: "???"
+                            val fileSize = user.file?.fileSize?.toDoubleOrNull()?.div(1000000.0)?.toString() ?: "???"
                             Text(
                                 text = string(
                                     R.string.room_details_file_properties,
-                                    MiscUtils.timeStamper(user.file.value?.fileDuration?.toLong() ?: 0),
+                                    MiscUtils.timeStamper(user.file?.fileDuration?.toLong() ?: 0),
                                     fileSize
                                 ),
                                 modifier = Modifier.fillMaxWidth(),

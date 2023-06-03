@@ -1,26 +1,35 @@
 package app.activities
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
+import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.app.PictureInPictureParams
 import android.app.RemoteAction
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.res.Configuration
+import android.graphics.drawable.Icon
+import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import androidx.media3.common.TrackSelectionOverride
 import app.R
 import app.activities.WatchActivityUI.RoomUI
 import app.databinding.WatchActivityBinding
 import app.datastore.DataStoreKeys
 import app.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
+import app.datastore.DataStoreKeys.DATASTORE_INROOM_PREFERENCES
 import app.datastore.DataStoreKeys.DATASTORE_MISC_PREFS
 import app.datastore.DataStoreKeys.MISC_NIGHTMODE
+import app.datastore.DataStoreKeys.PREF_INROOM_PIP
 import app.datastore.DataStoreKeys.PREF_INROOM_PLAYER_SUBTITLE_SIZE
 import app.datastore.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
 import app.datastore.DataStoreUtils.booleanFlow
@@ -40,7 +49,7 @@ import app.utils.MiscUtils.string
 import app.utils.MiscUtils.timeStamper
 import app.utils.PlayerUtils.pausePlayback
 import app.utils.PlayerUtils.playPlayback
-import app.utils.PlayerUtils.reapplyTrackSelections
+import app.utils.PlayerUtils.reapplyTrackChoices
 import app.utils.PlayerUtils.retweakSubtitleAppearance
 import app.utils.PlayerUtils.trackProgress
 import app.utils.RoomUtils.broadcastMessage
@@ -48,6 +57,8 @@ import app.utils.RoomUtils.pingUpdate
 import app.utils.SharedPlaylistUtils.changePlaylistSelection
 import app.wrappers.Constants
 import app.wrappers.MediaFile
+import app.wrappers.TrackChoices
+import `is`.xyz.mpv.MPVLib
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -64,32 +75,33 @@ class WatchActivity : ComponentActivity(), ProtocolCallback {
 
     var media: MediaFile? = null
 
+    /* Our syncplay protocol (which extends a ViewModel to control LiveData) */
+    lateinit var p: SyncplayProtocol //If it is not initialized, it means we're in Solo Mode
+
+    var setReadyDirectly = false
     val seeks = mutableListOf<Pair<Long, Long>>()
 
-    /* Variables to control ExoPlayer's HUD */
+    var currentTrackChoices: TrackChoices = TrackChoices()
+
+    /* Related to playback status */
     val isNowPlaying = mutableStateOf(false)
     val timeFull = mutableLongStateOf(0L)
     val timeCurrent = mutableLongStateOf(0L)
 
+    /* UI */
     val hudVisibilityState = mutableStateOf(true)
     val pipMode = mutableStateOf(false)
-
-    /* Our syncplay protocol (which extends a ViewModel to control LiveData) */
-    lateinit var p: SyncplayProtocol //If it is not initialized, it means we're in Solo Mode
-
-    var lastAudioOverride: TrackSelectionOverride? = null
-    var lastSubtitleOverride: TrackSelectionOverride? = null
-
-    val fadingMsg = mutableStateOf(false)
-
     var startupSlide = false
+    var wentForFilePick = false
+
+    lateinit var binding: WatchActivityBinding
 
     /** Returns whether we're in Solo Mode, by checking if our protocol is initialized */
     fun isSoloMode(): Boolean {
         return !::p.isInitialized
     }
 
-    lateinit var binding: WatchActivityBinding
+
     /** Now, onto overriding lifecycle methods */
     override fun onCreate(sis: Bundle?) {
         /** Applying saved language */
@@ -124,10 +136,13 @@ class WatchActivity : ComponentActivity(), ProtocolCallback {
         cutoutMode(true)
 
         engine.value = runBlocking {
-            DATASTORE_MISC_PREFS.obtainString(DataStoreKeys.MISC_PLAYER_ENGINE, "exo")
+            DATASTORE_MISC_PREFS.obtainString(DataStoreKeys.MISC_PLAYER_ENGINE, "mpv")
         }
 
         setupPlayer()
+
+        /** Set ready first hand */
+        setReadyDirectly = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainBoolean(DataStoreKeys.PREF_READY_FIRST_HAND, true) }
 
         /** Setting content view, making everything visible */
         binding.compose.setContent {
@@ -140,7 +155,6 @@ class WatchActivity : ComponentActivity(), ProtocolCallback {
 
         trackProgress()
 
-        //TODO: fetch readiness-first-hand and apply it
         //TODO: show hint on how to add video
         //TODO: attach tooltips to buttons
 
@@ -161,6 +175,24 @@ class WatchActivity : ComponentActivity(), ProtocolCallback {
         }
     }
 
+    /** Last checkpoint after executing activityresults. This means the activity is fully ready. */
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
+    override fun onResume() {
+        super.onResume()
+        val filter = IntentFilter(ACTION_PIP_PAUSE_PLAY)
+        registerReceiver(pipBroadcastReceiver, filter)
+
+        hideSystemUI(false)
+
+        /** Applying track choices again so the player doesn't forget about track choices **/
+        reapplyTrackChoices()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(pipBroadcastReceiver)
+    }
+
     /** the onStart() follows the onCreate(), it means all the UI is ready
      * It precedes any activity results. onCreate -> onStart -> ActivityResults -> onResume */
     override fun onStart() {
@@ -177,8 +209,6 @@ class WatchActivity : ComponentActivity(), ProtocolCallback {
     fun setupPlayer() {
         runBlocking { lifecycleScope.launch(Dispatchers.Main) {
             player = HighLevelPlayer.create(this@WatchActivity, engine.value)
-
-            hasVideoG.value = true
         }}
     }
 
@@ -193,28 +223,12 @@ class WatchActivity : ComponentActivity(), ProtocolCallback {
         }
     }
 
-    override fun onStop() {
-        super.onStop()
-        //exoplayer?.release()
-    }
-
-    /** Last checkpoint after executing activityresults. This means the activity is fully ready. */
-    override fun onResume() {
-        super.onResume()
-        hideSystemUI(false)
-
-        /** Applying track choices again so the player doesn't forget about track choices **/
-        reapplyTrackSelections()
-    }
-
     override fun onSomeonePaused(pauser: String) {
         if (pauser != p.session.currentUsername) pausePlayback()
         broadcastMessage(
             message = string(R.string.room_guy_paused, pauser, timeStamper(p.currentVideoPosition.toLong())),
             isChat = false
         )
-
-        fadingMsg.value = true
     }
 
     override fun onSomeonePlayed(player: String) {
@@ -224,11 +238,6 @@ class WatchActivity : ComponentActivity(), ProtocolCallback {
 
     override fun onChatReceived(chatter: String, chatmessage: String) {
         broadcastMessage(message = chatmessage, isChat = true, chatter = chatter)
-
-        /** We animate the fading message when the HUD is locked or hidden */
-        if (chatter != p.session.currentUsername) {
-            fadingMsg.value = true
-        }
     }
 
     override fun onSomeoneSeeked(seeker: String, toPosition: Double) {
@@ -295,13 +304,18 @@ class WatchActivity : ComponentActivity(), ProtocolCallback {
         /** Adjusting connection state */
         p.state = Constants.CONNECTIONSTATE.STATE_CONNECTED
 
+        /** Dismissing the 'Disconnected' popup since it's irrelevant at this point **/
+        /* lifecycleScope.launch(Dispatchers.Main) {
+            disconnectedPopup.dismiss() /* Dismiss any disconnection popup, if they exist */
+        } */
+
+        /** Set as ready first-hand */
+        if (media == null) {
+            p.sendPacket(JsonSender.sendReadiness(setReadyDirectly, true))
+        }
+
         /** Telling user that they're connected **/
         broadcastMessage(message = string(R.string.room_connected_to_server), isChat = false)
-
-        /** Dismissing the 'Disconnected' popup since it's irrelevant at this point **/
-        lifecycleScope.launch(Dispatchers.Main) {
-            //disconnectedPopup.dismiss() /* Dismiss any disconnection popup, if they exist */
-        }
 
         /** Telling user which room they joined **/
         broadcastMessage(message = string(R.string.room_you_joined_room, p.session.currentRoom), isChat = false)
@@ -403,17 +417,24 @@ class WatchActivity : ComponentActivity(), ProtocolCallback {
         }
     }
 
+
     override fun onBackPressed() {
-        initiatePIPmode()
+        //super.onBackPressed()
+        terminate()
     }
 
-    fun terminate(backPressBehavior: Boolean = false) {
+    fun terminate() {
         p.setBroadcaster(null)
         p.channel?.close()
+        if (player?.ismpvInit == true) {
+            MPVLib.removeObserver(player?.observer)
+            MPVLib.destroy()
+        }
         finish()
     }
 
     /** Let's inform Jetpack Compose that we entered picture in picture, to adjust some UI settings */
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         pipMode.value = isInPictureInPictureMode
@@ -423,25 +444,67 @@ class WatchActivity : ComponentActivity(), ProtocolCallback {
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
 
-        //initiatePIPmode()
+        if (!wentForFilePick) {
+            initiatePIPmode()
+        }
     }
 
     fun initiatePIPmode() {
+        val isPipAllowed = runBlocking {
+            DATASTORE_INROOM_PREFERENCES.obtainBoolean(PREF_INROOM_PIP, true)
+        } && (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+
+        if (!isPipAllowed) return
+
         moveTaskToBack(true)
 
-        val intent = Intent(this, this::class.java)
-        val pauseplayPI = PendingIntent.getActivity(this, 1010101, intent, PendingIntent.FLAG_IMMUTABLE)
+        updatePiPParams()
 
-
-        val remoteActions = listOf<RemoteAction>(
-            /* RemoteAction(
-                Icon.createWithResource(this, R.drawable.ic_pause),
-                "Pause", "", pauseplayPI
-            ) */
-        )
-
-        val params = PictureInPictureParams.Builder().setActions(remoteActions).build()
-        enterPictureInPictureMode(params)
+        enterPictureInPictureMode()
         hudVisibilityState.value = false
     }
+
+    fun updatePiPParams() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+            return
+
+        val intent = Intent(ACTION_PIP_PAUSE_PLAY)
+        val pendingIntent = PendingIntent.getBroadcast(
+            this, 6969, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE)
+
+        val action = if (player?.isInPlayState() == true) {
+            RemoteAction(Icon.createWithResource(this, R.drawable.ic_pause),
+                "Play", "", pendingIntent)
+        } else {
+            RemoteAction(Icon.createWithResource(this, R.drawable.ic_play),
+                "Pause", "", pendingIntent)
+        }
+
+        val params = with(PictureInPictureParams.Builder()) {
+            setActions(if (hasVideoG.value) listOf(action) else listOf())
+        }
+
+        try {
+            setPictureInPictureParams(params.build())
+        } catch (_: IllegalArgumentException) { }
+    }
+
+    private val pipBroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            intent?.let {
+                if (it.action == ACTION_PIP_PAUSE_PLAY) {
+                    val pausePlayValue = it.getIntExtra("pause_zero_play_one", -1)
+
+                    if (pausePlayValue == 1) {
+                        playPlayback()
+                    } else {
+                        pausePlayback()
+                    }
+                }
+            }
+        }
+    }
+
+    val ACTION_PIP_PAUSE_PLAY = "action_pip_pause_play"
 }

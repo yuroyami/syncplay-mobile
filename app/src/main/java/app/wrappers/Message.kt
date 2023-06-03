@@ -9,20 +9,21 @@ import app.utils.MiscUtils.generateTimestamp
 /***************************************************************************************************
  * Message wrapper class. It encapsulates all information and data we need about a single message  *
  ***************************************************************************************************/
-class Message {
-
+class Message (
     /** The sender of the message. Null when it's not a chat message */
-    var sender: String? = null
+    var sender: String? = null,
 
     /** The timestamp at which the message is sent/declared */
-    var timestamp: String = generateTimestamp()
+    var timestamp: String = generateTimestamp(),
 
     /** Content of the message */
-    var content: String = ""
+    var content: String = "",
 
     /** If the message refers to a chat/action by the app user themself */
     var isMainUser: Boolean = false
+) {
 
+    var seen = false
     /** Returns an AnnotatedString to use with Compose Text
      * @param includeTimestamp Whether the timestamp should be included, true by default
      * @param context Context to fetch color preferences from

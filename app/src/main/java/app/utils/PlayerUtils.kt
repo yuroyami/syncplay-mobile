@@ -22,13 +22,17 @@ object PlayerUtils {
 
     /** This pauses playback on the main (necessary) thread **/
     fun WatchActivity.pausePlayback() {
-        runOnUiThread { player?.pause() }
+        runOnUiThread {
+            player?.pause()
+            updatePiPParams()
+        }
     }
 
     /** This resumes playback on the main thread, and hides system UI **/
     fun WatchActivity.playPlayback() {
         runOnUiThread {
             player?.play()
+            updatePiPParams()
             hideSystemUI(true)
         }
     }
@@ -77,64 +81,35 @@ object PlayerUtils {
 
     /** Used for applying any registered subtitle/audio selecions after, for example, going back
      * to the RoomActivity after closing the app for far too long (restoring instance state).*/
-    fun WatchActivity.reapplyTrackSelections() {
+    fun WatchActivity.reapplyTrackChoices() {
         if (player?.engine == HighLevelPlayer.ENGINE.EXOPLAYER) {
 
             /* We need to cast MediaController to ExoPlayer since they're roughly the same */
             player?.analyzeTracks(media ?: return)
 
-            (player?.exoplayer as Player?)?.apply {
+            player?.exoplayer?.apply {
                 val builder = trackSelectionParameters.buildUpon()
 
                 var newParams = builder.build()
 
-                if (lastAudioOverride != null) {
-                    newParams = newParams.buildUpon().addOverride(lastAudioOverride ?: return).build()
+                if (currentTrackChoices.lastAudioOverride != null) {
+                    newParams = newParams.buildUpon().addOverride(currentTrackChoices.lastAudioOverride ?: return).build()
                 }
-                if (lastSubtitleOverride != null) {
-                    newParams = newParams.buildUpon().addOverride(lastSubtitleOverride ?: return).build()
+                if (currentTrackChoices.lastSubtitleOverride != null) {
+                    newParams = newParams.buildUpon().addOverride(currentTrackChoices.lastSubtitleOverride ?: return).build()
                 }
                 trackSelectionParameters = newParams
             }
         }
-    }
 
-    /** Selects the track with the given index, based on its type.
-     * @param type Whether it's an audio or a text track. Can only be [C.TRACK_TYPE_TEXT] or [C.TRACK_TYPE_AUDIO]
-     * @param index The index of the track. Any negative index disables the tracks altogether.
-     */
-    fun WatchActivity.selectTrack(type: Int, index: Int) {
-        if (player?.engine == HighLevelPlayer.ENGINE.EXOPLAYER) {
+        if (player?.engine == HighLevelPlayer.ENGINE.MPV) {
+            val subIndex = currentTrackChoices.subtitleSelectionIndexMpv
+            val audioIndex = currentTrackChoices.audioSelectionIndexMpv
 
-            (player?.exoplayer as ExoPlayer?)?.apply {
-                val builder = trackSelector?.parameters?.buildUpon()
-
-                /* First, clearing our subtitle track selection (This helps troubleshoot many issues */
-                trackSelector?.parameters = builder?.clearOverridesOfType(type)!!.build()
-                lastSubtitleOverride = null
-
-                /* Now, selecting our subtitle track should one be selected */
-                if (index >= 0) {
-                    when (type) {
-                        C.TRACK_TYPE_TEXT -> {
-                            lastSubtitleOverride = TrackSelectionOverride(
-                                media!!.subtitleExoTracks[index].trackGroup!!,
-                                media!!.subtitleExoTracks[index].index
-                            )
-                        }
-
-                        C.TRACK_TYPE_AUDIO -> {
-                            lastSubtitleOverride = TrackSelectionOverride(
-                                media!!.audioExoTracks[index].trackGroup!!,
-                                media!!.audioExoTracks[index].index
-                            )
-                        }
-                    }
-                    trackSelector?.parameters = builder.addOverride(lastSubtitleOverride!!).build()
-                }
+            with(player ?: return) {
+                if (subIndex != null) selectTrack(C.TRACK_TYPE_TEXT, subIndex)
+                if (audioIndex != null) selectTrack(C.TRACK_TYPE_AUDIO, audioIndex)
             }
         }
     }
-
-
 }

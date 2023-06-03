@@ -22,6 +22,7 @@
 - [Features](#features)
 - [How to use](#how-to-use)
 - [Roadmap](#roadmap)
+- [Components and architecture](#components-and-architecture)
 - [F.A.Q](#F.A.Q)
 - [Feedback](#feedback)
 - [Build Process](#build-process)
@@ -38,7 +39,7 @@
 [![is Maintained?](https://img.shields.io/badge/Maintained-YES-green?style=for-the-badge)]()
 [![License](https://img.shields.io/badge/License-AGPL--3.0-brightgreen?style=for-the-badge)]()
 [![Status](https://img.shields.io/badge/Status-BETA-0cf?style=for-the-badge&logo=statuspage)]()
-[![Requirement](https://img.shields.io/badge/REQUIREMENT-Android%205.0%20and%20later-blueviolet?style=for-the-badge&logo=android%20studio)]()
+[![Requirement](https://img.shields.io/badge/REQUIREMENT-Android%206.0%20and%20later-blueviolet?style=for-the-badge&logo=android%20studio)]()
 
 Introducing Syncplay Android, an app that brings the remarkable functionality of Syncplay PC to the Android platform. With Syncplay Android, you can synchronize media playback with your friends, allowing you to watch videos together, even when you're physically apart.
 
@@ -46,7 +47,7 @@ In its beta release, Syncplay Android faithfully replicates the core features fo
 
 Experience the convenience of Syncplay on your Android device and enjoy shared video watching with friends. Embrace the joy of shared entertainment with Syncplay Android.
 
-**Cannot run on Android versions below Android 8.0 (Codename: Oreo)**
+**Cannot run on Android versions below Android 6.0 (Codename: Marshmallow)**
 
 <p align="center">
   <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS1.png" width=150>
@@ -64,7 +65,7 @@ Experience the convenience of Syncplay on your Android device and enjoy shared v
 * Ability to load custom external subtitle files.
 * Efficient native Kotlin codebase for optimal performance.
 * Multi-language support (Currently available in English, Chinese, French and Arabic, with more languages coming soon).
-* Compatible with Android 8.0 Oreo up to the latest Android 14 UpsideDownCake release.
+* Compatible with Android 6.0 Marshmallow up to the latest Android 14 UpsideDownCake release.
 
 <p align="center">
   <img src = "https://raw.githubusercontent.com/chromaticnoob/syncplay-android/master/art/SS2.png" width="30%">
@@ -88,6 +89,8 @@ These are the things I am willing to add/adjust in the future :
 - [x] Shared Playlists
 - [x] Support for custom/private servers
 - [x] URL Support (as of 0.10.0)
+- [x] Multiple player engines (Exoplayer, mpv)
+- [x] Picture-in-picture mode (Floating window)
 - [ ] TLS/SSL Secure Connection Support
 - [x] Multi-language Support (WIP)
   - [x] English

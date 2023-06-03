@@ -1,6 +1,7 @@
 package app.protocol
 
 import android.util.Log
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -48,7 +49,7 @@ open class SyncplayProtocol : ViewModel() {
     /** Protocol-exclusive variables - should never change these initial values **/
     var serverIgnFly: Int = 0
     var clientIgnFly: Int = 0
-    var ping = mutableStateOf(-1.0)
+    var ping = mutableDoubleStateOf(-1.0)
     val rewindThreshold = 12L /* This is as per official Syncplay, shouldn't be subject to change */
 
     /** Variables that track user status */

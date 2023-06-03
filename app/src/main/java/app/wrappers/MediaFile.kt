@@ -2,10 +2,19 @@ package app.wrappers
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.media3.common.MediaItem
+import app.player.mpv.MPVView
 import app.utils.MiscUtils
 import app.utils.MiscUtils.getFileName
 import app.utils.MiscUtils.toHex
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.net.MalformedURLException
 import java.net.URL
 import kotlin.math.roundToInt
@@ -30,12 +39,12 @@ class MediaFile {
     var fileSize: String = ""
     var fileSizeHashed = ""
 
-    /** The duration of the file in hh:mm:ss format **/
+    /** The duration of the file (ms) **/
     var fileDuration: Double = -1.0
 
     /** the subtitle and audio tracks for this file **/
-    var audioExoTracks: MutableList<ExoTrack> = mutableListOf()
-    var subtitleExoTracks: MutableList<ExoTrack> = mutableListOf()
+    var audioTracks: MutableList<Track> = mutableListOf()
+    var subtitleTracks: MutableList<Track> = mutableListOf()
 
     /** This refers to any external subtitle file that was loaded **/
     var externalSub: MediaItem.SubtitleConfiguration? = null
@@ -47,8 +56,7 @@ class MediaFile {
     fun collectInfo(context: Context) {
         /** Using MiscUtils **/
         fileName = context.getFileName(uri!!)!!
-        fileSize =
-            MiscUtils.getRealSizeFromUri(context, uri!!)?.toDouble()?.roundToInt().toString()
+        fileSize = MiscUtils.getRealSizeFromUri(context, uri!!)?.toDouble()?.toLong().toString()
 
         /** Hashing name and size in case they're used **/
         fileNameHashed = MiscUtils.sha256(fileName).toHex()

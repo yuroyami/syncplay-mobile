@@ -37,9 +37,10 @@
     <string name="connect_server_b">Server address</string>
     <string name="connect_server_c">Make sure that you and your friends\njoin the same server.</string>
     <string name="connect_button_join">Join Room</string>
-    <string name="connect_button_saveshortcut">Config quick home shortcut</string>
-    <string name="connect_button_switchplayer_exo">Switch player\n(ExoPlayer)</string>
-    <string name="connect_button_switchplayer_mpv">Switch player\n(mpv)</string>
+    <string name="connect_button">Join Room</string>
+    <string name="connect_button_saveshortcut">Add home shortcut\nfor current config</string>
+    <string name="connect_button_switchplayer_exo">Switch player\nExoPlayer (Stable)</string>
+    <string name="connect_button_switchplayer_mpv">Switch player\nmpv (Experimental)</string>
 
     <string name="connect_footnote">Syncplay\'s Unofficial Android Client</string>
     <string name="connect_username_empty_error">Username shouldn\'t be empty</string>
@@ -203,11 +204,13 @@
     <string name="uisetting_apply">APPLY</string>
     <string name="uisetting_timestamp_summary">Disable this to hide the timestamps at the beginning of chat messages.</string>
     <string name="uisetting_timestamp_title">Chat timestamps</string>
+    <string name="uisetting_msgoutline_summary">Enable this to give chat messages an outline, to reduce blending with background video.</string>
+    <string name="uisetting_msgoutline_title">Chat message outline</string>
     <string name="uisetting_msgboxaction_summary">When enabled, clicking on the \'OK\' button on your keyboard will send the message. When this is disabled, it will simply close the keyboard without doing anything.</string>
     <string name="uisetting_msgboxaction_title">Keyboard\'s OK button function </string>
     <string name="uisetting_overview_alpha_summary">Default is 40 (Almost transparent), change this if you want to make the room details\' panel more readable by increasing opacity.</string>
     <string name="uisetting_overview_alpha_title">Room Details Background Opacity</string>
-    <string name="uisetting_messagery_alpha_summary">Default is 100 (Half transparent). Maximum is 255 (100% Opaque). Increase readability of the messages by making background more opaque.</string>
+    <string name="uisetting_messagery_alpha_summary">Default is 0 (transparent). Maximum is 255 (100% Opaque). Increase readability of the messages by making background more opaque.</string>
     <string name="uisetting_messagery_alpha_title">Messages\' background opacity</string>
     <string name="uisetting_msgsize_summary">Changes message text size. Default is 10.</string>
     <string name="uisetting_msgsize_title">Message font size</string>
@@ -237,6 +240,8 @@
     <string name="uisetting_seek_forward_jump_title">Seek forward jump amount (seconds) </string>
     <string name="uisetting_seek_backward_jump_summary">Specifies how many seconds a seek-backward should rewind. Default is 10 seconds.</string>
     <string name="uisetting_seek_backward_jump_title">Seek backward jump amount (seconds) </string>
+    <string name="uisetting_pip_summary">Whether the player should enter windowed picture-in-picture mode when minimizing the app. Default is true</string>
+    <string name="uisetting_pip_title">Picture-in-picture mode</string>
     <string name="uisetting_reconnect_interval_summary">How many seconds to wait for reconnection on each failure of connection or disconneciton. Default is 2 seconds.</string>
     <string name="uisetting_reconnect_interval_title">Reconnection interval</string>
 

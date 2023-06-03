@@ -8,11 +8,15 @@ import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.provider.OpenableColumns
 import android.util.Log
+import androidx.appcompat.app.AlertDialog
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
@@ -23,17 +27,19 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import app.R
 import app.activities.WatchActivity
+import app.activities.WatchActivityUI.RoomUI
 import app.playback.PlaybackProperties
 import app.player.highlevel.HighLevelPlayer.ENGINE.EXOPLAYER
 import app.player.highlevel.HighLevelPlayer.ENGINE.MPV
 import app.player.highlevel.HighLevelPlayer.ENGINE.VLC
 import app.player.mpv.MPVView
 import app.protocol.JsonSender
+import app.utils.MiscUtils.getFileName
 import app.utils.MiscUtils.string
 import app.utils.MiscUtils.toasty
 import app.utils.RoomUtils.sendPlayback
-import app.wrappers.ExoTrack
 import app.wrappers.MediaFile
+import app.wrappers.Track
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import `is`.xyz.mpv.MPVLib
@@ -79,10 +85,12 @@ class HighLevelPlayer private constructor() {
     private var session: MediaSession? = null
     private var currentMedia: MediaItem? = null
 
+    /* mpv-related properties */
+    var ismpvInit = false
+
     /* Player Views */
     lateinit var exoView: PlayerView
     lateinit var mpvView: MPVView
-
 
     companion object {
         fun create(context: WatchActivity, player: String): HighLevelPlayer {
@@ -285,7 +293,7 @@ class HighLevelPlayer private constructor() {
     fun hasAnyMedia(): Boolean {
         return when (engine) {
             EXOPLAYER -> exoplayer.mediaItemCount != 0
-            MPV -> false //TODO
+            MPV -> MPVLib.getPropertyInt("playlist-count") > 0
             else -> false
         }
     }
@@ -295,7 +303,10 @@ class HighLevelPlayer private constructor() {
     fun isInPlayState(): Boolean {
         return when (engine) {
             EXOPLAYER -> exoplayer.playbackState == Player.STATE_READY && exoplayer.playWhenReady
-            MPV -> mpvView.paused == false
+            MPV -> {
+                if (!ismpvInit) return false
+                else return mpvView.paused == false
+            }
             else -> false
         }
     }
@@ -306,7 +317,7 @@ class HighLevelPlayer private constructor() {
     fun analyzeTracks(media: MediaFile) {
         when (engine) {
             EXOPLAYER -> analyzeTracksExo(media)
-            MPV -> false //TODO
+            MPV -> analyzeTracksMpv(media)
             else -> {}
         }
     }
@@ -322,8 +333,8 @@ class HighLevelPlayer private constructor() {
      * I do all of this here.
      */
     private fun analyzeTracksExo(media: MediaFile) {
-        media.audioExoTracks.clear()
-        media.subtitleExoTracks.clear()
+        media.audioTracks.clear()
+        media.subtitleTracks.clear()
         val tracks = exoplayer.currentTracks
         for (group in tracks.groups) {
             val trackGroup = group.mediaTrackGroup
@@ -334,20 +345,178 @@ class HighLevelPlayer private constructor() {
                     val index = trackGroup.indexOf(format)
 
                     /** Creating a custom Track instance for every track in a track group **/
-                    val exoTrack = ExoTrack()
-                    exoTrack.trackGroup = trackGroup
-                    exoTrack.trackType = trackType
-                    exoTrack.index = index
-                    exoTrack.format = format
+                    val exoTrack = Track(
+                        trackGroup = trackGroup,
+                        trackType = trackType,
+                        index = index,
+                        format = format,
+                        name = "${format.label} [${format.language?.uppercase() ?: "UND"}]"
+                    ).apply {
+                        this.selected.value = group.isTrackSelected(index)
+                    }
+
                     exoTrack.selected.value = group.isTrackSelected(index)
 
                     if (trackType == C.TRACK_TYPE_TEXT) {
-                        media.subtitleExoTracks.add(exoTrack)
+                        media.subtitleTracks.add(exoTrack)
                     } else {
-                        media.audioExoTracks.add(exoTrack)
+                        media.audioTracks.add(exoTrack)
                     }
                 }
             }
+        }
+    }
+
+    private fun analyzeTracksMpv(media: MediaFile) {
+        media.subtitleTracks.clear()
+        media.audioTracks.clear()
+        val count = MPVLib.getPropertyInt("track-list/count")!!
+        // Note that because events are async, properties might disappear at any moment
+        // so use ?: continue instead of !!
+        for (i in 0 until count) {
+            val type = MPVLib.getPropertyString("track-list/$i/type") ?: continue
+            if (type != "audio" && type != "sub") continue;
+            val mpvId = MPVLib.getPropertyInt("track-list/$i/id") ?: continue
+            val lang = MPVLib.getPropertyString("track-list/$i/lang")
+            val title = MPVLib.getPropertyString("track-list/$i/title")
+            val selected = MPVLib.getPropertyBoolean("track-list/$i/selected") ?: false
+
+            /** Speculating the track name based on whatever info there is on it */
+            val trackName = if (!lang.isNullOrEmpty() && !title.isNullOrEmpty())
+                "$title [$lang]"
+            else if (!lang.isNullOrEmpty() && title.isNullOrEmpty()) {
+                "$title [UND]"
+            } else if (!title.isNullOrEmpty() && lang.isNullOrEmpty())
+                "Track [$lang]"
+            else "Track $mpvId [UND]"
+
+            Log.e("trck", "Found track $mpvId: $type, $title [$lang], $selected")
+            when (type) {
+                "audio" -> {
+                    media.audioTracks.add(
+                        Track(
+                            name = trackName,
+                            index = mpvId,
+                            trackType = C.TRACK_TYPE_AUDIO,
+                        ).apply {
+                            this.selected.value = selected
+                        }
+                    )
+                }
+                "sub" -> {
+                    media.subtitleTracks.add(
+                        Track(
+                            name = trackName,
+                            index = mpvId,
+                            trackType = C.TRACK_TYPE_TEXT,
+                        ).apply {
+                            this.selected.value = selected
+                        }
+                    )
+                }
+            }
+        }
+    }
+    /** Selects the track with the given index, based on its type.
+     * @param type Whether it's an audio or a text track. Can only be [C.TRACK_TYPE_TEXT] or [C.TRACK_TYPE_AUDIO]
+     * @param index The index of the track. Any negative index disables the tracks altogether.
+     */
+    fun WatchActivity.selectTrack(type: Int, index: Int) {
+        if (player?.engine == EXOPLAYER) {
+            (player?.exoplayer as ExoPlayer?)?.apply {
+                val builder = trackSelector?.parameters?.buildUpon()
+
+                /* First, clearing our subtitle track selection (This helps troubleshoot many issues */
+                trackSelector?.parameters = builder?.clearOverridesOfType(type)!!.build()
+                currentTrackChoices.lastSubtitleOverride = null
+
+                /* Now, selecting our subtitle track should one be selected */
+                if (index >= 0) {
+                    when (type) {
+                        C.TRACK_TYPE_TEXT -> {
+                            currentTrackChoices.lastSubtitleOverride = TrackSelectionOverride(
+                                media!!.subtitleTracks[index].trackGroup!!,
+                                media!!.subtitleTracks[index].index
+                            )
+                        }
+
+                        C.TRACK_TYPE_AUDIO -> {
+                            currentTrackChoices.lastSubtitleOverride = TrackSelectionOverride(
+                                media!!.audioTracks[index].trackGroup!!,
+                                media!!.audioTracks[index].index
+                            )
+                        }
+                    }
+                    trackSelector?.parameters = builder.addOverride(currentTrackChoices.lastSubtitleOverride!!).build()
+                } else {
+
+                }
+            }
+        }
+
+        if (player?.engine == MPV) {
+            when (type) {
+                C.TRACK_TYPE_TEXT -> {
+                    if (index >= 0) {
+                        MPVLib.setPropertyInt("sid", index)
+                    } else if (index == -1) {
+                        MPVLib.setPropertyString("sid", "no")
+                    }
+
+                    currentTrackChoices.subtitleSelectionIndexMpv = index
+                }
+
+                C.TRACK_TYPE_AUDIO -> {
+                    if (index >= 0) {
+                        MPVLib.setPropertyInt("aid", index)
+                    } else if (index == -1) {
+                        MPVLib.setPropertyString("aid", "no")
+                    }
+
+                    currentTrackChoices.audioSelectionIndexMpv = index
+                }
+            }
+        }
+    }
+
+
+    fun WatchActivity.loadExternalSub(uri: Uri) {
+        if (player?.hasAnyMedia() == true) {
+            val filename = getFileName(uri = uri).toString()
+            val extension = filename.substring(filename.length - 4)
+
+            val mimeType =
+                if (extension.contains("srt")) MimeTypes.APPLICATION_SUBRIP
+                else if ((extension.contains("ass"))
+                    || (extension.contains("ssa"))
+                ) MimeTypes.TEXT_SSA
+                else if (extension.contains("ttml")) MimeTypes.APPLICATION_TTML
+                else if (extension.contains("vtt")) MimeTypes.TEXT_VTT else ""
+
+            if (mimeType != "") {
+                when (player?.engine) {
+                    EXOPLAYER -> {
+                        media?.externalSub = MediaItem.SubtitleConfiguration.Builder(uri)
+                            .setUri(uri)
+                            .setMimeType(mimeType)
+                            .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
+                            .build()
+
+                        player?.injectVideo(this@loadExternalSub)
+                    }
+                    MPV -> {
+                        resolveUri(uri)?.let {
+                            MPVLib.command(arrayOf("sub-add", it, "cached"))
+                        }
+                    }
+                    else -> {}
+                }
+                toasty(string(R.string.room_selected_sub, filename))
+            } else {
+                toasty(getString(R.string.room_selected_sub_error))
+            }
+        } else {
+            toasty(getString(R.string.room_sub_error_load_vid_first))
         }
     }
 
@@ -384,17 +553,29 @@ class HighLevelPlayer private constructor() {
             /* Injecting the media into exoplayer */
             try {
 
-                delay(2000)
+                delay(500)
                 uri?.let {
-                    resolveUri(it)?.let { it2 ->
-                        Log.e("mpv", "Final path $it2")
+                    if (isUrl == false) {
+                        resolveUri(it)?.let { it2 ->
+                            Log.e("mpv", "Final path $it2")
+                            mpvView = binding.mpvview
+                            if (!ismpvInit) {
+                                mpvView.initialize(applicationContext.filesDir.path)
+                                ismpvInit = true
+                            }
+                            mpvObserverAttach()
+                            mpvView.playFile(it2)
+                            mpvView.surfaceCreated(mpvView.holder)
+                        }
+                    } else {
                         mpvView = binding.mpvview
-                        mpvView.initialize(applicationContext.filesDir.path)
+                        if (!ismpvInit) {
+                            mpvView.initialize(applicationContext.filesDir.path)
+                            ismpvInit = true
+                        }
                         mpvObserverAttach()
-                        mpvView.playFile(it2)
+                        mpvView.playFile(uri.toString())
                         mpvView.surfaceCreated(mpvView.holder)
-
-
                     }
                 }
 
@@ -461,7 +642,7 @@ class HighLevelPlayer private constructor() {
                 ins.read()
                 return path
             }
-        } catch(e: Exception) { } finally { ins?.close() }
+        } catch(_: Exception) { } finally { ins?.close() }
         return null
     }
 
@@ -473,7 +654,7 @@ class HighLevelPlayer private constructor() {
                 val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
                 val fileName = cursor.getString(index)
                 cursor.close()
-                val file: File = File(getCacheDir(), fileName)
+                val file = File(getCacheDir(), fileName)
                 try {
                     contentResolver.openInputStream(uri).use { inputStream ->
                         FileOutputStream(file).use { outputStream ->
@@ -571,8 +752,12 @@ class HighLevelPlayer private constructor() {
 
                     if (isSoloMode()) return
                     if (duration != media?.fileDuration) {
-                        media?.fileDuration = duration
-                        p.sendPacket(JsonSender.sendFile(media ?: return))
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            //while (media?.fileSize == "") {}
+                            media?.fileDuration = duration
+                            Log.e("exo", "SENDING FILE VIA EXO INFO")
+                            p.sendPacket(JsonSender.sendFile(media ?: return@launch))
+                        }
                     }
                 }
             }
@@ -594,14 +779,6 @@ class HighLevelPlayer private constructor() {
                 }
             }
 
-            /* This detects when the user seeks */
-            override fun onPositionDiscontinuity(
-                oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int,
-            ) {
-                super.onPositionDiscontinuity(oldPosition, newPosition, reason)
-
-            }
-
             /* This detects when a media track change has happened (such as loading a custom sub) */
             override fun onTracksChanged(tracks: Tracks) {
                 super.onTracksChanged(tracks)
@@ -620,18 +797,23 @@ class HighLevelPlayer private constructor() {
         })
     }
 
+    var mpvPos = 0L
 
-    var mpvPos: Long = 0L
+    lateinit var observer: MPVLib.EventObserver
 
     private fun WatchActivity.mpvObserverAttach() {
-        mpvView.addObserver(object: MPVLib.EventObserver {
+        if (::observer.isInitialized) {
+            mpvView.removeObserver(observer)
+        }
+        observer = object: MPVLib.EventObserver {
             override fun eventProperty(property: String) {
             }
 
             override fun eventProperty(property: String, value: Long) {
                 when (property) {
-                    "time-pos" -> mpvPos = value * 1000
+                    "time-pos" -> this@HighLevelPlayer.mpvPos = value * 1000
                     "duration" -> timeFull.longValue = value
+                    //"file-size" -> value
                 }
             }
 
@@ -658,14 +840,21 @@ class HighLevelPlayer private constructor() {
                         hasVideoG.value = true
 
                         if (isSoloMode()) return
-                        if (timeFull.longValue.toDouble() != media?.fileDuration) {
-                            media?.fileDuration = timeFull.longValue.toDouble()
-                            p.sendPacket(JsonSender.sendFile(media ?: return))
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            while (true) {
+                                if (timeFull.longValue.toDouble() > 0) {
+                                    media?.fileDuration = timeFull.longValue.toDouble()
+                                    p.sendPacket(JsonSender.sendFile(media ?: return@launch))
+                                    break
+                                }
+                            }
                         }
                     }
                 }
             }
 
-        })
+        }
+        mpvView.addObserver(observer)
     }
+
 }

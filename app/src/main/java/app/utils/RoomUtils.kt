@@ -67,10 +67,11 @@ object RoomUtils {
 
         /** Messages are just a wrapper class for everything we need about a message
         So first, we initialize it, customize it, then add it to our long list of messages */
-        val msg = Message()
-        if (isChat) msg.sender = chatter
-        msg.isMainUser = chatter == p.session.currentUsername
-        msg.content = message
+        val msg = Message(
+            sender = if (isChat) chatter else null,
+            isMainUser = chatter == p.session.currentUsername,
+            content = message
+        )
 
         /** Adding the message instance to our message sequence **/
         p.session.messageSequence.add(msg)

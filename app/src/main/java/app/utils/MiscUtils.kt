@@ -24,6 +24,7 @@ import androidx.core.os.LocaleListCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import app.R
@@ -53,7 +54,8 @@ object MiscUtils {
 
         if (recreateActivity) recreate();
 
-        if (showToast) Toast.makeText(this, String.format(resources.getString(R.string.setting_display_language_toast), ""), Toast.LENGTH_SHORT).show()
+        if (showToast) Toast.makeText(this, String.format(resources.getString(R.string.setting_display_language_toast), ""), Toast.LENGTH_SHORT)
+            .show()
     }
 
     /** Functions to grab a localized string from resources, format it according to arguments **/
@@ -79,26 +81,28 @@ object MiscUtils {
         return s
     }
 
-    /** Method responsible for getting the real file name on ALL Android APIs.
-     * This is especially useful when you're using Intent.ACTION_OPEN_DOCUMENT
-     * or Intent.ACTION_GET_CONTENT.
-     *
-     * Usually, they return useless file indexers (such as msf:4285) but with the help of a context
-     * we can get the real file name using this.
-     */
+    val gb = 2L * 1024L * 1024L * 1024L
 
     /** Helps determine the size of a file in bytes, needing only its Uri and a context */
-    fun getRealSizeFromUri(context: Context, uri: Uri): String? {
-        var cursor: Cursor? = null
-        return try {
-            val proj = arrayOf(MediaStore.Video.Media.SIZE)
-            cursor = context.contentResolver.query(uri, proj, null, null, null)
-            val columnindex: Int = cursor?.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE)!!
-            cursor.moveToFirst()
-            cursor.getString(columnindex)
-        } finally {
-            cursor?.close()
-        }
+    fun getRealSizeFromUri(context: Context, uri: Uri): Long? {
+        val df = DocumentFile.fromSingleUri(context, uri) ?: return null
+        return df.length()
+        /*
+        val size1 = df.length()
+        return if (size1 >= gb) {
+            var size = 0L //Size incremental variable
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                BufferedInputStream(inputStream).use { bufferedInputStream ->
+                    val buffer = ByteArray(100 * 1024 * 1024) // 8 KB buffer size (can be adjusted as per your requirements)
+                    var bytesRead: Int
+
+                    while (bufferedInputStream.read(buffer).also { bytesRead = it } != -1) {
+                        size += bytesRead
+                    }
+                }
+            }
+            size
+        } else size1 */
     }
 
     fun Context.getFileName(uri: Uri): String? = when (uri.scheme) {
