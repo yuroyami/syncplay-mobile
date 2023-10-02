@@ -1,0 +1,39 @@
+<resources>
+    <!--List of Languages and their Tags-->
+    <string-array name="Lang">
+        <item>English</item>
+        <item>العربية</item>
+        <item>中文</item>
+        <item>Français</item>
+    </string-array>
+    <string-array name="LangValues">
+        <item>"en"</item>
+        <item>"ar"</item>
+        <item>"zh"</item>
+        <item>"fr"</item>
+    </string-array>
+
+    <!--List of options for whether to hash a file's name and size-->
+    <string-array name="fileinfoBehavior">
+        <item>@string/setting_fileinfoBehavior_a</item>
+        <item>@string/setting_fileinfoBehavior_b</item>
+        <item>@string/setting_fileinfoBehavior_c</item>
+    </string-array>
+    <string-array name="fileinfoBehaviorValues">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+
+    <!-- List of options for night mode -->
+    <string-array name="nightModeEntries">
+        <item>@string/setting_night_mode_a</item>
+        <item>@string/setting_night_mode_b</item>
+        <item>@string/setting_night_mode_c</item>
+    </string-array>
+    <string-array name="nightModeValues">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+</resources>
