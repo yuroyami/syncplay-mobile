@@ -14,24 +14,28 @@ struct iOSApp: App {
 		WindowGroup {
 			NavigationView {
 				
-				//if (!isRoom) {
-				//    HomeScreen(joinRoomLambda: { self.isRoom = true } )
-				//} else {
-				WatchScreen()
-					.ignoresSafeArea(.all)
-					.onAppear {
-						self.appDelegate.myOrientation = .landscape
-						
-						//UIDevice.current.setValue(UIInterfaceOrientation.landscapeLeft.rawValue, forKey: "orientation")
-						//UIView.setAnimationsEnabled(true)
-					}
-					.onDisappear {
-						self.appDelegate.myOrientation = .all
-						
-						//UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
-						//UIView.setAnimationsEnabled(true)
-					}
-				//}
+				if (!isRoom) {
+						HomeScreen(joinRoomLambda: { self.isRoom = true } )
+						.ignoresSafeArea(edges: .vertical)
+
+					
+			
+				} else {
+					WatchScreen()
+						.ignoresSafeArea(.all)
+						.onAppear {
+							self.appDelegate.myOrientation = .landscape
+							
+							UIDevice.current.setValue(UIInterfaceOrientation.landscapeLeft.rawValue, forKey: "orientation")
+							UIView.setAnimationsEnabled(true)
+						}
+						.onDisappear {
+							self.appDelegate.myOrientation = .all
+							
+							UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
+							UIView.setAnimationsEnabled(true)
+						}
+				}
 				
 				//NavigationLink(
 				//	destination: WatchScreen(),
