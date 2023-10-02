@@ -12,8 +12,11 @@ object CommonUtils {
     /** Generates the current clock timestamp */
     fun generateClockstamp(): String {
         val c = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
-        val actualHour = if (c.hour < 10) "0${c.hour}" else "${c.hour}"
-        return "${actualHour}:${c.minute}:${c.second}"
+        return "${c.hour.fixDigits()}:${c.minute.fixDigits()}:${c.second.fixDigits()}"
+    }
+
+    private fun Int.fixDigits(): String {
+        return if (this < 10) "0${this}" else "${this}"
     }
 
     /** prints the string to the platform-specific logcat output */
