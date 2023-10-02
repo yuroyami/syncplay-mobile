@@ -1,5 +1,6 @@
 package com.yuroyami.syncplay.models
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -17,6 +18,9 @@ data class Message (
     /** Content of the message */
     var content: String = "",
 
+    /** Content of the message if it has to be part of Compose */
+    var contentComposite: (@Composable () -> String)? = null,
+
     /** If the message refers to a chat/action by the app user themself */
     var isMainUser: Boolean = false
 ) {
@@ -25,6 +29,7 @@ data class Message (
     /** Returns an AnnotatedString to use with Compose Text
      * @param msgPalette A [MessagePalette] that contains colors and properties
      **/
+    @Composable
     fun factorize(msgPalette: MessagePalette): AnnotatedString {
 
         /* An AnnotatedString builder that will append child AnnotatedStings together */
@@ -50,7 +55,7 @@ data class Message (
             minibuilder.append(tag)
 
             val chatTEXT = AnnotatedString(
-                text = content,
+                text = contentComposite?.invoke() ?: content,
                 spanStyle = SpanStyle(
                     color = msgPalette.usermsgColor,
                     fontWeight = FontWeight.Medium
@@ -61,7 +66,7 @@ data class Message (
             minibuilder.toAnnotatedString()
         } else {
             AnnotatedString(
-                text = content,
+                text = contentComposite?.invoke() ?: content,
                 spanStyle = SpanStyle(
                     if (msgPalette.isError) msgPalette.errormsgColor else msgPalette.systemmsgColor
                 )

@@ -48,22 +48,19 @@ open class SyncplayProtocol {
     var session = Session()
 
     /** Late-initialized socket channel which will host all incoming and outcoming data **/
-    var socket: Socket? = null
-    var connection: Connection? = null
+    private var socket: Socket? = null
+    private var connection: Connection? = null
     var state: Constants.CONNECTIONSTATE = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
     var tls: Constants.TLS = Constants.TLS.TLS_NO
 
     /** Coroutine scopes and dispatchers */
-    val generalScope = CoroutineScope(Dispatchers.IO)
-    val writeScope = CoroutineScope(Dispatchers.IO)
-    val readScope = CoroutineScope(Dispatchers.IO)
+    private val generalScope = CoroutineScope(Dispatchers.IO)
+    private val writeScope = CoroutineScope(Dispatchers.IO)
+    private val readScope = CoroutineScope(Dispatchers.IO)
 
     /** ============================ start of protocol =====================================**/
 
-    /** This method is responsible for bootstrapping (initializing) the Netty TCP socket client
-     *
-     * @param tlsMode Indicates how the client will behave on first initialization.
-     * Using 'null' will set up */
+    /** This method is responsible for bootstrapping (initializing) the Ktor TCP socket */
     fun connect() {
         /** Informing UI controllers that we are starting a connection attempt */
         syncplayCallback?.onConnectionAttempt()
@@ -100,8 +97,6 @@ open class SyncplayProtocol {
                     }
                 }
 
-
-                //TODO: Success of connection
                 /** if the TLS mode is [Constants.TLS.TLS_ASK], then the the first packet to send
                  * concerns an opportunistic TLS check with the server, otherwise, a Hello would be first */
                 if (tls == Constants.TLS.TLS_ASK) {
@@ -152,7 +147,7 @@ open class SyncplayProtocol {
         }
     }
 
-    fun onError() {
+    private fun onError() {
         syncplayCallback?.onDisconnected()
     }
 

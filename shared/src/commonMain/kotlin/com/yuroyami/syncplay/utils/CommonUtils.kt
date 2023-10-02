@@ -7,9 +7,7 @@ object CommonUtils {
 
 
     /** prints the string to the platform-specific logcat output */
-
     var nap = false
-
     fun loggy(string: String) {
         if (!nap) {
             Napier.base(DebugAntilog())

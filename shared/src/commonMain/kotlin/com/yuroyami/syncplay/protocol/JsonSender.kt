@@ -8,6 +8,7 @@ import com.yuroyami.syncplay.datastore.obtainString
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.utils.md5
 import com.yuroyami.syncplay.utils.toHex
+import com.yuroyami.syncplay.watchroom.p
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
@@ -144,49 +145,54 @@ object JsonSender {
         doSeek: Boolean?,
         seekPosition: Long = 0,
         iChangeState: Int,
-        play: Boolean?,
-        protocol: SyncplayProtocol,
+        play: Boolean?
     ): String {
-
-        val state: MutableMap<String, Any?> = mutableMapOf()
-        val playstate: MutableMap<String, Any?> = mutableMapOf()
-        if (doSeek == true) {
-            playstate["position"] = seekPosition.toDouble() / 1000.0
-        } else {
-            playstate["position"] = protocol.currentVideoPosition.toFloat()
-        }
-        playstate["paused"] = protocol.paused
-        playstate["doSeek"] = doSeek
-        val ping: MutableMap<String, Any?> = mutableMapOf()
-        if (servertime != null) {
-            ping["latencyCalculation"] = servertime
-        }
-        ping["clientLatencyCalculation"] = clienttime
-        ping["clientRtt"] = protocol.ping.value
-
-        if (iChangeState == 1) {
-            val ignore: MutableMap<String, Any?> = mutableMapOf()
-            ignore["client"] = protocol.clientIgnFly
-            state["ignoringOnTheFly"] = ignore
-            playstate["paused"] = !play!!
-
-        } else {
-            if (protocol.serverIgnFly != 0) {
-                val ignore: MutableMap<String, Any?> = mutableMapOf()
-                ignore["server"] = protocol.serverIgnFly
-                state["ignoringOnTheFly"] = ignore
-                protocol.serverIgnFly = 0
+        val state = buildJsonObject {
+            val playstate = buildJsonObject {
+                if (doSeek == true) {
+                    put("position", seekPosition.toDouble() / 1000.0)
+                } else {
+                    put("position", p.currentVideoPosition.toFloat())
+                }
+                put("paused", p.paused)
+                put("doSeek", doSeek)
             }
+
+            val ping = buildJsonObject {
+                servertime?.let { put("latencyCalculation", it) }
+                put("clientLatencyCalculation", clienttime)
+                put("clientRtt", p.ping.value)
+            }
+
+            if (iChangeState == 1) {
+                val ignore = buildJsonObject {
+                    put("client", p.clientIgnFly)
+                }
+                put("ignoringOnTheFly", ignore)
+                put("playstate", buildJsonObject {
+                    put("paused", !(play ?: false))
+                })
+            } else {
+                if (p.serverIgnFly != 0) {
+                    val ignore = buildJsonObject {
+                        put("server", p.serverIgnFly)
+                    }
+                    put("ignoringOnTheFly", ignore)
+                    p.serverIgnFly = 0
+                }
+            }
+
+            put("playstate", playstate)
+            put("ping", ping)
         }
 
-        state["playstate"] = playstate
-        state["ping"] = ping
-
-        val statewrapper: MutableMap<String, Any?> = mutableMapOf()
-        statewrapper["State"] = state
+        val statewrapper = buildJsonObject {
+            put("State", state)
+        }
 
         return Json.encodeToString(statewrapper)
     }
+
 
     fun sendPlaylistChange(list: List<String>): String {
         val files = buildJsonObject {

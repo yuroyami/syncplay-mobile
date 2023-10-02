@@ -28,6 +28,7 @@ object JsonHandler {
         try {
             element = Json.decodeFromString<ReceivedJson>(json)
         } catch (e: Exception) {
+            loggy(e.stackTraceToString())
             return
         }
         try {
@@ -213,8 +214,7 @@ object JsonHandler {
                             null,
                             0,
                             iChangeState = 0,
-                            play = null,
-                            protocol = protocol
+                            play = null
                         )
                     )
                 } else {
@@ -225,8 +225,7 @@ object JsonHandler {
                             doSeek,
                             0,
                             0,
-                            null,
-                            protocol
+                            null
                         )
                     )
                 }
@@ -256,8 +255,7 @@ object JsonHandler {
                     false,
                     0,
                     0,
-                    null,
-                    protocol
+                    null
                 )
             )
         }
