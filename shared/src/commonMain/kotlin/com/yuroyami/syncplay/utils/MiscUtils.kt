@@ -10,16 +10,7 @@ expect fun generateTimestampMillis(): Long
 
 expect fun timeStamper(seconds: Long): String
 
-///** This function is used to print/format the timestamp used in determining video values
-// * @param seconds Unix epoch timestamp in seconds
-// ***/
-//fun timeStamper(seconds: Long): String {
-//    return if (seconds < 3600) {
-//        String.format("%02d:%02d", (seconds / 60) % 60, seconds % 60)
-//    } else {
-//        String.format("%02d:%02d:%02d", seconds / 3600, (seconds / 60) % 60, seconds % 60)
-//    }
-//}
+
 //
 ///** This is used to generate chat messages' timestamp ready-for-use strings **/
 //fun generateTimestamp(): String {

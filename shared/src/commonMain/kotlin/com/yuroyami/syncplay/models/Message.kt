@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
+import com.yuroyami.syncplay.utils.CommonUtils.generateClockstamp
 
 /***************************************************************************************************
  * Message wrapper class. It encapsulates all information and data we need about a single message  *
@@ -13,7 +14,7 @@ data class Message (
     var sender: String? = null,
 
     /** The timestamp at which the message is sent/declared */
-    var timestamp: String = "", //TODO: generateTimestamp(),
+    var timestamp: String = generateClockstamp(),
 
     /** Content of the message */
     var content: String = "",

@@ -39,6 +39,8 @@ kotlin {
             dependencies {
                 implementation("io.github.aakira:napier:2.6.1")
 
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.1")
+
                 val kotlincrypto = "0.3.0"
                 implementation("org.kotlincrypto.core:digest:$kotlincrypto")
                 implementation("org.kotlincrypto.hash:md:$kotlincrypto")

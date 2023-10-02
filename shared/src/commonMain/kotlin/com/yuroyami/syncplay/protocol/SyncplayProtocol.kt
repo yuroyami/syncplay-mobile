@@ -88,12 +88,16 @@ open class SyncplayProtocol {
                 /** Initiate reading */
                 readScope.launch {
                     while (true) {
-                        connection?.input?.awaitContent()
-                        connection?.input?.readUTF8Line()?.let { ln ->
-                            handleJson(json = ln)
-                        }
+                        try {
+                            connection?.input?.awaitContent()
+                            connection?.input?.readUTF8Line()?.let { ln ->
+                                handleJson(json = ln)
+                            }
 
-                        delay(10)
+                            delay(10)
+                        } catch (e: Exception) {
+                            loggy(e.stackTraceToString())
+                        }
                     }
                 }
 
