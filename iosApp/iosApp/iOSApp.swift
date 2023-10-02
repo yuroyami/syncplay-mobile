@@ -20,7 +20,7 @@ struct iOSApp: App {
 				ZStack {
 					
 					NavigationLink(
-						destination: WatchScreen()
+						destination: WatchScreen().ignoresSafeArea(.all).navigationBarBackButtonHidden(true)
 							.onAppear {
 								self.appDelegate.myOrientation = .landscape
 								
@@ -35,13 +35,13 @@ struct iOSApp: App {
 								UIView.setAnimationsEnabled(true)
 							},
 						isActive: $isRoom
-					) {}.navigationBarBackButtonHidden(true)
+					) {}
 					if (!isRoom) {
-						HomeScreen(joinRoomLambda: { self.isRoom = true } )
+						HomeScreen(joinRoomLambda: { self.isRoom = true } ).ignoresSafeArea(.all)
 					}
 				}
 				
-			}.navigationBarBackButtonHidden(true).ignoresSafeArea(.all)
+			}
 		}
 	}
 }
