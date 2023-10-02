@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -716,7 +717,8 @@ fun RoomUI(isSoloMode: Boolean) {
                             Row(modifier = Modifier.fillMaxWidth(0.75f)) {
 
                                 Column(
-                                    modifier = Modifier.fillMaxWidth(0.33f),
+                                    modifier = Modifier.fillMaxWidth(0.33f)
+                                        .offset(x = 10.dp, y = 10.dp),
                                     horizontalAlignment = Alignment.Start,
                                     verticalArrangement = Arrangement.Bottom,
                                 ) {
@@ -728,11 +730,11 @@ fun RoomUI(isSoloMode: Boolean) {
                                     )
                                 }
 
-                                if (!gestures.value) {
-                                    Column(
-                                        Modifier.fillMaxWidth(0.5f),
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
+                                Column(
+                                    Modifier.fillMaxWidth(0.5f),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    if (gestures.value) {
                                         Row(horizontalArrangement = Arrangement.Center) {
                                             FancyIcon2(icon = Icons.Filled.FastRewind, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black) {
                                                 //seekBckwd()
@@ -746,7 +748,8 @@ fun RoomUI(isSoloMode: Boolean) {
                                 }
 
                                 Column(
-                                    Modifier.fillMaxWidth(),
+                                    Modifier.fillMaxWidth()
+                                        .offset(x = (-10).dp, y = 10.dp),
                                     verticalArrangement = Arrangement.Bottom,
                                     horizontalAlignment = Alignment.End
                                 ) {
