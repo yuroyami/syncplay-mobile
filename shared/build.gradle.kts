@@ -45,10 +45,13 @@ kotlin {
                 implementation("org.kotlincrypto.hash:sha2:$kotlincrypto")
 
                 val ktor = "2.3.4"
-                implementation("io.ktor:ktor-client-logging:$ktor")
                 implementation("io.ktor:ktor-client-core:$ktor")
                 implementation("io.ktor:ktor-network:$ktor")
-                implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor")
+
+                //implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor")
+
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+
 
                 val datastore = "1.1.0-alpha05"
                 api(libs.datastore.preferences.core)

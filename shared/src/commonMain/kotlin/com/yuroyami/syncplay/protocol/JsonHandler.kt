@@ -3,6 +3,7 @@ package com.yuroyami.syncplay.protocol
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.User
 import com.yuroyami.syncplay.protocol.json.ReceivedJson
+import com.yuroyami.syncplay.utils.CommonUtils.loggy
 import com.yuroyami.syncplay.utils.generateTimestampMillis
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -20,7 +21,7 @@ object JsonHandler {
 
     fun SyncplayProtocol.handleJson(json: String) {
         val protocol = this
-        //TODO: loggy("Server: $json")
+        loggy("Server: $json")
 
         /* Second, we check what kind of JSON message we received from the first Json Object */
         val element: ReceivedJson?
@@ -29,15 +30,19 @@ object JsonHandler {
         } catch (e: Exception) {
             return
         }
-        when  {
-            element.hello != null -> handleHello(element.hello, protocol)
-            element.set != null -> handleSet(element.set, protocol)
-            element.list != null -> handleList(element.list, protocol)
-            element.state != null -> handleState(element.state, protocol, json)
-            element.chat != null -> handleChat(element.chat, protocol)
-            element.error != null -> handleError(element.error, protocol)
-            element.tls != null -> handleTLS(element.tls, protocol)
-            else -> dropError("unknown-command-server-error")
+        try {
+            when {
+                element.hello != null -> handleHello(element.hello, protocol)
+                element.set != null -> handleSet(element.set, protocol)
+                element.list != null -> handleList(element.list, protocol)
+                element.state != null -> handleState(element.state, protocol, json)
+                element.chat != null -> handleChat(element.chat, protocol)
+                element.error != null -> handleError(element.error, protocol)
+                element.tls != null -> handleTLS(element.tls, protocol)
+                else -> dropError("unknown-command-server-error")
+            }
+        } catch (e: Exception) {
+            loggy(e.stackTraceToString())
         }
 
     }

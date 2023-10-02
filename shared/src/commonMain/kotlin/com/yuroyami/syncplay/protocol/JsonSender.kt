@@ -1,3 +1,4 @@
+@file:OptIn(ExperimentalSerializationApi::class)
 package com.yuroyami.syncplay.protocol
 
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
@@ -5,68 +6,78 @@ import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_HASH_FILENAME
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_HASH_FILESIZE
 import com.yuroyami.syncplay.datastore.obtainString
 import com.yuroyami.syncplay.models.MediaFile
+import com.yuroyami.syncplay.protocol.json.DynamicLookupSerializer
 import com.yuroyami.syncplay.utils.md5
 import com.yuroyami.syncplay.utils.toHex
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 /** This class does not actually send anything but what it actually does is compose JSON strings which will be sent later */
 object JsonSender {
 
-    fun sendHello(username: String, roomname: String, serverPassword: String): String {
-        val hello: HashMap<String, Any> = hashMapOf()
-        hello["username"] = username
-        if (serverPassword != "") {
-            /* Syncplay servers accept passwords in MD5-Hexadecimal form. */
-            hello["password"] = md5(serverPassword).toHex()
-        }
-        val room: HashMap<String, String> = hashMapOf()
-        room["name"] = roomname
-        hello["room"] = room
-        hello["version"] = "1.6.9"
-        val features: HashMap<String, Boolean> = hashMapOf()
-        features["sharedPlaylists"] = false
-        features["chat"] = true
-        features["featureList"] = true
-        features["readiness"] = true
-        features["managedRooms"] = true
-        hello["features"] = features
+    val anySerializer = DynamicLookupSerializer()
 
-        val wrapper: HashMap<String, HashMap<String, Any>> = hashMapOf()
-        wrapper["Hello"] = hello
+    fun sendHello(username: String, roomname: String, serverPassword: String): String {
+        val hello = buildJsonObject {
+            put("username", username)
+
+            if (serverPassword.isNotEmpty()) {
+                put("password", md5(serverPassword).toHex())
+            }
+
+            put("room", buildJsonObject {
+                put("name", roomname)
+            })
+
+            put("version", "1.7.0")
+            put("features", buildJsonObject {
+                put("sharedPlaylists", true)
+                put("chat", true)
+                put("featureList", true)
+                put("readiness", true)
+                put("managedRooms", true)
+            })
+        }
+
+        val wrapper = buildJsonObject {
+            put("Hello", hello)
+        }
 
         return Json.encodeToString(wrapper)
     }
 
     fun sendJoined(roomname: String): String {
-        val event: HashMap<String, Any> = hashMapOf()
+        val event: MutableMap<String, Any> = mutableMapOf()
         event["joined"] = true
 
-        val room: HashMap<String, String> = hashMapOf()
+        val room: MutableMap<String, String> = mutableMapOf()
         room["name"] = roomname
 
-        val username: HashMap<String, Any> = hashMapOf()
+        val username: MutableMap<String, Any> = mutableMapOf()
         username["room"] = room
         username["event"] = event
 
-        val user: HashMap<String, Any> = hashMapOf()
+        val user: MutableMap<String, Any> = mutableMapOf()
         user[roomname] = username
 
-        val wrapper: HashMap<String, HashMap<String, Any>> = hashMapOf()
+        val wrapper: MutableMap<String, MutableMap<String, Any>> = mutableMapOf()
         wrapper["Set"] = user
         return Json.encodeToString(wrapper)
     }
 
     fun sendReadiness(isReady: Boolean, manuallyInitiated: Boolean): String {
-        val ready: HashMap<String, Boolean> = hashMapOf()
+        val ready: MutableMap<String, Boolean> = mutableMapOf()
         ready["isReady"] = isReady
         ready["manuallyInitiated"] = manuallyInitiated
 
-        val setting: HashMap<String, Any> = hashMapOf()
+        val setting: MutableMap<String, Any> = mutableMapOf()
         setting["ready"] = ready
 
-        val wrapper: HashMap<String, Any> = hashMapOf()
+        val wrapper: MutableMap<String, Any> = mutableMapOf()
         wrapper["Set"] = setting
 
         return Json.encodeToString(wrapper)
@@ -77,7 +88,7 @@ object JsonSender {
         val nameBehavior = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainString(PREF_HASH_FILENAME, "1") }
         val sizeBehavior = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainString(PREF_HASH_FILESIZE, "1") }
 
-        val fileproperties: HashMap<String, Any> = hashMapOf()
+        val fileproperties: MutableMap<String, Any> = mutableMapOf()
         fileproperties["duration"] = media.fileDuration
         fileproperties["name"] = when (nameBehavior) {
             "1" -> media.fileName
@@ -90,24 +101,24 @@ object JsonSender {
             else -> ""
         }
 
-        val file: HashMap<String, Any> = hashMapOf()
+        val file: MutableMap<String, Any> = mutableMapOf()
         file["file"] = fileproperties
 
-        val wrapper: HashMap<String, Any> = hashMapOf()
+        val wrapper: MutableMap<String, Any> = mutableMapOf()
         wrapper["Set"] = file
 
         return Json.encodeToString(wrapper)
     }
 
     fun sendEmptyList(): String {
-        val emptylist: HashMap<String, Any?> = hashMapOf()
+        val emptylist: MutableMap<String, Any?> = mutableMapOf()
         emptylist["List"] = listOf<String>() //TODO:Check
 
         return Json.encodeToString(emptylist)
     }
 
     fun sendChat(message: String): String {
-        val wrapper: HashMap<String, Any> = hashMapOf()
+        val wrapper: MutableMap<String, Any> = mutableMapOf()
         wrapper["Chat"] = message
 
         return Json.encodeToString(wrapper)
@@ -123,8 +134,8 @@ object JsonSender {
         protocol: SyncplayProtocol,
     ): String {
 
-        val state: HashMap<String, Any?> = hashMapOf()
-        val playstate: HashMap<String, Any?> = hashMapOf()
+        val state: MutableMap<String, Any?> = mutableMapOf()
+        val playstate: MutableMap<String, Any?> = mutableMapOf()
         if (doSeek == true) {
             playstate["position"] = seekPosition.toDouble() / 1000.0
         } else {
@@ -132,7 +143,7 @@ object JsonSender {
         }
         playstate["paused"] = protocol.paused
         playstate["doSeek"] = doSeek
-        val ping: HashMap<String, Any?> = hashMapOf()
+        val ping: MutableMap<String, Any?> = mutableMapOf()
         if (servertime != null) {
             ping["latencyCalculation"] = servertime
         }
@@ -140,14 +151,14 @@ object JsonSender {
         ping["clientRtt"] = protocol.ping.value
 
         if (iChangeState == 1) {
-            val ignore: HashMap<String, Any?> = hashMapOf()
+            val ignore: MutableMap<String, Any?> = mutableMapOf()
             ignore["client"] = protocol.clientIgnFly
             state["ignoringOnTheFly"] = ignore
             playstate["paused"] = !play!!
 
         } else {
             if (protocol.serverIgnFly != 0) {
-                val ignore: HashMap<String, Any?> = hashMapOf()
+                val ignore: MutableMap<String, Any?> = mutableMapOf()
                 ignore["server"] = protocol.serverIgnFly
                 state["ignoringOnTheFly"] = ignore
                 protocol.serverIgnFly = 0
@@ -157,43 +168,43 @@ object JsonSender {
         state["playstate"] = playstate
         state["ping"] = ping
 
-        val statewrapper: HashMap<String, Any?> = hashMapOf()
+        val statewrapper: MutableMap<String, Any?> = mutableMapOf()
         statewrapper["State"] = state
 
         return Json.encodeToString(statewrapper)
     }
 
     fun sendPlaylistChange(list: List<String>): String {
-        val files: HashMap<String, Any?> = hashMapOf()
+        val files: MutableMap<String, Any?> = mutableMapOf()
         files["files"] = list
 
-        val playlistChange: HashMap<String, Any?> = hashMapOf()
+        val playlistChange: MutableMap<String, Any?> = mutableMapOf()
         playlistChange["playlistChange"] = files
 
-        val set: HashMap<String, Any?> = hashMapOf()
+        val set: MutableMap<String, Any?> = mutableMapOf()
         set["Set"] = playlistChange
 
         return Json.encodeToString(set)
     }
 
     fun sendPlaylistIndex(i: Int): String {
-        val index: HashMap<String, Any?> = hashMapOf()
+        val index: MutableMap<String, Any?> = mutableMapOf()
         index["index"] = i
 
-        val playlistIndex: HashMap<String, Any?> = hashMapOf()
+        val playlistIndex: MutableMap<String, Any?> = mutableMapOf()
         playlistIndex["playlistIndex"] = index
 
-        val set: HashMap<String, Any?> = hashMapOf()
+        val set: MutableMap<String, Any?> = mutableMapOf()
         set["Set"] = playlistIndex
 
         return Json.encodeToString(set)
     }
 
     fun sendTLS(): String {
-        val tls: HashMap<String, String> = hashMapOf()
+        val tls: MutableMap<String, String> = mutableMapOf()
         tls["startTLS"] = "send"
 
-        val wrapper: HashMap<String, Any> = hashMapOf()
+        val wrapper: MutableMap<String, Any> = mutableMapOf()
         wrapper["TLS"] = tls
 
         return Json.encodeToString(wrapper)

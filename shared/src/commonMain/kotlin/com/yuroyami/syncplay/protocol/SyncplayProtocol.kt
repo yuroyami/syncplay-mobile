@@ -100,25 +100,24 @@ open class SyncplayProtocol {
                     }
                 }
 
+
+                //TODO: Success of connection
+                /** if the TLS mode is [Constants.TLS.TLS_ASK], then the the first packet to send
+                 * concerns an opportunistic TLS check with the server, otherwise, a Hello would be first */
+                if (tls == Constants.TLS.TLS_ASK) {
+                    sendPacket(sendTLS())
+                } else {
+                    sendPacket(
+                        sendHello(
+                            session.currentUsername,
+                            session.currentRoom,
+                            session.currentPassword
+                        )
+                    )
+                }
             } catch (e: Exception) {
                 loggy(e.stackTraceToString())
                 syncplayCallback?.onConnectionFailed()
-            }
-
-
-            //TODO: Success of connection
-            /** if the TLS mode is [Constants.TLS.TLS_ASK], then the the first packet to send
-             * concerns an opportunistic TLS check with the server, otherwise, a Hello would be first */
-            if (tls == Constants.TLS.TLS_ASK) {
-                sendPacket(sendTLS())
-            } else {
-                sendPacket(
-                    sendHello(
-                        session.currentUsername,
-                        session.currentRoom,
-                        session.currentPassword
-                    )
-                )
             }
         }
     }
@@ -130,6 +129,7 @@ open class SyncplayProtocol {
             try {
                 if (socket != null && socket?.isClosed == false) {
                     val finalOut = json + "\r\n"
+                    loggy("Client: $finalOut")
                     connection?.output?.writeStringUtf8(finalOut)
                     connection?.output?.flush()
                 } else {
