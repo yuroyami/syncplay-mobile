@@ -127,7 +127,7 @@ object RoomComposables {
                     modifier = Modifier
                         .height(if (pipModeObserver) 40.dp else 84.dp)
                         .aspectRatio(1f)
-                        .radiantOverlay(offset = Offset(x = 40f, y = 60f))
+                        .radiantOverlay(offset = Offset(x = 50f, y = 80f))
                 )
 
                 Spacer(modifier = Modifier.width(14.dp))

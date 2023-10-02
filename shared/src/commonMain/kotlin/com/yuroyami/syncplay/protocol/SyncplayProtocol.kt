@@ -1,14 +1,14 @@
 package com.yuroyami.syncplay.protocol
 
 import androidx.compose.runtime.mutableDoubleStateOf
-import com.yuroyami.syncplay.protocol.JsonSender.sendHello
-import com.yuroyami.syncplay.protocol.JsonSender.sendTLS
 import com.yuroyami.syncplay.datastore.DataStoreKeys
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_INROOM_PREFERENCES
 import com.yuroyami.syncplay.datastore.obtainInt
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.Session
 import com.yuroyami.syncplay.protocol.JsonHandler.handleJson
+import com.yuroyami.syncplay.protocol.JsonSender.sendHello
+import com.yuroyami.syncplay.protocol.JsonSender.sendTLS
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.Connection
 import io.ktor.network.sockets.Socket
@@ -77,7 +77,7 @@ open class SyncplayProtocol {
             }
             /** We should never forget \r\n delimiters, or we would get no input */
             try {
-                val selectorManager = SelectorManager(generalScope.coroutineContext)
+                val selectorManager = SelectorManager(this.coroutineContext)
                 socket = aSocket(selectorManager)
                     .tcp()
                     .connect(session.serverHost, session.serverPort)
