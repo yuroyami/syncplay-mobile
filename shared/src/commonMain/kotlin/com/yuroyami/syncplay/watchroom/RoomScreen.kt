@@ -105,7 +105,6 @@ import com.yuroyami.syncplay.datastore.ds
 import com.yuroyami.syncplay.datastore.intFlow
 import com.yuroyami.syncplay.datastore.obtainBoolean
 import com.yuroyami.syncplay.datastore.writeBoolean
-import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.Paletting.ROOM_ICON_SIZE
@@ -154,14 +153,14 @@ fun RoomUI(isSoloMode: Boolean) {
         val screenHeightPx = with(density) { screenHeightDp.dp.roundToPx() }
         val screenWidthPx = with(density) { screenWidthDp.dp.roundToPx() }
 
-        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        BoxWithConstraints(modifier = Modifier.fillMaxSize().background(Color.Black)) {
             if (screenHeightDp == 0f) screenHeightDp = this.maxHeight.value
             if (screenWidthDp == 0f) screenWidthDp = this.maxWidth.value
         }
 
         val hasVideo = remember { hasVideoG }
         val hudVisibility = remember { hudVisibilityState }
-        var pipModeObserver by remember { pipMode }
+        val pipModeObserver by remember { pipMode }
         val locked = remember { mutableStateOf(false) }
 
         val addurlpopupstate = remember { mutableStateOf(false) }
@@ -334,9 +333,7 @@ fun RoomUI(isSoloMode: Boolean) {
                 }
             )
 
-            /* This is the UI builder for the HUD.
-         * In order to replace the limitation of not being able to use ConstraintLayout in KMM,
-         * we can resort to using a combination of Boxes, Rows, and Columns. */
+            /* HUD below: We resort to using a combination of Boxes, Rows, and Columns. */
             if (hudVisibility.value) {
                 Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
 
@@ -597,15 +594,6 @@ fun RoomUI(isSoloMode: Boolean) {
                                                 !DATASTORE_MISC_PREFS.obtainBoolean(MISC_NIGHTMODE, true)
                                             }
 
-                                            /*
-                            FIXME: if (newMode) {
-                                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-                            } else {
-                                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-                            }
-
-                             */
-
                                             generalScope.launch {
                                                 DATASTORE_MISC_PREFS.writeBoolean(MISC_NIGHTMODE, newMode)
                                             }
@@ -632,6 +620,8 @@ fun RoomUI(isSoloMode: Boolean) {
                                         },
                                         onClick = {
                                             //TODO: terminate()
+                                            //TODO: REMOVE
+                                            hasVideo.value = !hasVideo.value
                                         }
                                     )
                                 }
@@ -688,92 +678,93 @@ fun RoomUI(isSoloMode: Boolean) {
                         }
                     }
 
-                    /* Bottom-left row (Ready button) */
-                    if (!isSoloMode()) {
-                        IconToggleButton(modifier = Modifier
-                            .width(112.dp)
-                            .padding(8.dp)
-                            .align(Alignment.BottomStart),
-                            checked = ready.value,
-                            colors = IconButtonDefaults.iconToggleButtonColors(
-                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                contentColor = MaterialTheme.colorScheme.primary,
-                                checkedContainerColor = MaterialTheme.colorScheme.primary,
-                                checkedContentColor = Color.Black
-                            ),
-                            onCheckedChange = { b ->
-                                ready.value = b
-                                p.ready = b
-                                p.sendPacket(JsonSender.sendReadiness(b, true))
-                            }) {
-                            when (ready.value) {
-                                true -> Text("Ready")
-                                false -> Text("Not Ready")
+                    if (hasVideo.value) {
+                        /* Bottom-left row (Ready button) */
+                        if (!isSoloMode()) {
+                            IconToggleButton(modifier = Modifier
+                                .width(112.dp)
+                                .padding(8.dp)
+                                .align(Alignment.BottomStart),
+                                checked = ready.value,
+                                colors = IconButtonDefaults.iconToggleButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.primary,
+                                    checkedContainerColor = MaterialTheme.colorScheme.primary,
+                                    checkedContentColor = Color.Black
+                                ),
+                                onCheckedChange = { b ->
+                                    ready.value = b
+                                    p.ready = b
+                                    //TODO: p.sendPacket(JsonSender.sendReadiness(b, true))
+                                }) {
+                                when (ready.value) {
+                                    true -> Text("Ready", fontSize = 14.sp)
+                                    false -> Text("Not Ready", fontSize = 13.sp)
+                                }
                             }
                         }
-                    }
 
-                    /* Bottom-mid row (Slider + timestamps) */
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.align(Alignment.BottomCenter).padding(4.dp).fillMaxWidth()
-                    ) {
-                        val slidervalue = remember { timeCurrent }
-                        val slidermax = remember { timeFull }
-                        val interactionSource = remember { MutableInteractionSource() }
+                        /* Bottom-mid row (Slider + timestamps) */
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.align(Alignment.BottomCenter).padding(4.dp).fillMaxWidth()
+                        ) {
+                            val slidervalue = remember { timeCurrent }
+                            val slidermax = remember { timeFull }
+                            val interactionSource = remember { MutableInteractionSource() }
 
-                        Row(modifier = Modifier.fillMaxWidth(0.75f)) {
+                            Row(modifier = Modifier.fillMaxWidth(0.75f)) {
 
-                            Column(
-                                modifier = Modifier.fillMaxWidth(0.33f),
-                                horizontalAlignment = Alignment.Start,
-                                verticalArrangement = Arrangement.Bottom,
-                            ) {
-                                Text(
-                                    text = timeStamper(remember { timeCurrent }.longValue),
-                                    modifier = Modifier
-                                        .alpha(0.85f)
-                                        .gradientOverlay(),
-                                )
-                            }
-
-                            if (!gestures.value) {
                                 Column(
-                                    Modifier.fillMaxWidth(0.5f),
-                                    horizontalAlignment = Alignment.CenterHorizontally
+                                    modifier = Modifier.fillMaxWidth(0.33f),
+                                    horizontalAlignment = Alignment.Start,
+                                    verticalArrangement = Arrangement.Bottom,
                                 ) {
-                                    Row(horizontalArrangement = Arrangement.Center) {
-                                        FancyIcon2(icon = Icons.Filled.FastRewind, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black) {
-                                            //seekBckwd()
-                                        }
-                                        Spacer(Modifier.width(24.dp))
-                                        FancyIcon2(icon = Icons.Filled.FastForward, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black) {
-                                            //seekFwd()
+                                    Text(
+                                        text = timeStamper(remember { timeCurrent }.longValue),
+                                        modifier = Modifier
+                                            .alpha(0.85f)
+                                            .gradientOverlay(),
+                                    )
+                                }
+
+                                if (!gestures.value) {
+                                    Column(
+                                        Modifier.fillMaxWidth(0.5f),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Row(horizontalArrangement = Arrangement.Center) {
+                                            FancyIcon2(icon = Icons.Filled.FastRewind, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black) {
+                                                //seekBckwd()
+                                            }
+                                            Spacer(Modifier.width(24.dp))
+                                            FancyIcon2(icon = Icons.Filled.FastForward, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black) {
+                                                //seekFwd()
+                                            }
                                         }
                                     }
                                 }
-                            }
 
-                            Column(
-                                Modifier.fillMaxWidth(),
-                                verticalArrangement = Arrangement.Bottom,
-                                horizontalAlignment = Alignment.End
-                            ) {
-                                val timeFullR = remember { timeFull }
-                                Text(
-                                    text = if (timeFullR.longValue >= Long.MAX_VALUE / 1000L) "???" else timeStamper(timeFullR.longValue),
-                                    modifier = Modifier
-                                        .alpha(0.85f)
-                                        .gradientOverlay(),
-                                )
+                                Column(
+                                    Modifier.fillMaxWidth(),
+                                    verticalArrangement = Arrangement.Bottom,
+                                    horizontalAlignment = Alignment.End
+                                ) {
+                                    val timeFullR = remember { timeFull }
+                                    Text(
+                                        text = if (timeFullR.longValue >= Long.MAX_VALUE / 1000L) "???" else timeStamper(timeFullR.longValue),
+                                        modifier = Modifier
+                                            .alpha(0.85f)
+                                            .gradientOverlay(),
+                                    )
+                                }
                             }
-                        }
-                        Slider(
-                            value = slidervalue.longValue.toFloat(),
-                            valueRange = (0f..(slidermax.longValue.toFloat())),
-                            onValueChange = { f ->
-                                generalScope.launch {
-                                    /* FIXME: Seeking
+                            Slider(
+                                value = slidervalue.longValue.toFloat(),
+                                valueRange = (0f..(slidermax.longValue.toFloat())),
+                                onValueChange = { f ->
+                                    generalScope.launch {
+                                        /* FIXME: Seeking
                                 if (isSoloMode()) {
                                     if (player == null) return@launch
                                     seeks.add(Pair(player!!.getPositionMs(), f.toLong() * 1000))
@@ -781,38 +772,41 @@ fun RoomUI(isSoloMode: Boolean) {
                                 player?.seekTo(f.toLong() * 1000L)
                                 sendSeek(f.toLong() * 1000L)
                                  */
+                                    }
+                                    slidervalue.longValue = f.toLong()
+                                },
+                                modifier = Modifier
+                                    .alpha(0.82f)
+                                    .fillMaxWidth(0.75f)
+                                    .padding(horizontal = 12.dp),
+                                interactionSource = interactionSource,
+                                steps = 500,
+                                thumb = remember(SliderDefaults.colors(), true) {
+                                    {
+                                        SliderDefaults.Thumb(
+                                            interactionSource = interactionSource,
+                                            colors = SliderDefaults.colors(),
+                                            enabled = true,
+                                            modifier = Modifier.alpha(0.8f)
+                                        )
+                                    }
                                 }
-                                slidervalue.longValue = f.toLong()
-                            },
-                            modifier = Modifier
-                                .alpha(0.82f)
-                                .fillMaxWidth(0.75f)
-                                .padding(horizontal = 12.dp),
-                            interactionSource = interactionSource,
-                            steps = 500,
-                            thumb = remember(SliderDefaults.colors(), true) {
-                                {
-                                    SliderDefaults.Thumb(
-                                        interactionSource = interactionSource,
-                                        colors = SliderDefaults.colors(),
-                                        enabled = true,
-                                        modifier = Modifier.alpha(0.8f)
-                                    )
-                                }
-                            }
-                        )
+                            )
+                        }
                     }
 
                     /* Bottom-right row (Controls) */
                     Row(modifier = Modifier.align(Alignment.BottomEnd).padding(4.dp)) {
-                        FancyIcon2(
-                            modifier = Modifier,
-                            icon = Icons.Filled.VideoSettings, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black,
-                            onClick = {
-                                controlcardvisible.value = !controlcardvisible.value
-                                addmediacardvisible.value = false
-                            }
-                        )
+                        if (hasVideo.value) {
+                            FancyIcon2(
+                                modifier = Modifier,
+                                icon = Icons.Filled.VideoSettings, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black,
+                                onClick = {
+                                    controlcardvisible.value = !controlcardvisible.value
+                                    addmediacardvisible.value = false
+                                }
+                            )
+                        }
 
                         /* The button of adding media */
                         AddVideoButton(
@@ -820,29 +814,28 @@ fun RoomUI(isSoloMode: Boolean) {
                             onClick = {
                                 addmediacardvisible.value = !addmediacardvisible.value
                                 controlcardvisible.value = false
-
-                                //TODO: REMOVE
-                                hasVideo.value = !hasVideo.value
                             }
                         )
                     }
 
                     /** PLAY BUTTON */
                     val playing = remember { isNowPlaying }
-                    FancyIcon2(
-                        icon = when (playing.value) {
-                            true -> Icons.Filled.Pause
-                            false -> Icons.Filled.PlayArrow
-                        },
-                        size = (ROOM_ICON_SIZE * 2.25).roundToInt(),
-                        shadowColor = Color.Black,
-                        modifier = Modifier.align(Alignment.Center)
-                    ) { /* FIXME: OnClick
+                    if (hasVideo.value) {
+                        FancyIcon2(
+                            icon = when (playing.value) {
+                                true -> Icons.Filled.Pause
+                                false -> Icons.Filled.PlayArrow
+                            },
+                            size = (ROOM_ICON_SIZE * 2.25).roundToInt(),
+                            shadowColor = Color.Black,
+                            modifier = Modifier.align(Alignment.Center)
+                        ) { /* FIXME: OnClick
                     if (player?.isInPlayState() == true) {
                         pausePlayback()
                     } else {
                         playPlayback()
                     }*/
+                        }
                     }
                 }
             }

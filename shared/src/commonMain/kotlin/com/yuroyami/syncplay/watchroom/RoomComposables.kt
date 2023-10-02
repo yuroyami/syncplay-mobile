@@ -56,6 +56,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -293,8 +294,9 @@ object RoomComposables {
 
                         Spacer(modifier = Modifier.width(6.dp))
 
-                        Text(modifier = Modifier.gradientOverlay(),
-                            text = "Add media", fontSize = 18.sp, color = Color.DarkGray, fontWeight = FontWeight.Bold
+                        Text(modifier = Modifier.fillMaxWidth().gradientOverlay(),
+                            text = "Add media", textAlign = TextAlign.Center, maxLines = 1,
+                            fontSize = 14.sp, color = Color.DarkGray, fontWeight = FontWeight.Bold
                         )
                     }
                 }
