@@ -3,7 +3,7 @@ package com.yuroyami.syncplay.watchroom
 import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.protocol.ProtocolCallback
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
-import com.yuroyami.syncplay.utils.loggy
+import com.yuroyami.syncplay.utils.CommonUtils.loggy
 
 lateinit var p: SyncplayProtocol //If it is not initialized, it means we're in Solo Mode
 
@@ -65,7 +65,6 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
             override fun onDisconnected() {
                 loggy("ON DISCONNECTED ")
-
             }
 
             override fun onTLSCheck() {

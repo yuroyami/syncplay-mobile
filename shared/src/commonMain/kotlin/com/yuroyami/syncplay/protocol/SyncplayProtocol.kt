@@ -6,9 +6,10 @@ import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_INROOM_PREFERENCE
 import com.yuroyami.syncplay.datastore.obtainInt
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.Session
+import com.yuroyami.syncplay.protocol.JsonHandler.handleJson
 import com.yuroyami.syncplay.protocol.JsonSender.sendHello
 import com.yuroyami.syncplay.protocol.JsonSender.sendTLS
-import com.yuroyami.syncplay.utils.loggy
+import com.yuroyami.syncplay.utils.CommonUtils.loggy
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.Connection
 import io.ktor.network.sockets.InetSocketAddress
@@ -16,6 +17,7 @@ import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.connection
 import io.ktor.network.sockets.isClosed
+import io.ktor.utils.io.readUTF8Line
 import io.ktor.utils.io.writeStringUtf8
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -78,18 +80,15 @@ open class SyncplayProtocol {
             /** We should never forget \r\n delimiters, or we would get no input */
             try {
                 //val selectorManager =
-                socket = aSocket(SelectorManager(Dispatchers.IO))
+                socket = aSocket(SelectorManager(this.coroutineContext))
                     .tcp()
                     .connect(InetSocketAddress(session.serverHost, session.serverPort))
 
-
                 loggy("PROTOCOL: Attempting to connect. HOST: ${session.serverHost}, PORT: ${session.serverPort}....")
-
 
                 connection = socket?.connection()
 
                 /** Initiate reading */
-                /*
                 readScope.launch {
                     while (true) {
                         connection?.input?.awaitContent()
@@ -101,29 +100,27 @@ open class SyncplayProtocol {
                     }
                 }
 
-                 */
-
             } catch (e: Exception) {
                 loggy(e.stackTraceToString())
                 syncplayCallback?.onConnectionFailed()
             }
 
-            if (false) {
-                //TODO: Success of connection
-                /** if the TLS mode is [Constants.TLS.TLS_ASK], then the the first packet to send
-                 * concerns an opportunistic TLS check with the server, otherwise, a Hello would be first */
-                if (tls == Constants.TLS.TLS_ASK) {
-                    sendPacket(sendTLS())
-                } else {
-                    sendPacket(
-                        sendHello(
-                            session.currentUsername,
-                            session.currentRoom,
-                            session.currentPassword
-                        )
+
+            //TODO: Success of connection
+            /** if the TLS mode is [Constants.TLS.TLS_ASK], then the the first packet to send
+             * concerns an opportunistic TLS check with the server, otherwise, a Hello would be first */
+            if (tls == Constants.TLS.TLS_ASK) {
+                sendPacket(sendTLS())
+            } else {
+                sendPacket(
+                    sendHello(
+                        session.currentUsername,
+                        session.currentRoom,
+                        session.currentPassword
                     )
-                }
+                )
             }
+
 
         }
     }
