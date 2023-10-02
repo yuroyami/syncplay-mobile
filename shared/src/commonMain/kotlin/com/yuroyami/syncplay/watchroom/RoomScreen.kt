@@ -718,7 +718,7 @@ fun RoomUI(isSoloMode: Boolean) {
 
                                 Column(
                                     modifier = Modifier.fillMaxWidth(0.33f)
-                                        .offset(x = 10.dp, y = 10.dp),
+                                        .offset(x = 25.dp, y = 10.dp),
                                     horizontalAlignment = Alignment.Start,
                                     verticalArrangement = Arrangement.Bottom,
                                 ) {
@@ -749,7 +749,7 @@ fun RoomUI(isSoloMode: Boolean) {
 
                                 Column(
                                     Modifier.fillMaxWidth()
-                                        .offset(x = (-10).dp, y = 10.dp),
+                                        .offset(x = (-25).dp, y = 10.dp),
                                     verticalArrangement = Arrangement.Bottom,
                                     horizontalAlignment = Alignment.End
                                 ) {
