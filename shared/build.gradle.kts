@@ -7,6 +7,7 @@ plugins {
     kotlin("plugin.serialization") version "1.9.10"
 }
 
+val ktor = "2.3.4"
 @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
 kotlin {
     targetHierarchy.default()
@@ -36,15 +37,18 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                implementation("io.github.aakira:napier:2.6.1")
+
                 val kotlincrypto = "0.3.0"
                 implementation("org.kotlincrypto.core:digest:$kotlincrypto")
                 implementation("org.kotlincrypto.hash:md:$kotlincrypto")
                 implementation("org.kotlincrypto.hash:sha2:$kotlincrypto")
 
                 val ktor = "2.3.4"
-                implementation(libs.ktor.client.core)
-                implementation(libs.ktor.network)
-                implementation(libs.ktor.serialization.kotlinx.json)
+                implementation("io.ktor:ktor-client-logging:$ktor")
+                implementation("io.ktor:ktor-client-core:$ktor")
+                implementation("io.ktor:ktor-network:$ktor")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor")
 
                 val datastore = "1.1.0-alpha05"
                 api(libs.datastore.preferences.core)
@@ -72,6 +76,9 @@ kotlin {
         val androidMain by getting {
             dependencies {
                 dependsOn(commonMain)
+                implementation("io.ktor:ktor-client-android:$ktor")
+
+
                 api("androidx.core:core-ktx:1.12.0")
                 api("androidx.appcompat:appcompat:1.7.0-alpha03")
                 api("androidx.documentfile:documentfile:1.0.1") /* Managing Scoped Storage */
@@ -102,15 +109,17 @@ kotlin {
                 implementation("androidx.media3:media3-common:$media3")
             }
         }
-//        val iosX64Main by getting
-//        val iosArm64Main by getting
-//        val iosSimulatorArm64Main by getting
-//        val iosMain by creating {
+        val iosMain by getting {
 //            dependsOn(commonMain)
 //            iosX64Main.dependsOn(this)
 //            iosArm64Main.dependsOn(this)
 //            iosSimulatorArm64Main.dependsOn(this)
-//        }
+//
+
+            dependencies {
+                implementation("io.ktor:ktor-client-ios:$ktor")
+            }
+        }
     }
 }
 

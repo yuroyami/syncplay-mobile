@@ -6,16 +6,16 @@ import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_INROOM_PREFERENCE
 import com.yuroyami.syncplay.datastore.obtainInt
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.Session
-import com.yuroyami.syncplay.protocol.JsonHandler.handleJson
 import com.yuroyami.syncplay.protocol.JsonSender.sendHello
 import com.yuroyami.syncplay.protocol.JsonSender.sendTLS
+import com.yuroyami.syncplay.utils.loggy
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.Connection
+import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.connection
 import io.ktor.network.sockets.isClosed
-import io.ktor.utils.io.readUTF8Line
 import io.ktor.utils.io.writeStringUtf8
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -72,29 +72,39 @@ open class SyncplayProtocol {
 
             /** Should we establish a TLS connection ? */
             if (tls == Constants.TLS.TLS_YES) {
-                //Log.e("TLS", "Attempting TLS")
-
+                loggy("Attempting TLS")
             }
+
             /** We should never forget \r\n delimiters, or we would get no input */
             try {
-                val selectorManager = SelectorManager(this.coroutineContext)
-                socket = aSocket(selectorManager)
+                //val selectorManager =
+                socket = aSocket(SelectorManager(Dispatchers.IO))
                     .tcp()
-                    .connect(session.serverHost, session.serverPort)
+                    .connect(InetSocketAddress(session.serverHost, session.serverPort))
+
+
+                loggy("PROTOCOL: Attempting to connect. HOST: ${session.serverHost}, PORT: ${session.serverPort}....")
+
 
                 connection = socket?.connection()
 
                 /** Initiate reading */
+                /*
                 readScope.launch {
                     while (true) {
                         connection?.input?.awaitContent()
                         connection?.input?.readUTF8Line()?.let { ln ->
                             handleJson(json = ln)
                         }
+
+                        delay(10)
                     }
                 }
 
+                 */
+
             } catch (e: Exception) {
+                loggy(e.stackTraceToString())
                 syncplayCallback?.onConnectionFailed()
             }
 

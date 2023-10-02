@@ -4,7 +4,6 @@ datastore = "1.1.0-alpha05"
 kotlin = "1.9.0"
 compose = "1.5.1"
 compose-compiler = "1.5.2"
-ktor = "2.3.4"
 media3-exoplayer = "1.2.0-alpha02"
 moko = "0.23.0"
 
@@ -12,9 +11,6 @@ moko = "0.23.0"
 datastore-core-okio = { module = "androidx.datastore:datastore-core-okio", version.ref = "datastore" }
 datastore-preferences-core = { module = "androidx.datastore:datastore-preferences-core", version.ref = "datastore" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
-ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
-ktor-network = { module = "io.ktor:ktor-network", version.ref = "ktor" }
-ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3-exoplayer" }
 moko-resources-compose = { module = "dev.icerock.moko:resources-compose", version.ref = "moko" }
 moko-resources-generator = { module = "dev.icerock.moko:resources-generator", version.ref = "moko" }

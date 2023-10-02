@@ -2,6 +2,7 @@ package com.yuroyami.syncplay.utils
 
 import android.content.Context
 import android.content.res.Configuration
+import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import java.util.Locale

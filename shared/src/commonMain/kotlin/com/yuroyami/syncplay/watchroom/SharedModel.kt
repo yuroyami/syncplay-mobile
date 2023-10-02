@@ -3,6 +3,7 @@ package com.yuroyami.syncplay.watchroom
 import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.protocol.ProtocolCallback
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
+import com.yuroyami.syncplay.utils.loggy
 
 lateinit var p: SyncplayProtocol //If it is not initialized, it means we're in Solo Mode
 
@@ -51,20 +52,19 @@ fun prepareProtocol(joinInfo: JoinInfo) {
             }
 
             override fun onConnected() {
-                println("ON CONNECTED")
-
+                loggy("ON CONNECTED")
             }
 
             override fun onConnectionAttempt() {
-                println("ON CONNECTION ATTEMPT")
+                loggy("ON CONNECTION ATTEMPT")
             }
 
             override fun onConnectionFailed() {
-                println(" CONNECTION FAILED")
+                loggy(" CONNECTION FAILED")
             }
 
             override fun onDisconnected() {
-                println("ON DISCONNECTED ")
+                loggy("ON DISCONNECTED ")
 
             }
 
