@@ -10,37 +10,40 @@ struct iOSApp: App {
 	
 	@State var isRoom = false
 	
+	init() {
+		UIApplication.shared.isIdleTimerDisabled = true //Keep screen on
+	}
+	
 	var body: some Scene {
 		WindowGroup {
-			NavigationView {
+			ZStack {
+				NavigationView {
+					
+					NavigationLink(
+						destination: WatchScreen().ignoresSafeArea(.all)
+							.onAppear {
+								self.appDelegate.myOrientation = .landscape
+								
+								UIDevice.current.setValue(UIInterfaceOrientation.landscapeLeft.rawValue, forKey: "orientation")
+								UIView.setAnimationsEnabled(true)
+							}
+							.onDisappear {
+								
+								self.appDelegate.myOrientation = .all
+								
+								UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
+								UIView.setAnimationsEnabled(true)
+							},
+						isActive: $isRoom
+					) {}
+				
+				}.navigationBarBackButtonHidden(true)
 				
 				if (!isRoom) {
-						HomeScreen(joinRoomLambda: { self.isRoom = true } )
-						.ignoresSafeArea(edges: .vertical)
-
-					
-			
-				} else {
-					WatchScreen()
-						.ignoresSafeArea(.all)
-						.onAppear {
-							self.appDelegate.myOrientation = .landscape
-							
-							UIDevice.current.setValue(UIInterfaceOrientation.landscapeLeft.rawValue, forKey: "orientation")
-							UIView.setAnimationsEnabled(true)
-						}
-						.onDisappear {
-							self.appDelegate.myOrientation = .all
-							
-							UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
-							UIView.setAnimationsEnabled(true)
-						}
+					HomeScreen(joinRoomLambda: { self.isRoom = true } )
+						.ignoresSafeArea(edges: .all)
 				}
 				
-				//NavigationLink(
-				//	destination: WatchScreen(),
-				//	isActive: $isRoom
-				//) {}
 			}
 		}
 	}
