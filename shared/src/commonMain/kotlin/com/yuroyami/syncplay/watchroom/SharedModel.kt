@@ -73,11 +73,14 @@ fun prepareProtocol(joinInfo: JoinInfo) {
         p = SyncplayProtocol()
         p.syncplayCallback = setupCallback()
 
-        /** Getting information from intent **/
+        /** Getting information from joining info argument **/
         p.session.serverHost = joinInfo.address
         p.session.serverPort = joinInfo.port
         p.session.currentUsername = joinInfo.username
         p.session.currentRoom = joinInfo.roomname
         p.session.currentPassword = joinInfo.password
+
+        /** Connecting */
+        p.connect()
     }
 }

@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.MR
 import com.yuroyami.syncplay.compose.ComposeUtils
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
+import com.yuroyami.syncplay.compose.ComposeUtils.radiantOverlay
 import com.yuroyami.syncplay.datastore.DataStoreKeys
 import com.yuroyami.syncplay.datastore.booleanFlow
 import com.yuroyami.syncplay.datastore.ds
@@ -126,6 +127,7 @@ object RoomComposables {
                     modifier = Modifier
                         .height(if (pipModeObserver) 40.dp else 84.dp)
                         .aspectRatio(1f)
+                        .radiantOverlay(offset = Offset(x = 40f, y = 60f))
                 )
 
                 Spacer(modifier = Modifier.width(14.dp))

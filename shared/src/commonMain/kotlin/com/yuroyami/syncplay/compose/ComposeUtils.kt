@@ -578,6 +578,24 @@ object ComposeUtils {
             }
     }
 
+    /** Adds an OVAL gradient overlay on the composable (Syncplay gradient by default) */
+    fun Modifier.radiantOverlay(colors: List<Color> = Paletting.SP_GRADIENT, offset: Offset = Offset.Unspecified): Modifier {
+        return this
+            .graphicsLayer(alpha = 0.99f)
+            .drawWithCache {
+                onDrawWithContent {
+                    drawContent()
+                    drawRect(
+                        brush = Brush.radialGradient(
+                            center = offset,
+                            colors = colors
+                        ),
+                        blendMode = BlendMode.SrcAtop
+                    )
+                }
+            }
+    }
+
     /** Shows a popup with the given content.
      * @param dialogOpen Controls whether the popup dialog is shown or not.
      * When this is false, the dialog is not rendered at all.
