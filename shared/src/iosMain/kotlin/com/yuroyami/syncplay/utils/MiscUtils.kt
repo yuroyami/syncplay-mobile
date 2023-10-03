@@ -10,6 +10,7 @@ import platform.Foundation.timeIntervalSince1970
 import kotlin.concurrent.AtomicReference
 import kotlin.math.roundToLong
 
+
 actual fun getPlatform(): String = "iOS"
 
 actual fun changeLanguage(lang: String, context: Any?) {
@@ -32,4 +33,8 @@ actual fun timeStamper(seconds: Long): String {
 
 actual fun getFileName(uri: String, context: Any?): String? {
     return "" //TODO
+}
+
+actual fun pingIcmp(host: String, packet: Int): Int? {
+    return null //TODO
 }

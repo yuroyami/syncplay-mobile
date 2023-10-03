@@ -12,6 +12,8 @@ expect fun timeStamper(seconds: Long): String
 
 expect fun getFileName(uri: String, context: Any? = null): String?
 
+expect fun pingIcmp(host: String, packet: Int): Int?
+
 //val gb = 2L * 1024L * 1024L * 1024L
 //
 ///** Helps determine the size of a file in bytes, needing only its Uri and a context */
@@ -35,43 +37,6 @@ expect fun getFileName(uri: String, context: Any? = null): String?
 //        size
 //    } else size1 */
 //}
-//
-//
-///** This function is used to calculate the ICMP Ping to a certain server or end host.
-// * This is a long blocking call, therefore it should be executed on a background IO thread. **/
-//fun pingIcmp(host: String, packet: Int): Double {
-//    var result = 0.13
-//    try {
-//        val pingprocess: Process? =
-//            Runtime.getRuntime().exec("/system/bin/ping -c 1 -w 1 -s $packet $host")
-//        //Reading the Output with BufferedReader
-//        val bufferedReader = BufferedReader(InputStreamReader(pingprocess?.inputStream))
-//        //Parsing the result in a string variable.
-//        val logger: StringBuilder = StringBuilder()
-//        var line: String? = ""
-//        while (line != null) {
-//            line = bufferedReader.readLine()
-//            logger.append(line + "\n")
-//        }
-//        val pingoutput = logger.toString()
-//
-//        //Now reading what we have in pingResult and storing it as an Int value.
-//        result = when {
-//            pingoutput.contains("100% packet loss") -> {
-//                0.2
-//            }
-//
-//            else -> {
-//                ((pingoutput.substringAfter("time=").substringBefore(" ms").trim()
-//                    .toDouble()) / 1000.0)
-//            }
-//        }
-//    } catch (e: IOException) {
-//        e.printStackTrace()
-//    }
-//    return result
-//}
-
 //@Suppress("DEPRECATION")
 //fun ComponentActivity.showSystemUI(useDeprecated: Boolean) {
 //    if (useDeprecated) {

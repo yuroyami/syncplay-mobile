@@ -1,6 +1,6 @@
 package com.yuroyami.syncplay.protocol
 
-import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableStateOf
 import com.yuroyami.syncplay.datastore.DataStoreKeys
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_INROOM_PREFERENCES
 import com.yuroyami.syncplay.datastore.obtainInt
@@ -17,6 +17,7 @@ import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.connection
 import io.ktor.network.sockets.isClosed
+import io.ktor.network.tls.tls
 import io.ktor.utils.io.readUTF8Line
 import io.ktor.utils.io.writeStringUtf8
 import kotlinx.coroutines.CoroutineScope
@@ -34,7 +35,7 @@ open class SyncplayProtocol {
     /** Protocol-exclusive variables - should never change these initial values **/
     var serverIgnFly: Int = 0
     var clientIgnFly: Int = 0
-    var ping = mutableDoubleStateOf(-1.0)
+    var ping = mutableStateOf<Int?>(null)
     val rewindThreshold = 12L /* This is as per official Syncplay, shouldn't be subject to change */
 
     /** Variables that track user status */
@@ -74,12 +75,16 @@ open class SyncplayProtocol {
                 loggy("Attempting TLS")
             }
 
-            /** We should never forget \r\n delimiters, or we would get no input */
             try {
                 //val selectorManager =
                 socket = aSocket(SelectorManager(this.coroutineContext))
                     .tcp()
                     .connect(InetSocketAddress(session.serverHost, session.serverPort))
+                    .also {
+                        if (tls == Constants.TLS.TLS_YES) {
+                            it.tls(this.coroutineContext)
+                        }
+                    }
 
                 loggy("PROTOCOL: Attempting to connect. HOST: ${session.serverHost}, PORT: ${session.serverPort}....")
 

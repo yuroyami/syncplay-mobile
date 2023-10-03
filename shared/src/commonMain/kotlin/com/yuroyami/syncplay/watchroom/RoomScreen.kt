@@ -347,7 +347,7 @@ fun RoomUI(isSoloMode: Boolean) {
                     ) {
                         Row(modifier = Modifier.fillMaxWidth()) {
                             /** Message input box */
-                            if (!isSoloMode() && !pipModeObserver) {
+                            if (!isSoloMode && !pipModeObserver) {
                                 val onSend = fun() {
                                     val msgToSend = msg.value.also {
                                         it.replace("\\", "")
@@ -434,7 +434,7 @@ fun RoomUI(isSoloMode: Boolean) {
 
                     /* Top-Center info */
                     /** Overall info (PING + ROOMNAME + OSD Messages) */
-                    if (!isSoloMode() && !pipModeObserver) {
+                    if (!isSoloMode && !pipModeObserver) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.wrapContentWidth().align(Alignment.TopCenter)
@@ -490,7 +490,7 @@ fun RoomUI(isSoloMode: Boolean) {
                             Spacer(Modifier.width(12.dp))
 
                             /** Shared Playlist */
-                            if (!isSoloMode()) {
+                            if (!isSoloMode) {
                                 RoomTab(icon = Icons.Filled.PlaylistPlay, visibilityState = sharedplaylistVisibility.value) {
                                     sharedplaylistVisibility.value = !sharedplaylistVisibility.value
                                     userinfoVisibility.value = false
@@ -501,7 +501,7 @@ fun RoomUI(isSoloMode: Boolean) {
                             }
 
                             /** User Info card tab */
-                            if (!isSoloMode()) {
+                            if (!isSoloMode) {
                                 RoomTab(icon = Icons.Filled.Groups, visibilityState = userinfoVisibility.value) {
                                     userinfoVisibility.value = !userinfoVisibility.value
                                     sharedplaylistVisibility.value = false
@@ -547,7 +547,7 @@ fun RoomUI(isSoloMode: Boolean) {
                                     )
 
                                     /* Chat history item */
-                                    if (!isSoloMode()) {
+                                    if (!isSoloMode) {
                                         DropdownMenuItem(
                                             text = {
                                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -640,7 +640,7 @@ fun RoomUI(isSoloMode: Boolean) {
                         val cardHeight = 0.72f
                         Box {
                             /** User-info card (toggled on and off) */
-                            if (!isSoloMode()) {
+                            if (!isSoloMode) {
                                 FreeAnimatedVisibility(
                                     modifier = Modifier
                                         .fillMaxWidth(cardWidth)
@@ -654,7 +654,7 @@ fun RoomUI(isSoloMode: Boolean) {
                             }
 
                             /** Shared Playlist card (toggled on and off) */
-                            if (!isSoloMode()) {
+                            if (!isSoloMode) {
                                 FreeAnimatedVisibility(
                                     modifier = Modifier
                                         .fillMaxWidth(cardWidth)
@@ -683,7 +683,7 @@ fun RoomUI(isSoloMode: Boolean) {
 
                     if (hasVideo.value) {
                         /* Bottom-left row (Ready button) */
-                        if (!isSoloMode()) {
+                        if (!isSoloMode) {
                             IconToggleButton(modifier = Modifier
                                 .width(112.dp)
                                 .padding(8.dp)
@@ -847,7 +847,7 @@ fun RoomUI(isSoloMode: Boolean) {
         }
 
         /** Fading Message overlay */
-        if (!isSoloMode()) {
+        if (!isSoloMode) {
             fadingMessageLayout(
                 hudVisibility = hudVisibility.value,
                 pipModeObserver = pipModeObserver,

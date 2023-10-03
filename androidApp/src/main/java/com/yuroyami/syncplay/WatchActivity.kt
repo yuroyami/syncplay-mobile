@@ -68,24 +68,10 @@ class WatchActivity : ComponentActivity() {
             RoomUI(isSoloMode)
         }
 
-        //TODO: show hint on how to add video
         //TODO: attach tooltips to buttons
 
         /** Starting ping update */
         //pingUpdate()
-
-        /** Now connecting to the server */
-        if (!isSoloMode) {
-            val tls = false /* sp.getBoolean("tls", false) */ //Fetching the TLS setting (whether the user wanna connect via TLS)
-            /* if (p.channel == null) {
-                /* If user has TLS on, we check for TLS from the server (Opportunistic TLS) */
-                if (tls) {
-                    p.syncplayBroadcaster?.onTLSCheck()
-                    p.tls = Constants.TLS.TLS_ASK
-                }
-                p.connect()
-            }*/
-        }
     }
 
 
@@ -118,12 +104,6 @@ class WatchActivity : ComponentActivity() {
 //            val ccsize = DataStoreKeys.DATASTORE_INROOM_PREFERENCES.obtainInt(PREF_INROOM_PLAYER_SUBTITLE_SIZE, 16)
 //            retweakSubtitleAppearance(ccsize.toFloat())
 //        }
-//    }
-//
-//    fun setupPlayer() {
-//        runBlocking { lifecycleScope.launch(Dispatchers.Main) {
-//            player = HighLevelPlayer.create(this@WatchActivity, engine.value)
-//        }}
 //    }
 //
 //    fun unalphizePlayer(engine: String) {

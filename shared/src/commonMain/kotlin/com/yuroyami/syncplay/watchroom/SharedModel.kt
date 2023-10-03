@@ -3,6 +3,7 @@ package com.yuroyami.syncplay.watchroom
 import com.yuroyami.syncplay.MR
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
+import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_TLS_ENABLE
 import com.yuroyami.syncplay.datastore.obtainBoolean
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.JoinInfo
@@ -279,6 +280,11 @@ fun prepareProtocol(joinInfo: JoinInfo) {
         p.session.currentPassword = joinInfo.password
 
         /** Connecting */
+        val tls = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainBoolean(PREF_TLS_ENABLE, false) }
+        if (tls) {
+            p.syncplayCallback?.onTLSCheck()
+            p.tls = Constants.TLS.TLS_ASK
+        }
         p.connect()
     }
 }
