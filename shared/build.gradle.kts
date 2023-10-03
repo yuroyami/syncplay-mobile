@@ -147,6 +147,10 @@ android {
     kotlin {
         jvmToolchain(8)
     }
+
+    buildFeatures {
+        viewBinding = true //I prefer using viewbinding to quickly inflate ExoPlayer and MPV XML views.
+    }
 }
 
 

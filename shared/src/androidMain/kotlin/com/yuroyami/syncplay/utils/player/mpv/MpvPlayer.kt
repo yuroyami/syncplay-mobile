@@ -5,9 +5,14 @@ import android.content.res.AssetManager
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.util.Log
+import android.view.LayoutInflater
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import androidx.media3.common.C
 import androidx.media3.common.MimeTypes
+import com.yuroyami.syncplay.databinding.MpvviewBinding
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
@@ -50,8 +55,7 @@ class MpvPlayer : BasePlayer {
     val mpvMainScope = CoroutineScope(Dispatchers.Main)
     val mpvBGScope = CoroutineScope(Dispatchers.IO)
 
-    override fun initialize(extra: Any) {
-        mpvView = extra as MPVView
+    override fun initialize() {
         ctx = mpvView.context.applicationContext
 
         copyAssets(ctx)
@@ -59,6 +63,18 @@ class MpvPlayer : BasePlayer {
         //TODO: LoadControl
         //TODO: AudioLock
         //TODO: TrackSelection applying default language
+    }
+
+    @Composable
+    override fun VideoPlayer(modifier: Modifier) {
+        AndroidView(
+            modifier = modifier,
+            factory = { context ->
+                mpvView = MpvviewBinding.inflate(LayoutInflater.from(context)).mpvview
+                initialize()
+                return@AndroidView mpvView
+            },
+            update = {})
     }
 
     override fun hasMedia(): Boolean {

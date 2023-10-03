@@ -3,7 +3,6 @@ package com.yuroyami.syncplay.watchroom
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -92,7 +91,6 @@ import com.yuroyami.syncplay.compose.ComposeUtils
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyIcon2
 import com.yuroyami.syncplay.compose.ComposeUtils.FlexibleFancyAnnotatedText
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
-import com.yuroyami.syncplay.compose.ComposeUtils.solidOverlay
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_INROOM_PREFERENCES
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_MISC_PREFS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_NIGHTMODE
@@ -117,11 +115,11 @@ import com.yuroyami.syncplay.utils.timeStamper
 import com.yuroyami.syncplay.watchroom.RoomComposables.AddVideoButton
 import com.yuroyami.syncplay.watchroom.RoomComposables.ComposedMessagePalette
 import com.yuroyami.syncplay.watchroom.RoomComposables.FreeAnimatedVisibility
+import com.yuroyami.syncplay.watchroom.RoomComposables.PingRadar
 import com.yuroyami.syncplay.watchroom.RoomComposables.RoomArtwork
 import com.yuroyami.syncplay.watchroom.RoomComposables.RoomTab
 import com.yuroyami.syncplay.watchroom.RoomComposables.fadingMessageLayout
 import dev.icerock.moko.resources.compose.asFont
-import dev.icerock.moko.resources.compose.painterResource
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking

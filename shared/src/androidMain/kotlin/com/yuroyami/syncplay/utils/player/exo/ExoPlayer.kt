@@ -1,6 +1,10 @@
 package com.yuroyami.syncplay.utils.player.exo
 
 import android.annotation.SuppressLint
+import android.view.LayoutInflater
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -20,6 +24,7 @@ import androidx.media3.ui.PlayerView
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.yuroyami.syncplay.R
+import com.yuroyami.syncplay.databinding.ExoviewBinding
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
@@ -57,8 +62,7 @@ class ExoPlayer: BasePlayer {
     val exoMainScope = CoroutineScope(Dispatchers.Main)
     val exoBGScope = CoroutineScope(Dispatchers.IO)
 
-    override fun initialize(extra: Any) {
-        exoView = extra as PlayerView
+    override fun initialize() {
         val context = exoView.context
 
         exoMainScope.launch {
@@ -178,6 +182,18 @@ class ExoPlayer: BasePlayer {
 
             trackProgress()
         }
+    }
+
+    @Composable
+    override fun VideoPlayer(modifier: Modifier) {
+        AndroidView(
+            modifier = modifier,
+            factory = { context ->
+                exoView = ExoviewBinding.inflate(LayoutInflater.from(context)).exoview
+                initialize()
+                return@AndroidView exoView
+            },
+            update = {})
     }
 
     override fun hasMedia(): Boolean {

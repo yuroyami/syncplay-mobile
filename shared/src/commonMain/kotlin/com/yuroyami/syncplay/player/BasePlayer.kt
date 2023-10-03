@@ -1,5 +1,7 @@
 package com.yuroyami.syncplay.player
 
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import com.yuroyami.syncplay.models.MediaFile
 
 /** This is an interface that wraps the needed player functionality for Syncplay.
@@ -17,7 +19,7 @@ import com.yuroyami.syncplay.models.MediaFile
 interface BasePlayer {
 
     /** Called when the player is to be initialized */
-    fun initialize(extra: Any)
+    fun initialize()
 
     /** Returns whether the current player has any media loaded */
     fun hasMedia(): Boolean
@@ -50,4 +52,6 @@ interface BasePlayer {
 
     fun switchAspectRatio(): String
 
+    @Composable
+    fun VideoPlayer(modifier: Modifier)
 }
