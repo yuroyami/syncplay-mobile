@@ -10,7 +10,6 @@ import platform.Foundation.timeIntervalSince1970
 import kotlin.concurrent.AtomicReference
 import kotlin.math.roundToLong
 
-
 actual fun getPlatform(): String = "iOS"
 
 actual fun changeLanguage(lang: String, context: Any?) {
@@ -36,5 +35,5 @@ actual fun getFileName(uri: String, context: Any?): String? {
 }
 
 actual fun pingIcmp(host: String, packet: Int): Int? {
-    return null //TODO
+    return pingIcmpIOS(host, packet)
 }

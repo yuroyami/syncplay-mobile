@@ -64,6 +64,7 @@ import com.yuroyami.syncplay.MR
 import com.yuroyami.syncplay.compose.ComposeUtils
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.compose.ComposeUtils.radiantOverlay
+import com.yuroyami.syncplay.compose.ComposeUtils.solidOverlay
 import com.yuroyami.syncplay.datastore.DataStoreKeys
 import com.yuroyami.syncplay.datastore.booleanFlow
 import com.yuroyami.syncplay.datastore.ds
@@ -327,5 +328,50 @@ object RoomComposables {
             label = label,
             content = content
         )
+    }
+
+
+    /** Ping */
+    @Composable
+    fun PingRadar(pingValue: Int?) {
+        when (pingValue) {
+            null -> {
+                Image(
+                    painter = painterResource(MR.images.network_level_0), "",
+                    modifier = Modifier.size(16.dp).solidOverlay(Color.Gray)
+                )
+            }
+
+            in (0..90) -> {
+                Image(
+                    painter = painterResource(MR.images.network_level_4), "",
+                    modifier = Modifier.size(16.dp).solidOverlay(Color.Green)
+                )
+            }
+            in (91..120) -> {
+                Image(
+                    painter = painterResource(MR.images.network_level_3), "",
+                    modifier = Modifier.size(16.dp).solidOverlay(Color.Yellow)
+                )
+            }
+            in (121..160) -> {
+                Image(
+                    painter = painterResource(MR.images.network_level_3), "",
+                    modifier = Modifier.size(16.dp).solidOverlay(Color(255, 176, 66))
+                )
+            }
+            in (161..200) -> {
+                Image(
+                    painter = painterResource(MR.images.network_level_2), "",
+                    modifier = Modifier.size(16.dp).solidOverlay(Color(181, 80, 25))
+                )
+            }
+            else -> {
+                Image(
+                    painter = painterResource(MR.images.network_level_1), "",
+                    modifier = Modifier.size(16.dp).solidOverlay(Color.Red)
+                )
+            }
+        }
     }
 }

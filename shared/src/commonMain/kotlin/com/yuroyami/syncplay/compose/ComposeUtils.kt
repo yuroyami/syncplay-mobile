@@ -596,6 +596,21 @@ object ComposeUtils {
             }
     }
 
+    /** Adds an OVAL gradient overlay on the composable (Syncplay gradient by default) */
+    fun Modifier.solidOverlay(color: Color): Modifier {
+        return this
+            .graphicsLayer(alpha = 0.99f)
+            .drawWithCache {
+                onDrawWithContent {
+                    drawContent()
+                    drawRect(
+                        color = color,
+                        blendMode = BlendMode.SrcAtop
+                    )
+                }
+            }
+    }
+
     /** Shows a popup with the given content.
      * @param dialogOpen Controls whether the popup dialog is shown or not.
      * When this is false, the dialog is not rendered at all.

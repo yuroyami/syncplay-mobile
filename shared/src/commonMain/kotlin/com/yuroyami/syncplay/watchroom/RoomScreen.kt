@@ -3,6 +3,7 @@ package com.yuroyami.syncplay.watchroom
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -91,6 +92,7 @@ import com.yuroyami.syncplay.compose.ComposeUtils
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyIcon2
 import com.yuroyami.syncplay.compose.ComposeUtils.FlexibleFancyAnnotatedText
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
+import com.yuroyami.syncplay.compose.ComposeUtils.solidOverlay
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_INROOM_PREFERENCES
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_MISC_PREFS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_NIGHTMODE
@@ -119,6 +121,7 @@ import com.yuroyami.syncplay.watchroom.RoomComposables.RoomArtwork
 import com.yuroyami.syncplay.watchroom.RoomComposables.RoomTab
 import com.yuroyami.syncplay.watchroom.RoomComposables.fadingMessageLayout
 import dev.icerock.moko.resources.compose.asFont
+import dev.icerock.moko.resources.compose.painterResource
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -441,25 +444,18 @@ fun RoomUI(isSoloMode: Boolean) {
                         ) {
                             if (!isSoloMode) {
                                 Row {
+                                    val pingo by remember { p.ping }
                                     Text(
-                                        text = if (p.ping.doubleValue < 0) {
+                                        text = if (pingo == null) {
                                             "Disconnected"
                                         } else {
-                                            "Connected - ${p.ping.doubleValue.toInt()}ms"
+                                            "Connected - ${pingo!!.toInt()}ms"
                                         },
                                         color = Paletting.OLD_SP_PINK
                                     )
                                     Spacer(Modifier.width(4.dp))
-                                    /*
-                        Image(
-                            when (p.ping.doubleValue) {
-                                (-1.0) -> painterResource(MR.images.icon_unconnected)
-                                in (0.0..100.0) -> painterResource(MR.images.ping_3)
-                                in (100.0..199.0) -> painterResource(MR.images.ping_2)
-                                else -> painterResource(MR.images.ping_1)
-                            }, "", Modifier.size(16.dp)
-                        )
-                         */
+
+                                    PingRadar(pingo)
                                 }
                                 Text(text = "Room: ${p.session.currentRoom}", fontSize = 11.sp, color = Paletting.OLD_SP_PINK)
                             }
