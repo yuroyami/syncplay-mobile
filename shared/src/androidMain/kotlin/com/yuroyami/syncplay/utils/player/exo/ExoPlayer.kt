@@ -25,6 +25,7 @@ import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.ENGINE
 import com.yuroyami.syncplay.player.PlayerOptions
+import com.yuroyami.syncplay.player.PlayerUtils.trackProgress
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.utils.CommonUtils.loggy
 import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
@@ -63,17 +64,18 @@ class ExoPlayer: BasePlayer {
         exoMainScope.launch {
 
             /** LoadControl (Buffering manager) and track selector (for track language preference) **/
+            val options = PlayerOptions.get()
             val loadControl = DefaultLoadControl.Builder()
                 .setBufferDurationsMs(
-                    PlayerOptions.minBuffer,
-                    PlayerOptions.maxBuffer,
-                    PlayerOptions.playbackBuffer,
-                    PlayerOptions.playbackBuffer + 500
+                    options.minBuffer,
+                    options.maxBuffer,
+                    options.playbackBuffer,
+                    options.playbackBuffer + 500
                 ).build()
 
             val trackSelector = DefaultTrackSelector(context.applicationContext)
-            val params = trackSelector.buildUponParameters().setPreferredAudioLanguage(PlayerOptions.audioPreference)
-                .setPreferredTextLanguage(PlayerOptions.ccPreference)
+            val params = trackSelector.buildUponParameters().setPreferredAudioLanguage(options.audioPreference)
+                .setPreferredTextLanguage(options.ccPreference)
                 .build()
             trackSelector.parameters = params
 
@@ -172,6 +174,9 @@ class ExoPlayer: BasePlayer {
                     loggy("Player error: ${error.message ?: ""}")
                 }
             })
+
+
+            trackProgress()
         }
     }
 

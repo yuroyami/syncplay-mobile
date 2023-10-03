@@ -31,7 +31,6 @@ fun isSoloMode(): Boolean {
     return !::p.isInitialized
 }
 
-
 fun prepareProtocol(joinInfo: JoinInfo) {
     if (!joinInfo.soloMode) {
         /** Initializing our ViewModel, which is our protocol at the same time **/

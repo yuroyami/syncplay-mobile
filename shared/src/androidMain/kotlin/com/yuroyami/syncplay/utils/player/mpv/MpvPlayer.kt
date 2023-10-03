@@ -12,6 +12,7 @@ import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.ENGINE
+import com.yuroyami.syncplay.player.PlayerUtils
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.utils.CommonUtils.loggy
 import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
@@ -327,6 +328,8 @@ class MpvPlayer : BasePlayer {
             }
         }
         mpvView.addObserver(observer)
+
+        PlayerUtils.trackProgress()
     }
 
     //TODO

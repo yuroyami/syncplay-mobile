@@ -14,9 +14,12 @@ import com.yuroyami.syncplay.player.PlayerUtils.getEngineForString
 import com.yuroyami.syncplay.utils.UIUtils.cutoutMode
 import com.yuroyami.syncplay.utils.UIUtils.hideSystemUI
 import com.yuroyami.syncplay.utils.changeLanguage
+import com.yuroyami.syncplay.utils.player.exo.ExoPlayer
+import com.yuroyami.syncplay.utils.player.mpv.MpvPlayer
 import com.yuroyami.syncplay.watchroom.RoomUI
 import com.yuroyami.syncplay.watchroom.engine
 import com.yuroyami.syncplay.watchroom.isSoloMode
+import com.yuroyami.syncplay.watchroom.player
 import com.yuroyami.syncplay.watchroom.setReadyDirectly
 import kotlinx.coroutines.runBlocking
 
@@ -43,7 +46,17 @@ class WatchActivity : ComponentActivity() {
                 DATASTORE_MISC_PREFS.obtainString(DataStoreKeys.MISC_PLAYER_ENGINE, "mpv")
             })
 
-        //TODO: setupPlayer()
+        when (engine) {
+            ENGINE.ANDROID_EXOPLAYER -> {
+                player = ExoPlayer()
+                //player.initialize()
+            }
+            ENGINE.ANDROID_MPV -> {
+                player = MpvPlayer()
+                //player.initialize()
+            }
+            else -> {}
+        }
 
         /** Set ready first hand */
         setReadyDirectly = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainBoolean(DataStoreKeys.PREF_READY_FIRST_HAND, true) }
@@ -54,8 +67,6 @@ class WatchActivity : ComponentActivity() {
         setContent {
             RoomUI(isSoloMode)
         }
-
-        //trackProgress()
 
         //TODO: show hint on how to add video
         //TODO: attach tooltips to buttons
