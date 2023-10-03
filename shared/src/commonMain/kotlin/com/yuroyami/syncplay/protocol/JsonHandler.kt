@@ -2,7 +2,6 @@ package com.yuroyami.syncplay.protocol
 
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.User
-import com.yuroyami.syncplay.protocol.json.ReceivedJson
 import com.yuroyami.syncplay.utils.CommonUtils.loggy
 import com.yuroyami.syncplay.utils.generateTimestampMillis
 import kotlinx.serialization.json.Json

@@ -28,7 +28,7 @@ data class MediaFile(
     var subtitleTracks: MutableList<Track> = mutableListOf(),
 
     /** This refers to any external subtitle file that was loaded **/
-    var externalSub: String? /* MediaItem.SubtitleConfiguration? */ = null,
+    var externalSub: Any? = null,
 
     /** MediaInfo chart for this file **/
     var mediainfo: MediaInfo = MediaInfo()

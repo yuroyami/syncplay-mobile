@@ -49,6 +49,7 @@ kotlin {
                 val ktor = "2.3.4"
                 implementation("io.ktor:ktor-client-core:$ktor")
                 implementation("io.ktor:ktor-network:$ktor")
+                implementation("io.ktor:ktor-network-tls:$ktor")
 
                 //implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor")
 

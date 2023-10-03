@@ -2,8 +2,8 @@ package com.yuroyami.syncplay.models
 
 class TrackChoices {
     /* Exo */
-    //var lastAudioOverride: TrackSelectionOverride? = null
-    //var lastSubtitleOverride: TrackSelectionOverride? = null
+    var lastAudioOverride: Any? = null //TYPE: TrackSelectionOverride
+    var lastSubtitleOverride: Any? = null
 
     /* mpv */
     var audioSelectionIndexMpv: Int? = null

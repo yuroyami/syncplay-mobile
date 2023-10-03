@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.protocol.json
+package com.yuroyami.syncplay.protocol
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

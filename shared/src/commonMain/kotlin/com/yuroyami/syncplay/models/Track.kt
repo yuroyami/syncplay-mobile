@@ -17,10 +17,10 @@ data class Track(
     val trackType: Int? = null,
 
     /** EXO: The corresponding format (ExoPlayer calls track a format for some reason) **/
-    //val format: Format? = null,
+    val format_EXO_ONLY: Any? = null,
 
     /** EXO:  The trackgroup in which the track/format exists **/
-    //val trackGroup: TrackGroup? = null
+    val trackGroup_EXO_ONLY: Any? = null
 ) {
     /** The current status of the track **/
     var selected: MutableState<Boolean> = mutableStateOf(false)

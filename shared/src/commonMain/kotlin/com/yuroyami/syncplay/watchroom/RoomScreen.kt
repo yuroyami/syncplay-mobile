@@ -106,9 +106,11 @@ import com.yuroyami.syncplay.datastore.ds
 import com.yuroyami.syncplay.datastore.intFlow
 import com.yuroyami.syncplay.datastore.obtainBoolean
 import com.yuroyami.syncplay.datastore.writeBoolean
+import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.Paletting.ROOM_ICON_SIZE
+import com.yuroyami.syncplay.utils.RoomUtils.sendMessage
 import com.yuroyami.syncplay.utils.timeStamper
 import com.yuroyami.syncplay.watchroom.RoomComposables.AddVideoButton
 import com.yuroyami.syncplay.watchroom.RoomComposables.ComposedMessagePalette
@@ -352,7 +354,7 @@ fun RoomUI(isSoloMode: Boolean) {
                                         if (it.length > 150) it.substring(0, 149)
                                     }
                                     if (msgToSend.isNotBlank()) {
-                                        //TODO: sendMessage(msgToSend)
+                                        sendMessage(msgToSend)
                                     }
                                     msg.value = ""
                                     msgCanSend.value = false
@@ -696,7 +698,7 @@ fun RoomUI(isSoloMode: Boolean) {
                                 onCheckedChange = { b ->
                                     ready.value = b
                                     p.ready = b
-                                    //TODO: p.sendPacket(JsonSender.sendReadiness(b, true))
+                                    p.sendPacket(JsonSender.sendReadiness(b, true))
                                 }) {
                                 when (ready.value) {
                                     true -> Text("Ready", fontSize = 14.sp)

@@ -17,18 +17,8 @@ import com.yuroyami.syncplay.watchroom.RoomUI
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.setReadyDirectly
 import kotlinx.coroutines.runBlocking
-//import com.yuroyami.syncplay.BuildConfig
 
 class WatchActivity : ComponentActivity() {
-
-    /* High-level player wrapper (currently wraps exoplayer and mpv) */
-    //var player: HighLevelPlayer? = null
-    var engine = mutableStateOf("")
-
-
-    //var currentTrackChoices: TrackChoices = TrackChoices()
-
-    //lateinit var binding: WatchActivityBinding
 
     /** Now, onto overriding lifecycle methods */
     override fun onCreate(sis: Bundle?) {

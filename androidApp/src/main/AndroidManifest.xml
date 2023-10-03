@@ -19,17 +19,18 @@
         android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="false"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true"
+        android:taskAffinity=""
+        >
 
         <activity
             android:name=".HomeActivity"
             android:autoRemoveFromRecents="true"
-            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:configChanges="orientation|keyboardHidden|screenLayout|screenSize|smallestScreenSize"
             android:exported="true"
             android:imeOptions="flagNoExtractUi"
             android:launchMode="singleTask"
             android:screenOrientation="fullSensor"
-            android:taskAffinity=""
             android:theme="@style/SplashTheme"
             android:windowSoftInputMode="adjustPan">
             <intent-filter>
@@ -48,7 +49,6 @@
             android:resizeableActivity="true"
             android:screenOrientation="sensorLandscape"
             android:supportsPictureInPicture="true"
-            android:taskAffinity=""
             android:theme="@style/SyncplayTheme"
             android:windowSoftInputMode="adjustNothing" />
 

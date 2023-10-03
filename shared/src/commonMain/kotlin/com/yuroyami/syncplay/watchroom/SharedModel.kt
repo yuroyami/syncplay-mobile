@@ -7,6 +7,7 @@ import com.yuroyami.syncplay.datastore.obtainBoolean
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.models.MediaFile
+import com.yuroyami.syncplay.models.TrackChoices
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.protocol.ProtocolCallback
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
@@ -20,6 +21,7 @@ lateinit var p: SyncplayProtocol //If it is not initialized, it means we're in S
 
 var media: MediaFile? = null
 
+var currentTrackChoices: TrackChoices = TrackChoices()
 
 /** Returns whether we're in Solo Mode, by checking if our protocol is initialized */
 fun isSoloMode(): Boolean {
