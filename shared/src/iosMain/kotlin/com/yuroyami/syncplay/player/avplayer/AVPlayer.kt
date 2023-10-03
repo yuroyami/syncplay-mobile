@@ -1,7 +1,6 @@
 package com.yuroyami.syncplay.player.avplayer
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.interop.UIKitView
 import com.yuroyami.syncplay.models.MediaFile
@@ -15,7 +14,6 @@ import kotlinx.coroutines.IO
 import platform.AVFoundation.AVPlayer
 import platform.AVFoundation.AVPlayerItem
 import platform.AVFoundation.AVPlayerLayer
-import platform.AVFoundation.play
 import platform.AVKit.AVPlayerViewController
 import platform.CoreGraphics.CGRect
 import platform.Foundation.NSURL
@@ -29,47 +27,42 @@ class AVPlayer : BasePlayer {
 
     /*-- Exoplayer-related properties --*/
     var avplayer: AVPlayer? = null
+    lateinit var avView:  AVPlayerViewController
+    var playerlayer: AVPlayerLayer? = null
     private var currentMedia: AVPlayerItem? = null
-    lateinit var avView: UIView
 
     val avMainScope = CoroutineScope(Dispatchers.Main)
     val avBGScope = CoroutineScope(Dispatchers.IO)
 
     override fun initialize() {
-
+        avplayer = AVPlayer(uRL = NSURL.new()!!)
+        playerlayer = AVPlayerLayer()
+        avView = AVPlayerViewController()
+        avView.player = avplayer!!
+        avView.showsPlaybackControls = false
+        playerlayer?.player = avplayer
     }
 
     @OptIn(ExperimentalForeignApi::class)
     @Composable
     override fun VideoPlayer(modifier: Modifier) {
-        val player = remember { AVPlayer(uRL = NSURL.new()!!) }
-        val playerLayer = remember { AVPlayerLayer() }
-        val avPlayerViewController = remember { AVPlayerViewController() }
-        avPlayerViewController.player = player
-        avPlayerViewController.showsPlaybackControls = true
-
-        playerLayer.player = player
         UIKitView(
             modifier = modifier,
             factory = {
-                // Create a UIView to hold the AVPlayerLayer
+                initialize()
                 val playerContainer = UIView()
-                playerContainer.addSubview(avPlayerViewController.view)
-                // Return the playerContainer as the root UIView
+                playerContainer.addSubview(avView.view)
                 playerContainer
             },
             onResize = { view: UIView, rect: CValue<CGRect> ->
                 CATransaction.begin()
                 CATransaction.setValue(true, kCATransactionDisableActions)
                 view.layer.setFrame(rect)
-                playerLayer.setFrame(rect)
-                avPlayerViewController.view.layer.frame = rect
+                playerlayer?.setFrame(rect)
+                avView.view.layer.frame = rect
                 CATransaction.commit()
             },
-            update = { view ->
-                player.play()
-                avPlayerViewController.player!!.play()
-            }
+            update = { }
         )
     }
 
