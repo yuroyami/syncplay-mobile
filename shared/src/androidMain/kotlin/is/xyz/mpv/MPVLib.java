@@ -2,23 +2,22 @@ package is.xyz.mpv;
 
 // Wrapper for native library
 
+import java.util.ArrayList;
+import java.util.List;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.view.Surface;
 
 import androidx.annotation.NonNull;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @SuppressWarnings("unused")
 public class MPVLib {
 
      static {
-        String[] libs = { "mpv", "player" };
-        for (String lib: libs) {
-            System.loadLibrary(lib);
-        }
+          String[] libs = { "mpv", "player" };
+          for (String lib: libs) {
+               System.loadLibrary(lib);
+          }
      }
 
      public static native void create(Context appctx);

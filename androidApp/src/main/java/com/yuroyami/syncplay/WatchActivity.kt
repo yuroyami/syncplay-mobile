@@ -4,16 +4,18 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.mutableStateOf
 import com.yuroyami.syncplay.datastore.DataStoreKeys
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_MISC_PREFS
 import com.yuroyami.syncplay.datastore.obtainBoolean
 import com.yuroyami.syncplay.datastore.obtainString
+import com.yuroyami.syncplay.player.ENGINE
+import com.yuroyami.syncplay.player.PlayerUtils.getEngineForString
 import com.yuroyami.syncplay.utils.UIUtils.cutoutMode
 import com.yuroyami.syncplay.utils.UIUtils.hideSystemUI
 import com.yuroyami.syncplay.utils.changeLanguage
 import com.yuroyami.syncplay.watchroom.RoomUI
+import com.yuroyami.syncplay.watchroom.engine
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.setReadyDirectly
 import kotlinx.coroutines.runBlocking
@@ -36,9 +38,10 @@ class WatchActivity : ComponentActivity() {
         cutoutMode(true)
 
         val flavor = "noLibs" //fixme: BuildConfig.FLAVOR
-        engine.value = if (flavor == "noLibs") "exo" else runBlocking {
-            DATASTORE_MISC_PREFS.obtainString(DataStoreKeys.MISC_PLAYER_ENGINE, "mpv")
-        }
+        engine = if (flavor == "noLibs") ENGINE.ANDROID_EXOPLAYER else
+            getEngineForString(runBlocking {
+                DATASTORE_MISC_PREFS.obtainString(DataStoreKeys.MISC_PLAYER_ENGINE, "mpv")
+            })
 
         //TODO: setupPlayer()
 

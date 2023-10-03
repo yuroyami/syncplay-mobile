@@ -12,12 +12,11 @@ import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
-import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
-import androidx.media3.session.MediaController
-import androidx.media3.session.MediaSession
-import androidx.media3.ui.PlayerView
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import androidx.media3.session.MediaSession
 import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.PlayerView
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.yuroyami.syncplay.R
@@ -29,6 +28,7 @@ import com.yuroyami.syncplay.player.PlayerOptions
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.utils.CommonUtils.loggy
 import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
+import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.watchroom.currentTrackChoices
 import com.yuroyami.syncplay.watchroom.hasVideoG
 import com.yuroyami.syncplay.watchroom.isNowPlaying
@@ -248,9 +248,32 @@ class ExoPlayer: BasePlayer {
         }
     }
 
+    override fun reapplyTrackChoices() {
+        /* We need to cast MediaController to ExoPlayer since they're roughly the same */
+        analyzeTracks(media ?: return)
+
+        exoplayer?.apply {
+            val builder = trackSelectionParameters.buildUpon()
+
+            var newParams = builder.build()
+
+            if (currentTrackChoices.lastAudioOverride != null) {
+                newParams = newParams.buildUpon().addOverride(
+                    currentTrackChoices.lastAudioOverride as? TrackSelectionOverride ?: return
+                ).build()
+            }
+            if (currentTrackChoices.lastSubtitleOverride != null) {
+                newParams = newParams.buildUpon().addOverride(
+                    currentTrackChoices.lastSubtitleOverride as? TrackSelectionOverride ?: return
+                ).build()
+            }
+            trackSelectionParameters = newParams
+        }
+    }
+
     override fun loadExternalSub(uri: String) {
         if (hasMedia()) {
-            val filename = getFileName(uri = uri).toString()
+            val filename = getFileName(uri = uri, exoView.context).toString()
             val extension = filename.substring(filename.length - 4)
 
             val mimeType =

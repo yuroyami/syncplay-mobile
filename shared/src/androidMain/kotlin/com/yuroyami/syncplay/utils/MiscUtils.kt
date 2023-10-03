@@ -1,10 +1,14 @@
 package com.yuroyami.syncplay.utils
 
+import android.content.ContentResolver
 import android.content.Context
 import android.content.res.Configuration
-import android.util.Log
+import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.net.toUri
 import androidx.core.os.LocaleListCompat
+import java.io.File
 import java.util.Locale
 
 actual fun getPlatform(): String = "Android"
@@ -35,3 +39,19 @@ actual fun timeStamper(seconds: Long): String {
         String.format("%02d:%02d:%02d", seconds / 3600, (seconds / 60) % 60, seconds % 60)
     }
 }
+
+actual fun getFileName(uri: String, context: Any?): String? {
+    val actualuri = uri.toUri()
+    return when (actualuri.scheme) {
+        ContentResolver.SCHEME_CONTENT -> (context as? Context)?.getContentFileName(actualuri)
+        else -> actualuri.path?.let(::File)?.name
+    }
+}
+
+private fun Context.getContentFileName(uri: Uri): String? = runCatching {
+    contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+        cursor.moveToFirst()
+        return@use cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
+            .let(cursor::getString)
+    }
+}.getOrNull()

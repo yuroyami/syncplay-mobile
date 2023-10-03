@@ -5,9 +5,9 @@ import android.content.res.AssetManager
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.media3.common.C
 import androidx.media3.common.MimeTypes
-import com.yuroyami.syncplay.R
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
@@ -15,12 +15,14 @@ import com.yuroyami.syncplay.player.ENGINE
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.utils.CommonUtils.loggy
 import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
+import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.watchroom.currentTrackChoices
 import com.yuroyami.syncplay.watchroom.hasVideoG
 import com.yuroyami.syncplay.watchroom.isNowPlaying
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.media
 import com.yuroyami.syncplay.watchroom.p
+import com.yuroyami.syncplay.watchroom.player
 import com.yuroyami.syncplay.watchroom.timeFull
 import `is`.xyz.mpv.MPVLib
 import kotlinx.coroutines.CoroutineScope
@@ -143,9 +145,19 @@ class MpvPlayer : BasePlayer {
         }
     }
 
+    override fun reapplyTrackChoices() {
+        val subIndex = currentTrackChoices.subtitleSelectionIndexMpv
+        val audioIndex = currentTrackChoices.audioSelectionIndexMpv
+
+        with(player ?: return) {
+            if (subIndex != null) selectTrack(C.TRACK_TYPE_TEXT, subIndex)
+            if (audioIndex != null) selectTrack(C.TRACK_TYPE_AUDIO, audioIndex)
+        }
+    }
+
     override fun loadExternalSub(uri: String) {
         if (hasMedia()) {
-            val filename = getFileName(uri = uri).toString()
+            val filename = getFileName(uri = uri, ctx).toString()
             val extension = filename.substring(filename.length - 4)
 
             val mimeType =
@@ -157,7 +169,7 @@ class MpvPlayer : BasePlayer {
                 else if (extension.contains("vtt")) MimeTypes.TEXT_VTT else ""
 
             if (mimeType != "") {
-                resolveUri(uri)?.let {
+                ctx.resolveUri(uri.toUri())?.let {
                     MPVLib.command(arrayOf("sub-add", it, "cached"))
                 }
                 //toasty(string(R.string.room_selected_sub, filename))
@@ -197,7 +209,7 @@ class MpvPlayer : BasePlayer {
                 delay(500)
                 uri?.let {
                     if (!isUrl) {
-                        resolveUri(it)?.let { it2 ->
+                        ctx.resolveUri(it.toUri())?.let { it2 ->
                             loggy("Final path $it2")
                             if (!ismpvInit) {
                                 mpvView.initialize(ctx.filesDir.path)

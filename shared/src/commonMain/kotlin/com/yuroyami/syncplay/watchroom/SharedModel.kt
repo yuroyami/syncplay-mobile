@@ -8,6 +8,8 @@ import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.TrackChoices
+import com.yuroyami.syncplay.player.BasePlayer
+import com.yuroyami.syncplay.player.ENGINE
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.protocol.ProtocolCallback
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
@@ -18,7 +20,8 @@ import dev.icerock.moko.resources.compose.stringResource
 import kotlinx.coroutines.runBlocking
 
 lateinit var p: SyncplayProtocol //If it is not initialized, it means we're in Solo Mode
-
+lateinit var engine: ENGINE
+var player: BasePlayer? = null
 var media: MediaFile? = null
 
 var currentTrackChoices: TrackChoices = TrackChoices()

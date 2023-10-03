@@ -29,3 +29,7 @@ actual fun timeStamper(seconds: Long): String {
     formatter.allowedUnits = NSCalendarUnitHour and NSCalendarUnitMinute and NSCalendarUnitSecond
     return formatter.stringFromTimeInterval(seconds.toDouble()) ?: "??:??"
 }
+
+actual fun getFileName(uri: String, context: Any?): String? {
+    return "" //TODO
+}

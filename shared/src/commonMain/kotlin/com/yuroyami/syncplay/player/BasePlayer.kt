@@ -30,6 +30,8 @@ interface BasePlayer {
 
     fun selectTrack(type: Int, index: Int)
 
+    fun reapplyTrackChoices()
+
     /** Loads an external sub given the [uri] */
     fun loadExternalSub(uri: String)
 

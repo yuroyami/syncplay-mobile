@@ -10,15 +10,8 @@ expect fun generateTimestampMillis(): Long
 
 expect fun timeStamper(seconds: Long): String
 
+expect fun getFileName(uri: String, context: Any? = null): String?
 
-//
-///** This is used to generate chat messages' timestamp ready-for-use strings **/
-//fun generateTimestamp(): String {
-//    var s = Timestamp(System.currentTimeMillis()).toString().trim()
-//    s = s.removeRange(19 until s.length).removeRange(0..10)
-//    return s
-//}
-//
 //val gb = 2L * 1024L * 1024L * 1024L
 //
 ///** Helps determine the size of a file in bytes, needing only its Uri and a context */
@@ -43,18 +36,6 @@ expect fun timeStamper(seconds: Long): String
 //    } else size1 */
 //}
 //
-//fun Context.getFileName(uri: Uri): String? = when (uri.scheme) {
-//    ContentResolver.SCHEME_CONTENT -> getContentFileName(uri)
-//    else -> uri.path?.let(::File)?.name
-//}
-//
-//private fun Context.getContentFileName(uri: Uri): String? = runCatching {
-//    contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-//        cursor.moveToFirst()
-//        return@use cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
-//            .let(cursor::getString)
-//    }
-//}.getOrNull()
 //
 ///** This function is used to calculate the ICMP Ping to a certain server or end host.
 // * This is a long blocking call, therefore it should be executed on a background IO thread. **/
@@ -90,14 +71,7 @@ expect fun timeStamper(seconds: Long): String
 //    }
 //    return result
 //}
-//
-///** Convenience log function **/
-//fun loggy(string: String) {
-//    Log.e("Syncplay", string)
-//}
-//
 
-//
 //@Suppress("DEPRECATION")
 //fun ComponentActivity.showSystemUI(useDeprecated: Boolean) {
 //    if (useDeprecated) {
@@ -122,13 +96,6 @@ expect fun timeStamper(seconds: Long): String
 //        PreferenceManager.getDefaultSharedPreferences(context).getInt(key, Color.BLACK)
 //    return String.format("#%06X", 0xFFFFFF and color)
 //}
-//
-///** This basically just changes the Status Bar color */
-//fun setStatusBarColor(@ColorInt color: Int, window: Window) {
-//    window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-//    window.statusBarColor = color
-//}
-//
 
 //
 ///** Syncplay uses SHA256 hex-digested to hash file names and sizes **/
@@ -139,12 +106,5 @@ expect fun timeStamper(seconds: Long): String
 //fun ComponentActivity.hideKb() {
 //    lifecycleScope.launch(Dispatchers.Main) {
 //        WindowInsetsControllerCompat(window, window.decorView).hide(WindowInsetsCompat.Type.ime())
-//    }
-//}
-//
-///** Convenience method to save code space */
-//fun Context.toasty(string: String) {
-//    Handler(Looper.getMainLooper()).post {
-//        Toast.makeText(this@toasty, string, Toast.LENGTH_SHORT).show()
 //    }
 //}
