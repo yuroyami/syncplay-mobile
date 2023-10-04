@@ -86,7 +86,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
-import androidx.compose.ui.zIndex
 import com.yuroyami.syncplay.MR
 import com.yuroyami.syncplay.compose.CardRoomPrefs.InRoomSettingsCard
 import com.yuroyami.syncplay.compose.CardUserInfo.UserInfoCard
@@ -109,12 +108,15 @@ import com.yuroyami.syncplay.datastore.ds
 import com.yuroyami.syncplay.datastore.intFlow
 import com.yuroyami.syncplay.datastore.obtainBoolean
 import com.yuroyami.syncplay.datastore.writeBoolean
+import com.yuroyami.syncplay.player.PlayerUtils.pausePlayback
+import com.yuroyami.syncplay.player.PlayerUtils.playPlayback
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.Paletting.ROOM_ICON_SIZE
 import com.yuroyami.syncplay.utils.CommonUtils
 import com.yuroyami.syncplay.utils.RoomUtils.sendMessage
+import com.yuroyami.syncplay.utils.RoomUtils.sendSeek
 import com.yuroyami.syncplay.utils.timeStamper
 import com.yuroyami.syncplay.watchroom.RoomComposables.AddVideoButton
 import com.yuroyami.syncplay.watchroom.RoomComposables.ComposedMessagePalette
@@ -213,6 +215,39 @@ fun RoomUI() {
         val seekDecrement = DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP, 10).collectAsState(initial = 10)
 
         /** Room artwork underlay (when no video is loaded) */
+        val seekBckwd = remember {
+            fun() {
+                if (player == null) return
+                var newPos = (player!!.currentPositionMs()) - seekDecrement.value * 1000
+                if (newPos < 0) {
+                    newPos = 0
+                }
+                if (isSoloMode()) {
+                    seeks.add(Pair(player!!.currentPositionMs(), newPos * 1000))
+                }
+
+                player?.seekTo(newPos)
+                sendSeek(newPos)
+            }
+        }
+
+        val seekFwd = remember {
+            fun() {
+                if (player == null) return
+                var newPos = (player!!.currentPositionMs()) + seekIncrement.value * 1000
+                if (media != null) {
+                    if (newPos > media?.fileDuration!!.toLong()) {
+                        newPos = media?.fileDuration!!.toLong()
+                    }
+                }
+                if (isSoloMode()) {
+                    seeks.add(Pair((player!!.currentPositionMs()), newPos * 1000))
+                }
+                player?.seekTo(newPos)
+                sendSeek(newPos)
+            }
+        }
+
         if (!hasVideo.value) {
             RoomArtwork(pipModeObserver)
         }
@@ -335,7 +370,7 @@ fun RoomUI() {
                         onDoubleTap = if (gestures.value && hasVideo.value) { offset ->
                             generalScope.launch {
                                 if (offset.x < screenWidthPx.times(0.25f)) {
-                                    //TODO: seekBckwd()
+                                    seekBckwd()
 
                                     val press = PressInteraction.Press(Offset.Zero)
                                     seekLeftInteraction.emit(press)
@@ -343,7 +378,7 @@ fun RoomUI() {
                                     seekLeftInteraction.emit(PressInteraction.Release(press))
                                 }
                                 if (offset.x > screenWidthPx.times(0.85f)) {
-                                    //TODO: seekFwd()
+                                    seekFwd()
 
                                     val press = PressInteraction.Press(Offset.Zero)
                                     seekRightInteraction.emit(press)
@@ -760,11 +795,11 @@ fun RoomUI() {
                                     if (gestures.value) {
                                         Row(horizontalArrangement = Arrangement.Center) {
                                             FancyIcon2(icon = Icons.Filled.FastRewind, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black) {
-                                                //seekBckwd()
+                                                seekBckwd()
                                             }
                                             Spacer(Modifier.width(24.dp))
                                             FancyIcon2(icon = Icons.Filled.FastForward, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black) {
-                                                //seekFwd()
+                                                seekFwd()
                                             }
                                         }
                                     }
@@ -790,15 +825,14 @@ fun RoomUI() {
                                 valueRange = (0f..(slidermax.longValue.toFloat())),
                                 onValueChange = { f ->
                                     generalScope.launch {
-                                        /* FIXME: Seeking
-                                if (isSoloMode()) {
-                                    if (player == null) return@launch
-                                    seeks.add(Pair(player!!.getPositionMs(), f.toLong() * 1000))
-                                }
-                                player?.seekTo(f.toLong() * 1000L)
-                                sendSeek(f.toLong() * 1000L)
-                                 */
+                                        if (isSoloMode()) {
+                                            if (player == null) return@launch
+                                            seeks.add(Pair(player!!.currentPositionMs(), f.toLong() * 1000))
+                                        }
+                                        player?.seekTo(f.toLong() * 1000L)
+                                        sendSeek(f.toLong() * 1000L)
                                     }
+
                                     slidervalue.longValue = f.toLong()
                                 },
                                 modifier = Modifier
@@ -844,35 +878,66 @@ fun RoomUI() {
                                 }
                             )
 
-                            FreeAnimatedVisibility(addmediacardvisible.value,
-                                modifier = Modifier
-                                    .zIndex(10f)
-                            ) {
-                                Card(
-                                    shape = CardDefaults.outlinedShape,
-                                    border = BorderStroke(2.dp, Color.Gray),
-                                    colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
-                                ) {
-                                    Column(modifier = Modifier.padding(6.dp)) {
-                                        /* Add file from storage */
-                                        FancyIcon2(icon = Icons.Filled.CreateNewFolder, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
-                                            pickerScope.launch {
-                                                try {
-                                                    pickFuture = CompletableDeferred() //We create a future that will be fulfilled
-                                                    pickerCallback?.goPickVideo() //Ask the platform to pick video
-                                                    addmediacardvisible.value = false
-                                                    val result = pickFuture?.await() ?: return@launch
-                                                    player?.injectVideo(result, false)
-                                                } catch (e: CancellationException) {}
+
+                            DropdownMenu(
+                                modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
+                                expanded = addmediacardvisible.value,
+                                properties = PopupProperties(
+                                    dismissOnBackPress = true,
+                                    focusable = true,
+                                    dismissOnClickOutside = true
+                                ),
+                                onDismissRequest = { addmediacardvisible.value = false }) {
+
+                                ComposeUtils.FancyText2(
+                                    modifier = Modifier
+                                        .align(Alignment.CenterHorizontally)
+                                        .padding(horizontal = 2.dp),
+                                    string = "Add media",
+                                    solid = Color.Black,
+                                    size = 14f,
+                                    font = directive
+                                )
+
+                                //From storage
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            FancyIcon2(icon = Icons.Filled.CreateNewFolder, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {}
+                                            Spacer(Modifier.width(8.dp))
+                                            Text(color = Color.LightGray, text = "From storage")
+                                        }
+                                    },
+                                    onClick = {
+                                        addmediacardvisible.value = false
+
+                                        pickerScope.launch {
+                                            try {
+                                                pickFuture = CompletableDeferred() //We create a future that will be fulfilled
+                                                pickerCallback?.goPickVideo() //Ask the platform to pick video
+                                                addmediacardvisible.value = false
+                                                val result = pickFuture?.await() ?: return@launch
+                                                player?.injectVideo(result, false)
+                                            } catch (e: CancellationException) {
                                             }
                                         }
-
-                                        /* Add link */
-                                        FancyIcon2(icon = Icons.Filled.AddLink, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
-                                            addurlpopupstate.value = true
-                                        }
                                     }
-                                }
+                                )
+
+                                //From network URL
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            FancyIcon2(icon = Icons.Filled.AddLink, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {}
+                                            Spacer(Modifier.width(8.dp))
+                                            Text(color = Color.LightGray, text = "From network (URL)")
+                                        }
+                                    },
+                                    onClick = {
+                                        addmediacardvisible.value = false
+                                        addurlpopupstate.value = true
+                                    }
+                                )
                             }
                         }
                     }
@@ -888,12 +953,12 @@ fun RoomUI() {
                             size = (ROOM_ICON_SIZE * 2.25).roundToInt(),
                             shadowColor = Color.Black,
                             modifier = Modifier.align(Alignment.Center)
-                        ) { /* FIXME: OnClick
-                    if (player?.isInPlayState() == true) {
-                        pausePlayback()
-                    } else {
-                        playPlayback()
-                    }*/
+                        ) {
+                            if (player?.isPlaying() == true) {
+                                pausePlayback()
+                            } else {
+                                playPlayback()
+                            }
                         }
                     }
                 }

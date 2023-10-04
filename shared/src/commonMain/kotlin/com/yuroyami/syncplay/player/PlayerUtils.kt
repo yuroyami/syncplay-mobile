@@ -22,21 +22,18 @@ object PlayerUtils {
     }
 
     /** This pauses playback on the main (necessary) thread **/
-//    fun WatchActivity.pausePlayback() {
-//        runOnUiThread {
-//            player?.pause()
-//            updatePiPParams()
-//        }
-//    }
-//
-//    /** This resumes playback on the main thread, and hides system UI **/
-//    fun WatchActivity.playPlayback() {
-//        runOnUiThread {
-//            player?.play()
-//            updatePiPParams()
-//            hideSystemUI(true)
-//        }
-//    }
+    fun pausePlayback() {
+        player?.pause()
+        //TODO: updatePiPParams()
+
+    }
+
+    /** This resumes playback on the main thread, and hides system UI **/
+    fun playPlayback() {
+        player?.play()
+        //TODO: updatePiPParams()
+        //TODO: hideSystemUI(true)
+    }
 //
 //    /** Changes the subtitle appearance given the size and captionStyle (otherwise, default will be used) */
 //    fun WatchActivity.retweakSubtitleAppearance(
