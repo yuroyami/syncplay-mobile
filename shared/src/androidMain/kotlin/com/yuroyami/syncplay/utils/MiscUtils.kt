@@ -17,6 +17,9 @@ import kotlin.math.roundToInt
 
 actual fun getPlatform(): String = "Android"
 
+var defaultEngineAndroid = "exo"
+actual fun getDefaultEngine(): String = defaultEngineAndroid
+
 actual fun changeLanguage(lang: String, context: Any?) {
     val appCompatWay = false
     if (appCompatWay) {

@@ -9,6 +9,9 @@ import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.core.content.pm.ShortcutInfoCompat
+import androidx.core.content.pm.ShortcutManagerCompat
+import androidx.core.graphics.drawable.IconCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -25,7 +28,10 @@ import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.utils.JoinCallback
 import com.yuroyami.syncplay.utils.LanguageChange
 import com.yuroyami.syncplay.utils.changeLanguage
+import com.yuroyami.syncplay.utils.defaultEngine
+import com.yuroyami.syncplay.utils.defaultEngineAndroid
 import com.yuroyami.syncplay.utils.joinCallback
+import com.yuroyami.syncplay.watchroom.defaultEngine
 import com.yuroyami.syncplay.watchroom.prepareProtocol
 import dev.icerock.moko.resources.desc.Resource
 import dev.icerock.moko.resources.desc.StringDesc
@@ -35,6 +41,8 @@ class HomeActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen() /* This will be called only on cold starts */
+
+        defaultEngineAndroid =  if (BuildConfig.FLAVOR == "noLibs") "exo" else "mpv"
 
         /** Adjusting the appearance of system window decor */
         /* Tweaking some window UI elements */
@@ -67,7 +75,7 @@ class HomeActivity : ComponentActivity() {
 
         /****** Composing UI using Jetpack Compose *******/
         setContent {
-            HomeScreen(savedConfig = config) /* Shared Compose multiplatform composable */
+            HomeScreen(config = config) /* Shared Compose multiplatform composable */
         }
 
         /** Language change listener */
@@ -91,6 +99,32 @@ class HomeActivity : ComponentActivity() {
                 val intent = Intent(this@HomeActivity, WatchActivity::class.java)
                 intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
                 startActivity(intent)
+            }
+
+            override fun onSaveConfigShortcut(joinInfo: JoinInfo) {
+
+                val shortcutIntent = Intent(this@HomeActivity, HomeActivity::class.java)
+                shortcutIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+                shortcutIntent.action = Intent.ACTION_MAIN
+                shortcutIntent.putExtra("quickLaunch", true)
+                shortcutIntent.putExtra("name", joinInfo.username.trim())
+                shortcutIntent.putExtra("room", joinInfo.roomname.trim())
+                shortcutIntent.putExtra("serverip", joinInfo.address.trim())
+                shortcutIntent.putExtra("serverport", joinInfo.port)
+                shortcutIntent.putExtra("serverpw", joinInfo.password)
+
+                val shortcutId = "${joinInfo.username}${joinInfo.roomname}${joinInfo.address}${joinInfo.port}"
+                val shortcutLabel = joinInfo.roomname
+                val shortcutIcon = IconCompat.createWithResource(this@HomeActivity, R.mipmap.ic_launcher)
+
+                val shortcutInfo = ShortcutInfoCompat.Builder(this@HomeActivity, shortcutId)
+                    .setShortLabel(shortcutLabel)
+                    .setIcon(shortcutIcon)
+                    .setIntent(shortcutIntent)
+                    .build()
+
+                ShortcutManagerCompat.addDynamicShortcuts(this@HomeActivity, listOf(shortcutInfo))
+                ShortcutManagerCompat.requestPinShortcut(this@HomeActivity, shortcutInfo, null)
             }
         }
 

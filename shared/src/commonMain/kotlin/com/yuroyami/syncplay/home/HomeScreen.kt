@@ -25,12 +25,14 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Api
+import androidx.compose.material.icons.filled.BookmarkAdd
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MeetingRoom
 import androidx.compose.material.icons.filled.PersonPin
@@ -68,6 +70,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.geometry.Offset
@@ -88,27 +91,35 @@ import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.compose.PopupAPropos.AProposPopup
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_MISC_PREFS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_NIGHTMODE
+import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_PLAYER_ENGINE
 import com.yuroyami.syncplay.datastore.MySettings.globalSettings
 import com.yuroyami.syncplay.datastore.booleanFlow
 import com.yuroyami.syncplay.datastore.ds
+import com.yuroyami.syncplay.datastore.stringFlow
+import com.yuroyami.syncplay.datastore.writeString
 import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.settings.SettingsUI
 import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
+import com.yuroyami.syncplay.utils.getDefaultEngine
 import com.yuroyami.syncplay.utils.joinCallback
 import dev.icerock.moko.resources.compose.asFont
 import dev.icerock.moko.resources.compose.painterResource
 import dev.icerock.moko.resources.compose.stringResource
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 
 /** This is what previously used to be HomeActivity before we migrated towards KMM.*/
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(savedConfig: HomeConfig) {
+fun HomeScreen(config: HomeConfig) {
     val nightMode = DATASTORE_MISC_PREFS.ds().booleanFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
 
     val directive = MR.fonts.Directive4.regular.asFont()!!
     val inter = MR.fonts.Inter.regular.asFont()!!
+
+    val savedConfig = remember { config }
 
     val servers = listOf(
         "syncplay.pl:8995",
@@ -120,9 +131,6 @@ fun HomeScreen(savedConfig: HomeConfig) {
     )
 
     AppTheme(nightMode.value) {
-        //TODO: window.statusBarColor = MaterialTheme.colorScheme.tertiaryContainer.toArgb()
-        //TOOD: window.navigationBarColor = MaterialTheme.colorScheme.background.toArgb()
-
         /* Remembering stuff like scope for onClicks, snackBar host state for snackbars ... etc */
         val scope = rememberCoroutineScope()
         val snackbarHostState = remember { SnackbarHostState() }
@@ -148,7 +156,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
                     /* Settings Button */
                     val settingState = remember { mutableIntStateOf(0) }
 
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(horizontalAlignment = CenterHorizontally) {
                         ListItem(
                             modifier = Modifier.fillMaxWidth()
                                 .padding(bottom = 12.dp, top = (TopAppBarDefaults.windowInsets.asPaddingValues().calculateTopPadding() + 12.dp)),
@@ -286,7 +294,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
                         .fillMaxSize()
                         .windowInsetsPadding(BottomAppBarDefaults.windowInsets)
                         .verticalScroll(rememberScrollState()),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                    horizontalAlignment = CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceAround
                 ) {
                     /* Instead of consuming paddingValues, we create a spacer with that height */
@@ -307,7 +315,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
                     /* Username */
                     Column(
                         modifier = Modifier.wrapContentHeight().fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
+                        horizontalAlignment = CenterHorizontally,
                     ) {
 
                         FlexibleFancyText(
@@ -358,7 +366,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
                         modifier = Modifier
                             .wrapContentHeight()
                             .fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
+                        horizontalAlignment = CenterHorizontally,
                     ) {
 
 
@@ -409,7 +417,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
                         modifier = Modifier
                             .wrapContentHeight()
                             .fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
+                        horizontalAlignment = CenterHorizontally,
                     ) {
                         FlexibleFancyText(
                             text = stringResource(MR.strings.connect_server_a),
@@ -584,213 +592,164 @@ fun HomeScreen(savedConfig: HomeConfig) {
                     }
 
                     /* Buttons */
-                    Column {
-                        /* FIXME
-                        /* shortcut button */
-                        Button(
-                        border = BorderStroke(width = 2.dp, color = MaterialTheme.colorScheme.primary),
-                        modifier = Modifier
-                        .fillMaxWidth(0.7f)
-                        .padding(8.dp),
-                        onClick = {
+                    val defaultEngine = remember { getDefaultEngine() }
+                    val player = DATASTORE_MISC_PREFS.ds().stringFlow(MISC_PLAYER_ENGINE, defaultEngine).collectAsState(initial = defaultEngine)
 
-                        val shortcutIntent = Intent(this@HomeActivity, HomeActivity::class.java)
-                        shortcutIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
-                        shortcutIntent.action = Intent.ACTION_MAIN
-                        shortcutIntent.putExtra("quickLaunch", true)
-                        shortcutIntent.putExtra("name", textUsername.trim())
-                        shortcutIntent.putExtra("room", textRoomname.trim())
-                        shortcutIntent.putExtra("serverip", serverAddress.trim())
-                        shortcutIntent.putExtra("serverport", serverPort.toIntOrNull() ?: 0)
-                        shortcutIntent.putExtra("serverpw", serverPassword)
+                    Column(horizontalAlignment = CenterHorizontally) {
+                        Row(horizontalArrangement = Arrangement.Center) {
+                            /* shortcut button */
+                            Button(
+                                border = BorderStroke(width = 2.dp, color = MaterialTheme.colorScheme.primary),
+                                shape = CircleShape,
+                                modifier = Modifier.padding(8.dp).size(28.dp),
+                                onClick = {
+                                    joinCallback?.onSaveConfigShortcut(
+                                        JoinInfo(
+                                            textUsername.replace("\\", "").trim(),
+                                            textRoomname.replace("\\", "").trim(),
+                                            serverAddress,
+                                            serverPort.toInt(),
+                                            serverPassword
+                                        )
+                                    )
+                                }
+                            ) {
+                                Icon(imageVector = Icons.Filled.BookmarkAdd, "")
+                            }
 
-                        val shortcutId = "$textUsername$textRoomname$serverAddress"
-                        val shortcutLabel = textRoomname
-                        val shortcutIcon = IconCompat.createWithResource(this@HomeActivity, R.mipmap.ic_launcher)
-
-                        val shortcutInfo = ShortcutInfoCompat.Builder(this@HomeActivity, shortcutId)
-                        .setShortLabel(shortcutLabel)
-                        .setIcon(shortcutIcon)
-                        .setIntent(shortcutIntent)
-                        .build()
-
-                        ShortcutManagerCompat.addDynamicShortcuts(
-                        this@HomeActivity,
-                        listOf(shortcutInfo)
-                        )
-                        ShortcutManagerCompat.requestPinShortcut(
-                        this@HomeActivity,
-                        shortcutInfo,
-                        null
-                        )
-
-                        }
-                        ) {
-                        Icon(imageVector = Icons.Filled.SwitchAccessShortcutAdd, "")
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                        maxLines = 2,
-                        text = stringResource(R.string.connect_button_saveshortcut),
-                        fontSize = 10.sp
-                        )
-                        }
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-
-                        /* Switch player button */
-                        val flavor = BuildConfig.FLAVOR
-                        val default = if (flavor == "noLibs") "exo" else "mpv"
-                        val player = DATASTORE_MISC_PREFS.ds().stringFlow(MISC_PLAYER_ENGINE, default).collectAsState(initial = default)
-
-                        if (flavor == "withLibs") {
-                        Button(
-                        border = BorderStroke(
-                        width = 2.dp,
-                        color = MaterialTheme.colorScheme.primary
-                        ),
-                        modifier = Modifier
-                        .fillMaxWidth(0.7f)
-                        .padding(8.dp),
-                        onClick = {
-                        lifecycleScope.launch {
-                        DATASTORE_MISC_PREFS.ds().writeString(
-                        MISC_PLAYER_ENGINE,
-                        if (player.value == "exo") "mpv" else "exo"
-                        )
-                        }
-                        }
-                        ) {
-                        when (player.value) {
-                        "exo" -> {
-                        Image(
-                        painter = painterResource(id = R.drawable.exoplayer),
-                        contentDescription = "",
-                        modifier = Modifier
-                        .size(24.dp)
-                        .padding(2.dp)
-                        )
-
-                        Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                        text = stringResource(R.string.connect_button_switchplayer_exo),
-                        fontSize = 10.sp
-                        )
-                        }
-
-                        "mpv" -> {
-                        Image(
-                        painter = painterResource(id = R.drawable.mpv),
-                        contentDescription = "",
-                        modifier = Modifier
-                        .size(24.dp)
-                        .padding(2.dp)
-                        )
-
-                        Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                        text = stringResource(MR.strings.connect_button_switchplayer_mpv),
-                        fontSize = 10.sp
-                        )
-                        }
-                        }
-                        }
-                        }
-                        }
-
-                         */
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        /* join button */
-                        val snacktxtEmptyUSER = stringResource(MR.strings.connect_username_empty_error)
-                        val snacktxtEmptyROOM = stringResource(MR.strings.connect_roomname_empty_error)
-                        val snacktxtEmptyIP = stringResource(MR.strings.connect_address_empty_error)
-                        val snacktxtEmptyPORT = stringResource(MR.strings.connect_port_empty_error)
-
-                        Button(
-                            border = BorderStroke(width = 2.dp, color = MaterialTheme.colorScheme.primary),
-                            modifier = Modifier.fillMaxWidth(0.8f),
-                            onClick = {
-                                /* Trimming whitespaces */
-                                textUsername = textUsername.trim()
-                                textRoomname = textRoomname.trim()
-                                serverAddress = serverAddress.trim()
-                                serverPort = serverPort.trim()
-                                serverPassword = serverPassword.trim()
-
-                                /* Checking whether username is empty */
-                                if (textUsername.isBlank()) {
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(snacktxtEmptyUSER)
+                            Button(
+                                border = BorderStroke(width = 2.dp, color = MaterialTheme.colorScheme.primary),
+                                modifier = Modifier.padding(8.dp).size(28.dp),
+                                shape = CircleShape,
+                                onClick = {
+                                    scope.launch(Dispatchers.IO) {
+                                        if (defaultEngine != "exo") {
+                                            DATASTORE_MISC_PREFS.ds().writeString(
+                                                MISC_PLAYER_ENGINE,
+                                                when (player.value) {
+                                                    "exo" -> "mpv"
+                                                    "mpv" -> "exo"
+                                                    else -> "avplayer"
+                                                }
+                                            )
+                                        }
                                     }
-                                    return@Button
                                 }
-
-                                /* Taking the first 150 letters of the username if it's too long */
-                                textUsername.let {
-                                    if (it.length > 150) textUsername = it.substring(0, 149)
-                                }
-
-                                /* Taking only 35 letters from the roomname if it's too long */
-                                textRoomname.let {
-                                    if (it.length > 35) textRoomname = it.substring(0, 34)
-                                }
-
-                                /* Checking whether roomname is empty */
-                                if (textRoomname.isBlank()) {
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(snacktxtEmptyROOM)
-                                    }
-                                    return@Button
-                                }
-
-                                /* Checking whether address is empty */
-                                if (serverAddress.isBlank()) {
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(snacktxtEmptyIP)
-                                    }
-                                    return@Button
-                                }
-
-                                /* Checking whether port is empty */
-                                if (serverPort.isBlank()) {
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(snacktxtEmptyPORT)
-                                    }
-                                    return@Button
-                                }
-
-                                /* Checking whether port is a number */
-                                if (serverPort.toIntOrNull() == null) {
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(snacktxtEmptyPORT)
-                                    }
-                                    return@Button
-                                }
-
-                                val info = JoinInfo(
-                                    textUsername.replace("\\", "").trim(),
-                                    textRoomname.replace("\\", "").trim(),
-                                    serverAddress,
-                                    serverPort.toInt(),
-                                    serverPassword
+                            ) {
+                                Image(
+                                    painter = painterResource(
+                                        when (player.value) {
+                                            "exo" -> MR.images.exoplayer
+                                            "mpv" -> MR.images.mpv
+                                            "avplayer" -> MR.images.exoplayer
+                                            else -> MR.images.exoplayer
+                                        }
+                                    ),
+                                    contentDescription = "",
+                                    modifier = Modifier.size(24.dp).padding(2.dp)
                                 )
-
-                                joinCallback?.onJoin(info)
-                            },
-                        ) {
-                            Icon(imageVector = Icons.Filled.Api, "")
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(MR.strings.connect_button_join), fontSize = 18.sp)
+                            }
                         }
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            stringResource(
+                                MR.strings.connect_button_current_engine,
+                                when (player.value) {
+                                    "exo" -> "ExoPlayer"
+                                    "mpv" -> "mpv"
+                                    "avplayer" -> "Apple AVPlayer"
+                                    else -> MR.images.exoplayer
+                                }
+                            ),
+                            fontSize = 9.sp
+                        )
                     }
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    /* join button */
+                    val snacktxtEmptyUSER = stringResource(MR.strings.connect_username_empty_error)
+                    val snacktxtEmptyROOM = stringResource(MR.strings.connect_roomname_empty_error)
+                    val snacktxtEmptyIP = stringResource(MR.strings.connect_address_empty_error)
+                    val snacktxtEmptyPORT = stringResource(MR.strings.connect_port_empty_error)
+
+                    Button(
+                        border = BorderStroke(width = 2.dp, color = MaterialTheme.colorScheme.primary),
+                        modifier = Modifier.fillMaxWidth(0.8f),
+                        onClick = {
+                            /* Trimming whitespaces */
+                            textUsername = textUsername.trim()
+                            textRoomname = textRoomname.trim()
+                            serverAddress = serverAddress.trim()
+                            serverPort = serverPort.trim()
+                            serverPassword = serverPassword.trim()
+
+                            /* Checking whether username is empty */
+                            if (textUsername.isBlank()) {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(snacktxtEmptyUSER)
+                                }
+                                return@Button
+                            }
+
+                            /* Taking the first 150 letters of the username if it's too long */
+                            textUsername.let {
+                                if (it.length > 150) textUsername = it.substring(0, 149)
+                            }
+
+                            /* Taking only 35 letters from the roomname if it's too long */
+                            textRoomname.let {
+                                if (it.length > 35) textRoomname = it.substring(0, 34)
+                            }
+
+                            /* Checking whether roomname is empty */
+                            if (textRoomname.isBlank()) {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(snacktxtEmptyROOM)
+                                }
+                                return@Button
+                            }
+
+                            /* Checking whether address is empty */
+                            if (serverAddress.isBlank()) {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(snacktxtEmptyIP)
+                                }
+                                return@Button
+                            }
+
+                            /* Checking whether port is empty */
+                            if (serverPort.isBlank()) {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(snacktxtEmptyPORT)
+                                }
+                                return@Button
+                            }
+
+                            /* Checking whether port is a number */
+                            if (serverPort.toIntOrNull() == null) {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(snacktxtEmptyPORT)
+                                }
+                                return@Button
+                            }
+
+                            val info = JoinInfo(
+                                textUsername.replace("\\", "").trim(),
+                                textRoomname.replace("\\", "").trim(),
+                                serverAddress,
+                                serverPort.toInt(),
+                                serverPassword
+                            )
+
+                            joinCallback?.onJoin(info)
+                        },
+                    ) {
+                        Icon(imageVector = Icons.Filled.Api, "")
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(MR.strings.connect_button_join), fontSize = 18.sp)
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
                 }
             }
         )

@@ -15,14 +15,13 @@ import com.yuroyami.syncplay.datastore.obtainBoolean
 import com.yuroyami.syncplay.datastore.obtainString
 import com.yuroyami.syncplay.player.ENGINE
 import com.yuroyami.syncplay.player.PlayerUtils.getEngineForString
+import com.yuroyami.syncplay.player.exo.ExoPlayer
+import com.yuroyami.syncplay.player.mpv.MpvPlayer
 import com.yuroyami.syncplay.utils.UIUtils.cutoutMode
 import com.yuroyami.syncplay.utils.UIUtils.hideSystemUI
 import com.yuroyami.syncplay.utils.changeLanguage
-import com.yuroyami.syncplay.player.exo.ExoPlayer
-import com.yuroyami.syncplay.player.mpv.MpvPlayer
 import com.yuroyami.syncplay.watchroom.PickerCallback
 import com.yuroyami.syncplay.watchroom.RoomUI
-import com.yuroyami.syncplay.watchroom.engine
 import com.yuroyami.syncplay.watchroom.pickFuture
 import com.yuroyami.syncplay.watchroom.pickerCallback
 import com.yuroyami.syncplay.watchroom.player
@@ -65,11 +64,9 @@ class WatchActivity : ComponentActivity() {
         cutoutMode(true)
 
         /** Checking whether this APK at this point supports multi-engine players */
-        val flavor = "noLibs" //fixme: BuildConfig.FLAVOR
-        engine = if (flavor == "noLibs") ENGINE.ANDROID_EXOPLAYER else
-            getEngineForString(runBlocking {
-                DATASTORE_MISC_PREFS.obtainString(DataStoreKeys.MISC_PLAYER_ENGINE, "mpv")
-            })
+        val engine = getEngineForString(
+            runBlocking { DATASTORE_MISC_PREFS.obtainString(DataStoreKeys.MISC_PLAYER_ENGINE, "mpv") }
+        )
 
         when (engine) {
             ENGINE.ANDROID_EXOPLAYER -> player = ExoPlayer()
@@ -101,8 +98,6 @@ class WatchActivity : ComponentActivity() {
         setContent {
             RoomUI()
         }
-
-        //TODO: attach tooltips to buttons
     }
 
 

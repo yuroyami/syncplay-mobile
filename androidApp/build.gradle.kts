@@ -65,6 +65,79 @@ android {
             pickFirsts += "META-INF/io.netty.versions.properties"
         }
     }
+
+    val abiCodes = mapOf(
+        "armeabi-v7a" to 1,
+        "arm64-v8a" to 2,
+        "x86" to 3,
+        "x86_64" to 4
+    )
+
+    flavorDimensions.add("engine")
+
+    productFlavors {
+        create("withLibs") {
+            dimension = "engine"
+
+            splits {
+                abi {
+                    isEnable = true
+                    reset()
+                    abiCodes.forEach { (abi, _) ->
+                        if (file("$projectDir/src/main/jniLibs/$abi").exists())
+                            include(abi)
+                    }
+                    isUniversalApk = true
+                }
+            }
+
+            tasks.register("stripNativeLibs", Exec::class) {
+                val stripToolMap: Map<String, String> = mapOf(
+                    "armeabi-v7a" to "arm-linux-androideabi-strip",
+                    "arm64-v8a" to "aarch64-linux-android-strip",
+                    "x86" to "i686-linux-android-strip",
+                    "x86_64" to "x86_64-linux-android-strip"
+                )
+                workingDir(file("$projectDir/src/main/jniLibs"))
+                abiCodes.keys.forEach { abi ->
+                    val stripTool: String? = stripToolMap[abi]
+                    if (stripTool != null) {
+                        val stripCommand = project.exec {
+                            commandLine(stripTool)
+                            args("-r", "-u", "$abi/*.so")
+                        }
+                        dependsOn(stripCommand)
+                    }
+                }
+            }
+        }
+        create("noLibs") {
+            dimension = "engine"
+            ndk {
+                abiFilters.clear()
+            }
+            splits {
+                abi {
+                    isEnable = false
+                }
+            }
+
+            packaging {
+                jniLibs.excludes.add("**/libavcodec.so")
+                jniLibs.excludes.add("**/libavdevice.so")
+                jniLibs.excludes.add("**/libavfilter.so")
+                jniLibs.excludes.add("**/libavformat.so")
+                jniLibs.excludes.add("**/libavutil.so")
+                jniLibs.excludes.add("**/libc++_shared.so")
+                jniLibs.excludes.add("**/libmpv.so")
+                jniLibs.excludes.add("**/libplayer.so")
+                jniLibs.excludes.add("**/libpostproc.so")
+                jniLibs.excludes.add("**/libswresample.so")
+                jniLibs.excludes.add("**/libswscale.so")
+                jniLibs.excludes.add("**/**.so")
+            }
+        }
+    }
 }
 
 dependencies {

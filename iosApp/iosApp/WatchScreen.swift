@@ -4,7 +4,7 @@ import shared
 
 struct WatchScreenCompose: UIViewControllerRepresentable {
 	func makeUIViewController(context: Context) -> UIViewController {
-		GeneralUtilsKt.WatchScreenControllerIOS()
+		ScreensUtilsKt.WatchScreenControllerIOS()
 	}
 	
 	func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}

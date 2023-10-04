@@ -3,7 +3,8 @@ package com.yuroyami.syncplay.utils
 
 expect fun getPlatform(): String
 
-/** Language changer at runtime */
+expect fun getDefaultEngine(): String
+
 expect fun changeLanguage(lang: String, context: Any?)
 
 expect fun generateTimestampMillis(): Long

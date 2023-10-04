@@ -20,7 +20,7 @@ struct HomeScreenCompose: UIViewControllerRepresentable {
 	let joinRoomLambda: () -> Void
 	
 	func makeUIViewController(context: Context) -> UIViewController {
-		GeneralUtilsKt.HomeScreenControllerIOS(joinRoomLambda: joinRoomLambda)
+		ScreensUtilsKt.HomeScreenControllerIOS(joinRoomLambda: joinRoomLambda)
 	}
 	
 	func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}

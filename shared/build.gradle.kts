@@ -51,8 +51,6 @@ kotlin {
                 implementation("io.ktor:ktor-network:$ktor")
                 implementation("io.ktor:ktor-network-tls:$ktor")
 
-                //implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor")
-
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
 
@@ -64,9 +62,6 @@ kotlin {
                 implementation(compose.foundation)
                 implementation(compose.material3)
                 implementation(compose.materialIconsExtended)
-
-                //@OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
-                //implementation(compose.components.resources)
 
                 api(libs.moko.resources.compose) // for compose multiplatform
 
@@ -121,7 +116,6 @@ kotlin {
 //            iosArm64Main.dependsOn(this)
 //            iosSimulatorArm64Main.dependsOn(this)
 //
-
             dependencies {
                 implementation("io.ktor:ktor-client-ios:$ktor")
             }
@@ -149,6 +143,7 @@ android {
     }
 
     buildFeatures {
+        buildConfig = true
         viewBinding = true //I prefer using viewbinding to quickly inflate ExoPlayer and MPV XML views.
     }
 }

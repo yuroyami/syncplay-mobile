@@ -12,6 +12,8 @@ import kotlin.math.roundToLong
 
 actual fun getPlatform(): String = "iOS"
 
+actual fun getDefaultEngine(): String = "avplayer"
+
 actual fun changeLanguage(lang: String, context: Any?) {
     val languageBundle = AtomicReference<NSBundle?>(null)
 
