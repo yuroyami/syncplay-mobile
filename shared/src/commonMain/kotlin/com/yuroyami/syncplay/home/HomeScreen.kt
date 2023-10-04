@@ -601,7 +601,7 @@ fun HomeScreen(config: HomeConfig) {
                             Button(
                                 border = BorderStroke(width = 2.dp, color = MaterialTheme.colorScheme.primary),
                                 shape = CircleShape,
-                                modifier = Modifier.padding(8.dp).size(28.dp),
+                                modifier = Modifier.padding(2.dp).size(64.dp),
                                 onClick = {
                                     joinCallback?.onSaveConfigShortcut(
                                         JoinInfo(
@@ -614,12 +614,15 @@ fun HomeScreen(config: HomeConfig) {
                                     )
                                 }
                             ) {
-                                Icon(imageVector = Icons.Filled.BookmarkAdd, "")
+                                Icon(
+                                    imageVector = Icons.Filled.BookmarkAdd, "",
+                                    modifier = Modifier.size(62.dp).padding(2.dp)
+                                )
                             }
 
                             Button(
                                 border = BorderStroke(width = 2.dp, color = MaterialTheme.colorScheme.primary),
-                                modifier = Modifier.padding(8.dp).size(28.dp),
+                                modifier = Modifier.padding(2.dp).size(64.dp),
                                 shape = CircleShape,
                                 onClick = {
                                     scope.launch(Dispatchers.IO) {
@@ -641,12 +644,12 @@ fun HomeScreen(config: HomeConfig) {
                                         when (player.value) {
                                             "exo" -> MR.images.exoplayer
                                             "mpv" -> MR.images.mpv
-                                            "avplayer" -> MR.images.exoplayer
+                                            "avplayer" -> MR.images.swift
                                             else -> MR.images.exoplayer
                                         }
                                     ),
                                     contentDescription = "",
-                                    modifier = Modifier.size(24.dp).padding(2.dp)
+                                    modifier = Modifier.size(62.dp).padding(2.dp)
                                 )
                             }
                         }
