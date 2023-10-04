@@ -18,8 +18,8 @@ import com.yuroyami.syncplay.player.PlayerUtils.getEngineForString
 import com.yuroyami.syncplay.utils.UIUtils.cutoutMode
 import com.yuroyami.syncplay.utils.UIUtils.hideSystemUI
 import com.yuroyami.syncplay.utils.changeLanguage
-import com.yuroyami.syncplay.utils.player.exo.ExoPlayer
-import com.yuroyami.syncplay.utils.player.mpv.MpvPlayer
+import com.yuroyami.syncplay.player.exo.ExoPlayer
+import com.yuroyami.syncplay.player.mpv.MpvPlayer
 import com.yuroyami.syncplay.watchroom.PickerCallback
 import com.yuroyami.syncplay.watchroom.RoomUI
 import com.yuroyami.syncplay.watchroom.engine
