@@ -143,7 +143,7 @@ object PopupAPropos {
                     Image(
                         painter = painterResource(MR.images.github),
                         contentDescription = "",
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(64.dp)
                             .clickable(
                                 enabled = true,
                                 interactionSource = remember { MutableInteractionSource() },
