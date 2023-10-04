@@ -1,15 +1,11 @@
 package com.yuroyami.syncplay.utils
 
-import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.p
 import io.github.aakira.napier.DebugAntilog
 import io.github.aakira.napier.Napier
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.isActive
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -24,18 +20,14 @@ object CommonUtils {
     }
 
     private fun Int.fixDigits(): String {
-        return if (this < 10) "0${this}" else "${this}"
+        return if (this < 10) "0${this}" else "$this"
     }
 
     var pingUpdateJob: Job? = null
-    fun beginPingUpdate() {
-        if (pingUpdateJob == null && !isSoloMode()) {
-            pingUpdateJob = CoroutineScope(Dispatchers.IO).launch {
-                while (true) {
-                    p.ping.value = pingIcmp(p.session.serverHost, 32)
-                    delay(50)
-                }
-            }
+    suspend fun beginPingUpdate() {
+        while (true) {
+            p.ping.value = if (p.connection?.socket?.isActive == true) pingIcmp(p.session.serverHost, 32) else null
+            delay(1000)
         }
     }
 

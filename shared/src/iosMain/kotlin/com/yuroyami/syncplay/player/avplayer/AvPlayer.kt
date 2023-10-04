@@ -6,17 +6,31 @@ import androidx.compose.ui.interop.UIKitView
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.ENGINE
+import com.yuroyami.syncplay.watchroom.hasVideoG
+import com.yuroyami.syncplay.watchroom.isSoloMode
+import com.yuroyami.syncplay.watchroom.media
+import com.yuroyami.syncplay.watchroom.p
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.useContents
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.launch
 import platform.AVFoundation.AVPlayer
 import platform.AVFoundation.AVPlayerItem
 import platform.AVFoundation.AVPlayerLayer
+import platform.AVFoundation.currentItem
+import platform.AVFoundation.currentTime
+import platform.AVFoundation.pause
+import platform.AVFoundation.play
+import platform.AVFoundation.rate
+import platform.AVFoundation.seekToTime
+import platform.AVFoundation.seekableTimeRanges
 import platform.AVKit.AVPlayerViewController
 import platform.CoreGraphics.CGRect
-import platform.Foundation.NSURL
+import platform.CoreMedia.CMTimeMake
+import platform.Foundation.NSURL.Companion.URLWithString
 import platform.QuartzCore.CATransaction
 import platform.QuartzCore.kCATransactionDisableActions
 import platform.UIKit.UIView
@@ -35,7 +49,7 @@ class AvPlayer : BasePlayer {
     val avBGScope = CoroutineScope(Dispatchers.IO)
 
     override fun initialize() {
-        avplayer = AVPlayer(uRL = NSURL.new()!!)
+        avplayer = AVPlayer.new()
         playerlayer = AVPlayerLayer()
         avView = AVPlayerViewController()
         avView.player = avplayer!!
@@ -67,11 +81,11 @@ class AvPlayer : BasePlayer {
     }
 
     override fun hasMedia(): Boolean {
-        TODO("Not yet implemented")
+        return avplayer?.currentItem != null
     }
 
     override fun isPlaying(): Boolean {
-        TODO("Not yet implemented")
+        return (avplayer?.rate() ?: 0f) > 0f && avplayer?.error == null
     }
 
     override fun analyzeTracks(mediafile: MediaFile) {
@@ -91,27 +105,72 @@ class AvPlayer : BasePlayer {
     }
 
     override fun injectVideo(uri: String?, isUrl: Boolean) {
-        TODO("Not yet implemented")
+        hasVideoG.value = true
+
+        avMainScope.launch {
+            /* Creating a media file from the selected file */
+            if (uri != null || media == null) {
+                media = MediaFile()
+                media?.uri = uri
+
+                /* Obtaining info from it (size and name) */
+                if (isUrl) {
+                    media?.url = uri.toString()
+                    //TODO: media?.collectInfoURL()
+                } else {
+                    //TODO: media?.collectInfo(applicationContext)
+                }
+
+                /* Checking mismatches with others in room */
+                //checkFileMismatches(p) TODO
+            }
+            /* Injecting the media into avplayer */
+            try {
+                uri?.let {
+                    currentMedia = AVPlayerItem(uRL = URLWithString(it)!!)
+                    avplayer = AVPlayer.playerWithPlayerItem(currentMedia)
+                }
+
+                /* Goes back to the beginning for everyone */
+                if (!isSoloMode()) {
+                    p.currentVideoPosition = 0.0
+                }
+
+                /* Seeing if we have to start over TODO **/
+                //if (startFromPosition != (-3.0).toLong()) myExoPlayer?.seekTo(startFromPosition)
+            } catch (e: Exception) {
+                /* If, for some reason, the video didn't wanna load */
+                e.printStackTrace()
+                //TODO: toasty("There was a problem loading this file.")
+            }
+
+            /* Finally, show a a toast to the user that the media file has been added */
+            //TODO: toasty(string(R.string.room_selected_vid, "${media?.fileName}"))
+        }
     }
 
     override fun pause() {
-        TODO("Not yet implemented")
+        avplayer?.pause()
     }
 
     override fun play() {
-        TODO("Not yet implemented")
+        avplayer?.play()
     }
 
     override fun isSeekable(): Boolean {
-        TODO("Not yet implemented")
+        return avplayer?.currentItem?.seekableTimeRanges?.isNotEmpty() == true
     }
 
+    @OptIn(ExperimentalForeignApi::class)
     override fun seekTo(toPositionMs: Long) {
-        TODO("Not yet implemented")
+        avplayer?.seekToTime(CMTimeMake(toPositionMs, 1000))
     }
 
+    @OptIn(ExperimentalForeignApi::class)
     override fun currentPositionMs(): Long {
-        TODO("Not yet implemented")
+        return avplayer?.currentTime()?.useContents {
+            this.value
+        } ?: 0L
     }
 
     override fun switchAspectRatio(): String {

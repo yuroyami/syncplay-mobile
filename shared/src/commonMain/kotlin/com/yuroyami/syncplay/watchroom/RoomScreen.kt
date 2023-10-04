@@ -31,7 +31,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddLink
 import androidx.compose.material.icons.filled.AutoFixHigh
+import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FastRewind
@@ -65,7 +67,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -85,6 +86,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
+import androidx.compose.ui.zIndex
 import com.yuroyami.syncplay.MR
 import com.yuroyami.syncplay.compose.CardRoomPrefs.InRoomSettingsCard
 import com.yuroyami.syncplay.compose.CardUserInfo.UserInfoCard
@@ -111,6 +113,7 @@ import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.Paletting.ROOM_ICON_SIZE
+import com.yuroyami.syncplay.utils.CommonUtils
 import com.yuroyami.syncplay.utils.RoomUtils.sendMessage
 import com.yuroyami.syncplay.utils.timeStamper
 import com.yuroyami.syncplay.watchroom.RoomComposables.AddVideoButton
@@ -121,6 +124,11 @@ import com.yuroyami.syncplay.watchroom.RoomComposables.RoomArtwork
 import com.yuroyami.syncplay.watchroom.RoomComposables.RoomTab
 import com.yuroyami.syncplay.watchroom.RoomComposables.fadingMessageLayout
 import dev.icerock.moko.resources.compose.asFont
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -141,13 +149,34 @@ val isNowPlaying = mutableStateOf(false)
 val timeFull = mutableLongStateOf(0L)
 val timeCurrent = mutableLongStateOf(0L)
 
+interface PickerCallback {
+    fun goPickVideo()
+    fun goPickFolder()
+}
+
+var pickFuture: CompletableDeferred<String>? = null
+var pickerCallback: PickerCallback? = null
+var pickerScope = CoroutineScope(Dispatchers.IO)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RoomUI(isSoloMode: Boolean) {
+fun RoomUI() {
+    val isSoloMode = remember { isSoloMode() }
     val nightMode = DATASTORE_MISC_PREFS.ds().booleanFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
 
     val directive = MR.fonts.Directive4.regular.asFont()!!
     val inter = MR.fonts.Inter.regular.asFont()!!
+
+    val composeScope = rememberCoroutineScope { Dispatchers.IO }
+
+    LaunchedEffect(null) {
+        /** Starting ping update */
+        if (CommonUtils.pingUpdateJob == null && !isSoloMode) {
+            CommonUtils.pingUpdateJob = composeScope.launch {
+                CommonUtils.beginPingUpdate()
+            }
+        }
+    }
 
     AppTheme(nightMode.value) {
         val generalScope = rememberCoroutineScope()
@@ -806,13 +835,46 @@ fun RoomUI(isSoloMode: Boolean) {
                         }
 
                         /* The button of adding media */
-                        AddVideoButton(
-                            modifier = Modifier,
-                            onClick = {
-                                addmediacardvisible.value = !addmediacardvisible.value
-                                controlcardvisible.value = false
+                        Box {
+                            AddVideoButton(
+                                modifier = Modifier,
+                                onClick = {
+                                    addmediacardvisible.value = !addmediacardvisible.value
+                                    controlcardvisible.value = false
+                                }
+                            )
+
+                            FreeAnimatedVisibility(addmediacardvisible.value,
+                                modifier = Modifier
+                                    .zIndex(10f)
+                            ) {
+                                Card(
+                                    shape = CardDefaults.outlinedShape,
+                                    border = BorderStroke(2.dp, Color.Gray),
+                                    colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+                                ) {
+                                    Column(modifier = Modifier.padding(6.dp)) {
+                                        /* Add file from storage */
+                                        FancyIcon2(icon = Icons.Filled.CreateNewFolder, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
+                                            pickerScope.launch {
+                                                try {
+                                                    pickFuture = CompletableDeferred() //We create a future that will be fulfilled
+                                                    pickerCallback?.goPickVideo() //Ask the platform to pick video
+                                                    addmediacardvisible.value = false
+                                                    val result = pickFuture?.await() ?: return@launch
+                                                    player?.injectVideo(result, false)
+                                                } catch (e: CancellationException) {}
+                                            }
+                                        }
+
+                                        /* Add link */
+                                        FancyIcon2(icon = Icons.Filled.AddLink, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
+                                            addurlpopupstate.value = true
+                                        }
+                                    }
+                                }
                             }
-                        )
+                        }
                     }
 
                     /** PLAY BUTTON */

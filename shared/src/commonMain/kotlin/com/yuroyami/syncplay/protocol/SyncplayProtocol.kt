@@ -50,7 +50,7 @@ open class SyncplayProtocol {
 
     /** Late-initialized socket channel which will host all incoming and outcoming data **/
     private var socket: Socket? = null
-    private var connection: Connection? = null
+    var connection: Connection? = null
     var state: Constants.CONNECTIONSTATE = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
     var tls: Constants.TLS = Constants.TLS.TLS_NO
 

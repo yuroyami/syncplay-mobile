@@ -1,9 +1,13 @@
 package com.yuroyami.syncplay
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import com.yuroyami.syncplay.datastore.DataStoreKeys
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_MISC_PREFS
@@ -16,14 +20,36 @@ import com.yuroyami.syncplay.utils.UIUtils.hideSystemUI
 import com.yuroyami.syncplay.utils.changeLanguage
 import com.yuroyami.syncplay.utils.player.exo.ExoPlayer
 import com.yuroyami.syncplay.utils.player.mpv.MpvPlayer
+import com.yuroyami.syncplay.watchroom.PickerCallback
 import com.yuroyami.syncplay.watchroom.RoomUI
 import com.yuroyami.syncplay.watchroom.engine
-import com.yuroyami.syncplay.watchroom.isSoloMode
+import com.yuroyami.syncplay.watchroom.pickFuture
+import com.yuroyami.syncplay.watchroom.pickerCallback
 import com.yuroyami.syncplay.watchroom.player
 import com.yuroyami.syncplay.watchroom.setReadyDirectly
 import kotlinx.coroutines.runBlocking
 
 class WatchActivity : ComponentActivity() {
+
+    private var dirPickResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val dirUri = result.data?.data ?: return@registerForActivityResult
+                contentResolver.takePersistableUriPermission(
+                    dirUri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                )
+            }
+        }
+
+    private var videoPickResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val video = result.data?.data ?: return@registerForActivityResult
+
+                pickFuture?.complete(video.toString()) //Tell our commonMain shared module that we picked a video
+            }
+        }
 
     /** Now, onto overriding lifecycle methods */
     override fun onCreate(sis: Bundle?) {
@@ -33,13 +59,12 @@ class WatchActivity : ComponentActivity() {
 
         super.onCreate(sis)
 
-        /** Telling Android that it should keep the screen on */
+        /** Telling Android that it should keep the screen on, use cut-out mode and go full-screen */
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-
-        /** Enabling fullscreen mode (hiding system UI) */
         hideSystemUI(false)
         cutoutMode(true)
 
+        /** Checking whether this APK at this point supports multi-engine players */
         val flavor = "noLibs" //fixme: BuildConfig.FLAVOR
         engine = if (flavor == "noLibs") ENGINE.ANDROID_EXOPLAYER else
             getEngineForString(runBlocking {
@@ -55,17 +80,29 @@ class WatchActivity : ComponentActivity() {
         /** Set ready first hand */
         setReadyDirectly = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainBoolean(DataStoreKeys.PREF_READY_FIRST_HAND, true) }
 
-        val isSoloMode = isSoloMode() //One time execution
+        pickerCallback = object: PickerCallback {
+            override fun goPickVideo() {
+                val intent = Intent()
+                intent.action = Intent.ACTION_OPEN_DOCUMENT
+                intent.type = "video/*"
+                videoPickResult.launch(intent)
+            }
+
+            override fun goPickFolder() {
+                val intent = Intent()
+                intent.action = Intent.ACTION_OPEN_DOCUMENT_TREE
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                dirPickResult.launch(intent)
+            }
+        }
 
         /** Setting content view, making everything visible */
         setContent {
-            RoomUI(isSoloMode)
+            RoomUI()
         }
 
         //TODO: attach tooltips to buttons
-
-        /** Starting ping update */
-        //pingUpdate()
     }
 
 
@@ -97,17 +134,6 @@ class WatchActivity : ComponentActivity() {
 //        lifecycleScope.launch(Dispatchers.Main) {
 //            val ccsize = DataStoreKeys.DATASTORE_INROOM_PREFERENCES.obtainInt(PREF_INROOM_PLAYER_SUBTITLE_SIZE, 16)
 //            retweakSubtitleAppearance(ccsize.toFloat())
-//        }
-//    }
-//
-//    fun unalphizePlayer(engine: String) {
-//        when (engine) {
-//            "exo" -> {
-//                binding.exoview.alpha = 1f
-//            }
-//            "mpv" -> {
-//                binding.mpvview.alpha = 1f
-//            }
 //        }
 //    }
 //
