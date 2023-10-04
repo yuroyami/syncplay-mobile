@@ -21,7 +21,7 @@ import platform.QuartzCore.CATransaction
 import platform.QuartzCore.kCATransactionDisableActions
 import platform.UIKit.UIView
 
-class AVPlayer : BasePlayer {
+class AvPlayer : BasePlayer {
 
     val engine = ENGINE.IOS_AVPLAYER
 

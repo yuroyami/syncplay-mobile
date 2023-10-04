@@ -47,14 +47,8 @@ class WatchActivity : ComponentActivity() {
             })
 
         when (engine) {
-            ENGINE.ANDROID_EXOPLAYER -> {
-                player = ExoPlayer()
-                //player.initialize()
-            }
-            ENGINE.ANDROID_MPV -> {
-                player = MpvPlayer()
-                //player.initialize()
-            }
+            ENGINE.ANDROID_EXOPLAYER -> player = ExoPlayer()
+            ENGINE.ANDROID_MPV -> player = MpvPlayer()
             else -> {}
         }
 

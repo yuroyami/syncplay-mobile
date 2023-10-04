@@ -5,8 +5,10 @@ import com.yuroyami.syncplay.datastore.languageCallback
 import com.yuroyami.syncplay.home.HomeConfig
 import com.yuroyami.syncplay.home.HomeScreen
 import com.yuroyami.syncplay.models.JoinInfo
+import com.yuroyami.syncplay.player.avplayer.AvPlayer
 import com.yuroyami.syncplay.watchroom.RoomUI
 import com.yuroyami.syncplay.watchroom.isSoloMode
+import com.yuroyami.syncplay.watchroom.player
 import com.yuroyami.syncplay.watchroom.prepareProtocol
 
 /** These are the corresponding GeneralUtils actual functions for every expect function that exists within
@@ -46,6 +48,8 @@ fun HomeScreenControllerIOS(joinRoomLambda: () -> Unit) = ComposeUIViewControlle
     joinCallback = object : JoinCallback {
         override fun onJoin(joinInfo: JoinInfo) {
             prepareProtocol(joinInfo.get())
+
+            player = AvPlayer() //Initializing player upon joining room
 
             joinRoomLambda()
         }

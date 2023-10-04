@@ -65,6 +65,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -190,11 +191,8 @@ fun RoomUI(isSoloMode: Boolean) {
         /** video surface */
         val seekLeftInteraction: MutableInteractionSource = remember { MutableInteractionSource() }
         val seekRightInteraction: MutableInteractionSource = remember { MutableInteractionSource() }
-        LaunchedEffect(hasVideo.value) {
-            if (hasVideo.value) {
-                //TODO: unalphizePlayer(engine.value)
-            }
-        }
+
+        player?.VideoPlayer(Modifier.fillMaxSize().alpha(if (hasVideo.value) 1f else 0f))
 
         /** Lock layout, This is what appears when the user locks the screen */
         val unlockButtonVisibility = remember { mutableStateOf(false) }
