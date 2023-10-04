@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowColumn
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -79,7 +80,7 @@ object SettingsUI {
                 SettingsGridLayout.SETTINGS_GRID_VERTICAL_FLOW -> {
                     /** FlowColumn basically arranges cards vertically, then creates another column when space doesn't suffice */
                     FlowColumn(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxHeight(),
                         verticalArrangement = Arrangement.SpaceEvenly,
                         horizontalArrangement = Arrangement.Center
                     ) {
@@ -109,7 +110,7 @@ object SettingsUI {
 
                 SettingsGridLayout.SETTINGS_GRID_VERTICAL_GRID -> {
                     LazyVerticalGrid(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxHeight(),
                         columns = GridCells.Fixed(gridColumns)
                     ) {
                         iteratorSettingCategoryGrid(clickedCardIndex, settingcategories, titleSize, cardSize, onCardClicked)

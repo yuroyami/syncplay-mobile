@@ -1,5 +1,6 @@
 package com.yuroyami.syncplay.watchroom
 
+import androidx.compose.animation.expandIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.BorderStroke
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowColumn
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -32,25 +35,35 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddLink
+import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.AutoFixHigh
+import androidx.compose.material.icons.filled.BrowseGallery
 import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.DoNotTouch
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.NoEncryption
+import androidx.compose.material.icons.filled.NoteAdd
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.SpeakerGroup
+import androidx.compose.material.icons.filled.Subtitles
+import androidx.compose.material.icons.filled.SubtitlesOff
+import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.VideoSettings
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -86,6 +99,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
+import androidx.compose.ui.zIndex
 import com.yuroyami.syncplay.MR
 import com.yuroyami.syncplay.compose.CardRoomPrefs.InRoomSettingsCard
 import com.yuroyami.syncplay.compose.CardUserInfo.UserInfoCard
@@ -160,7 +174,7 @@ var pickFuture: CompletableDeferred<String>? = null
 var pickerCallback: PickerCallback? = null
 var pickerScope = CoroutineScope(Dispatchers.IO)
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun RoomUI() {
     val isSoloMode = remember { isSoloMode() }
@@ -733,6 +747,214 @@ fun RoomUI() {
                                 visible = inroomprefsVisibility.value && !userinfoVisibility.value && !sharedplaylistVisibility.value
                             ) {
                                 InRoomSettingsCard()
+                            }
+
+                            /** Control card (to control the player) */
+                            FreeAnimatedVisibility(
+                                modifier = Modifier.zIndex(10f)
+                                    .wrapContentWidth()
+                                    .fillMaxHeight(cardHeight),
+                                enter = expandIn(),
+                                visible = controlcardvisible.value
+                            ) {
+                                /** CONTROL CARD ------ PLAYER CONTROL CARD ----- PLAYER CONTROL CARD */
+                                Card(
+                                    modifier = Modifier.zIndex(10f),
+                                    shape = CardDefaults.outlinedShape,
+                                    border = BorderStroke(2.dp, Color.Gray),
+                                    elevation = CardDefaults.outlinedCardElevation(defaultElevation = 8.dp),
+                                    colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+                                ) {
+                                    FlowColumn(
+                                        modifier = Modifier
+                                            .padding(6.dp)
+                                            .fillMaxHeight(),
+                                        verticalArrangement = Arrangement.SpaceEvenly,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        /* Aspect Ratio */
+                                        FancyIcon2(icon = Icons.Filled.AspectRatio, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
+                                            val newAspectRatio = player?.switchAspectRatio()
+                                            //TODO: Inform user about his new aspect ratio
+                                        }
+
+                                        /* Seek Gesture (DoNotTouch for disabling it) */
+                                        FancyIcon2(
+                                            icon = when (gestures.value) {
+                                                true -> Icons.Filled.TouchApp
+                                                false -> Icons.Filled.DoNotTouch
+                                            }, size = ROOM_ICON_SIZE, shadowColor = Color.Black
+                                        ) {
+                                            gestures.value = !gestures.value
+                                        }
+
+                                        /* Seek To */
+                                        FancyIcon2(icon = Icons.Filled.BrowseGallery, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
+                                            controlcardvisible.value = false
+                                            seektopopupstate.value = true
+                                        }
+
+                                        /* Undo Last Seek */
+                                        FancyIcon2(icon = Icons.Filled.History, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
+                                            if (seeks.isEmpty()) {
+                                                //TODO toasty("There is no recent seek in the room.")
+                                                return@FancyIcon2
+                                            }
+
+                                            controlcardvisible.value = false
+
+                                            val lastSeek = seeks.last()
+                                            player?.seekTo(lastSeek.first)
+                                            sendSeek(lastSeek.first)
+                                            seeks.remove(lastSeek)
+                                            //TODO toasty("Seek undone.")
+                                        }
+
+                                        /* Subtitle Tracks */
+                                        Box {
+                                            val tracksPopup = remember { mutableStateOf(false) }
+
+
+                                            FancyIcon2(icon = Icons.Filled.Subtitles, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
+                                                player?.analyzeTracks(media ?: return@FancyIcon2)
+                                                tracksPopup.value = true
+                                            }
+
+                                            DropdownMenu(
+                                                modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
+                                                expanded = tracksPopup.value,
+                                                properties = PopupProperties(
+                                                    dismissOnBackPress = true,
+                                                    focusable = true,
+                                                    dismissOnClickOutside = true
+                                                ),
+                                                onDismissRequest = { tracksPopup.value = !tracksPopup.value }) {
+
+                                                ComposeUtils.FancyText2(
+                                                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                                                    string = "Subtitle Track",
+                                                    solid = Color.Black,
+                                                    size = 14f,
+                                                    font = directive
+                                                )
+
+                                                DropdownMenuItem(
+                                                    text = {
+                                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                                            Icon(imageVector = Icons.Filled.NoteAdd, "", tint = Color.LightGray)
+
+                                                            Spacer(Modifier.width(2.dp))
+
+                                                            Text("Import from file", color = Color.LightGray)
+                                                        }
+                                                    },
+                                                    onClick = {
+                                                        tracksPopup.value = false
+                                                        controlcardvisible.value = false
+
+                                                        //TODO: Load external sub
+                                                    }
+                                                )
+
+
+                                                DropdownMenuItem(
+                                                    text = {
+                                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                                            Icon(imageVector = Icons.Filled.SubtitlesOff, "", tint = Color.LightGray)
+
+                                                            Spacer(Modifier.width(2.dp))
+
+                                                            Text("Disable subtitles.", color = Color.LightGray)
+
+                                                        }
+                                                    },
+                                                    onClick = {
+                                                        //player?.selectTrack(C.TRACK_TYPE_TEXT, -1)
+                                                        tracksPopup.value = false
+                                                        controlcardvisible.value = false
+
+                                                    }
+                                                )
+
+                                                for (track in (media?.subtitleTracks) ?: listOf()) {
+                                                    DropdownMenuItem(
+                                                        text = {
+                                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                                Checkbox(checked = track.selected.value, onCheckedChange = {
+                                                                    //FIXME: player?.selectTrack(C.TRACK_TYPE_TEXT, track.index)
+                                                                    tracksPopup.value = false
+                                                                })
+
+                                                                Text(
+                                                                    color = Color.LightGray,
+                                                                    text = track.name
+                                                                )
+                                                            }
+                                                        },
+                                                        onClick = {
+                                                            //FIXME player?.selectTrack(C.TRACK_TYPE_TEXT, track.index)
+                                                            tracksPopup.value = false
+                                                            controlcardvisible.value = false
+
+                                                        }
+                                                    )
+                                                }
+                                            }
+                                        }
+
+                                        /* Audio Tracks */
+                                        Box {
+                                            val tracksPopup = remember { mutableStateOf(false) }
+
+                                            FancyIcon2(icon = Icons.Filled.SpeakerGroup, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
+                                                player?.analyzeTracks(media ?: return@FancyIcon2)
+                                                tracksPopup.value = true
+                                            }
+
+                                            DropdownMenu(
+                                                modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
+                                                expanded = tracksPopup.value,
+                                                properties = PopupProperties(
+                                                    dismissOnBackPress = true,
+                                                    focusable = true,
+                                                    dismissOnClickOutside = true
+                                                ),
+                                                onDismissRequest = { tracksPopup.value = !tracksPopup.value }) {
+
+                                                ComposeUtils.FancyText2(
+                                                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                                                    string = "Audio Track",
+                                                    solid = Color.Black,
+                                                    size = 14f,
+                                                    font = directive
+                                                )
+
+                                                for (track in (media?.audioTracks ?: listOf())) {
+                                                    DropdownMenuItem(text = {
+                                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                                            Checkbox(checked = track.selected.value, onCheckedChange = {
+                                                                with(player ?: return@Checkbox) {
+                                                                   //FIXME: selectTrack(C.TRACK_TYPE_AUDIO, track.index)
+                                                                }
+                                                                tracksPopup.value = false
+                                                            })
+
+                                                            Text(
+                                                                color = Color.LightGray,
+                                                                text = track.name
+                                                            )
+                                                        }
+                                                    },
+                                                        onClick = {
+                                                            //FIXME: player?.selectTrack(C.TRACK_TYPE_AUDIO, track.index)
+                                                            tracksPopup.value = false
+                                                        }
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
