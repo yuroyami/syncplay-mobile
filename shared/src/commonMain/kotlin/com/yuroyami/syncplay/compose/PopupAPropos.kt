@@ -3,14 +3,17 @@ package com.yuroyami.syncplay.compose
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.ripple.rememberRipple
@@ -21,7 +24,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -29,33 +34,45 @@ import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.MR
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
 import com.yuroyami.syncplay.compose.ComposeUtils.SyncplayishText
-import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
+import com.yuroyami.syncplay.compose.ComposeUtils.radiantOverlay
 import dev.icerock.moko.resources.compose.painterResource
 import dev.icerock.moko.resources.compose.stringResource
 
 object PopupAPropos {
 
-
     @Composable
     fun AProposPopup(visibilityState: MutableState<Boolean>) {
         return RoomPopup(
             dialogOpen = visibilityState.value,
-            widthPercent = 0.85f,
-            heightPercent = 0.5f,
+            widthPercent = 0.95f,
+            heightPercent = 0.6f,
             strokeWidth = 0f,
             cardBackgroundColor = Color.DarkGray,
             onDismiss = { visibilityState.value = false }
         ) {
-            Column(modifier = Modifier.fillMaxSize().padding(6.dp)) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceAround
+            ) {
 
-                Row {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceAround,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Image(
                         painter = painterResource(MR.images.syncplay_logo_gradient),
-                        contentDescription = "About Syncplay Mobile - Enter Solo mode",
-                        modifier = Modifier.requiredSize(96.dp).gradientOverlay()
+                        contentDescription = "",
+                        modifier = Modifier.requiredSize(96.dp)
+                            .radiantOverlay(offset = Offset(x = 50f, y = 65f))
                     )
 
-                    Column {
+                    Spacer(Modifier.width(10.dp))
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.SpaceAround
+                    ) {
                         /** 1st title */
                         SyncplayishText(
                             string = "Syncplay",
@@ -74,27 +91,44 @@ object PopupAPropos {
                     }
                 }
 
-                Text(color = MaterialTheme.colorScheme.primary, text = "• Version: 0.13.0", fontSize = 11.sp, maxLines = 1)
-                Text(color = MaterialTheme.colorScheme.primary, text = "• Developed by: yuroyami", fontSize = 11.sp, maxLines = 1)
                 Text(
+                    modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start,
+                    color = MaterialTheme.colorScheme.primary, text = "• Version: 0.13.0", fontSize = 11.sp, maxLines = 1
+                )
+
+                Text(
+                    modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start,
+                    color = MaterialTheme.colorScheme.primary, text = "• Developed by: yuroyami", fontSize = 11.sp, maxLines = 1
+                )
+
+                Text(
+                    modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start,
                     color = MaterialTheme.colorScheme.primary,
                     text = "• This client is not official. Thanks to official Syncplay team for their amazing software.",
                     fontSize = 11.sp,
                     lineHeight = 14.sp
                 )
+
                 Text(
+                    modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start,
                     color = MaterialTheme.colorScheme.primary,
                     text = "• Syncplay is officially available for Windows, macOS, and Linux.",
                     fontSize = 11.sp,
                     lineHeight = 14.sp
                 )
-                Text(color = MaterialTheme.colorScheme.primary, text = "• Official Website: www.syncplay.pl", fontSize = 11.sp, maxLines = 1)
 
+                Text(
+                    modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start,
+                    color = MaterialTheme.colorScheme.primary, text = "• Official Website: www.syncplay.pl", fontSize = 11.sp, maxLines = 1
+                )
 
-
-                Row {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceAround,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     /* Solo mode */
                     Button(
+                        modifier = Modifier.wrapContentWidth(),
                         onClick = {
                             visibilityState.value = false
 
@@ -109,7 +143,7 @@ object PopupAPropos {
                     Image(
                         painter = painterResource(MR.images.github),
                         contentDescription = "",
-                        modifier = Modifier.aspectRatio(1f)
+                        modifier = Modifier.size(48.dp)
                             .clickable(
                                 enabled = true,
                                 interactionSource = remember { MutableInteractionSource() },

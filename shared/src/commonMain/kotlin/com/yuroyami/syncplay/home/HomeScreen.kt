@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -79,6 +78,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -88,6 +88,7 @@ import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.MR
 import com.yuroyami.syncplay.compose.ComposeUtils.FlexibleFancyText
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
+import com.yuroyami.syncplay.compose.ComposeUtils.radiantOverlay
 import com.yuroyami.syncplay.compose.PopupAPropos.AProposPopup
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_MISC_PREFS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_NIGHTMODE
@@ -227,7 +228,7 @@ fun HomeScreen(config: HomeConfig) {
                                         modifier = Modifier
                                             .height(32.dp)
                                             .aspectRatio(1f)
-                                            .gradientOverlay()
+                                            .radiantOverlay(offset = Offset(x = 30f, y = 45f))
                                     )
 
                                     Spacer(modifier = Modifier.width(12.dp))
@@ -588,6 +589,8 @@ fun HomeScreen(config: HomeConfig) {
                                 label = {
                                     Text("Password (empty if undefined)", color = Color.Gray)
                                 })
+
+                            Spacer(modifier = Modifier.height(10.dp))
                         }
                     }
 
@@ -600,8 +603,8 @@ fun HomeScreen(config: HomeConfig) {
                             /* shortcut button */
                             Button(
                                 border = BorderStroke(width = 2.dp, color = MaterialTheme.colorScheme.primary),
-                                shape = CircleShape,
-                                modifier = Modifier.padding(2.dp).size(64.dp),
+                                modifier = Modifier.height(54.dp).aspectRatio(1.6f),
+                                shape = RoundedCornerShape(25),
                                 onClick = {
                                     joinCallback?.onSaveConfigShortcut(
                                         JoinInfo(
@@ -616,14 +619,17 @@ fun HomeScreen(config: HomeConfig) {
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.BookmarkAdd, "",
-                                    modifier = Modifier.size(62.dp).padding(2.dp)
+                                    modifier = Modifier.fillMaxSize()
                                 )
                             }
 
+                            Spacer(modifier = Modifier.width(10.dp))
+
+
                             Button(
                                 border = BorderStroke(width = 2.dp, color = MaterialTheme.colorScheme.primary),
-                                modifier = Modifier.padding(2.dp).size(64.dp),
-                                shape = CircleShape,
+                                modifier = Modifier.height(54.dp).aspectRatio(1.6f),
+                                shape = RoundedCornerShape(25),
                                 onClick = {
                                     scope.launch(Dispatchers.IO) {
                                         if (defaultEngine != "exo") {
@@ -648,11 +654,14 @@ fun HomeScreen(config: HomeConfig) {
                                             else -> MR.images.exoplayer
                                         }
                                     ),
+                                    contentScale = ContentScale.FillHeight,
                                     contentDescription = "",
-                                    modifier = Modifier.size(62.dp).padding(2.dp)
+                                    modifier = Modifier.fillMaxSize()
                                 )
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(4.dp))
 
                         Text(
                             stringResource(

@@ -51,7 +51,7 @@
     <string name="connect_custom_server_password">Password (Empty if not required)</string>
     <string name="connect_port">Port</string>
     <string name="connect_nightmodeswitch">Switch the day/night mode.</string>
-    <string name="connect_solomode">Enter solo mode (video-player only)</string>
+    <string name="connect_solomode">Enter solo mode\n(video-player only)</string>
 
 
     <!-- Room Activity Strings -->
