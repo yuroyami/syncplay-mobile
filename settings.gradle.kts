@@ -20,7 +20,7 @@ pluginManagement {
         id("com.android.application").version(agpVersion)
         id("com.android.library").version(agpVersion)
 
-        id("org.jetbrains.compose").version("1.5.10-beta01")
+        id("org.jetbrains.compose").version("1.5.10-beta02")
     }
 }
 

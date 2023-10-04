@@ -26,3 +26,4 @@ gradle/
 obj/
 *.jks
 *.so
+jniLibs/*

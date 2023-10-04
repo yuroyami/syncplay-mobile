@@ -25,6 +25,7 @@ import com.yuroyami.syncplay.datastore.obtainString
 import com.yuroyami.syncplay.home.HomeConfig
 import com.yuroyami.syncplay.home.HomeScreen
 import com.yuroyami.syncplay.models.JoinInfo
+import com.yuroyami.syncplay.shared.MR
 import com.yuroyami.syncplay.utils.JoinCallback
 import com.yuroyami.syncplay.utils.LanguageChange
 import com.yuroyami.syncplay.utils.changeLanguage

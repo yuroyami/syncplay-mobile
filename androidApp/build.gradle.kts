@@ -9,6 +9,12 @@ android {
     compileSdk = 34
 
     //sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
+    sourceSets["main"].jniLibs {
+        srcDirs("$projectDir/src/main/libs")
+        srcDirs("$projectDir/src/main/jniLibs")
+        srcDirs("$projectDir/src/jniLibs")
+    }
+    //sourceSets["main"].jni.srcDirs("$projectDir/src/main/jni")
 
     signingConfigs {
         create("github") {
@@ -38,14 +44,18 @@ android {
         release {
             isMinifyEnabled = false
         }
+        /*
         debug {
             isDebuggable = true
             applicationIdSuffix = ".new"
         }
+
+         */
     }
 
     buildFeatures {
         buildConfig = true
+        viewBinding = true //I prefer using viewbinding to quickly inflate ExoPlayer and MPV XML views.
     }
 
     compileOptions {
@@ -55,13 +65,6 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            pickFirsts += "META-INF/INDEX.LIST"
-            pickFirsts += "META-INF/io.netty.versions.properties"
-        }
-    }
 
     val abiCodes = mapOf(
         "armeabi-v7a" to 1,
@@ -70,24 +73,60 @@ android {
         "x86_64" to 4
     )
 
-
     flavorDimensions.add("engine")
 
     productFlavors {
         create("withLibs") {
             dimension = "engine"
 
+            tasks.register("stripNativeLibs", Exec::class) {
+                /*commandLine("arm64-linux-android-strip")
+                workingDir(file("$projectDir/src/main/jniLibs"))
+                args("-r", "-u", "*.so")*/
+
+                val stripToolMap: Map<String, String> = mapOf(
+                    "armeabi-v7a" to "arm-linux-androideabi-strip",
+                    "arm64-v8a" to "aarch64-linux-android-strip",
+                    "x86" to "i686-linux-android-strip",
+                    "x86_64" to "x86_64-linux-android-strip"
+                )
+
+                // Set the working directory where the task will be executed
+                workingDir(file("$projectDir/src/main/jniLibs"))
+
+                // Iterate over each target architecture and create a strip command for it
+                abiCodes.keys.forEach { abi ->
+                    val stripTool: String? = stripToolMap[abi]
+                    if (stripTool != null) {
+                        val stripCommand = project.exec {
+                            // Set the command to the appropriate strip tool for the current target architecture
+                            commandLine(stripTool)
+
+                            // Add arguments to specify the native library files to strip
+                            args("-r", "-u", "$abi/*.so")
+                        }
+
+                        // Execute the strip command
+                        dependsOn(stripCommand)
+                    }
+                }
+            }
+
             splits {
                 abi {
                     isEnable = true
                     reset()
                     abiCodes.forEach { (abi, _) ->
-                        if (file("$rootDir/shared/src/androidMain/jniLibs/$abi").exists())
+                        val exists = file("$projectDir/src/main/jniLibs/$abi").exists()
+                        if (exists) {
                             include(abi)
+                        }
                     }
                     isUniversalApk = true
                 }
             }
+
+
         }
 
         create("noLibs") {
@@ -100,10 +139,11 @@ android {
             splits {
                 abi {
                     isEnable = false
+                    isUniversalApk = true
                 }
             }
 
-            packaging {
+            packagingOptions {
                 jniLibs.excludes.add("**/libavcodec.so")
                 jniLibs.excludes.add("**/libavdevice.so")
                 jniLibs.excludes.add("**/libavfilter.so")
@@ -117,6 +157,16 @@ android {
                 jniLibs.excludes.add("**/libswscale.so")
                 //jniLibs.excludes.add("**/**.so")
             }
+        }
+
+
+
+    }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            pickFirsts += "META-INF/INDEX.LIST"
         }
     }
 }

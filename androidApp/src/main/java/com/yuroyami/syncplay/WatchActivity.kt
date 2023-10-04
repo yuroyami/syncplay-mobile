@@ -20,6 +20,7 @@ import com.yuroyami.syncplay.player.mpv.MpvPlayer
 import com.yuroyami.syncplay.utils.UIUtils.cutoutMode
 import com.yuroyami.syncplay.utils.UIUtils.hideSystemUI
 import com.yuroyami.syncplay.utils.changeLanguage
+import com.yuroyami.syncplay.utils.defaultEngineAndroid
 import com.yuroyami.syncplay.watchroom.PickerCallback
 import com.yuroyami.syncplay.watchroom.RoomUI
 import com.yuroyami.syncplay.watchroom.pickFuture
@@ -65,7 +66,7 @@ class WatchActivity : ComponentActivity() {
 
         /** Checking whether this APK at this point supports multi-engine players */
         val engine = getEngineForString(
-            runBlocking { DATASTORE_MISC_PREFS.obtainString(DataStoreKeys.MISC_PLAYER_ENGINE, "mpv") }
+            runBlocking { DATASTORE_MISC_PREFS.obtainString(DataStoreKeys.MISC_PLAYER_ENGINE, defaultEngineAndroid) }
         )
 
         when (engine) {

@@ -38,7 +38,7 @@ import androidx.compose.material.icons.filled.VideoSettings
 import androidx.compose.material.icons.filled.Web
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.toArgb
-import com.yuroyami.syncplay.MR
+import com.yuroyami.syncplay.shared.MR
 import com.yuroyami.syncplay.compose.PopupMediaDirs.MediaDirsPopup
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_COLOR_ERRORMSG
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_COLOR_FRIENDTAG

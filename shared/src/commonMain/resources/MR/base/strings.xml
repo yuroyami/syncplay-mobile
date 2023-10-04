@@ -1,12 +1,6 @@
 <resources>
     <string name="app_name" translatable="false">Syncplay</string>
 
-    <string name="ui_track">#%d</string>
-    <string name="ui_track_text">#%1$d: %2$s</string>
-    <string name="ui_track_title_lang">#%1$d: %2$s (%3$s)</string>
-
-    <string name="pref_video_interpolation_sync_default" translatable="false">audio</string>
-
     <!-- Contextless Strings -->
     <string name="yes">Yes</string>
     <string name="no">No</string>

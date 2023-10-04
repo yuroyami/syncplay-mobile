@@ -100,7 +100,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
-import com.yuroyami.syncplay.MR
+import com.yuroyami.syncplay.shared.MR
 import com.yuroyami.syncplay.compose.CardRoomPrefs.InRoomSettingsCard
 import com.yuroyami.syncplay.compose.CardUserInfo.UserInfoCard
 import com.yuroyami.syncplay.compose.ComposeUtils

@@ -97,17 +97,17 @@ kotlin {
 
                 /* Media3 (ExoPlayer + MediaSession etc) */
                 val media3 = "1.2.0-alpha02"
-                implementation(libs.media3.exoplayer)
-                implementation("androidx.media3:media3-exoplayer-dash:$media3")
-                implementation("androidx.media3:media3-exoplayer-hls:$media3")
-                implementation("androidx.media3:media3-exoplayer-rtsp:$media3")
-                implementation("androidx.media3:media3-datasource-okhttp:$media3")
-                implementation("androidx.media3:media3-ui:$media3")
-                implementation("androidx.media3:media3-session:$media3")
-                implementation("androidx.media3:media3-extractor:$media3")
-                implementation("androidx.media3:media3-decoder:$media3")
-                implementation("androidx.media3:media3-datasource:$media3")
-                implementation("androidx.media3:media3-common:$media3")
+                api(libs.media3.exoplayer)
+                api("androidx.media3:media3-exoplayer-dash:$media3")
+                api("androidx.media3:media3-exoplayer-hls:$media3")
+                api("androidx.media3:media3-exoplayer-rtsp:$media3")
+                api("androidx.media3:media3-datasource-okhttp:$media3")
+                api("androidx.media3:media3-ui:$media3")
+                api("androidx.media3:media3-session:$media3")
+                api("androidx.media3:media3-extractor:$media3")
+                api("androidx.media3:media3-decoder:$media3")
+                api("androidx.media3:media3-datasource:$media3")
+                api("androidx.media3:media3-common:$media3")
             }
         }
         val iosMain by getting {
@@ -125,7 +125,7 @@ kotlin {
 
 android {
     compileSdk = (findProperty("android.compileSdk") as String).toInt()
-    namespace = "com.yuroyami.syncplay"
+    namespace = "com.yuroyami.syncplay.shared"
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     sourceSets["main"].res.srcDirs("src/androidMain/res")
@@ -144,13 +144,12 @@ android {
 
     buildFeatures {
         buildConfig = true
-        viewBinding = true //I prefer using viewbinding to quickly inflate ExoPlayer and MPV XML views.
     }
 }
 
 
 multiplatformResources {
-    multiplatformResourcesPackage = "com.yuroyami.syncplay" // required
+    multiplatformResourcesPackage = "com.yuroyami.syncplay.shared" // required
     //disableStaticFrameworkWarning = true
     //multiplatformResourcesClassName = "SharedRes" // optional, default MR
     //multiplatformResourcesVisibility = MRVisibility.Internal // optional, default Public
