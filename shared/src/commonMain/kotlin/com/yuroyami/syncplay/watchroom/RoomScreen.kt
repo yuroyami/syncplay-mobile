@@ -753,7 +753,8 @@ fun RoomUI() {
                             FreeAnimatedVisibility(
                                 modifier = Modifier.zIndex(10f)
                                     .wrapContentWidth()
-                                    .fillMaxHeight(cardHeight),
+                                    .align(Alignment.CenterEnd)
+                                    .fillMaxHeight(cardHeight + 0.1f),
                                 enter = expandIn(),
                                 visible = controlcardvisible.value
                             ) {
