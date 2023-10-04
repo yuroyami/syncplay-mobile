@@ -29,14 +29,11 @@ android {
         signingConfig = signingConfigs.getByName("github")
         //proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
+
     composeOptions {
         kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
     }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -73,6 +70,7 @@ android {
         "x86_64" to 4
     )
 
+
     flavorDimensions.add("engine")
 
     productFlavors {
@@ -84,38 +82,21 @@ android {
                     isEnable = true
                     reset()
                     abiCodes.forEach { (abi, _) ->
-                        if (file("$projectDir/src/main/jniLibs/$abi").exists())
+                        if (file("$rootDir/shared/src/androidMain/jniLibs/$abi").exists())
                             include(abi)
                     }
                     isUniversalApk = true
                 }
             }
-
-            tasks.register("stripNativeLibs", Exec::class) {
-                val stripToolMap: Map<String, String> = mapOf(
-                    "armeabi-v7a" to "arm-linux-androideabi-strip",
-                    "arm64-v8a" to "aarch64-linux-android-strip",
-                    "x86" to "i686-linux-android-strip",
-                    "x86_64" to "x86_64-linux-android-strip"
-                )
-                workingDir(file("$projectDir/src/main/jniLibs"))
-                abiCodes.keys.forEach { abi ->
-                    val stripTool: String? = stripToolMap[abi]
-                    if (stripTool != null) {
-                        val stripCommand = project.exec {
-                            commandLine(stripTool)
-                            args("-r", "-u", "$abi/*.so")
-                        }
-                        dependsOn(stripCommand)
-                    }
-                }
-            }
         }
+
         create("noLibs") {
             dimension = "engine"
+
             ndk {
                 abiFilters.clear()
             }
+
             splits {
                 abi {
                     isEnable = false
@@ -134,7 +115,7 @@ android {
                 jniLibs.excludes.add("**/libpostproc.so")
                 jniLibs.excludes.add("**/libswresample.so")
                 jniLibs.excludes.add("**/libswscale.so")
-                jniLibs.excludes.add("**/**.so")
+                //jniLibs.excludes.add("**/**.so")
             }
         }
     }
