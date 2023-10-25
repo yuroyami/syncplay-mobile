@@ -1,10 +1,10 @@
 plugins {
-    alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.kotlinCocoapods)
-    alias(libs.plugins.androidLibrary)
+    id("org.jetbrains.kotlin.multiplatform")
+    id("org.jetbrains.kotlin.native.cocoapods")
+    id("com.android.library")
     id("org.jetbrains.compose")
     id("dev.icerock.mobile.multiplatform-resources")
-    kotlin("plugin.serialization") version "1.9.10"
+    kotlin("plugin.serialization")
 }
 
 val ktor = "2.3.4"
@@ -35,69 +35,89 @@ kotlin {
     }
     
     sourceSets {
+        val ktor = "2.3.5"
         val commonMain by getting {
             dependencies {
+                /* Logging handler */
                 implementation("io.github.aakira:napier:2.6.1")
 
+                /* Official JetBrains Kotlin Date 'n time manager (i.e: generating date from epoch) */
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.1")
 
+                /* Hash digesters */
                 val kotlincrypto = "0.3.0"
                 implementation("org.kotlincrypto.core:digest:$kotlincrypto")
                 implementation("org.kotlincrypto.hash:md:$kotlincrypto")
                 implementation("org.kotlincrypto.hash:sha2:$kotlincrypto")
 
-                val ktor = "2.3.4"
+                /* Network client */
                 implementation("io.ktor:ktor-client-core:$ktor")
                 implementation("io.ktor:ktor-network:$ktor")
                 implementation("io.ktor:ktor-network-tls:$ktor")
 
+                /* JSON serializer/deserializer to communicate with Syncplay servers */
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
-
+                /* Jetpack Datastore for preferences and settings (accessible in Compose in real-time) */
                 val datastore = "1.1.0-alpha05"
-                api(libs.datastore.preferences.core)
-                api(libs.datastore.core.okio)
+                api("androidx.datastore:datastore-preferences-core:$datastore")
+                api("androidx.datastore:datastore-core-okio:$datastore")
 
+                /* Compose core dependencies */
                 implementation(compose.runtime)
                 implementation(compose.foundation)
                 implementation(compose.material3)
                 implementation(compose.materialIconsExtended)
 
-                api(libs.moko.resources.compose) // for compose multiplatform
-
-                //implementation("org.jetbrains.skiko:skiko:0.7.77")
+                /* Multiplatform resource accessor from Compose */
+                api("dev.icerock.moko:resources-compose:0.23.0") // for compose multiplatform
             }
         }
         val commonTest by getting {
             dependencies {
-                implementation(libs.kotlin.test)
+                //implementation(libs.kotlin.test)
+                //implementation("org.jetbrains.kotlin:kotlin-test:1.9.10")
             }
         }
 
         val androidMain by getting {
             dependencies {
                 dependsOn(commonMain)
+
+                /* Required ktor network client declaration for Android */
                 implementation("io.ktor:ktor-client-android:$ktor")
 
+                /* Android-only core dependencies */
 
+                /* AndroidX compat */
                 api("androidx.core:core-ktx:1.12.0")
                 api("androidx.appcompat:appcompat:1.7.0-alpha03")
-                api("androidx.documentfile:documentfile:1.0.1") /* Managing Scoped Storage */
+
+                /* SAF DocumentFile manager */
+                api("androidx.documentfile:documentfile:1.0.1")
+
+                /* AndroidX's Splash Screen */
                 api("androidx.core:core-splashscreen:1.0.1")
+
+                /* Jetpack Shared Preferences */
                 api("androidx.preference:preference-ktx:1.2.1")
 
+                /* Jetpack Home shortcut manager */
                 api("androidx.core:core-google-shortcuts:1.1.0") {
                     exclude(group = "com.google.crypto.tink", module = "tink-android")
                     exclude(group = "com.google.android.gms")
                 }
 
-                /* More compose add-ons */
-                api("androidx.activity:activity-compose:1.7.2")
+                /* Compose add-ons */
+                api("androidx.activity:activity-compose:1.8.0")
                 implementation("com.godaddy.android.colorpicker:compose-color-picker-android:0.7.0")
 
-                /* Media3 (ExoPlayer + MediaSession etc) */
-                val media3 = "1.2.0-alpha02"
-                api(libs.media3.exoplayer)
+                /* Lottie for animations (like Nightmode toggle button) */
+                implementation("com.airbnb.android:lottie-compose:6.1.0")
+
+                /* Media3 (ExoPlayer and its extensions) */
+                val media3 = "1.2.0-beta01"
+                api("androidx.media3:media3-exoplayer:$media3")
                 api("androidx.media3:media3-exoplayer-dash:$media3")
                 api("androidx.media3:media3-exoplayer-hls:$media3")
                 api("androidx.media3:media3-exoplayer-rtsp:$media3")
@@ -117,6 +137,7 @@ kotlin {
 //            iosSimulatorArm64Main.dependsOn(this)
 //
             dependencies {
+                /* Required ktor network client declaration for iOS */
                 implementation("io.ktor:ktor-client-ios:$ktor")
             }
         }

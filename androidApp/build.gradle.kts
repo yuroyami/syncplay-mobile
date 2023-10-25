@@ -1,8 +1,15 @@
 plugins {
-    alias(libs.plugins.androidApplication)
-    alias(libs.plugins.kotlinAndroid)
+    id("org.jetbrains.kotlin.android")
+    id("com.android.application")
     id("org.jetbrains.compose")
 }
+
+val abiCodes = mapOf(
+    "armeabi-v7a" to 1,
+    "arm64-v8a" to 2,
+    "x86" to 3,
+    "x86_64" to 4
+)
 
 android {
     namespace = "com.yuroyami.syncplay"
@@ -36,21 +43,26 @@ android {
         //proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
 
+    packaging {
+        //jniLibs.useLegacyPackaging = true
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            pickFirsts += "META-INF/INDEX.LIST"
+        }
+    }
+
     composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
+        kotlinCompilerExtensionVersion = "1.5.3"
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
         }
-        /*
         debug {
             isDebuggable = true
             applicationIdSuffix = ".new"
         }
-
-         */
     }
 
     buildFeatures {
@@ -66,18 +78,25 @@ android {
         jvmTarget = "1.8"
     }
 
-    val abiCodes = mapOf(
-        "armeabi-v7a" to 1,
-        "arm64-v8a" to 2,
-        "x86" to 3,
-        "x86_64" to 4
-    )
-
     flavorDimensions.add("engine")
 
     productFlavors {
         create("withLibs") {
             dimension = "engine"
+
+            splits {
+                abi {
+                    isEnable = true
+                    reset()
+                    abiCodes.forEach { (abi, _) ->
+                        val exists = file("$projectDir/src/main/jniLibs/$abi").exists()
+                        if (exists) {
+                            include(abi)
+                        }
+                    }
+                    isUniversalApk = true
+                }
+            }
 
             tasks.register("stripNativeLibs", Exec::class) {
                 /*commandLine("arm64-linux-android-strip")
@@ -111,22 +130,6 @@ android {
                     }
                 }
             }
-
-            splits {
-                abi {
-                    isEnable = true
-                    reset()
-                    abiCodes.forEach { (abi, _) ->
-                        val exists = file("$projectDir/src/main/jniLibs/$abi").exists()
-                        if (exists) {
-                            include(abi)
-                        }
-                    }
-                    isUniversalApk = true
-                }
-            }
-
-
         }
 
         create("noLibs") {
@@ -139,34 +142,29 @@ android {
             splits {
                 abi {
                     isEnable = false
-                    isUniversalApk = true
                 }
             }
 
-            packagingOptions {
-                jniLibs.excludes.add("**/libavcodec.so")
-                jniLibs.excludes.add("**/libavdevice.so")
-                jniLibs.excludes.add("**/libavfilter.so")
-                jniLibs.excludes.add("**/libavformat.so")
-                jniLibs.excludes.add("**/libavutil.so")
-                jniLibs.excludes.add("**/libc++_shared.so")
-                jniLibs.excludes.add("**/libmpv.so")
-                jniLibs.excludes.add("**/libplayer.so")
-                jniLibs.excludes.add("**/libpostproc.so")
-                jniLibs.excludes.add("**/libswresample.so")
-                jniLibs.excludes.add("**/libswscale.so")
-                //jniLibs.excludes.add("**/**.so")
+
+            packaging {
+                gradle.startParameter.taskNames.forEach { task ->
+                    if (task.contains("assemble")) {
+                        if (task.contains("noLibs")) {
+                            jniLibs.excludes.add("**/libavcodec.so")
+                            jniLibs.excludes.add("**/libavdevice.so")
+                            jniLibs.excludes.add("**/libavfilter.so")
+                            jniLibs.excludes.add("**/libavformat.so")
+                            jniLibs.excludes.add("**/libavutil.so")
+                            jniLibs.excludes.add("**/libc++_shared.so")
+                            jniLibs.excludes.add("**/libmpv.so")
+                            jniLibs.excludes.add("**/libplayer.so")
+                            jniLibs.excludes.add("**/libpostproc.so")
+                            jniLibs.excludes.add("**/libswresample.so")
+                            jniLibs.excludes.add("**/libswscale.so")
+                        }
+                    }
+                }
             }
-        }
-
-
-
-    }
-
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            pickFirsts += "META-INF/INDEX.LIST"
         }
     }
 }
