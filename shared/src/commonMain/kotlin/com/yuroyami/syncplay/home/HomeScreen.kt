@@ -70,6 +70,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
+import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.geometry.Offset
@@ -85,10 +86,10 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.shared.MR
 import com.yuroyami.syncplay.compose.ComposeUtils.FlexibleFancyText
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.compose.ComposeUtils.radiantOverlay
+import com.yuroyami.syncplay.compose.NightModeToggle
 import com.yuroyami.syncplay.compose.PopupAPropos.AProposPopup
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_MISC_PREFS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_NIGHTMODE
@@ -100,6 +101,7 @@ import com.yuroyami.syncplay.datastore.stringFlow
 import com.yuroyami.syncplay.datastore.writeString
 import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.settings.SettingsUI
+import com.yuroyami.syncplay.shared.MR
 import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.getDefaultEngine
@@ -163,18 +165,12 @@ fun HomeScreen(config: HomeConfig) {
                                 .padding(bottom = 12.dp, top = (TopAppBarDefaults.windowInsets.asPaddingValues().calculateTopPadding() + 12.dp)),
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                             trailingContent = {
-                                Row {
-                                    /** FIXME: NightModeToggle(
-                                    modifier = Modifier
-                                    .size(62.dp)
-                                    .constrainAs(nightmode) {
-                                    top.linkTo(settingsbutton.top)
-                                    bottom.linkTo(settingsbutton.bottom)
-                                    start.linkTo(parent.start, (4.dp))
-                                    },
-                                    state = nightMode
+                                Row(verticalAlignment = CenterVertically) {
+                                    NightModeToggle(
+                                        modifier = Modifier.size(58.dp),
+                                        state = nightMode
                                     )
-                                     */
+
                                     IconButton(
                                         onClick = {
                                             when (settingState.intValue) {

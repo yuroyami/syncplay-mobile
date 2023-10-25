@@ -76,6 +76,7 @@ class WatchActivity : ComponentActivity() {
         }
 
         /** Set ready first hand */
+        //TODO: Move to common code
         setReadyDirectly = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainBoolean(DataStoreKeys.PREF_READY_FIRST_HAND, true) }
 
         pickerCallback = object: PickerCallback {

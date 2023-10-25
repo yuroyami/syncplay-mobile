@@ -52,7 +52,7 @@ class MpvPlayer : BasePlayer {
     lateinit var mpvView: MPVView
     lateinit var ctx: Context
 
-    val mpvMainScope = CoroutineScope(Dispatchers.Main)
+    private val mpvMainScope = CoroutineScope(Dispatchers.Main)
     val mpvBGScope = CoroutineScope(Dispatchers.IO)
 
     override fun initialize() {

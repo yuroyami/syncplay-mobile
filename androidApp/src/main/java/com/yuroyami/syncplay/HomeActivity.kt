@@ -6,7 +6,9 @@ import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.pm.ShortcutInfoCompat
@@ -19,8 +21,9 @@ import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_MISC_PREFS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_NIGHTMODE
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_DISPLAY_LANG
+import com.yuroyami.syncplay.datastore.booleanFlow
+import com.yuroyami.syncplay.datastore.ds
 import com.yuroyami.syncplay.datastore.languageCallback
-import com.yuroyami.syncplay.datastore.obtainBoolean
 import com.yuroyami.syncplay.datastore.obtainString
 import com.yuroyami.syncplay.home.HomeConfig
 import com.yuroyami.syncplay.home.HomeScreen
@@ -59,21 +62,17 @@ class HomeActivity : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
 
-        /** Applying night mode from the system */
-        val nightmodepref = runBlocking { DATASTORE_MISC_PREFS.obtainBoolean(MISC_NIGHTMODE, true) }
-        if (nightmodepref) {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-            WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = true
-        } else {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-            WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
-        }
-
         /** Getting saved config */
         val config = HomeConfig()
 
         /****** Composing UI using Jetpack Compose *******/
         setContent {
+            val nightMode by DATASTORE_MISC_PREFS.ds().booleanFlow(MISC_NIGHTMODE, false).collectAsState(initial = false)
+
+            LaunchedEffect(nightMode) {
+                WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = !nightMode
+            }
+
             HomeScreen(config = config) /* Shared Compose multiplatform composable */
         }
 

@@ -16,11 +16,11 @@ android {
     compileSdk = 34
 
     //sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-    sourceSets["main"].jniLibs {
-        srcDirs("$projectDir/src/main/libs")
-        srcDirs("$projectDir/src/main/jniLibs")
-        srcDirs("$projectDir/src/jniLibs")
-    }
+//    sourceSets["main"].jniLibs {
+//        srcDirs("$projectDir/src/main/libs")
+//        srcDirs("$projectDir/src/main/jniLibs")
+//        srcDirs("$projectDir/src/jniLibs")
+//    }
     //sourceSets["main"].jni.srcDirs("$projectDir/src/main/jni")
 
     signingConfigs {
@@ -48,6 +48,7 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             pickFirsts += "META-INF/INDEX.LIST"
+            pickFirsts += "META-INF/versions/9/previous-compilation-data.bin"
         }
     }
 
@@ -147,21 +148,22 @@ android {
 
 
             packaging {
-                gradle.startParameter.taskNames.forEach { task ->
-                    if (task.contains("assemble")) {
-                        if (task.contains("noLibs")) {
-                            jniLibs.excludes.add("**/libavcodec.so")
-                            jniLibs.excludes.add("**/libavdevice.so")
-                            jniLibs.excludes.add("**/libavfilter.so")
-                            jniLibs.excludes.add("**/libavformat.so")
-                            jniLibs.excludes.add("**/libavutil.so")
-                            jniLibs.excludes.add("**/libc++_shared.so")
-                            jniLibs.excludes.add("**/libmpv.so")
-                            jniLibs.excludes.add("**/libplayer.so")
-                            jniLibs.excludes.add("**/libpostproc.so")
-                            jniLibs.excludes.add("**/libswresample.so")
-                            jniLibs.excludes.add("**/libswscale.so")
-                        }
+//                gradle.startParameter.taskNames.forEach { task ->
+//                    if (task.contains("assemble")) {
+//                        if (task.contains("noLibs")) {
+                jniLibs {
+                    if (false) {
+                        excludes += ("**/libavcodec.so")
+                        excludes += ("**/libavdevice.so")
+                        excludes += ("**/libavfilter.so")
+                        excludes += ("**/libavformat.so")
+                        excludes += ("**/libavutil.so")
+                        //jniLibs.excludes.add("**/libc++_shared.so")
+                        excludes += ("**/libmpv.so")
+                        excludes += ("**/libplayer.so")
+                        excludes += ("**/libpostproc.so")
+                        excludes += ("**/libswresample.so")
+                        excludes += ("**/libswscale.so")
                     }
                 }
             }
