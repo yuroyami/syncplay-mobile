@@ -7,18 +7,18 @@ plugins {
     kotlin("plugin.serialization")
 }
 
-val ktor = "2.3.4"
 @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
 kotlin {
-    targetHierarchy.default()
+    //targetHierarchy.default()
 
     androidTarget {
         compilations.all {
             kotlinOptions {
-                jvmTarget = "1.8"
+                jvmTarget = "17"
             }
         }
     }
+
     iosX64()
     iosArm64()
     iosSimulatorArm64()
@@ -35,7 +35,7 @@ kotlin {
     }
     
     sourceSets {
-        val ktor = "2.3.5"
+        val ktor = "2.3.6"
         val commonMain by getting {
             dependencies {
                 /* Logging handler */
@@ -59,7 +59,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
                 /* Jetpack Datastore for preferences and settings (accessible in Compose in real-time) */
-                val datastore = "1.1.0-alpha05"
+                val datastore = "1.1.0-alpha06"
                 api("androidx.datastore:datastore-preferences-core:$datastore")
                 api("androidx.datastore:datastore-core-okio:$datastore")
 
@@ -71,12 +71,6 @@ kotlin {
 
                 /* Multiplatform resource accessor from Compose */
                 api("dev.icerock.moko:resources-compose:0.23.0") // for compose multiplatform
-            }
-        }
-        val commonTest by getting {
-            dependencies {
-                //implementation(libs.kotlin.test)
-                //implementation("org.jetbrains.kotlin:kotlin-test:1.9.10")
             }
         }
 
@@ -97,7 +91,7 @@ kotlin {
                 api("androidx.documentfile:documentfile:1.0.1")
 
                 /* AndroidX's Splash Screen */
-                api("androidx.core:core-splashscreen:1.0.1")
+                api("androidx.core:core-splashscreen:1.1.0-alpha02")
 
                 /* Jetpack Shared Preferences */
                 api("androidx.preference:preference-ktx:1.2.1")
@@ -116,7 +110,7 @@ kotlin {
                 implementation("com.airbnb.android:lottie-compose:6.1.0")
 
                 /* Media3 (ExoPlayer and its extensions) */
-                val media3 = "1.2.0-beta01"
+                val media3 = "1.2.0-rc01"
                 api("androidx.media3:media3-exoplayer:$media3")
                 api("androidx.media3:media3-exoplayer-dash:$media3")
                 api("androidx.media3:media3-exoplayer-hls:$media3")
@@ -130,12 +124,15 @@ kotlin {
                 api("androidx.media3:media3-common:$media3")
             }
         }
-        val iosMain by getting {
-//            dependsOn(commonMain)
-//            iosX64Main.dependsOn(this)
-//            iosArm64Main.dependsOn(this)
-//            iosSimulatorArm64Main.dependsOn(this)
-//
+        val iosX64Main by getting
+        val iosArm64Main by getting
+        val iosSimulatorArm64Main by getting
+        val iosMain by creating {
+            dependsOn(commonMain)
+            iosX64Main.dependsOn(this)
+            iosArm64Main.dependsOn(this)
+            iosSimulatorArm64Main.dependsOn(this)
+
             dependencies {
                 /* Required ktor network client declaration for iOS */
                 implementation("io.ktor:ktor-client-ios:$ktor")
@@ -156,11 +153,11 @@ android {
         minSdk = (findProperty("android.minSdk") as String).toInt()
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlin {
-        jvmToolchain(8)
+        jvmToolchain(17)
     }
 
     buildFeatures {
