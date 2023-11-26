@@ -53,7 +53,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.3"
+        kotlinCompilerExtensionVersion = "1.5.4"
     }
 
     buildTypes {
@@ -148,9 +148,6 @@ android {
 
 
             packaging {
-//                gradle.startParameter.taskNames.forEach { task ->
-//                    if (task.contains("assemble")) {
-//                        if (task.contains("noLibs")) {
                 jniLibs {
                     if (false) {
                         excludes += ("**/libavcodec.so")

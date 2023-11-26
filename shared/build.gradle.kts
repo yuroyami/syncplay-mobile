@@ -68,9 +68,13 @@ kotlin {
                 implementation(compose.foundation)
                 implementation(compose.material3)
                 implementation(compose.materialIconsExtended)
+                @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+                implementation(compose.components.resources)
 
-                /* Multiplatform resource accessor from Compose */
+                /* Multiplatform localized string accessor helper */
                 api("dev.icerock.moko:resources-compose:0.23.0") // for compose multiplatform
+
+                implementation("com.github.ajalt.colormath:colormath:3.3.3")
             }
         }
 
@@ -80,8 +84,6 @@ kotlin {
 
                 /* Required ktor network client declaration for Android */
                 implementation("io.ktor:ktor-client-android:$ktor")
-
-                /* Android-only core dependencies */
 
                 /* AndroidX compat */
                 api("androidx.core:core-ktx:1.12.0")
@@ -103,14 +105,13 @@ kotlin {
                 }
 
                 /* Compose add-ons */
-                api("androidx.activity:activity-compose:1.8.0")
-                implementation("com.godaddy.android.colorpicker:compose-color-picker-android:0.7.0")
+                api("androidx.activity:activity-compose:1.8.1")
 
                 /* Lottie for animations (like Nightmode toggle button) */
-                implementation("com.airbnb.android:lottie-compose:6.1.0")
+                implementation("com.airbnb.android:lottie-compose:6.2.0")
 
                 /* Media3 (ExoPlayer and its extensions) */
-                val media3 = "1.2.0-rc01"
+                val media3 = "1.2.0"
                 api("androidx.media3:media3-exoplayer:$media3")
                 api("androidx.media3:media3-exoplayer-dash:$media3")
                 api("androidx.media3:media3-exoplayer-hls:$media3")

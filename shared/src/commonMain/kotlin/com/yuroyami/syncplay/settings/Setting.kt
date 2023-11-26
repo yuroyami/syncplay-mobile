@@ -36,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
@@ -49,6 +50,7 @@ import androidx.datastore.preferences.core.Preferences
 import com.yuroyami.syncplay.compose.ComposeUtils.FlexibleFancyText
 import com.yuroyami.syncplay.compose.ComposeUtils.MultiChoiceDialog
 import com.yuroyami.syncplay.compose.ComposeUtils.SmartFancyIcon
+import com.yuroyami.syncplay.compose.PopupColorPicker.ColorPickingPopup
 import com.yuroyami.syncplay.datastore.booleanFlow
 import com.yuroyami.syncplay.datastore.datastoreFiles
 import com.yuroyami.syncplay.datastore.intFlow
@@ -57,6 +59,9 @@ import com.yuroyami.syncplay.datastore.writeBoolean
 import com.yuroyami.syncplay.datastore.writeInt
 import com.yuroyami.syncplay.datastore.writeString
 import com.yuroyami.syncplay.ui.Paletting
+import com.yuroyami.syncplay.utils.colorpicker.HsvColor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -230,7 +235,7 @@ class Setting(
     @Composable
     private fun BooleanSettingUI(modifier: Modifier = Modifier, type: Boolean) {
         val boolean = datastore().booleanFlow(key, defaultValue as Boolean).collectAsState(initial = defaultValue)
-        val scope = rememberCoroutineScope()
+        val scope = rememberCoroutineScope { Dispatchers.IO }
 
         ListItem(
             modifier = modifier
@@ -303,7 +308,7 @@ class Setting(
     private fun ListSettingUI(modifier: Modifier = Modifier) {
         val dialogOpen = remember { mutableStateOf(false) }
         val selectedItem = datastore().stringFlow(key, defaultValue as String).collectAsState(initial = defaultValue)
-        val scope = rememberCoroutineScope()
+        val scope = rememberCoroutineScope { Dispatchers.IO }
 
         val renderedValues = entryValues.invoke()
 
@@ -373,7 +378,7 @@ class Setting(
     @Composable
     private fun SliderSettingUI(modifier: Modifier = Modifier) {
         val value = datastore().intFlow(key, defaultValue as Int).collectAsState(initial = defaultValue)
-        val scope = rememberCoroutineScope()
+        val scope = rememberCoroutineScope { Dispatchers.IO }
 
         ListItem(
             modifier = modifier
@@ -446,6 +451,7 @@ class Setting(
     private fun ColorSettingUI(modifier: Modifier = Modifier) {
         val color = datastore().intFlow(key, defaultValue as Int).collectAsState(initial = defaultValue)
         val colorDialogState = remember { mutableStateOf(false) }
+        val scope = rememberCoroutineScope { Dispatchers.IO }
 
         ListItem(
             modifier = modifier
@@ -493,14 +499,11 @@ class Setting(
             }
         )
 
-        /*
-        TODO: ColorPickingPopup(colorDialogState, initialColor = HsvColor.from(Color(color.value))) { hsvColor ->
+        ColorPickingPopup(colorDialogState, initialColor = HsvColor.from(Color(color.value))) { hsvColor ->
             scope.launch {
-                datastorekey.writeInt(key, hsvColor.toColorInt())
+                datastorekey.writeInt(key, hsvColor.toColor().toArgb())
             }
         }
-
-         */
     }
 
     /** A string setting UI composable function. It has a textfield next to it */
