@@ -55,10 +55,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.yuroyami.syncplay.shared.MR
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.Paletting.backgroundGradient
-import dev.icerock.moko.resources.compose.fontFamilyResource
 
 /** Contains a bunch of composable functions that are frequently reused */
 object ComposeUtils {
@@ -92,7 +90,7 @@ object ComposeUtils {
                         offset = Offset(0f, 10f),
                         blurRadius = 5f
                     ),
-                    fontFamily = fontFamilyResource(MR.fonts.Directive4.regular),
+                    fontFamily = FontFamily(org.jetbrains.compose.resources.Font("fonts/Directive4-Regular.otf")),
                     fontSize = size.sp,
                 )
             )
@@ -105,7 +103,7 @@ object ComposeUtils {
                     brush = Brush.linearGradient(
                         colors = colorStops
                     ),
-                    fontFamily = fontFamilyResource(MR.fonts.Directive4.regular),
+                    fontFamily = FontFamily(org.jetbrains.compose.resources.Font("fonts/Directive4-Regular.otf")),
                     fontSize = size.sp,
                 )
             )
@@ -519,14 +517,16 @@ object ComposeUtils {
                                 style = TextStyle(
                                     brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT),
                                     shadow = Shadow(offset = Offset(0f, 0f), blurRadius = 1f),
-                                    fontFamily = fontFamilyResource(MR.fonts.Directive4.regular), fontSize = (15.6).sp
+                                    fontFamily = FontFamily(org.jetbrains.compose.resources.Font("fonts/Directive4-Regular.otf")),
+                                    fontSize = (15.6).sp
                                 )
                             )
                             Text(
                                 text = title,
                                 style = TextStyle(
                                     color = Color.DarkGray,
-                                    fontFamily = fontFamilyResource(MR.fonts.Directive4.regular), fontSize = 15.sp,
+                                    fontFamily = FontFamily(org.jetbrains.compose.resources.Font("fonts/Directive4-Regular.otf")),
+                                    fontSize = 15.sp,
                                 )
                             )
                         }

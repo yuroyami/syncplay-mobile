@@ -22,17 +22,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.yuroyami.syncplay.shared.MR
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyIcon2
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.datastore.MySettings.inRoomPreferences
 import com.yuroyami.syncplay.settings.SettingsUI
 import com.yuroyami.syncplay.settings.SettingsUI.SettingsGrid
 import com.yuroyami.syncplay.ui.Paletting
-import dev.icerock.moko.resources.compose.asFont
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.Font
 
 object CardRoomPrefs {
 
+    @OptIn(ExperimentalResourceApi::class)
     @Composable
     fun InRoomSettingsCard() {
         val settingState = remember { mutableIntStateOf(1) }
@@ -49,7 +50,7 @@ object CardRoomPrefs {
                     string = "In-room Preferences",
                     solid = Color.Transparent,
                     size = 16f,
-                    font = MR.fonts.Directive4.regular.asFont()!!
+                    font = Font("fonts/Directive4-Regular.otf")
                 )
 
                 if (settingState.intValue == 2) {

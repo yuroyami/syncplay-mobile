@@ -38,14 +38,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.yuroyami.syncplay.shared.MR
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.ui.Paletting
-import dev.icerock.moko.resources.compose.asFont
+import org.jetbrains.compose.resources.Font
 
 /** Object class that will wrap everything related to settings (including composables for UI) */
 object SettingsUI {
@@ -169,15 +166,10 @@ object SettingsUI {
                 }
             }
 
-            MR.fonts.Inter.regular.asFont(
-                weight = FontWeight.Normal,
-                style = FontStyle.Normal
-            )?.let {
-                FancyText2(
-                    string = categ.title, solid = Color.Transparent,
-                    size = titleSize, font = it
-                )
-            }
+            FancyText2(
+                string = categ.title, solid = Color.Transparent,
+                size = titleSize, font = Font("fonts/Inter-Regular.otf")
+            )
         }
     }
 

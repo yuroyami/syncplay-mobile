@@ -100,7 +100,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
-import com.yuroyami.syncplay.shared.MR
 import com.yuroyami.syncplay.compose.CardRoomPrefs.InRoomSettingsCard
 import com.yuroyami.syncplay.compose.CardUserInfo.UserInfoCard
 import com.yuroyami.syncplay.compose.ComposeUtils
@@ -139,7 +138,6 @@ import com.yuroyami.syncplay.watchroom.RoomComposables.PingRadar
 import com.yuroyami.syncplay.watchroom.RoomComposables.RoomArtwork
 import com.yuroyami.syncplay.watchroom.RoomComposables.RoomTab
 import com.yuroyami.syncplay.watchroom.RoomComposables.fadingMessageLayout
-import dev.icerock.moko.resources.compose.asFont
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -148,6 +146,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.compose.resources.Font
 import kotlin.math.roundToInt
 
 /** TODO: Ship these to a platform-agnostic viewmodel */
@@ -180,8 +179,8 @@ fun RoomUI() {
     val isSoloMode = remember { isSoloMode() }
     val nightMode = DATASTORE_MISC_PREFS.ds().booleanFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
 
-    val directive = MR.fonts.Directive4.regular.asFont()!!
-    val inter = MR.fonts.Inter.regular.asFont()!!
+    val directive = Font("fonts/Directive4-Regular.otf")
+    val inter = Font("fonts/Inter-Regular.otf")
 
     val composeScope = rememberCoroutineScope { Dispatchers.IO }
 
@@ -496,7 +495,7 @@ fun RoomUI() {
                                                     .clickable(enabled = false) {}.focusable(false),
                                                 text = text,
                                                 size = if (pipModeObserver) 6f else (msgFontSize.value.toFloat()),
-                                                font = MR.fonts.Inter.regular.asFont()!!,
+                                                font = inter,
                                                 lineHeight = (msgFontSize.value + 4).sp,
                                                 overflow = TextOverflow.Ellipsis,
                                                 shadowSize = 1.5f,
@@ -613,7 +612,7 @@ fun RoomUI() {
                                         string = "More Options...",
                                         solid = Color.Black,
                                         size = 14f,
-                                        font = MR.fonts.Directive4.regular.asFont()
+                                        font = directive
                                     )
 
                                     /* Chat history item */

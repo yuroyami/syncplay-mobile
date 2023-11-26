@@ -106,12 +106,12 @@ import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.getDefaultEngine
 import com.yuroyami.syncplay.utils.joinCallback
-import dev.icerock.moko.resources.compose.asFont
-import dev.icerock.moko.resources.compose.painterResource
 import dev.icerock.moko.resources.compose.stringResource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.Font
+import org.jetbrains.compose.resources.painterResource
 
 /** This is what previously used to be HomeActivity before we migrated towards KMM.*/
 @OptIn(ExperimentalMaterial3Api::class)
@@ -119,8 +119,8 @@ import kotlinx.coroutines.launch
 fun HomeScreen(config: HomeConfig) {
     val nightMode = DATASTORE_MISC_PREFS.ds().booleanFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
 
-    val directive = MR.fonts.Directive4.regular.asFont()!!
-    val inter = MR.fonts.Inter.regular.asFont()!!
+    val directive = Font("fonts/Directive4-Regular.otf")
+    val inter = Font("fonts/Inter-Regular.otf")
 
     val savedConfig = remember { config }
 
@@ -220,7 +220,7 @@ fun HomeScreen(config: HomeConfig) {
                                 ) { aboutpopupState.value = true }
                                 ) {
                                     Image(
-                                        painter = painterResource(MR.images.syncplay_logo_gradient), contentDescription = "",
+                                        painter = painterResource("images/syncplay_logo_gradient.svg"), contentDescription = "",
                                         modifier = Modifier
                                             .height(32.dp)
                                             .aspectRatio(1f)
@@ -644,10 +644,10 @@ fun HomeScreen(config: HomeConfig) {
                                 Image(
                                     painter = painterResource(
                                         when (player.value) {
-                                            "exo" -> MR.images.exoplayer
-                                            "mpv" -> MR.images.mpv
-                                            "avplayer" -> MR.images.swift
-                                            else -> MR.images.exoplayer
+                                            "exo" -> "images/exoplayer@1x.png"
+                                            "mpv" -> "images/mpv@1x.png"
+                                            "avplayer" -> "images/swift@1x.png"
+                                            else -> "images/exoplayer@1x.png"
                                         }
                                     ),
                                     contentScale = ContentScale.FillHeight,
@@ -666,7 +666,7 @@ fun HomeScreen(config: HomeConfig) {
                                     "exo" -> "ExoPlayer"
                                     "mpv" -> "mpv"
                                     "avplayer" -> "Apple AVPlayer"
-                                    else -> MR.images.exoplayer
+                                    else -> "ExoPlayer"
                                 }
                             ),
                             fontSize = 9.sp

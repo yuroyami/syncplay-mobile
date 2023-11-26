@@ -38,6 +38,7 @@ import com.yuroyami.syncplay.utils.timeStamper
 import com.yuroyami.syncplay.watchroom.p
 import dev.icerock.moko.resources.compose.asFont
 import dev.icerock.moko.resources.compose.stringResource
+import org.jetbrains.compose.resources.Font
 
 object CardUserInfo {
 
@@ -56,7 +57,7 @@ object CardUserInfo {
                 string = "User info",
                 solid = Color.Transparent,
                 size = 18f,
-                font = MR.fonts.Directive4.regular.asFont()!!
+                font = Font("fonts/Directive4-Regular.otf")
             )
 
             Column(

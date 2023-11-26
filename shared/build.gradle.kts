@@ -31,10 +31,21 @@ kotlin {
         podfile = project.file("../iosApp/Podfile")
         framework {
             baseName = "shared"
+            isStatic = false
         }
     }
     
     sourceSets {
+        all {
+            languageSettings {
+                optIn("kotlin.RequiresOptIn")
+                optIn("kotlinx.cinterop.ExperimentalForeignApi")
+                optIn("kotlin.experimental.ExperimentalNativeApi")
+                optIn("org.jetbrains.compose.resources.ExperimentalResourceApi")
+                optIn("androidx.compose.material3.ExperimentalMaterial3Api")
+            }
+        }
+
         val ktor = "2.3.6"
         val commonMain by getting {
             dependencies {

@@ -17,9 +17,10 @@ import com.airbnb.lottie.compose.rememberLottieAnimatable
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.yuroyami.syncplay.datastore.DataStoreKeys
 import com.yuroyami.syncplay.datastore.writeBoolean
-import com.yuroyami.syncplay.shared.MR
-import dev.icerock.moko.resources.compose.readTextAsState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.readResourceBytes
 
 /** Shows an infinitely repeating Bodymovin [json] animation with the specified [speed].
  *
@@ -39,7 +40,7 @@ actual fun InfiniteLottieAnimation(
         composition = comp,
         isPlaying = isplaying,
         restartOnPlay = true,
-        speed = speed ,
+        speed = speed,
         iterations = Int.MAX_VALUE,
         reverseOnRepeat = reverseOnEnd,
         modifier = modifier
@@ -50,13 +51,21 @@ actual fun InfiniteLottieAnimation(
  *
  * @param nightModeState Defines the initial state of the button (you should pass it,
  * like you're telling the composable which mode is enabled initially).
-*/
+ */
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 actual fun NightModeToggle(modifier: Modifier, state: State<Boolean>) {
-    val scope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope { Dispatchers.IO }
 
     /* The lottie composition to play */
-    MR.assets.daynight_toggle.readTextAsState().value?.let {
+    var s by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(Unit) {
+        scope.launch {
+            s = readResourceBytes("images/droid_icon.xml").decodeToString()
+        }
+    }
+
+    s?.let {
         val composition by rememberLottieComposition(LottieCompositionSpec.JsonString(it))
         val anim = rememberLottieAnimatable() /* The animatable that accompanies the composition */
 

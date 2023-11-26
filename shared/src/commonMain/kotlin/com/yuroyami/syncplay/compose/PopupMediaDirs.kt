@@ -44,21 +44,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
-import com.yuroyami.syncplay.shared.MR
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
 import com.yuroyami.syncplay.datastore.ds
 import com.yuroyami.syncplay.datastore.stringSetFlow
+import com.yuroyami.syncplay.shared.MR
 import com.yuroyami.syncplay.ui.Paletting
-import dev.icerock.moko.resources.compose.asFont
-import dev.icerock.moko.resources.compose.fontFamilyResource
 import dev.icerock.moko.resources.compose.stringResource
+import org.jetbrains.compose.resources.Font
 
 var wentForFilePick = false
 
@@ -67,6 +67,9 @@ object PopupMediaDirs {
     @OptIn(ExperimentalLayoutApi::class)
     @Composable
     fun MediaDirsPopup(visibilityState: MutableState<Boolean>) {
+        val directive4 = Font("fonts/Directive4-Regular.otf")
+        val inter = Font("fonts/Inter-Regular.otf")
+
         return RoomPopup(
             dialogOpen = visibilityState.value,
             widthPercent = 0.9f,
@@ -119,7 +122,7 @@ object PopupMediaDirs {
                     string = stringResource(MR.strings.media_directories),
                     solid = Color.Black,
                     size = 18f,
-                    font = MR.fonts.Directive4.regular.asFont()!!
+                    font = directive4
                 )
 
                 /* Title's subtext */
@@ -128,7 +131,7 @@ object PopupMediaDirs {
                     color = MaterialTheme.colorScheme.primary,
                     lineHeight = 14.sp,
                     fontSize = 10.sp,
-                    fontFamily = fontFamilyResource(MR.fonts.Directive4.regular),
+                    fontFamily = FontFamily(directive4),
                     textAlign = TextAlign.Center,
                 )
 
@@ -168,7 +171,7 @@ object PopupMediaDirs {
 
                                     Text(
                                         text = if (text?.contains("primary:") == true) text.substringAfter("primary:") else text ?: "",
-                                        fontFamily = fontFamilyResource(MR.fonts.Inter.regular),
+                                        fontFamily = FontFamily(inter),
                                         fontSize = 8.sp,
                                         textAlign = TextAlign.Center,
                                         lineHeight = 10.sp,

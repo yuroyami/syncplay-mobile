@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,8 +36,9 @@ import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
 import com.yuroyami.syncplay.compose.ComposeUtils.SyncplayishText
 import com.yuroyami.syncplay.compose.ComposeUtils.radiantOverlay
 import com.yuroyami.syncplay.shared.MR
-import dev.icerock.moko.resources.compose.painterResource
 import dev.icerock.moko.resources.compose.stringResource
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.vectorResource
 
 object PopupAPropos {
 
@@ -61,7 +63,7 @@ object PopupAPropos {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Image(
-                        painter = painterResource(MR.images.syncplay_logo_gradient),
+                        imageVector = vectorResource("images/syncplay_logo_gradient.svg"),
                         contentDescription = "",
                         modifier = Modifier.requiredSize(96.dp)
                             .radiantOverlay(offset = Offset(x = 50f, y = 65f))
@@ -140,8 +142,9 @@ object PopupAPropos {
                         Text(stringResource(MR.strings.connect_solomode), textAlign = TextAlign.Center, fontSize = 14.sp)
                     }
 
+                    val uriHandler = LocalUriHandler.current
                     Image(
-                        painter = painterResource(MR.images.github),
+                        painter = painterResource("images/github.png"),
                         contentDescription = "",
                         modifier = Modifier.size(64.dp)
                             .clickable(
@@ -152,9 +155,7 @@ object PopupAPropos {
                                     color = Color(100, 100, 100, 200)
                                 )
                             ) {
-                                //TODO: expect platform call for browser
-                                //val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.github.com/yuroyami/syncplay-android/releases"))
-                                //ContextCompat.startActivity(this@AProposPopup, browserIntent, null)
+                                uriHandler.openUri("https://www.github.com/yuroyami/syncplay-mobile/releases")
                             }
                     )
                 }

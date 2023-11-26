@@ -17,11 +17,9 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowColumn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -32,11 +30,9 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddToQueue
-import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -59,15 +55,13 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
-import com.yuroyami.syncplay.shared.MR
 import com.yuroyami.syncplay.compose.ComposeUtils
-import com.yuroyami.syncplay.compose.ComposeUtils.FancyIcon2
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.compose.ComposeUtils.radiantOverlay
 import com.yuroyami.syncplay.compose.ComposeUtils.solidOverlay
@@ -77,10 +71,9 @@ import com.yuroyami.syncplay.datastore.ds
 import com.yuroyami.syncplay.datastore.intFlow
 import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.ui.Paletting
-import com.yuroyami.syncplay.ui.Paletting.ROOM_ICON_SIZE
-import dev.icerock.moko.resources.compose.fontFamilyResource
-import dev.icerock.moko.resources.compose.painterResource
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.Font
+import org.jetbrains.compose.resources.painterResource
 
 object RoomComposables {
 
@@ -130,8 +123,9 @@ object RoomComposables {
                     .align(Alignment.Center),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+
                 Image(
-                    painter = painterResource(MR.images.syncplay_logo_gradient), contentDescription = "",
+                    painter = painterResource("images/syncplay_logo_gradient.svg"), contentDescription = "",
                     modifier = Modifier
                         .height(if (pipModeObserver) 40.dp else 84.dp)
                         .aspectRatio(1f)
@@ -156,7 +150,7 @@ object RoomComposables {
                                 offset = Offset(0f, 10f),
                                 blurRadius = 5f
                             ),
-                            fontFamily = fontFamilyResource(MR.fonts.Directive4.regular)
+                            fontFamily = FontFamily(Font("fonts/Directive4-Regular.otf"))
                         ),
                         fontSize = if (pipModeObserver) 8.sp else 26.sp,
                     )
@@ -167,7 +161,7 @@ object RoomComposables {
                             brush = Brush.linearGradient(
                                 colors = Paletting.SP_GRADIENT
                             ),
-                            fontFamily = fontFamilyResource(MR.fonts.Directive4.regular)
+                            fontFamily = FontFamily(Font("fonts/Directive4-Regular.otf"))
                         ),
                         fontSize = if (pipModeObserver) 8.sp else 26.sp,
                     )
@@ -344,38 +338,38 @@ object RoomComposables {
         when (pingValue) {
             null -> {
                 Image(
-                    painter = painterResource(MR.images.network_level_0), "",
+                    painter = painterResource("images/network_level_0@1x.png"), "",
                     modifier = Modifier.size(16.dp).solidOverlay(Color.Gray)
                 )
             }
 
             in (0..90) -> {
                 Image(
-                    painter = painterResource(MR.images.network_level_4), "",
+                    painter = painterResource("images/network_level_4@1x.png"), "",
                     modifier = Modifier.size(16.dp).solidOverlay(Color.Green)
                 )
             }
             in (91..120) -> {
                 Image(
-                    painter = painterResource(MR.images.network_level_3), "",
+                    painter = painterResource("images/network_level_3@1x.png"), "",
                     modifier = Modifier.size(16.dp).solidOverlay(Color.Yellow)
                 )
             }
             in (121..160) -> {
                 Image(
-                    painter = painterResource(MR.images.network_level_3), "",
+                    painter = painterResource("images/network_level_3@1x.png"), "",
                     modifier = Modifier.size(16.dp).solidOverlay(Color(255, 176, 66))
                 )
             }
             in (161..200) -> {
                 Image(
-                    painter = painterResource(MR.images.network_level_2), "",
+                    painter = painterResource("images/network_level_2@1x.png"), "",
                     modifier = Modifier.size(16.dp).solidOverlay(Color(181, 80, 25))
                 )
             }
             else -> {
                 Image(
-                    painter = painterResource(MR.images.network_level_1), "",
+                    painter = painterResource("images/network_level_1@1x.png"), "",
                     modifier = Modifier.size(16.dp).solidOverlay(Color.Red)
                 )
             }
