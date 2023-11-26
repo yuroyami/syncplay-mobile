@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.compose
+package com.yuroyami.syncplay.compose.popups
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -67,8 +67,8 @@ object PopupMediaDirs {
     @OptIn(ExperimentalLayoutApi::class)
     @Composable
     fun MediaDirsPopup(visibilityState: MutableState<Boolean>) {
-        val directive4 = Font("fonts/Directive4-Regular.otf")
-        val inter = Font("fonts/Inter-Regular.otf")
+        val directive4 = Font("MR/fonts/Directive4-Regular.otf")
+        val inter = Font("MR/fonts/Inter-Regular.otf")
 
         return RoomPopup(
             dialogOpen = visibilityState.value,

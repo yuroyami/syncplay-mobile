@@ -58,15 +58,13 @@ actual fun NightModeToggle(modifier: Modifier, state: State<Boolean>) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
 
     /* The lottie composition to play */
-    var s by remember { mutableStateOf<String?>(null) }
+    var s by remember { mutableStateOf<ByteArray?>(null) }
     LaunchedEffect(Unit) {
-        scope.launch {
-            s = readResourceBytes("images/droid_icon.xml").decodeToString()
-        }
+        s = readResourceBytes("assets/daynight_toggle.json")
     }
 
     s?.let {
-        val composition by rememberLottieComposition(LottieCompositionSpec.JsonString(it))
+        val composition by rememberLottieComposition(LottieCompositionSpec.JsonString(it.decodeToString()))
         val anim = rememberLottieAnimatable() /* The animatable that accompanies the composition */
 
         val night2day = LottieClipSpec.Progress(0f, 0.4f)

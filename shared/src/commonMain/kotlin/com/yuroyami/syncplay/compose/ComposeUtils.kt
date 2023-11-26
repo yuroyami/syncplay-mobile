@@ -90,7 +90,7 @@ object ComposeUtils {
                         offset = Offset(0f, 10f),
                         blurRadius = 5f
                     ),
-                    fontFamily = FontFamily(org.jetbrains.compose.resources.Font("fonts/Directive4-Regular.otf")),
+                    fontFamily = FontFamily(fontDirective()),
                     fontSize = size.sp,
                 )
             )
@@ -103,7 +103,7 @@ object ComposeUtils {
                     brush = Brush.linearGradient(
                         colors = colorStops
                     ),
-                    fontFamily = FontFamily(org.jetbrains.compose.resources.Font("fonts/Directive4-Regular.otf")),
+                    fontFamily = FontFamily(fontDirective()),
                     fontSize = size.sp,
                 )
             )
@@ -517,7 +517,7 @@ object ComposeUtils {
                                 style = TextStyle(
                                     brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT),
                                     shadow = Shadow(offset = Offset(0f, 0f), blurRadius = 1f),
-                                    fontFamily = FontFamily(org.jetbrains.compose.resources.Font("fonts/Directive4-Regular.otf")),
+                                    fontFamily = FontFamily(fontDirective()),
                                     fontSize = (15.6).sp
                                 )
                             )
@@ -525,7 +525,7 @@ object ComposeUtils {
                                 text = title,
                                 style = TextStyle(
                                     color = Color.DarkGray,
-                                    fontFamily = FontFamily(org.jetbrains.compose.resources.Font("fonts/Directive4-Regular.otf")),
+                                    fontFamily = FontFamily(fontDirective()),
                                     fontSize = 15.sp,
                                 )
                             )

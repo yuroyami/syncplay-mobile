@@ -100,8 +100,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
-import com.yuroyami.syncplay.compose.CardRoomPrefs.InRoomSettingsCard
-import com.yuroyami.syncplay.compose.CardUserInfo.UserInfoCard
+import com.yuroyami.syncplay.compose.cards.CardRoomPrefs.InRoomSettingsCard
+import com.yuroyami.syncplay.compose.cards.CardUserInfo.UserInfoCard
 import com.yuroyami.syncplay.compose.ComposeUtils
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyIcon2
 import com.yuroyami.syncplay.compose.ComposeUtils.FlexibleFancyAnnotatedText
@@ -179,8 +179,8 @@ fun RoomUI() {
     val isSoloMode = remember { isSoloMode() }
     val nightMode = DATASTORE_MISC_PREFS.ds().booleanFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
 
-    val directive = Font("fonts/Directive4-Regular.otf")
-    val inter = Font("fonts/Inter-Regular.otf")
+    val directive = Font("MR/fonts/Directive4-Regular.otf")
+    val inter = Font("MR/fonts/Inter-Regular.otf")
 
     val composeScope = rememberCoroutineScope { Dispatchers.IO }
 
@@ -698,8 +698,6 @@ fun RoomUI() {
                                     )
                                 }
                             }
-
-
                         }
 
                         Spacer(Modifier.height(20.dp))

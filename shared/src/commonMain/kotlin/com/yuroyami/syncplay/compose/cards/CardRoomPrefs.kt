@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.compose
+package com.yuroyami.syncplay.compose.cards
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
@@ -50,7 +50,7 @@ object CardRoomPrefs {
                     string = "In-room Preferences",
                     solid = Color.Transparent,
                     size = 16f,
-                    font = Font("fonts/Directive4-Regular.otf")
+                    font = Font("MR/fonts/Directive4-Regular.otf")
                 )
 
                 if (settingState.intValue == 2) {

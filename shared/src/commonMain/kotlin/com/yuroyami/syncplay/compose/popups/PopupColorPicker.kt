@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.compose
+package com.yuroyami.syncplay.compose.popups
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -75,7 +75,7 @@ object PopupColorPicker {
                     string = "Pick a Color",
                     solid = Color.Black,
                     size = 18f,
-                    font = org.jetbrains.compose.resources.Font("fonts/Directive4-Regular.otf")
+                    font = org.jetbrains.compose.resources.Font("MR/fonts/Directive4-Regular.otf")
                 )
 
                 /* The card that holds the color picker */

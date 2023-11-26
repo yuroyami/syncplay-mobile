@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.compose
+package com.yuroyami.syncplay.compose.popups
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -26,7 +26,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
@@ -34,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
 import com.yuroyami.syncplay.compose.ComposeUtils.SyncplayishText
-import com.yuroyami.syncplay.compose.ComposeUtils.radiantOverlay
 import com.yuroyami.syncplay.shared.MR
 import dev.icerock.moko.resources.compose.stringResource
 import org.jetbrains.compose.resources.painterResource
@@ -63,10 +61,10 @@ object PopupAPropos {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Image(
-                        imageVector = vectorResource("images/syncplay_logo_gradient.svg"),
+                        imageVector = vectorResource("images/syncplay_logo_gradient.xml"),
                         contentDescription = "",
                         modifier = Modifier.requiredSize(96.dp)
-                            .radiantOverlay(offset = Offset(x = 50f, y = 65f))
+                      //      .radiantOverlay(offset = Offset(x = 50f, y = 65f))
                     )
 
                     Spacer(Modifier.width(10.dp))

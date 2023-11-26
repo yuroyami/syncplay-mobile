@@ -63,14 +63,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.compose.ComposeUtils
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
-import com.yuroyami.syncplay.compose.ComposeUtils.radiantOverlay
 import com.yuroyami.syncplay.compose.ComposeUtils.solidOverlay
+import com.yuroyami.syncplay.compose.fontDirective
 import com.yuroyami.syncplay.datastore.DataStoreKeys
 import com.yuroyami.syncplay.datastore.booleanFlow
 import com.yuroyami.syncplay.datastore.ds
 import com.yuroyami.syncplay.datastore.intFlow
 import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.ui.Paletting
+import dev.icerock.moko.resources.compose.painterResource
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
@@ -125,11 +126,11 @@ object RoomComposables {
             ) {
 
                 Image(
-                    painter = painterResource("images/syncplay_logo_gradient.svg"), contentDescription = "",
+                    painter = painterResource("images/syncplay_logo_gradient.xml"), contentDescription = "",
                     modifier = Modifier
                         .height(if (pipModeObserver) 40.dp else 84.dp)
                         .aspectRatio(1f)
-                        .radiantOverlay(offset = Offset(x = 50f, y = 80f))
+                       // .radiantOverlay(offset = Offset(x = 50f, y = 80f))
                 )
 
                 Spacer(modifier = Modifier.width(14.dp))
@@ -150,7 +151,7 @@ object RoomComposables {
                                 offset = Offset(0f, 10f),
                                 blurRadius = 5f
                             ),
-                            fontFamily = FontFamily(Font("fonts/Directive4-Regular.otf"))
+                            fontFamily = FontFamily(fontDirective())
                         ),
                         fontSize = if (pipModeObserver) 8.sp else 26.sp,
                     )
@@ -161,7 +162,7 @@ object RoomComposables {
                             brush = Brush.linearGradient(
                                 colors = Paletting.SP_GRADIENT
                             ),
-                            fontFamily = FontFamily(Font("fonts/Directive4-Regular.otf"))
+                            fontFamily = FontFamily(fontDirective())
                         ),
                         fontSize = if (pipModeObserver) 8.sp else 26.sp,
                     )

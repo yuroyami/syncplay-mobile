@@ -50,7 +50,7 @@ import androidx.datastore.preferences.core.Preferences
 import com.yuroyami.syncplay.compose.ComposeUtils.FlexibleFancyText
 import com.yuroyami.syncplay.compose.ComposeUtils.MultiChoiceDialog
 import com.yuroyami.syncplay.compose.ComposeUtils.SmartFancyIcon
-import com.yuroyami.syncplay.compose.PopupColorPicker.ColorPickingPopup
+import com.yuroyami.syncplay.compose.popups.PopupColorPicker.ColorPickingPopup
 import com.yuroyami.syncplay.datastore.booleanFlow
 import com.yuroyami.syncplay.datastore.datastoreFiles
 import com.yuroyami.syncplay.datastore.intFlow

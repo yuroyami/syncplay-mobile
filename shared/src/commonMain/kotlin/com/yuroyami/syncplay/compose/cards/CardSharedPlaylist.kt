@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.compose
+package com.yuroyami.syncplay.compose.cards
 
 object CardSharedPlaylist {
 

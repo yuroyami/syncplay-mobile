@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.compose
+package com.yuroyami.syncplay.compose.cards
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
@@ -31,14 +31,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.shared.MR
+import com.yuroyami.syncplay.compose.ComposeUtils
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
+import com.yuroyami.syncplay.compose.fontDirective
+import com.yuroyami.syncplay.shared.MR
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.timeStamper
 import com.yuroyami.syncplay.watchroom.p
-import dev.icerock.moko.resources.compose.asFont
 import dev.icerock.moko.resources.compose.stringResource
-import org.jetbrains.compose.resources.Font
 
 object CardUserInfo {
 
@@ -57,7 +57,7 @@ object CardUserInfo {
                 string = "User info",
                 solid = Color.Transparent,
                 size = 18f,
-                font = Font("fonts/Directive4-Regular.otf")
+                font = fontDirective()
             )
 
             Column(

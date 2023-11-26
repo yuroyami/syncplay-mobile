@@ -41,8 +41,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
+import com.yuroyami.syncplay.compose.fontInter
 import com.yuroyami.syncplay.ui.Paletting
-import org.jetbrains.compose.resources.Font
 
 /** Object class that will wrap everything related to settings (including composables for UI) */
 object SettingsUI {
@@ -168,7 +168,7 @@ object SettingsUI {
 
             FancyText2(
                 string = categ.title, solid = Color.Transparent,
-                size = titleSize, font = Font("fonts/Inter-Regular.otf")
+                size = titleSize, font = fontInter()
             )
         }
     }

@@ -88,9 +88,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.compose.ComposeUtils.FlexibleFancyText
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
-import com.yuroyami.syncplay.compose.ComposeUtils.radiantOverlay
 import com.yuroyami.syncplay.compose.NightModeToggle
-import com.yuroyami.syncplay.compose.PopupAPropos.AProposPopup
+import com.yuroyami.syncplay.compose.fontDirective
+import com.yuroyami.syncplay.compose.fontInter
+import com.yuroyami.syncplay.compose.popups.PopupAPropos.AProposPopup
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_MISC_PREFS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_NIGHTMODE
 import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_PLAYER_ENGINE
@@ -106,21 +107,20 @@ import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.getDefaultEngine
 import com.yuroyami.syncplay.utils.joinCallback
+import dev.icerock.moko.resources.compose.painterResource
 import dev.icerock.moko.resources.compose.stringResource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.vectorResource
 
 /** This is what previously used to be HomeActivity before we migrated towards KMM.*/
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(config: HomeConfig) {
     val nightMode = DATASTORE_MISC_PREFS.ds().booleanFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
-
-    val directive = Font("fonts/Directive4-Regular.otf")
-    val inter = Font("fonts/Inter-Regular.otf")
 
     val savedConfig = remember { config }
 
@@ -135,7 +135,7 @@ fun HomeScreen(config: HomeConfig) {
 
     AppTheme(nightMode.value) {
         /* Remembering stuff like scope for onClicks, snackBar host state for snackbars ... etc */
-        val scope = rememberCoroutineScope()
+        val scope = rememberCoroutineScope { Dispatchers.IO }
         val snackbarHostState = remember { SnackbarHostState() }
         val focusManager = LocalFocusManager.current
 
@@ -220,11 +220,11 @@ fun HomeScreen(config: HomeConfig) {
                                 ) { aboutpopupState.value = true }
                                 ) {
                                     Image(
-                                        painter = painterResource("images/syncplay_logo_gradient.svg"), contentDescription = "",
+                                        imageVector = vectorResource("images/syncplay_logo_gradient.xml"), contentDescription = "",
                                         modifier = Modifier
                                             .height(32.dp)
                                             .aspectRatio(1f)
-                                            .radiantOverlay(offset = Offset(x = 30f, y = 45f))
+                                            //.radiantOverlay(offset = Offset(x = 30f, y = 45f))
                                     )
 
                                     Spacer(modifier = Modifier.width(12.dp))
@@ -245,7 +245,7 @@ fun HomeScreen(config: HomeConfig) {
                                                     offset = Offset(0f, 10f),
                                                     blurRadius = 5f
                                                 ),
-                                                fontFamily = FontFamily(directive),
+                                                fontFamily = FontFamily(fontDirective()),
                                                 fontSize = 24.sp,
                                             )
                                         )
@@ -254,7 +254,7 @@ fun HomeScreen(config: HomeConfig) {
                                             text = "Syncplay",
                                             style = TextStyle(
                                                 brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT),
-                                                fontFamily = FontFamily(directive),
+                                                fontFamily = FontFamily(fontDirective()),
                                                 fontSize = 24.sp,
                                             )
                                         )
@@ -319,7 +319,7 @@ fun HomeScreen(config: HomeConfig) {
                             text = stringResource(MR.strings.connect_username_a),
                             size = 20f,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = directive,
+                            font = fontDirective(),
                             shadowColors = listOf(Color.Gray)
                         )
 
@@ -371,7 +371,7 @@ fun HomeScreen(config: HomeConfig) {
                             text = stringResource(MR.strings.connect_roomname_a),
                             size = 20f,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = directive,
+                            font = fontDirective(),
                             shadowColors = listOf(Color.Gray)
                         )
 
@@ -420,7 +420,7 @@ fun HomeScreen(config: HomeConfig) {
                             text = stringResource(MR.strings.connect_server_a),
                             size = 20f,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = directive,
+                            font = fontDirective(),
                             shadowColors = listOf(Color.Gray)
                         )
 
@@ -515,7 +515,7 @@ fun HomeScreen(config: HomeConfig) {
                                         brush = Brush.linearGradient(
                                             colors = Paletting.SP_GRADIENT
                                         ),
-                                        fontFamily = FontFamily(inter),
+                                        fontFamily = FontFamily(fontInter()),
                                         fontSize = 16.sp,
                                     ),
                                     label = {
@@ -545,7 +545,7 @@ fun HomeScreen(config: HomeConfig) {
                                         brush = Brush.linearGradient(
                                             colors = Paletting.SP_GRADIENT
                                         ),
-                                        fontFamily = FontFamily(inter),
+                                        fontFamily = FontFamily(fontInter()),
                                         fontSize = 16.sp,
                                     ),
                                     label = {
@@ -579,7 +579,7 @@ fun HomeScreen(config: HomeConfig) {
                                     brush = Brush.linearGradient(
                                         colors = Paletting.SP_GRADIENT
                                     ),
-                                    fontFamily = FontFamily(inter),
+                                    fontFamily = FontFamily(fontInter()),
                                     fontSize = 16.sp,
                                 ),
                                 label = {
