@@ -36,26 +36,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
+import com.yuroyami.syncplay.compose.fontDirective
 import com.yuroyami.syncplay.shared.MR
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.colorpicker.ClassicColorPicker
 import com.yuroyami.syncplay.utils.colorpicker.HsvColor
 import dev.icerock.moko.resources.compose.stringResource
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import kotlin.math.ceil
 
 object PopupColorPicker {
 
-    @OptIn(ExperimentalResourceApi::class)
     @Composable
     fun ColorPickingPopup(
         visibilityState: MutableState<Boolean>,
         initialColor: HsvColor = HsvColor.from(Color.Black),
         onColorChanged: (HsvColor) -> Unit,
+        onDefaultReset: () -> Unit
     ) {
         return RoomPopup(
             dialogOpen = visibilityState.value,
-            widthPercent = 0.5f,
+            widthPercent = 0.7f,
             heightPercent = 0.85f,
             strokeWidth = 0.5f,
             cardBackgroundColor = Color.DarkGray,
@@ -75,7 +75,7 @@ object PopupColorPicker {
                     string = "Pick a Color",
                     solid = Color.Black,
                     size = 18f,
-                    font = org.jetbrains.compose.resources.Font("MR/fonts/Directive4-Regular.otf")
+                    font = fontDirective()
                 )
 
                 /* The card that holds the color picker */
@@ -96,9 +96,7 @@ object PopupColorPicker {
                 ) {
                     TextButton(
                         modifier = Modifier.weight(1f).padding(6.dp),
-                        onClick = {
-
-                        }
+                        onClick = onDefaultReset
                     ) {
                         Text("Reset to default", fontSize = 10.sp)
                     }
@@ -120,12 +118,10 @@ object PopupColorPicker {
                         color = color.value.toColor(),
                         border = BorderStroke(0.5.dp, Color.Gray),
                         shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.weight(1f).padding(6.dp)
+                        modifier = Modifier.weight(0.5f).padding(6.dp)
                     ) {
                         Canvas(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .alpha(1.0f - color.value.alpha)
+                            modifier = Modifier.fillMaxSize().alpha(1.0f - color.value.alpha)
                         ) {
                             clipRect {
                                 val darkColor = Color.LightGray

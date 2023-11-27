@@ -1,5 +1,10 @@
 package com.yuroyami.syncplay.utils
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import platform.Foundation.NSBundle
 import platform.Foundation.NSCalendarUnitHour
 import platform.Foundation.NSCalendarUnitMinute
@@ -38,4 +43,21 @@ actual fun getFileName(uri: String, context: Any?): String? {
 
 actual fun pingIcmp(host: String, packet: Int): Int? {
     return pingIcmpIOS(host, packet)
+}
+
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+actual fun getScreenSizeInfo(): ScreenSizeInfo {
+    val density = LocalDensity.current
+    val config = LocalWindowInfo.current.containerSize
+
+
+    return remember(density, config) {
+        ScreenSizeInfo(
+            hPX = config.height,
+            wPX = config.width,
+            hDP = with(density) { config.height.toDp() },
+            wDP = with(density) { config.width.toDp() }
+        )
+    }
 }

@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Redo
@@ -24,16 +23,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyIcon2
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
+import com.yuroyami.syncplay.compose.fontDirective
 import com.yuroyami.syncplay.datastore.MySettings.inRoomPreferences
 import com.yuroyami.syncplay.settings.SettingsUI
 import com.yuroyami.syncplay.settings.SettingsUI.SettingsGrid
 import com.yuroyami.syncplay.ui.Paletting
-import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.jetbrains.compose.resources.Font
 
 object CardRoomPrefs {
 
-    @OptIn(ExperimentalResourceApi::class)
     @Composable
     fun InRoomSettingsCard() {
         val settingState = remember { mutableIntStateOf(1) }
@@ -50,7 +47,7 @@ object CardRoomPrefs {
                     string = "In-room Preferences",
                     solid = Color.Transparent,
                     size = 16f,
-                    font = Font("MR/fonts/Directive4-Regular.otf")
+                    font = fontDirective()
                 )
 
                 if (settingState.intValue == 2) {
@@ -66,9 +63,7 @@ object CardRoomPrefs {
                     modifier = Modifier.fillMaxSize().padding(top = 32.dp).align(TopCenter)
                 ) {
                     SettingsGrid(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .wrapContentWidth(),
+                        modifier = Modifier.fillMaxSize(),
                         settingcategories = inRoomPreferences(),
                         state = settingState,
                         layoutOrientation = SettingsUI.SettingsGridLayout.SETTINGS_GRID_HORIZONTAL_GRID,

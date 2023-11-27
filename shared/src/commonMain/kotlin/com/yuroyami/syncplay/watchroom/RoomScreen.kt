@@ -12,7 +12,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowColumn
@@ -85,7 +84,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -93,19 +91,21 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
-import com.yuroyami.syncplay.compose.cards.CardRoomPrefs.InRoomSettingsCard
-import com.yuroyami.syncplay.compose.cards.CardUserInfo.UserInfoCard
 import com.yuroyami.syncplay.compose.ComposeUtils
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyIcon2
 import com.yuroyami.syncplay.compose.ComposeUtils.FlexibleFancyAnnotatedText
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
+import com.yuroyami.syncplay.compose.cards.CardRoomPrefs.InRoomSettingsCard
+import com.yuroyami.syncplay.compose.cards.CardUserInfo.UserInfoCard
+import com.yuroyami.syncplay.compose.fontDirective
+import com.yuroyami.syncplay.compose.fontInter
+import com.yuroyami.syncplay.compose.popups.PopupChatHistory.ChatHistoryPopup
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_INROOM_PREFERENCES
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_MISC_PREFS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_NIGHTMODE
@@ -130,6 +130,7 @@ import com.yuroyami.syncplay.ui.Paletting.ROOM_ICON_SIZE
 import com.yuroyami.syncplay.utils.CommonUtils
 import com.yuroyami.syncplay.utils.RoomUtils.sendMessage
 import com.yuroyami.syncplay.utils.RoomUtils.sendSeek
+import com.yuroyami.syncplay.utils.getScreenSizeInfo
 import com.yuroyami.syncplay.utils.timeStamper
 import com.yuroyami.syncplay.watchroom.RoomComposables.AddVideoButton
 import com.yuroyami.syncplay.watchroom.RoomComposables.ComposedMessagePalette
@@ -146,7 +147,6 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.compose.resources.Font
 import kotlin.math.roundToInt
 
 /** TODO: Ship these to a platform-agnostic viewmodel */
@@ -179,8 +179,8 @@ fun RoomUI() {
     val isSoloMode = remember { isSoloMode() }
     val nightMode = DATASTORE_MISC_PREFS.ds().booleanFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
 
-    val directive = Font("MR/fonts/Directive4-Regular.otf")
-    val inter = Font("MR/fonts/Inter-Regular.otf")
+    val directive = fontDirective()
+    val inter = fontInter()
 
     val composeScope = rememberCoroutineScope { Dispatchers.IO }
 
@@ -194,18 +194,8 @@ fun RoomUI() {
     }
 
     AppTheme(nightMode.value) {
-        val generalScope = rememberCoroutineScope()
         val focusManager = LocalFocusManager.current
-        val density = LocalDensity.current
-        var screenHeightDp by remember { mutableStateOf(0f) }
-        var screenWidthDp by remember { mutableStateOf(0f) }
-        val screenHeightPx = with(density) { screenHeightDp.dp.roundToPx() }
-        val screenWidthPx = with(density) { screenWidthDp.dp.roundToPx() }
-
-        BoxWithConstraints(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-            if (screenHeightDp == 0f) screenHeightDp = this.maxHeight.value
-            if (screenWidthDp == 0f) screenWidthDp = this.maxWidth.value
-        }
+        val dimensions = getScreenSizeInfo()
 
         val hasVideo = remember { hasVideoG }
         val hudVisibility = remember { hudVisibilityState }
@@ -215,7 +205,6 @@ fun RoomUI() {
         val addurlpopupstate = remember { mutableStateOf(false) }
         val chathistorypopupstate = remember { mutableStateOf(false) }
         val seektopopupstate = remember { mutableStateOf(false) }
-
 
         val msgPalette = ComposedMessagePalette()
 
@@ -335,7 +324,7 @@ fun RoomUI() {
 
             if (!startupSlide) {
                 LaunchedEffect(null) {
-                    generalScope.launch {
+                    composeScope.launch {
                         delay(600)
                         userinfoVisibility.value = true
                         startupSlide = true
@@ -381,8 +370,8 @@ fun RoomUI() {
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onDoubleTap = if (gestures.value && hasVideo.value) { offset ->
-                            generalScope.launch {
-                                if (offset.x < screenWidthPx.times(0.25f)) {
+                            composeScope.launch {
+                                if (offset.x < dimensions.wPX.times(0.25f)) {
                                     seekBckwd()
 
                                     val press = PressInteraction.Press(Offset.Zero)
@@ -390,7 +379,7 @@ fun RoomUI() {
                                     delay(150)
                                     seekLeftInteraction.emit(PressInteraction.Release(press))
                                 }
-                                if (offset.x > screenWidthPx.times(0.85f)) {
+                                if (offset.x > dimensions.wPX.times(0.85f)) {
                                     seekFwd()
 
                                     val press = PressInteraction.Press(Offset.Zero)
@@ -487,21 +476,19 @@ fun RoomUI() {
                                             it.seen = true /* Once seen, don't use it in fading message */
                                         }
 
-                                        Box {
-                                            val text = it.factorize(msgPalette)
+                                        val text = it.factorize(msgPalette)
 
-                                            FlexibleFancyAnnotatedText(
-                                                modifier = Modifier.fillMaxWidth()
-                                                    .clickable(enabled = false) {}.focusable(false),
-                                                text = text,
-                                                size = if (pipModeObserver) 6f else (msgFontSize.value.toFloat()),
-                                                font = inter,
-                                                lineHeight = (msgFontSize.value + 4).sp,
-                                                overflow = TextOverflow.Ellipsis,
-                                                shadowSize = 1.5f,
-                                                shadowColors = if (msgOutline.value) listOf(Color.Black) else listOf()
-                                            )
-                                        }
+                                        FlexibleFancyAnnotatedText(
+                                            modifier = Modifier.fillMaxWidth()
+                                                .clickable(enabled = false) {}.focusable(false),
+                                            text = text,
+                                            size = if (pipModeObserver) 6f else (msgFontSize.value.toFloat()),
+                                            font = inter,
+                                            lineHeight = (msgFontSize.value + 4).sp,
+                                            overflow = TextOverflow.Ellipsis,
+                                            shadowSize = 1.5f,
+                                            shadowColors = if (msgOutline.value) listOf(Color.Black) else listOf()
+                                        )
                                     }
                                 }
                             }
@@ -666,7 +653,7 @@ fun RoomUI() {
                                                 !DATASTORE_MISC_PREFS.obtainBoolean(MISC_NIGHTMODE, true)
                                             }
 
-                                            generalScope.launch {
+                                            composeScope.launch {
                                                 DATASTORE_MISC_PREFS.writeBoolean(MISC_NIGHTMODE, newMode)
                                             }
                                         }
@@ -712,8 +699,8 @@ fun RoomUI() {
                                     modifier = Modifier
                                         .fillMaxWidth(cardWidth)
                                         .fillMaxHeight(cardHeight),
-                                    enter = slideInHorizontally(initialOffsetX = { (screenWidthPx + screenWidthPx * 0.3).toInt() }),
-                                    exit = slideOutHorizontally(targetOffsetX = { (screenWidthPx + screenWidthPx * 0.3).toInt() }),
+                                    enter = slideInHorizontally(initialOffsetX = { (dimensions.wPX * 1.3).toInt() }),
+                                    exit = slideOutHorizontally(targetOffsetX = { (dimensions.wPX * 1.3).toInt() }),
                                     visible = !inroomprefsVisibility.value && userinfoVisibility.value && !sharedplaylistVisibility.value
                                 ) {
                                     UserInfoCard()
@@ -726,8 +713,8 @@ fun RoomUI() {
                                     modifier = Modifier
                                         .fillMaxWidth(cardWidth)
                                         .fillMaxHeight(cardHeight),
-                                    enter = slideInHorizontally(initialOffsetX = { (screenWidthPx + screenWidthPx * 0.3).toInt() }),
-                                    exit = slideOutHorizontally(targetOffsetX = { (screenWidthPx + screenWidthPx * 0.3).toInt() }),
+                                    enter = slideInHorizontally(initialOffsetX = { (dimensions.wPX * 1.3).toInt() }),
+                                    exit = slideOutHorizontally(targetOffsetX = { (dimensions.wPX * 1.3).toInt() }),
                                     visible = !inroomprefsVisibility.value && !userinfoVisibility.value && sharedplaylistVisibility.value
                                 ) {
                                     //TODO: SharedPlaylistCard()
@@ -739,8 +726,8 @@ fun RoomUI() {
                                 modifier = Modifier
                                     .fillMaxWidth(cardWidth)
                                     .fillMaxHeight(cardHeight),
-                                enter = slideInHorizontally(initialOffsetX = { (screenWidthPx + screenWidthPx * 0.3).toInt() }),
-                                exit = slideOutHorizontally(targetOffsetX = { (screenWidthPx + screenWidthPx * 0.3).toInt() }),
+                                enter = slideInHorizontally(initialOffsetX = { (dimensions.wPX * 1.3).toInt() }),
+                                exit = slideOutHorizontally(targetOffsetX = { (dimensions.wPX * 1.3).toInt() }),
                                 visible = inroomprefsVisibility.value && !userinfoVisibility.value && !sharedplaylistVisibility.value
                             ) {
                                 InRoomSettingsCard()
@@ -932,7 +919,7 @@ fun RoomUI() {
                                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                                             Checkbox(checked = track.selected.value, onCheckedChange = {
                                                                 with(player ?: return@Checkbox) {
-                                                                   //FIXME: selectTrack(C.TRACK_TYPE_AUDIO, track.index)
+                                                                    //FIXME: selectTrack(C.TRACK_TYPE_AUDIO, track.index)
                                                                 }
                                                                 tracksPopup.value = false
                                                             })
@@ -1044,7 +1031,7 @@ fun RoomUI() {
                                 value = slidervalue.longValue.toFloat(),
                                 valueRange = (0f..(slidermax.longValue.toFloat())),
                                 onValueChange = { f ->
-                                    generalScope.launch {
+                                    composeScope.launch {
                                         if (isSoloMode()) {
                                             if (player == null) return@launch
                                             seeks.add(Pair(player!!.currentPositionMs(), f.toLong() * 1000))
@@ -1198,7 +1185,7 @@ fun RoomUI() {
         /** Popups */
         //AddUrlPopup(visibilityState = addurlpopupstate)
         //SeekToPositionPopup(visibilityState = seektopopupstate)
-        //if (!isSoloMode()) ChatHistoryPopup(visibilityState = chathistorypopupstate)
+        if (!isSoloMode) ChatHistoryPopup(visibilityState = chathistorypopupstate, msgPalette)
 
     }
 }

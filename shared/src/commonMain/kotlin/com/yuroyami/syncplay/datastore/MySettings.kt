@@ -63,6 +63,7 @@ import com.yuroyami.syncplay.shared.MR
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.langMap
 import com.yuroyami.syncplay.utils.LanguageChange
+import com.yuroyami.syncplay.watchroom.isSoloMode
 import dev.icerock.moko.resources.compose.stringResource
 
 var languageCallback: LanguageChange? = null
@@ -318,39 +319,6 @@ object MySettings {
         )
     }
 
-    @Composable
-    fun testSettings(): List<SettingCategory> {
-        val ds = DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
-
-        val settingStyling = SettingStyling(
-            titleFilling = listOf(Paletting.OLD_SP_YELLOW),
-            titleShadow = Paletting.SP_GRADIENT,
-            iconSize = 32f,
-            iconTints = listOf(Paletting.OLD_SP_YELLOW),
-            iconShadows = Paletting.SP_GRADIENT
-        )
-
-        return listOf(
-            /** Setting Card Number 01: General */
-            SettingCategory(
-                title = "General",
-                icon = Icons.Filled.SettingsSuggest,
-                settingList = listOf(
-                    Setting(
-                        type = SettingType.CheckboxSetting,
-                        title = { stringResource(MR.strings.setting_remember_join_info_title) },
-                        summary = { stringResource(MR.strings.setting_remember_join_info_summary) },
-                        defaultValue = true,
-                        key = PREF_REMEMBER_INFO,
-                        icon = Icons.Filled.Face,
-                        datastorekey = ds,
-                        styling = settingStyling
-                    )
-                )
-            ),
-        )
-    }
-
     fun inRoomPreferences(): List<SettingCategory> {
         val ds = DataStoreKeys.DATASTORE_INROOM_PREFERENCES
 
@@ -365,7 +333,7 @@ object MySettings {
 
         val list = mutableListOf<SettingCategory>()
 
-        if (true /* TODO: !isSoloMode() */) {
+        if (!isSoloMode()) {
             list.add(
                 SettingCategory(
                     title = "Chat Colors",
@@ -477,7 +445,7 @@ object MySettings {
                             type = SettingType.SliderSetting,
                             title = { stringResource(MR.strings.uisetting_msgsize_title) },
                             summary = { stringResource(MR.strings.uisetting_msgsize_summary) },
-                            defaultValue = 10,
+                            defaultValue = 9,
                             minValue = 6,
                             maxValue = 28,
                             key = PREF_INROOM_MSG_FONTSIZE,

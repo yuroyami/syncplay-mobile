@@ -77,7 +77,7 @@ open class SyncplayProtocol {
 
             try {
                 //val selectorManager =
-                socket = aSocket(SelectorManager(this.coroutineContext))
+                socket = aSocket(SelectorManager(Dispatchers.IO))
                     .tcp()
                     .connect(InetSocketAddress(session.serverHost, session.serverPort))
                     .also {
@@ -96,6 +96,7 @@ open class SyncplayProtocol {
                         try {
                             connection?.input?.awaitContent()
                             connection?.input?.readUTF8Line()?.let { ln ->
+                                loggy(ln)
                                 handleJson(json = ln)
                             }
 
@@ -129,11 +130,10 @@ open class SyncplayProtocol {
     /** WRITING: This small method basically checks if the channel is active and writes to it, otherwise
      *  it queues the json to send in a special queue until the connection recovers. */
     open fun sendPacket(json: String) {
-        writeScope.launch(Dispatchers.IO) {
+        writeScope.launch {
             try {
                 if (socket != null && socket?.isClosed == false) {
                     val finalOut = json + "\r\n"
-                    loggy("Client: $finalOut")
                     connection?.output?.writeStringUtf8(finalOut)
                     connection?.output?.flush()
                 } else {

@@ -3,7 +3,7 @@ package com.yuroyami.syncplay.protocol
 interface ProtocolCallback {
 
     /** Interface that is used as an intermediate (middle-man) bridge between the protocol and the
-     * client itself. This interface broadcasts multiple events to the UI client (RoomActivity) **/
+     * client itself. This interface broadcasts multiple events to the UI client **/
 
     fun onSomeonePaused(pauser: String)
 

@@ -6,6 +6,11 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.core.os.LocaleListCompat
 import com.yuroyami.syncplay.utils.CommonUtils.loggy
@@ -74,12 +79,28 @@ actual fun pingIcmp(host: String, packet: Int): Int? {
         return if (pingOutput.contains("100% packet loss")) {
             null
         } else {
-            val time = ((pingOutput.substringAfter("time=").substringBefore(" ms").trim()
-                .toDouble()) / 1000.0)
-            time.roundToInt()
+            pingOutput.substringAfter("time=").substringBefore(" ms").trim()
+                .toDouble().roundToInt()
         }
     } catch (e: Exception) {
         loggy(e.stackTraceToString())
         return null
+    }
+}
+
+@Composable
+actual fun getScreenSizeInfo(): ScreenSizeInfo {
+    val density = LocalDensity.current
+    val config = LocalConfiguration.current
+    val hDp = config.screenHeightDp.dp
+    val wDp = config.screenWidthDp.dp
+
+    return remember(density, config) {
+        ScreenSizeInfo(
+            hPX = with(density) { hDp.roundToPx() },
+            wPX = with(density) { wDp.roundToPx() },
+            hDP = hDp,
+            wDP = wDp
+        )
     }
 }

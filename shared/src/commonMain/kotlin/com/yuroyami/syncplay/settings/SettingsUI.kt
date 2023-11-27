@@ -99,6 +99,7 @@ object SettingsUI {
                 SettingsGridLayout.SETTINGS_GRID_HORIZONTAL_GRID -> {
                     LazyHorizontalGrid(
                         modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
                         rows = GridCells.Fixed(gridRows)
                     ) {
                         iteratorSettingCategoryGrid(clickedCardIndex, settingcategories, titleSize, cardSize, onCardClicked)
@@ -108,6 +109,7 @@ object SettingsUI {
                 SettingsGridLayout.SETTINGS_GRID_VERTICAL_GRID -> {
                     LazyVerticalGrid(
                         modifier = Modifier.fillMaxHeight(),
+                        verticalArrangement = Arrangement.Center,
                         columns = GridCells.Fixed(gridColumns)
                     ) {
                         iteratorSettingCategoryGrid(clickedCardIndex, settingcategories, titleSize, cardSize, onCardClicked)

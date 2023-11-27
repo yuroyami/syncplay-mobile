@@ -93,7 +93,7 @@ class Setting(
     val styling: SettingStyling = SettingStyling(),
     val dependency: String = "",
     val maxValue: Int = 100, val minValue: Int = 0,
-    val entryKeys: @Composable () -> List<String> = { listOf() }, val entryValues: @Composable () ->  List<String> = { listOf() },
+    val entryKeys: @Composable () -> List<String> = { listOf() }, val entryValues: @Composable () -> List<String> = { listOf() },
     val onClick: (() -> Unit)? = null, val onItemChosen: ((index: Int, value: String) -> Unit)? = null,
     val onValueChanged: ((newValue: Int) -> Unit)? = null,
     val popupComposable: (@Composable (MutableState<Boolean>) -> Unit)? = null,
@@ -203,7 +203,7 @@ class Setting(
                     tintColors = styling.iconTints,
                     shadowColors = styling.iconShadows,
                     icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
-                    )
+                )
             },
             headlineContent = {
                 FlexibleFancyText(
@@ -255,7 +255,7 @@ class Setting(
                     tintColors = styling.iconTints,
                     shadowColors = styling.iconShadows,
                     icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
-                    )
+                )
             },
             trailingContent = {
                 if (type) {
@@ -499,11 +499,11 @@ class Setting(
             }
         )
 
-        ColorPickingPopup(colorDialogState, initialColor = HsvColor.from(Color(color.value))) { hsvColor ->
+        ColorPickingPopup(colorDialogState, initialColor = HsvColor.from(Color(color.value)), onColorChanged = { hsvColor ->
             scope.launch {
                 datastorekey.writeInt(key, hsvColor.toColor().toArgb())
             }
-        }
+        }, onDefaultReset = { scope.launch { datastorekey.writeInt(key, defaultValue) } })
     }
 
     /** A string setting UI composable function. It has a textfield next to it */
@@ -531,7 +531,7 @@ class Setting(
                     tintColors = styling.iconTints,
                     shadowColors = styling.iconShadows,
                     icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
-                    )
+                )
             },
             trailingContent = {
                 TextField(

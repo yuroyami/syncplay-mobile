@@ -1,5 +1,8 @@
 package com.yuroyami.syncplay.utils
 
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.Dp
+
 
 expect fun getPlatform(): String
 
@@ -15,6 +18,10 @@ expect fun getFileName(uri: String, context: Any? = null): String?
 
 expect fun pingIcmp(host: String, packet: Int): Int?
 
+data class ScreenSizeInfo(val hPX: Int, val wPX: Int, val hDP: Dp, val wDP: Dp)
+
+@Composable
+expect fun getScreenSizeInfo(): ScreenSizeInfo
 //val gb = 2L * 1024L * 1024L * 1024L
 //
 ///** Helps determine the size of a file in bytes, needing only its Uri and a context */
