@@ -17,7 +17,6 @@ import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.connection
 import io.ktor.network.sockets.isClosed
-import io.ktor.network.tls.tls
 import io.ktor.utils.io.readUTF8Line
 import io.ktor.utils.io.writeStringUtf8
 import kotlinx.coroutines.CoroutineScope
@@ -63,6 +62,13 @@ open class SyncplayProtocol {
 
     /** This method is responsible for bootstrapping (initializing) the Ktor TCP socket */
     fun connect() {
+        try {
+            /* Cleaning leftovers */
+            socket?.close()
+            socket?.dispose()
+        } catch (_: Exception) {
+        }
+
         /** Informing UI controllers that we are starting a connection attempt */
         syncplayCallback?.onConnectionAttempt()
         state = Constants.CONNECTIONSTATE.STATE_CONNECTING
@@ -76,14 +82,13 @@ open class SyncplayProtocol {
             }
 
             try {
-                //val selectorManager =
                 socket = aSocket(SelectorManager(Dispatchers.IO))
                     .tcp()
                     .connect(InetSocketAddress(session.serverHost, session.serverPort))
-                    .also {
+                    .run {
                         if (tls == Constants.TLS.TLS_YES) {
-                            it.tls(this.coroutineContext)
-                        }
+                            this //tls(this.coroutineContext)
+                        } else this
                     }
 
                 loggy("PROTOCOL: Attempting to connect. HOST: ${session.serverHost}, PORT: ${session.serverPort}....")
@@ -127,11 +132,14 @@ open class SyncplayProtocol {
 
     /** WRITING: This small method basically checks if the channel is active and writes to it, otherwise
      *  it queues the json to send in a special queue until the connection recovers. */
-    open fun sendPacket(json: String) {
+    open fun sendPacket(json: String, isRetry: Boolean = false) {
         writeScope.launch {
             try {
                 if (socket != null && socket?.isClosed == false) {
                     val finalOut = json + "\r\n"
+
+                    loggy("OUT: $finalOut")
+
                     connection?.output?.writeStringUtf8(finalOut)
                     connection?.output?.flush()
                 } else {
@@ -149,7 +157,12 @@ open class SyncplayProtocol {
                     }
                 }
             } catch (e: Exception) {
-                onError()
+                loggy(e.stackTraceToString())
+                if (isRetry) {
+                    onError()
+                } else {
+                    sendPacket(json, isRetry = true)
+                }
             }
         }
     }

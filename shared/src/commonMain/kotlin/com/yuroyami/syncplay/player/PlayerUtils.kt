@@ -1,8 +1,11 @@
 package com.yuroyami.syncplay.player
 
+import com.yuroyami.syncplay.utils.RoomUtils
 import com.yuroyami.syncplay.watchroom.isSoloMode
+import com.yuroyami.syncplay.watchroom.media
 import com.yuroyami.syncplay.watchroom.p
 import com.yuroyami.syncplay.watchroom.player
+import com.yuroyami.syncplay.watchroom.seeks
 import com.yuroyami.syncplay.watchroom.timeCurrent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +36,39 @@ object PlayerUtils {
         player?.play()
         //TODO: updatePiPParams()
         //TODO: hideSystemUI(true)
+    }
+
+    fun seekBckwd(decrement: Int) {
+        player?.playerScopeIO?.launch {
+            val currentMs = player!!.currentPositionMs()
+            var newPos = (currentMs) - decrement * 1000
+
+            if (newPos < 0) { newPos = 0 }
+
+            RoomUtils.sendSeek(newPos)
+            player?.seekTo(newPos)
+
+            if (isSoloMode) {
+                seeks.add(Pair(currentMs, newPos * 1000))
+            }
+        }
+    }
+
+    fun seekFrwrd(increment: Int) {
+        player?.playerScopeIO?.launch {
+            val currentMs = player!!.currentPositionMs()
+            var newPos = (currentMs) + increment * 1000
+            if (media != null) {
+                if (newPos > media?.fileDuration!!.toLong()) {
+                    newPos = media?.fileDuration!!.toLong()
+                }
+            }
+            RoomUtils.sendSeek(newPos)
+            player?.seekTo(newPos)
+            if (isSoloMode) {
+                seeks.add(Pair((currentMs), newPos * 1000))
+            }
+        }
     }
 //
 //    /** Changes the subtitle appearance given the size and captionStyle (otherwise, default will be used) */
@@ -65,7 +101,7 @@ object PlayerUtils {
                         timeCurrent.longValue = progress
 
                         /* Informing protocol */
-                        if (!isSoloMode()) {
+                        if (!isSoloMode) {
                             p.currentVideoPosition = progress.toDouble()
                         }
                     }

@@ -333,7 +333,7 @@ object MySettings {
 
         val list = mutableListOf<SettingCategory>()
 
-        if (!isSoloMode()) {
+        if (!isSoloMode) {
             list.add(
                 SettingCategory(
                     title = "Chat Colors",

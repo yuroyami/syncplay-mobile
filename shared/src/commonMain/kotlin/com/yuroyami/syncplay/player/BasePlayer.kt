@@ -3,6 +3,9 @@ package com.yuroyami.syncplay.player
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.yuroyami.syncplay.models.MediaFile
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 
 /** This is an interface that wraps the needed player functionality for Syncplay.
  *
@@ -16,42 +19,45 @@ import com.yuroyami.syncplay.models.MediaFile
  * This interface will be implemented by one of the players mentioned above, and will delegate
  * all the necessary functionality, in a platform-agnostic manner.
  */
-interface BasePlayer {
+abstract class BasePlayer {
+
+    val playerScopeMain = CoroutineScope(Dispatchers.Main)
+    val playerScopeIO = CoroutineScope(Dispatchers.IO)
 
     /** Called when the player is to be initialized */
-    fun initialize()
+    abstract fun initialize()
 
     /** Returns whether the current player has any media loaded */
-    fun hasMedia(): Boolean
+    abstract fun hasMedia(): Boolean
 
     /** Returns whether the current player is in play state (unpaused) */
-    fun isPlaying(): Boolean
+    abstract fun isPlaying(): Boolean
 
     /** Called when the player ought to analyze the tracks of the currently loaded media */
-    fun analyzeTracks(mediafile: MediaFile)
+    abstract fun analyzeTracks(mediafile: MediaFile)
 
-    fun selectTrack(type: Int, index: Int)
+    abstract fun selectTrack(type: Int, index: Int)
 
-    fun reapplyTrackChoices()
+    abstract fun reapplyTrackChoices()
 
     /** Loads an external sub given the [uri] */
-    fun loadExternalSub(uri: String)
+    abstract fun loadExternalSub(uri: String)
 
     /** Loads a media located at [uri] */
-    fun injectVideo(uri: String? = null, isUrl: Boolean = false)
+    abstract fun injectVideo(uri: String? = null, isUrl: Boolean = false)
 
-    fun pause()
+    abstract fun pause()
 
-    fun play()
+    abstract fun play()
 
-    fun isSeekable(): Boolean
+    abstract fun isSeekable(): Boolean
 
-    fun seekTo(toPositionMs: Long)
+    abstract fun seekTo(toPositionMs: Long)
 
-    fun currentPositionMs(): Long
+    abstract fun currentPositionMs(): Long
 
-    fun switchAspectRatio(): String
+    abstract fun switchAspectRatio(): String
 
     @Composable
-    fun VideoPlayer(modifier: Modifier)
+    abstract fun VideoPlayer(modifier: Modifier)
 }

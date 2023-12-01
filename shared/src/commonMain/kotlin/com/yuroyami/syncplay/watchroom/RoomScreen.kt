@@ -124,6 +124,8 @@ import com.yuroyami.syncplay.datastore.obtainBoolean
 import com.yuroyami.syncplay.datastore.writeBoolean
 import com.yuroyami.syncplay.player.PlayerUtils.pausePlayback
 import com.yuroyami.syncplay.player.PlayerUtils.playPlayback
+import com.yuroyami.syncplay.player.PlayerUtils.seekBckwd
+import com.yuroyami.syncplay.player.PlayerUtils.seekFrwrd
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
@@ -177,7 +179,6 @@ var pickerScope = CoroutineScope(Dispatchers.IO)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun RoomUI() {
-    val isSoloMode = remember { isSoloMode() }
     val nightMode = DATASTORE_MISC_PREFS.ds().booleanFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
 
     val directive = fontDirective()
@@ -218,39 +219,6 @@ fun RoomUI() {
         val seekDecrement = DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP, 10).collectAsState(initial = 10)
 
         /** Room artwork underlay (when no video is loaded) */
-        val seekBckwd = remember {
-            fun() {
-                if (player == null) return
-                var newPos = (player!!.currentPositionMs()) - seekDecrement.value * 1000
-                if (newPos < 0) {
-                    newPos = 0
-                }
-                if (isSoloMode()) {
-                    seeks.add(Pair(player!!.currentPositionMs(), newPos * 1000))
-                }
-
-                player?.seekTo(newPos)
-                sendSeek(newPos)
-            }
-        }
-
-        val seekFwd = remember {
-            fun() {
-                if (player == null) return
-                var newPos = (player!!.currentPositionMs()) + seekIncrement.value * 1000
-                if (media != null) {
-                    if (newPos > media?.fileDuration!!.toLong()) {
-                        newPos = media?.fileDuration!!.toLong()
-                    }
-                }
-                if (isSoloMode()) {
-                    seeks.add(Pair((player!!.currentPositionMs()), newPos * 1000))
-                }
-                player?.seekTo(newPos)
-                sendSeek(newPos)
-            }
-        }
-
         if (!hasVideo.value) {
             RoomArtwork(pipModeObserver)
         }
@@ -373,7 +341,7 @@ fun RoomUI() {
                         onDoubleTap = if (gestures && hasVideo.value) { offset ->
                             composeScope.launch {
                                 if (offset.x < dimensions.wPX.times(0.25f)) {
-                                    seekBckwd()
+                                    seekBckwd(seekDecrement.value)
 
                                     val press = PressInteraction.Press(Offset.Zero)
                                     seekLeftInteraction.emit(press)
@@ -381,7 +349,7 @@ fun RoomUI() {
                                     seekLeftInteraction.emit(PressInteraction.Release(press))
                                 }
                                 if (offset.x > dimensions.wPX.times(0.85f)) {
-                                    seekFwd()
+                                    seekFrwrd(seekIncrement.value)
 
                                     val press = PressInteraction.Press(Offset.Zero)
                                     seekRightInteraction.emit(press)
@@ -454,10 +422,10 @@ fun RoomUI() {
                             }
                         }
 
-                        /** Messages */
+                        /* Messages */
                         if (!isSoloMode) {
                             Card(
-                                modifier = Modifier.focusable(false),
+                                modifier = Modifier.clickable(false){}.focusable(false),
                                 shape = RoundedCornerShape(4.dp),
                                 colors = CardDefaults.cardColors(
                                     containerColor = if (hasVideo.value || MaterialTheme.colorScheme.primary != Paletting.OLD_SP_YELLOW)
@@ -469,7 +437,7 @@ fun RoomUI() {
                                 LazyColumn(
                                     contentPadding = PaddingValues(8.dp),
                                     userScrollEnabled = false,
-                                    modifier = Modifier.fillMaxWidth().focusable(false)
+                                    modifier = Modifier.fillMaxWidth().clickable(false){}.focusable(false)
                                 ) {
                                     //TODO: Show errors in red
                                     val lastMessages = msgs.toList().takeLast(msgMaxCount)
@@ -498,7 +466,7 @@ fun RoomUI() {
                     }
 
                     /* Top-Center info */
-                    /** Overall info (PING + ROOMNAME + OSD Messages) */
+                    /* Overall info (PING + ROOMNAME + OSD Messages) */
                     if (!isSoloMode && !pipModeObserver) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -537,8 +505,8 @@ fun RoomUI() {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
 
-                            /** The tabs in the top-right corner */
-                            /** In-room settings */
+                            /* The tabs in the top-right corner */
+                            /* In-room settings */
                             RoomTab(icon = Icons.Filled.AutoFixHigh, visibilityState = inroomprefsVisibility.value) {
                                 sharedplaylistVisibility.value = false
                                 userinfoVisibility.value = false
@@ -547,7 +515,7 @@ fun RoomUI() {
 
                             Spacer(Modifier.width(12.dp))
 
-                            /** Shared Playlist */
+                            /* Shared Playlist */
                             if (!isSoloMode) {
                                 RoomTab(icon = Icons.Filled.PlaylistPlay, visibilityState = sharedplaylistVisibility.value) {
                                     sharedplaylistVisibility.value = !sharedplaylistVisibility.value
@@ -558,7 +526,7 @@ fun RoomUI() {
                                 Spacer(Modifier.width(12.dp))
                             }
 
-                            /** User Info card tab */
+                            /* User Info card tab */
                             if (!isSoloMode) {
                                 RoomTab(icon = Icons.Filled.Groups, visibilityState = userinfoVisibility.value) {
                                     userinfoVisibility.value = !userinfoVisibility.value
@@ -681,8 +649,6 @@ fun RoomUI() {
                                         },
                                         onClick = {
                                             //TODO: terminate()
-                                            //TODO: REMOVE
-                                            hasVideo.value = !hasVideo.value
                                         }
                                     )
                                 }
@@ -977,8 +943,8 @@ fun RoomUI() {
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.align(Alignment.BottomCenter).padding(4.dp).fillMaxWidth()
                         ) {
-                            val slidervalue = remember { timeCurrent }
-                            val slidermax = remember { timeFull }
+                            var slidervalue by remember { timeCurrent }
+                            val slidermax by remember { timeFull }
                             val interactionSource = remember { MutableInteractionSource() }
 
                             Row(modifier = Modifier.fillMaxWidth(0.75f)) {
@@ -1004,11 +970,11 @@ fun RoomUI() {
                                     if (gestures) {
                                         Row(horizontalArrangement = Arrangement.Center) {
                                             FancyIcon2(icon = Icons.Filled.FastRewind, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black) {
-                                                seekBckwd()
+                                                seekBckwd(seekDecrement.value)
                                             }
                                             Spacer(Modifier.width(24.dp))
                                             FancyIcon2(icon = Icons.Filled.FastForward, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black) {
-                                                seekFwd()
+                                                seekFrwrd(seekIncrement.value)
                                             }
                                         }
                                     }
@@ -1030,19 +996,20 @@ fun RoomUI() {
                                 }
                             }
                             Slider(
-                                value = slidervalue.longValue.toFloat(),
-                                valueRange = (0f..(slidermax.longValue.toFloat())),
+                                value = slidervalue.toFloat(),
+                                valueRange = (0f..(slidermax.toFloat())),
                                 onValueChange = { f ->
-                                    composeScope.launch {
-                                        if (isSoloMode()) {
-                                            if (player == null) return@launch
-                                            seeks.add(Pair(player!!.currentPositionMs(), f.toLong() * 1000))
-                                        }
-                                        player?.seekTo(f.toLong() * 1000L)
-                                        sendSeek(f.toLong() * 1000L)
+                                    player?.seekTo(f.toLong() * 1000L)
+                                     if (isSoloMode) {
+                                         player?.let {
+                                             seeks.add(Pair(it.currentPositionMs(), f.toLong() * 1000))
+                                         }
                                     }
 
-                                    slidervalue.longValue = f.toLong()
+                                    slidervalue = f.toLong()
+                                },
+                                onValueChangeFinished = {
+                                    sendSeek(slidervalue * 1000L)
                                 },
                                 modifier = Modifier
                                     .alpha(0.82f)
@@ -1127,8 +1094,7 @@ fun RoomUI() {
                                                 addmediacardvisible = false
                                                 val result = pickFuture?.await() ?: return@launch
                                                 player?.injectVideo(result, false)
-                                            } catch (e: CancellationException) {
-                                            }
+                                            } catch (_: CancellationException) {}
                                         }
                                     }
                                 )

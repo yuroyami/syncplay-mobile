@@ -6,13 +6,14 @@ import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.p
+import com.yuroyami.syncplay.watchroom.player
 
 /** Methods exclusive to Room functionality (messages, sending data to server, etc) */
 object RoomUtils {
 
     /** Sends a play/pause playback to the server **/
     fun sendPlayback(play: Boolean) {
-        if (isSoloMode()) return
+        if (isSoloMode) return
 
         p.sendPacket(
             JsonSender.sendState(
@@ -23,20 +24,20 @@ object RoomUtils {
     }
 
     fun sendSeek(newpos: Long) {
-        if (isSoloMode()) return
+        if (isSoloMode) return
 
         p.sendPacket(
             JsonSender.sendState(
                 null, (generateTimestampMillis() / 1000.0), true,
                 newpos, 1,
-                play = true, //FIXME player?.isInPlayState() == true
+                play = player?.isPlaying() == true,
             )
         )
     }
 
     /** Sends a chat message to the server **/
     fun sendMessage(message: String) {
-        if (isSoloMode()) return
+        if (isSoloMode) return
 
         p.sendPacket(JsonSender.sendChat(message))
     }
@@ -60,7 +61,7 @@ object RoomUtils {
 
     /** This broadcasts a message to show it in the chat section **/
     fun broadcastMessage(message: String = "", messageComposite: (@Composable () -> String)? = null, isChat: Boolean, chatter: String = "") {
-        if (isSoloMode()) return
+        if (isSoloMode) return
 
         /** Messages are just a wrapper class for everything we need about a message
         So first, we initialize it, customize it, then add it to our long list of messages */
@@ -79,7 +80,7 @@ object RoomUtils {
      * Mismatches are: Name, Size, Duration. If 3 mismatches are detected, no error is thrown
      * since that would mean that the two files are completely and obviously different.*/
     fun checkFileMismatches(p: SyncplayProtocol) {
-        if (isSoloMode()) return
+        if (isSoloMode) return
         //TODO
 
         /** First, we check if user wanna be notified about file mismatchings */

@@ -41,9 +41,7 @@ actual fun changeLanguage(lang: String, context: Any?) {
     }
 }
 
-actual fun generateTimestampMillis(): Long {
-    return System.currentTimeMillis()
-}
+actual fun generateTimestampMillis() = System.currentTimeMillis()
 
 actual fun timeStamper(seconds: Long): String {
     return if (seconds < 3600) {

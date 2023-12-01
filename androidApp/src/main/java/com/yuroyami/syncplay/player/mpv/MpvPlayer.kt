@@ -31,8 +31,6 @@ import com.yuroyami.syncplay.watchroom.p
 import com.yuroyami.syncplay.watchroom.player
 import com.yuroyami.syncplay.watchroom.timeFull
 import `is`.xyz.mpv.MPVLib
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -42,18 +40,15 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 
-class MpvPlayer : BasePlayer {
+class MpvPlayer : BasePlayer() {
 
     val engine = ENGINE.ANDROID_MPV
 
     var mpvPos = 0L
-    lateinit var observer: MPVLib.EventObserver
+    private lateinit var observer: MPVLib.EventObserver
     var ismpvInit = false
-    lateinit var mpvView: MPVView
-    lateinit var ctx: Context
-
-    private val mpvMainScope = CoroutineScope(Dispatchers.Main)
-    val mpvBGScope = CoroutineScope(Dispatchers.IO)
+    private lateinit var mpvView: MPVView
+    private lateinit var ctx: Context
 
     override fun initialize() {
         ctx = mpvView.context.applicationContext
@@ -203,7 +198,7 @@ class MpvPlayer : BasePlayer {
         hasVideoG.value = true
         val ctx = mpvView.context
 
-        mpvMainScope.launch {
+        playerScopeMain.launch {
             /* Creating a media file from the selected file */
             if (uri != null || media == null) {
                 media = MediaFile()
@@ -248,7 +243,7 @@ class MpvPlayer : BasePlayer {
                 }
 
                 /* Goes back to the beginning for everyone */
-                if (!isSoloMode()) {
+                if (!isSoloMode) {
                     p.currentVideoPosition = 0.0
                 }
 
@@ -266,11 +261,15 @@ class MpvPlayer : BasePlayer {
     }
 
     override fun pause() {
-        mpvView.cyclePause() //FIXME: Don't cycle pause, rather pause directly
+        playerScopeIO.launch {
+            mpvView.paused = true
+        }
     }
 
     override fun play() {
-        mpvView.cyclePause() //FIXME: Don't cycle pause, rather play directly
+        playerScopeIO.launch {
+            mpvView.paused = false
+        }
     }
 
     override fun isSeekable(): Boolean {
@@ -278,7 +277,9 @@ class MpvPlayer : BasePlayer {
     }
 
     override fun seekTo(toPositionMs: Long) {
-        mpvView.timePos = toPositionMs.toInt() / 1000 //TODO: Check if it works
+        playerScopeIO.launch {
+            mpvView.timePos = toPositionMs.toInt() / 1000
+        }
     }
 
     override fun currentPositionMs(): Long {
@@ -288,7 +289,6 @@ class MpvPlayer : BasePlayer {
     override fun switchAspectRatio(): String {
         return "" //TODO
     }
-
 
     /** MPV EXCLUSIVE */
     private fun mpvObserverAttach() {
@@ -313,7 +313,7 @@ class MpvPlayer : BasePlayer {
                         isNowPlaying.value = !value //Just to inform UI
 
                         //Tell server about playback state change
-                        if (!isSoloMode()) {
+                        if (!isSoloMode) {
                             sendPlayback(!value)
                             p.paused = value
                         }
@@ -329,8 +329,8 @@ class MpvPlayer : BasePlayer {
                     MPVLib.mpvEventId.MPV_EVENT_START_FILE -> {
                         hasVideoG.value = true
 
-                        if (isSoloMode()) return
-                        mpvBGScope.launch {
+                        if (isSoloMode) return
+                        playerScopeIO.launch {
                             while (true) {
                                 if (timeFull.longValue.toDouble() > 0) {
                                     media?.fileDuration = timeFull.longValue.toDouble()

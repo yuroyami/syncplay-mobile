@@ -107,12 +107,10 @@ import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.getDefaultEngine
 import com.yuroyami.syncplay.utils.joinCallback
-import dev.icerock.moko.resources.compose.painterResource
 import dev.icerock.moko.resources.compose.stringResource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
 
@@ -199,9 +197,7 @@ fun HomeScreen(config: HomeConfig) {
                                                     else -> Icons.Filled.Redo
                                                 },
                                                 contentDescription = "",
-                                                modifier = Modifier
-                                                    .size(30.dp)
-                                                    .gradientOverlay(),
+                                                modifier = Modifier.size(30.dp).gradientOverlay(),
                                             )
                                         }
                                     }
@@ -221,10 +217,7 @@ fun HomeScreen(config: HomeConfig) {
                                 ) {
                                     Image(
                                         imageVector = vectorResource("images/syncplay_logo_gradient.xml"), contentDescription = "",
-                                        modifier = Modifier
-                                            .height(32.dp)
-                                            .aspectRatio(1f)
-                                            //.radiantOverlay(offset = Offset(x = 30f, y = 45f))
+                                        modifier = Modifier.height(32.dp).aspectRatio(1f)
                                     )
 
                                     Spacer(modifier = Modifier.width(12.dp))
@@ -469,7 +462,7 @@ fun HomeScreen(config: HomeConfig) {
                             ) {
                                 servers.forEach { server ->
                                     DropdownMenuItem(
-                                        text = { Text(server, color = Color.White) },
+                                        text = { Text(server.replace("151.80.32.178", "syncplay.pl"), color = Color.White) },
                                         onClick = {
                                             selectedServer = server
                                             expanded.value = false

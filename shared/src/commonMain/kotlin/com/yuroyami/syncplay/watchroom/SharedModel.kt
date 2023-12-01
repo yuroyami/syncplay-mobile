@@ -27,9 +27,8 @@ var media: MediaFile? = null
 var currentTrackChoices: TrackChoices = TrackChoices()
 
 /** Returns whether we're in Solo Mode, by checking if our protocol is initialized */
-fun isSoloMode(): Boolean {
-    return !::p.isInitialized
-}
+val isSoloMode: Boolean
+    get() = !::p.isInitialized
 
 fun prepareProtocol(joinInfo: JoinInfo) {
     if (!joinInfo.soloMode) {
@@ -93,24 +92,23 @@ fun prepareProtocol(joinInfo: JoinInfo) {
             override fun onSomeoneSeeked(seeker: String, toPosition: Double) {
                 loggy("SYNCPLAY Protocol: $seeker seeked to: $toPosition")
 
-                    val oldPos = p.currentVideoPosition.toLong()
-                    val newPos = toPosition.toLong()
-                    if (oldPos == newPos) return
+                val oldPos = p.currentVideoPosition.toLong()
+                val newPos = toPosition.toLong()
 
-                    /* Saving seek so it can be undone on mistake */
-                    seeks.add(Pair(oldPos * 1000, newPos * 1000))
+                /* Saving seek so it can be undone on mistake */
+                seeks.add(Pair(oldPos * 1000, newPos * 1000))
 
-                    broadcastMessage(messageComposite = { stringResource(MR.strings.room_seeked, seeker, timeStamper(oldPos), timeStamper(newPos)) }, isChat = false)
+                broadcastMessage(messageComposite = { stringResource(MR.strings.room_seeked, seeker, timeStamper(oldPos), timeStamper(newPos)) }, isChat = false)
 
-                    if (seeker != p.session.currentUsername) {
-                        //player?.seekTo((toPosition * 1000.0).toLong())
-                    }
+                if (seeker != p.session.currentUsername) {
+                    player?.seekTo((toPosition * 1000.0).toLong())
+                }
             }
 
             override fun onSomeoneBehind(behinder: String, toPosition: Double) {
                 loggy("SYNCPLAY Protocol: $behinder is behind. Rewinding to $toPosition")
 
-                //TODO: player?.seekTo((toPosition * 1000.0).toLong())
+                player?.seekTo((toPosition * 1000.0).toLong())
 
                 broadcastMessage(messageComposite = { stringResource(MR.strings.room_rewinded, behinder) }, isChat = false)
             }

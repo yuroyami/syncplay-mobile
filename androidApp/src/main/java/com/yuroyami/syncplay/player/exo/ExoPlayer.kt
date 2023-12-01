@@ -41,15 +41,13 @@ import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.media
 import com.yuroyami.syncplay.watchroom.p
 import com.yuroyami.syncplay.watchroom.timeFull
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.util.Collections
 import kotlin.math.abs
 import com.yuroyami.syncplay.shared.R as XR
 
-class ExoPlayer : BasePlayer {
+class ExoPlayer : BasePlayer() {
 
     val engine = ENGINE.ANDROID_EXOPLAYER
 
@@ -59,13 +57,10 @@ class ExoPlayer : BasePlayer {
     private var currentMedia: MediaItem? = null
     lateinit var exoView: PlayerView
 
-    val exoMainScope = CoroutineScope(Dispatchers.Main)
-    val exoBGScope = CoroutineScope(Dispatchers.IO)
-
     override fun initialize() {
         val context = exoView.context
 
-        exoMainScope.launch {
+        playerScopeMain.launch {
 
             /** LoadControl (Buffering manager) and track selector (for track language preference) **/
             val options = PlayerOptions.get()
@@ -134,9 +129,9 @@ class ExoPlayer : BasePlayer {
                         val duration = exoplayer!!.duration.div(1000.0)
                         timeFull.longValue = abs(duration.toLong())
 
-                        if (isSoloMode()) return
+                        if (isSoloMode) return
                         if (duration != media?.fileDuration) {
-                            exoBGScope.launch launch2@{
+                            playerScopeIO.launch launch2@{
 
                                 //while (media?.fileSize == "") {}
                                 media?.fileDuration = duration
@@ -155,7 +150,7 @@ class ExoPlayer : BasePlayer {
                             isNowPlaying.value = isPlaying //Just to inform UI
 
                             //Tell server about playback state change
-                            if (!isSoloMode()) {
+                            if (!isSoloMode) {
                                 sendPlayback(isPlaying)
                                 p.paused = !isPlaying
                             }
@@ -328,7 +323,7 @@ class ExoPlayer : BasePlayer {
         /* Changing UI (hiding artwork, showing media controls) */
         hasVideoG.value = true
 
-        exoMainScope.launch {
+        playerScopeMain.launch {
             /* Creating a media file from the selected file */
             if (uri != null || media == null) {
                 media = MediaFile()
@@ -362,7 +357,7 @@ class ExoPlayer : BasePlayer {
                 exoplayer?.prepare() /* This prepares it and makes the first frame visible */
 
                 /* Goes back to the beginning for everyone */
-                if (!isSoloMode()) {
+                if (!isSoloMode) {
                     p.currentVideoPosition = 0.0
                 }
 
@@ -383,13 +378,13 @@ class ExoPlayer : BasePlayer {
     }
 
     override fun pause() {
-        exoMainScope.launch {
+        playerScopeMain.launch {
             exoplayer?.pause()
         }
     }
 
     override fun play() {
-        exoMainScope.launch {
+        playerScopeMain.launch {
             exoplayer?.play()
         }
     }
@@ -399,7 +394,7 @@ class ExoPlayer : BasePlayer {
     }
 
     override fun seekTo(toPositionMs: Long) {
-        exoMainScope.launch {
+        playerScopeMain.launch {
             exoplayer?.seekTo((toPositionMs))
         }
     }
