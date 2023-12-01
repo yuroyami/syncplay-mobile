@@ -7,9 +7,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -88,10 +86,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -115,8 +111,6 @@ import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_MSG_BOX_ACTION
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_MSG_FONTSIZE
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_MSG_MAXCOUNT
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
-import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP
-import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP
 import com.yuroyami.syncplay.datastore.booleanFlow
 import com.yuroyami.syncplay.datastore.ds
 import com.yuroyami.syncplay.datastore.intFlow
@@ -215,8 +209,6 @@ fun RoomUI() {
         val msgFontSize = DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_MSG_FONTSIZE, 9).collectAsState(initial = 9)
         val msgMaxCount by DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_MSG_MAXCOUNT, 10).collectAsState(initial = 0)
         val keyboardOkFunction by DATASTORE_INROOM_PREFERENCES.ds().booleanFlow(PREF_INROOM_MSG_BOX_ACTION, true).collectAsState(initial = true)
-        val seekIncrement = DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP, 10).collectAsState(initial = 10)
-        val seekDecrement = DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP, 10).collectAsState(initial = 10)
 
         /** Room artwork underlay (when no video is loaded) */
         if (!hasVideo.value) {
@@ -224,9 +216,6 @@ fun RoomUI() {
         }
 
         /** video surface */
-        val seekLeftInteraction: MutableInteractionSource = remember { MutableInteractionSource() }
-        val seekRightInteraction: MutableInteractionSource = remember { MutableInteractionSource() }
-
         player?.VideoPlayer(Modifier.fillMaxSize().alpha(if (hasVideo.value) 1f else 0f))
 
         /** Lock layout, This is what appears when the user locks the screen */
@@ -301,72 +290,17 @@ fun RoomUI() {
                 }
             }
 
-            /* Seek animators, their only purpose is to animate a seek action */
-            if (gestures) {
-                Box(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Box(modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .fillMaxHeight().fillMaxWidth(0.1f)
-                        .clickable(
-                            enabled = false,
-                            interactionSource = seekLeftInteraction,
-                            indication = rememberRipple(
-                                bounded = false,
-                                color = Color(100, 100, 100, 190)
-                            )
-                        ) {}
-                    )
-
-                    Box(modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .fillMaxHeight().fillMaxWidth(0.1f)
-                        .clickable(
-                            interactionSource = seekRightInteraction,
-                            indication = rememberRipple(
-                                bounded = false,
-                                color = Color(100, 100, 100, 190)
-                            )
-                        ) {}
-                    )
-                }
-            }
-
             /* Gestures Interceptor */
-            Box(modifier = Modifier
-                .fillMaxSize()
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onDoubleTap = if (gestures && hasVideo.value) { offset ->
-                            composeScope.launch {
-                                if (offset.x < dimensions.wPX.times(0.25f)) {
-                                    seekBckwd(seekDecrement.value)
-
-                                    val press = PressInteraction.Press(Offset.Zero)
-                                    seekLeftInteraction.emit(press)
-                                    delay(150)
-                                    seekLeftInteraction.emit(PressInteraction.Release(press))
-                                }
-                                if (offset.x > dimensions.wPX.times(0.85f)) {
-                                    seekFrwrd(seekIncrement.value)
-
-                                    val press = PressInteraction.Press(Offset.Zero)
-                                    seekRightInteraction.emit(press)
-                                    delay(150)
-                                    seekRightInteraction.emit(PressInteraction.Release(press))
-                                }
-                            }
-                        } else null,
-                        onTap = {
-                            hudVisibility.value = !hudVisibility.value
-                            if (!hudVisibility.value) {
-                                /* Hide any popups */
-                                controlcardvisible = false
-                                addmediacardvisible = false
-                            }
-                        }
-                    )
+            GestureInterceptor(
+                gestures = gestures,
+                hasVideo = hasVideo.value,
+                onSingleTap = {
+                    hudVisibility.value = !hudVisibility.value
+                    if (!hudVisibility.value) {
+                        /* Hide any popups */
+                        controlcardvisible = false
+                        addmediacardvisible = false
+                    }
                 }
             )
 
@@ -970,11 +904,11 @@ fun RoomUI() {
                                     if (gestures) {
                                         Row(horizontalArrangement = Arrangement.Center) {
                                             FancyIcon2(icon = Icons.Filled.FastRewind, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black) {
-                                                seekBckwd(seekDecrement.value)
+                                                seekBckwd()
                                             }
                                             Spacer(Modifier.width(24.dp))
                                             FancyIcon2(icon = Icons.Filled.FastForward, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black) {
-                                                seekFrwrd(seekIncrement.value)
+                                                seekFrwrd()
                                             }
                                         }
                                     }

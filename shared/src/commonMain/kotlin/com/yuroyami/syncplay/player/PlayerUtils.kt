@@ -1,5 +1,8 @@
 package com.yuroyami.syncplay.player
 
+import com.yuroyami.syncplay.datastore.DataStoreKeys
+import com.yuroyami.syncplay.datastore.ds
+import com.yuroyami.syncplay.datastore.intFlow
 import com.yuroyami.syncplay.utils.RoomUtils
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.media
@@ -11,6 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 object PlayerUtils {
@@ -38,10 +42,12 @@ object PlayerUtils {
         //TODO: hideSystemUI(true)
     }
 
-    fun seekBckwd(decrement: Int) {
+    fun seekBckwd() {
         player?.playerScopeIO?.launch {
+            val dec = DataStoreKeys.DATASTORE_INROOM_PREFERENCES.ds().intFlow(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP, 10).first()
+
             val currentMs = player!!.currentPositionMs()
-            var newPos = (currentMs) - decrement * 1000
+            var newPos = (currentMs) - dec * 1000
 
             if (newPos < 0) { newPos = 0 }
 
@@ -54,10 +60,12 @@ object PlayerUtils {
         }
     }
 
-    fun seekFrwrd(increment: Int) {
+    fun seekFrwrd() {
         player?.playerScopeIO?.launch {
+            val inc = DataStoreKeys.DATASTORE_INROOM_PREFERENCES.ds().intFlow(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP, 10).first()
+
             val currentMs = player!!.currentPositionMs()
-            var newPos = (currentMs) + increment * 1000
+            var newPos = (currentMs) + inc * 1000
             if (media != null) {
                 if (newPos > media?.fileDuration!!.toLong()) {
                     newPos = media?.fileDuration!!.toLong()
