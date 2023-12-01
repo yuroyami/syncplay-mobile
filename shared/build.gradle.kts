@@ -46,7 +46,7 @@ kotlin {
             }
         }
 
-        val ktor = "2.3.6"
+        val ktor = "3.0.0-beta-1"
         val commonMain by getting {
             dependencies {
                 /* Logging handler */
@@ -67,7 +67,7 @@ kotlin {
                 implementation("io.ktor:ktor-network-tls:$ktor")
 
                 /* JSON serializer/deserializer to communicate with Syncplay servers */
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.1")
 
                 /* Jetpack Datastore for preferences and settings (accessible in Compose in real-time) */
                 val datastore = "1.1.0-alpha06"

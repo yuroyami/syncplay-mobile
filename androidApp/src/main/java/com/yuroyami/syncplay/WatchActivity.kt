@@ -11,7 +11,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import com.yuroyami.syncplay.datastore.DataStoreKeys
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_MISC_PREFS
-import com.yuroyami.syncplay.datastore.obtainBoolean
 import com.yuroyami.syncplay.datastore.obtainString
 import com.yuroyami.syncplay.player.ENGINE
 import com.yuroyami.syncplay.player.PlayerUtils.getEngineForString
@@ -26,7 +25,6 @@ import com.yuroyami.syncplay.watchroom.RoomUI
 import com.yuroyami.syncplay.watchroom.pickFuture
 import com.yuroyami.syncplay.watchroom.pickerCallback
 import com.yuroyami.syncplay.watchroom.player
-import com.yuroyami.syncplay.watchroom.setReadyDirectly
 import kotlinx.coroutines.runBlocking
 
 class WatchActivity : ComponentActivity() {
@@ -74,10 +72,6 @@ class WatchActivity : ComponentActivity() {
             ENGINE.ANDROID_MPV -> player = MpvPlayer()
             else -> {}
         }
-
-        /** Set ready first hand */
-        //TODO: Move to common code
-        setReadyDirectly = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainBoolean(DataStoreKeys.PREF_READY_FIRST_HAND, true) }
 
         pickerCallback = object: PickerCallback {
             override fun goPickVideo() {

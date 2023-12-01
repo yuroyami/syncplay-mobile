@@ -1,6 +1,6 @@
 package com.yuroyami.syncplay.watchroom
 
-import com.yuroyami.syncplay.shared.MR
+import com.yuroyami.syncplay.datastore.DataStoreKeys
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_TLS_ENABLE
@@ -13,6 +13,7 @@ import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.protocol.ProtocolCallback
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
+import com.yuroyami.syncplay.shared.MR
 import com.yuroyami.syncplay.utils.CommonUtils.loggy
 import com.yuroyami.syncplay.utils.RoomUtils.broadcastMessage
 import com.yuroyami.syncplay.utils.timeStamper
@@ -34,6 +35,9 @@ fun prepareProtocol(joinInfo: JoinInfo) {
     if (!joinInfo.soloMode) {
         /** Initializing our ViewModel, which is our protocol at the same time **/
         p = SyncplayProtocol()
+
+        setReadyDirectly = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainBoolean(DataStoreKeys.PREF_READY_FIRST_HAND, true) }
+
         p.syncplayCallback = object : ProtocolCallback {
             override fun onSomeonePaused(pauser: String) {
                 loggy("SYNCPLAY Protocol: Someone ($pauser) paused.")
@@ -169,8 +173,10 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
                 /** Set as ready first-hand */
                 if (media == null) {
-                    p.sendPacket(JsonSender.sendReadiness(setReadyDirectly, true))
+                    p.ready = setReadyDirectly
+                    p.sendPacket(JsonSender.sendReadiness(setReadyDirectly, false))
                 }
+
 
                 /** Telling user that they're connected **/
                 broadcastMessage(messageComposite = { stringResource(MR.strings.room_connected_to_server) }, isChat = false)

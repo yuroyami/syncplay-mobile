@@ -84,6 +84,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -187,7 +188,7 @@ fun RoomUI() {
     LaunchedEffect(null) {
         /** Starting ping update */
         if (CommonUtils.pingUpdateJob == null && !isSoloMode) {
-            CommonUtils.pingUpdateJob = composeScope.launch {
+            CommonUtils.pingUpdateJob = composeScope.launch(Dispatchers.IO) {
                 CommonUtils.beginPingUpdate()
             }
         }
@@ -310,14 +311,14 @@ fun RoomUI() {
         } else {
             /** ACTUAL ROOM HUD AND LAYOUT */
 
-            val msg = remember { mutableStateOf("") }
-            val msgCanSend = remember { mutableStateOf(false) }
+            var msg by remember { mutableStateOf("") }
+            var msgCanSend by remember { mutableStateOf(false) }
             val msgs = if (!isSoloMode) remember { p.session.messageSequence } else remember { mutableStateListOf() }
-            val ready = remember { mutableStateOf(false /*setReadyDirectly*/) }
-            val controlcardvisible = remember { mutableStateOf(false) }
-            val addmediacardvisible = remember { mutableStateOf(false) }
+            var ready by remember { mutableStateOf(setReadyDirectly) }
+            var controlcardvisible by remember { mutableStateOf(false) }
+            var addmediacardvisible by remember { mutableStateOf(false) }
 
-            val gestures = remember { mutableStateOf(false) }
+            var gestures by remember { mutableStateOf(false) }
             val userinfoVisibility = remember { mutableStateOf(false) }
             val sharedplaylistVisibility = remember { mutableStateOf(false) }
             val inroomprefsVisibility = remember { mutableStateOf(false) }
@@ -333,7 +334,7 @@ fun RoomUI() {
             }
 
             /* Seek animators, their only purpose is to animate a seek action */
-            if (gestures.value) {
+            if (gestures) {
                 Box(
                     modifier = Modifier.fillMaxSize()
                 ) {
@@ -369,7 +370,7 @@ fun RoomUI() {
                 .fillMaxSize()
                 .pointerInput(Unit) {
                     detectTapGestures(
-                        onDoubleTap = if (gestures.value && hasVideo.value) { offset ->
+                        onDoubleTap = if (gestures && hasVideo.value) { offset ->
                             composeScope.launch {
                                 if (offset.x < dimensions.wPX.times(0.25f)) {
                                     seekBckwd()
@@ -393,8 +394,8 @@ fun RoomUI() {
                             hudVisibility.value = !hudVisibility.value
                             if (!hudVisibility.value) {
                                 /* Hide any popups */
-                                controlcardvisible.value = false
-                                addmediacardvisible.value = false
+                                controlcardvisible = false
+                                addmediacardvisible = false
                             }
                         }
                     )
@@ -414,15 +415,16 @@ fun RoomUI() {
                             /** Message input box */
                             if (!isSoloMode && !pipModeObserver) {
                                 val onSend = fun() {
-                                    val msgToSend = msg.value.also {
-                                        it.replace("\\", "")
-                                        if (it.length > 150) it.substring(0, 149)
+                                    val msgToSend = msg.run {
+                                        var t = replace("\\", "")
+                                        if (t.length > 150) t = t.substring(0, 149)
+                                        t
                                     }
                                     if (msgToSend.isNotBlank()) {
                                         sendMessage(msgToSend)
                                     }
-                                    msg.value = ""
-                                    msgCanSend.value = false
+                                    msg = ""
+                                    msgCanSend = false
 
                                     focusManager.clearFocus()
                                 }
@@ -437,16 +439,16 @@ fun RoomUI() {
                                     }),
                                     label = { Text(text = "Type your message...", fontSize = 12.sp) },
                                     trailingIcon = {
-                                        if (msgCanSend.value) {
-                                            IconButton(onClick = { onSend() }) {
+                                        if (msgCanSend) {
+                                            IconButton(onClick = onSend) {
                                                 Icon(imageVector = Icons.Filled.Send, "")
                                             }
                                         }
                                     },
-                                    value = msg.value,
+                                    value = msg,
                                     onValueChange = { s ->
-                                        msg.value = s
-                                        msgCanSend.value = s.isNotBlank()
+                                        msg = s
+                                        msgCanSend = s.isNotBlank()
                                     }
                                 )
                             }
@@ -740,7 +742,7 @@ fun RoomUI() {
                                     .align(Alignment.CenterEnd)
                                     .fillMaxHeight(cardHeight + 0.1f),
                                 enter = expandIn(),
-                                visible = controlcardvisible.value
+                                visible = controlcardvisible
                             ) {
                                 /** CONTROL CARD ------ PLAYER CONTROL CARD ----- PLAYER CONTROL CARD */
                                 Card(
@@ -765,17 +767,17 @@ fun RoomUI() {
 
                                         /* Seek Gesture (DoNotTouch for disabling it) */
                                         FancyIcon2(
-                                            icon = when (gestures.value) {
+                                            icon = when (gestures) {
                                                 true -> Icons.Filled.TouchApp
                                                 false -> Icons.Filled.DoNotTouch
                                             }, size = ROOM_ICON_SIZE, shadowColor = Color.Black
                                         ) {
-                                            gestures.value = !gestures.value
+                                            gestures = !gestures
                                         }
 
                                         /* Seek To */
                                         FancyIcon2(icon = Icons.Filled.BrowseGallery, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
-                                            controlcardvisible.value = false
+                                            controlcardvisible = false
                                             seektopopupstate.value = true
                                         }
 
@@ -786,7 +788,7 @@ fun RoomUI() {
                                                 return@FancyIcon2
                                             }
 
-                                            controlcardvisible.value = false
+                                            controlcardvisible = false
 
                                             val lastSeek = seeks.last()
                                             player?.seekTo(lastSeek.first)
@@ -835,7 +837,7 @@ fun RoomUI() {
                                                     },
                                                     onClick = {
                                                         tracksPopup.value = false
-                                                        controlcardvisible.value = false
+                                                        controlcardvisible = false
 
                                                         //TODO: Load external sub
                                                     }
@@ -856,7 +858,7 @@ fun RoomUI() {
                                                     onClick = {
                                                         //player?.selectTrack(C.TRACK_TYPE_TEXT, -1)
                                                         tracksPopup.value = false
-                                                        controlcardvisible.value = false
+                                                        controlcardvisible = false
 
                                                     }
                                                 )
@@ -879,7 +881,7 @@ fun RoomUI() {
                                                         onClick = {
                                                             //FIXME player?.selectTrack(C.TRACK_TYPE_TEXT, track.index)
                                                             tracksPopup.value = false
-                                                            controlcardvisible.value = false
+                                                            controlcardvisible = false
 
                                                         }
                                                     )
@@ -951,7 +953,7 @@ fun RoomUI() {
                                 .width(112.dp)
                                 .padding(8.dp)
                                 .align(Alignment.BottomStart),
-                                checked = ready.value,
+                                checked = ready,
                                 colors = IconButtonDefaults.iconToggleButtonColors(
                                     containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                                     contentColor = MaterialTheme.colorScheme.primary,
@@ -959,11 +961,11 @@ fun RoomUI() {
                                     checkedContentColor = Color.Black
                                 ),
                                 onCheckedChange = { b ->
-                                    ready.value = b
+                                    ready = b
                                     p.ready = b
                                     p.sendPacket(JsonSender.sendReadiness(b, true))
                                 }) {
-                                when (ready.value) {
+                                when (ready) {
                                     true -> Text("Ready", fontSize = 14.sp)
                                     false -> Text("Not Ready", fontSize = 13.sp)
                                 }
@@ -999,7 +1001,7 @@ fun RoomUI() {
                                     Modifier.fillMaxWidth(0.5f),
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-                                    if (gestures.value) {
+                                    if (gestures) {
                                         Row(horizontalArrangement = Arrangement.Center) {
                                             FancyIcon2(icon = Icons.Filled.FastRewind, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black) {
                                                 seekBckwd()
@@ -1069,8 +1071,8 @@ fun RoomUI() {
                                 modifier = Modifier,
                                 icon = Icons.Filled.VideoSettings, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black,
                                 onClick = {
-                                    controlcardvisible.value = !controlcardvisible.value
-                                    addmediacardvisible.value = false
+                                    controlcardvisible = !controlcardvisible
+                                    addmediacardvisible = false
                                 }
                             )
                         }
@@ -1080,21 +1082,21 @@ fun RoomUI() {
                             AddVideoButton(
                                 modifier = Modifier,
                                 onClick = {
-                                    addmediacardvisible.value = !addmediacardvisible.value
-                                    controlcardvisible.value = false
+                                    addmediacardvisible = !addmediacardvisible
+                                    controlcardvisible = false
                                 }
                             )
 
 
                             DropdownMenu(
                                 modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
-                                expanded = addmediacardvisible.value,
+                                expanded = addmediacardvisible,
                                 properties = PopupProperties(
                                     dismissOnBackPress = true,
                                     focusable = true,
                                     dismissOnClickOutside = true
                                 ),
-                                onDismissRequest = { addmediacardvisible.value = false }) {
+                                onDismissRequest = { addmediacardvisible = false }) {
 
                                 ComposeUtils.FancyText2(
                                     modifier = Modifier
@@ -1116,13 +1118,13 @@ fun RoomUI() {
                                         }
                                     },
                                     onClick = {
-                                        addmediacardvisible.value = false
+                                        addmediacardvisible = false
 
                                         pickerScope.launch {
                                             try {
                                                 pickFuture = CompletableDeferred() //We create a future that will be fulfilled
                                                 pickerCallback?.goPickVideo() //Ask the platform to pick video
-                                                addmediacardvisible.value = false
+                                                addmediacardvisible = false
                                                 val result = pickFuture?.await() ?: return@launch
                                                 player?.injectVideo(result, false)
                                             } catch (e: CancellationException) {
@@ -1141,7 +1143,7 @@ fun RoomUI() {
                                         }
                                     },
                                     onClick = {
-                                        addmediacardvisible.value = false
+                                        addmediacardvisible = false
                                         addurlpopupstate.value = true
                                     }
                                 )

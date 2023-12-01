@@ -14,10 +14,10 @@ import androidx.annotation.NonNull;
 public class MPVLib {
 
      static {
-          String[] libs = { "mpv", "player" };
-          for (String lib: libs) {
-               System.loadLibrary(lib);
-          }
+        String[] libs = { "mpv", "player" };
+        for (String lib: libs) {
+            System.loadLibrary(lib);
+        }
      }
 
      public static native void create(Context appctx);

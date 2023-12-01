@@ -99,8 +99,6 @@ open class SyncplayProtocol {
                                 loggy(ln)
                                 handleJson(json = ln)
                             }
-
-                            delay(10)
                         } catch (e: Exception) {
                             loggy(e.stackTraceToString())
                         }
