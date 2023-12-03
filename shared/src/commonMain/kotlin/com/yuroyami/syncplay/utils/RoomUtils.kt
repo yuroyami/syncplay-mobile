@@ -7,6 +7,7 @@ import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.p
 import com.yuroyami.syncplay.watchroom.player
+import kotlinx.coroutines.launch
 
 /** Methods exclusive to Room functionality (messages, sending data to server, etc) */
 object RoomUtils {
@@ -26,13 +27,15 @@ object RoomUtils {
     fun sendSeek(newpos: Long) {
         if (isSoloMode) return
 
-        p.sendPacket(
-            JsonSender.sendState(
-                null, (generateTimestampMillis() / 1000.0), true,
-                newpos, 1,
-                play = player?.isPlaying() == true,
+        player?.playerScopeMain?.launch {
+            p.sendPacket(
+                JsonSender.sendState(
+                    null, (generateTimestampMillis() / 1000.0), true,
+                    newpos, 1,
+                    play = player?.isPlaying() == true,
+                )
             )
-        )
+        }
     }
 
     /** Sends a chat message to the server **/

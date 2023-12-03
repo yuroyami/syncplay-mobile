@@ -64,12 +64,12 @@ kotlin {
                 implementation("io.ktor:ktor-network-tls:$ktor")
 
                 /* JSON serializer/deserializer to communicate with Syncplay servers */
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
 
                 /* Jetpack Datastore for preferences and settings (accessible in Compose in real-time) */
                 val datastore = "1.1.0-alpha07"
                 api("androidx.datastore:datastore-preferences-core:$datastore")
-                api("androidx.datastore:datastore-core-okio:$datastore")
+                //api("androidx.datastore:datastore-core-okio:$datastore")
 
                 /* Compose core dependencies */
                 implementation(compose.runtime)

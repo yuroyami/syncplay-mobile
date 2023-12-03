@@ -30,6 +30,7 @@
             android:exported="true"
             android:imeOptions="flagNoExtractUi"
             android:launchMode="singleTask"
+            android:excludeFromRecents="true"
             android:screenOrientation="fullSensor"
             android:theme="@style/SplashTheme"
             android:windowSoftInputMode="adjustPan">

@@ -79,13 +79,15 @@ class HomeActivity : ComponentActivity() {
         /** Language change listener */
         languageCallback = object: LanguageChange {
             override fun onLanguageChanged(newLang: String) {
-                recreate()
+                runOnUiThread {
+                    recreate()
 
-                Toast.makeText(
-                    this@HomeActivity,
-                    StringDesc.Resource(MR.strings.setting_display_language_toast).toString(this@HomeActivity),
-                    Toast.LENGTH_SHORT
-                ).show()
+                    Toast.makeText(
+                        this@HomeActivity,
+                        StringDesc.Resource(MR.strings.setting_display_language_toast).toString(this@HomeActivity),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
         }
 

@@ -24,29 +24,8 @@ data class ScreenSizeInfo(val hPX: Int, val wPX: Int, val hDP: Dp, val wDP: Dp)
 
 @Composable
 expect fun getScreenSizeInfo(): ScreenSizeInfo
-//val gb = 2L * 1024L * 1024L * 1024L
-//
-///** Helps determine the size of a file in bytes, needing only its Uri and a context */
-//fun getRealSizeFromUri(context: Context, uri: Uri): Long? {
-//    val df = DocumentFile.fromSingleUri(context, uri) ?: return null
-//    return df.length()
-//    /*
-//    val size1 = df.length()
-//    return if (size1 >= gb) {
-//        var size = 0L //Size incremental variable
-//        context.contentResolver.openInputStream(uri)?.use { inputStream ->
-//            BufferedInputStream(inputStream).use { bufferedInputStream ->
-//                val buffer = ByteArray(100 * 1024 * 1024) // 8 KB buffer size (can be adjusted as per your requirements)
-//                var bytesRead: Int
-//
-//                while (bufferedInputStream.read(buffer).also { bytesRead = it } != -1) {
-//                    size += bytesRead
-//                }
-//            }
-//        }
-//        size
-//    } else size1 */
-//}
+
+
 //@Suppress("DEPRECATION")
 //fun ComponentActivity.showSystemUI(useDeprecated: Boolean) {
 //    if (useDeprecated) {

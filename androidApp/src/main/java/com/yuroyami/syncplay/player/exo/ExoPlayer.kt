@@ -31,9 +31,11 @@ import com.yuroyami.syncplay.player.ENGINE
 import com.yuroyami.syncplay.player.PlayerOptions
 import com.yuroyami.syncplay.player.PlayerUtils.trackProgress
 import com.yuroyami.syncplay.protocol.JsonSender
-import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
+import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
+import com.yuroyami.syncplay.utils.collectInfoURLAndroid
 import com.yuroyami.syncplay.utils.getFileName
+import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.watchroom.currentTrackChoices
 import com.yuroyami.syncplay.watchroom.hasVideoG
 import com.yuroyami.syncplay.watchroom.isNowPlaying
@@ -41,15 +43,17 @@ import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.media
 import com.yuroyami.syncplay.watchroom.p
 import com.yuroyami.syncplay.watchroom.timeFull
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.util.Collections
 import kotlin.math.abs
 import com.yuroyami.syncplay.shared.R as XR
 
 class ExoPlayer : BasePlayer() {
-
-    val engine = ENGINE.ANDROID_EXOPLAYER
+    override val engine = ENGINE.ANDROID_EXOPLAYER
 
     /*-- Exoplayer-related properties --*/
     var exoplayer: ExoPlayer? = null
@@ -61,7 +65,6 @@ class ExoPlayer : BasePlayer() {
         val context = exoView.context
 
         playerScopeMain.launch {
-
             /** LoadControl (Buffering manager) and track selector (for track language preference) **/
             val options = PlayerOptions.get()
             val loadControl = DefaultLoadControl.Builder()
@@ -332,9 +335,9 @@ class ExoPlayer : BasePlayer() {
                 /* Obtaining info from it (size and name) */
                 if (isUrl) {
                     media?.url = uri
-                    //TODO: media?.collectInfoURL()
+                    media?.let { collectInfoURL(it) }
                 } else {
-                    //TODO: media?.collectInfo(applicationContext)
+                    media?.let { collectInfoLocal(it) }
                 }
 
                 /* Checking mismatches with others in room */
@@ -399,6 +402,7 @@ class ExoPlayer : BasePlayer() {
         }
     }
 
+
     override fun currentPositionMs(): Long {
         return exoplayer?.currentPosition ?: 0L
     }
@@ -421,6 +425,13 @@ class ExoPlayer : BasePlayer() {
         }
     }
 
+    override fun collectInfoLocal(mediafile: MediaFile) {
+        collectInfoLocalAndroid(mediafile, exoView.context)
+    }
+
+    override fun collectInfoURL(mediafile: MediaFile) {
+        collectInfoURLAndroid(mediafile)
+    }
 
     /** EXO-EXCLUSIVE */
 }

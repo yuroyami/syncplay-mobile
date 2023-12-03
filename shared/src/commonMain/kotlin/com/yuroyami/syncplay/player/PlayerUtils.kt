@@ -16,6 +16,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 object PlayerUtils {
 
@@ -46,7 +47,7 @@ object PlayerUtils {
         player?.playerScopeIO?.launch {
             val dec = DataStoreKeys.DATASTORE_INROOM_PREFERENCES.ds().intFlow(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP, 10).first()
 
-            val currentMs = player!!.currentPositionMs()
+            val currentMs = withContext(Dispatchers.Main) { player!!.currentPositionMs() }
             var newPos = (currentMs) - dec * 1000
 
             if (newPos < 0) { newPos = 0 }
@@ -64,7 +65,7 @@ object PlayerUtils {
         player?.playerScopeIO?.launch {
             val inc = DataStoreKeys.DATASTORE_INROOM_PREFERENCES.ds().intFlow(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP, 10).first()
 
-            val currentMs = player!!.currentPositionMs()
+            val currentMs = withContext(Dispatchers.Main) { player!!.currentPositionMs() }
             var newPos = (currentMs) + inc * 1000
             if (media != null) {
                 if (newPos > media?.fileDuration!!.toLong()) {

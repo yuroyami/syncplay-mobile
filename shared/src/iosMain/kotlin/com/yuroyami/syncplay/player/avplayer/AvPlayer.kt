@@ -6,6 +6,8 @@ import androidx.compose.ui.interop.UIKitView
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.ENGINE
+import com.yuroyami.syncplay.utils.collectInfoLocaliOS
+import com.yuroyami.syncplay.utils.collectInfoURLiOS
 import com.yuroyami.syncplay.watchroom.hasVideoG
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.media
@@ -34,7 +36,7 @@ import platform.UIKit.UIView
 
 class AvPlayer : BasePlayer() {
 
-    val engine = ENGINE.IOS_AVPLAYER
+    override val engine = ENGINE.IOS_AVPLAYER
 
     /*-- Exoplayer-related properties --*/
     var avplayer: AVPlayer? = null
@@ -110,9 +112,9 @@ class AvPlayer : BasePlayer() {
                 /* Obtaining info from it (size and name) */
                 if (isUrl) {
                     media?.url = uri.toString()
-                    //TODO: media?.collectInfoURL()
+                    media?.let { collectInfoURL(it) }
                 } else {
-                    //TODO: media?.collectInfo(applicationContext)
+                    media?.let { collectInfoLocal(it) }
                 }
 
                 /* Checking mismatches with others in room */
@@ -168,6 +170,15 @@ class AvPlayer : BasePlayer() {
     }
 
     override fun switchAspectRatio(): String {
-        TODO("Not yet implemented")
+        //TODO
+        return ""
+    }
+
+    override fun collectInfoLocal(mediafile: MediaFile) {
+        collectInfoLocaliOS(mediafile)
+    }
+
+    override fun collectInfoURL(mediafile: MediaFile) {
+        collectInfoURLiOS(mediafile)
     }
 }

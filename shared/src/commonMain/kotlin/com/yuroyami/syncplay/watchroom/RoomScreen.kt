@@ -208,7 +208,6 @@ fun RoomUI() {
 
         val hasVideo = remember { hasVideoG }
         var hudVisibility by remember { hudVisibilityState }
-        var hudRenevator by remember { mutableStateOf(false) } //Revives HUD timeout
         val pipModeObserver by remember { pipMode }
         var locked by remember { mutableStateOf(false) }
 
@@ -225,12 +224,12 @@ fun RoomUI() {
         val keyboardOkFunction by DATASTORE_INROOM_PREFERENCES.ds().booleanFlow(PREF_INROOM_MSG_BOX_ACTION, true).collectAsState(initial = true)
 
         /* Time-out HUD hider */
-        LaunchedEffect(hudVisibility, hudRenevator) {
-            if (hudVisibility) {
-                delay(3000) //TODO Use prefs
-                hudVisibility = false
-            }
-        }
+//        LaunchedEffect(hudVisibility, hudRenevator) {
+//            if (hudVisibility) {
+//                delay(3000) //TODO Use prefs
+//                hudVisibility = false
+//            }
+//        }
 
         /** Room artwork underlay (when no video is loaded) */
         if (!hasVideo.value) {
@@ -246,9 +245,7 @@ fun RoomUI() {
         if (locked) {
             /** The touch interceptor to switch unlock button visibility */
             Box(
-                Modifier
-                    .fillMaxSize()
-                    .clickable(
+                Modifier.fillMaxSize().clickable(
                         interactionSource = MutableInteractionSource(),
                         indication = null, onClick = {
                             unlockButtonVisibility.value = !unlockButtonVisibility.value
@@ -433,11 +430,7 @@ fun RoomUI() {
                                 Row {
                                     val pingo by remember { p.ping }
                                     Text(
-                                        text = if (pingo == null) {
-                                            "Disconnected"
-                                        } else {
-                                            "Connected - ${pingo!!.toInt()}ms"
-                                        },
+                                        text = if (pingo == null) "Disconnected" else "Connected - ${pingo!!.toInt()}ms",
                                         color = Paletting.OLD_SP_PINK
                                     )
                                     Spacer(Modifier.width(4.dp))
@@ -460,10 +453,9 @@ fun RoomUI() {
                     ) {
                         /* The tabs row */
                         Row(
-                            modifier = Modifier.fillMaxWidth().height(50.dp)
-                                .padding(top = 15.dp, end = 4.dp),
+                            modifier = Modifier.fillMaxWidth().height(50.dp).padding(top = 15.dp, end = 4.dp),
                             horizontalArrangement = Arrangement.End,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = CenterVertically
                         ) {
 
                             /* The tabs in the top-right corner */
@@ -524,8 +516,7 @@ fun RoomUI() {
                                     onDismissRequest = { overflowmenustate.value = false }) {
 
                                     ComposeUtils.FancyText2(
-                                        modifier = Modifier
-                                            .align(Alignment.CenterHorizontally)
+                                        modifier = Modifier.align(Alignment.CenterHorizontally)
                                             .padding(horizontal = 2.dp),
                                         string = "More Options...",
                                         solid = Color.Black,
@@ -537,7 +528,7 @@ fun RoomUI() {
                                     if (!isSoloMode) {
                                         DropdownMenuItem(
                                             text = {
-                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Row(verticalAlignment = CenterVertically) {
                                                     Icon(
                                                         modifier = Modifier.padding(2.dp),
                                                         imageVector = Icons.Filled.Forum, contentDescription = "",
@@ -562,7 +553,7 @@ fun RoomUI() {
                                     /* Toggle Dark mode */
                                     DropdownMenuItem(
                                         text = {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Row(verticalAlignment = CenterVertically) {
                                                 Icon(
                                                     modifier = Modifier.padding(2.dp),
                                                     imageVector = Icons.Filled.DarkMode, contentDescription = "",
@@ -593,7 +584,7 @@ fun RoomUI() {
                                     /* Leave room item */
                                     DropdownMenuItem(
                                         text = {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Row(verticalAlignment = CenterVertically) {
                                                 Icon(
                                                     modifier = Modifier.padding(2.dp),
                                                     imageVector = Icons.Filled.Logout, contentDescription = "",
@@ -689,7 +680,9 @@ fun RoomUI() {
                                         /* Aspect Ratio */
                                         FancyIcon2(icon = Icons.Filled.AspectRatio, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
                                             val newAspectRatio = player?.switchAspectRatio()
-                                            //TODO: Inform user about his new aspect ratio
+                                            if (newAspectRatio != null) {
+                                                composeScope.dispatchOSD(newAspectRatio)
+                                            }
                                         }
 
                                         /* Seek Gesture (DoNotTouch for disabling it) */
@@ -711,7 +704,7 @@ fun RoomUI() {
                                         /* Undo Last Seek */
                                         FancyIcon2(icon = Icons.Filled.History, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
                                             if (seeks.isEmpty()) {
-                                                //TODO toasty("There is no recent seek in the room.")
+                                                composeScope.dispatchOSD("There is no recent seek in the room.")
                                                 return@FancyIcon2
                                             }
 
@@ -721,7 +714,7 @@ fun RoomUI() {
                                             player?.seekTo(lastSeek.first)
                                             sendSeek(lastSeek.first)
                                             seeks.remove(lastSeek)
-                                            //TODO toasty("Seek undone.")
+                                            composeScope.dispatchOSD("Seek undone.")
                                         }
 
                                         /* Subtitle Tracks */
@@ -754,7 +747,7 @@ fun RoomUI() {
 
                                                 DropdownMenuItem(
                                                     text = {
-                                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Row(verticalAlignment = CenterVertically) {
                                                             Icon(imageVector = Icons.Filled.NoteAdd, "", tint = Color.LightGray)
 
                                                             Spacer(Modifier.width(2.dp))
@@ -773,7 +766,7 @@ fun RoomUI() {
 
                                                 DropdownMenuItem(
                                                     text = {
-                                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Row(verticalAlignment = CenterVertically) {
                                                             Icon(imageVector = Icons.Filled.SubtitlesOff, "", tint = Color.LightGray)
 
                                                             Spacer(Modifier.width(2.dp))
@@ -793,7 +786,7 @@ fun RoomUI() {
                                                 for (track in (media?.subtitleTracks) ?: listOf()) {
                                                     DropdownMenuItem(
                                                         text = {
-                                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                            Row(verticalAlignment = CenterVertically) {
                                                                 Checkbox(checked = track.selected.value, onCheckedChange = {
                                                                     //FIXME: player?.selectTrack(C.TRACK_TYPE_TEXT, track.index)
                                                                     tracksPopup.value = false
@@ -845,7 +838,7 @@ fun RoomUI() {
 
                                                 for (track in (media?.audioTracks ?: listOf())) {
                                                     DropdownMenuItem(text = {
-                                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Row(verticalAlignment = CenterVertically) {
                                                             Checkbox(checked = track.selected.value, onCheckedChange = {
                                                                 with(player ?: return@Checkbox) {
                                                                     //FIXME: selectTrack(C.TRACK_TYPE_AUDIO, track.index)
@@ -911,16 +904,13 @@ fun RoomUI() {
                             Row(modifier = Modifier.fillMaxWidth(0.75f)) {
 
                                 Column(
-                                    modifier = Modifier.fillMaxWidth(0.33f)
-                                        .offset(x = 25.dp, y = 10.dp),
+                                    modifier = Modifier.fillMaxWidth(0.33f).offset(x=25.dp, y=10.dp),
                                     horizontalAlignment = Alignment.Start,
                                     verticalArrangement = Arrangement.Bottom,
                                 ) {
                                     Text(
                                         text = timeStamper(remember { timeCurrent }.longValue),
-                                        modifier = Modifier
-                                            .alpha(0.85f)
-                                            .gradientOverlay(),
+                                        modifier = Modifier.alpha(0.85f).gradientOverlay(),
                                     )
                                 }
 
@@ -928,7 +918,7 @@ fun RoomUI() {
                                     Modifier.fillMaxWidth(0.5f),
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-                                    if (gestures) {
+                                    if (!gestures) {
                                         Row(horizontalArrangement = Arrangement.Center) {
                                             FancyIcon2(icon = Icons.Filled.FastRewind, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black) {
                                                 seekBckwd()
@@ -942,17 +932,14 @@ fun RoomUI() {
                                 }
 
                                 Column(
-                                    Modifier.fillMaxWidth()
-                                        .offset(x = (-25).dp, y = 10.dp),
+                                    Modifier.fillMaxWidth().offset(x = (-25).dp, y = 10.dp),
                                     verticalArrangement = Arrangement.Bottom,
                                     horizontalAlignment = Alignment.End
                                 ) {
                                     val timeFullR = remember { timeFull }
                                     Text(
                                         text = if (timeFullR.longValue >= Long.MAX_VALUE / 1000L) "???" else timeStamper(timeFullR.longValue),
-                                        modifier = Modifier
-                                            .alpha(0.85f)
-                                            .gradientOverlay(),
+                                        modifier = Modifier.alpha(0.85f).gradientOverlay(),
                                     )
                                 }
                             }
@@ -963,7 +950,9 @@ fun RoomUI() {
                                     player?.seekTo(f.toLong() * 1000L)
                                      if (isSoloMode) {
                                          player?.let {
-                                             seeks.add(Pair(it.currentPositionMs(), f.toLong() * 1000))
+                                             composeScope.launch(Dispatchers.Main) {
+                                                 seeks.add(Pair(it.currentPositionMs(), f.toLong() * 1000))
+                                             }
                                          }
                                     }
 
@@ -1042,7 +1031,7 @@ fun RoomUI() {
                                 //From storage
                                 DropdownMenuItem(
                                     text = {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Row(verticalAlignment = CenterVertically) {
                                             FancyIcon2(icon = Icons.Filled.CreateNewFolder, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {}
                                             Spacer(Modifier.width(8.dp))
                                             Text(color = Color.LightGray, text = "From storage")
@@ -1066,7 +1055,7 @@ fun RoomUI() {
                                 //From network URL
                                 DropdownMenuItem(
                                     text = {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Row(verticalAlignment = CenterVertically) {
                                             FancyIcon2(icon = Icons.Filled.AddLink, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {}
                                             Spacer(Modifier.width(8.dp))
                                             Text(color = Color.LightGray, text = "From network (URL)")
@@ -1093,10 +1082,12 @@ fun RoomUI() {
                             shadowColor = Color.Black,
                             modifier = Modifier.align(Alignment.Center)
                         ) {
-                            if (player?.isPlaying() == true) {
-                                pausePlayback()
-                            } else {
-                                playPlayback()
+                            composeScope.launch(Dispatchers.Main) {
+                                if (player?.isPlaying() == true) {
+                                    pausePlayback()
+                                } else {
+                                    playPlayback()
+                                }
                             }
                         }
                     }
@@ -1118,6 +1109,5 @@ fun RoomUI() {
         //AddUrlPopup(visibilityState = addurlpopupstate)
         //SeekToPositionPopup(visibilityState = seektopopupstate)
         if (!isSoloMode) ChatHistoryPopup(visibilityState = chathistorypopupstate, msgPalette)
-
     }
 }

@@ -21,6 +21,8 @@ import kotlinx.coroutines.IO
  */
 abstract class BasePlayer {
 
+    abstract val engine: ENGINE
+
     val playerScopeMain = CoroutineScope(Dispatchers.Main)
     val playerScopeIO = CoroutineScope(Dispatchers.IO)
 
@@ -57,6 +59,10 @@ abstract class BasePlayer {
     abstract fun currentPositionMs(): Long
 
     abstract fun switchAspectRatio(): String
+
+    abstract fun collectInfoLocal(mediafile: MediaFile)
+
+    abstract fun collectInfoURL(mediafile: MediaFile)
 
     @Composable
     abstract fun VideoPlayer(modifier: Modifier)

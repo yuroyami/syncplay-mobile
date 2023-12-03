@@ -19,9 +19,11 @@ import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.ENGINE
 import com.yuroyami.syncplay.player.PlayerUtils
 import com.yuroyami.syncplay.protocol.JsonSender
-import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
+import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
+import com.yuroyami.syncplay.utils.collectInfoURLAndroid
 import com.yuroyami.syncplay.utils.getFileName
+import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.watchroom.currentTrackChoices
 import com.yuroyami.syncplay.watchroom.hasVideoG
 import com.yuroyami.syncplay.watchroom.isNowPlaying
@@ -42,7 +44,7 @@ import java.io.OutputStream
 
 class MpvPlayer : BasePlayer() {
 
-    val engine = ENGINE.ANDROID_MPV
+    override val engine = ENGINE.ANDROID_MPV
 
     var mpvPos = 0L
     private lateinit var observer: MPVLib.EventObserver
@@ -207,9 +209,9 @@ class MpvPlayer : BasePlayer() {
                 /* Obtaining info from it (size and name) */
                 if (isUrl) {
                     media?.url = uri.toString()
-                    //TODO: media?.collectInfoURL()
+                    media?.let { collectInfoURL(it) }
                 } else {
-                    //TODO: media?.collectInfo(applicationContext)
+                    media?.let { collectInfoLocal(it) }
                 }
 
                 /* Checking mismatches with others in room */
@@ -288,6 +290,14 @@ class MpvPlayer : BasePlayer() {
 
     override fun switchAspectRatio(): String {
         return "" //TODO
+    }
+
+    override fun collectInfoLocal(mediafile: MediaFile) {
+        collectInfoLocalAndroid(mediafile, ctx)
+    }
+
+    override fun collectInfoURL(mediafile: MediaFile) {
+        collectInfoURLAndroid(mediafile)
     }
 
     /** MPV EXCLUSIVE */
