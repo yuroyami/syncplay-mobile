@@ -17,6 +17,8 @@ import kotlin.math.roundToLong
 
 actual fun getPlatform(): String = "iOS"
 
+actual fun loggy(s: String?) = println(s.toString())
+
 actual fun getDefaultEngine(): String = "avplayer"
 
 actual fun changeLanguage(lang: String, context: Any?) {

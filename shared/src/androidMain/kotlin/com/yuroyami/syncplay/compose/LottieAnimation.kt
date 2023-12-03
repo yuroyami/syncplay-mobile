@@ -19,8 +19,6 @@ import com.yuroyami.syncplay.datastore.DataStoreKeys
 import com.yuroyami.syncplay.datastore.writeBoolean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.jetbrains.compose.resources.readResourceBytes
 
 /** Shows an infinitely repeating Bodymovin [json] animation with the specified [speed].
  *
@@ -52,19 +50,20 @@ actual fun InfiniteLottieAnimation(
  * @param nightModeState Defines the initial state of the button (you should pass it,
  * like you're telling the composable which mode is enabled initially).
  */
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 actual fun NightModeToggle(modifier: Modifier, state: State<Boolean>) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
 
     /* The lottie composition to play */
-    var s by remember { mutableStateOf<ByteArray?>(null) }
+    var s by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) {
-        s = readResourceBytes("assets/daynight_toggle.json")
+        scope.launch {
+            s = daynightAsset()
+        }
     }
 
     s?.let {
-        val composition by rememberLottieComposition(LottieCompositionSpec.JsonString(it.decodeToString()))
+        val composition by rememberLottieComposition(LottieCompositionSpec.JsonString(it))
         val anim = rememberLottieAnimatable() /* The animatable that accompanies the composition */
 
         val night2day = LottieClipSpec.Progress(0f, 0.4f)

@@ -42,23 +42,6 @@ object RoomUtils {
         p.sendPacket(JsonSender.sendChat(message))
     }
 
-    /** Periodic ping calculator (for UI and Protocol uses) */
-    /*
-    fun pingUpdate() {
-        lifecycleScope.launch(Dispatchers.IO) {
-            while (!isSoloMode()) {
-                if (p.channel?.isActive == true) {
-                    p.ping.value = com.yuroyami.syncplaymobile.utils.MiscUtils.pingIcmp("151.80.32.178", 32) * 1000.0
-                } else {
-                    p.ping.value = -1.0
-                }
-                delay(1000)
-            }
-        }
-    }
-
-     */
-
     /** This broadcasts a message to show it in the chat section **/
     fun broadcastMessage(message: String = "", messageComposite: (@Composable () -> String)? = null, isChat: Boolean, chatter: String = "") {
         if (isSoloMode) return

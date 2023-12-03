@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -13,7 +14,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.core.os.LocaleListCompat
-import com.yuroyami.syncplay.utils.CommonUtils.loggy
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
@@ -21,6 +21,8 @@ import java.util.Locale
 import kotlin.math.roundToInt
 
 actual fun getPlatform(): String = "Android"
+
+actual fun loggy(s: String?) { Log.e("SYNCPLAY", s.toString()) }
 
 var defaultEngineAndroid = "exo"
 

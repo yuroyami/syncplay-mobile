@@ -13,15 +13,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import com.yuroyami.syncplay.datastore.DataStoreKeys
 import com.yuroyami.syncplay.datastore.writeBoolean
-import com.yuroyami.syncplay.shared.MR
-import dev.icerock.moko.resources.compose.readTextAsState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -72,16 +72,20 @@ actual fun InfiniteLottieAnimation(
 
 @Composable
 actual fun NightModeToggle(modifier: Modifier, state: State<Boolean>) {
+    val scope = rememberCoroutineScope { Dispatchers.IO }
 
     /* The lottie composition to play */
-    MR.assets.daynight_toggle.readTextAsState().value?.let {
-        if (it.isBlank()) return@let
+    var s by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(Unit) {
+        scope.launch {
+            s = daynightAsset()
+        }
+    }
 
+    s?.let {
         val animation = Animation.makeFromString(it)
 
         val animatable = Animatable(initialValue = if (!state.value) 0f else 0.52f)
-
-        val scope = rememberCoroutineScope()
 
         LaunchedEffect(state.value) {
             /* Applying the corresponding animation */

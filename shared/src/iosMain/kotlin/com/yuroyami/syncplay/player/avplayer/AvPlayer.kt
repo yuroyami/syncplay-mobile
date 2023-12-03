@@ -13,9 +13,6 @@ import com.yuroyami.syncplay.watchroom.p
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.useContents
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import platform.AVFoundation.AVPlayer
 import platform.AVFoundation.AVPlayerItem
@@ -35,7 +32,7 @@ import platform.QuartzCore.CATransaction
 import platform.QuartzCore.kCATransactionDisableActions
 import platform.UIKit.UIView
 
-class AvPlayer : BasePlayer {
+class AvPlayer : BasePlayer() {
 
     val engine = ENGINE.IOS_AVPLAYER
 
@@ -44,9 +41,6 @@ class AvPlayer : BasePlayer {
     lateinit var avView:  AVPlayerViewController
     var playerlayer: AVPlayerLayer? = null
     private var currentMedia: AVPlayerItem? = null
-
-    val avMainScope = CoroutineScope(Dispatchers.Main)
-    val avBGScope = CoroutineScope(Dispatchers.IO)
 
     override fun initialize() {
         avplayer = AVPlayer.new()
@@ -107,7 +101,7 @@ class AvPlayer : BasePlayer {
     override fun injectVideo(uri: String?, isUrl: Boolean) {
         hasVideoG.value = true
 
-        avMainScope.launch {
+        playerScopeMain.launch {
             /* Creating a media file from the selected file */
             if (uri != null || media == null) {
                 media = MediaFile()
@@ -132,7 +126,7 @@ class AvPlayer : BasePlayer {
                 }
 
                 /* Goes back to the beginning for everyone */
-                if (!isSoloMode()) {
+                if (!isSoloMode) {
                     p.currentVideoPosition = 0.0
                 }
 

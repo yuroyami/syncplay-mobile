@@ -51,6 +51,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
+import com.yuroyami.syncplay.compose.fontDirective
+import com.yuroyami.syncplay.compose.fontInter
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
 import com.yuroyami.syncplay.datastore.ds
@@ -67,8 +69,8 @@ object PopupMediaDirs {
     @OptIn(ExperimentalLayoutApi::class)
     @Composable
     fun MediaDirsPopup(visibilityState: MutableState<Boolean>) {
-        val directive4 = Font("MR/fonts/Directive4-Regular.otf")
-        val inter = Font("MR/fonts/Inter-Regular.otf")
+        val directive4 = fontDirective()
+        val inter = fontInter()
 
         return RoomPopup(
             dialogOpen = visibilityState.value,

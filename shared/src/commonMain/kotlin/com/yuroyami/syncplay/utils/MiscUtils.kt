@@ -6,6 +6,8 @@ import androidx.compose.ui.unit.Dp
 
 expect fun getPlatform(): String
 
+expect fun loggy(s: String?)
+
 expect fun getDefaultEngine(): String
 
 expect fun changeLanguage(lang: String, context: Any?)

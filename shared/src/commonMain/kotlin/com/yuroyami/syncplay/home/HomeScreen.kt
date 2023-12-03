@@ -447,7 +447,7 @@ fun HomeScreen(config: HomeConfig) {
                                         .gradientOverlay(),
                                     singleLine = true,
                                     readOnly = true,
-                                    value = selectedServer,
+                                    value = selectedServer.replace("151.80.32.178", "syncplay.pl"),
                                     supportingText = { /* Text(stringResource(R.string.connect_server_c), fontSize = 9.sp) */ },
                                     onValueChange = { },
                                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded.value) }
@@ -637,10 +637,10 @@ fun HomeScreen(config: HomeConfig) {
                                 Image(
                                     painter = painterResource(
                                         when (player.value) {
-                                            "exo" -> "images/exoplayer@1x.png"
-                                            "mpv" -> "images/mpv@1x.png"
-                                            "avplayer" -> "images/swift@1x.png"
-                                            else -> "images/exoplayer@1x.png"
+                                            "exo" -> "images/exoplayer.png"
+                                            "mpv" -> "images/mpv.png"
+                                            "avplayer" -> "images/swift.png"
+                                            else -> "images/exoplayer.png"
                                         }
                                     ),
                                     contentScale = ContentScale.FillHeight,

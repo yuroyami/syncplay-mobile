@@ -9,7 +9,7 @@ import com.yuroyami.syncplay.models.Session
 import com.yuroyami.syncplay.protocol.JsonHandler.handleJson
 import com.yuroyami.syncplay.protocol.JsonSender.sendHello
 import com.yuroyami.syncplay.protocol.JsonSender.sendTLS
-import com.yuroyami.syncplay.utils.CommonUtils.loggy
+import com.yuroyami.syncplay.utils.loggy
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.Connection
 import io.ktor.network.sockets.InetSocketAddress

@@ -19,7 +19,7 @@ import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.ENGINE
 import com.yuroyami.syncplay.player.PlayerUtils
 import com.yuroyami.syncplay.protocol.JsonSender
-import com.yuroyami.syncplay.utils.CommonUtils.loggy
+import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.watchroom.currentTrackChoices

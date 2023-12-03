@@ -9,7 +9,7 @@ plugins {
 
 @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
 kotlin {
-    //targetHierarchy.default()
+    applyDefaultHierarchyTemplate()
 
     androidTarget {
         compilations.all {
@@ -49,9 +49,6 @@ kotlin {
         val ktor = "3.0.0-beta-1"
         val commonMain by getting {
             dependencies {
-                /* Logging handler */
-                implementation("io.github.aakira:napier:2.6.1")
-
                 /* Official JetBrains Kotlin Date 'n time manager (i.e: generating date from epoch) */
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.1")
 
@@ -70,7 +67,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.1")
 
                 /* Jetpack Datastore for preferences and settings (accessible in Compose in real-time) */
-                val datastore = "1.1.0-alpha06"
+                val datastore = "1.1.0-alpha07"
                 api("androidx.datastore:datastore-preferences-core:$datastore")
                 api("androidx.datastore:datastore-core-okio:$datastore")
 
@@ -80,7 +77,7 @@ kotlin {
                 implementation(compose.material3)
                 implementation(compose.materialIconsExtended)
                 @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
-                implementation(compose.components.resources)
+                api(compose.components.resources)
 
                 /* Multiplatform localized string accessor helper */
                 api("dev.icerock.moko:resources-compose:0.23.0") // for compose multiplatform
@@ -136,14 +133,14 @@ kotlin {
                 api("androidx.media3:media3-common:$media3")
             }
         }
-        val iosX64Main by getting
-        val iosArm64Main by getting
-        val iosSimulatorArm64Main by getting
-        val iosMain by creating {
+//        val iosX64Main by getting
+//        val iosArm64Main by getting
+//        val iosSimulatorArm64Main by getting
+        val iosMain by getting {
             dependsOn(commonMain)
-            iosX64Main.dependsOn(this)
-            iosArm64Main.dependsOn(this)
-            iosSimulatorArm64Main.dependsOn(this)
+//            iosX64Main.dependsOn(this)
+//            iosArm64Main.dependsOn(this)
+//            iosSimulatorArm64Main.dependsOn(this)
 
             dependencies {
                 /* Required ktor network client declaration for iOS */
@@ -152,14 +149,24 @@ kotlin {
         }
     }
 }
+//
+//compose {
+//    kotlinCompilerPlugin.set("1.5.4-dev1-kt2.0.0-Beta1")
+//}
 
 android {
     compileSdk = (findProperty("android.compileSdk") as String).toInt()
     namespace = "com.yuroyami.syncplay.shared"
 
-    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-    sourceSets["main"].res.srcDirs("src/androidMain/res")
-    sourceSets["main"].resources.srcDirs("src/commonMain/resources")
+    //sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
+    //sourceSets["main"].res.srcDirs("src/androidMain/res")
+    //sourceSets["main"].resources.srcDirs("src/commonMain/resources")
+    sourceSets {
+        named("main") {
+            resources.srcDirs("src/commonMain/resources")
+           // assets.srcDirs("src/commonMain/resources/assets")
+        }
+    }
 
     defaultConfig {
         minSdk = (findProperty("android.minSdk") as String).toInt()

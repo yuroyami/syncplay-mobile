@@ -71,9 +71,7 @@ import com.yuroyami.syncplay.datastore.ds
 import com.yuroyami.syncplay.datastore.intFlow
 import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.ui.Paletting
-import dev.icerock.moko.resources.compose.painterResource
 import kotlinx.coroutines.delay
-import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 
 object RoomComposables {
@@ -339,38 +337,38 @@ object RoomComposables {
         when (pingValue) {
             null -> {
                 Image(
-                    painter = painterResource("images/network_level_0@1x.png"), "",
+                    painter = painterResource("images/network_level_0.png"), "",
                     modifier = Modifier.size(16.dp).solidOverlay(Color.Gray)
                 )
             }
 
             in (0..90) -> {
                 Image(
-                    painter = painterResource("images/network_level_4@1x.png"), "",
+                    painter = painterResource("images/network_level_4.png"), "",
                     modifier = Modifier.size(16.dp).solidOverlay(Color.Green)
                 )
             }
             in (91..120) -> {
                 Image(
-                    painter = painterResource("images/network_level_3@1x.png"), "",
+                    painter = painterResource("images/network_level_3.png"), "",
                     modifier = Modifier.size(16.dp).solidOverlay(Color.Yellow)
                 )
             }
             in (121..160) -> {
                 Image(
-                    painter = painterResource("images/network_level_3@1x.png"), "",
+                    painter = painterResource("images/network_level_3.png"), "",
                     modifier = Modifier.size(16.dp).solidOverlay(Color(255, 176, 66))
                 )
             }
             in (161..200) -> {
                 Image(
-                    painter = painterResource("images/network_level_2@1x.png"), "",
+                    painter = painterResource("images/network_level_2.png"), "",
                     modifier = Modifier.size(16.dp).solidOverlay(Color(181, 80, 25))
                 )
             }
             else -> {
                 Image(
-                    painter = painterResource("images/network_level_1@1x.png"), "",
+                    painter = painterResource("images/network_level_1.png"), "",
                     modifier = Modifier.size(16.dp).solidOverlay(Color.Red)
                 )
             }

@@ -10,11 +10,13 @@ import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.TrackChoices
 import com.yuroyami.syncplay.player.BasePlayer
+import com.yuroyami.syncplay.player.PlayerUtils.pausePlayback
+import com.yuroyami.syncplay.player.PlayerUtils.playPlayback
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.protocol.ProtocolCallback
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.shared.MR
-import com.yuroyami.syncplay.utils.CommonUtils.loggy
+import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.RoomUtils.broadcastMessage
 import com.yuroyami.syncplay.utils.timeStamper
 import dev.icerock.moko.resources.compose.stringResource
@@ -42,7 +44,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                 loggy("SYNCPLAY Protocol: Someone ($pauser) paused.")
 
                 if (pauser != p.session.currentUsername) {
-                    //TODO: pausePlayback()
+                    pausePlayback()
                 }
                 broadcastMessage(
                     messageComposite = { stringResource(MR.strings.room_guy_paused, pauser, timeStamper(p.currentVideoPosition.toLong())) },
@@ -54,7 +56,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                 loggy("SYNCPLAY Protocol: Someone ($player) unpaused.")
 
                 if (player != p.session.currentUsername) {
-                    //TODO: playPlayback()
+                    playPlayback()
                 }
 
                 broadcastMessage(messageComposite = { stringResource(MR.strings.room_guy_played, player) }, isChat = false)
@@ -80,7 +82,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                 /* If the setting is enabled, pause playback **/
                 val pauseOnLeft = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainBoolean(PREF_PAUSE_ON_SOMEONE_LEAVE, true) }
                 if (pauseOnLeft) {
-                    //TODO: pausePlayback()
+                    pausePlayback()
                 }
 
                 /* Rare cases where a user can see his own self disconnected */
@@ -164,11 +166,6 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                 /** Adjusting connection state */
                 p.state = Constants.CONNECTIONSTATE.STATE_CONNECTED
 
-                /** Dismissing the 'Disconnected' popup since it's irrelevant at this point **/
-                /* lifecycleScope.launch(Dispatchers.Main) {
-                    disconnectedPopup.dismiss() /* Dismiss any disconnection popup, if they exist */
-                } */
-
                 /** Set as ready first-hand */
                 if (media == null) {
                     p.ready = setReadyDirectly
@@ -236,9 +233,6 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                 /** Telling user that the connection has been lost **/
                 broadcastMessage(messageComposite = { stringResource(MR.strings.room_attempting_reconnection) }, isChat = false)
 
-                /** Showing a popup that informs the user about their DISCONNECTED state **/
-                //TODO: showPopup(disconnectedPopup, true)
-
                 /** Attempting reconnection **/
                 p.reconnect()
             }
@@ -271,7 +265,6 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                     )
                 }
             }
-
         }
 
         /** Getting information from joining info argument **/

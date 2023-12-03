@@ -31,7 +31,7 @@ import com.yuroyami.syncplay.player.ENGINE
 import com.yuroyami.syncplay.player.PlayerOptions
 import com.yuroyami.syncplay.player.PlayerUtils.trackProgress
 import com.yuroyami.syncplay.protocol.JsonSender
-import com.yuroyami.syncplay.utils.CommonUtils.loggy
+import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.watchroom.currentTrackChoices
@@ -55,7 +55,7 @@ class ExoPlayer : BasePlayer() {
     var exoplayer: ExoPlayer? = null
     private var session: MediaSession? = null
     private var currentMedia: MediaItem? = null
-    lateinit var exoView: PlayerView
+    private lateinit var exoView: PlayerView
 
     override fun initialize() {
         val context = exoView.context

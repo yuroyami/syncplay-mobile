@@ -84,6 +84,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
@@ -141,6 +142,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -150,6 +152,17 @@ import kotlin.math.roundToInt
 val hasVideoG = mutableStateOf(false)
 val hudVisibilityState = mutableStateOf(true)
 val pipMode = mutableStateOf(false)
+
+val osdMsg = mutableStateOf("")
+var osdJob: Job? = null
+fun CoroutineScope.dispatchOSD(s: String) {
+    osdJob?.cancel(null)
+    osdJob = launch(Dispatchers.IO) {
+        osdMsg.value = s
+        delay(2000) //TODO Option to change delay
+        osdMsg.value = ""
+    }
+}
 
 var setReadyDirectly = false
 val seeks = mutableListOf<Pair<Long, Long>>()
@@ -194,9 +207,10 @@ fun RoomUI() {
         val dimensions = getScreenSizeInfo()
 
         val hasVideo = remember { hasVideoG }
-        val hudVisibility = remember { hudVisibilityState }
+        var hudVisibility by remember { hudVisibilityState }
+        var hudRenevator by remember { mutableStateOf(false) } //Revives HUD timeout
         val pipModeObserver by remember { pipMode }
-        val locked = remember { mutableStateOf(false) }
+        var locked by remember { mutableStateOf(false) }
 
         val addurlpopupstate = remember { mutableStateOf(false) }
         val chathistorypopupstate = remember { mutableStateOf(false) }
@@ -210,6 +224,14 @@ fun RoomUI() {
         val msgMaxCount by DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_MSG_MAXCOUNT, 10).collectAsState(initial = 0)
         val keyboardOkFunction by DATASTORE_INROOM_PREFERENCES.ds().booleanFlow(PREF_INROOM_MSG_BOX_ACTION, true).collectAsState(initial = true)
 
+        /* Time-out HUD hider */
+        LaunchedEffect(hudVisibility, hudRenevator) {
+            if (hudVisibility) {
+                delay(3000) //TODO Use prefs
+                hudVisibility = false
+            }
+        }
+
         /** Room artwork underlay (when no video is loaded) */
         if (!hasVideo.value) {
             RoomArtwork(pipModeObserver)
@@ -221,7 +243,7 @@ fun RoomUI() {
         /** Lock layout, This is what appears when the user locks the screen */
         val unlockButtonVisibility = remember { mutableStateOf(false) }
 
-        if (locked.value) {
+        if (locked) {
             /** The touch interceptor to switch unlock button visibility */
             Box(
                 Modifier
@@ -248,7 +270,8 @@ fun RoomUI() {
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = rememberRipple(color = Paletting.SP_ORANGE)
                             ) {
-                                locked.value = false
+                                locked = false
+                                hudVisibility = true
                             },
                         shape = RoundedCornerShape(6.dp),
                         border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT)),
@@ -295,8 +318,8 @@ fun RoomUI() {
                 gestures = gestures,
                 hasVideo = hasVideo.value,
                 onSingleTap = {
-                    hudVisibility.value = !hudVisibility.value
-                    if (!hudVisibility.value) {
+                    hudVisibility = !hudVisibility
+                    if (!hudVisibility) {
                         /* Hide any popups */
                         controlcardvisible = false
                         addmediacardvisible = false
@@ -305,7 +328,7 @@ fun RoomUI() {
             )
 
             /* HUD below: We resort to using a combination of Boxes, Rows, and Columns. */
-            if (hudVisibility.value) {
+            if (hudVisibility) {
                 Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
 
                     /* Top row (Message input box + Messages) */
@@ -421,8 +444,12 @@ fun RoomUI() {
 
                                     PingRadar(pingo)
                                 }
+
                                 Text(text = "Room: ${p.session.currentRoom}", fontSize = 11.sp, color = Paletting.OLD_SP_PINK)
                             }
+
+                            val osd by remember { osdMsg }
+                            Text(text = osd, fontSize = 11.sp, color = Paletting.SP_PALE)
                         }
                     }
 
@@ -474,8 +501,8 @@ fun RoomUI() {
 
                             /** Lock card */
                             RoomTab(icon = Icons.Filled.Lock, visibilityState = false) {
-                                locked.value = true
-                                hudVisibility.value = false
+                                locked = true
+                                hudVisibility = false
                             }
 
                             Spacer(Modifier.width(6.dp))
@@ -966,7 +993,10 @@ fun RoomUI() {
                     }
 
                     /* Bottom-right row (Controls) */
-                    Row(modifier = Modifier.align(Alignment.BottomEnd).padding(4.dp)) {
+                    Row(
+                        verticalAlignment = CenterVertically,
+                        modifier = Modifier.align(Alignment.BottomEnd).padding(4.dp)
+                    ) {
                         if (hasVideo.value) {
                             FancyIcon2(
                                 modifier = Modifier,
@@ -1077,7 +1107,7 @@ fun RoomUI() {
         /** Fading Message overlay */
         if (!isSoloMode) {
             fadingMessageLayout(
-                hudVisibility = hudVisibility.value,
+                hudVisibility = hudVisibility,
                 pipModeObserver = pipModeObserver,
                 msgPalette
             )
