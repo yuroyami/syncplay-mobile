@@ -2,12 +2,16 @@ package com.yuroyami.syncplay
 
 import android.app.Activity
 import android.content.Intent
+import android.media.AudioManager
 import android.os.Bundle
+import android.provider.Settings
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.media3.common.C
+import androidx.media3.common.C.STREAM_TYPE_MUSIC
 import com.yuroyami.syncplay.datastore.DataStoreKeys
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_MISC_PREFS
@@ -18,10 +22,13 @@ import com.yuroyami.syncplay.player.exo.ExoPlayer
 import com.yuroyami.syncplay.player.mpv.MpvPlayer
 import com.yuroyami.syncplay.utils.UIUtils.cutoutMode
 import com.yuroyami.syncplay.utils.UIUtils.hideSystemUI
+import com.yuroyami.syncplay.utils.audioManager
 import com.yuroyami.syncplay.utils.changeLanguage
 import com.yuroyami.syncplay.utils.defaultEngineAndroid
+import com.yuroyami.syncplay.watchroom.GestureCallback
 import com.yuroyami.syncplay.watchroom.PickerCallback
 import com.yuroyami.syncplay.watchroom.RoomUI
+import com.yuroyami.syncplay.watchroom.gestureCallback
 import com.yuroyami.syncplay.watchroom.pickFuture
 import com.yuroyami.syncplay.watchroom.pickerCallback
 import com.yuroyami.syncplay.watchroom.player
@@ -62,6 +69,8 @@ class WatchActivity : ComponentActivity() {
         hideSystemUI(false)
         cutoutMode(true)
 
+        /* Volume controls should adjust the music volume while in the app */
+
         /** Checking whether this APK at this point supports multi-engine players */
         val engine = getEngineForString(
             runBlocking { DATASTORE_MISC_PREFS.obtainString(DataStoreKeys.MISC_PLAYER_ENGINE, defaultEngineAndroid) }
@@ -87,6 +96,37 @@ class WatchActivity : ComponentActivity() {
                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                 dirPickResult.launch(intent)
+            }
+        }
+
+        gestureCallback = object: GestureCallback {
+            override fun getMaxVolume() = audioManager.getStreamMaxVolume(C.STREAM_TYPE_MUSIC)
+            override fun getCurrentVolume() = audioManager.getStreamVolume(C.STREAM_TYPE_MUSIC)
+            override fun changeCurrentVolume(v: Int) {
+                if (!audioManager.isVolumeFixed) {
+                    audioManager.setStreamVolume(STREAM_TYPE_MUSIC, v, AudioManager.FLAG_SHOW_UI)
+                }
+            }
+
+            override fun getMaxBrightness() = 1f
+            override fun getCurrentBrightness(): Float {
+                val brightness = window.attributes.screenBrightness
+
+                //Check if we already have a brightness
+                val brightnesstemp = if (brightness != -1f)
+                    brightness
+                else {
+                    //Check if the device is in auto mode
+                    if (Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC) {
+                        //cannot retrieve a value -> 0.5
+                        0.5f
+                    } else Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS, 128).toFloat() / 255
+                }
+
+                return brightnesstemp
+            }
+            override fun changeCurrentBrightness(v: Float) {
+                window.attributes.screenBrightness = v.coerceIn(0f, 1f)
             }
         }
 

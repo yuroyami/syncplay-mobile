@@ -34,7 +34,7 @@
     <string name="room_startup_hint">"通过点击下面的图标按钮从手机存储插入一个新的视频"</string>
     <string name="room_selected_vid">选择的视频文件: %s</string>
     <string name="room_selected_sub">选择的字幕文件: %s</string>
-    <string name="room_selected_sub_error">无效的字幕文件.支持的格式有: \'SRT\', \'TTML\', \'ASS\', \'SSA\', \'VTT\'</string>
+    <string name="room_selected_sub_error">无效的字幕文件.支持的格式有: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'</string>
     <string name="room_sub_error_load_vid_first">第一次加载视频</string>
     <string name="room_type_message">输入你要说的内容…</string>
     <string name="room_send_button">发送</string>
@@ -58,7 +58,7 @@
     <string name="room_rewinded">由于播放时间差距大而倒退 %s</string>
     <string name="room_guy_left">%s 离开房间.</string>
     <string name="room_guy_joined">%s 您已经加入聊天室.</string>
-    <string name="room_isplayingfile">%1s 正在播放 \'%2s\' (%3s)</string>
+    <string name="room_isplayingfile">%1s 正在播放 '%2s' (%3s)</string>
     <string name="room_you_joined_room">你已经加入聊天室: %s</string>
     <string name="room_scaling_fit_screen">调整尺寸: 适合屏幕</string>
     <string name="room_scaling_fixed_width">调整尺寸: 固定宽度</string>
@@ -75,14 +75,14 @@
     <string name="room_details_nofileplayed">(没有播放视频)</string>
     <string name="room_details_file_properties">时长: %1s - 大小: %2s MBs</string>
     <string name="disconnected_notice_header">断开连接</string>
-    <string name="disconnected_notice_a">您已与服务器断开连接.\n这可能是由于您的网络连接的问题或您正在连接的服务器的问题.如果问题仍然存在,请更换服务器.</string>
+    <string name="disconnected_notice_a">您已与服务器断开连接. 这可能是由于您的网络连接的问题或您正在连接的服务器的问题.如果问题仍然存在,请更换服务器.</string>
     <string name="disconnected_notice_b">尝试重新连接…</string>
-    <string name="room_file_mismatch_warning_core">"你的文件不同于 %s\'s 请按照以下方式进行归档: "</string>
+    <string name="room_file_mismatch_warning_core">"你的文件不同于 %s's 请按照以下方式进行归档: "</string>
     <string name="room_file_mismatch_warning_name">"名称. "</string>
     <string name="room_file_mismatch_warning_duration">"时长. "</string>
     <string name="room_file_mismatch_warning_size">"大小. "</string>
     <string name="room_shared_playlist">房间的分享播放列表</string>
-    <string name="room_shared_playlist_brief">导入一个文件或一个目录，包括文件名到播放列表.\n 单击文件链接，让所有用户播放它.</string>
+    <string name="room_shared_playlist_brief">导入一个文件或一个目录，包括文件名到播放列表.  单击文件链接，让所有用户播放它.</string>
     <string name="room_shared_playlist_updated">%s 更新播放列表</string>
     <string name="room_shared_playlist_changed">%s 更改了当前选择的播放列表</string>
     <string name="room_shared_playlist_no_directories">您没有为共享播放列表指定任何媒体目录. 手动添加文件.</string>

@@ -3,6 +3,11 @@ package com.yuroyami.syncplay.locale
 import com.yuroyami.syncplay.utils.format
 import com.yuroyami.syncplay.utils.loggy
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.Serializable
+import nl.adaptivity.xmlutil.serialization.XML
+import nl.adaptivity.xmlutil.serialization.XmlElement
+import nl.adaptivity.xmlutil.serialization.XmlSerialName
+import nl.adaptivity.xmlutil.serialization.XmlValue
 import org.jetbrains.compose.resources.readResourceBytes
 
 object Localization {
@@ -26,13 +31,8 @@ object Localization {
             strings[lang.value]!![key]!!.format(*args)
         } catch (e: NullPointerException) {
             load(Language.ENGLISH)
-            strings[Language.ENGLISH.value]?.get(key)?.format(*args) ?: throw Exception("")
-        } catch (e: Exception) {
-            loggy(e.stackTraceToString())
-            loggy(key)
-            ""
+            strings[Language.ENGLISH.value]?.get(key)!!.format(*args)
         }
-
     }
 
     private fun load(language: Language) {
@@ -42,29 +42,31 @@ object Localization {
         strings[language.value] = parsed
     }
 
-    private fun parseXmlContent(xmlContent: String): Map<String, String> {
+    private fun parseXml(xml: String): Map<String, String> {
         val map = HashMap<String, String>()
-        val regex = "<string name=\"(.*?)\">(.*?)</string>".toRegex()
-        regex.findAll(xmlContent).forEach { matchResult ->
-            val key = matchResult.groups[1]?.value ?: ""
-            val value = matchResult.groups[2]?.value ?: ""
-            map[key] = value
+        val res = XML.decodeFromString(LocalizedStrings.serializer(), xml)
+        res.strings.forEach {
+            loggy("${it.name}  == ${it.v}")
+            map[it.name] = it.v
         }
         return map
     }
 
-    private fun parseXml(xml: String): Map<String, String> {
-        val map = HashMap<String, String>()
-//        val document = Ksoup.parse(xml, Parser.xmlParser())
-//        document.selectFirst("resources")?.children()?.forEach {
-//            if (it.tagName() == "string") {
-//                loggy("ELEMENTO $it")
-//                val sName = it.attr("name")
-//                val sValue = it.textNodes().joinToString(separator = "") { s -> s.coreValue() }
-//                map[sName] = sValue
-//            }
-//        }
+    @Serializable
+    @XmlSerialName("resources", "", "")
+    data class LocalizedStrings(
+        @XmlElement(true)
+        val strings: MutableList<LocalizedString>
+    ) {
+        @Serializable
+        @XmlSerialName("string", "", "")
+        data class LocalizedString(
+            @XmlElement(false)
+            @XmlSerialName("name", "", "")
+            val name: String,
 
-        return map
+            @XmlValue(true)
+            val v: String
+        )
     }
 }

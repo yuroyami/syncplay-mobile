@@ -44,14 +44,10 @@ import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.media
 import com.yuroyami.syncplay.watchroom.p
 import com.yuroyami.syncplay.watchroom.timeFull
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.util.Collections
 import kotlin.math.abs
-import com.yuroyami.syncplay.R as XR
 
 class ExoPlayer : BasePlayer() {
     override val engine = ENGINE.ANDROID_EXOPLAYER
@@ -321,6 +317,7 @@ class ExoPlayer : BasePlayer() {
         } else {
             //toasty(getString(R.string.room_sub_error_load_vid_first))
         }
+
     }
 
     override fun injectVideo(uri: String?, isUrl: Boolean) {

@@ -1,6 +1,7 @@
 package com.yuroyami.syncplay.utils
 
 import android.content.Context
+import android.media.AudioManager
 import android.net.Uri
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
@@ -8,6 +9,7 @@ import com.yuroyami.syncplay.models.MediaFile
 import java.net.MalformedURLException
 import java.net.URL
 
+lateinit var audioManager: AudioManager
 
 fun collectInfoLocalAndroid(media: MediaFile, context: Context) {
     with (media) {

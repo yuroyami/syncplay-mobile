@@ -14,6 +14,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.core.os.LocaleListCompat
+import androidx.media3.common.C.STREAM_TYPE_MUSIC
+import com.yuroyami.syncplay.watchroom.player
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader

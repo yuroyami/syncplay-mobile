@@ -81,6 +81,7 @@ kotlin {
 
                 /* XML parser to read string localz */
                 implementation("io.github.pdvrieze.xmlutil:core:0.86.2")
+                implementation("io.github.pdvrieze.xmlutil:serialization:0.86.2")
             }
         }
 
@@ -148,7 +149,7 @@ kotlin {
         }
     }
 }
-//
+
 compose {
     kotlinCompilerPlugin.set("1.5.4-dev1-kt2.0.0-Beta1")
 }

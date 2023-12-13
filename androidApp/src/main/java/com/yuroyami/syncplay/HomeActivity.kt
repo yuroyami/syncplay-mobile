@@ -1,6 +1,8 @@
 package com.yuroyami.syncplay
 
+import android.content.Context
 import android.content.Intent
+import android.media.AudioManager
 import android.os.Bundle
 import android.view.WindowManager
 import android.widget.Toast
@@ -31,6 +33,7 @@ import com.yuroyami.syncplay.locale.Localization.stringResource
 import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.utils.JoinCallback
 import com.yuroyami.syncplay.utils.LanguageChange
+import com.yuroyami.syncplay.utils.audioManager
 import com.yuroyami.syncplay.utils.changeLanguage
 import com.yuroyami.syncplay.utils.defaultEngineAndroid
 import com.yuroyami.syncplay.utils.joinCallback
@@ -59,6 +62,8 @@ class HomeActivity : ComponentActivity() {
         changeLanguage(lang, this)
 
         super.onCreate(savedInstanceState)
+
+        audioManager = applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
         /** Getting saved config */
         val config = HomeConfig()

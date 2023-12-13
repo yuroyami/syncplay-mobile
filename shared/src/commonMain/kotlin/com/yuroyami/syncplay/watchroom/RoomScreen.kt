@@ -6,7 +6,6 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -77,6 +76,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -84,9 +84,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.Bottom
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
@@ -100,10 +102,13 @@ import com.yuroyami.syncplay.compose.ComposeUtils.FancyIcon2
 import com.yuroyami.syncplay.compose.ComposeUtils.FlexibleFancyAnnotatedText
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.compose.cards.CardRoomPrefs.InRoomSettingsCard
+import com.yuroyami.syncplay.compose.cards.CardSharedPlaylist.SharedPlaylistCard
 import com.yuroyami.syncplay.compose.cards.CardUserInfo.UserInfoCard
 import com.yuroyami.syncplay.compose.fontDirective
 import com.yuroyami.syncplay.compose.fontInter
+import com.yuroyami.syncplay.compose.popups.PopupAddUrl.AddUrlPopup
 import com.yuroyami.syncplay.compose.popups.PopupChatHistory.ChatHistoryPopup
+import com.yuroyami.syncplay.compose.popups.PopupSeekToPosition.SeekToPositionPopup
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_INROOM_PREFERENCES
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_MISC_PREFS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_NIGHTMODE
@@ -246,11 +251,11 @@ fun RoomUI() {
             /** The touch interceptor to switch unlock button visibility */
             Box(
                 Modifier.fillMaxSize().clickable(
-                        interactionSource = MutableInteractionSource(),
-                        indication = null, onClick = {
-                            unlockButtonVisibility.value = !unlockButtonVisibility.value
-                        }
-                    )
+                    interactionSource = MutableInteractionSource(),
+                    indication = null, onClick = {
+                        unlockButtonVisibility.value = !unlockButtonVisibility.value
+                    }
+                )
             )
 
             Column(
@@ -310,21 +315,6 @@ fun RoomUI() {
                 }
             }
 
-            /* Gestures Interceptor */
-            GestureInterceptor(
-                gestures = gestures,
-                hasVideo = hasVideo.value,
-                onSingleTap = {
-                    hudVisibility = !hudVisibility
-                    if (!hudVisibility) {
-                        /* Hide any popups */
-                        controlcardvisible = false
-                        addmediacardvisible = false
-                    }
-                }
-            )
-
-            /* HUD below: We resort to using a combination of Boxes, Rows, and Columns. */
             if (hudVisibility) {
                 Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
 
@@ -378,22 +368,19 @@ fun RoomUI() {
 
                         /* Messages */
                         if (!isSoloMode) {
-                            Card(
-                                modifier = Modifier.clickable(false){}.focusable(false),
-                                shape = RoundedCornerShape(4.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (hasVideo.value || MaterialTheme.colorScheme.primary != Paletting.OLD_SP_YELLOW)
+                            Box(
+                                modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(
+                                    color = if (hasVideo.value || MaterialTheme.colorScheme.primary != Paletting.OLD_SP_YELLOW)
                                         Color(50, 50, 50, msgBoxOpacity.value) else Color.Transparent
-                                ),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                                )
                             ) {
                                 //val lastMessages = msgs.toList().takeLast(msgMaxCount)
-                                val lastMessages = remember(msgs.size) { msgs.takeLast(msgMaxCount) }
+                                val lastMessages = msgs.takeLast(msgMaxCount)
 
                                 LazyColumn(
                                     contentPadding = PaddingValues(8.dp),
                                     userScrollEnabled = false,
-                                    modifier = Modifier.fillMaxWidth().clickable(false){}.focusable(false)
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
                                     //TODO: Show errors in red
                                     items(lastMessages) {
@@ -404,8 +391,7 @@ fun RoomUI() {
                                         val text = it.factorize(msgPalette)
 
                                         FlexibleFancyAnnotatedText(
-                                            modifier = Modifier.fillMaxWidth()
-                                                .clickable(enabled = false) {}.focusable(false),
+                                            modifier = Modifier.fillMaxWidth(),
                                             text = text,
                                             size = if (pipModeObserver) 6f else (msgFontSize.value.toFloat()),
                                             font = inter,
@@ -419,7 +405,26 @@ fun RoomUI() {
                             }
                         }
                     }
+                }
+            }
 
+            /* Gestures Interceptor */
+            GestureInterceptor(
+                gestures = gestures,
+                hasVideo = hasVideo.value,
+                onSingleTap = {
+                    hudVisibility = !hudVisibility
+                    if (!hudVisibility) {
+                        /* Hide any popups */
+                        controlcardvisible = false
+                        addmediacardvisible = false
+                    }
+                }
+            )
+
+            /* HUD below: We resort to using a combination of Boxes, Rows, and Columns. */
+            if (hudVisibility) {
+                Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
                     /* Top-Center info */
                     /* Overall info (PING + ROOMNAME + OSD Messages) */
                     if (!isSoloMode && !pipModeObserver) {
@@ -638,7 +643,7 @@ fun RoomUI() {
                                     exit = slideOutHorizontally(targetOffsetX = { (dimensions.wPX * 1.3).toInt() }),
                                     visible = !inroomprefsVisibility.value && !userinfoVisibility.value && sharedplaylistVisibility.value
                                 ) {
-                                    //TODO: SharedPlaylistCard()
+                                    SharedPlaylistCard()
                                 }
                             }
 
@@ -694,6 +699,7 @@ fun RoomUI() {
                                             }, size = ROOM_ICON_SIZE, shadowColor = Color.Black
                                         ) {
                                             gestures = !gestures
+                                            composeScope.dispatchOSD(if (gestures) "Gestures enabled" else "Gestures disabled")
                                         }
 
                                         /* Seek To */
@@ -902,10 +908,10 @@ fun RoomUI() {
                             val slidermax by remember { timeFull }
                             val interactionSource = remember { MutableInteractionSource() }
 
-                            Row(modifier = Modifier.fillMaxWidth(0.75f)) {
+                            Row(modifier = Modifier.fillMaxWidth(0.75f), verticalAlignment = Bottom) {
 
                                 Column(
-                                    modifier = Modifier.fillMaxWidth(0.33f).offset(x=25.dp, y=10.dp),
+                                    modifier = Modifier.fillMaxWidth(0.33f).offset(x = 25.dp, y = 10.dp),
                                     horizontalAlignment = Alignment.Start,
                                     verticalArrangement = Arrangement.Bottom,
                                 ) {
@@ -949,12 +955,12 @@ fun RoomUI() {
                                 valueRange = (0f..(slidermax.toFloat())),
                                 onValueChange = { f ->
                                     player?.seekTo(f.toLong() * 1000L)
-                                     if (isSoloMode) {
-                                         player?.let {
-                                             composeScope.launch(Dispatchers.Main) {
-                                                 seeks.add(Pair(it.currentPositionMs(), f.toLong() * 1000))
-                                             }
-                                         }
+                                    if (isSoloMode) {
+                                        player?.let {
+                                            composeScope.launch(Dispatchers.Main) {
+                                                seeks.add(Pair(it.currentPositionMs(), f.toLong() * 1000))
+                                            }
+                                        }
                                     }
 
                                     slidervalue = f.toLong()
@@ -1048,7 +1054,8 @@ fun RoomUI() {
                                                 addmediacardvisible = false
                                                 val result = pickFuture?.await() ?: return@launch
                                                 player?.injectVideo(result, false)
-                                            } catch (_: CancellationException) {}
+                                            } catch (_: CancellationException) {
+                                            }
                                         }
                                     }
                                 )
@@ -1107,8 +1114,8 @@ fun RoomUI() {
 
 
         /** Popups */
-        //AddUrlPopup(visibilityState = addurlpopupstate)
-        //SeekToPositionPopup(visibilityState = seektopopupstate)
+        AddUrlPopup(visibilityState = addurlpopupstate)
+        SeekToPositionPopup(visibilityState = seektopopupstate)
         if (!isSoloMode) ChatHistoryPopup(visibilityState = chathistorypopupstate, msgPalette)
     }
 }

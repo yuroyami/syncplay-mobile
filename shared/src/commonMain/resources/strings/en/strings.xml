@@ -1,12 +1,12 @@
 <resources>
-    <string name="app_name" translatable="false">Syncplay</string>
+    <string name="app_name">Syncplay</string>
 
     <!-- Contextless Strings -->
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="okay">Okay</string>
     <string name="cancel">Cancel</string>
-    <string name="dont_show_again">Don\'t show this again</string>
+    <string name="dont_show_again">Don't show this again</string>
     <string name="play">Play</string>
     <string name="pause">Pause</string>
     <string name="delete">Delete</string>
@@ -29,30 +29,30 @@
     <string name="connect_roomname_c">Room where you and your friends watch </string>
     <string name="connect_server_a">Select Syncplay server:</string>
     <string name="connect_server_b">Server address</string>
-    <string name="connect_server_c">Make sure that you and your friends\njoin the same server.</string>
+    <string name="connect_server_c">Make sure that you and your friends join the same server.</string>
     <string name="connect_button_join">Join Room</string>
     <string name="connect_button">Join Room</string>
     <string name="connect_button_saveshortcut">Save current config as home shortcut</string>
     <string name="connect_button_current_engine">Current engine: %s</string>
 
-    <string name="connect_footnote">Syncplay\'s Unofficial Android Client</string>
-    <string name="connect_username_empty_error">Username shouldn\'t be empty</string>
-    <string name="connect_roomname_empty_error">Roomname shouldn\'t be empty</string>
-    <string name="connect_address_empty_error">Server Address shouldn\'t be empty</string>
+    <string name="connect_footnote">Syncplay's Unofficial Android Client</string>
+    <string name="connect_username_empty_error">Username shouldn't be empty</string>
+    <string name="connect_roomname_empty_error">Roomname shouldn't be empty</string>
+    <string name="connect_address_empty_error">Server Address shouldn't be empty</string>
     <string name="connect_port_empty_error">Enter port!</string>
 
     <string name="connect_enter_custom_server">Enter Custom Server</string>
     <string name="connect_custom_server_password">Password (Empty if not required)</string>
     <string name="connect_port">Port</string>
     <string name="connect_nightmodeswitch">Switch the day/night mode.</string>
-    <string name="connect_solomode">Enter solo mode\n(video-player only)</string>
+    <string name="connect_solomode">Enter solo mode (video-player only)</string>
 
 
     <!-- Room Activity Strings -->
     <string name="room_startup_hint">"Insert a new video from storage by clicking on the button with the following icon "</string>
     <string name="room_selected_vid">Selected video file: %s</string>
     <string name="room_selected_sub">Loaded subtitle file: %s</string>
-    <string name="room_selected_sub_error">Invalid subtitle file. Supported formats are: \'SRT\', \'TTML\', \'ASS\', \'SSA\', \'VTT\'</string>
+    <string name="room_selected_sub_error">Invalid subtitle file. Supported formats are: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'</string>
     <string name="room_sub_error_load_vid_first">Load video first</string>
     <string name="room_type_message">Type your message…</string>
     <string name="room_send_button">SEND</string>
@@ -76,7 +76,7 @@
     <string name="room_rewinded">Rewinded due to time difference with %s</string>
     <string name="room_guy_left">%s left the room.</string>
     <string name="room_guy_joined">%s joined the room.</string>
-    <string name="room_isplayingfile">%1s is playing \'%2s\' (%3s)</string>
+    <string name="room_isplayingfile">%1s is playing '%2s' (%3s)</string>
     <string name="room_you_joined_room">You have joined the room: %s</string>
     <string name="room_scaling_fit_screen">Resize Mode: FIT TO SCREEN</string>
     <string name="room_scaling_fixed_width">Resize Mode: FIXED WIDTH</string>
@@ -93,18 +93,18 @@
     <string name="room_details_nofileplayed">(No file being played)</string>
     <string name="room_details_file_properties">Duration: %1s - Size: %2s MBs</string>
     <string name="disconnected_notice_header">DISCONNECTED</string>
-    <string name="disconnected_notice_a">You have been disconnected from the server.\nThis may be due to a problem in your internet connection or an issue with the server you\'re connecting to. If the problem persists, change the server.</string>
+    <string name="disconnected_notice_a">You have been disconnected from the server. This may be due to a problem in your internet connection or an issue with the server you're connecting to. If the problem persists, change the server.</string>
     <string name="disconnected_notice_b">Attempting to reconnect…</string>
-    <string name="room_file_mismatch_warning_core">"Your file is different from %s\'s file in the following ways: "</string>
+    <string name="room_file_mismatch_warning_core">"Your file is different from %s's file in the following ways: "</string>
     <string name="room_file_mismatch_warning_name">"Name. "</string>
     <string name="room_file_mismatch_warning_duration">"Duration. "</string>
     <string name="room_file_mismatch_warning_size">"Size. "</string>
-    <string name="room_shared_playlist">Room\'s Shared Playlist</string>
-    <string name="room_shared_playlist_brief">Import a file or a directory to include file name(s) into the playlist.\n Click on a file line to get all users to play it.</string>
+    <string name="room_shared_playlist">Room's Shared Playlist</string>
+    <string name="room_shared_playlist_brief">Import a file or a directory to include file name(s) into the playlist.  Click on a file line to get all users to play it.</string>
     <string name="room_shared_playlist_updated">%s updated the playlist</string>
     <string name="room_shared_playlist_changed">%s changed the playlist current selection</string>
     <string name="room_shared_playlist_no_directories">You have not specified any media directories for shared playlists. Manually add the files.</string>
-    <string name="room_shared_playlist_not_found">Syncplay couldn\'t find the file that is currently playing in the shared playlist in your media directories.</string>
+    <string name="room_shared_playlist_not_found">Syncplay couldn't find the file that is currently playing in the shared playlist in your media directories.</string>
     <string name="room_shared_playlist_not_featured">This room or server do not have Shared Playlists feature on.</string>
     <string name="room_shared_playlist_button_add_file">Add file(s) to bottom of playlist</string>
     <string name="room_shared_playlist_button_add_folder">Add folder to playlist (and media directories)</string>
@@ -136,7 +136,7 @@
 
 
     <!-- Directories Activity Strings -->
-    <string name="media_directories">Media Directories for \nShared Playlist</string>
+    <string name="media_directories">Media Directories for  Shared Playlist</string>
     <string name="media_directories_brief">Syncplay will search any media directories you specify here in order to find a name that a shared playlist is playing. It is much better if you specify small directories as the searching operation can throttle and be very slow.</string>
     <string name="media_directories_setting_summary">Syncplay will search any media directories you specify here in order to find a name that a shared playlist is playing.</string>
     <string name="media_directories_save">Save &amp; Exit</string>
@@ -160,20 +160,20 @@
     <string name="setting_display_language_summry">Select your language of choice with which Syncplay is displayed.</string>
     <string name="setting_display_language_toast">Changed language. Restart app for the setting to take full effect.</string>
     <string name="setting_audio_default_language_title">Preferred Audio Track Language</string>
-    <string name="setting_audio_default_language_summry">Automatically load a audio track with the language code you set here.\nFor example, English code is \'en-US\', Japanese is \'ja-JP\'.\nGoogle \'IETF BCP 47 codes\' for more information.</string>
+    <string name="setting_audio_default_language_summry">Automatically load a audio track with the language code you set here. For example, English code is 'en-US', Japanese is 'ja-JP'. Google 'IETF BCP 47 codes' for more information.</string>
     <string name="setting_cc_default_language_title">Preferred Subtitle Language</string>
-    <string name="setting_cc_default_language_summry">Automatically load a subtitle track with the language code you set here.\nFor example, English code is \'en-US\', Japanese is \'ja-JP\'.\nGoogle \'IETF BCP 47 codes\' for more information.</string>
+    <string name="setting_cc_default_language_summry">Automatically load a subtitle track with the language code you set here. For example, English code is 'en-US', Japanese is 'ja-JP'. Google 'IETF BCP 47 codes' for more information.</string>
     <string name="setting_use_buffer_title">Use Custom Buffer Sizes</string>
-    <string name="setting_use_buffer_summary">If you are not satisfied with the player\'s video load times before and during
+    <string name="setting_use_buffer_summary">If you are not satisfied with the player's video load times before and during
         playback, you can use custom buffer sizes (Use at your own risk).</string>
     <string name="setting_max_buffer_title">Custom max buffer size</string>
     <string name="setting_max_buffer_summary">Default is 30 (30000 milliseconds). This determines the maximum buffer size
-        before starting to play the video. If you don\'t know what this is, don\'t change it.</string>
+        before starting to play the video. If you don't know what this is, don't change it.</string>
     <string name="setting_min_buffer_summary">Default is 15 (15000 milliseconds). Decrease this value to play video faster but
         there is a possibility that the player may fail or even crash. Change at your own risk.</string>
     <string name="setting_min_buffer_title">Custom min buffer size</string>
     <string name="setting_playback_buffer_summary">Default is 2500 milliseconds. This represents the buffer size when SEEKING
-        or UNPAUSING the video. Change this if you\'re not satisfied with the small delay when seeking video.</string>
+        or UNPAUSING the video. Change this if you're not satisfied with the small delay when seeking video.</string>
     <string name="setting_playback_buffer_title">Custom playback buffer size (ms)</string>
     <string name="setting_ready_firsthand_summary">Enable this if you want to be set automatically as ready once you enter the room.</string>
     <string name="setting_ready_firsthand_title">Set as ready first-hand</string>
@@ -185,7 +185,7 @@
     <string name="setting_resetdefault_summary">Reset everything to its default value (Recommended)</string>
     <string name="setting_resetdefault_dialog">Are you sure to clear settings for this screen ?</string>
     <string name="setting_pause_if_someone_left_title">Pause if someone leaves</string>
-    <string name="setting_pause_if_someone_left_summary">Enable this if you want playback to pause/stop if someone leaves the room while you\'re watching.</string>
+    <string name="setting_pause_if_someone_left_summary">Enable this if you want playback to pause/stop if someone leaves the room while you're watching.</string>
     <string name="setting_warn_file_mismatch_title">File mismatch warning</string>
     <string name="setting_warn_file_mismatch_summary">Enabled by default. This will warn you in case you load a file that is different from users in the group (in terms of name, duration or size, not all of them).</string>
     <string name="setting_fileinfo_behaviour_name_title">File name information sending</string>
@@ -199,12 +199,12 @@
     <string name="uisetting_timestamp_title">Chat timestamps</string>
     <string name="uisetting_msgoutline_summary">Enable this to give chat messages an outline, to reduce blending with background video.</string>
     <string name="uisetting_msgoutline_title">Chat message outline</string>
-    <string name="uisetting_msgboxaction_summary">When enabled, clicking on the \'OK\' button on your keyboard will send the message. When this is disabled, it will simply close the keyboard without doing anything.</string>
-    <string name="uisetting_msgboxaction_title">Keyboard\'s OK button function </string>
-    <string name="uisetting_overview_alpha_summary">Default is 40 (Almost transparent), change this if you want to make the room details\' panel more readable by increasing opacity.</string>
+    <string name="uisetting_msgboxaction_summary">When enabled, clicking on the 'OK' button on your keyboard will send the message. When this is disabled, it will simply close the keyboard without doing anything.</string>
+    <string name="uisetting_msgboxaction_title">Keyboard's OK button function </string>
+    <string name="uisetting_overview_alpha_summary">Default is 40 (Almost transparent), change this if you want to make the room details' panel more readable by increasing opacity.</string>
     <string name="uisetting_overview_alpha_title">Room Details Background Opacity</string>
     <string name="uisetting_messagery_alpha_summary">Default is 0 (transparent). Maximum is 255 (100% Opaque). Increase readability of the messages by making background more opaque.</string>
-    <string name="uisetting_messagery_alpha_title">Messages\' background opacity</string>
+    <string name="uisetting_messagery_alpha_title">Messages' background opacity</string>
     <string name="uisetting_msgsize_summary">Changes message text size. Default is 10.</string>
     <string name="uisetting_msgsize_title">Message font size</string>
     <string name="uisetting_msgcount_summary">Default is 10. Limits the message number count to this value.</string>
@@ -215,7 +215,7 @@
     <string name="uisetting_timestamp_color_title">Timestamp Text Color</string>
     <string name="uisetting_self_color_summary">Customize the text color of your name tag (Default is Dark Red)</string>
     <string name="uisetting_self_color_title">Self Tag Color</string>
-    <string name="uisetting_friend_color_summary">Customize the text color of friends\' name tags (Default is Blue)</string>
+    <string name="uisetting_friend_color_summary">Customize the text color of friends' name tags (Default is Blue)</string>
     <string name="uisetting_friend_color_title">Friend Tag Text Color</string>
     <string name="uisetting_system_color_summary">Customize the text color of system room messages (Default is White)</string>
     <string name="uisetting_system_color_title">System Message Text Color</string>
@@ -243,7 +243,7 @@
 
     <string name="setting_fileinfoBehavior_a">Send raw</string>
     <string name="setting_fileinfoBehavior_b">Send hashed</string>
-    <string name="setting_fileinfoBehavior_c">Don\'t send</string>
+    <string name="setting_fileinfoBehavior_c">Don't send</string>
 
     <string name="setting_night_mode_a">OFF</string>
     <string name="setting_night_mode_b">AUTO (System)</string>

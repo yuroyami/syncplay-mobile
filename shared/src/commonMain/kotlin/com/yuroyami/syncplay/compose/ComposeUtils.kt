@@ -3,6 +3,7 @@ package com.yuroyami.syncplay.compose
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
@@ -343,14 +345,17 @@ object ComposeUtils {
         shadowSize: Float = 6f,
         lineHeight: TextUnit = TextUnit.Unspecified,
         overflow: TextOverflow = TextOverflow.Clip,
+    ) {
+        val txtMdfr = Modifier.focusable(false)
+            .focusProperties { canFocus = false }
+            .clickable(false){}
 
-        ) {
         Box(modifier = modifier) {
             /** Shadow */
             if (shadowColors.isNotEmpty()) {
                 Text(
                     text = text,
-                    modifier = if (shadowColors.size == 1) Modifier else Modifier.gradientOverlay(shadowColors),
+                    modifier = if (shadowColors.size == 1) txtMdfr else txtMdfr.gradientOverlay(shadowColors),
                     style = TextStyle(
                         color = Color.Transparent,
                         shadow = Shadow(
@@ -367,6 +372,7 @@ object ComposeUtils {
             /** Stroke */
             if (strokeColors.isNotEmpty()) {
                 Text(
+                    modifier = txtMdfr,
                     text = text.toString(),
                     style = if (strokeColors.size == 1) {
                         TextStyle(
@@ -399,6 +405,7 @@ object ComposeUtils {
             /** Filling */
             if (fillingColors.isNotEmpty()) {
                 Text(
+                    modifier = txtMdfr,
                     text = text,
                     style = if (fillingColors.size <= 1) {
                         TextStyle(
