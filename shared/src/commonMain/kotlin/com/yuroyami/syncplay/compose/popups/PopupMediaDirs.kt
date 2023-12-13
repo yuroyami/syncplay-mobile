@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -57,10 +58,8 @@ import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
 import com.yuroyami.syncplay.datastore.ds
 import com.yuroyami.syncplay.datastore.stringSetFlow
-import com.yuroyami.syncplay.shared.MR
+import com.yuroyami.syncplay.locale.Localization
 import com.yuroyami.syncplay.ui.Paletting
-import dev.icerock.moko.resources.compose.stringResource
-import org.jetbrains.compose.resources.Font
 
 var wentForFilePick = false
 
@@ -121,7 +120,7 @@ object PopupMediaDirs {
 
                 /* The title */
                 FancyText2(
-                    string = stringResource(MR.strings.media_directories),
+                    string = Localization.stringResource("media_directories"),
                     solid = Color.Black,
                     size = 18f,
                     font = directive4
@@ -129,7 +128,7 @@ object PopupMediaDirs {
 
                 /* Title's subtext */
                 Text(
-                    text = stringResource(MR.strings.media_directories_brief),
+                    text = Localization.stringResource("media_directories_brief"),
                     color = MaterialTheme.colorScheme.primary,
                     lineHeight = 14.sp,
                     fontSize = 10.sp,
@@ -139,7 +138,8 @@ object PopupMediaDirs {
 
                 /* The card that holds the media directories */
                 Card(
-                    modifier = Modifier.fillMaxWidth(0.9f),
+                    modifier = Modifier.fillMaxWidth(0.9f).fillMaxHeight(0.7f)
+                        .align(Alignment.CenterHorizontally).padding(6.dp),
                     shape = RoundedCornerShape(size = 6.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.LightGray)
                 ) {
@@ -154,7 +154,6 @@ object PopupMediaDirs {
 
                             Box {
                                 val itemMenuState = remember { mutableStateOf(false) }
-
 
                                 Column(
                                     modifier = Modifier
@@ -198,7 +197,7 @@ object PopupMediaDirs {
                                         text = {
                                             Text(
                                                 color = Color.LightGray,
-                                                text = stringResource(MR.strings.media_directories_show_full_path),
+                                                text = Localization.stringResource("media_directories_show_full_path"),
                                                 fontSize = 12.sp
                                             )
                                         },
@@ -222,7 +221,7 @@ object PopupMediaDirs {
 
                                     //Item action: Delete
                                     DropdownMenuItem(
-                                        text = { Text(color = Color.LightGray, text = stringResource(MR.strings.media_directories_delete), fontSize = 12.sp) },
+                                        text = { Text(color = Color.LightGray, text = Localization.stringResource("media_directories_delete"), fontSize = 12.sp) },
                                         leadingIcon = { Icon(imageVector = Icons.Filled.Delete, "", tint = Color.LightGray) },
                                         onClick = {
                                             itemMenuState.value = false
@@ -280,7 +279,7 @@ object PopupMediaDirs {
                     ) {
                         Icon(imageVector = Icons.Filled.ClearAll, "")
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(MR.strings.media_directories_clear_all), fontSize = 14.sp)
+                        Text(Localization.stringResource("media_directories_clear_all"), fontSize = 14.sp)
                     }
 
                     /* Add folder button */
@@ -301,7 +300,7 @@ object PopupMediaDirs {
                     ) {
                         Icon(imageVector = Icons.Filled.CreateNewFolder, "")
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(MR.strings.media_directories_add_folder), fontSize = 14.sp)
+                        Text(Localization.stringResource("media_directories_add_folder"), fontSize = 14.sp)
                     }
 
                     /* Save button */
@@ -314,7 +313,7 @@ object PopupMediaDirs {
                     ) {
                         Icon(imageVector = Icons.Filled.Done, "")
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(MR.strings.media_directories_save), fontSize = 14.sp)
+                        Text(Localization.stringResource("media_directories_save"), fontSize = 14.sp)
                     }
                 }
             }

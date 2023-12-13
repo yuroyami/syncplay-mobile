@@ -1,6 +1,5 @@
 package com.yuroyami.syncplay.utils
 
-import androidx.compose.runtime.Composable
 import com.yuroyami.syncplay.models.Message
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
@@ -46,7 +45,7 @@ object RoomUtils {
     }
 
     /** This broadcasts a message to show it in the chat section **/
-    fun broadcastMessage(message: String = "", messageComposite: (@Composable () -> String)? = null, isChat: Boolean, chatter: String = "") {
+    fun broadcastMessage(message: String, isChat: Boolean, chatter: String = "") {
         if (isSoloMode) return
 
         /** Messages are just a wrapper class for everything we need about a message
@@ -54,8 +53,7 @@ object RoomUtils {
         val msg = Message(
             sender = if (isChat) chatter else null,
             isMainUser = chatter == p.session.currentUsername,
-            content = message,
-            contentComposite = messageComposite
+            content = message
         )
 
         /** Adding the message instance to our message sequence **/

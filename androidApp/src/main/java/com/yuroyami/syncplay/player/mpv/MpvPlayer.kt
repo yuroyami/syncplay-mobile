@@ -75,7 +75,8 @@ class MpvPlayer : BasePlayer() {
     }
 
     override fun hasMedia(): Boolean {
-        return MPVLib.getPropertyInt("playlist-count") > 0
+        val c = MPVLib.getPropertyInt("playlist-count")
+        return c != null && c > 0
     }
 
     override fun isPlaying(): Boolean {
@@ -198,7 +199,7 @@ class MpvPlayer : BasePlayer() {
     override fun injectVideo(uri: String?, isUrl: Boolean) {
         /* Changing UI (hiding artwork, showing media controls) */
         hasVideoG.value = true
-        val ctx = mpvView.context
+        val ctx = mpvView.context ?: return
 
         playerScopeMain.launch {
             /* Creating a media file from the selected file */
@@ -226,7 +227,7 @@ class MpvPlayer : BasePlayer() {
                         ctx.resolveUri(it.toUri())?.let { it2 ->
                             loggy("Final path $it2")
                             if (!ismpvInit) {
-                                mpvView.initialize(ctx.filesDir.path)
+                                mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
                                 ismpvInit = true
                             }
                             mpvObserverAttach()
@@ -235,7 +236,7 @@ class MpvPlayer : BasePlayer() {
                         }
                     } else {
                         if (!ismpvInit) {
-                            mpvView.initialize(ctx.filesDir.path)
+                            mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
                             ismpvInit = true
                         }
                         mpvObserverAttach()

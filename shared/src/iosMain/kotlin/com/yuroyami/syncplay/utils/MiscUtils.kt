@@ -11,6 +11,11 @@ import platform.Foundation.NSCalendarUnitMinute
 import platform.Foundation.NSCalendarUnitSecond
 import platform.Foundation.NSDate
 import platform.Foundation.NSDateComponentsFormatter
+import platform.Foundation.NSLocale
+import platform.Foundation.NSString
+import platform.Foundation.currentLocale
+import platform.Foundation.languageCode
+import platform.Foundation.stringWithFormat
 import platform.Foundation.timeIntervalSince1970
 import kotlin.concurrent.AtomicReference
 import kotlin.math.roundToLong
@@ -62,4 +67,22 @@ actual fun getScreenSizeInfo(): ScreenSizeInfo {
             wDP = with(density) { config.width.toDp() }
         )
     }
+}
+
+actual fun String.format(vararg keys: String) =
+    // This ugly work around is because varargs can't be passed to Objective-C...
+    NSString.stringWithFormat(this, *arrayOf(keys as NSString))
+    /* when (keys.size) {
+        0 -> this //NSString.stringWithFormat(this)
+        1 -> NSString.stringWithFormat(this, keys[0])
+        2 -> NSString.stringWithFormat(this, keys[0], keys[1])
+        3 -> NSString.stringWithFormat(this, keys[0], keys[1], keys[2])
+        4 -> NSString.stringWithFormat(this, keys[0], keys[1], keys[2], keys[3])
+        5 -> NSString.stringWithFormat(this, keys[0], keys[1], keys[2], keys[3], keys[4])
+        6 -> NSString.stringWithFormat(this, keys[0], keys[1], keys[2], keys[3], keys[4], keys[5])
+        else -> throw IllegalStateException("more than 6 args")
+    } */
+
+actual fun getSystemLanguageCode(): String {
+    return NSLocale.currentLocale.languageCode
 }

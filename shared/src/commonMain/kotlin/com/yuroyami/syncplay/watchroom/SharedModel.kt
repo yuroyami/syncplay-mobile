@@ -5,6 +5,7 @@ import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_TLS_ENABLE
 import com.yuroyami.syncplay.datastore.obtainBoolean
+import com.yuroyami.syncplay.locale.Localization
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.models.MediaFile
@@ -15,11 +16,9 @@ import com.yuroyami.syncplay.player.PlayerUtils.playPlayback
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.protocol.ProtocolCallback
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
-import com.yuroyami.syncplay.shared.MR
-import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.RoomUtils.broadcastMessage
+import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timeStamper
-import dev.icerock.moko.resources.compose.stringResource
 import kotlinx.coroutines.runBlocking
 
 lateinit var p: SyncplayProtocol //If it is not initialized, it means we're in Solo Mode
@@ -47,7 +46,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                     pausePlayback()
                 }
                 broadcastMessage(
-                    messageComposite = { stringResource(MR.strings.room_guy_paused, pauser, timeStamper(p.currentVideoPosition.toLong())) },
+                    message = Localization.stringResource("room_guy_paused", pauser, timeStamper(p.currentVideoPosition.toLong())),
                     isChat = false
                 )
             }
@@ -59,7 +58,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                     playPlayback()
                 }
 
-                broadcastMessage(messageComposite = { stringResource(MR.strings.room_guy_played, player) }, isChat = false)
+                broadcastMessage(message = Localization.stringResource("room_guy_played", player), isChat = false)
             }
 
             override fun onChatReceived(chatter: String, chatmessage: String) {
@@ -71,13 +70,13 @@ fun prepareProtocol(joinInfo: JoinInfo) {
             override fun onSomeoneJoined(joiner: String) {
                 loggy("SYNCPLAY Protocol: $joiner joined the room.")
 
-                broadcastMessage(messageComposite = { stringResource(MR.strings.room_guy_joined, joiner) }, isChat = false)
+                broadcastMessage(message = Localization.stringResource("room_guy_joined, joiner") , isChat = false)
             }
 
             override fun onSomeoneLeft(leaver: String) {
                 loggy("SYNCPLAY Protocol: $leaver left the room.")
 
-                broadcastMessage(messageComposite = { stringResource(MR.strings.room_guy_left, leaver) }, isChat = false)
+                broadcastMessage(message = Localization.stringResource("room_guy_left, leaver"), isChat = false)
 
                 /* If the setting is enabled, pause playback **/
                 val pauseOnLeft = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainBoolean(PREF_PAUSE_ON_SOMEONE_LEAVE, true) }
@@ -100,7 +99,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                 /* Saving seek so it can be undone on mistake */
                 seeks.add(Pair(oldPos * 1000, newPos * 1000))
 
-                broadcastMessage(messageComposite = { stringResource(MR.strings.room_seeked, seeker, timeStamper(oldPos), timeStamper(newPos)) }, isChat = false)
+                broadcastMessage(message =  Localization.stringResource("room_seeked, seeker", timeStamper(oldPos), timeStamper(newPos)), isChat = false)
 
                 if (seeker != p.session.currentUsername) {
                     player?.seekTo((toPosition * 1000.0).toLong())
@@ -112,7 +111,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
                 player?.seekTo((toPosition * 1000.0).toLong())
 
-                broadcastMessage(messageComposite = { stringResource(MR.strings.room_rewinded, behinder) }, isChat = false)
+                broadcastMessage(message =  Localization.stringResource("room_rewinded, behinder"), isChat = false)
             }
 
             override fun onReceivedList() {
@@ -124,14 +123,13 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                 loggy("SYNCPLAY Protocol: $person loaded: $file - Duration: $fileduration")
 
                 broadcastMessage(
-                    messageComposite = {
-                        stringResource(
-                            MR.strings.room_isplayingfile,
+                    message =
+                        Localization.stringResource("room_isplayingfile",
                             person,
                             file ?: "",
                             timeStamper(fileduration?.toLong() ?: 0)
                         )
-                    },
+                    ,
                     isChat = false
                 )
             }
@@ -146,7 +144,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
                 /** Telling user that the playlist has been updated/changed **/
                 if (user == "") return
-                broadcastMessage(messageComposite = { stringResource(MR.strings.room_shared_playlist_updated, user) }, isChat = false)
+                broadcastMessage(message =  Localization.stringResource("room_shared_playlist_updated", user), isChat = false)
             }
 
             override fun onPlaylistIndexChanged(user: String, index: Int) {
@@ -157,7 +155,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
                 /** Telling user that the playlist selection/index has been changed **/
                 if (user == "") return
-                broadcastMessage(messageComposite = { stringResource(MR.strings.room_shared_playlist_changed, user) }, isChat = false)
+                broadcastMessage(message =  Localization.stringResource("room_shared_playlist_changed", user), isChat = false)
             }
 
             override fun onConnected() {
@@ -174,10 +172,10 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
 
                 /** Telling user that they're connected **/
-                broadcastMessage(messageComposite = { stringResource(MR.strings.room_connected_to_server) }, isChat = false)
+                broadcastMessage(message =  Localization.stringResource("room_connected_to_server"), isChat = false)
 
                 /** Telling user which room they joined **/
-                broadcastMessage(messageComposite = { stringResource(MR.strings.room_you_joined_room, p.session.currentRoom) }, isChat = false)
+                broadcastMessage(message =  Localization.stringResource("room_you_joined_room", p.session.currentRoom), isChat = false)
 
                 /** Resubmit any ongoing file being played **/
                 if (media != null) {
@@ -196,13 +194,11 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
                 /** Telling user that a connection attempt is on **/
                 broadcastMessage(
-                    messageComposite = {
-                        stringResource(
-                            MR.strings.room_attempting_connect,
+                    message =
+                        Localization.stringResource("room_attempting_connect",
                             if (p.session.serverHost == "151.80.32.178") "syncplay.pl" else p.session.serverHost,
                             p.session.serverPort.toString()
-                        )
-                    },
+                        ),
                     isChat = false
                 )
             }
@@ -215,7 +211,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
                 /** Telling user that connection has failed **/
                 broadcastMessage(
-                    messageComposite = { stringResource(MR.strings.room_connection_failed) },
+                    message = Localization.stringResource("room_connection_failed"),
                     isChat = false
                 )
 
@@ -231,7 +227,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                 p.state = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
 
                 /** Telling user that the connection has been lost **/
-                broadcastMessage(messageComposite = { stringResource(MR.strings.room_attempting_reconnection) }, isChat = false)
+                broadcastMessage(message =  Localization.stringResource("room_attempting_reconnection"), isChat = false)
 
                 /** Attempting reconnection **/
                 p.reconnect()

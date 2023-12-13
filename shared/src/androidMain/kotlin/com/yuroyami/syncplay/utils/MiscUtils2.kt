@@ -104,3 +104,11 @@ actual fun getScreenSizeInfo(): ScreenSizeInfo {
         )
     }
 }
+
+actual fun String.format(vararg keys: String): String {
+    return if (keys.isEmpty()) this else String.format(this, *keys)
+}
+
+actual fun getSystemLanguageCode(): String {
+    return androidx.compose.ui.text.intl.Locale.current.language
+}

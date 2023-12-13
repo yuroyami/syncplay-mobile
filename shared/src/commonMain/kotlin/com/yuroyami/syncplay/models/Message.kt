@@ -19,9 +19,6 @@ data class Message (
     /** Content of the message */
     var content: String = "",
 
-    /** Content of the message if it has to be part of Compose */
-    var contentComposite: (@Composable () -> String)? = null,
-
     /** If the message refers to a chat/action by the app user themself */
     var isMainUser: Boolean = false
 ) {
@@ -56,7 +53,7 @@ data class Message (
             minibuilder.append(tag)
 
             val chatTEXT = AnnotatedString(
-                text = contentComposite?.invoke() ?: content,
+                text = content,
                 spanStyle = SpanStyle(
                     color = msgPalette.usermsgColor,
                     fontWeight = FontWeight.Medium
@@ -67,7 +64,7 @@ data class Message (
             minibuilder.toAnnotatedString()
         } else {
             AnnotatedString(
-                text = contentComposite?.invoke() ?: content,
+                text = content,
                 spanStyle = SpanStyle(
                     if (msgPalette.isError) msgPalette.errormsgColor else msgPalette.systemmsgColor
                 )

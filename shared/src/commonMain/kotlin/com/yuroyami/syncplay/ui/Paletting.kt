@@ -60,7 +60,7 @@ object Paletting {
     /** dimensions */
     const val ROOM_ICON_SIZE = 38
     const val USER_INFO_IC_SIZE = 16
-    const val USER_INFO_TXT_SIZE = 11
+    const val USER_INFO_TXT_SIZE = 10
 
 
     @Composable

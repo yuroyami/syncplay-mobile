@@ -1,5 +1,6 @@
 package com.yuroyami.syncplay.watchroom
 
+import SyncplayMobile.generated.resources.Res
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterTransition
@@ -124,7 +125,7 @@ object RoomComposables {
             ) {
 
                 Image(
-                    painter = painterResource("images/syncplay_logo_gradient.xml"), contentDescription = "",
+                    painter = painterResource(Res.images.syncplay_logo_gradient), contentDescription = "",
                     modifier = Modifier
                         .height(if (pipModeObserver) 40.dp else 84.dp)
                         .aspectRatio(1f)
@@ -334,43 +335,49 @@ object RoomComposables {
     /** Ping */
     @Composable
     fun PingRadar(pingValue: Int?) {
-        when (pingValue) {
-            null -> {
-                Image(
-                    painter = painterResource("images/network_level_0.png"), "",
-                    modifier = Modifier.size(16.dp).solidOverlay(Color.Gray)
-                )
-            }
+        with(Res.images) {
+            when (pingValue) {
+                null -> {
+                    Image(
+                        painter = painterResource(network_level_0), "",
+                        modifier = Modifier.size(16.dp).solidOverlay(Color.Gray)
+                    )
+                }
 
-            in (0..90) -> {
-                Image(
-                    painter = painterResource("images/network_level_4.png"), "",
-                    modifier = Modifier.size(16.dp).solidOverlay(Color.Green)
-                )
-            }
-            in (91..120) -> {
-                Image(
-                    painter = painterResource("images/network_level_3.png"), "",
-                    modifier = Modifier.size(16.dp).solidOverlay(Color.Yellow)
-                )
-            }
-            in (121..160) -> {
-                Image(
-                    painter = painterResource("images/network_level_3.png"), "",
-                    modifier = Modifier.size(16.dp).solidOverlay(Color(255, 176, 66))
-                )
-            }
-            in (161..200) -> {
-                Image(
-                    painter = painterResource("images/network_level_2.png"), "",
-                    modifier = Modifier.size(16.dp).solidOverlay(Color(181, 80, 25))
-                )
-            }
-            else -> {
-                Image(
-                    painter = painterResource("images/network_level_1.png"), "",
-                    modifier = Modifier.size(16.dp).solidOverlay(Color.Red)
-                )
+                in (0..90) -> {
+                    Image(
+                        painter = painterResource(network_level_4), "",
+                        modifier = Modifier.size(16.dp).solidOverlay(Color.Green)
+                    )
+                }
+
+                in (91..120) -> {
+                    Image(
+                        painter = painterResource(network_level_1), "",
+                        modifier = Modifier.size(16.dp).solidOverlay(Color.Yellow)
+                    )
+                }
+
+                in (121..160) -> {
+                    Image(
+                        painter = painterResource(network_level_3), "",
+                        modifier = Modifier.size(16.dp).solidOverlay(Color(255, 176, 66))
+                    )
+                }
+
+                in (161..200) -> {
+                    Image(
+                        painter = painterResource(network_level_1), "",
+                        modifier = Modifier.size(16.dp).solidOverlay(Color(181, 80, 25))
+                    )
+                }
+
+                else -> {
+                    Image(
+                        painter = painterResource(network_level_1), "",
+                        modifier = Modifier.size(16.dp).solidOverlay(Color.Red)
+                    )
+                }
             }
         }
     }

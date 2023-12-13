@@ -3,7 +3,6 @@ plugins {
     id("org.jetbrains.kotlin.native.cocoapods")
     id("com.android.library")
     id("org.jetbrains.compose")
-    id("dev.icerock.mobile.multiplatform-resources")
     kotlin("plugin.serialization")
 }
 
@@ -14,7 +13,7 @@ kotlin {
     androidTarget {
         compilations.all {
             kotlinOptions {
-                jvmTarget = "17"
+                jvmTarget = "1.8"
             }
         }
     }
@@ -31,7 +30,7 @@ kotlin {
         podfile = project.file("../iosApp/Podfile")
         framework {
             baseName = "shared"
-            isStatic = false
+            isStatic = true
         }
     }
     
@@ -46,11 +45,11 @@ kotlin {
             }
         }
 
-        val ktor = "3.0.0-beta-1"
+        val ktor = "2.3.7" //"3.0.0-beta-1"
         val commonMain by getting {
             dependencies {
                 /* Official JetBrains Kotlin Date 'n time manager (i.e: generating date from epoch) */
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
 
                 /* Hash digesters */
                 val kotlincrypto = "0.3.0"
@@ -69,7 +68,6 @@ kotlin {
                 /* Jetpack Datastore for preferences and settings (accessible in Compose in real-time) */
                 val datastore = "1.1.0-alpha07"
                 api("androidx.datastore:datastore-preferences-core:$datastore")
-                //api("androidx.datastore:datastore-core-okio:$datastore")
 
                 /* Compose core dependencies */
                 implementation(compose.runtime)
@@ -77,12 +75,12 @@ kotlin {
                 implementation(compose.material3)
                 implementation(compose.materialIconsExtended)
                 @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
-                api(compose.components.resources)
-
-                /* Multiplatform localized string accessor helper */
-                api("dev.icerock.moko:resources-compose:0.23.0") // for compose multiplatform
+                implementation(compose.components.resources)
 
                 implementation("com.github.ajalt.colormath:colormath:3.3.3")
+
+                /* XML parser to read string localz */
+                implementation("io.github.pdvrieze.xmlutil:core:0.86.2")
             }
         }
 
@@ -98,13 +96,13 @@ kotlin {
                 api("androidx.appcompat:appcompat:1.7.0-alpha03")
 
                 /* SAF DocumentFile manager */
-                api("androidx.documentfile:documentfile:1.0.1")
+                implementation("androidx.documentfile:documentfile:1.0.1")
 
                 /* AndroidX's Splash Screen */
                 api("androidx.core:core-splashscreen:1.1.0-alpha02")
 
                 /* Jetpack Shared Preferences */
-                api("androidx.preference:preference-ktx:1.2.1")
+                implementation("androidx.preference:preference-ktx:1.2.1")
 
                 /* Jetpack Home shortcut manager */
                 api("androidx.core:core-google-shortcuts:1.1.0") {
@@ -133,6 +131,7 @@ kotlin {
                 api("androidx.media3:media3-common:$media3")
             }
         }
+
 //        val iosX64Main by getting
 //        val iosArm64Main by getting
 //        val iosSimulatorArm64Main by getting
@@ -150,9 +149,9 @@ kotlin {
     }
 }
 //
-//compose {
-//    kotlinCompilerPlugin.set("1.5.4-dev1-kt2.0.0-Beta1")
-//}
+compose {
+    kotlinCompilerPlugin.set("1.5.4-dev1-kt2.0.0-Beta1")
+}
 
 android {
     compileSdk = (findProperty("android.compileSdk") as String).toInt()
@@ -172,27 +171,14 @@ android {
         minSdk = (findProperty("android.minSdk") as String).toInt()
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlin {
-        jvmToolchain(17)
+        jvmToolchain(8)
     }
 
     buildFeatures {
         buildConfig = true
     }
-}
-
-
-multiplatformResources {
-    multiplatformResourcesPackage = "com.yuroyami.syncplay.shared" // required
-    //disableStaticFrameworkWarning = true
-    //multiplatformResourcesClassName = "SharedRes" // optional, default MR
-    //multiplatformResourcesVisibility = MRVisibility.Internal // optional, default Public
-    //iosBaseLocalizationRegion = "en" // optional, default "en"
-    // multiplatformResourcesSourceSet = "commonClientMain"  // optional, default "commonMain"
-
-    //  /Users/mac/Library/Java/JavaVirtualMachines/openjdk-20.02/Contents/Home
-    // /Applications/Android\ Studio.app/Contents/jbr/Contents/Home
 }

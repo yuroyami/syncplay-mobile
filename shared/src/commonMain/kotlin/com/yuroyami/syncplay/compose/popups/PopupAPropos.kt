@@ -1,5 +1,6 @@
 package com.yuroyami.syncplay.compose.popups
 
+import SyncplayMobile.generated.resources.Res
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -33,8 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
 import com.yuroyami.syncplay.compose.ComposeUtils.SyncplayishText
-import com.yuroyami.syncplay.shared.MR
-import dev.icerock.moko.resources.compose.stringResource
+import com.yuroyami.syncplay.locale.Localization.stringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
 
@@ -61,7 +61,7 @@ object PopupAPropos {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Image(
-                        imageVector = vectorResource("images/syncplay_logo_gradient.xml"),
+                        imageVector = vectorResource(Res.images.syncplay_logo_gradient),
                         contentDescription = "",
                         modifier = Modifier.requiredSize(96.dp)
                       //      .radiantOverlay(offset = Offset(x = 50f, y = 65f))
@@ -137,12 +137,12 @@ object PopupAPropos {
                     ) {
                         Icon(imageVector = Icons.Filled.Tv, "")
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(MR.strings.connect_solomode), textAlign = TextAlign.Center, fontSize = 14.sp)
+                        Text(stringResource("connect_solomode"), textAlign = TextAlign.Center, fontSize = 14.sp)
                     }
 
                     val uriHandler = LocalUriHandler.current
                     Image(
-                        painter = painterResource("images/github.png"),
+                        painter = painterResource(Res.images.github),
                         contentDescription = "",
                         modifier = Modifier.size(64.dp)
                             .clickable(

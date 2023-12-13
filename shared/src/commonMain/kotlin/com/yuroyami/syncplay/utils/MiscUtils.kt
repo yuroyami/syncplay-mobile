@@ -25,6 +25,9 @@ data class ScreenSizeInfo(val hPX: Int, val wPX: Int, val hDP: Dp, val wDP: Dp)
 @Composable
 expect fun getScreenSizeInfo(): ScreenSizeInfo
 
+expect fun String.format(vararg keys: String): String
+
+expect fun getSystemLanguageCode(): String
 
 //@Suppress("DEPRECATION")
 //fun ComponentActivity.showSystemUI(useDeprecated: Boolean) {

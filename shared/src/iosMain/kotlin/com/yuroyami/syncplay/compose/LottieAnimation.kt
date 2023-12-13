@@ -30,45 +30,45 @@ import org.jetbrains.skia.skottie.Animation
 import org.jetbrains.skia.sksg.InvalidationController
 import kotlin.math.roundToInt
 
-@Composable
-actual fun InfiniteLottieAnimation(
-    modifier: Modifier,
-    json: String,
-    speed: Float,
-    isplaying: Boolean,
-    reverseOnEnd: Boolean,
-) {
-    if (json.isNotEmpty()) {
-        val animation = Animation.makeFromString(json)
-
-        val infiniteTransition = rememberInfiniteTransition()
-
-        val time by infiniteTransition.animateFloat(
-            initialValue = 0f,
-            targetValue = animation.duration,
-            animationSpec = infiniteRepeatable(
-                animation = tween((animation.duration * 1000).roundToInt(), easing = LinearEasing),
-                repeatMode = if (reverseOnEnd) RepeatMode.Reverse else RepeatMode.Restart
-            )
-        )
-
-        val invalidationController = remember { InvalidationController() }
-        Canvas(modifier) {
-            drawIntoCanvas {
-                if (isplaying) {
-                    animation.seekFrameTime(time, invalidationController)
-                } else {
-                    animation.seek(0f, invalidationController)
-                }
-
-                animation.render(
-                    canvas = it.nativeCanvas,
-                    dst = Rect.makeWH(size.width, size.height)
-                )
-            }
-        }
-    }
-}
+//@Composable
+//actual fun InfiniteLottieAnimation(
+//    modifier: Modifier,
+//    json: String,
+//    speed: Float,
+//    isplaying: Boolean,
+//    reverseOnEnd: Boolean,
+//) {
+//    if (json.isNotEmpty()) {
+//        val animation = Animation.makeFromString(json)
+//
+//        val infiniteTransition = rememberInfiniteTransition()
+//
+//        val time by infiniteTransition.animateFloat(
+//            initialValue = 0f,
+//            targetValue = animation.duration,
+//            animationSpec = infiniteRepeatable(
+//                animation = tween((animation.duration * 1000).roundToInt(), easing = LinearEasing),
+//                repeatMode = if (reverseOnEnd) RepeatMode.Reverse else RepeatMode.Restart
+//            )
+//        )
+//
+//        val invalidationController = remember { InvalidationController() }
+//        Canvas(modifier) {
+//            drawIntoCanvas {
+//                if (isplaying) {
+//                    animation.seekFrameTime(time, invalidationController)
+//                } else {
+//                    animation.seek(0f, invalidationController)
+//                }
+//
+//                animation.render(
+//                    canvas = it.nativeCanvas,
+//                    dst = Rect.makeWH(size.width, size.height)
+//                )
+//            }
+//        }
+//    }
+//}
 
 @Composable
 actual fun NightModeToggle(modifier: Modifier, state: State<Boolean>) {

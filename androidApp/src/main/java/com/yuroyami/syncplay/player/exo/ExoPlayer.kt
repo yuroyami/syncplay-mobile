@@ -24,6 +24,7 @@ import androidx.media3.ui.PlayerView
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.yuroyami.syncplay.databinding.ExoviewBinding
+import com.yuroyami.syncplay.locale.Localization
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
@@ -50,7 +51,7 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.util.Collections
 import kotlin.math.abs
-import com.yuroyami.syncplay.shared.R as XR
+import com.yuroyami.syncplay.R as XR
 
 class ExoPlayer : BasePlayer() {
     override val engine = ENGINE.ANDROID_EXOPLAYER
@@ -411,11 +412,11 @@ class ExoPlayer : BasePlayer() {
     override fun switchAspectRatio(): String {
         with(exoView.context.applicationContext) {
             val resolutions = mutableMapOf<Int, String>()
-            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIT] = getString(XR.string.room_scaling_fit_screen)
-            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH] = getString(XR.string.room_scaling_fixed_width)
-            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT] = getString(XR.string.room_scaling_fixed_height)
-            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FILL] = getString(XR.string.room_scaling_fill_screen)
-            resolutions[AspectRatioFrameLayout.RESIZE_MODE_ZOOM] = getString(XR.string.room_scaling_zoom)
+            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIT] = Localization.stringResource("room_scaling_fit_screen")
+            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH] = Localization.stringResource("room_scaling_fixed_width")
+            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT] = Localization.stringResource("room_scaling_fixed_height")
+            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FILL] = Localization.stringResource("room_scaling_fill_screen")
+            resolutions[AspectRatioFrameLayout.RESIZE_MODE_ZOOM] = Localization.stringResource("room_scaling_zoom")
 
             var nextRes = (exoView.resizeMode + 1)
             if (nextRes == 5) nextRes = 0

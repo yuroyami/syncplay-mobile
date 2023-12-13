@@ -387,6 +387,8 @@ fun RoomUI() {
                                 ),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                             ) {
+                                //val lastMessages = msgs.toList().takeLast(msgMaxCount)
+                                val lastMessages = remember(msgs.size) { msgs.takeLast(msgMaxCount) }
 
                                 LazyColumn(
                                     contentPadding = PaddingValues(8.dp),
@@ -394,7 +396,6 @@ fun RoomUI() {
                                     modifier = Modifier.fillMaxWidth().clickable(false){}.focusable(false)
                                 ) {
                                     //TODO: Show errors in red
-                                    val lastMessages = msgs.toList().takeLast(msgMaxCount)
                                     items(lastMessages) {
                                         LaunchedEffect(null) {
                                             it.seen = true /* Once seen, don't use it in fading message */

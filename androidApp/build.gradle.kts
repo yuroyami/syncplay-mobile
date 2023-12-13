@@ -53,7 +53,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.4-dev1-kt2.0.0-Beta1"
+        kotlinCompilerExtensionVersion = "1.5.5" //"1.5.4-dev1-kt2.0.0-Beta1"
     }
 
     buildTypes {
@@ -72,11 +72,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "1.8"
     }
 
     flavorDimensions.add("engine")

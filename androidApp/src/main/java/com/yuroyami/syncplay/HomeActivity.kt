@@ -27,16 +27,14 @@ import com.yuroyami.syncplay.datastore.languageCallback
 import com.yuroyami.syncplay.datastore.obtainString
 import com.yuroyami.syncplay.home.HomeConfig
 import com.yuroyami.syncplay.home.HomeScreen
+import com.yuroyami.syncplay.locale.Localization.stringResource
 import com.yuroyami.syncplay.models.JoinInfo
-import com.yuroyami.syncplay.shared.MR
 import com.yuroyami.syncplay.utils.JoinCallback
 import com.yuroyami.syncplay.utils.LanguageChange
 import com.yuroyami.syncplay.utils.changeLanguage
 import com.yuroyami.syncplay.utils.defaultEngineAndroid
 import com.yuroyami.syncplay.utils.joinCallback
 import com.yuroyami.syncplay.watchroom.prepareProtocol
-import dev.icerock.moko.resources.desc.Resource
-import dev.icerock.moko.resources.desc.StringDesc
 import kotlinx.coroutines.runBlocking
 
 class HomeActivity : ComponentActivity() {
@@ -84,7 +82,7 @@ class HomeActivity : ComponentActivity() {
 
                     Toast.makeText(
                         this@HomeActivity,
-                        StringDesc.Resource(MR.strings.setting_display_language_toast).toString(this@HomeActivity),
+                        stringResource("setting_display_language_toast"),
                         Toast.LENGTH_SHORT
                     ).show()
                 }

@@ -55,16 +55,15 @@ import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_PIP
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_REMEMBER_INFO
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
+import com.yuroyami.syncplay.locale.Localization
 import com.yuroyami.syncplay.settings.Setting
 import com.yuroyami.syncplay.settings.SettingCategory
 import com.yuroyami.syncplay.settings.SettingStyling
 import com.yuroyami.syncplay.settings.SettingType
-import com.yuroyami.syncplay.shared.MR
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.langMap
 import com.yuroyami.syncplay.utils.LanguageChange
 import com.yuroyami.syncplay.watchroom.isSoloMode
-import dev.icerock.moko.resources.compose.stringResource
 
 var languageCallback: LanguageChange? = null
 
@@ -97,8 +96,8 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.CheckboxSetting,
-                        title = { stringResource(MR.strings.setting_remember_join_info_title) },
-                        summary = { stringResource(MR.strings.setting_remember_join_info_summary) },
+                        title = { Localization.stringResource("setting_remember_join_info_title") },
+                        summary = { Localization.stringResource("setting_remember_join_info_summary") },
                         defaultValue = true,
                         key = PREF_REMEMBER_INFO,
                         icon = Icons.Filled.Face,
@@ -107,8 +106,8 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.PopupSetting,
-                        title = { stringResource(MR.strings.media_directories) },
-                        summary = { stringResource(MR.strings.media_directories_setting_summary) },
+                        title = { Localization.stringResource("media_directories") },
+                        summary = { Localization.stringResource("media_directories_setting_summary") },
                         key = PREF_SP_MEDIA_DIRS,
                         icon = Icons.Filled.QueueMusic,
                         datastorekey = ds,
@@ -127,8 +126,8 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.MultiChoicePopupSetting,
-                        title = { stringResource(MR.strings.setting_display_language_title) },
-                        summary = { stringResource(MR.strings.setting_display_language_summry) },
+                        title = { Localization.stringResource("setting_display_language_title") },
+                        summary = {Localization.stringResource("setting_display_language_summry") },
                         defaultValue = "en",
                         key = DataStoreKeys.PREF_DISPLAY_LANG,
                         entryKeys = { langKeys },
@@ -142,8 +141,8 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.TextFieldSetting,
-                        title = { stringResource(MR.strings.setting_audio_default_language_title) },
-                        summary = { stringResource(MR.strings.setting_audio_default_language_summry) },
+                        title = { Localization.stringResource("setting_audio_default_language_title") },
+                        summary = { Localization.stringResource("setting_audio_default_language_summry") },
                         defaultValue = "und",
                         key = DataStoreKeys.PREF_AUDIO_LANG,
                         icon = Icons.Filled.GraphicEq,
@@ -152,8 +151,8 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.TextFieldSetting,
-                        title = { stringResource(MR.strings.setting_cc_default_language_title) },
-                        summary = { stringResource(MR.strings.setting_cc_default_language_summry) },
+                        title = { Localization.stringResource("setting_cc_default_language_title") },
+                        summary = { Localization.stringResource("setting_cc_default_language_summry") },
                         defaultValue = "eng",
                         key = DataStoreKeys.PREF_CC_LANG,
                         icon = Icons.Filled.ClosedCaptionOff,
@@ -170,8 +169,8 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.CheckboxSetting,
-                        title = { stringResource(MR.strings.setting_ready_firsthand_title) },
-                        summary = { stringResource(MR.strings.setting_ready_firsthand_summary) },
+                        title = { Localization.stringResource("setting_ready_firsthand_title") },
+                        summary = { Localization.stringResource("setting_ready_firsthand_summary") },
                         defaultValue = true,
                         key = DataStoreKeys.PREF_READY_FIRST_HAND,
                         icon = Icons.Filled.TaskAlt,
@@ -180,8 +179,8 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.CheckboxSetting,
-                        title = { stringResource(MR.strings.setting_pause_if_someone_left_title) },
-                        summary = { stringResource(MR.strings.setting_pause_if_someone_left_summary) },
+                        title = { Localization.stringResource("setting_pause_if_someone_left_title") },
+                        summary = { Localization.stringResource("setting_pause_if_someone_left_summary") },
                         defaultValue = true,
                         key = DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE,
                         icon = Icons.Filled.FrontHand,
@@ -190,8 +189,8 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.CheckboxSetting,
-                        title = { stringResource(MR.strings.setting_warn_file_mismatch_title) },
-                        summary = { stringResource(MR.strings.setting_warn_file_mismatch_summary) },
+                        title = { Localization.stringResource("setting_warn_file_mismatch_title") },
+                        summary = { Localization.stringResource("setting_warn_file_mismatch_summary") },
                         defaultValue = true,
                         key = DataStoreKeys.PREF_FILE_MISMATCH_WARNING,
                         icon = Icons.Filled.ErrorOutline,
@@ -200,15 +199,15 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.MultiChoicePopupSetting,
-                        title = { stringResource(MR.strings.setting_fileinfo_behaviour_name_title) },
-                        summary = { stringResource(MR.strings.setting_fileinfo_behaviour_name_summary) },
+                        title = { Localization.stringResource("setting_fileinfo_behaviour_name_title") },
+                        summary = { Localization.stringResource("setting_fileinfo_behaviour_name_summary") },
                         key = DataStoreKeys.PREF_HASH_FILENAME,
                         defaultValue = "1",
                         entryKeys = {
                             listOf(
-                                stringResource(MR.strings.setting_fileinfoBehavior_a),
-                                stringResource(MR.strings.setting_fileinfoBehavior_b),
-                                stringResource(MR.strings.setting_fileinfoBehavior_c)
+                                Localization.stringResource("setting_fileinfoBehavior_a"),
+                                Localization.stringResource("setting_fileinfoBehavior_b"),
+                                Localization.stringResource("setting_fileinfoBehavior_c")
                             )
                         },
                         entryValues = { listOf("1", "2", "3") },
@@ -218,15 +217,15 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.MultiChoicePopupSetting,
-                        title = { stringResource(MR.strings.setting_fileinfo_behaviour_size_title) },
-                        summary = { stringResource(MR.strings.setting_fileinfo_behaviour_size_summary) },
+                        title = { Localization.stringResource("setting_fileinfo_behaviour_size_title") },
+                        summary = { Localization.stringResource("setting_fileinfo_behaviour_size_summary") },
                         key = DataStoreKeys.PREF_HASH_FILESIZE,
                         defaultValue = "1",
                         entryKeys = {
                             listOf(
-                                stringResource(MR.strings.setting_fileinfoBehavior_a),
-                                stringResource(MR.strings.setting_fileinfoBehavior_b),
-                                stringResource(MR.strings.setting_fileinfoBehavior_c)
+                                Localization.stringResource("setting_fileinfoBehavior_a"),
+                                Localization.stringResource("setting_fileinfoBehavior_b"),
+                                Localization.stringResource("setting_fileinfoBehavior_c")
                             )
                         },
                         entryValues = { listOf("1", "2", "3") },
@@ -244,8 +243,8 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.SliderSetting,
-                        title = { stringResource(MR.strings.setting_max_buffer_title) },
-                        summary = { stringResource(MR.strings.setting_max_buffer_summary) },
+                        title = { Localization.stringResource("setting_max_buffer_title") },
+                        summary = { Localization.stringResource("setting_max_buffer_summary") },
                         defaultValue = 30,
                         minValue = 1,
                         maxValue = 60,
@@ -256,8 +255,8 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.SliderSetting,
-                        title = { stringResource(MR.strings.setting_min_buffer_title) },
-                        summary = { stringResource(MR.strings.setting_min_buffer_summary) },
+                        title = { Localization.stringResource("setting_min_buffer_title") },
+                        summary = { Localization.stringResource("setting_min_buffer_summary") },
                         defaultValue = 15,
                         minValue = 1,
                         maxValue = 30,
@@ -268,8 +267,8 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.SliderSetting,
-                        title = { stringResource(MR.strings.setting_playback_buffer_title) },
-                        summary = { stringResource(MR.strings.setting_playback_buffer_summary) },
+                        title = { Localization.stringResource("setting_playback_buffer_title") },
+                        summary = { Localization.stringResource("setting_playback_buffer_summary") },
                         defaultValue = 2500,
                         minValue = 100,
                         maxValue = 15000,
@@ -288,8 +287,8 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.ToggleSetting,
-                        title = { stringResource(MR.strings.setting_tls_title) },
-                        summary = { stringResource(MR.strings.setting_tls_summary) },
+                        title = { Localization.stringResource("setting_tls_title") },
+                        summary = { Localization.stringResource("setting_tls_summary") },
                         defaultValue = false,
                         key = "tls",
                         enabled = false,
@@ -306,8 +305,8 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.OneClickSetting,
-                        title = { stringResource(MR.strings.setting_resetdefault_title) },
-                        summary = { stringResource(MR.strings.setting_resetdefault_summary) },
+                        title = { Localization.stringResource("setting_resetdefault_title") },
+                        summary = { Localization.stringResource("setting_resetdefault_summary") },
                         isResetDefault = true,
                         key = "reset_default",
                         icon = Icons.Filled.ClearAll,
@@ -341,8 +340,8 @@ object MySettings {
                     settingList = listOf(
                         Setting(
                             type = SettingType.ColorSetting,
-                            title = { stringResource(MR.strings.uisetting_timestamp_color_title) },
-                            summary = { stringResource(MR.strings.uisetting_timestamp_color_summary) },
+                            title = { Localization.stringResource("uisetting_timestamp_color_title") },
+                            summary = { Localization.stringResource("uisetting_timestamp_color_summary") },
                             defaultValue = Paletting.MSG_TIMESTAMP.toArgb(),
                             key = PREF_INROOM_COLOR_TIMESTAMP,
                             icon = Icons.Filled.Brush,
@@ -351,8 +350,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.ColorSetting,
-                            title = { stringResource(MR.strings.uisetting_self_color_title) },
-                            summary = { stringResource(MR.strings.uisetting_self_color_summary) },
+                            title = { Localization.stringResource("uisetting_self_color_title") },
+                            summary = { Localization.stringResource("uisetting_self_color_summary") },
                             defaultValue = Paletting.MSG_SELF_TAG.toArgb(),
                             key = PREF_INROOM_COLOR_SELFTAG,
                             icon = Icons.Filled.Brush,
@@ -361,8 +360,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.ColorSetting,
-                            title = { stringResource(MR.strings.uisetting_friend_color_title) },
-                            summary = { stringResource(MR.strings.uisetting_friend_color_summary) },
+                            title = { Localization.stringResource("uisetting_friend_color_title") },
+                            summary = { Localization.stringResource("uisetting_friend_color_summary") },
                             defaultValue = Paletting.MSG_FRIEND_TAG.toArgb(),
                             key = PREF_INROOM_COLOR_FRIENDTAG,
                             icon = Icons.Filled.Brush,
@@ -371,8 +370,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.ColorSetting,
-                            title = { stringResource(MR.strings.uisetting_system_color_title) },
-                            summary = { stringResource(MR.strings.uisetting_system_color_summary) },
+                            title = { Localization.stringResource("uisetting_system_color_title") },
+                            summary = { Localization.stringResource("uisetting_system_color_summary") },
                             defaultValue = Paletting.MSG_SYSTEM.toArgb(),
                             key = PREF_INROOM_COLOR_SYSTEMMSG,
                             icon = Icons.Filled.Brush,
@@ -381,8 +380,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.ColorSetting,
-                            title = { stringResource(MR.strings.uisetting_human_color_title) },
-                            summary = { stringResource(MR.strings.uisetting_human_color_summary) },
+                            title = { Localization.stringResource("uisetting_human_color_title") },
+                            summary = { Localization.stringResource("uisetting_human_color_summary") },
                             defaultValue = Paletting.MSG_CHAT.toArgb(),
                             key = PREF_INROOM_COLOR_USERMSG,
                             icon = Icons.Filled.Brush,
@@ -391,8 +390,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.ColorSetting,
-                            title = { stringResource(MR.strings.uisetting_error_color_title) },
-                            summary = { stringResource(MR.strings.uisetting_error_color_summary) },
+                            title = { Localization.stringResource("uisetting_error_color_title") },
+                            summary = { Localization.stringResource("uisetting_error_color_summary") },
                             defaultValue = Paletting.MSG_ERROR.toArgb(),
                             key = PREF_INROOM_COLOR_ERRORMSG,
                             icon = Icons.Filled.Brush,
@@ -411,8 +410,8 @@ object MySettings {
                     settingList = listOf(
                         Setting(
                             type = SettingType.ToggleSetting,
-                            title = { stringResource(MR.strings.uisetting_timestamp_title) },
-                            summary = { stringResource(MR.strings.uisetting_timestamp_summary) },
+                            title = { Localization.stringResource("uisetting_timestamp_title") },
+                            summary = { Localization.stringResource("uisetting_timestamp_summary") },
                             defaultValue = true,
                             key = PREF_INROOM_MSG_ACTIVATE_STAMP,
                             icon = Icons.Filled.Pin,
@@ -421,8 +420,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.ToggleSetting,
-                            title = { stringResource(MR.strings.uisetting_msgoutline_title) },
-                            summary = { stringResource(MR.strings.uisetting_msgoutline_title) },
+                            title = { Localization.stringResource("uisetting_msgoutline_title") },
+                            summary = { Localization.stringResource("uisetting_msgoutline_title") },
                             defaultValue = true,
                             key = PREF_INROOM_MSG_OUTLINE,
                             icon = Icons.Filled.BorderColor,
@@ -431,8 +430,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.SliderSetting,
-                            title = { stringResource(MR.strings.uisetting_messagery_alpha_title) },
-                            summary = { stringResource(MR.strings.uisetting_messagery_alpha_summary) },
+                            title = { Localization.stringResource("uisetting_messagery_alpha_title") },
+                            summary = { Localization.stringResource("uisetting_messagery_alpha_summary") },
                             defaultValue = 0,
                             minValue = 0,
                             maxValue = 255,
@@ -443,8 +442,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.SliderSetting,
-                            title = { stringResource(MR.strings.uisetting_msgsize_title) },
-                            summary = { stringResource(MR.strings.uisetting_msgsize_summary) },
+                            title = { Localization.stringResource("uisetting_msgsize_title") },
+                            summary = { Localization.stringResource("uisetting_msgsize_summary") },
                             defaultValue = 9,
                             minValue = 6,
                             maxValue = 28,
@@ -455,8 +454,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.SliderSetting,
-                            title = { stringResource(MR.strings.uisetting_msgcount_title) },
-                            summary = { stringResource(MR.strings.uisetting_msgcount_summary) },
+                            title = { Localization.stringResource("uisetting_msgcount_title") },
+                            summary = { Localization.stringResource("uisetting_msgcount_summary") },
                             defaultValue = 10,
                             minValue = 1,
                             maxValue = 30,
@@ -467,8 +466,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.SliderSetting,
-                            title = { stringResource(MR.strings.uisetting_msglife_title) },
-                            summary = { stringResource(MR.strings.uisetting_msglife_summary) },
+                            title = { Localization.stringResource("uisetting_msglife_title") },
+                            summary = { Localization.stringResource("uisetting_msglife_summary") },
                             defaultValue = 3,
                             minValue = 1,
                             maxValue = 10,
@@ -479,8 +478,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.ToggleSetting,
-                            title = { stringResource(MR.strings.uisetting_msgboxaction_title) },
-                            summary = { stringResource(MR.strings.uisetting_msgboxaction_summary) },
+                            title = { Localization.stringResource("uisetting_msgboxaction_title") },
+                            summary = { Localization.stringResource("uisetting_msgboxaction_summary") },
                             defaultValue = true,
                             key = PREF_INROOM_MSG_BOX_ACTION,
                             icon = Icons.Filled.Keyboard,
@@ -499,8 +498,8 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.SliderSetting,
-                        title = { stringResource(MR.strings.uisetting_subtitle_size_title) },
-                        summary = { stringResource(MR.strings.uisetting_subtitle_size_summary) },
+                        title = { Localization.stringResource("uisetting_subtitle_size_title") },
+                        summary = { Localization.stringResource("uisetting_subtitle_size_summary") },
                         defaultValue = 16,
                         minValue = 2,
                         maxValue = 200,
@@ -539,8 +538,8 @@ object MySettings {
 //                    ),
                     Setting(
                         type = SettingType.SliderSetting,
-                        title = { stringResource(MR.strings.uisetting_seek_forward_jump_title) },
-                        summary = { stringResource(MR.strings.uisetting_seek_forward_jump_summary) },
+                        title = { Localization.stringResource("uisetting_seek_forward_jump_title") },
+                        summary = { Localization.stringResource("uisetting_seek_forward_jump_summary") },
                         defaultValue = 10,
                         minValue = 1,
                         maxValue = 120,
@@ -551,8 +550,8 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.SliderSetting,
-                        title = { stringResource(MR.strings.uisetting_seek_backward_jump_title) },
-                        summary = { stringResource(MR.strings.uisetting_seek_backward_jump_summary) },
+                        title = { Localization.stringResource("uisetting_seek_backward_jump_title") },
+                        summary = { Localization.stringResource("uisetting_seek_backward_jump_summary") },
                         defaultValue = 10,
                         minValue = 1,
                         maxValue = 120,
@@ -573,8 +572,8 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.ToggleSetting,
-                        title = { stringResource(MR.strings.uisetting_pip_title) },
-                        summary = { stringResource(MR.strings.uisetting_pip_title) },
+                        title = { Localization.stringResource("uisetting_pip_title") },
+                        summary = { Localization.stringResource("uisetting_pip_title") },
                         defaultValue = true,
                         key = PREF_INROOM_PIP,
                         icon = Icons.Filled.PictureInPicture,
@@ -583,8 +582,8 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.SliderSetting,
-                        title = { stringResource(MR.strings.uisetting_reconnect_interval_title) } ,
-                        summary = { stringResource(MR.strings.uisetting_reconnect_interval_summary) },
+                        title = { Localization.stringResource("uisetting_reconnect_interval_title") } ,
+                        summary = { Localization.stringResource("uisetting_reconnect_interval_summary") },
                         defaultValue = 2,
                         minValue = 0,
                         maxValue = 15,
@@ -595,8 +594,8 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.OneClickSetting,
-                        title = { stringResource(MR.strings.uisetting_resetdefault_title) },
-                        summary = { stringResource(MR.strings.uisetting_resetdefault_summary) },
+                        title = { Localization.stringResource("uisetting_resetdefault_title") },
+                        summary = { Localization.stringResource("uisetting_resetdefault_summary") },
                         isResetDefault = true,
                         key = "RESET",
                         icon = Icons.Filled.ClearAll,

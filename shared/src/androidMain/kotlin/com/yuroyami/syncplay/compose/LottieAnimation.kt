@@ -25,25 +25,25 @@ import kotlinx.coroutines.launch
  *  On the Android side, it uses Lottie-compose
  *  On the iOS side, it uses JetBrains Skiko (Skottie)
  */
-@Composable
-actual fun InfiniteLottieAnimation(
-    modifier: Modifier,
-    json: String,
-    speed: Float,
-    isplaying: Boolean,
-    reverseOnEnd: Boolean
-) {
-    val comp by rememberLottieComposition(spec = LottieCompositionSpec.JsonString(json))
-    LottieAnimation(
-        composition = comp,
-        isPlaying = isplaying,
-        restartOnPlay = true,
-        speed = speed,
-        iterations = Int.MAX_VALUE,
-        reverseOnRepeat = reverseOnEnd,
-        modifier = modifier
-    )
-}
+//@Composable
+//actual fun InfiniteLottieAnimation(
+//    modifier: Modifier,
+//    json: String,
+//    speed: Float,
+//    isplaying: Boolean,
+//    reverseOnEnd: Boolean
+//) {
+//    val comp by rememberLottieComposition(spec = LottieCompositionSpec.JsonString(json))
+//    LottieAnimation(
+//        composition = comp,
+//        isPlaying = isplaying,
+//        restartOnPlay = true,
+//        speed = speed,
+//        iterations = Int.MAX_VALUE,
+//        reverseOnRepeat = reverseOnEnd,
+//        modifier = modifier
+//    )
+//}
 
 /** Toggle button responsible for switching the day/night (dark/light) mode.
  *
