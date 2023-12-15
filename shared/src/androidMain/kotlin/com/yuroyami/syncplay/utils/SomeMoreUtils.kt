@@ -9,8 +9,6 @@ import com.yuroyami.syncplay.models.MediaFile
 import java.net.MalformedURLException
 import java.net.URL
 
-lateinit var audioManager: AudioManager
-
 fun collectInfoLocalAndroid(media: MediaFile, context: Context) {
     with (media) {
         /** Using MiscUtils **/

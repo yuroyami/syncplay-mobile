@@ -1,6 +1,7 @@
 package com.yuroyami.syncplay
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
 import android.os.Bundle
@@ -22,7 +23,6 @@ import com.yuroyami.syncplay.player.exo.ExoPlayer
 import com.yuroyami.syncplay.player.mpv.MpvPlayer
 import com.yuroyami.syncplay.utils.UIUtils.cutoutMode
 import com.yuroyami.syncplay.utils.UIUtils.hideSystemUI
-import com.yuroyami.syncplay.utils.audioManager
 import com.yuroyami.syncplay.utils.changeLanguage
 import com.yuroyami.syncplay.utils.defaultEngineAndroid
 import com.yuroyami.syncplay.watchroom.GestureCallback
@@ -56,6 +56,8 @@ class WatchActivity : ComponentActivity() {
             }
         }
 
+    lateinit var audioManager: AudioManager
+
     /** Now, onto overriding lifecycle methods */
     override fun onCreate(sis: Bundle?) {
         /** Applying saved language */
@@ -63,6 +65,8 @@ class WatchActivity : ComponentActivity() {
         changeLanguage(lang = lang, context = this)
 
         super.onCreate(sis)
+
+        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
         /** Telling Android that it should keep the screen on, use cut-out mode and go full-screen */
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)

@@ -76,7 +76,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -131,7 +130,7 @@ import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.Paletting.ROOM_ICON_SIZE
 import com.yuroyami.syncplay.utils.CommonUtils
-import com.yuroyami.syncplay.utils.RoomUtils.sendMessage
+import com.yuroyami.syncplay.utils.RoomUtils
 import com.yuroyami.syncplay.utils.RoomUtils.sendSeek
 import com.yuroyami.syncplay.utils.getScreenSizeInfo
 import com.yuroyami.syncplay.utils.timeStamper
@@ -317,62 +316,18 @@ fun RoomUI() {
 
             if (hudVisibility) {
                 Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
-
                     /* Top row (Message input box + Messages) */
                     Column(
                         modifier = Modifier.fillMaxWidth(0.32f).align(Alignment.TopStart),
                         horizontalAlignment = Alignment.Start
                     ) {
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            /** Message input box */
-                            if (!isSoloMode && !pipModeObserver) {
-                                val onSend = fun() {
-                                    val msgToSend = msg.run {
-                                        var t = replace("\\", "")
-                                        if (t.length > 150) t = t.substring(0, 149)
-                                        t
-                                    }
-                                    if (msgToSend.isNotBlank()) {
-                                        sendMessage(msgToSend)
-                                    }
-                                    msg = ""
-                                    msgCanSend = false
-
-                                    focusManager.clearFocus()
-                                }
-
-                                OutlinedTextField(
-                                    modifier = Modifier.alpha(0.75f).gradientOverlay().fillMaxWidth(),
-                                    singleLine = true,
-                                    keyboardActions = KeyboardActions(onDone = {
-                                        if (keyboardOkFunction) {
-                                            onSend()
-                                        }
-                                    }),
-                                    label = { Text(text = "Type your message...", fontSize = 12.sp) },
-                                    trailingIcon = {
-                                        if (msgCanSend) {
-                                            IconButton(onClick = onSend) {
-                                                Icon(imageVector = Icons.Filled.Send, "")
-                                            }
-                                        }
-                                    },
-                                    value = msg,
-                                    onValueChange = { s ->
-                                        msg = s
-                                        msgCanSend = s.isNotBlank()
-                                    }
-                                )
-                            }
-                        }
-
                         /* Messages */
                         if (!isSoloMode) {
                             Box(
                                 modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(
                                     color = if (hasVideo.value || MaterialTheme.colorScheme.primary != Paletting.OLD_SP_YELLOW)
                                         Color(50, 50, 50, msgBoxOpacity.value) else Color.Transparent
-                                )
+                                ).padding(top = 64.dp)
                             ) {
                                 //val lastMessages = msgs.toList().takeLast(msgMaxCount)
                                 val lastMessages = msgs.takeLast(msgMaxCount)
@@ -425,6 +380,55 @@ fun RoomUI() {
             /* HUD below: We resort to using a combination of Boxes, Rows, and Columns. */
             if (hudVisibility) {
                 Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
+                    /* Top row (Message input box + Messages) */
+                    Column(
+                        modifier = Modifier.fillMaxWidth(0.32f).align(Alignment.TopStart),
+                        horizontalAlignment = Alignment.Start
+                    ) {
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            /** Message input box */
+                            if (!isSoloMode && !pipModeObserver) {
+                                val onSend = fun() {
+                                    val msgToSend = msg.run {
+                                        var t = replace("\\", "")
+                                        if (t.length > 150) t = t.substring(0, 149)
+                                        t
+                                    }
+                                    if (msgToSend.isNotBlank()) {
+                                        RoomUtils.sendMessage(msgToSend)
+                                    }
+                                    msg = ""
+                                    msgCanSend = false
+
+                                    focusManager.clearFocus()
+                                }
+
+                                OutlinedTextField(
+                                    modifier = Modifier.alpha(0.75f).gradientOverlay().fillMaxWidth(),
+                                    singleLine = true,
+                                    keyboardActions = KeyboardActions(onDone = {
+                                        if (keyboardOkFunction) {
+                                            onSend()
+                                        }
+                                    }),
+                                    label = { Text(text = "Type your message...", fontSize = 12.sp) },
+                                    trailingIcon = {
+                                        if (msgCanSend) {
+                                            IconButton(onClick = onSend) {
+                                                Icon(imageVector = Icons.Filled.Send, "")
+                                            }
+                                        }
+                                    },
+                                    value = msg,
+                                    onValueChange = { s ->
+                                        msg = s
+                                        msgCanSend = s.isNotBlank()
+                                    }
+                                )
+                            }
+                        }
+                    }
+
                     /* Top-Center info */
                     /* Overall info (PING + ROOMNAME + OSD Messages) */
                     if (!isSoloMode && !pipModeObserver) {

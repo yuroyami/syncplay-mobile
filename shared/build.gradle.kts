@@ -45,7 +45,7 @@ kotlin {
             }
         }
 
-        val ktor = "2.3.7" //"3.0.0-beta-1"
+        val ktor = /* "2.3.7" */ "3.0.0-beta-1"
         val commonMain by getting {
             dependencies {
                 /* Official JetBrains Kotlin Date 'n time manager (i.e: generating date from epoch) */
@@ -60,7 +60,8 @@ kotlin {
                 /* Network client */
                 implementation("io.ktor:ktor-client-core:$ktor")
                 implementation("io.ktor:ktor-network:$ktor")
-                implementation("io.ktor:ktor-network-tls:$ktor")
+                //implementation("io.ktor:ktor-network-tls:$ktor")
+
 
                 /* JSON serializer/deserializer to communicate with Syncplay servers */
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
@@ -90,7 +91,8 @@ kotlin {
                 dependsOn(commonMain)
 
                 /* Required ktor network client declaration for Android */
-                implementation("io.ktor:ktor-client-android:$ktor")
+                //implementation("io.ktor:ktor-client-android:$ktor")
+                //implementation("io.netty:netty-all:4.1.103.Final")
 
                 /* AndroidX compat */
                 api("androidx.core:core-ktx:1.12.0")
@@ -133,20 +135,23 @@ kotlin {
             }
         }
 
+        val iosMain by getting {
+            dependencies {
+                /* Required ktor network client declaration for iOS */
+                //implementation("io.ktor:ktor-client-ios:$ktor")
+            }
+        }
 //        val iosX64Main by getting
 //        val iosArm64Main by getting
 //        val iosSimulatorArm64Main by getting
-        val iosMain by getting {
-            dependsOn(commonMain)
-//            iosX64Main.dependsOn(this)
-//            iosArm64Main.dependsOn(this)
-//            iosSimulatorArm64Main.dependsOn(this)
+//        val iosMain by getting {
+//            dependsOn(commonMain)
+////            iosX64Main.dependsOn(this)
+////            iosArm64Main.dependsOn(this)
+////            iosSimulatorArm64Main.dependsOn(this)
+//
 
-            dependencies {
-                /* Required ktor network client declaration for iOS */
-                implementation("io.ktor:ktor-client-ios:$ktor")
-            }
-        }
+//        }
     }
 }
 

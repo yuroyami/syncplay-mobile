@@ -49,6 +49,7 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             pickFirsts += "META-INF/INDEX.LIST"
             pickFirsts += "META-INF/versions/9/previous-compilation-data.bin"
+            pickFirsts += "META-INF/io.netty.versions.properties"
         }
     }
 

@@ -1,5 +1,6 @@
 package com.yuroyami.syncplay.watchroom
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Brightness6
 import androidx.compose.material.icons.filled.VolumeUp
@@ -26,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -163,11 +166,11 @@ fun GestureInterceptor(
                         modifier = Modifier.offset(
                             (vertdragOffset.x + 100).toDp(),
                             vertdragOffset.y.toDp()
-                        ),
+                        ).background(Color.LightGray).clip(RoundedCornerShape(25)),
                         verticalAlignment = CenterVertically
                     ) {
                         Icon(imageVector = Icons.Filled.Brightness6, "")
-                        Text("Brightness: $currentBrightness", color = Color.White)
+                        Text("Brightness: $currentBrightness", color = Color.Black)
                     }
                 }
 
@@ -176,11 +179,11 @@ fun GestureInterceptor(
                         modifier = Modifier.offset(
                             (vertdragOffset.x - 500).toDp(),
                             vertdragOffset.y.toDp()
-                        ),
+                        ).background(Color.LightGray).clip(RoundedCornerShape(25)),
                         verticalAlignment = CenterVertically
                     ) {
                         Icon(imageVector = Icons.Filled.VolumeUp, "")
-                        Text("Brightness: $currentVolume", color = Color.White)
+                        Text("Brightness: $currentVolume", color = Color.Black)
                     }
                 }
             }

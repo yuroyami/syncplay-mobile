@@ -21,6 +21,11 @@ import kotlinx.serialization.json.putJsonArray
 /** This class does not actually send anything but what it actually does is compose JSON strings which will be sent later */
 object JsonSender {
 
+    val json = Json {
+        encodeDefaults = true
+        allowSpecialFloatingPointValues = true
+    }
+
     fun sendHello(username: String, roomname: String, serverPassword: String): String {
         val hello = buildJsonObject {
             put("username", username)
@@ -39,7 +44,7 @@ object JsonSender {
                 put("chat", true)
                 put("featureList", true)
                 put("readiness", true)
-                put("managedRooms", true)
+                put("managedRooms", false)
             })
         }
 
@@ -47,7 +52,7 @@ object JsonSender {
             put("Hello", hello)
         }
 
-        return Json.encodeToString(wrapper)
+        return json.encodeToString(wrapper)
     }
 
     fun sendJoined(roomname: String): String {
@@ -72,7 +77,7 @@ object JsonSender {
             put("Set", user)
         }
 
-        return Json.encodeToString(wrapper)
+        return json.encodeToString(wrapper)
     }
 
     fun sendReadiness(isReady: Boolean, manuallyInitiated: Boolean): String {
@@ -89,7 +94,7 @@ object JsonSender {
             put("Set", setting)
         }
 
-        return Json.encodeToString(wrapper)
+        return json.encodeToString(wrapper)
     }
 
     fun sendFile(media: MediaFile): String {
@@ -119,7 +124,7 @@ object JsonSender {
             put("Set", file)
         }
 
-        return Json.encodeToString(wrapper)
+        return json.encodeToString(wrapper)
     }
 
     fun sendEmptyList(): String {
@@ -136,7 +141,7 @@ object JsonSender {
             put("Chat", message)
         }
 
-        return Json.encodeToString(wrapper)
+        return json.encodeToString(wrapper)
     }
 
     fun sendState(
@@ -161,7 +166,7 @@ object JsonSender {
             val ping = buildJsonObject {
                 servertime?.let { put("latencyCalculation", it) }
                 put("clientLatencyCalculation", clienttime)
-                put("clientRtt", p.ping.value)
+                put("clientRtt", p.ping.value ?: 0)
             }
 
             if (iChangeState == 1) {
@@ -190,7 +195,7 @@ object JsonSender {
             put("State", state)
         }
 
-        return Json.encodeToString(statewrapper)
+        return json.encodeToString(statewrapper)
     }
 
 
@@ -211,7 +216,7 @@ object JsonSender {
             put("Set", playlistChange)
         }
 
-        return Json.encodeToString(set)
+        return json.encodeToString(set)
     }
 
     fun sendPlaylistIndex(i: Int): String {
@@ -223,7 +228,7 @@ object JsonSender {
             put("Set", playlistIndex)
         }
 
-        return Json.encodeToString(set)
+        return json.encodeToString(set)
     }
 
     fun sendTLS(): String {
@@ -235,7 +240,7 @@ object JsonSender {
             put("TLS", tls)
         }
 
-        return Json.encodeToString(wrapper)
+        return json.encodeToString(wrapper)
     }
 
 }

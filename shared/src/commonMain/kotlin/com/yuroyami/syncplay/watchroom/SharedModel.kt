@@ -33,8 +33,7 @@ val isSoloMode: Boolean
 
 fun prepareProtocol(joinInfo: JoinInfo) {
     if (!joinInfo.soloMode) {
-        /** Initializing our ViewModel, which is our protocol at the same time **/
-        p = SyncplayProtocol()
+        p = SyncplayProtocol() //instantiateProtocol()
 
         setReadyDirectly = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainBoolean(DataStoreKeys.PREF_READY_FIRST_HAND, true) }
 

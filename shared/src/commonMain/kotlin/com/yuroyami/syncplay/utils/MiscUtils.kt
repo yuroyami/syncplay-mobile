@@ -2,6 +2,7 @@ package com.yuroyami.syncplay.utils
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.Dp
+import com.yuroyami.syncplay.protocol.SyncplayProtocol
 
 
 expect fun getPlatform(): String
@@ -28,6 +29,8 @@ expect fun getScreenSizeInfo(): ScreenSizeInfo
 expect fun String.format(vararg keys: String): String
 
 expect fun getSystemLanguageCode(): String
+
+//expect fun instantiateProtocol(): SyncplayProtocol
 
 //@Suppress("DEPRECATION")
 //fun ComponentActivity.showSystemUI(useDeprecated: Boolean) {

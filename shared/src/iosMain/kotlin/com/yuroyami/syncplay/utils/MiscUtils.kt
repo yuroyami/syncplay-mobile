@@ -86,3 +86,5 @@ actual fun String.format(vararg keys: String) =
 actual fun getSystemLanguageCode(): String {
     return NSLocale.currentLocale.languageCode
 }
+
+//actual fun instantiateProtocol(): SyncplayProtocol = SyncplayProtocolIOS()

@@ -1,7 +1,6 @@
 package com.yuroyami.syncplay.locale
 
 import com.yuroyami.syncplay.utils.format
-import com.yuroyami.syncplay.utils.loggy
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import nl.adaptivity.xmlutil.serialization.XML
@@ -24,8 +23,6 @@ object Localization {
 //    }
 
     fun stringResource(key: String, vararg args: String): String {
-        loggy("TRYINGGGGG: $key")
-
         return try {
             load(lang)
             strings[lang.value]!![key]!!.format(*args)
@@ -46,7 +43,6 @@ object Localization {
         val map = HashMap<String, String>()
         val res = XML.decodeFromString(LocalizedStrings.serializer(), xml)
         res.strings.forEach {
-            loggy("${it.name}  == ${it.v}")
             map[it.name] = it.v
         }
         return map

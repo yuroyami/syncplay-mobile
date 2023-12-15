@@ -176,10 +176,28 @@ code_sign_if_enabled() {
 }
 
 if [[ "$CONFIGURATION" == "Debug" ]]; then
-  install_framework "${PODS_ROOT}/../../shared/build/cocoapods/framework/shared.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/CNIOAtomics/CNIOAtomics.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/CNIODarwin/CNIODarwin.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/CNIOLinux/CNIOLinux.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/CNIOWindows/CNIOWindows.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/SwiftNIO/NIO.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/SwiftNIOConcurrencyHelpers/NIOConcurrencyHelpers.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/SwiftNIOCore/NIOCore.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/SwiftNIOEmbedded/NIOEmbedded.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/SwiftNIOPosix/NIOPosix.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/_NIODataStructures/_NIODataStructures.framework"
 fi
 if [[ "$CONFIGURATION" == "Release" ]]; then
-  install_framework "${PODS_ROOT}/../../shared/build/cocoapods/framework/shared.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/CNIOAtomics/CNIOAtomics.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/CNIODarwin/CNIODarwin.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/CNIOLinux/CNIOLinux.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/CNIOWindows/CNIOWindows.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/SwiftNIO/NIO.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/SwiftNIOConcurrencyHelpers/NIOConcurrencyHelpers.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/SwiftNIOCore/NIOCore.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/SwiftNIOEmbedded/NIOEmbedded.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/SwiftNIOPosix/NIOPosix.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/_NIODataStructures/_NIODataStructures.framework"
 fi
 if [ "${COCOAPODS_PARALLEL_CODE_SIGN}" == "true" ]; then
   wait

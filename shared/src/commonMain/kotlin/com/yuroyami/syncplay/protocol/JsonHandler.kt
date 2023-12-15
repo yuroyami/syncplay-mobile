@@ -2,8 +2,8 @@ package com.yuroyami.syncplay.protocol
 
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.User
-import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.generateTimestampMillis
+import com.yuroyami.syncplay.utils.loggy
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -18,33 +18,44 @@ import kotlinx.serialization.json.jsonPrimitive
 /** Handlers that parse JSONs and control callbacks based on the incoming message from server */
 object JsonHandler {
 
+    val jsonx = Json {
+        encodeDefaults = true
+        allowSpecialFloatingPointValues = true
+    }
+
     fun SyncplayProtocol.handleJson(json: String) {
         val protocol = this
         loggy("Server: $json")
 
         /* Second, we check what kind of JSON message we received from the first Json Object */
-        val element: ReceivedJson?
         try {
-            element = Json.decodeFromString<ReceivedJson>(json)
+            val element = jsonx.decodeFromString<JsonElement>(json).jsonObject
+            with(element.keys) {
+                when {
+                    contains("Hello") -> handleHello(element["Hello"]!!.jsonObject, protocol)
+                    contains("Set") -> handleSet(element["Set"]!!.jsonObject, protocol)
+                    contains("List") -> handleList(element["List"]!!.jsonObject, protocol)
+                    contains("State") -> handleState(element["State"]!!.jsonObject, protocol, json)
+                    contains("Chat") -> handleChat(element["Chat"]!!.jsonObject, protocol)
+                    contains("Error") -> handleError(element["Error"]!!.jsonObject, protocol)
+                    contains("TLS") -> handleTLS(element["TLS"]!!.jsonObject, protocol)
+                    else -> dropError("unknown-command-server-error")
+                }
+            }
+//            when {
+//                element.hello != null -> handleHello(element.hello, protocol)
+//                element.set != null -> handleSet(element.set, protocol)
+//                element.list != null -> handleList(element.list, protocol)
+//                element.state != null -> handleState(element.state, protocol, json)
+//                element.chat != null -> handleChat(element.chat, protocol)
+//                element.error != null -> handleError(element.error, protocol)
+//                element.tls != null -> handleTLS(element.tls, protocol)
+//                else -> dropError("unknown-command-server-error")
+//            }
         } catch (e: Exception) {
             loggy(e.stackTraceToString())
             return
         }
-        try {
-            when {
-                element.hello != null -> handleHello(element.hello, protocol)
-                element.set != null -> handleSet(element.set, protocol)
-                element.list != null -> handleList(element.list, protocol)
-                element.state != null -> handleState(element.state, protocol, json)
-                element.chat != null -> handleChat(element.chat, protocol)
-                element.error != null -> handleError(element.error, protocol)
-                element.tls != null -> handleTLS(element.tls, protocol)
-                else -> dropError("unknown-command-server-error")
-            }
-        } catch (e: Exception) {
-            loggy(e.stackTraceToString())
-        }
-
     }
 
     private fun handleHello(hello: JsonObject, p: SyncplayProtocol) {

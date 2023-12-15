@@ -14,8 +14,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.core.os.LocaleListCompat
-import androidx.media3.common.C.STREAM_TYPE_MUSIC
-import com.yuroyami.syncplay.watchroom.player
+import com.yuroyami.syncplay.protocol.SyncplayProtocol
+import com.yuroyami.syncplay.protocol.SyncplayProtocolAndroid
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
@@ -114,3 +114,5 @@ actual fun String.format(vararg keys: String): String {
 actual fun getSystemLanguageCode(): String {
     return androidx.compose.ui.text.intl.Locale.current.language
 }
+
+//actual fun instantiateProtocol(): SyncplayProtocol = SyncplayProtocolAndroid()

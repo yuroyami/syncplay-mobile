@@ -54,9 +54,7 @@ open class SyncplayProtocol {
     var tls: Constants.TLS = Constants.TLS.TLS_NO
 
     /** Coroutine scopes and dispatchers */
-    private val generalScope = CoroutineScope(Dispatchers.IO)
-    private val writeScope = CoroutineScope(Dispatchers.IO)
-    private val readScope = CoroutineScope(Dispatchers.IO)
+    val protoScope = CoroutineScope(Dispatchers.IO)
 
     /** ============================ start of protocol =====================================**/
 
@@ -74,7 +72,7 @@ open class SyncplayProtocol {
         state = Constants.CONNECTIONSTATE.STATE_CONNECTING
 
         /** Bootstrapping our Ktor client  */
-        generalScope.launch {
+        protoScope.launch {
 
             /** Should we establish a TLS connection ? */
             if (tls == Constants.TLS.TLS_YES) {
@@ -96,7 +94,7 @@ open class SyncplayProtocol {
                 connection = socket?.connection()
 
                 /** Initiate reading */
-                readScope.launch {
+                protoScope.launch {
                     while (true) {
                         try {
                             connection?.input?.awaitContent()
@@ -133,7 +131,7 @@ open class SyncplayProtocol {
     /** WRITING: This small method basically checks if the channel is active and writes to it, otherwise
      *  it queues the json to send in a special queue until the connection recovers. */
     open fun sendPacket(json: String, isRetry: Boolean = false) {
-        writeScope.launch {
+        protoScope.launch {
             try {
                 if (socket != null && socket?.isClosed == false) {
                     val finalOut = json + "\r\n"
@@ -174,7 +172,7 @@ open class SyncplayProtocol {
     /** This method schedules reconnection ONLY IN in disconnected state */
     fun reconnect() {
         if (state == Constants.CONNECTIONSTATE.STATE_DISCONNECTED) {
-            generalScope.launch(Dispatchers.IO) {
+            protoScope.launch(Dispatchers.IO) {
                 state = Constants.CONNECTIONSTATE.STATE_SCHEDULING_RECONNECT
                 val reconnectionInterval =
                     runBlocking { DATASTORE_INROOM_PREFERENCES.obtainInt(DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL, 2) } * 1000

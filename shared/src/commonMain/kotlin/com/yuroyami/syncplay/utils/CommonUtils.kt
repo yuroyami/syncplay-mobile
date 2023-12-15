@@ -21,9 +21,10 @@ object CommonUtils {
     var pingUpdateJob: Job? = null
     suspend fun beginPingUpdate() {
         while (true) {
-            p.ping.value = if (p.connection?.socket?.isActive == true) pingIcmp(p.session.serverHost, 32) else null
+            p.ping.value = if (p.connection?.socket?.isActive == true && p.connection != null) {
+                pingIcmp(p.session.serverHost, 32)
+            } else null
             delay(1000)
         }
     }
-
 }
