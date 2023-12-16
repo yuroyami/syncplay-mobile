@@ -45,7 +45,7 @@ object RoomUtils {
     }
 
     /** This broadcasts a message to show it in the chat section **/
-    fun broadcastMessage(message: String, isChat: Boolean, chatter: String = "") {
+    fun broadcastMessage(message: String, isChat: Boolean, chatter: String = "", isError: Boolean = false) {
         if (isSoloMode) return
 
         /** Messages are just a wrapper class for everything we need about a message
@@ -53,7 +53,8 @@ object RoomUtils {
         val msg = Message(
             sender = if (isChat) chatter else null,
             isMainUser = chatter == p.session.currentUsername,
-            content = message
+            content = message,
+            isError = isError
         )
 
         /** Adding the message instance to our message sequence **/

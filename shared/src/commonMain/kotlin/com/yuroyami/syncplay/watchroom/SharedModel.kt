@@ -211,7 +211,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                 /** Telling user that connection has failed **/
                 broadcastMessage(
                     message = Localization.stringResource("room_connection_failed"),
-                    isChat = false
+                    isChat = false, isError = true
                 )
 
                 /** Attempting reconnection **/
@@ -226,7 +226,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                 p.state = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
 
                 /** Telling user that the connection has been lost **/
-                broadcastMessage(message =  Localization.stringResource("room_attempting_reconnection"), isChat = false)
+                broadcastMessage(message =  Localization.stringResource("room_attempting_reconnection"), isChat = false,  isError = true)
 
                 /** Attempting reconnection **/
                 p.reconnect()
@@ -249,7 +249,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                     p.tls = Constants.TLS.TLS_YES
                     p.connect()
                 } else {
-                    broadcastMessage("Server does not support TLS.", isChat = false)
+                    broadcastMessage("Server does not support TLS.", isChat = false, isError = true)
                     p.tls = Constants.TLS.TLS_NO
                     p.sendPacket(
                         JsonSender.sendHello(

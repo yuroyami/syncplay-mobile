@@ -9,6 +9,5 @@ data class MessagePalette(
     val systemmsgColor: Color,
     val usermsgColor: Color,
     val errormsgColor: Color,
-    val includeTimestamp: Boolean = true,
-    val isError: Boolean = false
+    val includeTimestamp: Boolean = true
 )

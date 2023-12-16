@@ -5,6 +5,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import com.yuroyami.syncplay.utils.CommonUtils.generateClockstamp
+import kotlinx.atomicfu.atomic
 
 /***************************************************************************************************
  * Message wrapper class. It encapsulates all information and data we need about a single message  *
@@ -20,10 +21,15 @@ data class Message (
     var content: String = "",
 
     /** If the message refers to a chat/action by the app user themself */
-    var isMainUser: Boolean = false
+    var isMainUser: Boolean = false,
+
+    /** Whether the message is an error message (and therefore should be colored in Error color (red in default) */
+    var isError: Boolean = false
 ) {
 
-    var seen = false
+    /** indicates that this message has been seen */
+    var seen = atomic(false)
+
     /** Returns an AnnotatedString to use with Compose Text
      * @param msgPalette A [MessagePalette] that contains colors and properties
      **/
@@ -66,7 +72,7 @@ data class Message (
             AnnotatedString(
                 text = content,
                 spanStyle = SpanStyle(
-                    if (msgPalette.isError) msgPalette.errormsgColor else msgPalette.systemmsgColor
+                    if (isError) msgPalette.errormsgColor else msgPalette.systemmsgColor
                 )
             )
         }
