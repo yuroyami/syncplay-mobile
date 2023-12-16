@@ -5,7 +5,6 @@ import com.yuroyami.syncplay.datastore.ds
 import com.yuroyami.syncplay.datastore.intFlow
 import com.yuroyami.syncplay.utils.RoomUtils
 import com.yuroyami.syncplay.watchroom.isSoloMode
-import com.yuroyami.syncplay.watchroom.media
 import com.yuroyami.syncplay.watchroom.p
 import com.yuroyami.syncplay.watchroom.player
 import com.yuroyami.syncplay.watchroom.seeks
@@ -48,7 +47,7 @@ object PlayerUtils {
             val dec = DataStoreKeys.DATASTORE_INROOM_PREFERENCES.ds().intFlow(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP, 10).first()
 
             val currentMs = withContext(Dispatchers.Main) { player!!.currentPositionMs() }
-            var newPos = (currentMs) - dec * 1000
+            var newPos = (currentMs) - (dec * 1000L)
 
             if (newPos < 0) { newPos = 0 }
 
@@ -66,14 +65,15 @@ object PlayerUtils {
             val inc = DataStoreKeys.DATASTORE_INROOM_PREFERENCES.ds().intFlow(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP, 10).first()
 
             val currentMs = withContext(Dispatchers.Main) { player!!.currentPositionMs() }
-            var newPos = (currentMs) + inc * 1000
-            if (media != null) {
-                if (newPos > media?.fileDuration!!.toLong()) {
-                    newPos = media?.fileDuration!!.toLong()
-                }
-            }
+            var newPos = (currentMs) + (inc * 1000L)
+//            if (media != null) {
+//                if (newPos > media?.fileDuration!!.toLong()) {
+//                    newPos = media?.fileDuration!!.toLong()
+//                }
+//            }
             RoomUtils.sendSeek(newPos)
             player?.seekTo(newPos)
+
             if (isSoloMode) {
                 seeks.add(Pair((currentMs), newPos * 1000))
             }

@@ -303,9 +303,8 @@ class MpvPlayer : BasePlayer() {
 
     /** MPV EXCLUSIVE */
     private fun mpvObserverAttach() {
-        if (::observer.isInitialized) {
-            mpvView.removeObserver(observer)
-        }
+        removeObserver()
+
         observer = object : MPVLib.EventObserver {
             override fun eventProperty(property: String) {
             }
@@ -441,5 +440,11 @@ class MpvPlayer : BasePlayer() {
             ins?.close()
         }
         return null
+    }
+
+    fun removeObserver() {
+        if (::observer.isInitialized) {
+            mpvView.removeObserver(observer)
+        }
     }
 }

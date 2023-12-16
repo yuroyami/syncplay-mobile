@@ -23,6 +23,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -67,6 +68,10 @@ open class SyncplayProtocol {
             /* Cleaning leftovers */
             socket?.close()
             socket?.dispose()
+
+            if (terminating) {
+                protoScope.cancel("")
+            }
         } catch (_: Exception) {
         }
     }
@@ -102,7 +107,7 @@ open class SyncplayProtocol {
 
                 /** Initiate reading */
                 launch {
-                    while (true) {
+                    while (!terminating) {
                         try {
                             connection?.input?.awaitContent()
                             connection?.input?.readUTF8Line()?.let { ln ->

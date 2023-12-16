@@ -193,9 +193,10 @@ class WatchActivity : ComponentActivity() {
             (player as ExoPlayer).exoplayer?.release()
         }
         if (player is MpvPlayer) {
-            MPVLib.removeObserver((player as MpvPlayer).observer)
+            (player as MpvPlayer).removeObserver()
             MPVLib.destroy()
         }
+
         finish()
     }
 //
