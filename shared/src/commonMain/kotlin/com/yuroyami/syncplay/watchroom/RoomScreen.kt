@@ -280,7 +280,7 @@ fun RoomUI() {
             var controlcardvisible by remember { mutableStateOf(false) }
             var addmediacardvisible by remember { mutableStateOf(false) }
 
-            var gestures by remember { mutableStateOf(false) }
+            val gestures = remember { mutableStateOf(false) }
             val userinfoVisibility = remember { mutableStateOf(false) }
             val sharedplaylistVisibility = remember { mutableStateOf(false) }
             val inroomprefsVisibility = remember { mutableStateOf(false) }
@@ -343,7 +343,7 @@ fun RoomUI() {
             }
 
             /* Gestures Interceptor */
-            GestureInterceptor(gestures = gestures, hasVideo = hasVideo.value, onSingleTap = {
+            GestureInterceptor(gestureState = gestures, videoState = hasVideoG, onSingleTap = {
                 hudVisibility = !hudVisibility
                 if (!hudVisibility) {/* Hide any popups */
                     controlcardvisible = false
@@ -630,13 +630,13 @@ fun RoomUI() {
 
                                         /* Seek Gesture (DoNotTouch for disabling it) */
                                         FancyIcon2(
-                                            icon = when (gestures) {
+                                            icon = when (gestures.value) {
                                                 true -> Icons.Filled.TouchApp
                                                 false -> Icons.Filled.DoNotTouch
                                             }, size = ROOM_ICON_SIZE, shadowColor = Color.Black
                                         ) {
-                                            gestures = !gestures
-                                            composeScope.dispatchOSD(if (gestures) "Gestures enabled" else "Gestures disabled")
+                                            gestures.value = !gestures.value
+                                            composeScope.dispatchOSD(if (gestures.value) "Gestures enabled" else "Gestures disabled")
                                         }
 
                                         /* Seek To */
@@ -825,7 +825,7 @@ fun RoomUI() {
                                 Column(
                                     Modifier.fillMaxWidth(0.5f), horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-                                    if (!gestures) {
+                                    if (!gestures.value) {
                                         Row(horizontalArrangement = Arrangement.Center) {
                                             FancyIcon2(icon = Icons.Filled.FastRewind, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black) {
                                                 seekBckwd()

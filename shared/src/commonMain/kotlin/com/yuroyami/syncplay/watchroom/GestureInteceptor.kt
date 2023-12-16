@@ -20,6 +20,7 @@ import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,10 +49,14 @@ var initialBrightness = 0f
 
 @Composable
 fun GestureInterceptor(
-    gestures: Boolean, hasVideo: Boolean,
+    gestureState: MutableState<Boolean>,
+    videoState: MutableState<Boolean>,
     onSingleTap: () -> Unit
 ) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
+
+    val g by remember { gestureState }
+    val v by remember { videoState }
 
     val seekLeftInteraction = remember { MutableInteractionSource() }
     val seekRightInteraction = remember { MutableInteractionSource() }
@@ -66,9 +71,9 @@ fun GestureInterceptor(
     var vertdragOffset by remember { mutableStateOf(Offset.Zero) }
 
     Box(modifier = Modifier.fillMaxSize()
-        .pointerInput(hasVideo, gestures) {
+        .pointerInput(g, v) {
             detectTapGestures(
-                onDoubleTap = if (gestures && hasVideo) { offset ->
+                onDoubleTap = if (g && v) { offset ->
                     scope.launch {
                         if (offset.x < dimensions.wPX.times(0.25f)) {
                             PlayerUtils.seekBckwd()
@@ -91,51 +96,53 @@ fun GestureInterceptor(
                 onTap = { onSingleTap.invoke() },
             )
         }
-        .pointerInput(hasVideo, gestures) {
-            detectVerticalDragGestures(
-                onDragStart = {
-                    initialBrightness = gestureCallback.getCurrentBrightness()
-                    initialVolume = gestureCallback.getCurrentVolume()
-                },
-                onDragEnd = {
-                    dragdistance = 0F
-                    currentBrightness = -1f
-                    currentVolume = -1
-                },
-                onVerticalDrag = { pntr, f ->
-                    dragdistance += f
+        .pointerInput(g, v) {
+            if (g && v) {
+                detectVerticalDragGestures(
+                    onDragStart = {
+                        initialBrightness = gestureCallback.getCurrentBrightness()
+                        initialVolume = gestureCallback.getCurrentVolume()
+                    },
+                    onDragEnd = {
+                        dragdistance = 0F
+                        currentBrightness = -1f
+                        currentVolume = -1
+                    },
+                    onVerticalDrag = { pntr, f ->
+                        dragdistance += f
 
-                    vertdragOffset = pntr.position
+                        vertdragOffset = pntr.position
 
-                    if (pntr.position.x >= dimensions.wPX * 0.5f) {
-                        /** Volume adjusting */
-                        val h = dimensions.hPX / 1.5
-                        val maxVolume = gestureCallback.getMaxVolume()
+                        if (pntr.position.x >= dimensions.wPX * 0.5f) {
+                            /** Volume adjusting */
+                            val h = dimensions.hPX / 1.5
+                            val maxVolume = gestureCallback.getMaxVolume()
 
-                        var newVolume = (initialVolume + (-dragdistance * maxVolume / h)).roundToInt()
+                            var newVolume = (initialVolume + (-dragdistance * maxVolume / h)).roundToInt()
 
-                        if (newVolume > maxVolume) newVolume = maxVolume
-                        if (newVolume < 0) newVolume = 0
+                            if (newVolume > maxVolume) newVolume = maxVolume
+                            if (newVolume < 0) newVolume = 0
 
-                        currentVolume = newVolume //ui
+                            currentVolume = newVolume //ui
 
-                        gestureCallback.changeCurrentVolume(newVolume)
-                    } else {
-                        /** Brightness adjusting */
-                        val h = dimensions.hPX / 1.5
-                        val maxBright = gestureCallback.getMaxBrightness()
-                        val newBright = (initialBrightness + (-dragdistance * maxBright / h)).toFloat()
+                            gestureCallback.changeCurrentVolume(newVolume)
+                        } else {
+                            /** Brightness adjusting */
+                            val h = dimensions.hPX / 1.5
+                            val maxBright = gestureCallback.getMaxBrightness()
+                            val newBright = (initialBrightness + (-dragdistance * maxBright / h)).toFloat()
 
-                        currentBrightness = newBright //ui
+                            currentBrightness = newBright //ui
 
-                        gestureCallback.changeCurrentBrightness(newBright)
+                            gestureCallback.changeCurrentBrightness(newBright)
+                        }
                     }
-                }
-            )
+                )
+            }
         }
     ) {
         /* Seek animators, their only purpose is to animate a seek action */
-        if (gestures) {
+        if (g) {
             Box(modifier = Modifier
                 .align(Alignment.CenterStart)
                 .fillMaxHeight().fillMaxWidth(0.1f)
@@ -183,7 +190,7 @@ fun GestureInterceptor(
                         verticalAlignment = CenterVertically
                     ) {
                         Icon(imageVector = Icons.Filled.VolumeUp, "")
-                        Text("Brightness: $currentVolume", color = Color.Black)
+                        Text("Volume: $currentVolume", color = Color.Black)
                     }
                 }
             }
