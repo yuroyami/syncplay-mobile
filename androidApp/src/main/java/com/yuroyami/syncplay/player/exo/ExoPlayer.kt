@@ -1,6 +1,7 @@
 package com.yuroyami.syncplay.player.exo
 
 import android.annotation.SuppressLint
+import android.util.TypedValue
 import android.view.LayoutInflater
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -31,6 +32,7 @@ import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.ENGINE
 import com.yuroyami.syncplay.player.PlayerOptions
 import com.yuroyami.syncplay.player.PlayerUtils.trackProgress
+import com.yuroyami.syncplay.player.TRACKTYPE
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
@@ -38,6 +40,7 @@ import com.yuroyami.syncplay.utils.collectInfoURLAndroid
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.watchroom.currentTrackChoices
+import com.yuroyami.syncplay.watchroom.dispatchOSD
 import com.yuroyami.syncplay.watchroom.hasVideoG
 import com.yuroyami.syncplay.watchroom.isNowPlaying
 import com.yuroyami.syncplay.watchroom.isSoloMode
@@ -235,24 +238,24 @@ class ExoPlayer : BasePlayer() {
         }
     }
 
-    override fun selectTrack(type: Int, index: Int) {
+    override fun selectTrack(type: TRACKTYPE, index: Int) {
         val builder = exoplayer?.trackSelector?.parameters?.buildUpon() ?: return
 
         /* First, clearing our subtitle track selection (This helps troubleshoot many issues */
-        exoplayer?.trackSelector?.parameters = builder.clearOverridesOfType(type).build()
+        exoplayer?.trackSelector?.parameters = builder.clearOverridesOfType(type.getExoType()).build()
         currentTrackChoices.lastSubtitleOverride = null
 
         /* Now, selecting our subtitle track should one be selected */
         if (index >= 0) {
             when (type) {
-                C.TRACK_TYPE_TEXT -> {
+                TRACKTYPE.SUBTITLE -> {
                     currentTrackChoices.lastSubtitleOverride = TrackSelectionOverride(
                         media!!.subtitleTracks[index].trackGroup_EXO_ONLY as TrackGroup,
                         media!!.subtitleTracks[index].index
                     )
                 }
 
-                C.TRACK_TYPE_AUDIO -> {
+                TRACKTYPE.AUDIO -> {
                     currentTrackChoices.lastSubtitleOverride = TrackSelectionOverride(
                         media!!.audioTracks[index].trackGroup_EXO_ONLY as TrackGroup,
                         media!!.audioTracks[index].index
@@ -364,17 +367,14 @@ class ExoPlayer : BasePlayer() {
 
                 /* Updating play button */
                 exoplayer?.duration?.let { timeFull.longValue = if (it < 0) 0 else it }
-
-                /* Seeing if we have to start over TODO **/
-                //if (startFromPosition != (-3.0).toLong()) myExoPlayer?.seekTo(startFromPosition)
             } catch (e: IOException) {
                 /* If, for some reason, the video didn't wanna load */
                 e.printStackTrace()
-                //toasty("There was a problem loading this file.")
+                playerScopeMain.dispatchOSD("There was a problem loading this file.")
             }
 
             /* Finally, show a a toast to the user that the media file has been added */
-            //toasty(string(R.string.room_selected_vid, "${media?.fileName}"))
+            playerScopeMain.dispatchOSD(Localization.stringResource("room_selected_vid", "${media?.fileName}"))
         }
     }
 
@@ -407,20 +407,18 @@ class ExoPlayer : BasePlayer() {
 
     @SuppressLint("WrongConstant")
     override fun switchAspectRatio(): String {
-        with(exoView.context.applicationContext) {
-            val resolutions = mutableMapOf<Int, String>()
-            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIT] = Localization.stringResource("room_scaling_fit_screen")
-            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH] = Localization.stringResource("room_scaling_fixed_width")
-            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT] = Localization.stringResource("room_scaling_fixed_height")
-            resolutions[AspectRatioFrameLayout.RESIZE_MODE_FILL] = Localization.stringResource("room_scaling_fill_screen")
-            resolutions[AspectRatioFrameLayout.RESIZE_MODE_ZOOM] = Localization.stringResource("room_scaling_zoom")
+        val resolutions = mutableMapOf<Int, String>()
+        resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIT] = Localization.stringResource("room_scaling_fit_screen")
+        resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH] = Localization.stringResource("room_scaling_fixed_width")
+        resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT] = Localization.stringResource("room_scaling_fixed_height")
+        resolutions[AspectRatioFrameLayout.RESIZE_MODE_FILL] = Localization.stringResource("room_scaling_fill_screen")
+        resolutions[AspectRatioFrameLayout.RESIZE_MODE_ZOOM] = Localization.stringResource("room_scaling_zoom")
 
-            var nextRes = (exoView.resizeMode + 1)
-            if (nextRes == 5) nextRes = 0
-            exoView.resizeMode = nextRes
+        var nextRes = (exoView.resizeMode + 1)
+        if (nextRes == 5) nextRes = 0
+        exoView.resizeMode = nextRes
 
-            return resolutions[nextRes]!!
-        }
+        return resolutions[nextRes]!!
     }
 
     override fun collectInfoLocal(mediafile: MediaFile) {
@@ -431,5 +429,19 @@ class ExoPlayer : BasePlayer() {
         collectInfoURLAndroid(mediafile)
     }
 
+
+    override fun changeSubtitleSize(newSize: Int) {
+        playerScopeMain.launch {
+            exoView.subtitleView?.setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, newSize.toFloat())
+        }
+    }
+
     /** EXO-EXCLUSIVE */
+
+    fun TRACKTYPE.getExoType(): Int {
+        return when (this) {
+            TRACKTYPE.AUDIO -> C.TRACK_TYPE_AUDIO
+            TRACKTYPE.SUBTITLE -> C.TRACK_TYPE_TEXT
+        }
+    }
 }

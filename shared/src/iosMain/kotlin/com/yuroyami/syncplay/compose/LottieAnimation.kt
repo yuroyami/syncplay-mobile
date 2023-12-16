@@ -2,10 +2,6 @@ package com.yuroyami.syncplay.compose
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.material3.IconButton
@@ -77,9 +73,7 @@ actual fun NightModeToggle(modifier: Modifier, state: State<Boolean>) {
     /* The lottie composition to play */
     var s by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) {
-        scope.launch {
-            s = daynightAsset()
-        }
+        s = daynightAsset()
     }
 
     s?.let {

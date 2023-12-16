@@ -33,7 +33,7 @@ fun collectInfoURLiOS(media: MediaFile) {
     }
 }
 
-val gb = 2L * 1024L * 1024L * 1024L
+const val gb = 2L * 1024L * 1024L * 1024L
 
 fun getFileName(s: String): String {
     return "IDK"

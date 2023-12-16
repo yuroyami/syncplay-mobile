@@ -57,9 +57,7 @@ actual fun NightModeToggle(modifier: Modifier, state: State<Boolean>) {
     /* The lottie composition to play */
     var s by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) {
-        scope.launch {
-            s = daynightAsset()
-        }
+        s = daynightAsset()
     }
 
     s?.let {

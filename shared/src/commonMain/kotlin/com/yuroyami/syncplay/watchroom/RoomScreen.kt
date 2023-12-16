@@ -125,6 +125,7 @@ import com.yuroyami.syncplay.player.PlayerUtils.pausePlayback
 import com.yuroyami.syncplay.player.PlayerUtils.playPlayback
 import com.yuroyami.syncplay.player.PlayerUtils.seekBckwd
 import com.yuroyami.syncplay.player.PlayerUtils.seekFrwrd
+import com.yuroyami.syncplay.player.TRACKTYPE
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
@@ -227,14 +228,6 @@ fun RoomUI() {
         val msgMaxCount by DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_MSG_MAXCOUNT, 10).collectAsState(initial = 0)
         val keyboardOkFunction by DATASTORE_INROOM_PREFERENCES.ds().booleanFlow(PREF_INROOM_MSG_BOX_ACTION, true).collectAsState(initial = true)
 
-        /* Time-out HUD hider */
-//        LaunchedEffect(hudVisibility, hudRenevator) {
-//            if (hudVisibility) {
-//                delay(3000) //TODO Use prefs
-//                hudVisibility = false
-//            }
-//        }
-
         /** Room artwork underlay (when no video is loaded) */
         if (!hasVideo.value) {
             RoomArtwork(pipModeObserver)
@@ -248,28 +241,18 @@ fun RoomUI() {
 
         if (locked) {
             /** The touch interceptor to switch unlock button visibility */
-            Box(
-                Modifier.fillMaxSize().clickable(
-                    interactionSource = MutableInteractionSource(),
-                    indication = null, onClick = {
-                        unlockButtonVisibility.value = !unlockButtonVisibility.value
-                    }
-                )
-            )
+            Box(Modifier.fillMaxSize().clickable(interactionSource = MutableInteractionSource(), indication = null, onClick = {
+                unlockButtonVisibility.value = !unlockButtonVisibility.value
+            }))
 
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = 15.dp, end = 44.dp),
-                horizontalAlignment = Alignment.End
+                modifier = Modifier.fillMaxSize().padding(top = 15.dp, end = 44.dp), horizontalAlignment = Alignment.End
             ) {
                 /** Unlock Card */
                 if (unlockButtonVisibility.value && !pipModeObserver) {
                     Card(
-                        modifier = Modifier.width(48.dp).alpha(0.5f).aspectRatio(1f)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = rememberRipple(color = Paletting.SP_ORANGE)
+                        modifier = Modifier.width(48.dp).alpha(0.5f).aspectRatio(1f).clickable(
+                                interactionSource = remember { MutableInteractionSource() }, indication = rememberRipple(color = Paletting.SP_ORANGE)
                             ) {
                                 locked = false
                                 hudVisibility = true
@@ -281,9 +264,7 @@ fun RoomUI() {
                     ) {
                         Box(modifier = Modifier.fillMaxSize()) {
                             Icon(
-                                imageVector = Icons.Filled.NoEncryption,
-                                contentDescription = "",
-                                modifier = Modifier.size(32.dp).align(Alignment.Center).gradientOverlay()
+                                imageVector = Icons.Filled.NoEncryption, contentDescription = "", modifier = Modifier.size(32.dp).align(Alignment.Center).gradientOverlay()
                             )
                         }
                     }
@@ -318,26 +299,21 @@ fun RoomUI() {
                 Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
                     /* Top row (Message input box + Messages) */
                     Column(
-                        modifier = Modifier.fillMaxWidth(0.32f).align(Alignment.TopStart),
-                        horizontalAlignment = Alignment.Start
+                        modifier = Modifier.fillMaxWidth(0.32f).align(Alignment.TopStart), horizontalAlignment = Alignment.Start
                     ) {
                         /* Messages */
                         if (!isSoloMode) {
                             Box(
                                 modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(
-                                    color = if (hasVideo.value || MaterialTheme.colorScheme.primary != Paletting.OLD_SP_YELLOW)
-                                        Color(50, 50, 50, msgBoxOpacity.value) else Color.Transparent
+                                    color = if (hasVideo.value || MaterialTheme.colorScheme.primary != Paletting.OLD_SP_YELLOW) Color(50, 50, 50, msgBoxOpacity.value) else Color.Transparent
                                 ).padding(top = 64.dp)
                             ) {
                                 //val lastMessages = msgs.toList().takeLast(msgMaxCount)
                                 val lastMessages = msgs.takeLast(msgMaxCount)
 
                                 LazyColumn(
-                                    contentPadding = PaddingValues(8.dp),
-                                    userScrollEnabled = false,
-                                    modifier = Modifier.fillMaxWidth()
+                                    contentPadding = PaddingValues(8.dp), userScrollEnabled = false, modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    //TODO: Show errors in red
                                     items(lastMessages) {
                                         LaunchedEffect(null) {
                                             it.seen = true /* Once seen, don't use it in fading message */
@@ -364,26 +340,33 @@ fun RoomUI() {
             }
 
             /* Gestures Interceptor */
-            GestureInterceptor(
-                gestures = gestures,
-                hasVideo = hasVideo.value,
-                onSingleTap = {
-                    hudVisibility = !hudVisibility
-                    if (!hudVisibility) {
-                        /* Hide any popups */
-                        controlcardvisible = false
-                        addmediacardvisible = false
-                    }
+            GestureInterceptor(gestures = gestures, hasVideo = hasVideo.value, onSingleTap = {
+                hudVisibility = !hudVisibility
+                if (!hudVisibility) {/* Hide any popups */
+                    controlcardvisible = false
+                    addmediacardvisible = false
                 }
-            )
+            })
 
             /* HUD below: We resort to using a combination of Boxes, Rows, and Columns. */
+            if (hudVisibility && hasVideo.value) {
+                Box(Modifier.fillMaxSize()) {
+                    val blacky = Color.Black.copy(alpha = 0.8F)
+                    Box(
+                        modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(84.dp).background(
+                            brush = Brush.verticalGradient(
+                                listOf(Color.Transparent, blacky, blacky, blacky)
+                            )
+                        ).clickable(false){}
+                    )
+                }
+            }
+
             if (hudVisibility) {
                 Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
                     /* Top row (Message input box + Messages) */
                     Column(
-                        modifier = Modifier.fillMaxWidth(0.32f).align(Alignment.TopStart),
-                        horizontalAlignment = Alignment.Start
+                        modifier = Modifier.fillMaxWidth(0.32f).align(Alignment.TopStart), horizontalAlignment = Alignment.Start
                     ) {
                         Row(modifier = Modifier.fillMaxWidth()) {
                             /** Message input box */
@@ -403,45 +386,34 @@ fun RoomUI() {
                                     focusManager.clearFocus()
                                 }
 
-                                OutlinedTextField(
-                                    modifier = Modifier.alpha(0.75f).gradientOverlay().fillMaxWidth(),
-                                    singleLine = true,
-                                    keyboardActions = KeyboardActions(onDone = {
-                                        if (keyboardOkFunction) {
-                                            onSend()
-                                        }
-                                    }),
-                                    label = { Text(text = "Type your message...", fontSize = 12.sp) },
-                                    trailingIcon = {
-                                        if (msgCanSend) {
-                                            IconButton(onClick = onSend) {
-                                                Icon(imageVector = Icons.Filled.Send, "")
-                                            }
-                                        }
-                                    },
-                                    value = msg,
-                                    onValueChange = { s ->
-                                        msg = s
-                                        msgCanSend = s.isNotBlank()
+                                OutlinedTextField(modifier = Modifier.alpha(0.75f).gradientOverlay().fillMaxWidth(), singleLine = true, keyboardActions = KeyboardActions(onDone = {
+                                    if (keyboardOkFunction) {
+                                        onSend()
                                     }
-                                )
+                                }), label = { Text(text = "Type your message...", fontSize = 12.sp) }, trailingIcon = {
+                                    if (msgCanSend) {
+                                        IconButton(onClick = onSend) {
+                                            Icon(imageVector = Icons.Filled.Send, "")
+                                        }
+                                    }
+                                }, value = msg, onValueChange = { s ->
+                                    msg = s
+                                    msgCanSend = s.isNotBlank()
+                                })
                             }
                         }
                     }
 
-                    /* Top-Center info */
-                    /* Overall info (PING + ROOMNAME + OSD Messages) */
+                    /* Top-Center info *//* Overall info (PING + ROOMNAME + OSD Messages) */
                     if (!isSoloMode && !pipModeObserver) {
                         Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.wrapContentWidth().align(Alignment.TopCenter)
+                            horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.wrapContentWidth().align(Alignment.TopCenter)
                         ) {
                             if (!isSoloMode) {
                                 Row {
                                     val pingo by remember { p.ping }
                                     Text(
-                                        text = if (pingo == null) "Disconnected" else "Connected - ${pingo!!.toInt()}ms",
-                                        color = Paletting.OLD_SP_PINK
+                                        text = if (pingo == null) "Disconnected" else "Connected - ${pingo!!.toInt()}ms", color = Paletting.OLD_SP_PINK
                                     )
                                     Spacer(Modifier.width(4.dp))
 
@@ -458,18 +430,14 @@ fun RoomUI() {
 
                     /* Card tabs (Top-right row) and the Cards below them  */
                     Column(
-                        modifier = Modifier.align(Alignment.TopEnd),
-                        horizontalAlignment = Alignment.End
+                        modifier = Modifier.align(Alignment.TopEnd), horizontalAlignment = Alignment.End
                     ) {
                         /* The tabs row */
                         Row(
-                            modifier = Modifier.fillMaxWidth().height(50.dp).padding(top = 15.dp, end = 4.dp),
-                            horizontalArrangement = Arrangement.End,
-                            verticalAlignment = CenterVertically
+                            modifier = Modifier.fillMaxWidth().height(50.dp).padding(top = 15.dp, end = 4.dp), horizontalArrangement = Arrangement.End, verticalAlignment = CenterVertically
                         ) {
 
-                            /* The tabs in the top-right corner */
-                            /* In-room settings */
+                            /* The tabs in the top-right corner *//* In-room settings */
                             RoomTab(icon = Icons.Filled.AutoFixHigh, visibilityState = inroomprefsVisibility.value) {
                                 sharedplaylistVisibility.value = false
                                 userinfoVisibility.value = false
@@ -515,19 +483,12 @@ fun RoomUI() {
                                     overflowmenustate.value = !overflowmenustate.value
                                 }
 
-                                DropdownMenu(
-                                    modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
-                                    expanded = overflowmenustate.value,
-                                    properties = PopupProperties(
-                                        dismissOnBackPress = true,
-                                        focusable = true,
-                                        dismissOnClickOutside = true
-                                    ),
-                                    onDismissRequest = { overflowmenustate.value = false }) {
+                                DropdownMenu(modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer), expanded = overflowmenustate.value, properties = PopupProperties(
+                                    dismissOnBackPress = true, focusable = true, dismissOnClickOutside = true
+                                ), onDismissRequest = { overflowmenustate.value = false }) {
 
                                     ComposeUtils.FancyText2(
-                                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                                            .padding(horizontal = 2.dp),
+                                        modifier = Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 2.dp),
                                         string = "More Options...",
                                         solid = Color.Black,
                                         size = 14f,
@@ -536,83 +497,65 @@ fun RoomUI() {
 
                                     /* Chat history item */
                                     if (!isSoloMode) {
-                                        DropdownMenuItem(
-                                            text = {
-                                                Row(verticalAlignment = CenterVertically) {
-                                                    Icon(
-                                                        modifier = Modifier.padding(2.dp),
-                                                        imageVector = Icons.Filled.Forum, contentDescription = "",
-                                                        tint = Color.LightGray
-                                                    )
+                                        DropdownMenuItem(text = {
+                                            Row(verticalAlignment = CenterVertically) {
+                                                Icon(
+                                                    modifier = Modifier.padding(2.dp), imageVector = Icons.Filled.Forum, contentDescription = "", tint = Color.LightGray
+                                                )
 
-                                                    Spacer(Modifier.width(8.dp))
+                                                Spacer(Modifier.width(8.dp))
 
-                                                    Text(
-                                                        color = Color.LightGray,
-                                                        text = "Chat history"
-                                                    )
-                                                }
-                                            },
-                                            onClick = {
-                                                overflowmenustate.value = false
-                                                chathistorypopupstate.value = true
+                                                Text(
+                                                    color = Color.LightGray, text = "Chat history"
+                                                )
                                             }
-                                        )
+                                        }, onClick = {
+                                            overflowmenustate.value = false
+                                            chathistorypopupstate.value = true
+                                        })
                                     }
 
                                     /* Toggle Dark mode */
-                                    DropdownMenuItem(
-                                        text = {
-                                            Row(verticalAlignment = CenterVertically) {
-                                                Icon(
-                                                    modifier = Modifier.padding(2.dp),
-                                                    imageVector = Icons.Filled.DarkMode, contentDescription = "",
-                                                    tint = Color.LightGray
-                                                )
+                                    DropdownMenuItem(text = {
+                                        Row(verticalAlignment = CenterVertically) {
+                                            Icon(
+                                                modifier = Modifier.padding(2.dp), imageVector = Icons.Filled.DarkMode, contentDescription = "", tint = Color.LightGray
+                                            )
 
-                                                Spacer(Modifier.width(8.dp))
+                                            Spacer(Modifier.width(8.dp))
 
-                                                Text(
-                                                    color = Color.LightGray,
-                                                    text = "Toggle night-mode"
-                                                )
-                                            }
-                                        },
-                                        onClick = {
-                                            overflowmenustate.value = false
-
-                                            val newMode = runBlocking {
-                                                !DATASTORE_MISC_PREFS.obtainBoolean(MISC_NIGHTMODE, true)
-                                            }
-
-                                            composeScope.launch {
-                                                DATASTORE_MISC_PREFS.writeBoolean(MISC_NIGHTMODE, newMode)
-                                            }
+                                            Text(
+                                                color = Color.LightGray, text = "Toggle night-mode"
+                                            )
                                         }
-                                    )
+                                    }, onClick = {
+                                        overflowmenustate.value = false
+
+                                        val newMode = runBlocking {
+                                            !DATASTORE_MISC_PREFS.obtainBoolean(MISC_NIGHTMODE, true)
+                                        }
+
+                                        composeScope.launch {
+                                            DATASTORE_MISC_PREFS.writeBoolean(MISC_NIGHTMODE, newMode)
+                                        }
+                                    })
 
                                     /* Leave room item */
-                                    DropdownMenuItem(
-                                        text = {
-                                            Row(verticalAlignment = CenterVertically) {
-                                                Icon(
-                                                    modifier = Modifier.padding(2.dp),
-                                                    imageVector = Icons.Filled.Logout, contentDescription = "",
-                                                    tint = Color.LightGray
-                                                )
+                                    DropdownMenuItem(text = {
+                                        Row(verticalAlignment = CenterVertically) {
+                                            Icon(
+                                                modifier = Modifier.padding(2.dp), imageVector = Icons.Filled.Logout, contentDescription = "", tint = Color.LightGray
+                                            )
 
-                                                Spacer(Modifier.width(8.dp))
+                                            Spacer(Modifier.width(8.dp))
 
-                                                Text(
-                                                    color = Color.LightGray,
-                                                    text = "Leave room"
-                                                )
-                                            }
-                                        },
-                                        onClick = {
-                                            //TODO: terminate()
+                                            Text(
+                                                color = Color.LightGray, text = "Leave room"
+                                            )
                                         }
-                                    )
+                                    }, onClick = {
+                                        roomCallback.onLeave()
+                                    })
                                 }
                             }
                         }
@@ -625,10 +568,7 @@ fun RoomUI() {
                         Box {
                             /** User-info card (toggled on and off) */
                             if (!isSoloMode) {
-                                FreeAnimatedVisibility(
-                                    modifier = Modifier
-                                        .fillMaxWidth(cardWidth)
-                                        .fillMaxHeight(cardHeight),
+                                FreeAnimatedVisibility(modifier = Modifier.fillMaxWidth(cardWidth).fillMaxHeight(cardHeight),
                                     enter = slideInHorizontally(initialOffsetX = { (dimensions.wPX * 1.3).toInt() }),
                                     exit = slideOutHorizontally(targetOffsetX = { (dimensions.wPX * 1.3).toInt() }),
                                     visible = !inroomprefsVisibility.value && userinfoVisibility.value && !sharedplaylistVisibility.value
@@ -639,10 +579,7 @@ fun RoomUI() {
 
                             /** Shared Playlist card (toggled on and off) */
                             if (!isSoloMode) {
-                                FreeAnimatedVisibility(
-                                    modifier = Modifier
-                                        .fillMaxWidth(cardWidth)
-                                        .fillMaxHeight(cardHeight),
+                                FreeAnimatedVisibility(modifier = Modifier.fillMaxWidth(cardWidth).fillMaxHeight(cardHeight),
                                     enter = slideInHorizontally(initialOffsetX = { (dimensions.wPX * 1.3).toInt() }),
                                     exit = slideOutHorizontally(targetOffsetX = { (dimensions.wPX * 1.3).toInt() }),
                                     visible = !inroomprefsVisibility.value && !userinfoVisibility.value && sharedplaylistVisibility.value
@@ -652,10 +589,7 @@ fun RoomUI() {
                             }
 
                             /** In-room card (toggled on and off) */
-                            FreeAnimatedVisibility(
-                                modifier = Modifier
-                                    .fillMaxWidth(cardWidth)
-                                    .fillMaxHeight(cardHeight),
+                            FreeAnimatedVisibility(modifier = Modifier.fillMaxWidth(cardWidth).fillMaxHeight(cardHeight),
                                 enter = slideInHorizontally(initialOffsetX = { (dimensions.wPX * 1.3).toInt() }),
                                 exit = slideOutHorizontally(targetOffsetX = { (dimensions.wPX * 1.3).toInt() }),
                                 visible = inroomprefsVisibility.value && !userinfoVisibility.value && !sharedplaylistVisibility.value
@@ -665,12 +599,7 @@ fun RoomUI() {
 
                             /** Control card (to control the player) */
                             FreeAnimatedVisibility(
-                                modifier = Modifier.zIndex(10f)
-                                    .wrapContentWidth()
-                                    .align(Alignment.CenterEnd)
-                                    .fillMaxHeight(cardHeight + 0.1f),
-                                enter = expandIn(),
-                                visible = controlcardvisible
+                                modifier = Modifier.zIndex(10f).wrapContentWidth().align(Alignment.CenterEnd).fillMaxHeight(cardHeight + 0.1f), enter = expandIn(), visible = controlcardvisible
                             ) {
                                 /** CONTROL CARD ------ PLAYER CONTROL CARD ----- PLAYER CONTROL CARD */
                                 Card(
@@ -681,11 +610,7 @@ fun RoomUI() {
                                     colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
                                 ) {
                                     FlowColumn(
-                                        modifier = Modifier
-                                            .padding(6.dp)
-                                            .fillMaxHeight(),
-                                        verticalArrangement = Arrangement.SpaceEvenly,
-                                        horizontalArrangement = Arrangement.Center
+                                        modifier = Modifier.padding(6.dp).fillMaxHeight(), verticalArrangement = Arrangement.SpaceEvenly, horizontalArrangement = Arrangement.Center
                                     ) {
                                         /* Aspect Ratio */
                                         FancyIcon2(icon = Icons.Filled.AspectRatio, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
@@ -738,84 +663,68 @@ fun RoomUI() {
                                                 tracksPopup.value = true
                                             }
 
-                                            DropdownMenu(
-                                                modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
+                                            DropdownMenu(modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
                                                 expanded = tracksPopup.value,
                                                 properties = PopupProperties(
-                                                    dismissOnBackPress = true,
-                                                    focusable = true,
-                                                    dismissOnClickOutside = true
+                                                    dismissOnBackPress = true, focusable = true, dismissOnClickOutside = true
                                                 ),
                                                 onDismissRequest = { tracksPopup.value = !tracksPopup.value }) {
 
                                                 ComposeUtils.FancyText2(
-                                                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                                                    string = "Subtitle Track",
-                                                    solid = Color.Black,
-                                                    size = 14f,
-                                                    font = directive
+                                                    modifier = Modifier.align(Alignment.CenterHorizontally), string = "Subtitle Track", solid = Color.Black, size = 14f, font = directive
                                                 )
 
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Row(verticalAlignment = CenterVertically) {
-                                                            Icon(imageVector = Icons.Filled.NoteAdd, "", tint = Color.LightGray)
+                                                DropdownMenuItem(text = {
+                                                    Row(verticalAlignment = CenterVertically) {
+                                                        Icon(imageVector = Icons.Filled.NoteAdd, "", tint = Color.LightGray)
 
-                                                            Spacer(Modifier.width(2.dp))
+                                                        Spacer(Modifier.width(2.dp))
 
-                                                            Text("Import from file", color = Color.LightGray)
-                                                        }
-                                                    },
-                                                    onClick = {
-                                                        tracksPopup.value = false
-                                                        controlcardvisible = false
-
-                                                        //TODO: Load external sub
+                                                        Text("Import from file", color = Color.LightGray)
                                                     }
-                                                )
+                                                }, onClick = {
+                                                    tracksPopup.value = false
+                                                    controlcardvisible = false
+
+                                                    //TODO: Load external sub
+                                                })
 
 
-                                                DropdownMenuItem(
-                                                    text = {
-                                                        Row(verticalAlignment = CenterVertically) {
-                                                            Icon(imageVector = Icons.Filled.SubtitlesOff, "", tint = Color.LightGray)
+                                                DropdownMenuItem(text = {
+                                                    Row(verticalAlignment = CenterVertically) {
+                                                        Icon(imageVector = Icons.Filled.SubtitlesOff, "", tint = Color.LightGray)
 
-                                                            Spacer(Modifier.width(2.dp))
+                                                        Spacer(Modifier.width(2.dp))
 
-                                                            Text("Disable subtitles.", color = Color.LightGray)
-
-                                                        }
-                                                    },
-                                                    onClick = {
-                                                        //player?.selectTrack(C.TRACK_TYPE_TEXT, -1)
-                                                        tracksPopup.value = false
-                                                        controlcardvisible = false
+                                                        Text("Disable subtitles.", color = Color.LightGray)
 
                                                     }
-                                                )
+                                                }, onClick = {
+                                                    player?.selectTrack(TRACKTYPE.SUBTITLE, -1)
+                                                    tracksPopup.value = false
+                                                    controlcardvisible = false
+
+                                                })
 
                                                 for (track in (media?.subtitleTracks) ?: listOf()) {
-                                                    DropdownMenuItem(
-                                                        text = {
-                                                            Row(verticalAlignment = CenterVertically) {
-                                                                Checkbox(checked = track.selected.value, onCheckedChange = {
-                                                                    //FIXME: player?.selectTrack(C.TRACK_TYPE_TEXT, track.index)
-                                                                    tracksPopup.value = false
-                                                                })
+                                                    DropdownMenuItem(text = {
+                                                        Row(verticalAlignment = CenterVertically) {
+                                                            Checkbox(checked = track.selected.value, onCheckedChange = {
+                                                                player?.selectTrack(TRACKTYPE.SUBTITLE, track.index)
+                                                                tracksPopup.value = false
+                                                            })
 
-                                                                Text(
-                                                                    color = Color.LightGray,
-                                                                    text = track.name
-                                                                )
-                                                            }
-                                                        },
-                                                        onClick = {
-                                                            //FIXME player?.selectTrack(C.TRACK_TYPE_TEXT, track.index)
-                                                            tracksPopup.value = false
-                                                            controlcardvisible = false
-
+                                                            Text(
+                                                                color = Color.LightGray, text = track.name
+                                                            )
                                                         }
-                                                    )
+                                                    }, onClick = {
+                                                        player?.selectTrack(TRACKTYPE.SUBTITLE, track.index)
+
+                                                        tracksPopup.value = false
+                                                        controlcardvisible = false
+
+                                                    })
                                                 }
                                             }
                                         }
@@ -829,45 +738,33 @@ fun RoomUI() {
                                                 tracksPopup.value = true
                                             }
 
-                                            DropdownMenu(
-                                                modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
+                                            DropdownMenu(modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
                                                 expanded = tracksPopup.value,
                                                 properties = PopupProperties(
-                                                    dismissOnBackPress = true,
-                                                    focusable = true,
-                                                    dismissOnClickOutside = true
+                                                    dismissOnBackPress = true, focusable = true, dismissOnClickOutside = true
                                                 ),
                                                 onDismissRequest = { tracksPopup.value = !tracksPopup.value }) {
 
                                                 ComposeUtils.FancyText2(
-                                                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                                                    string = "Audio Track",
-                                                    solid = Color.Black,
-                                                    size = 14f,
-                                                    font = directive
+                                                    modifier = Modifier.align(Alignment.CenterHorizontally), string = "Audio Track", solid = Color.Black, size = 14f, font = directive
                                                 )
 
                                                 for (track in (media?.audioTracks ?: listOf())) {
                                                     DropdownMenuItem(text = {
                                                         Row(verticalAlignment = CenterVertically) {
                                                             Checkbox(checked = track.selected.value, onCheckedChange = {
-                                                                with(player ?: return@Checkbox) {
-                                                                    //FIXME: selectTrack(C.TRACK_TYPE_AUDIO, track.index)
-                                                                }
+                                                                player?.selectTrack(TRACKTYPE.AUDIO, track.index)
                                                                 tracksPopup.value = false
                                                             })
 
                                                             Text(
-                                                                color = Color.LightGray,
-                                                                text = track.name
+                                                                color = Color.LightGray, text = track.name
                                                             )
                                                         }
-                                                    },
-                                                        onClick = {
-                                                            //FIXME: player?.selectTrack(C.TRACK_TYPE_AUDIO, track.index)
-                                                            tracksPopup.value = false
-                                                        }
-                                                    )
+                                                    }, onClick = {
+                                                        player?.selectTrack(TRACKTYPE.AUDIO, track.index)
+                                                        tracksPopup.value = false
+                                                    })
                                                 }
                                             }
                                         }
@@ -877,25 +774,18 @@ fun RoomUI() {
                         }
                     }
 
-                    if (hasVideo.value) {
-                        /* Bottom-left row (Ready button) */
+                    if (hasVideo.value) {/* Bottom-left row (Ready button) */
                         if (!isSoloMode) {
-                            IconToggleButton(modifier = Modifier
-                                .width(112.dp)
-                                .padding(8.dp)
-                                .align(Alignment.BottomStart),
-                                checked = ready,
-                                colors = IconButtonDefaults.iconToggleButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                    contentColor = MaterialTheme.colorScheme.primary,
-                                    checkedContainerColor = MaterialTheme.colorScheme.primary,
-                                    checkedContentColor = Color.Black
-                                ),
-                                onCheckedChange = { b ->
-                                    ready = b
-                                    p.ready = b
-                                    p.sendPacket(JsonSender.sendReadiness(b, true))
-                                }) {
+                            IconToggleButton(modifier = Modifier.width(112.dp).padding(8.dp).align(Alignment.BottomStart), checked = ready, colors = IconButtonDefaults.iconToggleButtonColors(
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                contentColor = MaterialTheme.colorScheme.primary,
+                                checkedContainerColor = MaterialTheme.colorScheme.primary,
+                                checkedContentColor = Color.Black
+                            ), onCheckedChange = { b ->
+                                ready = b
+                                p.ready = b
+                                p.sendPacket(JsonSender.sendReadiness(b, true))
+                            }) {
                                 when (ready) {
                                     true -> Text("Ready", fontSize = 14.sp)
                                     false -> Text("Not Ready", fontSize = 13.sp)
@@ -905,8 +795,7 @@ fun RoomUI() {
 
                         /* Bottom-mid row (Slider + timestamps) */
                         Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.align(Alignment.BottomCenter).padding(4.dp).fillMaxWidth()
+                            horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.align(Alignment.BottomCenter).padding(4.dp).fillMaxWidth()
                         ) {
                             var slidervalue by remember { timeCurrent }
                             val slidermax by remember { timeFull }
@@ -926,8 +815,7 @@ fun RoomUI() {
                                 }
 
                                 Column(
-                                    Modifier.fillMaxWidth(0.5f),
-                                    horizontalAlignment = Alignment.CenterHorizontally
+                                    Modifier.fillMaxWidth(0.5f), horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     if (!gestures) {
                                         Row(horizontalArrangement = Arrangement.Center) {
@@ -943,9 +831,7 @@ fun RoomUI() {
                                 }
 
                                 Column(
-                                    Modifier.fillMaxWidth().offset(x = (-25).dp, y = 10.dp),
-                                    verticalArrangement = Arrangement.Bottom,
-                                    horizontalAlignment = Alignment.End
+                                    Modifier.fillMaxWidth().offset(x = (-25).dp, y = 10.dp), verticalArrangement = Arrangement.Bottom, horizontalAlignment = Alignment.End
                                 ) {
                                     val timeFullR = remember { timeFull }
                                     Text(
@@ -954,8 +840,7 @@ fun RoomUI() {
                                     )
                                 }
                             }
-                            Slider(
-                                value = slidervalue.toFloat(),
+                            Slider(value = slidervalue.toFloat(),
                                 valueRange = (0f..(slidermax.toFloat())),
                                 onValueChange = { f ->
                                     player?.seekTo(f.toLong() * 1000L)
@@ -972,112 +857,79 @@ fun RoomUI() {
                                 onValueChangeFinished = {
                                     sendSeek(slidervalue * 1000L)
                                 },
-                                modifier = Modifier
-                                    .alpha(0.82f)
-                                    .fillMaxWidth(0.75f)
-                                    .padding(horizontal = 12.dp),
+                                modifier = Modifier.alpha(0.82f).fillMaxWidth(0.75f).padding(horizontal = 12.dp),
                                 interactionSource = interactionSource,
                                 steps = 500,
                                 thumb = remember(SliderDefaults.colors(), true) {
                                     {
                                         SliderDefaults.Thumb(
-                                            interactionSource = interactionSource,
-                                            colors = SliderDefaults.colors(),
-                                            enabled = true,
-                                            modifier = Modifier.alpha(0.8f)
+                                            interactionSource = interactionSource, colors = SliderDefaults.colors(), enabled = true, modifier = Modifier.alpha(0.8f)
                                         )
                                     }
-                                }
-                            )
+                                })
                         }
                     }
 
                     /* Bottom-right row (Controls) */
                     Row(
-                        verticalAlignment = CenterVertically,
-                        modifier = Modifier.align(Alignment.BottomEnd).padding(4.dp)
+                        verticalAlignment = CenterVertically, modifier = Modifier.align(Alignment.BottomEnd).padding(4.dp)
                     ) {
                         if (hasVideo.value) {
-                            FancyIcon2(
-                                modifier = Modifier,
-                                icon = Icons.Filled.VideoSettings, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black,
-                                onClick = {
-                                    controlcardvisible = !controlcardvisible
-                                    addmediacardvisible = false
-                                }
-                            )
+                            FancyIcon2(modifier = Modifier.offset(y = (-2).dp), icon = Icons.Filled.VideoSettings, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black, onClick = {
+                                controlcardvisible = !controlcardvisible
+                                addmediacardvisible = false
+                            })
                         }
 
                         /* The button of adding media */
                         Box {
-                            AddVideoButton(
-                                modifier = Modifier,
-                                onClick = {
-                                    addmediacardvisible = !addmediacardvisible
-                                    controlcardvisible = false
-                                }
-                            )
+                            AddVideoButton(modifier = Modifier, onClick = {
+                                addmediacardvisible = !addmediacardvisible
+                                controlcardvisible = false
+                            })
 
 
-                            DropdownMenu(
-                                modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
-                                expanded = addmediacardvisible,
-                                properties = PopupProperties(
-                                    dismissOnBackPress = true,
-                                    focusable = true,
-                                    dismissOnClickOutside = true
-                                ),
-                                onDismissRequest = { addmediacardvisible = false }) {
+                            DropdownMenu(modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer), expanded = addmediacardvisible, properties = PopupProperties(
+                                dismissOnBackPress = true, focusable = true, dismissOnClickOutside = true
+                            ), onDismissRequest = { addmediacardvisible = false }) {
 
                                 ComposeUtils.FancyText2(
-                                    modifier = Modifier
-                                        .align(Alignment.CenterHorizontally)
-                                        .padding(horizontal = 2.dp),
-                                    string = "Add media",
-                                    solid = Color.Black,
-                                    size = 14f,
-                                    font = directive
+                                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 2.dp), string = "Add media", solid = Color.Black, size = 14f, font = directive
                                 )
 
                                 //From storage
-                                DropdownMenuItem(
-                                    text = {
-                                        Row(verticalAlignment = CenterVertically) {
-                                            FancyIcon2(icon = Icons.Filled.CreateNewFolder, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {}
-                                            Spacer(Modifier.width(8.dp))
-                                            Text(color = Color.LightGray, text = "From storage")
-                                        }
-                                    },
-                                    onClick = {
-                                        addmediacardvisible = false
+                                DropdownMenuItem(text = {
+                                    Row(verticalAlignment = CenterVertically) {
+                                        FancyIcon2(icon = Icons.Filled.CreateNewFolder, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {}
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(color = Color.LightGray, text = "From storage")
+                                    }
+                                }, onClick = {
+                                    addmediacardvisible = false
 
-                                        pickerScope.launch {
-                                            try {
-                                                pickFuture = CompletableDeferred() //We create a future that will be fulfilled
-                                                pickerCallback?.goPickVideo() //Ask the platform to pick video
-                                                addmediacardvisible = false
-                                                val result = pickFuture?.await() ?: return@launch
-                                                player?.injectVideo(result, false)
-                                            } catch (_: CancellationException) {
-                                            }
+                                    pickerScope.launch {
+                                        try {
+                                            pickFuture = CompletableDeferred() //We create a future that will be fulfilled
+                                            pickerCallback?.goPickVideo() //Ask the platform to pick video
+                                            addmediacardvisible = false
+                                            val result = pickFuture?.await() ?: return@launch
+                                            player?.injectVideo(result, false)
+                                        } catch (_: CancellationException) {
                                         }
                                     }
-                                )
+                                })
 
                                 //From network URL
-                                DropdownMenuItem(
-                                    text = {
-                                        Row(verticalAlignment = CenterVertically) {
-                                            FancyIcon2(icon = Icons.Filled.AddLink, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {}
-                                            Spacer(Modifier.width(8.dp))
-                                            Text(color = Color.LightGray, text = "From network (URL)")
-                                        }
-                                    },
-                                    onClick = {
-                                        addmediacardvisible = false
-                                        addurlpopupstate.value = true
+                                DropdownMenuItem(text = {
+                                    Row(verticalAlignment = CenterVertically) {
+                                        FancyIcon2(icon = Icons.Filled.AddLink, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {}
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(color = Color.LightGray, text = "From network (URL)")
                                     }
-                                )
+                                }, onClick = {
+                                    addmediacardvisible = false
+                                    addurlpopupstate.value = true
+                                })
                             }
                         }
                     }
@@ -1089,10 +941,7 @@ fun RoomUI() {
                             icon = when (playing.value) {
                                 true -> Icons.Filled.Pause
                                 false -> Icons.Filled.PlayArrow
-                            },
-                            size = (ROOM_ICON_SIZE * 2.25).roundToInt(),
-                            shadowColor = Color.Black,
-                            modifier = Modifier.align(Alignment.Center)
+                            }, size = (ROOM_ICON_SIZE * 2.25).roundToInt(), shadowColor = Color.Black, modifier = Modifier.align(Alignment.Center)
                         ) {
                             composeScope.launch(Dispatchers.Main) {
                                 if (player?.isPlaying() == true) {
@@ -1110,9 +959,7 @@ fun RoomUI() {
         /** Fading Message overlay */
         if (!isSoloMode) {
             fadingMessageLayout(
-                hudVisibility = hudVisibility,
-                pipModeObserver = pipModeObserver,
-                msgPalette
+                hudVisibility = hudVisibility, pipModeObserver = pipModeObserver, msgPalette
             )
         }
 

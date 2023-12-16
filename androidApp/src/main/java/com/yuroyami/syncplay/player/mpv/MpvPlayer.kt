@@ -13,11 +13,13 @@ import androidx.core.net.toUri
 import androidx.media3.common.C
 import androidx.media3.common.MimeTypes
 import com.yuroyami.syncplay.databinding.MpvviewBinding
+import com.yuroyami.syncplay.locale.Localization.stringResource
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.ENGINE
 import com.yuroyami.syncplay.player.PlayerUtils
+import com.yuroyami.syncplay.player.TRACKTYPE
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
@@ -25,6 +27,7 @@ import com.yuroyami.syncplay.utils.collectInfoURLAndroid
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.watchroom.currentTrackChoices
+import com.yuroyami.syncplay.watchroom.dispatchOSD
 import com.yuroyami.syncplay.watchroom.hasVideoG
 import com.yuroyami.syncplay.watchroom.isNowPlaying
 import com.yuroyami.syncplay.watchroom.isSoloMode
@@ -47,7 +50,7 @@ class MpvPlayer : BasePlayer() {
     override val engine = ENGINE.ANDROID_MPV
 
     var mpvPos = 0L
-    private lateinit var observer: MPVLib.EventObserver
+    lateinit var observer: MPVLib.EventObserver
     var ismpvInit = false
     private lateinit var mpvView: MPVView
     private lateinit var ctx: Context
@@ -136,9 +139,9 @@ class MpvPlayer : BasePlayer() {
     }
 
 
-    override fun selectTrack(type: Int, index: Int) {
+    override fun selectTrack(type: TRACKTYPE, index: Int) {
         when (type) {
-            C.TRACK_TYPE_TEXT -> {
+            TRACKTYPE.SUBTITLE -> {
                 if (index >= 0) {
                     MPVLib.setPropertyInt("sid", index)
                 } else if (index == -1) {
@@ -148,7 +151,7 @@ class MpvPlayer : BasePlayer() {
                 currentTrackChoices.subtitleSelectionIndexMpv = index
             }
 
-            C.TRACK_TYPE_AUDIO -> {
+            TRACKTYPE.AUDIO -> {
                 if (index >= 0) {
                     MPVLib.setPropertyInt("aid", index)
                 } else if (index == -1) {
@@ -165,8 +168,8 @@ class MpvPlayer : BasePlayer() {
         val audioIndex = currentTrackChoices.audioSelectionIndexMpv
 
         with(player ?: return) {
-            if (subIndex != null) selectTrack(C.TRACK_TYPE_TEXT, subIndex)
-            if (audioIndex != null) selectTrack(C.TRACK_TYPE_AUDIO, audioIndex)
+            if (subIndex != null) selectTrack(TRACKTYPE.SUBTITLE, subIndex)
+            if (audioIndex != null) selectTrack(TRACKTYPE.AUDIO, audioIndex)
         }
     }
 
@@ -249,17 +252,14 @@ class MpvPlayer : BasePlayer() {
                 if (!isSoloMode) {
                     p.currentVideoPosition = 0.0
                 }
-
-                /* Seeing if we have to start over TODO **/
-                //if (startFromPosition != (-3.0).toLong()) myExoPlayer?.seekTo(startFromPosition)
             } catch (e: IOException) {
                 /* If, for some reason, the video didn't wanna load */
                 e.printStackTrace()
-                //TODO: toasty("There was a problem loading this file.")
+                playerScopeMain.dispatchOSD("There was a problem loading this file.")
             }
 
             /* Finally, show a a toast to the user that the media file has been added */
-            //TODO: toasty(string(R.string.room_selected_vid, "${media?.fileName}"))
+            playerScopeMain.dispatchOSD(stringResource("room_selected_vid", "${media?.fileName}"))
         }
     }
 
@@ -299,6 +299,10 @@ class MpvPlayer : BasePlayer() {
 
     override fun collectInfoURL(mediafile: MediaFile) {
         collectInfoURLAndroid(mediafile)
+    }
+
+    override fun changeSubtitleSize(newSize: Int) {
+
     }
 
     /** MPV EXCLUSIVE */

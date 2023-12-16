@@ -27,11 +27,15 @@ import com.yuroyami.syncplay.utils.changeLanguage
 import com.yuroyami.syncplay.utils.defaultEngineAndroid
 import com.yuroyami.syncplay.watchroom.GestureCallback
 import com.yuroyami.syncplay.watchroom.PickerCallback
+import com.yuroyami.syncplay.watchroom.RoomCallback
 import com.yuroyami.syncplay.watchroom.RoomUI
 import com.yuroyami.syncplay.watchroom.gestureCallback
+import com.yuroyami.syncplay.watchroom.p
 import com.yuroyami.syncplay.watchroom.pickFuture
 import com.yuroyami.syncplay.watchroom.pickerCallback
 import com.yuroyami.syncplay.watchroom.player
+import com.yuroyami.syncplay.watchroom.roomCallback
+import `is`.xyz.mpv.MPVLib
 import kotlinx.coroutines.runBlocking
 
 class WatchActivity : ComponentActivity() {
@@ -134,6 +138,11 @@ class WatchActivity : ComponentActivity() {
             }
         }
 
+        roomCallback = object: RoomCallback {
+            override fun onLeave() {
+                terminate()
+            }
+        }
         /** Setting content view, making everything visible */
         setContent {
             RoomUI()
@@ -177,15 +186,18 @@ class WatchActivity : ComponentActivity() {
 //        terminate()
 //    }
 //
-//    fun terminate() {
-//        p.setBroadcaster(null)
-//        p.channel?.close()
-//        if (player?.ismpvInit == true) {
-//            MPVLib.removeObserver(player?.observer)
-//            MPVLib.destroy()
-//        }
-//        finish()
-//    }
+    fun terminate() {
+        p.endConnection()
+
+        if (player is ExoPlayer) {
+            (player as ExoPlayer).exoplayer?.release()
+        }
+        if (player is MpvPlayer) {
+            MPVLib.removeObserver((player as MpvPlayer).observer)
+            MPVLib.destroy()
+        }
+        finish()
+    }
 //
 //    /** Let's inform Jetpack Compose that we entered picture in picture, to adjust some UI settings */
 //    @RequiresApi(Build.VERSION_CODES.O)

@@ -22,6 +22,7 @@ import io.ktor.utils.io.writeStringUtf8
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -47,7 +48,7 @@ open class SyncplayProtocol {
     var session = Session()
 
     /** Late-initialized socket channel which will host all incoming and outcoming data **/
-    private var socket: Socket? = null
+    var socket: Socket? = null
     var connection: Connection? = null
     var state: Constants.CONNECTIONSTATE = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
     var tls: Constants.TLS = Constants.TLS.TLS_NO
@@ -57,14 +58,17 @@ open class SyncplayProtocol {
 
     /** ============================ start of protocol =====================================**/
 
-    /** This method is responsible for bootstrapping (initializing) the Ktor TCP socket */
-    fun connect() {
+    fun endConnection() {
         try {
             /* Cleaning leftovers */
             socket?.close()
             socket?.dispose()
         } catch (_: Exception) {
         }
+    }
+    /** This method is responsible for bootstrapping (initializing) the Ktor TCP socket */
+    fun connect() {
+        endConnection()
 
         /** Informing UI controllers that we are starting a connection attempt */
         syncplayCallback?.onConnectionAttempt()
@@ -172,16 +176,20 @@ open class SyncplayProtocol {
     }
 
     /** This method schedules reconnection ONLY IN in disconnected state */
+
+    private var reconnectionJob: Job? = null
     fun reconnect() {
         if (state == Constants.CONNECTIONSTATE.STATE_DISCONNECTED) {
-            protoScope.launch(Dispatchers.IO) {
-                state = Constants.CONNECTIONSTATE.STATE_SCHEDULING_RECONNECT
-                val reconnectionInterval = DATASTORE_INROOM_PREFERENCES
-                    .obtainInt(DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL, 2) * 1000L
+            if (reconnectionJob == null || reconnectionJob?.isCompleted == true) {
+                reconnectionJob = protoScope.launch(Dispatchers.IO) {
+                    state = Constants.CONNECTIONSTATE.STATE_SCHEDULING_RECONNECT
+                    val reconnectionInterval = DATASTORE_INROOM_PREFERENCES
+                        .obtainInt(DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL, 2) * 1000L
 
-                delay(reconnectionInterval)
+                    delay(reconnectionInterval)
 
-                connect()
+                    connect()
+                }
             }
         }
     }

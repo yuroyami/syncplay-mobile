@@ -38,7 +38,7 @@ abstract class BasePlayer {
     /** Called when the player ought to analyze the tracks of the currently loaded media */
     abstract fun analyzeTracks(mediafile: MediaFile)
 
-    abstract fun selectTrack(type: Int, index: Int)
+    abstract fun selectTrack(type: TRACKTYPE, index: Int)
 
     abstract fun reapplyTrackChoices()
 
@@ -64,6 +64,10 @@ abstract class BasePlayer {
 
     abstract fun collectInfoURL(mediafile: MediaFile)
 
+    abstract fun changeSubtitleSize(newSize: Int)
+
     @Composable
     abstract fun VideoPlayer(modifier: Modifier)
+
+
 }

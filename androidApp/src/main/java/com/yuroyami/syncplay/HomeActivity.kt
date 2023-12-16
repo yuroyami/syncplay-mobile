@@ -23,17 +23,15 @@ import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_NIGHTMODE
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_DISPLAY_LANG
 import com.yuroyami.syncplay.datastore.booleanFlow
 import com.yuroyami.syncplay.datastore.ds
-import com.yuroyami.syncplay.datastore.languageCallback
 import com.yuroyami.syncplay.datastore.obtainString
+import com.yuroyami.syncplay.home.HomeCallback
 import com.yuroyami.syncplay.home.HomeConfig
 import com.yuroyami.syncplay.home.HomeScreen
 import com.yuroyami.syncplay.locale.Localization.stringResource
 import com.yuroyami.syncplay.models.JoinInfo
-import com.yuroyami.syncplay.utils.JoinCallback
-import com.yuroyami.syncplay.utils.LanguageChange
 import com.yuroyami.syncplay.utils.changeLanguage
 import com.yuroyami.syncplay.utils.defaultEngineAndroid
-import com.yuroyami.syncplay.utils.joinCallback
+import com.yuroyami.syncplay.watchroom.homeCallback
 import com.yuroyami.syncplay.watchroom.prepareProtocol
 import kotlinx.coroutines.runBlocking
 
@@ -75,7 +73,7 @@ class HomeActivity : ComponentActivity() {
         }
 
         /** Language change listener */
-        languageCallback = object: LanguageChange {
+        homeCallback = object: HomeCallback {
             override fun onLanguageChanged(newLang: String) {
                 runOnUiThread {
                     recreate()
@@ -87,9 +85,7 @@ class HomeActivity : ComponentActivity() {
                     ).show()
                 }
             }
-        }
 
-        joinCallback = object: JoinCallback {
             override fun onJoin(joinInfo: JoinInfo) {
                 prepareProtocol(joinInfo.get())
 
@@ -135,7 +131,7 @@ class HomeActivity : ComponentActivity() {
                     port = getIntExtra("serverport", 80),
                     password = getStringExtra("serverpw") ?: ""
                 )
-                joinCallback?.onJoin(info)
+                homeCallback.onJoin(info)
             }
         }
     }

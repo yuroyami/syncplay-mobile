@@ -5,6 +5,7 @@ import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_TLS_ENABLE
 import com.yuroyami.syncplay.datastore.obtainBoolean
+import com.yuroyami.syncplay.home.HomeCallback
 import com.yuroyami.syncplay.locale.Localization
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.JoinInfo
@@ -22,6 +23,10 @@ import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.runBlocking
 
 lateinit var p: SyncplayProtocol //If it is not initialized, it means we're in Solo Mode
+
+lateinit var homeCallback: HomeCallback
+lateinit var roomCallback: RoomCallback
+
 var player: BasePlayer? = null
 var media: MediaFile? = null
 

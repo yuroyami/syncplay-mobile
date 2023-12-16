@@ -107,7 +107,7 @@ import com.yuroyami.syncplay.settings.SettingsUI
 import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.getDefaultEngine
-import com.yuroyami.syncplay.utils.joinCallback
+import com.yuroyami.syncplay.watchroom.homeCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -595,7 +595,7 @@ fun HomeScreen(config: HomeConfig) {
                                 modifier = Modifier.height(54.dp).aspectRatio(1.6f),
                                 shape = RoundedCornerShape(25),
                                 onClick = {
-                                    joinCallback?.onSaveConfigShortcut(
+                                    homeCallback.onSaveConfigShortcut(
                                         JoinInfo(
                                             textUsername.replace("\\", "").trim(),
                                             textRoomname.replace("\\", "").trim(),
@@ -743,7 +743,7 @@ fun HomeScreen(config: HomeConfig) {
                                 serverPassword
                             )
 
-                            joinCallback?.onJoin(info)
+                            homeCallback.onJoin(info)
                         },
                     ) {
                         Icon(imageVector = Icons.Filled.Api, "")

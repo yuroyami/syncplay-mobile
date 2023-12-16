@@ -62,10 +62,9 @@ import com.yuroyami.syncplay.settings.SettingStyling
 import com.yuroyami.syncplay.settings.SettingType
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.langMap
-import com.yuroyami.syncplay.utils.LanguageChange
+import com.yuroyami.syncplay.watchroom.homeCallback
 import com.yuroyami.syncplay.watchroom.isSoloMode
-
-var languageCallback: LanguageChange? = null
+import com.yuroyami.syncplay.watchroom.player
 
 object MySettings {
 
@@ -133,8 +132,8 @@ object MySettings {
                         entryKeys = { langKeys },
                         entryValues = { langValues },
                         icon = Icons.Filled.Translate,
-                        onItemChosen = { i, v ->
-                            languageCallback?.onLanguageChanged(v)
+                        onItemChosen = { _, v ->
+                            homeCallback.onLanguageChanged(v)
                         },
                         datastorekey = ds,
                         styling = settingStyling,
@@ -504,10 +503,7 @@ object MySettings {
                         minValue = 2,
                         maxValue = 200,
                         onValueChanged = { v ->
-                            /* TODO:
-                            if (engine.value == "exo") {
-                                player?.exoView?.subtitleView?.setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, v.toFloat())
-                            } */
+                            player?.changeSubtitleSize(v)
                         },
                         key = DataStoreKeys.PREF_INROOM_PLAYER_SUBTITLE_SIZE,
                         icon = Icons.Filled.SortByAlpha,
