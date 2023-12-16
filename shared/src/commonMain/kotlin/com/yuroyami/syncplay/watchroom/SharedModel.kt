@@ -33,7 +33,7 @@ val isSoloMode: Boolean
 
 fun prepareProtocol(joinInfo: JoinInfo) {
     if (!joinInfo.soloMode) {
-        p = SyncplayProtocol() //instantiateProtocol()
+        p = SyncplayProtocol()
 
         setReadyDirectly = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainBoolean(DataStoreKeys.PREF_READY_FIRST_HAND, true) }
 
@@ -69,13 +69,13 @@ fun prepareProtocol(joinInfo: JoinInfo) {
             override fun onSomeoneJoined(joiner: String) {
                 loggy("SYNCPLAY Protocol: $joiner joined the room.")
 
-                broadcastMessage(message = Localization.stringResource("room_guy_joined, joiner") , isChat = false)
+                broadcastMessage(message = Localization.stringResource("room_guy_joined", joiner) , isChat = false)
             }
 
             override fun onSomeoneLeft(leaver: String) {
                 loggy("SYNCPLAY Protocol: $leaver left the room.")
 
-                broadcastMessage(message = Localization.stringResource("room_guy_left, leaver"), isChat = false)
+                broadcastMessage(message = Localization.stringResource("room_guy_left", leaver), isChat = false)
 
                 /* If the setting is enabled, pause playback **/
                 val pauseOnLeft = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainBoolean(PREF_PAUSE_ON_SOMEONE_LEAVE, true) }
@@ -98,7 +98,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                 /* Saving seek so it can be undone on mistake */
                 seeks.add(Pair(oldPos * 1000, newPos * 1000))
 
-                broadcastMessage(message =  Localization.stringResource("room_seeked, seeker", timeStamper(oldPos), timeStamper(newPos)), isChat = false)
+                broadcastMessage(message =  Localization.stringResource("room_seeked", seeker, timeStamper(oldPos), timeStamper(newPos)), isChat = false)
 
                 if (seeker != p.session.currentUsername) {
                     player?.seekTo((toPosition * 1000.0).toLong())
@@ -110,7 +110,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
                 player?.seekTo((toPosition * 1000.0).toLong())
 
-                broadcastMessage(message =  Localization.stringResource("room_rewinded, behinder"), isChat = false)
+                broadcastMessage(message =  Localization.stringResource("room_rewinded", behinder), isChat = false)
             }
 
             override fun onReceivedList() {

@@ -177,9 +177,9 @@ open class SyncplayProtocol {
             protoScope.launch(Dispatchers.IO) {
                 state = Constants.CONNECTIONSTATE.STATE_SCHEDULING_RECONNECT
                 val reconnectionInterval = DATASTORE_INROOM_PREFERENCES
-                    .obtainInt(DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL, 2) * 1000
+                    .obtainInt(DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL, 2) * 1000L
 
-                delay(reconnectionInterval.toLong())
+                delay(reconnectionInterval)
 
                 connect()
             }

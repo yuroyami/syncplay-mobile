@@ -211,7 +211,7 @@ object PopupSeekToPosition {
 
                             player?.seekTo(result)
 
-                            dispatchOSD("Seeking to ${timeStamper(result)}")
+                            dispatchOSD("Seeking to ${timeStamper(result.div(1000L))}")
                         }
 
                     },

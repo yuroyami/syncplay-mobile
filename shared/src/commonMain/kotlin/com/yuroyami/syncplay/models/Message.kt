@@ -1,16 +1,18 @@
 package com.yuroyami.syncplay.models
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import com.yuroyami.syncplay.utils.CommonUtils.generateClockstamp
-import kotlinx.atomicfu.atomic
 
 /***************************************************************************************************
  * Message wrapper class. It encapsulates all information and data we need about a single message  *
  ***************************************************************************************************/
-data class Message (
+data class Message(
     /** The sender of the message. Null when it's not a chat message */
     var sender: String? = null,
 
@@ -24,17 +26,19 @@ data class Message (
     var isMainUser: Boolean = false,
 
     /** Whether the message is an error message (and therefore should be colored in Error color (red in default) */
-    var isError: Boolean = false
+    var isError: Boolean = true
 ) {
 
     /** indicates that this message has been seen */
-    var seen = atomic(false)
+    var seen = false
 
     /** Returns an AnnotatedString to use with Compose Text
      * @param msgPalette A [MessagePalette] that contains colors and properties
      **/
     @Composable
     fun factorize(msgPalette: MessagePalette): AnnotatedString {
+        val isActuallyError by remember { mutableStateOf(isError) }
+        val isActuallyMainUser by remember { mutableStateOf(isMainUser) }
 
         /* An AnnotatedString builder that will append child AnnotatedStings together */
         val builder = AnnotatedString.Builder()
@@ -52,7 +56,7 @@ data class Message (
             val tag = AnnotatedString(
                 text = ("$sender: "),
                 spanStyle = SpanStyle(
-                    color = if (isMainUser) msgPalette.selftagColor else msgPalette.friendtagColor,
+                    color = if (isActuallyMainUser) msgPalette.selftagColor else msgPalette.friendtagColor,
                     fontWeight = FontWeight.SemiBold
                 )
             )
@@ -71,9 +75,8 @@ data class Message (
         } else {
             AnnotatedString(
                 text = content,
-                spanStyle = SpanStyle(
-                    if (isError) msgPalette.errormsgColor else msgPalette.systemmsgColor
-                )
+                spanStyle = if (isActuallyError) SpanStyle(msgPalette.errormsgColor) else
+                    SpanStyle(msgPalette.systemmsgColor)
             )
         }
 

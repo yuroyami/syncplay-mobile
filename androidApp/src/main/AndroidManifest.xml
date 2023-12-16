@@ -20,7 +20,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="false"
         android:usesCleartextTraffic="true"
-        android:taskAffinity=""
         >
 
         <activity
@@ -29,7 +28,6 @@
             android:configChanges="orientation|keyboardHidden|screenLayout|screenSize|smallestScreenSize"
             android:exported="true"
             android:imeOptions="flagNoExtractUi"
-            android:launchMode="singleTask"
             android:excludeFromRecents="true"
             android:screenOrientation="fullSensor"
             android:theme="@style/SplashTheme"
@@ -42,7 +40,6 @@
 
         <activity
             android:name=".WatchActivity"
-            android:autoRemoveFromRecents="true"
             android:configChanges="orientation|keyboardHidden|screenLayout|screenSize|smallestScreenSize"
             android:exported="true"
             android:imeOptions="flagNoExtractUi"
