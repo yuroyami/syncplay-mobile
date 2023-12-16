@@ -38,7 +38,6 @@ data class Message(
     @Composable
     fun factorize(msgPalette: MessagePalette): AnnotatedString {
         val isActuallyError by remember { mutableStateOf(isError) }
-        val isActuallyMainUser by remember { mutableStateOf(isMainUser) }
 
         /* An AnnotatedString builder that will append child AnnotatedStings together */
         val builder = AnnotatedString.Builder()
@@ -56,7 +55,7 @@ data class Message(
             val tag = AnnotatedString(
                 text = ("$sender: "),
                 spanStyle = SpanStyle(
-                    color = if (isActuallyMainUser) msgPalette.selftagColor else msgPalette.friendtagColor,
+                    color = if (isMainUser) msgPalette.selftagColor else msgPalette.friendtagColor,
                     fontWeight = FontWeight.SemiBold
                 )
             )
