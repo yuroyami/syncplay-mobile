@@ -24,7 +24,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 open class SyncplayProtocol {
 
@@ -94,16 +93,19 @@ open class SyncplayProtocol {
                 connection = socket?.connection()
 
                 /** Initiate reading */
-                protoScope.launch {
+                launch {
                     while (true) {
                         try {
                             connection?.input?.awaitContent()
                             connection?.input?.readUTF8Line()?.let { ln ->
                                 loggy(ln)
-                                handleJson(json = ln)
+                                launch {
+                                    handleJson(json = ln)
+                                }
                             }
                         } catch (e: Exception) {
                             loggy(e.stackTraceToString())
+                            onError()
                         }
                     }
                 }
@@ -174,8 +176,9 @@ open class SyncplayProtocol {
         if (state == Constants.CONNECTIONSTATE.STATE_DISCONNECTED) {
             protoScope.launch(Dispatchers.IO) {
                 state = Constants.CONNECTIONSTATE.STATE_SCHEDULING_RECONNECT
-                val reconnectionInterval =
-                    runBlocking { DATASTORE_INROOM_PREFERENCES.obtainInt(DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL, 2) } * 1000
+                val reconnectionInterval = DATASTORE_INROOM_PREFERENCES
+                    .obtainInt(DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL, 2) * 1000
+
                 delay(reconnectionInterval.toLong())
 
                 connect()

@@ -5,6 +5,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import kotlinx.cinterop.cstr
 import platform.Foundation.NSBundle
 import platform.Foundation.NSCalendarUnitHour
 import platform.Foundation.NSCalendarUnitMinute
@@ -71,20 +72,18 @@ actual fun getScreenSizeInfo(): ScreenSizeInfo {
 
 actual fun String.format(vararg keys: String) =
     // This ugly work around is because varargs can't be passed to Objective-C...
-    NSString.stringWithFormat(this, *arrayOf(keys as NSString))
-    /* when (keys.size) {
+   // NSString.stringWithFormat(this, *arrayOf(keys as NSString))
+    when (keys.size) {
         0 -> this //NSString.stringWithFormat(this)
-        1 -> NSString.stringWithFormat(this, keys[0])
-        2 -> NSString.stringWithFormat(this, keys[0], keys[1])
-        3 -> NSString.stringWithFormat(this, keys[0], keys[1], keys[2])
-        4 -> NSString.stringWithFormat(this, keys[0], keys[1], keys[2], keys[3])
-        5 -> NSString.stringWithFormat(this, keys[0], keys[1], keys[2], keys[3], keys[4])
-        6 -> NSString.stringWithFormat(this, keys[0], keys[1], keys[2], keys[3], keys[4], keys[5])
+        1 -> NSString.stringWithFormat(this, keys[0].cstr)
+        2 -> NSString.stringWithFormat(this, keys[0].cstr, keys[1].cstr)
+        3 -> NSString.stringWithFormat(this, keys[0].cstr, keys[1].cstr, keys[2].cstr)
+        4 -> NSString.stringWithFormat(this, keys[0].cstr, keys[1].cstr, keys[2].cstr, keys[3].cstr)
+        5 -> NSString.stringWithFormat(this, keys[0].cstr, keys[1].cstr, keys[2].cstr, keys[3].cstr, keys[4].cstr)
+        6 -> NSString.stringWithFormat(this, keys[0].cstr, keys[1].cstr, keys[2].cstr, keys[3].cstr, keys[4].cstr, keys[5].cstr)
         else -> throw IllegalStateException("more than 6 args")
-    } */
+    }
 
 actual fun getSystemLanguageCode(): String {
     return NSLocale.currentLocale.languageCode
 }
-
-//actual fun instantiateProtocol(): SyncplayProtocol = SyncplayProtocolIOS()

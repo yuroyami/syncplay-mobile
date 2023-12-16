@@ -14,8 +14,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.core.os.LocaleListCompat
-import com.yuroyami.syncplay.protocol.SyncplayProtocol
-import com.yuroyami.syncplay.protocol.SyncplayProtocolAndroid
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
