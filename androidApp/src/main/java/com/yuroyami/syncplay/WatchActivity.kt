@@ -90,7 +90,7 @@ class WatchActivity : ComponentActivity() {
             else -> {}
         }
 
-        pickerCallback = object: PickerCallback {
+        pickerCallback = object : PickerCallback {
             override fun goPickVideo() {
                 val intent = Intent()
                 intent.action = Intent.ACTION_OPEN_DOCUMENT
@@ -107,7 +107,7 @@ class WatchActivity : ComponentActivity() {
             }
         }
 
-        gestureCallback = object: GestureCallback {
+        gestureCallback = object : GestureCallback {
             override fun getMaxVolume() = audioManager.getStreamMaxVolume(C.STREAM_TYPE_MUSIC)
             override fun getCurrentVolume() = audioManager.getStreamVolume(C.STREAM_TYPE_MUSIC)
             override fun changeCurrentVolume(v: Int) {
@@ -125,7 +125,12 @@ class WatchActivity : ComponentActivity() {
                     brightness
                 else {
                     //Check if the device is in auto mode
-                    if (Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC) {
+                    if (Settings.System.getInt(
+                            contentResolver,
+                            Settings.System.SCREEN_BRIGHTNESS_MODE,
+                            Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+                        ) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+                    ) {
                         //cannot retrieve a value -> 0.5
                         0.5f
                     } else Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS, 128).toFloat() / 255
@@ -133,12 +138,13 @@ class WatchActivity : ComponentActivity() {
 
                 return brightnesstemp
             }
+
             override fun changeCurrentBrightness(v: Float) {
                 window.attributes.screenBrightness = v.coerceIn(0f, 1f)
             }
         }
 
-        roomCallback = object: RoomCallback {
+        roomCallback = object : RoomCallback {
             override fun onLeave() {
                 terminate()
             }
@@ -150,7 +156,7 @@ class WatchActivity : ComponentActivity() {
     }
 
 
-//    /** Last checkpoint after executing activityresults. This means the activity is fully ready. */
+    //    /** Last checkpoint after executing activityresults. This means the activity is fully ready. */
 //    @SuppressLint("UnspecifiedRegisterReceiverFlag")
 //    override fun onResume() {
 //        super.onResume()
@@ -181,11 +187,12 @@ class WatchActivity : ComponentActivity() {
 //        }
 //    }
 //
-//    override fun onBackPressed() {
-//        //super.onBackPressed()
-//        terminate()
-//    }
-//
+
+    override fun onBackPressed() {
+        terminate()
+        super.onBackPressed()
+    }
+
     fun terminate() {
         p.endConnection(true)
 

@@ -328,8 +328,11 @@ fun RoomUI() {
                                             font = inter,
                                             lineHeight = (msgFontSize.value + 4).sp,
                                             overflow = TextOverflow.Ellipsis,
-                                            shadowSize = 1.5f,
-                                            shadowColors = if (msgOutline.value) listOf(Color.Black) else listOf()
+                                            strokeColors = listOf(Color.Black),
+                                            strokeWidth = 3f,
+                                            //shadowSize = 1.5f,
+                                            //shadowOffset = Pair(0,0),
+                                            //shadowColors = if (msgOutline.value) listOf(Color.Black) else listOf()
                                         )
                                     }
                                 }
