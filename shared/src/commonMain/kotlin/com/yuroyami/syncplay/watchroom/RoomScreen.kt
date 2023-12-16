@@ -424,7 +424,10 @@ fun RoomUI() {
                             }
 
                             val osd by remember { osdMsg }
-                            Text(text = osd, fontSize = 11.sp, color = Paletting.SP_PALE)
+                            Text(
+                                text = osd, fontSize = 11.sp, color = Paletting.SP_PALE,
+                                modifier = Modifier.fillMaxWidth(0.3f)
+                            )
                         }
                     }
 
@@ -613,10 +616,12 @@ fun RoomUI() {
                                         modifier = Modifier.padding(6.dp).fillMaxHeight(), verticalArrangement = Arrangement.SpaceEvenly, horizontalArrangement = Arrangement.Center
                                     ) {
                                         /* Aspect Ratio */
-                                        FancyIcon2(icon = Icons.Filled.AspectRatio, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
-                                            val newAspectRatio = player?.switchAspectRatio()
-                                            if (newAspectRatio != null) {
-                                                composeScope.dispatchOSD(newAspectRatio)
+                                        if (player?.canChangeAspectRatio == true) {
+                                            FancyIcon2(icon = Icons.Filled.AspectRatio, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
+                                                val newAspectRatio = player?.switchAspectRatio()
+                                                if (newAspectRatio != null) {
+                                                    composeScope.dispatchOSD(newAspectRatio)
+                                                }
                                             }
                                         }
 

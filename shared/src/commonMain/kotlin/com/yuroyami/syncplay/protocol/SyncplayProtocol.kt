@@ -56,9 +56,13 @@ open class SyncplayProtocol {
     /** Coroutine scopes and dispatchers */
     val protoScope = CoroutineScope(Dispatchers.IO)
 
+    var terminating = false
+
     /** ============================ start of protocol =====================================**/
 
-    fun endConnection() {
+    fun endConnection(terminating: Boolean) {
+        this.terminating = terminating
+
         try {
             /* Cleaning leftovers */
             socket?.close()
@@ -68,7 +72,7 @@ open class SyncplayProtocol {
     }
     /** This method is responsible for bootstrapping (initializing) the Ktor TCP socket */
     fun connect() {
-        endConnection()
+        endConnection(false)
 
         /** Informing UI controllers that we are starting a connection attempt */
         syncplayCallback?.onConnectionAttempt()
@@ -172,6 +176,8 @@ open class SyncplayProtocol {
     }
 
     private fun onError() {
+        if (terminating) return
+
         syncplayCallback?.onDisconnected()
     }
 

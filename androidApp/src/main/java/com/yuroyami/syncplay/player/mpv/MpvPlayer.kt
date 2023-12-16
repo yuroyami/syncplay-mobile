@@ -23,7 +23,6 @@ import com.yuroyami.syncplay.player.TRACKTYPE
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
-import com.yuroyami.syncplay.utils.collectInfoURLAndroid
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.watchroom.currentTrackChoices
@@ -54,6 +53,9 @@ class MpvPlayer : BasePlayer() {
     var ismpvInit = false
     private lateinit var mpvView: MPVView
     private lateinit var ctx: Context
+
+    override val canChangeAspectRatio: Boolean
+        get() = false
 
     override fun initialize() {
         ctx = mpvView.context.applicationContext
@@ -289,16 +291,10 @@ class MpvPlayer : BasePlayer() {
         return mpvPos
     }
 
-    override fun switchAspectRatio(): String {
-        return "" //TODO
-    }
+    override fun switchAspectRatio() = ""
 
     override fun collectInfoLocal(mediafile: MediaFile) {
         collectInfoLocalAndroid(mediafile, ctx)
-    }
-
-    override fun collectInfoURL(mediafile: MediaFile) {
-        collectInfoURLAndroid(mediafile)
     }
 
     override fun changeSubtitleSize(newSize: Int) {

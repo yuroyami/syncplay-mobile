@@ -3,6 +3,9 @@ package com.yuroyami.syncplay.player
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.yuroyami.syncplay.models.MediaFile
+import com.yuroyami.syncplay.utils.sha256
+import com.yuroyami.syncplay.utils.toHex
+import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -25,6 +28,8 @@ abstract class BasePlayer {
 
     val playerScopeMain = CoroutineScope(Dispatchers.Main)
     val playerScopeIO = CoroutineScope(Dispatchers.IO)
+
+    abstract val canChangeAspectRatio: Boolean
 
     /** Called when the player is to be initialized */
     abstract fun initialize()
@@ -62,12 +67,25 @@ abstract class BasePlayer {
 
     abstract fun collectInfoLocal(mediafile: MediaFile)
 
-    abstract fun collectInfoURL(mediafile: MediaFile)
-
     abstract fun changeSubtitleSize(newSize: Int)
 
     @Composable
     abstract fun VideoPlayer(modifier: Modifier)
 
+    fun collectInfoURL(media: MediaFile) {
+        with (media) {
+            try {
+                /** Using SyncplayUtils **/
+                fileName = Url(url!!).pathSegments.last()
+                fileSize = 0L.toString()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            /** Hashing name and size in case they're used **/
+            fileNameHashed = sha256(fileName).toHex()
+            fileSizeHashed = sha256(fileSize).toHex()
+        }
+    }
 
 }

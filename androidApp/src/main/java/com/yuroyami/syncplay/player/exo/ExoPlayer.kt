@@ -36,7 +36,6 @@ import com.yuroyami.syncplay.player.TRACKTYPE
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
-import com.yuroyami.syncplay.utils.collectInfoURLAndroid
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.watchroom.currentTrackChoices
@@ -60,6 +59,9 @@ class ExoPlayer : BasePlayer() {
     private var session: MediaSession? = null
     private var currentMedia: MediaItem? = null
     private lateinit var exoView: PlayerView
+
+    override val canChangeAspectRatio: Boolean
+        get() = true
 
     override fun initialize() {
         val context = exoView.context
@@ -425,11 +427,6 @@ class ExoPlayer : BasePlayer() {
         collectInfoLocalAndroid(mediafile, exoView.context)
     }
 
-    override fun collectInfoURL(mediafile: MediaFile) {
-        collectInfoURLAndroid(mediafile)
-    }
-
-
     override fun changeSubtitleSize(newSize: Int) {
         playerScopeMain.launch {
             exoView.subtitleView?.setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, newSize.toFloat())
@@ -438,7 +435,7 @@ class ExoPlayer : BasePlayer() {
 
     /** EXO-EXCLUSIVE */
 
-    fun TRACKTYPE.getExoType(): Int {
+    private fun TRACKTYPE.getExoType(): Int {
         return when (this) {
             TRACKTYPE.AUDIO -> C.TRACK_TYPE_AUDIO
             TRACKTYPE.SUBTITLE -> C.TRACK_TYPE_TEXT

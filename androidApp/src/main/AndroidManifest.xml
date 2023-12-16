@@ -24,7 +24,6 @@
 
         <activity
             android:name=".HomeActivity"
-            android:autoRemoveFromRecents="true"
             android:configChanges="orientation|keyboardHidden|screenLayout|screenSize|smallestScreenSize"
             android:exported="true"
             android:imeOptions="flagNoExtractUi"

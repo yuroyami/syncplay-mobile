@@ -113,4 +113,3 @@ actual fun getSystemLanguageCode(): String {
     return androidx.compose.ui.text.intl.Locale.current.language
 }
 
-//actual fun instantiateProtocol(): SyncplayProtocol = SyncplayProtocolAndroid()

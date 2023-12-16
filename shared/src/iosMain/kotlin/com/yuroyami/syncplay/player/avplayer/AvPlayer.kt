@@ -6,8 +6,8 @@ import androidx.compose.ui.interop.UIKitView
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.ENGINE
+import com.yuroyami.syncplay.player.TRACKTYPE
 import com.yuroyami.syncplay.utils.collectInfoLocaliOS
-import com.yuroyami.syncplay.utils.collectInfoURLiOS
 import com.yuroyami.syncplay.watchroom.hasVideoG
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.media
@@ -39,10 +39,13 @@ class AvPlayer : BasePlayer() {
     override val engine = ENGINE.IOS_AVPLAYER
 
     /*-- Exoplayer-related properties --*/
-    var avplayer: AVPlayer? = null
-    lateinit var avView:  AVPlayerViewController
-    var playerlayer: AVPlayerLayer? = null
+    private var avplayer: AVPlayer? = null
+    private lateinit var avView:  AVPlayerViewController
+    private var playerlayer: AVPlayerLayer? = null
     private var currentMedia: AVPlayerItem? = null
+
+    override val canChangeAspectRatio: Boolean
+        get() = true
 
     override fun initialize() {
         avplayer = AVPlayer.new()
@@ -88,7 +91,7 @@ class AvPlayer : BasePlayer() {
         TODO("Not yet implemented")
     }
 
-    override fun selectTrack(type: Int, index: Int) {
+    override fun selectTrack(type: TRACKTYPE, index: Int) {
         TODO("Not yet implemented")
     }
 
@@ -178,7 +181,7 @@ class AvPlayer : BasePlayer() {
         collectInfoLocaliOS(mediafile)
     }
 
-    override fun collectInfoURL(mediafile: MediaFile) {
-        collectInfoURLiOS(mediafile)
+    override fun changeSubtitleSize(newSize: Int) {
+
     }
 }

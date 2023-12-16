@@ -112,7 +112,7 @@ class WatchActivity : ComponentActivity() {
             override fun getCurrentVolume() = audioManager.getStreamVolume(C.STREAM_TYPE_MUSIC)
             override fun changeCurrentVolume(v: Int) {
                 if (!audioManager.isVolumeFixed) {
-                    audioManager.setStreamVolume(STREAM_TYPE_MUSIC, v, AudioManager.FLAG_SHOW_UI)
+                    audioManager.setStreamVolume(STREAM_TYPE_MUSIC, v, 0)
                 }
             }
 
@@ -187,7 +187,7 @@ class WatchActivity : ComponentActivity() {
 //    }
 //
     fun terminate() {
-        p.endConnection()
+        p.endConnection(true)
 
         if (player is ExoPlayer) {
             (player as ExoPlayer).exoplayer?.release()
