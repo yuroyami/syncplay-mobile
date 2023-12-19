@@ -18,14 +18,14 @@ import kotlinx.serialization.json.jsonPrimitive
 /** Handlers that parse JSONs and control callbacks based on the incoming message from server */
 object JsonHandler {
 
-    val jsonx = Json {
+    private val jsonx = Json {
         encodeDefaults = true
         allowSpecialFloatingPointValues = true
     }
 
     fun SyncplayProtocol.handleJson(json: String) {
         val protocol = this
-        loggy("Server: $json")
+        loggy("Server: $json", 0)
 
         /* Second, we check what kind of JSON message we received from the first Json Object */
         try {
@@ -42,18 +42,8 @@ object JsonHandler {
                     else -> dropError("unknown-command-server-error")
                 }
             }
-//            when {
-//                element.hello != null -> handleHello(element.hello, protocol)
-//                element.set != null -> handleSet(element.set, protocol)
-//                element.list != null -> handleList(element.list, protocol)
-//                element.state != null -> handleState(element.state, protocol, json)
-//                element.chat != null -> handleChat(element.chat, protocol)
-//                element.error != null -> handleError(element.error, protocol)
-//                element.tls != null -> handleTLS(element.tls, protocol)
-//                else -> dropError("unknown-command-server-error")
-//            }
         } catch (e: Exception) {
-            loggy(e.stackTraceToString())
+            loggy(e.stackTraceToString(), 1)
             return
         }
     }

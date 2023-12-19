@@ -176,10 +176,9 @@ class ExoPlayer : BasePlayer() {
                 }
 
                 override fun onPlayerError(error: PlaybackException) {
-                    loggy("Player error: ${error.message ?: ""}")
+                    loggy("Player error: ${error.message ?: ""}", 301)
                 }
             })
-
 
             trackProgress()
         }

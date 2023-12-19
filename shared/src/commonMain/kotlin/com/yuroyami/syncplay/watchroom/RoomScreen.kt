@@ -110,6 +110,7 @@ import com.yuroyami.syncplay.compose.popups.PopupChatHistory.ChatHistoryPopup
 import com.yuroyami.syncplay.compose.popups.PopupSeekToPosition.SeekToPositionPopup
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_INROOM_PREFERENCES
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_MISC_PREFS
+import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_GESTURES
 import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_NIGHTMODE
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_MSG_BG_OPACITY
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_MSG_BOX_ACTION
@@ -280,7 +281,8 @@ fun RoomUI() {
             var controlcardvisible by remember { mutableStateOf(false) }
             var addmediacardvisible by remember { mutableStateOf(false) }
 
-            val gestures = remember { mutableStateOf(false) }
+            val gestures = DATASTORE_MISC_PREFS.ds().booleanFlow(MISC_GESTURES, true).collectAsState(initial = true)
+
             val userinfoVisibility = remember { mutableStateOf(false) }
             val sharedplaylistVisibility = remember { mutableStateOf(false) }
             val inroomprefsVisibility = remember { mutableStateOf(false) }
@@ -635,8 +637,12 @@ fun RoomUI() {
                                                 false -> Icons.Filled.DoNotTouch
                                             }, size = ROOM_ICON_SIZE, shadowColor = Color.Black
                                         ) {
-                                            gestures.value = !gestures.value
-                                            composeScope.dispatchOSD(if (gestures.value) "Gestures enabled" else "Gestures disabled")
+                                            composeScope.launch {
+                                                DATASTORE_MISC_PREFS
+                                                    .writeBoolean(MISC_GESTURES, !gestures.value)
+
+                                                dispatchOSD(if (gestures.value) "Gestures enabled" else "Gestures disabled")
+                                            }
                                         }
 
                                         /* Seek To */

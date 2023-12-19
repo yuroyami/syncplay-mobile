@@ -230,7 +230,7 @@ class MpvPlayer : BasePlayer() {
                 uri?.let {
                     if (!isUrl) {
                         ctx.resolveUri(it.toUri())?.let { it2 ->
-                            loggy("Final path $it2")
+                            loggy("Final path $it2", 301)
                             if (!ismpvInit) {
                                 mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
                                 ismpvInit = true
@@ -372,14 +372,14 @@ class MpvPlayer : BasePlayer() {
                 // Note that .available() officially returns an *estimated* number of bytes available
                 // this is only true for generic streams, asset streams return the full file size
                 if (outFile.length() == ins.available().toLong()) {
-                    loggy("Skipping copy of asset file (exists same size): $filename")
+                    loggy("Skipping copy of asset file (exists same size): $filename", 302)
                     continue
                 }
                 out = FileOutputStream(outFile)
                 ins.copyTo(out)
-                loggy("Copied asset file: $filename")
+                loggy("Copied asset file: $filename", 303)
             } catch (e: IOException) {
-                loggy("Failed to copy asset file: $filename")
+                loggy("Failed to copy asset file: $filename", 304)
             } finally {
                 ins?.close()
                 out?.close()

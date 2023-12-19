@@ -114,7 +114,7 @@ object PlayerUtils {
                             p.currentVideoPosition = progress.toDouble()
                         }
                     }
-                    delay(1000)
+                    delay(500)
                 }
             }
         }

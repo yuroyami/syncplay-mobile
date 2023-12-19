@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyIcon2
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.fontDirective
-import com.yuroyami.syncplay.datastore.MySettings.inRoomPreferences
+import com.yuroyami.syncplay.settings.MySettings.inRoomPreferences
 import com.yuroyami.syncplay.settings.SettingsUI
 import com.yuroyami.syncplay.settings.SettingsUI.SettingsGrid
 import com.yuroyami.syncplay.ui.Paletting

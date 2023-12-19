@@ -5,4 +5,5 @@ val langMap = mapOf(
     "العربية" to "ar",
     "中文" to "zh",
     "Français" to "fr",
+    "Español" to "es"
 )

@@ -27,7 +27,6 @@
             android:configChanges="orientation|keyboardHidden|screenLayout|screenSize|smallestScreenSize"
             android:exported="true"
             android:imeOptions="flagNoExtractUi"
-            android:excludeFromRecents="true"
             android:screenOrientation="fullSensor"
             android:theme="@style/SplashTheme"
             android:windowSoftInputMode="adjustPan">

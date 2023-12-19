@@ -26,6 +26,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
 
 open class SyncplayProtocol {
 
@@ -55,19 +56,15 @@ open class SyncplayProtocol {
     var tls: Constants.TLS = Constants.TLS.TLS_NO
 
     /** Coroutine scopes and dispatchers */
-    val protoScope = CoroutineScope(Dispatchers.IO)
-
-    var terminating = false
+    private val protoScope = CoroutineScope(Dispatchers.IO)
 
     /** ============================ start of protocol =====================================**/
 
     fun endConnection(terminating: Boolean) {
-        this.terminating = terminating
-
         try {
             /* Cleaning leftovers */
-            socket?.close()
-            socket?.dispose()
+            socket?.cancel(null)
+            //socket?.dispose()
 
             if (terminating) {
                 protoScope.cancel("")
@@ -88,7 +85,7 @@ open class SyncplayProtocol {
 
             /** Should we establish a TLS connection ? */
             if (tls == Constants.TLS.TLS_YES) {
-                loggy("Attempting TLS")
+                loggy("Attempting TLS", 201)
             }
 
             try {
@@ -101,23 +98,26 @@ open class SyncplayProtocol {
                         } else this
                     }
 
-                loggy("PROTOCOL: Attempting to connect. HOST: ${session.serverHost}, PORT: ${session.serverPort}....")
+                loggy("PROTOCOL: Attempting to connect. HOST: ${session.serverHost}, PORT: ${session.serverPort}....", 202)
 
                 connection = socket?.connection()
 
                 /** Initiate reading */
                 launch {
-                    while (!terminating) {
+                    while (true) {
                         try {
                             connection?.input?.awaitContent()
                             connection?.input?.readUTF8Line()?.let { ln ->
-                                loggy(ln)
+                                loggy(ln, 203)
                                 launch {
                                     handleJson(json = ln)
                                 }
                             }
-                        } catch (e: Exception) {
-                            loggy(e.stackTraceToString())
+                        } catch (e: CancellationException) {
+                            loggy(e.stackTraceToString(), 204)
+                            throw e
+                        } catch (e2: Exception) {
+                            loggy(e2.stackTraceToString(), 2040)
                             onError()
                         }
                     }
@@ -137,7 +137,7 @@ open class SyncplayProtocol {
                     )
                 }
             } catch (e: Exception) {
-                loggy(e.stackTraceToString())
+                loggy(e.stackTraceToString(), 205)
                 syncplayCallback?.onConnectionFailed()
             }
         }
@@ -151,7 +151,7 @@ open class SyncplayProtocol {
                 if (socket != null && socket?.isClosed == false) {
                     val finalOut = json + "\r\n"
 
-                    loggy("OUT: $finalOut")
+                    loggy("OUT: $finalOut", 206)
 
                     connection?.output?.writeStringUtf8(finalOut)
                     connection?.output?.flush()
@@ -170,7 +170,7 @@ open class SyncplayProtocol {
                     }
                 }
             } catch (e: Exception) {
-                loggy(e.stackTraceToString())
+                loggy(e.stackTraceToString(), 207)
                 if (isRetry) {
                     onError()
                 } else {
@@ -181,8 +181,6 @@ open class SyncplayProtocol {
     }
 
     private fun onError() {
-        if (terminating) return
-
         syncplayCallback?.onDisconnected()
     }
 

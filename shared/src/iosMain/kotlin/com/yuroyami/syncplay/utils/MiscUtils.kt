@@ -23,7 +23,7 @@ import kotlin.math.roundToLong
 
 actual fun getPlatform(): String = "iOS"
 
-actual fun loggy(s: String?) = println(s.toString())
+actual fun loggy(s: String?, checkpoint: Int) = println("Checkpoint: $checkpoint \n" + s.toString())
 
 actual fun getDefaultEngine(): String = "avplayer"
 

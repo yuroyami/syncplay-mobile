@@ -1,7 +1,6 @@
 package com.yuroyami.syncplay.compose.cards
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,9 +8,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
@@ -59,13 +58,13 @@ object CardUserInfo {
                 font = fontDirective()
             )
 
-            Column(
+            val userlist = remember { p.session.userList }
+
+            LazyColumn(
                 modifier = Modifier
                     .padding(PaddingValues(start = 8.dp, top = 4.dp, bottom = 8.dp, end = 12.dp))
-                    .verticalScroll(rememberScrollState())
             ) {
-                val userlist = remember { p.session.userList }
-                for (user in userlist) {
+                items(userlist) { user ->
                     /* A row for Username, Filename, and File properties */
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         /* User's readiness icon */

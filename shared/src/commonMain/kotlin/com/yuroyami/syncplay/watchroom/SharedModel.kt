@@ -44,7 +44,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
         p.syncplayCallback = object : ProtocolCallback {
             override fun onSomeonePaused(pauser: String) {
-                loggy("SYNCPLAY Protocol: Someone ($pauser) paused.")
+                loggy("SYNCPLAY Protocol: Someone ($pauser) paused.", 1001)
 
                 if (pauser != p.session.currentUsername) {
                     pausePlayback()
@@ -56,7 +56,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
             }
 
             override fun onSomeonePlayed(player: String) {
-                loggy("SYNCPLAY Protocol: Someone ($player) unpaused.")
+                loggy("SYNCPLAY Protocol: Someone ($player) unpaused.", 1002)
 
                 if (player != p.session.currentUsername) {
                     playPlayback()
@@ -66,19 +66,19 @@ fun prepareProtocol(joinInfo: JoinInfo) {
             }
 
             override fun onChatReceived(chatter: String, chatmessage: String) {
-                loggy("SYNCPLAY Protocol: $chatter sent: $chatmessage")
+                loggy("SYNCPLAY Protocol: $chatter sent: $chatmessage", 1003)
 
                 broadcastMessage(message = chatmessage, isChat = true, chatter = chatter)
             }
 
             override fun onSomeoneJoined(joiner: String) {
-                loggy("SYNCPLAY Protocol: $joiner joined the room.")
+                loggy("SYNCPLAY Protocol: $joiner joined the room.", 1004)
 
                 broadcastMessage(message = Localization.stringResource("room_guy_joined", joiner) , isChat = false)
             }
 
             override fun onSomeoneLeft(leaver: String) {
-                loggy("SYNCPLAY Protocol: $leaver left the room.")
+                loggy("SYNCPLAY Protocol: $leaver left the room.", 1005)
 
                 broadcastMessage(message = Localization.stringResource("room_guy_left", leaver), isChat = false)
 
@@ -95,7 +95,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
             }
 
             override fun onSomeoneSeeked(seeker: String, toPosition: Double) {
-                loggy("SYNCPLAY Protocol: $seeker seeked to: $toPosition")
+                loggy("SYNCPLAY Protocol: $seeker seeked to: $toPosition", 1006)
 
                 val oldPos = p.currentVideoPosition.toLong()
                 val newPos = toPosition.toLong()
@@ -111,7 +111,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
             }
 
             override fun onSomeoneBehind(behinder: String, toPosition: Double) {
-                loggy("SYNCPLAY Protocol: $behinder is behind. Rewinding to $toPosition")
+                loggy("SYNCPLAY Protocol: $behinder is behind. Rewinding to $toPosition", 1007)
 
                 player?.seekTo((toPosition * 1000.0).toLong())
 
@@ -119,12 +119,12 @@ fun prepareProtocol(joinInfo: JoinInfo) {
             }
 
             override fun onReceivedList() {
-                loggy("SYNCPLAY Protocol: Received list update.")
+                loggy("SYNCPLAY Protocol: Received list update.", 1008)
 
             }
 
             override fun onSomeoneLoadedFile(person: String, file: String?, fileduration: Double?) {
-                loggy("SYNCPLAY Protocol: $person loaded: $file - Duration: $fileduration")
+                loggy("SYNCPLAY Protocol: $person loaded: $file - Duration: $fileduration", 1009)
 
                 broadcastMessage(
                     message =
@@ -139,7 +139,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
             }
 
             override fun onPlaylistUpdated(user: String) {
-                loggy("SYNCPLAY Protocol: Playlist updated by $user")
+                loggy("SYNCPLAY Protocol: Playlist updated by $user", 1010)
 
                 /** Selecting first item on list **/
                 if (p.session.sharedPlaylist.size != 0 && p.session.sharedPlaylistIndex == -1) {
@@ -152,7 +152,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
             }
 
             override fun onPlaylistIndexChanged(user: String, index: Int) {
-                loggy("SYNCPLAY Protocol: Playlist index changed by $user to $index")
+                loggy("SYNCPLAY Protocol: Playlist index changed by $user to $index", 1011)
 
                 /** Changing the selection for the user, to load the file at the given index **/
                 //changePlaylistSelection(index)
@@ -163,7 +163,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
             }
 
             override fun onConnected() {
-                loggy("SYNCPLAY Protocol: Connected!")
+                loggy("SYNCPLAY Protocol: Connected!", 1012)
 
                 /** Adjusting connection state */
                 p.state = Constants.CONNECTIONSTATE.STATE_CONNECTED
@@ -194,7 +194,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
             }
 
             override fun onConnectionAttempt() {
-                loggy("SYNCPLAY Protocol: Attempting connection...")
+                loggy("SYNCPLAY Protocol: Attempting connection...", 1013)
 
                 /** Telling user that a connection attempt is on **/
                 broadcastMessage(
@@ -208,7 +208,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
             }
 
             override fun onConnectionFailed() {
-                loggy("SYNCPLAY Protocol: Connection failed :/")
+                loggy("SYNCPLAY Protocol: Connection failed :/", 1014)
 
                 /** Adjusting connection state */
                 p.state = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
@@ -224,7 +224,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
             }
 
             override fun onDisconnected() {
-                loggy("SYNCPLAY Protocol: Disconnected.")
+                loggy("SYNCPLAY Protocol: Disconnected.", 1015)
 
 
                 /** Adjusting connection state */
@@ -238,14 +238,14 @@ fun prepareProtocol(joinInfo: JoinInfo) {
             }
 
             override fun onTLSCheck() {
-                loggy("SYNCPLAY Protocol: Checking TLS...")
+                loggy("SYNCPLAY Protocol: Checking TLS...", 1016)
 
                 /** Telling user that the app is checking whether the chosen server supports TLS **/
                 broadcastMessage("Checking whether server supports TLS", isChat = false)
             }
 
             override fun onReceivedTLS(supported: Boolean) {
-                loggy("SYNCPLAY Protocol: Received TLS...")
+                loggy("SYNCPLAY Protocol: Received TLS...", 1017)
 
                 /** Deciding next step based on whether the server supports TLS or not **/
                 if (supported) {

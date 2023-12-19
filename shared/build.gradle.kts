@@ -45,14 +45,14 @@ kotlin {
             }
         }
 
-        val ktor = /* "2.3.7" */ "3.0.0-beta-1"
+        val ktor = "2.3.7" // "3.0.0-beta-1"
         val commonMain by getting {
             dependencies {
                 /* Official JetBrains Kotlin Date 'n time manager (i.e: generating date from epoch) */
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
 
                 /* Hash digesters */
-                val kotlincrypto = "0.3.0"
+                val kotlincrypto = "0.4.0"
                 implementation("org.kotlincrypto.core:digest:$kotlincrypto")
                 implementation("org.kotlincrypto.hash:md:$kotlincrypto")
                 implementation("org.kotlincrypto.hash:sha2:$kotlincrypto")
@@ -92,10 +92,9 @@ kotlin {
 
                 /* Required ktor network client declaration for Android */
                 //implementation("io.ktor:ktor-client-android:$ktor")
-                //implementation("io.netty:netty-all:4.1.103.Final")
 
                 /* AndroidX compat */
-                api("androidx.core:core-ktx:1.12.0")
+                api("androidx.core:core-ktx:1.13.0-alpha02")
                 api("androidx.appcompat:appcompat:1.7.0-alpha03")
 
                 /* SAF DocumentFile manager */
@@ -114,7 +113,7 @@ kotlin {
                 }
 
                 /* Compose add-ons */
-                api("androidx.activity:activity-compose:1.8.1")
+                api("androidx.activity:activity-compose:1.8.2")
 
                 /* Lottie for animations (like Nightmode toggle button) */
                 implementation("com.airbnb.android:lottie-compose:6.2.0")

@@ -16,7 +16,7 @@ object DataStoreKeys {
 
     const val MISC_PLAYER_ENGINE = "misc_player_engine"
 
-    const val MISC_DISCARD_HINT_POPUP = "misc_discard_hint_popup"
+    const val MISC_GESTURES = "misc_gestures"
 
     /** ---------- Global Settings ----------- */
     const val DATASTORE_GLOBAL_SETTINGS = "syncplayglobalsettings.preferences_pb"
@@ -44,7 +44,6 @@ object DataStoreKeys {
 
     /* Network */
     const val PREF_TLS_ENABLE = "pref_tls"
-    const val PREF_RECONNECTION_INTERVAL = "pref_reconnection_interval"
 
     /* Advanced */
     const val PREF_GLOBAL_CLEAR_ALL = "pref_global_clear_all"

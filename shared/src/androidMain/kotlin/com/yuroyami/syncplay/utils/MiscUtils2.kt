@@ -22,7 +22,7 @@ import kotlin.math.roundToInt
 
 actual fun getPlatform(): String = "Android"
 
-actual fun loggy(s: String?) { Log.e("SYNCPLAY", s.toString()) }
+actual fun loggy(s: String?, checkpoint: Int) { Log.e("SYNCPLAY", "Checkpoint: $checkpoint \n" + s.toString()) }
 
 var defaultEngineAndroid = "exo"
 
@@ -83,7 +83,7 @@ actual fun pingIcmp(host: String, packet: Int): Int? {
                 .toDouble().roundToInt()
         }
     } catch (e: Exception) {
-        loggy(e.stackTraceToString())
+        loggy(e.stackTraceToString(), 69)
         return null
     }
 }

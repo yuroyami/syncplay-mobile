@@ -25,6 +25,7 @@ import com.yuroyami.syncplay.utils.UIUtils.cutoutMode
 import com.yuroyami.syncplay.utils.UIUtils.hideSystemUI
 import com.yuroyami.syncplay.utils.changeLanguage
 import com.yuroyami.syncplay.utils.defaultEngineAndroid
+import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.watchroom.GestureCallback
 import com.yuroyami.syncplay.watchroom.PickerCallback
 import com.yuroyami.syncplay.watchroom.RoomCallback
@@ -35,7 +36,6 @@ import com.yuroyami.syncplay.watchroom.pickFuture
 import com.yuroyami.syncplay.watchroom.pickerCallback
 import com.yuroyami.syncplay.watchroom.player
 import com.yuroyami.syncplay.watchroom.roomCallback
-import `is`.xyz.mpv.MPVLib
 import kotlinx.coroutines.runBlocking
 
 class WatchActivity : ComponentActivity() {
@@ -69,6 +69,10 @@ class WatchActivity : ComponentActivity() {
         changeLanguage(lang = lang, context = this)
 
         super.onCreate(sis)
+
+//        Thread.setDefaultUncaughtExceptionHandler { t, e ->
+//            loggy(e.stackTraceToString(), 99999)
+//        }
 
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
@@ -201,7 +205,7 @@ class WatchActivity : ComponentActivity() {
         }
         if (player is MpvPlayer) {
             (player as MpvPlayer).removeObserver()
-            MPVLib.destroy()
+            //MPVLib.destroy()
         }
 
         finish()

@@ -21,6 +21,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,8 +50,8 @@ var initialBrightness = 0f
 
 @Composable
 fun GestureInterceptor(
-    gestureState: MutableState<Boolean>,
-    videoState: MutableState<Boolean>,
+    gestureState: State<Boolean>,
+    videoState: State<Boolean>,
     onSingleTap: () -> Unit
 ) {
     val scope = rememberCoroutineScope { Dispatchers.IO }

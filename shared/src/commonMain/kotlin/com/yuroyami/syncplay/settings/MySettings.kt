@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.datastore
+package com.yuroyami.syncplay.settings
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BorderColor
@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.Web
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.toArgb
 import com.yuroyami.syncplay.compose.popups.PopupMediaDirs.MediaDirsPopup
+import com.yuroyami.syncplay.datastore.DataStoreKeys
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_COLOR_ERRORMSG
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_COLOR_FRIENDTAG
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_COLOR_SELFTAG
@@ -56,10 +57,6 @@ import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_PIP
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_REMEMBER_INFO
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
 import com.yuroyami.syncplay.locale.Localization
-import com.yuroyami.syncplay.settings.Setting
-import com.yuroyami.syncplay.settings.SettingCategory
-import com.yuroyami.syncplay.settings.SettingStyling
-import com.yuroyami.syncplay.settings.SettingType
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.langMap
 import com.yuroyami.syncplay.watchroom.homeCallback
@@ -79,13 +76,6 @@ object MySettings {
             iconTints = listOf(Paletting.OLD_SP_YELLOW),
             iconShadows = Paletting.SP_GRADIENT
         )
-
-        val langKeys = mutableListOf<String>()
-        val langValues = mutableListOf<String>()
-        for (entry in langMap) {
-            langKeys.add(entry.key)
-            langValues.add(entry.value)
-        }
 
         return listOf(
             /** Setting Card Number 01: General */
@@ -129,8 +119,8 @@ object MySettings {
                         summary = {Localization.stringResource("setting_display_language_summry") },
                         defaultValue = "en",
                         key = DataStoreKeys.PREF_DISPLAY_LANG,
-                        entryKeys = { langKeys },
-                        entryValues = { langValues },
+                        entryKeys = { langMap.keys.toList() },
+                        entryValues = { langMap.keys.toList() },
                         icon = Icons.Filled.Translate,
                         onItemChosen = { _, v ->
                             homeCallback.onLanguageChanged(v)

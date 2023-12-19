@@ -15,14 +15,6 @@ android {
     namespace = "com.yuroyami.syncplay"
     compileSdk = 34
 
-    //sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-//    sourceSets["main"].jniLibs {
-//        srcDirs("$projectDir/src/main/libs")
-//        srcDirs("$projectDir/src/main/jniLibs")
-//        srcDirs("$projectDir/src/jniLibs")
-//    }
-    //sourceSets["main"].jni.srcDirs("$projectDir/src/main/jni")
-
     signingConfigs {
         create("github") {
             storeFile = file("${rootDir}/keystore/keystore.jks")
@@ -38,7 +30,7 @@ android {
         targetSdk = (findProperty("android.targetSdk") as String).toInt()
         versionCode = 101300 //Changing versionName semantic projection from 1.XXX.XXX.XXX to 1.XX.XX.XX
         versionName = "0.13.0"
-        resourceConfigurations.addAll(setOf("en", "ar", "zh", "fr")) //To use with AppCompatDelegate.setApplicationLocale
+        resourceConfigurations.addAll(setOf("en", "ar", "zh", "fr", "es")) //To use with AppCompatDelegate.setApplicationLocale
         signingConfig = signingConfigs.getByName("github")
         //proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
@@ -54,7 +46,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.5" //"1.5.4-dev1-kt2.0.0-Beta1"
+        kotlinCompilerExtensionVersion = "1.5.5"
     }
 
     buildTypes {

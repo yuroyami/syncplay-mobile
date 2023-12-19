@@ -42,6 +42,12 @@ class HomeActivity : ComponentActivity() {
 
         defaultEngineAndroid =  if (BuildConfig.FLAVOR == "noLibs") "exo" else "mpv"
 
+        /** Applying saved language */
+        val lang = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainString(PREF_DISPLAY_LANG, "en") }
+        changeLanguage(lang, this)
+
+        super.onCreate(savedInstanceState)
+
         /** Adjusting the appearance of system window decor */
         /* Tweaking some window UI elements */
         window.attributes = window.attributes.apply {
@@ -52,11 +58,6 @@ class HomeActivity : ComponentActivity() {
         window.navigationBarColor = Color.Transparent.toArgb()
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        /** Applying saved language */
-        val lang = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainString(PREF_DISPLAY_LANG, "en") }
-        changeLanguage(lang, this)
-
-        super.onCreate(savedInstanceState)
 
         /** Getting saved config */
         val config = HomeConfig()

@@ -2,12 +2,11 @@ package com.yuroyami.syncplay.utils
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.Dp
-import com.yuroyami.syncplay.protocol.SyncplayProtocol
 
 
 expect fun getPlatform(): String
 
-expect fun loggy(s: String?)
+expect fun loggy(s: String?, checkpoint: Int)
 
 expect fun getDefaultEngine(): String
 
@@ -47,21 +46,6 @@ expect fun getSystemLanguageCode(): String
 //}
 //
 
-//
-///** Returns a hexadecimal color code from a preference ColorInt
-// *
-// * TODO: Use Datastore **/
-//fun getColorCode(key: String, context: Context): String {
-//    @ColorInt val color =
-//        PreferenceManager.getDefaultSharedPreferences(context).getInt(key, Color.BLACK)
-//    return String.format("#%06X", 0xFFFFFF and color)
-//}
-
-//
-///** Syncplay uses SHA256 hex-digested to hash file names and sizes **/
-//fun sha256(str: String): ByteArray =
-//    MessageDigest.getInstance("SHA-256").digest(str.toByteArray(UTF_8))
-//
 ///** Hides the keyboard and loses message typing focus **/
 //fun ComponentActivity.hideKb() {
 //    lifecycleScope.launch(Dispatchers.Main) {
