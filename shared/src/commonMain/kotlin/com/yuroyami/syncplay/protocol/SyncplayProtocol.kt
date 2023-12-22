@@ -63,8 +63,8 @@ open class SyncplayProtocol {
     fun endConnection(terminating: Boolean) {
         try {
             /* Cleaning leftovers */
-            socket?.cancel(null)
-            //socket?.dispose()
+            socket?.close()
+            socket?.dispose()
 
             if (terminating) {
                 protoScope.cancel("")

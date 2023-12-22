@@ -199,6 +199,8 @@
     <string name="uisetting_timestamp_title">Chat timestamps</string>
     <string name="uisetting_msgoutline_summary">Enable this to give chat messages an outline, to reduce blending with background video.</string>
     <string name="uisetting_msgoutline_title">Chat message outline</string>
+    <string name="uisetting_msgshadow_summary">Enable this to give chat messages a shadow, to reduce blending with background video.</string>
+    <string name="uisetting_msgshadow_title">Chat message shadow</string>
     <string name="uisetting_msgboxaction_summary">When enabled, clicking on the 'OK' button on your keyboard will send the message. When this is disabled, it will simply close the keyboard without doing anything.</string>
     <string name="uisetting_msgboxaction_title">Keyboard's OK button function </string>
     <string name="uisetting_overview_alpha_summary">Default is 40 (Almost transparent), change this if you want to make the room details' panel more readable by increasing opacity.</string>

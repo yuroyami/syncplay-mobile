@@ -86,7 +86,7 @@ class MpvPlayer : BasePlayer() {
 
     override fun isPlaying(): Boolean {
         return if (!ismpvInit) false
-        else mpvView.paused == false
+        else !mpvView.paused
     }
 
     override fun analyzeTracks(mediafile: MediaFile) {
@@ -139,7 +139,6 @@ class MpvPlayer : BasePlayer() {
             }
         }
     }
-
 
     override fun selectTrack(type: TRACKTYPE, index: Int) {
         when (type) {
@@ -266,12 +265,16 @@ class MpvPlayer : BasePlayer() {
     }
 
     override fun pause() {
+        if (!ismpvInit) return
+
         playerScopeIO.launch {
             mpvView.paused = true
         }
     }
 
     override fun play() {
+        if (!ismpvInit) return
+
         playerScopeIO.launch {
             mpvView.paused = false
         }
@@ -282,6 +285,8 @@ class MpvPlayer : BasePlayer() {
     }
 
     override fun seekTo(toPositionMs: Long) {
+        if (!ismpvInit) return
+
         playerScopeIO.launch {
             mpvView.timePos = toPositionMs.toInt() / 1000
         }

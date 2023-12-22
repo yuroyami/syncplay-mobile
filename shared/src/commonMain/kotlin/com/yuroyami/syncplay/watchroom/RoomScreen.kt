@@ -117,6 +117,7 @@ import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_MSG_BOX_ACTION
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_MSG_FONTSIZE
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_MSG_MAXCOUNT
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
+import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_MSG_SHADOW
 import com.yuroyami.syncplay.datastore.booleanFlow
 import com.yuroyami.syncplay.datastore.ds
 import com.yuroyami.syncplay.datastore.intFlow
@@ -224,7 +225,8 @@ fun RoomUI() {
         val msgPalette = ComposedMessagePalette()
 
         val msgBoxOpacity = DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_MSG_BG_OPACITY, 0).collectAsState(initial = 0)
-        val msgOutline = DATASTORE_INROOM_PREFERENCES.ds().booleanFlow(PREF_INROOM_MSG_OUTLINE, true).collectAsState(initial = true)
+        val msgOutline by DATASTORE_INROOM_PREFERENCES.ds().booleanFlow(PREF_INROOM_MSG_OUTLINE, true).collectAsState(initial = true)
+        val msgShadow by DATASTORE_INROOM_PREFERENCES.ds().booleanFlow(PREF_INROOM_MSG_SHADOW, false).collectAsState(initial = false)
         val msgFontSize = DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_MSG_FONTSIZE, 9).collectAsState(initial = 9)
         val msgMaxCount by DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_MSG_MAXCOUNT, 10).collectAsState(initial = 0)
         val keyboardOkFunction by DATASTORE_INROOM_PREFERENCES.ds().booleanFlow(PREF_INROOM_MSG_BOX_ACTION, true).collectAsState(initial = true)
@@ -331,10 +333,10 @@ fun RoomUI() {
                                             lineHeight = (msgFontSize.value + 4).sp,
                                             overflow = TextOverflow.Ellipsis,
                                             strokeColors = listOf(Color.Black),
-                                            strokeWidth = 3f,
-                                            //shadowSize = 1.5f,
+                                            strokeWidth = if (msgOutline) 3f else 0f,
+                                            shadowSize = 1.5f,
                                             //shadowOffset = Pair(0,0),
-                                            //shadowColors = if (msgOutline.value) listOf(Color.Black) else listOf()
+                                            shadowColors = if (msgShadow) listOf(Color.Black) else listOf()
                                         )
                                     }
                                 }

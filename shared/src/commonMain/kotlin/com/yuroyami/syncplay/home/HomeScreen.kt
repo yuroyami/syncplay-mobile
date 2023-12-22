@@ -1,6 +1,6 @@
 package com.yuroyami.syncplay.home
 
-import SyncplayMobile.generated.resources.Res
+import syncplaymobile.generated.resources.Res
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.BorderStroke
@@ -216,7 +216,7 @@ fun HomeScreen(config: HomeConfig) {
                                 ) { aboutpopupState.value = true }
                                 ) {
                                     Image(
-                                        imageVector = vectorResource(Res.images.syncplay_logo_gradient), contentDescription = "",
+                                        imageVector = vectorResource(Res.drawable.syncplay_logo_gradient), contentDescription = "",
                                         modifier = Modifier.height(32.dp).aspectRatio(1f)
                                     )
 
@@ -636,7 +636,7 @@ fun HomeScreen(config: HomeConfig) {
                             ) {
                                 Image(
                                     painter = painterResource(
-                                        with(Res.images) {
+                                        with(Res.drawable) {
                                             when (player.value) {
                                                 "exo" -> exoplayer
                                                 "mpv" -> mpv

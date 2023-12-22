@@ -4,7 +4,11 @@ plugins {
     id("com.android.library")
     id("org.jetbrains.compose")
     kotlin("plugin.serialization")
+    id("com.google.devtools.ksp")
 }
+
+val lyricist = "1.6.2"
+
 
 @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
 kotlin {
@@ -33,7 +37,7 @@ kotlin {
             isStatic = true
         }
     }
-    
+
     sourceSets {
         all {
             languageSettings {
@@ -45,9 +49,14 @@ kotlin {
             }
         }
 
-        val ktor = "2.3.7" // "3.0.0-beta-1"
+        val ktor = "3.0.0-beta-1"
         val commonMain by getting {
             dependencies {
+                //Strings internationalization and localization
+                implementation("cafe.adriel.lyricist:lyricist:$lyricist")
+
+                api("com.rickclephas.kmm:kmm-viewmodel-core:1.0.0-ALPHA-16")
+
                 /* Official JetBrains Kotlin Date 'n time manager (i.e: generating date from epoch) */
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
 
@@ -152,6 +161,11 @@ kotlin {
 
 //        }
     }
+
+    dependencies {
+        implementation("cafe.adriel.lyricist:lyricist-processor:$lyricist")
+        implementation("cafe.adriel.lyricist:lyricist-processor-xml:$lyricist")
+    }
 }
 
 compose {
@@ -168,7 +182,7 @@ android {
     sourceSets {
         named("main") {
             resources.srcDirs("src/commonMain/resources")
-           // assets.srcDirs("src/commonMain/resources/assets")
+            // assets.srcDirs("src/commonMain/resources/assets")
         }
     }
 
@@ -186,4 +200,9 @@ android {
     buildFeatures {
         buildConfig = true
     }
+}
+
+ksp {
+    val strings = kotlin.sourceSets.getByName("commonMain").resources.srcDirs.first()
+    arg("lyricist.xml.resourcesPath", strings.absolutePath)
 }

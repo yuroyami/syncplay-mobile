@@ -62,6 +62,7 @@ object DataStoreKeys {
     /* Message Properties */
     const val PREF_INROOM_MSG_ACTIVATE_STAMP = "pref_inroom_msg_activate_stamp"
     const val PREF_INROOM_MSG_OUTLINE = "pref_inroom_msg_outline"
+    const val PREF_INROOM_MSG_SHADOW = "pref_inroom_msg_shadow"
     const val PREF_INROOM_MSG_BG_OPACITY = "pref_inroom_msg_bg_opacity"
     const val PREF_INROOM_MSG_FONTSIZE = "pref_inroom_msg_fontsize"
     const val PREF_INROOM_MSG_MAXCOUNT = "pref_inroom_msg_maxcount"

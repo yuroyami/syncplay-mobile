@@ -70,9 +70,9 @@ class WatchActivity : ComponentActivity() {
 
         super.onCreate(sis)
 
-//        Thread.setDefaultUncaughtExceptionHandler { t, e ->
-//            loggy(e.stackTraceToString(), 99999)
-//        }
+        Thread.setDefaultUncaughtExceptionHandler { t, e ->
+            loggy(e.stackTraceToString(), 99999)
+        }
 
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
@@ -200,13 +200,8 @@ class WatchActivity : ComponentActivity() {
     fun terminate() {
         p.endConnection(true)
 
-        if (player is ExoPlayer) {
-            (player as ExoPlayer).exoplayer?.release()
-        }
-        if (player is MpvPlayer) {
-            (player as MpvPlayer).removeObserver()
-            //MPVLib.destroy()
-        }
+        (player as? ExoPlayer)?.exoplayer?.release()
+        (player as? MpvPlayer)?.removeObserver()
 
         finish()
     }

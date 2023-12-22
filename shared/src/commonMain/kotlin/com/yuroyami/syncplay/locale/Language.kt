@@ -6,7 +6,8 @@ enum class Language(val value: String) {
     ENGLISH("en"),
     CHINESE("zh"),
     FRENCH("fr"),
-    ARABIC("ar");
+    ARABIC("ar"),
+    SPANISH("es");
 
     override fun toString(): String {
         return this.name.lowercase().replaceFirstChar { it.titlecase() }
@@ -17,6 +18,7 @@ enum class Language(val value: String) {
             "zh" -> CHINESE
             "fr" -> FRENCH
             "ar" -> ARABIC
+            "es" -> SPANISH
             else -> ENGLISH
         }
     }

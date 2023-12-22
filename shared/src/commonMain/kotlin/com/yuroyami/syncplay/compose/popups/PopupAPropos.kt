@@ -1,6 +1,6 @@
 package com.yuroyami.syncplay.compose.popups
 
-import SyncplayMobile.generated.resources.Res
+import syncplaymobile.generated.resources.Res
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -61,7 +61,7 @@ object PopupAPropos {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Image(
-                        imageVector = vectorResource(Res.images.syncplay_logo_gradient),
+                        imageVector = vectorResource(Res.drawable.syncplay_logo_gradient),
                         contentDescription = "",
                         modifier = Modifier.requiredSize(96.dp)
                       //      .radiantOverlay(offset = Offset(x = 50f, y = 65f))
@@ -142,7 +142,7 @@ object PopupAPropos {
 
                     val uriHandler = LocalUriHandler.current
                     Image(
-                        painter = painterResource(Res.images.github),
+                        painter = painterResource(Res.drawable.github),
                         contentDescription = "",
                         modifier = Modifier.size(64.dp)
                             .clickable(

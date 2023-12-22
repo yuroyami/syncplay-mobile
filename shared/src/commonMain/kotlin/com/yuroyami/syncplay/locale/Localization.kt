@@ -15,7 +15,7 @@ object Localization {
         get() = Language.default()
 
     private val strings: MutableMap<String, Map<String, String>> = HashMap()
-    private val resourcePath: (Language) -> String = { "strings/${it.value}/strings.xml" }
+    private val resourcePath: (Language) -> String = { "values/${it.value}/strings.xml" }
 
 //    fun stringResource(key: String): String {
 //        load(lang)

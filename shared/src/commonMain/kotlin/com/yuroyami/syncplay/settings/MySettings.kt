@@ -53,6 +53,7 @@ import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_MSG_FADING_DURA
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_MSG_FONTSIZE
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_MSG_MAXCOUNT
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
+import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_MSG_SHADOW
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_PIP
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_REMEMBER_INFO
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
@@ -313,8 +314,8 @@ object MySettings {
         val ss = SettingStyling(
             titleFilling = listOf(Paletting.OLD_SP_YELLOW),
             titleShadow = Paletting.SP_GRADIENT,
-            titleSize = 13f,
-            summarySize = 9f,
+            titleSize = 11f,
+            summarySize = 8f,
             iconTints = listOf(Paletting.OLD_SP_YELLOW),
             iconShadows = Paletting.SP_GRADIENT
         )
@@ -413,6 +414,16 @@ object MySettings {
                             summary = { Localization.stringResource("uisetting_msgoutline_title") },
                             defaultValue = true,
                             key = PREF_INROOM_MSG_OUTLINE,
+                            icon = Icons.Filled.BorderColor,
+                            datastorekey = ds,
+                            styling = ss,
+                        ),
+                        Setting(
+                            type = SettingType.ToggleSetting,
+                            title = { Localization.stringResource("uisetting_msgshadow_title") },
+                            summary = { Localization.stringResource("uisetting_msgshadow_title") },
+                            defaultValue = false,
+                            key = PREF_INROOM_MSG_SHADOW,
                             icon = Icons.Filled.BorderColor,
                             datastorekey = ds,
                             styling = ss,

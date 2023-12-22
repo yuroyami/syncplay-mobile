@@ -78,12 +78,6 @@ class HomeActivity : ComponentActivity() {
             override fun onLanguageChanged(newLang: String) {
                 runOnUiThread {
                     recreate()
-
-                    Toast.makeText(
-                        this@HomeActivity,
-                        stringResource("setting_display_language_toast"),
-                        Toast.LENGTH_SHORT
-                    ).show()
                 }
             }
 

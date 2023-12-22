@@ -53,7 +53,7 @@ data class Message(
             val minibuilder = AnnotatedString.Builder()
 
             val tag = AnnotatedString(
-                text = ("$sender: "),
+                text = "$sender: ",
                 spanStyle = SpanStyle(
                     color = if (isMainUser) msgPalette.selftagColor else msgPalette.friendtagColor,
                     fontWeight = FontWeight.SemiBold

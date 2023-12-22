@@ -110,6 +110,6 @@ actual fun String.format(vararg keys: String): String {
 }
 
 actual fun getSystemLanguageCode(): String {
-    return androidx.compose.ui.text.intl.Locale.current.language
+    return androidx.compose.ui.text.intl.Locale.current.toLanguageTag().also { loggy(it, 0) }
 }
 

@@ -1,6 +1,5 @@
 package com.yuroyami.syncplay.watchroom
 
-import SyncplayMobile.generated.resources.Res
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterTransition
@@ -74,6 +73,7 @@ import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.ui.Paletting
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
+import syncplaymobile.generated.resources.Res
 
 object RoomComposables {
 
@@ -125,7 +125,7 @@ object RoomComposables {
             ) {
 
                 Image(
-                    painter = painterResource(Res.images.syncplay_logo_gradient), contentDescription = "",
+                    painter = painterResource(Res.drawable.syncplay_logo_gradient), contentDescription = "",
                     modifier = Modifier
                         .height(if (pipModeObserver) 40.dp else 84.dp)
                         .aspectRatio(1f)
@@ -335,7 +335,7 @@ object RoomComposables {
     /** Ping */
     @Composable
     fun PingRadar(pingValue: Int?) {
-        with(Res.images) {
+        with(Res.drawable) {
             when (pingValue) {
                 null -> {
                     Image(
@@ -353,7 +353,7 @@ object RoomComposables {
 
                 in (91..120) -> {
                     Image(
-                        painter = painterResource(network_level_1), "",
+                        painter = painterResource(network_level_3), "",
                         modifier = Modifier.size(16.dp).solidOverlay(Color.Yellow)
                     )
                 }
@@ -367,7 +367,7 @@ object RoomComposables {
 
                 in (161..200) -> {
                     Image(
-                        painter = painterResource(network_level_1), "",
+                        painter = painterResource(network_level_2), "",
                         modifier = Modifier.size(16.dp).solidOverlay(Color(181, 80, 25))
                     )
                 }
