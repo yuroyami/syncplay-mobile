@@ -226,10 +226,5 @@ val PtStrings = object : Strings {
     override val settingFileinfoBehaviorA = "Enviar bruto"
     override val settingFileinfoBehaviorB = "Enviar hash"
     override val settingFileinfoBehaviorC = "Não enviar"
-    override val en = "Inglês"
-    override val ar = "Árabe"
-    override val zh = "Chinês"
-    override val fr = "Francês"
-    override val es = "Espanhol"
 
 }

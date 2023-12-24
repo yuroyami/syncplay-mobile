@@ -224,10 +224,5 @@ val TrStrings = object : Strings {
     override val settingFileinfoBehaviorA = "Ham veri gönder"
     override val settingFileinfoBehaviorB = "Hash veri gönder"
     override val settingFileinfoBehaviorC = "Gönderme"
-    override val en = "İngilizce"
-    override val ar = "Arapça"
-    override val zh = "Çince"
-    override val fr = "Fransızca"
-    override val es = "İspanyolca"
 
 }

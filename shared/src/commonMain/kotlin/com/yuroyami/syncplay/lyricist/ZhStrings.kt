@@ -220,9 +220,4 @@ val ZhStrings = object : Strings {
     override val settingFileinfoBehaviorA = "反馈信息"
     override val settingFileinfoBehaviorB = "发送方式"
     override val settingFileinfoBehaviorC = "取消发送"
-    override val en = "英语"
-    override val ar = "阿拉伯语"
-    override val zh = "中文"
-    override val fr = "法语"
-    override val es = "西班牙语"
 }

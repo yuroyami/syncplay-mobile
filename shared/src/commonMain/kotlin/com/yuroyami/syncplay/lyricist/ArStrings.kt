@@ -29,7 +29,6 @@ val ArStrings = object : Strings {
     override val connectServerB = "عنوان الخادم"
     override val connectServerC = "تأكد من أنك وأصدقاؤك انضممتم إلى نفس الخادم."
     override val connectButtonJoin = "الانضمام إلى الغرفة"
-    override val connectButton = "الانضمام إلى الغرفة"
     override val connectButtonSaveshortcut = "حفظ التكوين الحالي كاختصار للرئيسية"
     override val connectButtonCurrentEngine = { p0: String -> "المحرك الحالي: %s".format(p0) }
     override val connectFootnote = "Syncplay's Unofficial Android Client"
@@ -225,13 +224,4 @@ val ArStrings = object : Strings {
     override val settingFileinfoBehaviorA = "أرسال البيانات أصلية"
     override val settingFileinfoBehaviorB = "إرسال البيانات مشفرة"
     override val settingFileinfoBehaviorC = "لا ترسل إطلاقاً"
-    override val en = "الإنجليزية"
-    override val ar = "العربية"
-    override val zh = "الصينية"
-    override val fr = "الفرنسية"
-    override val es = "الإسبانية"
-
-
-
-
 }

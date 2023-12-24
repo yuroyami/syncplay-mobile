@@ -29,7 +29,6 @@ val EsStrings = object : Strings {
     override val connectServerB = "Dirección del servidor"
     override val connectServerC = "Asegúrate de que tú y tus amigos se unan al mismo servidor."
     override val connectButtonJoin = "Unirse/crear sala"
-    override val connectButton = "Unirse/crear sala"
     override val connectButtonSaveshortcut = "Agregar acceso directo a Inicio con la configuración actual"
     override val connectButtonCurrentEngine = { p0: String -> "Motor actual: %s".format(p0) }
     override val connectFootnote = "Cliente Android no oficial de Syncplay"
@@ -216,14 +215,7 @@ val EsStrings = object : Strings {
     override val uisettingReconnectIntervalTitle = "Intervalo de reconexión"
     override val uisettingResetdefaultSummary = "Restablecer todas las configuraciones anteriores a los valores predeterminados."
     override val uisettingResetdefaultTitle = "Restablecer configuración predeterminada"
-
     override val settingFileinfoBehaviorA = "Enviar sin procesar"
     override val settingFileinfoBehaviorB = "Enviar codificado"
     override val settingFileinfoBehaviorC = "No enviar"
-
-    override val en = "Inglés"
-    override val ar = "Árabe"
-    override val zh = "Chino"
-    override val fr = "Francés"
-    override val es = "Español"
 }

@@ -226,10 +226,4 @@ val DeStrings = object : Strings {
     override val settingFileinfoBehaviorA = "Rohe Daten senden"
     override val settingFileinfoBehaviorB = "Gehasht senden"
     override val settingFileinfoBehaviorC = "Nicht senden"
-    override val en = "Englisch"
-    override val ar = "Arabisch"
-    override val zh = "Chinesisch"
-    override val fr = "Französisch"
-    override val es = "Spanisch"
-
 }

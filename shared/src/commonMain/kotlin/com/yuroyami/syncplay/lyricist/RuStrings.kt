@@ -228,10 +228,5 @@ val RuStrings = object : Strings {
     override val settingFileinfoBehaviorA = "Отправить как есть"
     override val settingFileinfoBehaviorB = "Отправить в виде хеша"
     override val settingFileinfoBehaviorC = "Не отправлять"
-    override val en = "Английский"
-    override val ar = "Арабский"
-    override val zh = "Китайский"
-    override val fr = "Французский"
-    override val es = "Испанский"
 
 }

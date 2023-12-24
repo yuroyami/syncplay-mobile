@@ -220,10 +220,4 @@ val JaStrings = object : Strings {
     override val settingFileinfoBehaviorA = "生の状態で送信"
     override val settingFileinfoBehaviorB = "ハッシュで送信"
     override val settingFileinfoBehaviorC = "送信しない"
-    override val en = "英語"
-    override val ar = "アラビア語"
-    override val zh = "中国語"
-    override val fr = "フランス語"
-    override val es = "スペイン語"
-
 }
