@@ -161,11 +161,6 @@ kotlin {
 
 //        }
     }
-
-    dependencies {
-        implementation("cafe.adriel.lyricist:lyricist-processor:$lyricist")
-        implementation("cafe.adriel.lyricist:lyricist-processor-xml:$lyricist")
-    }
 }
 
 compose {
@@ -205,4 +200,9 @@ android {
 ksp {
     val strings = kotlin.sourceSets.getByName("commonMain").resources.srcDirs.first()
     arg("lyricist.xml.resourcesPath", strings.absolutePath)
+}
+
+dependencies {
+    ksp("cafe.adriel.lyricist:lyricist-processor:$lyricist")
+    ksp("cafe.adriel.lyricist:lyricist-processor-xml:$lyricist")
 }
