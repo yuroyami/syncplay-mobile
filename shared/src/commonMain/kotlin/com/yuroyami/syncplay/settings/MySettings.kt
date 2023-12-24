@@ -123,7 +123,7 @@ object MySettings {
                         defaultValue = "en",
                         key = DataStoreKeys.PREF_DISPLAY_LANG,
                         entryKeys = { langMap.keys.toList() },
-                        entryValues = { langMap.keys.toList() },
+                        entryValues = { langMap.values.toList() },
                         icon = Icons.Filled.Translate,
                         onItemChosen = { _, v ->
                             homeCallback.onLanguageChanged(v)
