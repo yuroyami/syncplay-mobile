@@ -52,14 +52,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
-import com.yuroyami.syncplay.compose.fontDirective
-import com.yuroyami.syncplay.compose.fontInter
-import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
-import com.yuroyami.syncplay.datastore.ds
 import com.yuroyami.syncplay.datastore.stringSetFlow
 import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.ui.Paletting
+import org.jetbrains.compose.resources.Font
+import syncplaymobile.generated.resources.Res
 
 var wentForFilePick = false
 
@@ -69,9 +67,6 @@ object PopupMediaDirs {
     @Composable
     fun MediaDirsPopup(visibilityState: MutableState<Boolean>) {
         val localz = rememberStrings()
-
-        val directive4 = fontDirective()
-        val inter = fontInter()
 
         return RoomPopup(
             dialogOpen = visibilityState.value,
@@ -125,7 +120,7 @@ object PopupMediaDirs {
                     string = localz.strings.mediaDirectories,
                     solid = Color.Black,
                     size = 18f,
-                    font = directive4
+                    font = Font(Res.font.directive4_regular)
                 )
 
                 /* Title's subtext */
@@ -134,7 +129,7 @@ object PopupMediaDirs {
                     color = MaterialTheme.colorScheme.primary,
                     lineHeight = 14.sp,
                     fontSize = 10.sp,
-                    fontFamily = FontFamily(directive4),
+                    fontFamily = FontFamily(Font(Res.font.directive4_regular)),
                     textAlign = TextAlign.Center,
                 )
 
@@ -145,8 +140,7 @@ object PopupMediaDirs {
                     shape = RoundedCornerShape(size = 6.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.LightGray)
                 ) {
-                    val dirs = DATASTORE_GLOBAL_SETTINGS.ds()
-                        .stringSetFlow(PREF_SP_MEDIA_DIRS, emptySet()).collectAsState(initial = emptySet())
+                    val dirs = stringSetFlow(PREF_SP_MEDIA_DIRS, emptySet()).collectAsState(initial = emptySet())
 
                     LazyVerticalGrid(
                         columns = GridCells.Adaptive(66.dp),
@@ -174,7 +168,7 @@ object PopupMediaDirs {
 
                                     Text(
                                         text = if (text?.contains("primary:") == true) text.substringAfter("primary:") else text ?: "",
-                                        fontFamily = FontFamily(inter),
+                                        fontFamily = FontFamily(Font(Res.font.inter_regular)),
                                         fontSize = 8.sp,
                                         textAlign = TextAlign.Center,
                                         lineHeight = 10.sp,

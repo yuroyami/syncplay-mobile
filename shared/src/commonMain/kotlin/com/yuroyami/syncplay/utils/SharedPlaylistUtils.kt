@@ -1,9 +1,10 @@
 package com.yuroyami.syncplay.utils
 
+import cafe.adriel.lyricist.Lyricist
 import com.yuroyami.syncplay.datastore.DataStoreKeys
 import com.yuroyami.syncplay.datastore.obtainStringSet
 import com.yuroyami.syncplay.datastore.writeStringSet
-import com.yuroyami.syncplay.locale.Localization.stringResource
+import com.yuroyami.syncplay.lyricist.Stringies
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.protocol.JsonSender.sendPlaylistChange
 import com.yuroyami.syncplay.protocol.JsonSender.sendPlaylistIndex
@@ -75,11 +76,11 @@ object SharedPlaylistUtils {
     }
 
     private suspend fun saveFolderPathAsMediaDirectory(uri: String) {
-        val paths = DataStoreKeys.DATASTORE_GLOBAL_SETTINGS.obtainStringSet(DataStoreKeys.PREF_SP_MEDIA_DIRS, emptySet()).toMutableSet()
+        val paths = obtainStringSet(DataStoreKeys.PREF_SP_MEDIA_DIRS, emptySet()).toMutableSet()
 
         if (!paths.contains(uri)) paths.add(uri)
 
-        DataStoreKeys.DATASTORE_GLOBAL_SETTINGS.writeStringSet(DataStoreKeys.PREF_SP_MEDIA_DIRS, paths)
+        writeStringSet(DataStoreKeys.PREF_SP_MEDIA_DIRS, paths)
     }
 
     /** This is to send a playlist selection change to the server */
@@ -101,6 +102,8 @@ object SharedPlaylistUtils {
      * is heavy.
      */
     private suspend fun retrieveFile(fileName: String) {
+        val lyricist = Lyricist("en", Stringies)
+
             /** We have to know whether the file name is an URL or just a file name */
             if (fileName.contains("http://", true) ||
                 fileName.contains("https://", true) ||
@@ -109,10 +112,10 @@ object SharedPlaylistUtils {
                 player?.injectVideo(fileName, isUrl = true)
             } else {
                 /** We search our media directories which were added by the user in settings */
-                val paths = DataStoreKeys.DATASTORE_GLOBAL_SETTINGS.obtainStringSet(DataStoreKeys.PREF_SP_MEDIA_DIRS, emptySet()).toMutableSet()
+                val paths = obtainStringSet(DataStoreKeys.PREF_SP_MEDIA_DIRS, emptySet()).toMutableSet()
 
                 if (paths.isEmpty()) {
-                    broadcastMessage(stringResource("room_shared_playlist_no_directories"), false)
+                    broadcastMessage(lyricist.strings.roomSharedPlaylistNoDirectories, false)
                 }
 
                 var fileUri2Play: String? = null
@@ -148,7 +151,7 @@ object SharedPlaylistUtils {
                 }
                 if (fileUri2Play == null) {
                     if (media?.fileName != fileName) {
-                        val s = stringResource("room_shared_playlist_not_found")
+                        val s = lyricist.strings.roomSharedPlaylistNotFound
                         CoroutineScope(currentCoroutineContext()).dispatchOSD(s)
                         broadcastMessage(s, false)
                     }

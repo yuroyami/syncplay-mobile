@@ -32,16 +32,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.compose.ComposeUtils
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
-import com.yuroyami.syncplay.compose.fontDirective
-import com.yuroyami.syncplay.locale.Localization.stringResource
+import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.timeStamper
 import com.yuroyami.syncplay.watchroom.p
+import org.jetbrains.compose.resources.Font
+import syncplaymobile.generated.resources.Res
 
 object CardUserInfo {
 
     @Composable
     fun UserInfoCard() {
+        val lyricist = rememberStrings()
+
         Card(
             shape = RoundedCornerShape(6.dp),
             border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT)),
@@ -55,7 +58,7 @@ object CardUserInfo {
                 string = "User info",
                 solid = Color.Transparent,
                 size = 18f,
-                font = fontDirective()
+                font = Font(Res.font.directive4_regular)
             )
 
             val userlist = remember { p.session.userList }
@@ -123,7 +126,7 @@ object CardUserInfo {
                             fontSize = Paletting.USER_INFO_TXT_SIZE.sp,
                             lineHeight = (Paletting.USER_INFO_TXT_SIZE + 4).sp,
                             color = Paletting.SP_CUTE_PINK,
-                            text = user.file?.fileName ?: stringResource("room_details_nofileplayed"),
+                            text = user.file?.fileName ?: lyricist.strings.roomDetailsNofileplayed,
                             fontWeight = FontWeight.W300
                         )
                     }
@@ -138,8 +141,7 @@ object CardUserInfo {
                             /* File properties */
                             val fileSize = user.file?.fileSize?.toDoubleOrNull()?.div(1000000.0)?.toString() ?: "???"
                             Text(
-                                text = stringResource(
-                                    "room_details_file_properties",
+                                text = lyricist.strings.roomDetailsFileProperties(
                                     timeStamper(user.file?.fileDuration?.toLong() ?: 0),
                                     fileSize
                                 ),

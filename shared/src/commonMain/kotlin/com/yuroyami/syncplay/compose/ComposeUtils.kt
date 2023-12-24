@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -59,6 +58,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.Paletting.backgroundGradient
+import org.jetbrains.compose.resources.Font
+import syncplaymobile.generated.resources.Res
 
 /** Contains a bunch of composable functions that are frequently reused */
 object ComposeUtils {
@@ -92,7 +93,7 @@ object ComposeUtils {
                         offset = Offset(0f, 10f),
                         blurRadius = 5f
                     ),
-                    fontFamily = FontFamily(fontDirective()),
+                    fontFamily = FontFamily(Font(Res.font.directive4_regular)),
                     fontSize = size.sp,
                 )
             )
@@ -105,44 +106,10 @@ object ComposeUtils {
                     brush = Brush.linearGradient(
                         colors = colorStops
                     ),
-                    fontFamily = FontFamily(fontDirective()),
+                    fontFamily = FontFamily(Font(Res.font.directive4_regular)),
                     fontSize = size.sp,
                 )
             )
-        }
-    }
-
-    /** Creates a fancy icon with solid tint and gradient trailing shadow */
-    @Composable
-    fun FancyIcon(
-        modifier: Modifier = Modifier,
-        icon: ImageVector?,
-        color: Color = Color.DarkGray,
-        size: Int,
-        onClick: () -> Unit = {},
-    ) {
-        Box(modifier = modifier) {
-            if (icon != null) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = "",
-                    modifier = modifier
-                        .size(size.dp)
-                        .align(Alignment.Center)
-                        .gradientOverlay()
-                )
-                Icon(
-                    imageVector = icon,
-                    contentDescription = "",
-                    modifier = modifier
-                        .size((size - 2).dp)
-                        .align(Alignment.Center),
-                    tint = color
-                )
-
-            } else {
-                Spacer(modifier = Modifier.size(size.dp))
-            }
         }
     }
 
@@ -465,44 +432,10 @@ object ComposeUtils {
         }
     }
 
-    /** Creates a text with: Solid + Filling + Gradient Shadow */
-    @Composable
-    fun FancyText3(
-        modifier: Modifier = Modifier,
-        string: String,
-        solid: Color,
-        size: Float,
-        font: Font? = null,
-    ) {
-        Box(modifier = modifier) {
-            Text(
-                text = string,
-                modifier = Modifier.gradientOverlay(),
-                style = TextStyle(
-                    color = Color.Transparent,
-                    shadow = Shadow(color = Color.Black, Offset(4f, 4f), blurRadius = 6f),
-                    textAlign = TextAlign.Center,
-                    fontFamily = font?.let { FontFamily(it) } ?: FontFamily.Default,
-                    fontSize = size.sp,
-                )
-            )
-            Text(
-                text = string,
-                style = TextStyle(
-                    color = solid,
-                    textAlign = TextAlign.Center,
-                    fontFamily = font?.let { FontFamily(it) } ?: FontFamily.Default,
-                    fontSize = size.sp,
-                )
-            )
-        }
-    }
-
     /** Creates a multi-choice dialog which is populated by the given list */
     @Composable
     fun MultiChoiceDialog(
         title: String = "",
-        subtext: String = "",
         items: List<String>,
         selectedItem: Int,
         onItemClick: (Int) -> Unit,
@@ -524,7 +457,7 @@ object ComposeUtils {
                                 style = TextStyle(
                                     brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT),
                                     shadow = Shadow(offset = Offset(0f, 0f), blurRadius = 1f),
-                                    fontFamily = FontFamily(fontDirective()),
+                                    fontFamily = FontFamily(Font(Res.font.directive4_regular)),
                                     fontSize = (15.6).sp
                                 )
                             )
@@ -532,7 +465,7 @@ object ComposeUtils {
                                 text = title,
                                 style = TextStyle(
                                     color = Color.DarkGray,
-                                    fontFamily = FontFamily(fontDirective()),
+                                    fontFamily = FontFamily(Font(Res.font.directive4_regular)),
                                     fontSize = 15.sp,
                                 )
                             )

@@ -9,22 +9,15 @@ import com.yuroyami.syncplay.models.MediaFile
 import java.util.Locale
 
 fun Context.changeLanguage(lang: String): Context {
-    val appCompatWay = false
-    //if (appCompatWay) {
-    //    val localesList: LocaleListCompat = LocaleListCompat.forLanguageTags(lang)
-    //    AppCompatDelegate.setApplicationLocales(localesList)
-    //} else {
-        val locale = Locale(lang)
-        Locale.setDefault(locale)
-        val config = Configuration()
-        config.setLocale(locale)
-        return createConfigurationContext(config)
-        //resources.updateConfiguration(config, resources.displayMetrics)
-    //}
+    val locale = Locale(lang)
+    Locale.setDefault(locale)
+    val config = Configuration()
+    config.setLocale(locale)
+    return createConfigurationContext(config)
 }
 
 fun collectInfoLocalAndroid(media: MediaFile, context: Context) {
-    with (media) {
+    with(media) {
         /** Using MiscUtils **/
         fileName = getFileName(uri!!, context)!!
         fileSize = getRealSizeFromUri(context, uri!!.toUri())?.toDouble()?.toLong().toString()

@@ -1,7 +1,6 @@
 package com.yuroyami.syncplay.models
 
 import com.yuroyami.syncplay.datastore.DataStoreKeys
-import com.yuroyami.syncplay.datastore.ds
 import com.yuroyami.syncplay.datastore.obtainBoolean
 import com.yuroyami.syncplay.datastore.writeInt
 import com.yuroyami.syncplay.datastore.writeString
@@ -20,14 +19,14 @@ data class JoinInfo(
 ) {
     private fun remember(): JoinInfo {
         CoroutineScope(Dispatchers.IO).launch {
-            val saveInfo = DataStoreKeys.DATASTORE_MISC_PREFS.obtainBoolean(DataStoreKeys.PREF_REMEMBER_INFO, true)
+            val saveInfo = obtainBoolean(DataStoreKeys.PREF_REMEMBER_INFO, true)
 
             if (saveInfo) {
-                DataStoreKeys.DATASTORE_MISC_PREFS.ds().writeString(DataStoreKeys.MISC_JOIN_USERNAME, username)
-                DataStoreKeys.DATASTORE_MISC_PREFS.ds().writeString(DataStoreKeys.MISC_JOIN_ROOMNAME, roomname)
-                DataStoreKeys.DATASTORE_MISC_PREFS.ds().writeString(DataStoreKeys.MISC_JOIN_SERVER_ADDRESS, address)
-                DataStoreKeys.DATASTORE_MISC_PREFS.ds().writeInt(DataStoreKeys.MISC_JOIN_SERVER_PORT, port)
-                DataStoreKeys.DATASTORE_MISC_PREFS.ds().writeString(DataStoreKeys.MISC_JOIN_SERVER_PW, password)
+                writeString(DataStoreKeys.MISC_JOIN_USERNAME, username)
+                writeString(DataStoreKeys.MISC_JOIN_ROOMNAME, roomname)
+                writeString(DataStoreKeys.MISC_JOIN_SERVER_ADDRESS, address)
+                writeInt(DataStoreKeys.MISC_JOIN_SERVER_PORT, port)
+                writeString(DataStoreKeys.MISC_JOIN_SERVER_PW, password)
             }
         }
         return this

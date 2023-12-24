@@ -25,13 +25,12 @@ class PlayerOptions private constructor() {
     companion object {
         fun get(): PlayerOptions {
             val options = PlayerOptions()
-            val key = DataStoreKeys.DATASTORE_INROOM_PREFERENCES
-            options.maxBuffer = runBlocking { key.obtainInt(DataStoreKeys.PREF_MAX_BUFFER, 30000) }
-            options.minBuffer = runBlocking { key.obtainInt(DataStoreKeys.PREF_MIN_BUFFER, 15000) }
-            options.playbackBuffer = runBlocking { key.obtainInt(DataStoreKeys.PREF_SEEK_BUFFER, 2000) }
+            options.maxBuffer = runBlocking { obtainInt(DataStoreKeys.PREF_MAX_BUFFER, 30000) }
+            options.minBuffer = runBlocking { obtainInt(DataStoreKeys.PREF_MIN_BUFFER, 15000) }
+            options.playbackBuffer = runBlocking { obtainInt(DataStoreKeys.PREF_SEEK_BUFFER, 2000) }
 
-            options.ccPreference = runBlocking { key.obtainString(DataStoreKeys.PREF_CC_LANG, "eng") }
-            options.audioPreference = runBlocking { key.obtainString(DataStoreKeys.PREF_AUDIO_LANG, "und") }
+            options.ccPreference = runBlocking { obtainString(DataStoreKeys.PREF_CC_LANG, "eng") }
+            options.audioPreference = runBlocking { obtainString(DataStoreKeys.PREF_AUDIO_LANG, "und") }
             return options
         }
     }

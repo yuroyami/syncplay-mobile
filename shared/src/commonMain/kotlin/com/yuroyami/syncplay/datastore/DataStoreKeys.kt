@@ -1,9 +1,10 @@
 package com.yuroyami.syncplay.datastore
 
 object DataStoreKeys {
+    const val SYNCPLAY_PREFS = "syncplayprefs.preferences_pb"
+
 
     /** ------------ Joining info -------------*/
-    const val DATASTORE_MISC_PREFS = "syncplaymiscprefs.preferences_pb"
 
     /* Log-in (join) info */
     const val MISC_JOIN_USERNAME = "misc_join_info_username"
@@ -11,15 +12,9 @@ object DataStoreKeys {
     const val MISC_JOIN_SERVER_ADDRESS = "misc_join_info_server_address"
     const val MISC_JOIN_SERVER_PORT = "misc_join_info_server_port"
     const val MISC_JOIN_SERVER_PW = "misc_join_info_server_password"
-
     const val MISC_NIGHTMODE = "misc_nightmode"
-
     const val MISC_PLAYER_ENGINE = "misc_player_engine"
-
     const val MISC_GESTURES = "misc_gestures"
-
-    /** ---------- Global Settings ----------- */
-    const val DATASTORE_GLOBAL_SETTINGS = "syncplayglobalsettings.preferences_pb"
 
     /* General */
     const val PREF_REMEMBER_INFO = "pref_remember_info"
@@ -49,8 +44,6 @@ object DataStoreKeys {
     const val PREF_GLOBAL_CLEAR_ALL = "pref_global_clear_all"
 
     /** ---------- In-room Preferences ----------- */
-    const val DATASTORE_INROOM_PREFERENCES = "syncplayinroompreferences.preferences_pb"
-
     /* Message Colors */
     const val PREF_INROOM_COLOR_TIMESTAMP = "pref_inroom_color_timestamp"
     const val PREF_INROOM_COLOR_SELFTAG = "pref_inroom_color_selftag"

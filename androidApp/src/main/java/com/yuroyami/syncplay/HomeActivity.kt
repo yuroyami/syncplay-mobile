@@ -18,10 +18,8 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.yuroyami.syncplay.datastore.DataStoreKeys
-import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_MISC_PREFS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_NIGHTMODE
 import com.yuroyami.syncplay.datastore.booleanFlow
-import com.yuroyami.syncplay.datastore.ds
 import com.yuroyami.syncplay.datastore.obtainString
 import com.yuroyami.syncplay.home.HomeCallback
 import com.yuroyami.syncplay.home.HomeConfig
@@ -58,7 +56,7 @@ class HomeActivity : ComponentActivity() {
 
         /****** Composing UI using Jetpack Compose *******/
         setContent {
-            val nightMode by DATASTORE_MISC_PREFS.ds().booleanFlow(MISC_NIGHTMODE, false).collectAsState(initial = false)
+            val nightMode by booleanFlow(MISC_NIGHTMODE, false).collectAsState(initial = false)
 
             LaunchedEffect(nightMode) {
                 WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = !nightMode
@@ -108,6 +106,8 @@ class HomeActivity : ComponentActivity() {
                 ShortcutManagerCompat.addDynamicShortcuts(this@HomeActivity, listOf(shortcutInfo))
                 ShortcutManagerCompat.requestPinShortcut(this@HomeActivity, shortcutInfo, null)
             }
+
+            override fun onSoloMode() = soloMode()
         }
 
         /** Maybe there is a shortcut intent */
@@ -120,7 +120,7 @@ class HomeActivity : ComponentActivity() {
                     port = getIntExtra("serverport", 80),
                     password = getStringExtra("serverpw") ?: ""
                 )
-                homeCallback.onJoin(info)
+                homeCallback?.onJoin(info)
             }
         }
     }
@@ -136,7 +136,7 @@ class HomeActivity : ComponentActivity() {
 
     override fun attachBaseContext(newBase: Context?) {
         /** Applying saved language */
-        val lang = runBlocking { DataStoreKeys.DATASTORE_GLOBAL_SETTINGS.obtainString(DataStoreKeys.PREF_DISPLAY_LANG, "en") }
+        val lang = runBlocking { obtainString(DataStoreKeys.PREF_DISPLAY_LANG, "en") }
         super.attachBaseContext(newBase!!.changeLanguage(lang))
     }
 }

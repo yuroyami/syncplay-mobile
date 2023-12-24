@@ -103,13 +103,9 @@ import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.compose.cards.CardRoomPrefs.InRoomSettingsCard
 import com.yuroyami.syncplay.compose.cards.CardSharedPlaylist.SharedPlaylistCard
 import com.yuroyami.syncplay.compose.cards.CardUserInfo.UserInfoCard
-import com.yuroyami.syncplay.compose.fontDirective
-import com.yuroyami.syncplay.compose.fontInter
 import com.yuroyami.syncplay.compose.popups.PopupAddUrl.AddUrlPopup
 import com.yuroyami.syncplay.compose.popups.PopupChatHistory.ChatHistoryPopup
 import com.yuroyami.syncplay.compose.popups.PopupSeekToPosition.SeekToPositionPopup
-import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_INROOM_PREFERENCES
-import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_MISC_PREFS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_GESTURES
 import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_NIGHTMODE
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_MSG_BG_OPACITY
@@ -119,7 +115,6 @@ import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_MSG_MAXCOUNT
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_MSG_SHADOW
 import com.yuroyami.syncplay.datastore.booleanFlow
-import com.yuroyami.syncplay.datastore.ds
 import com.yuroyami.syncplay.datastore.intFlow
 import com.yuroyami.syncplay.datastore.obtainBoolean
 import com.yuroyami.syncplay.datastore.writeBoolean
@@ -153,6 +148,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.compose.resources.Font
+import syncplaymobile.generated.resources.Res
 import kotlin.math.roundToInt
 
 /** TODO: Ship these to a platform-agnostic viewmodel */
@@ -193,10 +190,10 @@ var pickerScope = CoroutineScope(Dispatchers.IO)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun RoomUI() {
-    val nightMode = DATASTORE_MISC_PREFS.ds().booleanFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
+    val nightMode = booleanFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
 
-    val directive = fontDirective()
-    val inter = fontInter()
+    val directive = Font(Res.font.directive4_regular)
+    val inter = Font(Res.font.inter_regular)
 
     val composeScope = rememberCoroutineScope { Dispatchers.IO }
 
@@ -224,12 +221,12 @@ fun RoomUI() {
 
         val msgPalette = ComposedMessagePalette()
 
-        val msgBoxOpacity = DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_MSG_BG_OPACITY, 0).collectAsState(initial = 0)
-        val msgOutline by DATASTORE_INROOM_PREFERENCES.ds().booleanFlow(PREF_INROOM_MSG_OUTLINE, true).collectAsState(initial = true)
-        val msgShadow by DATASTORE_INROOM_PREFERENCES.ds().booleanFlow(PREF_INROOM_MSG_SHADOW, false).collectAsState(initial = false)
-        val msgFontSize = DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_MSG_FONTSIZE, 9).collectAsState(initial = 9)
-        val msgMaxCount by DATASTORE_INROOM_PREFERENCES.ds().intFlow(PREF_INROOM_MSG_MAXCOUNT, 10).collectAsState(initial = 0)
-        val keyboardOkFunction by DATASTORE_INROOM_PREFERENCES.ds().booleanFlow(PREF_INROOM_MSG_BOX_ACTION, true).collectAsState(initial = true)
+        val msgBoxOpacity = intFlow(PREF_INROOM_MSG_BG_OPACITY, 0).collectAsState(initial = 0)
+        val msgOutline by booleanFlow(PREF_INROOM_MSG_OUTLINE, true).collectAsState(initial = true)
+        val msgShadow by booleanFlow(PREF_INROOM_MSG_SHADOW, false).collectAsState(initial = false)
+        val msgFontSize = intFlow(PREF_INROOM_MSG_FONTSIZE, 9).collectAsState(initial = 9)
+        val msgMaxCount by intFlow(PREF_INROOM_MSG_MAXCOUNT, 10).collectAsState(initial = 0)
+        val keyboardOkFunction by booleanFlow(PREF_INROOM_MSG_BOX_ACTION, true).collectAsState(initial = true)
 
         /** Room artwork underlay (when no video is loaded) */
         if (!hasVideo.value) {
@@ -283,7 +280,7 @@ fun RoomUI() {
             var controlcardvisible by remember { mutableStateOf(false) }
             var addmediacardvisible by remember { mutableStateOf(false) }
 
-            val gestures = DATASTORE_MISC_PREFS.ds().booleanFlow(MISC_GESTURES, true).collectAsState(initial = true)
+            val gestures = booleanFlow(MISC_GESTURES, true).collectAsState(initial = true)
 
             val userinfoVisibility = remember { mutableStateOf(false) }
             val sharedplaylistVisibility = remember { mutableStateOf(false) }
@@ -542,11 +539,11 @@ fun RoomUI() {
                                         overflowmenustate.value = false
 
                                         val newMode = runBlocking {
-                                            !DATASTORE_MISC_PREFS.obtainBoolean(MISC_NIGHTMODE, true)
+                                            !obtainBoolean(MISC_NIGHTMODE, true)
                                         }
 
                                         composeScope.launch {
-                                            DATASTORE_MISC_PREFS.writeBoolean(MISC_NIGHTMODE, newMode)
+                                            writeBoolean(MISC_NIGHTMODE, newMode)
                                         }
                                     })
 
@@ -564,7 +561,7 @@ fun RoomUI() {
                                             )
                                         }
                                     }, onClick = {
-                                        roomCallback.onLeave()
+                                        roomCallback?.onLeave()
                                     })
                                 }
                             }
@@ -640,9 +637,7 @@ fun RoomUI() {
                                             }, size = ROOM_ICON_SIZE, shadowColor = Color.Black
                                         ) {
                                             composeScope.launch {
-                                                DATASTORE_MISC_PREFS
-                                                    .writeBoolean(MISC_GESTURES, !gestures.value)
-
+                                                writeBoolean(MISC_GESTURES, !gestures.value)
                                                 dispatchOSD(if (gestures.value) "Gestures enabled" else "Gestures disabled")
                                             }
                                         }

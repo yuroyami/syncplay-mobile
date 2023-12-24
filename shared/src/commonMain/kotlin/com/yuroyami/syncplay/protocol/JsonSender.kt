@@ -1,7 +1,6 @@
 @file:OptIn(ExperimentalSerializationApi::class)
 package com.yuroyami.syncplay.protocol
 
-import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_HASH_FILENAME
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_HASH_FILESIZE
 import com.yuroyami.syncplay.datastore.obtainString
@@ -99,8 +98,8 @@ object JsonSender {
 
     fun sendFile(media: MediaFile): String {
         /** Checking whether file name or file size have to be hashed **/
-        val nameBehavior = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainString(PREF_HASH_FILENAME, "1") }
-        val sizeBehavior = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainString(PREF_HASH_FILESIZE, "1") }
+        val nameBehavior = runBlocking { obtainString(PREF_HASH_FILENAME, "1") }
+        val sizeBehavior = runBlocking { obtainString(PREF_HASH_FILESIZE, "1") }
 
         val fileproperties = buildJsonObject {
             put("duration", media.fileDuration)

@@ -40,9 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
-import com.yuroyami.syncplay.compose.fontDirective
-import com.yuroyami.syncplay.compose.fontInter
-import com.yuroyami.syncplay.locale.Localization.stringResource
+import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.timeStamper
 import com.yuroyami.syncplay.watchroom.dispatchOSD
@@ -50,6 +48,8 @@ import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.player
 import com.yuroyami.syncplay.watchroom.seeks
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.Font
+import syncplaymobile.generated.resources.Res
 
 object PopupSeekToPosition {
 
@@ -78,7 +78,7 @@ object PopupSeekToPosition {
                     string = "Seek to Precise Position",
                     solid = Color.Black,
                     size = 18f,
-                    font = fontDirective()
+                    font = Font(Res.font.directive4_regular)
                 )
 
                 /* Title's subtext */
@@ -86,7 +86,7 @@ object PopupSeekToPosition {
                     text = "Hours:Minutes:Seconds",
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 10.sp,
-                    fontFamily = FontFamily(fontInter()),
+                    fontFamily = FontFamily(Font(Res.font.inter_regular)),
                     textAlign = TextAlign.Center,
                     lineHeight = 14.sp
                 )
@@ -119,7 +119,7 @@ object PopupSeekToPosition {
                         onValueChange = { hours.value = it },
                         textStyle = TextStyle(
                             brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT),
-                            fontFamily = FontFamily(fontInter()),
+                            fontFamily = FontFamily(Font(Res.font.inter_regular)),
                             fontSize = 16.sp,
                         ),
                         label = { Text("HH", color = Color.Gray) }
@@ -148,7 +148,7 @@ object PopupSeekToPosition {
                         onValueChange = { minutes.value = it },
                         textStyle = TextStyle(
                             brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT),
-                            fontFamily = FontFamily(fontInter()),
+                            fontFamily = FontFamily(Font(Res.font.inter_regular)),
                             fontSize = 16.sp,
                         ),
                         label = { Text("MM", color = Color.Gray) }
@@ -176,7 +176,7 @@ object PopupSeekToPosition {
                         onValueChange = { seconds.value = it },
                         textStyle = TextStyle(
                             brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT),
-                            fontFamily = FontFamily(fontInter()),
+                            fontFamily = FontFamily(Font(Res.font.inter_regular)),
                             fontSize = 16.sp,
                         ),
                         label = { Text("ss", color = Color.Gray) }
@@ -218,7 +218,7 @@ object PopupSeekToPosition {
                 ) {
                     Icon(imageVector = Icons.Filled.Done, "")
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource("done"), fontSize = 14.sp)
+                    Text(rememberStrings().strings.done, fontSize = 14.sp)
                 }
             }
         }

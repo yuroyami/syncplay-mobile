@@ -1,7 +1,6 @@
 package com.yuroyami.syncplay.player
 
 import com.yuroyami.syncplay.datastore.DataStoreKeys
-import com.yuroyami.syncplay.datastore.ds
 import com.yuroyami.syncplay.datastore.intFlow
 import com.yuroyami.syncplay.utils.RoomUtils
 import com.yuroyami.syncplay.watchroom.isSoloMode
@@ -44,7 +43,7 @@ object PlayerUtils {
 
     fun seekBckwd() {
         player?.playerScopeIO?.launch {
-            val dec = DataStoreKeys.DATASTORE_INROOM_PREFERENCES.ds().intFlow(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP, 10).first()
+            val dec = intFlow(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP, 10).first()
 
             val currentMs = withContext(Dispatchers.Main) { player!!.currentPositionMs() }
             var newPos = (currentMs) - (dec * 1000L)
@@ -62,7 +61,7 @@ object PlayerUtils {
 
     fun seekFrwrd() {
         player?.playerScopeIO?.launch {
-            val inc = DataStoreKeys.DATASTORE_INROOM_PREFERENCES.ds().intFlow(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP, 10).first()
+            val inc = intFlow(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP, 10).first()
 
             val currentMs = withContext(Dispatchers.Main) { player!!.currentPositionMs() }
             var newPos = (currentMs) + (inc * 1000L)

@@ -70,10 +70,8 @@ import com.yuroyami.syncplay.compose.ComposeUtils.FancyIcon2
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
-import com.yuroyami.syncplay.compose.fontDirective
-import com.yuroyami.syncplay.compose.fontInter
 import com.yuroyami.syncplay.compose.popups.PopupMediaDirs.MediaDirsPopup
-import com.yuroyami.syncplay.locale.Localization.stringResource
+import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.SharedPlaylistUtils.addURLs
 import com.yuroyami.syncplay.utils.SharedPlaylistUtils.clearPlaylist
@@ -85,12 +83,16 @@ import com.yuroyami.syncplay.watchroom.p
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.Font
+import syncplaymobile.generated.resources.Res
 
 object CardSharedPlaylist {
 
     @Composable
     fun SharedPlaylistCard() {
         val scope = rememberCoroutineScope { Dispatchers.IO }
+        val lyricist = rememberStrings()
+
         /* ActivityResultLaunchers for various shared playlist actions */
 //        val spAddFile = rememberLauncherForActivityResult(
 //            contract = ActivityResultContracts.OpenMultipleDocuments(),
@@ -185,7 +187,7 @@ object CardSharedPlaylist {
                     string = "Shared Playlist",
                     solid = Color.Transparent,
                     size = 16f,
-                    font = fontDirective()
+                    font = Font(Res.font.directive4_regular)
                 )
 
                 /* The actual shared playlist */
@@ -243,12 +245,12 @@ object CardSharedPlaylist {
                                     string = "Item Actions",
                                     solid = Color.Black,
                                     size = 12f,
-                                    font = fontDirective()
+                                    font = Font(Res.font.directive4_regular)
                                 )
 
                                 //Item Action: Play
                                 DropdownMenuItem(
-                                    text = { Text(color = Color.LightGray, text = stringResource("play")) },
+                                    text = { Text(color = Color.LightGray, text = lyricist.strings.play) },
                                     leadingIcon = { Icon(imageVector = Icons.Default.PlayCircle, "", tint = Color.LightGray) },
                                     onClick = {
                                         sendPlaylistSelection(index)
@@ -258,7 +260,7 @@ object CardSharedPlaylist {
 
                                 //Item Action: Delete
                                 DropdownMenuItem(
-                                    text = { Text(color = Color.LightGray, text = stringResource("delete")) },
+                                    text = { Text(color = Color.LightGray, text = lyricist.strings.delete) },
                                     leadingIcon = { Icon(imageVector = Icons.Default.Delete, "", tint = Color.LightGray) },
                                     onClick = {
                                         deleteItemFromPlaylist(index)
@@ -333,7 +335,7 @@ object CardSharedPlaylist {
                                 string = "Shared Playlist Actions",
                                 solid = Color.Black,
                                 size = 13f,
-                                font = fontDirective()
+                                font = Font(Res.font.directive4_regular)
                             )
 
                             val txtsize = 10f
@@ -344,7 +346,7 @@ object CardSharedPlaylist {
                                     Text(
                                         fontSize = txtsize.sp,
                                         color = Color.LightGray,
-                                        text = stringResource("room_shared_playlist_button_shuffle")
+                                        text = lyricist.strings.roomSharedPlaylistButtonShuffle
                                     )
                                 },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Shuffle, "", tint = Color.LightGray) },
@@ -360,7 +362,7 @@ object CardSharedPlaylist {
                                     Text(
                                         fontSize = txtsize.sp,
                                         color = Color.LightGray,
-                                        text = stringResource("room_shared_playlist_button_shuffle_rest")
+                                        text = lyricist.strings.roomSharedPlaylistButtonShuffleRest
                                     )
                                 },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Shuffle, "", tint = Color.LightGray) },
@@ -378,7 +380,7 @@ object CardSharedPlaylist {
                                     Text(
                                         fontSize = txtsize.sp,
                                         color = Color.LightGray,
-                                        text = stringResource("room_shared_playlist_button_add_file")
+                                        text = lyricist.strings.roomSharedPlaylistButtonAddFile
                                     )
                                 },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.NoteAdd, "", tint = Color.LightGray) },
@@ -395,7 +397,7 @@ object CardSharedPlaylist {
                                     Text(
                                         fontSize = txtsize.sp,
                                         color = Color.LightGray,
-                                        text = stringResource("room_shared_playlist_button_add_url")
+                                        text = lyricist.strings.roomSharedPlaylistButtonAddUrl
                                     )
                                 },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.AddLink, "", tint = Color.LightGray) },
@@ -411,7 +413,7 @@ object CardSharedPlaylist {
                                     Text(
                                         fontSize = txtsize.sp,
                                         color = Color.LightGray,
-                                        text = stringResource("room_shared_playlist_button_add_folder")
+                                        text = lyricist.strings.roomSharedPlaylistButtonAddFolder
                                     )
                                 },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.CreateNewFolder, "", tint = Color.LightGray) },
@@ -430,7 +432,7 @@ object CardSharedPlaylist {
                                     Text(
                                         fontSize = txtsize.sp,
                                         color = Color.LightGray,
-                                        text = stringResource("room_shared_playlist_button_playlist_import")
+                                        text = lyricist.strings.roomSharedPlaylistButtonPlaylistImport
                                     )
                                 },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Download, "", tint = Color.LightGray) },
@@ -447,7 +449,7 @@ object CardSharedPlaylist {
                                     Text(
                                         fontSize = txtsize.sp,
                                         color = Color.LightGray,
-                                        text = stringResource("room_shared_playlist_button_playlist_import_n_shuffle")
+                                        text = lyricist.strings.roomSharedPlaylistButtonPlaylistImportNShuffle
                                     )
                                 },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Download, "", tint = Color.LightGray) },
@@ -464,7 +466,7 @@ object CardSharedPlaylist {
                                     Text(
                                         fontSize = txtsize.sp,
                                         color = Color.LightGray,
-                                        text = stringResource("room_shared_playlist_button_playlist_export")
+                                        text = lyricist.strings.roomSharedPlaylistButtonPlaylistExport
                                     )
                                 },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Save, "", tint = Color.LightGray) },
@@ -489,7 +491,7 @@ object CardSharedPlaylist {
                                     Text(
                                         fontSize = txtsize.sp,
                                         color = Color.LightGray,
-                                        text = stringResource("room_shared_playlist_button_set_media_directories")
+                                        text = lyricist.strings.roomSharedPlaylistButtonSetMediaDirectories
                                     )
                                 },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Folder, "", tint = Color.LightGray) },
@@ -525,6 +527,8 @@ object CardSharedPlaylist {
 
     @Composable
     fun AddSPUrlsPopup(visibilityState: MutableState<Boolean>) {
+        val lyr = rememberStrings()
+
         return RoomPopup(
             dialogOpen = visibilityState.value,
             widthPercent = 0.9f,
@@ -545,7 +549,7 @@ object CardSharedPlaylist {
                     string = "Add URLs to Shared Playlist",
                     solid = Color.Black,
                     size = 18f,
-                    font = fontDirective()
+                    font = Font(Res.font.directive4_regular)
                 )
 
                 /* Title's subtext */
@@ -553,7 +557,7 @@ object CardSharedPlaylist {
                     text = "Each line wil be added as an entry to the shared playlist.\nSyncplay Android supports only direct links for now.",
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 10.sp,
-                    fontFamily = FontFamily(fontInter()),
+                    fontFamily = FontFamily(Font(Res.font.inter_regular)),
                     textAlign = TextAlign.Center,
                     lineHeight = 14.sp
                 )
@@ -587,7 +591,7 @@ object CardSharedPlaylist {
                         brush = Brush.linearGradient(
                             colors = Paletting.SP_GRADIENT
                         ),
-                        fontFamily = FontFamily(fontInter()),
+                        fontFamily = FontFamily(Font(Res.font.inter_regular)),
                         fontSize = 16.sp,
                     ),
                     label = {
@@ -607,11 +611,9 @@ object CardSharedPlaylist {
                 ) {
                     Icon(imageVector = Icons.Filled.Done, "")
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource("done"), fontSize = 14.sp)
+                    Text(lyr.strings.done, fontSize = 14.sp)
                 }
             }
         }
     }
-
-
 }

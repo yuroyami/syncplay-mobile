@@ -48,22 +48,19 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import com.yuroyami.syncplay.compose.ComposeUtils.FlexibleFancyText
 import com.yuroyami.syncplay.compose.ComposeUtils.MultiChoiceDialog
 import com.yuroyami.syncplay.compose.ComposeUtils.SmartFancyIcon
 import com.yuroyami.syncplay.compose.popups.PopupColorPicker.ColorPickingPopup
 import com.yuroyami.syncplay.datastore.booleanFlow
-import com.yuroyami.syncplay.datastore.datastoreFiles
-import com.yuroyami.syncplay.datastore.ds
+import com.yuroyami.syncplay.datastore.datastore
 import com.yuroyami.syncplay.datastore.intFlow
 import com.yuroyami.syncplay.datastore.stringFlow
 import com.yuroyami.syncplay.datastore.writeBoolean
 import com.yuroyami.syncplay.datastore.writeInt
 import com.yuroyami.syncplay.datastore.writeString
-import com.yuroyami.syncplay.locale.Localization.stringResource
+import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.colorpicker.HsvColor
 import kotlinx.coroutines.Dispatchers
@@ -92,17 +89,16 @@ import kotlin.math.roundToInt
  * @param isResetDefault For a [SettingType.OneClickSetting], this one prompts the user to clear settings.
  * */
 class Setting(
-    val datastorekey: String,
-    val type: SettingType, val key: String,
-    val title: @Composable () -> String, val summary: @Composable () -> String,
-    val defaultValue: Any? = null, val icon: ImageVector? = null, val enabled: Boolean = true,
-    val styling: SettingStyling = SettingStyling(),
+    val type: SettingType,
+    val key: String, val title: @Composable () -> String,
+    val summary: @Composable () -> String, val defaultValue: Any? = null,
+    val icon: ImageVector? = null, val enabled: Boolean = true, val styling: SettingStyling = SettingStyling(),
     val dependency: String = "",
-    val maxValue: Int = 100, val minValue: Int = 0,
-    val entryKeys: @Composable () -> List<String> = { listOf() }, val entryValues: @Composable () -> List<String> = { listOf() },
-    val onClick: (() -> Unit)? = null, val onItemChosen: ((index: Int, value: String) -> Unit)? = null,
-    val onValueChanged: ((newValue: Int) -> Unit)? = null,
-    val popupComposable: (@Composable (MutableState<Boolean>) -> Unit)? = null,
+    val maxValue: Int = 100,
+    val minValue: Int = 0, val entryKeys: @Composable () -> List<String> = { listOf() },
+    val entryValues: @Composable () -> List<String> = { listOf() }, val onClick: (() -> Unit)? = null,
+    val onItemChosen: ((index: Int, value: String) -> Unit)? = null, val onValueChanged: ((newValue: Int) -> Unit)? = null,
+    val popupComposable: @Composable() ((MutableState<Boolean>) -> Unit)? = null,
     val isResetDefault: Boolean = false,
 ) {
 
@@ -125,6 +121,7 @@ class Setting(
     @Composable
     private fun OneClickSettingUI(modifier: Modifier = Modifier) {
         val scope = rememberCoroutineScope()
+        val lyricist = rememberStrings()
 
         var resetDialog by remember { mutableStateOf(false) }
         if (resetDialog && isResetDefault) {
@@ -134,18 +131,18 @@ class Setting(
                     TextButton(onClick = {
                         resetDialog = false
                         scope.launch(Dispatchers.IO) {
-                            datastorekey.ds().edit { preferences ->
+                            datastore.edit { preferences ->
                                 preferences.clear()
                             }
                         }
-                    }) { Text(stringResource("yes")) }
+                    }) { Text(lyricist.strings.yes) }
                 },
                 dismissButton = {
                     TextButton(onClick = {
                         resetDialog = false
-                    }) { Text(stringResource("no")) }
+                    }) { Text(lyricist.strings.no) }
                 },
-                text = { Text(stringResource("setting_resetdefault_dialog")) }
+                text = { Text(lyricist.strings.settingResetdefaultDialog) }
             )
         }
         ListItem(
@@ -240,7 +237,7 @@ class Setting(
      * based on the parameter [type] that is passed. If it's true, it is a checkbox setting, otherwise, a toggle button. */
     @Composable
     private fun BooleanSettingUI(modifier: Modifier = Modifier, type: Boolean) {
-        val boolean = datastore().booleanFlow(key, defaultValue as Boolean).collectAsState(initial = defaultValue)
+        val boolean = booleanFlow(key, defaultValue as Boolean).collectAsState(initial = defaultValue)
         val scope = rememberCoroutineScope { Dispatchers.IO }
 
         ListItem(
@@ -252,7 +249,7 @@ class Setting(
 
                 ) {
                     scope.launch {
-                        datastore().writeBoolean(key, !boolean.value)
+                        writeBoolean(key, !boolean.value)
                     }
                 },
             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -270,7 +267,7 @@ class Setting(
                         enabled = enabled,
                         onCheckedChange = { b ->
                             scope.launch {
-                                datastore().writeBoolean(key, b)
+                                writeBoolean(key, b)
                             }
                         }
                     )
@@ -280,7 +277,7 @@ class Setting(
                         enabled = enabled,
                         onCheckedChange = { b ->
                             scope.launch {
-                                datastore().writeBoolean(key, b)
+                                writeBoolean(key, b)
                             }
                         }
                     )
@@ -313,7 +310,7 @@ class Setting(
     @Composable
     private fun ListSettingUI(modifier: Modifier = Modifier) {
         val dialogOpen = remember { mutableStateOf(false) }
-        val selectedItem = datastore().stringFlow(key, defaultValue as String).collectAsState(initial = defaultValue)
+        val selectedItem = stringFlow(key, defaultValue as String).collectAsState(initial = defaultValue)
         val scope = rememberCoroutineScope { Dispatchers.IO }
 
         val renderedValues = entryValues.invoke()
@@ -328,7 +325,7 @@ class Setting(
                     dialogOpen.value = false
 
                     scope.launch {
-                        datastore().writeString(key, renderedValues[i])
+                        writeString(key, renderedValues[i])
 
                         onItemChosen?.let { it(i, renderedValues[i]) }
 
@@ -383,7 +380,7 @@ class Setting(
      * @exception SettingCreationException */
     @Composable
     private fun SliderSettingUI(modifier: Modifier = Modifier) {
-        val value = datastore().intFlow(key, defaultValue as Int).collectAsState(initial = defaultValue)
+        val value = intFlow(key, defaultValue as Int).collectAsState(initial = defaultValue)
         val scope = rememberCoroutineScope { Dispatchers.IO }
 
         ListItem(
@@ -429,7 +426,7 @@ class Setting(
                             valueRange = (minValue.toFloat())..(maxValue.toFloat()),
                             onValueChange = { f ->
                                 scope.launch {
-                                    datastore().writeInt(key, f.roundToInt())
+                                   writeInt(key, f.roundToInt())
                                 }
                                 onValueChanged?.invoke(f.roundToInt())
                             }, modifier = Modifier
@@ -455,7 +452,7 @@ class Setting(
     /** A color setting UI composable function. Clicking this would displays a popup to the user. */
     @Composable
     private fun ColorSettingUI(modifier: Modifier = Modifier) {
-        val color = datastore().intFlow(key, defaultValue as Int).collectAsState(initial = defaultValue)
+        val color = intFlow(key, defaultValue as Int).collectAsState(initial = defaultValue)
         val colorDialogState = remember { mutableStateOf(false) }
         val scope = rememberCoroutineScope { Dispatchers.IO }
 
@@ -507,15 +504,15 @@ class Setting(
 
         ColorPickingPopup(colorDialogState, initialColor = HsvColor.from(Color(color.value)), onColorChanged = { hsvColor ->
             scope.launch {
-                datastorekey.writeInt(key, hsvColor.toColor().toArgb())
+                writeInt(key, hsvColor.toColor().toArgb())
             }
-        }, onDefaultReset = { scope.launch { datastorekey.writeInt(key, defaultValue) } })
+        }, onDefaultReset = { scope.launch { writeInt(key, defaultValue) } })
     }
 
     /** A string setting UI composable function. It has a textfield next to it */
     @Composable
     private fun TextFieldSettingUI(modifier: Modifier = Modifier) {
-        val string by datastore().stringFlow(key, defaultValue as String).collectAsState(initial = defaultValue)
+        val string by stringFlow(key, defaultValue as String).collectAsState(initial = defaultValue)
         val scope = rememberCoroutineScope()
         val focusManager = LocalFocusManager.current
 
@@ -528,7 +525,7 @@ class Setting(
 
                 ) {
                     scope.launch {
-                        datastore().writeString(key, string)
+                        writeString(key, string)
                     }
                 },
             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -559,7 +556,7 @@ class Setting(
                     ),
                     onValueChange = {
                         scope.launch {
-                            datastore().writeString(key, it)
+                            writeString(key, it)
                         }
                     },
                     textStyle = TextStyle(
@@ -591,11 +588,5 @@ class Setting(
                 )
             }
         )
-    }
-
-
-    /** Returns the global instance of the datastore that stores this setting */
-    fun datastore(): DataStore<Preferences> {
-        return datastoreFiles[datastorekey]!!
     }
 }

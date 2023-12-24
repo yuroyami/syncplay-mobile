@@ -84,19 +84,16 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.compose.ComposeUtils.FlexibleFancyText
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.compose.NightModeToggle
-import com.yuroyami.syncplay.compose.fontDirective
-import com.yuroyami.syncplay.compose.fontInter
 import com.yuroyami.syncplay.compose.popups.PopupAPropos.AProposPopup
-import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_MISC_PREFS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_NIGHTMODE
 import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_PLAYER_ENGINE
 import com.yuroyami.syncplay.datastore.booleanFlow
-import com.yuroyami.syncplay.datastore.ds
 import com.yuroyami.syncplay.datastore.stringFlow
 import com.yuroyami.syncplay.datastore.writeString
 import com.yuroyami.syncplay.lyricist.rememberStrings
@@ -110,6 +107,7 @@ import com.yuroyami.syncplay.watchroom.homeCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
 import syncplaymobile.generated.resources.Res
@@ -120,7 +118,7 @@ import syncplaymobile.generated.resources.Res
 fun HomeScreen(config: HomeConfig) {
     val localz = rememberStrings()
 
-    val nightMode = DATASTORE_MISC_PREFS.ds().booleanFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
+    val nightMode = booleanFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
 
     val savedConfig = remember { config }
 
@@ -240,7 +238,7 @@ fun HomeScreen(config: HomeConfig) {
                                                     offset = Offset(0f, 10f),
                                                     blurRadius = 5f
                                                 ),
-                                                fontFamily = FontFamily(fontDirective()),
+                                                fontFamily = FontFamily(Font(Res.font.directive4_regular)),
                                                 fontSize = 24.sp,
                                             )
                                         )
@@ -249,7 +247,7 @@ fun HomeScreen(config: HomeConfig) {
                                             text = "Syncplay",
                                             style = TextStyle(
                                                 brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT),
-                                                fontFamily = FontFamily(fontDirective()),
+                                                fontFamily = FontFamily(Font(Res.font.directive4_regular)),
                                                 fontSize = 24.sp,
                                             )
                                         )
@@ -313,8 +311,9 @@ fun HomeScreen(config: HomeConfig) {
                         FlexibleFancyText(
                             text = localz.strings.connectUsernameA,
                             size = 20f,
+                            textAlign = TextAlign.Center,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = fontDirective(),
+                            font = Font(Res.font.directive4_regular),
                             shadowColors = listOf(Color.Gray)
                         )
 
@@ -365,8 +364,9 @@ fun HomeScreen(config: HomeConfig) {
                         FlexibleFancyText(
                             text = localz.strings.connectRoomnameA,
                             size = 20f,
+                            textAlign = TextAlign.Center,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = fontDirective(),
+                            font = Font(Res.font.directive4_regular),
                             shadowColors = listOf(Color.Gray)
                         )
 
@@ -414,8 +414,9 @@ fun HomeScreen(config: HomeConfig) {
                         FlexibleFancyText(
                             text = localz.strings.connectServerA,
                             size = 20f,
+                            textAlign = TextAlign.Center,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = fontDirective(),
+                            font = Font(Res.font.directive4_regular),
                             shadowColors = listOf(Color.Gray)
                         )
 
@@ -510,7 +511,7 @@ fun HomeScreen(config: HomeConfig) {
                                         brush = Brush.linearGradient(
                                             colors = Paletting.SP_GRADIENT
                                         ),
-                                        fontFamily = FontFamily(fontInter()),
+                                        fontFamily = FontFamily(Font(Res.font.inter_regular)),
                                         fontSize = 16.sp,
                                     ),
                                     label = {
@@ -540,7 +541,7 @@ fun HomeScreen(config: HomeConfig) {
                                         brush = Brush.linearGradient(
                                             colors = Paletting.SP_GRADIENT
                                         ),
-                                        fontFamily = FontFamily(fontInter()),
+                                        fontFamily = FontFamily(Font(Res.font.inter_regular)),
                                         fontSize = 16.sp,
                                     ),
                                     label = {
@@ -574,7 +575,7 @@ fun HomeScreen(config: HomeConfig) {
                                     brush = Brush.linearGradient(
                                         colors = Paletting.SP_GRADIENT
                                     ),
-                                    fontFamily = FontFamily(fontInter()),
+                                    fontFamily = FontFamily(Font(Res.font.inter_regular)),
                                     fontSize = 16.sp,
                                 ),
                                 label = {
@@ -587,7 +588,7 @@ fun HomeScreen(config: HomeConfig) {
 
                     /* Buttons */
                     val defaultEngine = remember { getDefaultEngine() }
-                    val player = DATASTORE_MISC_PREFS.ds().stringFlow(MISC_PLAYER_ENGINE, defaultEngine).collectAsState(initial = defaultEngine)
+                    val player = stringFlow(MISC_PLAYER_ENGINE, defaultEngine).collectAsState(initial = defaultEngine)
 
                     Column(horizontalAlignment = CenterHorizontally) {
                         Row(horizontalArrangement = Arrangement.Center) {
@@ -597,7 +598,7 @@ fun HomeScreen(config: HomeConfig) {
                                 modifier = Modifier.height(54.dp).aspectRatio(1.6f),
                                 shape = RoundedCornerShape(25),
                                 onClick = {
-                                    homeCallback.onSaveConfigShortcut(
+                                    homeCallback?.onSaveConfigShortcut(
                                         JoinInfo(
                                             textUsername.replace("\\", "").trim(),
                                             textRoomname.replace("\\", "").trim(),
@@ -624,7 +625,7 @@ fun HomeScreen(config: HomeConfig) {
                                 onClick = {
                                     scope.launch(Dispatchers.IO) {
                                         if (defaultEngine != "exo") {
-                                            DATASTORE_MISC_PREFS.ds().writeString(
+                                            writeString(
                                                 MISC_PLAYER_ENGINE,
                                                 when (player.value) {
                                                     "exo" -> "mpv"
@@ -665,6 +666,7 @@ fun HomeScreen(config: HomeConfig) {
                                     else -> "ExoPlayer"
                                 }
                             ),
+                            textAlign = TextAlign.Center,
                             fontSize = 9.sp
                         )
                     }
@@ -745,7 +747,7 @@ fun HomeScreen(config: HomeConfig) {
                                 serverPassword
                             )
 
-                            homeCallback.onJoin(info)
+                            homeCallback?.onJoin(info)
                         },
                     ) {
                         Icon(imageVector = Icons.Filled.Api, "")

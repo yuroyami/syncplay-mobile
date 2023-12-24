@@ -86,9 +86,7 @@ actual fun NightModeToggle(modifier: Modifier, state: State<Boolean>) {
         IconButton(
             modifier = modifier,
             onClick = {
-                scope.launch {
-                    DataStoreKeys.DATASTORE_MISC_PREFS.writeBoolean(DataStoreKeys.MISC_NIGHTMODE, !state.value)
-                }
+                scope.launch { writeBoolean(DataStoreKeys.MISC_NIGHTMODE, !state.value) }
             }) {
             LottieAnimation(
                 composition = composition,

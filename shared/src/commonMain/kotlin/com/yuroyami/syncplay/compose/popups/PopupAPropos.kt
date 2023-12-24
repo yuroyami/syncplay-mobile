@@ -1,6 +1,5 @@
 package com.yuroyami.syncplay.compose.popups
 
-import syncplaymobile.generated.resources.Res
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -34,14 +33,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
 import com.yuroyami.syncplay.compose.ComposeUtils.SyncplayishText
-import com.yuroyami.syncplay.locale.Localization.stringResource
+import com.yuroyami.syncplay.lyricist.rememberStrings
+import com.yuroyami.syncplay.watchroom.homeCallback
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
+import syncplaymobile.generated.resources.Res
 
 object PopupAPropos {
 
     @Composable
     fun AProposPopup(visibilityState: MutableState<Boolean>) {
+        val lyricist = rememberStrings()
+
         return RoomPopup(
             dialogOpen = visibilityState.value,
             widthPercent = 0.95f,
@@ -132,12 +135,12 @@ object PopupAPropos {
                         onClick = {
                             visibilityState.value = false
 
-                            //TODO: soloMode()
+                            homeCallback?.onSoloMode()
                         },
                     ) {
                         Icon(imageVector = Icons.Filled.Tv, "")
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource("connect_solomode"), textAlign = TextAlign.Center, fontSize = 14.sp)
+                        Text(lyricist.strings.connectSolomode, textAlign = TextAlign.Center, fontSize = 14.sp)
                     }
 
                     val uriHandler = LocalUriHandler.current

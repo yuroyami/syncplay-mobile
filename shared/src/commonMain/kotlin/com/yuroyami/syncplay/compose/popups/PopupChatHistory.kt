@@ -29,11 +29,11 @@ import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.compose.ComposeUtils
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
-import com.yuroyami.syncplay.compose.fontDirective
-import com.yuroyami.syncplay.compose.fontInter
 import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.watchroom.p
+import org.jetbrains.compose.resources.Font
+import syncplaymobile.generated.resources.Res
 
 object PopupChatHistory {
 
@@ -63,7 +63,7 @@ object PopupChatHistory {
                     string = "Chat History",
                     solid = Color.Black,
                     size = 18f,
-                    font = fontDirective()
+                    font = Font(Res.font.directive4_regular)
                 )
 
                 /* The actual messages */
@@ -71,13 +71,12 @@ object PopupChatHistory {
                     contentPadding = PaddingValues(8.dp),
                     modifier = Modifier.fillMaxHeight(0.7f).background(Color(50, 50, 50, 50))
                 ) {
-                    //TODO: Show errors in red
                     items(msgs) {
                         ComposeUtils.FlexibleFancyAnnotatedText(
                             modifier = Modifier.fillMaxWidth(),
                             text = it.factorize(palette),
                             size = 10f,
-                            font = fontInter(),
+                            font = Font(Res.font.inter_regular),
                             lineHeight = 14.sp,
                             overflow = TextOverflow.Ellipsis,
                         )

@@ -70,7 +70,7 @@ object MySettings {
     fun globalSettings(): List<SettingCategory> {
         val localz = rememberStrings()
 
-        val ds = DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
+        val ds = DataStoreKeys.SYNCPLAY_PREFS
 
         val settingStyling = SettingStyling(
             titleFilling = listOf(Paletting.OLD_SP_YELLOW),
@@ -88,21 +88,19 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.CheckboxSetting,
+                        key = PREF_REMEMBER_INFO,
                         title = { localz.strings.settingRememberJoinInfoTitle },
                         summary = { localz.strings.settingRememberJoinInfoSummary },
                         defaultValue = true,
-                        key = PREF_REMEMBER_INFO,
                         icon = Icons.Filled.Face,
-                        datastorekey = ds,
                         styling = settingStyling
                     ),
                     Setting(
                         type = SettingType.PopupSetting,
+                        key = PREF_SP_MEDIA_DIRS,
                         title = { localz.strings.mediaDirectories },
                         summary = { localz.strings.mediaDirectoriesSettingSummary },
-                        key = PREF_SP_MEDIA_DIRS,
                         icon = Icons.Filled.QueueMusic,
-                        datastorekey = ds,
                         styling = settingStyling,
                         popupComposable = { s ->
                             MediaDirsPopup(s)
@@ -118,37 +116,34 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.MultiChoicePopupSetting,
+                        key = DataStoreKeys.PREF_DISPLAY_LANG,
                         title = { localz.strings.settingDisplayLanguageTitle },
                         summary = { localz.strings.settingDisplayLanguageSummry },
                         defaultValue = "en",
-                        key = DataStoreKeys.PREF_DISPLAY_LANG,
+                        icon = Icons.Filled.Translate,
+                        styling = settingStyling,
                         entryKeys = { langMap.keys.toList() },
                         entryValues = { langMap.values.toList() },
-                        icon = Icons.Filled.Translate,
                         onItemChosen = { _, v ->
-                            homeCallback.onLanguageChanged(v)
+                            homeCallback?.onLanguageChanged(v)
                         },
-                        datastorekey = ds,
-                        styling = settingStyling,
                     ),
                     Setting(
                         type = SettingType.TextFieldSetting,
+                        key = DataStoreKeys.PREF_AUDIO_LANG,
                         title = { localz.strings.settingAudioDefaultLanguageTitle },
                         summary = { localz.strings.settingAudioDefaultLanguageSummry },
                         defaultValue = "und",
-                        key = DataStoreKeys.PREF_AUDIO_LANG,
                         icon = Icons.Filled.GraphicEq,
-                        datastorekey = ds,
                         styling = settingStyling,
                     ),
                     Setting(
                         type = SettingType.TextFieldSetting,
+                        key = DataStoreKeys.PREF_CC_LANG,
                         title = { localz.strings.settingCcDefaultLanguageTitle },
                         summary = { localz.strings.settingCcDefaultLanguageSummry },
                         defaultValue = "eng",
-                        key = DataStoreKeys.PREF_CC_LANG,
                         icon = Icons.Filled.ClosedCaptionOff,
-                        datastorekey = ds,
                         styling = settingStyling,
                     )
                 )
@@ -161,40 +156,39 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.CheckboxSetting,
+                        key = DataStoreKeys.PREF_READY_FIRST_HAND,
                         title = { localz.strings.settingReadyFirsthandTitle },
                         summary = { localz.strings.settingReadyFirsthandSummary },
                         defaultValue = true,
-                        key = DataStoreKeys.PREF_READY_FIRST_HAND,
                         icon = Icons.Filled.TaskAlt,
-                        datastorekey = ds,
                         styling = settingStyling,
                     ),
                     Setting(
                         type = SettingType.CheckboxSetting,
+                        key = DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE,
                         title = { localz.strings.settingPauseIfSomeoneLeftTitle },
                         summary = { localz.strings.settingPauseIfSomeoneLeftSummary },
                         defaultValue = true,
-                        key = DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE,
                         icon = Icons.Filled.FrontHand,
-                        datastorekey = ds,
                         styling = settingStyling,
                     ),
                     Setting(
                         type = SettingType.CheckboxSetting,
+                        key = DataStoreKeys.PREF_FILE_MISMATCH_WARNING,
                         title = { localz.strings.settingWarnFileMismatchTitle },
                         summary = { localz.strings.settingWarnFileMismatchSummary },
                         defaultValue = true,
-                        key = DataStoreKeys.PREF_FILE_MISMATCH_WARNING,
                         icon = Icons.Filled.ErrorOutline,
-                        datastorekey = ds,
                         styling = settingStyling,
                     ),
                     Setting(
                         type = SettingType.MultiChoicePopupSetting,
+                        key = DataStoreKeys.PREF_HASH_FILENAME,
                         title = { localz.strings.settingFileinfoBehaviourNameTitle },
                         summary = { localz.strings.settingFileinfoBehaviourNameSummary },
-                        key = DataStoreKeys.PREF_HASH_FILENAME,
                         defaultValue = "1",
+                        icon = Icons.Filled.DesignServices,
+                        styling = settingStyling,
                         entryKeys = {
                             listOf(
                                 localz.strings.settingFileinfoBehaviorA,
@@ -203,16 +197,15 @@ object MySettings {
                             )
                         },
                         entryValues = { listOf("1", "2", "3") },
-                        icon = Icons.Filled.DesignServices,
-                        datastorekey = ds,
-                        styling = settingStyling,
                     ),
                     Setting(
                         type = SettingType.MultiChoicePopupSetting,
+                        key = DataStoreKeys.PREF_HASH_FILESIZE,
                         title = { localz.strings.settingFileinfoBehaviourSizeTitle },
                         summary = { localz.strings.settingFileinfoBehaviourSizeSummary },
-                        key = DataStoreKeys.PREF_HASH_FILESIZE,
                         defaultValue = "1",
+                        icon = Icons.Filled.DesignServices,
+                        styling = settingStyling,
                         entryKeys = {
                             listOf(
                                 localz.strings.settingFileinfoBehaviorA,
@@ -221,9 +214,6 @@ object MySettings {
                             )
                         },
                         entryValues = { listOf("1", "2", "3") },
-                        icon = Icons.Filled.DesignServices,
-                        datastorekey = ds,
-                        styling = settingStyling,
                     )
                 )
             ),
@@ -235,39 +225,36 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.SliderSetting,
+                        key = DataStoreKeys.PREF_MAX_BUFFER,
                         title = { localz.strings.settingMaxBufferTitle },
                         summary = { localz.strings.settingMaxBufferSummary },
                         defaultValue = 30,
-                        minValue = 1,
-                        maxValue = 60,
-                        key = DataStoreKeys.PREF_MAX_BUFFER,
                         icon = Icons.Filled.HourglassTop,
-                        datastorekey = ds,
                         styling = settingStyling,
+                        maxValue = 60,
+                        minValue = 1,
                     ),
                     Setting(
                         type = SettingType.SliderSetting,
+                        key = DataStoreKeys.PREF_MIN_BUFFER,
                         title = { localz.strings.settingMinBufferTitle },
                         summary = { localz.strings.settingMinBufferSummary },
                         defaultValue = 15,
-                        minValue = 1,
-                        maxValue = 30,
-                        key = DataStoreKeys.PREF_MIN_BUFFER,
                         icon = Icons.Filled.HourglassBottom,
-                        datastorekey = ds,
                         styling = settingStyling,
+                        maxValue = 30,
+                        minValue = 1,
                     ),
                     Setting(
                         type = SettingType.SliderSetting,
+                        key = DataStoreKeys.PREF_SEEK_BUFFER,
                         title = { localz.strings.settingPlaybackBufferTitle },
                         summary = { localz.strings.settingPlaybackBufferSummary },
                         defaultValue = 2500,
-                        minValue = 100,
-                        maxValue = 15000,
-                        key = DataStoreKeys.PREF_SEEK_BUFFER,
                         icon = Icons.Filled.HourglassEmpty,
-                        datastorekey = ds,
                         styling = settingStyling,
+                        maxValue = 15000,
+                        minValue = 100,
                     )
 
                 )
@@ -279,13 +266,12 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.ToggleSetting,
+                        key = "tls",
                         title = { localz.strings.settingTlsTitle },
                         summary = { localz.strings.settingTlsSummary },
                         defaultValue = false,
-                        key = "tls",
-                        enabled = false,
                         icon = Icons.Filled.Key,
-                        datastorekey = ds,
+                        enabled = false,
                         styling = settingStyling,
                     )
                 )
@@ -297,13 +283,12 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.OneClickSetting,
+                        key = "reset_default",
                         title = { localz.strings.settingResetdefaultTitle },
                         summary = { localz.strings.settingResetdefaultSummary },
-                        isResetDefault = true,
-                        key = "reset_default",
                         icon = Icons.Filled.ClearAll,
-                        datastorekey = ds,
                         styling = settingStyling,
+                        isResetDefault = true,
                     )
                 )
             ),
@@ -314,7 +299,7 @@ object MySettings {
     fun inRoomPreferences(): List<SettingCategory> {
         val localz = rememberStrings()
 
-        val ds = DataStoreKeys.DATASTORE_INROOM_PREFERENCES
+        val ds = DataStoreKeys.SYNCPLAY_PREFS
 
         val ss = SettingStyling(
             titleFilling = listOf(Paletting.OLD_SP_YELLOW),
@@ -335,62 +320,56 @@ object MySettings {
                     settingList = listOf(
                         Setting(
                             type = SettingType.ColorSetting,
+                            key = PREF_INROOM_COLOR_TIMESTAMP,
                             title = { localz.strings.uisettingTimestampColorTitle },
                             summary = { localz.strings.uisettingTimestampSummary },
                             defaultValue = Paletting.MSG_TIMESTAMP.toArgb(),
-                            key = PREF_INROOM_COLOR_TIMESTAMP,
                             icon = Icons.Filled.Brush,
-                            datastorekey = ds,
                             styling = ss,
                         ),
                         Setting(
                             type = SettingType.ColorSetting,
+                            key = PREF_INROOM_COLOR_SELFTAG,
                             title = { localz.strings.uisettingSelfColorTitle },
                             summary = { localz.strings.uisettingSelfColorSummary },
                             defaultValue = Paletting.MSG_SELF_TAG.toArgb(),
-                            key = PREF_INROOM_COLOR_SELFTAG,
                             icon = Icons.Filled.Brush,
-                            datastorekey = ds,
                             styling = ss,
                         ),
                         Setting(
                             type = SettingType.ColorSetting,
+                            key = PREF_INROOM_COLOR_FRIENDTAG,
                             title = { localz.strings.uisettingFriendColorTitle },
                             summary = { localz.strings.uisettingFriendColorSummary },
                             defaultValue = Paletting.MSG_FRIEND_TAG.toArgb(),
-                            key = PREF_INROOM_COLOR_FRIENDTAG,
                             icon = Icons.Filled.Brush,
-                            datastorekey = ds,
                             styling = ss,
                         ),
                         Setting(
                             type = SettingType.ColorSetting,
+                            key = PREF_INROOM_COLOR_SYSTEMMSG,
                             title = { localz.strings.uisettingSystemColorTitle },
                             summary = { localz.strings.uisettingSystemColorSummary },
                             defaultValue = Paletting.MSG_SYSTEM.toArgb(),
-                            key = PREF_INROOM_COLOR_SYSTEMMSG,
                             icon = Icons.Filled.Brush,
-                            datastorekey = ds,
                             styling = ss,
                         ),
                         Setting(
                             type = SettingType.ColorSetting,
+                            key = PREF_INROOM_COLOR_USERMSG,
                             title = { localz.strings.uisettingHumanColorTitle },
                             summary = { localz.strings.uisettingHumanColorSummary },
                             defaultValue = Paletting.MSG_CHAT.toArgb(),
-                            key = PREF_INROOM_COLOR_USERMSG,
                             icon = Icons.Filled.Brush,
-                            datastorekey = ds,
                             styling = ss,
                         ),
                         Setting(
                             type = SettingType.ColorSetting,
+                            key = PREF_INROOM_COLOR_ERRORMSG,
                             title = { localz.strings.uisettingErrorColorTitle },
                             summary = { localz.strings.uisettingErrorColorSummary },
                             defaultValue = Paletting.MSG_ERROR.toArgb(),
-                            key = PREF_INROOM_COLOR_ERRORMSG,
                             icon = Icons.Filled.Brush,
-                            datastorekey = ds,
                             styling = ss,
                         ),
 
@@ -405,90 +384,82 @@ object MySettings {
                     settingList = listOf(
                         Setting(
                             type = SettingType.ToggleSetting,
+                            key = PREF_INROOM_MSG_ACTIVATE_STAMP,
                             title = { localz.strings.uisettingTimestampTitle },
                             summary = { localz.strings.uisettingTimestampSummary },
                             defaultValue = true,
-                            key = PREF_INROOM_MSG_ACTIVATE_STAMP,
                             icon = Icons.Filled.Pin,
-                            datastorekey = ds,
                             styling = ss,
                         ),
                         Setting(
                             type = SettingType.ToggleSetting,
+                            key = PREF_INROOM_MSG_OUTLINE,
                             title = { localz.strings.uisettingMsgoutlineTitle },
                             summary = { localz.strings.uisettingMsgoutlineSummary },
                             defaultValue = true,
-                            key = PREF_INROOM_MSG_OUTLINE,
                             icon = Icons.Filled.BorderColor,
-                            datastorekey = ds,
                             styling = ss,
                         ),
                         Setting(
                             type = SettingType.ToggleSetting,
+                            key = PREF_INROOM_MSG_SHADOW,
                             title = { localz.strings.uisettingMsgshadowTitle },
                             summary = { localz.strings.uisettingMsgshadowSummary },
                             defaultValue = false,
-                            key = PREF_INROOM_MSG_SHADOW,
                             icon = Icons.Filled.BorderColor,
-                            datastorekey = ds,
                             styling = ss,
                         ),
                         Setting(
                             type = SettingType.SliderSetting,
+                            key = PREF_INROOM_MSG_BG_OPACITY,
                             title = { localz.strings.uisettingMessageryAlphaTitle },
                             summary = { localz.strings.uisettingMessageryAlphaSummary },
                             defaultValue = 0,
-                            minValue = 0,
-                            maxValue = 255,
-                            key = PREF_INROOM_MSG_BG_OPACITY,
                             icon = Icons.Filled.Opacity,
-                            datastorekey = ds,
                             styling = ss,
+                            maxValue = 255,
+                            minValue = 0,
                         ),
                         Setting(
                             type = SettingType.SliderSetting,
+                            key = PREF_INROOM_MSG_FONTSIZE,
                             title = { localz.strings.uisettingMsgsizeTitle },
                             summary = { localz.strings.uisettingMsgsizeSummary },
                             defaultValue = 9,
-                            minValue = 6,
-                            maxValue = 28,
-                            key = PREF_INROOM_MSG_FONTSIZE,
                             icon = Icons.Filled.FormatSize,
-                            datastorekey = ds,
                             styling = ss,
+                            maxValue = 28,
+                            minValue = 6,
                         ),
                         Setting(
                             type = SettingType.SliderSetting,
+                            key = PREF_INROOM_MSG_MAXCOUNT,
                             title = { localz.strings.uisettingMsgcountTitle },
                             summary = { localz.strings.uisettingMsgcountSummary },
                             defaultValue = 10,
-                            minValue = 1,
-                            maxValue = 30,
-                            key = PREF_INROOM_MSG_MAXCOUNT,
                             icon = Icons.Filled.FormatListNumbered,
-                            datastorekey = ds,
                             styling = ss,
+                            maxValue = 30,
+                            minValue = 1,
                         ),
                         Setting(
                             type = SettingType.SliderSetting,
+                            key = PREF_INROOM_MSG_FADING_DURATION,
                             title = { localz.strings.uisettingMsglifeTitle },
                             summary = { localz.strings.uisettingMsglifeSummary },
                             defaultValue = 3,
-                            minValue = 1,
-                            maxValue = 10,
-                            key = PREF_INROOM_MSG_FADING_DURATION,
                             icon = Icons.Filled.Timer,
-                            datastorekey = ds,
                             styling = ss,
+                            maxValue = 10,
+                            minValue = 1,
                         ),
                         Setting(
                             type = SettingType.ToggleSetting,
+                            key = PREF_INROOM_MSG_BOX_ACTION,
                             title = { localz.strings.uisettingMsgboxactionTitle },
                             summary = { localz.strings.uisettingMsgboxactionSummary },
                             defaultValue = true,
-                            key = PREF_INROOM_MSG_BOX_ACTION,
                             icon = Icons.Filled.Keyboard,
-                            datastorekey = ds,
                             styling = ss,
                         ),
                     )
@@ -503,18 +474,17 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.SliderSetting,
+                        key = DataStoreKeys.PREF_INROOM_PLAYER_SUBTITLE_SIZE,
                         title = { localz.strings.uisettingSubtitleSizeTitle },
                         summary = { localz.strings.uisettingSubtitleSizeSummary },
                         defaultValue = 16,
-                        minValue = 2,
+                        icon = Icons.Filled.SortByAlpha,
+                        styling = ss,
                         maxValue = 200,
+                        minValue = 2,
                         onValueChanged = { v ->
                             player?.changeSubtitleSize(v)
                         },
-                        key = DataStoreKeys.PREF_INROOM_PLAYER_SUBTITLE_SIZE,
-                        icon = Icons.Filled.SortByAlpha,
-                        datastorekey = ds,
-                        styling = ss,
                     ),
 //                    Setting(
 //                        type = SettingType.SliderSetting,
@@ -540,27 +510,25 @@ object MySettings {
 //                    ),
                     Setting(
                         type = SettingType.SliderSetting,
+                        key = DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP,
                         title = { localz.strings.uisettingSeekForwardJumpTitle },
                         summary = { localz.strings.uisettingSeekForwardJumpSummary },
                         defaultValue = 10,
-                        minValue = 1,
-                        maxValue = 120,
-                        key = DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP,
                         icon = Icons.Filled.FastForward,
-                        datastorekey = ds,
                         styling = ss,
+                        maxValue = 120,
+                        minValue = 1,
                     ),
                     Setting(
                         type = SettingType.SliderSetting,
+                        key = DataStoreKeys.PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP,
                         title = { localz.strings.uisettingSeekBackwardJumpTitle },
                         summary = { localz.strings.uisettingSeekBackwardJumpSummary },
                         defaultValue = 10,
-                        minValue = 1,
-                        maxValue = 120,
-                        key = DataStoreKeys.PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP,
                         icon = Icons.Filled.FastRewind,
-                        datastorekey = ds,
                         styling = ss,
+                        maxValue = 120,
+                        minValue = 1,
                     ),
                 )
             )
@@ -574,35 +542,32 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.ToggleSetting,
+                        key = PREF_INROOM_PIP,
                         title = { localz.strings.uisettingPipTitle },
                         summary = { localz.strings.uisettingPipSummary },
                         defaultValue = true,
-                        key = PREF_INROOM_PIP,
                         icon = Icons.Filled.PictureInPicture,
-                        datastorekey = ds,
                         styling = ss,
                     ),
                     Setting(
                         type = SettingType.SliderSetting,
+                        key = DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL,
                         title = { localz.strings.uisettingReconnectIntervalTitle },
                         summary = { localz.strings.uisettingReconnectIntervalSummary },
                         defaultValue = 2,
-                        minValue = 0,
-                        maxValue = 15,
-                        key = DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL,
                         icon = Icons.Filled.Web,
-                        datastorekey = ds,
                         styling = ss,
+                        maxValue = 15,
+                        minValue = 0,
                     ),
                     Setting(
                         type = SettingType.OneClickSetting,
+                        key = "RESET",
                         title = { localz.strings.uisettingResetdefaultTitle },
                         summary = { localz.strings.uisettingResetdefaultSummary },
-                        isResetDefault = true,
-                        key = "RESET",
                         icon = Icons.Filled.ClearAll,
-                        datastorekey = ds,
                         styling = ss,
+                        isResetDefault = true,
                     )
                 )
             )

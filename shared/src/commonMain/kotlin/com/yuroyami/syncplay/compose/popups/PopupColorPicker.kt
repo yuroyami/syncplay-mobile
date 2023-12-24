@@ -36,11 +36,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
-import com.yuroyami.syncplay.compose.fontDirective
 import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.colorpicker.ClassicColorPicker
 import com.yuroyami.syncplay.utils.colorpicker.HsvColor
+import org.jetbrains.compose.resources.Font
+import syncplaymobile.generated.resources.Res
 import kotlin.math.ceil
 
 object PopupColorPicker {
@@ -74,7 +75,7 @@ object PopupColorPicker {
                     string = "Pick a Color",
                     solid = Color.Black,
                     size = 18f,
-                    font = fontDirective()
+                    font = Font(Res.font.directive4_regular)
                 )
 
                 /* The card that holds the color picker */

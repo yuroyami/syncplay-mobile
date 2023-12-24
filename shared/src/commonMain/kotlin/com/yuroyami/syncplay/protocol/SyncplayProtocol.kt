@@ -2,7 +2,6 @@ package com.yuroyami.syncplay.protocol
 
 import androidx.compose.runtime.mutableStateOf
 import com.yuroyami.syncplay.datastore.DataStoreKeys
-import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_INROOM_PREFERENCES
 import com.yuroyami.syncplay.datastore.obtainInt
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.Session
@@ -192,8 +191,7 @@ open class SyncplayProtocol {
             if (reconnectionJob == null || reconnectionJob?.isCompleted == true) {
                 reconnectionJob = protoScope.launch(Dispatchers.IO) {
                     state = Constants.CONNECTIONSTATE.STATE_SCHEDULING_RECONNECT
-                    val reconnectionInterval = DATASTORE_INROOM_PREFERENCES
-                        .obtainInt(DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL, 2) * 1000L
+                    val reconnectionInterval = obtainInt(DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL, 2) * 1000L
 
                     delay(reconnectionInterval)
 

@@ -10,5 +10,6 @@ interface HomeCallback {
 
     fun onSaveConfigShortcut(joinInfo: JoinInfo)
 
+    fun onSoloMode()
 
 }

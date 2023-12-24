@@ -2,7 +2,6 @@ package com.yuroyami.syncplay.watchroom
 
 import cafe.adriel.lyricist.Lyricist
 import com.yuroyami.syncplay.datastore.DataStoreKeys
-import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_TLS_ENABLE
 import com.yuroyami.syncplay.datastore.obtainBoolean
@@ -25,8 +24,8 @@ import kotlinx.coroutines.runBlocking
 
 lateinit var p: SyncplayProtocol //If it is not initialized, it means we're in Solo Mode
 
-lateinit var homeCallback: HomeCallback
-lateinit var roomCallback: RoomCallback
+var homeCallback: HomeCallback? = null
+var roomCallback: RoomCallback? = null
 
 var player: BasePlayer? = null
 var media: MediaFile? = null
@@ -43,7 +42,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
     if (!joinInfo.soloMode) {
         p = SyncplayProtocol()
 
-        setReadyDirectly = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainBoolean(DataStoreKeys.PREF_READY_FIRST_HAND, true) }
+        setReadyDirectly = runBlocking { obtainBoolean(DataStoreKeys.PREF_READY_FIRST_HAND, true) }
 
         p.syncplayCallback = object : ProtocolCallback {
             override fun onSomeonePaused(pauser: String) {
@@ -86,7 +85,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                 broadcastMessage(message = lyricist.strings.roomGuyLeft(leaver), isChat = false)
 
                 /* If the setting is enabled, pause playback **/
-                val pauseOnLeft = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainBoolean(PREF_PAUSE_ON_SOMEONE_LEAVE, true) }
+                val pauseOnLeft = runBlocking { obtainBoolean(PREF_PAUSE_ON_SOMEONE_LEAVE, true) }
                 if (pauseOnLeft) {
                     pausePlayback()
                 }
@@ -277,7 +276,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
         p.session.currentPassword = joinInfo.password
 
         /** Connecting */
-        val tls = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainBoolean(PREF_TLS_ENABLE, false) }
+        val tls = runBlocking { obtainBoolean(PREF_TLS_ENABLE, false) }
         if (tls) {
             p.syncplayCallback?.onTLSCheck()
             p.tls = Constants.TLS.TLS_ASK

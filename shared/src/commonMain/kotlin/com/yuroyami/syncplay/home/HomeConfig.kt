@@ -15,11 +15,11 @@ class HomeConfig {
 
 
     init {
-        savedUser = runBlocking { DataStoreKeys.DATASTORE_MISC_PREFS.obtainString(DataStoreKeys.MISC_JOIN_USERNAME, "user" + (0..9999).random().toString()) }
-        savedRoom = runBlocking { DataStoreKeys.DATASTORE_MISC_PREFS.obtainString(DataStoreKeys.MISC_JOIN_ROOMNAME, "room" + (0..9999).random().toString()) }
-        savedIP = runBlocking { DataStoreKeys.DATASTORE_MISC_PREFS.obtainString(DataStoreKeys.MISC_JOIN_SERVER_ADDRESS, "syncplay.pl") }
-        savedPort = runBlocking { DataStoreKeys.DATASTORE_MISC_PREFS.obtainInt(DataStoreKeys.MISC_JOIN_SERVER_PORT, 8997) }
-        savedPassword = runBlocking { DataStoreKeys.DATASTORE_MISC_PREFS.obtainString(DataStoreKeys.MISC_JOIN_SERVER_PW, "") }
+        savedUser = runBlocking { obtainString(DataStoreKeys.MISC_JOIN_USERNAME, "user" + (0..9999).random().toString()) }
+        savedRoom = runBlocking { obtainString(DataStoreKeys.MISC_JOIN_ROOMNAME, "room" + (0..9999).random().toString()) }
+        savedIP = runBlocking { obtainString(DataStoreKeys.MISC_JOIN_SERVER_ADDRESS, "syncplay.pl") }
+        savedPort = runBlocking { obtainInt(DataStoreKeys.MISC_JOIN_SERVER_PORT, 8997) }
+        savedPassword = runBlocking {obtainString(DataStoreKeys.MISC_JOIN_SERVER_PW, "") }
     }
 
 }
