@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.ui
+package com.yuroyami.syncplay.lyricist
 
 val langMap = mapOf(
     "English" to "en",

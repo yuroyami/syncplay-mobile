@@ -30,7 +30,6 @@ val EnStrings = object : Strings {
     override val connectServerB = "Server address"
     override val connectServerC = "Make sure that you and your friends join the same server."
     override val connectButtonJoin = "Join Room"
-    override val connectButton = "Join Room"
     override val connectButtonSaveshortcut = "Save current config as home shortcut"
     override val connectButtonCurrentEngine = { p0: String -> "Current engine: %s".format(p0) }
     override val connectFootnote = "Syncplay's Unofficial Android Client"
@@ -43,6 +42,7 @@ val EnStrings = object : Strings {
     override val connectPort = "Port"
     override val connectNightmodeswitch = "Switch the day/night mode."
     override val connectSolomode = "Enter solo mode (video-player only)"
+
     override val roomSelectedVid = { p0: String -> "Selected video file: %s".format(p0) }
     override val roomSelectedSub = { p0: String -> "Loaded subtitle file: %s".format(p0) }
     override val roomSelectedSubError = "Invalid subtitle file. Supported formats are: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'"
@@ -120,6 +120,7 @@ val EnStrings = object : Strings {
     override val roomAddmediaOffline = "From phone storage"
     override val roomAddmediaOnline = "From a network URL"
     override val roomAddmediaOnlineUrl = "URL address"
+
     override val mediaDirectories = "Media Directories for Shared Playlist"
     override val mediaDirectoriesBrief = "Syncplay will search any media directories you specify here in order to find a name that a shared playlist is playing. It is much better if you specify small directories as the searching operation can throttle and be very slow."
     override val mediaDirectoriesSettingSummary = "Syncplay will search any media directories you specify here in order to find a name that a shared playlist is playing."
@@ -176,6 +177,7 @@ val EnStrings = object : Strings {
     override val settingFileinfoBehaviourNameSummary = "Choose the method with which you show your added media file name to other users."
     override val settingFileinfoBehaviourSizeTitle = "File size information sending"
     override val settingFileinfoBehaviourSizeSummary = "Choose the method with which you show your added media file size to other users."
+
     override val uisettingApply = "APPLY"
     override val uisettingTimestampSummary = "Disable this to hide the timestamps at the beginning of chat messages."
     override val uisettingTimestampTitle = "Chat timestamps"
@@ -228,10 +230,4 @@ val EnStrings = object : Strings {
     override val settingFileinfoBehaviorA = "Send raw"
     override val settingFileinfoBehaviorB = "Send hashed"
     override val settingFileinfoBehaviorC = "Don't send"
-    override val en = "English"
-    override val ar = "Arabic"
-    override val zh = "Chinese"
-    override val fr = "French"
-    override val es = "Spanish"
-
 }

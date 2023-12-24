@@ -34,7 +34,6 @@ interface Strings {
     val connectServerB: String
     val connectServerC: String
     val connectButtonJoin: String
-    val connectButton: String
     val connectButtonSaveshortcut: String
     val connectButtonCurrentEngine: (String) -> String
     val connectFootnote: String
@@ -224,19 +223,20 @@ interface Strings {
     val settingFileinfoBehaviorA: String
     val settingFileinfoBehaviorB: String
     val settingFileinfoBehaviorC: String
-    val en: String
-    val ar: String
-    val zh: String
-    val fr: String
-    val es: String
 }
 
 object Locales {
-    const val En = "en"
-    const val Fr = "fr"
-    const val Es = "es"
-    const val Ar = "ar"
-    const val Zh = "zh"
+    const val En = "en" //English
+    const val Fr = "fr" //French
+    const val Es = "es" //Spanish
+    const val Ar = "ar" //Arabic
+    const val Zh = "zh" //Chinese (Simplified)
+    const val Ru = "ru" //Russian
+    const val Ja = "ja" //Japanese
+    const val Pt = "pt" //Portuguese
+    const val de = "de" //German
+    const val tr = "tr" //Turkish
+    const val ko = "ko" //Korean
 }
 
 val Stringies: Map<LanguageTag, Strings> = mapOf(
@@ -244,7 +244,7 @@ val Stringies: Map<LanguageTag, Strings> = mapOf(
     Locales.Fr to FrStrings,
     Locales.Es to EsStrings,
     Locales.Ar to ArStrings,
-    Locales.Zh to ZhStrings
+    Locales.Zh to ZhStrings,
 )
 
 val LocalStrings: ProvidableCompositionLocal<Strings> =

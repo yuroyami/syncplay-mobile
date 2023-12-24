@@ -59,7 +59,7 @@ import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_REMEMBER_INFO
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
 import com.yuroyami.syncplay.locale.Localization
 import com.yuroyami.syncplay.ui.Paletting
-import com.yuroyami.syncplay.ui.langMap
+import com.yuroyami.syncplay.lyricist.langMap
 import com.yuroyami.syncplay.watchroom.homeCallback
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.player

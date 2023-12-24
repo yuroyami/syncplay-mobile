@@ -3,510 +3,235 @@ package com.yuroyami.syncplay.lyricist
 import com.yuroyami.syncplay.utils.format
 
 val ArStrings = object : Strings {
-
-      override val disconnectedNoticeHeader = "انقطع الاتصال"
-
-    override val connectUsernameA = "اكتب اسم مستخدمك:"
-
     override val yes = "نعم"
-
     override val no = "لا"
-
-    override val okay = "حسناً"
-
-    override val cancel = "إلـغاء"
-
-    override val dontShowAgain = "لا تخبرني مجدداً"
-
+    override val okay = "حسنًا"
+    override val cancel = "إلغاء"
+    override val dontShowAgain = "لا تظهر هذا مرة أخرى"
     override val play = "تشغيل"
-
-    override val pause = "إيقاف"
-
+    override val pause = "إيقاف مؤقت"
     override val delete = "حذف"
-    override val confirm: String
-        get() = TODO("Not yet implemented")
-    override val done: String
-        get() = TODO("Not yet implemented")
-    override val close: String
-        get() = TODO("Not yet implemented")
-    override val off: String
-        get() = TODO("Not yet implemented")
-    override val on: String
-        get() = TODO("Not yet implemented")
-
-    override val tabConnect = "اتصال"
-
-    override val tabSettings = "إعدادات"
-
+    override val confirm = "تأكيد"
+    override val done = "تم"
+    override val close = "إغلاق"
+    override val off = "إيقاف"
+    override val on = "تشغيل"
+    override val tabConnect = "الاتصال"
+    override val tabSettings = "الإعدادات"
     override val tabAbout = "حول"
-
+    override val connectUsernameA = "اكتب اسم المستخدم الخاص بك:"
     override val connectUsernameB = "اسم المستخدم"
-
-    override val connectUsernameC = "اسمٌ من اختيارك"
-
-    override val connectRoomnameA = "أدخِل اسم الغرفة :"
-
+    override val connectUsernameC = "اسم يختاره المستخدم"
+    override val connectRoomnameA = "أدخل اسم الغرفة:"
     override val connectRoomnameB = "اسم الغرفة"
-
-    override val connectRoomnameC = "الغرفة التي تشاهد مع أصدقائك فيها"
-
-    override val connectServerA = "اختر سيرفر Syncplay :"
-
-    override val connectServerB = "عنوان السيرفر"
-
-    override val connectServerC = "تأكد من أنك و أصدقاؤك في نفس السيرفر"
-    override val connectButtonJoin: String
-        get() = TODO("Not yet implemented")
-
-    override val connectButton = "الدخول إلى الغرفة"
-    override val connectButtonSaveshortcut: String
-        get() = TODO("Not yet implemented")
-    override val connectButtonCurrentEngine: (String) -> String
-        get() = TODO("Not yet implemented")
-
-    override val connectFootnote = "تطبيق الأندرويد غير الرسمي لـSyncplay"
-
-    override val connectUsernameEmptyError = "اسم المستخدم لا يجب أن يكون فارغاً"
-
-    override val connectRoomnameEmptyError = "اسم الغرفة لا يجب أن يكون فارغاً"
-    override val connectAddressEmptyError: String
-        get() = TODO("Not yet implemented")
-    override val connectPortEmptyError: String
-        get() = TODO("Not yet implemented")
-
-    override val connectEnterCustomServer = "أدخل سيرفر مميز"
-
-    override val connectCustomServerPassword = "كلمة السر (إن تواجدت)"
-
-    override val connectPort = "منفذ"
-    override val connectNightmodeswitch: String
-        get() = TODO("Not yet implemented")
-    override val connectSolomode: String
-        get() = TODO("Not yet implemented")
-
-    override val roomStartupHint = "اضغط على الزر الذي يشبه الشكل أسفله لإدخال فيديو جديد"
-
-    override val roomSelectedVid = { p0: String -> 
-        "تم اختيار ملف الفيديو : %s"
-            .format(p0)
-    }
-
-    override val roomSelectedSub = { p0: String -> 
-        "تم إدخال ملف الترجمة : %s"
-            .format(p0)
-    }
-
-    override val roomSelectedSubError = "ملف الترجمة غير صالح. الامتدادات الصالحة هي : SSA, ASS, VTT, SRT, TTML"
-
-    override val roomSubErrorLoadVidFirst = "أَدخل فيديو أولاً"
-
-    override val roomTypeMessage = "اكتب رسالتك …"
-
-    override val roomSendButton = "إرسال"
-
-    override val roomReady = "مستعد"
-    override val roomNotReady: String
-        get() = TODO("Not yet implemented")
-
-    override val roomDetails = "إظهار التفاصيل"
-
-    override val roomPingConnected = { p0: String -> 
-        "متصل - تأخر: %s ميليثانية"
-            .format(p0)
-    }
-
+    override val connectRoomnameC = "الغرفة التي تشاهد فيها أنت وأصدقاؤك"
+    override val connectServerA = "اختر خادم Syncplay:"
+    override val connectServerB = "عنوان الخادم"
+    override val connectServerC = "تأكد من أنك وأصدقاؤك انضممتم إلى نفس الخادم."
+    override val connectButtonJoin = "الانضمام إلى الغرفة"
+    override val connectButton = "الانضمام إلى الغرفة"
+    override val connectButtonSaveshortcut = "حفظ التكوين الحالي كاختصار للرئيسية"
+    override val connectButtonCurrentEngine = { p0: String -> "المحرك الحالي: %s".format(p0) }
+    override val connectFootnote = "Syncplay's Unofficial Android Client"
+    override val connectUsernameEmptyError = "يجب ألا يكون اسم المستخدم فارغًا"
+    override val connectRoomnameEmptyError = "يجب ألا يكون اسم الغرفة فارغًا"
+    override val connectAddressEmptyError = "يجب ألا يكون عنوان الخادم فارغًا"
+    override val connectPortEmptyError = "أدخل رقم المنفذ!"
+    override val connectEnterCustomServer = "أدخل خادم مخصص"
+    override val connectCustomServerPassword = "كلمة المرور (فارغة إذا لم تكون مطلوبة)"
+    override val connectPort = "المنفذ"
+    override val connectNightmodeswitch = "تبديل وضع الليل/النهار."
+    override val connectSolomode = "الدخول إلى وضع فردي (مشغل الفيديو فقط)"
+    override val roomSelectedVid = { p0: String -> "الفيديو المحدد: %s".format(p0) }
+    override val roomSelectedSub = { p0: String -> "تم تحميل ملف الترجمة: %s".format(p0) }
+    override val roomSelectedSubError = "ملف ترجمة غير صالح. الصيغ المدعومة هي: 'SRT'، 'TTML'، 'ASS'، 'SSA'، 'VTT'"
+    override val roomSubErrorLoadVidFirst = "قم بتحميل الفيديو أولاً"
+    override val roomTypeMessage = "اكتب رسالتك..."
+    override val roomReady = "جاهز"
+    override val roomNotReady = "غير جاهز"
+    override val roomPingConnected = { p0: String -> "متصل - PING: %s مللي ثانية".format(p0) }
     override val roomPingDisconnected = "غير متصل"
-
-    override val roomOverflowSub = "إدخال ملف ترجمة…"
-
-    override val roomOverflowCutout = "وضع توسيع ثلمة الكاميرا"
-
-    override val roomOverflowFf = "أزرار التحرك السريع"
-
-    override val roomOverflowMsghistory = "أرشيف الرسائل"
-
+    override val roomOverflowSub = "تحميل ملف الترجمة..."
+    override val roomOverflowMsghistory = "تاريخ الرسائل"
     override val roomOverflowSettings = "الإعدادات"
-
-    override val disconnectedNoticeA = "انقطع الاتصال بالسيرفر بسبب مشكل في الشبكة"
-
-    override val disconnectedNoticeB = "إعادة محاولة الاتصال…"
-
-    override val settingRememberJoinInfoTitle = "تذكـّر معلومات الانضمام"
-
-    override val settingDisplayLanguageTitle = "اللغة"
-
-    override val settingRememberJoinInfoSummary = "مفعلة افتراضياً. هذا سيسمح لـSyncplay بالاحتفاظ بمعلومات انضمامك في المرة القادمة التي تفتح فيها التطبيق."
-
-    override val settingDisplayLanguageSummry = "اختر لغتك المفضلة التي يظهر بـها Syncplay"
-
-    override val settingDisplayLanguageToast = { p0: String ->
-        "تم تغيير اللغة إلى: %s. أعد تشغيل التطبيق لينطبق الإعداد تماماً."
-            .format(p0)
-    }
-    override val settingAudioDefaultLanguageTitle: String
-        get() = TODO("Not yet implemented")
-    override val settingAudioDefaultLanguageSummry: String
-        get() = TODO("Not yet implemented")
-    override val settingCcDefaultLanguageTitle: String
-        get() = TODO("Not yet implemented")
-    override val settingCcDefaultLanguageSummry: String
-        get() = TODO("Not yet implemented")
-
-    override val settingUseBufferTitle = "استعمال أحجام عرض مؤقت خاصة"
-
-    override val settingUseBufferSummary = "إذا لاحظتَ أن مشغل الفيديو يستغرق وقتاً طويلاً من أجل تغيير النقطة الزمنية ، يمكنك استعمال أحجام عرض مؤقت خاصة (لا ينصح بتشغيلها)"
-
-    override val settingMaxBufferTitle = "حجم العرض المؤقت الأقصى الخاص"
-
-    override val settingMaxBufferSummary = "القيمة الافتراضية هي 50 (50000 ميلي ثانية). هذه القيمة تحدد كم مدة الفيديو الأكبر التي ستعالج و تحمل مؤقتاً."
-
-    override val settingMinBufferSummary = "القيمة الافتراضية هي 15 (15 الف ميلي ثانية). أخفِض هذه القيمة لبدء تشغيل الفيديو بشكل أسرع دون تحميل الكثير مسبقاً. قد يسبب هذا أعطاباً في المشغل أو التطبيق."
-
-    override val settingMinBufferTitle = "حجم العرض المؤقت الأدنى الخاص"
-
-    override val settingPlaybackBufferSummary = "القيمة الافتراضية هي 2.5 ثانية (2500 ميلي ثانية). هذه تمثل حجم العرض المؤقت لحظة بدء تشغيل الفيديو أو تغيير النقطة الزمنية."
-
-    override val settingPlaybackBufferTitle = "حجم عرض بدء التشغيل المؤقت الخاص"
-
-    override val settingReadyFirsthandTitle = "التحديد كـمستعد فورياً"
-
-    override val settingReadyFirsthandSummary = "شغِّل هذا الخيار إذا أردت أن تُحدد مستعداً اوتوماتيكياً فورَ انضمامك لغرفةٍ مـا"
-
-    override val settingRewindThresholdTitle = "أرجِعني للوراء إن كان أحدهم متأخراً بـ x ثانية"
-
-    override val settingRewindThresholdSummary = "إذا ما كان أحدهم متأخراً بالقيمة المحددة هنا ، سيعود الفيديو خاصتك ليزامنه."
-
-    override val uisettingSubtitleSizeTitle = "حجم الترجمة"
-    override val uisettingSubtitleDelaySummary: String
-        get() = TODO("Not yet implemented")
-    override val uisettingSubtitleDelayTitle: String
-        get() = TODO("Not yet implemented")
-    override val uisettingAudioDelaySummary: String
-        get() = TODO("Not yet implemented")
-    override val uisettingAudioDelayTitle: String
-        get() = TODO("Not yet implemented")
-    override val uisettingSeekForwardJumpSummary: String
-        get() = TODO("Not yet implemented")
-    override val uisettingSeekForwardJumpTitle: String
-        get() = TODO("Not yet implemented")
-    override val uisettingSeekBackwardJumpSummary: String
-        get() = TODO("Not yet implemented")
-    override val uisettingSeekBackwardJumpTitle: String
-        get() = TODO("Not yet implemented")
-    override val uisettingPipSummary: String
-        get() = TODO("Not yet implemented")
-    override val uisettingPipTitle: String
-        get() = TODO("Not yet implemented")
-    override val uisettingReconnectIntervalSummary: String
-        get() = TODO("Not yet implemented")
-    override val uisettingReconnectIntervalTitle: String
-        get() = TODO("Not yet implemented")
-
-    override val uisettingSubtitleSizeSummary = "ستغير هذه القيمة حجم خط ترجمة الفيديوهات. القيمة الافتراضية هي 18."
-
-    override val settingTlsTitle = "\" اتصال آمن (TLSv1,3) -متوفر قريباً- \""
-
-    override val settingTlsSummary = "هذا سيخبر Syncplay من استعمال بروتوكول اتصال أكثر آماناً بدل جيوب اتصال عارية و بحتة. هذه الميزة غير مفعلة حالياً و سيتم إضافتها عن قريب."
-
-    override val settingResetdefaultTitle = "استرداد الحالة الافتراضية للإعدادات"
-
-    override val settingResetdefaultSummary = "إعادة كل شيء إلى قيمته الافتراضية."
-    override val settingResetdefaultDialog: String
-        get() = TODO("Not yet implemented")
-
-    override val settingPauseIfSomeoneLeftTitle = "جـمـِّـد الفيديو إن غادر أحدهم"
-
-    override val settingPauseIfSomeoneLeftSummary = "شغِّل هذه الخاصية إن أردتَ إيقاف الفيديو إذ ما غادر أحدهم الغرفة"
-
-    override val settingWarnFileMismatchTitle = "إنـذار عن عدم توافق الملفات بين المستخدمين"
-
-    override val settingWarnFileMismatchSummary = "مشغلة إفتراضاً. هاته الخاصية تنذرك إذا ما تواجدت اختلافات بين ملفات المستخدمين من حيث الاسم ، الحجم أو المدة (و ليس جميعهم معاً)"
-
-    override val settingFileinfoBehaviourNameTitle = "إرسال معلومات اسم الملف"
-
-    override val settingFileinfoBehaviourNameSummary = "اختر الطريقة التي تريد بها إظهار اسم الملف للمستخدمين الآخرين."
-
-    override val settingFileinfoBehaviourSizeTitle = "إرسال معلومات حجم الملف"
-
-    override val settingFileinfoBehaviourSizeSummary = "اختر الطريقة التي تريد بها إظهار حجم الملف للمستخدمين الآخرين."
-
-    override val uisettingApply = "تطبيق"
-
-    override val uisettingTimestampTitle = "الطوابع الزمنية للرسائل"
-    override val uisettingMsgoutlineSummary: String
-        get() = TODO("Not yet implemented")
-    override val uisettingMsgoutlineTitle: String
-        get() = TODO("Not yet implemented")
-    override val uisettingMsgshadowSummary: String
-        get() = TODO("Not yet implemented")
-    override val uisettingMsgshadowTitle: String
-        get() = TODO("Not yet implemented")
-    override val uisettingMsgboxactionSummary: String
-        get() = TODO("Not yet implemented")
-    override val uisettingMsgboxactionTitle: String
-        get() = TODO("Not yet implemented")
-
-    override val uisettingTimestampSummary = "عطِّل هذه الميزة لإخفاء الطوابع الزمنية في بداية رسائل الغرفة."
-
-    override val uisettingOverviewAlphaSummary = "القيمة الافتراضية هي 40(شبه شفاف). غير هذه القيمة لتغيير شفافية خلفية تفاصيل الغرفة."
-
-    override val uisettingOverviewAlphaTitle = "شفافية خلفية تفاصيل الغرفة"
-
-    override val uisettingMessageryAlphaTitle = "شفافية خلفية الرسائل"
-
-    override val uisettingMessageryAlphaSummary = "افتراضياً قيمتها 40 (شبه شفاف). أقصى قيمة ممكنة هي 255 (غير شفاف تماماً). ارفع من هذه القيمة لخفض شفافية خلفية الرسائل من أجل جعلها أكثر قابلية للقراءة"
-
-    override val uisettingMsgsizeSummary = "يغير هذا الإعداد من حجم خط الرسائل. افتراضياً 11."
-
-    override val uisettingMsgsizeTitle = "حجم خط الرسائل"
-
-    override val uisettingMsgcountSummary = "افتراضياً 12. يحدُّ هذا الإعداد من عدد الرسائل الممكن إظهارها في نفس الوقت."
-
-    override val uisettingMsgcountTitle = "العدد الأقصى للرسائل"
-
-    override val uisettingMsglifeTitle = "مدة عرض رسائل الدردشة"
-
-    override val uisettingMsglifeSummary = "عند استلام رسالة غرفة أو دردشة ، ستبدأ بالتلاشي تدريجياً لمدة زمنية هي التي تحددها هنا."
-
-    override val uisettingResetdefaultTitle = "استرداد الإعدادات الافتراضية"
-
-    override val uisettingResetdefaultSummary = "إعادة كل الإعدادات أعلاه إلى حالتها الافتراضية."
-
-    override val roomSharedPlaylist = "قائمة التشغيل المشتركة للغرفة"
-
-    override val roomSharedPlaylistBrief = "أدخل ملفاً أو مجلداً لإرفاق أسماء الملفات إلى القائمة"
-
-    override val roomSharedPlaylistUpdated = { p0: String -> 
-        "%s جدّدَ القئمة"
-            .format(p0)
-    }
-
-    override val roomSharedPlaylistChanged = { p0: String -> 
-        "%s غيَّـر موضع القائمة"
-            .format(p0)
-    }
-
-    override val roomSharedPlaylistNoDirectories = "لم تحدد أي مسارات ميديا لقوائم التشغيل المشتركة. يرجى إضافة الملف يدوياً."
-
-    override val roomSharedPlaylistNotFound = "لم يستطع البرنامج إيجاد الملف الجاري تشغيله في القائمة."
-
-    override val roomSharedPlaylistNotFeatured = "الغرفة أو السيرفر لا يدعمان خاصية قوائم التشغيل المشتركة."
-    override val roomSharedPlaylistButtonAddFile: String
-        get() = TODO("Not yet implemented")
-    override val roomSharedPlaylistButtonAddFolder: String
-        get() = TODO("Not yet implemented")
-    override val roomSharedPlaylistButtonAddUrl: String
-        get() = TODO("Not yet implemented")
-    override val roomSharedPlaylistButtonShuffle: String
-        get() = TODO("Not yet implemented")
-    override val roomSharedPlaylistButtonShuffleRest: String
-        get() = TODO("Not yet implemented")
-    override val roomSharedPlaylistButtonOverflow: String
-        get() = TODO("Not yet implemented")
-    override val roomSharedPlaylistButtonPlaylistImport: String
-        get() = TODO("Not yet implemented")
-    override val roomSharedPlaylistButtonPlaylistImportNShuffle: String
-        get() = TODO("Not yet implemented")
-    override val roomSharedPlaylistButtonPlaylistExport: String
-        get() = TODO("Not yet implemented")
-    override val roomSharedPlaylistButtonSetMediaDirectories: String
-        get() = TODO("Not yet implemented")
-    override val roomSharedPlaylistButtonSetTrustedDomains: String
-        get() = TODO("Not yet implemented")
-    override val roomSharedPlaylistButtonUndo: String
-        get() = TODO("Not yet implemented")
-    override val roomButtonDescAspectRatio: String
-        get() = TODO("Not yet implemented")
-    override val roomButtonDescSharedPlaylist: String
-        get() = TODO("Not yet implemented")
-    override val roomButtonDescAudioTracks: String
-        get() = TODO("Not yet implemented")
-    override val roomButtonDescSubtitleTracks: String
-        get() = TODO("Not yet implemented")
-    override val roomButtonDescRewind: String
-        get() = TODO("Not yet implemented")
-    override val roomButtonDescToggle: String
-        get() = TODO("Not yet implemented")
-    override val roomButtonDescPlay: String
-        get() = TODO("Not yet implemented")
-    override val roomButtonDescPause: String
-        get() = TODO("Not yet implemented")
-    override val roomButtonDescFfwd: String
-        get() = TODO("Not yet implemented")
-    override val roomButtonDescAdd: String
-        get() = TODO("Not yet implemented")
-    override val roomButtonDescLock: String
-        get() = TODO("Not yet implemented")
-    override val roomButtonDescMore: String
-        get() = TODO("Not yet implemented")
-    override val roomAddmediaOffline: String
-        get() = TODO("Not yet implemented")
-    override val roomAddmediaOnline: String
-        get() = TODO("Not yet implemented")
-    override val roomAddmediaOnlineUrl: String
-        get() = TODO("Not yet implemented")
-
-    override val mediaDirectories = "مسارات الميديا لـقوائم التشغيل المشتركة"
-
-    override val mediaDirectoriesBrief = "سيبحث التطبيق في مسارات الميديا التي تعينها هنا من أجل إيجاد اسم ملف في قائمة التشغيل. اتنبه أن العملية قد تطول إذا ما حددت مجلدات ذات ملفات كثيرة."
-
-    override val mediaDirectoriesSettingSummary = "سيبحث التطبيق في مسارات الميديا التي تعينها هنا من أجل إيجاد اسم ملف في قائمة التشغيل."
-
-    override val mediaDirectoriesSave = "حفظ و خروج"
-
-    override val mediaDirectoriesClearAll = "مسح الكـل"
-
-    override val mediaDirectoriesClearAllConfirm = "هل أنت متأكد من مسح القائمة ؟"
-
-    override val mediaDirectoriesAddFolder = "إضافة مجلد"
-
-    override val mediaDirectoriesDelete = "حذف من القائمة"
-
-    override val mediaDirectoriesShowFullPath = "إظـهار المسـار الكامل"
-
-    override val settingsCategGeneral = "إعدادات عـامة"
-
-    override val settingsCategPlayer = "إعدادات المشغل"
-
-    override val settingsCategRoom = "إعدادات الغرفة"
-
-    override val settingsCategVideo = "إعدادات الفيديو"
-
-    override val settingsCategMisc = "إعدادات مميزة"
-    override val settingNightModeTitle: String
-        get() = TODO("Not yet implemented")
-    override val settingNightModeSummary: String
-        get() = TODO("Not yet implemented")
-
-    override val settingFileinfoBehaviorA = "إرسالها أصلية"
-
-    override val settingFileinfoBehaviorB = "إرسالها مشفرة"
-
-    override val settingFileinfoBehaviorC = "لا ترسل"
-
-    override val en = "الانجليزية"
-
-    override val ar = "العربية"
-    override val zh: String
-        get() = TODO("Not yet implemented")
-    override val fr: String
-        get() = TODO("Not yet implemented")
-    override val es: String
-        get() = TODO("Not yet implemented")
-
-    override val roomEmptyMessageError = "اكتب شيئاً !"
-
-    override val roomAttemptingConnect = "تتم محاولة الاتصال بـ %1s:%2s"
-
-    override val roomConnectedToServer = "تم الاتصال بالسيرفر."
-
+    override val roomEmptyMessageError = "اكتب شيئًا!"
+    override val roomAttemptingConnect = { p0: String, p1: String -> "محاولة الاتصال بـ %1s:%2s".format(p0, p1) }
+    override val roomConnectedToServer = "تم الاتصال بالخادم."
     override val roomConnectionFailed = "فشل الاتصال."
-
-    override val roomAttemptingReconnection = "انقطع الاتصال بالسيرفر. يتم إعادة المحاولة…"
-
-    override val roomGuyPlayed = { p0: String -> 
-        "واصل %s التشغيل"
-            .format(p0)
-    }
-
-    override val roomGuyPaused = { p0: String -> 
-        "جمد %s التشغيل"
-            .format(p0)
-    }
-
-    override val roomSeeked = "قفز %1s من %2s إلى %3s"
-
-    override val roomRewinded = { p0: String -> 
-        "الرجوع إلى الوراء بسبب الفرق الزمني مع %s"
-            .format(p0)
-    }
-
-    override val roomGuyLeft = { p0: String -> 
-        "غادر %s الغرفة"
-            .format(p0)
-    }
-
-    override val roomGuyJoined = { p0: String -> 
-        "انضم %s للغرفة"
-            .format(p0)
-    }
-
-    override val roomIsplayingfile = "يلعب %1s الفيديو %2s ذو المدة (%3s) الآن"
-
-    override val roomYouJoinedRoom = { p0: String -> 
-        "لقد انضممت إلى الغرفة: %s"
-            .format(p0)
-    }
-
-    override val roomDetailsFileProperties = "المدة: %1s - الحجم : %2s ميغا"
-
-    override val roomDetailsNofileplayed = "(ما مـِن ملف جاري تشغيله)"
-
-    override val roomDetailsCurrentRoom = { p0: String -> 
-        "الغرفة الحـالية : %s"
-            .format(p0)
-    }
-
-    override val roomSubTrackNotfound = "ما من ترجمة في الملف !"
-
-    override val roomTrackTrack = "مقطع"
-
+    override val roomAttemptingReconnection = "تم فقد الاتصال بالخادم."
+    override val roomGuyPlayed = { p0: String -> "%s استأنف التشغيل".format(p0) }
+    override val roomGuyPaused = { p0: String, p1: String -> "%1s قام بإيقاف التشغيل في %2s".format(p0, p1) }
+    override val roomSeeked = { p0: String, p1: String, p2: String -> "%1s قفز من %2s إلى %3s".format(p0, p1, p2) }
+    override val roomRewinded = { p0: String -> "تمت إعادة التشغيل بسبب اختلاف التوقيت مع %s".format(p0) }
+    override val roomGuyLeft = { p0: String -> "%s غادر الغرفة.".format(p0) }
+    override val roomGuyJoined = { p0: String -> "%s انضم إلى الغرفة.".format(p0) }
+    override val roomIsplayingfile = { p0: String, p1: String, p2: String -> "%1s يشغل '%2s' (%3s)".format(p0, p1, p2) }
+    override val roomYouJoinedRoom = { p0: String -> "لقد انضممت إلى الغرفة: %s".format(p0) }
+    override val roomScalingFitScreen = "وضع التكبير: ملاءمة للشاشة"
+    override val roomScalingFixedWidth = "وضع التكبير: عرض ثابت"
+    override val roomScalingFixedHeight = "وضع التكبير: ارتفاع ثابت"
+    override val roomScalingFillScreen = "وضع التكبير: ملء الشاشة"
+    override val roomScalingZoom = "وضع التكبير: تكبير"
+    override val roomSubTrackChanged = { p0: String -> "تم تغيير مسار الترجمة إلى: %s".format(p0) }
+    override val roomAudioTrackChanged = { p0: String -> "تم تغيير مسار الصوت إلى: %s".format(p0) }
+    override val roomAudioTrackNotFound = "لا يوجد صوت!"
     override val roomSubTrackDisable = "تعطيل الترجمة"
+    override val roomTrackTrack = "المسار"
+    override val roomSubTrackNotfound = "لم يتم العثور على ترجمات!"
+    override val roomDetailsCurrentRoom = { p0: String -> "الغرفة الحالية: %s".format(p0) }
+    override val roomDetailsNofileplayed = "(لا يتم تشغيل ملف)"
+    override val roomDetailsFileProperties = { p0: String, p1: String -> "المدة: %1s - الحجم: %2s ميغابايت".format(p0, p1) }
+    override val roomFileMismatchWarningCore = { p0: String -> "ملفك مختلف عن ملف %s في النقاط التالية: ".format(p0) }
+    override val roomFileMismatchWarningName = "الاسم."
+    override val roomFileMismatchWarningDuration = "المدة."
+    override val roomFileMismatchWarningSize = "الحجم."
+    override val roomSharedPlaylist = "قائمة التشغيل المشتركة في الغرفة"
+    override val roomSharedPlaylistBrief = "قم بإدراج ملف أو مجلد لتضمين اسم (أسماء) الملف في قائمة التشغيل. انقر فوق سطر الملف لجعل جميع المستخدمين يشغلونه."
+    override val roomSharedPlaylistUpdated = { p0: String -> "حدث %s للقائمة".format(p0) }
+    override val roomSharedPlaylistChanged = { p0: String -> "غيّر %s اختيار القائمة".format(p0) }
+    override val roomSharedPlaylistNoDirectories = "لم تقم بتحديد أي مجلدات وسائط لقوائم التشغيل المشتركة. أضف الملفات يدويًا."
+    override val roomSharedPlaylistNotFound = "لا يمكن Syncplay العثور على الملف الذي يتم تشغيله حاليًا في قائمة التشغيل المشتركة في مجلدات الوسائط الخاصة بك."
+    override val roomSharedPlaylistNotFeatured = "لا تتوفر ميزة قوائم التشغيل المشتركة في هذه الغرفة أو الخادم."
+    override val roomSharedPlaylistButtonAddFile = "إضافة ملف(ات) إلى نهاية قائمة التشغيل"
+    override val roomSharedPlaylistButtonAddFolder = "إضافة مجلد إلى قائمة التشغيل (ومجلدات الوسائط)"
+    override val roomSharedPlaylistButtonAddUrl = "إضافة عناوين URL إلى نهاية قائمة التشغيل"
+    override val roomSharedPlaylistButtonShuffle = "تبديل قائمة التشغيل بأكملها"
+    override val roomSharedPlaylistButtonShuffleRest = "تبديل الجزء المتبقي من قائمة التشغيل"
+    override val roomSharedPlaylistButtonOverflow = "المزيد من إعدادات قائمة التشغيل المشتركة"
+    override val roomSharedPlaylistButtonPlaylistImport = "تحميل قائمة التشغيل من ملف"
+    override val roomSharedPlaylistButtonPlaylistImportNShuffle = "تحميل وتبديل قائمة التشغيل من ملف"
+    override val roomSharedPlaylistButtonPlaylistExport = "حفظ قائمة التشغيل إلى ملف"
+    override val roomSharedPlaylistButtonSetMediaDirectories = "تعيين مجلدات الوسائط"
+    override val roomSharedPlaylistButtonSetTrustedDomains = "تعيين النطاقات الموثوق بها"
+    override val roomSharedPlaylistButtonUndo = "تراجع عن آخر تغيير"
+    override val roomButtonDescAspectRatio = "نسبة العرض إلى الارتفاع"
+    override val roomButtonDescSharedPlaylist = "قائمة التشغيل المشتركة"
+    override val roomButtonDescAudioTracks = "مسارات الصوت"
+    override val roomButtonDescSubtitleTracks = "مسارات الترجمة"
+    override val roomButtonDescRewind = "للوراء"
+    override val roomButtonDescToggle = "."
+    override val roomButtonDescPlay = "تشغيل"
+    override val roomButtonDescPause = "إيقاف مؤقت"
+    override val roomButtonDescFfwd = "للأمام بسرعة"
+    override val roomButtonDescAdd = "إضافة ملف وسائط"
+    override val roomButtonDescLock = "قفل اللمس"
+    override val roomButtonDescMore = "إعدادات أكثر"
+    override val roomAddmediaOffline = "من تخزين الهاتف"
+    override val roomAddmediaOnline = "من عنوان URL في الشبكة"
+    override val roomAddmediaOnlineUrl = "عنوان URL"
+    override val mediaDirectories = "مجلدات الوسائط لقائمة التشغيل المشتركة"
+    override val mediaDirectoriesBrief = "سيقوم Syncplay بالبحث في أي مجلدات وسائط تحددها هنا للعثور على اسم يتم تشغيله في قائمة تشغيل مشتركة. من الأفضل إذا قمت بتحديد مجلدات صغيرة حيث يمكن أن تتسبب عملية البحث في المشاكل وتكون بطيئة جدًا."
+    override val mediaDirectoriesSettingSummary = "سيقوم Syncplay بالبحث في أي مجلدات وسائط تحددها هنا للعثور على اسم يتم تشغيله في قائمة تشغيل مشتركة."
+    override val mediaDirectoriesSave = "حفظ والخروج"
+    override val mediaDirectoriesClearAll = "مسح الكل"
+    override val mediaDirectoriesClearAllConfirm = "هل أنت متأكد من رغبتك في مسح القائمة؟"
+    override val mediaDirectoriesAddFolder = "إضافة مجلد"
+    override val mediaDirectoriesDelete = "إزالة من القائمة"
+    override val mediaDirectoriesShowFullPath = "عرض المسار الكامل"
+    override val settingsCategGeneral = "إعدادات عامة"
+    override val settingsCategPlayer = "إعدادات اللاعب"
+    override val settingsCategRoom = "إعدادات الغرفة"
+    override val settingsCategVideo = "إعدادات الفيديو"
+    override val settingsCategMisc = "متنوعات"
+    override val settingNightModeTitle = "الوضع الليلي"
+    override val settingNightModeSummary = "حدد سلوك الوضع الليلي."
+    override val settingRememberJoinInfoTitle = "تذكر معلومات الانضمام"
+    override val settingRememberJoinInfoSummary = "تمكينها افتراضيًا. سيتيح لـ SyncPlay حفظ اسم المستخدم الأخير، واسم الغرفة، وآخر خادم رسمي استخدمته."
+    override val settingDisplayLanguageTitle = "عرض اللغة"
+    override val settingDisplayLanguageSummry = "حدد لغتك المفضلة التي سيتم عرض Syncplay بها."
+    override val settingDisplayLanguageToast = "تغيير اللغة. أعد تشغيل التطبيق لتفعيل الإعداد بشكل كامل."
+    override val settingAudioDefaultLanguageTitle = "لغة المسار الصوتي المفضلة"
+    override val settingAudioDefaultLanguageSummry = "قم بتحميل مسار صوتي بشكل تلقائي بلغة التي قمت بتحديدها هنا. على سبيل المثال، رمز اللغة الإنجليزية هو 'en-US'، واليابانية هي 'ja-JP'. ابحث في 'IETF BCP 47 codes' للمزيد من المعلومات."
+    override val settingCcDefaultLanguageTitle = "لغة العنوان الفرعي المفضلة"
+    override val settingCcDefaultLanguageSummry = "قم بتحميل مسار عنوان فرعي بلغة التي قمت بتحديدها هنا. على سبيل المثال، رمز اللغة الإنجليزية هو 'en-US'، واليابانية هي 'ja-JP'. ابحث في 'IETF BCP 47 codes' للمزيد من المعلومات."
+    override val settingUseBufferTitle = "استخدام أحجام تخزين مؤقت مخصصة"
+    override val settingUseBufferSummary = "إذا لم تكن راضيًا عن أوقات تحميل الفيديو من قبل اللاعب قبل وأثناء التشغيل، يمكنك استخدام أحجام تخزين مؤقت مخصصة (استخدم على مسؤوليتك الشخصية)."
+    override val settingMaxBufferTitle = "حجم التخزين المؤقت الأقصى المخصص"
+    override val settingMaxBufferSummary =
+        "القيمة الافتراضية هي 30 (30000 مللي ثانية). يحدد هذا الحجم الأقصى للتخزين المؤقت قبل بدء تشغيل الفيديو. إذا لم تكن تعرف ما هو ذلك، فلا تقم بتغييره."
+    override val settingMinBufferSummary =
+        "القيمة الافتراضية هي 15 (15000 مللي ثانية). قلل هذه القيمة لتشغيل الفيديو بشكل أسرع ولكن هناك احتمالًا لفشل اللاعب أو حتى تعطله. غير ذلك على مسؤوليتك الشخصية."
+    override val settingMinBufferTitle = "حجم التخزين المؤقت الأدنى المخصص"
+    override val settingPlaybackBufferSummary =
+        "القيمة الافتراضية هي 2500 مللي ثانية. تمثل هذه القيمة حجم التخزين المؤقت عند البحث أو استئناف تشغيل الفيديو. قم بتغييرها إذا لم تكن راضيًا عن التأخير الصغير عند البحث في الفيديو."
+    override val settingPlaybackBufferTitle = "حجم تخزين المؤقت المخصص (مللي ثانية)"
+    override val settingReadyFirsthandSummary = "قم بتمكين هذا إذا كنت ترغب في تعيين نفسك تلقائيًا كجاهز بمجرد دخولك إلى الغرفة."
+    override val settingReadyFirsthandTitle = "تعيين كجاهز أولاً"
+    override val settingRewindThresholdSummary = "إذا كان شخص ما خلف القيمة التي حددتها هنا، سيتم إعادة تشغيل الفيديو لمطابقته مع الشخص الذي خلف."
+    override val settingRewindThresholdTitle = "عتبة الإرجاع"
+    override val settingTlsSummary = "إذا كان الخادم يدعم اتصال TLS الآمن، فإن تطبيق Syncplay Android سيحاول الاتصال به عبر TLS. (غير متاح حاليًا)"
+    override val settingTlsTitle = "استخدام اتصال آمن (TLSv1.3) [سيكون متاحًا قريبًا]"
+    override val settingResetdefaultTitle = "إعادة تعيين الإعدادات الافتراضية"
+    override val settingResetdefaultSummary = "إعادة تعيين كل شيء إلى القيم الافتراضية (مُستحسَن)"
+    override val settingResetdefaultDialog = "هل أنت متأكد من مسح الإعدادات لهذه الشاشة؟"
+    override val settingPauseIfSomeoneLeftTitle = "إيقاف التشغيل إذا ما غادر شخص ما"
+    override val settingPauseIfSomeoneLeftSummary = "قم بتمكين هذا إذا كنت ترغب في إيقاف التشغيل/إيقاف التشغيل إذا ما غادر شخص ما الغرفة أثناء المشاهدة."
+    override val settingWarnFileMismatchTitle = "تحذير اختلاف الملف"
+    override val settingWarnFileMismatchSummary =
+        "مُمكن بشكل افتراضي. سيحذرك هذا في حالة قمت بتحميل ملف يختلف عن ملفات المستخدمين في المجموعة (من حيث الاسم أو المدة أو الحجم، وليس كلها)."
+    override val settingFileinfoBehaviourNameTitle = "إرسال معلومات اسم الملف"
+    override val settingFileinfoBehaviourNameSummary = "اختر الطريقة التي تظهر بها اسم ملف الوسائط الخاص بك للمستخدمين الآخرين."
+    override val settingFileinfoBehaviourSizeTitle = "إرسال معلومات حجم الملف"
+    override val settingFileinfoBehaviourSizeSummary = "اختر الطريقة التي تظهر بها حجم ملف الوسائط الخاص بك للمستخدمين الآخرين."
+    override val uisettingApply = "تطبيق"
+    override val uisettingTimestampSummary = "قم بتعطيل هذا لإخفاء الطوابع الزمنية في بداية رسائل الدردشة."
+    override val uisettingTimestampTitle = "طوابع الزمن في الدردشة"
+    override val uisettingMsgoutlineSummary = "فعّل هذا لإضفاء حدود لرسائل الدردشة، لتقليل الاندماج مع خلفية الفيديو."
+    override val uisettingMsgoutlineTitle = "حدود رسائل الدردشة"
+    override val uisettingMsgshadowSummary = "فعّل هذا لإضفاء ظل لرسائل الدردشة، لتقليل الاندماج مع خلفية الفيديو."
+    override val uisettingMsgshadowTitle = "ظل رسائل الدردشة"
+    override val uisettingMsgboxactionSummary =
+        "عند تمكين هذا، سيقوم النقر على زر 'موافق' على لوحة المفاتيح بإرسال الرسالة. عند تعطيله، سيقوم ببساطة بإغلاق لوحة المفاتيح دون القيام بأي شيء."
+    override val uisettingMsgboxactionTitle = "وظيفة زر 'موافق' على لوحة المفاتيح"
+    override val uisettingOverviewAlphaSummary = "الإعداد الافتراضي هو 40 (شفاف تقريبًا)، قم بتغيير هذا إذا كنت ترغب في جعل لوحة تفاصيل الغرفة أكثر وضوحًا عن طريق زيادة الشفافية."
+    override val uisettingOverviewAlphaTitle = "شفافية خلفية تفاصيل الغرفة"
+    override val uisettingMessageryAlphaSummary = "الإعداد الافتراضي هو 0 (شفاف). الحد الأقصى هو 255 (مطفي 100٪). زيادة قراءة الرسائل عن طريق جعل خلفية الرسائل أكثر انعتاقًا."
+    override val uisettingMessageryAlphaTitle = "شفافية خلفية الرسائل"
+    override val uisettingMsgsizeSummary = "تغيير حجم النص في الرسائل. الإعداد الافتراضي هو 10."
+    override val uisettingMsgsizeTitle = "حجم الخط في الرسائل"
+    override val uisettingMsgcountSummary = "الإعداد الافتراضي هو 10. يحد من عدد الرسائل إلى هذا القيمة."
+    override val uisettingMsgcountTitle = "الحد الأقصى لعدد الرسائل"
+    override val uisettingMsglifeSummary = "عند استلام رسالة دردشة أو رسالة غرفة، ستبدأ في التلاشي للفترة الزمنية المحددة أدناه."
+    override val uisettingMsglifeTitle = "فترة عرض رسائل الدردشة"
+    override val uisettingTimestampColorSummary = "قم بتخصيص لون النص للطوابع الزمنية في الرسائل (الإعداد الافتراضي هو الوردي)"
+    override val uisettingTimestampColorTitle = "لون النص في الطوابع الزمنية"
+    override val uisettingSelfColorSummary = "قم بتخصيص لون النص لعلامة اسمك (الإعداد الافتراضي هو الأحمر الداكن)"
+    override val uisettingSelfColorTitle = "لون علامة اسم الشخص"
+    override val uisettingFriendColorSummary = "قم بتخصيص لون النص لعلامات أسماء أصدقائك (الإعداد الافتراضي هو الأزرق)"
+    override val uisettingFriendColorTitle = "لون نص علامات أسماء الأصدقاء"
+    override val uisettingSystemColorSummary = "قم بتخصيص لون النص لرسائل النظام في الغرفة (الإعداد الافتراضي هو الأبيض)"
+    override val uisettingSystemColorTitle = "لون نص رسائل النظام"
+    override val uisettingHumanColorSummary = "قم بتخصيص لون النص لرسائل المستخدمين (الإعداد الافتراضي هو الأبيض)"
+    override val uisettingHumanColorTitle = "لون نص رسائل المستخدمين"
+    override val uisettingErrorColorSummary = "قم بتخصيص لون النص لرسائل الأخطاء (الإعداد الافتراضي هو الأحمر)"
+    override val uisettingErrorColorTitle = "لون نص رسائل الأخطاء"
+    override val uisettingSubtitleSizeSummary =
+        "يغيّر حجم الترجمة للترجمات التي يتم تحميلها يدويًا (عند تحميلها من ملف). الإعداد الافتراضي هو 16. لا يمكن تغيير حجم الترجمات المدمجة."
+    override val uisettingSubtitleSizeTitle = "حجم الترجمة"
+    override val uisettingSubtitleDelaySummary = "الإعداد الافتراضي هو 0. سيؤدي ذلك إلى تأخير أو تقديم الترجمة. استخدم القيم السلبية لتقديمها."
+    override val uisettingSubtitleDelayTitle = "تأخير الترجمة (مللي ثانية)"
+    override val uisettingAudioDelaySummary = "الإعداد الافتراضي هو 0. سيؤدي ذلك إلى تأخير أو تقديم المسار الصوتي. استخدم القيم السلبية لتقديمه."
+    override val uisettingAudioDelayTitle = "تأخير المسار الصوتي (مللي ثانية)"
+    override val uisettingSeekForwardJumpSummary = "تحدد كم ثانية يجب أن يتخطى إلى الأمام عند البحث. الإعداد الافتراضي هو 10 ثوان."
+    override val uisettingSeekForwardJumpTitle = "مقدار البحث للأمام (ثواني)"
+    override val uisettingSeekBackwardJumpSummary = "تحدد كم ثانية يجب أن يرجع إلى الوراء عند البحث العكسي. الإعداد الافتراضي هو 10 ثوان."
+    override val uisettingSeekBackwardJumpTitle = "مقدار البحث العكسي (ثواني)"
+    override val uisettingPipSummary = "ما إذا كان يجب على المشغل دخول وضع الصورة في الصورة عند تصغير التطبيق. الإعداد الافتراضي هو صحيح"
+    override val uisettingPipTitle = "وضع الصورة في الصورة"
+    override val uisettingReconnectIntervalSummary = "كم ثانية يجب أن ينتظر لإعادة الاتصال في كل فشل للاتصال أو الانفصال. الإعداد الافتراضي هو 2 ثانية."
+    override val uisettingReconnectIntervalTitle = "فاصل إعادة الاتصال"
+    override val uisettingResetdefaultSummary = "إعادة تعيين كل الإعدادات أعلاه إلى الإعدادات الافتراضية."
+    override val uisettingResetdefaultTitle = "إعادة تعيين الإعدادات الافتراضية"
+    override val settingFileinfoBehaviorA = "أرسال البيانات أصلية"
+    override val settingFileinfoBehaviorB = "إرسال البيانات مشفرة"
+    override val settingFileinfoBehaviorC = "لا ترسل إطلاقاً"
+    override val en = "الإنجليزية"
+    override val ar = "العربية"
+    override val zh = "الصينية"
+    override val fr = "الفرنسية"
+    override val es = "الإسبانية"
 
-    override val roomAudioTrackNotFound = "ما من صوت في الملف"
 
-    override val roomAudioTrackChanged = { p0: String -> 
-        "تم تغيير مقطع الصوت إلى : %s"
-            .format(p0)
-    }
 
-    override val roomSubTrackChanged = { p0: String -> 
-        "تم تغيير مقطع الترجمة إلى : %s"
-            .format(p0)
-    }
 
-    override val roomScalingZoom = "وضع التكبير : زووم"
-
-    override val roomScalingFillScreen = "وضع التكبير : ملء الشاشة"
-
-    override val roomScalingFixedHeight = "وضع التكبير : طول ثابت"
-
-    override val roomScalingFixedWidth = "وضع التكبير : عرض ثابت"
-
-    override val roomScalingFitScreen = "وضع التكبير : ملاءمة الشاشة"
-
-    override val uisettingHumanColorTitle = "لون خط رسائل المستخدمين"
-    override val uisettingErrorColorSummary: String
-        get() = TODO("Not yet implemented")
-    override val uisettingErrorColorTitle: String
-        get() = TODO("Not yet implemented")
-
-    override val uisettingHumanColorSummary = "\"يعدل لون خط رسائل المستخدمين (اللون الافتراضي : أبيض) \""
-
-    override val uisettingSystemColorTitle = "لون خـط رسائل النظام"
-
-    override val uisettingSystemColorSummary = "يعدل لون خط رسائل نظام الغرفة التلقائية (أبيض افتراضيا)"
-
-    override val uisettingFriendColorTitle = "لون خـط اسم الصديق"
-
-    override val uisettingFriendColorSummary = "يعدل لون خط اسم الصديق (أزرق افتراضيا)"
-
-    override val uisettingSelfColorTitle = "لون خط الاسم الشخصي"
-
-    override val uisettingSelfColorSummary = "يعدل لون خط اسم الذات (أحمر افتراضياً)"
-
-    override val uisettingTimestampColorTitle = "لون خط الطوابع الزمنية"
-
-    override val uisettingTimestampColorSummary = "يعدل لون خط طوابع الزمن في الرسائل (وردي افتراضياً)"
-
-    override val roomFileMismatchWarningCore = { p0: String -> 
-        "ملفك مختلف عن ملف %s بالأوجـه التالية :"
-            .format(p0)
-    }
-
-    override val roomFileMismatchWarningName = "\"الاسم. \""
-
-    override val roomFileMismatchWarningDuration = "\"المدة. \""
-
-    override val roomFileMismatchWarningSize = "\"الحجم. \""
 }
