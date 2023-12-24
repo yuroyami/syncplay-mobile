@@ -3,6 +3,7 @@ package com.yuroyami.syncplay.lyricist
 import com.yuroyami.syncplay.utils.format
 
 val EsStrings = object : Strings {
+
     override val appName: String
         get() = TODO("Not yet implemented")
 

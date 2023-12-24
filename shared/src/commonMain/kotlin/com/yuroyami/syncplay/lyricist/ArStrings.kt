@@ -3,6 +3,7 @@ package com.yuroyami.syncplay.lyricist
 import com.yuroyami.syncplay.utils.format
 
 val ArStrings = object : Strings {
+
       override val disconnectedNoticeHeader = "انقطع الاتصال"
 
     override val connectUsernameA = "اكتب اسم مستخدمك:"
@@ -22,6 +23,16 @@ val ArStrings = object : Strings {
     override val pause = "إيقاف"
 
     override val delete = "حذف"
+    override val confirm: String
+        get() = TODO("Not yet implemented")
+    override val done: String
+        get() = TODO("Not yet implemented")
+    override val close: String
+        get() = TODO("Not yet implemented")
+    override val off: String
+        get() = TODO("Not yet implemented")
+    override val on: String
+        get() = TODO("Not yet implemented")
 
     override val tabConnect = "اتصال"
 
@@ -44,20 +55,34 @@ val ArStrings = object : Strings {
     override val connectServerB = "عنوان السيرفر"
 
     override val connectServerC = "تأكد من أنك و أصدقاؤك في نفس السيرفر"
+    override val connectButtonJoin: String
+        get() = TODO("Not yet implemented")
 
     override val connectButton = "الدخول إلى الغرفة"
+    override val connectButtonSaveshortcut: String
+        get() = TODO("Not yet implemented")
+    override val connectButtonCurrentEngine: (String) -> String
+        get() = TODO("Not yet implemented")
 
     override val connectFootnote = "تطبيق الأندرويد غير الرسمي لـSyncplay"
 
     override val connectUsernameEmptyError = "اسم المستخدم لا يجب أن يكون فارغاً"
 
     override val connectRoomnameEmptyError = "اسم الغرفة لا يجب أن يكون فارغاً"
+    override val connectAddressEmptyError: String
+        get() = TODO("Not yet implemented")
+    override val connectPortEmptyError: String
+        get() = TODO("Not yet implemented")
 
     override val connectEnterCustomServer = "أدخل سيرفر مميز"
 
     override val connectCustomServerPassword = "كلمة السر (إن تواجدت)"
 
     override val connectPort = "منفذ"
+    override val connectNightmodeswitch: String
+        get() = TODO("Not yet implemented")
+    override val connectSolomode: String
+        get() = TODO("Not yet implemented")
 
     override val roomStartupHint = "اضغط على الزر الذي يشبه الشكل أسفله لإدخال فيديو جديد"
 
@@ -80,6 +105,8 @@ val ArStrings = object : Strings {
     override val roomSendButton = "إرسال"
 
     override val roomReady = "مستعد"
+    override val roomNotReady: String
+        get() = TODO("Not yet implemented")
 
     override val roomDetails = "إظهار التفاصيل"
 
@@ -112,10 +139,18 @@ val ArStrings = object : Strings {
 
     override val settingDisplayLanguageSummry = "اختر لغتك المفضلة التي يظهر بـها Syncplay"
 
-    override val settingDisplayLanguageToast = { p0: String -> 
+    override val settingDisplayLanguageToast = { p0: String ->
         "تم تغيير اللغة إلى: %s. أعد تشغيل التطبيق لينطبق الإعداد تماماً."
             .format(p0)
     }
+    override val settingAudioDefaultLanguageTitle: String
+        get() = TODO("Not yet implemented")
+    override val settingAudioDefaultLanguageSummry: String
+        get() = TODO("Not yet implemented")
+    override val settingCcDefaultLanguageTitle: String
+        get() = TODO("Not yet implemented")
+    override val settingCcDefaultLanguageSummry: String
+        get() = TODO("Not yet implemented")
 
     override val settingUseBufferTitle = "استعمال أحجام عرض مؤقت خاصة"
 
@@ -142,6 +177,30 @@ val ArStrings = object : Strings {
     override val settingRewindThresholdSummary = "إذا ما كان أحدهم متأخراً بالقيمة المحددة هنا ، سيعود الفيديو خاصتك ليزامنه."
 
     override val uisettingSubtitleSizeTitle = "حجم الترجمة"
+    override val uisettingSubtitleDelaySummary: String
+        get() = TODO("Not yet implemented")
+    override val uisettingSubtitleDelayTitle: String
+        get() = TODO("Not yet implemented")
+    override val uisettingAudioDelaySummary: String
+        get() = TODO("Not yet implemented")
+    override val uisettingAudioDelayTitle: String
+        get() = TODO("Not yet implemented")
+    override val uisettingSeekForwardJumpSummary: String
+        get() = TODO("Not yet implemented")
+    override val uisettingSeekForwardJumpTitle: String
+        get() = TODO("Not yet implemented")
+    override val uisettingSeekBackwardJumpSummary: String
+        get() = TODO("Not yet implemented")
+    override val uisettingSeekBackwardJumpTitle: String
+        get() = TODO("Not yet implemented")
+    override val uisettingPipSummary: String
+        get() = TODO("Not yet implemented")
+    override val uisettingPipTitle: String
+        get() = TODO("Not yet implemented")
+    override val uisettingReconnectIntervalSummary: String
+        get() = TODO("Not yet implemented")
+    override val uisettingReconnectIntervalTitle: String
+        get() = TODO("Not yet implemented")
 
     override val uisettingSubtitleSizeSummary = "ستغير هذه القيمة حجم خط ترجمة الفيديوهات. القيمة الافتراضية هي 18."
 
@@ -152,6 +211,8 @@ val ArStrings = object : Strings {
     override val settingResetdefaultTitle = "استرداد الحالة الافتراضية للإعدادات"
 
     override val settingResetdefaultSummary = "إعادة كل شيء إلى قيمته الافتراضية."
+    override val settingResetdefaultDialog: String
+        get() = TODO("Not yet implemented")
 
     override val settingPauseIfSomeoneLeftTitle = "جـمـِّـد الفيديو إن غادر أحدهم"
 
@@ -172,6 +233,18 @@ val ArStrings = object : Strings {
     override val uisettingApply = "تطبيق"
 
     override val uisettingTimestampTitle = "الطوابع الزمنية للرسائل"
+    override val uisettingMsgoutlineSummary: String
+        get() = TODO("Not yet implemented")
+    override val uisettingMsgoutlineTitle: String
+        get() = TODO("Not yet implemented")
+    override val uisettingMsgshadowSummary: String
+        get() = TODO("Not yet implemented")
+    override val uisettingMsgshadowTitle: String
+        get() = TODO("Not yet implemented")
+    override val uisettingMsgboxactionSummary: String
+        get() = TODO("Not yet implemented")
+    override val uisettingMsgboxactionTitle: String
+        get() = TODO("Not yet implemented")
 
     override val uisettingTimestampSummary = "عطِّل هذه الميزة لإخفاء الطوابع الزمنية في بداية رسائل الغرفة."
 
@@ -218,6 +291,60 @@ val ArStrings = object : Strings {
     override val roomSharedPlaylistNotFound = "لم يستطع البرنامج إيجاد الملف الجاري تشغيله في القائمة."
 
     override val roomSharedPlaylistNotFeatured = "الغرفة أو السيرفر لا يدعمان خاصية قوائم التشغيل المشتركة."
+    override val roomSharedPlaylistButtonAddFile: String
+        get() = TODO("Not yet implemented")
+    override val roomSharedPlaylistButtonAddFolder: String
+        get() = TODO("Not yet implemented")
+    override val roomSharedPlaylistButtonAddUrl: String
+        get() = TODO("Not yet implemented")
+    override val roomSharedPlaylistButtonShuffle: String
+        get() = TODO("Not yet implemented")
+    override val roomSharedPlaylistButtonShuffleRest: String
+        get() = TODO("Not yet implemented")
+    override val roomSharedPlaylistButtonOverflow: String
+        get() = TODO("Not yet implemented")
+    override val roomSharedPlaylistButtonPlaylistImport: String
+        get() = TODO("Not yet implemented")
+    override val roomSharedPlaylistButtonPlaylistImportNShuffle: String
+        get() = TODO("Not yet implemented")
+    override val roomSharedPlaylistButtonPlaylistExport: String
+        get() = TODO("Not yet implemented")
+    override val roomSharedPlaylistButtonSetMediaDirectories: String
+        get() = TODO("Not yet implemented")
+    override val roomSharedPlaylistButtonSetTrustedDomains: String
+        get() = TODO("Not yet implemented")
+    override val roomSharedPlaylistButtonUndo: String
+        get() = TODO("Not yet implemented")
+    override val roomButtonDescAspectRatio: String
+        get() = TODO("Not yet implemented")
+    override val roomButtonDescSharedPlaylist: String
+        get() = TODO("Not yet implemented")
+    override val roomButtonDescAudioTracks: String
+        get() = TODO("Not yet implemented")
+    override val roomButtonDescSubtitleTracks: String
+        get() = TODO("Not yet implemented")
+    override val roomButtonDescRewind: String
+        get() = TODO("Not yet implemented")
+    override val roomButtonDescToggle: String
+        get() = TODO("Not yet implemented")
+    override val roomButtonDescPlay: String
+        get() = TODO("Not yet implemented")
+    override val roomButtonDescPause: String
+        get() = TODO("Not yet implemented")
+    override val roomButtonDescFfwd: String
+        get() = TODO("Not yet implemented")
+    override val roomButtonDescAdd: String
+        get() = TODO("Not yet implemented")
+    override val roomButtonDescLock: String
+        get() = TODO("Not yet implemented")
+    override val roomButtonDescMore: String
+        get() = TODO("Not yet implemented")
+    override val roomAddmediaOffline: String
+        get() = TODO("Not yet implemented")
+    override val roomAddmediaOnline: String
+        get() = TODO("Not yet implemented")
+    override val roomAddmediaOnlineUrl: String
+        get() = TODO("Not yet implemented")
 
     override val mediaDirectories = "مسارات الميديا لـقوائم التشغيل المشتركة"
 
@@ -246,6 +373,10 @@ val ArStrings = object : Strings {
     override val settingsCategVideo = "إعدادات الفيديو"
 
     override val settingsCategMisc = "إعدادات مميزة"
+    override val settingNightModeTitle: String
+        get() = TODO("Not yet implemented")
+    override val settingNightModeSummary: String
+        get() = TODO("Not yet implemented")
 
     override val settingFileinfoBehaviorA = "إرسالها أصلية"
 
@@ -256,6 +387,12 @@ val ArStrings = object : Strings {
     override val en = "الانجليزية"
 
     override val ar = "العربية"
+    override val zh: String
+        get() = TODO("Not yet implemented")
+    override val fr: String
+        get() = TODO("Not yet implemented")
+    override val es: String
+        get() = TODO("Not yet implemented")
 
     override val roomEmptyMessageError = "اكتب شيئاً !"
 
@@ -339,6 +476,10 @@ val ArStrings = object : Strings {
     override val roomScalingFitScreen = "وضع التكبير : ملاءمة الشاشة"
 
     override val uisettingHumanColorTitle = "لون خط رسائل المستخدمين"
+    override val uisettingErrorColorSummary: String
+        get() = TODO("Not yet implemented")
+    override val uisettingErrorColorTitle: String
+        get() = TODO("Not yet implemented")
 
     override val uisettingHumanColorSummary = "\"يعدل لون خط رسائل المستخدمين (اللون الافتراضي : أبيض) \""
 

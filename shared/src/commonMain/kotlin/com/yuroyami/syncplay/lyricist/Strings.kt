@@ -8,7 +8,6 @@ import cafe.adriel.lyricist.LanguageTag
 import cafe.adriel.lyricist.Lyricist
 
 interface Strings {
-    val appName: String
     val yes: String
     val no: String
     val okay: String
@@ -48,20 +47,16 @@ interface Strings {
     val connectPort: String
     val connectNightmodeswitch: String
     val connectSolomode: String
-    val roomStartupHint: String
     val roomSelectedVid: (String) -> String
     val roomSelectedSub: (String) -> String
     val roomSelectedSubError: String
     val roomSubErrorLoadVidFirst: String
     val roomTypeMessage: String
-    val roomSendButton: String
     val roomReady: String
-    val roomDetails: String
+    val roomNotReady: String
     val roomPingConnected: (String) -> String
     val roomPingDisconnected: String
     val roomOverflowSub: String
-    val roomOverflowCutout: String
-    val roomOverflowFf: String
     val roomOverflowMsghistory: String
     val roomOverflowSettings: String
     val roomEmptyMessageError: String
@@ -91,9 +86,6 @@ interface Strings {
     val roomDetailsCurrentRoom: (String) -> String
     val roomDetailsNofileplayed: String
     val roomDetailsFileProperties: (String, String) -> String
-    val disconnectedNoticeHeader: String
-    val disconnectedNoticeA: String
-    val disconnectedNoticeB: String
     val roomFileMismatchWarningCore: (String) -> String
     val roomFileMismatchWarningName: String
     val roomFileMismatchWarningDuration: String
@@ -232,14 +224,10 @@ interface Strings {
     val settingFileinfoBehaviorA: String
     val settingFileinfoBehaviorB: String
     val settingFileinfoBehaviorC: String
-    val settingNightModeA: String
-    val settingNightModeB: String
-    val settingNightModeC: String
     val en: String
     val ar: String
     val zh: String
     val fr: String
-    val roomNotReady: String
     val es: String
 }
 

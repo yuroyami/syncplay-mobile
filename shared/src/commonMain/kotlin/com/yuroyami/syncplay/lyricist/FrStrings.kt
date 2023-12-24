@@ -3,8 +3,6 @@ package com.yuroyami.syncplay.lyricist
 import com.yuroyami.syncplay.utils.format
 
 val FrStrings = object : Strings {
-      override val appName = "Syncplay"
-
     override val yes = "Oui"
 
     override val no = "Non"
