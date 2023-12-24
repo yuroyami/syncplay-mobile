@@ -1,6 +1,5 @@
 package com.yuroyami.syncplay.home
 
-import syncplaymobile.generated.resources.Res
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.BorderStroke
@@ -96,13 +95,13 @@ import com.yuroyami.syncplay.compose.popups.PopupAPropos.AProposPopup
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_MISC_PREFS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_NIGHTMODE
 import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_PLAYER_ENGINE
-import com.yuroyami.syncplay.settings.MySettings.globalSettings
 import com.yuroyami.syncplay.datastore.booleanFlow
 import com.yuroyami.syncplay.datastore.ds
 import com.yuroyami.syncplay.datastore.stringFlow
 import com.yuroyami.syncplay.datastore.writeString
-import com.yuroyami.syncplay.locale.Localization
+import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.models.JoinInfo
+import com.yuroyami.syncplay.settings.MySettings.globalSettings
 import com.yuroyami.syncplay.settings.SettingsUI
 import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
@@ -113,11 +112,14 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
+import syncplaymobile.generated.resources.Res
 
 /** This is what previously used to be HomeActivity before we migrated towards KMM.*/
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(config: HomeConfig) {
+    val localz = rememberStrings()
+
     val nightMode = DATASTORE_MISC_PREFS.ds().booleanFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
 
     val savedConfig = remember { config }
@@ -128,7 +130,7 @@ fun HomeScreen(config: HomeConfig) {
         "syncplay.pl:8997",
         "syncplay.pl:8998",
         "syncplay.pl:8999",
-        Localization.stringResource("connect_enter_custom_server")
+        localz.strings.connectEnterCustomServer
     )
 
     AppTheme(nightMode.value) {
@@ -309,7 +311,7 @@ fun HomeScreen(config: HomeConfig) {
                     ) {
 
                         FlexibleFancyText(
-                            text = Localization.stringResource("connect_username_a"),
+                            text = localz.strings.connectUsernameA,
                             size = 20f,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),
                             font = fontDirective(),
@@ -337,7 +339,7 @@ fun HomeScreen(config: HomeConfig) {
                             OutlinedTextField(
                                 modifier = Modifier.gradientOverlay(),
                                 singleLine = true,
-                                label = { Text(Localization.stringResource("connect_username_b")) },
+                                label = { Text(localz.strings.connectUsernameB) },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.PersonPin, "") },
                                 supportingText = { /* Text(stringResource(R.string.connect_username_c), fontSize = 10.sp) */ },
                                 keyboardActions = KeyboardActions(onDone = {
@@ -361,7 +363,7 @@ fun HomeScreen(config: HomeConfig) {
 
 
                         FlexibleFancyText(
-                            text = Localization.stringResource("connect_roomname_a"),
+                            text = localz.strings.connectRoomnameA,
                             size = 20f,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),
                             font = fontDirective(),
@@ -389,7 +391,7 @@ fun HomeScreen(config: HomeConfig) {
                             OutlinedTextField(
                                 modifier = Modifier.gradientOverlay(),
                                 singleLine = true,
-                                label = { Text(Localization.stringResource("connect_roomname_b")) },
+                                label = { Text(localz.strings.connectRoomnameB) },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.MeetingRoom, "") },
                                 supportingText = { /* Text(stringResource(R.string.connect_roomname_c), fontSize = 10.sp) */ },
                                 keyboardActions = KeyboardActions(onDone = {
@@ -410,7 +412,7 @@ fun HomeScreen(config: HomeConfig) {
                         horizontalAlignment = CenterHorizontally,
                     ) {
                         FlexibleFancyText(
-                            text = Localization.stringResource("connect_server_a"),
+                            text = localz.strings.connectServerA,
                             size = 20f,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),
                             font = fontDirective(),
@@ -655,7 +657,7 @@ fun HomeScreen(config: HomeConfig) {
                         Spacer(modifier = Modifier.height(4.dp))
 
                         Text(
-                            Localization.stringResource("connect_button_current_engine",
+                            localz.strings.connectButtonCurrentEngine.invoke(
                                 when (player.value) {
                                     "exo" -> "ExoPlayer"
                                     "mpv" -> "mpv"
@@ -669,10 +671,10 @@ fun HomeScreen(config: HomeConfig) {
                     Spacer(modifier = Modifier.height(10.dp))
 
                     /* join button */
-                    val snacktxtEmptyUSER = Localization.stringResource("connect_username_empty_error")
-                    val snacktxtEmptyROOM = Localization.stringResource("connect_roomname_empty_error")
-                    val snacktxtEmptyIP = Localization.stringResource("connect_address_empty_error")
-                    val snacktxtEmptyPORT = Localization.stringResource("connect_port_empty_error")
+                    val snacktxtEmptyUSER = localz.strings.connectUsernameEmptyError
+                    val snacktxtEmptyROOM = localz.strings.connectRoomnameEmptyError
+                    val snacktxtEmptyIP = localz.strings.connectAddressEmptyError
+                    val snacktxtEmptyPORT = localz.strings.connectPortEmptyError
 
                     Button(
                         border = BorderStroke(width = 2.dp, color = MaterialTheme.colorScheme.primary),
@@ -748,7 +750,7 @@ fun HomeScreen(config: HomeConfig) {
                     ) {
                         Icon(imageVector = Icons.Filled.Api, "")
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(Localization.stringResource("connect_button_join"), fontSize = 18.sp)
+                        Text(localz.strings.connectButtonJoin, fontSize = 18.sp)
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))

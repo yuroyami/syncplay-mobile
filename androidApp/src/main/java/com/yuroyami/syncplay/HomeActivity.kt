@@ -1,9 +1,9 @@
 package com.yuroyami.syncplay
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.WindowManager
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.LaunchedEffect
@@ -17,17 +17,15 @@ import androidx.core.graphics.drawable.IconCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
+import com.yuroyami.syncplay.datastore.DataStoreKeys
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_MISC_PREFS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_NIGHTMODE
-import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_DISPLAY_LANG
 import com.yuroyami.syncplay.datastore.booleanFlow
 import com.yuroyami.syncplay.datastore.ds
 import com.yuroyami.syncplay.datastore.obtainString
 import com.yuroyami.syncplay.home.HomeCallback
 import com.yuroyami.syncplay.home.HomeConfig
 import com.yuroyami.syncplay.home.HomeScreen
-import com.yuroyami.syncplay.locale.Localization.stringResource
 import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.utils.changeLanguage
 import com.yuroyami.syncplay.utils.defaultEngineAndroid
@@ -41,10 +39,6 @@ class HomeActivity : ComponentActivity() {
         installSplashScreen() /* This will be called only on cold starts */
 
         defaultEngineAndroid =  if (BuildConfig.FLAVOR == "noLibs") "exo" else "mpv"
-
-        /** Applying saved language */
-        val lang = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainString(PREF_DISPLAY_LANG, "en") }
-        changeLanguage(lang, this)
 
         super.onCreate(savedInstanceState)
 
@@ -138,5 +132,11 @@ class HomeActivity : ComponentActivity() {
         intent.putExtra("SOLO_MODE", true)
 
         startActivity(intent)
+    }
+
+    override fun attachBaseContext(newBase: Context?) {
+        /** Applying saved language */
+        val lang = runBlocking { DataStoreKeys.DATASTORE_GLOBAL_SETTINGS.obtainString(DataStoreKeys.PREF_DISPLAY_LANG, "en") }
+        super.attachBaseContext(newBase!!.changeLanguage(lang))
     }
 }

@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
 import com.yuroyami.syncplay.compose.fontDirective
-import com.yuroyami.syncplay.locale.Localization
+import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.colorpicker.ClassicColorPicker
 import com.yuroyami.syncplay.utils.colorpicker.HsvColor
@@ -110,7 +110,8 @@ object PopupColorPicker {
                     ) {
                         Icon(imageVector = Icons.Filled.Done, "", tint = Color.Black)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(Localization.stringResource("done"), fontSize = 14.sp, color = Color.Black)
+                        val localz = rememberStrings()
+                        Text(localz.strings.done, fontSize = 14.sp, color = Color.Black)
                     }
 
                     Surface(

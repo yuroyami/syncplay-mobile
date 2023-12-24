@@ -1,12 +1,13 @@
 package com.yuroyami.syncplay.watchroom
 
+import cafe.adriel.lyricist.Lyricist
 import com.yuroyami.syncplay.datastore.DataStoreKeys
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_TLS_ENABLE
 import com.yuroyami.syncplay.datastore.obtainBoolean
 import com.yuroyami.syncplay.home.HomeCallback
-import com.yuroyami.syncplay.locale.Localization
+import com.yuroyami.syncplay.lyricist.Stringies
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.models.MediaFile
@@ -37,6 +38,8 @@ val isSoloMode: Boolean
     get() = !::p.isInitialized
 
 fun prepareProtocol(joinInfo: JoinInfo) {
+    val lyricist = Lyricist("en", Stringies)
+
     if (!joinInfo.soloMode) {
         p = SyncplayProtocol()
 
@@ -50,7 +53,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                     pausePlayback()
                 }
                 broadcastMessage(
-                    message = Localization.stringResource("room_guy_paused", pauser, timeStamper(p.currentVideoPosition.toLong())),
+                    message = lyricist.strings.roomGuyPaused.invoke(pauser, timeStamper(p.currentVideoPosition.toLong())),
                     isChat = false
                 )
             }
@@ -62,7 +65,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                     playPlayback()
                 }
 
-                broadcastMessage(message = Localization.stringResource("room_guy_played", player), isChat = false)
+                broadcastMessage(message = lyricist.strings.roomGuyPlayed.invoke(player), isChat = false)
             }
 
             override fun onChatReceived(chatter: String, chatmessage: String) {
@@ -74,13 +77,13 @@ fun prepareProtocol(joinInfo: JoinInfo) {
             override fun onSomeoneJoined(joiner: String) {
                 loggy("SYNCPLAY Protocol: $joiner joined the room.", 1004)
 
-                broadcastMessage(message = Localization.stringResource("room_guy_joined", joiner) , isChat = false)
+                broadcastMessage(message = lyricist.strings.roomGuyJoined(joiner), isChat = false)
             }
 
             override fun onSomeoneLeft(leaver: String) {
                 loggy("SYNCPLAY Protocol: $leaver left the room.", 1005)
 
-                broadcastMessage(message = Localization.stringResource("room_guy_left", leaver), isChat = false)
+                broadcastMessage(message = lyricist.strings.roomGuyLeft(leaver), isChat = false)
 
                 /* If the setting is enabled, pause playback **/
                 val pauseOnLeft = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainBoolean(PREF_PAUSE_ON_SOMEONE_LEAVE, true) }
@@ -103,7 +106,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                 /* Saving seek so it can be undone on mistake */
                 seeks.add(Pair(oldPos * 1000, newPos * 1000))
 
-                broadcastMessage(message =  Localization.stringResource("room_seeked", seeker, timeStamper(oldPos), timeStamper(newPos)), isChat = false)
+                broadcastMessage(message = lyricist.strings.roomSeeked(seeker, timeStamper(oldPos), timeStamper(newPos)), isChat = false)
 
                 if (seeker != p.session.currentUsername) {
                     player?.seekTo((toPosition * 1000.0).toLong())
@@ -115,7 +118,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
                 player?.seekTo((toPosition * 1000.0).toLong())
 
-                broadcastMessage(message =  Localization.stringResource("room_rewinded", behinder), isChat = false)
+                broadcastMessage(message = lyricist.strings.roomRewinded(behinder), isChat = false)
             }
 
             override fun onReceivedList() {
@@ -128,12 +131,11 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
                 broadcastMessage(
                     message =
-                        Localization.stringResource("room_isplayingfile",
-                            person,
-                            file ?: "",
-                            timeStamper(fileduration?.toLong() ?: 0)
-                        )
-                    ,
+                    lyricist.strings.roomIsplayingfile(
+                        person,
+                        file ?: "",
+                        timeStamper(fileduration?.toLong() ?: 0)
+                    ),
                     isChat = false
                 )
             }
@@ -148,7 +150,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
                 /** Telling user that the playlist has been updated/changed **/
                 if (user == "") return
-                broadcastMessage(message =  Localization.stringResource("room_shared_playlist_updated", user), isChat = false)
+                broadcastMessage(message = lyricist.strings.roomSharedPlaylistUpdated(user), isChat = false)
             }
 
             override fun onPlaylistIndexChanged(user: String, index: Int) {
@@ -159,7 +161,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
                 /** Telling user that the playlist selection/index has been changed **/
                 if (user == "") return
-                broadcastMessage(message =  Localization.stringResource("room_shared_playlist_changed", user), isChat = false)
+                broadcastMessage(message = lyricist.strings.roomSharedPlaylistChanged(user), isChat = false)
             }
 
             override fun onConnected() {
@@ -176,10 +178,10 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
 
                 /** Telling user that they're connected **/
-                broadcastMessage(message =  Localization.stringResource("room_connected_to_server"), isChat = false)
+                broadcastMessage(message = lyricist.strings.roomConnectedToServer, isChat = false)
 
                 /** Telling user which room they joined **/
-                broadcastMessage(message =  Localization.stringResource("room_you_joined_room", p.session.currentRoom), isChat = false)
+                broadcastMessage(message = lyricist.strings.roomYouJoinedRoom(p.session.currentRoom), isChat = false)
 
                 /** Resubmit any ongoing file being played **/
                 if (media != null) {
@@ -199,10 +201,10 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                 /** Telling user that a connection attempt is on **/
                 broadcastMessage(
                     message =
-                        Localization.stringResource("room_attempting_connect",
-                            if (p.session.serverHost == "151.80.32.178") "syncplay.pl" else p.session.serverHost,
-                            p.session.serverPort.toString()
-                        ),
+                    lyricist.strings.roomAttemptingConnect(
+                        if (p.session.serverHost == "151.80.32.178") "syncplay.pl" else p.session.serverHost,
+                        p.session.serverPort.toString()
+                    ),
                     isChat = false
                 )
             }
@@ -215,7 +217,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
                 /** Telling user that connection has failed **/
                 broadcastMessage(
-                    message = Localization.stringResource("room_connection_failed"),
+                    message = lyricist.strings.roomConnectionFailed,
                     isChat = false, isError = true
                 )
 
@@ -231,7 +233,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                 p.state = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
 
                 /** Telling user that the connection has been lost **/
-                broadcastMessage(message =  Localization.stringResource("room_attempting_reconnection"), isChat = false,  isError = true)
+                broadcastMessage(message = lyricist.strings.roomAttemptingReconnection, isChat = false, isError = true)
 
                 /** Attempting reconnection **/
                 p.reconnect()

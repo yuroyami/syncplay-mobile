@@ -53,7 +53,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 //Strings internationalization and localization
-                implementation("cafe.adriel.lyricist:lyricist:$lyricist")
+                api("cafe.adriel.lyricist:lyricist:$lyricist")
 
                 api("com.rickclephas.kmm:kmm-viewmodel-core:1.0.0-ALPHA-16")
 

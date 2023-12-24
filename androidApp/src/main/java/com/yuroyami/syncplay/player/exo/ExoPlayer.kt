@@ -22,10 +22,11 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaSession
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import cafe.adriel.lyricist.Lyricist
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.yuroyami.syncplay.databinding.ExoviewBinding
-import com.yuroyami.syncplay.locale.Localization
+import com.yuroyami.syncplay.lyricist.Stringies
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
@@ -375,7 +376,8 @@ class ExoPlayer : BasePlayer() {
             }
 
             /* Finally, show a a toast to the user that the media file has been added */
-            playerScopeMain.dispatchOSD(Localization.stringResource("room_selected_vid", "${media?.fileName}"))
+            val lyricist = Lyricist("en", Stringies)
+            playerScopeMain.dispatchOSD(lyricist.strings.roomSelectedVid("${media?.fileName}"))
         }
     }
 
@@ -409,11 +411,14 @@ class ExoPlayer : BasePlayer() {
     @SuppressLint("WrongConstant")
     override fun switchAspectRatio(): String {
         val resolutions = mutableMapOf<Int, String>()
-        resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIT] = Localization.stringResource("room_scaling_fit_screen")
-        resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH] = Localization.stringResource("room_scaling_fixed_width")
-        resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT] = Localization.stringResource("room_scaling_fixed_height")
-        resolutions[AspectRatioFrameLayout.RESIZE_MODE_FILL] = Localization.stringResource("room_scaling_fill_screen")
-        resolutions[AspectRatioFrameLayout.RESIZE_MODE_ZOOM] = Localization.stringResource("room_scaling_zoom")
+
+        val lyricist = Lyricist("en", Stringies)
+
+        resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIT] = lyricist.strings.roomScalingFitScreen
+        resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH] = lyricist.strings.roomScalingFixedWidth
+        resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT] = lyricist.strings.roomScalingFixedHeight
+        resolutions[AspectRatioFrameLayout.RESIZE_MODE_FILL] = lyricist.strings.roomScalingFillScreen
+        resolutions[AspectRatioFrameLayout.RESIZE_MODE_ZOOM] = lyricist.strings.roomScalingZoom
 
         var nextRes = (exoView.resizeMode + 1)
         if (nextRes == 5) nextRes = 0

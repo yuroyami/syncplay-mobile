@@ -31,7 +31,7 @@ import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
 import com.yuroyami.syncplay.compose.fontDirective
 import com.yuroyami.syncplay.compose.fontInter
-import com.yuroyami.syncplay.locale.Localization
+import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.watchroom.p
 
@@ -91,9 +91,10 @@ object PopupChatHistory {
                         visibilityState.value = false
                     },
                 ) {
+                    val localz = rememberStrings()
                     Icon(imageVector = Icons.Filled.Close, "")
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(Localization.stringResource("close"), fontSize = 14.sp)
+                    Text(localz.strings.close, fontSize = 14.sp)
                 }
 
             }

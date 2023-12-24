@@ -57,9 +57,9 @@ import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_MSG_SHADOW
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_INROOM_PIP
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_REMEMBER_INFO
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
-import com.yuroyami.syncplay.locale.Localization
-import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.lyricist.langMap
+import com.yuroyami.syncplay.lyricist.rememberStrings
+import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.watchroom.homeCallback
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.player
@@ -68,6 +68,8 @@ object MySettings {
 
     @Composable
     fun globalSettings(): List<SettingCategory> {
+        val localz = rememberStrings()
+
         val ds = DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
 
         val settingStyling = SettingStyling(
@@ -86,8 +88,8 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.CheckboxSetting,
-                        title = { Localization.stringResource("setting_remember_join_info_title") },
-                        summary = { Localization.stringResource("setting_remember_join_info_summary") },
+                        title = { localz.strings.settingRememberJoinInfoTitle },
+                        summary = { localz.strings.settingRememberJoinInfoSummary },
                         defaultValue = true,
                         key = PREF_REMEMBER_INFO,
                         icon = Icons.Filled.Face,
@@ -96,14 +98,14 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.PopupSetting,
-                        title = { Localization.stringResource("media_directories") },
-                        summary = { Localization.stringResource("media_directories_setting_summary") },
+                        title = { localz.strings.mediaDirectories },
+                        summary = { localz.strings.mediaDirectoriesSettingSummary },
                         key = PREF_SP_MEDIA_DIRS,
                         icon = Icons.Filled.QueueMusic,
                         datastorekey = ds,
                         styling = settingStyling,
-                        popupComposable = {
-                                s -> MediaDirsPopup(s)
+                        popupComposable = { s ->
+                            MediaDirsPopup(s)
                         }
                     )
                 )
@@ -116,8 +118,8 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.MultiChoicePopupSetting,
-                        title = { Localization.stringResource("setting_display_language_title") },
-                        summary = {Localization.stringResource("setting_display_language_summry") },
+                        title = { localz.strings.settingDisplayLanguageTitle },
+                        summary = { localz.strings.settingDisplayLanguageSummry },
                         defaultValue = "en",
                         key = DataStoreKeys.PREF_DISPLAY_LANG,
                         entryKeys = { langMap.keys.toList() },
@@ -131,8 +133,8 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.TextFieldSetting,
-                        title = { Localization.stringResource("setting_audio_default_language_title") },
-                        summary = { Localization.stringResource("setting_audio_default_language_summry") },
+                        title = { localz.strings.settingAudioDefaultLanguageTitle },
+                        summary = { localz.strings.settingAudioDefaultLanguageSummry },
                         defaultValue = "und",
                         key = DataStoreKeys.PREF_AUDIO_LANG,
                         icon = Icons.Filled.GraphicEq,
@@ -141,8 +143,8 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.TextFieldSetting,
-                        title = { Localization.stringResource("setting_cc_default_language_title") },
-                        summary = { Localization.stringResource("setting_cc_default_language_summry") },
+                        title = { localz.strings.settingCcDefaultLanguageTitle },
+                        summary = { localz.strings.settingCcDefaultLanguageSummry },
                         defaultValue = "eng",
                         key = DataStoreKeys.PREF_CC_LANG,
                         icon = Icons.Filled.ClosedCaptionOff,
@@ -159,8 +161,8 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.CheckboxSetting,
-                        title = { Localization.stringResource("setting_ready_firsthand_title") },
-                        summary = { Localization.stringResource("setting_ready_firsthand_summary") },
+                        title = { localz.strings.settingReadyFirsthandTitle },
+                        summary = { localz.strings.settingReadyFirsthandSummary },
                         defaultValue = true,
                         key = DataStoreKeys.PREF_READY_FIRST_HAND,
                         icon = Icons.Filled.TaskAlt,
@@ -169,8 +171,8 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.CheckboxSetting,
-                        title = { Localization.stringResource("setting_pause_if_someone_left_title") },
-                        summary = { Localization.stringResource("setting_pause_if_someone_left_summary") },
+                        title = { localz.strings.settingPauseIfSomeoneLeftTitle },
+                        summary = { localz.strings.settingPauseIfSomeoneLeftSummary },
                         defaultValue = true,
                         key = DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE,
                         icon = Icons.Filled.FrontHand,
@@ -179,8 +181,8 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.CheckboxSetting,
-                        title = { Localization.stringResource("setting_warn_file_mismatch_title") },
-                        summary = { Localization.stringResource("setting_warn_file_mismatch_summary") },
+                        title = { localz.strings.settingWarnFileMismatchTitle },
+                        summary = { localz.strings.settingWarnFileMismatchSummary },
                         defaultValue = true,
                         key = DataStoreKeys.PREF_FILE_MISMATCH_WARNING,
                         icon = Icons.Filled.ErrorOutline,
@@ -189,15 +191,15 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.MultiChoicePopupSetting,
-                        title = { Localization.stringResource("setting_fileinfo_behaviour_name_title") },
-                        summary = { Localization.stringResource("setting_fileinfo_behaviour_name_summary") },
+                        title = { localz.strings.settingFileinfoBehaviourNameTitle },
+                        summary = { localz.strings.settingFileinfoBehaviourNameSummary },
                         key = DataStoreKeys.PREF_HASH_FILENAME,
                         defaultValue = "1",
                         entryKeys = {
                             listOf(
-                                Localization.stringResource("setting_fileinfoBehavior_a"),
-                                Localization.stringResource("setting_fileinfoBehavior_b"),
-                                Localization.stringResource("setting_fileinfoBehavior_c")
+                                localz.strings.settingFileinfoBehaviorA,
+                                localz.strings.settingFileinfoBehaviorB,
+                                localz.strings.settingFileinfoBehaviorC
                             )
                         },
                         entryValues = { listOf("1", "2", "3") },
@@ -207,15 +209,15 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.MultiChoicePopupSetting,
-                        title = { Localization.stringResource("setting_fileinfo_behaviour_size_title") },
-                        summary = { Localization.stringResource("setting_fileinfo_behaviour_size_summary") },
+                        title = { localz.strings.settingFileinfoBehaviourSizeTitle },
+                        summary = { localz.strings.settingFileinfoBehaviourSizeSummary },
                         key = DataStoreKeys.PREF_HASH_FILESIZE,
                         defaultValue = "1",
                         entryKeys = {
                             listOf(
-                                Localization.stringResource("setting_fileinfoBehavior_a"),
-                                Localization.stringResource("setting_fileinfoBehavior_b"),
-                                Localization.stringResource("setting_fileinfoBehavior_c")
+                                localz.strings.settingFileinfoBehaviorA,
+                                localz.strings.settingFileinfoBehaviorB,
+                                localz.strings.settingFileinfoBehaviorC
                             )
                         },
                         entryValues = { listOf("1", "2", "3") },
@@ -233,8 +235,8 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.SliderSetting,
-                        title = { Localization.stringResource("setting_max_buffer_title") },
-                        summary = { Localization.stringResource("setting_max_buffer_summary") },
+                        title = { localz.strings.settingMaxBufferTitle },
+                        summary = { localz.strings.settingMaxBufferSummary },
                         defaultValue = 30,
                         minValue = 1,
                         maxValue = 60,
@@ -245,8 +247,8 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.SliderSetting,
-                        title = { Localization.stringResource("setting_min_buffer_title") },
-                        summary = { Localization.stringResource("setting_min_buffer_summary") },
+                        title = { localz.strings.settingMinBufferTitle },
+                        summary = { localz.strings.settingMinBufferSummary },
                         defaultValue = 15,
                         minValue = 1,
                         maxValue = 30,
@@ -257,8 +259,8 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.SliderSetting,
-                        title = { Localization.stringResource("setting_playback_buffer_title") },
-                        summary = { Localization.stringResource("setting_playback_buffer_summary") },
+                        title = { localz.strings.settingPlaybackBufferTitle },
+                        summary = { localz.strings.settingPlaybackBufferSummary },
                         defaultValue = 2500,
                         minValue = 100,
                         maxValue = 15000,
@@ -277,8 +279,8 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.ToggleSetting,
-                        title = { Localization.stringResource("setting_tls_title") },
-                        summary = { Localization.stringResource("setting_tls_summary") },
+                        title = { localz.strings.settingTlsTitle },
+                        summary = { localz.strings.settingTlsSummary },
                         defaultValue = false,
                         key = "tls",
                         enabled = false,
@@ -295,8 +297,8 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.OneClickSetting,
-                        title = { Localization.stringResource("setting_resetdefault_title") },
-                        summary = { Localization.stringResource("setting_resetdefault_summary") },
+                        title = { localz.strings.settingResetdefaultTitle },
+                        summary = { localz.strings.settingResetdefaultSummary },
                         isResetDefault = true,
                         key = "reset_default",
                         icon = Icons.Filled.ClearAll,
@@ -308,7 +310,10 @@ object MySettings {
         )
     }
 
+    @Composable
     fun inRoomPreferences(): List<SettingCategory> {
+        val localz = rememberStrings()
+
         val ds = DataStoreKeys.DATASTORE_INROOM_PREFERENCES
 
         val ss = SettingStyling(
@@ -330,8 +335,8 @@ object MySettings {
                     settingList = listOf(
                         Setting(
                             type = SettingType.ColorSetting,
-                            title = { Localization.stringResource("uisetting_timestamp_color_title") },
-                            summary = { Localization.stringResource("uisetting_timestamp_color_summary") },
+                            title = { localz.strings.uisettingTimestampColorTitle },
+                            summary = { localz.strings.uisettingTimestampSummary },
                             defaultValue = Paletting.MSG_TIMESTAMP.toArgb(),
                             key = PREF_INROOM_COLOR_TIMESTAMP,
                             icon = Icons.Filled.Brush,
@@ -340,8 +345,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.ColorSetting,
-                            title = { Localization.stringResource("uisetting_self_color_title") },
-                            summary = { Localization.stringResource("uisetting_self_color_summary") },
+                            title = { localz.strings.uisettingSelfColorTitle },
+                            summary = { localz.strings.uisettingSelfColorSummary },
                             defaultValue = Paletting.MSG_SELF_TAG.toArgb(),
                             key = PREF_INROOM_COLOR_SELFTAG,
                             icon = Icons.Filled.Brush,
@@ -350,8 +355,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.ColorSetting,
-                            title = { Localization.stringResource("uisetting_friend_color_title") },
-                            summary = { Localization.stringResource("uisetting_friend_color_summary") },
+                            title = { localz.strings.uisettingFriendColorTitle },
+                            summary = { localz.strings.uisettingFriendColorSummary },
                             defaultValue = Paletting.MSG_FRIEND_TAG.toArgb(),
                             key = PREF_INROOM_COLOR_FRIENDTAG,
                             icon = Icons.Filled.Brush,
@@ -360,8 +365,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.ColorSetting,
-                            title = { Localization.stringResource("uisetting_system_color_title") },
-                            summary = { Localization.stringResource("uisetting_system_color_summary") },
+                            title = { localz.strings.uisettingSystemColorTitle },
+                            summary = { localz.strings.uisettingSystemColorSummary },
                             defaultValue = Paletting.MSG_SYSTEM.toArgb(),
                             key = PREF_INROOM_COLOR_SYSTEMMSG,
                             icon = Icons.Filled.Brush,
@@ -370,8 +375,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.ColorSetting,
-                            title = { Localization.stringResource("uisetting_human_color_title") },
-                            summary = { Localization.stringResource("uisetting_human_color_summary") },
+                            title = { localz.strings.uisettingHumanColorTitle },
+                            summary = { localz.strings.uisettingHumanColorSummary },
                             defaultValue = Paletting.MSG_CHAT.toArgb(),
                             key = PREF_INROOM_COLOR_USERMSG,
                             icon = Icons.Filled.Brush,
@@ -380,8 +385,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.ColorSetting,
-                            title = { Localization.stringResource("uisetting_error_color_title") },
-                            summary = { Localization.stringResource("uisetting_error_color_summary") },
+                            title = { localz.strings.uisettingErrorColorTitle },
+                            summary = { localz.strings.uisettingErrorColorSummary },
                             defaultValue = Paletting.MSG_ERROR.toArgb(),
                             key = PREF_INROOM_COLOR_ERRORMSG,
                             icon = Icons.Filled.Brush,
@@ -400,8 +405,8 @@ object MySettings {
                     settingList = listOf(
                         Setting(
                             type = SettingType.ToggleSetting,
-                            title = { Localization.stringResource("uisetting_timestamp_title") },
-                            summary = { Localization.stringResource("uisetting_timestamp_summary") },
+                            title = { localz.strings.uisettingTimestampTitle },
+                            summary = { localz.strings.uisettingTimestampSummary },
                             defaultValue = true,
                             key = PREF_INROOM_MSG_ACTIVATE_STAMP,
                             icon = Icons.Filled.Pin,
@@ -410,8 +415,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.ToggleSetting,
-                            title = { Localization.stringResource("uisetting_msgoutline_title") },
-                            summary = { Localization.stringResource("uisetting_msgoutline_title") },
+                            title = { localz.strings.uisettingMsgoutlineTitle },
+                            summary = { localz.strings.uisettingMsgoutlineSummary },
                             defaultValue = true,
                             key = PREF_INROOM_MSG_OUTLINE,
                             icon = Icons.Filled.BorderColor,
@@ -420,8 +425,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.ToggleSetting,
-                            title = { Localization.stringResource("uisetting_msgshadow_title") },
-                            summary = { Localization.stringResource("uisetting_msgshadow_title") },
+                            title = { localz.strings.uisettingMsgshadowTitle },
+                            summary = { localz.strings.uisettingMsgshadowSummary },
                             defaultValue = false,
                             key = PREF_INROOM_MSG_SHADOW,
                             icon = Icons.Filled.BorderColor,
@@ -430,8 +435,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.SliderSetting,
-                            title = { Localization.stringResource("uisetting_messagery_alpha_title") },
-                            summary = { Localization.stringResource("uisetting_messagery_alpha_summary") },
+                            title = { localz.strings.uisettingMessageryAlphaTitle },
+                            summary = { localz.strings.uisettingMessageryAlphaSummary },
                             defaultValue = 0,
                             minValue = 0,
                             maxValue = 255,
@@ -442,8 +447,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.SliderSetting,
-                            title = { Localization.stringResource("uisetting_msgsize_title") },
-                            summary = { Localization.stringResource("uisetting_msgsize_summary") },
+                            title = { localz.strings.uisettingMsgsizeTitle },
+                            summary = { localz.strings.uisettingMsgsizeSummary },
                             defaultValue = 9,
                             minValue = 6,
                             maxValue = 28,
@@ -454,8 +459,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.SliderSetting,
-                            title = { Localization.stringResource("uisetting_msgcount_title") },
-                            summary = { Localization.stringResource("uisetting_msgcount_summary") },
+                            title = { localz.strings.uisettingMsgcountTitle },
+                            summary = { localz.strings.uisettingMsgcountSummary },
                             defaultValue = 10,
                             minValue = 1,
                             maxValue = 30,
@@ -466,8 +471,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.SliderSetting,
-                            title = { Localization.stringResource("uisetting_msglife_title") },
-                            summary = { Localization.stringResource("uisetting_msglife_summary") },
+                            title = { localz.strings.uisettingMsglifeTitle },
+                            summary = { localz.strings.uisettingMsglifeSummary },
                             defaultValue = 3,
                             minValue = 1,
                             maxValue = 10,
@@ -478,8 +483,8 @@ object MySettings {
                         ),
                         Setting(
                             type = SettingType.ToggleSetting,
-                            title = { Localization.stringResource("uisetting_msgboxaction_title") },
-                            summary = { Localization.stringResource("uisetting_msgboxaction_summary") },
+                            title = { localz.strings.uisettingMsgboxactionTitle },
+                            summary = { localz.strings.uisettingMsgboxactionSummary },
                             defaultValue = true,
                             key = PREF_INROOM_MSG_BOX_ACTION,
                             icon = Icons.Filled.Keyboard,
@@ -498,8 +503,8 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.SliderSetting,
-                        title = { Localization.stringResource("uisetting_subtitle_size_title") },
-                        summary = { Localization.stringResource("uisetting_subtitle_size_summary") },
+                        title = { localz.strings.uisettingSubtitleSizeTitle },
+                        summary = { localz.strings.uisettingSubtitleSizeSummary },
                         defaultValue = 16,
                         minValue = 2,
                         maxValue = 200,
@@ -535,8 +540,8 @@ object MySettings {
 //                    ),
                     Setting(
                         type = SettingType.SliderSetting,
-                        title = { Localization.stringResource("uisetting_seek_forward_jump_title") },
-                        summary = { Localization.stringResource("uisetting_seek_forward_jump_summary") },
+                        title = { localz.strings.uisettingSeekForwardJumpTitle },
+                        summary = { localz.strings.uisettingSeekForwardJumpSummary },
                         defaultValue = 10,
                         minValue = 1,
                         maxValue = 120,
@@ -547,8 +552,8 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.SliderSetting,
-                        title = { Localization.stringResource("uisetting_seek_backward_jump_title") },
-                        summary = { Localization.stringResource("uisetting_seek_backward_jump_summary") },
+                        title = { localz.strings.uisettingSeekBackwardJumpTitle },
+                        summary = { localz.strings.uisettingSeekBackwardJumpSummary },
                         defaultValue = 10,
                         minValue = 1,
                         maxValue = 120,
@@ -569,8 +574,8 @@ object MySettings {
                 settingList = listOf(
                     Setting(
                         type = SettingType.ToggleSetting,
-                        title = { Localization.stringResource("uisetting_pip_title") },
-                        summary = { Localization.stringResource("uisetting_pip_title") },
+                        title = { localz.strings.uisettingPipTitle },
+                        summary = { localz.strings.uisettingPipSummary },
                         defaultValue = true,
                         key = PREF_INROOM_PIP,
                         icon = Icons.Filled.PictureInPicture,
@@ -579,8 +584,8 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.SliderSetting,
-                        title = { Localization.stringResource("uisetting_reconnect_interval_title") } ,
-                        summary = { Localization.stringResource("uisetting_reconnect_interval_summary") },
+                        title = { localz.strings.uisettingReconnectIntervalTitle },
+                        summary = { localz.strings.uisettingReconnectIntervalSummary },
                         defaultValue = 2,
                         minValue = 0,
                         maxValue = 15,
@@ -591,8 +596,8 @@ object MySettings {
                     ),
                     Setting(
                         type = SettingType.OneClickSetting,
-                        title = { Localization.stringResource("uisetting_resetdefault_title") },
-                        summary = { Localization.stringResource("uisetting_resetdefault_summary") },
+                        title = { localz.strings.uisettingResetdefaultTitle },
+                        summary = { localz.strings.uisettingResetdefaultSummary },
                         isResetDefault = true,
                         key = "RESET",
                         icon = Icons.Filled.ClearAll,
@@ -602,8 +607,6 @@ object MySettings {
                 )
             )
         )
-
         return list
     }
-
 }

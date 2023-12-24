@@ -58,7 +58,7 @@ import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
 import com.yuroyami.syncplay.datastore.ds
 import com.yuroyami.syncplay.datastore.stringSetFlow
-import com.yuroyami.syncplay.locale.Localization
+import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.ui.Paletting
 
 var wentForFilePick = false
@@ -68,6 +68,8 @@ object PopupMediaDirs {
     @OptIn(ExperimentalLayoutApi::class)
     @Composable
     fun MediaDirsPopup(visibilityState: MutableState<Boolean>) {
+        val localz = rememberStrings()
+
         val directive4 = fontDirective()
         val inter = fontInter()
 
@@ -120,7 +122,7 @@ object PopupMediaDirs {
 
                 /* The title */
                 FancyText2(
-                    string = Localization.stringResource("media_directories"),
+                    string = localz.strings.mediaDirectories,
                     solid = Color.Black,
                     size = 18f,
                     font = directive4
@@ -128,7 +130,7 @@ object PopupMediaDirs {
 
                 /* Title's subtext */
                 Text(
-                    text = Localization.stringResource("media_directories_brief"),
+                    text = localz.strings.mediaDirectoriesBrief,
                     color = MaterialTheme.colorScheme.primary,
                     lineHeight = 14.sp,
                     fontSize = 10.sp,
@@ -197,7 +199,7 @@ object PopupMediaDirs {
                                         text = {
                                             Text(
                                                 color = Color.LightGray,
-                                                text = Localization.stringResource("media_directories_show_full_path"),
+                                                text = localz.strings.mediaDirectoriesShowFullPath,
                                                 fontSize = 12.sp
                                             )
                                         },
@@ -221,7 +223,7 @@ object PopupMediaDirs {
 
                                     //Item action: Delete
                                     DropdownMenuItem(
-                                        text = { Text(color = Color.LightGray, text = Localization.stringResource("media_directories_delete"), fontSize = 12.sp) },
+                                        text = { Text(color = Color.LightGray, text = localz.strings.mediaDirectoriesDelete, fontSize = 12.sp) },
                                         leadingIcon = { Icon(imageVector = Icons.Filled.Delete, "", tint = Color.LightGray) },
                                         onClick = {
                                             itemMenuState.value = false
@@ -279,7 +281,7 @@ object PopupMediaDirs {
                     ) {
                         Icon(imageVector = Icons.Filled.ClearAll, "")
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(Localization.stringResource("media_directories_clear_all"), fontSize = 14.sp)
+                        Text(localz.strings.mediaDirectoriesClearAll, fontSize = 14.sp)
                     }
 
                     /* Add folder button */
@@ -300,7 +302,7 @@ object PopupMediaDirs {
                     ) {
                         Icon(imageVector = Icons.Filled.CreateNewFolder, "")
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(Localization.stringResource("media_directories_add_folder"), fontSize = 14.sp)
+                        Text(localz.strings.mediaDirectoriesAddFolder, fontSize = 14.sp)
                     }
 
                     /* Save button */
@@ -313,7 +315,7 @@ object PopupMediaDirs {
                     ) {
                         Icon(imageVector = Icons.Filled.Done, "")
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(Localization.stringResource("media_directories_save"), fontSize = 14.sp)
+                        Text(localz.strings.mediaDirectoriesSave, fontSize = 14.sp)
                     }
                 }
             }

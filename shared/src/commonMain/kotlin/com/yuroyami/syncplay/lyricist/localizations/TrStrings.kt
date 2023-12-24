@@ -1,5 +1,6 @@
-package com.yuroyami.syncplay.lyricist
+package com.yuroyami.syncplay.lyricist.localizations
 
+import com.yuroyami.syncplay.lyricist.Strings
 import com.yuroyami.syncplay.utils.format
 
 val TrStrings = object : Strings {

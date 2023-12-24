@@ -12,8 +12,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import androidx.media3.common.C
 import androidx.media3.common.MimeTypes
+import cafe.adriel.lyricist.Lyricist
 import com.yuroyami.syncplay.databinding.MpvviewBinding
-import com.yuroyami.syncplay.locale.Localization.stringResource
+import com.yuroyami.syncplay.lyricist.Stringies
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
@@ -49,8 +50,8 @@ class MpvPlayer : BasePlayer() {
     override val engine = ENGINE.ANDROID_MPV
 
     var mpvPos = 0L
-    lateinit var observer: MPVLib.EventObserver
-    var ismpvInit = false
+    private lateinit var observer: MPVLib.EventObserver
+    private var ismpvInit = false
     private lateinit var mpvView: MPVView
     private lateinit var ctx: Context
 
@@ -260,7 +261,9 @@ class MpvPlayer : BasePlayer() {
             }
 
             /* Finally, show a a toast to the user that the media file has been added */
-            playerScopeMain.dispatchOSD(stringResource("room_selected_vid", "${media?.fileName}"))
+            val lyricist = Lyricist("en", Stringies)
+            playerScopeMain.dispatchOSD(lyricist.strings.roomSelectedVid("${media?.fileName}"))
+
         }
     }
 

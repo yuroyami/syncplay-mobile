@@ -14,7 +14,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.media3.common.C
 import androidx.media3.common.C.STREAM_TYPE_MUSIC
 import com.yuroyami.syncplay.datastore.DataStoreKeys
-import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_GLOBAL_SETTINGS
 import com.yuroyami.syncplay.datastore.DataStoreKeys.DATASTORE_MISC_PREFS
 import com.yuroyami.syncplay.datastore.obtainString
 import com.yuroyami.syncplay.player.ENGINE
@@ -23,7 +22,6 @@ import com.yuroyami.syncplay.player.exo.ExoPlayer
 import com.yuroyami.syncplay.player.mpv.MpvPlayer
 import com.yuroyami.syncplay.utils.UIUtils.cutoutMode
 import com.yuroyami.syncplay.utils.UIUtils.hideSystemUI
-import com.yuroyami.syncplay.utils.changeLanguage
 import com.yuroyami.syncplay.utils.defaultEngineAndroid
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.watchroom.GestureCallback
@@ -63,12 +61,12 @@ class WatchActivity : ComponentActivity() {
     lateinit var audioManager: AudioManager
 
     /** Now, onto overriding lifecycle methods */
-    override fun onCreate(sis: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         /** Applying saved language */
-        val lang = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainString(DataStoreKeys.PREF_DISPLAY_LANG, "en") }
-        changeLanguage(lang = lang, context = this)
+        //val lang = runBlocking { DATASTORE_GLOBAL_SETTINGS.obtainString(DataStoreKeys.PREF_DISPLAY_LANG, "en") }
+        //changeLanguage(lang = lang, context = this)
 
-        super.onCreate(sis)
+        super.onCreate(savedInstanceState)
 
         Thread.setDefaultUncaughtExceptionHandler { t, e ->
             loggy(e.stackTraceToString(), 99999)

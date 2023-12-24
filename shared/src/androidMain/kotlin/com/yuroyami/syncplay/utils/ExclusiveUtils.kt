@@ -1,10 +1,27 @@
 package com.yuroyami.syncplay.utils
 
 import android.content.Context
+import android.content.res.Configuration
 import android.net.Uri
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.yuroyami.syncplay.models.MediaFile
+import java.util.Locale
+
+fun Context.changeLanguage(lang: String): Context {
+    val appCompatWay = false
+    //if (appCompatWay) {
+    //    val localesList: LocaleListCompat = LocaleListCompat.forLanguageTags(lang)
+    //    AppCompatDelegate.setApplicationLocales(localesList)
+    //} else {
+        val locale = Locale(lang)
+        Locale.setDefault(locale)
+        val config = Configuration()
+        config.setLocale(locale)
+        return createConfigurationContext(config)
+        //resources.updateConfiguration(config, resources.displayMetrics)
+    //}
+}
 
 fun collectInfoLocalAndroid(media: MediaFile, context: Context) {
     with (media) {

@@ -10,8 +10,6 @@ expect fun loggy(s: String?, checkpoint: Int)
 
 expect fun getDefaultEngine(): String
 
-expect fun changeLanguage(lang: String, context: Any?)
-
 expect fun generateTimestampMillis(): Long
 
 expect fun timeStamper(seconds: Long): String

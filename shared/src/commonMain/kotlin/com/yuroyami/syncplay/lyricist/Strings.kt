@@ -6,6 +6,19 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.text.intl.Locale
 import cafe.adriel.lyricist.LanguageTag
 import cafe.adriel.lyricist.Lyricist
+import com.yuroyami.syncplay.lyricist.localizations.ArStrings
+import com.yuroyami.syncplay.lyricist.localizations.DeStrings
+import com.yuroyami.syncplay.lyricist.localizations.EnStrings
+import com.yuroyami.syncplay.lyricist.localizations.EsStrings
+import com.yuroyami.syncplay.lyricist.localizations.FrStrings
+import com.yuroyami.syncplay.lyricist.localizations.HiStrings
+import com.yuroyami.syncplay.lyricist.localizations.ItStrings
+import com.yuroyami.syncplay.lyricist.localizations.JaStrings
+import com.yuroyami.syncplay.lyricist.localizations.KoStrings
+import com.yuroyami.syncplay.lyricist.localizations.PtStrings
+import com.yuroyami.syncplay.lyricist.localizations.RuStrings
+import com.yuroyami.syncplay.lyricist.localizations.TrStrings
+import com.yuroyami.syncplay.lyricist.localizations.ZhStrings
 
 interface Strings {
     val yes: String
@@ -226,24 +239,34 @@ interface Strings {
 }
 
 object Locales {
-    const val En = "en" //English
-    const val Fr = "fr" //French
-    const val Es = "es" //Spanish
     const val Ar = "ar" //Arabic
-    const val Zh = "zh" //Chinese (Simplified)
-    const val Ru = "ru" //Russian
+    const val De = "de" //German
+    const val En = "en" //English
+    const val Es = "es" //Spanish
+    const val Fr = "fr" //French
+    const val Hi = "hi" //Hindi
+    const val It = "it" //Italian
     const val Ja = "ja" //Japanese
+    const val Ko = "ko" //Korean
     const val Pt = "pt" //Portuguese
-    const val de = "de" //German
-    const val tr = "tr" //Turkish
-    const val ko = "ko" //Korean
+    const val Ru = "ru" //Russian
+    const val Tr = "tr" //Turkish
+    const val Zh = "zh" //Chinese (Simplified)
 }
 
 val Stringies: Map<LanguageTag, Strings> = mapOf(
-    Locales.En to EnStrings,
-    Locales.Fr to FrStrings,
-    Locales.Es to EsStrings,
     Locales.Ar to ArStrings,
+    Locales.De to DeStrings,
+    Locales.En to EnStrings,
+    Locales.Es to EsStrings,
+    Locales.Fr to FrStrings,
+    Locales.Hi to HiStrings,
+    Locales.It to ItStrings,
+    Locales.Ja to JaStrings,
+    Locales.Ko to KoStrings,
+    Locales.Pt to PtStrings,
+    Locales.Ru to RuStrings,
+    Locales.Tr to TrStrings,
     Locales.Zh to ZhStrings,
 )
 

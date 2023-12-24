@@ -30,7 +30,10 @@ android {
         targetSdk = (findProperty("android.targetSdk") as String).toInt()
         versionCode = 101300 //Changing versionName semantic projection from 1.XXX.XXX.XXX to 1.XX.XX.XX
         versionName = "0.13.0"
-        resourceConfigurations.addAll(setOf("en", "ar", "zh", "fr", "es")) //To use with AppCompatDelegate.setApplicationLocale
+        resourceConfigurations.addAll(setOf(
+            //To use with AppCompatDelegate.setApplicationLocale
+            "ar", "de", "en", "es", "fr", "hi", "it", "ja", "ko", "pt", "ru", "tr", "zh"
+        ))
         signingConfig = signingConfigs.getByName("github")
         //proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
