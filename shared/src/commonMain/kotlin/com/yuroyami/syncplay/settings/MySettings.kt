@@ -70,8 +70,6 @@ object MySettings {
     fun globalSettings(): List<SettingCategory> {
         val localz = rememberStrings()
 
-        val ds = DataStoreKeys.SYNCPLAY_PREFS
-
         val settingStyling = SettingStyling(
             titleFilling = listOf(Paletting.OLD_SP_YELLOW),
             titleShadow = Paletting.SP_GRADIENT,
@@ -83,7 +81,7 @@ object MySettings {
         return listOf(
             /** Setting Card Number 01: General */
             SettingCategory(
-                title = "General",
+                title = localz.strings.settingsCategGeneral,
                 icon = Icons.Filled.SettingsSuggest,
                 settingList = listOf(
                     Setting(
@@ -111,7 +109,7 @@ object MySettings {
 
             /** Setting Card N°02: Language */
             SettingCategory(
-                title = "Language",
+                title = localz.strings.settingsCategLanguage,
                 icon = Icons.Filled.Translate,
                 settingList = listOf(
                     Setting(
@@ -151,7 +149,7 @@ object MySettings {
 
             /** Setting Card N°03: Syncing */
             SettingCategory(
-                title = "Syncing",
+                title = localz.strings.settingsCategSyncing,
                 icon = Icons.Filled.ConnectWithoutContact,
                 settingList = listOf(
                     Setting(
@@ -220,7 +218,7 @@ object MySettings {
 
 
             SettingCategory(
-                title = "Exoplayer",
+                title = localz.strings.settingsCategExoplayer,
                 icon = Icons.Filled.VideoSettings,
                 settingList = listOf(
                     Setting(
@@ -261,12 +259,12 @@ object MySettings {
             ),
 
             SettingCategory(
-                title = "Network",
+                title = localz.strings.settingsCategNetwork,
                 icon = Icons.Filled.Hub,
                 settingList = listOf(
                     Setting(
                         type = SettingType.ToggleSetting,
-                        key = "tls",
+                        key = DataStoreKeys.PREF_TLS_ENABLE,
                         title = { localz.strings.settingTlsTitle },
                         summary = { localz.strings.settingTlsSummary },
                         defaultValue = false,
@@ -278,12 +276,12 @@ object MySettings {
             ),
 
             SettingCategory(
-                title = "Advanced",
+                title = localz.strings.settingsCategAdvanced,
                 icon = Icons.Filled.Stream,
                 settingList = listOf(
                     Setting(
                         type = SettingType.OneClickSetting,
-                        key = "reset_default",
+                        key = DataStoreKeys.PREF_GLOBAL_CLEAR_ALL,
                         title = { localz.strings.settingResetdefaultTitle },
                         summary = { localz.strings.settingResetdefaultSummary },
                         icon = Icons.Filled.ClearAll,
@@ -299,8 +297,6 @@ object MySettings {
     fun inRoomPreferences(): List<SettingCategory> {
         val localz = rememberStrings()
 
-        val ds = DataStoreKeys.SYNCPLAY_PREFS
-
         val ss = SettingStyling(
             titleFilling = listOf(Paletting.OLD_SP_YELLOW),
             titleShadow = Paletting.SP_GRADIENT,
@@ -315,7 +311,7 @@ object MySettings {
         if (!isSoloMode) {
             list.add(
                 SettingCategory(
-                    title = "Chat Colors",
+                    title = localz.strings.uisettingCategChatColors,
                     icon = Icons.Filled.Palette,
                     settingList = listOf(
                         Setting(
@@ -379,7 +375,7 @@ object MySettings {
 
             list.add(
                 SettingCategory(
-                    title = "Chat Properties",
+                    title = localz.strings.uisettingCategChatProperties,
                     icon = Icons.Filled.Chat,
                     settingList = listOf(
                         Setting(
@@ -469,7 +465,7 @@ object MySettings {
 
         list.add(
             SettingCategory(
-                title = "Player Settings",
+                title = localz.strings.uisettingCategPlayerSettings,
                 icon = Icons.Filled.VideoLabel,
                 settingList = listOf(
                     Setting(
@@ -537,7 +533,7 @@ object MySettings {
 
         list.add(
             SettingCategory(
-                title = "Advanced",
+                title = localz.strings.settingsCategAdvanced,
                 icon = Icons.Filled.Stream,
                 settingList = listOf(
                     Setting(

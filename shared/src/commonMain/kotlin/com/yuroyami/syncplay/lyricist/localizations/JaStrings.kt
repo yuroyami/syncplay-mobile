@@ -128,11 +128,18 @@ val JaStrings = object : Strings {
     override val mediaDirectoriesAddFolder = "フォルダを追加"
     override val mediaDirectoriesDelete = "リストから削除"
     override val mediaDirectoriesShowFullPath = "フルパスを表示"
-    override val settingsCategGeneral = "一般設定"
-    override val settingsCategPlayer = "プレイヤー設定"
-    override val settingsCategRoom = "ルーム設定"
-    override val settingsCategVideo = "ビデオ設定"
-    override val settingsCategMisc = "その他"
+
+    override val settingsCategGeneral = "一般"
+    override val settingsCategExoplayer = "Exoplayer"
+    override val settingsCategLanguage = "言語"
+    override val settingsCategSyncing = "同期"
+    override val settingsCategNetwork = "ネットワーク"
+    override val settingsCategAdvanced = "高度な設定"
+    override val uisettingCategChatColors = "チャットの色"
+    override val uisettingCategChatProperties = "チャットのプロパティ"
+    override val uisettingCategPlayerSettings = "ビデオプレーヤーの設定"
+
+
     override val settingNightModeTitle = "ナイトモード"
     override val settingNightModeSummary = "ナイトモードの動作を選択します。"
     override val settingRememberJoinInfoTitle = "参加情報を覚えておく"

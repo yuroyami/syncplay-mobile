@@ -146,10 +146,11 @@ interface Strings {
     val mediaDirectoriesDelete: String
     val mediaDirectoriesShowFullPath: String
     val settingsCategGeneral: String
-    val settingsCategPlayer: String
-    val settingsCategRoom: String
-    val settingsCategVideo: String
-    val settingsCategMisc: String
+    val settingsCategLanguage: String
+    val settingsCategSyncing: String
+    val settingsCategExoplayer: String
+    val settingsCategNetwork: String
+    val settingsCategAdvanced: String
     val settingNightModeTitle: String
     val settingNightModeSummary: String
     val settingRememberJoinInfoTitle: String
@@ -186,6 +187,10 @@ interface Strings {
     val settingFileinfoBehaviourNameSummary: String
     val settingFileinfoBehaviourSizeTitle: String
     val settingFileinfoBehaviourSizeSummary: String
+
+    val uisettingCategChatColors: String
+    val uisettingCategPlayerSettings: String
+    val uisettingCategChatProperties: String
     val uisettingApply: String
     val uisettingTimestampSummary: String
     val uisettingTimestampTitle: String
@@ -238,36 +243,36 @@ interface Strings {
     val settingFileinfoBehaviorC: String
 }
 
-object Locales {
-    const val Ar = "ar" //Arabic
-    const val De = "de" //German
-    const val En = "en" //English
-    const val Es = "es" //Spanish
-    const val Fr = "fr" //French
-    const val Hi = "hi" //Hindi
-    const val It = "it" //Italian
-    const val Ja = "ja" //Japanese
-    const val Ko = "ko" //Korean
-    const val Pt = "pt" //Portuguese
-    const val Ru = "ru" //Russian
-    const val Tr = "tr" //Turkish
-    const val Zh = "zh" //Chinese (Simplified)
+enum class Locales(val tag: String) {
+    Ar("ar"), //Arabic
+    De("de"), //German
+    En("en"), //English
+    Es("es"), //Spanish
+    Fr("fr"), //French
+    Hi("hi"), //Hindi
+    It("it"), //Italian
+    Ja("ja"), //Japanese
+    Ko("ko"), //Korean
+    Pt("pt"), //Portuguese
+    Ru("ru"), //Russian
+    Tr("tr"), //Turkish
+    Zh("zh") //Chinese (Simplified)
 }
 
 val Stringies: Map<LanguageTag, Strings> = mapOf(
-    Locales.Ar to ArStrings,
-    Locales.De to DeStrings,
-    Locales.En to EnStrings,
-    Locales.Es to EsStrings,
-    Locales.Fr to FrStrings,
-    Locales.Hi to HiStrings,
-    Locales.It to ItStrings,
-    Locales.Ja to JaStrings,
-    Locales.Ko to KoStrings,
-    Locales.Pt to PtStrings,
-    Locales.Ru to RuStrings,
-    Locales.Tr to TrStrings,
-    Locales.Zh to ZhStrings,
+    Locales.Ar.tag to ArStrings,
+    Locales.De.tag to DeStrings,
+    Locales.En.tag to EnStrings,
+    Locales.Es.tag to EsStrings,
+    Locales.Fr.tag to FrStrings,
+    Locales.Hi.tag to HiStrings,
+    Locales.It.tag to ItStrings,
+    Locales.Ja.tag to JaStrings,
+    Locales.Ko.tag to KoStrings,
+    Locales.Pt.tag to PtStrings,
+    Locales.Ru.tag to RuStrings,
+    Locales.Tr.tag to TrStrings,
+    Locales.Zh.tag to ZhStrings,
 )
 
 val LocalStrings: ProvidableCompositionLocal<Strings> =

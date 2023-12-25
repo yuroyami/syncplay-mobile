@@ -128,11 +128,18 @@ val EsStrings = object : Strings {
     override val mediaDirectoriesAddFolder = "Agregar carpeta"
     override val mediaDirectoriesDelete = "Eliminar de la lista"
     override val mediaDirectoriesShowFullPath = "Mostrar ruta completa"
-    override val settingsCategGeneral = "Configuración general"
-    override val settingsCategPlayer = "Configuración del reproductor"
-    override val settingsCategRoom = "Configuración de la sala"
-    override val settingsCategVideo = "Configuración de video"
-    override val settingsCategMisc = "Misceláneo"
+
+    override val settingsCategGeneral = "General"
+    override val settingsCategExoplayer = "Exoplayer"
+    override val settingsCategLanguage = "Idioma"
+    override val settingsCategSyncing = "Sincronización"
+    override val settingsCategNetwork = "Red"
+    override val settingsCategAdvanced = "Avanzado"
+    override val uisettingCategChatColors = "Colores del chat"
+    override val uisettingCategChatProperties = "Propiedades del chat"
+    override val uisettingCategPlayerSettings = "Configuración del reproductor"
+
+
     override val settingNightModeTitle = "Modo nocturno"
     override val settingNightModeSummary = "Selecciona el comportamiento del modo nocturno."
     override val settingRememberJoinInfoTitle = "Recordar información de entrada"
