@@ -174,18 +174,15 @@ val HiStrings = object : Strings {
     override val settingResetdefaultTitle = "डिफ़ॉल्ट सेटिंग्स रीसेट करें"
     override val settingResetdefaultSummary = "सभी को इसके डिफ़ॉल्ट मूल्य पर रीसेट करें (सिफारिश किया जाता है)"
     override val settingResetdefaultDialog = "इस स्क्रीन के लिए सेटिंग को हटाने के लिए क्या आप सुनिश्चित हैं?"
-
-    //TODO
-    override val settingPauseIfSomeoneLeftTitle = "Pause if someone leaves"
-    override val settingPauseIfSomeoneLeftSummary = "Enable this if you want playback to pause/stop if someone leaves the room while you're watching."
-    override val settingWarnFileMismatchTitle = "File mismatch warning"
+    override val settingPauseIfSomeoneLeftTitle = "यदि कोई छोड़ दे तो रोकें"
+    override val settingPauseIfSomeoneLeftSummary = "इसे सक्षम करें यदि आप चाहते हैं कि जब आप देख रहे होते हैं और कोई कमरे से बाहर जाता है तो प्लेबैक रोके/रुके।"
+    override val settingWarnFileMismatchTitle = "फ़ाइल मेल नहीं खाती है चेतावनी"
     override val settingWarnFileMismatchSummary =
-        "Enabled by default. This will warn you in case you load a file that is different from users in the group (in terms of name, duration or size, not all of them)."
-    override val settingFileinfoBehaviourNameTitle = "File name information sending"
-    override val settingFileinfoBehaviourNameSummary = "Choose the method with which you show your added media file name to other users."
-    override val settingFileinfoBehaviourSizeTitle = "File size information sending"
-    override val settingFileinfoBehaviourSizeSummary = "Choose the method with which you show your added media file size to other users."
-
+        "डिफ़ॉल्ट रूप से सक्षम है। इससे आपको चेतावनी मिलेगी यदि आप किसी ऐसी फ़ाइल को लोड करते हैं जो समूह के अन्य उपयोगकर्ताओं से अलग है (नाम, अवधि या आकार के प्रति)."
+    override val settingFileinfoBehaviourNameTitle = "फ़ाइल का नाम सूचना भेजना"
+    override val settingFileinfoBehaviourNameSummary = "अन्य उपयोगकर्ताओं को अपनी जोड़ी गई मीडिया फ़ाइल का नाम दिखाने का तरीका चुनें।"
+    override val settingFileinfoBehaviourSizeTitle = "फ़ाइल का आकार सूचना भेजना"
+    override val settingFileinfoBehaviourSizeSummary = "अन्य उपयोगकर्ताओं को अपनी जोड़ी गई मीडिया फ़ाइल का आकार दिखाने का तरीका चुनें।"
     override val uisettingApply = "लागू करें"
     override val uisettingTimestampSummary = "इसे अक्षरशहीद के मैसेज की शुरुआत में समय छुपाने के लिए अक्षम करें।"
     override val uisettingTimestampTitle = "चैट टाइमस्टैम्प"
