@@ -50,7 +50,6 @@ class HomeActivity : ComponentActivity() {
         window.navigationBarColor = Color.Transparent.toArgb()
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-
         /** Getting saved config */
         val config = HomeConfig()
 
