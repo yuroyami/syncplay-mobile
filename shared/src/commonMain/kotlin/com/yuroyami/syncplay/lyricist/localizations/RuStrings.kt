@@ -121,6 +121,8 @@ val RuStrings = object : Strings {
     override val roomAddmediaOffline = "Из хранилища телефона"
     override val roomAddmediaOnline = "Из сетевого URL"
     override val roomAddmediaOnlineUrl = "URL-адрес"
+    override val roomSkipMinuteAndHalfButton = "Пропустить 1 минуту и 30 секунд"
+
     override val mediaDirectories = "Медиа-каталоги для общего плейлиста"
     override val mediaDirectoriesBrief = "Syncplay будет искать любые указанные вами медиа-каталоги, чтобы найти имя, которое воспроизводится в общем плейлисте. Желательно указывать небольшие каталоги, так как операция поиска может замедлиться и быть очень медленной."
     override val mediaDirectoriesSettingSummary = "Syncplay будет искать любые указанные вами медиа-каталоги, чтобы найти имя, которое воспроизводится в общем плейлисте."

@@ -119,6 +119,8 @@ val ZhStrings = object : Strings {
     override val roomAddmediaOffline = "来自手机存储"
     override val roomAddmediaOnline = "来自网络URL"
     override val roomAddmediaOnlineUrl = "URL地址"
+    override val roomSkipMinuteAndHalfButton = "跳过1分钟30秒"
+
     override val mediaDirectories = "共享播放列表的媒体目录"
     override val mediaDirectoriesBrief = "Syncplay将搜索您在这里指定的任何媒体目录，以便找到共享播放列表正在播放视频的名称. 如果指定较小的文件目录会更好，因为搜索操作可能会受限并非常慢."
     override val mediaDirectoriesSettingSummary = "Syncplay将搜索您在这里指定的任何媒体目录，以便找到共享播放列表正在播放视频的名称."

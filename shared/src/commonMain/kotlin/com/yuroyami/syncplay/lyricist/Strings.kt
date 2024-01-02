@@ -59,6 +59,7 @@ interface Strings {
     val connectPort: String
     val connectNightmodeswitch: String
     val connectSolomode: String
+
     val roomSelectedVid: (String) -> String
     val roomSelectedSub: (String) -> String
     val roomSelectedSubError: String
@@ -136,6 +137,8 @@ interface Strings {
     val roomAddmediaOffline: String
     val roomAddmediaOnline: String
     val roomAddmediaOnlineUrl: String
+    val roomSkipMinuteAndHalfButton: String
+
     val mediaDirectories: String
     val mediaDirectoriesBrief: String
     val mediaDirectoriesSettingSummary: String
@@ -145,6 +148,7 @@ interface Strings {
     val mediaDirectoriesAddFolder: String
     val mediaDirectoriesDelete: String
     val mediaDirectoriesShowFullPath: String
+
     val settingsCategGeneral: String
     val settingsCategLanguage: String
     val settingsCategSyncing: String
@@ -238,6 +242,7 @@ interface Strings {
     val uisettingReconnectIntervalTitle: String
     val uisettingResetdefaultSummary: String
     val uisettingResetdefaultTitle: String
+
     val settingFileinfoBehaviorA: String
     val settingFileinfoBehaviorB: String
     val settingFileinfoBehaviorC: String

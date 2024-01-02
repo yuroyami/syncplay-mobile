@@ -35,7 +35,7 @@ android {
 //            "ar", "de", "en", "es", "fr", "hi", "it", "ja", "ko", "pt", "ru", "tr", "zh"
 //        ))
         signingConfig = signingConfigs.getByName("github")
-        //proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
 
     packaging {
@@ -53,7 +53,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
         }
         debug {
             isDebuggable = true
@@ -94,43 +94,44 @@ android {
                 }
             }
 
-            tasks.register("stripNativeLibs", Exec::class) {
-                /*commandLine("arm64-linux-android-strip")
-                workingDir(file("$projectDir/src/main/jniLibs"))
-                args("-r", "-u", "*.so")*/
-
-                val stripToolMap: Map<String, String> = mapOf(
-                    "armeabi-v7a" to "arm-linux-androideabi-strip",
-                    "arm64-v8a" to "aarch64-linux-android-strip",
-                    "x86" to "i686-linux-android-strip",
-                    "x86_64" to "x86_64-linux-android-strip"
-                )
-
-                // Set the working directory where the task will be executed
-                workingDir(file("$projectDir/src/main/jniLibs"))
-
-                // Iterate over each target architecture and create a strip command for it
-                abiCodes.keys.forEach { abi ->
-                    val stripTool: String? = stripToolMap[abi]
-                    if (stripTool != null) {
-                        val stripCommand = project.exec {
-                            // Set the command to the appropriate strip tool for the current target architecture
-                            commandLine(stripTool)
-
-                            // Add arguments to specify the native library files to strip
-                            args("-r", "-u", "$abi/*.so")
-                        }
-
-                        // Execute the strip command
-                        dependsOn(stripCommand)
-                    }
-                }
-            }
+//            tasks.register("stripNativeLibs", Exec::class) {
+//                /*commandLine("arm64-linux-android-strip")
+//                workingDir(file("$projectDir/src/main/jniLibs"))
+//                args("-r", "-u", "*.so")*/
+//
+//                val stripToolMap: Map<String, String> = mapOf(
+//                    "armeabi-v7a" to "arm-linux-androideabi-strip",
+//                    "arm64-v8a" to "aarch64-linux-android-strip",
+//                    "x86" to "i686-linux-android-strip",
+//                    "x86_64" to "x86_64-linux-android-strip"
+//                )
+//
+//                // Set the working directory where the task will be executed
+//                workingDir(file("$projectDir/src/main/jniLibs"))
+//
+//                // Iterate over each target architecture and create a strip command for it
+//                abiCodes.keys.forEach { abi ->
+//                    val stripTool: String? = stripToolMap[abi]
+//                    if (stripTool != null) {
+//                        val stripCommand = project.exec {
+//                            // Set the command to the appropriate strip tool for the current target architecture
+//                            commandLine(stripTool)
+//
+//                            // Add arguments to specify the native library files to strip
+//                            args("-r", "-u", "$abi/*.so")
+//                        }
+//
+//                        // Execute the strip command
+//                        dependsOn(stripCommand)
+//                    }
+//                }
+//            }
         }
 
         create("noLibs") {
             dimension = "engine"
 
+            /*
             ndk {
                 abiFilters.clear()
             }
@@ -140,6 +141,8 @@ android {
                     isEnable = false
                 }
             }
+
+             */
 
 
             packaging {
@@ -168,3 +171,4 @@ dependencies {
 
     implementation(files("libs/ext.aar")) /* ExoPlayer's FFmpeg extension  */
 }
+

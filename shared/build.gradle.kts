@@ -1,3 +1,6 @@
+import com.android.build.gradle.internal.lint.AndroidLintAnalysisTask
+import com.android.build.gradle.internal.lint.LintModelWriterTask
+
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("org.jetbrains.kotlin.native.cocoapods")
@@ -30,7 +33,7 @@ kotlin {
         summary = "Syncplay Common Code (Platform-agnostic)"
         homepage = "www.github.com/yuroyami/syncplay-mobile"
         version = "0.13.0"
-        ios.deploymentTarget = "14.1"
+        ios.deploymentTarget = "14.0"
         podfile = project.file("../iosApp/Podfile")
         framework {
             baseName = "shared"
@@ -55,7 +58,7 @@ kotlin {
                 //Strings internationalization and localization
                 api("cafe.adriel.lyricist:lyricist:$lyricist")
 
-                api("com.rickclephas.kmm:kmm-viewmodel-core:1.0.0-ALPHA-16")
+                api("com.rickclephas.kmm:kmm-viewmodel-core:1.0.0-ALPHA-17")
 
                 /* Official JetBrains Kotlin Date 'n time manager (i.e: generating date from epoch) */
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
@@ -69,7 +72,7 @@ kotlin {
                 /* Network client */
                 implementation("io.ktor:ktor-client-core:$ktor")
                 implementation("io.ktor:ktor-network:$ktor")
-                //implementation("io.ktor:ktor-network-tls:$ktor")
+                implementation("io.ktor:ktor-network-tls:$ktor")
 
 
                 /* JSON serializer/deserializer to communicate with Syncplay servers */
@@ -80,18 +83,14 @@ kotlin {
                 api("androidx.datastore:datastore-preferences-core:$datastore")
 
                 /* Compose core dependencies */
-                implementation(compose.runtime)
-                implementation(compose.foundation)
-                implementation(compose.material3)
-                implementation(compose.materialIconsExtended)
+                api(compose.runtime)
+                api(compose.foundation)
+                api(compose.material3)
+                api(compose.materialIconsExtended)
                 @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
-                implementation(compose.components.resources)
+                api(compose.components.resources)
 
                 implementation("com.github.ajalt.colormath:colormath:3.3.3")
-
-                /* XML parser to read string localz */
-                implementation("io.github.pdvrieze.xmlutil:core:0.86.2")
-                implementation("io.github.pdvrieze.xmlutil:serialization:0.86.2")
             }
         }
 
@@ -116,16 +115,16 @@ kotlin {
                 implementation("androidx.preference:preference-ktx:1.2.1")
 
                 /* Jetpack Home shortcut manager */
-                api("androidx.core:core-google-shortcuts:1.1.0") {
+                api("androidx.core:core-google-shortcuts:1.2.0-alpha01") {
                     exclude(group = "com.google.crypto.tink", module = "tink-android")
                     exclude(group = "com.google.android.gms")
                 }
 
                 /* Compose add-ons */
-                api("androidx.activity:activity-compose:1.8.2")
+                api("androidx.activity:activity-compose:1.9.0-alpha01")
 
                 /* Lottie for animations (like Nightmode toggle button) */
-                implementation("com.airbnb.android:lottie-compose:6.2.0")
+                implementation("com.airbnb.android:lottie-compose:6.3.0")
 
                 /* Media3 (ExoPlayer and its extensions) */
                 val media3 = "1.2.0"
@@ -171,15 +170,9 @@ android {
     compileSdk = (findProperty("android.compileSdk") as String).toInt()
     namespace = "com.yuroyami.syncplay.shared"
 
-    //sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-    //sourceSets["main"].res.srcDirs("src/androidMain/res")
-    //sourceSets["main"].resources.srcDirs("src/commonMain/resources")
-    sourceSets {
-        named("main") {
-            resources.srcDirs("src/commonMain/resources")
-            // assets.srcDirs("src/commonMain/resources/assets")
-        }
-    }
+    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
+    sourceSets["main"].res.srcDirs("src/androidMain/res")
+    sourceSets["main"].resources.srcDirs("src/commonMain/resources")
 
     defaultConfig {
         minSdk = (findProperty("android.minSdk") as String).toInt()
@@ -205,4 +198,12 @@ ksp {
 dependencies {
     ksp("cafe.adriel.lyricist:lyricist-processor:$lyricist")
     ksp("cafe.adriel.lyricist:lyricist-processor-xml:$lyricist")
+}
+
+tasks.withType<AndroidLintAnalysisTask>{
+    dependsOn("copyFontsToAndroidAssets")
+}
+
+tasks.withType<LintModelWriterTask>{
+    dependsOn("copyFontsToAndroidAssets")
 }

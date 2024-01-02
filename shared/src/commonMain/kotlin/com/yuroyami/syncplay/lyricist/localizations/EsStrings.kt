@@ -119,6 +119,8 @@ val EsStrings = object : Strings {
     override val roomAddmediaOffline = "Desde el almacenamiento del teléfono"
     override val roomAddmediaOnline = "Desde una URL de red"
     override val roomAddmediaOnlineUrl = "Dirección URL"
+    override val roomSkipMinuteAndHalfButton = "Saltar 1 minuto y 30 segundos"
+
     override val mediaDirectories = "Directorios de medios para Lista de reproducción compartida"
     override val mediaDirectoriesBrief = "Syncplay buscará en los directorios de medios que especifiques aquí para encontrar el nombre que está reproduciendo una lista de reproducción compartida. Es mucho mejor si especificas directorios pequeños, ya que la operación de búsqueda puede limitarse y ser muy lenta."
     override val mediaDirectoriesSettingSummary = "Syncplay buscará en los directorios de medios que especifiques aquí para encontrar el nombre que está reproduciendo una lista de reproducción compartida."

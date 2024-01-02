@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AvTimer
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -42,12 +43,15 @@ import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
 import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.ui.Paletting
+import com.yuroyami.syncplay.utils.RoomUtils
 import com.yuroyami.syncplay.utils.timeStamper
 import com.yuroyami.syncplay.watchroom.dispatchOSD
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.player
 import com.yuroyami.syncplay.watchroom.seeks
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.Font
 import syncplaymobile.generated.resources.Res
 
@@ -183,6 +187,34 @@ object PopupSeekToPosition {
                     )
                 }
 
+                /* Skip ANIME intro */
+                Button(
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    border = BorderStroke(width = 1.dp, color = Color.Black),
+                    modifier = Modifier,
+                    onClick = {
+                        visibilityState.value = false
+                        player?.playerScopeIO?.launch {
+                            val currentMs = withContext(Dispatchers.Main) { player!!.currentPositionMs() }
+                            val newPos = (currentMs) + (90 * 1000L)
+
+                            RoomUtils.sendSeek(newPos)
+                            player?.seekTo(newPos)
+
+                            if (isSoloMode) {
+                                seeks.add(Pair((currentMs), newPos * 1000))
+                            }
+
+                            //TODO: I18N
+                            dispatchOSD("Skipping 1:30 of time")
+                        }
+                    },
+                ) {
+                    Icon(imageVector = Icons.Filled.AvTimer, "")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(rememberStrings().strings.roomSkipMinuteAndHalfButton, fontSize = 14.sp)
+                }
+
                 /* Ok button */
                 Button(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
@@ -211,6 +243,7 @@ object PopupSeekToPosition {
 
                             player?.seekTo(result)
 
+                            //TODO: Need I18n
                             dispatchOSD("Seeking to ${timeStamper(result.div(1000L))}")
                         }
 

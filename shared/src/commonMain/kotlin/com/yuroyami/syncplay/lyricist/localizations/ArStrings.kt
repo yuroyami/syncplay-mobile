@@ -119,6 +119,8 @@ val ArStrings = object : Strings {
     override val roomAddmediaOffline = "من تخزين الهاتف"
     override val roomAddmediaOnline = "من عنوان URL في الشبكة"
     override val roomAddmediaOnlineUrl = "عنوان URL"
+    override val roomSkipMinuteAndHalfButton = "اقفز دقيقة و 30 ثانية"
+
     override val mediaDirectories = "مجلدات الوسائط لقائمة التشغيل المشتركة"
     override val mediaDirectoriesBrief = "سيقوم Syncplay بالبحث في أي مجلدات وسائط تحددها هنا للعثور على اسم يتم تشغيله في قائمة تشغيل مشتركة. من الأفضل إذا قمت بتحديد مجلدات صغيرة حيث يمكن أن تتسبب عملية البحث في المشاكل وتكون بطيئة جدًا."
     override val mediaDirectoriesSettingSummary = "سيقوم Syncplay بالبحث في أي مجلدات وسائط تحددها هنا للعثور على اسم يتم تشغيله في قائمة تشغيل مشتركة."

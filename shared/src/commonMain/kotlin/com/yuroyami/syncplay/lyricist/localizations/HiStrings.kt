@@ -120,6 +120,7 @@ val HiStrings = object : Strings {
     override val roomAddmediaOffline = "फ़ोन स्टोरेज से"
     override val roomAddmediaOnline = "नेटवर्क URL से"
     override val roomAddmediaOnlineUrl = "URL पता"
+    override val roomSkipMinuteAndHalfButton = "1 मिनट और 30 सेकंड को छोड़ें"
 
     override val mediaDirectories = "साझा प्लेलिस्ट के लिए मीडिया निर्देशिकाएँ"
     override val mediaDirectoriesBrief = "सिंकप्ले यहाँ आप निर्दिष्ट करने पर विचार करेगा कि कोई साझा प्लेलिस्ट किस नाम से खेल रहा है। यह बेहतर है यदि आप छोटे निर्देशिकाएँ निर्दिष्ट करें क्योंकि खोज क्रिया धीमी हो सकती है।"

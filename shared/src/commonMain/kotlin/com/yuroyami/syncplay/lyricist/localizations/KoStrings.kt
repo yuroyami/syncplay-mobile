@@ -119,6 +119,8 @@ val KoStrings = object : Strings {
     override val roomAddmediaOffline = "휴대폰 저장소에서"
     override val roomAddmediaOnline = "네트워크 URL에서"
     override val roomAddmediaOnlineUrl = "URL 주소"
+    override val roomSkipMinuteAndHalfButton = "1분 30초 건너뛰기"
+
     override val mediaDirectories = "공유 재생 목록을 위한 미디어 디렉토리"
     override val mediaDirectoriesBrief = "Syncplay는 여기에서 지정한 미디어 디렉토리를 검색하여 공유 재생 목록이 재생 중인 이름을 찾습니다. 검색 작업이 쓰로틀링되어 매우 느릴 수 있으므로 작은 디렉토리를 지정하는 것이 좋습니다."
     override val mediaDirectoriesSettingSummary = "Syncplay는 여기에서 지정한 미디어 디렉토리를 검색하여 공유 재생 목록이 재생 중인 이름을 찾습니다."

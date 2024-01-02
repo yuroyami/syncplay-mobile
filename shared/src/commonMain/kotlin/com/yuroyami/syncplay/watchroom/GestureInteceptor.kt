@@ -20,9 +20,10 @@ import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -56,8 +57,8 @@ fun GestureInterceptor(
 ) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
 
-    val g by remember { gestureState }
-    val v by remember { videoState }
+    val g by gestureState
+    val v by videoState
 
     val seekLeftInteraction = remember { MutableInteractionSource() }
     val seekRightInteraction = remember { MutableInteractionSource() }
@@ -66,8 +67,8 @@ fun GestureInterceptor(
 
     //TODO: Individual gesture toggling option
 
-    var currentBrightness by remember { mutableStateOf(-1f) }
-    var currentVolume by remember { mutableStateOf(-1) }
+    var currentBrightness by remember { mutableFloatStateOf(-1f) }
+    var currentVolume by remember { mutableIntStateOf(-1) }
 
     var vertdragOffset by remember { mutableStateOf(Offset.Zero) }
 

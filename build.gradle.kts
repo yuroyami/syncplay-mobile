@@ -9,7 +9,7 @@ plugins {
     id("com.android.application") version agp apply false
     id("com.android.library") version agp apply false
 
-    val compose = "1.6.0-dev1350" //"1.5.11" //17
+    val compose = "1.6.0-dev1354" //"1.5.11" //17
     id("org.jetbrains.compose") version compose apply false
 
     id("com.google.devtools.ksp") version "2.0.0-Beta1-1.0.15" apply false

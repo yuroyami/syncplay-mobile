@@ -119,6 +119,8 @@ val ItStrings = object : Strings {
     override val roomAddmediaOffline = "Dalla memoria del telefono"
     override val roomAddmediaOnline = "Da un URL di rete"
     override val roomAddmediaOnlineUrl = "Indirizzo URL"
+    override val roomSkipMinuteAndHalfButton = "Salta 1 minuto e 30 secondi"
+
     override val mediaDirectories = "Cartelle multimediali per la Playlist Condivisa"
     override val mediaDirectoriesBrief = "Syncplay cercherà in qualsiasi cartella multimediale tu specifichi qui per trovare un nome che una playlist condivisa sta riproducendo. È molto meglio specificare cartelle piccole poiché l'operazione di ricerca può essere molto lenta."
     override val mediaDirectoriesSettingSummary = "Syncplay cercherà in qualsiasi cartella multimediale tu specifichi qui per trovare un nome che una playlist condivisa sta riproducendo."

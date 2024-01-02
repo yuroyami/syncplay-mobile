@@ -64,7 +64,7 @@ object PlayerUtils {
             val inc = intFlow(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP, 10).first()
 
             val currentMs = withContext(Dispatchers.Main) { player!!.currentPositionMs() }
-            var newPos = (currentMs) + (inc * 1000L)
+            val newPos = (currentMs) + (inc * 1000L)
 //            if (media != null) {
 //                if (newPos > media?.fileDuration!!.toLong()) {
 //                    newPos = media?.fileDuration!!.toLong()

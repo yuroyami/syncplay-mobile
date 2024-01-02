@@ -242,7 +242,7 @@ fun RoomUI() {
 
         if (locked) {
             /** The touch interceptor to switch unlock button visibility */
-            Box(Modifier.fillMaxSize().clickable(interactionSource = MutableInteractionSource(), indication = null, onClick = {
+            Box(Modifier.fillMaxSize().clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = {
                 unlockButtonVisibility.value = !unlockButtonVisibility.value
             }))
 

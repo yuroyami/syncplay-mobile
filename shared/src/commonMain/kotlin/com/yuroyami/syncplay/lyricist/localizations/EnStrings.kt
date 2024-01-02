@@ -121,6 +121,7 @@ val EnStrings = object : Strings {
     override val roomAddmediaOffline = "From phone storage"
     override val roomAddmediaOnline = "From a network URL"
     override val roomAddmediaOnlineUrl = "URL address"
+    override val roomSkipMinuteAndHalfButton = "Skip 1 minute and 30 seconds"
 
     override val mediaDirectories = "Media Directories for Shared Playlist"
     override val mediaDirectoriesBrief = "Syncplay will search any media directories you specify here in order to find a name that a shared playlist is playing. It is much better if you specify small directories as the searching operation can throttle and be very slow."

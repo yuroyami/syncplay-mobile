@@ -119,6 +119,8 @@ val TrStrings = object : Strings {
     override val roomAddmediaOffline = "Telefon depolama alanından"
     override val roomAddmediaOnline = "Ağ URL'sinden"
     override val roomAddmediaOnlineUrl = "URL adresi"
+    override val roomSkipMinuteAndHalfButton = "1 dakika 30 saniye atla"
+
     override val mediaDirectories = "Paylaşılan Çalma Listesi İçin Medya Dizinleri"
     override val mediaDirectoriesBrief = "Syncplay, paylaşılan çalma listesinde çalınan bir adı bulmak için burada belirttiğiniz medya dizinlerini arayacak. Arama işleminin yavaşlamaması için küçük dizinleri belirtmek çok daha iyidir."
     override val mediaDirectoriesSettingSummary = "Syncplay, paylaşılan çalma listesinde çalınan bir adı bulmak için burada belirttiğiniz medya dizinlerini arayacak."

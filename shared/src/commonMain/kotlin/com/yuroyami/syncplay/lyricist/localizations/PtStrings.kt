@@ -119,6 +119,8 @@ val PtStrings = object : Strings {
     override val roomAddmediaOffline = "Do armazenamento do telefone"
     override val roomAddmediaOnline = "De uma URL de rede"
     override val roomAddmediaOnlineUrl = "Endereço da URL"
+    override val roomSkipMinuteAndHalfButton = "Pular 1 minuto e 30 segundos"
+
     override val mediaDirectories = "Diretórios de Mídia para Playlist Compartilhada"
     override val mediaDirectoriesBrief = "O Syncplay irá procurar em qualquer diretório de mídia que você especificar aqui para encontrar um nome que uma playlist compartilhada está reproduzindo. É muito melhor se você especificar diretórios pequenos, pois a operação de pesquisa pode ser lenta."
     override val mediaDirectoriesSettingSummary = "O Syncplay irá procurar em qualquer diretório de mídia que você especificar aqui para encontrar um nome que uma playlist compartilhada está reproduzindo."

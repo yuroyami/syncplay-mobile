@@ -119,6 +119,7 @@ val JaStrings = object : Strings {
     override val roomAddmediaOffline = "携帯電話のストレージから"
     override val roomAddmediaOnline = "ネットワークURLから"
     override val roomAddmediaOnlineUrl = "URLアドレス"
+    override val roomSkipMinuteAndHalfButton = "1分30秒スキップ"
     override val mediaDirectories = "共有プレイリストのメディアディレクトリ"
     override val mediaDirectoriesBrief = "Syncplayは、ここで指定したメディアディレクトリを検索して、共有プレイリストが再生している名前を見つけるために使用します。検索操作はスロットル制御される可能性があり、非常に遅くなる可能性があるため、小さなディレクトリを指定すると良いです。"
     override val mediaDirectoriesSettingSummary = "Syncplayは、ここで指定したメディアディレクトリを検索して、共有プレイリストが再生している名前を見つけるために使用します。"

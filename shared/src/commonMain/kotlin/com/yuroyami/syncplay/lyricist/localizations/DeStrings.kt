@@ -119,6 +119,8 @@ val DeStrings = object : Strings {
     override val roomAddmediaOffline = "Von Telefon speichern"
     override val roomAddmediaOnline = "Von einer Netzwerk-URL"
     override val roomAddmediaOnlineUrl = "URL-Adresse"
+    override val roomSkipMinuteAndHalfButton = "1 Minute und 30 Sekunden überspringen"
+
     override val mediaDirectories = "Medienverzeichnisse für geteilte Playlist"
     override val mediaDirectoriesBrief = "Syncplay durchsucht die hier angegebenen Medienverzeichnisse, um den Namen einer geteilten Playlist zu finden. Es ist besser, wenn Sie kleine Verzeichnisse angeben, da die Suchoperation sonst gedrosselt und sehr langsam sein kann."
     override val mediaDirectoriesSettingSummary = "Syncplay durchsucht die hier angegebenen Medienverzeichnisse, um den Namen einer geteilten Playlist zu finden."
