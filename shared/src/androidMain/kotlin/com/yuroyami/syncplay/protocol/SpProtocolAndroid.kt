@@ -1,6 +1,5 @@
 package com.yuroyami.syncplay.protocol
 
-import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.protocol.JsonHandler.handleJson
 import com.yuroyami.syncplay.utils.loggy
 import io.netty.bootstrap.Bootstrap
@@ -26,46 +25,21 @@ class SpProtocolAndroid : SyncplayProtocol() {
 
     /** Netty stuff */
     var channel: Channel? = null
-    lateinit var socketChannel: SocketChannel
     lateinit var pipeline: ChannelPipeline
 
     override fun connectSocket() {
-        /** 1- Specifiying that we want the NIO event loop group. */
         val group: EventLoopGroup = NioEventLoopGroup()
-
-        /** 2- Initializing a bootstrap instance */
         val b = Bootstrap()
         b.group(group) /* Assigning the event loop group to the bootstrap */
             .channel(NioSocketChannel::class.java) /* We want a NIO Socket Channel */
             .handler(object : ChannelInitializer<SocketChannel>() {
                 override fun initChannel(ch: SocketChannel) {
                     pipeline = ch.pipeline()
-                    socketChannel = ch
-
-                    /** Should we establish a TLS connection ? */
-                    if (tls == Constants.TLS.TLS_YES) {
-                        loggy("Added TLS Netty Handler...", 0)
-                        //val h = sslContext.newHandler(ch.alloc(), session.serverHost, session.serverPort)
-                        //pipeline.addLast(h)
-
-                        //val engine: SSLEngine? = SSLContext.getDefault().createSSLEngine()
-                        //engine?.useClientMode = true
-                        //p.addLast("ssl", SslHandler(engine))
-                    }
-
-                    /** We should never forget \r\n delimiters, or we would get no input */
-                    pipeline.addLast(
-                        "framer",
+                    pipeline.addLast("framer",
                         DelimiterBasedFrameDecoder(8192, *Delimiters.lineDelimiter())
                     )
-
-                    /** Telling our Netty that it should decode incoming bytestreams into strings */
                     pipeline.addLast(StringDecoder())
-
-                    /** Telling our Netty that it should encode any strings to bytestreams */
                     pipeline.addLast(StringEncoder())
-
-                    /** Assigning a reader handler to read incoming messages, should be added last to pipeline */
                     pipeline.addLast(Reader())
                 }
             })
