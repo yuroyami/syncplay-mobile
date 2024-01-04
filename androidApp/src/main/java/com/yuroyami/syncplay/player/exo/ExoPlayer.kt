@@ -30,10 +30,8 @@ import com.yuroyami.syncplay.lyricist.Stringies
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
-import com.yuroyami.syncplay.player.BasePlayer.ENGINE
 import com.yuroyami.syncplay.player.PlayerOptions
 import com.yuroyami.syncplay.player.PlayerUtils.trackProgress
-import com.yuroyami.syncplay.player.BasePlayer.TRACKTYPE
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
@@ -44,6 +42,7 @@ import com.yuroyami.syncplay.watchroom.dispatchOSD
 import com.yuroyami.syncplay.watchroom.hasVideoG
 import com.yuroyami.syncplay.watchroom.isNowPlaying
 import com.yuroyami.syncplay.watchroom.isSoloMode
+import com.yuroyami.syncplay.watchroom.lyricist
 import com.yuroyami.syncplay.watchroom.media
 import com.yuroyami.syncplay.watchroom.p
 import com.yuroyami.syncplay.watchroom.timeFull
@@ -315,12 +314,12 @@ class ExoPlayer : BasePlayer() {
 
                 injectVideo(uri)
 
-                //toasty(string(R.string.room_selected_sub, filename))
+                playerScopeMain.dispatchOSD(lyricist.strings.roomSelectedSub(filename))
             } else {
-                //toasty(getString(R.string.room_selected_sub_error))
+                playerScopeMain.dispatchOSD(lyricist.strings.roomSelectedSubError)
             }
         } else {
-            //toasty(getString(R.string.room_sub_error_load_vid_first))
+            playerScopeMain.dispatchOSD(lyricist.strings.roomSubErrorLoadVidFirst)
         }
 
     }

@@ -267,9 +267,8 @@ object MySettings {
                         key = DataStoreKeys.PREF_TLS_ENABLE,
                         title = { localz.strings.settingTlsTitle },
                         summary = { localz.strings.settingTlsSummary },
-                        defaultValue = false,
+                        defaultValue = true,
                         icon = Icons.Filled.Key,
-                        enabled = false,
                         styling = settingStyling,
                     )
                 )

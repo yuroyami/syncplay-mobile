@@ -26,4 +26,17 @@ object CommonUtils {
             delay(1000)
         }
     }
+
+    val vidExs = listOf(
+        "mp4", "3gp", "av1", "mkv", "m4v", "mov", "wmv", "flv", "avi", "webm",
+        "ogg", "ogv", "mpeg", "mpg", "m2v", "ts", "mts", "m2ts", "vob",
+        "divx", "xvid", "asf", "rm", "rmvb", "qt", "f4v", "mxf", "m1v", "m2v",
+        "3g2", "mpg2", "mpg4", "h264", "h265", "hevc", "mjpeg", "mjpg", "mod",
+        "tod", "dat", "wma", "wav", "amv", "mtv", "swf"
+    )
+
+    val ccExs = listOf("srt", "sub", "sbv", "ass", "ssa", "usf", "idx", "vtt", "smi", "rt", "txt")
+
+    val sharedplaylistExs = listOf("txt", "m3u")
+
 }

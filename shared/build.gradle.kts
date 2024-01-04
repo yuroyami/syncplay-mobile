@@ -88,6 +88,7 @@ kotlin {
                 @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
                 api(compose.components.resources)
 
+                /* Helps with color calculations for color preferences */
                 implementation("com.github.ajalt.colormath:colormath:3.3.3")
             }
         }

@@ -119,11 +119,12 @@ import com.yuroyami.syncplay.datastore.booleanFlow
 import com.yuroyami.syncplay.datastore.intFlow
 import com.yuroyami.syncplay.datastore.obtainBoolean
 import com.yuroyami.syncplay.datastore.writeBoolean
+import com.yuroyami.syncplay.filepicking.FilePicker
+import com.yuroyami.syncplay.player.BasePlayer.TRACKTYPE
 import com.yuroyami.syncplay.player.PlayerUtils.pausePlayback
 import com.yuroyami.syncplay.player.PlayerUtils.playPlayback
 import com.yuroyami.syncplay.player.PlayerUtils.seekBckwd
 import com.yuroyami.syncplay.player.PlayerUtils.seekFrwrd
-import com.yuroyami.syncplay.player.BasePlayer.TRACKTYPE
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
@@ -140,8 +141,6 @@ import com.yuroyami.syncplay.watchroom.RoomComposables.PingRadar
 import com.yuroyami.syncplay.watchroom.RoomComposables.RoomArtwork
 import com.yuroyami.syncplay.watchroom.RoomComposables.RoomTab
 import com.yuroyami.syncplay.watchroom.RoomComposables.fadingMessageLayout
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -178,15 +177,6 @@ var startupSlide = false
 val isNowPlaying = mutableStateOf(false)
 val timeFull = mutableLongStateOf(0L)
 val timeCurrent = mutableLongStateOf(0L)
-
-interface PickerCallback {
-    fun goPickVideo()
-    fun goPickFolder()
-}
-
-var pickFuture: CompletableDeferred<String>? = null
-var pickerCallback: PickerCallback? = null
-var pickerScope = CoroutineScope(Dispatchers.IO)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -228,6 +218,23 @@ fun RoomUI() {
         val msgFontSize = intFlow(PREF_INROOM_MSG_FONTSIZE, 9).collectAsState(initial = 9)
         val msgMaxCount by intFlow(PREF_INROOM_MSG_MAXCOUNT, 10).collectAsState(initial = 0)
         val keyboardOkFunction by booleanFlow(PREF_INROOM_MSG_BOX_ACTION, true).collectAsState(initial = true)
+
+        /* Some file picking stuff */
+        var showVideoPicker by remember { mutableStateOf(false) }
+        FilePicker(show = showVideoPicker, fileExtensions = CommonUtils.vidExs) { file ->
+            showVideoPicker = false
+            file?.path?.let {
+                player?.injectVideo(it, false)
+            }
+        }
+
+        var showSubtitlePicker by remember { mutableStateOf(false) }
+        FilePicker(show = showVideoPicker, fileExtensions = CommonUtils.ccExs) { file ->
+            showSubtitlePicker = false
+            file?.path?.let {
+                player?.loadExternalSub(it)
+            }
+        }
 
         /** Room artwork underlay (when no video is loaded) */
         if (!hasVideo.value) {
@@ -608,7 +615,9 @@ fun RoomUI() {
 
                             /** Control card (to control the player) */
                             FreeAnimatedVisibility(
-                                modifier = Modifier.zIndex(10f).wrapContentWidth().align(Alignment.CenterEnd).fillMaxHeight(cardHeight + 0.1f), enter = expandIn(), visible = controlcardvisible
+                                modifier = Modifier.zIndex(10f).wrapContentWidth()
+                                    .align(Alignment.CenterEnd)
+                                    .fillMaxHeight(cardHeight + 0.1f), enter = expandIn(), visible = controlcardvisible
                             ) {
                                 /** CONTROL CARD ------ PLAYER CONTROL CARD ----- PLAYER CONTROL CARD */
                                 Card(
@@ -699,7 +708,7 @@ fun RoomUI() {
                                                     tracksPopup.value = false
                                                     controlcardvisible = false
 
-                                                    //TODO: Load external sub
+                                                    showSubtitlePicker = true
                                                 })
 
 
@@ -902,7 +911,10 @@ fun RoomUI() {
                             })
 
 
-                            DropdownMenu(modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer), expanded = addmediacardvisible, properties = PopupProperties(
+                            DropdownMenu(
+                                modifier = Modifier
+                                    .background(color = MaterialTheme.colorScheme.tertiaryContainer),
+                                expanded = addmediacardvisible, properties = PopupProperties(
                                 dismissOnBackPress = true, focusable = true, dismissOnClickOutside = true
                             ), onDismissRequest = { addmediacardvisible = false }) {
 
@@ -919,17 +931,7 @@ fun RoomUI() {
                                     }
                                 }, onClick = {
                                     addmediacardvisible = false
-
-                                    pickerScope.launch {
-                                        try {
-                                            pickFuture = CompletableDeferred() //We create a future that will be fulfilled
-                                            pickerCallback?.goPickVideo() //Ask the platform to pick video
-                                            addmediacardvisible = false
-                                            val result = pickFuture?.await() ?: return@launch
-                                            player?.injectVideo(result, false)
-                                        } catch (_: CancellationException) {
-                                        }
-                                    }
+                                    showVideoPicker = true
                                 })
 
                                 //From network URL

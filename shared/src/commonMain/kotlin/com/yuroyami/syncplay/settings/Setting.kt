@@ -3,7 +3,6 @@ package com.yuroyami.syncplay.settings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -419,32 +418,30 @@ class Setting(
                         )
                     )
 
-                    Row {
-                        Slider(
-                            value = value.value.toFloat(),
-                            enabled = enabled,
-                            valueRange = (minValue.toFloat())..(maxValue.toFloat()),
-                            onValueChange = { f ->
-                                scope.launch {
-                                   writeInt(key, f.roundToInt())
-                                }
-                                onValueChanged?.invoke(f.roundToInt())
-                            }, modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 12.dp)
-                        )
-
-                        Text(
-                            modifier = Modifier.width(84.dp),
-                            text = (value.value).toString(),
-                            style = TextStyle(
-                                color = MaterialTheme.colorScheme.primary,
-                                fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default,
-                                fontSize = (13).sp
-                            )
-                        )
-                    }
+                    Slider(
+                        value = value.value.toFloat(),
+                        enabled = enabled,
+                        valueRange = (minValue.toFloat())..(maxValue.toFloat()),
+                        onValueChange = { f ->
+                            scope.launch {
+                                writeInt(key, f.roundToInt())
+                            }
+                            onValueChanged?.invoke(f.roundToInt())
+                        }, modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp)
+                    )
                 }
+            },
+            trailingContent = {
+                Text(
+                    text = (value.value).toString(),
+                    style = TextStyle(
+                        color = MaterialTheme.colorScheme.primary,
+                        fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default,
+                        fontSize = (13).sp
+                    )
+                )
             }
         )
     }

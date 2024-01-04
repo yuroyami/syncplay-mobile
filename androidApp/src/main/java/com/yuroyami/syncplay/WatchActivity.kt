@@ -24,13 +24,10 @@ import com.yuroyami.syncplay.utils.changeLanguage
 import com.yuroyami.syncplay.utils.defaultEngineAndroid
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.watchroom.GestureCallback
-import com.yuroyami.syncplay.watchroom.PickerCallback
 import com.yuroyami.syncplay.watchroom.RoomCallback
 import com.yuroyami.syncplay.watchroom.RoomUI
 import com.yuroyami.syncplay.watchroom.gestureCallback
 import com.yuroyami.syncplay.watchroom.p
-import com.yuroyami.syncplay.watchroom.pickFuture
-import com.yuroyami.syncplay.watchroom.pickerCallback
 import com.yuroyami.syncplay.watchroom.player
 import com.yuroyami.syncplay.watchroom.roomCallback
 import kotlinx.coroutines.runBlocking
@@ -53,7 +50,7 @@ class WatchActivity : ComponentActivity() {
             if (result.resultCode == Activity.RESULT_OK) {
                 val video = result.data?.data ?: return@registerForActivityResult
 
-                pickFuture?.complete(video.toString()) //Tell our commonMain shared module that we picked a video
+                //pickFuture?.complete(video.toString()) //Tell our commonMain shared module that we picked a video
             }
         }
 
@@ -87,22 +84,22 @@ class WatchActivity : ComponentActivity() {
             else -> {}
         }
 
-        pickerCallback = object : PickerCallback {
-            override fun goPickVideo() {
-                val intent = Intent()
-                intent.action = Intent.ACTION_OPEN_DOCUMENT
-                intent.type = "video/*"
-                videoPickResult.launch(intent)
-            }
-
-            override fun goPickFolder() {
-                val intent = Intent()
-                intent.action = Intent.ACTION_OPEN_DOCUMENT_TREE
-                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                dirPickResult.launch(intent)
-            }
-        }
+//        pickerCallback = object : PickerCallback {
+//            override fun goPickVideo() {
+//                val intent = Intent()
+//                intent.action = Intent.ACTION_OPEN_DOCUMENT
+//                intent.type = "video/*"
+//                videoPickResult.launch(intent)
+//            }
+//
+//            override fun goPickFolder() {
+//                val intent = Intent()
+//                intent.action = Intent.ACTION_OPEN_DOCUMENT_TREE
+//                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+//                intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+//                dirPickResult.launch(intent)
+//            }
+//        }
 
         gestureCallback = object : GestureCallback {
             override fun getMaxVolume() = audioManager.getStreamMaxVolume(STREAM_TYPE_MUSIC)
