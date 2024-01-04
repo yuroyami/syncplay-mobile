@@ -101,6 +101,7 @@ class SpProtocolAndroid : SyncplayProtocol() {
             }
         }
 
+        @Deprecated("Deprecated in Java")
         override fun exceptionCaught(ctx: ChannelHandlerContext?, cause: Throwable?) {
             super.exceptionCaught(ctx, cause)
             syncplayCallback?.onDisconnected()
@@ -113,7 +114,7 @@ class SpProtocolAndroid : SyncplayProtocol() {
             .forClient()
             //.sslProvider(SslProvider.JDK)
             //.trustManager(Conscrypt.getDefaultX509TrustManager())
-            .startTls(false)
+            .startTls(false) //This isn't necessary for clients, we do it manually
             .build()
 
         val h = sslContext.newHandler(pipeline.channel().alloc(), session.serverHost, session.serverPort)

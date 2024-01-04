@@ -4,6 +4,7 @@ import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.User
 import com.yuroyami.syncplay.utils.generateTimestampMillis
 import com.yuroyami.syncplay.utils.loggy
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -136,7 +137,8 @@ object JsonHandler {
     private fun handleList(list: JsonObject, p: SyncplayProtocol) {
         val userlist = list[p.session.currentRoom]?.jsonObject ?: return
         val userkeys = userlist.keys /* Getting user list */
-        p.session.userList.clear() /* Clearing the list before populating it again */
+
+        val newList = mutableListOf<User>() //The list that will be emitted to the userlist UI
 
         var indexer = 1 /* This indexer is used to put the main user ahead of others in the list */
         for (user in userkeys) {
@@ -172,9 +174,13 @@ object JsonHandler {
                 }
             )
 
-            p.session.userList.add(utilisateur)
+            newList.add(utilisateur)
         }
-        p.syncplayCallback?.onReceivedList()
+
+        p.protoScope.launch {
+            p.session.userList.emit(newList)
+            p.syncplayCallback?.onReceivedList()
+        }
     }
 
     private fun handleState(state: JsonObject, protocol: SyncplayProtocol, json: String) {

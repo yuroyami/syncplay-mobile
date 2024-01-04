@@ -96,39 +96,36 @@ kotlin {
             dependencies {
                 dependsOn(commonMain)
 
-                /* Required ktor network client declaration for Android */
-                //implementation("io.ktor:ktor-client-android:$ktor")
-
-                api("org.conscrypt:conscrypt-android:2.5.2")
-
-                implementation("io.netty:netty-all:4.1.104.Final")
-
-                /* AndroidX compat */
+                /* Backward compatibility APIs */
                 api("androidx.core:core-ktx:1.13.0-alpha02")
                 api("androidx.appcompat:appcompat:1.7.0-alpha03")
 
-                /* SAF DocumentFile manager */
+                /* SAF DocumentFile manager with backward compatibility */
                 implementation("androidx.documentfile:documentfile:1.0.1")
 
-                /* AndroidX's Splash Screen */
+                /* Splash Screen with backward compatibility */
                 api("androidx.core:core-splashscreen:1.1.0-alpha02")
 
                 /* Jetpack Shared Preferences */
                 implementation("androidx.preference:preference-ktx:1.2.1")
 
-                /* Jetpack Home shortcut manager */
+                /* Jetpack Home shortcut manager for quick launch with backward compatibility */
                 api("androidx.core:core-google-shortcuts:1.2.0-alpha01") {
                     exclude(group = "com.google.crypto.tink", module = "tink-android")
                     exclude(group = "com.google.android.gms")
                 }
 
-                /* Compose add-ons */
+                /*  Activity's compose support with backward compatibility */
                 api("androidx.activity:activity-compose:1.9.0-alpha01")
 
                 /* Lottie for animations (like Nightmode toggle button) */
                 implementation("com.airbnb.android:lottie-compose:6.3.0")
 
-                /* Media3 (ExoPlayer and its extensions) */
+                /* Network and TLS */
+                implementation("io.netty:netty-all:4.1.104.Final")
+                api("org.conscrypt:conscrypt-android:2.5.2") //TLSv1.3 with backward compatibility
+
+                /* Video player engine: Media3 (ExoPlayer and its extensions) */
                 val media3 = "1.2.0"
                 api("androidx.media3:media3-exoplayer:$media3")
                 api("androidx.media3:media3-exoplayer-dash:$media3")

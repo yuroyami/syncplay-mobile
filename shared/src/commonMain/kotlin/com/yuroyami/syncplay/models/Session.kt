@@ -1,6 +1,7 @@
 package com.yuroyami.syncplay.models
 
 import androidx.compose.runtime.mutableStateListOf
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /*************************************************************************************************
  * Session wrapper class. It encapsulates all information and data we need about a session.
@@ -23,7 +24,7 @@ class Session {
     var currentPassword: String = ""
 
     /** Variable that stores all users that exist within the room */
-    var userList = mutableStateListOf<User>()
+    var userList = MutableStateFlow(listOf<User>())
 
     /** Variable that stores all messages that have been sent/received */
     var messageSequence = mutableStateListOf<Message>()
