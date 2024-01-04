@@ -21,20 +21,15 @@ import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.ssl.SslContextBuilder
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import org.conscrypt.Conscrypt
 
 class SpProtocolAndroid : SyncplayProtocol() {
 
     /** Netty stuff */
     var channel: Channel? = null
+    lateinit var socketChannel: SocketChannel
+    lateinit var pipeline: ChannelPipeline
 
     override fun connectSocket() {
-        val sslContext = SslContextBuilder
-            .forClient()
-            .trustManager(Conscrypt.getDefaultX509TrustManager())
-            .startTls(true)
-            .build()
-
         /** 1- Specifiying that we want the NIO event loop group. */
         val group: EventLoopGroup = NioEventLoopGroup()
 
@@ -44,12 +39,14 @@ class SpProtocolAndroid : SyncplayProtocol() {
             .channel(NioSocketChannel::class.java) /* We want a NIO Socket Channel */
             .handler(object : ChannelInitializer<SocketChannel>() {
                 override fun initChannel(ch: SocketChannel) {
-                    val p: ChannelPipeline = ch.pipeline()
+                    pipeline = ch.pipeline()
+                    socketChannel = ch
 
                     /** Should we establish a TLS connection ? */
-                    if (tls == Constants.TLS.TLS_ASK) {
-                        val h = sslContext.newHandler(ch.alloc(), session.serverHost, session.serverPort)
-                        p.addLast(h)
+                    if (tls == Constants.TLS.TLS_YES) {
+                        loggy("Added TLS Netty Handler...", 0)
+                        //val h = sslContext.newHandler(ch.alloc(), session.serverHost, session.serverPort)
+                        //pipeline.addLast(h)
 
                         //val engine: SSLEngine? = SSLContext.getDefault().createSSLEngine()
                         //engine?.useClientMode = true
@@ -57,19 +54,19 @@ class SpProtocolAndroid : SyncplayProtocol() {
                     }
 
                     /** We should never forget \r\n delimiters, or we would get no input */
-                    p.addLast(
+                    pipeline.addLast(
                         "framer",
                         DelimiterBasedFrameDecoder(8192, *Delimiters.lineDelimiter())
                     )
 
                     /** Telling our Netty that it should decode incoming bytestreams into strings */
-                    p.addLast(StringDecoder())
+                    pipeline.addLast(StringDecoder())
 
                     /** Telling our Netty that it should encode any strings to bytestreams */
-                    p.addLast(StringEncoder())
+                    pipeline.addLast(StringEncoder())
 
                     /** Assigning a reader handler to read incoming messages, should be added last to pipeline */
-                    p.addLast(Reader())
+                    pipeline.addLast(Reader())
                 }
             })
 
@@ -116,6 +113,11 @@ class SpProtocolAndroid : SyncplayProtocol() {
 
     /** NETTY READING: A small inner class that does the reading callback (Delegated by Netty) */
     inner class Reader : SimpleChannelInboundHandler<String>() {
+        override fun userEventTriggered(ctx: ChannelHandlerContext?, evt: Any?) {
+            super.userEventTriggered(ctx, evt)
+
+            loggy("Channel event: ${evt.toString()}", 0)
+        }
         override fun channelRead0(ctx: ChannelHandlerContext?, msg: String?) {
             if (msg != null) {
                 protoScope.launch {
@@ -132,4 +134,16 @@ class SpProtocolAndroid : SyncplayProtocol() {
     }
 
 
+    override fun upgradeTls() {
+        val sslContext = SslContextBuilder
+            .forClient()
+            //.sslProvider(SslProvider.JDK)
+            //.trustManager(Conscrypt.getDefaultX509TrustManager())
+            .startTls(false)
+            .build()
+
+        val h = sslContext.newHandler(pipeline.channel().alloc(), session.serverHost, session.serverPort)
+        pipeline.addFirst(h)
+
+    }
 }

@@ -138,4 +138,5 @@ abstract class SyncplayProtocol {
     abstract fun isSocketValid(): Boolean
     abstract fun endConnection(terminating: Boolean)
     abstract fun writeActualString(s: String)
+    abstract fun upgradeTls()
 }

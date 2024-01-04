@@ -253,6 +253,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                     broadcastMessage("Server supports TLS !", isChat = false)
                     p.tls = Constants.TLS.TLS_YES
                     //p.connect()
+                    p.upgradeTls()
                 } else {
                     broadcastMessage("Server does not support TLS.", isChat = false, isError = true)
                     p.tls = Constants.TLS.TLS_NO

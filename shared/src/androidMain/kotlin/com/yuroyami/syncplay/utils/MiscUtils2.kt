@@ -18,7 +18,7 @@ import kotlin.math.roundToInt
 
 actual fun getPlatform(): String = "Android"
 
-actual fun loggy(s: String?, checkpoint: Int) { Log.e("SYNCPLAY", "Checkpoint: $checkpoint \n" + s.toString()) }
+actual fun loggy(s: String?, checkpoint: Int) { Log.e("SYNCPLAY",  s.toString()) }
 
 var defaultEngineAndroid = "exo"
 
