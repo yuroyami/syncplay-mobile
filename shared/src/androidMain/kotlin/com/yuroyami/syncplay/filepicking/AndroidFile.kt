@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.core.net.toFile
+import com.yuroyami.syncplay.watchroom.wentForFilePick
 
 data class AndroidFile(
 	override val path: String,
@@ -41,6 +42,8 @@ actual fun FilePicker(
 	}
 
 	LaunchedEffect(show) {
+		wentForFilePick = show
+
 		if (show) {
 			launcher.launch(mimeTypes)
 		}
@@ -81,9 +84,11 @@ actual fun MultipleFilePicker(
 	}
 
 	LaunchedEffect(show) {
+		wentForFilePick = show
 		if (show) {
 			launcher.launch(mimeTypes)
 		}
+
 	}
 }
 
@@ -99,6 +104,8 @@ actual fun DirectoryPicker(
 	}
 
 	LaunchedEffect(show) {
+		wentForFilePick = show
+
 		if (show) {
 			launcher.launch(null)
 		}

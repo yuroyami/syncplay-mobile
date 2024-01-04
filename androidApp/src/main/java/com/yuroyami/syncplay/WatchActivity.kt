@@ -23,7 +23,6 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.media3.common.C.STREAM_TYPE_MUSIC
-import com.yuroyami.syncplay.compose.popups.wentForFilePick
 import com.yuroyami.syncplay.player.BasePlayer.ENGINE
 import com.yuroyami.syncplay.player.PlayerUtils.getEngineForString
 import com.yuroyami.syncplay.player.PlayerUtils.pausePlayback
@@ -49,6 +48,7 @@ import com.yuroyami.syncplay.watchroom.p
 import com.yuroyami.syncplay.watchroom.pipMode
 import com.yuroyami.syncplay.watchroom.player
 import com.yuroyami.syncplay.watchroom.roomCallback
+import com.yuroyami.syncplay.watchroom.wentForFilePick
 import kotlinx.coroutines.runBlocking
 
 class WatchActivity : ComponentActivity() {

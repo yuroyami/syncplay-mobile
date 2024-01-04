@@ -7,17 +7,10 @@ import androidx.compose.ui.text.intl.Locale
 import cafe.adriel.lyricist.LanguageTag
 import cafe.adriel.lyricist.Lyricist
 import com.yuroyami.syncplay.lyricist.localizations.ArStrings
-import com.yuroyami.syncplay.lyricist.localizations.DeStrings
 import com.yuroyami.syncplay.lyricist.localizations.EnStrings
 import com.yuroyami.syncplay.lyricist.localizations.EsStrings
 import com.yuroyami.syncplay.lyricist.localizations.FrStrings
-import com.yuroyami.syncplay.lyricist.localizations.HiStrings
-import com.yuroyami.syncplay.lyricist.localizations.ItStrings
-import com.yuroyami.syncplay.lyricist.localizations.JaStrings
-import com.yuroyami.syncplay.lyricist.localizations.KoStrings
-import com.yuroyami.syncplay.lyricist.localizations.PtStrings
 import com.yuroyami.syncplay.lyricist.localizations.RuStrings
-import com.yuroyami.syncplay.lyricist.localizations.TrStrings
 import com.yuroyami.syncplay.lyricist.localizations.ZhStrings
 
 interface Strings {
@@ -250,33 +243,33 @@ interface Strings {
 
 enum class Locales(val tag: String) {
     Ar("ar"), //Arabic
-    De("de"), //German
+    //De("de"), //German
     En("en"), //English
     Es("es"), //Spanish
     Fr("fr"), //French
-    Hi("hi"), //Hindi
-    It("it"), //Italian
-    Ja("ja"), //Japanese
-    Ko("ko"), //Korean
-    Pt("pt"), //Portuguese
+    //Hi("hi"), //Hindi
+    //It("it"), //Italian
+    //Ja("ja"), //Japanese
+    //Ko("ko"), //Korean
+    //Pt("pt"), //Portuguese
     Ru("ru"), //Russian
-    Tr("tr"), //Turkish
+    //Tr("tr"), //Turkish
     Zh("zh") //Chinese (Simplified)
 }
 
 val Stringies: Map<LanguageTag, Strings> = mapOf(
     Locales.Ar.tag to ArStrings,
-    Locales.De.tag to DeStrings,
+    //Locales.De.tag to DeStrings,
     Locales.En.tag to EnStrings,
     Locales.Es.tag to EsStrings,
     Locales.Fr.tag to FrStrings,
-    Locales.Hi.tag to HiStrings,
-    Locales.It.tag to ItStrings,
-    Locales.Ja.tag to JaStrings,
-    Locales.Ko.tag to KoStrings,
-    Locales.Pt.tag to PtStrings,
+    //Locales.Hi.tag to HiStrings,
+    //Locales.It.tag to ItStrings,
+    //Locales.Ja.tag to JaStrings,
+    //Locales.Ko.tag to KoStrings,
+    //Locales.Pt.tag to PtStrings,
     Locales.Ru.tag to RuStrings,
-    Locales.Tr.tag to TrStrings,
+    //Locales.Tr.tag to TrStrings,
     Locales.Zh.tag to ZhStrings,
 )
 

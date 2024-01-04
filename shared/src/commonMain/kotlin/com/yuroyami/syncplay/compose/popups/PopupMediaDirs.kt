@@ -59,7 +59,6 @@ import com.yuroyami.syncplay.ui.Paletting
 import org.jetbrains.compose.resources.Font
 import syncplaymobile.generated.resources.Res
 
-var wentForFilePick = false
 
 object PopupMediaDirs {
 

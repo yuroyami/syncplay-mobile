@@ -1,10 +1,6 @@
 package com.yuroyami.syncplay.watchroom
 
 import cafe.adriel.lyricist.Lyricist
-import com.yuroyami.syncplay.settings.DataStoreKeys
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_TLS_ENABLE
-import com.yuroyami.syncplay.settings.obtainBoolean
 import com.yuroyami.syncplay.home.HomeCallback
 import com.yuroyami.syncplay.lyricist.Strings
 import com.yuroyami.syncplay.models.Constants
@@ -17,6 +13,10 @@ import com.yuroyami.syncplay.player.PlayerUtils.playPlayback
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.protocol.ProtocolCallback
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
+import com.yuroyami.syncplay.settings.DataStoreKeys
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_TLS_ENABLE
+import com.yuroyami.syncplay.settings.obtainBoolean
 import com.yuroyami.syncplay.utils.RoomUtils.broadcastMessage
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timeStamper
@@ -33,6 +33,8 @@ var player: BasePlayer? = null
 var media: MediaFile? = null
 
 var currentTrackChoices: TrackChoices = TrackChoices()
+
+var wentForFilePick = false
 
 /** Returns whether we're in Solo Mode, by checking if our protocol is initialized */
 val isSoloMode: Boolean
