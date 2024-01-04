@@ -1,7 +1,6 @@
 package com.yuroyami.syncplay.utils
 
 import com.yuroyami.syncplay.watchroom.p
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -17,7 +16,6 @@ object CommonUtils {
 
     private fun Int.fixDigits() = this.toString().padStart(2, '0')
 
-    var pingUpdateJob: Job? = null
     suspend fun beginPingUpdate() {
         while (true) {
             p.ping.value = if (p.isSocketValid()) { //if (p.connection?.socket?.isActive == true && p.connection != null) {

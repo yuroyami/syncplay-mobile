@@ -152,11 +152,6 @@ import org.jetbrains.compose.resources.Font
 import syncplaymobile.generated.resources.Res
 import kotlin.math.roundToInt
 
-/** TODO: Ship these to a platform-agnostic viewmodel */
-val hasVideoG = mutableStateOf(false)
-val hudVisibilityState = mutableStateOf(true)
-val pipMode = mutableStateOf(false)
-
 val osdMsg = mutableStateOf("")
 var osdJob: Job? = null
 fun CoroutineScope.dispatchOSD(s: String) {
@@ -167,16 +162,6 @@ fun CoroutineScope.dispatchOSD(s: String) {
         osdMsg.value = ""
     }
 }
-
-var setReadyDirectly = false
-val seeks = mutableListOf<Pair<Long, Long>>()
-
-var startupSlide = false
-
-/* Related to playback status */
-val isNowPlaying = mutableStateOf(false)
-val timeFull = mutableLongStateOf(0L)
-val timeCurrent = mutableLongStateOf(0L)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -190,8 +175,8 @@ fun RoomUI() {
 
     LaunchedEffect(null) {
         /** Starting ping update */
-        if (CommonUtils.pingUpdateJob == null && !isSoloMode) {
-            CommonUtils.pingUpdateJob = composeScope.launch(Dispatchers.IO) {
+        if (p.pingUpdateJob == null && !isSoloMode) {
+            p.pingUpdateJob = composeScope.launch(Dispatchers.IO) {
                 CommonUtils.beginPingUpdate()
             }
         }
@@ -201,9 +186,9 @@ fun RoomUI() {
         val focusManager = LocalFocusManager.current
         val dimensions = getScreenSizeInfo()
 
-        val hasVideo = remember { hasVideoG }
-        var hudVisibility by remember { hudVisibilityState }
-        val pipModeObserver by remember { pipMode }
+        val hasVideo = remember { p.hasVideoG }
+        var hudVisibility by remember { p.hudVisibilityState }
+        val pipModeObserver by remember { p.pipMode }
         var locked by remember { mutableStateOf(false) }
 
         val addurlpopupstate = remember { mutableStateOf(false) }
@@ -284,7 +269,7 @@ fun RoomUI() {
             var msg by remember { mutableStateOf("") }
             var msgCanSend by remember { mutableStateOf(false) }
             val msgs = if (!isSoloMode) remember { p.session.messageSequence } else remember { mutableStateListOf() }
-            var ready by remember { mutableStateOf(setReadyDirectly) }
+            var ready by remember { mutableStateOf(p.setReadyDirectly) }
             var controlcardvisible by remember { mutableStateOf(false) }
             var addmediacardvisible by remember { mutableStateOf(false) }
 
@@ -294,12 +279,12 @@ fun RoomUI() {
             val sharedplaylistVisibility = remember { mutableStateOf(false) }
             val inroomprefsVisibility = remember { mutableStateOf(false) }
 
-            if (!startupSlide) {
+            if (!p.startupSlide) {
                 LaunchedEffect(null) {
                     composeScope.launch {
                         delay(600)
                         userinfoVisibility.value = true
-                        startupSlide = true
+                        p.startupSlide = true
                     }
                 }
             }
@@ -352,7 +337,7 @@ fun RoomUI() {
             }
 
             /* Gestures Interceptor */
-            GestureInterceptor(gestureState = gestures, videoState = hasVideoG, onSingleTap = {
+            GestureInterceptor(gestureState = gestures, videoState = p.hasVideoG, onSingleTap = {
                 hudVisibility = !hudVisibility
                 if (!hudVisibility) {/* Hide any popups */
                     controlcardvisible = false
@@ -661,17 +646,17 @@ fun RoomUI() {
 
                                         /* Undo Last Seek */
                                         FancyIcon2(icon = Icons.Filled.History, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
-                                            if (seeks.isEmpty()) {
+                                            if (p.seeks.isEmpty()) {
                                                 composeScope.dispatchOSD("There is no recent seek in the room.")
                                                 return@FancyIcon2
                                             }
 
                                             controlcardvisible = false
 
-                                            val lastSeek = seeks.last()
+                                            val lastSeek = p.seeks.last()
                                             player?.seekTo(lastSeek.first)
                                             sendSeek(lastSeek.first)
-                                            seeks.remove(lastSeek)
+                                            p.seeks.remove(lastSeek)
                                             composeScope.dispatchOSD("Seek undone.")
                                         }
 
@@ -819,8 +804,8 @@ fun RoomUI() {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.align(Alignment.BottomCenter).padding(4.dp).fillMaxWidth()
                         ) {
-                            var slidervalue by remember { timeCurrent }
-                            val slidermax by remember { timeFull }
+                            var slidervalue by remember { p.timeCurrent }
+                            val slidermax by remember { p.timeFull }
                             val interactionSource = remember { MutableInteractionSource() }
 
                             Row(modifier = Modifier.fillMaxWidth(0.75f), verticalAlignment = Bottom) {
@@ -831,7 +816,7 @@ fun RoomUI() {
                                     verticalArrangement = Arrangement.Bottom,
                                 ) {
                                     Text(
-                                        text = timeStamper(remember { timeCurrent }.longValue),
+                                        text = timeStamper(remember { p.timeCurrent }.longValue),
                                         modifier = Modifier.alpha(0.85f).gradientOverlay(),
                                     )
                                 }
@@ -855,7 +840,7 @@ fun RoomUI() {
                                 Column(
                                     Modifier.fillMaxWidth().offset(x = (-25).dp, y = 10.dp), verticalArrangement = Arrangement.Bottom, horizontalAlignment = Alignment.End
                                 ) {
-                                    val timeFullR = remember { timeFull }
+                                    val timeFullR = remember { p.timeFull }
                                     Text(
                                         text = if (timeFullR.longValue >= Long.MAX_VALUE / 1000L) "???" else timeStamper(timeFullR.longValue),
                                         modifier = Modifier.alpha(0.85f).gradientOverlay(),
@@ -869,7 +854,7 @@ fun RoomUI() {
                                     if (isSoloMode) {
                                         player?.let {
                                             composeScope.launch(Dispatchers.Main) {
-                                                seeks.add(Pair(it.currentPositionMs(), f.toLong() * 1000))
+                                                p.seeks.add(Pair(it.currentPositionMs(), f.toLong() * 1000))
                                             }
                                         }
                                     }
@@ -950,7 +935,7 @@ fun RoomUI() {
                     }
 
                     /** PLAY BUTTON */
-                    val playing = remember { isNowPlaying }
+                    val playing = remember { p.isNowPlaying }
                     if (hasVideo.value) {
                         FancyIcon2(
                             icon = when (playing.value) {

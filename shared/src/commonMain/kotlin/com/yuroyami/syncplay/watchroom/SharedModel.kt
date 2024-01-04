@@ -6,7 +6,6 @@ import com.yuroyami.syncplay.lyricist.Strings
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.models.MediaFile
-import com.yuroyami.syncplay.models.TrackChoices
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.PlayerUtils.pausePlayback
 import com.yuroyami.syncplay.player.PlayerUtils.playPlayback
@@ -32,8 +31,6 @@ var roomCallback: RoomCallback? = null
 var player: BasePlayer? = null
 var media: MediaFile? = null
 
-var currentTrackChoices: TrackChoices = TrackChoices()
-
 var wentForFilePick = false
 
 /** Returns whether we're in Solo Mode, by checking if our protocol is initialized */
@@ -42,9 +39,8 @@ val isSoloMode: Boolean
 
 fun prepareProtocol(joinInfo: JoinInfo) {
     if (!joinInfo.soloMode) {
-        //p = SyncplayProtocol()
 
-        setReadyDirectly = runBlocking { obtainBoolean(DataStoreKeys.PREF_READY_FIRST_HAND, true) }
+        p.setReadyDirectly = runBlocking { obtainBoolean(DataStoreKeys.PREF_READY_FIRST_HAND, true) }
 
         p.syncplayCallback = object : ProtocolCallback {
             override fun onSomeonePaused(pauser: String) {
@@ -105,7 +101,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                 val newPos = toPosition.toLong()
 
                 /* Saving seek so it can be undone on mistake */
-                seeks.add(Pair(oldPos * 1000, newPos * 1000))
+                p.seeks.add(Pair(oldPos * 1000, newPos * 1000))
 
                 broadcastMessage(message = lyricist.strings.roomSeeked(seeker, timeStamper(oldPos), timeStamper(newPos)), isChat = false)
 
@@ -173,8 +169,8 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
                 /** Set as ready first-hand */
                 if (media == null) {
-                    p.ready = setReadyDirectly
-                    p.sendPacket(JsonSender.sendReadiness(setReadyDirectly, false))
+                    p.ready = p.setReadyDirectly
+                    p.sendPacket(JsonSender.sendReadiness(p.setReadyDirectly, false))
                 }
 
 
