@@ -124,7 +124,9 @@ class WatchActivity : ComponentActivity() {
 
             override fun changeCurrentBrightness(v: Float) {
                 loggy("Brightness: $v", 0)
-                window.attributes.screenBrightness = v.coerceIn(0f, 1f)
+                val attrs = window.attributes
+                attrs.screenBrightness = v.coerceIn(0f, 1f)
+                window.attributes = attrs
             }
         }
 

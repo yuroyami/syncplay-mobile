@@ -25,6 +25,8 @@ actual fun FilePicker(
 	onFileSelected: FileSelected
 ) {
 	val launcher = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { result ->
+		wentForFilePick = false
+
 		if (result != null) {
 			onFileSelected(AndroidFile(result.toString(), result))
 		} else {
@@ -32,20 +34,18 @@ actual fun FilePicker(
 		}
 	}
 
-	val mimeTypeMap = MimeTypeMap.getSingleton()
+	/* val mimeTypeMap = MimeTypeMap.getSingleton()
 	val mimeTypes = if (fileExtensions.isNotEmpty()) {
 		fileExtensions.mapNotNull { ext ->
 			mimeTypeMap.getMimeTypeFromExtension(ext)
 		}.toTypedArray()
-	} else {
-		arrayOf("*/*")
-	}
+	} else { */
+		//arrayOf("*/*") }
 
 	LaunchedEffect(show) {
-		wentForFilePick = show
-
 		if (show) {
-			launcher.launch(mimeTypes)
+			wentForFilePick = true
+			launcher.launch(arrayOf("*/*"))
 		}
 	}
 }
@@ -60,6 +60,7 @@ actual fun MultipleFilePicker(
 	val launcher = rememberLauncherForActivityResult(
 		contract = ActivityResultContracts.OpenMultipleDocuments()
 	) { result ->
+		wentForFilePick = false
 
 		val files = result.mapNotNull { uri ->
 			uri.path?.let {path ->
@@ -84,8 +85,8 @@ actual fun MultipleFilePicker(
 	}
 
 	LaunchedEffect(show) {
-		wentForFilePick = show
 		if (show) {
+			wentForFilePick = true
 			launcher.launch(mimeTypes)
 		}
 
@@ -100,13 +101,14 @@ actual fun DirectoryPicker(
 	onFileSelected: (String?) -> Unit
 ) {
 	val launcher = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocumentTree()) { result ->
+		wentForFilePick = false
+
 		onFileSelected(result?.toString())
 	}
 
 	LaunchedEffect(show) {
-		wentForFilePick = show
-
 		if (show) {
+			wentForFilePick = true
 			launcher.launch(null)
 		}
 	}

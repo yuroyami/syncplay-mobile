@@ -136,7 +136,7 @@ fun GestureInterceptor(
 
                             currentBrightness = newBright //ui
 
-                            gestureCallback.changeCurrentBrightness(newBright)
+                            gestureCallback.changeCurrentBrightness(newBright.coerceIn(0f, 1f))
                         }
                     }
                 )
@@ -179,7 +179,8 @@ fun GestureInterceptor(
                         verticalAlignment = CenterVertically
                     ) {
                         Icon(imageVector = Icons.Filled.Brightness6, "")
-                        Text("Brightness: $currentBrightness", color = Color.Black)
+                        //TODO: Delegate 'times(100).toInt()' to platform
+                        Text("Brightness: ${currentBrightness.times(100).toInt()}%", color = Color.Black)
                     }
                 }
 
@@ -192,7 +193,8 @@ fun GestureInterceptor(
                         verticalAlignment = CenterVertically
                     ) {
                         Icon(imageVector = Icons.Filled.VolumeUp, "")
-                        Text("Volume: $currentVolume", color = Color.Black)
+                        //TODO '/30' should be platform specific
+                        Text("Volume: $currentVolume/30", color = Color.Black)
                     }
                 }
             }

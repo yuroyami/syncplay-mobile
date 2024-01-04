@@ -278,7 +278,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
         p.session.currentPassword = joinInfo.password
 
         /** Connecting */
-        val tls = runBlocking { obtainBoolean(PREF_TLS_ENABLE, false) }
+        val tls = runBlocking { obtainBoolean(PREF_TLS_ENABLE, true) }
         if (tls) {
             p.syncplayCallback?.onTLSCheck()
             p.tls = Constants.TLS.TLS_ASK

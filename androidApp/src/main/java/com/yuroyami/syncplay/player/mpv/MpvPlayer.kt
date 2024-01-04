@@ -306,7 +306,8 @@ class MpvPlayer : BasePlayer() {
     }
 
     override fun changeSubtitleSize(newSize: Int) {
-        MPVLib.setPropertyInt("sub-font-size", (newSize - 16).coerceIn(0, 100))
+       // MPVLib.setPropertyInt("sub-font-size", (newSize - 16).coerceIn(0, 100))
+        MPVLib.setPropertyString("sub-font-size", (newSize - 16).coerceIn(0, 100).toString())
     }
 
     /** MPV EXCLUSIVE */

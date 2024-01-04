@@ -107,6 +107,13 @@ import com.yuroyami.syncplay.compose.cards.CardUserInfo.UserInfoCard
 import com.yuroyami.syncplay.compose.popups.PopupAddUrl.AddUrlPopup
 import com.yuroyami.syncplay.compose.popups.PopupChatHistory.ChatHistoryPopup
 import com.yuroyami.syncplay.compose.popups.PopupSeekToPosition.SeekToPositionPopup
+import com.yuroyami.syncplay.filepicking.FilePicker
+import com.yuroyami.syncplay.player.BasePlayer.TRACKTYPE
+import com.yuroyami.syncplay.player.PlayerUtils.pausePlayback
+import com.yuroyami.syncplay.player.PlayerUtils.playPlayback
+import com.yuroyami.syncplay.player.PlayerUtils.seekBckwd
+import com.yuroyami.syncplay.player.PlayerUtils.seekFrwrd
+import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_GESTURES
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_NIGHTMODE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_BG_OPACITY
@@ -119,13 +126,6 @@ import com.yuroyami.syncplay.settings.booleanFlow
 import com.yuroyami.syncplay.settings.intFlow
 import com.yuroyami.syncplay.settings.obtainBoolean
 import com.yuroyami.syncplay.settings.writeBoolean
-import com.yuroyami.syncplay.filepicking.FilePicker
-import com.yuroyami.syncplay.player.BasePlayer.TRACKTYPE
-import com.yuroyami.syncplay.player.PlayerUtils.pausePlayback
-import com.yuroyami.syncplay.player.PlayerUtils.playPlayback
-import com.yuroyami.syncplay.player.PlayerUtils.seekBckwd
-import com.yuroyami.syncplay.player.PlayerUtils.seekFrwrd
-import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.Paletting.ROOM_ICON_SIZE
@@ -229,7 +229,7 @@ fun RoomUI() {
         }
 
         var showSubtitlePicker by remember { mutableStateOf(false) }
-        FilePicker(show = showVideoPicker, fileExtensions = CommonUtils.ccExs) { file ->
+        FilePicker(show = showSubtitlePicker, fileExtensions = CommonUtils.ccExs) { file ->
             showSubtitlePicker = false
             file?.path?.let {
                 player?.loadExternalSub(it)
