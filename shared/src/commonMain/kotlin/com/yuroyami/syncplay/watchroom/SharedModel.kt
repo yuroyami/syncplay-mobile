@@ -40,7 +40,7 @@ val isSoloMode: Boolean
 
 fun prepareProtocol(joinInfo: JoinInfo) {
     if (!joinInfo.soloMode) {
-        p = SyncplayProtocol()
+        //p = SyncplayProtocol()
 
         setReadyDirectly = runBlocking { obtainBoolean(DataStoreKeys.PREF_READY_FIRST_HAND, true) }
 
@@ -250,21 +250,20 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
                 /** Deciding next step based on whether the server supports TLS or not **/
                 if (supported) {
-                    //p.cert = resources.openRawResource(R.raw.cert)
                     broadcastMessage("Server supports TLS !", isChat = false)
                     p.tls = Constants.TLS.TLS_YES
-                    p.connect()
+                    //p.connect()
                 } else {
                     broadcastMessage("Server does not support TLS.", isChat = false, isError = true)
                     p.tls = Constants.TLS.TLS_NO
-                    p.sendPacket(
-                        JsonSender.sendHello(
-                            p.session.currentUsername,
-                            p.session.currentRoom,
-                            p.session.currentPassword
-                        )
-                    )
                 }
+                p.sendPacket(
+                    JsonSender.sendHello(
+                        p.session.currentUsername,
+                        p.session.currentRoom,
+                        p.session.currentPassword
+                    )
+                )
             }
         }
 

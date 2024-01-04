@@ -25,9 +25,11 @@ import com.yuroyami.syncplay.home.HomeCallback
 import com.yuroyami.syncplay.home.HomeConfig
 import com.yuroyami.syncplay.home.HomeScreen
 import com.yuroyami.syncplay.models.JoinInfo
+import com.yuroyami.syncplay.protocol.SpProtocolAndroid
 import com.yuroyami.syncplay.utils.changeLanguage
 import com.yuroyami.syncplay.utils.defaultEngineAndroid
 import com.yuroyami.syncplay.watchroom.homeCallback
+import com.yuroyami.syncplay.watchroom.p
 import com.yuroyami.syncplay.watchroom.prepareProtocol
 import kotlinx.coroutines.runBlocking
 
@@ -73,6 +75,8 @@ class HomeActivity : ComponentActivity() {
             }
 
             override fun onJoin(joinInfo: JoinInfo) {
+                p = SpProtocolAndroid()
+
                 prepareProtocol(joinInfo.get())
 
                 val intent = Intent(this@HomeActivity, WatchActivity::class.java)

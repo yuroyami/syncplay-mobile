@@ -6,6 +6,7 @@ import com.yuroyami.syncplay.datastore.obtainInt
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.Session
 import com.yuroyami.syncplay.protocol.JsonSender.sendHello
+import com.yuroyami.syncplay.protocol.JsonSender.sendTLS
 import com.yuroyami.syncplay.utils.loggy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -59,13 +60,17 @@ abstract class SyncplayProtocol {
 
                 /** if the TLS mode is [Constants.TLS.TLS_ASK], then the the first packet to send
                  * concerns an opportunistic TLS check with the server, otherwise, a Hello would be first */
-                sendPacket(
-                    sendHello(
-                        session.currentUsername,
-                        session.currentRoom,
-                        session.currentPassword
+                if (tls == Constants.TLS.TLS_ASK) {
+                    sendPacket(sendTLS())
+                } else {
+                    sendPacket(
+                        sendHello(
+                            session.currentUsername,
+                            session.currentRoom,
+                            session.currentPassword
+                        )
                     )
-                )
+                }
             } catch (e: Exception) {
                 loggy(e.stackTraceToString(), 205)
                 syncplayCallback?.onConnectionFailed()

@@ -32,6 +32,7 @@ class SpProtocolAndroid : SyncplayProtocol() {
         val sslContext = SslContextBuilder
             .forClient()
             .trustManager(Conscrypt.getDefaultX509TrustManager())
+            .startTls(true)
             .build()
 
         /** 1- Specifiying that we want the NIO event loop group. */
@@ -46,7 +47,7 @@ class SpProtocolAndroid : SyncplayProtocol() {
                     val p: ChannelPipeline = ch.pipeline()
 
                     /** Should we establish a TLS connection ? */
-                    if (tls == Constants.TLS.TLS_YES) {
+                    if (tls == Constants.TLS.TLS_ASK) {
                         val h = sslContext.newHandler(ch.alloc(), session.serverHost, session.serverPort)
                         p.addLast(h)
 

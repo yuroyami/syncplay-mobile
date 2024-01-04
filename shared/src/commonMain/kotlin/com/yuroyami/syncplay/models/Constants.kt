@@ -23,6 +23,7 @@ object Constants {
     /** The 3 TLS modes that the Netty client has to work with */
     enum class TLS {
         TLS_NO,
+        TLS_ASK,
         TLS_YES;
     }
 
