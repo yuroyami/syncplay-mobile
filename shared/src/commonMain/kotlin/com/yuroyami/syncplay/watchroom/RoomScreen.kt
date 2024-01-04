@@ -123,7 +123,7 @@ import com.yuroyami.syncplay.player.PlayerUtils.pausePlayback
 import com.yuroyami.syncplay.player.PlayerUtils.playPlayback
 import com.yuroyami.syncplay.player.PlayerUtils.seekBckwd
 import com.yuroyami.syncplay.player.PlayerUtils.seekFrwrd
-import com.yuroyami.syncplay.player.TRACKTYPE
+import com.yuroyami.syncplay.player.BasePlayer.TRACKTYPE
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting

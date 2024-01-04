@@ -18,12 +18,12 @@ import kotlinx.coroutines.withContext
 
 object PlayerUtils {
 
-    fun getEngineForString(nameOfEngine: String): ENGINE {
+    fun getEngineForString(nameOfEngine: String): BasePlayer.ENGINE {
         return when (nameOfEngine) {
-            "exo" -> ENGINE.ANDROID_EXOPLAYER
-            "mpv" -> ENGINE.ANDROID_MPV
-            "avplayer" -> ENGINE.IOS_AVPLAYER
-            else -> ENGINE.ANDROID_EXOPLAYER
+            "exo" -> BasePlayer.ENGINE.ANDROID_EXOPLAYER
+            "mpv" -> BasePlayer.ENGINE.ANDROID_MPV
+            "avplayer" -> BasePlayer.ENGINE.IOS_AVPLAYER
+            else -> BasePlayer.ENGINE.ANDROID_EXOPLAYER
         }
     }
 

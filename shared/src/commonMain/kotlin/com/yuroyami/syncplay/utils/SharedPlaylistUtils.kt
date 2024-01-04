@@ -1,15 +1,14 @@
 package com.yuroyami.syncplay.utils
 
-import cafe.adriel.lyricist.Lyricist
 import com.yuroyami.syncplay.datastore.DataStoreKeys
 import com.yuroyami.syncplay.datastore.obtainStringSet
 import com.yuroyami.syncplay.datastore.writeStringSet
-import com.yuroyami.syncplay.lyricist.Stringies
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.protocol.JsonSender.sendPlaylistChange
 import com.yuroyami.syncplay.protocol.JsonSender.sendPlaylistIndex
 import com.yuroyami.syncplay.utils.RoomUtils.broadcastMessage
 import com.yuroyami.syncplay.watchroom.dispatchOSD
+import com.yuroyami.syncplay.watchroom.lyricist
 import com.yuroyami.syncplay.watchroom.media
 import com.yuroyami.syncplay.watchroom.p
 import com.yuroyami.syncplay.watchroom.player
@@ -102,8 +101,6 @@ object SharedPlaylistUtils {
      * is heavy.
      */
     private suspend fun retrieveFile(fileName: String) {
-        val lyricist = Lyricist("en", Stringies)
-
             /** We have to know whether the file name is an URL or just a file name */
             if (fileName.contains("http://", true) ||
                 fileName.contains("https://", true) ||

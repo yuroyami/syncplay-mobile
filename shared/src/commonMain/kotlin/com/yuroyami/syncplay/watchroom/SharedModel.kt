@@ -6,7 +6,7 @@ import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
 import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_TLS_ENABLE
 import com.yuroyami.syncplay.datastore.obtainBoolean
 import com.yuroyami.syncplay.home.HomeCallback
-import com.yuroyami.syncplay.lyricist.Stringies
+import com.yuroyami.syncplay.lyricist.Strings
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.models.MediaFile
@@ -21,6 +21,8 @@ import com.yuroyami.syncplay.utils.RoomUtils.broadcastMessage
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.runBlocking
+
+lateinit var lyricist: Lyricist<Strings>
 
 lateinit var p: SyncplayProtocol //If it is not initialized, it means we're in Solo Mode
 
@@ -37,8 +39,6 @@ val isSoloMode: Boolean
     get() = !::p.isInitialized
 
 fun prepareProtocol(joinInfo: JoinInfo) {
-    val lyricist = Lyricist("en", Stringies)
-
     if (!joinInfo.soloMode) {
         p = SyncplayProtocol()
 

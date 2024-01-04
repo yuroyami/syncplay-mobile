@@ -10,6 +10,8 @@ class SyncplayApp: Application() {
     override fun onCreate() {
         super.onCreate()
 
+        //Security.insertProviderAt(Conscrypt.newProvider(), 1)
+
         //Initializing datastore
         datastore = dataStore(applicationContext, DataStoreKeys.SYNCPLAY_PREFS)
     }

@@ -104,6 +104,7 @@ import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.getDefaultEngine
 import com.yuroyami.syncplay.watchroom.homeCallback
+import com.yuroyami.syncplay.watchroom.lyricist
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -116,7 +117,7 @@ import syncplaymobile.generated.resources.Res
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(config: HomeConfig) {
-    val localz = rememberStrings()
+    lyricist = rememberStrings()
 
     val nightMode = booleanFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
 
@@ -128,7 +129,7 @@ fun HomeScreen(config: HomeConfig) {
         "syncplay.pl:8997",
         "syncplay.pl:8998",
         "syncplay.pl:8999",
-        localz.strings.connectEnterCustomServer
+        lyricist.strings.connectEnterCustomServer
     )
 
     AppTheme(nightMode.value) {
@@ -309,7 +310,7 @@ fun HomeScreen(config: HomeConfig) {
                     ) {
 
                         FlexibleFancyText(
-                            text = localz.strings.connectUsernameA,
+                            text = lyricist.strings.connectUsernameA,
                             size = 20f,
                             textAlign = TextAlign.Center,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),
@@ -338,7 +339,7 @@ fun HomeScreen(config: HomeConfig) {
                             OutlinedTextField(
                                 modifier = Modifier.gradientOverlay(),
                                 singleLine = true,
-                                label = { Text(localz.strings.connectUsernameB) },
+                                label = { Text(lyricist.strings.connectUsernameB) },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.PersonPin, "") },
                                 supportingText = { /* Text(stringResource(R.string.connect_username_c), fontSize = 10.sp) */ },
                                 keyboardActions = KeyboardActions(onDone = {
@@ -362,7 +363,7 @@ fun HomeScreen(config: HomeConfig) {
 
 
                         FlexibleFancyText(
-                            text = localz.strings.connectRoomnameA,
+                            text = lyricist.strings.connectRoomnameA,
                             size = 20f,
                             textAlign = TextAlign.Center,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),
@@ -391,7 +392,7 @@ fun HomeScreen(config: HomeConfig) {
                             OutlinedTextField(
                                 modifier = Modifier.gradientOverlay(),
                                 singleLine = true,
-                                label = { Text(localz.strings.connectRoomnameB) },
+                                label = { Text(lyricist.strings.connectRoomnameB) },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.MeetingRoom, "") },
                                 supportingText = { /* Text(stringResource(R.string.connect_roomname_c), fontSize = 10.sp) */ },
                                 keyboardActions = KeyboardActions(onDone = {
@@ -412,7 +413,7 @@ fun HomeScreen(config: HomeConfig) {
                         horizontalAlignment = CenterHorizontally,
                     ) {
                         FlexibleFancyText(
-                            text = localz.strings.connectServerA,
+                            text = lyricist.strings.connectServerA,
                             size = 20f,
                             textAlign = TextAlign.Center,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),
@@ -658,7 +659,7 @@ fun HomeScreen(config: HomeConfig) {
                         Spacer(modifier = Modifier.height(4.dp))
 
                         Text(
-                            localz.strings.connectButtonCurrentEngine.invoke(
+                            lyricist.strings.connectButtonCurrentEngine.invoke(
                                 when (player.value) {
                                     "exo" -> "ExoPlayer"
                                     "mpv" -> "mpv"
@@ -673,10 +674,10 @@ fun HomeScreen(config: HomeConfig) {
                     Spacer(modifier = Modifier.height(10.dp))
 
                     /* join button */
-                    val snacktxtEmptyUSER = localz.strings.connectUsernameEmptyError
-                    val snacktxtEmptyROOM = localz.strings.connectRoomnameEmptyError
-                    val snacktxtEmptyIP = localz.strings.connectAddressEmptyError
-                    val snacktxtEmptyPORT = localz.strings.connectPortEmptyError
+                    val snacktxtEmptyUSER = lyricist.strings.connectUsernameEmptyError
+                    val snacktxtEmptyROOM = lyricist.strings.connectRoomnameEmptyError
+                    val snacktxtEmptyIP = lyricist.strings.connectAddressEmptyError
+                    val snacktxtEmptyPORT = lyricist.strings.connectPortEmptyError
 
                     Button(
                         border = BorderStroke(width = 2.dp, color = MaterialTheme.colorScheme.primary),
@@ -752,7 +753,7 @@ fun HomeScreen(config: HomeConfig) {
                     ) {
                         Icon(imageVector = Icons.Filled.Api, "")
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(localz.strings.connectButtonJoin, fontSize = 18.sp)
+                        Text(lyricist.strings.connectButtonJoin, fontSize = 18.sp)
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))

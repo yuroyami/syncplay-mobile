@@ -52,13 +52,13 @@ kotlin {
             }
         }
 
-        val ktor = "3.0.0-beta-1"
+        val ktor = "2.3.7" // "3.0.0-beta-1"
         val commonMain by getting {
             dependencies {
                 //Strings internationalization and localization
                 api("cafe.adriel.lyricist:lyricist:$lyricist")
 
-                api("com.rickclephas.kmm:kmm-viewmodel-core:1.0.0-ALPHA-17")
+                api("dev.icerock.moko:mvvm-core:0.16.1")
 
                 /* Official JetBrains Kotlin Date 'n time manager (i.e: generating date from epoch) */
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
@@ -70,10 +70,8 @@ kotlin {
                 implementation("org.kotlincrypto.hash:sha2:$kotlincrypto")
 
                 /* Network client */
-                implementation("io.ktor:ktor-client-core:$ktor")
-                implementation("io.ktor:ktor-network:$ktor")
-                implementation("io.ktor:ktor-network-tls:$ktor")
-
+                api("io.ktor:ktor-network:$ktor")
+                api("io.ktor:ktor-network-tls:$ktor")
 
                 /* JSON serializer/deserializer to communicate with Syncplay servers */
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
@@ -100,6 +98,10 @@ kotlin {
 
                 /* Required ktor network client declaration for Android */
                 //implementation("io.ktor:ktor-client-android:$ktor")
+
+                api("org.conscrypt:conscrypt-android:2.5.2")
+
+                implementation("io.netty:netty-all:4.1.104.Final")
 
                 /* AndroidX compat */
                 api("androidx.core:core-ktx:1.13.0-alpha02")

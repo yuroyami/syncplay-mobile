@@ -26,6 +26,16 @@ abstract class BasePlayer {
 
     abstract val engine: ENGINE
 
+    enum class ENGINE {
+        ANDROID_EXOPLAYER,
+        ANDROID_MPV,
+        IOS_AVPLAYER,
+    }
+
+    enum class TRACKTYPE {
+        AUDIO, SUBTITLE
+    }
+
     val playerScopeMain = CoroutineScope(Dispatchers.Main)
     val playerScopeIO = CoroutineScope(Dispatchers.IO)
 
