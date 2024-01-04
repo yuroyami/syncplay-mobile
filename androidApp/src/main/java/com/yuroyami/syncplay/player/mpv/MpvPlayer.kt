@@ -126,6 +126,7 @@ class MpvPlayer : BasePlayer() {
                         }
                     )
                 }
+
                 "sub" -> {
                     media?.subtitleTracks?.add(
                         Track(
@@ -306,8 +307,18 @@ class MpvPlayer : BasePlayer() {
     }
 
     override fun changeSubtitleSize(newSize: Int) {
-       // MPVLib.setPropertyInt("sub-font-size", (newSize - 16).coerceIn(0, 100))
-        MPVLib.setPropertyString("sub-font-size", (newSize - 16).coerceIn(0, 100).toString())
+
+        val s: Double = when {
+            newSize == 16 -> 1.0
+            newSize > 16 -> {
+                1.0 + (newSize - 16) * 0.05
+            }
+            else -> {
+                1.0 - (16 - newSize) * (1.0 / 16)
+            }
+        }
+
+        MPVLib.setPropertyDouble("sub-scale", s)
     }
 
     /** MPV EXCLUSIVE */
