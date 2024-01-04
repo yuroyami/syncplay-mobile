@@ -33,6 +33,7 @@ import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.PlayerOptions
 import com.yuroyami.syncplay.player.PlayerUtils.trackProgress
 import com.yuroyami.syncplay.protocol.JsonSender
+import com.yuroyami.syncplay.utils.RoomUtils.checkFileMismatches
 import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.getFileName
@@ -68,7 +69,7 @@ class ExoPlayer : BasePlayer() {
 
         playerScopeMain.launch {
             /** LoadControl (Buffering manager) and track selector (for track language preference) **/
-            val options = PlayerOptions.get()
+            val options = PlayerOptions.getSuspendingly()
             val loadControl = DefaultLoadControl.Builder()
                 .setBufferDurationsMs(
                     options.minBuffer,
@@ -78,7 +79,8 @@ class ExoPlayer : BasePlayer() {
                 ).build()
 
             val trackSelector = DefaultTrackSelector(context.applicationContext)
-            val params = trackSelector.buildUponParameters().setPreferredAudioLanguage(options.audioPreference)
+            val params = trackSelector.buildUponParameters()
+                .setPreferredAudioLanguage(options.audioPreference)
                 .setPreferredTextLanguage(options.ccPreference)
                 .build()
             trackSelector.parameters = params
@@ -98,6 +100,8 @@ class ExoPlayer : BasePlayer() {
             exoplayer?.videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT /* Starter scaling */
 
             exoView.player = exoplayer
+
+            exoplayer?.playWhenReady = false
 
             /** Creating our MediaSession */
             session = MediaSession
@@ -343,7 +347,7 @@ class ExoPlayer : BasePlayer() {
                 }
 
                 /* Checking mismatches with others in room */
-                //checkFileMismatches(p) TODO
+                checkFileMismatches(p)
             }
 
             /* Injecting the media into exoplayer */

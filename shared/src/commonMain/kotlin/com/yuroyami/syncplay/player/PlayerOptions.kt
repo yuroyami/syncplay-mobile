@@ -33,5 +33,16 @@ class PlayerOptions private constructor() {
             options.audioPreference = runBlocking { obtainString(DataStoreKeys.PREF_AUDIO_LANG, "und") }
             return options
         }
+
+        suspend fun getSuspendingly(): PlayerOptions {
+            val options = PlayerOptions()
+            options.maxBuffer = obtainInt(DataStoreKeys.PREF_MAX_BUFFER, 30000)
+            options.minBuffer = obtainInt(DataStoreKeys.PREF_MIN_BUFFER, 15000)
+            options.playbackBuffer = obtainInt(DataStoreKeys.PREF_SEEK_BUFFER, 2000)
+
+            options.ccPreference =  obtainString(DataStoreKeys.PREF_CC_LANG, "eng")
+            options.audioPreference = obtainString(DataStoreKeys.PREF_AUDIO_LANG, "und")
+            return options
+        }
     }
 }

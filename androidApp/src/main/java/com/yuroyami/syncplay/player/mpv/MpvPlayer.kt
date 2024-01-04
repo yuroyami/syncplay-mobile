@@ -20,6 +20,7 @@ import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.PlayerUtils
 import com.yuroyami.syncplay.protocol.JsonSender
+import com.yuroyami.syncplay.utils.RoomUtils.checkFileMismatches
 import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.getFileName
@@ -220,7 +221,7 @@ class MpvPlayer : BasePlayer() {
                 }
 
                 /* Checking mismatches with others in room */
-                //checkFileMismatches(p) TODO
+                checkFileMismatches(p)
             }
             /* Injecting the media into exoplayer */
             try {

@@ -1,9 +1,19 @@
 package com.yuroyami.syncplay
 
+import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.PendingIntent
+import android.app.PendingIntent.FLAG_IMMUTABLE
+import android.app.PictureInPictureParams
+import android.app.RemoteAction
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.content.res.Configuration
+import android.graphics.drawable.Icon
 import android.media.AudioManager
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.WindowManager
@@ -11,13 +21,19 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.media3.common.C.STREAM_TYPE_MUSIC
-import com.yuroyami.syncplay.settings.DataStoreKeys
-import com.yuroyami.syncplay.settings.obtainString
+import com.yuroyami.syncplay.compose.popups.wentForFilePick
 import com.yuroyami.syncplay.player.BasePlayer.ENGINE
 import com.yuroyami.syncplay.player.PlayerUtils.getEngineForString
+import com.yuroyami.syncplay.player.PlayerUtils.pausePlayback
+import com.yuroyami.syncplay.player.PlayerUtils.playPlayback
 import com.yuroyami.syncplay.player.exo.ExoPlayer
 import com.yuroyami.syncplay.player.mpv.MpvPlayer
+import com.yuroyami.syncplay.settings.DataStoreKeys
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PIP
+import com.yuroyami.syncplay.settings.obtainBoolean
+import com.yuroyami.syncplay.settings.obtainString
 import com.yuroyami.syncplay.utils.UIUtils.cutoutMode
 import com.yuroyami.syncplay.utils.UIUtils.hideSystemUI
 import com.yuroyami.syncplay.utils.changeLanguage
@@ -27,7 +43,10 @@ import com.yuroyami.syncplay.watchroom.GestureCallback
 import com.yuroyami.syncplay.watchroom.RoomCallback
 import com.yuroyami.syncplay.watchroom.RoomUI
 import com.yuroyami.syncplay.watchroom.gestureCallback
+import com.yuroyami.syncplay.watchroom.hasVideoG
+import com.yuroyami.syncplay.watchroom.hudVisibilityState
 import com.yuroyami.syncplay.watchroom.p
+import com.yuroyami.syncplay.watchroom.pipMode
 import com.yuroyami.syncplay.watchroom.player
 import com.yuroyami.syncplay.watchroom.roomCallback
 import kotlinx.coroutines.runBlocking
@@ -45,24 +64,11 @@ class WatchActivity : ComponentActivity() {
             }
         }
 
-    private var videoPickResult =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                val video = result.data?.data ?: return@registerForActivityResult
-
-                //pickFuture?.complete(video.toString()) //Tell our commonMain shared module that we picked a video
-            }
-        }
-
     lateinit var audioManager: AudioManager
 
     /** Now, onto overriding lifecycle methods */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        Thread.setDefaultUncaughtExceptionHandler { _, e ->
-            loggy(e.stackTraceToString(), 99999)
-        }
 
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
@@ -83,23 +89,6 @@ class WatchActivity : ComponentActivity() {
             ENGINE.ANDROID_MPV -> player = MpvPlayer()
             else -> {}
         }
-
-//        pickerCallback = object : PickerCallback {
-//            override fun goPickVideo() {
-//                val intent = Intent()
-//                intent.action = Intent.ACTION_OPEN_DOCUMENT
-//                intent.type = "video/*"
-//                videoPickResult.launch(intent)
-//            }
-//
-//            override fun goPickFolder() {
-//                val intent = Intent()
-//                intent.action = Intent.ACTION_OPEN_DOCUMENT_TREE
-//                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-//                intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-//                dirPickResult.launch(intent)
-//            }
-//        }
 
         gestureCallback = object : GestureCallback {
             override fun getMaxVolume() = audioManager.getStreamMaxVolume(STREAM_TYPE_MUSIC)
@@ -134,6 +123,7 @@ class WatchActivity : ComponentActivity() {
             }
 
             override fun changeCurrentBrightness(v: Float) {
+                loggy("Brightness: $v", 0)
                 window.attributes.screenBrightness = v.coerceIn(0f, 1f)
             }
         }
@@ -183,9 +173,10 @@ class WatchActivity : ComponentActivity() {
 //    }
 //
 
+    @SuppressLint("MissingSuperCall")
     override fun onBackPressed() {
         terminate()
-        super.onBackPressed()
+        //super.onBackPressed()
     }
 
     fun terminate() {
@@ -196,86 +187,98 @@ class WatchActivity : ComponentActivity() {
 
         finish()
     }
-//
-//    /** Let's inform Jetpack Compose that we entered picture in picture, to adjust some UI settings */
-//    @RequiresApi(Build.VERSION_CODES.O)
-//    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
-//        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
-//        pipMode.value = isInPictureInPictureMode
-//    }
-//
-//    /** If user leaves the app by any standard means, then we initiate picture-in-picture mode */
-//    override fun onUserLeaveHint() {
-//        super.onUserLeaveHint()
-//
-//        if (!wentForFilePick) {
-//            initiatePIPmode()
-//        }
-//    }
-//
-//    fun initiatePIPmode() {
-//        val isPipAllowed = runBlocking {
-//            DATASTORE_INROOM_PREFERENCES.obtainBoolean(PREF_INROOM_PIP, true)
-//        } && (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-//
-//        if (!isPipAllowed) return
-//
-//        moveTaskToBack(true)
-//
-//        updatePiPParams()
-//
-//        enterPictureInPictureMode()
-//        hudVisibilityState.value = false
-//    }
-//
-//    fun updatePiPParams() {
-//        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
-//            return
-//
-//        val intent = Intent(ACTION_PIP_PAUSE_PLAY)
-//        val pendingIntent = PendingIntent.getBroadcast(
-//            this, 6969, intent,
-//            PendingIntent.FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE)
-//
-//        val action = if (player?.isInPlayState() == true) {
-//            RemoteAction(Icon.createWithResource(this, R.drawable.ic_pause),
-//                "Play", "", pendingIntent)
-//        } else {
-//            RemoteAction(Icon.createWithResource(this, R.drawable.ic_play),
-//                "Pause", "", pendingIntent)
-//        }
-//
-//        val params = with(PictureInPictureParams.Builder()) {
-//            setActions(if (hasVideoG.value) listOf(action) else listOf())
-//        }
-//
-//        try {
-//            setPictureInPictureParams(params.build())
-//        } catch (_: IllegalArgumentException) { }
-//    }
-//
-//    private val pipBroadcastReceiver = object : BroadcastReceiver() {
-//        override fun onReceive(context: Context?, intent: Intent?) {
-//            intent?.let {
-//                if (it.action == ACTION_PIP_PAUSE_PLAY) {
-//                    val pausePlayValue = it.getIntExtra("pause_zero_play_one", -1)
-//
-//                    if (pausePlayValue == 1) {
-//                        playPlayback()
-//                    } else {
-//                        pausePlayback()
-//                    }
-//                }
-//            }
-//        }
-//    }
-//
-//    val ACTION_PIP_PAUSE_PLAY = "action_pip_pause_play"
+
+    /** Let's inform Jetpack Compose that we entered picture in picture, to adjust some UI settings */
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        pipMode.value = isInPictureInPictureMode
+    }
+
+    /** If user leaves the app by any standard means, then we initiate picture-in-picture mode */
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+
+        if (!wentForFilePick) {
+            initiatePIPmode()
+        }
+    }
+
+    private fun initiatePIPmode() {
+        val isPipAllowed = runBlocking {obtainBoolean(PREF_INROOM_PIP, true) }
+                && (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+
+        if (!isPipAllowed) return
+
+        moveTaskToBack(true)
+        updatePiPParams()
+        enterPictureInPictureMode()
+        hudVisibilityState.value = false
+    }
+
+    private fun updatePiPParams() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+            return
+
+        val intent = Intent(pipACTION)
+        val pendingIntent = PendingIntent.getBroadcast(
+            this, 6969, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE)
+
+        val action = if (player?.isPlaying() == true) {
+            RemoteAction(
+                Icon.createWithResource(this, R.drawable.ic_pause),
+                "Play", "", pendingIntent)
+        } else {
+            RemoteAction(Icon.createWithResource(this, R.drawable.ic_play),
+                "Pause", "", pendingIntent)
+        }
+
+        val params = with(PictureInPictureParams.Builder()) {
+            setActions(if (hasVideoG.value) listOf(action) else listOf())
+        }
+
+        try {
+            setPictureInPictureParams(params.build())
+        } catch (_: IllegalArgumentException) { }
+    }
+
+    private val pipBroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            intent?.let {
+                if (it.action == pipACTION) {
+                    val pausePlayValue = it.getIntExtra("pause_zero_play_one", -1)
+
+                    if (pausePlayValue == 1) {
+                        playPlayback()
+                    } else {
+                        pausePlayback()
+                    }
+                }
+            }
+        }
+    }
+
+    val pipACTION = "action_pip_pause_play"
 
     /** Applying the locale language preference */
     override fun attachBaseContext(newBase: Context?) {
         /** Applying saved language */
         val lang = runBlocking { obtainString(DataStoreKeys.PREF_DISPLAY_LANG, "en") }
         super.attachBaseContext(newBase!!.changeLanguage(lang))
+    }
+
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
+    override fun onResume() {
+        super.onResume()
+        val filter = IntentFilter(pipACTION)
+        registerReceiver(pipBroadcastReceiver, filter)
+
+        hideSystemUI(false)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(pipBroadcastReceiver)
     }
 }
