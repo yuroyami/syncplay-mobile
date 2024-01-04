@@ -52,8 +52,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
-import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
-import com.yuroyami.syncplay.datastore.stringSetFlow
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_SP_MEDIA_DIRS
+import com.yuroyami.syncplay.settings.stringSetFlow
 import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.ui.Paletting
 import org.jetbrains.compose.resources.Font

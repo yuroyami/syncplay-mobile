@@ -1,7 +1,7 @@
 package com.yuroyami.syncplay.player
 
-import com.yuroyami.syncplay.datastore.DataStoreKeys
-import com.yuroyami.syncplay.datastore.intFlow
+import com.yuroyami.syncplay.settings.DataStoreKeys
+import com.yuroyami.syncplay.settings.intFlow
 import com.yuroyami.syncplay.utils.RoomUtils
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.p

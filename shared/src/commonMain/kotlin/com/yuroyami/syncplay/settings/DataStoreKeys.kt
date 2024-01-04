@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.datastore
+package com.yuroyami.syncplay.settings
 
 object DataStoreKeys {
     const val SYNCPLAY_PREFS = "syncplayprefs.preferences_pb"

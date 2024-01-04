@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.datastore
+package com.yuroyami.syncplay.settings
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory

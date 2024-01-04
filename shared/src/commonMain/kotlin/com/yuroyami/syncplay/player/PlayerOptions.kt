@@ -1,8 +1,8 @@
 package com.yuroyami.syncplay.player
 
-import com.yuroyami.syncplay.datastore.DataStoreKeys
-import com.yuroyami.syncplay.datastore.obtainInt
-import com.yuroyami.syncplay.datastore.obtainString
+import com.yuroyami.syncplay.settings.DataStoreKeys
+import com.yuroyami.syncplay.settings.obtainInt
+import com.yuroyami.syncplay.settings.obtainString
 import kotlinx.coroutines.runBlocking
 
 class PlayerOptions private constructor() {

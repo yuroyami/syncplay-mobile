@@ -16,8 +16,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
-import com.yuroyami.syncplay.datastore.DataStoreKeys
-import com.yuroyami.syncplay.datastore.writeBoolean
+import com.yuroyami.syncplay.settings.DataStoreKeys
+import com.yuroyami.syncplay.settings.writeBoolean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch

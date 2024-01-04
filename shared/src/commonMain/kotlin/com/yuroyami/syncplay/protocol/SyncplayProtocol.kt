@@ -1,8 +1,8 @@
 package com.yuroyami.syncplay.protocol
 
 import androidx.compose.runtime.mutableStateOf
-import com.yuroyami.syncplay.datastore.DataStoreKeys
-import com.yuroyami.syncplay.datastore.obtainInt
+import com.yuroyami.syncplay.settings.DataStoreKeys
+import com.yuroyami.syncplay.settings.obtainInt
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.Session
 import com.yuroyami.syncplay.protocol.JsonSender.sendHello

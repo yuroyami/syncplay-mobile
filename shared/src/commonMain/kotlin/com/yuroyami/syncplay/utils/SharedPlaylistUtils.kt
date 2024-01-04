@@ -1,8 +1,8 @@
 package com.yuroyami.syncplay.utils
 
-import com.yuroyami.syncplay.datastore.DataStoreKeys
-import com.yuroyami.syncplay.datastore.obtainStringSet
-import com.yuroyami.syncplay.datastore.writeStringSet
+import com.yuroyami.syncplay.settings.DataStoreKeys
+import com.yuroyami.syncplay.settings.obtainStringSet
+import com.yuroyami.syncplay.settings.writeStringSet
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.protocol.JsonSender.sendPlaylistChange
 import com.yuroyami.syncplay.protocol.JsonSender.sendPlaylistIndex

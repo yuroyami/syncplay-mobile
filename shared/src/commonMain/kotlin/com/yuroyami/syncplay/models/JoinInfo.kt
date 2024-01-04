@@ -1,9 +1,9 @@
 package com.yuroyami.syncplay.models
 
-import com.yuroyami.syncplay.datastore.DataStoreKeys
-import com.yuroyami.syncplay.datastore.obtainBoolean
-import com.yuroyami.syncplay.datastore.writeInt
-import com.yuroyami.syncplay.datastore.writeString
+import com.yuroyami.syncplay.settings.DataStoreKeys
+import com.yuroyami.syncplay.settings.obtainBoolean
+import com.yuroyami.syncplay.settings.writeInt
+import com.yuroyami.syncplay.settings.writeString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO

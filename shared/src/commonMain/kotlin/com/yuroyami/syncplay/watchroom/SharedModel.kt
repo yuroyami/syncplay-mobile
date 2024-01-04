@@ -1,10 +1,10 @@
 package com.yuroyami.syncplay.watchroom
 
 import cafe.adriel.lyricist.Lyricist
-import com.yuroyami.syncplay.datastore.DataStoreKeys
-import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
-import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_TLS_ENABLE
-import com.yuroyami.syncplay.datastore.obtainBoolean
+import com.yuroyami.syncplay.settings.DataStoreKeys
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_TLS_ENABLE
+import com.yuroyami.syncplay.settings.obtainBoolean
 import com.yuroyami.syncplay.home.HomeCallback
 import com.yuroyami.syncplay.lyricist.Strings
 import com.yuroyami.syncplay.models.Constants

@@ -1,9 +1,9 @@
 @file:OptIn(ExperimentalSerializationApi::class)
 package com.yuroyami.syncplay.protocol
 
-import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_HASH_FILENAME
-import com.yuroyami.syncplay.datastore.DataStoreKeys.PREF_HASH_FILESIZE
-import com.yuroyami.syncplay.datastore.obtainString
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_HASH_FILENAME
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_HASH_FILESIZE
+import com.yuroyami.syncplay.settings.obtainString
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.utils.md5
 import com.yuroyami.syncplay.utils.toHex

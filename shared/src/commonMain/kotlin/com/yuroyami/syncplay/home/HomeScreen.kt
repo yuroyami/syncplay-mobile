@@ -91,11 +91,11 @@ import com.yuroyami.syncplay.compose.ComposeUtils.FlexibleFancyText
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.compose.NightModeToggle
 import com.yuroyami.syncplay.compose.popups.PopupAPropos.AProposPopup
-import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_NIGHTMODE
-import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_PLAYER_ENGINE
-import com.yuroyami.syncplay.datastore.booleanFlow
-import com.yuroyami.syncplay.datastore.stringFlow
-import com.yuroyami.syncplay.datastore.writeString
+import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_NIGHTMODE
+import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_PLAYER_ENGINE
+import com.yuroyami.syncplay.settings.booleanFlow
+import com.yuroyami.syncplay.settings.stringFlow
+import com.yuroyami.syncplay.settings.writeString
 import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.settings.MySettings.globalSettings

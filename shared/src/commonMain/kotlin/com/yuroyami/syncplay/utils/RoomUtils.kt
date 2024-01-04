@@ -3,10 +3,15 @@ package com.yuroyami.syncplay.utils
 import com.yuroyami.syncplay.models.Message
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_FILE_MISMATCH_WARNING
+import com.yuroyami.syncplay.settings.obtainBoolean
 import com.yuroyami.syncplay.watchroom.isSoloMode
+import com.yuroyami.syncplay.watchroom.lyricist
+import com.yuroyami.syncplay.watchroom.media
 import com.yuroyami.syncplay.watchroom.p
 import com.yuroyami.syncplay.watchroom.player
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 /** Methods exclusive to Room functionality (messages, sending data to server, etc) */
 object RoomUtils {
@@ -61,37 +66,35 @@ object RoomUtils {
         p.session.messageSequence.add(msg)
     }
 
-    /** TODO: Method to verify mismatches of files with different users in the room.
-     * Mismatches are: Name, Size, Duration. If 3 mismatches are detected, no error is thrown
+    /** Mismatches are: Name, Size, Duration. If 3 mismatches are detected, no error is thrown
      * since that would mean that the two files are completely and obviously different.*/
     fun checkFileMismatches(p: SyncplayProtocol) {
         if (isSoloMode) return
-        //TODO
 
         /** First, we check if user wanna be notified about file mismatchings */
-        //FIXME: if (!PreferenceManager.getDefaultSharedPreferences(this)
-        //        .getBoolean("warn_file_mismatch", true)
-        //) return
+        val pref = runBlocking { obtainBoolean(PREF_FILE_MISMATCH_WARNING, true) }
 
-       // for (user in p.session.userList) {
-//            val theirFile = user.file ?: continue /* If they have no file, iterate unto next */
-//            val nameMismatch =
-//                (media?.fileName != theirFile.fileName) && (media?.fileNameHashed != theirFile.fileName)
-//            val durationMismatch = media?.fileDuration != theirFile.fileDuration
-//            val sizeMismatch =
-//                media?.fileSize != theirFile.fileSize && media?.fileSizeHashed != theirFile.fileSize
-//
-//            if (nameMismatch && durationMismatch && sizeMismatch) continue /* 2 mismatches or less */
-//            var warning = string(R.string.room_file_mismatch_warning_core, user.name)
-//            if (nameMismatch) warning =
-//                warning.plus(string(R.string.room_file_mismatch_warning_name))
-//            if (durationMismatch) warning =
-//                warning.plus(string(R.string.room_file_mismatch_warning_duration))
-//            if (sizeMismatch) warning =
-//                warning.plus(string(R.string.room_file_mismatch_warning_size))
+        if (!pref) return
 
-            //broadcastMessage(warning, false)
-       // }
+        for (user in p.session.userList.value) {
+            val theirFile = user.file ?: continue /* If they have no file, iterate unto next */
+
+            val nameMismatch = (media?.fileName != theirFile.fileName) and (media?.fileNameHashed != theirFile.fileNameHashed)
+            val durationMismatch = media?.fileDuration != theirFile.fileDuration
+            val sizeMismatch = (media?.fileSize != theirFile.fileSize) and (media?.fileSizeHashed != theirFile.fileSizeHashed)
+
+            if (nameMismatch && durationMismatch && sizeMismatch) continue /* 2 mismatches or less */
+
+            with(lyricist.strings) {
+                var warning = roomFileMismatchWarningCore(user.name)
+
+                if (nameMismatch) warning += roomFileMismatchWarningName
+                if (durationMismatch) warning += roomFileMismatchWarningDuration
+                if (sizeMismatch) warning += roomFileMismatchWarningSize
+
+                broadcastMessage(warning, false, isError = true)
+            }
+        }
     }
 
 }

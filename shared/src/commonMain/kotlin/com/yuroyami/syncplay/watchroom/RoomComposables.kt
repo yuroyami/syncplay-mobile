@@ -64,9 +64,9 @@ import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.compose.ComposeUtils
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.compose.ComposeUtils.solidOverlay
-import com.yuroyami.syncplay.datastore.DataStoreKeys
-import com.yuroyami.syncplay.datastore.booleanFlow
-import com.yuroyami.syncplay.datastore.intFlow
+import com.yuroyami.syncplay.settings.DataStoreKeys
+import com.yuroyami.syncplay.settings.booleanFlow
+import com.yuroyami.syncplay.settings.intFlow
 import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.ui.Paletting
 import kotlinx.coroutines.delay

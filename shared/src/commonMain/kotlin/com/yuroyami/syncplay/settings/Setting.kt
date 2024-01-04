@@ -52,13 +52,6 @@ import com.yuroyami.syncplay.compose.ComposeUtils.FlexibleFancyText
 import com.yuroyami.syncplay.compose.ComposeUtils.MultiChoiceDialog
 import com.yuroyami.syncplay.compose.ComposeUtils.SmartFancyIcon
 import com.yuroyami.syncplay.compose.popups.PopupColorPicker.ColorPickingPopup
-import com.yuroyami.syncplay.datastore.booleanFlow
-import com.yuroyami.syncplay.datastore.datastore
-import com.yuroyami.syncplay.datastore.intFlow
-import com.yuroyami.syncplay.datastore.stringFlow
-import com.yuroyami.syncplay.datastore.writeBoolean
-import com.yuroyami.syncplay.datastore.writeInt
-import com.yuroyami.syncplay.datastore.writeString
 import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.colorpicker.HsvColor

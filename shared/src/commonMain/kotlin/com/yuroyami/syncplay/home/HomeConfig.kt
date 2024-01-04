@@ -1,8 +1,8 @@
 package com.yuroyami.syncplay.home
 
-import com.yuroyami.syncplay.datastore.DataStoreKeys
-import com.yuroyami.syncplay.datastore.obtainInt
-import com.yuroyami.syncplay.datastore.obtainString
+import com.yuroyami.syncplay.settings.DataStoreKeys
+import com.yuroyami.syncplay.settings.obtainInt
+import com.yuroyami.syncplay.settings.obtainString
 import kotlinx.coroutines.runBlocking
 
 class HomeConfig {
@@ -19,7 +19,7 @@ class HomeConfig {
         savedRoom = runBlocking { obtainString(DataStoreKeys.MISC_JOIN_ROOMNAME, "room" + (0..9999).random().toString()) }
         savedIP = runBlocking { obtainString(DataStoreKeys.MISC_JOIN_SERVER_ADDRESS, "syncplay.pl") }
         savedPort = runBlocking { obtainInt(DataStoreKeys.MISC_JOIN_SERVER_PORT, 8997) }
-        savedPassword = runBlocking {obtainString(DataStoreKeys.MISC_JOIN_SERVER_PW, "") }
+        savedPassword = runBlocking { obtainString(DataStoreKeys.MISC_JOIN_SERVER_PW, "") }
     }
 
 }

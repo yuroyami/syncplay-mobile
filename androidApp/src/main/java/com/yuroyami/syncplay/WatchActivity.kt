@@ -12,8 +12,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.media3.common.C.STREAM_TYPE_MUSIC
-import com.yuroyami.syncplay.datastore.DataStoreKeys
-import com.yuroyami.syncplay.datastore.obtainString
+import com.yuroyami.syncplay.settings.DataStoreKeys
+import com.yuroyami.syncplay.settings.obtainString
 import com.yuroyami.syncplay.player.BasePlayer.ENGINE
 import com.yuroyami.syncplay.player.PlayerUtils.getEngineForString
 import com.yuroyami.syncplay.player.exo.ExoPlayer

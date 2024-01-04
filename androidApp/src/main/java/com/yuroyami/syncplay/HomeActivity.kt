@@ -17,10 +17,10 @@ import androidx.core.graphics.drawable.IconCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.yuroyami.syncplay.datastore.DataStoreKeys
-import com.yuroyami.syncplay.datastore.DataStoreKeys.MISC_NIGHTMODE
-import com.yuroyami.syncplay.datastore.booleanFlow
-import com.yuroyami.syncplay.datastore.obtainString
+import com.yuroyami.syncplay.settings.DataStoreKeys
+import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_NIGHTMODE
+import com.yuroyami.syncplay.settings.booleanFlow
+import com.yuroyami.syncplay.settings.obtainString
 import com.yuroyami.syncplay.home.HomeCallback
 import com.yuroyami.syncplay.home.HomeConfig
 import com.yuroyami.syncplay.home.HomeScreen
