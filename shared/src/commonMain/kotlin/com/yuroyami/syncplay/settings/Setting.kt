@@ -30,7 +30,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,514 +68,553 @@ import kotlin.math.roundToInt
  * @param defaultValue The default value of the setting, can be of any type but will throw an exception when incompatible
  * @param enabled Whether the setting is enabled, this is true by default if you don't pass any value so it's optional.
  * @param styling The styling used for the setting appearance (Fonts, sizes, colors for icon, title, summary, padding etc)
- * @param dependency Key string of another setting that this setting is dependent upon (Optional)
- * @param maxValue Max value of the setting if it works with numbers, 100 by default, this setting is optional.
- * @param minValue Min value of the setting, 0 by default, so this setting is optional.
- * @param entryKeys When working with multi choice setting for example, pass a list of the visible key texts
- * @param entryValues The under-the-hood values for each entryKey. It must be of same size as entryKeys.
- * @param onClick Lambda triggered upon clicking the setting, typically used for [SettingType.OneClickSetting]
- * @param onItemChosen Lambda triggered upon choosing an elemnt for a [SettingType.MultiChoicePopupSetting]
- * @param onValueChanged Lambda triggered upon changing a [SettingType.SliderSetting] value
- * @param popupComposable For a [SettingType.PopupSetting], this is a composable popup to show upon clicking
- * @param isResetDefault For a [SettingType.OneClickSetting], this one prompts the user to clear settings.
  * */
-class Setting(
-    val type: SettingType,
-    val key: String, val title: @Composable () -> String,
-    val summary: @Composable () -> String, val defaultValue: Any? = null,
-    val icon: ImageVector? = null, val enabled: Boolean = true, val styling: SettingStyling = SettingStyling(),
-    val dependency: String = "",
-    val maxValue: Int = 100,
-    val minValue: Int = 0, val entryKeys: @Composable () -> List<String> = { listOf() },
-    val entryValues: @Composable () -> List<String> = { listOf() }, val onClick: (() -> Unit)? = null,
-    val onItemChosen: ((index: Int, value: String) -> Unit)? = null, val onValueChanged: ((newValue: Int) -> Unit)? = null,
-    val popupComposable: @Composable() ((MutableState<Boolean>) -> Unit)? = null,
-    val isResetDefault: Boolean = false,
+sealed class Setting<T>(
+    val type: SettingType = SettingType.OneClickSettingType, val key: String = "",
+    val title: String = "", val summary: String = "",
+    val defaultValue: T? = null,
+    val icon: ImageVector? = null, val enabled: Boolean = true, val styling: SettingStyling = SettingStyling()
 ) {
 
-    /** The Composable function that creates the UI element for the setting. */
+    /** This is the abstract function that will be called by Compose UI in order to draw the setting.
+     * Each setting type has its own UI, so within this sealed class, we override it and draw it respectively;
+     */
     @Composable
-    fun SettingSingleton(modifier: Modifier = Modifier) {
-        when (type) {
-            SettingType.OneClickSetting -> OneClickSettingUI(modifier)
-            SettingType.PopupSetting -> PopupSettingUI(modifier)
-            SettingType.MultiChoicePopupSetting -> ListSettingUI(modifier)
-            SettingType.CheckboxSetting -> BooleanSettingUI(modifier = modifier, true)
-            SettingType.ToggleSetting -> BooleanSettingUI(modifier = modifier, false)
-            SettingType.SliderSetting -> SliderSettingUI(modifier = modifier)
-            SettingType.ColorSetting -> ColorSettingUI(modifier = modifier)
-            SettingType.TextFieldSetting -> TextFieldSettingUI(modifier = modifier)
+    abstract fun SettingComposable(modifier: Modifier)
 
-        }
-    }
 
-    @Composable
-    private fun OneClickSettingUI(modifier: Modifier = Modifier) {
-        val scope = rememberCoroutineScope()
-        val lyricist = rememberStrings()
+    /** ======= Now to specific types of SETTINGs and their respective child classes ======= */
 
-        var resetDialog by remember { mutableStateOf(false) }
-        if (resetDialog && isResetDefault) {
-            AlertDialog(
-                onDismissRequest = { resetDialog = false },
-                confirmButton = {
-                    TextButton(onClick = {
-                        resetDialog = false
-                        scope.launch(Dispatchers.IO) {
-                            datastore.edit { preferences ->
-                                preferences.clear()
+    class OneClickSetting(
+        type: SettingType, key: String, summary: String, title: String, defaultValue: Any? = null,
+        icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling,
+        val onClick: (() -> Unit)? = null,
+        val isResetDefault: Boolean = false
+    ) : Setting<Any>(
+        type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
+        icon = icon, enabled = enabled, styling = styling
+    ) {
+        @Composable
+        override fun SettingComposable(modifier: Modifier) {
+            val scope = rememberCoroutineScope()
+            val lyricist = rememberStrings()
+
+            var resetDialog by remember { mutableStateOf(false) }
+            if (resetDialog && isResetDefault) {
+                AlertDialog(
+                    onDismissRequest = { resetDialog = false },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            resetDialog = false
+                            scope.launch(Dispatchers.IO) {
+                                datastore.edit { preferences ->
+                                    preferences.clear()
+                                }
                             }
+                        }) { Text(lyricist.strings.yes) }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = {
+                            resetDialog = false
+                        }) { Text(lyricist.strings.no) }
+                    },
+                    text = { Text(lyricist.strings.settingResetdefaultDialog) }
+                )
+            }
+            ListItem(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
+                    ) {
+                        if (isResetDefault) {
+                            resetDialog = true
                         }
-                    }) { Text(lyricist.strings.yes) }
-                },
-                dismissButton = {
-                    TextButton(onClick = {
-                        resetDialog = false
-                    }) { Text(lyricist.strings.no) }
-                },
-                text = { Text(lyricist.strings.settingResetdefaultDialog) }
-            )
-        }
-        ListItem(
-            modifier = modifier
-                .fillMaxWidth()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
-                ) {
-                    if (isResetDefault) {
-                        resetDialog = true
-                    }
-                    onClick?.let { it() }
-                },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-            leadingContent = {
-                SmartFancyIcon(
-                    tintColors = styling.iconTints,
-                    icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
-                )
-            },
-            headlineContent = {
-                FlexibleFancyText(
-                    text = title.invoke(),
-                    fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                    strokeColors = styling.titleStroke ?: listOf(),
-                    shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
-                    size = styling.titleSize,
-                    font = styling.titleFont
-                )
-            },
-            supportingContent = {
-                Text(
-                    text = summary.invoke(),
-                    style = TextStyle(
-                        color = styling.summaryColor,
-                        fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
+                        onClick?.let { it() }
+                    },
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                leadingContent = {
+                    SmartFancyIcon(
+                        tintColors = styling.iconTints,
+                        icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
                     )
-                )
-            }
-        )
-    }
-
-    @Composable
-    private fun PopupSettingUI(modifier: Modifier = Modifier) {
-        val popupVisibility = remember { mutableStateOf(false) }
-
-        ListItem(
-            modifier = modifier
-                .fillMaxWidth()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
-
-                ) {
-                    popupVisibility.value = true
                 },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-            leadingContent = {
-                SmartFancyIcon(
-                    tintColors = styling.iconTints,
-                    shadowColors = styling.iconShadows,
-                    icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
-                )
-            },
-            headlineContent = {
-                FlexibleFancyText(
-                    text = title.invoke(),
-                    fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                    strokeColors = styling.titleStroke ?: listOf(),
-                    shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
-                    size = styling.titleSize,
-                    font = styling.titleFont
-                )
-            },
-            supportingContent = {
-                Text(
-                    text = summary.invoke(),
-                    style = TextStyle(
-                        color = styling.summaryColor,
-                        fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
+                headlineContent = {
+                    FlexibleFancyText(
+                        text = title,
+                        fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
+                        strokeColors = styling.titleStroke ?: listOf(),
+                        shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                        size = styling.titleSize,
+                        font = styling.titleFont
                     )
-                )
-            }
-        )
-
-
-        popupComposable?.invoke(popupVisibility)
-    }
-
-    /** A boolean setting UI composable function. This either creates a CheckboxSetting or a ToggleSetting
-     * based on the parameter [type] that is passed. If it's true, it is a checkbox setting, otherwise, a toggle button. */
-    @Composable
-    private fun BooleanSettingUI(modifier: Modifier = Modifier, type: Boolean) {
-        val boolean = booleanFlow(key, defaultValue as Boolean).collectAsState(initial = defaultValue)
-        val scope = rememberCoroutineScope { Dispatchers.IO }
-
-        ListItem(
-            modifier = modifier
-                .fillMaxWidth()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
-
-                ) {
-                    scope.launch {
-                        writeBoolean(key, !boolean.value)
-                    }
                 },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-            leadingContent = {
-                SmartFancyIcon(
-                    tintColors = styling.iconTints,
-                    shadowColors = styling.iconShadows,
-                    icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
-                )
-            },
-            trailingContent = {
-                if (type) {
-                    Checkbox(
-                        checked = boolean.value,
-                        enabled = enabled,
-                        onCheckedChange = { b ->
-                            scope.launch {
-                                writeBoolean(key, b)
-                            }
-                        }
-                    )
-                } else {
-                    Switch(
-                        checked = boolean.value,
-                        enabled = enabled,
-                        onCheckedChange = { b ->
-                            scope.launch {
-                                writeBoolean(key, b)
-                            }
-                        }
-                    )
-                }
-            },
-            headlineContent = {
-                FlexibleFancyText(
-                    text = title.invoke(),
-                    fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                    strokeColors = styling.titleStroke ?: listOf(),
-                    shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
-                    size = styling.titleSize,
-                    font = styling.titleFont
-                )
-            },
-            supportingContent = {
-                Text(
-                    text = summary.invoke(),
-                    style = TextStyle(
-                        color = styling.summaryColor,
-                        fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
-                    )
-                )
-            }
-        )
-    }
-
-    /** A multi-choice setting which shows a popup dialog when clicked.
-     * @exception SettingCreationException When [entryKeys] and [entryValues] are not passed/specified. */
-    @Composable
-    private fun ListSettingUI(modifier: Modifier = Modifier) {
-        val dialogOpen = remember { mutableStateOf(false) }
-        val selectedItem = stringFlow(key, defaultValue as String).collectAsState(initial = defaultValue)
-        val scope = rememberCoroutineScope { Dispatchers.IO }
-
-        val renderedValues = entryValues.invoke()
-
-        if (dialogOpen.value) {
-            MultiChoiceDialog(
-                items = entryKeys.invoke(),
-                title = title.invoke(),
-                onDismiss = { dialogOpen.value = false },
-                selectedItem = renderedValues.indexOf(selectedItem.value),
-                onItemClick = { i ->
-                    dialogOpen.value = false
-
-                    scope.launch {
-                        writeString(key, renderedValues[i])
-
-                        onItemChosen?.let { it(i, renderedValues[i]) }
-
-                    }
-                })
-        }
-
-        ListItem(
-            modifier = modifier
-                .fillMaxWidth()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
-
-                ) {
-                    dialogOpen.value = true
-                },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-            leadingContent = {
-                SmartFancyIcon(
-                    tintColors = styling.iconTints,
-                    shadowColors = styling.iconShadows,
-                    icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
-                )
-            },
-            headlineContent = {
-                FlexibleFancyText(
-                    text = title.invoke(),
-                    fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                    strokeColors = styling.titleStroke ?: listOf(),
-                    shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
-                    size = styling.titleSize,
-                    font = styling.titleFont
-                )
-            },
-            trailingContent = {
-                Icon(imageVector = Icons.Default.List, "")
-            },
-            supportingContent = {
-                Text(
-                    text = summary.invoke(),
-                    style = TextStyle(
-                        color = styling.summaryColor,
-                        fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
-                    )
-                )
-            }
-        )
-    }
-
-    /** A slider setting which has a draggable seek bar to choose an Integer value
-     * @exception SettingCreationException */
-    @Composable
-    private fun SliderSettingUI(modifier: Modifier = Modifier) {
-        val value = intFlow(key, defaultValue as Int).collectAsState(initial = defaultValue)
-        val scope = rememberCoroutineScope { Dispatchers.IO }
-
-        ListItem(
-            modifier = modifier
-                .fillMaxWidth()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
-
-                ) {},
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-            leadingContent = {
-                SmartFancyIcon(
-                    tintColors = styling.iconTints,
-                    shadowColors = styling.iconShadows,
-                    icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
-                )
-            },
-            headlineContent = {
-                FlexibleFancyText(
-                    text = title.invoke(),
-                    fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                    strokeColors = styling.titleStroke ?: listOf(),
-                    shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
-                    size = styling.titleSize,
-                    font = styling.titleFont
-                )
-            },
-            supportingContent = {
-                Column {
+                supportingContent = {
                     Text(
-                        text = summary.invoke(),
+                        text = summary,
                         style = TextStyle(
                             color = styling.summaryColor,
                             fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
                         )
                     )
+                }
+            )
+        }
+    }
 
-                    Slider(
-                        value = value.value.toFloat(),
-                        enabled = enabled,
-                        valueRange = (minValue.toFloat())..(maxValue.toFloat()),
-                        onValueChange = { f ->
-                            scope.launch {
-                                writeInt(key, f.roundToInt())
-                            }
-                            onValueChanged?.invoke(f.roundToInt())
-                        }, modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp)
+    class PopupSetting(
+        type: SettingType, key: String, summary: String, title: String, defaultValue: Any? = null,
+        icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling,
+        val popupComposable: @Composable() ((MutableState<Boolean>) -> Unit)? = null
+    ) : Setting<Any>(
+        type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
+        icon = icon, enabled = enabled, styling = styling
+    ) {
+        @Composable
+        override fun SettingComposable(modifier: Modifier) {
+            val popupVisibility = remember { mutableStateOf(false) }
+
+            ListItem(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
+
+                    ) {
+                        popupVisibility.value = true
+                    },
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                leadingContent = {
+                    SmartFancyIcon(
+                        tintColors = styling.iconTints,
+                        shadowColors = styling.iconShadows,
+                        icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
+                    )
+                },
+                headlineContent = {
+                    FlexibleFancyText(
+                        text = title,
+                        fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
+                        strokeColors = styling.titleStroke ?: listOf(),
+                        shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                        size = styling.titleSize,
+                        font = styling.titleFont
+                    )
+                },
+                supportingContent = {
+                    Text(
+                        text = summary,
+                        style = TextStyle(
+                            color = styling.summaryColor,
+                            fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
+                        )
                     )
                 }
-            },
-            trailingContent = {
-                Text(
-                    text = (value.value).toString(),
-                    style = TextStyle(
-                        color = MaterialTheme.colorScheme.primary,
-                        fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default,
-                        fontSize = (13).sp
-                    )
-                )
-            }
-        )
+            )
+
+
+            popupComposable?.invoke(popupVisibility)
+        }
     }
 
-    /** A color setting UI composable function. Clicking this would displays a popup to the user. */
-    @Composable
-    private fun ColorSettingUI(modifier: Modifier = Modifier) {
-        val color = intFlow(key, defaultValue as Int).collectAsState(initial = defaultValue)
-        val colorDialogState = remember { mutableStateOf(false) }
-        val scope = rememberCoroutineScope { Dispatchers.IO }
+    class BooleanSetting(
+        type: SettingType, key: String, summary: String, title: String, defaultValue: Boolean?,
+        icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling
+    ) : Setting<Boolean>(
+        type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
+        icon = icon, enabled = enabled, styling = styling
+    ) {
+        /** A boolean setting UI composable function. This either creates a CheckboxSetting or a ToggleSetting
+         * based on the parameter [type] that is passed, whether it is a checkbox setting, or a toggle button. */
+        @Composable
+        override fun SettingComposable(modifier: Modifier) {
+            val boolean = getSettingState()
+            val scope = rememberCoroutineScope { Dispatchers.IO }
 
-        ListItem(
-            modifier = modifier
-                .fillMaxWidth()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
+            ListItem(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
 
-                ) {
-                    colorDialogState.value = true
-                },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-            leadingContent = {
-                SmartFancyIcon(
-                    tintColors = styling.iconTints,
-                    shadowColors = styling.iconShadows,
-                    icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
-                )
-            },
-            headlineContent = {
-                FlexibleFancyText(
-                    text = title.invoke(),
-                    fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                    strokeColors = styling.titleStroke ?: listOf(),
-                    shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
-                    size = styling.titleSize,
-                    font = styling.titleFont
-                )
-            },
-            trailingContent = {
-                Button(
-                    onClick = { colorDialogState.value = true },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(color.value)),
-                    modifier = Modifier.size(24.dp)
-                ) {}
-            },
-            supportingContent = {
-                Text(
-                    text = summary.invoke(),
-                    style = TextStyle(
-                        color = styling.summaryColor,
-                        fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
-                    )
-                )
-            }
-        )
-
-        ColorPickingPopup(colorDialogState, initialColor = HsvColor.from(Color(color.value)), onColorChanged = { hsvColor ->
-            scope.launch {
-                writeInt(key, hsvColor.toColor().toArgb())
-            }
-        }, onDefaultReset = { scope.launch { writeInt(key, defaultValue) } })
-    }
-
-    /** A string setting UI composable function. It has a textfield next to it */
-    @Composable
-    private fun TextFieldSettingUI(modifier: Modifier = Modifier) {
-        val string by stringFlow(key, defaultValue as String).collectAsState(initial = defaultValue)
-        val scope = rememberCoroutineScope()
-        val focusManager = LocalFocusManager.current
-
-        ListItem(
-            modifier = modifier
-                .fillMaxWidth()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
-
-                ) {
-                    scope.launch {
-                        writeString(key, string)
-                    }
-                },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-            leadingContent = {
-                SmartFancyIcon(
-                    tintColors = styling.iconTints,
-                    shadowColors = styling.iconShadows,
-                    icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
-                )
-            },
-            trailingContent = {
-                TextField(
-                    modifier = Modifier.width(64.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    singleLine = true,
-                    value = string,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    keyboardActions = KeyboardActions(onDone = {
-                        focusManager.clearFocus()
-                    }),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.primary,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.primary,
-                        disabledContainerColor = MaterialTheme.colorScheme.primary,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent,
-                    ),
-                    onValueChange = {
+                    ) {
                         scope.launch {
-                            writeString(key, it)
+                            writeValue(key, boolean.value?.not())
                         }
                     },
-                    textStyle = TextStyle(
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default,
-                        fontSize = 12.sp,
-                        textAlign = TextAlign.Center
-                    ),
-                    label = {}
-                )
-            },
-            headlineContent = {
-                FlexibleFancyText(
-                    text = title.invoke(),
-                    fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                    strokeColors = styling.titleStroke ?: listOf(),
-                    shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
-                    size = styling.titleSize,
-                    font = styling.titleFont
-                )
-            },
-            supportingContent = {
-                Text(
-                    text = summary.invoke(),
-                    style = TextStyle(
-                        color = styling.summaryColor,
-                        fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                leadingContent = {
+                    SmartFancyIcon(
+                        tintColors = styling.iconTints,
+                        shadowColors = styling.iconShadows,
+                        icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
                     )
-                )
+                },
+                trailingContent = {
+                    if (type == SettingType.CheckboxSettingType) {
+                        Checkbox(
+                            checked = boolean.value ?: false,
+                            enabled = enabled,
+                            onCheckedChange = { b ->
+                                scope.launch {
+                                    writeValue(key, b)
+                                }
+                            }
+                        )
+                    } else {
+                        Switch(
+                            checked = boolean.value ?: false,
+                            enabled = enabled,
+                            onCheckedChange = { b ->
+                                scope.launch {
+                                    writeValue(key, b)
+                                }
+                            }
+                        )
+                    }
+                },
+                headlineContent = {
+                    FlexibleFancyText(
+                        text = title,
+                        fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
+                        strokeColors = styling.titleStroke ?: listOf(),
+                        shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                        size = styling.titleSize,
+                        font = styling.titleFont
+                    )
+                },
+                supportingContent = {
+                    Text(
+                        text = summary,
+                        style = TextStyle(
+                            color = styling.summaryColor,
+                            fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
+                        )
+                    )
+                }
+            )
+        }
+    }
+
+    class MultiChoiceSetting(
+        type: SettingType, key: String, summary: String, title: String, defaultValue: String?,
+        icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling,
+        val entryKeys: List<String> = listOf(),
+        val entryValues: List<String> = listOf(),
+        val onItemChosen: ((index: Int, value: String) -> Unit)? = null
+    ) : Setting<String>(
+        type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
+        icon = icon, enabled = enabled, styling = styling
+    ) {
+        /** A multi-choice setting which shows a popup dialog when clicked.
+         * @exception SettingCreationException When [entryKeys] and [entryValues] are not passed/specified. */
+        @Composable
+        override fun SettingComposable(modifier: Modifier) {
+            val dialogOpen = remember { mutableStateOf(false) }
+            val selectedItem = getSettingState()
+            val scope = rememberCoroutineScope { Dispatchers.IO }
+
+            val renderedValues = entryValues
+
+            if (dialogOpen.value) {
+                MultiChoiceDialog(
+                    items = entryKeys,
+                    title = title,
+                    onDismiss = { dialogOpen.value = false },
+                    selectedItem = renderedValues.indexOf(selectedItem.value),
+                    onItemClick = { i ->
+                        dialogOpen.value = false
+
+                        scope.launch {
+                            writeValue(key, renderedValues[i])
+
+                            onItemChosen?.let { it(i, renderedValues[i]) }
+
+                        }
+                    })
             }
-        )
+
+            ListItem(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
+
+                    ) {
+                        dialogOpen.value = true
+                    },
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                leadingContent = {
+                    SmartFancyIcon(
+                        tintColors = styling.iconTints,
+                        shadowColors = styling.iconShadows,
+                        icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
+                    )
+                },
+                headlineContent = {
+                    FlexibleFancyText(
+                        text = title,
+                        fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
+                        strokeColors = styling.titleStroke ?: listOf(),
+                        shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                        size = styling.titleSize,
+                        font = styling.titleFont
+                    )
+                },
+                trailingContent = {
+                    Icon(imageVector = Icons.Default.List, "")
+                },
+                supportingContent = {
+                    Text(
+                        text = summary,
+                        style = TextStyle(
+                            color = styling.summaryColor,
+                            fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
+                        )
+                    )
+                }
+            )
+        }
+    }
+
+    class SliderSetting(
+        type: SettingType, key: String, summary: String, title: String, defaultValue: Int?,
+        icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling,
+        val maxValue: Int = 100,
+        val minValue: Int = 0,
+        val onValueChanged: ((newValue: Int) -> Unit)? = null,
+    ) : Setting<Int>(
+        type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
+        icon = icon, enabled = enabled, styling = styling
+    ) {
+        @Composable
+        override fun SettingComposable(modifier: Modifier) {
+            val value = getSettingState()
+            val scope = rememberCoroutineScope { Dispatchers.IO }
+
+            ListItem(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
+
+                    ) {},
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                leadingContent = {
+                    SmartFancyIcon(
+                        tintColors = styling.iconTints,
+                        shadowColors = styling.iconShadows,
+                        icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
+                    )
+                },
+                headlineContent = {
+                    FlexibleFancyText(
+                        text = title,
+                        fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
+                        strokeColors = styling.titleStroke ?: listOf(),
+                        shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                        size = styling.titleSize,
+                        font = styling.titleFont
+                    )
+                },
+                supportingContent = {
+                    Column {
+                        Text(
+                            text = summary,
+                            style = TextStyle(
+                                color = styling.summaryColor,
+                                fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
+                            )
+                        )
+
+                        Slider(
+                            value = value.value?.toFloat() ?: 0f,
+                            enabled = enabled,
+                            valueRange = (minValue.toFloat())..(maxValue.toFloat()),
+                            onValueChange = { f ->
+                                scope.launch {
+                                    writeValue(key, f.roundToInt())
+                                }
+                                onValueChanged?.invoke(f.roundToInt())
+                            }, modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp)
+                        )
+                    }
+                },
+                trailingContent = {
+                    Text(
+                        text = (value.value).toString(),
+                        style = TextStyle(
+                            color = MaterialTheme.colorScheme.primary,
+                            fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default,
+                            fontSize = (13).sp
+                        )
+                    )
+                }
+            )
+        }
+    }
+
+    class ColorSetting(
+        type: SettingType, key: String, summary: String, title: String, defaultValue: Int?,
+        icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling
+    ) : Setting<Int>(
+        type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
+        icon = icon, enabled = enabled, styling = styling
+    ) {
+        /** A color setting UI composable function. Clicking this would displays a popup to the user. */
+        @Composable
+        override fun SettingComposable(modifier: Modifier) {
+            val color = getSettingState()
+            val colorDialogState = remember { mutableStateOf(false) }
+            val scope = rememberCoroutineScope { Dispatchers.IO }
+
+            ListItem(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
+
+                    ) {
+                        colorDialogState.value = true
+                    },
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                leadingContent = {
+                    SmartFancyIcon(
+                        tintColors = styling.iconTints,
+                        shadowColors = styling.iconShadows,
+                        icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
+                    )
+                },
+                headlineContent = {
+                    FlexibleFancyText(
+                        text = title,
+                        fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
+                        strokeColors = styling.titleStroke ?: listOf(),
+                        shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                        size = styling.titleSize,
+                        font = styling.titleFont
+                    )
+                },
+                trailingContent = {
+                    Button(
+                        onClick = { colorDialogState.value = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = color.value?.let { Color(it) } ?: Color(defaultValue!!)),
+                        modifier = Modifier.size(24.dp)
+                    ) {}
+                },
+                supportingContent = {
+                    Text(
+                        text = summary,
+                        style = TextStyle(
+                            color = styling.summaryColor,
+                            fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
+                        )
+                    )
+                }
+            )
+
+            ColorPickingPopup(colorDialogState, initialColor = HsvColor.from(color.value?.let { Color(it) } ?: Color(defaultValue!!)), onColorChanged = { hsvColor ->
+                scope.launch {
+                    writeValue(key, hsvColor.toColor().toArgb())
+                }
+            }, onDefaultReset = { scope.launch { writeValue(key, defaultValue) } })
+        }
+    }
+
+    class TextFieldSetting(
+        type: SettingType, key: String, summary: String, title: String, defaultValue: String?,
+        icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling
+    ) : Setting<String>(
+        type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
+        icon = icon, enabled = enabled, styling = styling
+    ) {
+        /** A string setting UI composable function. It has a textfield next to it */
+        @Composable
+        override fun SettingComposable(modifier: Modifier) {
+            val string by getSettingState()
+            val scope = rememberCoroutineScope()
+            val focusManager = LocalFocusManager.current
+
+            ListItem(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
+
+                    ) {
+                        scope.launch {
+                            writeValue(key, string)
+                        }
+                    },
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                leadingContent = {
+                    SmartFancyIcon(
+                        tintColors = styling.iconTints,
+                        shadowColors = styling.iconShadows,
+                        icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
+                    )
+                },
+                trailingContent = {
+                    TextField(
+                        modifier = Modifier.width(64.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true,
+                        value = string ?: "",
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        keyboardActions = KeyboardActions(onDone = {
+                            focusManager.clearFocus()
+                        }),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.primary,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.primary,
+                            disabledContainerColor = MaterialTheme.colorScheme.primary,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            disabledIndicatorColor = Color.Transparent,
+                        ),
+                        onValueChange = {
+                            scope.launch {
+                                writeValue(key, it)
+                            }
+                        },
+                        textStyle = TextStyle(
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default,
+                            fontSize = 12.sp,
+                            textAlign = TextAlign.Center
+                        ),
+                        label = {}
+                    )
+                },
+                headlineContent = {
+                    FlexibleFancyText(
+                        text = title,
+                        fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
+                        strokeColors = styling.titleStroke ?: listOf(),
+                        shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                        size = styling.titleSize,
+                        font = styling.titleFont
+                    )
+                },
+                supportingContent = {
+                    Text(
+                        text = summary,
+                        style = TextStyle(
+                            color = styling.summaryColor,
+                            fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
+                        )
+                    )
+                }
+            )
+        }
     }
 }

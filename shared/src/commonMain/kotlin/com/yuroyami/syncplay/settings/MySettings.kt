@@ -36,11 +36,26 @@ import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.VideoLabel
 import androidx.compose.material.icons.filled.VideoSettings
 import androidx.compose.material.icons.filled.Web
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.toArgb
 import com.yuroyami.syncplay.compose.popups.PopupMediaDirs.MediaDirsPopup
 import com.yuroyami.syncplay.lyricist.langMap
-import com.yuroyami.syncplay.lyricist.rememberStrings
+import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_ADVANCED
+import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_EXOPLAYER
+import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_GENERAL
+import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_LANG
+import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_NETWORK
+import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_SYNCING
+import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_INROOM_ADVANCED
+import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_INROOM_CHATCOLORS
+import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_INROOM_CHATPROPS
+import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_INROOM_PLAYERSETTINGS
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_AUDIO_LANG
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_CC_LANG
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_DISPLAY_LANG
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_FILE_MISMATCH_WARNING
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_GLOBAL_CLEAR_ALL
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_HASH_FILENAME
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_HASH_FILESIZE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_COLOR_ERRORMSG
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_COLOR_FRIENDTAG
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_COLOR_SELFTAG
@@ -56,430 +71,507 @@ import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_MAXCOUNT
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_SHADOW
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PIP
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_RESET_DEFAULT
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MAX_BUFFER
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MIN_BUFFER
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_READY_FIRST_HAND
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_REMEMBER_INFO
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_SEEK_BUFFER
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_SP_MEDIA_DIRS
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_TLS_ENABLE
+import com.yuroyami.syncplay.settings.Setting.BooleanSetting
+import com.yuroyami.syncplay.settings.Setting.ColorSetting
+import com.yuroyami.syncplay.settings.Setting.MultiChoiceSetting
+import com.yuroyami.syncplay.settings.Setting.OneClickSetting
+import com.yuroyami.syncplay.settings.Setting.SliderSetting
+import com.yuroyami.syncplay.settings.Setting.TextFieldSetting
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.watchroom.homeCallback
-import com.yuroyami.syncplay.watchroom.isSoloMode
+import com.yuroyami.syncplay.watchroom.lyricist
 import com.yuroyami.syncplay.watchroom.viewmodel
 
 object MySettings {
 
-    @Composable
-    fun globalSettings(): List<SettingCategory> {
-        val localz = rememberStrings()
+    private val settingGLOBALstyle = SettingStyling(
+        titleFilling = listOf(Paletting.OLD_SP_YELLOW),
+        titleShadow = Paletting.SP_GRADIENT,
+        iconSize = 32f,
+        iconTints = listOf(Paletting.OLD_SP_YELLOW),
+        iconShadows = Paletting.SP_GRADIENT
+    )
 
-        val settingStyling = SettingStyling(
-            titleFilling = listOf(Paletting.OLD_SP_YELLOW),
-            titleShadow = Paletting.SP_GRADIENT,
-            iconSize = 32f,
-            iconTints = listOf(Paletting.OLD_SP_YELLOW),
-            iconShadows = Paletting.SP_GRADIENT
+    private val settingROOMstyle = SettingStyling(
+        titleFilling = listOf(Paletting.OLD_SP_YELLOW),
+        titleShadow = Paletting.SP_GRADIENT,
+        titleSize = 11f,
+        summarySize = 8f,
+        iconTints = listOf(Paletting.OLD_SP_YELLOW),
+        iconShadows = Paletting.SP_GRADIENT
+    )
+
+    val sgGLOBAL = listOf(
+        SettingCategory(
+            keyID = CATEG_GLOBAL_GENERAL,
+            title = lyricist.strings.settingsCategGeneral,
+            icon = Icons.Filled.SettingsSuggest
+        ),
+        SettingCategory(
+            keyID = CATEG_GLOBAL_LANG,
+            title = lyricist.strings.settingsCategLanguage,
+            icon = Icons.Filled.Translate,
+        ),
+        SettingCategory(
+            keyID = CATEG_GLOBAL_SYNCING,
+            title = lyricist.strings.settingsCategSyncing,
+            icon = Icons.Filled.ConnectWithoutContact
+        ),
+        SettingCategory(
+            keyID = CATEG_GLOBAL_EXOPLAYER,
+            title = lyricist.strings.settingsCategExoplayer,
+            icon = Icons.Filled.VideoSettings
+        ),
+        SettingCategory(
+            keyID = CATEG_GLOBAL_NETWORK,
+            title = lyricist.strings.settingsCategNetwork,
+            icon = Icons.Filled.Hub
+        ),
+        SettingCategory(
+            keyID = CATEG_GLOBAL_ADVANCED,
+            title = lyricist.strings.settingsCategAdvanced,
+            icon = Icons.Filled.Stream
+        )
+    )
+
+    val sgROOM = listOf(
+        SettingCategory(
+            keyID = CATEG_INROOM_CHATCOLORS,
+            title = lyricist
+                .strings.uisettingCategChatColors,
+            icon = Icons.Filled.Palette,
+        ),
+        SettingCategory(
+            keyID = CATEG_INROOM_CHATPROPS,
+            title = lyricist
+                .strings.uisettingCategChatProperties,
+            icon = Icons.Filled.Chat
+        ),
+        SettingCategory(
+            keyID = CATEG_INROOM_PLAYERSETTINGS,
+            title = lyricist
+                .strings.uisettingCategPlayerSettings,
+            icon = Icons.Filled.VideoLabel,
+        ),
+        SettingCategory(
+            keyID = CATEG_INROOM_ADVANCED,
+            title = lyricist
+                .strings.settingsCategAdvanced,
+            icon = Icons.Filled.Stream
         )
 
-        return listOf(
-            /** Setting Card Number 01: General */
-            SettingCategory(
-                title = localz.strings.settingsCategGeneral,
-                icon = Icons.Filled.SettingsSuggest,
-                settingList = listOf(
-                    Setting(
-                        type = SettingType.CheckboxSetting,
-                        key = PREF_REMEMBER_INFO,
-                        title = { localz.strings.settingRememberJoinInfoTitle },
-                        summary = { localz.strings.settingRememberJoinInfoSummary },
-                        defaultValue = true,
-                        icon = Icons.Filled.Face,
-                        styling = settingStyling
-                    ),
-                    Setting(
-                        type = SettingType.PopupSetting,
-                        key = PREF_SP_MEDIA_DIRS,
-                        title = { localz.strings.mediaDirectories },
-                        summary = { localz.strings.mediaDirectoriesSettingSummary },
-                        icon = Icons.Filled.QueueMusic,
-                        styling = settingStyling,
-                        popupComposable = { s ->
-                            MediaDirsPopup(s)
-                        }
-                    )
-                )
+    )
+
+
+    val settingsGLOBAL = hashMapOf(
+        Setting.BooleanSetting(
+            type = SettingType.CheckboxSettingType,
+            key = PREF_REMEMBER_INFO,
+            title = lyricist.strings.settingRememberJoinInfoTitle,
+            summary = lyricist.strings.settingRememberJoinInfoSummary,
+            defaultValue = true,
+            icon = Icons.Filled.Face,
+            styling = settingGLOBALstyle
+        ) to CATEG_GLOBAL_GENERAL,
+
+        Setting.PopupSetting(
+            type = SettingType.PopupSettingType,
+            key = PREF_SP_MEDIA_DIRS,
+            title = lyricist.strings.mediaDirectories,
+            summary = lyricist.strings.mediaDirectoriesSettingSummary,
+            icon = Icons.Filled.QueueMusic,
+            styling = settingGLOBALstyle,
+            popupComposable = { s ->
+                MediaDirsPopup(s)
+            }
+        ) to CATEG_GLOBAL_GENERAL,
+
+        MultiChoiceSetting(
+            type = SettingType.MultiChoicePopupSettingType,
+            key = PREF_DISPLAY_LANG,
+            title = lyricist.strings.settingDisplayLanguageTitle,
+            summary = lyricist.strings.settingDisplayLanguageSummry,
+            defaultValue = "en",
+            icon = Icons.Filled.Translate,
+            styling = settingGLOBALstyle,
+            entryKeys = langMap.keys.toList(),
+            entryValues = langMap.values.toList(),
+            onItemChosen = { _, v ->
+                homeCallback?.onLanguageChanged(v)
+            }
+        ) to CATEG_GLOBAL_LANG,
+
+        TextFieldSetting(
+            type = SettingType.TextFieldSettingType,
+            key = PREF_AUDIO_LANG,
+            title = lyricist.strings.settingAudioDefaultLanguageTitle,
+            summary = lyricist.strings.settingAudioDefaultLanguageSummry,
+            defaultValue = "und",
+            icon = Icons.Filled.GraphicEq,
+            styling = settingGLOBALstyle,
+        ) to CATEG_GLOBAL_LANG,
+
+        TextFieldSetting(
+            type = SettingType.TextFieldSettingType,
+            key = PREF_CC_LANG,
+            title = lyricist
+                .strings.settingCcDefaultLanguageTitle,
+            summary = lyricist
+                .strings.settingCcDefaultLanguageSummry,
+            defaultValue = "eng",
+            icon = Icons.Filled.ClosedCaptionOff,
+            styling = settingGLOBALstyle,
+        ) to CATEG_GLOBAL_LANG,
+
+        BooleanSetting(
+            type = SettingType.CheckboxSettingType,
+            key = PREF_READY_FIRST_HAND,
+            title = lyricist
+                .strings.settingReadyFirsthandTitle,
+            summary = lyricist
+                .strings.settingReadyFirsthandSummary,
+            defaultValue = true,
+            icon = Icons.Filled.TaskAlt,
+            styling = settingGLOBALstyle,
+        ) to CATEG_GLOBAL_SYNCING,
+
+        BooleanSetting(
+            type = SettingType.CheckboxSettingType,
+            key = PREF_PAUSE_ON_SOMEONE_LEAVE,
+            title = lyricist
+                .strings.settingPauseIfSomeoneLeftTitle,
+            summary = lyricist
+                .strings.settingPauseIfSomeoneLeftSummary,
+            defaultValue = true,
+            icon = Icons.Filled.FrontHand,
+            styling = settingGLOBALstyle,
+        ) to CATEG_GLOBAL_SYNCING,
+
+        BooleanSetting(
+            type = SettingType.CheckboxSettingType,
+            key = PREF_FILE_MISMATCH_WARNING,
+            title = lyricist
+                .strings.settingWarnFileMismatchTitle,
+            summary = lyricist
+                .strings.settingWarnFileMismatchSummary,
+            defaultValue = true,
+            icon = Icons.Filled.ErrorOutline,
+            styling = settingGLOBALstyle,
+        ) to CATEG_GLOBAL_SYNCING,
+
+        MultiChoiceSetting(
+            type = SettingType.MultiChoicePopupSettingType,
+            key = PREF_HASH_FILENAME,
+            title = lyricist
+                .strings.settingFileinfoBehaviourNameTitle,
+            summary = lyricist
+                .strings.settingFileinfoBehaviourNameSummary,
+            defaultValue = "1",
+            icon = Icons.Filled.DesignServices,
+            styling = settingGLOBALstyle,
+            entryKeys =
+            listOf(
+                lyricist
+                    .strings.settingFileinfoBehaviorA,
+                lyricist
+                    .strings.settingFileinfoBehaviorB,
+                lyricist
+                    .strings.settingFileinfoBehaviorC
             ),
+            entryValues = listOf("1", "2", "3")
+        ) to CATEG_GLOBAL_SYNCING,
 
-            /** Setting Card N°02: Language */
-            SettingCategory(
-                title = localz.strings.settingsCategLanguage,
-                icon = Icons.Filled.Translate,
-                settingList = listOf(
-                    Setting(
-                        type = SettingType.MultiChoicePopupSetting,
-                        key = DataStoreKeys.PREF_DISPLAY_LANG,
-                        title = { localz.strings.settingDisplayLanguageTitle },
-                        summary = { localz.strings.settingDisplayLanguageSummry },
-                        defaultValue = "en",
-                        icon = Icons.Filled.Translate,
-                        styling = settingStyling,
-                        entryKeys = { langMap.keys.toList() },
-                        entryValues = { langMap.values.toList() },
-                        onItemChosen = { _, v ->
-                            homeCallback?.onLanguageChanged(v)
-                        },
-                    ),
-                    Setting(
-                        type = SettingType.TextFieldSetting,
-                        key = DataStoreKeys.PREF_AUDIO_LANG,
-                        title = { localz.strings.settingAudioDefaultLanguageTitle },
-                        summary = { localz.strings.settingAudioDefaultLanguageSummry },
-                        defaultValue = "und",
-                        icon = Icons.Filled.GraphicEq,
-                        styling = settingStyling,
-                    ),
-                    Setting(
-                        type = SettingType.TextFieldSetting,
-                        key = DataStoreKeys.PREF_CC_LANG,
-                        title = { localz.strings.settingCcDefaultLanguageTitle },
-                        summary = { localz.strings.settingCcDefaultLanguageSummry },
-                        defaultValue = "eng",
-                        icon = Icons.Filled.ClosedCaptionOff,
-                        styling = settingStyling,
-                    )
-                )
+        MultiChoiceSetting(
+            type = SettingType.MultiChoicePopupSettingType,
+            key = PREF_HASH_FILESIZE,
+            title = lyricist
+                .strings.settingFileinfoBehaviourSizeTitle,
+            summary = lyricist
+                .strings.settingFileinfoBehaviourSizeSummary,
+            defaultValue = "1",
+            icon = Icons.Filled.DesignServices,
+            styling = settingGLOBALstyle,
+            entryKeys =
+            listOf(
+                lyricist
+                    .strings.settingFileinfoBehaviorA,
+                lyricist
+                    .strings.settingFileinfoBehaviorB,
+                lyricist
+                    .strings.settingFileinfoBehaviorC
             ),
+            entryValues = listOf("1", "2", "3"),
+        ) to CATEG_GLOBAL_SYNCING,
 
-            /** Setting Card N°03: Syncing */
-            SettingCategory(
-                title = localz.strings.settingsCategSyncing,
-                icon = Icons.Filled.ConnectWithoutContact,
-                settingList = listOf(
-                    Setting(
-                        type = SettingType.CheckboxSetting,
-                        key = DataStoreKeys.PREF_READY_FIRST_HAND,
-                        title = { localz.strings.settingReadyFirsthandTitle },
-                        summary = { localz.strings.settingReadyFirsthandSummary },
-                        defaultValue = true,
-                        icon = Icons.Filled.TaskAlt,
-                        styling = settingStyling,
-                    ),
-                    Setting(
-                        type = SettingType.CheckboxSetting,
-                        key = DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE,
-                        title = { localz.strings.settingPauseIfSomeoneLeftTitle },
-                        summary = { localz.strings.settingPauseIfSomeoneLeftSummary },
-                        defaultValue = true,
-                        icon = Icons.Filled.FrontHand,
-                        styling = settingStyling,
-                    ),
-                    Setting(
-                        type = SettingType.CheckboxSetting,
-                        key = DataStoreKeys.PREF_FILE_MISMATCH_WARNING,
-                        title = { localz.strings.settingWarnFileMismatchTitle },
-                        summary = { localz.strings.settingWarnFileMismatchSummary },
-                        defaultValue = true,
-                        icon = Icons.Filled.ErrorOutline,
-                        styling = settingStyling,
-                    ),
-                    Setting(
-                        type = SettingType.MultiChoicePopupSetting,
-                        key = DataStoreKeys.PREF_HASH_FILENAME,
-                        title = { localz.strings.settingFileinfoBehaviourNameTitle },
-                        summary = { localz.strings.settingFileinfoBehaviourNameSummary },
-                        defaultValue = "1",
-                        icon = Icons.Filled.DesignServices,
-                        styling = settingStyling,
-                        entryKeys = {
-                            listOf(
-                                localz.strings.settingFileinfoBehaviorA,
-                                localz.strings.settingFileinfoBehaviorB,
-                                localz.strings.settingFileinfoBehaviorC
-                            )
-                        },
-                        entryValues = { listOf("1", "2", "3") },
-                    ),
-                    Setting(
-                        type = SettingType.MultiChoicePopupSetting,
-                        key = DataStoreKeys.PREF_HASH_FILESIZE,
-                        title = { localz.strings.settingFileinfoBehaviourSizeTitle },
-                        summary = { localz.strings.settingFileinfoBehaviourSizeSummary },
-                        defaultValue = "1",
-                        icon = Icons.Filled.DesignServices,
-                        styling = settingStyling,
-                        entryKeys = {
-                            listOf(
-                                localz.strings.settingFileinfoBehaviorA,
-                                localz.strings.settingFileinfoBehaviorB,
-                                localz.strings.settingFileinfoBehaviorC
-                            )
-                        },
-                        entryValues = { listOf("1", "2", "3") },
-                    )
-                )
-            ),
+        SliderSetting(
+            type = SettingType.SliderSettingType,
+            key = PREF_MAX_BUFFER,
+            title = lyricist
+                .strings.settingMaxBufferTitle,
+            summary = lyricist
+                .strings.settingMaxBufferSummary,
+            defaultValue = 30,
+            icon = Icons.Filled.HourglassTop,
+            styling = settingGLOBALstyle,
+            maxValue = 60,
+            minValue = 1,
+        ) to CATEG_GLOBAL_EXOPLAYER,
 
+        SliderSetting(
+            type = SettingType.SliderSettingType,
+            key = PREF_MIN_BUFFER,
+            title = lyricist
+                .strings.settingMinBufferTitle,
+            summary = lyricist
+                .strings.settingMinBufferSummary,
+            defaultValue = 15,
+            icon = Icons.Filled.HourglassBottom,
+            styling = settingGLOBALstyle,
+            maxValue = 30,
+            minValue = 1,
+        ) to CATEG_GLOBAL_EXOPLAYER,
 
-            SettingCategory(
-                title = localz.strings.settingsCategExoplayer,
-                icon = Icons.Filled.VideoSettings,
-                settingList = listOf(
-                    Setting(
-                        type = SettingType.SliderSetting,
-                        key = DataStoreKeys.PREF_MAX_BUFFER,
-                        title = { localz.strings.settingMaxBufferTitle },
-                        summary = { localz.strings.settingMaxBufferSummary },
-                        defaultValue = 30,
-                        icon = Icons.Filled.HourglassTop,
-                        styling = settingStyling,
-                        maxValue = 60,
-                        minValue = 1,
-                    ),
-                    Setting(
-                        type = SettingType.SliderSetting,
-                        key = DataStoreKeys.PREF_MIN_BUFFER,
-                        title = { localz.strings.settingMinBufferTitle },
-                        summary = { localz.strings.settingMinBufferSummary },
-                        defaultValue = 15,
-                        icon = Icons.Filled.HourglassBottom,
-                        styling = settingStyling,
-                        maxValue = 30,
-                        minValue = 1,
-                    ),
-                    Setting(
-                        type = SettingType.SliderSetting,
-                        key = DataStoreKeys.PREF_SEEK_BUFFER,
-                        title = { localz.strings.settingPlaybackBufferTitle },
-                        summary = { localz.strings.settingPlaybackBufferSummary },
-                        defaultValue = 2500,
-                        icon = Icons.Filled.HourglassEmpty,
-                        styling = settingStyling,
-                        maxValue = 15000,
-                        minValue = 100,
-                    )
+        SliderSetting(
+            type = SettingType.SliderSettingType,
+            key = PREF_SEEK_BUFFER,
+            title = lyricist
+                .strings.settingPlaybackBufferTitle,
+            summary = lyricist
+                .strings.settingPlaybackBufferSummary,
+            defaultValue = 2500,
+            icon = Icons.Filled.HourglassEmpty,
+            styling = settingGLOBALstyle,
+            maxValue = 15000,
+            minValue = 100,
+        ) to CATEG_GLOBAL_EXOPLAYER,
 
-                )
-            ),
+        BooleanSetting(
+            type = SettingType.ToggleSettingType,
+            key = PREF_TLS_ENABLE,
+            title = lyricist
+                .strings.settingTlsTitle,
+            summary = lyricist
+                .strings.settingTlsSummary,
+            defaultValue = true,
+            icon = Icons.Filled.Key,
+            styling = settingGLOBALstyle,
+        ) to CATEG_GLOBAL_NETWORK,
 
-            SettingCategory(
-                title = localz.strings.settingsCategNetwork,
-                icon = Icons.Filled.Hub,
-                settingList = listOf(
-                    Setting(
-                        type = SettingType.ToggleSetting,
-                        key = DataStoreKeys.PREF_TLS_ENABLE,
-                        title = { localz.strings.settingTlsTitle },
-                        summary = { localz.strings.settingTlsSummary },
-                        defaultValue = true,
-                        icon = Icons.Filled.Key,
-                        styling = settingStyling,
-                    )
-                )
-            ),
+        OneClickSetting(
+            type = SettingType.OneClickSettingType,
+            key = PREF_GLOBAL_CLEAR_ALL,
+            title = lyricist
+                .strings.settingResetdefaultTitle,
+            summary = lyricist
+                .strings.settingResetdefaultSummary,
+            icon = Icons.Filled.ClearAll,
+            styling = settingGLOBALstyle,
+            isResetDefault = true,
+        ) to CATEG_GLOBAL_ADVANCED
+    )
 
-            SettingCategory(
-                title = localz.strings.settingsCategAdvanced,
-                icon = Icons.Filled.Stream,
-                settingList = listOf(
-                    Setting(
-                        type = SettingType.OneClickSetting,
-                        key = DataStoreKeys.PREF_GLOBAL_CLEAR_ALL,
-                        title = { localz.strings.settingResetdefaultTitle },
-                        summary = { localz.strings.settingResetdefaultSummary },
-                        icon = Icons.Filled.ClearAll,
-                        styling = settingStyling,
-                        isResetDefault = true,
-                    )
-                )
-            ),
-        )
-    }
+    val settingsROOM = hashMapOf(
+        ColorSetting(
+            type = SettingType.ColorSettingType,
+            key = PREF_INROOM_COLOR_TIMESTAMP,
+            title = lyricist
+                .strings.uisettingTimestampColorTitle,
+            summary = lyricist
+                .strings.uisettingTimestampSummary,
+            defaultValue = Paletting.MSG_TIMESTAMP.toArgb(),
+            icon = Icons.Filled.Brush,
+            styling = settingROOMstyle,
+        ) to CATEG_INROOM_CHATCOLORS,
 
-    @Composable
-    fun inRoomPreferences(): List<SettingCategory> {
-        val localz = rememberStrings()
+        ColorSetting(
+            type = SettingType.ColorSettingType,
+            key = PREF_INROOM_COLOR_SELFTAG,
+            title = lyricist
+                .strings.uisettingSelfColorTitle,
+            summary = lyricist
+                .strings.uisettingSelfColorSummary,
+            defaultValue = Paletting.MSG_SELF_TAG.toArgb(),
+            icon = Icons.Filled.Brush,
+            styling = settingROOMstyle,
+        ) to CATEG_INROOM_CHATCOLORS,
 
-        val ss = SettingStyling(
-            titleFilling = listOf(Paletting.OLD_SP_YELLOW),
-            titleShadow = Paletting.SP_GRADIENT,
-            titleSize = 11f,
-            summarySize = 8f,
-            iconTints = listOf(Paletting.OLD_SP_YELLOW),
-            iconShadows = Paletting.SP_GRADIENT
-        )
+        ColorSetting(
+            type = SettingType.ColorSettingType,
+            key = PREF_INROOM_COLOR_FRIENDTAG,
+            title = lyricist
+                .strings.uisettingFriendColorTitle,
+            summary = lyricist
+                .strings.uisettingFriendColorSummary,
+            defaultValue = Paletting.MSG_FRIEND_TAG.toArgb(),
+            icon = Icons.Filled.Brush,
+            styling = settingROOMstyle,
+        ) to CATEG_INROOM_CHATCOLORS,
 
-        val list = mutableListOf<SettingCategory>()
+        ColorSetting(
+            type = SettingType.ColorSettingType,
+            key = PREF_INROOM_COLOR_SYSTEMMSG,
+            title = lyricist
+                .strings.uisettingSystemColorTitle,
+            summary = lyricist
+                .strings.uisettingSystemColorSummary,
+            defaultValue = Paletting.MSG_SYSTEM.toArgb(),
+            icon = Icons.Filled.Brush,
+            styling = settingROOMstyle,
+        ) to CATEG_INROOM_CHATCOLORS,
 
-        if (!isSoloMode) {
-            list.add(
-                SettingCategory(
-                    title = localz.strings.uisettingCategChatColors,
-                    icon = Icons.Filled.Palette,
-                    settingList = listOf(
-                        Setting(
-                            type = SettingType.ColorSetting,
-                            key = PREF_INROOM_COLOR_TIMESTAMP,
-                            title = { localz.strings.uisettingTimestampColorTitle },
-                            summary = { localz.strings.uisettingTimestampSummary },
-                            defaultValue = Paletting.MSG_TIMESTAMP.toArgb(),
-                            icon = Icons.Filled.Brush,
-                            styling = ss,
-                        ),
-                        Setting(
-                            type = SettingType.ColorSetting,
-                            key = PREF_INROOM_COLOR_SELFTAG,
-                            title = { localz.strings.uisettingSelfColorTitle },
-                            summary = { localz.strings.uisettingSelfColorSummary },
-                            defaultValue = Paletting.MSG_SELF_TAG.toArgb(),
-                            icon = Icons.Filled.Brush,
-                            styling = ss,
-                        ),
-                        Setting(
-                            type = SettingType.ColorSetting,
-                            key = PREF_INROOM_COLOR_FRIENDTAG,
-                            title = { localz.strings.uisettingFriendColorTitle },
-                            summary = { localz.strings.uisettingFriendColorSummary },
-                            defaultValue = Paletting.MSG_FRIEND_TAG.toArgb(),
-                            icon = Icons.Filled.Brush,
-                            styling = ss,
-                        ),
-                        Setting(
-                            type = SettingType.ColorSetting,
-                            key = PREF_INROOM_COLOR_SYSTEMMSG,
-                            title = { localz.strings.uisettingSystemColorTitle },
-                            summary = { localz.strings.uisettingSystemColorSummary },
-                            defaultValue = Paletting.MSG_SYSTEM.toArgb(),
-                            icon = Icons.Filled.Brush,
-                            styling = ss,
-                        ),
-                        Setting(
-                            type = SettingType.ColorSetting,
-                            key = PREF_INROOM_COLOR_USERMSG,
-                            title = { localz.strings.uisettingHumanColorTitle },
-                            summary = { localz.strings.uisettingHumanColorSummary },
-                            defaultValue = Paletting.MSG_CHAT.toArgb(),
-                            icon = Icons.Filled.Brush,
-                            styling = ss,
-                        ),
-                        Setting(
-                            type = SettingType.ColorSetting,
-                            key = PREF_INROOM_COLOR_ERRORMSG,
-                            title = { localz.strings.uisettingErrorColorTitle },
-                            summary = { localz.strings.uisettingErrorColorSummary },
-                            defaultValue = Paletting.MSG_ERROR.toArgb(),
-                            icon = Icons.Filled.Brush,
-                            styling = ss,
-                        ),
+        ColorSetting(
+            type = SettingType.ColorSettingType,
+            key = PREF_INROOM_COLOR_USERMSG,
+            title = lyricist
+                .strings.uisettingHumanColorTitle,
+            summary = lyricist
+                .strings.uisettingHumanColorSummary,
+            defaultValue = Paletting.MSG_CHAT.toArgb(),
+            icon = Icons.Filled.Brush,
+            styling = settingROOMstyle,
+        ) to CATEG_INROOM_CHATCOLORS,
 
-                        )
-                )
-            )
+        ColorSetting(
+            type = SettingType.ColorSettingType,
+            key = PREF_INROOM_COLOR_ERRORMSG,
+            title = lyricist
+                .strings.uisettingErrorColorTitle,
+            summary = lyricist
+                .strings.uisettingErrorColorSummary,
+            defaultValue = Paletting.MSG_ERROR.toArgb(),
+            icon = Icons.Filled.Brush,
+            styling = settingROOMstyle,
+        ) to CATEG_INROOM_CHATCOLORS,
 
-            list.add(
-                SettingCategory(
-                    title = localz.strings.uisettingCategChatProperties,
-                    icon = Icons.Filled.Chat,
-                    settingList = listOf(
-                        Setting(
-                            type = SettingType.ToggleSetting,
-                            key = PREF_INROOM_MSG_ACTIVATE_STAMP,
-                            title = { localz.strings.uisettingTimestampTitle },
-                            summary = { localz.strings.uisettingTimestampSummary },
-                            defaultValue = true,
-                            icon = Icons.Filled.Pin,
-                            styling = ss,
-                        ),
-                        Setting(
-                            type = SettingType.ToggleSetting,
-                            key = PREF_INROOM_MSG_OUTLINE,
-                            title = { localz.strings.uisettingMsgoutlineTitle },
-                            summary = { localz.strings.uisettingMsgoutlineSummary },
-                            defaultValue = true,
-                            icon = Icons.Filled.BorderColor,
-                            styling = ss,
-                        ),
-                        Setting(
-                            type = SettingType.ToggleSetting,
-                            key = PREF_INROOM_MSG_SHADOW,
-                            title = { localz.strings.uisettingMsgshadowTitle },
-                            summary = { localz.strings.uisettingMsgshadowSummary },
-                            defaultValue = false,
-                            icon = Icons.Filled.BorderColor,
-                            styling = ss,
-                        ),
-                        Setting(
-                            type = SettingType.SliderSetting,
-                            key = PREF_INROOM_MSG_BG_OPACITY,
-                            title = { localz.strings.uisettingMessageryAlphaTitle },
-                            summary = { localz.strings.uisettingMessageryAlphaSummary },
-                            defaultValue = 0,
-                            icon = Icons.Filled.Opacity,
-                            styling = ss,
-                            maxValue = 255,
-                            minValue = 0,
-                        ),
-                        Setting(
-                            type = SettingType.SliderSetting,
-                            key = PREF_INROOM_MSG_FONTSIZE,
-                            title = { localz.strings.uisettingMsgsizeTitle },
-                            summary = { localz.strings.uisettingMsgsizeSummary },
-                            defaultValue = 9,
-                            icon = Icons.Filled.FormatSize,
-                            styling = ss,
-                            maxValue = 28,
-                            minValue = 6,
-                        ),
-                        Setting(
-                            type = SettingType.SliderSetting,
-                            key = PREF_INROOM_MSG_MAXCOUNT,
-                            title = { localz.strings.uisettingMsgcountTitle },
-                            summary = { localz.strings.uisettingMsgcountSummary },
-                            defaultValue = 10,
-                            icon = Icons.Filled.FormatListNumbered,
-                            styling = ss,
-                            maxValue = 30,
-                            minValue = 1,
-                        ),
-                        Setting(
-                            type = SettingType.SliderSetting,
-                            key = PREF_INROOM_MSG_FADING_DURATION,
-                            title = { localz.strings.uisettingMsglifeTitle },
-                            summary = { localz.strings.uisettingMsglifeSummary },
-                            defaultValue = 3,
-                            icon = Icons.Filled.Timer,
-                            styling = ss,
-                            maxValue = 10,
-                            minValue = 1,
-                        ),
-                        Setting(
-                            type = SettingType.ToggleSetting,
-                            key = PREF_INROOM_MSG_BOX_ACTION,
-                            title = { localz.strings.uisettingMsgboxactionTitle },
-                            summary = { localz.strings.uisettingMsgboxactionSummary },
-                            defaultValue = true,
-                            icon = Icons.Filled.Keyboard,
-                            styling = ss,
-                        ),
-                    )
-                )
-            )
-        }
+        Setting.BooleanSetting(
+            type = SettingType.ToggleSettingType,
+            key = PREF_INROOM_MSG_ACTIVATE_STAMP,
+            title = lyricist
+                .strings.uisettingTimestampTitle,
+            summary = lyricist
+                .strings.uisettingTimestampSummary,
+            defaultValue = true,
+            icon = Icons.Filled.Pin,
+            styling = settingROOMstyle,
+        ) to CATEG_INROOM_CHATPROPS,
 
-        list.add(
-            SettingCategory(
-                title = localz.strings.uisettingCategPlayerSettings,
-                icon = Icons.Filled.VideoLabel,
-                settingList = listOf(
-                    Setting(
-                        type = SettingType.SliderSetting,
-                        key = DataStoreKeys.PREF_INROOM_PLAYER_SUBTITLE_SIZE,
-                        title = { localz.strings.uisettingSubtitleSizeTitle },
-                        summary = { localz.strings.uisettingSubtitleSizeSummary },
-                        defaultValue = 16,
-                        icon = Icons.Filled.SortByAlpha,
-                        styling = ss,
-                        maxValue = 200,
-                        minValue = 2,
-                        onValueChanged = { v ->
-                            viewmodel?.player?.changeSubtitleSize(v)
-                        },
-                    ),
+        Setting.BooleanSetting(
+            type = SettingType.ToggleSettingType,
+            key = PREF_INROOM_MSG_OUTLINE,
+            title = lyricist
+                .strings.uisettingMsgoutlineTitle,
+            summary = lyricist
+                .strings.uisettingMsgoutlineSummary,
+            defaultValue = true,
+            icon = Icons.Filled.BorderColor,
+            styling = settingROOMstyle,
+        ) to CATEG_INROOM_CHATPROPS,
+
+        Setting.BooleanSetting(
+            type = SettingType.ToggleSettingType,
+            key = PREF_INROOM_MSG_SHADOW,
+            title = lyricist
+                .strings.uisettingMsgshadowTitle,
+            summary = lyricist
+                .strings.uisettingMsgshadowSummary,
+            defaultValue = false,
+            icon = Icons.Filled.BorderColor,
+            styling = settingROOMstyle,
+        ) to CATEG_INROOM_CHATPROPS,
+
+        Setting.SliderSetting(
+            type = SettingType.SliderSettingType,
+            key = PREF_INROOM_MSG_BG_OPACITY,
+            title = lyricist
+                .strings.uisettingMessageryAlphaTitle,
+            summary = lyricist
+                .strings.uisettingMessageryAlphaSummary,
+            defaultValue = 0,
+            icon = Icons.Filled.Opacity,
+            styling = settingROOMstyle,
+            maxValue = 255,
+            minValue = 0,
+        ) to CATEG_INROOM_CHATPROPS,
+
+        SliderSetting(
+            type = SettingType.SliderSettingType,
+            key = PREF_INROOM_MSG_FONTSIZE,
+            title = lyricist
+                .strings.uisettingMsgsizeTitle,
+            summary = lyricist
+                .strings.uisettingMsgsizeSummary,
+            defaultValue = 9,
+            icon = Icons.Filled.FormatSize,
+            styling = settingROOMstyle,
+            maxValue = 28,
+            minValue = 6,
+        ) to CATEG_INROOM_CHATPROPS,
+
+        SliderSetting(
+            type = SettingType.SliderSettingType,
+            key = PREF_INROOM_MSG_MAXCOUNT,
+            title = lyricist
+                .strings.uisettingMsgcountTitle,
+            summary = lyricist
+                .strings.uisettingMsgcountSummary,
+            defaultValue = 10,
+            icon = Icons.Filled.FormatListNumbered,
+            styling = settingROOMstyle,
+            maxValue = 30,
+            minValue = 1,
+        ) to CATEG_INROOM_CHATPROPS,
+
+        SliderSetting(
+            type = SettingType.SliderSettingType,
+            key = PREF_INROOM_MSG_FADING_DURATION,
+            title = lyricist
+                .strings.uisettingMsglifeTitle,
+            summary = lyricist
+                .strings.uisettingMsglifeSummary,
+            defaultValue = 3,
+            icon = Icons.Filled.Timer,
+            styling = settingROOMstyle,
+            maxValue = 10,
+            minValue = 1,
+        ) to CATEG_INROOM_CHATPROPS,
+
+        BooleanSetting(
+            type = SettingType.ToggleSettingType,
+            key = PREF_INROOM_MSG_BOX_ACTION,
+            title = lyricist
+                .strings.uisettingMsgboxactionTitle,
+            summary = lyricist
+                .strings.uisettingMsgboxactionSummary,
+            defaultValue = true,
+            icon = Icons.Filled.Keyboard,
+            styling = settingROOMstyle,
+        ) to CATEG_INROOM_CHATPROPS,
+
+        SliderSetting(
+            type = SettingType.SliderSettingType,
+            key = DataStoreKeys.PREF_INROOM_PLAYER_SUBTITLE_SIZE,
+            title = lyricist
+                .strings.uisettingSubtitleSizeTitle,
+            summary = lyricist
+                .strings.uisettingSubtitleSizeSummary,
+            defaultValue = 16,
+            icon = Icons.Filled.SortByAlpha,
+            styling = settingROOMstyle,
+            maxValue = 200,
+            minValue = 2,
+            onValueChanged = { v ->
+                viewmodel?.player?.changeSubtitleSize(v)
+            }
+        ) to CATEG_INROOM_PLAYERSETTINGS,
 //                    Setting(
 //                        type = SettingType.SliderSetting,
 //                        title = resources.getString(R.string.uisetting_subtitle_delay_title),
@@ -502,70 +594,70 @@ object MySettings {
 //                        icon = Icons.Filled.CompareArrows,
 //                        datastorekey = ds
 //                    ),
-                    Setting(
-                        type = SettingType.SliderSetting,
-                        key = DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP,
-                        title = { localz.strings.uisettingSeekForwardJumpTitle },
-                        summary = { localz.strings.uisettingSeekForwardJumpSummary },
-                        defaultValue = 10,
-                        icon = Icons.Filled.FastForward,
-                        styling = ss,
-                        maxValue = 120,
-                        minValue = 1,
-                    ),
-                    Setting(
-                        type = SettingType.SliderSetting,
-                        key = DataStoreKeys.PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP,
-                        title = { localz.strings.uisettingSeekBackwardJumpTitle },
-                        summary = { localz.strings.uisettingSeekBackwardJumpSummary },
-                        defaultValue = 10,
-                        icon = Icons.Filled.FastRewind,
-                        styling = ss,
-                        maxValue = 120,
-                        minValue = 1,
-                    ),
-                )
-            )
-        )
+        SliderSetting(
+            type = SettingType.SliderSettingType,
+            key = DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP,
+            title = lyricist
+                .strings.uisettingSeekForwardJumpTitle,
+            summary = lyricist
+                .strings.uisettingSeekForwardJumpSummary,
+            defaultValue = 10,
+            icon = Icons.Filled.FastForward,
+            styling = settingROOMstyle,
+            maxValue = 120,
+            minValue = 1,
+        ) to CATEG_INROOM_PLAYERSETTINGS,
 
+        SliderSetting(
+            type = SettingType.SliderSettingType,
+            key = DataStoreKeys.PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP,
+            title = lyricist
+                .strings.uisettingSeekBackwardJumpTitle,
+            summary = lyricist
+                .strings.uisettingSeekBackwardJumpSummary,
+            defaultValue = 10,
+            icon = Icons.Filled.FastRewind,
+            styling = settingROOMstyle,
+            maxValue = 120,
+            minValue = 1,
+        ) to CATEG_INROOM_PLAYERSETTINGS,
 
-        list.add(
-            SettingCategory(
-                title = localz.strings.settingsCategAdvanced,
-                icon = Icons.Filled.Stream,
-                settingList = listOf(
-                    Setting(
-                        type = SettingType.ToggleSetting,
-                        key = PREF_INROOM_PIP,
-                        title = { localz.strings.uisettingPipTitle },
-                        summary = { localz.strings.uisettingPipSummary },
-                        defaultValue = true,
-                        icon = Icons.Filled.PictureInPicture,
-                        styling = ss,
-                    ),
-                    Setting(
-                        type = SettingType.SliderSetting,
-                        key = DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL,
-                        title = { localz.strings.uisettingReconnectIntervalTitle },
-                        summary = { localz.strings.uisettingReconnectIntervalSummary },
-                        defaultValue = 2,
-                        icon = Icons.Filled.Web,
-                        styling = ss,
-                        maxValue = 15,
-                        minValue = 0,
-                    ),
-                    Setting(
-                        type = SettingType.OneClickSetting,
-                        key = "RESET",
-                        title = { localz.strings.uisettingResetdefaultTitle },
-                        summary = { localz.strings.uisettingResetdefaultSummary },
-                        icon = Icons.Filled.ClearAll,
-                        styling = ss,
-                        isResetDefault = true,
-                    )
-                )
-            )
-        )
-        return list
-    }
+        BooleanSetting(
+            type = SettingType.ToggleSettingType,
+            key = PREF_INROOM_PIP,
+            title = lyricist
+                .strings.uisettingPipTitle,
+            summary = lyricist
+                .strings.uisettingPipSummary,
+            defaultValue = true,
+            icon = Icons.Filled.PictureInPicture,
+            styling = settingROOMstyle,
+        ) to CATEG_INROOM_ADVANCED,
+
+        SliderSetting(
+            type = SettingType.SliderSettingType,
+            key = DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL,
+            title = lyricist
+                .strings.uisettingReconnectIntervalTitle,
+            summary = lyricist
+                .strings.uisettingReconnectIntervalSummary,
+            defaultValue = 2,
+            icon = Icons.Filled.Web,
+            styling = settingROOMstyle,
+            maxValue = 15,
+            minValue = 0,
+        ) to CATEG_INROOM_ADVANCED,
+
+        OneClickSetting(
+            type = SettingType.OneClickSettingType,
+            key = PREF_INROOM_RESET_DEFAULT,
+            title = lyricist
+                .strings.uisettingResetdefaultTitle,
+            summary = lyricist
+                .strings.uisettingResetdefaultSummary,
+            icon = Icons.Filled.ClearAll,
+            styling = settingROOMstyle,
+            isResetDefault = true,
+        ) to CATEG_INROOM_ADVANCED
+    )
 }

@@ -23,6 +23,7 @@ Thumbs.db
 build/
 app/build/
 gradle/
+keystore/
 obj/
 *.jks
 *.so

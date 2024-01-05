@@ -4,13 +4,19 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.byteArrayPreferencesKey
+import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.runBlocking
 import okio.Path.Companion.toPath
 
 fun createDataStore(
@@ -24,70 +30,45 @@ fun createDataStore(
 lateinit var datastore: DataStore<Preferences>
 
 /** Flow obtainers, these are the ones that are gonna return flows to read from */
-fun stringFlow(key: String, default: String): Flow<String> {
-    return datastore.data.map { preferences ->
-        preferences[stringPreferencesKey(key)] ?: default
-    }
+@Suppress("UNCHECKED_CAST")
+inline fun <reified T> prefKeyMapper(name: String): Preferences.Key<T> {
+    return when (T::class) {
+        Int::class -> intPreferencesKey(name)
+        Double::class -> doublePreferencesKey(name)
+        String::class -> stringPreferencesKey(name)
+        Boolean::class -> booleanPreferencesKey(name)
+        Float::class -> floatPreferencesKey(name)
+        Long::class -> longPreferencesKey(name)
+        Set::class -> stringSetPreferencesKey(name)
+        ByteArray::class -> byteArrayPreferencesKey(name)
+        else -> throw IllegalArgumentException("Unsupported type: ${T::class}")
+    } as Preferences.Key<T>
 }
 
-fun booleanFlow(key: String, default: Boolean): Flow<Boolean> {
-    return datastore.data.map { preferences ->
-        preferences[booleanPreferencesKey(key)] ?: default
+inline fun <reified T> valueFlow(key: String, default: T): Flow<T> {
+    return datastore.data.mapNotNull { preferences ->
+        val preferencesKey: Preferences.Key<T> = prefKeyMapper(key)
+        preferences[preferencesKey] ?: default
     }
 }
-
-fun intFlow(key: String, default: Int): Flow<Int> {
-    return datastore.data.map { preferences ->
-        preferences[intPreferencesKey(key)] ?: default
-    }
-}
-
-fun stringSetFlow(key: String, default: Set<String>): Flow<Collection<String>> {
-    return datastore.data.map { preferences ->
-        preferences[stringSetPreferencesKey(key)] ?: default
-    }
-}
-
 
 /** Methods that write to flows (low level) */
-suspend fun writeString(key: String, value: String) {
+suspend inline fun <reified T> writeValue(key: String, value: T) {
     datastore.edit { preferences ->
-        preferences[stringPreferencesKey(key)] = value
+        val preferencesKey: Preferences.Key<T> = prefKeyMapper(key)
+        preferences[preferencesKey] = value
     }
 }
 
-suspend fun writeBoolean(key: String, value: Boolean) {
-    datastore.edit { preferences ->
-        preferences[booleanPreferencesKey(key)] = value
-    }
+/** ==== Convenience methods to obtain values ====== */
+/** Gets the current value of the flow suspendingly, which means it may suspend until a value is present */
+suspend inline fun <reified T> valueSuspendingly(key: String, default: T): T {
+    return valueFlow(key, default).first()
 }
 
-suspend fun writeInt(key: String, value: Int) {
-    datastore.edit { preferences ->
-        preferences[intPreferencesKey(key)] = value
-    }
-}
-
-suspend fun writeStringSet(key: String, value: Set<String>) {
-    datastore.edit { preferences ->
-        preferences[stringSetPreferencesKey(key)] = value
-    }
-}
-
-
-/** The rest are convenience methods which we will be using when fetching or writing data outside settings */
-suspend fun obtainString(key: String, default: String): String {
-    return stringFlow(key, default).first()
-}
-
-suspend fun obtainBoolean(key: String, default: Boolean): Boolean {
-    return booleanFlow(key, default).first()
-}
-
-suspend fun obtainInt(key: String, default: Int): Int {
-    return intFlow(key, default).first()
-}
-
-suspend fun obtainStringSet(key: String, default: Set<String>): Set<String> {
-    return stringSetFlow(key, default).first().toSet()
+/** Gets the current value of the flow blockingly (for non-coroutine context),
+ * To avoid blocking the thread, we return null if no value is present anyway
+ */
+inline fun <reified T> valueBlockingly(key: String, default: T): T? {
+    return runBlocking { valueFlow(key, default).firstOrNull() }
 }
