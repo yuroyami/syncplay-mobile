@@ -1,7 +1,7 @@
 <h1 align="center"> Syncplay for Mobile (Android & iOS) </h1> <br>
 <p align="center">
   <a href="">
-    <img alt="Syncplay for Mobile" title="Syncplay Mobile" src="https://github.com/yurowitz/syncplay-mobile/blob/master/art/LOGO.png?raw=true" width="250">
+    <img alt="Syncplay for Mobile" title="Syncplay Mobile" src="https://github.com/yuroyami/syncplay-mobile/blob/master/art/LOGO.png?raw=true" width="250">
   </a>
 </p>
 <p align="center">
@@ -53,8 +53,8 @@ Experience the convenience of Syncplay on your phone and enjoy shared video watc
 **Cannot run on Android versions below Android 6.0 (Codename: Marshmallow) and iOS 14.0 **
 
 <p align="center">
-  <img src = "https://raw.githubusercontent.com/yurowitz/syncplay-mobile/master/art/SS1.png" width=150>
-  <img src = "https://raw.githubusercontent.com/yurowitz/syncplay-mobile/master/art/SS3.png" width=150>
+  <img src = "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS1.png" width=150>
+  <img src = "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS3.png" width=150>
 </p>
 
 ## Features
@@ -72,15 +72,15 @@ Experience the convenience of Syncplay on your phone and enjoy shared video watc
 * Compatible with iOS 14.0 up to the latest iOS 17.2 release.
 
 <p align="center">
-  <img src = "https://raw.githubusercontent.com/yurowitz/syncplay-mobile/master/art/SS2.png" width="30%">
-  <img src = "https://raw.githubusercontent.com/yurowitz/syncplay-mobile/master/art/SS4.png" width="30%">
+  <img src = "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS2.png" width="30%">
+  <img src = "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS4.png" width="30%">
 </p>
 
 ## How to use
 ### How to use (Android)
 
 Usage on Android is fairly simple:
-- Download the latest release APK from [here](https://github.com/yurowitz/syncplay-mobile/releases/latest).
+- Download the latest release APK from [here](https://github.com/yuroyami/syncplay-mobile/releases/latest).
 - Install the APK. If any installation issues arise, uninstall the previous version of the app before installing the new one.
 - Open Syncplay. Specify a username of your choice, a room name of your choice (Tell your friends about it)
 - Select a server from the list (Tell your friends about this one too)
@@ -133,11 +133,11 @@ These are the things I am willing to add/adjust in the future :
 ## Translating
 
 * If you want to contribute with a translation in a language that isn't available in Syncplay, or
-  enhance the actual translations, please refer to [#30](https://github.com/yurowitz/syncplay-mobile/issues/30)
+  enhance the actual translations, please refer to [#30](https://github.com/yuroyami/syncplay-mobile/issues/30)
 
 ## Feedback
 
-Feel free to [file an issue](https://github.com/yurowitz/syncplay-mobile/issues/new).
+Feel free to [file an issue](https://github.com/yuroyami/syncplay-mobile/issues/new).
 
 If there's anything you'd like to chat about, please feel free to open a new discussion.
 
