@@ -182,6 +182,16 @@ val ArStrings = object : Strings {
     override val uisettingCategPlayerSettings = "إعدادات المشغل"
     override val uisettingCategChatProperties = "خصائص الدردشة"
 
+    override val uisettingCategMpv = "mpv"
+    override val uisettingMpvHardwareAccelerationTitle = "تسارع الأجهزة"
+    override val uisettingMpvHardwareAccelerationSummary = "قم بتعطيل هذا لاستخدام التسارع البرمجي بدلاً من ذلك."
+    override val uisettingMpvGpunextTitle = "استخدام gpu-next"
+    override val uisettingMpvGpunextSummary = "فرض استخدام mpv لواجهة جديدة لعرض الفيديو، تعتمد على libplacebo."
+    override val uiSettingMpvDebugTitle = "تمكين التصحيح"
+    override val uiSettingMpvDebugSummary = "عرض معلومات التصحيح."
+    override val uiSettingMpvInterpolationTitle = "تكامل الإطارات في الثانية"
+    override val uiSettingMpvInterpolationSummary = "تقليل الاهتزاز عن طريق تمكين تكامل الإطارات في الثانية. قد لا يعمل هذا بشكل جيد في بعض الحالات."
+
     override val uisettingApply = "تطبيق"
     override val uisettingTimestampSummary = "قم بتعطيل هذا لإخفاء الطوابع الزمنية في بداية رسائل الدردشة."
     override val uisettingTimestampTitle = "طوابع الزمن في الدردشة"

@@ -77,6 +77,13 @@ object DataStoreKeys {
     const val PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP = "pref_inroom_seek_forward_jump"
     const val PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP = "pref_inroom_seek_backward_jump"
 
+    /* MPV Settings */
+    const val CATEG_INROOM_MPV = "categ_inroom_mpv"
+    const val PREF_MPV_HARDWARE_ACCELERATION = "pref_mpv_hw"
+    const val PREF_MPV_GPU_NEXT = "pref_mpv_gpunext"
+    const val PREF_MPV_DEBUG_MODE = "pref_mpv_debug_mode"
+    const val PREF_MPV_INTERPOLATION = "pref_mpv_interpolation"
+
     /* Advanced */
     const val CATEG_INROOM_ADVANCED = "categ_inroom_advanced"
     const val PREF_INROOM_PIP = "pref_inroom_pip"

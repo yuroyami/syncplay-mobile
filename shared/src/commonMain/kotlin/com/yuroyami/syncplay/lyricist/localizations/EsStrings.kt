@@ -178,6 +178,17 @@ val EsStrings = object : Strings {
     override val settingFileinfoBehaviourNameSummary = "Elige el método con el que mostrarás el nombre de tu archivo multimedia agregado a otros usuarios."
     override val settingFileinfoBehaviourSizeTitle = "Envío de información del tamaño del archivo"
     override val settingFileinfoBehaviourSizeSummary = "Elige el método con el que mostrarás el tamaño de tu archivo multimedia agregado a otros usuarios."
+
+    override val uisettingCategMpv = "mpv"
+    override val uisettingMpvHardwareAccelerationTitle = "Aceleración de Hardware"
+    override val uisettingMpvHardwareAccelerationSummary = "Desactiva esto para utilizar en su lugar la aceleración de software."
+    override val uisettingMpvGpunextTitle = "Usar gpu-next"
+    override val uisettingMpvGpunextSummary = "Forzar a mpv a utilizar una nueva interfaz de renderizado de video, basada en libplacebo."
+    override val uiSettingMpvDebugTitle = "Habilitar depuración"
+    override val uiSettingMpvDebugSummary = "Mostrar información de depuración."
+    override val uiSettingMpvInterpolationTitle = "Interpolación de Framerate"
+    override val uiSettingMpvInterpolationSummary = "Reduce el temblor al habilitar la interpolación de framerate. Esto puede no funcionar bien en algunos casos."
+
     override val uisettingApply = "APLICAR"
     override val uisettingTimestampSummary = "Desactiva esto para ocultar las marcas de tiempo al principio de los mensajes de chat."
     override val uisettingTimestampTitle = "Marcas de tiempo en el chat"

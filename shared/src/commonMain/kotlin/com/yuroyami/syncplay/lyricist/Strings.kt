@@ -188,6 +188,15 @@ interface Strings {
     val uisettingCategChatColors: String
     val uisettingCategPlayerSettings: String
     val uisettingCategChatProperties: String
+    val uisettingCategMpv: String
+    val uisettingMpvHardwareAccelerationTitle: String
+    val uisettingMpvHardwareAccelerationSummary: String
+    val uisettingMpvGpunextTitle: String
+    val uisettingMpvGpunextSummary: String
+    val uiSettingMpvDebugTitle: String
+    val uiSettingMpvDebugSummary: String
+    val uiSettingMpvInterpolationTitle: String
+    val uiSettingMpvInterpolationSummary: String
     val uisettingApply: String
     val uisettingTimestampSummary: String
     val uisettingTimestampTitle: String

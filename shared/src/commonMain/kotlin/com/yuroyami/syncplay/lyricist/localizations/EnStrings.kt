@@ -42,7 +42,7 @@ val EnStrings = object : Strings {
     override val connectCustomServerPassword = "Password (Empty if not required)"
     override val connectPort = "Port"
     override val connectNightmodeswitch = "Switch the day/night mode."
-    override val connectSolomode = "Enter solo mode (video-player only)"
+    override val connectSolomode = "Offline mode"
 
     override val roomSelectedVid = { p0: String -> "Selected video file: %s".format(p0) }
     override val roomSelectedSub = { p0: String -> "Loaded subtitle file: %s".format(p0) }
@@ -142,7 +142,15 @@ val EnStrings = object : Strings {
     override val uisettingCategChatColors = "Chat colors"
     override val uisettingCategChatProperties = "Chat properties"
     override val uisettingCategPlayerSettings = "Player settings"
-
+    override val uisettingCategMpv = "mpv"
+    override val uisettingMpvHardwareAccelerationTitle = "Hardware Acceleration"
+    override val uisettingMpvHardwareAccelerationSummary = "Disable this to use software acceleration instead."
+    override val uisettingMpvGpunextTitle = "Use gpu-next"
+    override val uisettingMpvGpunextSummary = "Force mpv to use brand-new video rendering backend, based on libplacebo."
+    override val uiSettingMpvDebugTitle = "Enable debugging"
+    override val uiSettingMpvDebugSummary = "Show debugging information."
+    override val uiSettingMpvInterpolationTitle = "Framerate Interpolation"
+    override val uiSettingMpvInterpolationSummary = "Reduce jittering by enabling framerate interpolation. This may not work well in some cases."
     override val settingNightModeTitle = "Night Mode"
     override val settingNightModeSummary = "Select the night mode behavior."
     override val settingRememberJoinInfoTitle = "Remember joining info"

@@ -47,14 +47,13 @@ fun String.settingBoolean() = this.settingV<Boolean>() as Boolean
 @Composable fun String.settingStringState() = this.settingS<String>()
 @Composable fun String.settingBooleanState() = this.settingS<Boolean>()
 
-
 /* Mappers */
 val settingsMapper: HashMap<String, Setting<out Any>> = hashMapOf()
 
-fun HashMap<Setting<out Any>, String>.populate(categs: List<SettingCategory>) {
+fun List<Pair<Setting<out Any>, String>>.populate(categs: List<SettingCategory>) {
     categs.forEach { it.settingList.clear() }
 
-    this.forEach { (setting, categoryID) ->
+    forEach { (setting, categoryID) ->
         /** Mapping settings as values to their keys for easy later access */
         settingsMapper[setting.key] = setting
 

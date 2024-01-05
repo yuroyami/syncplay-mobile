@@ -179,6 +179,17 @@ val ZhStrings = object : Strings {
     override val settingFileinfoBehaviourNameSummary = "选择将添加的媒体文件名共享其他用户."
     override val settingFileinfoBehaviourSizeTitle = "是否共享文件大小"
     override val settingFileinfoBehaviourSizeSummary = "选择向其他用户共享显示添加的媒体文件大小."
+
+    override val uisettingCategMpv = "mpv"
+    override val uisettingMpvHardwareAccelerationTitle = "硬件加速"
+    override val uisettingMpvHardwareAccelerationSummary = "禁用此选项以使用软件加速替代。"
+    override val uisettingMpvGpunextTitle = "使用 gpu-next"
+    override val uisettingMpvGpunextSummary = "强制 mpv 使用全新的基于 libplacebo 的视频渲染后端。"
+    override val uiSettingMpvDebugTitle = "启用调试"
+    override val uiSettingMpvDebugSummary = "显示调试信息。"
+    override val uiSettingMpvInterpolationTitle = "帧率插值"
+    override val uiSettingMpvInterpolationSummary = "通过启用帧率插值减少抖动。在某些情况下可能效果不佳。"
+
     override val uisettingApply = "应用"
     override val uisettingTimestampSummary = "禁用此选项可以隐藏聊天消息开头的时间戳."
     override val uisettingTimestampTitle = "是否开启时间戳"

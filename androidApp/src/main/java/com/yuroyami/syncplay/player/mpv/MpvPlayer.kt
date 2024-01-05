@@ -463,4 +463,22 @@ class MpvPlayer : BasePlayer() {
             mpvView.removeObserver(observer)
         }
     }
+
+
+
+    fun toggleHardwareAcceleration(b: Boolean) {
+        MPVLib.setOptionString("hwdec", if (b) "auto" else "no" )
+    }
+
+    fun toggleGpuNext(b: Boolean) {
+        MPVLib.setOptionString("vo", if (b) "gpu-next" else "gpu")
+    }
+
+    fun toggleInterpolation(b: Boolean) {
+        MPVLib.setOptionString("interpolation", if (b) "yes" else "no")
+    }
+
+    fun toggleDebugMode(b: Boolean) {
+        MPVLib.setOptionString("gpu-debug", if (b) "yes" else "no")
+    }
 }

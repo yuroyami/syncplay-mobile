@@ -29,10 +29,11 @@ import com.yuroyami.syncplay.player.PlayerUtils.pausePlayback
 import com.yuroyami.syncplay.player.PlayerUtils.playPlayback
 import com.yuroyami.syncplay.player.exo.ExoPlayer
 import com.yuroyami.syncplay.player.mpv.MpvPlayer
+import com.yuroyami.syncplay.player.mpv.mpvRoomSettings
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PIP
+import com.yuroyami.syncplay.settings.MySettings.additionalPlayerRoomSettings
 import com.yuroyami.syncplay.settings.settingBoolean
-import com.yuroyami.syncplay.settings.settingString
 import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.utils.UIUtils.cutoutMode
 import com.yuroyami.syncplay.utils.UIUtils.hideSystemUI
@@ -81,8 +82,14 @@ class WatchActivity : ComponentActivity() {
         )
 
         when (engine) {
-            ENGINE.ANDROID_EXOPLAYER -> viewmodel?.player = ExoPlayer()
-            ENGINE.ANDROID_MPV -> viewmodel?.player = MpvPlayer()
+            ENGINE.ANDROID_EXOPLAYER -> {
+                additionalPlayerRoomSettings = listOf()
+                viewmodel?.player = ExoPlayer()
+            }
+            ENGINE.ANDROID_MPV -> {
+                additionalPlayerRoomSettings = mpvRoomSettings
+                viewmodel?.player = MpvPlayer()
+            }
             else -> {}
         }
 
@@ -269,7 +276,7 @@ class WatchActivity : ComponentActivity() {
     /** Applying the locale language preference */
     override fun attachBaseContext(newBase: Context?) {
         /** Applying saved language */
-        val lang = DataStoreKeys.PREF_DISPLAY_LANG.settingString()
+        val lang = valueBlockingly(DataStoreKeys.PREF_DISPLAY_LANG, "en")
         super.attachBaseContext(newBase!!.changeLanguage(lang))
     }
 

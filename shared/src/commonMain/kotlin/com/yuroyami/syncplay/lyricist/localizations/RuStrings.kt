@@ -185,6 +185,17 @@ val RuStrings = object : Strings {
     override val settingFileinfoBehaviourNameSummary = "Выберите метод, с помощью которого вы покажете другим пользователям имя вашего добавленного медиафайла."
     override val settingFileinfoBehaviourSizeTitle = "Отправка информации о размере файла"
     override val settingFileinfoBehaviourSizeSummary = "Выберите метод, с помощью которого вы покажете другим пользователям размер вашего добавленного медиафайла."
+
+    override val uisettingCategMpv = "mpv"
+    override val uisettingMpvHardwareAccelerationTitle = "Аппаратное ускорение"
+    override val uisettingMpvHardwareAccelerationSummary = "Отключите это, чтобы использовать вместо этого программное ускорение."
+    override val uisettingMpvGpunextTitle = "Использовать gpu-next"
+    override val uisettingMpvGpunextSummary = "Принудительное использование mpv нового бэкэнда для видеообработки на основе libplacebo."
+    override val uiSettingMpvDebugTitle = "Включить отладку"
+    override val uiSettingMpvDebugSummary = "Показывать отладочную информацию."
+    override val uiSettingMpvInterpolationTitle = "Интерполяция кадров в секунду"
+    override val uiSettingMpvInterpolationSummary = "Снизьте дрожание, включив интерполяцию кадров в секунду. Это может не работать хорошо в некоторых случаях."
+
     override val uisettingApply = "ПРИМЕНИТЬ"
     override val uisettingTimestampSummary = "Отключите это, чтобы скрыть временные метки в начале чат-сообщений."
     override val uisettingTimestampTitle = "Временные метки чата"

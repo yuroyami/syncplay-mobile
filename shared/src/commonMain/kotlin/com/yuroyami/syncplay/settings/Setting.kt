@@ -224,7 +224,8 @@ sealed class Setting<T>(
 
     class BooleanSetting(
         type: SettingType, key: String, summary: String, title: String, defaultValue: Boolean?,
-        icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling
+        icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling,
+        val onBooleanChanged: (Boolean) -> Unit = {},
     ) : Setting<Boolean>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
         icon = icon, enabled = enabled, styling = styling
@@ -261,22 +262,24 @@ sealed class Setting<T>(
                 trailingContent = {
                     if (type == SettingType.CheckboxSettingType) {
                         Checkbox(
-                            checked = boolean.value ?: false,
+                            checked = boolean.value,
                             enabled = enabled,
                             onCheckedChange = { b ->
                                 scope.launch {
                                     writeValue(key, b)
                                 }
+                                onBooleanChanged.invoke(b)
                             }
                         )
                     } else {
                         Switch(
-                            checked = boolean.value ?: false,
+                            checked = boolean.value,
                             enabled = enabled,
                             onCheckedChange = { b ->
                                 scope.launch {
                                     writeValue(key, b)
                                 }
+                                onBooleanChanged.invoke(b)
                             }
                         )
                     }

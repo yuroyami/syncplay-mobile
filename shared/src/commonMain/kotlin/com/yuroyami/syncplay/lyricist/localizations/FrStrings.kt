@@ -184,6 +184,16 @@ val FrStrings = object : Strings {
     override val settingFileinfoBehaviourSizeTitle = "Envoi d'informations sur la taille du fichier"
     override val settingFileinfoBehaviourSizeSummary = "Choisissez la méthode avec laquelle vous montrez la taille du fichier multimédia que vous avez ajouté aux autres utilisateurs."
 
+    override val uisettingCategMpv = "mpv"
+    override val uisettingMpvHardwareAccelerationTitle = "Accélération Matérielle"
+    override val uisettingMpvHardwareAccelerationSummary = "Désactivez ceci pour utiliser l'accélération logicielle à la place."
+    override val uisettingMpvGpunextTitle = "Utiliser gpu-next"
+    override val uisettingMpvGpunextSummary = "Forcez mpv à utiliser une nouvelle interface de rendu vidéo basée sur libplacebo."
+    override val uiSettingMpvDebugTitle = "Activer le débogage"
+    override val uiSettingMpvDebugSummary = "Afficher les informations de débogage."
+    override val uiSettingMpvInterpolationTitle = "Interpolation des images par seconde"
+    override val uiSettingMpvInterpolationSummary = "Réduisez les saccades en activant l'interpolation des images par seconde. Cela peut ne pas fonctionner bien dans certains cas."
+
     override val uisettingApply = "APPLIQUER"
     override val uisettingTimestampSummary = "Désactivez ceci pour masquer les horodatages au début des messages de chat."
     override val uisettingTimestampTitle = "Horodatages du chat"

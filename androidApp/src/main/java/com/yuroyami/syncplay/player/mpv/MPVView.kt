@@ -3,14 +3,17 @@ package com.yuroyami.syncplay.player.mpv
 import android.content.Context
 import android.os.Build
 import android.os.Environment
-import android.preference.PreferenceManager
 import android.util.AttributeSet
 import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.WindowManager
-import com.yuroyami.syncplay.R
 import com.yuroyami.syncplay.player.PlayerOptions
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MPV_DEBUG_MODE
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MPV_GPU_NEXT
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MPV_HARDWARE_ACCELERATION
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MPV_INTERPOLATION
+import com.yuroyami.syncplay.settings.settingBoolean
 import `is`.xyz.mpv.MPVLib
 import `is`.xyz.mpv.MPVLib.mpvFormat.MPV_FORMAT_DOUBLE
 import `is`.xyz.mpv.MPVLib.mpvFormat.MPV_FORMAT_FLAG
@@ -47,32 +50,20 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
         observeProperties()
     }
 
-    private var voInUse: String = ""
-
+    var voInUse: String = ""
     private fun initOptions() {
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this.context)
-
         // apply phone-optimized defaults
         MPVLib.setOptionString("profile", "fast")
 
-        // vo
-        val vo = if (sharedPreferences.getBoolean("gpu_next", false))
-            "gpu-next"
-        else
-            "gpu"
-        voInUse = vo
 
-        // hwdec
-        val hwdec = if (sharedPreferences.getBoolean("hardware_decoding", true))
-            "auto"
-        else
-            "no"
+        voInUse = if (PREF_MPV_GPU_NEXT.settingBoolean()) "gpu-next" else "gpu"
+
+        val hwdec = if (PREF_MPV_HARDWARE_ACCELERATION.settingBoolean()) "auto" else "no"
 
         // vo: set display fps as reported by android
         val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val disp = wm.defaultDisplay
         val refreshRate = disp.mode.refreshRate
-
         Log.v(TAG, "Display ${disp.displayId} reports FPS of $refreshRate")
         MPVLib.setOptionString("display-fps-override", refreshRate.toString())
 
@@ -95,14 +86,14 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
         )
 
         for ((preference_name, mpv_option) in opts) {
-            val preference = sharedPreferences.getString(preference_name, "")
-            if (!preference.isNullOrBlank())
-                MPVLib.setOptionString(mpv_option, preference)
+            //val preference = sharedPreferences.getString(preference_name, "")
+            //if (!preference.isNullOrBlank())
+                MPVLib.setOptionString(mpv_option, "")
         }
 
         // set more options
 
-        val debandMode = sharedPreferences.getString("video_debanding", "")
+        val debandMode = "" //TODO: Preferencize: sharedPreferences.getString("video_debanding", "")
         if (debandMode == "gradfun") {
             // lower the default radius (16) to improve performance
             MPVLib.setOptionString("vf", "gradfun=radius=12")
@@ -110,21 +101,22 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
             MPVLib.setOptionString("deband", "yes")
         }
 
-        val vidsync = sharedPreferences.getString("video_sync", resources.getString(R.string.pref_video_interpolation_sync_default))
-        MPVLib.setOptionString("video-sync", vidsync!!)
+        //TODO: Preferencize
+        MPVLib.setOptionString("video-sync", "audio")
 
-        if (sharedPreferences.getBoolean("video_interpolation", false))
+
+        if (PREF_MPV_INTERPOLATION.settingBoolean())
             MPVLib.setOptionString("interpolation", "yes")
 
-        if (sharedPreferences.getBoolean("gpudebug", false))
+        if (PREF_MPV_DEBUG_MODE.settingBoolean())
             MPVLib.setOptionString("gpu-debug", "yes")
 
-        if (sharedPreferences.getBoolean("video_fastdecode", false)) {
+        if (false /* TODO: sharedPreferences.getBoolean("video_fastdecode", false) */) {
             MPVLib.setOptionString("vd-lavc-fast", "yes")
             MPVLib.setOptionString("vd-lavc-skiploopfilter", "nonkey")
         }
 
-        MPVLib.setOptionString("vo", vo)
+        MPVLib.setOptionString("vo", voInUse)
         MPVLib.setOptionString("gpu-context", "android")
         MPVLib.setOptionString("opengl-es", "yes")
         MPVLib.setOptionString("hwdec", hwdec)
