@@ -1,9 +1,7 @@
 package com.yuroyami.syncplay.home
 
 import com.yuroyami.syncplay.settings.DataStoreKeys
-import com.yuroyami.syncplay.settings.obtainInt
-import com.yuroyami.syncplay.settings.obtainString
-import kotlinx.coroutines.runBlocking
+import com.yuroyami.syncplay.settings.valueBlockingly
 
 class HomeConfig {
 
@@ -15,11 +13,11 @@ class HomeConfig {
 
 
     init {
-        savedUser = runBlocking { obtainString(DataStoreKeys.MISC_JOIN_USERNAME, "user" + (0..9999).random().toString()) }
-        savedRoom = runBlocking { obtainString(DataStoreKeys.MISC_JOIN_ROOMNAME, "room" + (0..9999).random().toString()) }
-        savedIP = runBlocking { obtainString(DataStoreKeys.MISC_JOIN_SERVER_ADDRESS, "syncplay.pl") }
-        savedPort = runBlocking { obtainInt(DataStoreKeys.MISC_JOIN_SERVER_PORT, 8997) }
-        savedPassword = runBlocking { obtainString(DataStoreKeys.MISC_JOIN_SERVER_PW, "") }
+        savedUser = valueBlockingly(DataStoreKeys.MISC_JOIN_USERNAME, "user" + (0..9999).random().toString())
+        savedRoom = valueBlockingly(DataStoreKeys.MISC_JOIN_ROOMNAME, "room" + (0..9999).random().toString())
+        savedIP = valueBlockingly(DataStoreKeys.MISC_JOIN_SERVER_ADDRESS, "syncplay.pl")
+        savedPort = valueBlockingly(DataStoreKeys.MISC_JOIN_SERVER_PORT, 8997)
+        savedPassword = valueBlockingly(DataStoreKeys.MISC_JOIN_SERVER_PW, "")
     }
 
 }

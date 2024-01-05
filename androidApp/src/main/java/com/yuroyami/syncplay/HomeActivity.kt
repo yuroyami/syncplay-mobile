@@ -24,15 +24,14 @@ import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.protocol.SpProtocolAndroid
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_NIGHTMODE
-import com.yuroyami.syncplay.settings.booleanFlow
-import com.yuroyami.syncplay.settings.obtainString
+import com.yuroyami.syncplay.settings.valueBlockingly
+import com.yuroyami.syncplay.settings.valueFlow
 import com.yuroyami.syncplay.utils.changeLanguage
 import com.yuroyami.syncplay.utils.defaultEngineAndroid
 import com.yuroyami.syncplay.watchroom.SpViewModel
 import com.yuroyami.syncplay.watchroom.homeCallback
 import com.yuroyami.syncplay.watchroom.prepareProtocol
 import com.yuroyami.syncplay.watchroom.viewmodel
-import kotlinx.coroutines.runBlocking
 
 class HomeActivity : ComponentActivity() {
 
@@ -58,7 +57,7 @@ class HomeActivity : ComponentActivity() {
 
         /****** Composing UI using Jetpack Compose *******/
         setContent {
-            val nightMode by booleanFlow(MISC_NIGHTMODE, false).collectAsState(initial = false)
+            val nightMode by valueFlow(MISC_NIGHTMODE, false).collectAsState(initial = false)
 
             LaunchedEffect(nightMode) {
                 WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = !nightMode
@@ -143,7 +142,7 @@ class HomeActivity : ComponentActivity() {
 
     override fun attachBaseContext(newBase: Context?) {
         /** Applying saved language */
-        val lang = runBlocking { obtainString(DataStoreKeys.PREF_DISPLAY_LANG, "en") }
+        val lang = valueBlockingly(DataStoreKeys.PREF_DISPLAY_LANG, "en")
         super.attachBaseContext(newBase!!.changeLanguage(lang))
     }
 }

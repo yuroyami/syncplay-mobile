@@ -18,12 +18,11 @@ import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_TLS_ENABLE
-import com.yuroyami.syncplay.settings.obtainBoolean
+import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.utils.RoomUtils.broadcastMessage
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.runBlocking
 
 lateinit var lyricist: Lyricist<Strings>
 
@@ -70,7 +69,7 @@ val isSoloMode: Boolean
 fun prepareProtocol(joinInfo: JoinInfo) {
     if (!joinInfo.soloMode) {
 
-        viewmodel?.setReadyDirectly = runBlocking { obtainBoolean(DataStoreKeys.PREF_READY_FIRST_HAND, true) }
+        viewmodel?.setReadyDirectly = valueBlockingly(DataStoreKeys.PREF_READY_FIRST_HAND, true)
 
         with (viewmodel!!) {
             p.syncplayCallback = object : ProtocolCallback {
@@ -114,7 +113,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                     broadcastMessage(message = lyricist.strings.roomGuyLeft(leaver), isChat = false)
 
                     /* If the setting is enabled, pause playback **/
-                    val pauseOnLeft = runBlocking { obtainBoolean(PREF_PAUSE_ON_SOMEONE_LEAVE, true) }
+                    val pauseOnLeft = valueBlockingly(PREF_PAUSE_ON_SOMEONE_LEAVE, true)
                     if (pauseOnLeft) {
                         pausePlayback()
                     }
@@ -305,7 +304,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
             p.session.currentPassword = joinInfo.password
 
             /** Connecting */
-            val tls = runBlocking { obtainBoolean(PREF_TLS_ENABLE, true) }
+            val tls = valueBlockingly(PREF_TLS_ENABLE, true)
             if (tls) {
                 p.syncplayCallback?.onTLSCheck()
                 p.tls = Constants.TLS.TLS_ASK

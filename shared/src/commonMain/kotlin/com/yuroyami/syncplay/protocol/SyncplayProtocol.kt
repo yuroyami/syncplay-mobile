@@ -6,7 +6,7 @@ import com.yuroyami.syncplay.models.Session
 import com.yuroyami.syncplay.protocol.JsonSender.sendHello
 import com.yuroyami.syncplay.protocol.JsonSender.sendTLS
 import com.yuroyami.syncplay.settings.DataStoreKeys
-import com.yuroyami.syncplay.settings.obtainInt
+import com.yuroyami.syncplay.settings.valueSuspendingly
 import com.yuroyami.syncplay.utils.loggy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -125,7 +125,7 @@ abstract class SyncplayProtocol {
             if (reconnectionJob == null || reconnectionJob?.isCompleted == true) {
                 reconnectionJob = protoScope.launch(Dispatchers.IO) {
                     state = Constants.CONNECTIONSTATE.STATE_SCHEDULING_RECONNECT
-                    val reconnectionInterval = obtainInt(DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL, 2) * 1000L
+                    val reconnectionInterval = valueSuspendingly(DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL, 2) * 1000L
 
                     delay(reconnectionInterval)
 

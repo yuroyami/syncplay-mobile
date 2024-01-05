@@ -1,14 +1,13 @@
 package com.yuroyami.syncplay.player
 
 import com.yuroyami.syncplay.settings.DataStoreKeys
-import com.yuroyami.syncplay.settings.intFlow
+import com.yuroyami.syncplay.settings.valueSuspendingly
 import com.yuroyami.syncplay.utils.RoomUtils
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -37,7 +36,7 @@ object PlayerUtils {
 
     fun seekBckwd() {
         viewmodel?.player?.playerScopeIO?.launch {
-            val dec = intFlow(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP, 10).first()
+            val dec = valueSuspendingly(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP, 10)
 
             val currentMs = withContext(Dispatchers.Main) { viewmodel?.player!!.currentPositionMs() }
             var newPos = (currentMs) - (dec * 1000L)
@@ -55,7 +54,7 @@ object PlayerUtils {
 
     fun seekFrwrd() {
         viewmodel?.player?.playerScopeIO?.launch {
-            val inc = intFlow(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP, 10).first()
+            val inc = valueSuspendingly(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP, 10)
 
             val currentMs = withContext(Dispatchers.Main) { viewmodel?.player!!.currentPositionMs() }
             val newPos = (currentMs) + (inc * 1000L)

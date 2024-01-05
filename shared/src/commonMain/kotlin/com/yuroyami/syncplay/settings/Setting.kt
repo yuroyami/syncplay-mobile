@@ -57,6 +57,7 @@ import com.yuroyami.syncplay.utils.colorpicker.HsvColor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlin.math.roundToInt
 
 /** Main class that does the required logic and UI for a single Setting.
@@ -82,6 +83,8 @@ sealed class Setting<T>(
     @Composable
     abstract fun SettingComposable(modifier: Modifier)
 
+
+    /** This writes the default value as soon as it is initialized */
 
     /** ======= Now to specific types of SETTINGs and their respective child classes ======= */
 
@@ -226,6 +229,8 @@ sealed class Setting<T>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
         icon = icon, enabled = enabled, styling = styling
     ) {
+        init { runBlocking { writeValue(key, defaultValue) } }
+
         /** A boolean setting UI composable function. This either creates a CheckboxSetting or a ToggleSetting
          * based on the parameter [type] that is passed, whether it is a checkbox setting, or a toggle button. */
         @Composable
@@ -309,6 +314,8 @@ sealed class Setting<T>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
         icon = icon, enabled = enabled, styling = styling
     ) {
+        init { runBlocking { writeValue(key, defaultValue) } }
+
         /** A multi-choice setting which shows a popup dialog when clicked.
          * @exception SettingCreationException When [entryKeys] and [entryValues] are not passed/specified. */
         @Composable
@@ -391,6 +398,8 @@ sealed class Setting<T>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
         icon = icon, enabled = enabled, styling = styling
     ) {
+        init { runBlocking { writeValue(key, defaultValue) } }
+
         @Composable
         override fun SettingComposable(modifier: Modifier) {
             val value = getSettingState()
@@ -468,6 +477,8 @@ sealed class Setting<T>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
         icon = icon, enabled = enabled, styling = styling
     ) {
+        init { runBlocking { writeValue(key, defaultValue) } }
+
         /** A color setting UI composable function. Clicking this would displays a popup to the user. */
         @Composable
         override fun SettingComposable(modifier: Modifier) {
@@ -536,6 +547,8 @@ sealed class Setting<T>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
         icon = icon, enabled = enabled, styling = styling
     ) {
+        init { runBlocking { writeValue(key, defaultValue) } }
+
         /** A string setting UI composable function. It has a textfield next to it */
         @Composable
         override fun SettingComposable(modifier: Modifier) {

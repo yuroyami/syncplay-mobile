@@ -91,15 +91,14 @@ import com.yuroyami.syncplay.compose.ComposeUtils.FlexibleFancyText
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.compose.NightModeToggle
 import com.yuroyami.syncplay.compose.popups.PopupAPropos.AProposPopup
-import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_NIGHTMODE
-import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_PLAYER_ENGINE
-import com.yuroyami.syncplay.settings.booleanFlow
-import com.yuroyami.syncplay.settings.stringFlow
-import com.yuroyami.syncplay.settings.writeString
 import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.models.JoinInfo
-import com.yuroyami.syncplay.settings.MySettings.globalSettings
+import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_NIGHTMODE
+import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_PLAYER_ENGINE
+import com.yuroyami.syncplay.settings.MySettings.sgGLOBAL
 import com.yuroyami.syncplay.settings.SettingsUI
+import com.yuroyami.syncplay.settings.valueFlow
+import com.yuroyami.syncplay.settings.writeValue
 import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.getDefaultEngine
@@ -119,7 +118,7 @@ import syncplaymobile.generated.resources.Res
 fun HomeScreen(config: HomeConfig) {
     lyricist = rememberStrings()
 
-    val nightMode = booleanFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
+    val nightMode = valueFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
 
     val savedConfig = remember { config }
 
@@ -267,7 +266,7 @@ fun HomeScreen(config: HomeConfig) {
                         ) {
                             SettingsUI.SettingsGrid(
                                 modifier = Modifier.fillMaxWidth(),
-                                settingcategories = globalSettings(), //remember { testSettings()globalSettings() },
+                                settingcategories = sgGLOBAL, //remember { testSettings()globalSettings() },
                                 state = settingState,
                                 onCardClicked = {
                                     settingState.intValue = 2
@@ -589,7 +588,7 @@ fun HomeScreen(config: HomeConfig) {
 
                     /* Buttons */
                     val defaultEngine = remember { getDefaultEngine() }
-                    val player = stringFlow(MISC_PLAYER_ENGINE, defaultEngine).collectAsState(initial = defaultEngine)
+                    val player = valueFlow(MISC_PLAYER_ENGINE, defaultEngine).collectAsState(initial = defaultEngine)
 
                     Column(horizontalAlignment = CenterHorizontally) {
                         Row(horizontalArrangement = Arrangement.Center) {
@@ -626,7 +625,7 @@ fun HomeScreen(config: HomeConfig) {
                                 onClick = {
                                     scope.launch(Dispatchers.IO) {
                                         if (defaultEngine != "exo") {
-                                            writeString(
+                                            writeValue(
                                                 MISC_PLAYER_ENGINE,
                                                 when (player.value) {
                                                     "exo" -> "mpv"

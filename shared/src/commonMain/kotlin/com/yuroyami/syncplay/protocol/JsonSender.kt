@@ -4,11 +4,10 @@ package com.yuroyami.syncplay.protocol
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_HASH_FILENAME
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_HASH_FILESIZE
-import com.yuroyami.syncplay.settings.obtainString
+import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.utils.md5
 import com.yuroyami.syncplay.utils.toHex
 import com.yuroyami.syncplay.watchroom.viewmodel
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -98,8 +97,8 @@ object JsonSender {
 
     fun sendFile(media: MediaFile): String {
         /** Checking whether file name or file size have to be hashed **/
-        val nameBehavior = runBlocking { obtainString(PREF_HASH_FILENAME, "1") }
-        val sizeBehavior = runBlocking { obtainString(PREF_HASH_FILESIZE, "1") }
+        val nameBehavior = valueBlockingly(PREF_HASH_FILENAME, "1")
+        val sizeBehavior = valueBlockingly(PREF_HASH_FILESIZE, "1")
 
         val fileproperties = buildJsonObject {
             put("duration", media.fileDuration)

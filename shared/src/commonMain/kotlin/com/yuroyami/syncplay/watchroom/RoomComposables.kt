@@ -39,7 +39,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,7 +51,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -66,8 +64,8 @@ import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.compose.ComposeUtils.solidOverlay
 import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.settings.DataStoreKeys
-import com.yuroyami.syncplay.settings.booleanFlow
-import com.yuroyami.syncplay.settings.intFlow
+import com.yuroyami.syncplay.settings.settingBooleanState
+import com.yuroyami.syncplay.settings.settingIntState
 import com.yuroyami.syncplay.ui.Paletting
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.Font
@@ -78,13 +76,13 @@ object RoomComposables {
 
     @Composable
     fun ComposedMessagePalette(): MessagePalette {
-        val colorTimestamp = intFlow(DataStoreKeys.PREF_INROOM_COLOR_TIMESTAMP, Paletting.MSG_TIMESTAMP.toArgb()).collectAsState(initial = Paletting.MSG_TIMESTAMP.toArgb())
-        val colorSelftag = intFlow(DataStoreKeys.PREF_INROOM_COLOR_SELFTAG, Paletting.MSG_SELF_TAG.toArgb()).collectAsState(initial = Paletting.MSG_SELF_TAG.toArgb())
-        val colorFriendtag = intFlow(DataStoreKeys.PREF_INROOM_COLOR_FRIENDTAG, Paletting.MSG_FRIEND_TAG.toArgb()).collectAsState(initial = Paletting.MSG_FRIEND_TAG.toArgb())
-        val colorSystem = intFlow(DataStoreKeys.PREF_INROOM_COLOR_SYSTEMMSG, Paletting.MSG_SYSTEM.toArgb()).collectAsState(initial = Paletting.MSG_SYSTEM.toArgb())
-        val colorUserchat = intFlow(DataStoreKeys.PREF_INROOM_COLOR_USERMSG, Paletting.MSG_CHAT.toArgb()).collectAsState(initial = Paletting.MSG_CHAT.toArgb())
-        val colorError = intFlow(DataStoreKeys.PREF_INROOM_COLOR_ERRORMSG, Paletting.MSG_ERROR.toArgb()).collectAsState(initial = Paletting.MSG_ERROR.toArgb())
-        val msgIncludeTimestamp = booleanFlow(DataStoreKeys.PREF_INROOM_MSG_ACTIVATE_STAMP, true).collectAsState(initial = true)
+        val colorTimestamp = DataStoreKeys.PREF_INROOM_COLOR_TIMESTAMP.settingIntState()
+        val colorSelftag = DataStoreKeys.PREF_INROOM_COLOR_SELFTAG.settingIntState()
+        val colorFriendtag = DataStoreKeys.PREF_INROOM_COLOR_FRIENDTAG.settingIntState()
+        val colorSystem = DataStoreKeys.PREF_INROOM_COLOR_SYSTEMMSG.settingIntState()
+        val colorUserchat = DataStoreKeys.PREF_INROOM_COLOR_USERMSG.settingIntState()
+        val colorError = DataStoreKeys.PREF_INROOM_COLOR_ERRORMSG.settingIntState()
+        val msgIncludeTimestamp = DataStoreKeys.PREF_INROOM_MSG_ACTIVATE_STAMP.settingBooleanState()
 
         return MessagePalette(
             timestampColor = Color(colorTimestamp.value),
@@ -165,7 +163,7 @@ object RoomComposables {
     @Composable
     fun fadingMessageLayout(hudVisibility: Boolean, pipModeObserver: Boolean, msgPalette: MessagePalette) {
         /** The layout for the fading messages & OSD messages (when HUD is hidden, or when screen is locked) */
-        val fadingTimeout = intFlow(DataStoreKeys.PREF_INROOM_MSG_FADING_DURATION, 2).collectAsState(initial = 3)
+        val fadingTimeout = DataStoreKeys.PREF_INROOM_MSG_FADING_DURATION.settingIntState()
 
         if (!hudVisibility) {
             var visibility by remember { mutableStateOf(false) }

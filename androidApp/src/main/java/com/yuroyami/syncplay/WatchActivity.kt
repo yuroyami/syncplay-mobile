@@ -31,8 +31,9 @@ import com.yuroyami.syncplay.player.exo.ExoPlayer
 import com.yuroyami.syncplay.player.mpv.MpvPlayer
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PIP
-import com.yuroyami.syncplay.settings.obtainBoolean
-import com.yuroyami.syncplay.settings.obtainString
+import com.yuroyami.syncplay.settings.settingBoolean
+import com.yuroyami.syncplay.settings.settingString
+import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.utils.UIUtils.cutoutMode
 import com.yuroyami.syncplay.utils.UIUtils.hideSystemUI
 import com.yuroyami.syncplay.utils.changeLanguage
@@ -44,7 +45,6 @@ import com.yuroyami.syncplay.watchroom.RoomUI
 import com.yuroyami.syncplay.watchroom.gestureCallback
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.viewmodel
-import kotlinx.coroutines.runBlocking
 
 @Suppress("deprecation")
 class WatchActivity : ComponentActivity() {
@@ -77,7 +77,7 @@ class WatchActivity : ComponentActivity() {
 
         /** Checking whether this APK at this point supports multi-engine players */
         val engine = getEngineForString(
-            runBlocking { obtainString(DataStoreKeys.MISC_PLAYER_ENGINE, defaultEngineAndroid) }
+            valueBlockingly(DataStoreKeys.MISC_PLAYER_ENGINE, defaultEngineAndroid)
         )
 
         when (engine) {
@@ -211,8 +211,7 @@ class WatchActivity : ComponentActivity() {
     }
 
     private fun initiatePIPmode() {
-        val isPipAllowed = runBlocking {obtainBoolean(PREF_INROOM_PIP, true) }
-                && (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+        val isPipAllowed = PREF_INROOM_PIP.settingBoolean() && (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
 
         if (!isPipAllowed) return
 
@@ -270,7 +269,7 @@ class WatchActivity : ComponentActivity() {
     /** Applying the locale language preference */
     override fun attachBaseContext(newBase: Context?) {
         /** Applying saved language */
-        val lang = runBlocking { obtainString(DataStoreKeys.PREF_DISPLAY_LANG, "en") }
+        val lang = DataStoreKeys.PREF_DISPLAY_LANG.settingString()
         super.attachBaseContext(newBase!!.changeLanguage(lang))
     }
 

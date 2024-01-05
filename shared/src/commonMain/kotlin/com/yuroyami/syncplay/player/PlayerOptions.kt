@@ -1,9 +1,8 @@
 package com.yuroyami.syncplay.player
 
 import com.yuroyami.syncplay.settings.DataStoreKeys
-import com.yuroyami.syncplay.settings.obtainInt
-import com.yuroyami.syncplay.settings.obtainString
-import kotlinx.coroutines.runBlocking
+import com.yuroyami.syncplay.settings.valueBlockingly
+import com.yuroyami.syncplay.settings.valueSuspendingly
 
 class PlayerOptions private constructor() {
 
@@ -25,23 +24,23 @@ class PlayerOptions private constructor() {
     companion object {
         fun get(): PlayerOptions {
             val options = PlayerOptions()
-            options.maxBuffer = runBlocking { obtainInt(DataStoreKeys.PREF_MAX_BUFFER, 30000) }
-            options.minBuffer = runBlocking { obtainInt(DataStoreKeys.PREF_MIN_BUFFER, 15000) }
-            options.playbackBuffer = runBlocking { obtainInt(DataStoreKeys.PREF_SEEK_BUFFER, 2000) }
+            options.maxBuffer = valueBlockingly(DataStoreKeys.PREF_MAX_BUFFER, 30000)
+            options.minBuffer = valueBlockingly(DataStoreKeys.PREF_MIN_BUFFER, 15000)
+            options.playbackBuffer = valueBlockingly(DataStoreKeys.PREF_SEEK_BUFFER, 2000)
 
-            options.ccPreference = runBlocking { obtainString(DataStoreKeys.PREF_CC_LANG, "eng") }
-            options.audioPreference = runBlocking { obtainString(DataStoreKeys.PREF_AUDIO_LANG, "und") }
+            options.ccPreference = valueBlockingly(DataStoreKeys.PREF_CC_LANG, "eng")
+            options.audioPreference = valueBlockingly(DataStoreKeys.PREF_AUDIO_LANG, "und")
             return options
         }
 
         suspend fun getSuspendingly(): PlayerOptions {
             val options = PlayerOptions()
-            options.maxBuffer = obtainInt(DataStoreKeys.PREF_MAX_BUFFER, 30000)
-            options.minBuffer = obtainInt(DataStoreKeys.PREF_MIN_BUFFER, 15000)
-            options.playbackBuffer = obtainInt(DataStoreKeys.PREF_SEEK_BUFFER, 2000)
+            options.maxBuffer = valueSuspendingly(DataStoreKeys.PREF_MAX_BUFFER, 30000)
+            options.minBuffer = valueSuspendingly(DataStoreKeys.PREF_MIN_BUFFER, 15000)
+            options.playbackBuffer = valueSuspendingly(DataStoreKeys.PREF_SEEK_BUFFER, 2000)
 
-            options.ccPreference =  obtainString(DataStoreKeys.PREF_CC_LANG, "eng")
-            options.audioPreference = obtainString(DataStoreKeys.PREF_AUDIO_LANG, "und")
+            options.ccPreference =  valueSuspendingly(DataStoreKeys.PREF_CC_LANG, "eng")
+            options.audioPreference = valueSuspendingly(DataStoreKeys.PREF_AUDIO_LANG, "und")
             return options
         }
     }

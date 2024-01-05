@@ -110,70 +110,8 @@ object MySettings {
         iconShadows = Paletting.SP_GRADIENT
     )
 
-    val sgGLOBAL = listOf(
-        SettingCategory(
-            keyID = CATEG_GLOBAL_GENERAL,
-            title = lyricist.strings.settingsCategGeneral,
-            icon = Icons.Filled.SettingsSuggest
-        ),
-        SettingCategory(
-            keyID = CATEG_GLOBAL_LANG,
-            title = lyricist.strings.settingsCategLanguage,
-            icon = Icons.Filled.Translate,
-        ),
-        SettingCategory(
-            keyID = CATEG_GLOBAL_SYNCING,
-            title = lyricist.strings.settingsCategSyncing,
-            icon = Icons.Filled.ConnectWithoutContact
-        ),
-        SettingCategory(
-            keyID = CATEG_GLOBAL_EXOPLAYER,
-            title = lyricist.strings.settingsCategExoplayer,
-            icon = Icons.Filled.VideoSettings
-        ),
-        SettingCategory(
-            keyID = CATEG_GLOBAL_NETWORK,
-            title = lyricist.strings.settingsCategNetwork,
-            icon = Icons.Filled.Hub
-        ),
-        SettingCategory(
-            keyID = CATEG_GLOBAL_ADVANCED,
-            title = lyricist.strings.settingsCategAdvanced,
-            icon = Icons.Filled.Stream
-        )
-    )
-
-    val sgROOM = listOf(
-        SettingCategory(
-            keyID = CATEG_INROOM_CHATCOLORS,
-            title = lyricist
-                .strings.uisettingCategChatColors,
-            icon = Icons.Filled.Palette,
-        ),
-        SettingCategory(
-            keyID = CATEG_INROOM_CHATPROPS,
-            title = lyricist
-                .strings.uisettingCategChatProperties,
-            icon = Icons.Filled.Chat
-        ),
-        SettingCategory(
-            keyID = CATEG_INROOM_PLAYERSETTINGS,
-            title = lyricist
-                .strings.uisettingCategPlayerSettings,
-            icon = Icons.Filled.VideoLabel,
-        ),
-        SettingCategory(
-            keyID = CATEG_INROOM_ADVANCED,
-            title = lyricist
-                .strings.settingsCategAdvanced,
-            icon = Icons.Filled.Stream
-        )
-
-    )
-
-
-    val settingsGLOBAL = hashMapOf(
-        Setting.BooleanSetting(
+    private val settingsGLOBAL = hashMapOf(
+        BooleanSetting(
             type = SettingType.CheckboxSettingType,
             key = PREF_REMEMBER_INFO,
             title = lyricist.strings.settingRememberJoinInfoTitle,
@@ -379,7 +317,7 @@ object MySettings {
         ) to CATEG_GLOBAL_ADVANCED
     )
 
-    val settingsROOM = hashMapOf(
+    private val settingsROOM = hashMapOf(
         ColorSetting(
             type = SettingType.ColorSettingType,
             key = PREF_INROOM_COLOR_TIMESTAMP,
@@ -452,7 +390,7 @@ object MySettings {
             styling = settingROOMstyle,
         ) to CATEG_INROOM_CHATCOLORS,
 
-        Setting.BooleanSetting(
+        BooleanSetting(
             type = SettingType.ToggleSettingType,
             key = PREF_INROOM_MSG_ACTIVATE_STAMP,
             title = lyricist
@@ -464,7 +402,7 @@ object MySettings {
             styling = settingROOMstyle,
         ) to CATEG_INROOM_CHATPROPS,
 
-        Setting.BooleanSetting(
+        BooleanSetting(
             type = SettingType.ToggleSettingType,
             key = PREF_INROOM_MSG_OUTLINE,
             title = lyricist
@@ -476,7 +414,7 @@ object MySettings {
             styling = settingROOMstyle,
         ) to CATEG_INROOM_CHATPROPS,
 
-        Setting.BooleanSetting(
+        BooleanSetting(
             type = SettingType.ToggleSettingType,
             key = PREF_INROOM_MSG_SHADOW,
             title = lyricist
@@ -488,7 +426,7 @@ object MySettings {
             styling = settingROOMstyle,
         ) to CATEG_INROOM_CHATPROPS,
 
-        Setting.SliderSetting(
+        SliderSetting(
             type = SettingType.SliderSettingType,
             key = PREF_INROOM_MSG_BG_OPACITY,
             title = lyricist
@@ -660,4 +598,65 @@ object MySettings {
             isResetDefault = true,
         ) to CATEG_INROOM_ADVANCED
     )
+
+    val sgGLOBAL = listOf(
+        SettingCategory(
+            keyID = CATEG_GLOBAL_GENERAL,
+            title = lyricist.strings.settingsCategGeneral,
+            icon = Icons.Filled.SettingsSuggest
+        ),
+        SettingCategory(
+            keyID = CATEG_GLOBAL_LANG,
+            title = lyricist.strings.settingsCategLanguage,
+            icon = Icons.Filled.Translate,
+        ),
+        SettingCategory(
+            keyID = CATEG_GLOBAL_SYNCING,
+            title = lyricist.strings.settingsCategSyncing,
+            icon = Icons.Filled.ConnectWithoutContact
+        ),
+        SettingCategory(
+            keyID = CATEG_GLOBAL_EXOPLAYER,
+            title = lyricist.strings.settingsCategExoplayer,
+            icon = Icons.Filled.VideoSettings
+        ),
+        SettingCategory(
+            keyID = CATEG_GLOBAL_NETWORK,
+            title = lyricist.strings.settingsCategNetwork,
+            icon = Icons.Filled.Hub
+        ),
+        SettingCategory(
+            keyID = CATEG_GLOBAL_ADVANCED,
+            title = lyricist.strings.settingsCategAdvanced,
+            icon = Icons.Filled.Stream
+        )
+    ).also { settingsGLOBAL.populate(it) }
+
+    val sgROOM = listOf(
+        SettingCategory(
+            keyID = CATEG_INROOM_CHATCOLORS,
+            title = lyricist
+                .strings.uisettingCategChatColors,
+            icon = Icons.Filled.Palette,
+        ),
+        SettingCategory(
+            keyID = CATEG_INROOM_CHATPROPS,
+            title = lyricist
+                .strings.uisettingCategChatProperties,
+            icon = Icons.Filled.Chat
+        ),
+        SettingCategory(
+            keyID = CATEG_INROOM_PLAYERSETTINGS,
+            title = lyricist
+                .strings.uisettingCategPlayerSettings,
+            icon = Icons.Filled.VideoLabel,
+        ),
+        SettingCategory(
+            keyID = CATEG_INROOM_ADVANCED,
+            title = lyricist
+                .strings.settingsCategAdvanced,
+            icon = Icons.Filled.Stream
+        )
+
+    ).also { settingsROOM.populate(it) }
 }

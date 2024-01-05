@@ -69,6 +69,6 @@ suspend inline fun <reified T> valueSuspendingly(key: String, default: T): T {
 /** Gets the current value of the flow blockingly (for non-coroutine context),
  * To avoid blocking the thread, we return null if no value is present anyway
  */
-inline fun <reified T> valueBlockingly(key: String, default: T): T? {
-    return runBlocking { valueFlow(key, default).firstOrNull() }
+inline fun <reified T> valueBlockingly(key: String, default: T): T {
+    return runBlocking { valueFlow(key, default).firstOrNull() ?: default }
 }

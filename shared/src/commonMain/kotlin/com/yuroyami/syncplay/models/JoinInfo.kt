@@ -1,9 +1,8 @@
 package com.yuroyami.syncplay.models
 
 import com.yuroyami.syncplay.settings.DataStoreKeys
-import com.yuroyami.syncplay.settings.obtainBoolean
-import com.yuroyami.syncplay.settings.writeInt
-import com.yuroyami.syncplay.settings.writeString
+import com.yuroyami.syncplay.settings.valueSuspendingly
+import com.yuroyami.syncplay.settings.writeValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -19,14 +18,14 @@ data class JoinInfo(
 ) {
     private fun remember(): JoinInfo {
         CoroutineScope(Dispatchers.IO).launch {
-            val saveInfo = obtainBoolean(DataStoreKeys.PREF_REMEMBER_INFO, true)
+            val saveInfo = valueSuspendingly(DataStoreKeys.PREF_REMEMBER_INFO, true)
 
             if (saveInfo) {
-                writeString(DataStoreKeys.MISC_JOIN_USERNAME, username)
-                writeString(DataStoreKeys.MISC_JOIN_ROOMNAME, roomname)
-                writeString(DataStoreKeys.MISC_JOIN_SERVER_ADDRESS, address)
-                writeInt(DataStoreKeys.MISC_JOIN_SERVER_PORT, port)
-                writeString(DataStoreKeys.MISC_JOIN_SERVER_PW, password)
+                writeValue(DataStoreKeys.MISC_JOIN_USERNAME, username)
+                writeValue(DataStoreKeys.MISC_JOIN_ROOMNAME, roomname)
+                writeValue(DataStoreKeys.MISC_JOIN_SERVER_ADDRESS, address)
+                writeValue(DataStoreKeys.MISC_JOIN_SERVER_PORT, port)
+                writeValue(DataStoreKeys.MISC_JOIN_SERVER_PW, password)
             }
         }
         return this

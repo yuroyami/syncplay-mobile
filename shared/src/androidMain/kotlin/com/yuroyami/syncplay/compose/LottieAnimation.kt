@@ -16,7 +16,7 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.rememberLottieAnimatable
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.yuroyami.syncplay.settings.DataStoreKeys
-import com.yuroyami.syncplay.settings.writeBoolean
+import com.yuroyami.syncplay.settings.writeValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -86,7 +86,7 @@ actual fun NightModeToggle(modifier: Modifier, state: State<Boolean>) {
         IconButton(
             modifier = modifier,
             onClick = {
-                scope.launch { writeBoolean(DataStoreKeys.MISC_NIGHTMODE, !state.value) }
+                scope.launch { writeValue(DataStoreKeys.MISC_NIGHTMODE, !state.value) }
             }) {
             LottieAnimation(
                 composition = composition,

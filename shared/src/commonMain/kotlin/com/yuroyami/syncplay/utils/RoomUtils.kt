@@ -2,14 +2,12 @@ package com.yuroyami.syncplay.utils
 
 import com.yuroyami.syncplay.models.Message
 import com.yuroyami.syncplay.protocol.JsonSender
-import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_FILE_MISMATCH_WARNING
-import com.yuroyami.syncplay.settings.obtainBoolean
+import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.lyricist
 import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 /** Methods exclusive to Room functionality (messages, sending data to server, etc) */
 object RoomUtils {
@@ -70,7 +68,7 @@ object RoomUtils {
         if (isSoloMode) return
 
         /** First, we check if user wanna be notified about file mismatchings */
-        val pref = runBlocking { obtainBoolean(PREF_FILE_MISMATCH_WARNING, true) }
+        val pref = valueBlockingly(PREF_FILE_MISMATCH_WARNING, true)
 
         if (!pref) return
 

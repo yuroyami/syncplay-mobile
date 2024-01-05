@@ -4,8 +4,8 @@ import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.protocol.JsonSender.sendPlaylistChange
 import com.yuroyami.syncplay.protocol.JsonSender.sendPlaylistIndex
 import com.yuroyami.syncplay.settings.DataStoreKeys
-import com.yuroyami.syncplay.settings.obtainStringSet
-import com.yuroyami.syncplay.settings.writeStringSet
+import com.yuroyami.syncplay.settings.valueBlockingly
+import com.yuroyami.syncplay.settings.writeValue
 import com.yuroyami.syncplay.utils.RoomUtils.broadcastMessage
 import com.yuroyami.syncplay.watchroom.dispatchOSD
 import com.yuroyami.syncplay.watchroom.lyricist
@@ -73,11 +73,11 @@ object SharedPlaylistUtils {
     }
 
     private suspend fun saveFolderPathAsMediaDirectory(uri: String) {
-        val paths = obtainStringSet(DataStoreKeys.PREF_SP_MEDIA_DIRS, emptySet()).toMutableSet()
+        val paths = valueBlockingly(DataStoreKeys.PREF_SP_MEDIA_DIRS, emptySet<String>()).toMutableSet()
 
         if (!paths.contains(uri)) paths.add(uri)
 
-        writeStringSet(DataStoreKeys.PREF_SP_MEDIA_DIRS, paths)
+        writeValue(DataStoreKeys.PREF_SP_MEDIA_DIRS, paths)
     }
 
     /** This is to send a playlist selection change to the server */
@@ -107,7 +107,7 @@ object SharedPlaylistUtils {
                 viewmodel?.player?.injectVideo(fileName, isUrl = true)
             } else {
                 /** We search our media directories which were added by the user in settings */
-                val paths = obtainStringSet(DataStoreKeys.PREF_SP_MEDIA_DIRS, emptySet()).toMutableSet()
+                val paths = valueBlockingly(DataStoreKeys.PREF_SP_MEDIA_DIRS, emptySet<String>()).toMutableSet()
 
                 if (paths.isEmpty()) {
                     broadcastMessage(lyricist.strings.roomSharedPlaylistNoDirectories, false)

@@ -181,7 +181,7 @@ object SettingsUI {
         Column(modifier = modifier.fillMaxWidth()) {
             for ((index, setting) in settingcategory.settingList.withIndex()) {
                 /** Creating the setting composable */
-                setting.SettingSingleton()
+                setting.SettingComposable(Modifier)
 
                 /** Creating dividers between (and only between) each setting and another */
                 if (index != settingcategory.settingList.lastIndex) {

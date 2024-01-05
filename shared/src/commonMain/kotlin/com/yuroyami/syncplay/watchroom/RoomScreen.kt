@@ -121,10 +121,11 @@ import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_FONTSIZE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_MAXCOUNT
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_SHADOW
-import com.yuroyami.syncplay.settings.booleanFlow
-import com.yuroyami.syncplay.settings.intFlow
-import com.yuroyami.syncplay.settings.obtainBoolean
-import com.yuroyami.syncplay.settings.writeBoolean
+import com.yuroyami.syncplay.settings.settingBooleanState
+import com.yuroyami.syncplay.settings.settingIntState
+import com.yuroyami.syncplay.settings.valueBlockingly
+import com.yuroyami.syncplay.settings.valueFlow
+import com.yuroyami.syncplay.settings.writeValue
 import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.Paletting.ROOM_ICON_SIZE
@@ -146,7 +147,6 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.Font
 import syncplaymobile.generated.resources.Res
 import kotlin.math.roundToInt
@@ -165,7 +165,7 @@ fun CoroutineScope.dispatchOSD(s: String) {
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun RoomUI() {
-    val nightMode = booleanFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
+    val nightMode = valueFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
 
     val directive = Font(Res.font.directive4_regular)
     val inter = Font(Res.font.inter_regular)
@@ -196,12 +196,12 @@ fun RoomUI() {
 
         val msgPalette = ComposedMessagePalette()
 
-        val msgBoxOpacity = intFlow(PREF_INROOM_MSG_BG_OPACITY, 0).collectAsState(initial = 0)
-        val msgOutline by booleanFlow(PREF_INROOM_MSG_OUTLINE, true).collectAsState(initial = true)
-        val msgShadow by booleanFlow(PREF_INROOM_MSG_SHADOW, false).collectAsState(initial = false)
-        val msgFontSize = intFlow(PREF_INROOM_MSG_FONTSIZE, 9).collectAsState(initial = 9)
-        val msgMaxCount by intFlow(PREF_INROOM_MSG_MAXCOUNT, 10).collectAsState(initial = 0)
-        val keyboardOkFunction by booleanFlow(PREF_INROOM_MSG_BOX_ACTION, true).collectAsState(initial = true)
+        val msgBoxOpacity = PREF_INROOM_MSG_BG_OPACITY.settingIntState()
+        val msgOutline by PREF_INROOM_MSG_OUTLINE.settingBooleanState()
+        val msgShadow by PREF_INROOM_MSG_SHADOW.settingBooleanState()
+        val msgFontSize = PREF_INROOM_MSG_FONTSIZE.settingIntState()
+        val msgMaxCount by PREF_INROOM_MSG_MAXCOUNT.settingIntState()
+        val keyboardOkFunction by PREF_INROOM_MSG_BOX_ACTION.settingBooleanState()
 
         /* Some file picking stuff */
         var showVideoPicker by remember { mutableStateOf(false) }
@@ -272,7 +272,7 @@ fun RoomUI() {
             var controlcardvisible by remember { mutableStateOf(false) }
             var addmediacardvisible by remember { mutableStateOf(false) }
 
-            val gestures = booleanFlow(MISC_GESTURES, true).collectAsState(initial = true)
+            val gestures = valueFlow(MISC_GESTURES, true).collectAsState(initial = true)
 
             val userinfoVisibility = remember { mutableStateOf(false) }
             val sharedplaylistVisibility = remember { mutableStateOf(false) }
@@ -531,12 +531,10 @@ fun RoomUI() {
                                     }, onClick = {
                                         overflowmenustate.value = false
 
-                                        val newMode = runBlocking {
-                                            !obtainBoolean(MISC_NIGHTMODE, true)
-                                        }
+                                        val newMode = !valueBlockingly(MISC_NIGHTMODE, true)
 
                                         composeScope.launch {
-                                            writeBoolean(MISC_NIGHTMODE, newMode)
+                                            writeValue(MISC_NIGHTMODE, newMode)
                                         }
                                     })
 
@@ -632,7 +630,7 @@ fun RoomUI() {
                                             }, size = ROOM_ICON_SIZE, shadowColor = Color.Black
                                         ) {
                                             composeScope.launch {
-                                                writeBoolean(MISC_GESTURES, !gestures.value)
+                                                writeValue(MISC_GESTURES, !gestures.value)
                                                 dispatchOSD(if (gestures.value) "Gestures enabled" else "Gestures disabled")
                                             }
                                         }
