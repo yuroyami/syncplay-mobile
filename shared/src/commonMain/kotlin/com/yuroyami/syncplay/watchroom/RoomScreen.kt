@@ -76,7 +76,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -175,8 +174,8 @@ fun RoomUI() {
 
     LaunchedEffect(null) {
         /** Starting ping update */
-        if (p.pingUpdateJob == null && !isSoloMode) {
-            p.pingUpdateJob = composeScope.launch(Dispatchers.IO) {
+        if (viewmodel?.pingUpdateJob == null && !isSoloMode) {
+            viewmodel?.pingUpdateJob = composeScope.launch(Dispatchers.IO) {
                 CommonUtils.beginPingUpdate()
             }
         }
@@ -186,9 +185,9 @@ fun RoomUI() {
         val focusManager = LocalFocusManager.current
         val dimensions = getScreenSizeInfo()
 
-        val hasVideo = remember { p.hasVideoG }
-        var hudVisibility by remember { p.hudVisibilityState }
-        val pipModeObserver by remember { p.pipMode }
+        val hasVideo = remember { viewmodel!!.hasVideoG }
+        var hudVisibility by remember { viewmodel!!.hudVisibilityState }
+        val pipModeObserver by remember { viewmodel!!.pipMode }
         var locked by remember { mutableStateOf(false) }
 
         val addurlpopupstate = remember { mutableStateOf(false) }
@@ -209,7 +208,7 @@ fun RoomUI() {
         FilePicker(show = showVideoPicker, fileExtensions = CommonUtils.vidExs) { file ->
             showVideoPicker = false
             file?.path?.let {
-                player?.injectVideo(it, false)
+                viewmodel?.player?.injectVideo(it, false)
             }
         }
 
@@ -217,7 +216,7 @@ fun RoomUI() {
         FilePicker(show = showSubtitlePicker, fileExtensions = CommonUtils.ccExs) { file ->
             showSubtitlePicker = false
             file?.path?.let {
-                player?.loadExternalSub(it)
+                viewmodel?.player?.loadExternalSub(it)
             }
         }
 
@@ -227,7 +226,7 @@ fun RoomUI() {
         }
 
         /** video surface */
-        player?.VideoPlayer(Modifier.fillMaxSize().alpha(if (hasVideo.value) 1f else 0f))
+        viewmodel?.player?.VideoPlayer(Modifier.fillMaxSize().alpha(if (hasVideo.value) 1f else 0f))
 
         /** Lock layout, This is what appears when the user locks the screen */
         val unlockButtonVisibility = remember { mutableStateOf(false) }
@@ -268,8 +267,8 @@ fun RoomUI() {
 
             var msg by remember { mutableStateOf("") }
             var msgCanSend by remember { mutableStateOf(false) }
-            val msgs = if (!isSoloMode) remember { p.session.messageSequence } else remember { mutableStateListOf() }
-            var ready by remember { mutableStateOf(p.setReadyDirectly) }
+            val msgs = if (!isSoloMode) remember { viewmodel!!.p.session.messageSequence } else remember { mutableStateListOf() }
+            var ready by remember { mutableStateOf(viewmodel!!.setReadyDirectly) }
             var controlcardvisible by remember { mutableStateOf(false) }
             var addmediacardvisible by remember { mutableStateOf(false) }
 
@@ -279,12 +278,12 @@ fun RoomUI() {
             val sharedplaylistVisibility = remember { mutableStateOf(false) }
             val inroomprefsVisibility = remember { mutableStateOf(false) }
 
-            if (!p.startupSlide) {
+            if (!viewmodel!!.startupSlide) {
                 LaunchedEffect(null) {
                     composeScope.launch {
                         delay(600)
                         userinfoVisibility.value = true
-                        p.startupSlide = true
+                        viewmodel!!.startupSlide = true
                     }
                 }
             }
@@ -337,7 +336,7 @@ fun RoomUI() {
             }
 
             /* Gestures Interceptor */
-            GestureInterceptor(gestureState = gestures, videoState = p.hasVideoG, onSingleTap = {
+            GestureInterceptor(gestureState = gestures, videoState = viewmodel!!.hasVideoG, onSingleTap = {
                 hudVisibility = !hudVisibility
                 if (!hudVisibility) {/* Hide any popups */
                     controlcardvisible = false
@@ -408,7 +407,7 @@ fun RoomUI() {
                         ) {
                             if (!isSoloMode) {
                                 Row {
-                                    val pingo by remember { p.ping }
+                                    val pingo by remember { viewmodel!!.p.ping }
                                     Text(
                                         text = if (pingo == null) "Disconnected" else "Connected - ${pingo!!.toInt()}ms", color = Paletting.OLD_SP_PINK
                                     )
@@ -417,7 +416,7 @@ fun RoomUI() {
                                     PingRadar(pingo)
                                 }
 
-                                Text(text = "Room: ${p.session.currentRoom}", fontSize = 11.sp, color = Paletting.OLD_SP_PINK)
+                                Text(text = "Room: ${viewmodel!!.p.session.currentRoom}", fontSize = 11.sp, color = Paletting.OLD_SP_PINK)
                             }
 
                             val osd by remember { osdMsg }
@@ -555,7 +554,7 @@ fun RoomUI() {
                                             )
                                         }
                                     }, onClick = {
-                                        roomCallback?.onLeave()
+                                        viewmodel?.roomCallback?.onLeave()
                                     })
                                 }
                             }
@@ -616,9 +615,9 @@ fun RoomUI() {
                                         modifier = Modifier.padding(6.dp).fillMaxHeight(), verticalArrangement = Arrangement.SpaceEvenly, horizontalArrangement = Arrangement.Center
                                     ) {
                                         /* Aspect Ratio */
-                                        if (player?.canChangeAspectRatio == true) {
+                                        if (viewmodel?.player?.canChangeAspectRatio == true) {
                                             FancyIcon2(icon = Icons.Filled.AspectRatio, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
-                                                val newAspectRatio = player?.switchAspectRatio()
+                                                val newAspectRatio = viewmodel?.player?.switchAspectRatio()
                                                 if (newAspectRatio != null) {
                                                     composeScope.dispatchOSD(newAspectRatio)
                                                 }
@@ -646,17 +645,17 @@ fun RoomUI() {
 
                                         /* Undo Last Seek */
                                         FancyIcon2(icon = Icons.Filled.History, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
-                                            if (p.seeks.isEmpty()) {
+                                            if (viewmodel?.seeks?.isEmpty() == true) {
                                                 composeScope.dispatchOSD("There is no recent seek in the room.")
                                                 return@FancyIcon2
                                             }
 
                                             controlcardvisible = false
 
-                                            val lastSeek = p.seeks.last()
-                                            player?.seekTo(lastSeek.first)
+                                            val lastSeek = viewmodel?.seeks?.last() ?: return@FancyIcon2
+                                            viewmodel?.player?.seekTo(lastSeek.first)
                                             sendSeek(lastSeek.first)
-                                            p.seeks.remove(lastSeek)
+                                            viewmodel?.seeks?.remove(lastSeek)
                                             composeScope.dispatchOSD("Seek undone.")
                                         }
 
@@ -666,7 +665,7 @@ fun RoomUI() {
 
 
                                             FancyIcon2(icon = Icons.Filled.Subtitles, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
-                                                player?.analyzeTracks(media ?: return@FancyIcon2)
+                                                viewmodel?.player?.analyzeTracks(viewmodel?.media ?: return@FancyIcon2)
                                                 tracksPopup.value = true
                                             }
 
@@ -707,17 +706,17 @@ fun RoomUI() {
 
                                                     }
                                                 }, onClick = {
-                                                    player?.selectTrack(TRACKTYPE.SUBTITLE, -1)
+                                                    viewmodel?.player?.selectTrack(TRACKTYPE.SUBTITLE, -1)
                                                     tracksPopup.value = false
                                                     controlcardvisible = false
 
                                                 })
 
-                                                for (track in (media?.subtitleTracks) ?: listOf()) {
+                                                for (track in (viewmodel?.media?.subtitleTracks) ?: listOf()) {
                                                     DropdownMenuItem(text = {
                                                         Row(verticalAlignment = CenterVertically) {
                                                             Checkbox(checked = track.selected.value, onCheckedChange = {
-                                                                player?.selectTrack(TRACKTYPE.SUBTITLE, track.index)
+                                                                viewmodel?.player?.selectTrack(TRACKTYPE.SUBTITLE, track.index)
                                                                 tracksPopup.value = false
                                                             })
 
@@ -726,7 +725,7 @@ fun RoomUI() {
                                                             )
                                                         }
                                                     }, onClick = {
-                                                        player?.selectTrack(TRACKTYPE.SUBTITLE, track.index)
+                                                        viewmodel?.player?.selectTrack(TRACKTYPE.SUBTITLE, track.index)
 
                                                         tracksPopup.value = false
                                                         controlcardvisible = false
@@ -741,7 +740,7 @@ fun RoomUI() {
                                             val tracksPopup = remember { mutableStateOf(false) }
 
                                             FancyIcon2(icon = Icons.Filled.SpeakerGroup, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
-                                                player?.analyzeTracks(media ?: return@FancyIcon2)
+                                                viewmodel?.player?.analyzeTracks(viewmodel?.media ?: return@FancyIcon2)
                                                 tracksPopup.value = true
                                             }
 
@@ -756,11 +755,11 @@ fun RoomUI() {
                                                     modifier = Modifier.align(Alignment.CenterHorizontally), string = "Audio Track", solid = Color.Black, size = 14f, font = directive
                                                 )
 
-                                                for (track in (media?.audioTracks ?: listOf())) {
+                                                for (track in (viewmodel?.media?.audioTracks ?: listOf())) {
                                                     DropdownMenuItem(text = {
                                                         Row(verticalAlignment = CenterVertically) {
                                                             Checkbox(checked = track.selected.value, onCheckedChange = {
-                                                                player?.selectTrack(TRACKTYPE.AUDIO, track.index)
+                                                                viewmodel?.player?.selectTrack(TRACKTYPE.AUDIO, track.index)
                                                                 tracksPopup.value = false
                                                             })
 
@@ -769,7 +768,7 @@ fun RoomUI() {
                                                             )
                                                         }
                                                     }, onClick = {
-                                                        player?.selectTrack(TRACKTYPE.AUDIO, track.index)
+                                                        viewmodel?.player?.selectTrack(TRACKTYPE.AUDIO, track.index)
                                                         tracksPopup.value = false
                                                     })
                                                 }
@@ -790,8 +789,8 @@ fun RoomUI() {
                                 checkedContentColor = Color.Black
                             ), onCheckedChange = { b ->
                                 ready = b
-                                p.ready = b
-                                p.sendPacket(JsonSender.sendReadiness(b, true))
+                                viewmodel!!.p.ready = b
+                                viewmodel!!.p.sendPacket(JsonSender.sendReadiness(b, true))
                             }) {
                                 when (ready) {
                                     true -> Text("Ready", fontSize = 14.sp)
@@ -804,8 +803,8 @@ fun RoomUI() {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.align(Alignment.BottomCenter).padding(4.dp).fillMaxWidth()
                         ) {
-                            var slidervalue by remember { p.timeCurrent }
-                            val slidermax by remember { p.timeFull }
+                            var slidervalue by remember { viewmodel!!.timeCurrent }
+                            val slidermax by remember { viewmodel!!.timeFull }
                             val interactionSource = remember { MutableInteractionSource() }
 
                             Row(modifier = Modifier.fillMaxWidth(0.75f), verticalAlignment = Bottom) {
@@ -816,7 +815,7 @@ fun RoomUI() {
                                     verticalArrangement = Arrangement.Bottom,
                                 ) {
                                     Text(
-                                        text = timeStamper(remember { p.timeCurrent }.longValue),
+                                        text = timeStamper(remember { viewmodel!!.timeCurrent }.longValue),
                                         modifier = Modifier.alpha(0.85f).gradientOverlay(),
                                     )
                                 }
@@ -840,7 +839,7 @@ fun RoomUI() {
                                 Column(
                                     Modifier.fillMaxWidth().offset(x = (-25).dp, y = 10.dp), verticalArrangement = Arrangement.Bottom, horizontalAlignment = Alignment.End
                                 ) {
-                                    val timeFullR = remember { p.timeFull }
+                                    val timeFullR = remember { viewmodel!!.timeFull }
                                     Text(
                                         text = if (timeFullR.longValue >= Long.MAX_VALUE / 1000L) "???" else timeStamper(timeFullR.longValue),
                                         modifier = Modifier.alpha(0.85f).gradientOverlay(),
@@ -850,11 +849,11 @@ fun RoomUI() {
                             Slider(value = slidervalue.toFloat(),
                                 valueRange = (0f..(slidermax.toFloat())),
                                 onValueChange = { f ->
-                                    player?.seekTo(f.toLong() * 1000L)
+                                    viewmodel?.player?.seekTo(f.toLong() * 1000L)
                                     if (isSoloMode) {
-                                        player?.let {
+                                        viewmodel?.player?.let {
                                             composeScope.launch(Dispatchers.Main) {
-                                                p.seeks.add(Pair(it.currentPositionMs(), f.toLong() * 1000))
+                                                viewmodel?.seeks?.add(Pair(it.currentPositionMs(), f.toLong() * 1000))
                                             }
                                         }
                                     }
@@ -935,7 +934,7 @@ fun RoomUI() {
                     }
 
                     /** PLAY BUTTON */
-                    val playing = remember { p.isNowPlaying }
+                    val playing = remember { viewmodel!!.isNowPlaying }
                     if (hasVideo.value) {
                         FancyIcon2(
                             icon = when (playing.value) {
@@ -944,7 +943,7 @@ fun RoomUI() {
                             }, size = (ROOM_ICON_SIZE * 2.25).roundToInt(), shadowColor = Color.Black, modifier = Modifier.align(Alignment.Center)
                         ) {
                             composeScope.launch(Dispatchers.Main) {
-                                if (player?.isPlaying() == true) {
+                                if (viewmodel?.player?.isPlaying() == true) {
                                     pausePlayback()
                                 } else {
                                     playPlayback()

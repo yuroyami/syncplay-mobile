@@ -4,4 +4,6 @@ interface RoomCallback {
 
     fun onLeave()
 
+    fun onPlayback(paused: Boolean)
+
 }

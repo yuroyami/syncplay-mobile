@@ -39,6 +39,8 @@ import androidx.compose.material.icons.filled.Web
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.toArgb
 import com.yuroyami.syncplay.compose.popups.PopupMediaDirs.MediaDirsPopup
+import com.yuroyami.syncplay.lyricist.langMap
+import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_COLOR_ERRORMSG
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_COLOR_FRIENDTAG
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_COLOR_SELFTAG
@@ -56,12 +58,10 @@ import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_SHADOW
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PIP
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_REMEMBER_INFO
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_SP_MEDIA_DIRS
-import com.yuroyami.syncplay.lyricist.langMap
-import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.watchroom.homeCallback
 import com.yuroyami.syncplay.watchroom.isSoloMode
-import com.yuroyami.syncplay.watchroom.player
+import com.yuroyami.syncplay.watchroom.viewmodel
 
 object MySettings {
 
@@ -477,7 +477,7 @@ object MySettings {
                         maxValue = 200,
                         minValue = 2,
                         onValueChanged = { v ->
-                            player?.changeSubtitleSize(v)
+                            viewmodel?.player?.changeSubtitleSize(v)
                         },
                     ),
 //                    Setting(

@@ -17,20 +17,21 @@ import androidx.core.graphics.drawable.IconCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.yuroyami.syncplay.settings.DataStoreKeys
-import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_NIGHTMODE
-import com.yuroyami.syncplay.settings.booleanFlow
-import com.yuroyami.syncplay.settings.obtainString
 import com.yuroyami.syncplay.home.HomeCallback
 import com.yuroyami.syncplay.home.HomeConfig
 import com.yuroyami.syncplay.home.HomeScreen
 import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.protocol.SpProtocolAndroid
+import com.yuroyami.syncplay.settings.DataStoreKeys
+import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_NIGHTMODE
+import com.yuroyami.syncplay.settings.booleanFlow
+import com.yuroyami.syncplay.settings.obtainString
 import com.yuroyami.syncplay.utils.changeLanguage
 import com.yuroyami.syncplay.utils.defaultEngineAndroid
+import com.yuroyami.syncplay.watchroom.SpViewModel
 import com.yuroyami.syncplay.watchroom.homeCallback
-import com.yuroyami.syncplay.watchroom.p
 import com.yuroyami.syncplay.watchroom.prepareProtocol
+import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.runBlocking
 
 class HomeActivity : ComponentActivity() {
@@ -75,7 +76,8 @@ class HomeActivity : ComponentActivity() {
             }
 
             override fun onJoin(joinInfo: JoinInfo) {
-                p = SpProtocolAndroid()
+                viewmodel = SpViewModel()
+                viewmodel!!.p = SpProtocolAndroid()
 
                 prepareProtocol(joinInfo.get())
 
@@ -128,8 +130,10 @@ class HomeActivity : ComponentActivity() {
         }
     }
 
-    //FIXME
+
     fun soloMode() {
+        viewmodel = SpViewModel()
+
         val intent = Intent(this, WatchActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
         intent.putExtra("SOLO_MODE", true)

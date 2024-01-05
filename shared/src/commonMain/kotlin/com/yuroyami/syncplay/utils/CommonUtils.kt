@@ -1,6 +1,6 @@
 package com.yuroyami.syncplay.utils
 
-import com.yuroyami.syncplay.watchroom.p
+import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -18,8 +18,8 @@ object CommonUtils {
 
     suspend fun beginPingUpdate() {
         while (true) {
-            p.ping.value = if (p.isSocketValid()) { //if (p.connection?.socket?.isActive == true && p.connection != null) {
-                pingIcmp(p.session.serverHost, 32)
+            viewmodel?.p?.ping?.value = if (viewmodel?.p?.isSocketValid() == true) { //if (p.connection?.socket?.isActive == true && p.connection != null) {
+                pingIcmp(viewmodel!!.p.session.serverHost, 32)
             } else null
             delay(1000)
         }

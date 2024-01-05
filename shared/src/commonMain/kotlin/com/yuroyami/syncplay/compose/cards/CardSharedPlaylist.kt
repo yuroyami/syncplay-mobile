@@ -79,7 +79,7 @@ import com.yuroyami.syncplay.utils.SharedPlaylistUtils.deleteItemFromPlaylist
 import com.yuroyami.syncplay.utils.SharedPlaylistUtils.sendPlaylistSelection
 import com.yuroyami.syncplay.utils.SharedPlaylistUtils.shuffle
 import com.yuroyami.syncplay.watchroom.dispatchOSD
-import com.yuroyami.syncplay.watchroom.p
+import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -198,7 +198,7 @@ object CardSharedPlaylist {
                         .fillMaxWidth()
                         .padding(8.dp)
                 ) {
-                    itemsIndexed(p.session.sharedPlaylist) { index, item ->
+                    itemsIndexed(viewmodel!!.p.session.sharedPlaylist) { index, item ->
 
                         val itempopup = remember { mutableStateOf(false) }
 
@@ -212,7 +212,7 @@ object CardSharedPlaylist {
                                     indication = rememberRipple(color = Paletting.SP_ORANGE)
                                 ) { itempopup.value = true }
                             ) {
-                                if (index == p.session.sharedPlaylistIndex) {
+                                if (index == viewmodel!!.p.session.sharedPlaylistIndex) {
                                     Icon(
                                         imageVector = Icons.Outlined.PlayArrow, "",
                                         tint = Color.Green,
@@ -271,7 +271,7 @@ object CardSharedPlaylist {
 
                         }
 
-                        if (index < p.session.sharedPlaylist.lastIndex)
+                        if (index < viewmodel!!.p.session.sharedPlaylist.lastIndex)
                             Divider(
                                 modifier = Modifier
                                     .gradientOverlay()
@@ -472,7 +472,7 @@ object CardSharedPlaylist {
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Save, "", tint = Color.LightGray) },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
-                                    if (p.session.sharedPlaylist.isEmpty()) {
+                                    if (viewmodel!!.p.session.sharedPlaylist.isEmpty()) {
                                         scope.dispatchOSD("Shared Playlist is empty. Nothing to save.")
                                         return@DropdownMenuItem
                                     }

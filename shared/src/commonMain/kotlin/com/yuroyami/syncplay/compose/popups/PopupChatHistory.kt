@@ -31,7 +31,7 @@ import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
 import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.models.MessagePalette
-import com.yuroyami.syncplay.watchroom.p
+import com.yuroyami.syncplay.watchroom.viewmodel
 import org.jetbrains.compose.resources.Font
 import syncplaymobile.generated.resources.Res
 
@@ -40,7 +40,7 @@ object PopupChatHistory {
 
     @Composable
     fun ChatHistoryPopup(visibilityState: MutableState<Boolean>, msgPalette: MessagePalette) {
-        val msgs = remember { p.session.messageSequence }
+        val msgs = remember { viewmodel!!.p.session.messageSequence }
         val palette = msgPalette.copy(includeTimestamp = true) // We always show timestamp
 
         return RoomPopup(

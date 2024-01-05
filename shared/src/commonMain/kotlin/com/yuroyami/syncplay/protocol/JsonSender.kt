@@ -1,13 +1,13 @@
 @file:OptIn(ExperimentalSerializationApi::class)
 package com.yuroyami.syncplay.protocol
 
+import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_HASH_FILENAME
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_HASH_FILESIZE
 import com.yuroyami.syncplay.settings.obtainString
-import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.utils.md5
 import com.yuroyami.syncplay.utils.toHex
-import com.yuroyami.syncplay.watchroom.p
+import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
@@ -156,33 +156,33 @@ object JsonSender {
                 if (doSeek == true) {
                     put("position", seekPosition.toDouble() / 1000.0)
                 } else {
-                    put("position", p.currentVideoPosition.toFloat())
+                    put("position", viewmodel!!.p.currentVideoPosition.toFloat())
                 }
-                put("paused", p.paused)
+                put("paused", viewmodel!!.p.paused)
                 put("doSeek", doSeek)
             }
 
             val ping = buildJsonObject {
                 servertime?.let { put("latencyCalculation", it) }
                 put("clientLatencyCalculation", clienttime)
-                put("clientRtt", p.ping.value ?: 0)
+                put("clientRtt", viewmodel!!.p.ping.value ?: 0)
             }
 
             if (iChangeState == 1) {
                 val ignore = buildJsonObject {
-                    put("client", p.clientIgnFly)
+                    put("client", viewmodel!!.p.clientIgnFly)
                 }
                 put("ignoringOnTheFly", ignore)
                 put("playstate", buildJsonObject {
                     put("paused", !(play ?: false))
                 })
             } else {
-                if (p.serverIgnFly != 0) {
+                if (viewmodel!!.p.serverIgnFly != 0) {
                     val ignore = buildJsonObject {
-                        put("server", p.serverIgnFly)
+                        put("server", viewmodel!!.p.serverIgnFly)
                     }
                     put("ignoringOnTheFly", ignore)
-                    p.serverIgnFly = 0
+                    viewmodel!!.p.serverIgnFly = 0
                 }
             }
 

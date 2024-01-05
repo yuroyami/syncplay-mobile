@@ -4,13 +4,9 @@ import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.intFlow
 import com.yuroyami.syncplay.utils.RoomUtils
 import com.yuroyami.syncplay.watchroom.isSoloMode
-import com.yuroyami.syncplay.watchroom.p
-import com.yuroyami.syncplay.watchroom.player
-import com.yuroyami.syncplay.watchroom.seeks
-import com.yuroyami.syncplay.watchroom.timeCurrent
+import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -29,41 +25,39 @@ object PlayerUtils {
 
     /** This pauses playback on the main (necessary) thread **/
     fun pausePlayback() {
-        player?.pause()
-        //TODO: updatePiPParams()
-
+        viewmodel?.player?.pause()
+        viewmodel?.roomCallback?.onPlayback(true)
     }
 
     /** This resumes playback on the main thread, and hides system UI **/
     fun playPlayback() {
-        player?.play()
-        //TODO: updatePiPParams()
-        //TODO: hideSystemUI(true)
+        viewmodel?.player?.play()
+        viewmodel?.roomCallback?.onPlayback(false)
     }
 
     fun seekBckwd() {
-        player?.playerScopeIO?.launch {
+        viewmodel?.player?.playerScopeIO?.launch {
             val dec = intFlow(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP, 10).first()
 
-            val currentMs = withContext(Dispatchers.Main) { player!!.currentPositionMs() }
+            val currentMs = withContext(Dispatchers.Main) { viewmodel?.player!!.currentPositionMs() }
             var newPos = (currentMs) - (dec * 1000L)
 
             if (newPos < 0) { newPos = 0 }
 
             RoomUtils.sendSeek(newPos)
-            player?.seekTo(newPos)
+            viewmodel?.player?.seekTo(newPos)
 
             if (isSoloMode) {
-                seeks.add(Pair(currentMs, newPos * 1000))
+                viewmodel?.seeks?.add(Pair(currentMs, newPos * 1000))
             }
         }
     }
 
     fun seekFrwrd() {
-        player?.playerScopeIO?.launch {
+        viewmodel?.player?.playerScopeIO?.launch {
             val inc = intFlow(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP, 10).first()
 
-            val currentMs = withContext(Dispatchers.Main) { player!!.currentPositionMs() }
+            val currentMs = withContext(Dispatchers.Main) { viewmodel?.player!!.currentPositionMs() }
             val newPos = (currentMs) + (inc * 1000L)
 //            if (media != null) {
 //                if (newPos > media?.fileDuration!!.toLong()) {
@@ -71,10 +65,10 @@ object PlayerUtils {
 //                }
 //            }
             RoomUtils.sendSeek(newPos)
-            player?.seekTo(newPos)
+             viewmodel?.player?.seekTo(newPos)
 
             if (isSoloMode) {
-                seeks.add(Pair((currentMs), newPos * 1000))
+                viewmodel?.seeks?.add(Pair((currentMs), newPos * 1000))
             }
         }
     }
@@ -97,20 +91,19 @@ object PlayerUtils {
 //    }
 
     /** Tracks progress CONTINUOUSLY and updates it to UI (and server, if no solo mode) */
-    var playerTrackerJob: Job? = null
     fun trackProgress() {
-        if (playerTrackerJob == null) {
-            playerTrackerJob = CoroutineScope(Dispatchers.Main).launch {
+        if (viewmodel?.playerTrackerJob == null) {
+            viewmodel?.playerTrackerJob = CoroutineScope(Dispatchers.Main).launch {
                 while (true) {
-                    if (player?.isSeekable() == true) {
-                        val progress = (player?.currentPositionMs()?.div(1000L)) ?: 0L
+                    if (viewmodel?.player?.isSeekable() == true) {
+                        val progress = (viewmodel?.player?.currentPositionMs()?.div(1000L)) ?: 0L
 
                         /* Informing UI */
-                        timeCurrent.longValue = progress
+                        viewmodel?.timeCurrent?.longValue = progress
 
                         /* Informing protocol */
                         if (!isSoloMode) {
-                            p.currentVideoPosition = progress.toDouble()
+                            viewmodel?.p?.currentVideoPosition = progress.toDouble()
                         }
                     }
                     delay(500)

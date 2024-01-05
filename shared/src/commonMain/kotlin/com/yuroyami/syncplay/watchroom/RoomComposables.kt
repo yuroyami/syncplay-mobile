@@ -64,10 +64,10 @@ import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.compose.ComposeUtils
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.compose.ComposeUtils.solidOverlay
+import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.booleanFlow
 import com.yuroyami.syncplay.settings.intFlow
-import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.ui.Paletting
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.Font
@@ -170,9 +170,9 @@ object RoomComposables {
         if (!hudVisibility) {
             var visibility by remember { mutableStateOf(false) }
 
-            LaunchedEffect(p.session.messageSequence.size) {
-                if (p.session.messageSequence.isNotEmpty()) {
-                    val lastMsg = p.session.messageSequence.last()
+            LaunchedEffect(viewmodel!!.p.session.messageSequence.size) {
+                if (viewmodel!!.p.session.messageSequence.isNotEmpty()) {
+                    val lastMsg = viewmodel!!.p.session.messageSequence.last()
 
                     if (!lastMsg.isMainUser && !lastMsg.seen) {
                         visibility = true
@@ -196,7 +196,7 @@ object RoomComposables {
                             .fillMaxWidth(0.8f)
                             .focusable(false),
                         overflow = TextOverflow.Ellipsis,
-                        text = p.session.messageSequence.last().factorize(msgPalette),
+                        text = viewmodel!!.p.session.messageSequence.last().factorize(msgPalette),
                         lineHeight = if (pipModeObserver) 9.sp else 15.sp,
                         fontSize = if (pipModeObserver) 8.sp else 13.sp
                     )
@@ -264,7 +264,7 @@ object RoomComposables {
 
     @Composable
     fun AddVideoButton(modifier: Modifier, onClick: () -> Unit) {
-        if (hasVideoG.value) {
+        if (viewmodel?.hasVideoG?.value == true) {
             ComposeUtils.FancyIcon2(
                 modifier = modifier,
                 icon = Icons.Filled.AddToQueue, size = Paletting.ROOM_ICON_SIZE + 6, shadowColor = Color.Black,

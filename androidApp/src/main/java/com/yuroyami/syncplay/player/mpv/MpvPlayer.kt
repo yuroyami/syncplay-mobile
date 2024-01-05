@@ -25,16 +25,10 @@ import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
-import com.yuroyami.syncplay.watchroom.currentTrackChoices
 import com.yuroyami.syncplay.watchroom.dispatchOSD
-import com.yuroyami.syncplay.watchroom.hasVideoG
-import com.yuroyami.syncplay.watchroom.isNowPlaying
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.lyricist
-import com.yuroyami.syncplay.watchroom.media
-import com.yuroyami.syncplay.watchroom.p
-import com.yuroyami.syncplay.watchroom.player
-import com.yuroyami.syncplay.watchroom.timeFull
+import com.yuroyami.syncplay.watchroom.viewmodel
 import `is`.xyz.mpv.MPVLib
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -91,8 +85,8 @@ class MpvPlayer : BasePlayer() {
     }
 
     override fun analyzeTracks(mediafile: MediaFile) {
-        media?.subtitleTracks?.clear()
-        media?.audioTracks?.clear()
+        viewmodel?.media?.subtitleTracks?.clear()
+        viewmodel?.media?.audioTracks?.clear()
         val count = MPVLib.getPropertyInt("track-list/count")!!
         // Note that because events are async, properties might disappear at any moment
         // so use ?: continue instead of !!
@@ -116,7 +110,7 @@ class MpvPlayer : BasePlayer() {
             Log.e("trck", "Found track $mpvId: $type, $title [$lang], $selected")
             when (type) {
                 "audio" -> {
-                    media?.audioTracks?.add(
+                    viewmodel?.media?.audioTracks?.add(
                         Track(
                             name = trackName,
                             index = mpvId,
@@ -128,7 +122,7 @@ class MpvPlayer : BasePlayer() {
                 }
 
                 "sub" -> {
-                    media?.subtitleTracks?.add(
+                    viewmodel?.media?.subtitleTracks?.add(
                         Track(
                             name = trackName,
                             index = mpvId,
@@ -151,7 +145,7 @@ class MpvPlayer : BasePlayer() {
                     MPVLib.setPropertyString("sid", "no")
                 }
 
-                currentTrackChoices.subtitleSelectionIndexMpv = index
+                viewmodel?.currentTrackChoices?.subtitleSelectionIndexMpv = index
             }
 
             TRACKTYPE.AUDIO -> {
@@ -161,16 +155,16 @@ class MpvPlayer : BasePlayer() {
                     MPVLib.setPropertyString("aid", "no")
                 }
 
-                currentTrackChoices.audioSelectionIndexMpv = index
+                viewmodel?.currentTrackChoices?.audioSelectionIndexMpv = index
             }
         }
     }
 
     override fun reapplyTrackChoices() {
-        val subIndex = currentTrackChoices.subtitleSelectionIndexMpv
-        val audioIndex = currentTrackChoices.audioSelectionIndexMpv
+        val subIndex = viewmodel?.currentTrackChoices?.subtitleSelectionIndexMpv
+        val audioIndex = viewmodel?.currentTrackChoices?.audioSelectionIndexMpv
 
-        with(player ?: return) {
+        with(viewmodel?.player ?: return) {
             if (subIndex != null) selectTrack(TRACKTYPE.SUBTITLE, subIndex)
             if (audioIndex != null) selectTrack(TRACKTYPE.AUDIO, audioIndex)
         }
@@ -204,25 +198,25 @@ class MpvPlayer : BasePlayer() {
 
     override fun injectVideo(uri: String?, isUrl: Boolean) {
         /* Changing UI (hiding artwork, showing media controls) */
-        hasVideoG.value = true
+        viewmodel?.hasVideoG?.value = true
         val ctx = mpvView.context ?: return
 
         playerScopeMain.launch {
             /* Creating a media file from the selected file */
-            if (uri != null || media == null) {
-                media = MediaFile()
-                media?.uri = uri
+            if (uri != null || viewmodel?.media == null) {
+                viewmodel?.media = MediaFile()
+                viewmodel?.media?.uri = uri
 
                 /* Obtaining info from it (size and name) */
                 if (isUrl) {
-                    media?.url = uri.toString()
-                    media?.let { collectInfoURL(it) }
+                    viewmodel?.media?.url = uri.toString()
+                    viewmodel?.media?.let { collectInfoURL(it) }
                 } else {
-                    media?.let { collectInfoLocal(it) }
+                    viewmodel?.media?.let { collectInfoLocal(it) }
                 }
 
                 /* Checking mismatches with others in room */
-                checkFileMismatches(p)
+                checkFileMismatches()
             }
             /* Injecting the media into exoplayer */
             try {
@@ -253,7 +247,7 @@ class MpvPlayer : BasePlayer() {
 
                 /* Goes back to the beginning for everyone */
                 if (!isSoloMode) {
-                    p.currentVideoPosition = 0.0
+                    viewmodel!!.p.currentVideoPosition = 0.0
                 }
             } catch (e: IOException) {
                 /* If, for some reason, the video didn't wanna load */
@@ -263,7 +257,7 @@ class MpvPlayer : BasePlayer() {
 
             /* Finally, show a a toast to the user that the media file has been added */
             val lyricist = Lyricist("en", Stringies)
-            playerScopeMain.dispatchOSD(lyricist.strings.roomSelectedVid("${media?.fileName}"))
+            playerScopeMain.dispatchOSD(lyricist.strings.roomSelectedVid("${viewmodel?.media?.fileName}"))
 
         }
     }
@@ -332,7 +326,7 @@ class MpvPlayer : BasePlayer() {
             override fun eventProperty(property: String, value: Long) {
                 when (property) {
                     "time-pos" -> mpvPos = value * 1000
-                    "duration" -> timeFull.longValue = value
+                    "duration" -> viewmodel?.timeFull?.longValue = value
                     //"file-size" -> value
                 }
             }
@@ -340,12 +334,12 @@ class MpvPlayer : BasePlayer() {
             override fun eventProperty(property: String, value: Boolean) {
                 when (property) {
                     "pause" -> {
-                        isNowPlaying.value = !value //Just to inform UI
+                        viewmodel?.isNowPlaying?.value = !value //Just to inform UI
 
                         //Tell server about playback state change
                         if (!isSoloMode) {
                             sendPlayback(!value)
-                            p.paused = value
+                            viewmodel!!.p.paused = value
                         }
                     }
                 }
@@ -357,15 +351,17 @@ class MpvPlayer : BasePlayer() {
             override fun event(eventId: Int) {
                 when (eventId) {
                     MPVLib.mpvEventId.MPV_EVENT_START_FILE -> {
-                        hasVideoG.value = true
+                        viewmodel?.hasVideoG?.value = true
 
                         if (isSoloMode) return
                         playerScopeIO.launch {
                             while (true) {
-                                if (timeFull.longValue.toDouble() > 0) {
-                                    media?.fileDuration = timeFull.longValue.toDouble()
-                                    p.sendPacket(JsonSender.sendFile(media ?: return@launch))
-                                    break
+                                if (viewmodel != null) {
+                                    if (viewmodel!!.timeFull.longValue.toDouble() > 0) {
+                                        viewmodel?.media?.fileDuration = viewmodel?.timeFull?.longValue?.toDouble()!!
+                                        viewmodel!!.p.sendPacket(JsonSender.sendFile(viewmodel?.media ?: return@launch))
+                                        break
+                                    }
                                 }
                             }
                         }

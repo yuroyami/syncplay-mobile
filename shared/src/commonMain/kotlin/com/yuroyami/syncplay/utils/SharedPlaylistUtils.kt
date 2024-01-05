@@ -1,17 +1,15 @@
 package com.yuroyami.syncplay.utils
 
-import com.yuroyami.syncplay.settings.DataStoreKeys
-import com.yuroyami.syncplay.settings.obtainStringSet
-import com.yuroyami.syncplay.settings.writeStringSet
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.protocol.JsonSender.sendPlaylistChange
 import com.yuroyami.syncplay.protocol.JsonSender.sendPlaylistIndex
+import com.yuroyami.syncplay.settings.DataStoreKeys
+import com.yuroyami.syncplay.settings.obtainStringSet
+import com.yuroyami.syncplay.settings.writeStringSet
 import com.yuroyami.syncplay.utils.RoomUtils.broadcastMessage
 import com.yuroyami.syncplay.watchroom.dispatchOSD
 import com.yuroyami.syncplay.watchroom.lyricist
-import com.yuroyami.syncplay.watchroom.media
-import com.yuroyami.syncplay.watchroom.p
-import com.yuroyami.syncplay.watchroom.player
+import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 
@@ -29,20 +27,20 @@ object SharedPlaylistUtils {
             val filename = getFileName(uri) ?: return
 
             /** If the playlist already contains this file name, prevent adding it */
-            if (p.session.sharedPlaylist.contains(filename)) return
+            if (viewmodel!!.p.session.sharedPlaylist.contains(filename)) return
 
             /** If there is no duplicate, then we proceed, we check if the list is empty */
-            if (p.session.sharedPlaylist.isEmpty() && p.session.sharedPlaylistIndex == -1) {
+            if (viewmodel!!.p.session.sharedPlaylist.isEmpty() && viewmodel!!.p.session.sharedPlaylistIndex == -1) {
                 /* If it is empty, then we load the media file */
-                media = MediaFile()
-                media!!.uri = uri
-                player?.collectInfoLocal(media!!)
+                viewmodel?.media = MediaFile()
+                viewmodel?.media!!.uri = uri
+                viewmodel?.player?.collectInfoLocal(viewmodel?.media!!)
                 //TODO: injectVideo(uri.toString(), true)
-                p.sendPacket(sendPlaylistIndex(0))
+                viewmodel?.p?.sendPacket(sendPlaylistIndex(0))
             }
-            p.session.sharedPlaylist.add(filename)
+            viewmodel!!.p.session.sharedPlaylist.add(filename)
         }
-        p.sendPacket(sendPlaylistChange(p.session.sharedPlaylist))
+        viewmodel!!.p.sendPacket(sendPlaylistChange(viewmodel?.p?.session!!.sharedPlaylist))
     }
 
     suspend fun addFolderToPlaylist(uri: String) {
@@ -84,15 +82,15 @@ object SharedPlaylistUtils {
 
     /** This is to send a playlist selection change to the server */
     fun sendPlaylistSelection(index: Int) {
-        p.sendPacket(sendPlaylistIndex(index))
+        viewmodel?.p?.sendPacket(sendPlaylistIndex(index))
     }
 
     /** This is to change playlist selection in response other users' selection */
     suspend fun changePlaylistSelection(index: Int) {
-        if (p.session.sharedPlaylist.size < (index + 1)) return /* In rare cases when this was called on an empty list */
-        if (index != p.session.sharedPlaylistIndex) {
+        if (viewmodel!!.p.session.sharedPlaylist.size < (index + 1)) return /* In rare cases when this was called on an empty list */
+        if (index != viewmodel!!.p.session.sharedPlaylistIndex) {
             /* If the file on that index isn't playing, play the file */
-            retrieveFile(p.session.sharedPlaylist[index])
+            retrieveFile(viewmodel?.p!!.session.sharedPlaylist[index])
         }
     }
 
@@ -106,7 +104,7 @@ object SharedPlaylistUtils {
                 fileName.contains("https://", true) ||
                 fileName.contains("ftp://", true)
             ) {
-                player?.injectVideo(fileName, isUrl = true)
+                viewmodel?.player?.injectVideo(fileName, isUrl = true)
             } else {
                 /** We search our media directories which were added by the user in settings */
                 val paths = obtainStringSet(DataStoreKeys.PREF_SP_MEDIA_DIRS, emptySet()).toMutableSet()
@@ -147,7 +145,7 @@ object SharedPlaylistUtils {
 //                    }
                 }
                 if (fileUri2Play == null) {
-                    if (media?.fileName != fileName) {
+                    if (viewmodel?.media?.fileName != fileName) {
                         val s = lyricist.strings.roomSharedPlaylistNotFound
                         CoroutineScope(currentCoroutineContext()).dispatchOSD(s)
                         broadcastMessage(s, false)
@@ -159,10 +157,10 @@ object SharedPlaylistUtils {
 
     /** This will delete an item from playlist at a given index 'i' */
     fun deleteItemFromPlaylist(i: Int) {
-        p.session.sharedPlaylist.removeAt(i)
-        p.sendPacket(sendPlaylistChange(p.session.sharedPlaylist))
-        if (p.session.sharedPlaylist.isEmpty()) {
-            p.session.sharedPlaylistIndex = -1
+        viewmodel?.p?.session?.sharedPlaylist?.removeAt(i)
+        viewmodel?.p?.sendPacket(sendPlaylistChange(viewmodel?.p?.session!!.sharedPlaylist))
+        if (viewmodel?.p!!.session.sharedPlaylist.isEmpty()) {
+            viewmodel?.p?.session?.sharedPlaylistIndex = -1
         }
     }
 
@@ -170,7 +168,8 @@ object SharedPlaylistUtils {
      * @param mode False to shuffle all playlist, True to shuffle only the rest*/
     suspend fun shuffle(mode: Boolean) {
         /** If the shared playlist is empty, do nothing */
-        if (p.session.sharedPlaylistIndex < 0 || p.session.sharedPlaylist.isEmpty()) return
+        if (viewmodel!!.p.session.sharedPlaylistIndex < 0 || viewmodel!!.p.session.sharedPlaylist.isEmpty()) return
+
 
         /** Shuffling as per the mode selected: False = shuffle all, True = Shuffle rest */
         if (mode) {
@@ -178,21 +177,21 @@ object SharedPlaylistUtils {
              * grp1 is gonna be the group that doesn't change (everything until current index)
              * grp2 is the group to be shuffled since it's the 'remaining group' */
 
-            val grp1 = p.session.sharedPlaylist.take(p.session.sharedPlaylistIndex + 1).toMutableList()
-            val grp2 = p.session.sharedPlaylist.takeLast(p.session.sharedPlaylist.size - grp1.size).shuffled()
+            val grp1 = viewmodel!!.p.session.sharedPlaylist.take(viewmodel!!.p.session.sharedPlaylistIndex + 1).toMutableList()
+            val grp2 = viewmodel!!.p.session.sharedPlaylist.takeLast(viewmodel!!.p.session.sharedPlaylist.size - grp1.size).shuffled()
             grp1.addAll(grp2)
-            p.session.sharedPlaylist.clear()
-            p.session.sharedPlaylist.addAll(grp1)
+            viewmodel!!.p.session.sharedPlaylist.clear()
+            viewmodel!!.p.session.sharedPlaylist.addAll(grp1)
         } else {
             /** Shuffling everything is easy as Kotlin gives us the 'shuffle()' method */
-            p.session.sharedPlaylist.shuffle()
+            viewmodel!!.p.session.sharedPlaylist.shuffle()
 
             /** Index won't change, but the file at the given index did change, play it */
-            retrieveFile(p.session.sharedPlaylist[p.session.sharedPlaylistIndex])
+            retrieveFile(viewmodel!!.p.session.sharedPlaylist[viewmodel!!.p.session.sharedPlaylistIndex])
         }
 
         /** Announcing a new updated list to the room members */
-        p.sendPacket(sendPlaylistChange(p.session.sharedPlaylist))
+        viewmodel!!.p.sendPacket(sendPlaylistChange(viewmodel!!.p.session.sharedPlaylist))
     }
 
     /** Saves the playlist as a plain text file (.txt) to the designated folder with a timestamp of the current time
@@ -203,9 +202,9 @@ object SharedPlaylistUtils {
 
             /** Converting the shared playlist to a text string, line by line */
             var string = ""
-            for (f in p.session.sharedPlaylist) {
+            for (f in viewmodel!!.p.session.sharedPlaylist) {
                 string += f
-                if (p.session.sharedPlaylist.indexOf(f) != p.session.sharedPlaylist.size - 1) {
+                if (viewmodel!!.p.session.sharedPlaylist.indexOf(f) != viewmodel!!.p.session.sharedPlaylist.size - 1) {
                     string += "\n"
                 }
             }
@@ -243,17 +242,17 @@ object SharedPlaylistUtils {
     /** Adds URLs from the url adding popup */
     fun addURLs(string: List<String>) {
         val l = mutableListOf<String>()
-        l.addAll(p.session.sharedPlaylist)
+        l.addAll(viewmodel!!.p.session.sharedPlaylist)
         for (s in string) {
-            if (!p.session.sharedPlaylist.contains(s)) l.add(s)
+            if (!viewmodel!!.p.session.sharedPlaylist.contains(s)) l.add(s)
         }
-        p.sendPacket(sendPlaylistChange(l))
+        viewmodel!!.p.sendPacket(sendPlaylistChange(l))
     }
 
     /** Clears the shared playlist */
     fun clearPlaylist() {
-        if (p.session.sharedPlaylist.isEmpty()) return
-        p.sendPacket(sendPlaylistChange(emptyList()))
+        if (viewmodel!!.p.session.sharedPlaylist.isEmpty()) return
+        viewmodel!!.p.sendPacket(sendPlaylistChange(emptyList()))
     }
 
 }

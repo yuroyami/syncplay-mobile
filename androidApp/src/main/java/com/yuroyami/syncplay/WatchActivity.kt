@@ -42,15 +42,11 @@ import com.yuroyami.syncplay.watchroom.GestureCallback
 import com.yuroyami.syncplay.watchroom.RoomCallback
 import com.yuroyami.syncplay.watchroom.RoomUI
 import com.yuroyami.syncplay.watchroom.gestureCallback
-import com.yuroyami.syncplay.watchroom.hasVideoG
-import com.yuroyami.syncplay.watchroom.hudVisibilityState
-import com.yuroyami.syncplay.watchroom.p
-import com.yuroyami.syncplay.watchroom.pipMode
-import com.yuroyami.syncplay.watchroom.player
-import com.yuroyami.syncplay.watchroom.roomCallback
-import com.yuroyami.syncplay.watchroom.wentForFilePick
+import com.yuroyami.syncplay.watchroom.isSoloMode
+import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.runBlocking
 
+@Suppress("deprecation")
 class WatchActivity : ComponentActivity() {
 
     private var dirPickResult =
@@ -85,8 +81,8 @@ class WatchActivity : ComponentActivity() {
         )
 
         when (engine) {
-            ENGINE.ANDROID_EXOPLAYER -> player = ExoPlayer()
-            ENGINE.ANDROID_MPV -> player = MpvPlayer()
+            ENGINE.ANDROID_EXOPLAYER -> viewmodel?.player = ExoPlayer()
+            ENGINE.ANDROID_MPV -> viewmodel?.player = MpvPlayer()
             else -> {}
         }
 
@@ -130,10 +126,16 @@ class WatchActivity : ComponentActivity() {
             }
         }
 
-        roomCallback = object : RoomCallback {
+        viewmodel?.roomCallback = object : RoomCallback {
             override fun onLeave() {
                 terminate()
+                viewmodel = null
             }
+
+            override fun onPlayback(paused: Boolean) {
+                updatePiPParams()
+            }
+
         }
 
         /** Setting content view, making everything visible */
@@ -182,10 +184,12 @@ class WatchActivity : ComponentActivity() {
     }
 
     fun terminate() {
-        p.endConnection(true)
+        if (!isSoloMode) {
+            viewmodel?.p?.endConnection(true)
+        }
 
-        (player as? ExoPlayer)?.exoplayer?.release()
-        (player as? MpvPlayer)?.removeObserver()
+        (viewmodel?.player as? ExoPlayer)?.exoplayer?.release()
+        (viewmodel?.player as? MpvPlayer)?.removeObserver()
 
         finish()
     }
@@ -194,14 +198,14 @@ class WatchActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
-        pipMode.value = isInPictureInPictureMode
+        viewmodel?.pipMode?.value = isInPictureInPictureMode
     }
 
     /** If user leaves the app by any standard means, then we initiate picture-in-picture mode */
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
 
-        if (!wentForFilePick) {
+        if (viewmodel?.wentForFilePick != true) {
             initiatePIPmode()
         }
     }
@@ -215,7 +219,7 @@ class WatchActivity : ComponentActivity() {
         moveTaskToBack(true)
         updatePiPParams()
         enterPictureInPictureMode()
-        hudVisibilityState.value = false
+        viewmodel?.hudVisibilityState?.value = false
     }
 
     private fun updatePiPParams() {
@@ -227,7 +231,7 @@ class WatchActivity : ComponentActivity() {
             this, 6969, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE)
 
-        val action = if (player?.isPlaying() == true) {
+        val action = if (viewmodel?.player?.isPlaying() == true) {
             RemoteAction(
                 Icon.createWithResource(this, R.drawable.ic_pause),
                 "Play", "", pendingIntent)
@@ -237,7 +241,7 @@ class WatchActivity : ComponentActivity() {
         }
 
         val params = with(PictureInPictureParams.Builder()) {
-            setActions(if (hasVideoG.value) listOf(action) else listOf())
+            setActions(if (viewmodel?.hasVideoG?.value == true) listOf(action) else listOf())
         }
 
         try {

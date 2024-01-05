@@ -41,7 +41,7 @@ import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
 import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.ui.Paletting
-import com.yuroyami.syncplay.watchroom.player
+import com.yuroyami.syncplay.watchroom.viewmodel
 import org.jetbrains.compose.resources.Font
 import syncplaymobile.generated.resources.Res
 
@@ -133,7 +133,7 @@ object PopupAddUrl {
                         visibilityState.value = false
 
                         if (url.value.trim().isNotBlank()) {
-                            player?.injectVideo(url.value.trim(), isUrl = true)
+                            viewmodel?.player?.injectVideo(url.value.trim(), isUrl = true)
                         }
 
                     },

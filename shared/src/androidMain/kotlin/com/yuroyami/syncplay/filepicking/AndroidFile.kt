@@ -7,7 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.core.net.toFile
-import com.yuroyami.syncplay.watchroom.wentForFilePick
+import com.yuroyami.syncplay.watchroom.viewmodel
 
 data class AndroidFile(
 	override val path: String,
@@ -25,7 +25,7 @@ actual fun FilePicker(
 	onFileSelected: FileSelected
 ) {
 	val launcher = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocument()) { result ->
-		wentForFilePick = false
+		viewmodel?.wentForFilePick = false
 
 		if (result != null) {
 			onFileSelected(AndroidFile(result.toString(), result))
@@ -44,7 +44,7 @@ actual fun FilePicker(
 
 	LaunchedEffect(show) {
 		if (show) {
-			wentForFilePick = true
+			viewmodel?.wentForFilePick = true
 			launcher.launch(arrayOf("*/*"))
 		}
 	}
@@ -60,7 +60,7 @@ actual fun MultipleFilePicker(
 	val launcher = rememberLauncherForActivityResult(
 		contract = ActivityResultContracts.OpenMultipleDocuments()
 	) { result ->
-		wentForFilePick = false
+		viewmodel?.wentForFilePick = false
 
 		val files = result.mapNotNull { uri ->
 			uri.path?.let {path ->
@@ -86,7 +86,7 @@ actual fun MultipleFilePicker(
 
 	LaunchedEffect(show) {
 		if (show) {
-			wentForFilePick = true
+			viewmodel?.wentForFilePick = true
 			launcher.launch(mimeTypes)
 		}
 
@@ -101,14 +101,14 @@ actual fun DirectoryPicker(
 	onFileSelected: (String?) -> Unit
 ) {
 	val launcher = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocumentTree()) { result ->
-		wentForFilePick = false
+		viewmodel?.wentForFilePick = false
 
 		onFileSelected(result?.toString())
 	}
 
 	LaunchedEffect(show) {
 		if (show) {
-			wentForFilePick = true
+			viewmodel?.wentForFilePick = true
 			launcher.launch(null)
 		}
 	}

@@ -1,10 +1,8 @@
 package com.yuroyami.syncplay.protocol
 
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.Session
-import com.yuroyami.syncplay.models.TrackChoices
 import com.yuroyami.syncplay.protocol.JsonSender.sendHello
 import com.yuroyami.syncplay.protocol.JsonSender.sendTLS
 import com.yuroyami.syncplay.settings.DataStoreKeys
@@ -20,25 +18,6 @@ import kotlinx.coroutines.launch
 abstract class SyncplayProtocol {
     /** This refers to the event callback interface */
     var syncplayCallback: ProtocolCallback? = null
-
-    /** ----- UI feed ------- */
-    var setReadyDirectly = false
-    val seeks = mutableListOf<Pair<Long, Long>>()
-
-    var startupSlide = false
-
-    /* Related to playback status */
-    val isNowPlaying = mutableStateOf(false)
-    val timeFull = mutableLongStateOf(0L)
-    val timeCurrent = mutableLongStateOf(0L)
-
-    val hasVideoG = mutableStateOf(false)
-    val hudVisibilityState = mutableStateOf(true)
-    val pipMode = mutableStateOf(false)
-
-    var currentTrackChoices: TrackChoices = TrackChoices()
-
-    var pingUpdateJob: Job? = null
 
     /** ----- Network backbone ----- */
 
