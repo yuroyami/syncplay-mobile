@@ -270,7 +270,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                     loggy("SYNCPLAY Protocol: Checking TLS...", 1016)
 
                     /** Telling user that the app is checking whether the chosen server supports TLS **/
-                    broadcastMessage("Checking whether server supports TLS", isChat = false)
+                    broadcastMessage(lyricist.strings.roomAttemptingTls, isChat = false)
                 }
 
                 override fun onReceivedTLS(supported: Boolean) {
@@ -278,12 +278,11 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
                     /** Deciding next step based on whether the server supports TLS or not **/
                     if (supported) {
-                        broadcastMessage("Server supports TLS !", isChat = false)
+                        broadcastMessage(lyricist.strings.roomTlsSupported, isChat = false)
                         p.tls = Constants.TLS.TLS_YES
-                        //p.connect()
                         p.upgradeTls()
                     } else {
-                        broadcastMessage("Server does not support TLS.", isChat = false, isError = true)
+                        broadcastMessage(lyricist.strings.roomTlsNotSupported, isChat = false, isError = true)
                         p.tls = Constants.TLS.TLS_NO
                     }
                     p.sendPacket(

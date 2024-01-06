@@ -33,9 +33,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.compose.ComposeUtils
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
-import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.timeStamper
+import com.yuroyami.syncplay.watchroom.lyricist
 import com.yuroyami.syncplay.watchroom.viewmodel
 import org.jetbrains.compose.resources.Font
 import syncplaymobile.generated.resources.Res
@@ -44,8 +44,6 @@ object CardUserInfo {
 
     @Composable
     fun UserInfoCard() {
-        val lyricist = rememberStrings()
-
         Card(
             shape = RoundedCornerShape(6.dp),
             border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT)),
@@ -56,7 +54,7 @@ object CardUserInfo {
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .padding(vertical = 4.dp),
-                string = "User info",
+                string = lyricist.strings.roomCardTitleUserInfo,
                 solid = Color.Transparent,
                 size = 18f,
                 font = Font(Res.font.directive4_regular)

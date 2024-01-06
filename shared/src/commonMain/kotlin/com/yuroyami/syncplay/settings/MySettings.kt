@@ -118,7 +118,8 @@ val settingROOMstyle = SettingStyling(
     iconShadows = Paletting.SP_GRADIENT
 )
 
-private val settingsGLOBAL = listOf(
+private val settingsGLOBAL
+    get() = listOf(
     BooleanSetting(
         type = SettingType.CheckboxSettingType,
         key = PREF_REMEMBER_INFO,
@@ -325,7 +326,8 @@ private val settingsGLOBAL = listOf(
     ) to CATEG_GLOBAL_ADVANCED
 )
 
-val settingsROOM = mutableListOf(
+val settingsROOM
+    get() = mutableListOf(
     ColorSetting(
         type = SettingType.ColorSettingType,
         key = PREF_INROOM_COLOR_TIMESTAMP,

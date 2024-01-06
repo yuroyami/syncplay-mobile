@@ -162,6 +162,7 @@ fun GestureInterceptor(
                 .align(Alignment.CenterEnd)
                 .fillMaxHeight().fillMaxWidth(0.1f)
                 .clickable(
+                    enabled = false,
                     interactionSource = seekRightInteraction,
                     indication = rememberRipple(
                         bounded = false,

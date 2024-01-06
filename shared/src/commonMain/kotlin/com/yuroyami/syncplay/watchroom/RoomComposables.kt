@@ -289,7 +289,7 @@ object RoomComposables {
                         Spacer(modifier = Modifier.width(6.dp))
 
                         Text(modifier = Modifier.fillMaxWidth().gradientOverlay(),
-                            text = "Add media", textAlign = TextAlign.Center, maxLines = 1,
+                            text = lyricist.strings.roomButtonDescAdd, textAlign = TextAlign.Center, maxLines = 1,
                             fontSize = 14.sp, color = Color.DarkGray, fontWeight = FontWeight.Bold
                         )
                     }

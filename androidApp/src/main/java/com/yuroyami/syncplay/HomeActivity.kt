@@ -59,7 +59,7 @@ class HomeActivity : ComponentActivity() {
         setContent {
             val nightMode by valueFlow(MISC_NIGHTMODE, false).collectAsState(initial = false)
 
-            LaunchedEffect(nightMode) {
+            LaunchedEffect(null, nightMode) {
                 WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = !nightMode
             }
 

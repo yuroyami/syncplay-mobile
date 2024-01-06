@@ -390,7 +390,7 @@ fun RoomUI() {
                                     if (keyboardOkFunction) {
                                         onSend()
                                     }
-                                }), label = { Text(text = "Type your message...", fontSize = 12.sp) }, trailingIcon = {
+                                }), label = { Text(text = lyricist.strings.roomTypeMessage, fontSize = 12.sp) }, trailingIcon = {
                                     if (msgCanSend) {
                                         IconButton(onClick = onSend) {
                                             Icon(imageVector = Icons.Filled.Send, "")
@@ -413,14 +413,16 @@ fun RoomUI() {
                                 Row {
                                     val pingo by remember { viewmodel!!.p.ping }
                                     Text(
-                                        text = if (pingo == null) "Disconnected" else "Connected - ${pingo!!.toInt()}ms", color = Paletting.OLD_SP_PINK
+
+                                        text = if (pingo == null) lyricist.strings.roomPingDisconnected else lyricist.strings.roomPingConnected(pingo!!.toInt().toString()), color = Paletting.OLD_SP_PINK
                                     )
                                     Spacer(Modifier.width(4.dp))
 
                                     PingRadar(pingo)
                                 }
 
-                                Text(text = "Room: ${viewmodel!!.p.session.currentRoom}", fontSize = 11.sp, color = Paletting.OLD_SP_PINK)
+                                Text(text = lyricist.strings.roomDetailsCurrentRoom(viewmodel!!.p.session.currentRoom), fontSize = 11.sp, color = Paletting.OLD_SP_PINK)
+                                lyricist.strings.roomDetailsCurrentRoom
                             }
 
                             val osd by remember { osdMsg }
@@ -493,7 +495,7 @@ fun RoomUI() {
 
                                     ComposeUtils.FancyText2(
                                         modifier = Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 2.dp),
-                                        string = "More Options...",
+                                        string = lyricist.strings.roomOverflowTitle,
                                         solid = Color.Black,
                                         size = 14f,
                                         font = directive
@@ -510,7 +512,7 @@ fun RoomUI() {
                                                 Spacer(Modifier.width(8.dp))
 
                                                 Text(
-                                                    color = Color.LightGray, text = "Chat history"
+                                                    color = Color.LightGray, text = lyricist.strings.roomOverflowMsghistory
                                                 )
                                             }
                                         }, onClick = {
@@ -529,7 +531,7 @@ fun RoomUI() {
                                             Spacer(Modifier.width(8.dp))
 
                                             Text(
-                                                color = Color.LightGray, text = "Toggle night-mode"
+                                                color = Color.LightGray, text = lyricist.strings.roomOverflowToggleNightmode
                                             )
                                         }
                                     }, onClick = {
@@ -552,7 +554,7 @@ fun RoomUI() {
                                             Spacer(Modifier.width(8.dp))
 
                                             Text(
-                                                color = Color.LightGray, text = "Leave room"
+                                                color = Color.LightGray, text = lyricist.strings.roomOverflowLeaveRoom
                                             )
                                         }
                                     }, onClick = {
@@ -965,7 +967,7 @@ fun RoomUI() {
                                     Row(verticalAlignment = CenterVertically) {
                                         FancyIcon2(icon = Icons.Filled.CreateNewFolder, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {}
                                         Spacer(Modifier.width(8.dp))
-                                        Text(color = Color.LightGray, text = "From storage")
+                                        Text(color = Color.LightGray, text = lyricist.strings.roomAddmediaOffline)
                                     }
                                 }, onClick = {
                                     addmediacardvisible = false
@@ -977,7 +979,7 @@ fun RoomUI() {
                                     Row(verticalAlignment = CenterVertically) {
                                         FancyIcon2(icon = Icons.Filled.AddLink, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {}
                                         Spacer(Modifier.width(8.dp))
-                                        Text(color = Color.LightGray, text = "From network (URL)")
+                                        Text(color = Color.LightGray, text = lyricist.strings.roomAddmediaOnline)
                                     }
                                 }, onClick = {
                                     addmediacardvisible = false

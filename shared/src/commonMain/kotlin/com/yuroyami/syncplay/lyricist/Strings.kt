@@ -62,14 +62,18 @@ interface Strings {
     val roomNotReady: String
     val roomPingConnected: (String) -> String
     val roomPingDisconnected: String
-    val roomOverflowSub: String
+    val roomOverflowTitle: String
     val roomOverflowMsghistory: String
-    val roomOverflowSettings: String
+    val roomOverflowToggleNightmode: String
+    val roomOverflowLeaveRoom: String
     val roomEmptyMessageError: String
     val roomAttemptingConnect: (String, String) -> String
     val roomConnectedToServer: String
     val roomConnectionFailed: String
     val roomAttemptingReconnection: String
+    val roomAttemptingTls: String
+    val roomTlsSupported: String
+    val roomTlsNotSupported: String
     val roomGuyPlayed: (String) -> String
     val roomGuyPaused: (String, String) -> String
     val roomSeeked: (String, String, String) -> String
@@ -131,6 +135,9 @@ interface Strings {
     val roomAddmediaOnline: String
     val roomAddmediaOnlineUrl: String
     val roomSkipMinuteAndHalfButton: String
+
+    val roomCardTitleUserInfo: String
+    val roomCardTitleInRoomPrefs: String
 
     val mediaDirectories: String
     val mediaDirectoriesBrief: String

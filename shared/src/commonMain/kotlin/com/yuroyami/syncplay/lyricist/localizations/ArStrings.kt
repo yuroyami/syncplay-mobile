@@ -51,14 +51,15 @@ val ArStrings = object : Strings {
     override val roomNotReady = "غير جاهز"
     override val roomPingConnected = { p0: String -> "متصل - PING: %s مللي ثانية".format(p0) }
     override val roomPingDisconnected = "غير متصل"
-    override val roomOverflowSub = "تحميل ملف الترجمة..."
-    override val roomOverflowMsghistory = "تاريخ الرسائل"
-    override val roomOverflowSettings = "الإعدادات"
+
     override val roomEmptyMessageError = "اكتب شيئًا!"
     override val roomAttemptingConnect = { p0: String, p1: String -> "محاولة الاتصال بـ %1s:%2s".format(p0, p1) }
     override val roomConnectedToServer = "تم الاتصال بالخادم."
     override val roomConnectionFailed = "فشل الاتصال."
     override val roomAttemptingReconnection = "تم فقد الاتصال بالخادم."
+    override val roomAttemptingTls = "محاولة الاتصال الآمن"
+    override val roomTlsSupported = "تم تأسيس اتصال آمن (TLS)"
+    override val roomTlsNotSupported = "الخادم لا يدعم TLS"
     override val roomGuyPlayed = { p0: String -> "%s استأنف التشغيل".format(p0) }
     override val roomGuyPaused = { p0: String, p1: String -> "%1s قام بإيقاف التشغيل في %2s".format(p0, p1) }
     override val roomSeeked = { p0: String, p1: String, p2: String -> "%1s قفز من %2s إلى %3s".format(p0, p1, p2) }
@@ -120,6 +121,14 @@ val ArStrings = object : Strings {
     override val roomAddmediaOnline = "من عنوان URL في الشبكة"
     override val roomAddmediaOnlineUrl = "عنوان URL"
     override val roomSkipMinuteAndHalfButton = "اقفز دقيقة و 30 ثانية"
+
+    override val roomOverflowTitle = "المزيد من الخيارات..."
+    override val roomOverflowMsghistory = "سجل الدردشة"
+    override val roomOverflowToggleNightmode = "تبديل وضع الليل"
+    override val roomOverflowLeaveRoom = "مغادرة الغرفة"
+    override val roomCardTitleUserInfo = "معلومات المستخدم"
+    override val roomCardTitleInRoomPrefs = "تفضيلات الغرفة"
+
 
     override val mediaDirectories = "مجلدات الوسائط لقائمة التشغيل المشتركة"
     override val mediaDirectoriesBrief = "سيقوم Syncplay بالبحث في أي مجلدات وسائط تحددها هنا للعثور على اسم يتم تشغيله في قائمة تشغيل مشتركة. من الأفضل إذا قمت بتحديد مجلدات صغيرة حيث يمكن أن تتسبب عملية البحث في المشاكل وتكون بطيئة جدًا."

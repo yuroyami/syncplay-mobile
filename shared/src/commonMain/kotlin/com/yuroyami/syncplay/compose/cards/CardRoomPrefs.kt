@@ -27,6 +27,7 @@ import com.yuroyami.syncplay.settings.SettingsUI
 import com.yuroyami.syncplay.settings.SettingsUI.SettingsGrid
 import com.yuroyami.syncplay.settings.sgROOM
 import com.yuroyami.syncplay.ui.Paletting
+import com.yuroyami.syncplay.watchroom.lyricist
 import org.jetbrains.compose.resources.Font
 import syncplaymobile.generated.resources.Res
 
@@ -45,7 +46,7 @@ object CardRoomPrefs {
             Box(modifier = Modifier.fillMaxSize()) {
                 FancyText2(
                     modifier = Modifier.align(TopCenter).padding(6.dp),
-                    string = "In-room Preferences",
+                    string = lyricist.strings.roomCardTitleInRoomPrefs,
                     solid = Color.Transparent,
                     size = 16f,
                     font = Font(Res.font.directive4_regular)
