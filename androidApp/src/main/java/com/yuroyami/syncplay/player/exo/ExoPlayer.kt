@@ -64,6 +64,9 @@ class ExoPlayer : BasePlayer() {
     override val canChangeAspectRatio: Boolean
         get() = true
 
+    override val supportsChapters: Boolean
+        get() = false
+
     override fun initialize() {
         val context = exoView.context
 
@@ -273,17 +276,9 @@ class ExoPlayer : BasePlayer() {
         }
     }
 
-    override fun analyzeChapters(mediafile: MediaFile) {
-        //TODO("Not yet implemented")
-    }
-
-    override fun jumpToChapter(chapter: Chapter) {
-        //TODO("Not yet implemented")
-    }
-
-    override fun skipChapter() {
-        //TODO("Not yet implemented")
-    }
+    override fun analyzeChapters(mediafile: MediaFile) {}
+    override fun jumpToChapter(chapter: Chapter) {}
+    override fun skipChapter() {}
 
     override fun reapplyTrackChoices() {
         /* We need to cast MediaController to ExoPlayer since they're roughly the same */
@@ -431,8 +426,6 @@ class ExoPlayer : BasePlayer() {
     @SuppressLint("WrongConstant")
     override fun switchAspectRatio(): String {
         val resolutions = mutableMapOf<Int, String>()
-
-        val lyricist = Lyricist("en", Stringies)
 
         resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIT] = lyricist.strings.roomScalingFitScreen
         resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH] = lyricist.strings.roomScalingFixedWidth

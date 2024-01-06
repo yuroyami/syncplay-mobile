@@ -41,6 +41,7 @@ abstract class BasePlayer {
     val playerScopeIO = CoroutineScope(Dispatchers.IO)
 
     abstract val canChangeAspectRatio: Boolean
+    abstract val supportsChapters: Boolean
 
     /** Called when the player is to be initialized */
     abstract fun initialize()

@@ -53,7 +53,10 @@ class MpvPlayer : BasePlayer() {
     private lateinit var ctx: Context
 
     override val canChangeAspectRatio: Boolean
-        get() = false
+        get() = true
+
+    override val supportsChapters: Boolean
+        get() = true
 
     override fun initialize() {
         ctx = mpvView.context.applicationContext
@@ -319,7 +322,41 @@ class MpvPlayer : BasePlayer() {
         return mpvPos
     }
 
-    override fun switchAspectRatio() = ""
+    override fun switchAspectRatio(): String {
+        val currentAspect = MPVLib.getPropertyString("video-aspect-override")
+        val currentPanscan = MPVLib.getPropertyDouble("panscan")
+
+        loggy("currentAspect: $currentAspect and currentPanscan: $currentPanscan", 0)
+
+        val aspectRatios = listOf(
+            "-1.000000" to "Original" ,
+            "1.777778" to "16:9",
+            "1.600000" to "16:10",
+            "1.333333" to "4:3",
+            "2.350000" to "2.35:1",
+            "panscan" to "Pan/Scan"
+        )
+
+        var enablePanscan = false
+        val nextAspect = if (currentPanscan == 1.0) {
+            aspectRatios[0]
+        } else if (currentAspect == "2.350000") {
+            enablePanscan = true
+            aspectRatios[5]
+        } else {
+            aspectRatios[aspectRatios.indexOfFirst { it.first == currentAspect } + 1]
+        }
+
+        if (enablePanscan) {
+            MPVLib.setPropertyString("video-aspect-override", "-1")
+            MPVLib.setPropertyDouble("panscan", 1.0)
+        } else {
+            MPVLib.setPropertyString("video-aspect-override", nextAspect.first)
+            MPVLib.setPropertyDouble("panscan", 0.0)
+        }
+
+        return nextAspect.second
+    }
 
     override fun collectInfoLocal(mediafile: MediaFile) {
         collectInfoLocalAndroid(mediafile, ctx)

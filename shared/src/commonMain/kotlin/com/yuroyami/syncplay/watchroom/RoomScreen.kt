@@ -248,11 +248,11 @@ fun RoomUI() {
                 if (unlockButtonVisibility.value && !pipModeObserver) {
                     Card(
                         modifier = Modifier.width(48.dp).alpha(0.5f).aspectRatio(1f).clickable(
-                                interactionSource = remember { MutableInteractionSource() }, indication = rememberRipple(color = Paletting.SP_ORANGE)
-                            ) {
-                                locked = false
-                                hudVisibility = true
-                            },
+                            interactionSource = remember { MutableInteractionSource() }, indication = rememberRipple(color = Paletting.SP_ORANGE)
+                        ) {
+                            locked = false
+                            hudVisibility = true
+                        },
                         shape = RoundedCornerShape(6.dp),
                         border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT)),
                         colors = CardDefaults.cardColors(containerColor = Color.DarkGray),
@@ -357,7 +357,7 @@ fun RoomUI() {
                             brush = Brush.verticalGradient(
                                 listOf(Color.Transparent, blacky, blacky, blacky)
                             )
-                        ).clickable(false){}
+                        ).clickable(false) {}
                     )
                 }
             }
@@ -570,7 +570,8 @@ fun RoomUI() {
                         Box {
                             /** User-info card (toggled on and off) */
                             if (!isSoloMode) {
-                                FreeAnimatedVisibility(modifier = Modifier.fillMaxWidth(cardWidth).fillMaxHeight(cardHeight),
+                                FreeAnimatedVisibility(
+                                    modifier = Modifier.fillMaxWidth(cardWidth).fillMaxHeight(cardHeight),
                                     enter = slideInHorizontally(initialOffsetX = { (dimensions.wPX * 1.3).toInt() }),
                                     exit = slideOutHorizontally(targetOffsetX = { (dimensions.wPX * 1.3).toInt() }),
                                     visible = !inroomprefsVisibility.value && userinfoVisibility.value && !sharedplaylistVisibility.value
@@ -581,7 +582,8 @@ fun RoomUI() {
 
                             /** Shared Playlist card (toggled on and off) */
                             if (false /* TODO !isSoloMode */) {
-                                FreeAnimatedVisibility(modifier = Modifier.fillMaxWidth(cardWidth).fillMaxHeight(cardHeight),
+                                FreeAnimatedVisibility(
+                                    modifier = Modifier.fillMaxWidth(cardWidth).fillMaxHeight(cardHeight),
                                     enter = slideInHorizontally(initialOffsetX = { (dimensions.wPX * 1.3).toInt() }),
                                     exit = slideOutHorizontally(targetOffsetX = { (dimensions.wPX * 1.3).toInt() }),
                                     visible = !inroomprefsVisibility.value && !userinfoVisibility.value && sharedplaylistVisibility.value
@@ -591,7 +593,8 @@ fun RoomUI() {
                             }
 
                             /** In-room card (toggled on and off) */
-                            FreeAnimatedVisibility(modifier = Modifier.fillMaxWidth(cardWidth).fillMaxHeight(cardHeight),
+                            FreeAnimatedVisibility(
+                                modifier = Modifier.fillMaxWidth(cardWidth).fillMaxHeight(cardHeight),
                                 enter = slideInHorizontally(initialOffsetX = { (dimensions.wPX * 1.3).toInt() }),
                                 exit = slideOutHorizontally(targetOffsetX = { (dimensions.wPX * 1.3).toInt() }),
                                 visible = inroomprefsVisibility.value && !userinfoVisibility.value && !sharedplaylistVisibility.value
@@ -617,12 +620,10 @@ fun RoomUI() {
                                         modifier = Modifier.padding(6.dp).fillMaxHeight(), verticalArrangement = Arrangement.SpaceEvenly, horizontalArrangement = Arrangement.Center
                                     ) {
                                         /* Aspect Ratio */
-                                        if (viewmodel?.player?.canChangeAspectRatio == true) {
-                                            FancyIcon2(icon = Icons.Filled.AspectRatio, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
-                                                val newAspectRatio = viewmodel?.player?.switchAspectRatio()
-                                                if (newAspectRatio != null) {
-                                                    composeScope.dispatchOSD(newAspectRatio)
-                                                }
+                                        FancyIcon2(icon = Icons.Filled.AspectRatio, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
+                                            val newAspectRatio = viewmodel?.player?.switchAspectRatio()
+                                            if (newAspectRatio != null) {
+                                                composeScope.dispatchOSD(newAspectRatio)
                                             }
                                         }
 
@@ -779,49 +780,51 @@ fun RoomUI() {
 
 
                                         /* Chapters */
-                                        Box {
-                                            var chaptersPopup by remember { mutableStateOf(false) }
+                                        if (viewmodel?.player?.supportsChapters == true) {
+                                            Box {
+                                                var chaptersPopup by remember { mutableStateOf(false) }
 
-                                            FancyIcon2(icon = Icons.Filled.Theaters, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
-                                                viewmodel?.player?.analyzeChapters(viewmodel?.media ?: return@FancyIcon2)
-                                                chaptersPopup = !chaptersPopup
-                                            }
+                                                FancyIcon2(icon = Icons.Filled.Theaters, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
+                                                    viewmodel?.player?.analyzeChapters(viewmodel?.media ?: return@FancyIcon2)
+                                                    chaptersPopup = !chaptersPopup
+                                                }
 
-                                            DropdownMenu(modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
-                                                expanded = chaptersPopup,
-                                                properties = PopupProperties(
-                                                    dismissOnBackPress = true, focusable = true, dismissOnClickOutside = true
-                                                ),
-                                                onDismissRequest = { chaptersPopup = false }
-                                            ) {
+                                                DropdownMenu(modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
+                                                    expanded = chaptersPopup,
+                                                    properties = PopupProperties(
+                                                        dismissOnBackPress = true, focusable = true, dismissOnClickOutside = true
+                                                    ),
+                                                    onDismissRequest = { chaptersPopup = false }
+                                                ) {
 
-                                                ComposeUtils.FancyText2(
-                                                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                                                    string = "Chapters", solid = Color.Black, size = 14f, font = directive
-                                                )
+                                                    ComposeUtils.FancyText2(
+                                                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                                                        string = "Chapters", solid = Color.Black, size = 14f, font = directive
+                                                    )
 
-                                                DropdownMenuItem(text = {
-                                                    Row(verticalAlignment = CenterVertically) {
-                                                        Text(
-                                                            color = Color.LightGray, text = "Skip chapter"
-                                                        )
-                                                    }
-                                                }, onClick = {
-                                                    viewmodel?.player?.skipChapter()
-                                                    chaptersPopup = false
-                                                })
-
-                                                for (chapter in (viewmodel?.media?.chapters ?: listOf())) {
                                                     DropdownMenuItem(text = {
                                                         Row(verticalAlignment = CenterVertically) {
                                                             Text(
-                                                                color = Color.LightGray, text = chapter.name
+                                                                color = Color.LightGray, text = "Skip chapter"
                                                             )
                                                         }
                                                     }, onClick = {
-                                                        viewmodel?.player?.jumpToChapter(chapter)
+                                                        viewmodel?.player?.skipChapter()
                                                         chaptersPopup = false
                                                     })
+
+                                                    for (chapter in (viewmodel?.media?.chapters ?: listOf())) {
+                                                        DropdownMenuItem(text = {
+                                                            Row(verticalAlignment = CenterVertically) {
+                                                                Text(
+                                                                    color = Color.LightGray, text = chapter.name
+                                                                )
+                                                            }
+                                                        }, onClick = {
+                                                            viewmodel?.player?.jumpToChapter(chapter)
+                                                            chaptersPopup = false
+                                                        })
+                                                    }
                                                 }
                                             }
                                         }
@@ -950,8 +953,8 @@ fun RoomUI() {
                                 modifier = Modifier
                                     .background(color = MaterialTheme.colorScheme.tertiaryContainer),
                                 expanded = addmediacardvisible, properties = PopupProperties(
-                                dismissOnBackPress = true, focusable = true, dismissOnClickOutside = true
-                            ), onDismissRequest = { addmediacardvisible = false }) {
+                                    dismissOnBackPress = true, focusable = true, dismissOnClickOutside = true
+                                ), onDismissRequest = { addmediacardvisible = false }) {
 
                                 ComposeUtils.FancyText2(
                                     modifier = Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 2.dp), string = "Add media", solid = Color.Black, size = 14f, font = directive
