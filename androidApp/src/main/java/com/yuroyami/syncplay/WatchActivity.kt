@@ -32,7 +32,8 @@ import com.yuroyami.syncplay.player.mpv.MpvPlayer
 import com.yuroyami.syncplay.player.mpv.mpvRoomSettings
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PIP
-import com.yuroyami.syncplay.settings.MySettings.additionalPlayerRoomSettings
+import com.yuroyami.syncplay.settings.SettingObtainerCallback
+import com.yuroyami.syncplay.settings.obtainerCallback
 import com.yuroyami.syncplay.settings.settingBoolean
 import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.utils.UIUtils.cutoutMode
@@ -83,14 +84,17 @@ class WatchActivity : ComponentActivity() {
 
         when (engine) {
             ENGINE.ANDROID_EXOPLAYER -> {
-                additionalPlayerRoomSettings = listOf()
                 viewmodel?.player = ExoPlayer()
             }
             ENGINE.ANDROID_MPV -> {
-                additionalPlayerRoomSettings = mpvRoomSettings
+                loggy("1", 0)
                 viewmodel?.player = MpvPlayer()
             }
             else -> {}
+        }
+
+        obtainerCallback = object: SettingObtainerCallback {
+            override fun getMoreRoomSettings() = mpvRoomSettings
         }
 
         gestureCallback = object : GestureCallback {

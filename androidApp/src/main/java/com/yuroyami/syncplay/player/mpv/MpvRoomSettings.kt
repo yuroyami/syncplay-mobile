@@ -6,9 +6,9 @@ import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.SlowMotionVideo
 import androidx.compose.material.icons.filled.Speed
 import com.yuroyami.syncplay.settings.DataStoreKeys
-import com.yuroyami.syncplay.settings.MySettings
 import com.yuroyami.syncplay.settings.Setting
 import com.yuroyami.syncplay.settings.SettingType
+import com.yuroyami.syncplay.settings.settingROOMstyle
 import com.yuroyami.syncplay.watchroom.lyricist
 import com.yuroyami.syncplay.watchroom.viewmodel
 
@@ -20,7 +20,7 @@ val mpvRoomSettings = listOf(
         summary = lyricist.strings.uisettingMpvHardwareAccelerationSummary,
         defaultValue = true,
         icon = Icons.Filled.Speed,
-        styling = MySettings.settingROOMstyle,
+        styling = settingROOMstyle,
         onBooleanChanged = { b ->
             (viewmodel?.player as? MpvPlayer)?.toggleHardwareAcceleration(b)
         }
@@ -33,7 +33,7 @@ val mpvRoomSettings = listOf(
         summary = lyricist.strings.uisettingMpvGpunextSummary,
         defaultValue = false,
         icon = Icons.Filled.Memory,
-        styling = MySettings.settingROOMstyle,
+        styling = settingROOMstyle,
         onBooleanChanged = { b ->
             (viewmodel?.player as? MpvPlayer)?.toggleGpuNext(b)
         }
@@ -46,22 +46,23 @@ val mpvRoomSettings = listOf(
         summary = lyricist.strings.uiSettingMpvInterpolationSummary,
         defaultValue = false,
         icon = Icons.Filled.SlowMotionVideo,
-        styling = MySettings.settingROOMstyle,
+        styling = settingROOMstyle,
         onBooleanChanged = { b ->
             (viewmodel?.player as? MpvPlayer)?.toggleInterpolation(b)
         }
     ) to DataStoreKeys.CATEG_INROOM_MPV,
 
-    Setting.BooleanSetting(
+    Setting.SliderSetting(
         type = SettingType.CheckboxSettingType,
         key = DataStoreKeys.PREF_MPV_DEBUG_MODE,
         title = lyricist.strings.uiSettingMpvDebugTitle,
         summary = lyricist.strings.uiSettingMpvDebugSummary,
-        defaultValue = false,
+        defaultValue = 0,
+        maxValue = 3,
         icon = Icons.Filled.Adb,
-        styling = MySettings.settingROOMstyle,
-        onBooleanChanged = { b ->
-            (viewmodel?.player as? MpvPlayer)?.toggleDebugMode(b)
+        styling = settingROOMstyle,
+        onValueChanged = { i ->
+            (viewmodel?.player as? MpvPlayer)?.toggleDebugMode(i)
         }
     ) to DataStoreKeys.CATEG_INROOM_MPV,
 )

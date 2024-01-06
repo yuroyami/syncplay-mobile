@@ -9,7 +9,6 @@ import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.WindowManager
 import com.yuroyami.syncplay.player.PlayerOptions
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MPV_DEBUG_MODE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MPV_GPU_NEXT
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MPV_HARDWARE_ACCELERATION
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MPV_INTERPOLATION
@@ -108,8 +107,7 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
         if (PREF_MPV_INTERPOLATION.settingBoolean())
             MPVLib.setOptionString("interpolation", "yes")
 
-        if (PREF_MPV_DEBUG_MODE.settingBoolean())
-            MPVLib.setOptionString("gpu-debug", "yes")
+        MPVLib.setOptionString("gpu-debug", "no")
 
         if (false /* TODO: sharedPreferences.getBoolean("video_fastdecode", false) */) {
             MPVLib.setOptionString("vd-lavc-fast", "yes")

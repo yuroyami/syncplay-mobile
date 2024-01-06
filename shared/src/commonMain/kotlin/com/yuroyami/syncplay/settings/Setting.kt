@@ -76,15 +76,11 @@ sealed class Setting<T>(
     val defaultValue: T? = null,
     val icon: ImageVector? = null, val enabled: Boolean = true, val styling: SettingStyling = SettingStyling()
 ) {
-
     /** This is the abstract function that will be called by Compose UI in order to draw the setting.
      * Each setting type has its own UI, so within this sealed class, we override it and draw it respectively;
      */
     @Composable
     abstract fun SettingComposable(modifier: Modifier)
-
-
-    /** This writes the default value as soon as it is initialized */
 
     /** ======= Now to specific types of SETTINGs and their respective child classes ======= */
 
@@ -248,7 +244,7 @@ sealed class Setting<T>(
 
                     ) {
                         scope.launch {
-                            writeValue(key, boolean.value?.not())
+                            writeValue(key, !boolean.value)
                         }
                     },
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -445,14 +441,17 @@ sealed class Setting<T>(
                         )
 
                         Slider(
-                            value = value.value?.toFloat() ?: 0f,
+                            value = value.value.toFloat(),
                             enabled = enabled,
                             valueRange = (minValue.toFloat())..(maxValue.toFloat()),
                             onValueChange = { f ->
+                                if (f != value.value.toFloat()) {
+                                    onValueChanged?.invoke(f.roundToInt())
+                                }
+
                                 scope.launch {
                                     writeValue(key, f.roundToInt())
                                 }
-                                onValueChanged?.invoke(f.roundToInt())
                             }, modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 12.dp)
@@ -520,7 +519,7 @@ sealed class Setting<T>(
                 trailingContent = {
                     Button(
                         onClick = { colorDialogState.value = true },
-                        colors = ButtonDefaults.buttonColors(containerColor = color.value?.let { Color(it) } ?: Color(defaultValue!!)),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(color.value)),
                         modifier = Modifier.size(24.dp)
                     ) {}
                 },
@@ -535,7 +534,7 @@ sealed class Setting<T>(
                 }
             )
 
-            ColorPickingPopup(colorDialogState, initialColor = HsvColor.from(color.value?.let { Color(it) } ?: Color(defaultValue!!)), onColorChanged = { hsvColor ->
+            ColorPickingPopup(colorDialogState, initialColor = HsvColor.from(Color(color.value)), onColorChanged = { hsvColor ->
                 scope.launch {
                     writeValue(key, hsvColor.toColor().toArgb())
                 }
@@ -584,7 +583,7 @@ sealed class Setting<T>(
                         modifier = Modifier.width(64.dp),
                         shape = RoundedCornerShape(16.dp),
                         singleLine = true,
-                        value = string ?: "",
+                        value = string,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         keyboardActions = KeyboardActions(onDone = {
                             focusManager.clearFocus()

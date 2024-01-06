@@ -61,7 +61,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -96,9 +95,8 @@ import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_NIGHTMODE
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_PLAYER_ENGINE
-import com.yuroyami.syncplay.settings.MySettings.sgGLOBAL
-import com.yuroyami.syncplay.settings.MySettings.sgROOM
 import com.yuroyami.syncplay.settings.SettingsUI
+import com.yuroyami.syncplay.settings.sgGLOBAL
 import com.yuroyami.syncplay.settings.valueFlow
 import com.yuroyami.syncplay.settings.writeValue
 import com.yuroyami.syncplay.ui.AppTheme
@@ -120,7 +118,7 @@ import syncplaymobile.generated.resources.Res
 fun HomeScreen(config: HomeConfig) {
     lyricist = rememberStrings()
 
-    LaunchedEffect(null) { sgGLOBAL;sgROOM }
+    val sg = remember { sgGLOBAL() }
 
     val nightMode = valueFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
 
@@ -270,7 +268,7 @@ fun HomeScreen(config: HomeConfig) {
                         ) {
                             SettingsUI.SettingsGrid(
                                 modifier = Modifier.fillMaxWidth(),
-                                settingcategories = sgGLOBAL, //remember { testSettings()globalSettings() },
+                                settingcategories = sgGLOBAL(),
                                 state = settingState,
                                 onCardClicked = {
                                     settingState.intValue = 2

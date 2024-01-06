@@ -123,6 +123,7 @@ import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_SHADOW
 import com.yuroyami.syncplay.settings.settingBooleanState
 import com.yuroyami.syncplay.settings.settingIntState
+import com.yuroyami.syncplay.settings.sgROOM
 import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.settings.valueFlow
 import com.yuroyami.syncplay.settings.writeValue
@@ -166,6 +167,8 @@ fun CoroutineScope.dispatchOSD(s: String) {
 @Composable
 fun RoomUI() {
     val nightMode = valueFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
+
+    val sg = remember { sgROOM() }
 
     val directive = Font(Res.font.directive4_regular)
     val inter = Font(Res.font.inter_regular)

@@ -12,6 +12,7 @@ class SyncplayApp: Application() {
     override fun onCreate() {
         super.onCreate()
 
+        /* TLS (mainly TLSv1.3) support, via Conscrypt */
         Security.insertProviderAt(Conscrypt.newProvider(), 1)
 
         //Initializing datastore

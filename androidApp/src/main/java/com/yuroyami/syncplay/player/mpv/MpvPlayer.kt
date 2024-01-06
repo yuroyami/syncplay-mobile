@@ -464,21 +464,28 @@ class MpvPlayer : BasePlayer() {
         }
     }
 
-
-
     fun toggleHardwareAcceleration(b: Boolean) {
+        if (!ismpvInit) return
+
         MPVLib.setOptionString("hwdec", if (b) "auto" else "no" )
     }
 
     fun toggleGpuNext(b: Boolean) {
+        if (!ismpvInit) return
+
         MPVLib.setOptionString("vo", if (b) "gpu-next" else "gpu")
     }
 
     fun toggleInterpolation(b: Boolean) {
+        if (!ismpvInit) return
+
         MPVLib.setOptionString("interpolation", if (b) "yes" else "no")
     }
 
-    fun toggleDebugMode(b: Boolean) {
-        MPVLib.setOptionString("gpu-debug", if (b) "yes" else "no")
+    fun toggleDebugMode(i: Int) {
+        if (!ismpvInit) return
+
+        loggy("STATS $i", 0)
+        MPVLib.command(arrayOf("script-binding", "stats/display-page-$i"))
     }
 }
