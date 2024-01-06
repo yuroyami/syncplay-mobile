@@ -23,9 +23,11 @@ data class MediaFile(
     /** The duration of the file (ms) **/
     var fileDuration: Double = -1.0,
 
-    /** the subtitle and audio tracks for this file **/
+    /** the subtitle tracks, audio tracks and chapters for this file **/
     var audioTracks: MutableList<Track> = mutableListOf(),
     var subtitleTracks: MutableList<Track> = mutableListOf(),
+    val chapters: MutableList<Chapter> = mutableListOf(),
+
 
     /** This refers to any external subtitle file that was loaded **/
     var externalSub: Any? = null,

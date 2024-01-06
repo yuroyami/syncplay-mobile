@@ -15,6 +15,7 @@ import androidx.media3.common.MimeTypes
 import cafe.adriel.lyricist.Lyricist
 import com.yuroyami.syncplay.databinding.MpvviewBinding
 import com.yuroyami.syncplay.lyricist.Stringies
+import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
@@ -25,6 +26,7 @@ import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
+import com.yuroyami.syncplay.utils.timeStamper
 import com.yuroyami.syncplay.watchroom.dispatchOSD
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.lyricist
@@ -38,6 +40,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import kotlin.math.roundToLong
 
 class MpvPlayer : BasePlayer() {
 
@@ -56,10 +59,6 @@ class MpvPlayer : BasePlayer() {
         ctx = mpvView.context.applicationContext
 
         copyAssets(ctx)
-
-        //TODO: LoadControl
-        //TODO: AudioLock
-        //TODO: TrackSelection applying default language
     }
 
     @Composable
@@ -92,7 +91,7 @@ class MpvPlayer : BasePlayer() {
         // so use ?: continue instead of !!
         for (i in 0 until count) {
             val type = MPVLib.getPropertyString("track-list/$i/type") ?: continue
-            if (type != "audio" && type != "sub") continue;
+            if (type != "audio" && type != "sub") continue
             val mpvId = MPVLib.getPropertyInt("track-list/$i/id") ?: continue
             val lang = MPVLib.getPropertyString("track-list/$i/lang")
             val title = MPVLib.getPropertyString("track-list/$i/title")
@@ -158,6 +157,32 @@ class MpvPlayer : BasePlayer() {
                 viewmodel?.currentTrackChoices?.audioSelectionIndexMpv = index
             }
         }
+    }
+
+    override fun analyzeChapters(mediafile: MediaFile) {
+        if (!ismpvInit) return
+        val chapters = mpvView.loadChapters()
+        if (chapters.isEmpty()) return
+        mediafile.chapters.clear()
+        mediafile.chapters.addAll(chapters.map {
+            val timestamp = " (${timeStamper(it.time.roundToLong())})"
+            Chapter(
+                it.index,
+                (it.title ?: "Chapter ${it.index}") + timestamp,
+                (it.time * 1000).roundToLong()
+            )
+        })
+    }
+
+    override fun jumpToChapter(chapter: Chapter) {
+        if (!ismpvInit) return
+        MPVLib.setPropertyInt("chapter", chapter.index)
+    }
+
+    override fun skipChapter() {
+        if (!ismpvInit) return
+
+        MPVLib.command(arrayOf("add", "chapter", "1"))
     }
 
     override fun reapplyTrackChoices() {
@@ -307,6 +332,7 @@ class MpvPlayer : BasePlayer() {
             newSize > 16 -> {
                 1.0 + (newSize - 16) * 0.05
             }
+
             else -> {
                 1.0 - (16 - newSize) * (1.0 / 16)
             }
@@ -466,25 +492,21 @@ class MpvPlayer : BasePlayer() {
 
     fun toggleHardwareAcceleration(b: Boolean) {
         if (!ismpvInit) return
-
-        MPVLib.setOptionString("hwdec", if (b) "auto" else "no" )
+        MPVLib.setOptionString("hwdec", if (b) "auto" else "no")
     }
 
     fun toggleGpuNext(b: Boolean) {
         if (!ismpvInit) return
-
         MPVLib.setOptionString("vo", if (b) "gpu-next" else "gpu")
     }
 
     fun toggleInterpolation(b: Boolean) {
         if (!ismpvInit) return
-
         MPVLib.setOptionString("interpolation", if (b) "yes" else "no")
     }
 
     fun toggleDebugMode(i: Int) {
         if (!ismpvInit) return
-
         loggy("STATS $i", 0)
         MPVLib.command(arrayOf("script-binding", "stats/display-page-$i"))
     }

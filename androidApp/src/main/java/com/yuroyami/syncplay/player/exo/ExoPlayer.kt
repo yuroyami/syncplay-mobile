@@ -1,6 +1,8 @@
 package com.yuroyami.syncplay.player.exo
 
 import android.annotation.SuppressLint
+import android.graphics.Color
+import android.graphics.Typeface
 import android.util.TypedValue
 import android.view.LayoutInflater
 import androidx.compose.runtime.Composable
@@ -21,12 +23,14 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.session.MediaSession
 import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.CaptionStyleCompat
 import androidx.media3.ui.PlayerView
 import cafe.adriel.lyricist.Lyricist
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.yuroyami.syncplay.databinding.ExoviewBinding
 import com.yuroyami.syncplay.lyricist.Stringies
+import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
@@ -46,6 +50,7 @@ import kotlinx.coroutines.launch
 import java.io.IOException
 import java.util.Collections
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 class ExoPlayer : BasePlayer() {
     override val engine = ENGINE.ANDROID_EXOPLAYER
@@ -268,6 +273,18 @@ class ExoPlayer : BasePlayer() {
         }
     }
 
+    override fun analyzeChapters(mediafile: MediaFile) {
+        //TODO("Not yet implemented")
+    }
+
+    override fun jumpToChapter(chapter: Chapter) {
+        //TODO("Not yet implemented")
+    }
+
+    override fun skipChapter() {
+        //TODO("Not yet implemented")
+    }
+
     override fun reapplyTrackChoices() {
         /* We need to cast MediaController to ExoPlayer since they're roughly the same */
         analyzeTracks(viewmodel?.media ?: return)
@@ -352,8 +369,12 @@ class ExoPlayer : BasePlayer() {
                     .setUri(viewmodel?.media?.uri)
                     .setMediaId(viewmodel?.media?.uri.toString())
                     .apply {
-                        setSubtitleConfigurations(Collections.singletonList(viewmodel?.media?.externalSub
-                                as? MediaItem.SubtitleConfiguration ?: return@apply))
+                        setSubtitleConfigurations(
+                            Collections.singletonList(
+                                viewmodel?.media?.externalSub
+                                        as? MediaItem.SubtitleConfiguration ?: return@apply
+                            )
+                        )
                     }
                     .build()
 
@@ -437,11 +458,24 @@ class ExoPlayer : BasePlayer() {
     }
 
     /** EXO-EXCLUSIVE */
-
     private fun TRACKTYPE.getExoType(): Int {
         return when (this) {
             TRACKTYPE.AUDIO -> C.TRACK_TYPE_AUDIO
             TRACKTYPE.SUBTITLE -> C.TRACK_TYPE_TEXT
+        }
+    }
+
+    fun retweakSubtitleAppearance(
+        size: Float,
+        captionStyle: CaptionStyleCompat = CaptionStyleCompat(
+            Color.WHITE, Color.TRANSPARENT, Color.TRANSPARENT,
+            CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW, Color.BLACK, Typeface.DEFAULT_BOLD
+        )
+    ) {
+        if (::exoView.isInitialized) {
+            exoView.subtitleView?.setStyle(captionStyle)
+            changeSubtitleSize(size.roundToInt())
+
         }
     }
 }

@@ -71,23 +71,6 @@ object PlayerUtils {
             }
         }
     }
-//
-//    /** Changes the subtitle appearance given the size and captionStyle (otherwise, default will be used) */
-//    fun WatchActivity.retweakSubtitleAppearance(
-//        size: Float = 16f,
-//        captionStyle: CaptionStyleCompat = CaptionStyleCompat(
-//            Color.WHITE, Color.TRANSPARENT, Color.TRANSPARENT,
-//            CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW, Color.BLACK, Typeface.DEFAULT_BOLD
-//        ),
-//    ) {
-//        runOnUiThread {
-//            //TODO
-//            if (player?.engine == HighLevelPlayer.ENGINE.EXOPLAYER) {
-//                player?.exoView?.subtitleView?.setStyle(captionStyle)
-//                player?.exoView?.subtitleView?.setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, size)
-//            }
-//        }
-//    }
 
     /** Tracks progress CONTINUOUSLY and updates it to UI (and server, if no solo mode) */
     fun trackProgress() {

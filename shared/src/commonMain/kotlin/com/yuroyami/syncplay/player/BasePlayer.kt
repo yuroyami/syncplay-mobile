@@ -2,6 +2,7 @@ package com.yuroyami.syncplay.player
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.utils.sha256
 import com.yuroyami.syncplay.utils.toHex
@@ -54,6 +55,10 @@ abstract class BasePlayer {
     abstract fun analyzeTracks(mediafile: MediaFile)
 
     abstract fun selectTrack(type: TRACKTYPE, index: Int)
+
+    abstract fun analyzeChapters(mediafile: MediaFile)
+    abstract fun jumpToChapter(chapter: Chapter)
+    abstract fun skipChapter()
 
     abstract fun reapplyTrackChoices()
 

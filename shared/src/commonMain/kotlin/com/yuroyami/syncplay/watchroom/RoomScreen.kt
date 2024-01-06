@@ -54,6 +54,7 @@ import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.SpeakerGroup
 import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material.icons.filled.SubtitlesOff
+import androidx.compose.material.icons.filled.Theaters
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.VideoSettings
 import androidx.compose.material.ripple.rememberRipple
@@ -450,7 +451,7 @@ fun RoomUI() {
                             Spacer(Modifier.width(12.dp))
 
                             /* Shared Playlist */
-                            if (!isSoloMode) {
+                            if (false /* TODO !isSoloMode */) {
                                 RoomTab(icon = Icons.Filled.PlaylistPlay, visibilityState = sharedplaylistVisibility.value) {
                                     sharedplaylistVisibility.value = !sharedplaylistVisibility.value
                                     userinfoVisibility.value = false
@@ -579,7 +580,7 @@ fun RoomUI() {
                             }
 
                             /** Shared Playlist card (toggled on and off) */
-                            if (!isSoloMode) {
+                            if (false /* TODO !isSoloMode */) {
                                 FreeAnimatedVisibility(modifier = Modifier.fillMaxWidth(cardWidth).fillMaxHeight(cardHeight),
                                     enter = slideInHorizontally(initialOffsetX = { (dimensions.wPX * 1.3).toInt() }),
                                     exit = slideOutHorizontally(targetOffsetX = { (dimensions.wPX * 1.3).toInt() }),
@@ -771,6 +772,55 @@ fun RoomUI() {
                                                     }, onClick = {
                                                         viewmodel?.player?.selectTrack(TRACKTYPE.AUDIO, track.index)
                                                         tracksPopup.value = false
+                                                    })
+                                                }
+                                            }
+                                        }
+
+
+                                        /* Chapters */
+                                        Box {
+                                            var chaptersPopup by remember { mutableStateOf(false) }
+
+                                            FancyIcon2(icon = Icons.Filled.Theaters, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
+                                                viewmodel?.player?.analyzeChapters(viewmodel?.media ?: return@FancyIcon2)
+                                                chaptersPopup = !chaptersPopup
+                                            }
+
+                                            DropdownMenu(modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
+                                                expanded = chaptersPopup,
+                                                properties = PopupProperties(
+                                                    dismissOnBackPress = true, focusable = true, dismissOnClickOutside = true
+                                                ),
+                                                onDismissRequest = { chaptersPopup = false }
+                                            ) {
+
+                                                ComposeUtils.FancyText2(
+                                                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                                                    string = "Chapters", solid = Color.Black, size = 14f, font = directive
+                                                )
+
+                                                DropdownMenuItem(text = {
+                                                    Row(verticalAlignment = CenterVertically) {
+                                                        Text(
+                                                            color = Color.LightGray, text = "Skip chapter"
+                                                        )
+                                                    }
+                                                }, onClick = {
+                                                    viewmodel?.player?.skipChapter()
+                                                    chaptersPopup = false
+                                                })
+
+                                                for (chapter in (viewmodel?.media?.chapters ?: listOf())) {
+                                                    DropdownMenuItem(text = {
+                                                        Row(verticalAlignment = CenterVertically) {
+                                                            Text(
+                                                                color = Color.LightGray, text = chapter.name
+                                                            )
+                                                        }
+                                                    }, onClick = {
+                                                        viewmodel?.player?.jumpToChapter(chapter)
+                                                        chaptersPopup = false
                                                     })
                                                 }
                                             }

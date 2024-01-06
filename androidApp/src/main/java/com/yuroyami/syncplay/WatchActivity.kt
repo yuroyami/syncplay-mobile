@@ -22,6 +22,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C.STREAM_TYPE_MUSIC
 import com.yuroyami.syncplay.player.BasePlayer.ENGINE
 import com.yuroyami.syncplay.player.PlayerUtils.getEngineForString
@@ -32,10 +33,12 @@ import com.yuroyami.syncplay.player.mpv.MpvPlayer
 import com.yuroyami.syncplay.player.mpv.mpvRoomSettings
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PIP
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_SUBTITLE_SIZE
 import com.yuroyami.syncplay.settings.SettingObtainerCallback
 import com.yuroyami.syncplay.settings.obtainerCallback
 import com.yuroyami.syncplay.settings.settingBoolean
 import com.yuroyami.syncplay.settings.valueBlockingly
+import com.yuroyami.syncplay.settings.valueSuspendingly
 import com.yuroyami.syncplay.utils.UIUtils.cutoutMode
 import com.yuroyami.syncplay.utils.UIUtils.hideSystemUI
 import com.yuroyami.syncplay.utils.changeLanguage
@@ -47,6 +50,8 @@ import com.yuroyami.syncplay.watchroom.RoomUI
 import com.yuroyami.syncplay.watchroom.gestureCallback
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.viewmodel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Suppress("deprecation")
 class WatchActivity : ComponentActivity() {
@@ -94,7 +99,7 @@ class WatchActivity : ComponentActivity() {
         }
 
         obtainerCallback = object: SettingObtainerCallback {
-            override fun getMoreRoomSettings() = mpvRoomSettings
+            override fun getMoreRoomSettings() = if (viewmodel?.player?.engine == ENGINE.ANDROID_MPV) mpvRoomSettings else listOf()
         }
 
         gestureCallback = object : GestureCallback {
@@ -168,25 +173,20 @@ class WatchActivity : ComponentActivity() {
 //        /** Applying track choices again so the player doesn't forget about track choices **/
 //        reapplyTrackChoices()
 //    }
-//
-//    override fun onDestroy() {
-//        super.onDestroy()
-//        unregisterReceiver(pipBroadcastReceiver)
-//    }
-//
-//    /** the onStart() follows the onCreate(), it means all the UI is ready
-//     * It precedes any activity results. onCreate -> onStart -> ActivityResults -> onResume */
-//    override fun onStart() {
-//        super.onStart()
-//
-//
-//        /** Loading subtitle appearance */
-//        lifecycleScope.launch(Dispatchers.Main) {
-//            val ccsize = DataStoreKeys.DATASTORE_INROOM_PREFERENCES.obtainInt(PREF_INROOM_PLAYER_SUBTITLE_SIZE, 16)
-//            retweakSubtitleAppearance(ccsize.toFloat())
-//        }
-//    }
-//
+
+
+    /** the onStart() follows the onCreate(), it means all the UI is ready
+     * It precedes any activity results. onCreate -> onStart -> ActivityResults -> onResume */
+    override fun onStart() {
+        super.onStart()
+
+        /* Loading subtitle appearance */
+        lifecycleScope.launch(Dispatchers.Main) {
+            val ccsize = valueSuspendingly(PREF_INROOM_PLAYER_SUBTITLE_SIZE, 16)
+            (viewmodel?.player as? ExoPlayer)?.retweakSubtitleAppearance(ccsize.toFloat())
+        }
+    }
+
 
     @SuppressLint("MissingSuperCall")
     override fun onBackPressed() {
@@ -291,6 +291,9 @@ class WatchActivity : ComponentActivity() {
         registerReceiver(pipBroadcastReceiver, filter)
 
         hideSystemUI(false)
+
+        /** Applying track choices again so the player doesn't forget about track choices **/
+        viewmodel?.player?.reapplyTrackChoices()
     }
 
     override fun onDestroy() {
