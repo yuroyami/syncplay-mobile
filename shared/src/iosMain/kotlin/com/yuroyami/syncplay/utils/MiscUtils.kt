@@ -14,8 +14,10 @@ import kotlinx.coroutines.withTimeoutOrNull
 import platform.Foundation.NSDate
 import platform.Foundation.NSLocale
 import platform.Foundation.NSString
+import platform.Foundation.NSURL
 import platform.Foundation.currentLocale
 import platform.Foundation.languageCode
+import platform.Foundation.lastPathComponent
 import platform.Foundation.stringWithFormat
 import platform.Foundation.timeIntervalSince1970
 import kotlin.math.roundToInt
@@ -26,14 +28,6 @@ actual fun getPlatform(): PLATFORM = PLATFORM.IOS
 actual fun loggy(s: String?, checkpoint: Int) = println(s.toString())
 
 actual fun getDefaultEngine(): String = BasePlayer.ENGINE.IOS_VLC.name
-
-//actual fun changeLanguage(lang: String) {
-//    val languageBundle = AtomicReference<NSBundle?>(null)
-//
-//    NSBundle.mainBundle.pathForResource(lang, ofType = "lproj")?.let { path ->
-//        languageBundle.value = NSBundle.bundleWithPath(path)
-//    }
-//}
 
 actual fun generateTimestampMillis(): Long {
     return (NSDate().timeIntervalSince1970 * 1000).roundToLong()
@@ -48,7 +42,7 @@ actual fun timeStamper(seconds: Long): String {
 }
 
 actual fun getFileName(uri: String, context: Any?): String? {
-    return "" //TODO
+    return NSURL.fileURLWithPath(uri).lastPathComponent
 }
 
 actual suspend fun pingIcmp(host: String, packet: Int): Int? {
@@ -85,18 +79,22 @@ actual fun getScreenSizeInfo(): ScreenSizeInfo {
     }
 }
 
-actual fun String.format(vararg keys: String) =
+actual fun String.format(vararg args: String): String {
     // This ugly work around is because varargs can't be passed to Objective-C...
-    when (keys.size) {
-        0 -> this
-        1 -> NSString.stringWithFormat(this, keys[0].cstr)
-        2 -> NSString.stringWithFormat(this, keys[0].cstr, keys[1].cstr)
-        3 -> NSString.stringWithFormat(this, keys[0].cstr, keys[1].cstr, keys[2].cstr)
-        4 -> NSString.stringWithFormat(this, keys[0].cstr, keys[1].cstr, keys[2].cstr, keys[3].cstr)
-        5 -> NSString.stringWithFormat(this, keys[0].cstr, keys[1].cstr, keys[2].cstr, keys[3].cstr, keys[4].cstr)
-        6 -> NSString.stringWithFormat(this, keys[0].cstr, keys[1].cstr, keys[2].cstr, keys[3].cstr, keys[4].cstr, keys[5].cstr)
-        else -> throw IllegalStateException("more than 6 args")
+    // NSString format works with NSObjects via %@, we should change standard format to %@
+    //val objcFormat = this@format.replace(Regex("%((?:\\.|\\d|\\$)*)[abcdefs]"), "%$1@")
+    val objcFormat = this@format //.replace("%[\\d|.]*[sdf]|%".toRegex(), "@")
+    @Suppress("MagicNumber")
+    return when (args.size) {
+        0 -> this //NSString.stringWithFormat(objcFormat)
+        1 -> NSString.stringWithFormat(objcFormat, args[0].cstr)
+        2 -> NSString.stringWithFormat(objcFormat, args[0].cstr, args[1].cstr)
+        3 -> NSString.stringWithFormat(objcFormat, args[0].cstr, args[1].cstr, args[2].cstr)
+        4 -> NSString.stringWithFormat(objcFormat, args[0].cstr, args[1].cstr, args[2].cstr, args[3].cstr)
+        else -> NSString.stringWithFormat(objcFormat, args[0].cstr, args[1].cstr, args[2].cstr, args[3].cstr, args[4].cstr)
     }
+}
+
 
 actual fun getSystemLanguageCode(): String {
     return NSLocale.currentLocale.languageCode

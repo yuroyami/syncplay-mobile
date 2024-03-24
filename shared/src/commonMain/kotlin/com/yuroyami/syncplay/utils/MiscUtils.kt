@@ -32,7 +32,7 @@ data class ScreenSizeInfo(val hPX: Int, val wPX: Int, val hDP: Dp, val wDP: Dp)
 expect fun getScreenSizeInfo(): ScreenSizeInfo
 
 /** Formats a string and replaces placeholders with actual keys */
-expect fun String.format(vararg keys: String): String
+expect fun String.format(vararg args: String): String
 
 /** Gets the app's current locale lang code */
 expect fun getSystemLanguageCode(): String

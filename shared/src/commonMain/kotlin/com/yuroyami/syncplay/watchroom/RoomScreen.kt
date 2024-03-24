@@ -94,6 +94,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -107,7 +108,6 @@ import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.compose.cards.CardRoomPrefs.InRoomSettingsCard
 import com.yuroyami.syncplay.compose.cards.CardSharedPlaylist.SharedPlaylistCard
 import com.yuroyami.syncplay.compose.cards.CardUserInfo.UserInfoCard
-import com.yuroyami.syncplay.compose.getRegularFont
 import com.yuroyami.syncplay.compose.getSyncplayFont
 import com.yuroyami.syncplay.compose.popups.PopupAddUrl.AddUrlPopup
 import com.yuroyami.syncplay.compose.popups.PopupChatHistory.ChatHistoryPopup
@@ -192,7 +192,6 @@ private fun RoomUIImpl() {
     val nightMode = valueFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
 
     val directive = getSyncplayFont()
-    val inter = getRegularFont()
 
     val composeScope = rememberCoroutineScope { Dispatchers.IO }
 
@@ -341,7 +340,7 @@ private fun RoomUIImpl() {
                                             modifier = Modifier.fillMaxWidth(),
                                             text = text,
                                             size = if (pipModeObserver) 6f else (msgFontSize.value.toFloat()),
-                                            font = inter,
+                                            //font = inter,
                                             lineHeight = (msgFontSize.value + 4).sp,
                                             overflow = TextOverflow.Ellipsis,
                                             strokeColors = listOf(Color.Black),
@@ -423,7 +422,7 @@ private fun RoomUIImpl() {
                         }
                     }
 
-                    /* Top-Center info *//* Overall info (PING + ROOMNAME + OSD Messages) */
+                    /* Top-Center info: Overall info (PING + ROOMNAME + OSD Messages) */
                     if (!isSoloMode && !pipModeObserver) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.wrapContentWidth().align(Alignment.TopCenter)
@@ -447,9 +446,13 @@ private fun RoomUIImpl() {
 
                             val osd by remember { osdMsg }
                             Text(
-                                text = osd, fontSize = 11.sp, color = Paletting.SP_PALE,
                                 modifier = Modifier.fillMaxWidth(0.3f),
-                                textAlign = TextAlign.Center
+                                fontSize = 11.sp,
+                                lineHeight = (Paletting.USER_INFO_TXT_SIZE + 4).sp,
+                                color = Paletting.SP_PALE,
+                                text = osd,
+                                textAlign = TextAlign.Center,
+                                fontWeight = FontWeight.W300
                             )
                         }
                     }

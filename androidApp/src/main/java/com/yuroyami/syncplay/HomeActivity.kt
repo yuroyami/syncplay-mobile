@@ -64,7 +64,7 @@ class HomeActivity : ComponentActivity() {
                 WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = !nightMode
             }
 
-            HomeScreen(config = config) /* Shared Compose multiplatform composable */
+            HomeScreen(config) /* Shared Compose multiplatform composable */
         }
 
         /** Language change listener */

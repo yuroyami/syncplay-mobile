@@ -124,19 +124,18 @@ import syncplaymobile.shared.generated.resources.syncplay_logo_gradient
 import syncplaymobile.shared.generated.resources.vlc
 
 private val LocalGlobalSettings = staticCompositionLocalOf<List<SettingCategory>> {  error("No Global Settings provided") }
+lateinit var snacky: SnackbarHostState
 
 /** This is what previously used to be HomeActivity before we migrated towards KMM.*/
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(config: HomeConfig) {
+fun HomeScreen(savedConfig: HomeConfig) {
+    lyricist = rememberStrings()
+
     CompositionLocalProvider(
         LocalGlobalSettings provides sgGLOBAL()
     ) {
-        lyricist = rememberStrings()
-
         val nightMode = valueFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
-
-        val savedConfig = remember { config }
 
         val servers = listOf(
             "syncplay.pl:8995",
@@ -150,14 +149,14 @@ fun HomeScreen(config: HomeConfig) {
         AppTheme(nightMode.value) {
             /* Remembering stuff like scope for onClicks, snackBar host state for snackbars ... etc */
             val scope = rememberCoroutineScope { Dispatchers.IO }
-            val snackbarHostState = remember { SnackbarHostState() }
+            snacky = remember { SnackbarHostState() }
             val focusManager = LocalFocusManager.current
 
             val aboutpopupState = remember { mutableStateOf(false) }
 
             /* Using a Scaffold manages our top-level layout */
             Scaffold(
-                snackbarHost = { SnackbarHost(snackbarHostState) },
+                snackbarHost = { SnackbarHost(snacky) },
 
                 /* The top bar contains a syncplay logo, text, nightmode toggle button, and a setting button + its screen */
                 topBar = {
@@ -708,7 +707,7 @@ fun HomeScreen(config: HomeConfig) {
                                 /* Checking whether username is empty */
                                 if (textUsername.isBlank()) {
                                     scope.launch {
-                                        snackbarHostState.showSnackbar(snacktxtEmptyUSER)
+                                        snacky.showSnackbar(snacktxtEmptyUSER)
                                     }
                                     return@Button
                                 }
@@ -726,7 +725,7 @@ fun HomeScreen(config: HomeConfig) {
                                 /* Checking whether roomname is empty */
                                 if (textRoomname.isBlank()) {
                                     scope.launch {
-                                        snackbarHostState.showSnackbar(snacktxtEmptyROOM)
+                                        snacky.showSnackbar(snacktxtEmptyROOM)
                                     }
                                     return@Button
                                 }
@@ -734,7 +733,7 @@ fun HomeScreen(config: HomeConfig) {
                                 /* Checking whether address is empty */
                                 if (serverAddress.isBlank()) {
                                     scope.launch {
-                                        snackbarHostState.showSnackbar(snacktxtEmptyIP)
+                                        snacky.showSnackbar(snacktxtEmptyIP)
                                     }
                                     return@Button
                                 }
@@ -742,7 +741,7 @@ fun HomeScreen(config: HomeConfig) {
                                 /* Checking whether port is empty */
                                 if (serverPort.isBlank()) {
                                     scope.launch {
-                                        snackbarHostState.showSnackbar(snacktxtEmptyPORT)
+                                        snacky.showSnackbar(snacktxtEmptyPORT)
                                     }
                                     return@Button
                                 }
@@ -750,7 +749,7 @@ fun HomeScreen(config: HomeConfig) {
                                 /* Checking whether port is a number */
                                 if (serverPort.toIntOrNull() == null) {
                                     scope.launch {
-                                        snackbarHostState.showSnackbar(snacktxtEmptyPORT)
+                                        snacky.showSnackbar(snacktxtEmptyPORT)
                                     }
                                     return@Button
                                 }

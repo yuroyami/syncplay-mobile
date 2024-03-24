@@ -11,7 +11,7 @@ val langMap = mapOf(
     //"日本語 (ChatGPT)" to "ja", //Japanese
     //"한국말 (ChatGPT)" to "ko", //Korean
     //"português (ChatGPT)" to "pt", //Portuguese
-    "Pусский (ChatGPT)" to "ru", //Russian
+    "Pусский" to "ru", //Russian
     //"Türkçe (ChatGPT)" to "tr", //Turkish
     "中文" to "zh", //Chinese (Simplified)
 )

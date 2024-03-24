@@ -302,7 +302,7 @@ object ComposeUtils {
         modifier: Modifier = Modifier,
         text: AnnotatedString,
         size: Float,
-        font: Font,
+        font: Font? = null,
         textAlign: TextAlign = TextAlign.Start,
         fillingColors: List<Color> = listOf(MaterialTheme.colorScheme.primary),
         strokeColors: List<Color> = listOf(),
@@ -329,7 +329,7 @@ object ComposeUtils {
                             color = if (shadowColors.size == 1) shadowColors.first() else Color.Black, Offset(4f, 4f), blurRadius = shadowSize
                         ),
                         textAlign = textAlign,
-                        fontFamily = FontFamily(font),
+                        fontFamily = font?.let { FontFamily(it) },
                         fontSize = size.sp,
                     )
                 )
@@ -350,7 +350,7 @@ object ComposeUtils {
                                 join = StrokeJoin.Round
                             ),
                             textAlign = textAlign,
-                            fontFamily = FontFamily(font),
+                            fontFamily = font?.let { FontFamily(it) },
                             fontSize = size.sp,
                         )
                     } else {
@@ -362,7 +362,7 @@ object ComposeUtils {
                                 join = StrokeJoin.Round
                             ),
                             textAlign = textAlign,
-                            fontFamily = FontFamily(font),
+                            fontFamily = font?.let { FontFamily(it) },
                             fontSize = size.sp,
                         )
                     }
@@ -378,14 +378,14 @@ object ComposeUtils {
                         TextStyle(
                             color = fillingColors.first(),
                             textAlign = textAlign,
-                            fontFamily = FontFamily(font),
+                            fontFamily = font?.let { FontFamily(it) },
                             fontSize = size.sp,
                         )
                     } else {
                         TextStyle(
                             brush = Brush.linearGradient(colors = fillingColors),
                             textAlign = textAlign,
-                            fontFamily = FontFamily(font),
+                            fontFamily = font?.let { FontFamily(it) },
                             fontSize = size.sp,
                         )
                     }

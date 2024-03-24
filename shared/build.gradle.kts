@@ -100,7 +100,7 @@ kotlin {
                 dependsOn(commonMain)
 
                 /* Backward compatibility APIs */
-                api("androidx.core:core-ktx:1.13.0-alpha05")
+                api("androidx.core:core-ktx:1.13.0-beta01")
                 api("androidx.appcompat:appcompat:1.7.0-alpha03")
 
                 /* SAF DocumentFile manager with backward compatibility */
@@ -119,13 +119,13 @@ kotlin {
                 }
 
                 /*  Activity's compose support with backward compatibility */
-                api("androidx.activity:activity-compose:1.9.0-alpha03")
+                api("androidx.activity:activity-compose:1.9.0-beta01")
 
                 /* Lottie for animations (like Nightmode toggle button) */
                 implementation("com.airbnb.android:lottie-compose:6.4.0")
 
                 /* Network and TLS */
-                implementation("io.netty:netty-all:4.1.107.Final")
+                implementation("io.netty:netty-all:4.1.108.Final")
                 api("org.conscrypt:conscrypt-android:2.5.2") //TLSv1.3 with backward compatibility
 
                 /* Video player engine: Media3 (ExoPlayer and its extensions) */

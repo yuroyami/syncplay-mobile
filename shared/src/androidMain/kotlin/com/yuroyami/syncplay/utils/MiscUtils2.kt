@@ -87,8 +87,8 @@ actual fun getScreenSizeInfo(): ScreenSizeInfo {
     }
 }
 
-actual fun String.format(vararg keys: String): String {
-    return if (keys.isEmpty()) this else String.format(this, *keys)
+actual fun String.format(vararg args: String): String {
+    return String.format(this, *args)
 }
 
 actual fun getSystemLanguageCode(): String {

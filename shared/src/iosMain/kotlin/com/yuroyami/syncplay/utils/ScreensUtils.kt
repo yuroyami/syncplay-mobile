@@ -22,8 +22,10 @@ import com.yuroyami.syncplay.watchroom.RoomUI
 import com.yuroyami.syncplay.watchroom.homeCallback
 import com.yuroyami.syncplay.watchroom.prepareProtocol
 import com.yuroyami.syncplay.watchroom.viewmodel
+import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationDelegateProtocol
+import platform.UIKit.UIApplicationOpenSettingsURLString
 import platform.UIKit.UIInterfaceOrientationMask
 import platform.UIKit.UIInterfaceOrientationMaskAll
 import platform.UIKit.UIInterfaceOrientationMaskLandscape
@@ -90,10 +92,6 @@ fun SyncplayController() = ComposeUIViewController {
                         null
                     )
                 }
-//                UIDevice.currentDevice().setValue(
-//                    UIInterfaceOrientationPortrait,
-//                    "orientation"
-//                )
             }
 
             HomeScreen(remember { HomeConfig() })
@@ -102,8 +100,11 @@ fun SyncplayController() = ComposeUIViewController {
 }
 
 object Home : HomeCallback {
-    override fun onLanguageChanged(newLang: String) {
 
+    override fun onLanguageChanged(newLang: String) {
+        NSURL(string = UIApplicationOpenSettingsURLString).let { url ->
+            UIApplication.sharedApplication.openURL(url, mapOf<Any?, Any>(), null)
+        }
     }
 
     override fun onJoin(joinInfo: JoinInfo) {

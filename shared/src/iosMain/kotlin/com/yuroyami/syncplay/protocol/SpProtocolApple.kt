@@ -20,10 +20,10 @@ import kotlinx.coroutines.launch
 class SpProtocolApple : SyncplayProtocol() {
 
     /** Netty stuff */
-    var socket: Socket? = null
-    var connection: Connection? = null
-    var input: ByteReadChannel? = null
-    var output: ByteWriteChannel? = null
+    private var socket: Socket? = null
+    private var connection: Connection? = null
+    private var input: ByteReadChannel? = null
+    private var output: ByteWriteChannel? = null
 
     override suspend fun connectSocket() {
             try {

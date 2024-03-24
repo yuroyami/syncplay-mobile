@@ -58,7 +58,7 @@ fun List<Pair<Setting<out Any>, String>>.populate(categs: List<SettingCategory>)
         settingsMapper[setting.key] = setting
 
         /** Populating categories with their settings */
-        categs.first { it.keyID == categoryID }.settingList.add(setting)
+        categs.firstOrNull { it.keyID == categoryID }?.settingList?.add(setting)
     }
 }
 
