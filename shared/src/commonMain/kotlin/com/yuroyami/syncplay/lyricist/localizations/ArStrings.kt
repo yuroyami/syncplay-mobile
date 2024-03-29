@@ -123,6 +123,7 @@ val ArStrings = object : Strings {
     override val roomSkipMinuteAndHalfButton = "اقفز دقيقة و 30 ثانية"
 
     override val roomOverflowTitle = "المزيد من الخيارات..."
+    override val roomOverflowPip = "نمط النافذة المنبثقة"
     override val roomOverflowMsghistory = "سجل الدردشة"
     override val roomOverflowToggleNightmode = "تبديل وضع الليل"
     override val roomOverflowLeaveRoom = "مغادرة الغرفة"

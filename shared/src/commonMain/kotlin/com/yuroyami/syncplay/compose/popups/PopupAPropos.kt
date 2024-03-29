@@ -38,7 +38,8 @@ import com.yuroyami.syncplay.watchroom.homeCallback
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.vectorResource
 import syncplaymobile.shared.generated.resources.Res
-import syncplaymobile.shared.generated.resources.*
+import syncplaymobile.shared.generated.resources.github
+import syncplaymobile.shared.generated.resources.syncplay_logo_gradient
 
 object PopupAPropos {
 
@@ -97,7 +98,7 @@ object PopupAPropos {
 
                 Text(
                     modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start,
-                    color = MaterialTheme.colorScheme.primary, text = "• Version: 0.13.0", fontSize = 11.sp, maxLines = 1
+                    color = MaterialTheme.colorScheme.primary, text = "• Version: 0.14.0", fontSize = 11.sp, maxLines = 1
                 )
 
                 Text(
@@ -136,7 +137,7 @@ object PopupAPropos {
                         onClick = {
                             visibilityState.value = false
 
-                            homeCallback?.onSoloMode()
+                            homeCallback?.onJoin(null) //Passing null to indicate we're in offline mode
                         },
                     ) {
                         Icon(imageVector = Icons.Filled.Tv, "")

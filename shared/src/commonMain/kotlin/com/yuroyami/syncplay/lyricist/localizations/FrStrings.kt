@@ -121,6 +121,7 @@ val FrStrings = object : Strings {
     override val roomAddmediaOnlineUrl = "Adresse URL"
     override val roomSkipMinuteAndHalfButton = "Passer 1 minute et 30 secondes"
     override val roomOverflowTitle = "Plus d'options..."
+    override val roomOverflowPip = "Mode image-en-image (PIP)"
     override val roomOverflowMsghistory = "Historique de chat"
     override val roomOverflowToggleNightmode = "Basculer le mode nuit"
     override val roomOverflowLeaveRoom = "Quitter la salle"

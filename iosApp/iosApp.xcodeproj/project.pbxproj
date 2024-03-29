@@ -11,21 +11,7 @@
 		045FEB1D2B91A34200F9C842 /* SyncplayScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 045FEB1C2B91A34200F9C842 /* SyncplayScreen.swift */; };
 		04BF80022B9704B9002E2EDE /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF80012B9704B9002E2EDE /* AudioToolbox.framework */; };
 		04BF80042B9704C1002E2EDE /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF80032B9704C1002E2EDE /* AVFoundation.framework */; };
-		04BF80062B9704C9002E2EDE /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF80052B9704C9002E2EDE /* CFNetwork.framework */; };
-		04BF80082B9704D3002E2EDE /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF80072B9704D3002E2EDE /* CoreFoundation.framework */; };
-		04BF800A2B9704DA002E2EDE /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF80092B9704DA002E2EDE /* CoreGraphics.framework */; };
-		04BF800C2B9704E3002E2EDE /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF800B2B9704E3002E2EDE /* CoreMedia.framework */; };
-		04BF800E2B9704EB002E2EDE /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF800D2B9704EB002E2EDE /* CoreText.framework */; };
-		04BF80102B9704F1002E2EDE /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF800F2B9704F1002E2EDE /* CoreVideo.framework */; };
 		04BF80122B9704FA002E2EDE /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF80112B9704FA002E2EDE /* Foundation.framework */; };
-		04BF80142B970513002E2EDE /* libbz2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF80132B970509002E2EDE /* libbz2.tbd */; };
-		04BF80162B97051F002E2EDE /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF80152B970518002E2EDE /* libc++.tbd */; };
-		04BF80182B970533002E2EDE /* libiconv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF80172B97052A002E2EDE /* libiconv.tbd */; };
-		04BF801A2B970545002E2EDE /* libxml2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF80192B97053E002E2EDE /* libxml2.tbd */; };
-		04BF801C2B97054D002E2EDE /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF801B2B97054D002E2EDE /* OpenGLES.framework */; };
-		04BF801E2B970556002E2EDE /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF801D2B970556002E2EDE /* QuartzCore.framework */; };
-		04BF80202B97055D002E2EDE /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF801F2B97055D002E2EDE /* Security.framework */; };
-		04BF80222B970564002E2EDE /* VideoToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF80212B970564002E2EDE /* VideoToolbox.framework */; };
 		04BF80242B97056B002E2EDE /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF80232B97056B002E2EDE /* UIKit.framework */; };
 		04E674932AB8AF3D00404C63 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 04E674922AB8AF3D00404C63 /* Launch Screen.storyboard */; };
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
@@ -69,25 +55,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				04BF801E2B970556002E2EDE /* QuartzCore.framework in Frameworks */,
-				04BF800A2B9704DA002E2EDE /* CoreGraphics.framework in Frameworks */,
-				04BF80222B970564002E2EDE /* VideoToolbox.framework in Frameworks */,
-				04BF80082B9704D3002E2EDE /* CoreFoundation.framework in Frameworks */,
-				04BF80142B970513002E2EDE /* libbz2.tbd in Frameworks */,
-				04BF801A2B970545002E2EDE /* libxml2.tbd in Frameworks */,
 				04BF80242B97056B002E2EDE /* UIKit.framework in Frameworks */,
 				0424B733C25F1A6509DE1F07 /* Pods_iosApp.framework in Frameworks */,
-				04BF801C2B97054D002E2EDE /* OpenGLES.framework in Frameworks */,
 				04BF80022B9704B9002E2EDE /* AudioToolbox.framework in Frameworks */,
-				04BF800E2B9704EB002E2EDE /* CoreText.framework in Frameworks */,
-				04BF80162B97051F002E2EDE /* libc++.tbd in Frameworks */,
 				04BF80122B9704FA002E2EDE /* Foundation.framework in Frameworks */,
-				04BF80102B9704F1002E2EDE /* CoreVideo.framework in Frameworks */,
-				04BF80182B970533002E2EDE /* libiconv.tbd in Frameworks */,
-				04BF80062B9704C9002E2EDE /* CFNetwork.framework in Frameworks */,
 				04BF80042B9704C1002E2EDE /* AVFoundation.framework in Frameworks */,
-				04BF80202B97055D002E2EDE /* Security.framework in Frameworks */,
-				04BF800C2B9704E3002E2EDE /* CoreMedia.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -432,17 +404,19 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = logo;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 0.14.0;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
 				DEVELOPMENT_TEAM = B5573QN48P;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Syncplay;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.13.0;
+				MARKETING_VERSION = 0.14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yuroyami.syncplay;
 				PRODUCT_NAME = "${TARGET_NAME}";
 				SWIFT_VERSION = 5.0;
@@ -457,17 +431,19 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = logo;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 0.14.0;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
 				DEVELOPMENT_TEAM = B5573QN48P;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Syncplay;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.13.0;
+				MARKETING_VERSION = 0.14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yuroyami.syncplay;
 				PRODUCT_NAME = "${TARGET_NAME}";
 				SWIFT_VERSION = 5.0;

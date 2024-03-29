@@ -123,6 +123,7 @@ val EnStrings = object : Strings {
     override val roomAddmediaOnlineUrl = "URL address"
     override val roomSkipMinuteAndHalfButton = "Skip 1 minute and 30 seconds"
     override val roomOverflowTitle = "More Options..."
+    override val roomOverflowPip = "Picture-in-Picture"
     override val roomOverflowMsghistory = "Chat History"
     override val roomOverflowToggleNightmode = "Toggle night-mode"
     override val roomOverflowLeaveRoom = "Leave room"

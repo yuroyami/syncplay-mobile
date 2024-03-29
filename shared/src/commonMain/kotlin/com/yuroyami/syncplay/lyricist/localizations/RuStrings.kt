@@ -123,6 +123,7 @@ val RuStrings = object : Strings {
     override val roomAddmediaOnlineUrl = "URL адрес"
     override val roomSkipMinuteAndHalfButton = "Пропустить 1 минуту и 30 секунд"
     override val roomOverflowTitle = "Дополнительные опции..."
+    override val roomOverflowPip = "режим картинка в картинке"
     override val roomOverflowMsghistory = "История чата"
     override val roomOverflowToggleNightmode = "Переключить ночной режим"
     override val roomOverflowLeaveRoom = "Покинуть комнату"

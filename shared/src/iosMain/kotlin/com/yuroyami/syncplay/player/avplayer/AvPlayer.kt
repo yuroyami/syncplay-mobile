@@ -54,7 +54,7 @@ class AvPlayer : BasePlayer() {
     /*-- Exoplayer-related properties --*/
     private var avPlayer: AVPlayer? = null
     private lateinit var avView: AVPlayerViewController
-    private var avPlayerLayer: AVPlayerLayer? = null
+    var avPlayerLayer: AVPlayerLayer? = null
     private var avContainer: UIView? = null
 
     private var avMedia: AVPlayerItem? = null
@@ -246,7 +246,7 @@ class AvPlayer : BasePlayer() {
     override fun skipChapter() = Unit
 
 
-    fun CValue<CMTime>.toMillis(): Long {
+    private fun CValue<CMTime>.toMillis(): Long {
         return CMTimeGetSeconds(this).times(1000.0).roundToLong()
     }
 }

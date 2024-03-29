@@ -160,6 +160,10 @@ class WatchActivity : ComponentActivity() {
                 updatePiPParams()
             }
 
+            override fun onPictureInPicture(enable: Boolean) {
+
+            }
+
         }
 
         /** Setting content view, making everything visible */
@@ -244,7 +248,7 @@ class WatchActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
             return
 
-        val intent = Intent(pipACTION)
+        val intent = Intent("pip")
         val pendingIntent = PendingIntent.getBroadcast(
             this, 6969, intent,
             PendingIntent.FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE
@@ -275,7 +279,7 @@ class WatchActivity : ComponentActivity() {
     private val pipBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             intent?.let {
-                if (it.action == pipACTION) {
+                if (it.action == "pip") {
                     val pausePlayValue = it.getIntExtra("pause_zero_play_one", -1)
 
                     if (pausePlayValue == 1) {
@@ -288,8 +292,6 @@ class WatchActivity : ComponentActivity() {
         }
     }
 
-    val pipACTION = "action_pip_pause_play"
-
     /** Applying the locale language preference */
     override fun attachBaseContext(newBase: Context?) {
         /** Applying saved language */
@@ -300,7 +302,7 @@ class WatchActivity : ComponentActivity() {
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onResume() {
         super.onResume()
-        val filter = IntentFilter(pipACTION)
+        val filter = IntentFilter("pip")
         registerReceiver(pipBroadcastReceiver, filter)
 
         hideSystemUI(false)

@@ -8,6 +8,7 @@ import androidx.compose.ui.window.ComposeUIViewController
 import com.yuroyami.syncplay.home.HomeCallback
 import com.yuroyami.syncplay.home.HomeConfig
 import com.yuroyami.syncplay.home.HomeScreen
+import com.yuroyami.syncplay.home.snacky
 import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.avplayer.AvPlayer
@@ -18,14 +19,21 @@ import com.yuroyami.syncplay.settings.Setting
 import com.yuroyami.syncplay.settings.SettingObtainerCallback
 import com.yuroyami.syncplay.settings.obtainerCallback
 import com.yuroyami.syncplay.settings.valueBlockingly
+import com.yuroyami.syncplay.watchroom.RoomCallback
 import com.yuroyami.syncplay.watchroom.RoomUI
 import com.yuroyami.syncplay.watchroom.homeCallback
 import com.yuroyami.syncplay.watchroom.prepareProtocol
 import com.yuroyami.syncplay.watchroom.viewmodel
+import kotlinx.coroutines.delay
+import platform.AVKit.AVPictureInPictureController
 import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationDelegateProtocol
+import platform.UIKit.UIApplicationLaunchOptionsShortcutItemKey
 import platform.UIKit.UIApplicationOpenSettingsURLString
+import platform.UIKit.UIApplicationShortcutIcon.Companion.iconWithType
+import platform.UIKit.UIApplicationShortcutIconType
+import platform.UIKit.UIApplicationShortcutItem
 import platform.UIKit.UIInterfaceOrientationMask
 import platform.UIKit.UIInterfaceOrientationMaskAll
 import platform.UIKit.UIInterfaceOrientationMaskLandscape
@@ -33,11 +41,24 @@ import platform.UIKit.UIInterfaceOrientationMaskPortrait
 import platform.UIKit.UIWindow
 import platform.UIKit.UIWindowScene
 import platform.UIKit.UIWindowSceneGeometryPreferencesIOS
+import platform.UIKit.shortcutItems
 import platform.darwin.NSObject
 
-val delegato = AppleDelegate()
+val delegato = AppleDelegate().also {
+    UIApplication.sharedApplication.delegate = it
+}
+
+
+var pipcontroller: AVPictureInPictureController? = null
+
 class AppleDelegate : NSObject(), UIApplicationDelegateProtocol {
-    var myOrientationMask = UIInterfaceOrientationMaskPortrait
+
+    var myOrientationMask: UIInterfaceOrientationMask = UIInterfaceOrientationMaskPortrait
+
+
+    init {
+        homeCallback = Home
+    }
 
     override fun application(
         application: UIApplication,
@@ -45,9 +66,34 @@ class AppleDelegate : NSObject(), UIApplicationDelegateProtocol {
     ): UIInterfaceOrientationMask {
         return myOrientationMask
     }
+
+
+    override fun application(application: UIApplication, didFinishLaunchingWithOptions: Map<Any?, *>?): Boolean {
+        println("LAUNCHING OZRFIZORIFOZRIFOZRIFOZRIF")
+
+        sc = didFinishLaunchingWithOptions?.get(UIApplicationLaunchOptionsShortcutItemKey) as? UIApplicationShortcutItem
+
+        sc?.let { sc ->
+            homeCallback?.onJoin(sc.type.toJoinInfo())
+        }
+
+        return false
+    }
+
+    override fun application(application: UIApplication, performActionForShortcutItem: UIApplicationShortcutItem, completionHandler: (Boolean) -> Unit) {
+        println("2222222 OZRFIZORIFOZRIFOZRIFOZRIF")
+
+
+        sc = performActionForShortcutItem
+        homeCallback?.onJoin(performActionForShortcutItem.type.toJoinInfo())
+        completionHandler(true)
+
+    }
 }
 
 val isRoom = mutableStateOf(false)
+
+var sc: UIApplicationShortcutItem? = null
 
 /** This view controller hosts and switches between room screen and home screen view controllers */
 fun SyncplayController() = ComposeUIViewController {
@@ -55,6 +101,8 @@ fun SyncplayController() = ComposeUIViewController {
 
     when (room) {
         true -> {
+            viewmodel?.roomCallback = Room
+
             LaunchedEffect(null) {
                 delegato.myOrientationMask = UIInterfaceOrientationMaskLandscape
 
@@ -74,15 +122,8 @@ fun SyncplayController() = ComposeUIViewController {
         }
 
         false -> {
-            homeCallback = Home
-
             LaunchedEffect(null) {
-                with(UIApplication.sharedApplication) {
-                    delegate = delegato
-                }
-
                 delegato.myOrientationMask = UIInterfaceOrientationMaskAll
-
 
                 UIApplication.sharedApplication.connectedScenes.firstOrNull()?.let {
                     (it as? UIWindowScene)?.requestGeometryUpdateWithPreferences(
@@ -95,6 +136,14 @@ fun SyncplayController() = ComposeUIViewController {
             }
 
             HomeScreen(remember { HomeConfig() })
+
+            LaunchedEffect(null) {
+                delay(3000)
+
+                snacky.showSnackbar(
+                    sc?.type.toString()
+                )
+            }
         }
     }
 }
@@ -107,11 +156,13 @@ object Home : HomeCallback {
         }
     }
 
-    override fun onJoin(joinInfo: JoinInfo) {
+    override fun onJoin(joinInfo: JoinInfo?) {
         viewmodel = com.yuroyami.syncplay.watchroom.SpViewModel()
-        viewmodel!!.p = SpProtocolApple()
 
-        prepareProtocol(joinInfo.get())
+        joinInfo?.let {
+            viewmodel!!.p = SpProtocolApple()
+            prepareProtocol(it)
+        }
 
         val engine = BasePlayer.ENGINE.valueOf(
             valueBlockingly(DataStoreKeys.MISC_PLAYER_ENGINE, getDefaultEngine())
@@ -137,11 +188,72 @@ object Home : HomeCallback {
     }
 
     override fun onSaveConfigShortcut(joinInfo: JoinInfo) {
+        val type = with(joinInfo) { listOf(username, roomname, address, port.toString(), password) }
+            .joinToString("','#'")
 
-    }
+        val shortcutItem = UIApplicationShortcutItem(
+            type = type,
+            localizedTitle = joinInfo.roomname,
+            localizedSubtitle = null,
+            icon = iconWithType(UIApplicationShortcutIconType.UIApplicationShortcutIconTypeFavorite),
+            userInfo = null
+        )
 
-    override fun onSoloMode() {
+        // Add the shortcut item to the application
+        UIApplication.sharedApplication.shortcutItems = UIApplication.sharedApplication.shortcutItems?.plus(shortcutItem)
 
     }
 }
 
+fun handleShortcut(shortcut: UIApplicationShortcutItem) {
+    println("HANDLE AMIGO SHORTCUT $shortcut")
+    sc = shortcut
+    homeCallback?.onJoin(shortcut.type.toJoinInfo())
+}
+
+fun String.toJoinInfo(): JoinInfo {
+    val l = split("','#'")
+    return JoinInfo(
+        username = l[0], roomname = l[1],
+        address = l[2], port = l[3].toIntOrNull() ?: 0, password = l[4]
+    )
+}
+
+object Room : RoomCallback {
+    override fun onLeave() {
+        isRoom.value = false
+        loggy("On leave......")
+        viewmodel = null
+
+    }
+
+    override fun onPlayback(paused: Boolean) {
+
+    }
+
+    override fun onPictureInPicture(enable: Boolean) {
+        if (AVPictureInPictureController.isPictureInPictureSupported()) {
+            val layer = when (viewmodel?.player) {
+                is AvPlayer -> {
+                    (viewmodel?.player as? AvPlayer)?.avPlayerLayer
+                }
+
+                is VlcPlayer -> {
+                    (viewmodel?.player as? VlcPlayer)?.pipLayer
+                }
+
+                else -> null
+            }
+            layer?.let {
+                pipcontroller = AVPictureInPictureController(layer)
+            }
+        }
+
+        if (pipcontroller?.pictureInPicturePossible == true
+            && isRoom.value
+            && viewmodel?.media != null
+        ) {
+            pipcontroller?.startPictureInPicture()
+        }
+    }
+}

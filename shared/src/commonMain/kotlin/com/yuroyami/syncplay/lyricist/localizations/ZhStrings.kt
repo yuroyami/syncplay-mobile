@@ -122,6 +122,7 @@ val ZhStrings = object : Strings {
     override val roomAddmediaOnlineUrl = "URL地址"
     override val roomSkipMinuteAndHalfButton = "跳过1分钟30秒"
     override val roomOverflowTitle = "更多选项..."
+    override val roomOverflowPip = "画中画模式"
     override val roomOverflowMsghistory = "聊天记录"
     override val roomOverflowToggleNightmode = "切换夜间模式"
     override val roomOverflowLeaveRoom = "离开房间"

@@ -121,6 +121,7 @@ val EsStrings = object : Strings {
     override val roomAddmediaOnlineUrl = "Dirección URL"
     override val roomSkipMinuteAndHalfButton = "Saltar 1 minuto y 30 segundos"
     override val roomOverflowTitle = "Más opciones..."
+    override val roomOverflowPip = "Modo PIP"
     override val roomOverflowMsghistory = "Historial de chat"
     override val roomOverflowToggleNightmode = "Cambiar modo nocturno"
     override val roomOverflowLeaveRoom = "Salir de la sala"

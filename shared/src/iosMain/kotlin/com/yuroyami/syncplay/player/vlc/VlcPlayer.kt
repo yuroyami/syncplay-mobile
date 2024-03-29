@@ -28,6 +28,8 @@ import com.yuroyami.syncplay.watchroom.lyricist
 import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import platform.AVFoundation.AVLayerVideoGravityResizeAspect
+import platform.AVFoundation.AVPlayerLayer
 import platform.Foundation.NSArray
 import platform.Foundation.NSNotification
 import platform.Foundation.NSNumber
@@ -44,6 +46,8 @@ class VlcPlayer : BasePlayer() {
     private var vlcView: UIView? = null
 
     private var vlcMedia: VLCMedia? = null
+
+    var pipLayer: AVPlayerLayer? = null
 
     override val canChangeAspectRatio: Boolean
         get() = false //todo
@@ -62,6 +66,13 @@ class VlcPlayer : BasePlayer() {
                 libvlc = VLCLibrary(listOf("-vv"))
                 vlcPlayer = VLCMediaPlayer(libvlc!!)
                 vlcPlayer!!.drawable = vlcView
+
+                /* Layer for PIP */
+                pipLayer = AVPlayerLayer.playerLayerWithPlayer(null)
+                pipLayer?.frame = vlcView!!.bounds
+                pipLayer?.videoGravity = AVLayerVideoGravityResizeAspect
+                pipLayer?.addSublayer(vlcView!!.layer)
+
                 return@UIKitView vlcView!!.also {
                     initialize()
                 }

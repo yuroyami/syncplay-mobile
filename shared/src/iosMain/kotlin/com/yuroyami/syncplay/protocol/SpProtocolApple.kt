@@ -60,9 +60,11 @@ class SpProtocolApple : SyncplayProtocol() {
     override fun endConnection(terminating: Boolean) {
         try {
             /* Cleaning leftovers */
-            connection?.socket?.close()
+            socket?.close()
 
             if (terminating) {
+                socket?.dispose()
+
                 protoScope.cancel("")
             }
         } catch (_: Exception) {

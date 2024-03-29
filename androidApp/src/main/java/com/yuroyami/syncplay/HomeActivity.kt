@@ -75,11 +75,13 @@ class HomeActivity : ComponentActivity() {
                 }
             }
 
-            override fun onJoin(joinInfo: JoinInfo) {
+            override fun onJoin(joinInfo: JoinInfo?) {
                 viewmodel = SpViewModel()
-                viewmodel!!.p = SpProtocolAndroid()
 
-                prepareProtocol(joinInfo.get())
+                joinInfo?.let {
+                    viewmodel!!.p = SpProtocolAndroid()
+                    prepareProtocol(it)
+                }
 
                 val intent = Intent(this@HomeActivity, WatchActivity::class.java)
                 intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
@@ -111,8 +113,6 @@ class HomeActivity : ComponentActivity() {
                 ShortcutManagerCompat.addDynamicShortcuts(this@HomeActivity, listOf(shortcutInfo))
                 ShortcutManagerCompat.requestPinShortcut(this@HomeActivity, shortcutInfo, null)
             }
-
-            override fun onSoloMode() = soloMode()
         }
 
         /** Maybe there is a shortcut intent */
@@ -128,17 +128,6 @@ class HomeActivity : ComponentActivity() {
                 homeCallback?.onJoin(info)
             }
         }
-    }
-
-
-    fun soloMode() {
-        viewmodel = SpViewModel()
-
-        val intent = Intent(this, WatchActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-        intent.putExtra("SOLO_MODE", true)
-
-        startActivity(intent)
     }
 
     override fun attachBaseContext(newBase: Context?) {

@@ -50,6 +50,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.NoEncryption
 import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PictureInPicture
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SpeakerGroup
 import androidx.compose.material.icons.filled.Subtitles
@@ -525,6 +526,25 @@ private fun RoomUIImpl() {
                                         font = directive
                                     )
 
+                                    /* Picture-in-Picture mode */
+                                    DropdownMenuItem(text = {
+                                        Row(verticalAlignment = CenterVertically) {
+                                            Icon(
+                                                modifier = Modifier.padding(2.dp), imageVector = Icons.Filled.PictureInPicture, contentDescription = "", tint = Color.LightGray
+                                            )
+
+                                            Spacer(Modifier.width(8.dp))
+
+                                            Text(
+                                                color = Color.LightGray, text = lyricist.strings.roomOverflowPip
+                                            )
+                                        }
+                                    }, onClick = {
+                                        overflowmenustate.value = false
+
+                                        //TODO GO PIP
+                                    })
+
                                     /* Chat history item */
                                     if (!isSoloMode) {
                                         DropdownMenuItem(text = {
@@ -582,6 +602,7 @@ private fun RoomUIImpl() {
                                             )
                                         }
                                     }, onClick = {
+                                        viewmodel?.p?.endConnection(true)
                                         viewmodel?.roomCallback?.onLeave()
                                     })
                                 }

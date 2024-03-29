@@ -6,4 +6,5 @@ interface RoomCallback {
 
     fun onPlayback(paused: Boolean)
 
+    fun onPictureInPicture(enable: Boolean)
 }

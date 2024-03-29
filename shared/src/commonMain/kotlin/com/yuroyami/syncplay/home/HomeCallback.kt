@@ -6,10 +6,11 @@ interface HomeCallback {
 
     fun onLanguageChanged(newLang: String)
 
-    fun onJoin(joinInfo: JoinInfo)
+    /** Called when a user joins a room.
+     *
+     * @param [joinInfo] When null, the user is entering offline solo mode, otherwise joins an actual online room.
+     */
+    fun onJoin(joinInfo: JoinInfo?)
 
     fun onSaveConfigShortcut(joinInfo: JoinInfo)
-
-    fun onSoloMode()
-
 }

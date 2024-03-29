@@ -8,6 +8,7 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import cocoapods.SPLPing.SPLPing
 import cocoapods.SPLPing.SPLPingConfiguration
 import com.yuroyami.syncplay.player.BasePlayer
+import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.cstr
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeoutOrNull
@@ -15,10 +16,10 @@ import platform.Foundation.NSDate
 import platform.Foundation.NSLocale
 import platform.Foundation.NSString
 import platform.Foundation.NSURL
+import platform.Foundation.create
 import platform.Foundation.currentLocale
 import platform.Foundation.languageCode
 import platform.Foundation.lastPathComponent
-import platform.Foundation.stringWithFormat
 import platform.Foundation.timeIntervalSince1970
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
@@ -79,19 +80,20 @@ actual fun getScreenSizeInfo(): ScreenSizeInfo {
     }
 }
 
+@OptIn(BetaInteropApi::class)
 actual fun String.format(vararg args: String): String {
     // This ugly work around is because varargs can't be passed to Objective-C...
     // NSString format works with NSObjects via %@, we should change standard format to %@
     //val objcFormat = this@format.replace(Regex("%((?:\\.|\\d|\\$)*)[abcdefs]"), "%$1@")
-    val objcFormat = this@format //.replace("%[\\d|.]*[sdf]|%".toRegex(), "@")
+    val f = this@format //.replace("%[\\d|.]*[sdf]|%".toRegex(), "@")
     @Suppress("MagicNumber")
     return when (args.size) {
         0 -> this //NSString.stringWithFormat(objcFormat)
-        1 -> NSString.stringWithFormat(objcFormat, args[0].cstr)
-        2 -> NSString.stringWithFormat(objcFormat, args[0].cstr, args[1].cstr)
-        3 -> NSString.stringWithFormat(objcFormat, args[0].cstr, args[1].cstr, args[2].cstr)
-        4 -> NSString.stringWithFormat(objcFormat, args[0].cstr, args[1].cstr, args[2].cstr, args[3].cstr)
-        else -> NSString.stringWithFormat(objcFormat, args[0].cstr, args[1].cstr, args[2].cstr, args[3].cstr, args[4].cstr)
+        1 -> NSString.create(f, locale = NSLocale.currentLocale, args[0].cstr).toString()
+        2 -> NSString.create(f, locale = NSLocale.currentLocale, args[0].cstr, args[1].cstr).toString()
+        3 -> NSString.create(f,locale = NSLocale.currentLocale, args[0].cstr, args[1].cstr, args[2].cstr).toString()
+        4 -> NSString.create(f, locale = null, args[0].cstr, args[1].cstr, args[2].cstr, args[3].cstr).toString()
+        else -> NSString.create(f, locale = null, args[0].cstr, args[1].cstr, args[2].cstr, args[3].cstr, args[4].cstr).toString()
     }
 }
 

@@ -63,6 +63,7 @@ interface Strings {
     val roomPingConnected: (String) -> String
     val roomPingDisconnected: String
     val roomOverflowTitle: String
+    val roomOverflowPip: String
     val roomOverflowMsghistory: String
     val roomOverflowToggleNightmode: String
     val roomOverflowLeaveRoom: String
