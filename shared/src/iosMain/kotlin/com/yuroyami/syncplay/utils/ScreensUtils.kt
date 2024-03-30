@@ -24,7 +24,7 @@ import com.yuroyami.syncplay.watchroom.RoomUI
 import com.yuroyami.syncplay.watchroom.homeCallback
 import com.yuroyami.syncplay.watchroom.prepareProtocol
 import com.yuroyami.syncplay.watchroom.viewmodel
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import platform.AVKit.AVPictureInPictureController
 import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
@@ -69,23 +69,13 @@ class AppleDelegate : NSObject(), UIApplicationDelegateProtocol {
 
 
     override fun application(application: UIApplication, didFinishLaunchingWithOptions: Map<Any?, *>?): Boolean {
-        println("LAUNCHING OZRFIZORIFOZRIFOZRIFOZRIF")
-
-        sc = didFinishLaunchingWithOptions?.get(UIApplicationLaunchOptionsShortcutItemKey) as? UIApplicationShortcutItem
-
-        sc?.let { sc ->
-            homeCallback?.onJoin(sc.type.toJoinInfo())
-        }
-
+        (didFinishLaunchingWithOptions?.get(UIApplicationLaunchOptionsShortcutItemKey) as? UIApplicationShortcutItem)
+            ?.let { handleShortcut(it)}
         return false
     }
 
     override fun application(application: UIApplication, performActionForShortcutItem: UIApplicationShortcutItem, completionHandler: (Boolean) -> Unit) {
-        println("2222222 OZRFIZORIFOZRIFOZRIFOZRIF")
-
-
-        sc = performActionForShortcutItem
-        homeCallback?.onJoin(performActionForShortcutItem.type.toJoinInfo())
+        handleShortcut(performActionForShortcutItem)
         completionHandler(true)
 
     }
@@ -136,14 +126,6 @@ fun SyncplayController() = ComposeUIViewController {
             }
 
             HomeScreen(remember { HomeConfig() })
-
-            LaunchedEffect(null) {
-                delay(3000)
-
-                snacky.showSnackbar(
-                    sc?.type.toString()
-                )
-            }
         }
     }
 }
@@ -201,6 +183,12 @@ object Home : HomeCallback {
 
         // Add the shortcut item to the application
         UIApplication.sharedApplication.shortcutItems = UIApplication.sharedApplication.shortcutItems?.plus(shortcutItem)
+
+        viewmodel?.viewmodelScope?.launch {
+            snacky.showSnackbar(
+                "Shortcut added: ${joinInfo.roomname}"
+            )
+        }
     }
 
     override fun onEraseConfigShortcuts() {
@@ -225,7 +213,6 @@ fun String.toJoinInfo(): JoinInfo {
 object Room : RoomCallback {
     override fun onLeave() {
         isRoom.value = false
-        loggy("On leave......")
         viewmodel = null
 
     }

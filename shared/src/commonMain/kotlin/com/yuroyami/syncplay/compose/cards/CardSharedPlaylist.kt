@@ -186,7 +186,6 @@ object CardSharedPlaylist {
 
                         val itempopup = remember { mutableStateOf(false) }
 
-
                         Box {
                             Row(modifier = Modifier
                                 .fillMaxWidth()
@@ -194,7 +193,8 @@ object CardSharedPlaylist {
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = rememberRipple(color = Paletting.SP_ORANGE)
-                                ) { itempopup.value = true }
+                                ) { itempopup.value = true },
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
                                 if (index == viewmodel!!.p.session.sharedPlaylistIndex) {
                                     Icon(
@@ -209,7 +209,7 @@ object CardSharedPlaylist {
                                 Text(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(vertical = 6.dp),
+                                        .padding(vertical = 4.dp),
                                     text = item, maxLines = 1, fontSize = 11.sp, color = Color.LightGray
                                 )
                             }

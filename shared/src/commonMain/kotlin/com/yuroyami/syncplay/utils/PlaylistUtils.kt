@@ -113,10 +113,10 @@ object PlaylistUtils {
 
         if (!paths.contains(uri)) paths.add(uri)
 
-        writeValue(DataStoreKeys.PREF_SP_MEDIA_DIRS, paths)
+        writeValue(DataStoreKeys.PREF_SP_MEDIA_DIRS, paths.toSet())
     }
 
-    /** TODO: Search subdirectories
+    /**
      * name and load it into ExoPlayer. This is executed on a separate thread since the IO operation
      * is heavy.
      */
@@ -129,21 +129,27 @@ object PlaylistUtils {
             viewmodel?.player?.injectVideo(fileName, isUrl = true)
         } else {
             /* We search our media directories which were added by the user in settings */
-            val paths = valueBlockingly(DataStoreKeys.PREF_SP_MEDIA_DIRS, emptySet<String>()).toMutableSet()
+            val paths = valueBlockingly(DataStoreKeys.PREF_SP_MEDIA_DIRS, emptySet<String>())
 
             if (paths.isEmpty()) {
                 RoomUtils.broadcastMessage(lyricist.strings.roomSharedPlaylistNoDirectories, false)
             }
 
             var fileUri2Play: String? = null
+
             /* We iterate through the media directory paths spreading their children tree **/
             for (path in paths) {
+                println("Iterating media dirs....")
+
                 iterateDirectory(uri = path, target = fileName) {
                     fileUri2Play  = it
 
                     /** Loading the file into our player **/
                     viewmodel?.player?.injectVideo(fileUri2Play)
                 }
+
+                println("Iterating done?....")
+
             }
             if (fileUri2Play == null) {
                 if (viewmodel?.media?.fileName != fileName) {

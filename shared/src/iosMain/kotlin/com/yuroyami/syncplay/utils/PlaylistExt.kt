@@ -6,6 +6,7 @@ import com.yuroyami.syncplay.utils.CommonUtils.vidExs
 import com.yuroyami.syncplay.utils.PlaylistUtils.retrieveFile
 import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.cinterop.BetaInteropApi
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCObjectVar
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
@@ -19,9 +20,12 @@ import platform.Foundation.NSFileCoordinatorReadingWithoutChanges
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSString
 import platform.Foundation.NSURL
+import platform.Foundation.NSURLBookmarkCreationMinimalBookmark
+import platform.Foundation.NSURLBookmarkResolutionWithSecurityScope
 import platform.Foundation.NSURLIsDirectoryKey
 import platform.Foundation.NSURLNameKey
 import platform.Foundation.NSUTF8StringEncoding
+import platform.Foundation.NSUserDefaults
 import platform.Foundation.URLByAppendingPathComponent
 import platform.Foundation.dataUsingEncoding
 import platform.Foundation.lastPathComponent
@@ -83,23 +87,41 @@ actual suspend fun addFolderToPlaylist(uri: String) {
 }
 
 @OptIn(BetaInteropApi::class)
-actual suspend fun iterateDirectory(uri: String, target: String, onFileFound: (String) -> Unit) {
-    val url = NSURL.fileURLWithPath(uri, isDirectory = true)
-    val access = url.startAccessingSecurityScopedResource()
+actual fun iterateDirectory(uri: String, target: String, onFileFound: (String) -> Unit) {
+    val data = userDefaults().dataForKey(uri) ?: return
 
-    NSFileCoordinator().coordinateReadingItemAtURL(url, NSFileCoordinatorReadingWithoutChanges, error = null) { dirUrl ->
+    val resolvedUrl = NSURL.URLByResolvingBookmarkData(
+        bookmarkData = data,
+        options = NSURLBookmarkResolutionWithSecurityScope,
+        relativeToURL = null,
+        bookmarkDataIsStale = null,
+        error = null
+    ) ?: return
+
+    val access = resolvedUrl.startAccessingSecurityScopedResource()
+
+    NSFileCoordinator().coordinateReadingItemAtURL(resolvedUrl, NSFileCoordinatorReadingWithoutChanges, error = null) { dirUrl ->
         if (dirUrl == null) return@coordinateReadingItemAtURL
 
-        dirUrl.startAccessingSecurityScopedResource()//Start accessing securely
+        val access2 = dirUrl.startAccessingSecurityScopedResource()//Start accessing securely
+
         val enumerator = NSFileManager.defaultManager.enumeratorAtURL(
             url = dirUrl,
             includingPropertiesForKeys = listOf(NSURLNameKey, NSURLIsDirectoryKey),
-            options = NSDirectoryEnumerationSkipsHiddenFiles,
-            errorHandler = null
-        )
+            options = NSDirectoryEnumerationSkipsHiddenFiles
+        ) { urlOnError, theError ->
+
+            println("This URL caused an error: ${urlOnError?.path}")
+            println("The error is: ${theError?.localizedDescription}")
+
+            return@enumeratorAtURL true
+        }
 
         var obj = enumerator?.nextObject() as? NSURL
+
         while (obj != null) {
+            val objAccess = obj.startAccessingSecurityScopedResource()
+
             val isDirectory = memScoped {
                 val isDirectoryPointer = nativeHeap.alloc<ObjCObjectVar<Any?>>()
 
@@ -108,20 +130,32 @@ actual suspend fun iterateDirectory(uri: String, target: String, onFileFound: (S
                 return@memScoped isDirectoryPointer.value as? Boolean
             }
 
+            loggy("Found a file: ${obj.path}")
+
             if (isDirectory == false) {
+
+                loggy("The file isn't a directory it seems. Let's check the name.")
+
                 val filename = obj.lastPathComponent
+                loggy("Name is: $filename")
+
                 if (filename == target) {
+                    loggy("File passed the vibe check, escaping.")
+
                     obj.path?.let { onFileFound(it) }
                     break
                 }
             }
 
+            if (objAccess) obj.stopAccessingSecurityScopedResource()
+
             obj = enumerator?.nextObject() as? NSURL //Next object now
         }
-        dirUrl.stopAccessingSecurityScopedResource()//Start accessing securely
+
+        if (access2) dirUrl.stopAccessingSecurityScopedResource()
     }
 
-    if (access) url.stopAccessingSecurityScopedResource()
+    if (access) resolvedUrl.stopAccessingSecurityScopedResource()
 }
 
 
@@ -176,3 +210,19 @@ fun isValidMediaFileExtension(fileExtension: String?): Boolean {
     val audioExs = setOf("mp3", "m4a", "wav", "aiff", "aac", "flac", "alac", "ogg", "wma", "ogg")
     return audioExs.contains(fileExtension?.lowercase() ?: "#") || vidExs.contains(fileExtension?.lowercase() ?: "#")
 }
+
+@OptIn(ExperimentalForeignApi::class)
+fun bookmarkDirectory(dir: String) {
+    val url = NSURL.URLWithString(dir)
+    url?.startAccessingSecurityScopedResource()
+    url?.bookmarkDataWithOptions(
+        NSURLBookmarkCreationMinimalBookmark,
+        includingResourceValuesForKeys = null,
+        relativeToURL = null, error = null
+    )?.let {
+        userDefaults().setObject(it, dir)
+    }
+    url?.stopAccessingSecurityScopedResource()
+}
+
+fun userDefaults(): NSUserDefaults = NSUserDefaults.standardUserDefaults()

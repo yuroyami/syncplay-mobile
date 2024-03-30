@@ -126,7 +126,7 @@ class FilePickerLauncher(
 
     private fun createPicker() = UIDocumentPickerViewController(
         forOpeningContentTypes = contentTypes,
-		asCopy = true
+		asCopy = pickerMode != Directory
     ).apply {
         delegate = pickerDelegate
         initialDirectory?.let { directoryURL = NSURL(string = it) }

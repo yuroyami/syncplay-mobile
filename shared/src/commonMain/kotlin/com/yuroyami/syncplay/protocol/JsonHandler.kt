@@ -26,7 +26,7 @@ object JsonHandler {
 
     fun SyncplayProtocol.handleJson(json: String) {
         val protocol = this
-        loggy("Server: $json")
+        //loggy("Server: $json")
 
         /* Second, we check what kind of JSON message we received from the first Json Object */
         try {

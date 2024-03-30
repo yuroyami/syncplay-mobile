@@ -84,7 +84,7 @@ abstract class SyncplayProtocol {
             try {
                 if (isSocketValid()) {
                     val finalOut = json + "\r\n"
-                    loggy("Client: $finalOut", 206)
+                    //loggy("Client: $finalOut", 206)
                     writeActualString(finalOut)
                 } else {
                     /** Queuing any pending outgoing messages */

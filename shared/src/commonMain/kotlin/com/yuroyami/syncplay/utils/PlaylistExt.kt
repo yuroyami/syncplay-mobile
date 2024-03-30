@@ -3,7 +3,7 @@ package com.yuroyami.syncplay.utils
 
 expect suspend fun addFolderToPlaylist(uri: String)
 
-expect suspend fun iterateDirectory(uri: String, target: String, onFileFound: (String) -> Unit)
+expect fun iterateDirectory(uri: String, target: String, onFileFound: (String) -> Unit)
 
 /** Saves the playlist as a plain text file (.txt) to the designated folder with a timestamp of the current time
  * @param toFolderUri The uri of the save folder */
