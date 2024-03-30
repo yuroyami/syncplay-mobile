@@ -1,34 +1,80 @@
 package com.yuroyami.syncplay.utils
 
-import com.yuroyami.syncplay.models.MediaFile
-import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.protocol.JsonSender.sendPlaylistChange
 import com.yuroyami.syncplay.protocol.JsonSender.sendPlaylistIndex
+import com.yuroyami.syncplay.utils.CommonUtils.vidExs
 import com.yuroyami.syncplay.utils.PlaylistUtils.retrieveFile
 import com.yuroyami.syncplay.watchroom.viewmodel
+import kotlinx.cinterop.BetaInteropApi
+import kotlinx.cinterop.ObjCObjectVar
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.nativeHeap
+import kotlinx.cinterop.ptr
+import kotlinx.cinterop.value
+import kotlinx.coroutines.launch
+import platform.Foundation.NSDirectoryEnumerationSkipsHiddenFiles
+import platform.Foundation.NSFileCoordinator
+import platform.Foundation.NSFileCoordinatorReadingWithoutChanges
+import platform.Foundation.NSFileManager
+import platform.Foundation.NSString
+import platform.Foundation.NSURL
+import platform.Foundation.NSURLIsDirectoryKey
+import platform.Foundation.NSURLNameKey
+import platform.Foundation.NSUTF8StringEncoding
+import platform.Foundation.URLByAppendingPathComponent
+import platform.Foundation.dataUsingEncoding
+import platform.Foundation.lastPathComponent
+import platform.Foundation.stringWithContentsOfURL
+import platform.Foundation.stringWithString
+import platform.Foundation.writeToURL
 
+@OptIn(BetaInteropApi::class)
 actual suspend fun addFolderToPlaylist(uri: String) {
     /* First, we save it in our media directories as a common directory */
     PlaylistUtils.saveFolderPathAsMediaDirectory(uri)
 
     /* Now we get children files */
-    val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
-        uri.toUri(),
-        DocumentsContract.getTreeDocumentId(uri.toUri())
-    )
-
-    /** Obtaining the children tree from the path **/
-    val tree = DocumentFile.fromTreeUri(contextObtainer.obtainAppContext(), childrenUri) ?: return
-    val files = tree.listFiles() //todo
-
-    /** We iterate through the children file tree and add them to playlist */
     val newList = mutableListOf<String>()
-    for (file in files) {
-        if (file.isDirectory) continue
-        val filename = file.name!!
-        if (!viewmodel?.p?.session!!.sharedPlaylist.contains(filename)) newList.add(filename)
+
+    val url = NSURL.fileURLWithPath(uri, isDirectory = true)
+    val access = url.startAccessingSecurityScopedResource()
+
+    NSFileCoordinator().coordinateReadingItemAtURL(url, NSFileCoordinatorReadingWithoutChanges, error = null) { dirUrl ->
+        if (dirUrl == null) return@coordinateReadingItemAtURL
+
+        dirUrl.startAccessingSecurityScopedResource()//Start accessing securely
+        val enumerator = NSFileManager.defaultManager.enumeratorAtURL(
+            url = dirUrl,
+            includingPropertiesForKeys = listOf(NSURLNameKey, NSURLIsDirectoryKey),
+            options = NSDirectoryEnumerationSkipsHiddenFiles,
+            errorHandler = null
+        )
+
+        var obj = enumerator?.nextObject() as? NSURL
+        while (obj != null) {
+            val isDirectory = memScoped {
+                val isDirectoryPointer = nativeHeap.alloc<ObjCObjectVar<Any?>>()
+
+                obj?.getResourceValue(isDirectoryPointer.ptr, forKey = NSURLIsDirectoryKey, null)
+
+                return@memScoped isDirectoryPointer.value as? Boolean
+            }
+
+            if (isDirectory == false && isValidMediaFileExtension(obj.path?.substringAfterLast("."))) {
+                val filename = obj.lastPathComponent
+                if (!viewmodel?.p?.session!!.sharedPlaylist.contains(filename)) newList.add(filename!!)
+            }
+
+            obj = enumerator?.nextObject() as? NSURL //Next object now
+        }
+        dirUrl.stopAccessingSecurityScopedResource()//Start accessing securely
     }
+
+    if (access) url.stopAccessingSecurityScopedResource()
+
     newList.sort()
+
     if (viewmodel?.p?.session!!.sharedPlaylistIndex == -1) {
         retrieveFile(newList.first())
         viewmodel?.p?.sendPacket(sendPlaylistIndex(0))
@@ -36,33 +82,54 @@ actual suspend fun addFolderToPlaylist(uri: String) {
     viewmodel?.p?.sendPacket(sendPlaylistChange(viewmodel?.p?.session!!.sharedPlaylist + newList))
 }
 
+@OptIn(BetaInteropApi::class)
 actual suspend fun iterateDirectory(uri: String, target: String, onFileFound: (String) -> Unit) {
-    /** Will NOT work if Uri hasn't been declared persistent upon retrieving it */
-    val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
-        uri.toUri(),
-        DocumentsContract.getTreeDocumentId(uri.toUri())
-    )
+    val url = NSURL.fileURLWithPath(uri, isDirectory = true)
+    val access = url.startAccessingSecurityScopedResource()
 
-    val context = contextObtainer.obtainAppContext()
+    NSFileCoordinator().coordinateReadingItemAtURL(url, NSFileCoordinatorReadingWithoutChanges, error = null) { dirUrl ->
+        if (dirUrl == null) return@coordinateReadingItemAtURL
 
-    /** Obtaining the children tree from the path **/
-    val tree = DocumentFile.fromTreeUri(context, childrenUri) ?: return
-    val files = tree.listFiles()
+        dirUrl.startAccessingSecurityScopedResource()//Start accessing securely
+        val enumerator = NSFileManager.defaultManager.enumeratorAtURL(
+            url = dirUrl,
+            includingPropertiesForKeys = listOf(NSURLNameKey, NSURLIsDirectoryKey),
+            options = NSDirectoryEnumerationSkipsHiddenFiles,
+            errorHandler = null
+        )
 
-    /** We iterate through the children file tree, and we search for the specific file */
-    for (file in files) {
-        val filename = file.name!!
-        if (filename == target) {
-            onFileFound.invoke((tree.findFile(filename)?.uri ?: continue).toString())
-            break
+        var obj = enumerator?.nextObject() as? NSURL
+        while (obj != null) {
+            val isDirectory = memScoped {
+                val isDirectoryPointer = nativeHeap.alloc<ObjCObjectVar<Any?>>()
+
+                obj?.getResourceValue(isDirectoryPointer.ptr, forKey = NSURLIsDirectoryKey, null)
+
+                return@memScoped isDirectoryPointer.value as? Boolean
+            }
+
+            if (isDirectory == false) {
+                val filename = obj.lastPathComponent
+                if (filename == target) {
+                    obj.path?.let { onFileFound(it) }
+                    break
+                }
+            }
+
+            obj = enumerator?.nextObject() as? NSURL //Next object now
         }
+        dirUrl.stopAccessingSecurityScopedResource()//Start accessing securely
     }
+
+    if (access) url.stopAccessingSecurityScopedResource()
 }
 
 
 actual fun savePlaylistLocally(toFolderUri: String) {
-    val folder = DocumentFile.fromTreeUri(context, toFolderUri.toUri())
-    val txt = folder?.createFile("text/plain", "SharedPlaylist_${System.currentTimeMillis()}.txt")
+    val destFolder = NSURL.URLWithString(toFolderUri) ?: return
+    val destFile = destFolder.URLByAppendingPathComponent("SharedPlaylist_${generateTimestampMillis()}.txt")
+        ?: return
+
 
     /** Converting the shared playlist to a text string, line by line */
     val stringBuilder = StringBuilder()
@@ -71,26 +138,41 @@ actual fun savePlaylistLocally(toFolderUri: String) {
     }
     val string = stringBuilder.appendLine().trim().toString()
 
-    /** Writing to the file */
-    val s = context.contentResolver.openOutputStream(txt?.uri ?: return)
-    s?.write(string.toByteArray(Charsets.UTF_8))
-    s?.flush()
-    s?.close()
+
+    val destFileAccess = destFile.startAccessingSecurityScopedResource()
+
+    viewmodel?.viewmodelScope?.launch {
+        try {
+            val data = (NSString.stringWithString(string) as NSString).dataUsingEncoding(NSUTF8StringEncoding)
+            data?.writeToURL(destFile, true)
+        } catch (e: Exception) {
+            println("Error saving playlist: ${e.stackTraceToString()}")
+        }
+    }
+
+    if (destFileAccess) {
+        destFile.stopAccessingSecurityScopedResource()
+    }
 }
 
 actual fun loadPlaylistLocally(fromUri: String, alsoShuffle: Boolean) {
-    /** Opening the input stream of the file */
-    val s = context.contentResolver.openInputStream(fromUri.toUri()) ?: return
-    val string = s.readBytes().decodeToString()
-    s.close()
+    val url = NSURL.fileURLWithPath(fromUri, isDirectory = false)
+    val access = url.startAccessingSecurityScopedResource()
+    val content = NSString.stringWithContentsOfURL(url, NSUTF8StringEncoding, null) ?: return
+    if (access) url.stopAccessingSecurityScopedResource()
 
-    /** Reading content */
-    val lines = string.split("\n").toMutableList()
-
+        /** Reading content */
+    val lines = content.split("\n").toMutableList()
 
     /** If the user chose the shuffling option along with it, then we shuffle it */
     if (alsoShuffle) lines.shuffle()
 
     /** Updating the shared playlist */
     viewmodel?.p?.sendPacket(sendPlaylistChange(lines))
+}
+
+
+fun isValidMediaFileExtension(fileExtension: String?): Boolean {
+    val audioExs = setOf("mp3", "m4a", "wav", "aiff", "aac", "flac", "alac", "ogg", "wma", "ogg")
+    return audioExs.contains(fileExtension?.lowercase() ?: "#") || vidExs.contains(fileExtension?.lowercase() ?: "#")
 }

@@ -32,7 +32,7 @@ fun Context.changeLanguage(lang: String): Context {
 fun collectInfoLocalAndroid(media: MediaFile, context: Context) {
     with(media) {
         /** Using MiscUtils **/
-        fileName = getFileName(uri!!, context)!!
+        fileName = getFileName(uri!!)!!
         fileSize = getRealSizeFromUri(context, uri!!.toUri())?.toDouble()?.toLong().toString()
 
         /** Hashing name and size in case they're used **/
