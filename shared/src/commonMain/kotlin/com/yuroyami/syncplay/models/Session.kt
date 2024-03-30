@@ -1,5 +1,6 @@
 package com.yuroyami.syncplay.models
 
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -36,7 +37,7 @@ class Session {
 
     /** Variable that stores the shared playlist for the session */
     var sharedPlaylist = mutableStateListOf<String>() /* List of files */
-    var sharedPlaylistIndex = -1 /* Index of the currently playing file for the session */
+    var spIndex = mutableIntStateOf(-1) /* Index of the currently playing file for the session */
 
 //    /** A list of media directories to look for shared playlist file names */
 //    var mediaDirectories = mutableListOf<String>()

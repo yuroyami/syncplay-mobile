@@ -762,7 +762,9 @@ fun HomeScreen(savedConfig: HomeConfig) {
                                     serverPassword
                                 )
 
-                                homeCallback?.onJoin(info)
+                                info.remember() //Remembering info
+
+                                homeCallback?.onJoin(info.get())
                             },
                         ) {
                             Icon(imageVector = Icons.Filled.Api, "")

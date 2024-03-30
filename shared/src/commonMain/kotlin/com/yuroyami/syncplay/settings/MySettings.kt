@@ -1,11 +1,11 @@
 package com.yuroyami.syncplay.settings
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.BookmarkRemove
 import androidx.compose.material.icons.filled.BorderColor
 import androidx.compose.material.icons.filled.Brush
-import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.ClearAll
 import androidx.compose.material.icons.filled.ClosedCaptionOff
 import androidx.compose.material.icons.filled.ConnectWithoutContact
@@ -675,19 +675,19 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
                 ) to CATEG_INROOM_PLAYERSETTINGS
             )
 
-            add(
-                BooleanSetting(
-                    type = SettingType.ToggleSettingType,
-                    key = PREF_INROOM_PIP,
-                    title = lyricist
-                        .strings.uisettingPipTitle,
-                    summary = lyricist
-                        .strings.uisettingPipSummary,
-                    defaultValue = true,
-                    icon = Icons.Filled.PictureInPicture,
-                    styling = settingROOMstyle,
-                ) to CATEG_INROOM_ADVANCED
-            )
+//            add(
+//                BooleanSetting(
+//                    type = SettingType.ToggleSettingType,
+//                    key = PREF_INROOM_PIP,
+//                    title = lyricist
+//                        .strings.uisettingPipTitle,
+//                    summary = lyricist
+//                        .strings.uisettingPipSummary,
+//                    defaultValue = true,
+//                    icon = Icons.Filled.PictureInPicture,
+//                    styling = settingROOMstyle,
+//                ) to CATEG_INROOM_ADVANCED
+//            )
 
             add(
                 SliderSetting(
@@ -790,7 +790,7 @@ fun sgROOM(): MutableList<SettingCategory> {
             keyID = CATEG_INROOM_CHATPROPS,
             title = lyricist
                 .strings.uisettingCategChatProperties,
-            icon = Icons.Filled.Chat
+            icon = Icons.AutoMirrored.Filled.Chat
         ),
         SettingCategory(
             keyID = CATEG_INROOM_PLAYERSETTINGS,

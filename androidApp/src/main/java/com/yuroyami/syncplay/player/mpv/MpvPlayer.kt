@@ -10,8 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
-import androidx.media3.common.C
-import androidx.media3.common.MimeTypes
 import cafe.adriel.lyricist.Lyricist
 import com.yuroyami.syncplay.databinding.MpvviewBinding
 import com.yuroyami.syncplay.lyricist.Stringies
@@ -19,7 +17,6 @@ import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
-import com.yuroyami.syncplay.player.PlayerUtils
 import com.yuroyami.syncplay.player.PlayerUtils.trackProgress
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.utils.RoomUtils.checkFileMismatches
@@ -27,6 +24,7 @@ import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
+import com.yuroyami.syncplay.utils.lookForNeighborSub
 import com.yuroyami.syncplay.utils.timeStamper
 import com.yuroyami.syncplay.watchroom.dispatchOSD
 import com.yuroyami.syncplay.watchroom.isSoloMode

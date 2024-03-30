@@ -35,11 +35,9 @@ import com.yuroyami.syncplay.player.mpv.MpvPlayer
 import com.yuroyami.syncplay.player.mpv.mpvRoomSettings
 import com.yuroyami.syncplay.player.vlc.VlcPlayer
 import com.yuroyami.syncplay.settings.DataStoreKeys
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PIP
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_SUBTITLE_SIZE
 import com.yuroyami.syncplay.settings.SettingObtainerCallback
 import com.yuroyami.syncplay.settings.obtainerCallback
-import com.yuroyami.syncplay.settings.settingBoolean
 import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.settings.valueSuspendingly
 import com.yuroyami.syncplay.utils.UIUtils.cutoutMode
@@ -161,7 +159,9 @@ class WatchActivity : ComponentActivity() {
             }
 
             override fun onPictureInPicture(enable: Boolean) {
-
+                if (enable) {
+                    initiatePIPmode()
+                }
             }
 
         }
@@ -171,21 +171,6 @@ class WatchActivity : ComponentActivity() {
             RoomUI()
         }
     }
-
-
-    //    /** Last checkpoint after executing activityresults. This means the activity is fully ready. */
-//    @SuppressLint("UnspecifiedRegisterReceiverFlag")
-//    override fun onResume() {
-//        super.onResume()
-//        val filter = IntentFilter(ACTION_PIP_PAUSE_PLAY)
-//        registerReceiver(pipBroadcastReceiver, filter)
-//
-//        hideSystemUI(false)
-//
-//        /** Applying track choices again so the player doesn't forget about track choices **/
-//        reapplyTrackChoices()
-//    }
-
 
     /** the onStart() follows the onCreate(), it means all the UI is ready
      * It precedes any activity results. onCreate -> onStart -> ActivityResults -> onResume */
@@ -224,17 +209,9 @@ class WatchActivity : ComponentActivity() {
         viewmodel?.pipMode?.value = isInPictureInPictureMode
     }
 
-    /** If user leaves the app by any standard means, then we initiate picture-in-picture mode */
-    override fun onUserLeaveHint() {
-        super.onUserLeaveHint()
-
-        if (viewmodel?.wentForFilePick != true) {
-            initiatePIPmode()
-        }
-    }
 
     private fun initiatePIPmode() {
-        val isPipAllowed = PREF_INROOM_PIP.settingBoolean() && (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+        val isPipAllowed = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
 
         if (!isPipAllowed) return
 

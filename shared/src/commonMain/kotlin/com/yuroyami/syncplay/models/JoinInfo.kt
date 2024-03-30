@@ -16,7 +16,7 @@ data class JoinInfo(
     val password: String = "",
     val soloMode: Boolean = false
 ) {
-    private fun remember(): JoinInfo {
+    fun remember(): JoinInfo {
         CoroutineScope(Dispatchers.IO).launch {
             val saveInfo = valueSuspendingly(DataStoreKeys.PREF_REMEMBER_INFO, true)
 
@@ -31,10 +31,8 @@ data class JoinInfo(
         return this
     }
 
-    private fun finalize(): JoinInfo {
+    fun get(): JoinInfo {
         if (address == "syncplay.pl") address = "151.80.32.178"
         return this
     }
-
-    fun get() = this.remember().finalize()
 }

@@ -196,7 +196,8 @@ object CardSharedPlaylist {
                                 ) { itempopup.value = true },
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                if (index == viewmodel!!.p.session.sharedPlaylistIndex) {
+                                val spi by remember { viewmodel!!.p.session.spIndex }
+                                if (index == spi) {
                                     Icon(
                                         imageVector = Icons.Outlined.PlayArrow, "",
                                         tint = Color.Green,

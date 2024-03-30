@@ -79,7 +79,7 @@ actual suspend fun addFolderToPlaylist(uri: String) {
 
     newList.sort()
 
-    if (viewmodel?.p?.session!!.sharedPlaylistIndex == -1) {
+    if (viewmodel?.p?.session!!.spIndex.intValue == -1) {
         retrieveFile(newList.first())
         viewmodel?.p?.sendPacket(sendPlaylistIndex(0))
     }
@@ -130,17 +130,10 @@ actual fun iterateDirectory(uri: String, target: String, onFileFound: (String) -
                 return@memScoped isDirectoryPointer.value as? Boolean
             }
 
-            loggy("Found a file: ${obj.path}")
-
             if (isDirectory == false) {
-
-                loggy("The file isn't a directory it seems. Let's check the name.")
-
                 val filename = obj.lastPathComponent
-                loggy("Name is: $filename")
 
                 if (filename == target) {
-                    loggy("File passed the vibe check, escaping.")
 
                     obj.path?.let { onFileFound(it) }
                     break

@@ -477,7 +477,6 @@ private fun RoomUIImpl() {
                             Spacer(Modifier.width(12.dp))
 
                             /* Shared Playlist */
-                            //TODO: Fix shared playlist
                             if (!isSoloMode) {
                                 RoomTab(icon = Icons.AutoMirrored.Filled.PlaylistPlay, visibilityState = sharedplaylistVisibility.value) {
                                     sharedplaylistVisibility.value = !sharedplaylistVisibility.value
@@ -542,7 +541,7 @@ private fun RoomUIImpl() {
                                     }, onClick = {
                                         overflowmenustate.value = false
 
-                                        //TODO GO PIP
+                                        viewmodel?.roomCallback?.onPictureInPicture(true)
                                     })
 
                                     /* Chat history item */

@@ -112,7 +112,7 @@ object JsonHandler {
                         userMeant!!.jsonPrimitive.content,
                         newIndex!!.jsonPrimitive.int
                     )
-                    p.session.sharedPlaylistIndex = newIndex!!.jsonPrimitive.int
+                    p.session.spIndex.intValue = newIndex!!.jsonPrimitive.int
                 } else return
             }
 

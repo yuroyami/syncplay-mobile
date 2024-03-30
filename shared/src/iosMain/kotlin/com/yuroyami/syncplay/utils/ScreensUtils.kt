@@ -199,7 +199,7 @@ object Home : HomeCallback {
 fun handleShortcut(shortcut: UIApplicationShortcutItem) {
     println("HANDLE AMIGO SHORTCUT $shortcut")
     sc = shortcut
-    homeCallback?.onJoin(shortcut.type.toJoinInfo())
+    homeCallback?.onJoin(shortcut.type.toJoinInfo().get())
 }
 
 fun String.toJoinInfo(): JoinInfo {

@@ -132,7 +132,7 @@ class HomeActivity : ComponentActivity() {
                     port = getIntExtra("serverport", 80),
                     password = getStringExtra("serverpw") ?: ""
                 )
-                homeCallback?.onJoin(info)
+                homeCallback?.onJoin(info.get())
             }
         }
     }

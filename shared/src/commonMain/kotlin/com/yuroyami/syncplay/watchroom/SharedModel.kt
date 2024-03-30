@@ -122,9 +122,11 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                     broadcastMessage(message = lyricist.strings.roomGuyLeft(leaver), isChat = false)
 
                     /* If the setting is enabled, pause playback **/
-                    val pauseOnLeft = valueBlockingly(PREF_PAUSE_ON_SOMEONE_LEAVE, true)
-                    if (pauseOnLeft) {
-                        pausePlayback()
+                    if (viewmodel?.player?.hasMedia() == true) {
+                        val pauseOnLeft = valueBlockingly(PREF_PAUSE_ON_SOMEONE_LEAVE, true)
+                        if (pauseOnLeft) {
+                            pausePlayback()
+                        }
                     }
 
                     /* Rare cases where a user can see his own self disconnected */
@@ -180,7 +182,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                     loggy("SYNCPLAY Protocol: Playlist updated by $user", 1010)
 
                     /** Selecting first item on list **/
-                    if (p.session.sharedPlaylist.size != 0 && p.session.sharedPlaylistIndex == -1) {
+                    if (p.session.sharedPlaylist.size != 0 && p.session.spIndex.intValue == -1) {
                         //changePlaylistSelection(0)
                     }
 

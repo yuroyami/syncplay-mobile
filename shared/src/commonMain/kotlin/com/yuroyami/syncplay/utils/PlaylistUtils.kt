@@ -16,7 +16,7 @@ object PlaylistUtils {
      * @param mode False to shuffle all playlist, True to shuffle only the remaining non-played items in queue.*/
     suspend fun shuffle(mode: Boolean) {
         /* If the shared playlist is empty, do nothing */
-        if (viewmodel!!.p.session.sharedPlaylistIndex < 0 || viewmodel!!.p.session.sharedPlaylist.isEmpty()) return
+        if (viewmodel!!.p.session.spIndex.intValue < 0 || viewmodel!!.p.session.sharedPlaylist.isEmpty()) return
 
 
         /* Shuffling as per the mode selected: False = shuffle all, True = Shuffle rest */
@@ -25,7 +25,7 @@ object PlaylistUtils {
              * grp1 is gonna be the group that doesn't change (everything until current index)
              * grp2 is the group to be shuffled since it's the 'remaining group' */
 
-            val grp1 = viewmodel!!.p.session.sharedPlaylist.take(viewmodel!!.p.session.sharedPlaylistIndex + 1).toMutableList()
+            val grp1 = viewmodel!!.p.session.sharedPlaylist.take(viewmodel!!.p.session.spIndex.intValue + 1).toMutableList()
             val grp2 = viewmodel!!.p.session.sharedPlaylist.takeLast(viewmodel!!.p.session.sharedPlaylist.size - grp1.size).shuffled()
             grp1.addAll(grp2)
             viewmodel!!.p.session.sharedPlaylist.clear()
@@ -35,7 +35,7 @@ object PlaylistUtils {
             viewmodel!!.p.session.sharedPlaylist.shuffle()
 
             /* Index won't change, but the file at the given index did change, play it */
-            retrieveFile(viewmodel!!.p.session.sharedPlaylist[viewmodel!!.p.session.sharedPlaylistIndex])
+            retrieveFile(viewmodel!!.p.session.sharedPlaylist[viewmodel!!.p.session.spIndex.intValue])
         }
 
         /* Announcing a new updated list to the room members */
@@ -64,7 +64,7 @@ object PlaylistUtils {
             if (viewmodel!!.p.session.sharedPlaylist.contains(filename)) return
 
             /* If there is no duplicate, then we proceed, we check if the list is empty */
-            if (viewmodel!!.p.session.sharedPlaylist.isEmpty() && viewmodel!!.p.session.sharedPlaylistIndex == -1) {
+            if (viewmodel!!.p.session.sharedPlaylist.isEmpty() && viewmodel!!.p.session.spIndex.intValue == -1) {
                 viewmodel?.player?.injectVideo(uri, true)
                 viewmodel?.p?.sendPacket(JsonSender.sendPlaylistIndex(0))
             }
@@ -85,7 +85,7 @@ object PlaylistUtils {
         viewmodel?.p?.session?.sharedPlaylist?.removeAt(i)
         viewmodel?.p?.sendPacket(JsonSender.sendPlaylistChange(viewmodel?.p?.session!!.sharedPlaylist))
         if (viewmodel?.p!!.session.sharedPlaylist.isEmpty()) {
-            viewmodel?.p?.session?.sharedPlaylistIndex = -1
+            viewmodel?.p?.session?.spIndex?.intValue = -1
         }
     }
 
@@ -98,7 +98,7 @@ object PlaylistUtils {
     /** This is to change playlist selection in response other users' selection */
     suspend fun changePlaylistSelection(index: Int) {
         if (viewmodel!!.p.session.sharedPlaylist.size < (index + 1)) return /* In rare cases when this was called on an empty list */
-        if (index != viewmodel!!.p.session.sharedPlaylistIndex) {
+        if (index != viewmodel!!.p.session.spIndex?.intValue) {
             /* If the file on that index isn't playing, play the file */
             retrieveFile(viewmodel?.p!!.session.sharedPlaylist[index])
         }

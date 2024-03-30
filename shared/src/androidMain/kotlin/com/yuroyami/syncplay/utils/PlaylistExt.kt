@@ -29,7 +29,7 @@ actual suspend fun addFolderToPlaylist(uri: String) {
     }
     newList.sort()
 
-    if (viewmodel?.p?.session!!.sharedPlaylistIndex == -1) {
+    if (viewmodel?.p?.session!!.spIndex.intValue == -1) {
         retrieveFile(newList.first())
         viewmodel?.p?.sendPacket(sendPlaylistIndex(0))
     }
@@ -52,7 +52,7 @@ fun iterateDirectory(dir: DocumentFile, onFileDetected: (String) -> Unit) {
     }
 }
 
-actual suspend fun iterateDirectory(uri: String, target: String, onFileFound: (String) -> Unit) {
+actual fun iterateDirectory(uri: String, target: String, onFileFound: (String) -> Unit) {
     /** Will NOT work if Uri hasn't been declared persistent upon retrieving it */
     val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
         uri.toUri(),
