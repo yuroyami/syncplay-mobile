@@ -46,6 +46,10 @@ actual fun getFileName(uri: String): String? {
     return NSURL.fileURLWithPath(uri).lastPathComponent
 }
 
+actual fun getFolderName(uri: String): String? {
+    return NSURL.fileURLWithPath(uri).lastPathComponent
+}
+
 actual suspend fun pingIcmp(host: String, packet: Int): Int? {
     val future = CompletableDeferred<Int>()
     SPLPing.pingOnce(

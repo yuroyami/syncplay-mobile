@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import cafe.adriel.lyricist.Lyricist
 import com.yuroyami.syncplay.home.HomeCallback
+import com.yuroyami.syncplay.lyricist.Stringies
 import com.yuroyami.syncplay.lyricist.Strings
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.JoinInfo
@@ -31,7 +32,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-lateinit var lyricist: Lyricist<Strings>
+var lyricist: Lyricist<Strings>  = Lyricist("en", Stringies)
 
 var homeCallback: HomeCallback? = null
 var viewmodel: SpViewModel? = null

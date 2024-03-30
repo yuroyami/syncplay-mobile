@@ -266,7 +266,10 @@ object CardSharedPlaylist {
                 }
 
                 /* Bottom buttons (add file, add folder, add url, and overflow button) */
-                Row(horizontalArrangement = Arrangement.SpaceEvenly) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
 
                     /* Button to add file to Shared Playlist */
                     FancyIcon2(

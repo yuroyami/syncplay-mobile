@@ -1,11 +1,13 @@
 package com.yuroyami.syncplay.filepicking
 
+import android.content.Intent
 import android.net.Uri
 import android.webkit.MimeTypeMap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toFile
 import com.yuroyami.syncplay.watchroom.viewmodel
 
@@ -100,8 +102,17 @@ actual fun DirectoryPicker(
 	title: String?,
 	onFileSelected: (String?) -> Unit
 ) {
+	val context = LocalContext.current
+
 	val launcher = rememberLauncherForActivityResult(contract = ActivityResultContracts.OpenDocumentTree()) { result ->
 		viewmodel?.wentForFilePick = false
+
+		if (result != null) {
+			context.contentResolver.takePersistableUriPermission(
+				result,
+				Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+			)
+		}
 
 		onFileSelected(result?.toString())
 	}

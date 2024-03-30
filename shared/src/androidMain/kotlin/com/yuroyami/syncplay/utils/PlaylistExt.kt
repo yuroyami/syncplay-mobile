@@ -40,12 +40,14 @@ fun iterateDirectory(dir: DocumentFile, onFileDetected: (String) -> Unit) {
     val files = dir.listFiles()
 
     for (file in files) {
-        if (file.isDirectory) iterateDirectory(file, onFileDetected)
+        if (file.isDirectory) {
+            iterateDirectory(file, onFileDetected)
+        } else {
+            if (file.name == null) continue
 
-        if (file.name == null) continue
-
-        if (!viewmodel?.p?.session!!.sharedPlaylist.contains(file.name!!)) {
-            onFileDetected(file.name!!)
+            if (!viewmodel?.p?.session!!.sharedPlaylist.contains(file.name!!)) {
+                onFileDetected(file.name!!)
+            }
         }
     }
 }

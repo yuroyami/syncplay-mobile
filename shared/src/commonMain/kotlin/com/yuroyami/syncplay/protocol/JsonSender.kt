@@ -218,8 +218,12 @@ object JsonSender {
     }
 
     fun sendPlaylistIndex(i: Int): String {
-        val playlistIndex = buildJsonObject {
+        val index = buildJsonObject {
             put("index", i)
+        }
+
+        val playlistIndex = buildJsonObject {
+            put("playlistIndex", index)
         }
 
         val set = buildJsonObject {

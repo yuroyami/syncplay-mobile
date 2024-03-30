@@ -23,6 +23,9 @@ expect fun timeStamper(seconds: Long): String
 /** Gets the filename based on its URI, needs context on Android */
 expect fun getFileName(uri: String): String?
 
+/** Gets the folder name based on its URI, needs context on Android */
+expect fun getFolderName(uri: String): String?
+
 /** Pings a host once and retrieves the round trip time (RTT) */
 expect suspend fun pingIcmp(host: String, packet: Int): Int?
 

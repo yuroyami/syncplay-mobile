@@ -19,7 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ClearAll
@@ -68,6 +68,7 @@ import com.yuroyami.syncplay.settings.valueFlow
 import com.yuroyami.syncplay.settings.writeValue
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.PlaylistUtils
+import io.ktor.http.Url
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -142,7 +143,7 @@ object PopupMediaDirs {
                         columns = GridCells.Adaptive(66.dp),
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        itemsIndexed(dirs.value.toList()) { _, item ->
+                        items(dirs.value.toList()) {item ->
 
                             Box {
                                 val itemMenuState = remember { mutableStateOf(false) }
@@ -160,8 +161,12 @@ object PopupMediaDirs {
                                         tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(64.dp)
                                     )
 
+                                    val name = Url(item).pathSegments.last()
+                                        .substringAfter("primary:") //Android: Primary storage prefix removal
+                                        .substringAfter("secondary:")//Android: Secondary storage prefix removal
+
                                     Text(
-                                        text = item.substringAfterLast("/"),
+                                        text = name,
                                         fontFamily = FontFamily(getRegularFont()),
                                         fontSize = 8.sp,
                                         textAlign = TextAlign.Center,

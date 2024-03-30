@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
+import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import android.util.Log
 import androidx.compose.runtime.Composable
@@ -12,6 +13,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.documentfile.provider.DocumentFile
 import com.yuroyami.syncplay.player.BasePlayer
 import java.io.BufferedReader
 import java.io.File
@@ -35,6 +37,17 @@ actual fun timeStamper(seconds: Long): String {
     } else {
         String.format("%02d:%02d:%02d", seconds / 3600, (seconds / 60) % 60, seconds % 60)
     }
+}
+
+actual fun getFolderName(uri: String): String? {
+    val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
+        uri.toUri(),
+        DocumentsContract.getTreeDocumentId(uri.toUri())
+    )
+
+    val context = contextObtainer.obtainAppContext()
+    val d = DocumentFile.fromTreeUri(context, childrenUri)
+    return d?.name
 }
 
 actual fun getFileName(uri: String): String? {
