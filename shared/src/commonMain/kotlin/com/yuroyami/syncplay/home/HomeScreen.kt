@@ -673,11 +673,11 @@ fun HomeScreen(savedConfig: HomeConfig) {
                             Text(
                                 lyricist.strings.connectButtonCurrentEngine.invoke(
                                     when (player.value) {
-                                        BasePlayer.ENGINE.ANDROID_EXOPLAYER.name -> "Google ExoPlayer"
+                                        BasePlayer.ENGINE.ANDROID_EXOPLAYER.name -> "Google ExoPlayer (System)"
                                         BasePlayer.ENGINE.ANDROID_MPV.name -> "mpv (Default, Recommended)"
-                                        BasePlayer.ENGINE.ANDROID_VLC.name -> "VLC"
-                                        BasePlayer.ENGINE.IOS_AVPLAYER.name -> "Apple AVPlayer"
-                                        BasePlayer.ENGINE.IOS_VLC.name -> "VLC"
+                                        BasePlayer.ENGINE.ANDROID_VLC.name -> "VLC (Experimental, Unstable)"
+                                        BasePlayer.ENGINE.IOS_AVPLAYER.name -> "Apple AVPlayer (System)"
+                                        BasePlayer.ENGINE.IOS_VLC.name -> "VLC (Experimental, Unstable)"
                                         else -> "Undefined"
                                     }
                                 ),

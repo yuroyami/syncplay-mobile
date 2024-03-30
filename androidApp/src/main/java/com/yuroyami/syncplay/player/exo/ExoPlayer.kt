@@ -305,7 +305,7 @@ class ExoPlayer : BasePlayer() {
 
     override fun loadExternalSub(uri: String) {
         if (hasMedia()) {
-            val filename = getFileName(uri = uri, exoView.context).toString()
+            val filename = getFileName(uri = uri).toString()
             val extension = filename.substring(filename.length - 4).lowercase()
 
             val mimeType =

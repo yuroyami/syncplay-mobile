@@ -184,7 +184,7 @@ class VlcPlayer : BasePlayer() {
 
     override fun loadExternalSub(uri: String) {
         if (hasMedia()) {
-            val filename = getFileName(uri = uri, ctx).toString()
+            val filename = getFileName(uri = uri).toString()
             val extension = filename.substring(filename.length - 4)
 
             val mimeType =

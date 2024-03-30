@@ -21,21 +21,33 @@ actual suspend fun addFolderToPlaylist(uri: String) {
 
     /** Obtaining the children tree from the path **/
     val tree = DocumentFile.fromTreeUri(contextObtainer.obtainAppContext(), childrenUri) ?: return
-    val files = tree.listFiles()
 
     /** We iterate through the children file tree and add them to playlist */
     val newList = mutableListOf<String>()
-    for (file in files) {
-        if (file.isDirectory) continue //todo: iterate child dirs too
-        val filename = file.name!!
-        if (!viewmodel?.p?.session!!.sharedPlaylist.contains(filename)) newList.add(filename)
+    iterateDirectory(tree) {
+        newList.add(it)
     }
     newList.sort()
+
     if (viewmodel?.p?.session!!.sharedPlaylistIndex == -1) {
         retrieveFile(newList.first())
         viewmodel?.p?.sendPacket(sendPlaylistIndex(0))
     }
     viewmodel?.p?.sendPacket(sendPlaylistChange(viewmodel?.p?.session!!.sharedPlaylist + newList))
+}
+
+fun iterateDirectory(dir: DocumentFile, onFileDetected: (String) -> Unit) {
+    val files = dir.listFiles()
+
+    for (file in files) {
+        if (file.isDirectory) iterateDirectory(file, onFileDetected)
+
+        if (file.name == null) continue
+
+        if (!viewmodel?.p?.session!!.sharedPlaylist.contains(file.name!!)) {
+            onFileDetected(file.name!!)
+        }
+    }
 }
 
 actual suspend fun iterateDirectory(uri: String, target: String, onFileFound: (String) -> Unit) {
