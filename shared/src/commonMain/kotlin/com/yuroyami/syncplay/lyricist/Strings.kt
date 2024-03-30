@@ -160,6 +160,9 @@ interface Strings {
     val settingNightModeSummary: String
     val settingRememberJoinInfoTitle: String
     val settingRememberJoinInfoSummary: String
+    val settingEraseShortcutsTitle: String
+    val settingEraseShortcutsSummary: String
+    val settingEraseShortcutsDialog: String
     val settingDisplayLanguageTitle: String
     val settingDisplayLanguageSummry: String
     val settingDisplayLanguageToast: String

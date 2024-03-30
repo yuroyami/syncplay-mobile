@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -29,7 +30,6 @@
             android:configChanges="orientation|keyboardHidden|screenLayout|screenSize|smallestScreenSize"
             android:exported="true"
             android:imeOptions="flagNoExtractUi"
-            android:screenOrientation="fullSensor"
             android:theme="@style/SplashTheme"
             android:windowSoftInputMode="adjustPan">
             <intent-filter>
@@ -48,7 +48,8 @@
             android:screenOrientation="sensorLandscape"
             android:supportsPictureInPicture="true"
             android:theme="@style/SyncplayTheme"
-            android:windowSoftInputMode="adjustNothing" />
+            android:windowSoftInputMode="adjustNothing"
+            tools:ignore="DiscouragedApi" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

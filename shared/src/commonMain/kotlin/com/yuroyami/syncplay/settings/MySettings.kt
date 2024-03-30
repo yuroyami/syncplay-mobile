@@ -1,6 +1,8 @@
 package com.yuroyami.syncplay.settings
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.filled.BookmarkRemove
 import androidx.compose.material.icons.filled.BorderColor
 import androidx.compose.material.icons.filled.Brush
 import androidx.compose.material.icons.filled.Chat
@@ -26,7 +28,6 @@ import androidx.compose.material.icons.filled.Opacity
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PictureInPicture
 import androidx.compose.material.icons.filled.Pin
-import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.SettingsInputComponent
 import androidx.compose.material.icons.filled.SettingsSuggest
 import androidx.compose.material.icons.filled.SortByAlpha
@@ -38,6 +39,7 @@ import androidx.compose.material.icons.filled.VideoLabel
 import androidx.compose.material.icons.filled.VideoSettings
 import androidx.compose.material.icons.filled.Web
 import androidx.compose.ui.graphics.toArgb
+import androidx.datastore.preferences.core.edit
 import com.yuroyami.syncplay.compose.popups.PopupMediaDirs.MediaDirsPopup
 import com.yuroyami.syncplay.lyricist.langMap
 import com.yuroyami.syncplay.player.BasePlayer
@@ -55,6 +57,7 @@ import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_INROOM_PLAYERSETTINGS
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_AUDIO_LANG
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_CC_LANG
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_DISPLAY_LANG
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_ERASE_SHORTCUTS
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_FILE_MISMATCH_WARNING
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_GLOBAL_CLEAR_ALL
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_HASH_FILENAME
@@ -95,6 +98,9 @@ import com.yuroyami.syncplay.utils.getPlatform
 import com.yuroyami.syncplay.watchroom.homeCallback
 import com.yuroyami.syncplay.watchroom.lyricist
 import com.yuroyami.syncplay.watchroom.viewmodel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.launch
 
 lateinit var obtainerCallback: SettingObtainerCallback
 
@@ -134,12 +140,27 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
                     styling = settingGLOBALstyle
                 ) to CATEG_GLOBAL_GENERAL
             )
+            add(
+                Setting.YesNoDialogSetting(
+                    type = SettingType.YesNoDialogSettingType,
+                    key = PREF_ERASE_SHORTCUTS,
+                    title = lyricist.strings.settingEraseShortcutsTitle,
+                    summary = lyricist.strings.settingEraseShortcutsSummary,
+                    defaultValue = true,
+                    icon = Icons.Filled.BookmarkRemove,
+                    rationale = lyricist.strings.settingEraseShortcutsDialog,
+                    onYes = {
+                        homeCallback?.onEraseConfigShortcuts()
+                    },
+                    styling = settingGLOBALstyle
+                ) to CATEG_GLOBAL_GENERAL
+            )
             add(Setting.PopupSetting(
                 type = SettingType.PopupSettingType,
                 key = PREF_SP_MEDIA_DIRS,
                 title = lyricist.strings.mediaDirectories,
                 summary = lyricist.strings.mediaDirectoriesSettingSummary,
-                icon = Icons.Filled.QueueMusic,
+                icon = Icons.AutoMirrored.Filled.QueueMusic,
                 styling = settingGLOBALstyle,
                 popupComposable = { s ->
                     MediaDirsPopup(s)
@@ -170,7 +191,6 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
                         summary = lyricist.strings.settingDisplayLanguageSummry,
                         icon = Icons.Filled.Translate,
                         styling = settingGLOBALstyle,
-                        isResetDefault = false,
                         onClick = {
                             homeCallback?.onLanguageChanged("")
                         }
@@ -356,7 +376,7 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                OneClickSetting(
+                Setting.YesNoDialogSetting(
                     type = SettingType.OneClickSettingType,
                     key = PREF_GLOBAL_CLEAR_ALL,
                     title = lyricist
@@ -365,7 +385,14 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
                         .strings.settingResetdefaultSummary,
                     icon = Icons.Filled.ClearAll,
                     styling = settingGLOBALstyle,
-                    isResetDefault = true,
+                    rationale = lyricist.strings.settingResetdefaultDialog,
+                    onYes = {
+                        launch(Dispatchers.IO) {
+                            datastore.edit { preferences ->
+                                preferences.clear()
+                            }
+                        }
+                    },
                 ) to CATEG_GLOBAL_ADVANCED
             )
         }
@@ -679,7 +706,7 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                OneClickSetting(
+                Setting.YesNoDialogSetting(
                     type = SettingType.OneClickSettingType,
                     key = PREF_INROOM_RESET_DEFAULT,
                     title = lyricist
@@ -688,7 +715,14 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
                         .strings.uisettingResetdefaultSummary,
                     icon = Icons.Filled.ClearAll,
                     styling = settingROOMstyle,
-                    isResetDefault = true,
+                    rationale = lyricist.strings.settingResetdefaultDialog,
+                    onYes = {
+                        launch(Dispatchers.IO) {
+                            datastore.edit { preferences ->
+                                preferences.clear()
+                            }
+                        }
+                    },
                 ) to CATEG_INROOM_ADVANCED
             )
         }

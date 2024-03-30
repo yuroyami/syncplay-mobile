@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.NoteAdd
 import androidx.compose.material.icons.filled.AddLink
 import androidx.compose.material.icons.filled.ClearAll
 import androidx.compose.material.icons.filled.ContentPaste
@@ -29,7 +30,6 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.NoteAdd
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Shuffle
@@ -39,9 +39,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,9 +50,11 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -72,13 +74,21 @@ import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.compose.getRegularFont
 import com.yuroyami.syncplay.compose.popups.PopupMediaDirs.MediaDirsPopup
+import com.yuroyami.syncplay.filepicking.DirectoryPicker
+import com.yuroyami.syncplay.filepicking.FilePicker
+import com.yuroyami.syncplay.filepicking.MultipleFilePicker
 import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.ui.Paletting
-import com.yuroyami.syncplay.utils.SharedPlaylistUtils.addURLs
-import com.yuroyami.syncplay.utils.SharedPlaylistUtils.clearPlaylist
-import com.yuroyami.syncplay.utils.SharedPlaylistUtils.deleteItemFromPlaylist
-import com.yuroyami.syncplay.utils.SharedPlaylistUtils.sendPlaylistSelection
-import com.yuroyami.syncplay.utils.SharedPlaylistUtils.shuffle
+import com.yuroyami.syncplay.utils.CommonUtils
+import com.yuroyami.syncplay.utils.PlaylistUtils.addFiles
+import com.yuroyami.syncplay.utils.PlaylistUtils.addURLs
+import com.yuroyami.syncplay.utils.PlaylistUtils.clearPlaylist
+import com.yuroyami.syncplay.utils.PlaylistUtils.deleteItemFromPlaylist
+import com.yuroyami.syncplay.utils.PlaylistUtils.sendPlaylistSelection
+import com.yuroyami.syncplay.utils.PlaylistUtils.shuffle
+import com.yuroyami.syncplay.utils.addFolderToPlaylist
+import com.yuroyami.syncplay.utils.loadPlaylistLocally
+import com.yuroyami.syncplay.utils.savePlaylistLocally
 import com.yuroyami.syncplay.watchroom.dispatchOSD
 import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.Dispatchers
@@ -96,79 +106,51 @@ object CardSharedPlaylist {
         val lyricist = rememberStrings()
 
         /* ActivityResultLaunchers for various shared playlist actions */
-//        val spAddFile = rememberLauncherForActivityResult(
-//            contract = ActivityResultContracts.OpenMultipleDocuments(),
-//            onResult = { uris ->
-//                wentForFilePick = false
-//
-//                if (uris.isEmpty()) return@rememberLauncherForActivityResult
-//
-//                for (uri in uris) {
-//                    contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-//                }
-//
-//                addFilesToPlaylist(uris)
-//            }
-//        )
-//
-//        val spAddFolder = rememberLauncherForActivityResult(
-//            contract = ActivityResultContracts.OpenDocumentTree(),
-//            onResult = { treeUri ->
-//                wentForFilePick = false
-//
-//                if (treeUri == null) return@rememberLauncherForActivityResult
-//
-//                contentResolver.takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-//                addFolderToPlaylist(treeUri)
-//            }
-//        )
-//
-//        val spLoadFileNoShuffle = rememberLauncherForActivityResult(
-//            contract = ActivityResultContracts.OpenDocument(),
-//            onResult = { uri ->
-//                wentForFilePick = false
-//
-//                if (uri == null) return@rememberLauncherForActivityResult
-//
-//                val filename = getFileName(uri).toString()
-//                val extension = filename.substring(filename.length - 4)
-//                if (extension == ".txt") {
-//                    loadSHP(uri, false)
-//                } else {
-//                    toasty("Error: Not a valid plain text file (.txt)")
-//                }
-//            }
-//        )
-//
-//        val spLoadFileWithShuffle = rememberLauncherForActivityResult(
-//            contract = ActivityResultContracts.OpenDocument(),
-//            onResult = { uri ->
-//                wentForFilePick = false
-//
-//                if (uri == null) return@rememberLauncherForActivityResult
-//
-//                val filename = getFileName(uri).toString()
-//                val extension = filename.substring(filename.length - 4)
-//                if (extension == ".txt") {
-//                    loadSHP(uri, true)
-//                } else {
-//                    toasty("Error: Not a valid plain text file (.txt)")
-//                }
-//            }
-//        )
-//
-//        val spSaveToFile = rememberLauncherForActivityResult(
-//            contract = ActivityResultContracts.OpenDocumentTree(),
-//            onResult = { uri ->
-//                wentForFilePick = false
-//
-//                if (uri == null) return@rememberLauncherForActivityResult
-//
-//                val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-//                contentResolver.takePersistableUriPermission(uri, takeFlags)
-//                saveSHP(uri)
-//            }
-//        )
+        var mediaFilePicker by remember { mutableStateOf(false) }
+
+        MultipleFilePicker(
+            show = mediaFilePicker, fileExtensions = CommonUtils.vidExs,
+            title = "Select one or multiple files to add to playlist"
+        ) { files ->
+            mediaFilePicker = false
+            if (files?.isEmpty() == true || files == null) return@MultipleFilePicker
+
+            addFiles(files.map { it.path })
+        }
+
+        var mediaDirectoryPicker by remember { mutableStateOf(false) }
+        DirectoryPicker(
+            show = mediaDirectoryPicker,
+            title = "Select directory to add its files to playlist"
+        ) { directoryUri ->
+            mediaDirectoryPicker = false
+            if (directoryUri == null) return@DirectoryPicker
+
+            scope.launch {
+                addFolderToPlaylist(directoryUri)
+            }
+        }
+
+        var playlistLoaderPicker by remember { mutableStateOf(false) }
+        var shouldShuffle by remember { mutableStateOf(false) }
+        FilePicker(show = playlistLoaderPicker, fileExtensions = CommonUtils.playlistExs) { playlist ->
+            playlistLoaderPicker = false
+            if (playlist != null) {
+                loadPlaylistLocally(playlist.path, alsoShuffle = shouldShuffle)
+            }
+            shouldShuffle = false
+        }
+
+        var playlistSaverPicker by remember { mutableStateOf(false) }
+        DirectoryPicker(
+            show = playlistSaverPicker,
+            title = "Select directory to save playlist to as a file"
+        ) { directoryUri ->
+            playlistSaverPicker = false
+            if (directoryUri == null) return@DirectoryPicker
+
+            savePlaylistLocally(directoryUri)
+        }
 
         val mediaDirsPopupState = remember { mutableStateOf(false) }
         val addUrlsPopupState = remember { mutableStateOf(false) }
@@ -274,10 +256,11 @@ object CardSharedPlaylist {
                         }
 
                         if (index < viewmodel!!.p.session.sharedPlaylist.lastIndex)
-                            Divider(
+                            HorizontalDivider(
                                 modifier = Modifier
                                     .gradientOverlay()
-                                    .alpha(0.7f), color = Color.Black, thickness = (0.5).dp
+                                    .alpha(0.7f), thickness = (0.5).dp,
+                                color = Color.Black
                             )
                     }
                 }
@@ -287,10 +270,9 @@ object CardSharedPlaylist {
 
                     /* Button to add file to Shared Playlist */
                     FancyIcon2(
-                        icon = Icons.Filled.NoteAdd, size = Paletting.ROOM_ICON_SIZE, shadowColor = Color.Black,
+                        icon = Icons.AutoMirrored.Filled.NoteAdd, size = Paletting.ROOM_ICON_SIZE, shadowColor = Color.Black,
                         onClick = {
-                            //wentForFilePick = true
-                            //spAddFile.launch(arrayOf("video/*"))
+                            mediaFilePicker = true
                         }
                     )
 
@@ -306,8 +288,7 @@ object CardSharedPlaylist {
                     FancyIcon2(
                         icon = Icons.Filled.CreateNewFolder, size = Paletting.ROOM_ICON_SIZE, shadowColor = Color.Black,
                         onClick = {
-                            //wentForFilePick = true
-                            //spAddFolder.launch(null)
+                            mediaDirectoryPicker = true
                         }
                     )
 
@@ -374,7 +355,7 @@ object CardSharedPlaylist {
                                 }
                             )
 
-                            Divider(thickness = (0.5).dp, color = Color.LightGray)
+                            HorizontalDivider(thickness = (0.5).dp, color = Color.LightGray)
 
                             //Shared Playlist Action: Add file(s)
                             DropdownMenuItem(
@@ -385,11 +366,10 @@ object CardSharedPlaylist {
                                         text = lyricist.strings.roomSharedPlaylistButtonAddFile
                                     )
                                 },
-                                leadingIcon = { Icon(imageVector = Icons.Filled.NoteAdd, "", tint = Color.LightGray) },
+                                leadingIcon = { Icon(imageVector = Icons.AutoMirrored.Filled.NoteAdd, "", tint = Color.LightGray) },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
-                                    //wentForFilePick = true
-                                    //spAddFile.launch(arrayOf("video/*"))
+                                    mediaFilePicker = true
                                 }
                             )
 
@@ -421,12 +401,11 @@ object CardSharedPlaylist {
                                 leadingIcon = { Icon(imageVector = Icons.Filled.CreateNewFolder, "", tint = Color.LightGray) },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
-                                    //wentForFilePick = true
-                                    //spAddFolder.launch(null)
+                                    mediaDirectoryPicker = true
                                 }
                             )
 
-                            Divider(thickness = (0.5).dp, color = Color.LightGray)
+                            HorizontalDivider(thickness = (0.5).dp, color = Color.LightGray)
 
                             //Shared Playlist Action: Import playlist file (txt)
                             DropdownMenuItem(
@@ -440,8 +419,7 @@ object CardSharedPlaylist {
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Download, "", tint = Color.LightGray) },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
-                                    //wentForFilePick = true
-                                    //spLoadFileNoShuffle.launch(arrayOf("text/plain"))
+                                    playlistLoaderPicker = true
                                 }
                             )
 
@@ -457,8 +435,8 @@ object CardSharedPlaylist {
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Download, "", tint = Color.LightGray) },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
-                                    //wentForFilePick = true
-                                    //spLoadFileWithShuffle.launch(arrayOf("text/plain"))
+                                    playlistLoaderPicker = true
+                                    shouldShuffle = true
                                 }
                             )
 
@@ -479,13 +457,11 @@ object CardSharedPlaylist {
                                         return@DropdownMenuItem
                                     }
 
-                                    //wentForFilePick = true
-
-                                    //spSaveToFile.launch(null)
+                                    playlistSaverPicker = true
                                 }
                             )
 
-                            Divider(thickness = (0.5).dp, color = Color.LightGray)
+                            HorizontalDivider(thickness = (0.5).dp, color = Color.LightGray)
 
                             //Shared Playlist Action: Set Media Directories
                             DropdownMenuItem(
@@ -503,7 +479,7 @@ object CardSharedPlaylist {
                                 }
                             )
 
-                            Divider(thickness = (0.5).dp, color = Color.LightGray)
+                            HorizontalDivider(thickness = (0.5).dp, color = Color.LightGray)
 
                             //Shared Playlist Action: Clear playlist
                             DropdownMenuItem(

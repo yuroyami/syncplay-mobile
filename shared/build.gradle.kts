@@ -39,8 +39,8 @@ kotlin {
             isStatic = false
         }
 
-        pod("MobileVLCKit", "3.6.0b10")
-        pod("SPLPing")
+        pod("MobileVLCKit", "3.6.0b10") //Adds the VLC player engine to iOS
+        pod("SPLPing") //Light-weight Objective-C library to add the ICMP ping functionality
     }
 
     sourceSets {

@@ -42,7 +42,7 @@ actual fun timeStamper(seconds: Long): String {
     }
 }
 
-actual fun getFileName(uri: String, context: Any?): String? {
+actual fun getFileName(uri: String): String? {
     return NSURL.fileURLWithPath(uri).lastPathComponent
 }
 

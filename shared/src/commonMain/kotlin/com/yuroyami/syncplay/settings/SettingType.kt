@@ -18,6 +18,12 @@ enum class SettingType {
      * In XML Preferences, this is equivalent to the plain [Preference] setting. */
     OneClickSettingType,
 
+    /** YesNoDialogSettingType is a [SettingType] for showing a yes/no dialog upon clicking.
+     * It's only a convenient middle-ground between [OneClickSettingType] and [PopupSettingType]
+     * which just shows a popup that asks the user whether to perform an action or not upon clicking.
+     */
+    YesNoDialogSettingType,
+
     /** MultiChoicePopupSetting is a [SettingType] for a setting that shows a multi-choice popup dialog.
      * This type of setting receives a list of entry pairs, and only one can be chosen.
      *

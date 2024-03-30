@@ -1,8 +1,11 @@
 package com.yuroyami.syncplay
 
 import android.app.Application
+import android.content.Context
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.datastore
+import com.yuroyami.syncplay.utils.ContextObtainer
+import com.yuroyami.syncplay.utils.contextObtainer
 import com.yuroyami.syncplay.utils.dataStore
 import org.conscrypt.Conscrypt
 import java.security.Security
@@ -17,5 +20,11 @@ class SyncplayApp: Application() {
 
         //Initializing datastore
         datastore = dataStore(applicationContext, DataStoreKeys.SYNCPLAY_PREFS)
+
+        contextObtainer = object: ContextObtainer {
+            override fun obtainAppContext(): Context {
+                return applicationContext
+            }
+        }
     }
 }

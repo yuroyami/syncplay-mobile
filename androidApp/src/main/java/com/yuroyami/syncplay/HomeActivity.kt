@@ -111,7 +111,14 @@ class HomeActivity : ComponentActivity() {
                     .build()
 
                 ShortcutManagerCompat.addDynamicShortcuts(this@HomeActivity, listOf(shortcutInfo))
-                ShortcutManagerCompat.requestPinShortcut(this@HomeActivity, shortcutInfo, null)
+
+                if (ShortcutManagerCompat.isRequestPinShortcutSupported(this@HomeActivity)) {
+                    ShortcutManagerCompat.requestPinShortcut(this@HomeActivity, shortcutInfo, null)
+                }
+            }
+
+            override fun onEraseConfigShortcuts() {
+                ShortcutManagerCompat.removeAllDynamicShortcuts(this@HomeActivity)
             }
         }
 

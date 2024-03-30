@@ -201,7 +201,10 @@ object Home : HomeCallback {
 
         // Add the shortcut item to the application
         UIApplication.sharedApplication.shortcutItems = UIApplication.sharedApplication.shortcutItems?.plus(shortcutItem)
+    }
 
+    override fun onEraseConfigShortcuts() {
+        UIApplication.sharedApplication.shortcutItems = emptyList<UIApplicationShortcutItem>()
     }
 }
 

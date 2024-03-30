@@ -299,11 +299,17 @@ class WatchActivity : ComponentActivity() {
         super.attachBaseContext(newBase!!.changeLanguage(lang))
     }
 
+
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onResume() {
         super.onResume()
         val filter = IntentFilter("pip")
-        registerReceiver(pipBroadcastReceiver, filter)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(pipBroadcastReceiver, filter, RECEIVER_EXPORTED)
+        } else {
+            registerReceiver(pipBroadcastReceiver, filter)
+        }
+
 
         hideSystemUI(false)
 

@@ -1,5 +1,6 @@
 package com.yuroyami.syncplay.utils
 
+import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
@@ -27,6 +28,7 @@ actual fun getDefaultEngine(): String = defaultEngineAndroid
 
 actual fun generateTimestampMillis() = System.currentTimeMillis()
 
+@SuppressLint("DefaultLocale")
 actual fun timeStamper(seconds: Long): String {
     return if (seconds < 3600) {
         String.format("%02d:%02d", (seconds / 60) % 60, seconds % 60)
@@ -35,10 +37,11 @@ actual fun timeStamper(seconds: Long): String {
     }
 }
 
-actual fun getFileName(uri: String, context: Any?): String? {
+actual fun getFileName(uri: String): String? {
     val actualuri = uri.toUri()
+    val context = contextObtainer.obtainAppContext()
     return when (actualuri.scheme) {
-        ContentResolver.SCHEME_CONTENT -> (context as? Context)?.getContentFileName(actualuri)
+        ContentResolver.SCHEME_CONTENT -> context.getContentFileName(actualuri)
         else -> actualuri.path?.let(::File)?.name
     }
 }

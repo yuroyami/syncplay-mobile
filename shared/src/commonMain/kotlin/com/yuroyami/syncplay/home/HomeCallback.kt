@@ -13,4 +13,5 @@ interface HomeCallback {
     fun onJoin(joinInfo: JoinInfo?)
 
     fun onSaveConfigShortcut(joinInfo: JoinInfo)
+    fun onEraseConfigShortcuts()
 }

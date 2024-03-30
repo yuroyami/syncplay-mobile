@@ -13,6 +13,14 @@ import com.yuroyami.syncplay.models.MediaFile
 import java.io.File
 import java.util.Locale
 
+/** This is used specifically in the case where common code needs access to some context.
+ * This is currently used to get file names for shared playlists without leaking the context globally.
+ */
+interface ContextObtainer {
+    fun obtainAppContext(): Context
+}
+lateinit var contextObtainer: ContextObtainer
+
 fun Context.changeLanguage(lang: String): Context {
     val locale = Locale(lang)
     Locale.setDefault(locale)

@@ -46,7 +46,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.datastore.preferences.core.edit
 import com.yuroyami.syncplay.compose.ComposeUtils.FlexibleFancyText
 import com.yuroyami.syncplay.compose.ComposeUtils.MultiChoiceDialog
 import com.yuroyami.syncplay.compose.ComposeUtils.SmartFancyIcon
@@ -54,6 +53,7 @@ import com.yuroyami.syncplay.compose.popups.PopupColorPicker.ColorPickingPopup
 import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.colorpicker.HsvColor
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -87,36 +87,84 @@ sealed class Setting<T>(
         type: SettingType, key: String, summary: String, title: String, defaultValue: Any? = null,
         icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling,
         val onClick: (() -> Unit)? = null,
-        val isResetDefault: Boolean = false
     ) : Setting<Any>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
         icon = icon, enabled = enabled, styling = styling
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val scope = rememberCoroutineScope()
+            ListItem(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
+                    ) {
+                        onClick?.let { it() }
+                    },
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                leadingContent = {
+                    SmartFancyIcon(
+                        tintColors = styling.iconTints,
+                        icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
+                    )
+                },
+                headlineContent = {
+                    FlexibleFancyText(
+                        text = title,
+                        fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
+                        strokeColors = styling.titleStroke ?: listOf(),
+                        shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                        size = styling.titleSize,
+                        font = styling.titleFont
+                    )
+                },
+                supportingContent = {
+                    Text(
+                        text = summary,
+                        style = TextStyle(
+                            color = styling.summaryColor,
+                            fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
+                        )
+                    )
+                }
+            )
+        }
+    }
+
+    class YesNoDialogSetting(
+        type: SettingType, key: String, summary: String, title: String, defaultValue: Any? = null,
+        icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling,
+        val rationale: String,
+        val onYes: (CoroutineScope.() -> Unit)? = null,
+        val onNo: (CoroutineScope.() -> Unit)? = null
+        //TODO: Show "done" message (i.e: Operation successfully carried out) in a snackbar message
+    ) : Setting<Any>(
+        type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
+        icon = icon, enabled = enabled, styling = styling
+    ) {
+        @Composable
+        override fun SettingComposable(modifier: Modifier) {
+            val scope = rememberCoroutineScope { Dispatchers.IO }
             val lyricist = rememberStrings()
 
-            var resetDialog by remember { mutableStateOf(false) }
-            if (resetDialog && isResetDefault) {
+            var dialog by remember { mutableStateOf(false) }
+            if (dialog ) {
                 AlertDialog(
-                    onDismissRequest = { resetDialog = false },
+                    onDismissRequest = { dialog = false },
                     confirmButton = {
                         TextButton(onClick = {
-                            resetDialog = false
-                            scope.launch(Dispatchers.IO) {
-                                datastore.edit { preferences ->
-                                    preferences.clear()
-                                }
-                            }
+                            dialog = false
+                            onYes?.invoke(scope)
                         }) { Text(lyricist.strings.yes) }
                     },
                     dismissButton = {
                         TextButton(onClick = {
-                            resetDialog = false
+                            dialog = false
+                            onNo?.invoke(scope)
                         }) { Text(lyricist.strings.no) }
                     },
-                    text = { Text(lyricist.strings.settingResetdefaultDialog) }
+                    text = { Text(rationale) }
                 )
             }
             ListItem(
@@ -126,10 +174,7 @@ sealed class Setting<T>(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
                     ) {
-                        if (isResetDefault) {
-                            resetDialog = true
-                        }
-                        onClick?.let { it() }
+                        dialog = true
                     },
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 leadingContent = {

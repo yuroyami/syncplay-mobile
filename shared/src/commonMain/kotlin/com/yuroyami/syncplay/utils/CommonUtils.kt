@@ -35,6 +35,6 @@ object CommonUtils {
 
     val ccExs = listOf("srt", "sub", "sbv", "ass", "ssa", "usf", "idx", "vtt", "smi", "rt", "txt")
 
-    val sharedplaylistExs = listOf("txt", "m3u")
+    val playlistExs = listOf("txt", "m3u")
 
 }
