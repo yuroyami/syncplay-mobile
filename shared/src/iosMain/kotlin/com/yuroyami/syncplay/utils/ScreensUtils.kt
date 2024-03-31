@@ -13,7 +13,6 @@ import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.avplayer.AvPlayer
 import com.yuroyami.syncplay.player.vlc.VlcPlayer
-import com.yuroyami.syncplay.protocol.SpProtocolApple
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.Setting
 import com.yuroyami.syncplay.settings.SettingObtainerCallback
@@ -142,7 +141,7 @@ object Home : HomeCallback {
         viewmodel = com.yuroyami.syncplay.watchroom.SpViewModel()
 
         joinInfo?.let {
-            viewmodel!!.p = SpProtocolApple()
+            instantiateSyncplayProtocolSwiftNIO?.invoke()?.let { p -> viewmodel?.p = p }
             prepareProtocol(it)
         }
 

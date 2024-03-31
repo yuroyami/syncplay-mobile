@@ -67,10 +67,20 @@ actual fun iterateDirectory(uri: String, target: String, onFileFound: (String) -
 
     /** We iterate through the children file tree, and we search for the specific file */
     for (file in files) {
-        val filename = file.name!!
-        if (filename == target) {
-            onFileFound.invoke((tree.findFile(filename)?.uri ?: continue).toString())
-            break
+        loggy("Iterating: ${file.name}")
+
+        val stuff = fun (filename: String) {
+            if (filename == target) {
+                onFileFound.invoke((tree.findFile(filename)?.uri).toString())
+            }
+        }
+
+        if (file.isDirectory) {
+            iterateDirectory(file) {
+                stuff(it)
+            }
+        } else {
+            stuff(file.name!!)
         }
     }
 }

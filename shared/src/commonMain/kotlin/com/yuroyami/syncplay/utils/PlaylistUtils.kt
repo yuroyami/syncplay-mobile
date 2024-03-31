@@ -139,17 +139,12 @@ object PlaylistUtils {
 
             /* We iterate through the media directory paths spreading their children tree **/
             for (path in paths) {
-                println("Iterating media dirs....")
-
                 iterateDirectory(uri = path, target = fileName) {
                     fileUri2Play  = it
 
-                    /** Loading the file into our player **/
+                    /* Loading the file into our player **/
                     viewmodel?.player?.injectVideo(fileUri2Play)
                 }
-
-                println("Iterating done?....")
-
             }
             if (fileUri2Play == null) {
                 if (viewmodel?.media?.fileName != fileName) {

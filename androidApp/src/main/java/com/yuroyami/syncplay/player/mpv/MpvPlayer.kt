@@ -24,7 +24,6 @@ import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
-import com.yuroyami.syncplay.utils.lookForNeighborSub
 import com.yuroyami.syncplay.utils.timeStamper
 import com.yuroyami.syncplay.watchroom.dispatchOSD
 import com.yuroyami.syncplay.watchroom.isSoloMode
@@ -251,19 +250,21 @@ class MpvPlayer : BasePlayer() {
                     if (!isUrl) {
                         ctx.resolveUri(it.toUri())?.let { it2 ->
                             loggy("Final path $it2", 301)
-                            if (!ismpvInit) {
-                                mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
-                                ismpvInit = true
+                            if (ismpvInit) {
+                                MPVLib.destroy()
                             }
+                            mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
+                            ismpvInit = true
                             mpvObserverAttach()
                             mpvView.playFile(it2)
                             mpvView.surfaceCreated(mpvView.holder)
                         }
                     } else {
-                        if (!ismpvInit) {
-                            mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
-                            ismpvInit = true
+                        if (ismpvInit) {
+                            MPVLib.destroy()
                         }
+                        mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
+                        ismpvInit = true
                         mpvObserverAttach()
                         mpvView.playFile(uri.toString())
                         mpvView.surfaceCreated(mpvView.holder)
@@ -326,7 +327,7 @@ class MpvPlayer : BasePlayer() {
         loggy("currentAspect: $currentAspect and currentPanscan: $currentPanscan", 0)
 
         val aspectRatios = listOf(
-            "-1.000000" to "Original" ,
+            "-1.000000" to "Original",
             "1.777778" to "16:9",
             "1.600000" to "16:10",
             "1.333333" to "4:3",

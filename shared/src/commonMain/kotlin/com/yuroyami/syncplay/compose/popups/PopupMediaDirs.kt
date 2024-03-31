@@ -57,6 +57,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
+import com.eygraber.uri.Uri
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
 import com.yuroyami.syncplay.compose.getRegularFont
@@ -68,7 +69,6 @@ import com.yuroyami.syncplay.settings.valueFlow
 import com.yuroyami.syncplay.settings.writeValue
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.PlaylistUtils
-import io.ktor.http.Url
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -161,7 +161,7 @@ object PopupMediaDirs {
                                         tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(64.dp)
                                     )
 
-                                    val name = Url(item).pathSegments.last()
+                                    val name = Uri.parseOrNull(item)?.pathSegments?.last() ?: "Undefined"
                                         .substringAfter("primary:") //Android: Primary storage prefix removal
                                         .substringAfter("secondary:")//Android: Secondary storage prefix removal
 

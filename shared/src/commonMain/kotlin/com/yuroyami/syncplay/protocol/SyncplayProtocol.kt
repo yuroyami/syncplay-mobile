@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -115,6 +116,16 @@ abstract class SyncplayProtocol {
         syncplayCallback?.onDisconnected()
     }
 
+    fun terminateScope() {
+        try {
+            protoScope.cancel()
+        } catch (_: Exception) {}
+    }
+
+    fun routeInScope(lambda: () -> Unit) {
+        protoScope.launch { lambda.invoke() }
+    }
+
     /** This method schedules reconnection ONLY IN in disconnected state */
     private var reconnectionJob: Job? = null
     fun reconnect() {
@@ -133,7 +144,7 @@ abstract class SyncplayProtocol {
     }
 
     /** Platform-specific (because we're using Netty on Android side, and plain Ktor on iOS side */
-    abstract suspend fun connectSocket()
+    abstract fun connectSocket()
     abstract fun isSocketValid(): Boolean
     abstract fun endConnection(terminating: Boolean)
     abstract fun writeActualString(s: String)

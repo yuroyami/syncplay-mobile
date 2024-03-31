@@ -2,11 +2,11 @@ package com.yuroyami.syncplay.player
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.eygraber.uri.Uri
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.utils.sha256
 import com.yuroyami.syncplay.utils.toHex
-import io.ktor.http.Url
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -105,7 +105,7 @@ abstract class BasePlayer {
         with (media) {
             try {
                 /** Using Ktor's built-in URL support **/
-                fileName = Url(url!!).pathSegments.last()
+                fileName = Uri.parseOrNull(url!!)?.pathSegments?.last() ?: "Undefined"
                 fileSize = 0L.toString()
             } catch (e: Exception) {
                 e.printStackTrace()

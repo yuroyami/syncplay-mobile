@@ -170,6 +170,10 @@ class WatchActivity : ComponentActivity() {
         setContent {
             RoomUI()
         }
+
+        Thread.setDefaultUncaughtExceptionHandler { t, t2 ->
+            loggy(t2.stackTraceToString())
+        }
     }
 
     /** the onStart() follows the onCreate(), it means all the UI is ready

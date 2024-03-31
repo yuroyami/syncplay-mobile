@@ -1,6 +1,5 @@
 package com.yuroyami.syncplay.protocol
 
-import com.yuroyami.syncplay.protocol.JsonHandler.handleJson
 import com.yuroyami.syncplay.utils.loggy
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.Channel
@@ -18,7 +17,6 @@ import io.netty.handler.codec.Delimiters
 import io.netty.handler.codec.string.StringDecoder
 import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.ssl.SslContextBuilder
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 class SpProtocolAndroid : SyncplayProtocol() {
@@ -27,7 +25,7 @@ class SpProtocolAndroid : SyncplayProtocol() {
     var channel: Channel? = null
     lateinit var pipeline: ChannelPipeline
 
-    override suspend fun connectSocket() {
+    override fun connectSocket() {
         val group: EventLoopGroup = NioEventLoopGroup()
         val b = Bootstrap()
         b.group(group) /* Assigning the event loop group to the bootstrap */
@@ -68,7 +66,7 @@ class SpProtocolAndroid : SyncplayProtocol() {
             channel?.close()
 
             if (terminating) {
-                protoScope.cancel("")
+                terminateScope()
             }
         } catch (_: Exception) {
         }
@@ -95,7 +93,7 @@ class SpProtocolAndroid : SyncplayProtocol() {
         override fun channelRead0(ctx: ChannelHandlerContext?, msg: String?) {
             if (msg != null) {
                 protoScope.launch {
-                    handleJson(msg)
+                    handleJson(this@SpProtocolAndroid, msg)
                 }
             }
         }

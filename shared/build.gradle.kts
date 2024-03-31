@@ -54,7 +54,7 @@ kotlin {
             }
         }
 
-        val ktor =  "2.3.9" // "3.0.0-beta-1"
+
         val commonMain by getting {
             dependencies {
                 //Strings internationalization and localization
@@ -72,8 +72,11 @@ kotlin {
                 implementation("org.kotlincrypto.hash:sha2:$kotlincrypto")
 
                 /* Network client */
-                api("io.ktor:ktor-network:$ktor")
-                api("io.ktor:ktor-network-tls:$ktor")
+                //val ktor =  "2.3.9" // "3.0.0-beta-1"
+                //implementation("io.ktor:ktor-utils:$ktor")
+                //api("io.ktor:ktor-network-tls:$ktor")
+
+                implementation("com.eygraber:uri-kmp:0.0.18")
 
                 /* JSON serializer/deserializer to communicate with Syncplay servers */
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")

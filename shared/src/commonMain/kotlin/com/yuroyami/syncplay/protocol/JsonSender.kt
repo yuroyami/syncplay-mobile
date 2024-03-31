@@ -38,7 +38,7 @@ object JsonSender {
 
             put("version", "1.7.0")
             put("features", buildJsonObject {
-                put("sharedPlaylists", false) //TODO: enable after rewrite
+                put("sharedPlaylists", true)
                 put("chat", true)
                 put("featureList", true)
                 put("readiness", true)
