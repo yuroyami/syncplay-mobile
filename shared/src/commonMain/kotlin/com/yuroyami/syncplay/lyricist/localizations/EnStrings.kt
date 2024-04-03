@@ -189,7 +189,7 @@ val EnStrings = object : Strings {
     override val settingReadyFirsthandTitle = "Set as ready first-hand"
     override val settingRewindThresholdSummary = "If someone is behind with the value you select here, your video will be rewinded to match with the one behind."
     override val settingRewindThresholdTitle = "Rewind thresold"
-    override val settingTlsSummary = "Syncplay will attempt to establish a secure encrypted connection (mainly TLSv1.3 but fallbacks to older versions) with the server if the latter supports it."
+    override val settingTlsSummary = "Syncplay will attempt to establish a secure encrypted connection (mainly TLSv1.3 but fallbacks to older versions) with the server if the latter supports it. This setting will be ignored if the network engine does not support TLS."
     override val settingTlsTitle = "Use Secure Connection (TLS)"
     override val settingResetdefaultTitle = "Reset Default Settings"
     override val settingResetdefaultSummary = "Reset everything to its default value (Recommended)"
@@ -256,4 +256,11 @@ val EnStrings = object : Strings {
     override val settingFileinfoBehaviorA = "Send raw"
     override val settingFileinfoBehaviorB = "Send hashed"
     override val settingFileinfoBehaviorC = "Don't send"
+
+    override val settingNetworkEngineTitle = "Network Engine"
+    override val settingNetworkEngineSummary = "The network engine serves as the backbone of connectivity. Experiment with each option and choose the one that offers the most stability for your needs."
+    override val settingNetworkEngineNetty = "Netty (Recommended, TLS)"
+    override val settingNetworkEngineSwiftNIO = "SwiftNIO (Experimental)"
+    override val settingNetworkEngineKtor = "Ktor (Experimental)"
+
 }

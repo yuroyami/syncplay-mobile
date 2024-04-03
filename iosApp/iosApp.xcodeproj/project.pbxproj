@@ -19,6 +19,7 @@
 		0404ED322BB9375000FCDAB5 /* _NIOFileSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED312BB9375000FCDAB5 /* _NIOFileSystem */; };
 		0404ED342BB9375000FCDAB5 /* _NIOFileSystemFoundationCompat in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED332BB9375000FCDAB5 /* _NIOFileSystemFoundationCompat */; };
 		0404ED362BB9379800FCDAB5 /* SpProtocolIApple.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0404ED352BB9379800FCDAB5 /* SpProtocolIApple.swift */; };
+		0404ED392BB96D4C00FCDAB5 /* NIOSSL in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED382BB96D4C00FCDAB5 /* NIOSSL */; };
 		0424B733C25F1A6509DE1F07 /* Pods_iosApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E94BC4DE8C9E41F2FD82ABC4 /* Pods_iosApp.framework */; };
 		045FEB1D2B91A34200F9C842 /* SyncplayScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 045FEB1C2B91A34200F9C842 /* SyncplayScreen.swift */; };
 		04BF80022B9704B9002E2EDE /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04BF80012B9704B9002E2EDE /* AudioToolbox.framework */; };
@@ -69,6 +70,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				04BF80242B97056B002E2EDE /* UIKit.framework in Frameworks */,
+				0404ED392BB96D4C00FCDAB5 /* NIOSSL in Frameworks */,
 				0404ED322BB9375000FCDAB5 /* _NIOFileSystem in Frameworks */,
 				0424B733C25F1A6509DE1F07 /* Pods_iosApp.framework in Frameworks */,
 				0404ED342BB9375000FCDAB5 /* _NIOFileSystemFoundationCompat in Frameworks */,
@@ -196,6 +198,7 @@
 				0404ED2F2BB9375000FCDAB5 /* _NIOConcurrency */,
 				0404ED312BB9375000FCDAB5 /* _NIOFileSystem */,
 				0404ED332BB9375000FCDAB5 /* _NIOFileSystemFoundationCompat */,
+				0404ED382BB96D4C00FCDAB5 /* NIOSSL */,
 			);
 			productName = iosApp;
 			productReference = 7555FF7B242A565900829871 /* iosApp.app */;
@@ -227,6 +230,7 @@
 			mainGroup = 7555FF72242A565900829871;
 			packageReferences = (
 				0404ED1E2BB9374F00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio" */,
+				0404ED372BB96D4C00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio-ssl" */,
 			);
 			productRefGroup = 7555FF7C242A565900829871 /* Products */;
 			projectDirPath = "";
@@ -525,6 +529,14 @@
 				minimumVersion = 2.64.0;
 			};
 		};
+		0404ED372BB96D4C00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio-ssl" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-nio-ssl";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.26.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -582,6 +594,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 0404ED1E2BB9374F00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio" */;
 			productName = _NIOFileSystemFoundationCompat;
+		};
+		0404ED382BB96D4C00FCDAB5 /* NIOSSL */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0404ED372BB96D4C00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio-ssl" */;
+			productName = NIOSSL;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

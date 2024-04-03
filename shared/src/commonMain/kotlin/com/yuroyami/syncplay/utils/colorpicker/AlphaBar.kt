@@ -1,9 +1,9 @@
 package com.yuroyami.syncplay.utils.colorpicker
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.drag
-import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -15,8 +15,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
-import androidx.compose.ui.input.pointer.consumePositionChange
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.unit.dp
 import kotlin.math.ceil
 
@@ -45,24 +45,22 @@ internal fun AlphaBar(
         modifier = modifier
             .fillMaxSize()
             .pointerInput(Unit) {
-                forEachGesture {
-                    awaitPointerEventScope {
-                        val down = awaitFirstDown()
+                awaitEachGesture {
+                    val down = awaitFirstDown()
+                    onAlphaChanged(
+                        getAlphaFromPosition(
+                            down.position.x,
+                            this.size.width.toFloat()
+                        ).coerceIn(0f, 1f)
+                    )
+                    drag(down.id) { change ->
+                        if (change.positionChange() != Offset.Zero) change.consume()
                         onAlphaChanged(
                             getAlphaFromPosition(
-                                down.position.x,
+                                change.position.x,
                                 this.size.width.toFloat()
                             ).coerceIn(0f, 1f)
                         )
-                        drag(down.id) { change ->
-                            change.consumePositionChange()
-                            onAlphaChanged(
-                                getAlphaFromPosition(
-                                    change.position.x,
-                                    this.size.width.toFloat()
-                                ).coerceIn(0f, 1f)
-                            )
-                        }
                     }
                 }
             }

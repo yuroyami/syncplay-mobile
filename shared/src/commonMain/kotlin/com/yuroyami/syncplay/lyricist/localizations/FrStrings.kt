@@ -256,4 +256,11 @@ val FrStrings = object : Strings {
     override val settingFileinfoBehaviorA = "Envoyer brut"
     override val settingFileinfoBehaviorB = "Envoyer encrypté"
     override val settingFileinfoBehaviorC = "Ne pas envoyer"
+
+    override val settingNetworkEngineTitle = "Moteur de réseau"
+    override val settingNetworkEngineSummary = "Le moteur de réseau sert de colonne vertébrale à la connectivité. Expérimentez avec chaque option et choisissez celle qui offre le plus de stabilité pour vos besoins."
+    override val settingNetworkEngineNetty = "Netty (Recommandé)"
+    override val settingNetworkEngineSwiftNIO = "SwiftNIO (Expérimental)"
+    override val settingNetworkEngineKtor = "Ktor (Expérimental)"
+
 }

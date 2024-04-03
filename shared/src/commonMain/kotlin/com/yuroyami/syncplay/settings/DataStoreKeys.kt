@@ -43,6 +43,7 @@ object DataStoreKeys {
 
     /* Network */
     const val CATEG_GLOBAL_NETWORK = "categ_global_network"
+    const val PREF_NETWORK_ENGINE = "pref_network_engine"
     const val PREF_TLS_ENABLE = "pref_tls"
 
     /* Advanced */

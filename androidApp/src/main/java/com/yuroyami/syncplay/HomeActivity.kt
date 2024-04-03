@@ -23,6 +23,8 @@ import com.yuroyami.syncplay.home.HomeScreen
 import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.protocol.SpProtocolAndroid
+import com.yuroyami.syncplay.protocol.SpProtocolKtor
+import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_NIGHTMODE
 import com.yuroyami.syncplay.settings.valueBlockingly
@@ -79,7 +81,13 @@ class HomeActivity : ComponentActivity() {
                 viewmodel = SpViewModel()
 
                 joinInfo?.let {
-                    viewmodel!!.p = SpProtocolAndroid()
+                    val networkEngine = SyncplayProtocol.getPreferredEngine()
+                    viewmodel!!.p = if (networkEngine == SyncplayProtocol.NetworkEngine.KTOR) {
+                        SpProtocolKtor()
+                    } else {
+                        SpProtocolAndroid()
+                    }
+
                     prepareProtocol(it)
                 }
 

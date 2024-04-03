@@ -251,4 +251,11 @@ val ZhStrings = object : Strings {
     override val settingFileinfoBehaviorA = "反馈信息"
     override val settingFileinfoBehaviorB = "发送方式"
     override val settingFileinfoBehaviorC = "取消发送"
+
+    override val settingNetworkEngineTitle = "网络引擎"
+    override val settingNetworkEngineSummary = "网络引擎是连接的基础。尝试每个选项并选择最适合您需求的稳定性。"
+    override val settingNetworkEngineNetty = "Netty（推荐）"
+    override val settingNetworkEngineSwiftNIO = "SwiftNIO（实验性）"
+    override val settingNetworkEngineKtor = "Ktor（实验性）"
+
 }

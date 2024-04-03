@@ -191,6 +191,8 @@ val ArStrings = object : Strings {
     override val settingFileinfoBehaviourNameSummary = "اختر الطريقة التي تظهر بها اسم ملف الوسائط الخاص بك للمستخدمين الآخرين."
     override val settingFileinfoBehaviourSizeTitle = "إرسال معلومات حجم الملف"
     override val settingFileinfoBehaviourSizeSummary = "اختر الطريقة التي تظهر بها حجم ملف الوسائط الخاص بك للمستخدمين الآخرين."
+    override val settingNetworkEngineTitle = "محرك الشبة"
+    override val settingNetworkEngineSummary = "يتحكم محرك الشبكة في الاتصال. يمكنك تجريب كل محرك على حدة و اختيار المحرك الأكثر استقراراً."
     override val uisettingCategChatColors = "ألوان الدردشة"
     override val uisettingCategPlayerSettings = "إعدادات المشغل"
     override val uisettingCategChatProperties = "خصائص الدردشة"
@@ -257,4 +259,7 @@ val ArStrings = object : Strings {
     override val settingFileinfoBehaviorA = "أرسال البيانات أصلية"
     override val settingFileinfoBehaviorB = "إرسال البيانات مشفرة"
     override val settingFileinfoBehaviorC = "لا ترسل إطلاقاً"
+    override val settingNetworkEngineNetty = "Netty (مستحسَن)"
+    override val settingNetworkEngineSwiftNIO = "SwiftNIO (تجريبي)"
+    override val settingNetworkEngineKtor = "Ktor (تجريبي)"
 }

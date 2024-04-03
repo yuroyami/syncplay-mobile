@@ -1,18 +1,19 @@
 package com.yuroyami.syncplay.utils.colorpicker
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.drag
-import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.input.pointer.consumePositionChange
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.unit.dp
 
 /**
@@ -35,15 +36,14 @@ internal fun HueBar(
         modifier = modifier
             .fillMaxSize()
             .pointerInput(Unit) {
-                forEachGesture {
-                    awaitPointerEventScope {
-                        val down = awaitFirstDown()
-                        onHueChanged(getHueFromPoint(down.position.y, size.height.toFloat()))
-                        drag(down.id) { change ->
-                            change.consumePositionChange()
-                            onHueChanged(getHueFromPoint(change.position.y, size.height.toFloat()))
-                        }
+                awaitEachGesture {
+                    val down = awaitFirstDown()
+                    onHueChanged(getHueFromPoint(down.position.y, size.height.toFloat()))
+                    drag(down.id) { change ->
+                        if (change.positionChange() != Offset.Zero) change.consume()
+                        onHueChanged(getHueFromPoint(change.position.y, size.height.toFloat()))
                     }
+
                 }
             }
     ) {

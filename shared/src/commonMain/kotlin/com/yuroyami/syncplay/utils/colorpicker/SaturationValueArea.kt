@@ -1,9 +1,9 @@
 package com.yuroyami.syncplay.utils.colorpicker
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.drag
-import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -15,13 +15,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.input.pointer.consumePositionChange
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import com.github.ajalt.colormath.model.HSV
-import com.yuroyami.syncplay.utils.colorpicker.HsvColor
 
 /**
  * Saturation Value area Component that invokes onSaturationValueChanged when the saturation or value is mutated.
@@ -56,16 +55,14 @@ internal fun SaturationValueArea(
         modifier = modifier
             .fillMaxSize()
             .pointerInput(Unit) {
-                forEachGesture {
-                    awaitPointerEventScope {
-                        val down = awaitFirstDown()
-                        val (s, v) = getSaturationPoint(down.position, size)
-                        onSaturationValueChanged(s, v)
-                        drag(down.id) { change ->
-                            change.consumePositionChange()
-                            val (newSaturation, newValue) = getSaturationPoint(change.position, size)
-                            onSaturationValueChanged(newSaturation, newValue)
-                        }
+                awaitEachGesture {
+                    val down = awaitFirstDown()
+                    val (s, v) = getSaturationPoint(down.position, size)
+                    onSaturationValueChanged(s, v)
+                    drag(down.id) { change ->
+                        if (change.positionChange() != Offset.Zero) change.consume()
+                        val (newSaturation, newValue) = getSaturationPoint(change.position, size)
+                        onSaturationValueChanged(newSaturation, newValue)
                     }
                 }
             }

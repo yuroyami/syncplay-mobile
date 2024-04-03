@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Redo
+import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -56,7 +56,7 @@ object CardRoomPrefs {
                 if (settingState.intValue == 2) {
                     FancyIcon2(
                         modifier = Modifier.align(TopEnd).padding(6.dp),
-                        icon = Icons.Filled.Redo, size = 32, shadowColor = Color.DarkGray,
+                        icon = Icons.AutoMirrored.Filled.Redo, size = 32, shadowColor = Color.DarkGray,
                         onClick = { settingState.intValue = 1 }
                     )
                 }

@@ -257,4 +257,11 @@ val RuStrings = object : Strings {
     override val settingFileinfoBehaviorA = "Отправить как есть"
     override val settingFileinfoBehaviorB = "Отправить в виде хеша"
     override val settingFileinfoBehaviorC = "Не отправлять"
+
+    override val settingNetworkEngineTitle = "Сетевой движок"
+    override val settingNetworkEngineSummary = "Сетевой движок служит основой для поддержания связи. Испытайте каждый вариант и выберите тот, который обеспечивает наибольшую стабильность для ваших потребностей."
+    override val settingNetworkEngineNetty = "Netty (Рекомендуется)"
+    override val settingNetworkEngineSwiftNIO = "SwiftNIO (Экспериментальный)"
+    override val settingNetworkEngineKtor = "Ktor (Экспериментальный)"
+
 }

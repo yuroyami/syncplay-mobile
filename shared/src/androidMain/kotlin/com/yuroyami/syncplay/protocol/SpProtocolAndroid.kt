@@ -105,17 +105,18 @@ class SpProtocolAndroid : SyncplayProtocol() {
         }
     }
 
-
+    override fun supportsTLS() = true
     override fun upgradeTls() {
         val sslContext = SslContextBuilder
             .forClient()
             //.sslProvider(SslProvider.JDK)
             //.trustManager(Conscrypt.getDefaultX509TrustManager())
-            .startTls(false) //This isn't necessary for clients, we do it manually
+            .startTls(false) //This isn't necessary for clients, we already do it manually
             .build()
 
         val h = sslContext.newHandler(pipeline.channel().alloc(), session.serverHost, session.serverPort)
         pipeline.addFirst(h)
 
     }
+
 }

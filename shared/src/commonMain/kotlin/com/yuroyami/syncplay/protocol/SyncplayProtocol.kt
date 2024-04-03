@@ -6,7 +6,10 @@ import com.yuroyami.syncplay.models.Session
 import com.yuroyami.syncplay.protocol.JsonSender.sendHello
 import com.yuroyami.syncplay.protocol.JsonSender.sendTLS
 import com.yuroyami.syncplay.settings.DataStoreKeys
+import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.settings.valueSuspendingly
+import com.yuroyami.syncplay.utils.PLATFORM
+import com.yuroyami.syncplay.utils.getPlatform
 import com.yuroyami.syncplay.utils.loggy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -112,7 +115,7 @@ abstract class SyncplayProtocol {
         }
     }
 
-    private fun onError() {
+    fun onError() {
         syncplayCallback?.onDisconnected()
     }
 
@@ -120,10 +123,6 @@ abstract class SyncplayProtocol {
         try {
             protoScope.cancel()
         } catch (_: Exception) {}
-    }
-
-    fun routeInScope(lambda: () -> Unit) {
-        protoScope.launch { lambda.invoke() }
     }
 
     /** This method schedules reconnection ONLY IN in disconnected state */
@@ -143,10 +142,40 @@ abstract class SyncplayProtocol {
         }
     }
 
-    /** Platform-specific (because we're using Netty on Android side, and plain Ktor on iOS side */
+    fun handleJSON(json: String) {
+        protoScope.launch {
+            handleJson(this@SyncplayProtocol, json)
+        }
+    }
+
+    /********************************************************************************************
+     * Platform-specific (because we're using Netty on Android side, and plain Ktor on iOS side *
+     ********************************************************************************************/
+
+    /** Attempts a connection to the host and port specified under [Session] */
     abstract fun connectSocket()
+    /** Whether the currently established socket is valid (active) */
     abstract fun isSocketValid(): Boolean
+    /** Whether the currently selected network engine supports TLS */
+    abstract fun supportsTLS(): Boolean
+    /** Ends the connection and cancels any read/write operations. Disposes of any references */
     abstract fun endConnection(terminating: Boolean)
+    /** Writes the string to the socket */
     abstract fun writeActualString(s: String)
+    /** Attempts to upgrade the plain TCP socket to a TLS secure socket */
     abstract fun upgradeTls()
+
+    enum class NetworkEngine {
+        KTOR,
+        NETTY,
+        SWIFTNIO
+    }
+
+    companion object {
+        fun getPreferredEngine(): NetworkEngine {
+            val defaultEngine = if (getPlatform() == PLATFORM.Android) NetworkEngine.NETTY else NetworkEngine.KTOR
+            val engineName = valueBlockingly(DataStoreKeys.PREF_NETWORK_ENGINE, defaultEngine.name.lowercase())
+            return NetworkEngine.valueOf(engineName.uppercase())
+        }
+    }
 }

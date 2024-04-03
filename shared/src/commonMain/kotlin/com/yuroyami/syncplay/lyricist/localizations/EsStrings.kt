@@ -249,4 +249,11 @@ val EsStrings = object : Strings {
     override val settingFileinfoBehaviorA = "Enviar sin procesar"
     override val settingFileinfoBehaviorB = "Enviar codificado"
     override val settingFileinfoBehaviorC = "No enviar"
+
+    override val settingNetworkEngineTitle = "Motor de red"
+    override val settingNetworkEngineSummary = "El motor de red sirve como la columna vertebral de la conectividad. Experimenta con cada opción y elige aquella que ofrezca la mayor estabilidad para tus necesidades."
+    override val settingNetworkEngineNetty = "Netty (Recomendado)"
+    override val settingNetworkEngineSwiftNIO = "SwiftNIO (Experimental)"
+    override val settingNetworkEngineKtor = "Ktor (Experimental)"
+
 }

@@ -13,16 +13,16 @@ class SpProtocolApple: SyncplayProtocol {
         eventLoopGroup = group
 
         print("Bootstrapping...")
-        
+
         let bootstrap = ClientBootstrap(group: group)
             .connectTimeout(TimeAmount.seconds(10))
             .channelInitializer { channel in
-                channel.pipeline.addHandler(Reader(p: self))
+                channel.pipeline.addHandler(Reader())
             }
 
         let host = session.serverHost
         let port = Int(session.serverPort)
-        
+
         do {
             channel = try bootstrap.connect(host: host, port: port).wait()
         } catch {
@@ -33,19 +33,23 @@ class SpProtocolApple: SyncplayProtocol {
 
         if channel != nil {
             print("Connected!")
-            syncplayCallback?.onConnected()
+            //syncplayCallback?.onConnected()
         }
     }
 
-    
+
     override func isSocketValid() -> Bool {
         return channel?.isActive ?? false
+    }
+
+    override func supportsTLS() -> Bool {
+        return false
     }
 
     override func endConnection(terminating: Bool) {
         try? channel?.close().wait()
         try? eventLoopGroup?.syncShutdownGracefully()
-        
+
         if terminating {
             terminateScope()
         }
@@ -56,10 +60,10 @@ class SpProtocolApple: SyncplayProtocol {
             syncplayCallback?.onDisconnected()
             return
         }
-        
+
         let data = s.data(using: .utf8)!
         let buffer = channel.allocator.buffer(bytes: data)
-        
+
         channel.writeAndFlush(buffer).whenComplete { result in
             do {
                 try result.get()
@@ -73,34 +77,27 @@ class SpProtocolApple: SyncplayProtocol {
     override func upgradeTls() {
         // TLS setup for SwiftNIO
     }
-}
 
-class Reader: ChannelInboundHandler {
-    typealias InboundIn = ByteBuffer
-    let p: SpProtocolApple
-    
-    init(p: SpProtocolApple) {
-        self.p = p
-    }
-    
-    func channelRead(context: ChannelHandlerContext, data: NIOAny) {
-        var buffer = unwrapInboundIn(data)
-        let readableBytes = buffer.readableBytes
-        
-        if let received = buffer.readString(length: readableBytes) {
-            self.p.routeInScope() {
-                JsonHandlerKt.handleJson(protocol: self.p, json: received)
+    class Reader: ChannelInboundHandler {
+        typealias InboundIn = ByteBuffer
+
+        func channelRead(context: ChannelHandlerContext, data: NIOAny) {
+            var buffer = unwrapInboundIn(data)
+            let readableBytes = buffer.readableBytes
+
+            if let received = buffer.readString(length: readableBytes) {
+                handleJSON(json: received)
             }
         }
-    }
-    
-    func channelReadComplete(context: ChannelHandlerContext) {
-        context.flush()
-    }
 
-    func errorCaught(context: ChannelHandlerContext, error: Error) {
-        print("Reader exception: \(error)")
-        p.syncplayCallback?.onDisconnected()
-        context.close(promise: nil)
+        func channelReadComplete(context: ChannelHandlerContext) {
+            context.flush()
+        }
+
+        func errorCaught(context: ChannelHandlerContext, error: Error) {
+            print("Reader exception: \(error)")
+            onError()
+            //context.close(promise: nil)
+        }
     }
 }

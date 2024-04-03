@@ -15,11 +15,14 @@ import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import okio.ByteString.Companion.encodeUtf8
 
 /** Handlers that parse JSONs and control callbacks based on the incoming message from server */
 private val jsonx = Json {
     encodeDefaults = true
     allowSpecialFloatingPointValues = true
+    isLenient = true
+
 }
 
 fun handleJson(protocol: SyncplayProtocol, json: String) {
@@ -42,7 +45,7 @@ fun handleJson(protocol: SyncplayProtocol, json: String) {
         }
     } catch (e: Exception) {
         loggy(e.stackTraceToString(), 1)
-        return
+        loggy("Problematic string: $json")
     }
 }
 

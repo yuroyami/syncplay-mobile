@@ -1,8 +1,8 @@
 package com.yuroyami.syncplay.utils.colorpicker.harmony
 
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.drag
-import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -22,8 +22,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.consumePositionChange
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.utils.colorpicker.HsvColor
@@ -161,17 +161,16 @@ private fun HarmonyColorPickerWithMagnifiers(
         }
 
         val inputModifier = Modifier.pointerInput(diameterPx) {
-            forEachGesture {
-                awaitPointerEventScope {
-                    val down = awaitFirstDown(false)
-                    currentlyChangingInput = true
-                    updateColorWheel(down.position, animate = true)
-                    drag(down.id) { change ->
-                        updateColorWheel(change.position, animate = false)
-                        change.consumePositionChange()
-                    }
-                    currentlyChangingInput = false
+            awaitEachGesture {
+                val down = awaitFirstDown(false)
+                currentlyChangingInput = true
+                updateColorWheel(down.position, animate = true)
+                drag(down.id) { change ->
+                    updateColorWheel(change.position, animate = false)
+                    if (change.positionChange() != Offset.Zero) change.consume()
                 }
+                currentlyChangingInput = false
+
             }
         }
 

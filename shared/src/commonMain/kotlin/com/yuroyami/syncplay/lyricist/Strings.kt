@@ -195,6 +195,8 @@ interface Strings {
     val settingFileinfoBehaviourNameSummary: String
     val settingFileinfoBehaviourSizeTitle: String
     val settingFileinfoBehaviourSizeSummary: String
+    val settingNetworkEngineTitle: String
+    val settingNetworkEngineSummary: String
 
     val uisettingCategChatColors: String
     val uisettingCategPlayerSettings: String
@@ -259,6 +261,10 @@ interface Strings {
     val settingFileinfoBehaviorA: String
     val settingFileinfoBehaviorB: String
     val settingFileinfoBehaviorC: String
+
+    val settingNetworkEngineNetty: String
+    val settingNetworkEngineSwiftNIO: String
+    val settingNetworkEngineKtor: String
 }
 
 enum class Locales(val tag: String) {

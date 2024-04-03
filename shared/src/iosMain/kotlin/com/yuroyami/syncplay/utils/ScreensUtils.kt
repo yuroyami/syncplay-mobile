@@ -13,6 +13,8 @@ import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.avplayer.AvPlayer
 import com.yuroyami.syncplay.player.vlc.VlcPlayer
+import com.yuroyami.syncplay.protocol.SpProtocolKtor
+import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.Setting
 import com.yuroyami.syncplay.settings.SettingObtainerCallback
@@ -141,15 +143,21 @@ object Home : HomeCallback {
         viewmodel = com.yuroyami.syncplay.watchroom.SpViewModel()
 
         joinInfo?.let {
-            instantiateSyncplayProtocolSwiftNIO?.invoke()?.let { p -> viewmodel?.p = p }
+            val networkEngine = SyncplayProtocol.getPreferredEngine()
+            viewmodel!!.p = if (networkEngine == SyncplayProtocol.NetworkEngine.KTOR) {
+                SpProtocolKtor()
+            } else {
+                instantiateSyncplayProtocolSwiftNIO!!.invoke()
+            }
+
             prepareProtocol(it)
         }
 
-        val engine = BasePlayer.ENGINE.valueOf(
+        val videoEngine = BasePlayer.ENGINE.valueOf(
             valueBlockingly(DataStoreKeys.MISC_PLAYER_ENGINE, getDefaultEngine())
         )
 
-        when (engine) {
+        when (videoEngine) {
             BasePlayer.ENGINE.IOS_AVPLAYER -> {
                 viewmodel?.player = AvPlayer()
             }

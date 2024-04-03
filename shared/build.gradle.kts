@@ -60,7 +60,7 @@ kotlin {
                 //Strings internationalization and localization
                 api("cafe.adriel.lyricist:lyricist:$lyricist")
 
-                api("dev.icerock.moko:mvvm-core:0.16.1")
+                //api("dev.icerock.moko:mvvm-core:0.16.1")
 
                 /* Official JetBrains Kotlin Date 'n time manager (i.e: generating date from epoch) */
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
@@ -72,8 +72,8 @@ kotlin {
                 implementation("org.kotlincrypto.hash:sha2:$kotlincrypto")
 
                 /* Network client */
-                //val ktor =  "2.3.9" // "3.0.0-beta-1"
-                //implementation("io.ktor:ktor-utils:$ktor")
+                val ktor =  /* "2.3.9" */ "3.0.0-beta-1"
+                implementation("io.ktor:ktor-network:$ktor")
                 //api("io.ktor:ktor-network-tls:$ktor")
 
                 implementation("com.eygraber:uri-kmp:0.0.18")

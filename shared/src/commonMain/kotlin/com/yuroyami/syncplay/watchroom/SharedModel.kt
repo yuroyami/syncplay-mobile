@@ -316,8 +316,8 @@ fun prepareProtocol(joinInfo: JoinInfo) {
             p.session.currentPassword = joinInfo.password
 
             /** Connecting */
-            val tls = valueBlockingly(PREF_TLS_ENABLE, default = (getPlatform() == PLATFORM.Android) )
-            if (tls) {
+            val tls = valueBlockingly(PREF_TLS_ENABLE, default = (getPlatform() == PLATFORM.Android))
+            if (tls && p.supportsTLS()) {
                 p.syncplayCallback?.onTLSCheck()
                 p.tls = Constants.TLS.TLS_ASK
             }

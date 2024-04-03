@@ -24,9 +24,9 @@ import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.Lan
 import androidx.compose.material.icons.filled.Opacity
 import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.PictureInPicture
 import androidx.compose.material.icons.filled.Pin
 import androidx.compose.material.icons.filled.SettingsInputComponent
 import androidx.compose.material.icons.filled.SettingsSuggest
@@ -76,10 +76,10 @@ import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_FONTSIZE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_MAXCOUNT
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_SHADOW
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PIP
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_RESET_DEFAULT
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MAX_BUFFER
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MIN_BUFFER
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_NETWORK_ENGINE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_READY_FIRST_HAND
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_REMEMBER_INFO
@@ -361,19 +361,47 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
                 ) to CATEG_GLOBAL_EXOPLAYER
             )
 
+            if (getPlatform() == PLATFORM.Android) {
+                add(
+                    BooleanSetting(
+                        type = SettingType.ToggleSettingType,
+                        key = PREF_TLS_ENABLE,
+                        title = lyricist.strings.settingTlsTitle,
+                        summary = lyricist.strings.settingTlsSummary,
+                        defaultValue = getPlatform() == PLATFORM.Android, //StartTLS is not implemented in iOS
+                        icon = Icons.Filled.Key,
+                        styling = settingGLOBALstyle,
+                    ) to CATEG_GLOBAL_NETWORK
+                )
+            }
+
             add(
-                BooleanSetting(
-                    type = SettingType.ToggleSettingType,
-                    key = PREF_TLS_ENABLE,
-                    title = lyricist
-                        .strings.settingTlsTitle,
-                    summary = lyricist
-                        .strings.settingTlsSummary,
-                    defaultValue = getPlatform() == PLATFORM.Android, //StartTLS is not supported by iOS's Ktor
-                    icon = Icons.Filled.Key,
+                MultiChoiceSetting(
+                    type = SettingType.MultiChoicePopupSettingType,
+                    key = PREF_NETWORK_ENGINE,
+                    title = lyricist.strings.settingNetworkEngineTitle,
+                    summary = lyricist.strings.settingNetworkEngineSummary,
+                    defaultValue = if (getPlatform() == PLATFORM.Android) "netty" else "ktor",
+                    icon = Icons.Filled.Lan,
                     styling = settingGLOBALstyle,
+                    entryKeys =
+                    mutableListOf(lyricist.strings.settingNetworkEngineKtor).apply {
+                        if (getPlatform() == PLATFORM.Android) {
+                            add(lyricist.strings.settingNetworkEngineNetty)
+                        } else {
+                            add(lyricist.strings.settingNetworkEngineSwiftNIO)
+                        }
+                    },
+                    entryValues = mutableListOf("ktor").apply {
+                        if (getPlatform() == PLATFORM.Android) {
+                            add("netty")
+                        } else {
+                            add("swiftnio")
+                        }
+                    }
                 ) to CATEG_GLOBAL_NETWORK
             )
+
 
             add(
                 Setting.YesNoDialogSetting(
@@ -759,15 +787,15 @@ fun sgGLOBAL() = mutableListOf<SettingCategory>().apply {
                 icon = Icons.Filled.VideoSettings
             )
         )
-
-        add(
-            SettingCategory(
-                keyID = CATEG_GLOBAL_NETWORK,
-                title = lyricist.strings.settingsCategNetwork,
-                icon = Icons.Filled.Hub
-            )
-        )
     }
+    add(
+        SettingCategory(
+            keyID = CATEG_GLOBAL_NETWORK,
+            title = lyricist.strings.settingsCategNetwork,
+            icon = Icons.Filled.Hub
+        )
+    )
+    //}
     add(
         SettingCategory(
             keyID = CATEG_GLOBAL_ADVANCED,
