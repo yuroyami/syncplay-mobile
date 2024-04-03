@@ -3,10 +3,11 @@ import NIO
 import NIOFoundationCompat
 import shared
 
-class SpProtocolApple: SyncplayProtocol {
+class SpProtocolApple: SyncplayProtocol, ChannelInboundHandler {
+    typealias InboundIn = ByteBuffer
+    
     private var channel: Channel?
     private var eventLoopGroup: EventLoopGroup?
-
 
     override func connectSocket() {
         let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
@@ -17,14 +18,14 @@ class SpProtocolApple: SyncplayProtocol {
         let bootstrap = ClientBootstrap(group: group)
             .connectTimeout(TimeAmount.seconds(10))
             .channelInitializer { channel in
-                channel.pipeline.addHandler(Reader())
+                channel.pipeline.addHandler(self)
             }
 
         let host = session.serverHost
         let port = Int(session.serverPort)
 
         do {
-            channel = try bootstrap.connect(host: host, port: port).wait()
+            channel = try? bootstrap.connect(host: host, port: port).wait()
         } catch {
             print(error)
             syncplayCallback?.onConnectionFailed()
@@ -36,7 +37,6 @@ class SpProtocolApple: SyncplayProtocol {
             //syncplayCallback?.onConnected()
         }
     }
-
 
     override func isSocketValid() -> Bool {
         return channel?.isActive ?? false
@@ -78,26 +78,24 @@ class SpProtocolApple: SyncplayProtocol {
         // TLS setup for SwiftNIO
     }
 
-    class Reader: ChannelInboundHandler {
-        typealias InboundIn = ByteBuffer
+    
+    /** Channel handler stuff */
+    func channelRead(context: ChannelHandlerContext, data: NIOAny) {
+        var buffer = unwrapInboundIn(data)
+        let readableBytes = buffer.readableBytes
 
-        func channelRead(context: ChannelHandlerContext, data: NIOAny) {
-            var buffer = unwrapInboundIn(data)
-            let readableBytes = buffer.readableBytes
-
-            if let received = buffer.readString(length: readableBytes) {
-                handleJSON(json: received)
-            }
+        if let received = buffer.readString(length: readableBytes) {
+            handleJSON(json: received)
         }
+    }
 
-        func channelReadComplete(context: ChannelHandlerContext) {
-            context.flush()
-        }
+    func channelReadComplete(context: ChannelHandlerContext) {
+        //context.flush()
+    }
 
-        func errorCaught(context: ChannelHandlerContext, error: Error) {
-            print("Reader exception: \(error)")
-            onError()
-            //context.close(promise: nil)
-        }
+    func errorCaught(context: ChannelHandlerContext, error: Error) {
+        print("Reader exception: \(error)")
+        //onError()
+        //context.close(promise: nil)
     }
 }

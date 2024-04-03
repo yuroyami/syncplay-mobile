@@ -4,6 +4,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.uikit.ComposeUIViewControllerDelegate
 import androidx.compose.ui.window.ComposeUIViewController
 import com.yuroyami.syncplay.home.HomeCallback
 import com.yuroyami.syncplay.home.HomeConfig
@@ -68,10 +69,17 @@ class AppleDelegate : NSObject(), UIApplicationDelegateProtocol {
         return myOrientationMask
     }
 
-
+    @Suppress("CONFLICTING_OVERLOADS")
     override fun application(application: UIApplication, didFinishLaunchingWithOptions: Map<Any?, *>?): Boolean {
         (didFinishLaunchingWithOptions?.get(UIApplicationLaunchOptionsShortcutItemKey) as? UIApplicationShortcutItem)
-            ?.let { handleShortcut(it)}
+            ?.let { handleShortcut(it) }
+        return false
+    }
+
+    @Suppress("CONFLICTING_OVERLOADS")
+    override fun application(application: UIApplication, willFinishLaunchingWithOptions: Map<Any?, *>?): Boolean {
+        (willFinishLaunchingWithOptions?.get(UIApplicationLaunchOptionsShortcutItemKey) as? UIApplicationShortcutItem)
+            ?.let { handleShortcut(it) }
         return false
     }
 
@@ -87,7 +95,9 @@ val isRoom = mutableStateOf(false)
 var sc: UIApplicationShortcutItem? = null
 
 /** This view controller hosts and switches between room screen and home screen view controllers */
-fun SyncplayController() = ComposeUIViewController {
+fun SyncplayController() = ComposeUIViewController(configure = {
+    delegate = AppleLifecycleWatchdog
+}) {
     val room by remember { isRoom }
 
     when (room) {
@@ -252,5 +262,30 @@ object Room : RoomCallback {
         ) {
             pipcontroller?.startPictureInPicture()
         }
+    }
+}
+
+
+object AppleLifecycleWatchdog: ComposeUIViewControllerDelegate {
+    private val watchdog by lazy { viewmodel?.lifecycleWatchdog }
+
+    override fun viewDidAppear(animated: Boolean) {
+        watchdog?.onResume()
+    }
+
+    override fun viewDidDisappear(animated: Boolean) {
+        watchdog?.onStop()
+    }
+
+    override fun viewDidLoad() {
+        watchdog?.onCreate()
+    }
+
+    override fun viewWillAppear(animated: Boolean) {
+        watchdog?.onStart()
+    }
+
+    override fun viewWillDisappear(animated: Boolean) {
+        watchdog?.onPause()
     }
 }

@@ -42,6 +42,7 @@ import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.settings.valueSuspendingly
 import com.yuroyami.syncplay.utils.UIUtils.cutoutMode
 import com.yuroyami.syncplay.utils.UIUtils.hideSystemUI
+import com.yuroyami.syncplay.utils.bindWatchdog
 import com.yuroyami.syncplay.utils.changeLanguage
 import com.yuroyami.syncplay.utils.defaultEngineAndroid
 import com.yuroyami.syncplay.utils.loggy
@@ -165,6 +166,9 @@ class WatchActivity : ComponentActivity() {
             }
 
         }
+
+        /** Communicates the lifecycle with our common code */
+        bindWatchdog()
 
         /** Setting content view, making everything visible */
         setContent {

@@ -361,20 +361,6 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
                 ) to CATEG_GLOBAL_EXOPLAYER
             )
 
-            if (getPlatform() == PLATFORM.Android) {
-                add(
-                    BooleanSetting(
-                        type = SettingType.ToggleSettingType,
-                        key = PREF_TLS_ENABLE,
-                        title = lyricist.strings.settingTlsTitle,
-                        summary = lyricist.strings.settingTlsSummary,
-                        defaultValue = getPlatform() == PLATFORM.Android, //StartTLS is not implemented in iOS
-                        icon = Icons.Filled.Key,
-                        styling = settingGLOBALstyle,
-                    ) to CATEG_GLOBAL_NETWORK
-                )
-            }
-
             add(
                 MultiChoiceSetting(
                     type = SettingType.MultiChoicePopupSettingType,
@@ -402,6 +388,17 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
                 ) to CATEG_GLOBAL_NETWORK
             )
 
+            add(
+                BooleanSetting(
+                    type = SettingType.ToggleSettingType,
+                    key = PREF_TLS_ENABLE,
+                    title = lyricist.strings.settingTlsTitle,
+                    summary = lyricist.strings.settingTlsSummary,
+                    defaultValue = getPlatform() == PLATFORM.Android, //StartTLS is not implemented in iOS
+                    icon = Icons.Filled.Key,
+                    styling = settingGLOBALstyle,
+                ) to CATEG_GLOBAL_NETWORK
+            )
 
             add(
                 Setting.YesNoDialogSetting(

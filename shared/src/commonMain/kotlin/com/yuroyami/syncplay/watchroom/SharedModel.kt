@@ -20,6 +20,7 @@ import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_TLS_ENABLE
 import com.yuroyami.syncplay.settings.valueBlockingly
+import com.yuroyami.syncplay.ui.LifecycleWatchdog
 import com.yuroyami.syncplay.utils.PLATFORM
 import com.yuroyami.syncplay.utils.PlaylistUtils
 import com.yuroyami.syncplay.utils.RoomUtils.broadcastMessage
@@ -28,7 +29,6 @@ import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -40,7 +40,8 @@ var viewmodel: SpViewModel? = null
 class SpViewModel {
     lateinit var p: SyncplayProtocol //If it is not initialized, it means we're in Solo Mode
 
-    val viewmodelScope = CoroutineScope(Dispatchers.IO)
+    val viewmodelScope = CoroutineScope(Dispatchers.Default)
+
     var roomCallback: RoomCallback? = null
 
     var player: BasePlayer? = null
@@ -69,6 +70,29 @@ class SpViewModel {
 
     internal val isSoloMode: Boolean
         get() = !::p.isInitialized
+
+    //TODO Lifecycle Stuff
+    var lifecycleWatchdog = object: LifecycleWatchdog {
+        override fun onResume() {
+
+        }
+
+        override fun onStop() {
+
+        }
+
+        override fun onCreate() {
+
+        }
+
+        override fun onStart() {
+
+        }
+
+        override fun onPause() {
+
+        }
+    }
 }
 
 /** Returns whether we're in Solo Mode, by checking if our protocol is initialized */

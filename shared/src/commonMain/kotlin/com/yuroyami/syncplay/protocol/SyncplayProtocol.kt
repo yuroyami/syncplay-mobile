@@ -44,7 +44,7 @@ abstract class SyncplayProtocol {
     var tls: Constants.TLS = Constants.TLS.TLS_NO
 
     /** Coroutine scopes and dispatchers */
-    val protoScope = CoroutineScope(Dispatchers.IO)
+    val protoScope = CoroutineScope(Dispatchers.Default)
 
     /** This method is responsible for bootstrapping (initializing) the Ktor TCP socket */
     open fun connect() {
@@ -60,6 +60,8 @@ abstract class SyncplayProtocol {
                 connectSocket()
 
                 loggy("PROTOCOL: Connected! HOST: ${session.serverHost}, PORT: ${session.serverPort}....", 202)
+
+                delay(500)
 
                 /** if the TLS mode is [Constants.TLS.TLS_ASK], then the the first packet to send
                  * concerns an opportunistic TLS check with the server, otherwise, a Hello would be first */
