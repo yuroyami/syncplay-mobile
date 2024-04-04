@@ -7,22 +7,15 @@ import com.yuroyami.syncplay.player.BasePlayer
 /*****************************************************************************************
  * Track wrapper class. It encapsulates all info we need about a track in a track group  *
  *****************************************************************************************/
-
-data class Track(
-    val name: String,
-
-    /** The index of the format (track) **/
-    val index: Int = -100,
+interface Track {
+    /** Name of the track */
+    val name: String
 
     /** Corresponds to either subtitle track or audio track type **/
-    val trackType: BasePlayer.TRACKTYPE? = null,
+    val type: BasePlayer.TRACKTYPE?
 
-    /** EXO: The corresponding format (ExoPlayer calls track a format for some reason) **/
-    val format_EXO_ONLY: Any? = null,
+    /** The index of the format (track) **/
+    val index: Int
 
-    /** EXO:  The trackgroup in which the track/format exists **/
-    val trackGroup_EXO_ONLY: Any? = null
-) {
     /** The current status of the track **/
-    var selected: MutableState<Boolean> = mutableStateOf(false)
-}
+    val selected: MutableState<Boolean> }

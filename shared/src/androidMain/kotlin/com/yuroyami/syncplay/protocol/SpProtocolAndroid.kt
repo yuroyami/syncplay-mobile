@@ -93,7 +93,7 @@ class SpProtocolAndroid : SyncplayProtocol() {
         override fun channelRead0(ctx: ChannelHandlerContext?, msg: String?) {
             if (msg != null) {
                 protoScope.launch {
-                    handleJson(this@SpProtocolAndroid, msg)
+                    JsonHandler.parse(this@SpProtocolAndroid, msg)
                 }
             }
         }

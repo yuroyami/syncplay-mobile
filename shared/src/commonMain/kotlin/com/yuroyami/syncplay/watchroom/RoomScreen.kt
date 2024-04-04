@@ -602,6 +602,7 @@ private fun RoomUIImpl() {
                                         }
                                     }, onClick = {
                                         viewmodel?.p?.endConnection(true)
+                                        viewmodel?.player?.destroy()
                                         viewmodel?.roomCallback?.onLeave()
                                     })
                                 }

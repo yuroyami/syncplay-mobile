@@ -76,13 +76,17 @@ kotlin {
                 implementation("io.ktor:ktor-network:$ktor")
                 //api("io.ktor:ktor-network-tls:$ktor")
 
+                /* Android's "Uri" class but rewritten for Kotlin multiplatform */
                 implementation("com.eygraber:uri-kmp:0.0.18")
 
                 /* JSON serializer/deserializer to communicate with Syncplay servers */
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
+                /* Explicitly specifying a newer koroutines */
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1-Beta")
+
                 /* Jetpack Datastore for preferences and settings (accessible in Compose in real-time) */
-                val datastore = "1.1.0-beta02"
+                val datastore = "1.1.0-rc01"
                 api("androidx.datastore:datastore-preferences-core:$datastore")
 
                 /* Compose core dependencies */
@@ -103,17 +107,14 @@ kotlin {
                 dependsOn(commonMain)
 
                 /* Backward compatibility APIs */
-                api("androidx.core:core-ktx:1.13.0-beta01")
+                api("androidx.core:core-ktx:1.13.0-rc01")
                 api("androidx.appcompat:appcompat:1.7.0-alpha03")
 
                 /* SAF DocumentFile manager with backward compatibility */
                 implementation("androidx.documentfile:documentfile:1.0.1")
 
                 /* Splash Screen with backward compatibility */
-                api("androidx.core:core-splashscreen:1.1.0-alpha02")
-
-                /* Jetpack Shared Preferences */
-                implementation("androidx.preference:preference-ktx:1.2.1")
+                api("androidx.core:core-splashscreen:1.1.0-rc01")
 
                 /* Jetpack Home shortcut manager for quick launch with backward compatibility */
                 api("androidx.core:core-google-shortcuts:1.2.0-alpha01") {
@@ -122,7 +123,7 @@ kotlin {
                 }
 
                 /*  Activity's compose support with backward compatibility */
-                api("androidx.activity:activity-compose:1.9.0-beta01")
+                api("androidx.activity:activity-compose:1.9.0-rc01")
 
                 /* Lottie for animations (like Nightmode toggle button) */
                 implementation("com.airbnb.android:lottie-compose:6.4.0")
@@ -156,17 +157,6 @@ kotlin {
                 //implementation("io.ktor:ktor-client-ios:$ktor")
             }
         }
-//        val iosX64Main by getting
-//        val iosArm64Main by getting
-//        val iosSimulatorArm64Main by getting
-//        val iosMain by getting {
-//            dependsOn(commonMain)
-////            iosX64Main.dependsOn(this)
-////            iosArm64Main.dependsOn(this)
-////            iosSimulatorArm64Main.dependsOn(this)
-//
-
-//        }
     }
 }
 

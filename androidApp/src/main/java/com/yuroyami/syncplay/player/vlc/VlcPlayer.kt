@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.view.LayoutInflater
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
@@ -44,7 +45,7 @@ class VlcPlayer : BasePlayer() {
     private var vlcPlayer: MediaPlayer? = null
     private lateinit var vlcView: VLCVideoLayout
 
-    var vlcMedia: Media? = null
+    private var vlcMedia: Media? = null
 
     override val canChangeAspectRatio: Boolean
         get() = true
@@ -60,6 +61,13 @@ class VlcPlayer : BasePlayer() {
 
         vlcAttachObserver()
         playerScopeMain.trackProgress(intervalMillis = 250L)
+    }
+
+    override fun destroy() {
+        vlcPlayer?.stop()
+        vlcMedia?.release()
+        vlcPlayer?.release()
+        libvlc?.release()
     }
 
     @Composable
@@ -99,27 +107,27 @@ class VlcPlayer : BasePlayer() {
         viewmodel?.media?.subtitleTracks?.clear()
         viewmodel?.media?.audioTracks?.clear()
         val audioTracks = vlcPlayer?.getTracks(Track.Type.Audio)
-        audioTracks?.forEach { tracky ->
+        audioTracks?.forEachIndexed { i, tracky ->
             viewmodel?.media?.audioTracks?.add(
-                com.yuroyami.syncplay.models.Track(
-                    name = tracky.name,
-                    index = tracky.id.substringAfter("/").toInt(),
-                    trackType = TRACKTYPE.AUDIO
-                ).apply {
-                    selected.value = tracky.selected
+                object: VlcTrack {
+                    override val name = tracky.name
+                    override val type = TRACKTYPE.AUDIO
+                    override val index = i
+                    override val id = tracky.id
+                    override val selected = mutableStateOf(tracky.selected)
                 }
             )
         }
 
         val subtitleTracks = vlcPlayer?.getTracks(Track.Type.Text)
-        subtitleTracks?.forEach { tracky ->
+        subtitleTracks?.forEachIndexed { i, tracky ->
             viewmodel?.media?.subtitleTracks?.add(
-                com.yuroyami.syncplay.models.Track(
-                    name = tracky.name,
-                    index = tracky.id.substringAfter("/").toInt(),
-                    trackType = TRACKTYPE.SUBTITLE
-                ).apply {
-                    selected.value = tracky.selected
+                object: VlcTrack {
+                    override val name = tracky.name
+                    override val type = TRACKTYPE.SUBTITLE
+                    override val index = i
+                    override val id = tracky.id
+                    override val selected = mutableStateOf(tracky.selected)
                 }
             )
         }
@@ -129,7 +137,7 @@ class VlcPlayer : BasePlayer() {
         when (type) {
             TRACKTYPE.SUBTITLE -> {
                 if (index >= 0) {
-                    vlcPlayer?.selectTrack(viewmodel?.media?.subtitleTracks?.get(index)?.index.toString())
+                    vlcPlayer?.selectTrack((viewmodel?.media?.subtitleTracks?.get(index) as VlcTrack).id)
                 } else if (index == -1) {
                     vlcPlayer?.unselectTrackType(Track.Type.Text)
                 }
@@ -139,7 +147,7 @@ class VlcPlayer : BasePlayer() {
 
             TRACKTYPE.AUDIO -> {
                 if (index >= 0) {
-                    vlcPlayer?.selectTrack(viewmodel?.media?.audioTracks?.get(index)?.index.toString())
+                    vlcPlayer?.selectTrack((viewmodel?.media?.subtitleTracks?.get(index) as VlcTrack).id)
                 } else if (index == -1) {
                     vlcPlayer?.unselectTrackType(Track.Type.Audio)
                 }
@@ -279,6 +287,7 @@ class VlcPlayer : BasePlayer() {
     }
 
     override fun seekTo(toPositionMs: Long) {
+        super.seekTo(toPositionMs)
         vlcPlayer?.setTime(toPositionMs, true)
     }
 
@@ -361,5 +370,9 @@ class VlcPlayer : BasePlayer() {
 
     fun toggleHW(enable: Boolean) {
         vlcMedia?.setHWDecoderEnabled(enable, true)
+    }
+
+    interface VlcTrack: com.yuroyami.syncplay.models.Track {
+        val id: String
     }
 }

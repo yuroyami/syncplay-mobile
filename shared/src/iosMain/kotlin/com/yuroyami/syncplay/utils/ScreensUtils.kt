@@ -21,12 +21,15 @@ import com.yuroyami.syncplay.settings.Setting
 import com.yuroyami.syncplay.settings.SettingObtainerCallback
 import com.yuroyami.syncplay.settings.obtainerCallback
 import com.yuroyami.syncplay.settings.valueBlockingly
+import com.yuroyami.syncplay.watchroom.GestureCallback
 import com.yuroyami.syncplay.watchroom.RoomCallback
 import com.yuroyami.syncplay.watchroom.RoomUI
 import com.yuroyami.syncplay.watchroom.homeCallback
 import com.yuroyami.syncplay.watchroom.prepareProtocol
 import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.launch
+import platform.AVFoundation.setVolume
+import platform.AVFoundation.volume
 import platform.AVKit.AVPictureInPictureController
 import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
@@ -40,11 +43,13 @@ import platform.UIKit.UIInterfaceOrientationMask
 import platform.UIKit.UIInterfaceOrientationMaskAll
 import platform.UIKit.UIInterfaceOrientationMaskLandscape
 import platform.UIKit.UIInterfaceOrientationMaskPortrait
+import platform.UIKit.UIScreen
 import platform.UIKit.UIWindow
 import platform.UIKit.UIWindowScene
 import platform.UIKit.UIWindowSceneGeometryPreferencesIOS
 import platform.UIKit.shortcutItems
 import platform.darwin.NSObject
+import kotlin.math.roundToInt
 
 val delegato = AppleDelegate().also {
     UIApplication.sharedApplication.delegate = it
@@ -287,5 +292,40 @@ object AppleLifecycleWatchdog: ComposeUIViewControllerDelegate {
 
     override fun viewWillDisappear(animated: Boolean) {
         watchdog?.onPause()
+    }
+}
+
+object AppleGesture: GestureCallback {
+    override fun getMaxVolume() = 100
+    override fun getCurrentVolume(): Int {
+        //Volume in iOS is only relative, and max is 100% (1f)
+        return (((viewmodel?.player as? AvPlayer)?.avPlayer?.volume)?.times(100f))?.roundToInt()
+            ?: (((viewmodel?.player as? VlcPlayer)?.vlcPlayer?.pitch)?.times(100f))?.roundToInt()
+            ?: 0
+    }
+    override fun changeCurrentVolume(v: Int) {
+        val epsilon = 1e-2
+        if (v.toFloat() >= 0.0f - epsilon && v.toFloat() <= 1.0f + epsilon) {
+            // Volume is within the range [0.0, 1.0] with precision up to two decimal places
+            val clampedVolume = (v.toFloat()).coerceIn(0.0f, 1.0f)
+            (viewmodel?.player as? AvPlayer)?.avPlayer?.setVolume(clampedVolume)
+            (viewmodel?.player as? VlcPlayer)?.vlcPlayer?.setPitch(clampedVolume)
+
+        } else {
+            // Volume is outside the range [0.0, 1.0] with precision up to two decimal places
+            val clampedVolume = (v.toFloat() / 100f).coerceIn(0.0f, 1.0f)
+            (viewmodel?.player as? AvPlayer)?.avPlayer?.setVolume(clampedVolume)
+            (viewmodel?.player as? VlcPlayer)?.vlcPlayer?.setPitch(clampedVolume)
+        }
+    }
+
+    override fun getMaxBrightness(): Float = 1.0f
+
+    override fun getCurrentBrightness(): Float {
+        return UIScreen.mainScreen.brightness.toFloat()
+    }
+
+    override fun changeCurrentBrightness(v: Float) {
+        UIScreen.mainScreen.brightness = v.coerceIn(0.0f, 1.0f).toDouble()
     }
 }

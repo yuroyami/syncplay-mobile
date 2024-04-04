@@ -25,3 +25,4 @@ fun getFileSize(s: String): Long {
 }
 
 var instantiateSyncplayProtocolSwiftNIO: (() -> SyncplayProtocol)? = null
+

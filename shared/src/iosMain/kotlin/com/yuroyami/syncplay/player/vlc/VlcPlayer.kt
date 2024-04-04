@@ -42,7 +42,7 @@ class VlcPlayer : BasePlayer() {
     override val engine = ENGINE.IOS_VLC
 
     private var libvlc: VLCLibrary? = null
-    private var vlcPlayer: VLCMediaPlayer? = null
+    var vlcPlayer: VLCMediaPlayer? = null
     private var vlcView: UIView? = null
 
     private var vlcMedia: VLCMedia? = null
@@ -55,6 +55,15 @@ class VlcPlayer : BasePlayer() {
     override val supportsChapters: Boolean
         get() = true
 
+
+    override fun destroy() {
+        vlcPlayer?.stop()
+        vlcPlayer?.finalize()
+        vlcPlayer = null
+        vlcMedia = null
+        libvlc?.finalize()
+        libvlc = null
+    }
 
     @Composable
     override fun VideoPlayer(modifier: Modifier) {
@@ -321,6 +330,7 @@ class VlcPlayer : BasePlayer() {
     }
 
     override fun seekTo(toPositionMs: Long) {
+        super.seekTo(toPositionMs)
         vlcPlayer?.setTime(toPositionMs.toVLCTime())
     }
 

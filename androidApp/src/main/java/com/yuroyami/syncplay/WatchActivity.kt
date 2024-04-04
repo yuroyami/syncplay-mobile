@@ -1,9 +1,6 @@
 package com.yuroyami.syncplay
 
-//import com.yuroyami.syncplay.settings.SettingObtainerCallback
-//import com.yuroyami.syncplay.settings.obtainerCallback
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.app.PictureInPictureParams
@@ -21,8 +18,6 @@ import android.provider.Settings
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C.STREAM_TYPE_MUSIC
@@ -58,21 +53,13 @@ import kotlinx.coroutines.launch
 @Suppress("deprecation")
 class WatchActivity : ComponentActivity() {
 
-    private var dirPickResult =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                val dirUri = result.data?.data ?: return@registerForActivityResult
-                contentResolver.takePersistableUriPermission(
-                    dirUri,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                )
-            }
-        }
-
     lateinit var audioManager: AudioManager
 
     /** Now, onto overriding lifecycle methods */
     override fun onCreate(savedInstanceState: Bundle?) {
+        /** Communicates the lifecycle with our common code */
+        bindWatchdog()
+
         super.onCreate(savedInstanceState)
 
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -164,11 +151,7 @@ class WatchActivity : ComponentActivity() {
                     initiatePIPmode()
                 }
             }
-
         }
-
-        /** Communicates the lifecycle with our common code */
-        bindWatchdog()
 
         /** Setting content view, making everything visible */
         setContent {
@@ -204,9 +187,6 @@ class WatchActivity : ComponentActivity() {
             viewmodel?.p?.endConnection(true)
         }
 
-        (viewmodel?.player as? ExoPlayer)?.exoplayer?.release()
-        (viewmodel?.player as? MpvPlayer)?.removeObserver()
-
         finish()
     }
 
@@ -215,14 +195,18 @@ class WatchActivity : ComponentActivity() {
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         viewmodel?.pipMode?.value = isInPictureInPictureMode
-    }
 
+        if (!isInPictureInPictureMode) {
+            viewmodel?.player?.pause()
+        }
+    }
 
     private fun initiatePIPmode() {
         val isPipAllowed = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
 
         if (!isPipAllowed) return
 
+        viewmodel?.pipMode?.value = true
         moveTaskToBack(true)
         updatePiPParams()
         enterPictureInPictureMode()

@@ -20,6 +20,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 abstract class SyncplayProtocol {
+    val jsonHandler = JsonHandler
+
     /** This refers to the event callback interface */
     var syncplayCallback: ProtocolCallback? = null
 
@@ -55,31 +57,25 @@ abstract class SyncplayProtocol {
         state = Constants.CONNECTIONSTATE.STATE_CONNECTING
 
         /** Bootstrapping our Ktor client  */
-        protoScope.launch {
-            try {
-                connectSocket()
+        try {
+            connectSocket()
 
-                loggy("PROTOCOL: Connected! HOST: ${session.serverHost}, PORT: ${session.serverPort}....", 202)
-
-                delay(500)
-
-                /** if the TLS mode is [Constants.TLS.TLS_ASK], then the the first packet to send
-                 * concerns an opportunistic TLS check with the server, otherwise, a Hello would be first */
-                if (tls == Constants.TLS.TLS_ASK) {
-                    sendPacket(sendTLS())
-                } else {
-                    sendPacket(
-                        sendHello(
-                            session.currentUsername,
-                            session.currentRoom,
-                            session.currentPassword
-                        )
+            /** if the TLS mode is [Constants.TLS.TLS_ASK], then the the first packet to send
+             * concerns an opportunistic TLS check with the server, otherwise, a Hello would be first */
+            if (tls == Constants.TLS.TLS_ASK) {
+                sendPacket(sendTLS())
+            } else {
+                sendPacket(
+                    sendHello(
+                        session.currentUsername,
+                        session.currentRoom,
+                        session.currentPassword
                     )
-                }
-            } catch (e: Exception) {
-                loggy(e.stackTraceToString(), 205)
-                syncplayCallback?.onConnectionFailed()
+                )
             }
+        } catch (e: Exception) {
+            loggy(e.stackTraceToString(), 205)
+            syncplayCallback?.onConnectionFailed()
         }
     }
 
@@ -124,7 +120,8 @@ abstract class SyncplayProtocol {
     fun terminateScope() {
         try {
             protoScope.cancel()
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
     }
 
     /** This method schedules reconnection ONLY IN in disconnected state */
@@ -144,26 +141,25 @@ abstract class SyncplayProtocol {
         }
     }
 
-    fun handleJSON(json: String) {
-        protoScope.launch {
-            handleJson(this@SyncplayProtocol, json)
-        }
-    }
-
     /********************************************************************************************
      * Platform-specific (because we're using Netty on Android side, and plain Ktor on iOS side *
      ********************************************************************************************/
 
     /** Attempts a connection to the host and port specified under [Session] */
     abstract fun connectSocket()
+
     /** Whether the currently established socket is valid (active) */
     abstract fun isSocketValid(): Boolean
+
     /** Whether the currently selected network engine supports TLS */
     abstract fun supportsTLS(): Boolean
+
     /** Ends the connection and cancels any read/write operations. Disposes of any references */
     abstract fun endConnection(terminating: Boolean)
+
     /** Writes the string to the socket */
     abstract fun writeActualString(s: String)
+
     /** Attempts to upgrade the plain TCP socket to a TLS secure socket */
     abstract fun upgradeTls()
 

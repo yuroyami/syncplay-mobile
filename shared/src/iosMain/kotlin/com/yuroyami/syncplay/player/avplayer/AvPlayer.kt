@@ -52,7 +52,7 @@ class AvPlayer : BasePlayer() {
     override val engine = ENGINE.IOS_AVPLAYER
 
     /*-- Exoplayer-related properties --*/
-    private var avPlayer: AVPlayer? = null
+    var avPlayer: AVPlayer? = null
     private lateinit var avView: AVPlayerViewController
     var avPlayerLayer: AVPlayerLayer? = null
     private var avContainer: UIView? = null
@@ -75,6 +75,13 @@ class AvPlayer : BasePlayer() {
     fun reassign() {
         avView.player = avPlayer!!
         avPlayerLayer?.player = avPlayer
+    }
+
+    override fun destroy() {
+        avPlayer?.pause()
+        avPlayer?.finalize()
+        avPlayer = null
+        avContainer = null
     }
 
     @OptIn(ExperimentalForeignApi::class)
@@ -219,6 +226,7 @@ class AvPlayer : BasePlayer() {
 
     @OptIn(ExperimentalForeignApi::class)
     override fun seekTo(toPositionMs: Long) {
+        super.seekTo(toPositionMs)
         avPlayer?.seekToTime(CMTimeMake(toPositionMs, 1000))
     }
 

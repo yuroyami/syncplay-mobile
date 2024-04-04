@@ -6,10 +6,12 @@ import android.graphics.Typeface
 import android.util.TypedValue
 import android.view.LayoutInflater
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import androidx.media3.common.C
+import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
@@ -191,6 +193,12 @@ class ExoPlayer : BasePlayer() {
         }
     }
 
+    override fun destroy() {
+        exoplayer?.stop()
+        exoplayer?.release()
+        exoplayer = null
+    }
+
     @Composable
     override fun VideoPlayer(modifier: Modifier) {
         AndroidView(
@@ -224,17 +232,14 @@ class ExoPlayer : BasePlayer() {
                     val index = trackGroup.indexOf(format)
 
                     /** Creating a custom Track instance for every track in a track group **/
-                    val exoTrack = Track(
-                        trackGroup_EXO_ONLY = trackGroup,
-                        trackType = trackType.toCommonType(),
-                        index = index,
-                        format_EXO_ONLY = format,
-                        name = "${format.label} [${format.language?.uppercase() ?: "UND"}]"
-                    ).apply {
-                        this.selected.value = group.isTrackSelected(index)
+                    val exoTrack = object: ExoTrack {
+                        override val trackGroup = trackGroup
+                        override val format = format
+                        override val name = "${format.label} [${format.language?.uppercase() ?: "UND"}]"
+                        override val type = trackType.toCommonType()
+                        override val index = index
+                        override val selected = mutableStateOf(group.isTrackSelected(index))
                     }
-
-                    exoTrack.selected.value = group.isTrackSelected(index)
 
                     if (trackType == C.TRACK_TYPE_TEXT) {
                         viewmodel?.media?.subtitleTracks?.add(exoTrack)
@@ -258,14 +263,14 @@ class ExoPlayer : BasePlayer() {
             when (type) {
                 TRACKTYPE.SUBTITLE -> {
                     viewmodel?.currentTrackChoices?.lastSubtitleOverride = TrackSelectionOverride(
-                        viewmodel?.media!!.subtitleTracks[index].trackGroup_EXO_ONLY as TrackGroup,
+                        (viewmodel?.media!!.subtitleTracks[index] as ExoTrack).trackGroup,
                         viewmodel?.media!!.subtitleTracks[index].index
                     )
                 }
 
                 TRACKTYPE.AUDIO -> {
                     viewmodel?.currentTrackChoices?.lastSubtitleOverride = TrackSelectionOverride(
-                        viewmodel?.media!!.audioTracks[index].trackGroup_EXO_ONLY as TrackGroup,
+                        (viewmodel?.media!!.audioTracks[index] as ExoTrack).trackGroup,
                         viewmodel?.media!!.audioTracks[index].index
                     )
                 }
@@ -413,6 +418,7 @@ class ExoPlayer : BasePlayer() {
     }
 
     override fun seekTo(toPositionMs: Long) {
+        super.seekTo(toPositionMs)
         playerScopeMain.launch {
             exoplayer?.seekTo((toPositionMs))
         }
@@ -478,5 +484,10 @@ class ExoPlayer : BasePlayer() {
             changeSubtitleSize(size.roundToInt())
 
         }
+    }
+
+    interface ExoTrack: Track {
+        val trackGroup: TrackGroup
+        val format: Format
     }
 }

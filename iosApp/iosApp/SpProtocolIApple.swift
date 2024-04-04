@@ -1,69 +1,75 @@
 import Foundation
 import NIO
 import NIOFoundationCompat
+import NIOTransportServices
 import shared
 
-class SpProtocolApple: SyncplayProtocol, ChannelInboundHandler {
+@objc class SpProtocolApple: SyncplayProtocol, ChannelInboundHandler {
     typealias InboundIn = ByteBuffer
     
     private var channel: Channel?
     private var eventLoopGroup: EventLoopGroup?
-
-    override func connectSocket() {
-        let group = MultiThreadedEventLoopGroup(numberOfThreads: System.coreCount)
+    
+    @objc override func connectSocket() {
+        let group = NIOTSEventLoopGroup()
         eventLoopGroup = group
-
+        
         print("Bootstrapping...")
-
-        let bootstrap = ClientBootstrap(group: group)
+        
+        let host = session.serverHost
+        let port = Int(session.serverPort)
+        
+        let result = NIOTSConnectionBootstrap(group: group)
             .connectTimeout(TimeAmount.seconds(10))
             .channelInitializer { channel in
                 channel.pipeline.addHandler(self)
             }
-
-        let host = session.serverHost
-        let port = Int(session.serverPort)
-
-        do {
-            channel = try? bootstrap.connect(host: host, port: port).wait()
-        } catch {
-            print(error)
-            syncplayCallback?.onConnectionFailed()
-            return
-        }
-
-        if channel != nil {
+            .connect(host: host, port: port)
+        
+        result.whenSuccess { channel in
+            self.channel = channel
             print("Connected!")
-            //syncplayCallback?.onConnected()
         }
+        result.whenFailure { error in
+            print(error)
+            self.syncplayCallback?.onConnectionFailed()
+        }
+        
+        do {
+            _ = try result.wait()
+        } catch {
+            print("Connection error: \(error)")
+            self.syncplayCallback?.onConnectionFailed()
+        }
+        
     }
-
-    override func isSocketValid() -> Bool {
+    
+    @objc override func isSocketValid() -> Bool {
         return channel?.isActive ?? false
     }
-
-    override func supportsTLS() -> Bool {
+    
+    @objc override func supportsTLS() -> Bool {
         return false
     }
-
-    override func endConnection(terminating: Bool) {
-        try? channel?.close().wait()
-        try? eventLoopGroup?.syncShutdownGracefully()
-
+    
+    @objc override func endConnection(terminating: Bool) {
+        //try? channel?.close().wait()
+        //try? eventLoopGroup?.syncShutdownGracefully()
+        
         if terminating {
             terminateScope()
         }
     }
-
-    override func writeActualString(s: String) {
+    
+    @objc override func writeActualString(s: String) {
         guard let channel = channel else {
             syncplayCallback?.onDisconnected()
             return
         }
-
+        
         let data = s.data(using: .utf8)!
         let buffer = channel.allocator.buffer(bytes: data)
-
+        
         channel.writeAndFlush(buffer).whenComplete { result in
             do {
                 try result.get()
@@ -73,26 +79,28 @@ class SpProtocolApple: SyncplayProtocol, ChannelInboundHandler {
             }
         }
     }
-
-    override func upgradeTls() {
+    
+    @objc override func upgradeTls() {
         // TLS setup for SwiftNIO
     }
-
+    
     
     /** Channel handler stuff */
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
-        var buffer = unwrapInboundIn(data)
+        var buffer = self.unwrapInboundIn(data)
         let readableBytes = buffer.readableBytes
-
-        if let received = buffer.readString(length: readableBytes) {
-            handleJSON(json: received)
+        var data = buffer.readData(length: readableBytes)!
+        
+        // Decode the data buffer into a string using ASCII encoding
+        if let received = String(data: data, encoding: .utf8) {
+            self.jsonHandler.parse(protocol: self, json: received, retry: true)
         }
     }
-
+    
     func channelReadComplete(context: ChannelHandlerContext) {
         //context.flush()
     }
-
+    
     func errorCaught(context: ChannelHandlerContext, error: Error) {
         print("Reader exception: \(error)")
         //onError()

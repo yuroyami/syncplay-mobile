@@ -7,6 +7,7 @@ import android.os.ParcelFileDescriptor
 import android.util.Log
 import android.view.LayoutInflater
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
@@ -18,6 +19,7 @@ import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.PlayerUtils.trackProgress
+import com.yuroyami.syncplay.player.exo.ExoPlayer
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.utils.RoomUtils.checkFileMismatches
 import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
@@ -60,6 +62,10 @@ class MpvPlayer : BasePlayer() {
         ctx = mpvView.context.applicationContext
 
         copyAssets(ctx)
+    }
+
+    override fun destroy() {
+        mpvView.destroy()
     }
 
     @Composable
@@ -111,24 +117,22 @@ class MpvPlayer : BasePlayer() {
             when (type) {
                 "audio" -> {
                     viewmodel?.media?.audioTracks?.add(
-                        Track(
-                            name = trackName,
-                            index = mpvId,
-                            trackType = TRACKTYPE.AUDIO,
-                        ).apply {
-                            this.selected.value = selected
+                        object: Track {
+                            override val name = trackName
+                            override val type = TRACKTYPE.AUDIO
+                            override val index = mpvId
+                            override val selected = mutableStateOf(selected)
                         }
                     )
                 }
 
                 "sub" -> {
                     viewmodel?.media?.subtitleTracks?.add(
-                        Track(
-                            name = trackName,
-                            index = mpvId,
-                            trackType = TRACKTYPE.SUBTITLE,
-                        ).apply {
-                            this.selected.value = selected
+                        object: Track {
+                            override val name = trackName
+                            override val type = TRACKTYPE.SUBTITLE
+                            override val index = mpvId
+                            override val selected = mutableStateOf(selected)
                         }
                     )
                 }
@@ -310,6 +314,7 @@ class MpvPlayer : BasePlayer() {
 
     override fun seekTo(toPositionMs: Long) {
         if (!ismpvInit) return
+        super.seekTo(toPositionMs)
 
         playerScopeIO.launch {
             mpvView.timePos = toPositionMs.toInt() / 1000

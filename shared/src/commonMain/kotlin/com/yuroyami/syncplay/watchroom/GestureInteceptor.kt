@@ -14,8 +14,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Brightness6
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -192,7 +192,7 @@ fun GestureInterceptor(
                         ).background(Color.LightGray).clip(RoundedCornerShape(25)),
                         verticalAlignment = CenterVertically
                     ) {
-                        Icon(imageVector = Icons.Filled.VolumeUp, "")
+                        Icon(imageVector = Icons.AutoMirrored.Filled.VolumeUp, "")
                         //TODO '/30' should be platform specific
                         Text("Volume: $currentVolume/30", color = Color.Black)
                     }

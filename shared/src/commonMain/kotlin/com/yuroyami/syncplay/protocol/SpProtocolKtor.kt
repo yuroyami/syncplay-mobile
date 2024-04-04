@@ -42,7 +42,7 @@ class SpProtocolKtor : SyncplayProtocol() {
                         connection?.input?.awaitContent()
                         input?.readUTF8Line()?.let {
                             launch {
-                                handleJson(this@SpProtocolKtor, it)
+                                jsonHandler.parse(this@SpProtocolKtor, it)
                             }
                         }
 

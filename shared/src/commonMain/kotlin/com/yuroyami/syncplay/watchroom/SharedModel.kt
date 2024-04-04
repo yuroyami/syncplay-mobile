@@ -72,26 +72,28 @@ class SpViewModel {
         get() = !::p.isInitialized
 
     //TODO Lifecycle Stuff
-    var lifecycleWatchdog = object: LifecycleWatchdog {
-        override fun onResume() {
 
+    var background = false
+    var lifecycleWatchdog = object: LifecycleWatchdog {
+
+        override fun onResume() {
+            background = false
         }
 
         override fun onStop() {
-
+            if (!pipMode.value) {
+                background = true
+                viewmodel?.player?.pause()
+            }
         }
 
-        override fun onCreate() {
-
-        }
+        override fun onCreate() {}
 
         override fun onStart() {
-
+            background = false
         }
 
-        override fun onPause() {
-
-        }
+        override fun onPause() {}
     }
 }
 

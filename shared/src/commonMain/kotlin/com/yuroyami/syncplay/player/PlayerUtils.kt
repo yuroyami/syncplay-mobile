@@ -15,12 +15,14 @@ object PlayerUtils {
 
     /** This pauses playback on the main (necessary) thread **/
     fun pausePlayback() {
+        if (viewmodel?.background == true) return;
         viewmodel?.player?.pause()
         viewmodel?.roomCallback?.onPlayback(true)
     }
 
     /** This resumes playback on the main thread, and hides system UI **/
     fun playPlayback() {
+        if (viewmodel?.background == true) return;
         viewmodel?.player?.play()
         viewmodel?.roomCallback?.onPlayback(false)
     }

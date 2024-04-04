@@ -7,6 +7,7 @@ import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.utils.sha256
 import com.yuroyami.syncplay.utils.toHex
+import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -59,6 +60,9 @@ abstract class BasePlayer {
     /** Called when the player is to be initialized */
     abstract fun initialize()
 
+    /** Called when the player needs to be destroyed */
+    abstract fun destroy()
+
     /** Returns whether the current player has any media loaded */
     abstract fun hasMedia(): Boolean
 
@@ -88,7 +92,9 @@ abstract class BasePlayer {
 
     abstract fun isSeekable(): Boolean
 
-    abstract fun seekTo(toPositionMs: Long)
+    open fun seekTo(toPositionMs: Long) {
+        if (viewmodel?.background == true) return;
+    }
 
     abstract fun currentPositionMs(): Long
 
