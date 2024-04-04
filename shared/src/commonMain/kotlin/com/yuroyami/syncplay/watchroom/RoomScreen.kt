@@ -756,7 +756,7 @@ private fun RoomUIImpl() {
 
                                                     }
                                                 }, onClick = {
-                                                    viewmodel?.player?.selectTrack(TRACKTYPE.SUBTITLE, -1)
+                                                    viewmodel?.player?.selectTrack(null, TRACKTYPE.SUBTITLE)
                                                     tracksPopup.value = false
                                                     controlcardvisible = false
 
@@ -766,7 +766,7 @@ private fun RoomUIImpl() {
                                                     DropdownMenuItem(text = {
                                                         Row(verticalAlignment = CenterVertically) {
                                                             Checkbox(checked = track.selected.value, onCheckedChange = {
-                                                                viewmodel?.player?.selectTrack(TRACKTYPE.SUBTITLE, track.index)
+                                                                viewmodel?.player?.selectTrack(track, TRACKTYPE.SUBTITLE)
                                                                 tracksPopup.value = false
                                                             })
 
@@ -775,7 +775,7 @@ private fun RoomUIImpl() {
                                                             )
                                                         }
                                                     }, onClick = {
-                                                        viewmodel?.player?.selectTrack(TRACKTYPE.SUBTITLE, track.index)
+                                                        viewmodel?.player?.selectTrack(track, TRACKTYPE.SUBTITLE)
 
                                                         tracksPopup.value = false
                                                         controlcardvisible = false
@@ -809,7 +809,7 @@ private fun RoomUIImpl() {
                                                     DropdownMenuItem(text = {
                                                         Row(verticalAlignment = CenterVertically) {
                                                             Checkbox(checked = track.selected.value, onCheckedChange = {
-                                                                viewmodel?.player?.selectTrack(TRACKTYPE.AUDIO, track.index)
+                                                                viewmodel?.player?.selectTrack(track, TRACKTYPE.AUDIO)
                                                                 tracksPopup.value = false
                                                             })
 
@@ -818,7 +818,7 @@ private fun RoomUIImpl() {
                                                             )
                                                         }
                                                     }, onClick = {
-                                                        viewmodel?.player?.selectTrack(TRACKTYPE.AUDIO, track.index)
+                                                        viewmodel?.player?.selectTrack(track, TRACKTYPE.AUDIO)
                                                         tracksPopup.value = false
                                                     })
                                                 }

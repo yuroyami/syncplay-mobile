@@ -1,6 +1,7 @@
 package com.yuroyami.syncplay.player.avplayer
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.interop.UIKitView
@@ -8,37 +9,53 @@ import cafe.adriel.lyricist.Lyricist
 import com.yuroyami.syncplay.lyricist.Stringies
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
+import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.PlayerUtils.trackProgress
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.utils.RoomUtils.checkFileMismatches
 import com.yuroyami.syncplay.utils.collectInfoLocaliOS
+import com.yuroyami.syncplay.utils.getFileName
+import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.watchroom.dispatchOSD
 import com.yuroyami.syncplay.watchroom.isSoloMode
+import com.yuroyami.syncplay.watchroom.lyricist
 import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import platform.AVFoundation.AVLayerVideoGravityResize
+import platform.AVFoundation.AVLayerVideoGravityResizeAspect
+import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
+import platform.AVFoundation.AVMediaCharacteristic
+import platform.AVFoundation.AVMediaSelectionGroup
+import platform.AVFoundation.AVMediaSelectionOption
+import platform.AVFoundation.AVMediaTypeAudio
+import platform.AVFoundation.AVMediaTypeText
 import platform.AVFoundation.AVPlayer
 import platform.AVFoundation.AVPlayerItem
 import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
 import platform.AVFoundation.AVPlayerLayer
 import platform.AVFoundation.asset
+import platform.AVFoundation.availableMediaCharacteristicsWithMediaSelectionOptions
 import platform.AVFoundation.currentItem
 import platform.AVFoundation.currentTime
+import platform.AVFoundation.mediaSelectionGroupForMediaCharacteristic
 import platform.AVFoundation.pause
 import platform.AVFoundation.play
 import platform.AVFoundation.rate
 import platform.AVFoundation.seekToTime
 import platform.AVFoundation.seekableTimeRanges
+import platform.AVFoundation.selectMediaOption
 import platform.AVKit.AVPlayerViewController
 import platform.AVKit.AVPlayerViewControllerDelegateProtocol
 import platform.CoreGraphics.CGRect
 import platform.CoreMedia.CMTime
 import platform.CoreMedia.CMTimeGetSeconds
 import platform.CoreMedia.CMTimeMake
+import platform.Foundation.NSURL
 import platform.Foundation.NSURL.Companion.URLWithString
 import platform.Foundation.NSURL.Companion.fileURLWithPath
 import platform.QuartzCore.CATransaction
@@ -66,7 +83,7 @@ class AvPlayer : BasePlayer() {
         //avView.view.setBackgroundColor(UIColor.clearColor())
         //avPlayerLayer!!.setBackgroundColor(UIColor.clearColor().CGColor)
         avView.showsPlaybackControls = false
-        avView.delegate = object: NSObject(), AVPlayerViewControllerDelegateProtocol {
+        avView.delegate = object : NSObject(), AVPlayerViewControllerDelegateProtocol {
 
         }
         playerScopeMain.trackProgress(intervalMillis = 250L)
@@ -90,7 +107,7 @@ class AvPlayer : BasePlayer() {
         UIKitView(
             modifier = modifier,
             factory = remember {
-                factorylambda@ {
+                factorylambda@{
                     avPlayerLayer = AVPlayerLayer()
                     avView = AVPlayerViewController()
                     initialize()
@@ -120,11 +137,98 @@ class AvPlayer : BasePlayer() {
     }
 
     override fun analyzeTracks(mediafile: MediaFile) {
-        //TODO("Not yet implemented")
+        // Check if the AVPlayer is initialized
+        if (avPlayer == null || avMedia == null) return
+
+        viewmodel?.media?.subtitleTracks?.clear()
+        viewmodel?.media?.audioTracks?.clear()
+
+        //Groups
+        val asset = avPlayer?.currentItem?.asset ?: return
+        val characteristics = asset.availableMediaCharacteristicsWithMediaSelectionOptions.map { it as AVMediaCharacteristic }
+        characteristics.forEach {
+            loggy("Characteristic: $it")
+
+            val group = asset.mediaSelectionGroupForMediaCharacteristic(it)
+            group?.options?.map { op -> op as AVMediaSelectionOption }?.forEachIndexed { i, option ->
+                loggy("Option: $option")
+
+                val isSelected = group.defaultOption == option
+
+                if (option.mediaType == AVMediaTypeText || option.mediaType == AVMediaTypeAudio) {
+                    mediafile.audioTracks.add(
+                        object : AvTrack {
+                            override val sOption = option
+                            override val sGroup = group!!
+                            override val name = option.displayName + " [${option.extendedLanguageTag}]"
+                            override val index = i
+                            override val type = if (option.mediaType == AVMediaTypeAudio) TRACKTYPE.AUDIO else TRACKTYPE.SUBTITLE
+                            override val selected = mutableStateOf(isSelected)
+                        }
+                    )
+                }
+            }
+        }
+//
+//
+//        // Extract audio tracks information
+//        val audioTracks = avMedia!!.tracks.map { it as AVAssetTrack }.filter { it.mediaType == AVMediaTypeAudio }
+//        audioTracks.forEachIndexed { i, track ->
+//            mediafile.audioTracks.add(
+//                object : Track {
+//                    override val name = track.languageCode ?: "Track ${i + 1}"
+//                    override val index = i
+//                    override val type = TRACKTYPE.AUDIO
+//                    override val selected = mutableStateOf(track.selected)
+//                }
+//            )
+//        }
+//
+//        val subtitleTracks = avMedia!!.tracks.map { it as AVAssetTrack }.filter { it.mediaType == AVMediaTypeText }
+//        subtitleTracks.forEachIndexed { i, track ->
+//            mediafile.subtitleTracks.add(
+//                object : Track {
+//                    override val name = track.languageCode ?: "Subtitle ${i + 1}"
+//                    override val index = i
+//                    override val type = TRACKTYPE.SUBTITLE
+//                    override val selected = mutableStateOf(track.selected)
+//                }
+//            )
+//        }
     }
 
-    override fun selectTrack(type: TRACKTYPE, index: Int) {
-        //TODO("Not yet implemented")
+    override fun selectTrack(track: Track?, type: TRACKTYPE) {
+        val avtrack = track as? AvTrack
+
+        if (avtrack != null) {
+            avPlayer?.currentItem?.selectMediaOption(avtrack.sOption, avtrack.sGroup)
+        } else {
+            val asset = avPlayer?.currentItem?.asset ?: return
+            val characteristics = asset.availableMediaCharacteristicsWithMediaSelectionOptions.map { it as AVMediaCharacteristic }
+            var groupInQuestion: AVMediaSelectionGroup? = null
+            characteristics.forEach { characteristic ->
+                val group = asset.mediaSelectionGroupForMediaCharacteristic(characteristic)
+
+                when (type) {
+                    TRACKTYPE.AUDIO -> {
+                        val isAudio = group?.options?.any { (it as? AVMediaSelectionOption)?.mediaType == AVMediaTypeAudio }
+                        if (isAudio == true) {
+                            groupInQuestion = group
+                        }
+                    }
+                    TRACKTYPE.SUBTITLE -> {
+                        val isSubtitle = group?.options?.any { (it as? AVMediaSelectionOption)?.mediaType == AVMediaTypeText }
+                        if (isSubtitle == true) {
+                            groupInQuestion = group
+                        }
+                    }
+                }
+            }
+
+            if (groupInQuestion?.allowsEmptySelection == true) {
+                avPlayer?.currentItem?.selectMediaOption(null, groupInQuestion!!)
+            }
+        }
     }
 
     override fun reapplyTrackChoices() {
@@ -132,7 +236,23 @@ class AvPlayer : BasePlayer() {
     }
 
     override fun loadExternalSub(uri: String) {
-        //TODO("Not yet implemented")
+        if (hasMedia()) {
+            val filename = getFileName(uri = uri).toString()
+            val extension = filename.substring(filename.lastIndexOf('.') + 1).lowercase()
+
+            val mimeTypeValid = listOf("srt", "ass", "ssa", "ttml", "vtt").contains(extension)
+
+            if (mimeTypeValid) {
+                val subUri = NSURL.URLWithString(uri)!!
+
+                //TODO: Doesn't support loading external subs
+                playerScopeMain.dispatchOSD(lyricist.strings.roomSelectedSub(filename))
+            } else {
+                playerScopeMain.dispatchOSD(lyricist.strings.roomSelectedSubError)
+            }
+        } else {
+            playerScopeMain.dispatchOSD(lyricist.strings.roomSubErrorLoadVidFirst)
+        }
     }
 
     override fun injectVideo(uri: String?, isUrl: Boolean) {
@@ -236,8 +356,17 @@ class AvPlayer : BasePlayer() {
     }
 
     override fun switchAspectRatio(): String {
-        //TODO
-        return ""
+        val scales = listOf(
+            AVLayerVideoGravityResize,
+            AVLayerVideoGravityResizeAspect,
+            AVLayerVideoGravityResizeAspectFill
+        )
+        val current = avPlayerLayer?.videoGravity
+        val currentIndex = if (current != null) scales.indexOf(current) else -1
+        val nextIndex = (currentIndex + 1) % scales.size
+        val nextScale = scales[nextIndex]
+        avPlayerLayer?.videoGravity = nextScale
+        return nextScale!!
     }
 
     override fun collectInfoLocal(mediafile: MediaFile) {
@@ -256,5 +385,10 @@ class AvPlayer : BasePlayer() {
 
     private fun CValue<CMTime>.toMillis(): Long {
         return CMTimeGetSeconds(this).times(1000.0).roundToLong()
+    }
+
+    interface AvTrack : Track {
+        val sOption: AVMediaSelectionOption
+        val sGroup: AVMediaSelectionGroup
     }
 }
