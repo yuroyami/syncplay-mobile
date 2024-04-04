@@ -24,6 +24,7 @@ import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.watchroom.GestureCallback
 import com.yuroyami.syncplay.watchroom.RoomCallback
 import com.yuroyami.syncplay.watchroom.RoomUI
+import com.yuroyami.syncplay.watchroom.gestureCallback
 import com.yuroyami.syncplay.watchroom.homeCallback
 import com.yuroyami.syncplay.watchroom.prepareProtocol
 import com.yuroyami.syncplay.watchroom.viewmodel
@@ -58,6 +59,7 @@ val delegato = AppleDelegate().also {
 
 var pipcontroller: AVPictureInPictureController? = null
 
+@Suppress("CONFLICTING_OVERLOADS")
 class AppleDelegate : NSObject(), UIApplicationDelegateProtocol {
 
     var myOrientationMask: UIInterfaceOrientationMask = UIInterfaceOrientationMaskPortrait
@@ -74,14 +76,12 @@ class AppleDelegate : NSObject(), UIApplicationDelegateProtocol {
         return myOrientationMask
     }
 
-    @Suppress("CONFLICTING_OVERLOADS")
     override fun application(application: UIApplication, didFinishLaunchingWithOptions: Map<Any?, *>?): Boolean {
         (didFinishLaunchingWithOptions?.get(UIApplicationLaunchOptionsShortcutItemKey) as? UIApplicationShortcutItem)
             ?.let { handleShortcut(it) }
         return false
     }
 
-    @Suppress("CONFLICTING_OVERLOADS")
     override fun application(application: UIApplication, willFinishLaunchingWithOptions: Map<Any?, *>?): Boolean {
         (willFinishLaunchingWithOptions?.get(UIApplicationLaunchOptionsShortcutItemKey) as? UIApplicationShortcutItem)
             ?.let { handleShortcut(it) }
@@ -107,7 +107,8 @@ fun SyncplayController() = ComposeUIViewController(configure = {
 
     when (room) {
         true -> {
-            viewmodel?.roomCallback = Room
+            viewmodel?.roomCallback = remember { Room }
+            gestureCallback = remember { AppleGesture }
 
             LaunchedEffect(null) {
                 delegato.myOrientationMask = UIInterfaceOrientationMaskLandscape
@@ -295,37 +296,35 @@ object AppleLifecycleWatchdog: ComposeUIViewControllerDelegate {
     }
 }
 
-object AppleGesture: GestureCallback {
-    override fun getMaxVolume() = 100
-    override fun getCurrentVolume(): Int {
-        //Volume in iOS is only relative, and max is 100% (1f)
-        return (((viewmodel?.player as? AvPlayer)?.avPlayer?.volume)?.times(100f))?.roundToInt()
-            ?: (((viewmodel?.player as? VlcPlayer)?.vlcPlayer?.pitch)?.times(100f))?.roundToInt()
-            ?: 0
-    }
-    override fun changeCurrentVolume(v: Int) {
-        val epsilon = 1e-2
-        if (v.toFloat() >= 0.0f - epsilon && v.toFloat() <= 1.0f + epsilon) {
-            // Volume is within the range [0.0, 1.0] with precision up to two decimal places
-            val clampedVolume = (v.toFloat()).coerceIn(0.0f, 1.0f)
-            (viewmodel?.player as? AvPlayer)?.avPlayer?.setVolume(clampedVolume)
-            (viewmodel?.player as? VlcPlayer)?.vlcPlayer?.setPitch(clampedVolume)
+object AppleGesture : GestureCallback {
+    private const val MAX_VOLUME = 100
+    private const val MAX_BRIGHTNESS = 1.0f
 
-        } else {
-            // Volume is outside the range [0.0, 1.0] with precision up to two decimal places
-            val clampedVolume = (v.toFloat() / 100f).coerceIn(0.0f, 1.0f)
-            (viewmodel?.player as? AvPlayer)?.avPlayer?.setVolume(clampedVolume)
-            (viewmodel?.player as? VlcPlayer)?.vlcPlayer?.setPitch(clampedVolume)
+    override fun getMaxVolume() = MAX_VOLUME
+
+    override fun getCurrentVolume(): Int {
+        val avPlayer = (viewmodel?.player as? AvPlayer)?.avPlayer
+        val vlcPlayer = (viewmodel?.player as? VlcPlayer)?.vlcPlayer
+
+        return when {
+            avPlayer != null -> (avPlayer.volume * MAX_VOLUME).roundToInt()
+            vlcPlayer != null -> (vlcPlayer.pitch * MAX_VOLUME).roundToInt()
+            else -> 0
         }
     }
 
-    override fun getMaxBrightness(): Float = 1.0f
+    override fun changeCurrentVolume(v: Int) {
+        val clampedVolume = v.toFloat().coerceIn(0.0f, MAX_VOLUME.toFloat()) / MAX_VOLUME
 
-    override fun getCurrentBrightness(): Float {
-        return UIScreen.mainScreen.brightness.toFloat()
+        (viewmodel?.player as? AvPlayer)?.avPlayer?.setVolume(clampedVolume)
+        (viewmodel?.player as? VlcPlayer)?.vlcPlayer?.setPitch(clampedVolume)
     }
 
+    override fun getMaxBrightness() = MAX_BRIGHTNESS
+
+    override fun getCurrentBrightness(): Float = UIScreen.mainScreen.brightness.toFloat()
+
     override fun changeCurrentBrightness(v: Float) {
-        UIScreen.mainScreen.brightness = v.coerceIn(0.0f, 1.0f).toDouble()
+        UIScreen.mainScreen.brightness = v.coerceIn(0.0f, MAX_BRIGHTNESS).toDouble()
     }
 }

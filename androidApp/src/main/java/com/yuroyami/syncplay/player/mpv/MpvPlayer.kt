@@ -20,6 +20,7 @@ import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.PlayerUtils.trackProgress
 import com.yuroyami.syncplay.player.exo.ExoPlayer
+import com.yuroyami.syncplay.player.vlc.VlcPlayer
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.utils.RoomUtils.checkFileMismatches
 import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
@@ -140,26 +141,26 @@ class MpvPlayer : BasePlayer() {
         }
     }
 
-    override fun selectTrack(type: TRACKTYPE, index: Int) {
+    override fun selectTrack(track: Track?, type: TRACKTYPE) {
         when (type) {
             TRACKTYPE.SUBTITLE -> {
-                if (index >= 0) {
-                    MPVLib.setPropertyInt("sid", index)
-                } else if (index == -1) {
+                if (track != null) {
+                    MPVLib.setPropertyInt("sid", track.index)
+                } else {
                     MPVLib.setPropertyString("sid", "no")
                 }
 
-                viewmodel?.currentTrackChoices?.subtitleSelectionIndexMpv = index
+                viewmodel?.currentTrackChoices?.subtitleSelectionIndexMpv = track?.index ?: -1
             }
 
             TRACKTYPE.AUDIO -> {
-                if (index >= 0) {
-                    MPVLib.setPropertyInt("aid", index)
-                } else if (index == -1) {
+                if (track != null) {
+                    MPVLib.setPropertyInt("aid", track.index)
+                } else {
                     MPVLib.setPropertyString("aid", "no")
                 }
 
-                viewmodel?.currentTrackChoices?.audioSelectionIndexMpv = index
+                viewmodel?.currentTrackChoices?.audioSelectionIndexMpv = track?.index ?: -1
             }
         }
     }
@@ -194,9 +195,24 @@ class MpvPlayer : BasePlayer() {
         val subIndex = viewmodel?.currentTrackChoices?.subtitleSelectionIndexMpv
         val audioIndex = viewmodel?.currentTrackChoices?.audioSelectionIndexMpv
 
+        val ccMap = viewmodel?.media?.subtitleTracks
+        val audioMap = viewmodel?.media?.subtitleTracks
+
+        val ccGet = ccMap?.firstOrNull { it.index == subIndex }
+        val audioGet = audioMap?.firstOrNull { it.index == audioIndex }
+
         with(viewmodel?.player ?: return) {
-            if (subIndex != null) selectTrack(TRACKTYPE.SUBTITLE, subIndex)
-            if (audioIndex != null) selectTrack(TRACKTYPE.AUDIO, audioIndex)
+            if (subIndex == -1) {
+                selectTrack(null, TRACKTYPE.SUBTITLE)
+            } else if (ccGet != null) {
+                selectTrack(ccGet, TRACKTYPE.SUBTITLE)
+            }
+
+            if (audioIndex == -1) {
+                selectTrack(null, TRACKTYPE.AUDIO)
+            } else if (audioGet != null) {
+                selectTrack(audioGet, TRACKTYPE.AUDIO)
+            }
         }
     }
 

@@ -251,7 +251,9 @@ class ExoPlayer : BasePlayer() {
         }
     }
 
-    override fun selectTrack(type: TRACKTYPE, index: Int) {
+    override fun selectTrack(track: Track?, type: TRACKTYPE) {
+        val exoTrack = track as? ExoTrack
+
         val builder = exoplayer?.trackSelector?.parameters?.buildUpon() ?: return
 
         /* First, clearing our subtitle track selection (This helps troubleshoot many issues */
@@ -259,19 +261,19 @@ class ExoPlayer : BasePlayer() {
         viewmodel?.currentTrackChoices?.lastSubtitleOverride = null
 
         /* Now, selecting our subtitle track should one be selected */
-        if (index >= 0) {
+        if (exoTrack != null) {
             when (type) {
                 TRACKTYPE.SUBTITLE -> {
                     viewmodel?.currentTrackChoices?.lastSubtitleOverride = TrackSelectionOverride(
-                        (viewmodel?.media!!.subtitleTracks[index] as ExoTrack).trackGroup,
-                        viewmodel?.media!!.subtitleTracks[index].index
+                        exoTrack.trackGroup,
+                        exoTrack.index
                     )
                 }
 
                 TRACKTYPE.AUDIO -> {
                     viewmodel?.currentTrackChoices?.lastSubtitleOverride = TrackSelectionOverride(
-                        (viewmodel?.media!!.audioTracks[index] as ExoTrack).trackGroup,
-                        viewmodel?.media!!.audioTracks[index].index
+                        exoTrack.trackGroup,
+                        exoTrack.index
                     )
                 }
             }

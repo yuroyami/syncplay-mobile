@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import com.eygraber.uri.Uri
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
+import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.utils.sha256
 import com.yuroyami.syncplay.utils.toHex
 import com.yuroyami.syncplay.watchroom.viewmodel
@@ -72,7 +73,7 @@ abstract class BasePlayer {
     /** Called when the player ought to analyze the tracks of the currently loaded media */
     abstract fun analyzeTracks(mediafile: MediaFile)
 
-    abstract fun selectTrack(type: TRACKTYPE, index: Int)
+    abstract fun selectTrack(track: Track?, type: TRACKTYPE)
 
     abstract fun analyzeChapters(mediafile: MediaFile)
     abstract fun jumpToChapter(chapter: Chapter)
