@@ -3,9 +3,10 @@ import NIO
 import NIOFoundationCompat
 import NIOTransportServices
 import NIOExtras
+import NIOSSL
 import shared
 
-@objc class SpProtocolApple: SyncplayProtocol, ChannelInboundHandler {
+class SpProtocolApple: SyncplayProtocol, ChannelInboundHandler {
     typealias InboundIn = ByteBuffer
     
     private var channel: Channel?
@@ -13,7 +14,7 @@ import shared
     
     //override let engine = SyncplayProtocol.NetworkEngine.swiftnio
     
-    @objc override func connectSocket() {
+    override func connectSocket() {
         let group = NIOTSEventLoopGroup()
         eventLoopGroup = group
         
@@ -46,15 +47,15 @@ import shared
         
     }
     
-    @objc override func isSocketValid() -> Bool {
+    override func isSocketValid() -> Bool {
         return channel?.isActive ?? false
     }
     
-    @objc override func supportsTLS() -> Bool {
-        return false
+    override func supportsTLS() -> Bool {
+        return true
     }
     
-    @objc override func endConnection(terminating: Bool) {
+    override func endConnection(terminating: Bool) {
         try? channel?.close().wait()
         try? eventLoopGroup?.syncShutdownGracefully()
         
@@ -63,7 +64,7 @@ import shared
         }
     }
     
-    @objc override func writeActualString(s: String) {
+    override func writeActualString(s: String) {
         guard let channel = channel else {
             syncplayCallback?.onDisconnected()
             return
@@ -82,8 +83,19 @@ import shared
         }
     }
     
-    @objc override func upgradeTls() {
-        // TLS setup for SwiftNIO
+    override func upgradeTls() {
+        if (channel != nil) {
+            do {
+                let configuration = TLSConfiguration.makeClientConfiguration()
+                let sslContext = try NIOSSLContext(configuration: configuration)
+                let tlsHandler = try NIOSSLClientHandler(context: sslContext, serverHostname: "syncplay.pl")
+                try channel?.pipeline.addHandler(tlsHandler, position: .first).wait()
+            } catch {
+                print("Error initializing TLS: \(error)")
+                // Handle error appropriately (e.g., call onConnectionFailed())
+                self.syncplayCallback?.onConnectionFailed()
+            }
+        }
     }
     
     
