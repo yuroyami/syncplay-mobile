@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class SpProtocolKtor : SyncplayProtocol() {
+    override val engine = NetworkEngine.KTOR
 
     private var socket: Socket? = null
     private var connection: Connection? = null
@@ -41,9 +42,7 @@ class SpProtocolKtor : SyncplayProtocol() {
                     while (true) {
                         connection?.input?.awaitContent()
                         input?.readUTF8Line()?.let {
-                            launch {
-                                jsonHandler.parse(this@SpProtocolKtor, it)
-                            }
+                            jsonHandler.parse(this@SpProtocolKtor, it)
                         }
 
                         delay(100)
@@ -77,7 +76,7 @@ class SpProtocolKtor : SyncplayProtocol() {
             try {
                 connection?.output?.writeStringUtf8(s)
                 connection?.output?.flush()
-            } catch(e: Exception) {
+            } catch (e: Exception) {
                 syncplayCallback?.onDisconnected()
             }
         }

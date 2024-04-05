@@ -17,9 +17,10 @@ import io.netty.handler.codec.Delimiters
 import io.netty.handler.codec.string.StringDecoder
 import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.ssl.SslContextBuilder
-import kotlinx.coroutines.launch
 
 class SpProtocolAndroid : SyncplayProtocol() {
+
+    override val engine = NetworkEngine.NETTY
 
     /** Netty stuff */
     var channel: Channel? = null
@@ -33,7 +34,8 @@ class SpProtocolAndroid : SyncplayProtocol() {
             .handler(object : ChannelInitializer<SocketChannel>() {
                 override fun initChannel(ch: SocketChannel) {
                     pipeline = ch.pipeline()
-                    pipeline.addLast("framer",
+                    pipeline.addLast(
+                        "framer",
                         DelimiterBasedFrameDecoder(8192, *Delimiters.lineDelimiter())
                     )
                     pipeline.addLast(StringDecoder())
@@ -90,11 +92,10 @@ class SpProtocolAndroid : SyncplayProtocol() {
 
             loggy("Channel event: ${evt.toString()}", 0)
         }
+
         override fun channelRead0(ctx: ChannelHandlerContext?, msg: String?) {
             if (msg != null) {
-                protoScope.launch {
-                    JsonHandler.parse(this@SpProtocolAndroid, msg)
-                }
+                JsonHandler.parse(this@SpProtocolAndroid, msg)
             }
         }
 

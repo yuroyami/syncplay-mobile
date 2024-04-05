@@ -290,7 +290,7 @@ private fun RoomUIImpl() {
 
             var msg by remember { mutableStateOf("") }
             var msgCanSend by remember { mutableStateOf(false) }
-            val msgs = if (!isSoloMode) remember { viewmodel!!.p.session.messageSequence } else remember { mutableStateListOf() }
+            val msgs = remember { if (!isSoloMode) viewmodel!!.p.session.messageSequence else mutableStateListOf() }
             var ready by remember { mutableStateOf(viewmodel!!.setReadyDirectly) }
             var controlcardvisible by remember { mutableStateOf(false) }
             var addmediacardvisible by remember { mutableStateOf(false) }
@@ -335,11 +335,9 @@ private fun RoomUIImpl() {
                                             it.seen = true /* Once seen, don't use it in fading message */
                                         }
 
-                                        val text = it.factorize(LocalChatPalette.current)
-
                                         FlexibleFancyAnnotatedText(
                                             modifier = Modifier.fillMaxWidth(),
-                                            text = text,
+                                            text = it.factorize(LocalChatPalette.current),
                                             size = if (pipModeObserver) 6f else (msgFontSize.value.toFloat()),
                                             //font = inter,
                                             lineHeight = (msgFontSize.value + 4).sp,

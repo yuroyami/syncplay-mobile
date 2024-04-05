@@ -1,9 +1,5 @@
 package com.yuroyami.syncplay.models
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -35,10 +31,7 @@ data class Message(
     /** Returns an AnnotatedString to use with Compose Text
      * @param msgPalette A [MessagePalette] that contains colors and properties
      **/
-    @Composable
     fun factorize(msgPalette: MessagePalette): AnnotatedString {
-        val isActuallyError by remember { mutableStateOf(isError) }
-
         /* An AnnotatedString builder that will append child AnnotatedStings together */
         val builder = AnnotatedString.Builder()
 
@@ -74,7 +67,7 @@ data class Message(
         } else {
             AnnotatedString(
                 text = content,
-                spanStyle = if (isActuallyError) SpanStyle(msgPalette.errormsgColor) else
+                spanStyle = if (isError) SpanStyle(msgPalette.errormsgColor) else
                     SpanStyle(msgPalette.systemmsgColor)
             )
         }

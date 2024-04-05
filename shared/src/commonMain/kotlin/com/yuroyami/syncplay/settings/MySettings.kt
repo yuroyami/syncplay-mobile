@@ -367,7 +367,7 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
                     key = PREF_NETWORK_ENGINE,
                     title = lyricist.strings.settingNetworkEngineTitle,
                     summary = lyricist.strings.settingNetworkEngineSummary,
-                    defaultValue = if (getPlatform() == PLATFORM.Android) "netty" else "ktor",
+                    defaultValue = if (getPlatform() == PLATFORM.Android) "netty" else "swiftnio",
                     icon = Icons.Filled.Lan,
                     styling = settingGLOBALstyle,
                     entryKeys =

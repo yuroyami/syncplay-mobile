@@ -20,28 +20,29 @@ import kotlinx.serialization.json.jsonPrimitive
 
 object JsonHandler {
 
-    fun parse(protocol: SyncplayProtocol, json: String, retry: Boolean = true) {
-        loggy("Server: $json")
+    fun parse(protocol: SyncplayProtocol, json: String) {
+        protocol.protoScope.launch {
+            loggy("Server: $json")
 
-        /* Second, we check what kind of JSON message we received from the first Json Object */
-        try {
-            val element = Json.parseToJsonElement(json).jsonObject
-            with(element.keys) {
-                when {
-                    contains("Hello") -> handleHello(element["Hello"]!!.jsonObject, protocol)
-                    contains("Set") -> handleSet(element["Set"]!!.jsonObject, protocol)
-                    contains("List") -> handleList(element["List"]!!.jsonObject, protocol)
-                    contains("State") -> handleState(element["State"]!!.jsonObject, protocol, json)
-                    contains("Chat") -> handleChat(element["Chat"]!!.jsonObject, protocol)
-                    contains("Error") -> handleError(element["Error"]!!.jsonObject, protocol)
-                    contains("TLS") -> handleTLS(element["TLS"]!!.jsonObject, protocol)
-                    else -> dropError("unknown-command-server-error")
+            /* Second, we check what kind of JSON message we received from the first Json Object */
+            try {
+                val parsed = Json.parseToJsonElement(json)
+                val element = parsed.jsonObject
+                with(element.keys) {
+                    when {
+                        contains("Hello") -> handleHello(element["Hello"]!!.jsonObject, protocol)
+                        contains("Set") -> handleSet(element["Set"]!!.jsonObject, protocol)
+                        contains("List") -> handleList(element["List"]!!.jsonObject, protocol)
+                        contains("State") -> handleState(element["State"]!!.jsonObject, protocol, json)
+                        contains("Chat") -> handleChat(element["Chat"]!!.jsonObject, protocol)
+                        contains("Error") -> handleError(element["Error"]!!.jsonObject, protocol)
+                        contains("TLS") -> handleTLS(element["TLS"]!!.jsonObject, protocol)
+                        else -> dropError("unknown-command-server-error")
+                    }
                 }
+            } catch (e: Exception) {
+                loggy(e.stackTraceToString(), 1)
             }
-        } catch (e: Exception) {
-            if (retry) parse(protocol, json, false);
-            loggy(e.stackTraceToString(), 1)
-            loggy("Problematic string: $json")
         }
     }
 
@@ -53,7 +54,8 @@ object JsonHandler {
         p.sendPacket(JsonSender.sendJoined(p.session.currentRoom))
         p.sendPacket(JsonSender.sendEmptyList())
         //p.sendPacket(JsonSender.sendReadiness(p.ready, false))
-        p.syncplayCallback?.onConnected()
+        p.syncplayCallback!!.onConnected()
+        //p.sendPacket(JsonSender.sendEmptyList())
     }
 
     private fun handleSet(set: JsonObject, p: SyncplayProtocol) {

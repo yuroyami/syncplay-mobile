@@ -108,6 +108,10 @@ abstract class BasePlayer {
     @Composable
     abstract fun VideoPlayer(modifier: Modifier)
 
+    fun onPlaybackEnded() {
+        //TODO
+    }
+
     fun collectInfoURL(media: MediaFile) {
         with (media) {
             try {

@@ -260,7 +260,7 @@ val EnStrings = object : Strings {
     override val settingNetworkEngineTitle = "Network Engine"
     override val settingNetworkEngineSummary = "The network engine serves as the backbone of connectivity. Experiment with each option and choose the one that offers the most stability for your needs."
     override val settingNetworkEngineNetty = "Netty (Recommended, TLS)"
-    override val settingNetworkEngineSwiftNIO = "SwiftNIO (Experimental)"
+    override val settingNetworkEngineSwiftNIO = "SwiftNIO (Recommended)"
     override val settingNetworkEngineKtor = "Ktor (Experimental)"
 
 }

@@ -88,6 +88,7 @@ abstract class SyncplayProtocol {
                     val finalOut = json + "\r\n"
                     //loggy("Client: $finalOut", 206)
                     writeActualString(finalOut)
+
                 } else {
                     /** Queuing any pending outgoing messages */
                     if (json != sendHello(
@@ -163,6 +164,8 @@ abstract class SyncplayProtocol {
     /** Attempts to upgrade the plain TCP socket to a TLS secure socket */
     abstract fun upgradeTls()
 
+    open val engine: NetworkEngine = NetworkEngine.SWIFTNIO
+
     enum class NetworkEngine {
         KTOR,
         NETTY,
@@ -171,7 +174,7 @@ abstract class SyncplayProtocol {
 
     companion object {
         fun getPreferredEngine(): NetworkEngine {
-            val defaultEngine = if (getPlatform() == PLATFORM.Android) NetworkEngine.NETTY else NetworkEngine.KTOR
+            val defaultEngine = if (getPlatform() == PLATFORM.Android) NetworkEngine.NETTY else NetworkEngine.SWIFTNIO
             val engineName = valueBlockingly(DataStoreKeys.PREF_NETWORK_ENGINE, defaultEngine.name.lowercase())
             return NetworkEngine.valueOf(engineName.uppercase())
         }

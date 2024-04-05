@@ -2,6 +2,7 @@ import Foundation
 import NIO
 import NIOFoundationCompat
 import NIOTransportServices
+import NIOExtras
 import shared
 
 @objc class SpProtocolApple: SyncplayProtocol, ChannelInboundHandler {
@@ -10,21 +11,22 @@ import shared
     private var channel: Channel?
     private var eventLoopGroup: EventLoopGroup?
     
+    //override let engine = SyncplayProtocol.NetworkEngine.swiftnio
+    
     @objc override func connectSocket() {
         let group = NIOTSEventLoopGroup()
         eventLoopGroup = group
         
-        print("Bootstrapping...")
-        
         let host = session.serverHost
         let port = Int(session.serverPort)
         
-        let result = NIOTSConnectionBootstrap(group: group)
+        let result: EventLoopFuture<Channel> = NIOTSConnectionBootstrap(group: group)
             .connectTimeout(TimeAmount.seconds(10))
             .channelInitializer { channel in
-                channel.pipeline.addHandler(self)
-            }
-            .connect(host: host, port: port)
+                channel.pipeline.addHandler(ByteToMessageHandler(LineBasedFrameDecoder())).flatMap {
+                    channel.pipeline.addHandler(self)
+                }
+            }.connect(host: host, port: port)
         
         result.whenSuccess { channel in
             self.channel = channel
@@ -53,8 +55,8 @@ import shared
     }
     
     @objc override func endConnection(terminating: Bool) {
-        //try? channel?.close().wait()
-        //try? eventLoopGroup?.syncShutdownGracefully()
+        try? channel?.close().wait()
+        try? eventLoopGroup?.syncShutdownGracefully()
         
         if terminating {
             terminateScope()
@@ -89,16 +91,15 @@ import shared
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         var buffer = self.unwrapInboundIn(data)
         let readableBytes = buffer.readableBytes
-        var data = buffer.readData(length: readableBytes)!
+        let data = buffer.readData(length: readableBytes)!
         
-        // Decode the data buffer into a string using ASCII encoding
         if let received = String(data: data, encoding: .utf8) {
-            self.jsonHandler.parse(protocol: self, json: received, retry: true)
+            self.jsonHandler.parse(protocol: self, json: received)
         }
     }
     
     func channelReadComplete(context: ChannelHandlerContext) {
-        //context.flush()
+        context.flush()
     }
     
     func errorCaught(context: ChannelHandlerContext, error: Error) {

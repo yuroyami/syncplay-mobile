@@ -37,7 +37,9 @@ import platform.AVFoundation.AVLayerVideoGravityResizeAspect
 import platform.AVFoundation.AVPlayerLayer
 import platform.Foundation.NSArray
 import platform.Foundation.NSNotification
+import platform.Foundation.NSNotificationCenter
 import platform.Foundation.NSNumber
+import platform.Foundation.NSSelectorFromString
 import platform.Foundation.NSURL
 import platform.UIKit.UIColor
 import platform.UIKit.UIView
@@ -98,6 +100,15 @@ class VlcPlayer : BasePlayer() {
 
     override fun initialize() {
         vlcPlayer!!.delegate = object : NSObject(), VLCMediaPlayerDelegateProtocol {
+            init {
+                NSNotificationCenter.defaultCenter.addObserver(
+                    this,
+                    NSSelectorFromString("mediaPlayerStateChanged:"),
+                    "VLCMediaPlayerStateChanged",
+                    this
+                )
+            }
+
             override fun mediaPlayerStateChanged(aNotification: NSNotification) {
                 if (hasMedia()) {
                     val isPlaying = vlcPlayer?.state != VLCMediaPlayerState.VLCMediaPlayerStatePaused
@@ -111,6 +122,8 @@ class VlcPlayer : BasePlayer() {
                 }
             }
         }
+
+
 
         playerScopeIO.trackProgress(intervalMillis = 1000L)
     }
