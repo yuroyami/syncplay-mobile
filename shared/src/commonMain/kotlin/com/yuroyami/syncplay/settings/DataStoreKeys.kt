@@ -84,6 +84,8 @@ object DataStoreKeys {
     const val PREF_MPV_HARDWARE_ACCELERATION = "pref_mpv_hw"
     const val PREF_MPV_GPU_NEXT = "pref_mpv_gpunext"
     const val PREF_MPV_DEBUG_MODE = "pref_mpv_debug_mode"
+    const val PREF_MPV_VIDSYNC = "pref_mpv_video_sync"
+    const val PREF_MPV_PROFILE = "pref_mpv_profile"
     const val PREF_MPV_INTERPOLATION = "pref_mpv_interpolation"
 
     /* Advanced */

@@ -210,6 +210,10 @@ interface Strings {
     val uiSettingMpvDebugSummary: String
     val uiSettingMpvInterpolationTitle: String
     val uiSettingMpvInterpolationSummary: String
+    val uiSettingMpvVidsyncTitle: String
+    val uiSettingMpvVidsyncSummary: String
+    val uiSettingMpvProfileTitle: String
+    val uiSettingMpvProfileSummary: String
     val uisettingApply: String
     val uisettingTimestampSummary: String
     val uisettingTimestampTitle: String

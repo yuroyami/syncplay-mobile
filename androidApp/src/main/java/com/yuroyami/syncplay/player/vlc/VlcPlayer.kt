@@ -82,7 +82,8 @@ class VlcPlayer : BasePlayer() {
             onReset = {
                 try {
                     vlcPlayer?.attachViews(vlcView, null, true, false)
-                } catch (e: Exception) {}
+                } catch (e: Exception) {
+                }
             },
             onRelease = {
                 vlcPlayer?.detachViews()
@@ -90,7 +91,8 @@ class VlcPlayer : BasePlayer() {
             update = {
                 try {
                     vlcPlayer?.attachViews(vlcView, null, true, false)
-                } catch (e: Exception) {}
+                } catch (e: Exception) {
+                }
             }
         )
     }
@@ -109,7 +111,7 @@ class VlcPlayer : BasePlayer() {
         val audioTracks = vlcPlayer?.getTracks(Track.Type.Audio)
         audioTracks?.forEachIndexed { i, tracky ->
             viewmodel?.media?.audioTracks?.add(
-                object: VlcTrack {
+                object : VlcTrack {
                     override val name = tracky.name
                     override val type = TRACKTYPE.AUDIO
                     override val index = i
@@ -122,7 +124,7 @@ class VlcPlayer : BasePlayer() {
         val subtitleTracks = vlcPlayer?.getTracks(Track.Type.Text)
         subtitleTracks?.forEachIndexed { i, tracky ->
             viewmodel?.media?.subtitleTracks?.add(
-                object: VlcTrack {
+                object : VlcTrack {
                     override val name = tracky.name
                     override val type = TRACKTYPE.SUBTITLE
                     override val index = i
@@ -361,6 +363,11 @@ class VlcPlayer : BasePlayer() {
                     }
                 }
 
+                MediaPlayer.Event.EndReached -> {
+                    pause()
+                    onPlaybackEnded()
+                }
+
                 MediaPlayer.Event.LengthChanged -> {
                     if (vlcPlayer?.hasMedia() == true) {
                         /* Updating our timeFull */
@@ -388,7 +395,7 @@ class VlcPlayer : BasePlayer() {
         vlcMedia?.setHWDecoderEnabled(enable, true)
     }
 
-    interface VlcTrack: com.yuroyami.syncplay.models.Track {
+    interface VlcTrack : com.yuroyami.syncplay.models.Track {
         val id: String
     }
 }

@@ -19,12 +19,11 @@ import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.PlayerUtils.trackProgress
-import com.yuroyami.syncplay.player.exo.ExoPlayer
-import com.yuroyami.syncplay.player.vlc.VlcPlayer
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.utils.RoomUtils.checkFileMismatches
 import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
+import com.yuroyami.syncplay.utils.contextObtainer
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timeStamper
@@ -448,6 +447,10 @@ class MpvPlayer : BasePlayer() {
                             }
                         }
                     }
+                    MPVLib.mpvEventId.MPV_EVENT_END_FILE -> {
+                        pause()
+                        onPlaybackEnded()
+                    }
                 }
             }
         }
@@ -502,7 +505,7 @@ class MpvPlayer : BasePlayer() {
 
 
     private fun openContentFd(context: Context, uri: Uri): String? {
-        val resolver = context.applicationContext.contentResolver
+        val resolver = contextObtainer.obtainAppContext().contentResolver
         Log.e("mpv", "Resolving content URI: $uri")
         val fd = try {
             val desc = resolver.openFileDescriptor(uri, "r")
@@ -519,9 +522,8 @@ class MpvPlayer : BasePlayer() {
             return path
         }
         // Else, pass the fd to mpv
-        return "fdclose://${fd}"
+        return "fd://${fd}"
     }
-
 
     private fun findRealPath(fd: Int): String? {
         var ins: InputStream? = null
@@ -563,7 +565,16 @@ class MpvPlayer : BasePlayer() {
 
     fun toggleDebugMode(i: Int) {
         if (!ismpvInit) return
-        loggy("STATS $i", 0)
         MPVLib.command(arrayOf("script-binding", "stats/display-page-$i"))
+    }
+
+    fun setProfileMode(p: String) {
+        if (!ismpvInit) return
+        MPVLib.setOptionString("profile", p)
+    }
+
+    fun setVidSyncMode(m: String) {
+        if (!ismpvInit) return
+        MPVLib.setOptionString("video-sync", m)
     }
 }

@@ -13,6 +13,7 @@ import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MPV_GPU_NEXT
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MPV_HARDWARE_ACCELERATION
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MPV_INTERPOLATION
 import com.yuroyami.syncplay.settings.settingBoolean
+import com.yuroyami.syncplay.utils.contextObtainer
 import `is`.xyz.mpv.MPVLib
 import `is`.xyz.mpv.MPVLib.mpvFormat.MPV_FORMAT_DOUBLE
 import `is`.xyz.mpv.MPVLib.mpvFormat.MPV_FORMAT_FLAG
@@ -23,7 +24,7 @@ import kotlin.reflect.KProperty
 
 internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(context, attrs), SurfaceHolder.Callback {
     fun initialize(configDir: String, cacheDir: String) {
-        MPVLib.create(this.context)
+        MPVLib.create(contextObtainer.obtainAppContext())
         MPVLib.setOptionString("config", "yes")
         MPVLib.setOptionString("config-dir", configDir)
         for (opt in arrayOf("gpu-shader-cache-dir", "icc-cache-dir"))
@@ -54,7 +55,6 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
         // apply phone-optimized defaults
         MPVLib.setOptionString("profile", "fast")
 
-
         voInUse = if (PREF_MPV_GPU_NEXT.settingBoolean()) "gpu-next" else "gpu"
 
         val hwdec = if (PREF_MPV_HARDWARE_ACCELERATION.settingBoolean()) "auto" else "no"
@@ -63,6 +63,7 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
         val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val disp = wm.defaultDisplay
         val refreshRate = disp.mode.refreshRate
+
         Log.v(TAG, "Display ${disp.displayId} reports FPS of $refreshRate")
         MPVLib.setOptionString("display-fps-override", refreshRate.toString())
 
@@ -100,7 +101,6 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
             MPVLib.setOptionString("deband", "yes")
         }
 
-        //TODO: Preferencize
         MPVLib.setOptionString("video-sync", "audio")
 
 
@@ -155,6 +155,7 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
             Property("duration", MPV_FORMAT_INT64),
             Property("pause", MPV_FORMAT_FLAG),
             Property("paused-for-cache", MPV_FORMAT_FLAG),
+            Property("speed"),
             Property("track-list"),
             // observing double properties is not hooked up in the JNI code, but doing this
             // will restrict updates to when it actually changes
@@ -225,11 +226,22 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
         get() = MPVLib.getPropertyDouble("speed")
         set(speed) = MPVLib.setPropertyDouble("speed", speed!!)
 
+    var subDelay: Double?
+        get() = MPVLib.getPropertyDouble("sub-delay")
+        set(speed) = MPVLib.setPropertyDouble("sub-delay", speed!!)
+
+    var secondarySubDelay: Double?
+        get() = MPVLib.getPropertyDouble("secondary-sub-delay")
+        set(speed) = MPVLib.setPropertyDouble("secondary-sub-delay", speed!!)
+
     val estimatedVfFps: Double?
         get() = MPVLib.getPropertyDouble("estimated-vf-fps")
 
-    val videoAspect: Double?
-        get() = MPVLib.getPropertyDouble("video-params/aspect")
+    val videoOutAspect: Double?
+        get() = MPVLib.getPropertyDouble("video-out-params/aspect")
+
+    val videoOutRotation: Int?
+        get() = MPVLib.getPropertyInt("video-out-params/rotate")
 
     class TrackDelegate(private val name: String) {
         operator fun getValue(thisRef: Any?, property: KProperty<*>): Int {

@@ -91,7 +91,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.compose.ComposeUtils.FlexibleFancyText
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
-import com.yuroyami.syncplay.compose.NightModeToggle
+import com.yuroyami.syncplay.compose.NightModeToggler
 import com.yuroyami.syncplay.compose.getRegularFont
 import com.yuroyami.syncplay.compose.popups.PopupAPropos.AProposPopup
 import com.yuroyami.syncplay.lyricist.rememberStrings
@@ -179,7 +179,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
                                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                                 trailingContent = {
                                     Row(verticalAlignment = CenterVertically) {
-                                        NightModeToggle(
+                                        NightModeToggler(
                                             modifier = Modifier.size(58.dp),
                                             state = nightMode
                                         )

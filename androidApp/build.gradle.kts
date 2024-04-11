@@ -2,6 +2,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.android.application")
     id("org.jetbrains.compose")
+    //id("org.jetbrains.kotlin.plugin.compose")
 }
 
 val abiCodes = mapOf(
@@ -45,16 +46,16 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.10"
+        kotlinCompilerExtensionVersion = "1.5.11"
     }
 
     buildTypes {
         release {
             isMinifyEnabled = true
 
-            postprocessing {
-                isRemoveUnusedResources = true
-            }
+//            postprocessing {
+//                isRemoveUnusedResources = true
+//            }
         }
         debug {
             isDebuggable = true
@@ -75,52 +76,52 @@ android {
         jvmTarget = "1.8"
     }
 
-    flavorDimensions.add("engine")
-
-    productFlavors {
-        create("withLibs") {
-            dimension = "engine"
-
-            splits {
-                abi {
-                    isEnable = false
-                    reset()
-                    abiCodes.forEach { (abi, _) ->
-                        val exists = file("$projectDir/src/main/jniLibs/$abi").exists()
-                        if (exists) {
-                            include(abi)
-                        }
-                    }
-                    isUniversalApk = true
-                }
-            }
-        }
-
-        create("noLibs") {
-            dimension = "engine"
-        }
-
-        packaging {
-            jniLibs {
-                if (false) {
-                    //mpv libs
-                    excludes += ("**/libavcodec.so")
-                    excludes += ("**/libavdevice.so")
-                    excludes += ("**/libavfilter.so")
-                    excludes += ("**/libavformat.so")
-                    excludes += ("**/libavutil.so")
-                    excludes += ("**/libmpv.so")
-                    excludes += ("**/libplayer.so")
-                    excludes += ("**/libpostproc.so")
-                    excludes += ("**/libswresample.so")
-                    excludes += ("**/libswscale.so")
-
-                    //vlc
-                    excludes += ("**/libvlc.so")
-                }
-            }
-        }
-    }
+//    flavorDimensions.add("engine")
+//
+//    productFlavors {
+//        create("withLibs") {
+//            dimension = "engine"
+//
+//            splits {
+//                abi {
+//                    isEnable = true
+//                    reset()
+//                    abiCodes.forEach { (abi, _) ->
+//                        val exists = file("$projectDir/src/main/jniLibs/$abi").exists()
+//                        if (exists) {
+//                            include(abi)
+//                        }
+//                    }
+//                    isUniversalApk = true
+//                }
+//            }
+//        }
+//
+//        create("noLibs") {
+//            dimension = "engine"
+//        }
+//
+//        packaging {
+//            jniLibs {
+//                if (false) {
+//                    //mpv libs
+//                    excludes += ("**/libavcodec.so")
+//                    excludes += ("**/libavdevice.so")
+//                    excludes += ("**/libavfilter.so")
+//                    excludes += ("**/libavformat.so")
+//                    excludes += ("**/libavutil.so")
+//                    excludes += ("**/libmpv.so")
+//                    excludes += ("**/libplayer.so")
+//                    excludes += ("**/libpostproc.so")
+//                    excludes += ("**/libswresample.so")
+//                    excludes += ("**/libswscale.so")
+//
+//                    //vlc
+//                    excludes += ("**/libvlc.so")
+//                }
+//            }
+//        }
+//    }
 }
 
 dependencies {

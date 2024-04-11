@@ -21,10 +21,8 @@ import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_TLS_ENABLE
 import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.ui.LifecycleWatchdog
-import com.yuroyami.syncplay.utils.PLATFORM
 import com.yuroyami.syncplay.utils.PlaylistUtils
 import com.yuroyami.syncplay.utils.RoomUtils.broadcastMessage
-import com.yuroyami.syncplay.utils.getPlatform
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.CoroutineScope
@@ -342,7 +340,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
             p.session.currentPassword = joinInfo.password
 
             /** Connecting */
-            val tls = valueBlockingly(PREF_TLS_ENABLE, default = (getPlatform() == PLATFORM.Android))
+            val tls = valueBlockingly(PREF_TLS_ENABLE, default = true)
             if (tls && p.supportsTLS()) {
                 p.syncplayCallback?.onTLSCheck()
                 p.tls = Constants.TLS.TLS_ASK

@@ -394,7 +394,7 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
                     key = PREF_TLS_ENABLE,
                     title = lyricist.strings.settingTlsTitle,
                     summary = lyricist.strings.settingTlsSummary,
-                    defaultValue = getPlatform() == PLATFORM.Android, //StartTLS is not implemented in iOS
+                    defaultValue = true,
                     icon = Icons.Filled.Key,
                     styling = settingGLOBALstyle,
                 ) to CATEG_GLOBAL_NETWORK

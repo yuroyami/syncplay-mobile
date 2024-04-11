@@ -168,6 +168,10 @@ class ExoPlayer : BasePlayer() {
                                 sendPlayback(isPlaying)
                                 viewmodel!!.p.paused = !isPlaying
                             }
+
+                            if (exoplayer!!.playbackState == ExoPlayer.STATE_ENDED) {
+                                onPlaybackEnded() //signaling end of playback
+                            }
                         }
                     }
                 }

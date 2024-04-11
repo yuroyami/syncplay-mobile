@@ -41,7 +41,7 @@ class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen() /* This will be called only on cold starts */
 
-        if (BuildConfig.FLAVOR != "noLibs") defaultEngineAndroid = BasePlayer.ENGINE.ANDROID_MPV.name
+        /*if (BuildConfig.FLAVOR != "noLibs")*/ defaultEngineAndroid = BasePlayer.ENGINE.ANDROID_MPV.name
 
         super.onCreate(savedInstanceState)
 

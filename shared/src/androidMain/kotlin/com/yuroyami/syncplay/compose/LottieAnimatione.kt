@@ -50,6 +50,7 @@ import kotlinx.coroutines.launch
  * @param nightModeState Defines the initial state of the button (you should pass it,
  * like you're telling the composable which mode is enabled initially).
  */
+
 @Composable
 actual fun NightModeToggle(modifier: Modifier, state: State<Boolean>) {
     val scope = rememberCoroutineScope { Dispatchers.IO }

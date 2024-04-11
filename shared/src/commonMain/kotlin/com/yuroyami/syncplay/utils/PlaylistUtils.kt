@@ -98,7 +98,7 @@ object PlaylistUtils {
     /** This is to change playlist selection in response other users' selection */
     suspend fun changePlaylistSelection(index: Int) {
         if (viewmodel!!.p.session.sharedPlaylist.size < (index + 1)) return /* In rare cases when this was called on an empty list */
-        if (index != viewmodel!!.p.session.spIndex?.intValue) {
+        if (index != viewmodel!!.p.session.spIndex.intValue) {
             /* If the file on that index isn't playing, play the file */
             retrieveFile(viewmodel?.p!!.session.sharedPlaylist[index])
         }

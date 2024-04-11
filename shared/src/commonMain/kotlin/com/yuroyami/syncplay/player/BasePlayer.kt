@@ -6,8 +6,10 @@ import com.eygraber.uri.Uri
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
+import com.yuroyami.syncplay.utils.PlaylistUtils
 import com.yuroyami.syncplay.utils.sha256
 import com.yuroyami.syncplay.utils.toHex
+import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -109,7 +111,15 @@ abstract class BasePlayer {
     abstract fun VideoPlayer(modifier: Modifier)
 
     fun onPlaybackEnded() {
-        //TODO
+        if (!isSoloMode) {
+            if (viewmodel?.p?.session?.sharedPlaylist?.isEmpty() == true) return
+            val currentIndex = viewmodel?.p?.session?.spIndex?.intValue ?: return
+            val playlistSize = viewmodel?.p?.session?.sharedPlaylist?.size ?: return
+
+            val next = if (playlistSize == currentIndex + 1) 0 else currentIndex + 1
+            PlaylistUtils.sendPlaylistSelection(next)
+
+        }
     }
 
     fun collectInfoURL(media: MediaFile) {

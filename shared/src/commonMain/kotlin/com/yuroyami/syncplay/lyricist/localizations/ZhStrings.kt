@@ -199,7 +199,11 @@ val ZhStrings = object : Strings {
     override val uiSettingMpvDebugTitle = "启用调试"
     override val uiSettingMpvDebugSummary = "显示调试信息。"
     override val uiSettingMpvInterpolationTitle = "帧率插值"
-    override val uiSettingMpvInterpolationSummary = "通过启用帧率插值减少抖动。在某些情况下可能效果不佳。"
+    override val uiSettingMpvInterpolationSummary = "通过启用帧率插值来减少抖动。请注意，仅当将视频同步选项设置为其中一个 '显示' 模式时，才会应用此选项，否则将会被静默忽略。在某些情况下，这可能效果不佳。"
+    override val uiSettingMpvVidsyncTitle = "视频同步模式"
+    override val uiSettingMpvVidsyncSummary = "控制 mpv 如何将视频同步，可以是音频（默认，推荐）或显示本身。"
+    override val uiSettingMpvProfileTitle = "渲染预设 (配置文件)"
+    override val uiSettingMpvProfileSummary = "根据内置的预设配置 mpv 的功能。默认为 'fast'，因为它适用于手机。从直播源流式传输时，使用 'low-latency' 可能更好。"
 
     override val uisettingApply = "应用"
     override val uisettingTimestampSummary = "禁用此选项可以隐藏聊天消息开头的时间戳."

@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Card
@@ -315,7 +317,7 @@ object ComposeUtils {
     ) {
         val txtMdfr = Modifier.focusable(false)
             .focusProperties { canFocus = false }
-            .clickable(false){}
+            .clickable(false) {}
 
         Box(modifier = modifier) {
             /** Shadow */
@@ -472,29 +474,31 @@ object ComposeUtils {
                         }
                     }
 
-                    for ((index, item) in items.withIndex()) {
-                        Row(verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
-                            ) {
-                                onItemClick(index)
-                                onDismiss()
-                            }
-                        ) {
-                            RadioButton(
-                                selected = index == selectedItem,
-                                onClick = {
+                    LazyColumn(modifier = Modifier.padding(all = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        itemsIndexed(items) { index, item ->
+                            Row(verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
+                                ) {
                                     onItemClick(index)
                                     onDismiss()
                                 }
-                            )
-                            Text(
-                                text = item, modifier = Modifier
-                                    .fillMaxWidth(0.75f)
-                                    .padding(start = 8.dp)
-                            )
+                            ) {
+                                RadioButton(
+                                    selected = index == selectedItem,
+                                    onClick = {
+                                        onItemClick(index)
+                                        onDismiss()
+                                    }
+                                )
+                                Text(
+                                    text = item, modifier = Modifier
+                                        .fillMaxWidth(0.75f)
+                                        .padding(start = 8.dp)
+                                )
+                            }
                         }
                     }
                 }

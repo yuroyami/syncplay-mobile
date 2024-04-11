@@ -161,9 +161,10 @@ object PopupMediaDirs {
                                         tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(64.dp)
                                     )
 
-                                    val name = Uri.parseOrNull(item)?.pathSegments?.last() ?: "Undefined"
+                                    val name = (Uri.parseOrNull(item)?.pathSegments?.last() ?: "Undefined")
                                         .substringAfter("primary:") //Android: Primary storage prefix removal
                                         .substringAfter("secondary:")//Android: Secondary storage prefix removal
+                                        .substringAfterLast("/")
 
                                     Text(
                                         text = name,

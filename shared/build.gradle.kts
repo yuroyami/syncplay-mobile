@@ -1,5 +1,7 @@
 import com.android.build.gradle.internal.lint.AndroidLintAnalysisTask
 import com.android.build.gradle.internal.lint.LintModelWriterTask
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -10,17 +12,16 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
-val lyricist = "1.6.2"
+val lyricist = "1.7.0"
 
 @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
 kotlin {
     applyDefaultHierarchyTemplate()
 
     androidTarget {
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = "1.8"
-            }
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_1_8)
         }
     }
 
@@ -39,7 +40,9 @@ kotlin {
             isStatic = false
         }
 
-        pod("MobileVLCKit", "3.6.0b10") //Adds the VLC player engine to iOS
+        //pod("MobileVLCKit", "3.6.0b10") //Adds the VLC player engine to iOS
+        pod("MobileVLCKit", "4.0.0a2") //Adds the VLC player engine to iOS
+        //pod("VLCKit", "4.0.0a4") //a2
         pod("SPLPing") //Light-weight Objective-C library to add the ICMP ping functionality
     }
 
@@ -55,107 +58,110 @@ kotlin {
         }
 
 
-        val commonMain by getting {
-            dependencies {
-                //Strings internationalization and localization
-                api("cafe.adriel.lyricist:lyricist:$lyricist")
+        commonMain.dependencies {
+            /* Forcing Kotlin libs to match the compiler */
+            api("org.jetbrains.kotlin:kotlin-stdlib:2.0.0-RC1")
 
-                //api("dev.icerock.moko:mvvm-core:0.16.1")
 
-                /* Official JetBrains Kotlin Date 'n time manager (i.e: generating date from epoch) */
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
+            //Strings internationalization and localization
+            api("cafe.adriel.lyricist:lyricist:$lyricist")
 
-                /* Hash digesters */
-                val kotlincrypto = "0.4.0"
-                implementation("org.kotlincrypto.core:digest:$kotlincrypto")
-                implementation("org.kotlincrypto.hash:md:$kotlincrypto")
-                implementation("org.kotlincrypto.hash:sha2:$kotlincrypto")
+            //api("dev.icerock.moko:mvvm-core:0.16.1")
 
-                /* Network client */
-                val ktor =  /* "2.3.9" */ "3.0.0-beta-1"
-                implementation("io.ktor:ktor-network:$ktor")
-                //api("io.ktor:ktor-network-tls:$ktor")
+            /* Official JetBrains Kotlin Date 'n time manager (i.e: generating date from epoch) */
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
 
-                /* Android's "Uri" class but rewritten for Kotlin multiplatform */
-                implementation("com.eygraber:uri-kmp:0.0.18")
+            /* Hash digesters */
+            val kotlincrypto = "0.5.1"
+            implementation("org.kotlincrypto.core:digest:$kotlincrypto")
+            implementation("org.kotlincrypto.hash:md:$kotlincrypto")
+            implementation("org.kotlincrypto.hash:sha2:$kotlincrypto")
 
-                /* JSON serializer/deserializer to communicate with Syncplay servers */
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+            /* Network client */
+            val ktor = "2.3.10" //"3.0.0-beta-1"
+            implementation("io.ktor:ktor-network:$ktor")
+            //api("io.ktor:ktor-network-tls:$ktor")
 
-                /* Explicitly specifying a newer koroutines */
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1-Beta")
+            /* Android's "Uri" class but rewritten for Kotlin multiplatform */
+            implementation("com.eygraber:uri-kmp:0.0.18")
 
-                /* Jetpack Datastore for preferences and settings (accessible in Compose in real-time) */
-                val datastore = "1.1.0-rc01"
-                api("androidx.datastore:datastore-preferences-core:$datastore")
+            /* JSON serializer/deserializer to communicate with Syncplay servers */
+            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
-                /* Compose core dependencies */
-                api(compose.runtime)
-                api(compose.foundation)
-                api(compose.material3)
-                api(compose.materialIconsExtended)
-                @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
-                api(compose.components.resources)
+            /* Explicitly specifying a newer koroutines version */
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1-Beta")
 
-                /* Helps with color calculations for color preferences */
-                implementation("com.github.ajalt.colormath:colormath:3.4.0")
-            }
+            /* Jetpack Datastore for preferences and settings (accessible in Compose in real-time) */
+            val datastore = "1.1.0-rc01"
+            api("androidx.datastore:datastore-preferences-core:$datastore")
+
+            /* Compose core dependencies */
+            api(compose.runtime)
+            api(compose.foundation)
+            api(compose.material3)
+            api(compose.materialIconsExtended)
+            @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+            api(compose.components.resources)
+
+            /* Helps with color calculations for color preferences */
+            implementation("com.github.ajalt.colormath:colormath:3.4.0")
+
+            /* Compose multiplatform port of Android's lottie-compose. We only need Lottie for
+             * the day-night toggle button. This basically relies on lottie-compose for Android,
+             * and on skiko's lottie support (aka Skottie) on the iOS side, and other platforms.*/
+            implementation("io.github.alexzhirkevich:compottie:1.1.2")
+
         }
 
-        val androidMain by getting {
-            dependencies {
-                dependsOn(commonMain)
+        androidMain.dependencies {
+            /* Backward compatibility APIs */
+            api("androidx.core:core-ktx:1.13.0-rc01")
+            api("androidx.appcompat:appcompat:1.7.0-alpha03")
 
-                /* Backward compatibility APIs */
-                api("androidx.core:core-ktx:1.13.0-rc01")
-                api("androidx.appcompat:appcompat:1.7.0-alpha03")
+            /* SAF DocumentFile manager with backward compatibility */
+            implementation("androidx.documentfile:documentfile:1.0.1")
 
-                /* SAF DocumentFile manager with backward compatibility */
-                implementation("androidx.documentfile:documentfile:1.0.1")
+            /* Splash Screen with backward compatibility */
+            api("androidx.core:core-splashscreen:1.1.0-rc01")
 
-                /* Splash Screen with backward compatibility */
-                api("androidx.core:core-splashscreen:1.1.0-rc01")
-
-                /* Jetpack Home shortcut manager for quick launch with backward compatibility */
-                api("androidx.core:core-google-shortcuts:1.2.0-alpha01") {
-                    exclude(group = "com.google.crypto.tink", module = "tink-android")
-                    exclude(group = "com.google.android.gms")
-                }
-
-                /*  Activity's compose support with backward compatibility */
-                api("androidx.activity:activity-compose:1.9.0-rc01")
-
-                /* Lottie for animations (like Nightmode toggle button) */
-                implementation("com.airbnb.android:lottie-compose:6.4.0")
-
-                /* Network and TLS */
-                implementation("io.netty:netty-all:4.1.108.Final")
-                api("org.conscrypt:conscrypt-android:2.5.2") //TLSv1.3 with backward compatibility
-
-                /* Video player engine: Media3 (ExoPlayer and its extensions) */
-                val media3 = "1.3.0"
-                api("androidx.media3:media3-exoplayer:$media3")
-                api("androidx.media3:media3-exoplayer-dash:$media3")
-                api("androidx.media3:media3-exoplayer-hls:$media3")
-                api("androidx.media3:media3-exoplayer-rtsp:$media3")
-                api("androidx.media3:media3-datasource-okhttp:$media3")
-                api("androidx.media3:media3-ui:$media3")
-                api("androidx.media3:media3-session:$media3")
-                api("androidx.media3:media3-extractor:$media3")
-                api("androidx.media3:media3-decoder:$media3")
-                api("androidx.media3:media3-datasource:$media3")
-                api("androidx.media3:media3-common:$media3")
-
-                /* Video player engine: VLC (via libVLC) */
-                api("org.videolan.android:libvlc-all:4.0.0-eap15")
+            /* Jetpack Home shortcut manager for quick launch with backward compatibility */
+            api("androidx.core:core-google-shortcuts:1.2.0-alpha01") {
+                exclude(group = "com.google.crypto.tink", module = "tink-android")
+                exclude(group = "com.google.android.gms")
             }
+
+            /*  Activity's compose support with backward compatibility */
+            api("androidx.activity:activity-compose:1.9.0-rc01")
+
+            /* Lottie for animations (like Nightmode toggle button) */
+            implementation("com.airbnb.android:lottie-compose:6.4.0")
+
+            /* Network and TLS */
+            implementation("io.netty:netty-all:4.1.108.Final")
+            api("org.conscrypt:conscrypt-android:2.5.2") //TLSv1.3 with backward compatibility
+
+            /* Video player engine: Media3 (ExoPlayer and its extensions) */
+            val media3 = "1.3.1"
+            api("androidx.media3:media3-exoplayer:$media3")
+            api("androidx.media3:media3-exoplayer-dash:$media3")
+            api("androidx.media3:media3-exoplayer-hls:$media3")
+            api("androidx.media3:media3-exoplayer-rtsp:$media3")
+            api("androidx.media3:media3-datasource-okhttp:$media3")
+            api("androidx.media3:media3-ui:$media3")
+            api("androidx.media3:media3-session:$media3")
+            api("androidx.media3:media3-extractor:$media3")
+            api("androidx.media3:media3-decoder:$media3")
+            api("androidx.media3:media3-datasource:$media3")
+            api("androidx.media3:media3-common:$media3")
+
+            /* Video player engine: VLC (via libVLC) */
+            api("org.videolan.android:libvlc-all:4.0.0-eap15")
+
         }
 
-        val iosMain by getting {
-            dependencies {
-                /* Required ktor network client declaration for iOS */
-                //implementation("io.ktor:ktor-client-ios:$ktor")
-            }
+        iosMain.dependencies {
+            /* Required ktor network client declaration for iOS */
+            //implementation("io.ktor:ktor-client-ios:$ktor")
         }
     }
 }
@@ -198,10 +204,10 @@ dependencies {
     ksp("cafe.adriel.lyricist:lyricist-processor-xml:$lyricist")
 }
 
-tasks.withType<AndroidLintAnalysisTask>{
+tasks.withType<AndroidLintAnalysisTask> {
     dependsOn("copyFontsToAndroidAssets")
 }
 
-tasks.withType<LintModelWriterTask>{
+tasks.withType<LintModelWriterTask> {
     dependsOn("copyFontsToAndroidAssets")
 }
