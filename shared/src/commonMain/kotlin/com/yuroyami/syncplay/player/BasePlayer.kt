@@ -73,11 +73,11 @@ abstract class BasePlayer {
     abstract fun isPlaying(): Boolean
 
     /** Called when the player ought to analyze the tracks of the currently loaded media */
-    abstract fun analyzeTracks(mediafile: MediaFile)
+    abstract suspend fun analyzeTracks(mediafile: MediaFile)
 
     abstract fun selectTrack(track: Track?, type: TRACKTYPE)
 
-    abstract fun analyzeChapters(mediafile: MediaFile)
+    abstract suspend fun analyzeChapters(mediafile: MediaFile)
     abstract fun jumpToChapter(chapter: Chapter)
     abstract fun skipChapter()
 

@@ -12,14 +12,6 @@ import cocoapods.MobileVLCKit.VLCMediaPlayer
 import cocoapods.MobileVLCKit.VLCMediaPlayerDelegateProtocol
 import cocoapods.MobileVLCKit.VLCMediaPlayerState
 import cocoapods.MobileVLCKit.VLCTime
-import cocoapods.MobileVLCKit.audioTrackIndexes
-import cocoapods.MobileVLCKit.audioTrackNames
-import cocoapods.MobileVLCKit.currentAudioTrackIndex
-import cocoapods.MobileVLCKit.currentVideoSubTitleIndex
-import cocoapods.MobileVLCKit.setCurrentAudioTrackIndex
-import cocoapods.MobileVLCKit.setCurrentVideoSubTitleIndex
-import cocoapods.MobileVLCKit.videoSubTitlesIndexes
-import cocoapods.MobileVLCKit.videoSubTitlesNames
 import com.yuroyami.syncplay.lyricist.Stringies
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
@@ -27,8 +19,8 @@ import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.PlayerUtils.trackProgress
 import com.yuroyami.syncplay.protocol.JsonSender
-import com.yuroyami.syncplay.utils.RoomUtils
 import com.yuroyami.syncplay.utils.RoomUtils.checkFileMismatches
+import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
 import com.yuroyami.syncplay.utils.collectInfoLocaliOS
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
@@ -36,19 +28,20 @@ import com.yuroyami.syncplay.watchroom.dispatchOSD
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.lyricist
 import com.yuroyami.syncplay.watchroom.viewmodel
+import kotlinx.cinterop.cstr
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.toKString
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import platform.AVFoundation.AVLayerVideoGravityResizeAspect
 import platform.AVFoundation.AVPlayerLayer
 import platform.Foundation.NSArray
-import platform.Foundation.NSNotificationCenter
+import platform.Foundation.NSNotification
 import platform.Foundation.NSNumber
-import platform.Foundation.NSSelectorFromString
 import platform.Foundation.NSURL
 import platform.UIKit.UIColor
 import platform.UIKit.UIView
 import platform.darwin.NSObject
-import platform.posix.int64_t
 import kotlin.math.abs
 
 class VlcPlayer : BasePlayer() {
@@ -57,7 +50,7 @@ class VlcPlayer : BasePlayer() {
     private var libvlc: VLCLibrary? = null
     var vlcPlayer: VLCMediaPlayer? = null
     private var vlcView: UIView? = null
-
+    private var vlcDelegate = VlcDelegate()
     private var vlcMedia: VLCMedia? = null
 
     var pipLayer: AVPlayerLayer? = null
@@ -94,9 +87,9 @@ class VlcPlayer : BasePlayer() {
                 pipLayer?.videoGravity = AVLayerVideoGravityResizeAspect
                 pipLayer?.addSublayer(vlcView!!.layer)
 
-                return@UIKitView vlcView!!.also {
-                    initialize()
-                }
+                initialize()
+
+                return@UIKitView vlcView!!
             },
             interactive = false,
             update = {}
@@ -104,48 +97,10 @@ class VlcPlayer : BasePlayer() {
     }
 
     override fun initialize() {
-        vlcPlayer!!.delegate = object : NSObject(), VLCMediaPlayerDelegateProtocol {
-            init {
-                NSNotificationCenter.defaultCenter.addObserver(
-                    this,
-                    NSSelectorFromString("mediaPlayerStateChanged:"),
-                    "VLCMediaPlayerStateChanged",
-                    this
-                )
-            }
-
-            override fun mediaPlayerStateChanged(newState: VLCMediaPlayerState) {
-                if (hasMedia()) {
-                    val isPlaying = newState == VLCMediaPlayerState.VLCMediaPlayerStatePlaying
-                    viewmodel?.isNowPlaying?.value = isPlaying // Just to inform UI
-
-                    // Tell server about playback state change
-                    if (!isSoloMode) {
-                        RoomUtils.sendPlayback(isPlaying)
-                        viewmodel!!.p.paused = !isPlaying
-                    }
-                }
-            }
-
-            override fun mediaPlayerLengthChanged(length: int64_t) {
-                if (length <= 0) return
-
-                viewmodel?.timeFull?.longValue = abs(length)
-
-                if (!isSoloMode) {
-                    if (length.toDouble() != viewmodel?.media?.fileDuration) {
-                        playerScopeIO.launch launch2@{
-                            viewmodel?.media?.fileDuration = length.toDouble()
-                            viewmodel!!.p.sendPacket(JsonSender.sendFile(viewmodel?.media ?: return@launch2))
-                        }
-                    }
-                }
-            }
-        }
+        vlcPlayer!!.setDelegate(vlcDelegate)
 
 
-
-        playerScopeIO.trackProgress(intervalMillis = 1000L)
+        playerScopeMain.trackProgress(intervalMillis = 1000L)
     }
 
     override fun hasMedia(): Boolean {
@@ -156,7 +111,7 @@ class VlcPlayer : BasePlayer() {
         return vlcPlayer?.isPlaying() == true
     }
 
-    override fun analyzeTracks(mediafile: MediaFile) {
+    override suspend fun analyzeTracks(mediafile: MediaFile) {
         if (vlcPlayer == null) return
 
         viewmodel?.media?.subtitleTracks?.clear()
@@ -181,7 +136,7 @@ class VlcPlayer : BasePlayer() {
                     override val name = name.toString()
                     override val index = index as? Int ?: 0
                     override val type = TRACKTYPE.SUBTITLE
-                    override val selected = mutableStateOf(vlcPlayer!!.currentVideoSubTitleIndex == index)
+                    override val selected = mutableStateOf(vlcPlayer!!.currentAudioTrackIndex == index)
                 }
             )
         }
@@ -209,7 +164,7 @@ class VlcPlayer : BasePlayer() {
         }
     }
 
-    override fun analyzeChapters(mediafile: MediaFile) {
+    override suspend fun analyzeChapters(mediafile: MediaFile) {
         mediafile.chapters.clear()
         val chapters = (vlcPlayer?.chapterDescriptionsOfTitle(0) as? NSArray)?.toKList<String>()
 
@@ -235,7 +190,7 @@ class VlcPlayer : BasePlayer() {
     }
 
     override fun reapplyTrackChoices() {
-        //TODO Not implemented for iOS VLC player
+        // Not implemented for iOS VLC player
     }
 
     override fun loadExternalSub(uri: String) {
@@ -298,8 +253,27 @@ class VlcPlayer : BasePlayer() {
                         vlcPlayer?.setMedia(vlcmedia)
                         vlcmedia
                     }
+                    println("VLC PLAYER DELEGATE: ${vlcPlayer!!.delegate}")
+
+
+                    vlcMedia?.synchronousParse()
+
+                    println("VLC PLAYER DELEGATE: ${vlcPlayer!!.delegate}")
 
                     seekTo(0) //VLC retains video position for some reason
+
+                    val duration = vlcMedia!!.length.numberValue.doubleValue.div(1000.0)
+
+                    viewmodel?.timeFull?.longValue = abs(duration.toLong())
+
+                    if (!isSoloMode) {
+                        if (duration != viewmodel?.media?.fileDuration) {
+                            playerScopeIO.launch launch2@{
+                                viewmodel?.media?.fileDuration = duration
+                                viewmodel!!.p.sendPacket(JsonSender.sendFile(viewmodel?.media ?: return@launch2))
+                            }
+                        }
+                    }
                 }
 
                 /* Goes back to the beginning for everyone */
@@ -319,11 +293,19 @@ class VlcPlayer : BasePlayer() {
     }
 
     override fun pause() {
-        vlcPlayer?.pause()
+        println("VLC PLAYER DELEGATE: ${vlcPlayer!!.delegate}")
+
+        playerScopeMain.launch {
+            vlcPlayer?.pause()
+        }
     }
 
     override fun play() {
-        vlcPlayer?.play()
+        println("VLC PLAYER DELEGATE: ${vlcPlayer!!.delegate}")
+
+        playerScopeMain.launch {
+            vlcPlayer?.play()
+        }
     }
 
     override fun isSeekable(): Boolean {
@@ -347,7 +329,7 @@ class VlcPlayer : BasePlayer() {
         )
 
         // Read the current aspect ratio
-        val currentAspectRatio = vlcPlayer?.videoAspectRatio()
+        val currentAspectRatio = vlcPlayer?.videoAspectRatio()?.toKString()
 
         // Find the index of the current aspect ratio in the list
         val currentIndex = if (currentAspectRatio != null) {
@@ -363,7 +345,9 @@ class VlcPlayer : BasePlayer() {
         val newAspectRatio = aspectRatios[nextIndex]
 
         // Convert the new aspect ratio to C string and set it
-        vlcPlayer?.videoAspectRatio = newAspectRatio
+        memScoped {
+            vlcPlayer?.videoAspectRatio = newAspectRatio.cstr.ptr
+        }
 
         return newAspectRatio
     }
@@ -374,8 +358,6 @@ class VlcPlayer : BasePlayer() {
 
     override fun changeSubtitleSize(newSize: Int) {
         // TODO: Implement subtitle size changing for iOS VLC player
-        print("VLC Font Scaling: $newSize")
-        vlcPlayer?.setCurrentSubTitleFontScale(newSize.toFloat())
     }
 
     /** VLC EXCLUSIVE */
@@ -390,6 +372,27 @@ class VlcPlayer : BasePlayer() {
     private fun <T> NSArray.toKList(): List<T?> {
         return List(count.toInt()) { index ->
             objectAtIndex(index.toULong()) as? T
+        }
+    }
+
+
+    /* Delegate */
+    inner class VlcDelegate: NSObject(), VLCMediaPlayerDelegateProtocol {
+        override fun mediaPlayerStateChanged(aNotification: NSNotification) {
+            if (hasMedia()) {
+                val isPlaying = vlcPlayer?.state != VLCMediaPlayerState.VLCMediaPlayerStatePaused
+                viewmodel?.isNowPlaying?.value = isPlaying // Just to inform UI
+
+                // Tell server about playback state change
+                if (!isSoloMode) {
+                    sendPlayback(isPlaying)
+                    viewmodel!!.p.paused = !isPlaying
+
+                    if (vlcPlayer?.state == VLCMediaPlayerState.VLCMediaPlayerStateEnded) {
+                        onPlaybackEnded()
+                    }
+                }
+            }
         }
     }
 }

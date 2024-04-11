@@ -136,7 +136,7 @@ class AvPlayer : BasePlayer() {
         return (avPlayer?.rate() ?: 0f) > 0f && avPlayer?.error == null
     }
 
-    override fun analyzeTracks(mediafile: MediaFile) {
+    override suspend fun analyzeTracks(mediafile: MediaFile) {
         // Check if the AVPlayer is initialized
         if (avPlayer == null || avMedia == null) return
 
@@ -378,7 +378,7 @@ class AvPlayer : BasePlayer() {
     }
 
     override val supportsChapters = false
-    override fun analyzeChapters(mediafile: MediaFile) = Unit
+    override suspend fun analyzeChapters(mediafile: MediaFile) = Unit
     override fun jumpToChapter(chapter: Chapter) = Unit
     override fun skipChapter() = Unit
 

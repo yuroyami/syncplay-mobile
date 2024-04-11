@@ -174,7 +174,7 @@ fun CoroutineScope.dispatchOSD(s: String) {
 
 val LocalScreenSize = compositionLocalOf<ScreenSizeInfo> { error("No Screen Size Info provided") }
 val LocalChatPalette = compositionLocalOf<MessagePalette> { error("No Chat Palette provided") }
-val LocalRoomSettings = staticCompositionLocalOf<MutableList<SettingCategory>> {  error("No Room Settings provided") }
+val LocalRoomSettings = staticCompositionLocalOf<MutableList<SettingCategory>> { error("No Room Settings provided") }
 
 @Composable
 fun RoomUI() {
@@ -713,8 +713,10 @@ private fun RoomUIImpl() {
 
 
                                             FancyIcon2(icon = Icons.Filled.Subtitles, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
-                                                viewmodel?.player?.analyzeTracks(viewmodel?.media ?: return@FancyIcon2)
-                                                tracksPopup.value = true
+                                                composeScope.launch {
+                                                    viewmodel?.player?.analyzeTracks(viewmodel?.media ?: return@launch)
+                                                    tracksPopup.value = true
+                                                }
                                             }
 
                                             DropdownMenu(modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
@@ -788,8 +790,10 @@ private fun RoomUIImpl() {
                                             val tracksPopup = remember { mutableStateOf(false) }
 
                                             FancyIcon2(icon = Icons.Filled.SpeakerGroup, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
-                                                viewmodel?.player?.analyzeTracks(viewmodel?.media ?: return@FancyIcon2)
-                                                tracksPopup.value = true
+                                                composeScope.launch {
+                                                    viewmodel?.player?.analyzeTracks(viewmodel?.media ?: return@launch)
+                                                    tracksPopup.value = true
+                                                }
                                             }
 
                                             DropdownMenu(modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
@@ -830,8 +834,10 @@ private fun RoomUIImpl() {
                                                 var chaptersPopup by remember { mutableStateOf(false) }
 
                                                 FancyIcon2(icon = Icons.Filled.Theaters, size = ROOM_ICON_SIZE, shadowColor = Color.Black) {
-                                                    viewmodel?.player?.analyzeChapters(viewmodel?.media ?: return@FancyIcon2)
-                                                    chaptersPopup = !chaptersPopup
+                                                    composeScope.launch {
+                                                        viewmodel?.player?.analyzeChapters(viewmodel?.media ?: return@launch)
+                                                        chaptersPopup = !chaptersPopup
+                                                    }
                                                 }
 
                                                 DropdownMenu(modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),

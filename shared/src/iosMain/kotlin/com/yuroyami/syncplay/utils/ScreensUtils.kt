@@ -82,12 +82,6 @@ class AppleDelegate : NSObject(), UIApplicationDelegateProtocol {
         return false
     }
 
-    override fun application(application: UIApplication, willFinishLaunchingWithOptions: Map<Any?, *>?): Boolean {
-        (willFinishLaunchingWithOptions?.get(UIApplicationLaunchOptionsShortcutItemKey) as? UIApplicationShortcutItem)
-            ?.let { handleShortcut(it) }
-        return false
-    }
-
     override fun application(application: UIApplication, performActionForShortcutItem: UIApplicationShortcutItem, completionHandler: (Boolean) -> Unit) {
         handleShortcut(performActionForShortcutItem)
         completionHandler(true)

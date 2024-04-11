@@ -40,8 +40,8 @@ kotlin {
             isStatic = false
         }
 
-        //pod("MobileVLCKit", "3.6.0b10") //Adds the VLC player engine to iOS
-        pod("MobileVLCKit", "4.0.0a2") //Adds the VLC player engine to iOS
+        pod("MobileVLCKit", "3.6.0b10") //Adds the VLC player engine to iOS
+        //pod("MobileVLCKit", "4.0.0a2") //Adds the VLC player engine to iOS
         //pod("VLCKit", "4.0.0a4") //a2
         pod("SPLPing") //Light-weight Objective-C library to add the ICMP ping functionality
     }
@@ -110,6 +110,9 @@ kotlin {
              * the day-night toggle button. This basically relies on lottie-compose for Android,
              * and on skiko's lottie support (aka Skottie) on the iOS side, and other platforms.*/
             implementation("io.github.alexzhirkevich:compottie:1.1.2")
+
+            /* Annotations */
+            api("androidx.annotation:annotation:1.8.0-beta01")
 
         }
 
