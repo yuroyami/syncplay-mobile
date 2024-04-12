@@ -5,6 +5,8 @@ plugins {
     //id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val exoOnly = false
+
 val abiCodes = mapOf(
     "armeabi-v7a" to 1,
     "arm64-v8a" to 2,
@@ -33,6 +35,7 @@ android {
         versionName = "0.14.0"
         signingConfig = signingConfigs.getByName("github")
         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        //proguardFiles("proguard-rules.pro")
     }
 
     packaging {
@@ -51,11 +54,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-
-//            postprocessing {
-//                isRemoveUnusedResources = true
-//            }
+            isMinifyEnabled = exoOnly
         }
         debug {
             isDebuggable = true
@@ -76,52 +75,55 @@ android {
         jvmTarget = "1.8"
     }
 
-//    flavorDimensions.add("engine")
-//
-//    productFlavors {
-//        create("withLibs") {
-//            dimension = "engine"
-//
-//            splits {
-//                abi {
-//                    isEnable = true
-//                    reset()
-//                    abiCodes.forEach { (abi, _) ->
-//                        val exists = file("$projectDir/src/main/jniLibs/$abi").exists()
-//                        if (exists) {
-//                            include(abi)
-//                        }
-//                    }
-//                    isUniversalApk = true
-//                }
-//            }
-//        }
-//
-//        create("noLibs") {
-//            dimension = "engine"
-//        }
-//
-//        packaging {
-//            jniLibs {
-//                if (false) {
-//                    //mpv libs
-//                    excludes += ("**/libavcodec.so")
-//                    excludes += ("**/libavdevice.so")
-//                    excludes += ("**/libavfilter.so")
-//                    excludes += ("**/libavformat.so")
-//                    excludes += ("**/libavutil.so")
-//                    excludes += ("**/libmpv.so")
-//                    excludes += ("**/libplayer.so")
-//                    excludes += ("**/libpostproc.so")
-//                    excludes += ("**/libswresample.so")
-//                    excludes += ("**/libswscale.so")
-//
-//                    //vlc
-//                    excludes += ("**/libvlc.so")
-//                }
-//            }
-//        }
-//    }
+    if (!exoOnly) {
+        splits {
+            abi {
+                isEnable = true
+                reset()
+                abiCodes.forEach { (abi, _) ->
+                    val exists = file("$projectDir/src/main/jniLibs/$abi").exists()
+                    if (exists) {
+                        include(abi)
+                    }
+                }
+                isUniversalApk = true
+
+            }
+        }
+    } else {
+        packaging {
+            jniLibs {
+                //mpv libs
+                excludes += ("**/libavcodec.so")
+                excludes += ("**/libavdevice.so")
+                excludes += ("**/libavfilter.so")
+                excludes += ("**/libavformat.so")
+                excludes += ("**/libavutil.so")
+                excludes += ("**/libmpv.so")
+                excludes += ("**/libplayer.so")
+                excludes += ("**/libpostproc.so")
+                excludes += ("**/libswresample.so")
+                excludes += ("**/libswscale.so")
+
+                //vlc
+                excludes += ("**/libvlc.so")
+            }
+        }
+    }
+
+    flavorDimensions.add("flavor")
+    productFlavors {
+        create(if (exoOnly) "noLibs" else "withLibs") {
+            dimension = "flavor"
+        }
+    }
+
+    dependenciesInfo {
+        // Disables dependency metadata when building APKs.
+        includeInApk = false
+        // Disables dependency metadata when building Android App Bundles.
+        includeInBundle = false
+    }
 }
 
 dependencies {

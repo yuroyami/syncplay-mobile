@@ -1,5 +1,4 @@
-import com.android.build.gradle.internal.lint.AndroidLintAnalysisTask
-import com.android.build.gradle.internal.lint.LintModelWriterTask
+
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -205,12 +204,4 @@ ksp {
 dependencies {
     ksp("cafe.adriel.lyricist:lyricist-processor:$lyricist")
     ksp("cafe.adriel.lyricist:lyricist-processor-xml:$lyricist")
-}
-
-tasks.withType<AndroidLintAnalysisTask> {
-    dependsOn("copyFontsToAndroidAssets")
-}
-
-tasks.withType<LintModelWriterTask> {
-    dependsOn("copyFontsToAndroidAssets")
 }
