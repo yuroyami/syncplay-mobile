@@ -49,6 +49,7 @@ import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.lyricist
 import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.util.Collections
 import kotlin.math.abs
@@ -185,7 +186,9 @@ class ExoPlayer : BasePlayer() {
                     //timeFull.longValue = kotlin.math.abs(duration.toLong())
 
                     /* Repopulate audio and subtitle track lists with the new analysis of tracks **/
-                    analyzeTracks(viewmodel?.media ?: return)
+                    playerScopeMain.launch {
+                        analyzeTracks(viewmodel?.media ?: return@launch)
+                    }
                 }
 
                 override fun onPlayerError(error: PlaybackException) {
@@ -223,7 +226,7 @@ class ExoPlayer : BasePlayer() {
         return exoplayer?.playbackState == Player.STATE_READY && exoplayer?.playWhenReady == true
     }
 
-    override fun analyzeTracks(mediafile: MediaFile) {
+    override suspend fun analyzeTracks(mediafile: MediaFile) {
         viewmodel?.media?.audioTracks?.clear()
         viewmodel?.media?.subtitleTracks?.clear()
         val tracks = exoplayer?.currentTracks ?: return
@@ -287,30 +290,32 @@ class ExoPlayer : BasePlayer() {
         }
     }
 
-    override fun analyzeChapters(mediafile: MediaFile) {}
+    override suspend fun analyzeChapters(mediafile: MediaFile) {}
     override fun jumpToChapter(chapter: Chapter) {}
     override fun skipChapter() {}
 
     override fun reapplyTrackChoices() {
         /* We need to cast MediaController to ExoPlayer since they're roughly the same */
-        analyzeTracks(viewmodel?.media ?: return)
+        playerScopeMain.launch {
+            analyzeTracks(viewmodel?.media ?: return@launch)
 
-        exoplayer?.apply {
-            val builder = trackSelectionParameters.buildUpon()
+            exoplayer?.apply {
+                val builder = trackSelectionParameters.buildUpon()
 
-            var newParams = builder.build()
+                var newParams = builder.build()
 
-            if (viewmodel?.currentTrackChoices?.lastAudioOverride != null) {
-                newParams = newParams.buildUpon().addOverride(
-                    viewmodel?.currentTrackChoices?.lastAudioOverride as? TrackSelectionOverride ?: return
-                ).build()
+                if (viewmodel?.currentTrackChoices?.lastAudioOverride != null) {
+                    newParams = newParams.buildUpon().addOverride(
+                        viewmodel?.currentTrackChoices?.lastAudioOverride as? TrackSelectionOverride ?: return@launch
+                    ).build()
+                }
+                if (viewmodel?.currentTrackChoices?.lastSubtitleOverride != null) {
+                    newParams = newParams.buildUpon().addOverride(
+                        viewmodel?.currentTrackChoices?.lastSubtitleOverride as? TrackSelectionOverride ?: return@launch
+                    ).build()
+                }
+                trackSelectionParameters = newParams
             }
-            if (viewmodel?.currentTrackChoices?.lastSubtitleOverride != null) {
-                newParams = newParams.buildUpon().addOverride(
-                    viewmodel?.currentTrackChoices?.lastSubtitleOverride as? TrackSelectionOverride ?: return
-                ).build()
-            }
-            trackSelectionParameters = newParams
         }
     }
 

@@ -23,12 +23,14 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="false"
         android:usesCleartextTraffic="true"
+        android:taskAffinity=""
         >
 
         <activity
             android:name=".HomeActivity"
             android:configChanges="orientation|keyboardHidden|screenLayout|screenSize|smallestScreenSize"
             android:exported="true"
+            android:taskAffinity=""
             android:imeOptions="flagNoExtractUi"
             android:theme="@style/SplashTheme"
             android:windowSoftInputMode="adjustPan">
@@ -43,6 +45,7 @@
             android:configChanges="orientation|keyboardHidden|screenLayout|screenSize|smallestScreenSize"
             android:exported="true"
             android:imeOptions="flagNoExtractUi"
+            android:taskAffinity=""
             android:launchMode="singleTask"
             android:resizeableActivity="true"
             android:screenOrientation="sensorLandscape"

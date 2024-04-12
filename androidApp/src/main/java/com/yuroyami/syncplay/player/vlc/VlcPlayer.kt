@@ -82,7 +82,7 @@ class VlcPlayer : BasePlayer() {
             onReset = {
                 try {
                     vlcPlayer?.attachViews(vlcView, null, true, false)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                 }
             },
             onRelease = {
@@ -91,7 +91,7 @@ class VlcPlayer : BasePlayer() {
             update = {
                 try {
                     vlcPlayer?.attachViews(vlcView, null, true, false)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                 }
             }
         )
@@ -105,7 +105,7 @@ class VlcPlayer : BasePlayer() {
         return vlcPlayer?.isPlaying == true
     }
 
-    override fun analyzeTracks(mediafile: MediaFile) {
+    override suspend fun analyzeTracks(mediafile: MediaFile) {
         viewmodel?.media?.subtitleTracks?.clear()
         viewmodel?.media?.audioTracks?.clear()
         val audioTracks = vlcPlayer?.getTracks(Track.Type.Audio)
@@ -161,7 +161,7 @@ class VlcPlayer : BasePlayer() {
         }
     }
 
-    override fun analyzeChapters(mediafile: MediaFile) {
+    override suspend fun analyzeChapters(mediafile: MediaFile) {
         mediafile.chapters.clear()
         val chapters = vlcPlayer?.getChapters(-1)
         chapters?.forEachIndexed { i, chptr ->

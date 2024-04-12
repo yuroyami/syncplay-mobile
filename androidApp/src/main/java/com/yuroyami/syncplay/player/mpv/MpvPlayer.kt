@@ -65,6 +65,7 @@ class MpvPlayer : BasePlayer() {
     }
 
     override fun destroy() {
+        if (!ismpvInit) return
         mpvView.destroy()
     }
 
@@ -90,7 +91,7 @@ class MpvPlayer : BasePlayer() {
         else !mpvView.paused
     }
 
-    override fun analyzeTracks(mediafile: MediaFile) {
+    override suspend fun analyzeTracks(mediafile: MediaFile) {
         viewmodel?.media?.subtitleTracks?.clear()
         viewmodel?.media?.audioTracks?.clear()
         val count = MPVLib.getPropertyInt("track-list/count")!!
@@ -164,7 +165,7 @@ class MpvPlayer : BasePlayer() {
         }
     }
 
-    override fun analyzeChapters(mediafile: MediaFile) {
+    override suspend fun analyzeChapters(mediafile: MediaFile) {
         if (!ismpvInit) return
         val chapters = mpvView.loadChapters()
         if (chapters.isEmpty()) return

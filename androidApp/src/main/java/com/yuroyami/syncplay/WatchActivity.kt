@@ -138,6 +138,9 @@ class WatchActivity : ComponentActivity() {
 
         viewmodel?.roomCallback = object : RoomCallback {
             override fun onLeave() {
+                val intent = Intent(this@WatchActivity, HomeActivity::class.java)
+                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                startActivity(intent)
                 terminate()
                 viewmodel = null
             }
@@ -175,13 +178,6 @@ class WatchActivity : ComponentActivity() {
         }
     }
 
-
-    @SuppressLint("MissingSuperCall")
-    override fun onBackPressed() {
-        terminate()
-        //super.onBackPressed()
-    }
-
     fun terminate() {
         if (!isSoloMode) {
             viewmodel?.p?.endConnection(true)
@@ -190,7 +186,7 @@ class WatchActivity : ComponentActivity() {
         finish()
     }
 
-    /** Let's inform Jetpack Compose that we entered picture in picture, to adjust some UI settings */
+    /* Let's inform Jetpack Compose that we entered picture in picture, to adjust some UI settings */
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
@@ -207,7 +203,7 @@ class WatchActivity : ComponentActivity() {
         if (!isPipAllowed) return
 
         viewmodel?.pipMode?.value = true
-        moveTaskToBack(true)
+        //moveTaskToBack(true)
         updatePiPParams()
         enterPictureInPictureMode()
         viewmodel?.hudVisibilityState?.value = false

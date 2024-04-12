@@ -94,6 +94,7 @@ class HomeActivity : ComponentActivity() {
                 val intent = Intent(this@HomeActivity, WatchActivity::class.java)
                 intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
                 startActivity(intent)
+                finish()
             }
 
             override fun onSaveConfigShortcut(joinInfo: JoinInfo) {
