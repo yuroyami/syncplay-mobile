@@ -38,13 +38,8 @@
 
 ## Introduction
 
-[![OS - Android](https://img.shields.io/badge/Android-a4c639?style=for-the-badge&logo=android)]()  
-[![OS - iOS](https://img.shields.io/badge/iOS-555555?style=for-the-badge&logo=apple)]()
-[![Version Release](https://img.shields.io/badge/Version-0.14.0.beta-c22b3c?style=for-the-badge&logo=v)]()  
-[![Written Language](https://img.shields.io/badge/Made%20with-Kotlin-lightgrey?style=for-the-badge&logo=kotlin)]()  
-[![is Maintained?](https://img.shields.io/badge/Maintained-YES-green?style=for-the-badge)]()  
-[![License](https://img.shields.io/badge/License-AGPL--3.0-brightgreen?style=for-the-badge)]()  
-[![Status](https://img.shields.io/badge/Status-BETA-0cf?style=for-the-badge&logo=statuspage)]()  
+[![OS - Android](https://img.shields.io/badge/Android-a4c639?style=for-the-badge&logo=android)]()[![OS - iOS](https://img.shields.io/badge/iOS-555555?style=for-the-badge&logo=apple)]()
+[![Version Release](https://img.shields.io/badge/Version-0.14.0.beta-c22b3c?style=for-the-badge&logo=v)]()[![Written Language](https://img.shields.io/badge/Made%20with-Kotlin-lightgrey?style=for-the-badge&logo=kotlin)]()[![is Maintained?](https://img.shields.io/badge/Maintained-YES-green?style=for-the-badge)]()[![License](https://img.shields.io/badge/License-AGPL--3.0-brightgreen?style=for-the-badge)]()  
 [![Requirement](https://img.shields.io/badge/REQUIREMENT-Android%206.0%20and%20later-blueviolet?style=for-the-badge&logo=android%20studio)]()  
 [![Requirement](https://img.shields.io/badge/REQUIREMENT-iOS%2014.0%20and%20later-blueviolet?style=for-the-badge&logo=xcode)]()
 
