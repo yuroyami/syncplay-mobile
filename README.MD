@@ -26,8 +26,8 @@
 - [Introduction](#introduction)
 - [Features](#features)
 - [How to use](#how-to-use)
-- [Roadmap](#roadmap)
-- [Components and architecture](#components-and-architecture)
+- [Capabilities](#capabilities)
+- [Architecture](#architecture)
 - [FAQ](#faq)
 - [Feedback](#feedback)
 - [Build Process](#build-process)
@@ -39,8 +39,7 @@
 ## Introduction
 
 [![OS - Android](https://img.shields.io/badge/Android-a4c639?style=for-the-badge&logo=android)]()  
-[![OS - iOS](https://img.shields.io/badge/iOS-555555?style=for-the-badge&logo=apple)]()  
-<br>  
+[![OS - iOS](https://img.shields.io/badge/iOS-555555?style=for-the-badge&logo=apple)]()
 [![Version Release](https://img.shields.io/badge/Version-0.14.0.beta-c22b3c?style=for-the-badge&logo=v)]()  
 [![Written Language](https://img.shields.io/badge/Made%20with-Kotlin-lightgrey?style=for-the-badge&logo=kotlin)]()  
 [![is Maintained?](https://img.shields.io/badge/Maintained-YES-green?style=for-the-badge)]()  
@@ -56,8 +55,8 @@ It includes real-time chat functionality, enabling seamless communication while 
 **Cannot run on Android versions below Android 6.0 Marshmallow and iOS 14.0**
 
 <p align="center">  
-  <img src = "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS1.png" width=150>  
-  <img src = "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS3.png" width=150>  
+  <img src = "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS1.png" width=150 alt="">  
+  <img src = "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS3.png" width=150 alt="">  
 </p>  
 
 ## Features
@@ -70,8 +69,8 @@ It includes real-time chat functionality, enabling seamless communication while 
 * Multi-language support (Currently available in English, Chinese, French and Arabic, with more languages coming soon).
 
 <p align="center">  
-  <img src = "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS2.png" width="30%">  
-  <img src = "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS4.png" width="30%">  
+  <img src = "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS2.png" width="30%" alt="">  
+  <img src = "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS4.png" width="30%" alt="">  
 </p>  
 
 ## How to use
@@ -88,29 +87,30 @@ Usage on Android is fairly simple:
 
 The iOS version cannot be distributed in package format (like Android's APKs). The only ways to install an app on iOS are to either compile this project by yourself on your macOS, or someone would kindly donate to host this app on the Apple app store (the fee is a yearly $99).  The iOS app compiles and runs without issues on any iOS device with 14.0 (I assume this can be lowered further but I didn't try).
 
-##   General capability chart
+## Capabilities
+###   General capability chart
 The UI on both Android and iOS are 99.9% identical, minus some differences due to platform-specific behavior. This chart table will demonstrate things that work, and things that do not work, on each platform and video player.
 
-| Feature |Android  |  iOS|
-|--|--|--|
-|Chat|<p align="center">✔</p>|<p align="center">✔</p>|
-|Settings & Preferences|<p align="center">✔</p>|<p align="center">✔</p>|
-|Shared Playlists|<p align="center">✔</p>|✔ (Untested)|
-|Video players| - mpv (Default)<br>- ExoPlayer<br>- VLC| - VLC (Default)<br>- AVPlayer|
-|Supports TLS| <p align="center">✔ (Netty)</p>| ✔ (SwiftNIO) |
-|Picture-in-Picture (PIP) mode|<p align="center">✔</p>|✔ (only AVPlayer)|
-|Can save shortcuts|<p align="center">✔</p>|✔ (Unstable)|
+| Feature                       | Android                                 | iOS                           |
+|-------------------------------|-----------------------------------------|-------------------------------|
+| Chat                          | <p align="center">✔</p>                 | <p align="center">✔</p>       |
+| Settings & Preferences        | <p align="center">✔</p>                 | <p align="center">✔</p>       |
+| Shared Playlists              | <p align="center">✔</p>                 | ✔ (Untested)                  |
+| Video players                 | - mpv (Default)<br>- ExoPlayer<br>- VLC | - VLC (Default)<br>- AVPlayer |
+| Supports TLS                  | <p align="center">✔ (Netty)</p>         | ✔ (SwiftNIO)                  |
+| Picture-in-Picture (PIP) mode | <p align="center">✔</p>                 | ✔ (only AVPlayer)             |
+| Can save shortcuts            | <p align="center">✔</p>                 | ✔ (Unstable)                  |
 
-##   Video player capability chart
+###   Video player capability chart
 Some video players are more potent than others in certain areas. Here's a general overview to help you quickly pick the best contender
 
-| <font size="2">Feature</font> |mpv<br>Android|ExoPlayer<br>Android|VLC<br>Android|AVPlayer<br>iOS|VLC<br>iOS
-|--|--|--|--|--|--|
-|<font size="3">Supported<br>formats</font>|Most formats (including mkv and HEVC)|Depends on device capabilities|All formats|Depends on device capabilities|All formats
-|<font size="3">Stability with Syncplay</font>|Stable (recommended)|Mildly Stable|Experimental|Broken (for now) | Alpha
-|<font size="3">Supports Subtitles (including sideloaded ones)</font>|<p align="center">Best (via libass) ✔</p>|Basic support|<p align="center">✔</p>|<p align="center">No</p>|<p align="center">✔</p>|
-|<font size="3">Can play from URLs/URIs|<p align="center">✔</p></font>|<p align="center">✔</p>|<p align="center">✔</p>|<p align="center">✔</p>|<p align="center">✔</p>|
-|<font size="3">Supports Chapters|<p align="center">✔</p></font>|<p align="center">No</p>|<p align="center">✔</p>|<p align="center">No</p>|<p align="center">✔</p>|
+| <font size="2">Feature</font>                                        | mpv<br>Android                            | ExoPlayer<br>Android           | VLC<br>Android          | AVPlayer<br>iOS                | VLC<br>iOS              |
+|----------------------------------------------------------------------|-------------------------------------------|--------------------------------|-------------------------|--------------------------------|-------------------------|
+| <font size="3">Supported<br>formats</font>                           | Most formats (including mkv and HEVC)     | Depends on device capabilities | All formats             | Depends on device capabilities | All formats             |
+| <font size="3">Stability with Syncplay</font>                        | Stable (recommended)                      | Mildly Stable                  | Experimental            | Broken (for now)               | Alpha                   |
+| <font size="3">Supports Subtitles (including sideloaded ones)</font> | <p align="center">Best (via libass) ✔</p> | Basic support                  | <p align="center">✔</p> | <p align="center">No</p>       | <p align="center">✔</p> |
+| <font size="3">Can play from URLs/URIs                               | <p align="center">✔</p></font>            | <p align="center">✔</p>        | <p align="center">✔</p> | <p align="center">✔</p>        | <p align="center">✔</p> |
+| <font size="3">Supports Chapters                                     | <p align="center">✔</p></font>            | <p align="center">No</p>       | <p align="center">✔</p> | <p align="center">No</p>       | <p align="center">✔</p> |
 
 
 ## Architecture
@@ -125,15 +125,15 @@ Some video players are more potent than others in certain areas. Here's a genera
 
 ## F.A.Q
 
-* If my friend uses Syncplay on PC, can I watch with them ?  
-  <br>-> Yes, you can. Syncplay Android is made to be interoperable.
-* On Android, I get an error saying "App not installed" upon installing the app. What's wrong ?  
-  <br>-> Uninstall the older version before installing the new one.
-* Where is the iOS release ?  
-  <br>-> The release has to be uploaded to the Apple app store to make it available to everyone, which I do not own. Volunteers are welcome.
+> If my friend uses Syncplay on PC, can I watch with them ?  
+- Yes, you can. Syncplay Android is made to be interoperable.
+> On Android, I get an error saying "App not installed" upon installing the app. What's wrong ?  
+- Uninstall the older version before installing the new one.
+> Where is the iOS release ?  
+- The release has to be uploaded to the Apple app store to make it available to everyone, which I do not own. Volunteers are welcome.
 
 ## Translating
-Here are the available languages :
+Syncplay is available in the following languages :
 - [x] English
 - [x] Arabic
 - [x] French
@@ -145,7 +145,7 @@ Here are the available languages :
 
 ## Feedback
 
-Feel free to [file an issue](https://github.com/yuroyami/syncplay-mobile/issues/new).
+Feel free to [file an issue or a feature request](https://github.com/yuroyami/syncplay-mobile/issues/new).
 
 If there's anything you'd like to chat about, please feel free to open a new discussion.
 
