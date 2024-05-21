@@ -1,7 +1,6 @@
 package com.yuroyami.syncplay
 
 import android.app.Application
-import android.content.Context
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.datastore
 import com.yuroyami.syncplay.utils.ContextObtainer
@@ -22,9 +21,7 @@ class SyncplayApp: Application() {
         datastore = dataStore(applicationContext, DataStoreKeys.SYNCPLAY_PREFS)
 
         contextObtainer = object: ContextObtainer {
-            override fun obtainAppContext(): Context {
-                return applicationContext
-            }
+            override fun obtainAppContext() = applicationContext
         }
     }
 }

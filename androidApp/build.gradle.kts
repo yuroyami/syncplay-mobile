@@ -2,7 +2,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.android.application")
     id("org.jetbrains.compose")
-    //id("org.jetbrains.kotlin.plugin.compose")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 val exoOnly = false
@@ -29,13 +29,12 @@ android {
 
     defaultConfig {
         applicationId = "com.reddnek.syncplay"
-        minSdk = (findProperty("android.minSdk") as String).toInt()
-        targetSdk = (findProperty("android.targetSdk") as String).toInt()
-        versionCode = 1000014000 //Changing versionName semantic projection from 1.XXX.XXX.XXX to 1.XX.XX.XX
-        versionName = "0.14.0"
+        minSdk = 21
+        targetSdk = 34
+        versionCode = 1000015000 //Changing versionName semantic projection from 1.XXX.XXX.XXX to 1.XX.XX.XX
+        versionName = "0.15.0"
         signingConfig = signingConfigs.getByName("github")
         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-        //proguardFiles("proguard-rules.pro")
     }
 
     packaging {
@@ -48,9 +47,6 @@ android {
         }
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.11"
-    }
 
     buildTypes {
         release {
@@ -68,11 +64,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
 
     if (!exoOnly) {
@@ -128,7 +124,6 @@ android {
 
 dependencies {
     implementation(projects.shared)
-
     implementation(files("libs/ext.aar")) /* ExoPlayer's FFmpeg extension  */
 }
 

@@ -59,12 +59,16 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
 
         val hwdec = if (PREF_MPV_HARDWARE_ACCELERATION.settingBoolean()) "auto" else "no"
 
-        // vo: set display fps as reported by android
-        val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        val disp = wm.defaultDisplay
-        val refreshRate = disp.mode.refreshRate
 
-        Log.v(TAG, "Display ${disp.displayId} reports FPS of $refreshRate")
+        // vo: set display fps as reported by android
+        val refreshRate = @Suppress("DEPRECATION") if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            context.display?.refreshRate ?: 60f
+        } else {
+            val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+            wm.defaultDisplay.mode.refreshRate
+        }
+
+        Log.v(TAG, "Display FPS: $refreshRate")
         MPVLib.setOptionString("display-fps-override", refreshRate.toString())
 
         // set non-complex options

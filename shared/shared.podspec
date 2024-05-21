@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
     spec.name                     = 'shared'
-    spec.version                  = '0.14.0'
+    spec.version                  = '1.0.0'
     spec.homepage                 = 'www.github.com/yuroyami/syncplay-mobile'
     spec.source                   = { :http=> ''}
     spec.authors                  = ''
@@ -9,7 +9,7 @@ Pod::Spec.new do |spec|
     spec.vendored_frameworks      = 'build/cocoapods/framework/shared.framework'
     spec.libraries                = 'c++'
     spec.ios.deployment_target    = '14.0'
-    spec.dependency 'MobileVLCKit', '3.6.0b10'
+    spec.dependency 'MobileVLCKit', '3.6.0b11'
     spec.dependency 'SPLPing'
                 
     if !Dir.exist?('build/cocoapods/framework/shared.framework') || Dir.empty?('build/cocoapods/framework/shared.framework')
@@ -51,5 +51,5 @@ Pod::Spec.new do |spec|
             SCRIPT
         }
     ]
-    spec.resources = ['build/compose/ios/shared/compose-resources']
+    spec.resources = ['build/compose/cocoapods/compose-resources']
 end
