@@ -59,7 +59,7 @@ kotlin {
 
         commonMain.dependencies {
             /* Forcing Kotlin libs to match the compiler */
-            api("org.jetbrains.kotlin:kotlin-stdlib:2.0.0-RC3")
+            api("org.jetbrains.kotlin:kotlin-stdlib:2.0.0")
 
             //Strings internationalization and localization
             api("cafe.adriel.lyricist:lyricist:$lyricist")
@@ -85,7 +85,7 @@ kotlin {
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.0-RC")
 
             /* Explicitly specifying a newer koroutines version */
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1-Beta")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
 
             /* Jetpack Datastore for preferences and settings (accessible in Compose in real-time) */
             val datastore = "1.1.1"
@@ -96,9 +96,7 @@ kotlin {
             api(compose.foundation)
             api(compose.material3)
             api(compose.materialIconsExtended)
-            //@OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
             api(compose.components.resources)
-
 
             /* Helps with color calculations for color preferences */
             implementation("com.github.ajalt.colormath:colormath:3.5.0")
@@ -122,7 +120,7 @@ kotlin {
             implementation("androidx.documentfile:documentfile:1.0.1")
 
             /* Splash Screen with backward compatibility */
-            api("androidx.core:core-splashscreen:1.1.0-rc01")
+            api("androidx.core:core-splashscreen:1.1.0-rc01") //1.2.0 bugs our navbar opacity
 
             /* Jetpack Home shortcut manager for quick launch with backward compatibility */
             api("androidx.core:core-google-shortcuts:1.2.0-alpha01") {
