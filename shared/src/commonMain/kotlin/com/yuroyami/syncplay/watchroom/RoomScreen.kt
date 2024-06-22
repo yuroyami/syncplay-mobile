@@ -97,14 +97,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import com.yuroyami.syncplay.compose.ComposeUtils
+import com.yuroyami.syncplay.compose.ComposeUtils.ChatAnnotatedText
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyIcon2
-import com.yuroyami.syncplay.compose.ComposeUtils.FlexibleFancyAnnotatedText
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.compose.cards.CardRoomPrefs.InRoomSettingsCard
 import com.yuroyami.syncplay.compose.cards.CardSharedPlaylist.SharedPlaylistCard
@@ -190,6 +189,7 @@ fun RoomUI() {
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun RoomUIImpl() {
+
     val nightMode = valueFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
 
     val directive = getSyncplayFont()
@@ -335,18 +335,12 @@ private fun RoomUIImpl() {
                                             it.seen = true /* Once seen, don't use it in fading message */
                                         }
 
-                                        FlexibleFancyAnnotatedText(
+                                        ChatAnnotatedText(
                                             modifier = Modifier.fillMaxWidth(),
                                             text = it.factorize(LocalChatPalette.current),
                                             size = if (pipModeObserver) 6f else (msgFontSize.value.toFloat()),
-                                            //font = inter,
-                                            lineHeight = (msgFontSize.value + 4).sp,
-                                            overflow = TextOverflow.Ellipsis,
-                                            strokeColors = listOf(Color.Black),
-                                            strokeWidth = if (msgOutline) 3f else 0f,
-                                            shadowSize = 1.5f,
-                                            //shadowOffset = Pair(0,0),
-                                            shadowColors = if (msgShadow) listOf(Color.Black) else listOf()
+                                            hasShadow = msgShadow,
+                                            hasStroke = msgOutline
                                         )
                                     }
                                 }

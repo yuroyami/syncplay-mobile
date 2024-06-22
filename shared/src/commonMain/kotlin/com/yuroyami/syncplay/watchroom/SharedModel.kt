@@ -23,6 +23,7 @@ import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.ui.LifecycleWatchdog
 import com.yuroyami.syncplay.utils.PlaylistUtils
 import com.yuroyami.syncplay.utils.RoomUtils.broadcastMessage
+import com.yuroyami.syncplay.utils.RoomUtils.checkFileMismatches
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.CoroutineScope
@@ -200,6 +201,8 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                         ),
                         isChat = false
                     )
+
+                    checkFileMismatches()
                 }
 
                 override fun onPlaylistUpdated(user: String) {

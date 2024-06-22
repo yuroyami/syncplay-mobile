@@ -20,7 +20,7 @@ kotlin {
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
+            jvmTarget.set(JvmTarget.JVM_1_8)
         }
     }
 
@@ -82,7 +82,7 @@ kotlin {
             implementation("com.eygraber:uri-kmp:0.0.18")
 
             /* JSON serializer/deserializer to communicate with Syncplay servers */
-            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.0-RC")
+            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.0")
 
             /* Explicitly specifying a newer koroutines version */
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
@@ -97,6 +97,7 @@ kotlin {
             api(compose.material3)
             api(compose.materialIconsExtended)
             api(compose.components.resources)
+            api("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
 
             /* Helps with color calculations for color preferences */
             implementation("com.github.ajalt.colormath:colormath:3.5.0")
@@ -114,7 +115,7 @@ kotlin {
         androidMain.dependencies {
             /* Backward compatibility APIs */
             api("androidx.core:core-ktx:1.14.0-alpha01")
-            api("androidx.appcompat:appcompat:1.7.0-rc01")
+            api("androidx.appcompat:appcompat:1.7.0")
 
             /* SAF DocumentFile manager with backward compatibility */
             implementation("androidx.documentfile:documentfile:1.0.1")
@@ -132,11 +133,11 @@ kotlin {
             api("androidx.activity:activity-compose:1.9.0")
 
             /* Network and TLS */
-            implementation("io.netty:netty-all:4.1.109.Final")
+            implementation("io.netty:netty-all:4.1.110.Final")
             api("org.conscrypt:conscrypt-android:2.5.2") //TLSv1.3 with backward compatibility
 
             /* Video player engine: Media3 (ExoPlayer and its extensions) */
-            val media3 = "1.4.0-alpha01"
+            val media3 = "1.4.0-alpha02"
             api("androidx.media3:media3-exoplayer:$media3")
             api("androidx.media3:media3-exoplayer-dash:$media3")
             api("androidx.media3:media3-exoplayer-hls:$media3")
@@ -177,11 +178,11 @@ android {
         minSdk = 21
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlin {
-        jvmToolchain(17)
+        jvmToolchain(8)
     }
 
     buildFeatures {

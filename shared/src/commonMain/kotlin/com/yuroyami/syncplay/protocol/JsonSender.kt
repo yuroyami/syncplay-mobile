@@ -24,7 +24,7 @@ object JsonSender {
             put("username", username)
 
             if (serverPassword.isNotEmpty()) {
-                put("password", md5(serverPassword).toHex())
+                put("password", md5(serverPassword).toHex().lowercase())
             }
 
             put("room", buildJsonObject {

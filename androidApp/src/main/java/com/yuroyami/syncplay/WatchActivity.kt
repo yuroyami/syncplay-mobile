@@ -142,7 +142,6 @@ class WatchActivity : ComponentActivity() {
                 intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
                 startActivity(intent)
                 terminate()
-                viewmodel = null
             }
 
             override fun onPlayback(paused: Boolean) {
@@ -184,6 +183,7 @@ class WatchActivity : ComponentActivity() {
         }
 
         finish()
+        viewmodel = null
     }
 
     /* Let's inform Jetpack Compose that we entered picture in picture, to adjust some UI settings */
@@ -285,5 +285,13 @@ class WatchActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(pipBroadcastReceiver)
+    }
+
+    @Deprecated("", ReplaceWith(""))
+    @SuppressLint("MissingSuperCall")
+    override fun onBackPressed() {
+        startActivity(Intent(this, HomeActivity::class.java))
+        terminate()
+        //super.onBackPressed()
     }
 }

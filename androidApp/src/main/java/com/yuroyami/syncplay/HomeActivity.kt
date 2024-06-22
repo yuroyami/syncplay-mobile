@@ -92,7 +92,7 @@ class HomeActivity : ComponentActivity() {
                 }
 
                 val intent = Intent(this@HomeActivity, WatchActivity::class.java)
-                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 startActivity(intent)
                 finish()
             }
@@ -100,7 +100,7 @@ class HomeActivity : ComponentActivity() {
             override fun onSaveConfigShortcut(joinInfo: JoinInfo) {
 
                 val shortcutIntent = Intent(this@HomeActivity, HomeActivity::class.java)
-                shortcutIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+                shortcutIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 shortcutIntent.action = Intent.ACTION_MAIN
                 shortcutIntent.putExtra("quickLaunch", true)
                 shortcutIntent.putExtra("name", joinInfo.username.trim())

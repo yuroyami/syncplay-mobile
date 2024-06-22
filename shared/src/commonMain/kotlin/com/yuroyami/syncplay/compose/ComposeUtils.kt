@@ -300,6 +300,56 @@ object ComposeUtils {
     }
 
     @Composable
+    fun ChatAnnotatedText(
+        modifier: Modifier = Modifier,
+        text: AnnotatedString,
+        size: Float,
+        font: Font? = null,
+        textAlign: TextAlign = TextAlign.Start,
+        hasStroke: Boolean,
+        hasShadow: Boolean
+    ) {
+        val txtMdfr = modifier.focusable(false)
+            .focusProperties { canFocus = false }
+            .clickable(false) {}
+
+        val styleStroke = TextStyle(
+            color = Color.Black,
+            drawStyle = Stroke(
+                width = 3f,
+            ),
+            textAlign = textAlign,
+            fontFamily = font?.let { FontFamily(it) },
+            fontSize = size.sp,
+        )
+
+        val styleFill = TextStyle(
+            textAlign = textAlign,
+            fontFamily = font?.let { FontFamily(it) },
+            fontSize = size.sp,
+            shadow = if (hasShadow) Shadow(
+                color = Color.Black, Offset(4f, 4f), blurRadius = 1.5f
+            ) else null
+        )
+
+        Box(modifier = modifier) {
+            if (hasStroke) {
+                Text(
+                    modifier = txtMdfr,
+                    text = text,
+                    style = styleStroke
+                )
+            }
+
+            Text(
+                modifier = txtMdfr,
+                text = text,
+                style = styleFill
+            )
+        }
+    }
+
+    @Composable
     fun FlexibleFancyAnnotatedText(
         modifier: Modifier = Modifier,
         text: AnnotatedString,

@@ -13,7 +13,6 @@ import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.PlayerUtils.trackProgress
 import com.yuroyami.syncplay.protocol.JsonSender
-import com.yuroyami.syncplay.utils.RoomUtils.checkFileMismatches
 import com.yuroyami.syncplay.utils.collectInfoLocaliOS
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
@@ -49,15 +48,17 @@ import platform.AVFoundation.rate
 import platform.AVFoundation.seekToTime
 import platform.AVFoundation.seekableTimeRanges
 import platform.AVFoundation.selectMediaOption
+import platform.AVFoundation.timeControlStatus
 import platform.AVKit.AVPlayerViewController
-import platform.AVKit.AVPlayerViewControllerDelegateProtocol
 import platform.CoreGraphics.CGRect
 import platform.CoreMedia.CMTime
 import platform.CoreMedia.CMTimeGetSeconds
 import platform.CoreMedia.CMTimeMake
+import platform.Foundation.NSKeyValueObservingOptionNew
 import platform.Foundation.NSURL
 import platform.Foundation.NSURL.Companion.URLWithString
 import platform.Foundation.NSURL.Companion.fileURLWithPath
+import platform.Foundation.addObserver
 import platform.QuartzCore.CATransaction
 import platform.QuartzCore.kCATransactionDisableActions
 import platform.UIKit.UIView
@@ -83,15 +84,23 @@ class AvPlayer : BasePlayer() {
         //avView.view.setBackgroundColor(UIColor.clearColor())
         //avPlayerLayer!!.setBackgroundColor(UIColor.clearColor().CGColor)
         avView.showsPlaybackControls = false
-        avView.delegate = object : NSObject(), AVPlayerViewControllerDelegateProtocol {
-
-        }
         playerScopeMain.trackProgress(intervalMillis = 250L)
     }
 
-    fun reassign() {
+    private fun reassign() {
         avView.player = avPlayer!!
         avPlayerLayer?.player = avPlayer
+
+        avPlayer?.addObserver(
+            observer = object: NSObject() {
+                //todo
+            },
+            forKeyPath = "timeControlStatus",
+            options = NSKeyValueObservingOptionNew,
+            context = null
+        )
+
+        val status = avPlayer?.timeControlStatus()
     }
 
     override fun destroy() {
@@ -159,7 +168,7 @@ class AvPlayer : BasePlayer() {
                     mediafile.audioTracks.add(
                         object : AvTrack {
                             override val sOption = option
-                            override val sGroup = group!!
+                            override val sGroup: AVMediaSelectionGroup = group
                             override val name = option.displayName + " [${option.extendedLanguageTag}]"
                             override val index = i
                             override val type = if (option.mediaType == AVMediaTypeAudio) TRACKTYPE.AUDIO else TRACKTYPE.SUBTITLE
@@ -271,9 +280,6 @@ class AvPlayer : BasePlayer() {
                 } else {
                     viewmodel?.media?.let { collectInfoLocal(it) }
                 }
-
-                /* Checking mismatches with others in room */
-                checkFileMismatches()
             }
             /* Injecting the media into avplayer */
             try {

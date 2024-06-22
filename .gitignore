@@ -24,7 +24,6 @@ Thumbs.db
 .gradle/
 build/
 app/build/
-gradle/
 keystore/
 obj/
 *.jks

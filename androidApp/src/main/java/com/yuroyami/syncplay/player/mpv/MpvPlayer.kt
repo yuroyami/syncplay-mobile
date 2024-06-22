@@ -258,9 +258,6 @@ class MpvPlayer : BasePlayer() {
                 } else {
                     viewmodel?.media?.let { collectInfoLocal(it) }
                 }
-
-                /* Checking mismatches with others in room */
-                checkFileMismatches()
             }
             /* Injecting the media into exoplayer */
             try {

@@ -19,7 +19,6 @@ import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.PlayerUtils.trackProgress
 import com.yuroyami.syncplay.protocol.JsonSender
-import com.yuroyami.syncplay.utils.RoomUtils.checkFileMismatches
 import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
 import com.yuroyami.syncplay.utils.collectInfoLocaliOS
 import com.yuroyami.syncplay.utils.getFileName
@@ -233,9 +232,6 @@ class VlcPlayer : BasePlayer() {
                 } else {
                     viewmodel?.media?.let { collectInfoLocal(it) }
                 }
-
-                /* Checking mismatches with others in room */
-                checkFileMismatches()
             }
             /* Injecting the media into VLC player */
             try {
