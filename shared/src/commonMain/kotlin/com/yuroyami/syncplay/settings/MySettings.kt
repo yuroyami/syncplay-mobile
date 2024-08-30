@@ -689,7 +689,7 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
                     type = SettingType.SliderSettingType,
                     key = DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT,
                     title = lyricist.strings.uisettingCustomSeekAmountTitle,
-                    summary = lyricist.strings.uisettingCustomSeekAmountTitle,
+                    summary = lyricist.strings.uisettingCustomSeekAmountSummary,
                     defaultValue = 90,
                     icon = Icons.Filled.Update,
                     styling = settingROOMstyle,

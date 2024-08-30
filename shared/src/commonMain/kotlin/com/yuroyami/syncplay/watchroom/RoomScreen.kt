@@ -59,8 +59,6 @@ import androidx.compose.material.icons.filled.SubtitlesOff
 import androidx.compose.material.icons.filled.Theaters
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.VideoSettings
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -76,6 +74,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -1116,82 +1115,23 @@ private fun RoomUIImpl() {
                                 modifier = Modifier.fillMaxWidth(0.75f),
                                 verticalAlignment = Bottom
                             ) {
+                                Text(
+                                    text = timeStamper(remember { viewmodel!!.timeCurrent }.longValue),
+                                    modifier = Modifier.alpha(0.85f).gradientOverlay(),
+                                )
 
                                 Column(
-                                    modifier = Modifier.fillMaxWidth(0.33f)
-                                        .offset(x = 25.dp, y = 10.dp),
-                                    horizontalAlignment = Alignment.Start,
-                                    verticalArrangement = Arrangement.Bottom,
-                                ) {
-                                    Text(
-                                        text = timeStamper(remember { viewmodel!!.timeCurrent }.longValue),
-                                        modifier = Modifier.alpha(0.85f).gradientOverlay(),
-                                    )
-                                }
-
-                                Column(
-                                    Modifier.fillMaxWidth(0.5f),
+                                    Modifier.weight(1f),
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-                                    if (!gestures.value) {
-                                        Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                        if (!gestures.value) {
                                             FancyIcon2(
                                                 icon = Icons.Filled.FastRewind,
                                                 size = ROOM_ICON_SIZE + 6,
                                                 shadowColor = Color.Black
                                             ) {
                                                 seekBckwd()
-                                            }
-
-                                            val customSkipToFront by PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT.settingBooleanState()
-
-                                            if (customSkipToFront) {
-                                                val customSkipAmount by PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT.settingIntState()
-                                                val customSkipAmountString by derivedStateOf {
-                                                    timeStamper(
-                                                        customSkipAmount
-                                                    )
-                                                }
-                                                Button(
-                                                    colors = ButtonDefaults.buttonColors(
-                                                        containerColor = MaterialTheme.colorScheme.primary
-                                                    ),
-                                                    border = BorderStroke(
-                                                        width = 1.dp,
-                                                        color = Color.Black
-                                                    ),
-                                                    modifier = Modifier,
-                                                    onClick = {
-                                                        viewmodel?.player?.playerScopeIO?.launch {
-                                                            val currentMs =
-                                                                withContext(Dispatchers.Main) { viewmodel?.player!!.currentPositionMs() }
-                                                            val newPos = (currentMs) + (90 * 1000L)
-
-                                                            sendSeek(newPos)
-                                                            viewmodel?.player?.seekTo(newPos)
-
-                                                            if (isSoloMode) {
-                                                                viewmodel?.seeks?.add(
-                                                                    Pair(
-                                                                        (currentMs),
-                                                                        newPos * 1000
-                                                                    )
-                                                                )
-                                                            }
-
-                                                            //TODO: I18N
-                                                            dispatchOSD("Skipping  of time")
-                                                        }
-                                                    },
-                                                ) {
-                                                    Icon(imageVector = Icons.Filled.AvTimer, "")
-                                                    Spacer(modifier = Modifier.width(8.dp))
-                                                    Text(
-                                                        lyricist.strings.roomCustomSkipButton(
-                                                            customSkipAmountString
-                                                        ), fontSize = 14.sp
-                                                    )
-                                                }
                                             }
 
                                             FancyIcon2(
@@ -1202,22 +1142,64 @@ private fun RoomUIImpl() {
                                                 seekFrwrd()
                                             }
                                         }
+                                        val customSkipToFront by PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT.settingBooleanState()
+
+                                        if (customSkipToFront) {
+                                            val customSkipAmount by PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT.settingIntState()
+                                            val customSkipAmountString by derivedStateOf {
+                                                timeStamper(
+                                                    customSkipAmount
+                                                )
+                                            }
+                                            TextButton(
+                                                modifier = Modifier.gradientOverlay(),
+                                                onClick = {
+                                                    viewmodel?.player?.playerScopeIO?.launch {
+                                                        val currentMs =
+                                                            withContext(Dispatchers.Main) { viewmodel?.player!!.currentPositionMs() }
+                                                        val newPos = (currentMs) + (90 * 1000L)
+
+                                                        sendSeek(newPos)
+                                                        viewmodel?.player?.seekTo(newPos)
+
+                                                        if (isSoloMode) {
+                                                            viewmodel?.seeks?.add(
+                                                                Pair(
+                                                                    (currentMs),
+                                                                    newPos * 1000
+                                                                )
+                                                            )
+                                                        }
+
+                                                        dispatchOSD(
+                                                            lyricist.strings.roomCustomSkipButton(
+                                                                customSkipAmountString
+                                                            )
+                                                        )
+                                                    }
+                                                },
+                                            ) {
+                                                Icon(imageVector = Icons.Filled.AvTimer, "")
+                                                Text(
+                                                    modifier = Modifier.padding(start = 4.dp),
+                                                    text = lyricist.strings.roomCustomSkipButton(
+                                                        customSkipAmountString
+                                                    ), fontSize = 12.sp,
+                                                    maxLines = 1
+                                                )
+                                            }
+                                        }
                                     }
                                 }
 
-                                Column(
-                                    Modifier.fillMaxWidth().offset(x = (-25).dp, y = 10.dp),
-                                    verticalArrangement = Arrangement.Bottom,
-                                    horizontalAlignment = Alignment.End
-                                ) {
-                                    val timeFullR = remember { viewmodel!!.timeFull }
-                                    Text(
-                                        text = if (timeFullR.longValue >= Long.MAX_VALUE / 1000L) "???" else timeStamper(
-                                            timeFullR.longValue
-                                        ),
-                                        modifier = Modifier.alpha(0.85f).gradientOverlay(),
-                                    )
-                                }
+                                val timeFullR = remember { viewmodel!!.timeFull }
+                                Text(
+                                    text = if (timeFullR.longValue >= Long.MAX_VALUE / 1000L) "???" else timeStamper(
+                                        timeFullR.longValue
+                                    ),
+                                    modifier = Modifier.alpha(0.85f).gradientOverlay(),
+                                )
+
                             }
                             Slider(
                                 value = slidervalue.toFloat(),

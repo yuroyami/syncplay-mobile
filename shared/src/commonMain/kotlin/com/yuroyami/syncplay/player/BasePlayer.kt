@@ -14,6 +14,7 @@ import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.SupervisorJob
 
 /** This is an interface that wraps the needed player functionality for Syncplay.
  *
@@ -54,8 +55,9 @@ abstract class BasePlayer {
         AUDIO , SUBTITLE
     }
 
-    val playerScopeMain = CoroutineScope(Dispatchers.Main)
-    val playerScopeIO = CoroutineScope(Dispatchers.IO)
+    private val playerSupervisorJob = SupervisorJob()
+    val playerScopeMain = CoroutineScope(Dispatchers.Main + playerSupervisorJob)
+    val playerScopeIO = CoroutineScope(Dispatchers.IO + playerSupervisorJob)
 
     abstract val canChangeAspectRatio: Boolean
     abstract val supportsChapters: Boolean
