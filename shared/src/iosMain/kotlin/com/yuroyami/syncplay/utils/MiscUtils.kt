@@ -19,7 +19,6 @@ import platform.Foundation.NSURL
 import platform.Foundation.create
 import platform.Foundation.currentLocale
 import platform.Foundation.languageCode
-import platform.Foundation.lastPathComponent
 import platform.Foundation.timeIntervalSince1970
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
@@ -32,14 +31,6 @@ actual fun getDefaultEngine(): String = BasePlayer.ENGINE.IOS_VLC.name
 
 actual fun generateTimestampMillis(): Long {
     return (NSDate().timeIntervalSince1970 * 1000).roundToLong()
-}
-
-actual fun timeStamper(seconds: Long): String {
-    return if (seconds < 3600) {
-        "${(seconds / 60) % 60}:${(seconds % 60).toString().padStart(2, '0')}".padStart(5, '0')
-    } else {
-        "${seconds / 3600}:${((seconds / 60) % 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}".padStart(8, '0')
-    }
 }
 
 actual fun getFileName(uri: String): String? {

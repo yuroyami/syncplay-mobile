@@ -18,7 +18,14 @@ expect fun getDefaultEngine(): String
 expect fun generateTimestampMillis(): Long
 
 /** Converts seconds into a readable hh:mm:ss format */
-expect fun timeStamper(seconds: Number): String
+fun timeStamper(seconds: Number): String {
+    val secs = seconds.toLong()
+    return if (secs < 3600) {
+        "${(secs / 60) % 60}:${(secs % 60).toString().padStart(2, '0')}".padStart(5, '0')
+    } else {
+        "${secs / 3600}:${((secs / 60) % 60).toString().padStart(2, '0')}:${(secs % 60).toString().padStart(2, '0')}".padStart(8, '0')
+    }
+}
 
 /** Gets the filename based on its URI, needs context on Android */
 expect fun getFileName(uri: String): String?
