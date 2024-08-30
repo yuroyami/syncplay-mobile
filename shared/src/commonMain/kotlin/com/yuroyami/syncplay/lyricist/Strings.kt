@@ -135,7 +135,7 @@ interface Strings {
     val roomAddmediaOffline: String
     val roomAddmediaOnline: String
     val roomAddmediaOnlineUrl: String
-    val roomSkipMinuteAndHalfButton: String
+    val roomCustomSkipButton: (String) -> String
 
     val roomCardTitleUserInfo: String
     val roomCardTitleInRoomPrefs: String
@@ -251,6 +251,13 @@ interface Strings {
     val uisettingSubtitleDelayTitle: String
     val uisettingAudioDelaySummary: String
     val uisettingAudioDelayTitle: String
+
+    val uisettingCustomSeekFrontSummary: String
+    val uisettingCustomSeekFrontTitle: String
+
+    val uisettingCustomSeekAmountSummary: String
+    val uisettingCustomSeekAmountTitle: String
+
     val uisettingSeekForwardJumpSummary: String
     val uisettingSeekForwardJumpTitle: String
     val uisettingSeekBackwardJumpSummary: String

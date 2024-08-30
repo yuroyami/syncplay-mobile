@@ -24,6 +24,8 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -43,6 +45,10 @@ import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
 import com.yuroyami.syncplay.compose.getRegularFont
 import com.yuroyami.syncplay.lyricist.rememberStrings
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
+import com.yuroyami.syncplay.settings.settingBooleanState
+import com.yuroyami.syncplay.settings.settingIntState
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.RoomUtils
 import com.yuroyami.syncplay.utils.timeStamper
@@ -61,7 +67,7 @@ object PopupSeekToPosition {
 
     @Composable
     fun SeekToPositionPopup(visibilityState: MutableState<Boolean>) {
-        return RoomPopup(
+        RoomPopup(
             dialogOpen = visibilityState.value,
             widthPercent = 0.6f,
             heightPercent = 0.9f,
@@ -188,7 +194,11 @@ object PopupSeekToPosition {
                     )
                 }
 
-                /* Skip ANIME intro */
+                /* Custom Skip intro */
+                val customSkipToFront by PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT.settingBooleanState()
+                val customSkipAmount by PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT.settingIntState()
+                val customSkipAmountString by derivedStateOf { timeStamper(customSkipAmount) }
+
                 Button(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     border = BorderStroke(width = 1.dp, color = Color.Black),
@@ -207,13 +217,13 @@ object PopupSeekToPosition {
                             }
 
                             //TODO: I18N
-                            dispatchOSD("Skipping 1:30 of time")
+                            dispatchOSD("Skipping  of time")
                         }
                     },
                 ) {
                     Icon(imageVector = Icons.Filled.AvTimer, "")
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(rememberStrings().strings.roomSkipMinuteAndHalfButton, fontSize = 14.sp)
+                    Text(rememberStrings().strings.roomCustomSkipButton(customSkipAmountString), fontSize = 14.sp)
                 }
 
                 /* Ok button */

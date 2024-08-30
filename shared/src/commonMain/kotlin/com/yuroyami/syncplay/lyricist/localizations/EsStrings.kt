@@ -119,7 +119,6 @@ val EsStrings = object : Strings {
     override val roomAddmediaOffline = "Desde el almacenamiento del teléfono"
     override val roomAddmediaOnline = "Desde una URL de red"
     override val roomAddmediaOnlineUrl = "Dirección URL"
-    override val roomSkipMinuteAndHalfButton = "Saltar 1 minuto y 30 segundos"
     override val roomOverflowTitle = "Más opciones..."
     override val roomOverflowPip = "Modo PIP"
     override val roomOverflowMsghistory = "Historial de chat"
@@ -127,6 +126,12 @@ val EsStrings = object : Strings {
     override val roomOverflowLeaveRoom = "Salir de la sala"
     override val roomCardTitleUserInfo = "Información del usuario"
     override val roomCardTitleInRoomPrefs = "Preferencias en la sala"
+
+    override val roomCustomSkipButton: (String) -> String = { "Saltar %s".format(it) }
+    override val uisettingCustomSeekFrontSummary = "Activar esta opción mostrará el botón 'Periodo de salto' personalizado, que se encuentra en la ventana emergente 'Ir a posición', en la pantalla principal del reproductor entre los botones de rebobinado y avance rápido para un acceso más fácil."
+    override val uisettingCustomSeekFrontTitle = "Mostrar botón de salto personalizado en la pantalla principal"
+    override val uisettingCustomSeekAmountSummary = "La duración de salto por defecto es de 90 segundos (1:30 minutos), lo que es ideal para anime. Puedes ajustar esta duración para el botón de salto personalizado aquí."
+    override val uisettingCustomSeekAmountTitle = "Duración de salto personalizada"
 
     override val mediaDirectories = "Directorios de medios para Lista de reproducción compartida"
     override val mediaDirectoriesBrief = "Syncplay buscará en los directorios de medios que especifiques aquí para encontrar el nombre que está reproduciendo una lista de reproducción compartida. Es mucho mejor si especificas directorios pequeños, ya que la operación de búsqueda puede limitarse y ser muy lenta."

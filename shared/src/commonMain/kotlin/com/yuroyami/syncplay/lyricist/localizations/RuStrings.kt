@@ -121,7 +121,6 @@ val RuStrings = object : Strings {
     override val roomAddmediaOffline = "Из хранилища телефона"
     override val roomAddmediaOnline = "Из сетевого URL"
     override val roomAddmediaOnlineUrl = "URL адрес"
-    override val roomSkipMinuteAndHalfButton = "Пропустить 1 минуту и 30 секунд"
     override val roomOverflowTitle = "Дополнительные опции..."
     override val roomOverflowPip = "режим картинка в картинке"
     override val roomOverflowMsghistory = "История чата"
@@ -129,6 +128,12 @@ val RuStrings = object : Strings {
     override val roomOverflowLeaveRoom = "Покинуть комнату"
     override val roomCardTitleUserInfo = "Сведения о пользователе"
     override val roomCardTitleInRoomPrefs = "Настройки комнаты"
+
+    override val roomCustomSkipButton: (String) -> String = { "Пропустить %s".format(it) }
+    override val uisettingCustomSeekFrontSummary = "Включение этой опции покажет кнопку 'Период пропуска', находящуюся в всплывающем окне 'Перейти к позиции', на главном экране плеера между кнопками перемотки назад и вперед для удобства доступа."
+    override val uisettingCustomSeekFrontTitle = "Показать кнопку пропуска на главном экране"
+    override val uisettingCustomSeekAmountSummary = "По умолчанию продолжительность пропуска составляет 90 секунд (1:30 минуты), что идеально для аниме. Вы можете настроить эту продолжительность для кнопки пропуска здесь."
+    override val uisettingCustomSeekAmountTitle = "Продолжительность пропуска"
 
     override val mediaDirectories = "Папки с медиа для общего списка воспроизведения"
     override val mediaDirectoriesBrief = "Syncplay будет производить поиск среди любых папок с медиа указанных вами тут, чтобы найти название, которое воспроизводится в общем списке воспроизведения. Желательно указывать небольшие папки, так как операция поиска может вызвать задержки и быть очень медленной."

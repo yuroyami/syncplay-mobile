@@ -18,7 +18,7 @@ expect fun getDefaultEngine(): String
 expect fun generateTimestampMillis(): Long
 
 /** Converts seconds into a readable hh:mm:ss format */
-expect fun timeStamper(seconds: Long): String
+expect fun timeStamper(seconds: Number): String
 
 /** Gets the filename based on its URI, needs context on Android */
 expect fun getFileName(uri: String): String?

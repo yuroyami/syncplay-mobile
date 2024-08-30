@@ -119,7 +119,6 @@ val FrStrings = object : Strings {
     override val roomAddmediaOffline = "Depuis le stockage du téléphone"
     override val roomAddmediaOnline = "Depuis une URL réseau"
     override val roomAddmediaOnlineUrl = "Adresse URL"
-    override val roomSkipMinuteAndHalfButton = "Passer 1 minute et 30 secondes"
     override val roomOverflowTitle = "Plus d'options..."
     override val roomOverflowPip = "Mode image-en-image (PIP)"
     override val roomOverflowMsghistory = "Historique de chat"
@@ -127,6 +126,12 @@ val FrStrings = object : Strings {
     override val roomOverflowLeaveRoom = "Quitter la salle"
     override val roomCardTitleUserInfo = "Informations sur l'utilisateur"
     override val roomCardTitleInRoomPrefs = "Préférences dans la salle"
+
+    override val roomCustomSkipButton: (String) -> String = { "Passer %s".format(it) }
+    override val uisettingCustomSeekFrontSummary = "En activant cette option, le bouton de 'Période de saut' personnalisé, trouvé dans la fenêtre contextuelle 'Aller à la position', sera également affiché sur l'écran principal du lecteur entre les boutons de retour en arrière et d'avance rapide pour plus de commodité."
+    override val uisettingCustomSeekFrontTitle = "Afficher le bouton de saut personnalisé sur l'écran principal"
+    override val uisettingCustomSeekAmountSummary = "La durée de saut par défaut est de 90 secondes (1:30 minute), ce qui est idéal pour les animés. Vous pouvez ajuster cette durée pour le bouton de saut personnalisé ici."
+    override val uisettingCustomSeekAmountTitle = "Durée de saut personnalisée"
 
     override val mediaDirectories = "Répertoires multimédias pour la playlist partagée"
     override val mediaDirectoriesBrief = "Syncplay recherchera les répertoires multimédias que vous spécifiez ici afin de trouver un nom que la playlist partagée est en train de jouer. Il est préférable de spécifier des petits répertoires, car l'opération de recherche peut être lente."

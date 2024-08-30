@@ -13,7 +13,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.QuestionMark
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -28,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -98,7 +98,7 @@ sealed class Setting<T>(
                     .fillMaxWidth()
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
+                        indication = ripple(bounded = true, color = Paletting.SP_ORANGE)
                     ) {
                         onClick?.let { it() }
                     },
@@ -172,7 +172,7 @@ sealed class Setting<T>(
                     .fillMaxWidth()
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
+                        indication = ripple(bounded = true, color = Paletting.SP_ORANGE)
                     ) {
                         dialog = true
                     },
@@ -223,7 +223,7 @@ sealed class Setting<T>(
                     .fillMaxWidth()
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
+                        indication = ripple(bounded = true, color = Paletting.SP_ORANGE)
 
                     ) {
                         popupVisibility.value = true
@@ -282,7 +282,7 @@ sealed class Setting<T>(
                     .fillMaxWidth()
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
+                        indication = ripple(bounded = true, color = Paletting.SP_ORANGE)
 
                     ) {
                         scope.launch {
@@ -388,7 +388,7 @@ sealed class Setting<T>(
                     .fillMaxWidth()
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
+                        indication = ripple(bounded = true, color = Paletting.SP_ORANGE)
 
                     ) {
                         dialogOpen.value = true
@@ -447,7 +447,7 @@ sealed class Setting<T>(
                     .fillMaxWidth()
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
+                        indication = ripple(bounded = true, color = Paletting.SP_ORANGE)
 
                     ) {},
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -529,7 +529,7 @@ sealed class Setting<T>(
                     .fillMaxWidth()
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
+                        indication = ripple(bounded = true, color = Paletting.SP_ORANGE)
 
                     ) {
                         colorDialogState.value = true
@@ -597,7 +597,7 @@ sealed class Setting<T>(
                     .fillMaxWidth()
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = rememberRipple(bounded = true, color = Paletting.SP_ORANGE)
+                        indication = ripple(bounded = true, color = Paletting.SP_ORANGE)
 
                     ) {
                         scope.launch {

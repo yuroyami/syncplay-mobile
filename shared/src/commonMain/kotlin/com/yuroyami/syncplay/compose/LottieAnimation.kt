@@ -31,9 +31,6 @@ import kotlinx.coroutines.launch
 //)
 
 @Composable
-expect fun NightModeToggle(modifier: Modifier, state: State<Boolean>)
-
-@Composable
 fun NightModeToggler(modifier: Modifier, state: State<Boolean>) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
 

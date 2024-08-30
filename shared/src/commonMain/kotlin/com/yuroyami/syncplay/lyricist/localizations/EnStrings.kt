@@ -121,7 +121,14 @@ val EnStrings = object : Strings {
     override val roomAddmediaOffline = "From phone storage"
     override val roomAddmediaOnline = "From a network URL"
     override val roomAddmediaOnlineUrl = "URL address"
-    override val roomSkipMinuteAndHalfButton = "Skip 1 minute and 30 seconds"
+
+    override val roomCustomSkipButton: (String) -> String  = { "Skip %s".format(it) }
+    override val uisettingCustomSeekFrontSummary = "Enabling this will display the custom 'Skip period' button, found in the 'Seek to Position' popup, on the main player screen between the rewind and fast-forward buttons for easier access."
+    override val uisettingCustomSeekFrontTitle = "Show Custom Skip Button on Main Screen"
+    override val uisettingCustomSeekAmountSummary = "The default skip duration is 90 seconds (1:30 minutes), which is ideal for anime. You can adjust this duration for the custom skip button here."
+    override val uisettingCustomSeekAmountTitle = "Custom Skip Duration"
+
+
     override val roomOverflowTitle = "More Options..."
     override val roomOverflowPip = "Picture-in-Picture"
     override val roomOverflowMsghistory = "Chat History"

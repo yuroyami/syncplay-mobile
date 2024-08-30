@@ -37,7 +37,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MeetingRoom
 import androidx.compose.material.icons.filled.PersonPin
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -60,6 +59,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
@@ -224,7 +224,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
                                     Row(modifier = Modifier.clickable(
                                         enabled = true,
                                         interactionSource = remember { MutableInteractionSource() },
-                                        indication = rememberRipple(
+                                        indication = ripple(
                                             bounded = false,
                                             color = Color(100, 100, 100, 200)
                                         )

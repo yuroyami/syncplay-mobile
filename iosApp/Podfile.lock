@@ -1,7 +1,7 @@
 PODS:
-  - MobileVLCKit (3.6.0b11)
+  - MobileVLCKit (3.6.1b1)
   - shared (1.0.0):
-    - MobileVLCKit (= 3.6.0b11)
+    - MobileVLCKit (= 3.6.1b1)
     - SPLPing
   - SPLPing (1.1.8)
 
@@ -18,8 +18,8 @@ EXTERNAL SOURCES:
     :path: "../shared"
 
 SPEC CHECKSUMS:
-  MobileVLCKit: d20b1e96a93446d97abd377a1daa230202147619
-  shared: 3f08c2b6014ffa4228e7523b33b1613baa5b43d7
+  MobileVLCKit: 2d9c7c373393ae43086aeeff890bf0b1afc15c5c
+  shared: 50bef45c87cc7d0ce50aaba393a4e757019b60ac
   SPLPing: 420837fae1e19bba0a8360e91e7a384f22509663
 
 PODFILE CHECKSUM: f282da88f39e69507b0a255187c8a6b644477756

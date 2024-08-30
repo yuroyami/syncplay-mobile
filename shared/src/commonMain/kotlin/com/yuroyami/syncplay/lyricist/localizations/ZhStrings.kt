@@ -120,7 +120,6 @@ val ZhStrings = object : Strings {
     override val roomAddmediaOffline = "来自手机存储"
     override val roomAddmediaOnline = "来自网络URL"
     override val roomAddmediaOnlineUrl = "URL地址"
-    override val roomSkipMinuteAndHalfButton = "跳过1分钟30秒"
     override val roomOverflowTitle = "更多选项..."
     override val roomOverflowPip = "画中画模式"
     override val roomOverflowMsghistory = "聊天记录"
@@ -128,6 +127,12 @@ val ZhStrings = object : Strings {
     override val roomOverflowLeaveRoom = "离开房间"
     override val roomCardTitleUserInfo = "用户信息"
     override val roomCardTitleInRoomPrefs = "房间偏好设置"
+
+    override val roomCustomSkipButton: (String) -> String = { "跳过 %s".format(it) }
+    override val uisettingCustomSeekFrontSummary = "启用此功能将在主播放器屏幕上显示自定义的‘跳过时长’按钮，该按钮位于快退和快进按钮之间，方便访问。"
+    override val uisettingCustomSeekFrontTitle = "在主屏幕上显示自定义跳过按钮"
+    override val uisettingCustomSeekAmountSummary = "默认跳过时长为90秒（1:30分钟），适合动漫。您可以在这里调整自定义跳过按钮的时长。"
+    override val uisettingCustomSeekAmountTitle = "自定义跳过时长"
 
     override val mediaDirectories = "共享播放列表的媒体目录"
     override val mediaDirectoriesBrief = "Syncplay将搜索您在这里指定的任何媒体目录，以便找到共享播放列表正在播放视频的名称. 如果指定较小的文件目录会更好，因为搜索操作可能会受限并非常慢."

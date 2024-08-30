@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
+
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -18,9 +20,8 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     androidTarget {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_1_8)
+            jvmTarget.set(JvmTarget.JVM_17)
         }
     }
 
@@ -37,10 +38,10 @@ kotlin {
         podfile = project.file("../iosApp/Podfile")
         framework {
             baseName = "shared"
-            isStatic = false
+            isStatic = true
         }
 
-        pod("MobileVLCKit", "3.6.0b11") //Adds the VLC player engine to iOS
+        pod("MobileVLCKit", "3.6.1b1") //Adds the VLC player engine to iOS
         //pod("MobileVLCKit", "4.0.0a2") //Adds the VLC player engine to iOS
         //pod("VLCKit", "4.0.0a4") //a2
         pod("SPLPing") //Light-weight Objective-C library to add the ICMP ping functionality
@@ -59,7 +60,7 @@ kotlin {
 
         commonMain.dependencies {
             /* Forcing Kotlin libs to match the compiler */
-            api("org.jetbrains.kotlin:kotlin-stdlib:2.0.0")
+            api("org.jetbrains.kotlin:kotlin-stdlib:2.0.20")
 
             //Strings internationalization and localization
             api("cafe.adriel.lyricist:lyricist:$lyricist")
@@ -74,7 +75,7 @@ kotlin {
             implementation("org.kotlincrypto.hash:sha2:$kotlincrypto")
 
             /* Network client */
-            val ktor = "2.3.11" //"3.0.0-beta-1"
+            val ktor = "3.0.0-beta-2"
             implementation("io.ktor:ktor-network:$ktor")
             //api("io.ktor:ktor-network-tls:$ktor")
 
@@ -82,10 +83,10 @@ kotlin {
             implementation("com.eygraber:uri-kmp:0.0.18")
 
             /* JSON serializer/deserializer to communicate with Syncplay servers */
-            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.0")
+            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.2")
 
             /* Explicitly specifying a newer koroutines version */
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0-RC.2")
 
             /* Jetpack Datastore for preferences and settings (accessible in Compose in real-time) */
             val datastore = "1.1.1"
@@ -97,7 +98,8 @@ kotlin {
             api(compose.material3)
             api(compose.materialIconsExtended)
             api(compose.components.resources)
-            api("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
+
+            api("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0-dev1771")
 
             /* Helps with color calculations for color preferences */
             implementation("com.github.ajalt.colormath:colormath:3.5.0")
@@ -105,10 +107,10 @@ kotlin {
             /* Compose multiplatform port of Android's lottie-compose. We only need Lottie for
              * the day-night toggle button. This basically relies on lottie-compose for Android,
              * and on skiko's lottie support (aka Skottie) on the iOS side, and other platforms.*/
-            implementation("io.github.alexzhirkevich:compottie:1.1.2")
+            implementation("io.github.alexzhirkevich:compottie:1.1.2") //1.1.2
 
             /* Annotations */
-            api("androidx.annotation:annotation:1.8.0")
+            api("androidx.annotation:annotation:1.9.0-alpha02")
 
         }
 
@@ -130,14 +132,14 @@ kotlin {
             }
 
             /*  Activity's compose support with backward compatibility */
-            api("androidx.activity:activity-compose:1.9.0")
+            api("androidx.activity:activity-compose:1.9.1")
 
             /* Network and TLS */
-            implementation("io.netty:netty-all:4.1.110.Final")
+            api("io.netty:netty-all:4.1.112.Final")
             api("org.conscrypt:conscrypt-android:2.5.2") //TLSv1.3 with backward compatibility
 
             /* Video player engine: Media3 (ExoPlayer and its extensions) */
-            val media3 = "1.4.0-alpha02"
+            val media3 = "1.4.1"
             api("androidx.media3:media3-exoplayer:$media3")
             api("androidx.media3:media3-exoplayer-dash:$media3")
             api("androidx.media3:media3-exoplayer-hls:$media3")
@@ -162,12 +164,8 @@ kotlin {
     }
 }
 
-//compose {
-//    kotlinCompilerPlugin.set("1.5.9-kt-2.0.0-Beta4")
-//}
-
 android {
-    compileSdk = 34
+    compileSdk = 35
     namespace = "com.yuroyami.syncplay.shared"
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
@@ -178,11 +176,11 @@ android {
         minSdk = 21
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlin {
-        jvmToolchain(8)
+        jvmToolchain(17)
     }
 
     buildFeatures {

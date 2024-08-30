@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -46,7 +47,8 @@ abstract class SyncplayProtocol {
     var tls: Constants.TLS = Constants.TLS.TLS_NO
 
     /** Coroutine scopes and dispatchers */
-    val protoScope = CoroutineScope(Dispatchers.Default)
+    private val supervisorJob = SupervisorJob()
+    val protoScope = CoroutineScope(Dispatchers.IO + supervisorJob)
 
     /** This method is responsible for bootstrapping (initializing) the Ktor TCP socket */
     open fun connect() {

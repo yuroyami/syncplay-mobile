@@ -28,7 +28,9 @@ import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 var lyricist: Lyricist<Strings>  = Lyricist("en", Stringies)
@@ -39,7 +41,9 @@ var viewmodel: SpViewModel? = null
 class SpViewModel {
     lateinit var p: SyncplayProtocol //If it is not initialized, it means we're in Solo Mode
 
-    val viewmodelScope = CoroutineScope(Dispatchers.Default)
+    private val supervisorJob = SupervisorJob()
+
+    val viewmodelScope = CoroutineScope(Dispatchers.IO + supervisorJob)
 
     var roomCallback: RoomCallback? = null
 

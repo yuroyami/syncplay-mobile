@@ -9,7 +9,7 @@ Pod::Spec.new do |spec|
     spec.vendored_frameworks      = 'build/cocoapods/framework/shared.framework'
     spec.libraries                = 'c++'
     spec.ios.deployment_target    = '14.0'
-    spec.dependency 'MobileVLCKit', '3.6.0b11'
+    spec.dependency 'MobileVLCKit', '3.6.1b1'
     spec.dependency 'SPLPing'
                 
     if !Dir.exist?('build/cocoapods/framework/shared.framework') || Dir.empty?('build/cocoapods/framework/shared.framework')

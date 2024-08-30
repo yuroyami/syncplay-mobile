@@ -120,8 +120,6 @@ val ArStrings = object : Strings {
     override val roomAddmediaOffline = "من تخزين الهاتف"
     override val roomAddmediaOnline = "من عنوان URL في الشبكة"
     override val roomAddmediaOnlineUrl = "عنوان URL"
-    override val roomSkipMinuteAndHalfButton = "اقفز دقيقة و 30 ثانية"
-
     override val roomOverflowTitle = "المزيد من الخيارات..."
     override val roomOverflowPip = "نمط النافذة المنبثقة"
     override val roomOverflowMsghistory = "سجل الدردشة"
@@ -130,6 +128,11 @@ val ArStrings = object : Strings {
     override val roomCardTitleUserInfo = "معلومات المستخدم"
     override val roomCardTitleInRoomPrefs = "تفضيلات الغرفة"
 
+    override val roomCustomSkipButton: (String) -> String = { "تخطي %s".format(it) }
+    override val uisettingCustomSeekFrontSummary = "تمكين هذا سيعرض زر 'مدة التخطي' المخصص، الموجود في نافذة 'الانتقال إلى الموضع'، على الشاشة الرئيسية للاعب بين أزرار الرجوع السريع والتقديم السريع لسهولة الوصول."
+    override val uisettingCustomSeekFrontTitle = "عرض زر التخطي المخصص على الشاشة الرئيسية"
+    override val uisettingCustomSeekAmountSummary = "المدة الافتراضية للتخطي هي 90 ثانية (1:30 دقيقة)، وهي مثالية للأنمي. يمكنك ضبط هذه المدة لزر التخطي المخصص هنا."
+    override val uisettingCustomSeekAmountTitle = "مدة التخطي المخصصة"
 
     override val mediaDirectories = "مجلدات الوسائط لقائمة التشغيل المشتركة"
     override val mediaDirectoriesBrief = "سيقوم Syncplay بالبحث في أي مجلدات وسائط تحددها هنا للعثور على اسم يتم تشغيله في قائمة تشغيل مشتركة. من الأفضل إذا قمت بتحديد مجلدات صغيرة حيث يمكن أن تتسبب عملية البحث في المشاكل وتكون بطيئة جدًا."

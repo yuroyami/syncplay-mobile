@@ -27,7 +27,6 @@ import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -38,6 +37,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -153,7 +153,7 @@ object PopupMediaDirs {
                                         .padding(4.dp)
                                         .clickable(
                                             interactionSource = remember { MutableInteractionSource() },
-                                            indication = rememberRipple(color = Paletting.OLD_SP_PINK)
+                                            indication = ripple(color = Paletting.OLD_SP_PINK)
                                         ) { itemMenuState.value = true }, horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Icon(

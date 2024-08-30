@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.Stream
 import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled.VideoLabel
 import androidx.compose.material.icons.filled.VideoSettings
 import androidx.compose.material.icons.filled.Web
@@ -76,6 +77,7 @@ import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_FONTSIZE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_MAXCOUNT
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_SHADOW
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_RESET_DEFAULT
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MAX_BUFFER
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MIN_BUFFER
@@ -668,6 +670,34 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
 //                        icon = Icons.Filled.CompareArrows,
 //                        datastorekey = ds
 //                    ),
+
+
+            add(
+                BooleanSetting(
+                    type = SettingType.CheckboxSettingType,
+                    key = PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT,
+                    title = lyricist.strings.uisettingCustomSeekFrontTitle,
+                    summary = lyricist.strings.uisettingCustomSeekFrontSummary,
+                    defaultValue = true,
+                    icon = Icons.Filled.Update,
+                    styling = settingROOMstyle,
+                ) to CATEG_INROOM_PLAYERSETTINGS
+            )
+
+            add(
+                SliderSetting(
+                    type = SettingType.SliderSettingType,
+                    key = DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT,
+                    title = lyricist.strings.uisettingCustomSeekAmountTitle,
+                    summary = lyricist.strings.uisettingCustomSeekAmountTitle,
+                    defaultValue = 90,
+                    icon = Icons.Filled.Update,
+                    styling = settingROOMstyle,
+                    maxValue = 300,
+                    minValue = 30,
+                ) to CATEG_INROOM_PLAYERSETTINGS
+            )
+
             add(
                 SliderSetting(
                     type = SettingType.SliderSettingType,

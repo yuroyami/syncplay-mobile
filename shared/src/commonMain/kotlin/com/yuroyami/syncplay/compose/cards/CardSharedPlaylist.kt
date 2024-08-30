@@ -48,6 +48,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -192,7 +193,7 @@ object CardSharedPlaylist {
                                 .padding(horizontal = 5.dp)
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
-                                    indication = rememberRipple(color = Paletting.SP_ORANGE)
+                                    indication = ripple(color = Paletting.SP_ORANGE)
                                 ) { itempopup.value = true },
                                 verticalAlignment = Alignment.CenterVertically
                             ) {

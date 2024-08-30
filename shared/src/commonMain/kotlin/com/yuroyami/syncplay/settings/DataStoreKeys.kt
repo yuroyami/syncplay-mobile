@@ -74,8 +74,13 @@ object DataStoreKeys {
     /* Player Settings */
     const val CATEG_INROOM_PLAYERSETTINGS = "categ_inroom_playersettings"
     const val PREF_INROOM_PLAYER_SUBTITLE_SIZE = "pref_inroom_subtitle_size"
+
     const val PREF_INROOM_PLAYER_AUDIO_DELAY = "pref_inroom_audio_delay"
     const val PREF_INROOM_PLAYER_SUBTITLE_DELAY = "pref_inroom_subtitle_delay"
+
+    const val PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT = "pref_inroom_custom_seek_amount"
+    const val PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT = "pref_inroom_custom_seek_front"
+
     const val PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP = "pref_inroom_seek_forward_jump"
     const val PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP = "pref_inroom_seek_backward_jump"
 

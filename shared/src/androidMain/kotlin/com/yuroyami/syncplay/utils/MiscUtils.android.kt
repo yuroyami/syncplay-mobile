@@ -31,11 +31,12 @@ actual fun getDefaultEngine(): String = defaultEngineAndroid
 actual fun generateTimestampMillis() = System.currentTimeMillis()
 
 @SuppressLint("DefaultLocale")
-actual fun timeStamper(seconds: Long): String {
-    return if (seconds < 3600) {
-        String.format("%02d:%02d", (seconds / 60) % 60, seconds % 60)
+actual fun timeStamper(seconds: Number): String {
+    val secs = seconds.toLong()
+    return if (secs < 3600) {
+        String.format("%02d:%02d", (secs / 60) % 60, secs % 60)
     } else {
-        String.format("%02d:%02d:%02d", seconds / 3600, (seconds / 60) % 60, seconds % 60)
+        String.format("%02d:%02d:%02d", secs / 3600, (secs / 60) % 60, secs % 60)
     }
 }
 
