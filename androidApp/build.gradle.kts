@@ -18,6 +18,8 @@ android {
     namespace = "com.yuroyami.syncplay"
     compileSdk = 35
 
+    ndkVersion = "26.3.11579264"
+
     signingConfigs {
         create("github") {
             storeFile = file("${rootDir}/keystore/keystore.jks")
@@ -31,8 +33,8 @@ android {
         applicationId = "com.reddnek.syncplay"
         minSdk = 21
         targetSdk = 34
-        versionCode = 1000015000 //Changing versionName semantic projection from 1.XXX.XXX.XXX to 1.XX.XX.XX
-        versionName = "0.15.0"
+        versionCode = 1000015001 //Changing versionName semantic projection from 1.XXX.XXX.XXX to 1.XX.XX.XX
+        versionName = "0.15.1"
         signingConfig = signingConfigs.getByName("github")
         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }

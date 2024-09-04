@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -317,7 +316,7 @@ object ComposeUtils {
         val styleStroke = TextStyle(
             color = Color.Black,
             drawStyle = Stroke(
-                width = 3f,
+                width = 1f,
             ),
             textAlign = textAlign,
             fontFamily = font?.let { FontFamily(it) },
