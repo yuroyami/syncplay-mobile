@@ -1204,7 +1204,7 @@ private fun RoomUIImpl() {
                                                     viewmodel?.player?.playerScopeIO?.launch {
                                                         val currentMs =
                                                             withContext(Dispatchers.Main) { viewmodel?.player!!.currentPositionMs() }
-                                                        val newPos = (currentMs) + (90 * 1000L)
+                                                        val newPos = (currentMs) + (customSkipAmount * 1000L)
 
                                                         sendSeek(newPos)
                                                         viewmodel?.player?.seekTo(newPos)
