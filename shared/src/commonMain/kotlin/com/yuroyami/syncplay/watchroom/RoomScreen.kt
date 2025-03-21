@@ -1,10 +1,14 @@
 package com.yuroyami.syncplay.watchroom
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandIn
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -71,10 +75,12 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -95,12 +101,22 @@ import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
@@ -219,6 +235,7 @@ private fun RoomUIImpl() {
 
         val hasVideo = remember { viewmodel!!.hasVideoG }
         var hudVisibility by remember { viewmodel!!.hudVisibilityState }
+
         val pipModeObserver by remember { viewmodel!!.pipMode }
         var locked by remember { mutableStateOf(false) }
 
@@ -265,8 +282,8 @@ private fun RoomUIImpl() {
         if (locked) {
             /** The touch interceptor to switch unlock button visibility */
             Box(
-                Modifier.fillMaxSize()
-                    .clickable(interactionSource = remember { MutableInteractionSource() },
+                Modifier.fillMaxSize().clickable(
+                        interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                         onClick = {
                             unlockButtonVisibility.value = !unlockButtonVisibility.value
@@ -333,7 +350,7 @@ private fun RoomUIImpl() {
                 }
             }
 
-            if (hudVisibility) {
+            AnimatedVisibility(hudVisibility, enter = fadeIn(), exit = fadeOut()) {
                 Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
                     /* Top row (Message input box + Messages) */
                     Column(
@@ -345,10 +362,7 @@ private fun RoomUIImpl() {
                             Box(
                                 modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(
                                     color = if (hasVideo.value || MaterialTheme.colorScheme.primary != Paletting.OLD_SP_YELLOW) Color(
-                                        50,
-                                        50,
-                                        50,
-                                        msgBoxOpacity.value
+                                        50, 50, 50, msgBoxOpacity.value
                                     ) else Color.Transparent
                                 ).padding(top = 64.dp)
                             ) {
@@ -383,9 +397,7 @@ private fun RoomUIImpl() {
 
             /* Gestures Interceptor */
             GestureInterceptor(
-                gestureState = gestures,
-                videoState = viewmodel!!.hasVideoG,
-                onSingleTap = {
+                gestureState = gestures, videoState = viewmodel!!.hasVideoG, onSingleTap = {
                     hudVisibility = !hudVisibility
                     if (!hudVisibility) {/* Hide any popups */
                         controlcardvisible = false
@@ -394,7 +406,11 @@ private fun RoomUIImpl() {
                 })
 
             /* HUD below: We resort to using a combination of Boxes, Rows, and Columns. */
-            if (hudVisibility && hasVideo.value) {
+            AnimatedVisibility(
+                hudVisibility && hasVideo.value,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
                 Box(Modifier.fillMaxSize()) {
                     val blacky = Color.Black.copy(alpha = 0.8F)
                     Box(
@@ -403,12 +419,11 @@ private fun RoomUIImpl() {
                                 brush = Brush.verticalGradient(
                                     listOf(Color.Transparent, blacky, blacky, blacky)
                                 )
-                            ).clickable(false) {}
-                    )
+                            ).clickable(false) {})
                 }
             }
 
-            if (hudVisibility) {
+            AnimatedVisibility(hudVisibility, enter = fadeIn(), exit = fadeOut()) {
                 Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
                     /* Top row (Message input box + Messages) */
                     Column(
@@ -433,38 +448,23 @@ private fun RoomUIImpl() {
                                     focusManager.clearFocus()
                                 }
 
-                                OutlinedTextField(
-                                    modifier = Modifier.alpha(0.75f).gradientOverlay()
-                                        .fillMaxWidth(),
+                                GradientTextField(
+                                    value = msg,
+                                    onValueChange = { s ->
+                                        msg = s
+                                        msgCanSend = s.isNotBlank()
+                                    },
+                                    label = lyricist.strings.roomTypeMessage,
+                                    onSend = onSend,
+                                    msgCanSend = msgCanSend,
                                     singleLine = true,
                                     keyboardActions = KeyboardActions(onDone = {
                                         if (keyboardOkFunction) {
                                             onSend()
                                         }
                                     }),
-                                    label = {
-                                        Text(
-                                            text = lyricist.strings.roomTypeMessage,
-                                            fontSize = 12.sp,
-                                            maxLines = 1
-                                        )
-                                    },
-                                    trailingIcon = {
-                                        if (msgCanSend) {
-                                            IconButton(onClick = onSend) {
-                                                Icon(
-                                                    imageVector = Icons.AutoMirrored.Filled.Send,
-                                                    ""
-                                                )
-                                            }
-                                        }
-                                    },
-                                    value = msg,
-                                    onValueChange = { s ->
-                                        msg = s
-                                        msgCanSend = s.isNotBlank()
-                                    })
-                            }
+                                    colors = Paletting.SP_GRADIENT
+                                )                            }
                         }
                     }
 
@@ -481,8 +481,7 @@ private fun RoomUIImpl() {
 
                                         text = if (pingo == null) lyricist.strings.roomPingDisconnected else lyricist.strings.roomPingConnected(
                                             pingo!!.toInt().toString()
-                                        ),
-                                        color = Paletting.OLD_SP_PINK
+                                        ), color = Paletting.OLD_SP_PINK
                                     )
                                     Spacer(Modifier.width(4.dp))
 
@@ -582,7 +581,8 @@ private fun RoomUIImpl() {
                                     overflowmenustate.value = !overflowmenustate.value
                                 }
 
-                                DropdownMenu(modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
+                                DropdownMenu(
+                                    modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
                                     expanded = overflowmenustate.value,
                                     properties = PopupProperties(
                                         dismissOnBackPress = true,
@@ -746,8 +746,7 @@ private fun RoomUIImpl() {
                             /** Control card (to control the player) */
                             FreeAnimatedVisibility(
                                 modifier = Modifier.zIndex(10f).wrapContentWidth()
-                                    .align(Alignment.CenterEnd)
-                                    .fillMaxHeight(cardHeight + 0.1f),
+                                    .align(Alignment.CenterEnd).fillMaxHeight(cardHeight + 0.1f),
                                 enter = expandIn(),
                                 visible = controlcardvisible
                             ) {
@@ -839,7 +838,8 @@ private fun RoomUIImpl() {
                                                 }
                                             }
 
-                                            DropdownMenu(modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
+                                            DropdownMenu(
+                                                modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
                                                 expanded = tracksPopup.value,
                                                 properties = PopupProperties(
                                                     dismissOnBackPress = true,
@@ -899,8 +899,7 @@ private fun RoomUIImpl() {
                                                     }
                                                 }, onClick = {
                                                     viewmodel?.player?.selectTrack(
-                                                        null,
-                                                        TRACKTYPE.SUBTITLE
+                                                        null, TRACKTYPE.SUBTITLE
                                                     )
                                                     tracksPopup.value = false
                                                     controlcardvisible = false
@@ -915,8 +914,7 @@ private fun RoomUIImpl() {
                                                                 checked = track.selected.value,
                                                                 onCheckedChange = {
                                                                     viewmodel?.player?.selectTrack(
-                                                                        track,
-                                                                        TRACKTYPE.SUBTITLE
+                                                                        track, TRACKTYPE.SUBTITLE
                                                                     )
                                                                     tracksPopup.value = false
                                                                 })
@@ -928,8 +926,7 @@ private fun RoomUIImpl() {
                                                         }
                                                     }, onClick = {
                                                         viewmodel?.player?.selectTrack(
-                                                            track,
-                                                            TRACKTYPE.SUBTITLE
+                                                            track, TRACKTYPE.SUBTITLE
                                                         )
 
                                                         tracksPopup.value = false
@@ -957,7 +954,8 @@ private fun RoomUIImpl() {
                                                 }
                                             }
 
-                                            DropdownMenu(modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
+                                            DropdownMenu(
+                                                modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
                                                 expanded = tracksPopup.value,
                                                 properties = PopupProperties(
                                                     dismissOnBackPress = true,
@@ -984,8 +982,7 @@ private fun RoomUIImpl() {
                                                                 checked = track.selected.value,
                                                                 onCheckedChange = {
                                                                     viewmodel?.player?.selectTrack(
-                                                                        track,
-                                                                        TRACKTYPE.AUDIO
+                                                                        track, TRACKTYPE.AUDIO
                                                                     )
                                                                     tracksPopup.value = false
                                                                 })
@@ -997,8 +994,7 @@ private fun RoomUIImpl() {
                                                         }
                                                     }, onClick = {
                                                         viewmodel?.player?.selectTrack(
-                                                            track,
-                                                            TRACKTYPE.AUDIO
+                                                            track, TRACKTYPE.AUDIO
                                                         )
                                                         tracksPopup.value = false
                                                     })
@@ -1025,15 +1021,15 @@ private fun RoomUIImpl() {
                                                     }
                                                 }
 
-                                                DropdownMenu(modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
+                                                DropdownMenu(
+                                                    modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
                                                     expanded = chaptersPopup,
                                                     properties = PopupProperties(
                                                         dismissOnBackPress = true,
                                                         focusable = true,
                                                         dismissOnClickOutside = true
                                                     ),
-                                                    onDismissRequest = { chaptersPopup = false }
-                                                ) {
+                                                    onDismissRequest = { chaptersPopup = false }) {
 
                                                     ComposeUtils.FancyText2(
                                                         modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -1080,8 +1076,9 @@ private fun RoomUIImpl() {
 
                     if (hasVideo.value) {/* Bottom-left row (Ready button) */
                         if (!isSoloMode) {
-                            IconToggleButton(modifier = Modifier.width(112.dp).padding(8.dp)
-                                .align(Alignment.BottomStart),
+                            IconToggleButton(
+                                modifier = Modifier.width(112.dp).padding(8.dp)
+                                    .align(Alignment.BottomStart),
                                 checked = ready,
                                 colors = IconButtonDefaults.iconToggleButtonColors(
                                     containerColor = MaterialTheme.colorScheme.tertiaryContainer,
@@ -1112,8 +1109,7 @@ private fun RoomUIImpl() {
                             val interactionSource = remember { MutableInteractionSource() }
 
                             Row(
-                                modifier = Modifier.fillMaxWidth(0.75f),
-                                verticalAlignment = Bottom
+                                modifier = Modifier.fillMaxWidth(0.75f), verticalAlignment = Bottom
                             ) {
                                 Text(
                                     text = timeStamper(remember { viewmodel!!.timeCurrent }.longValue),
@@ -1165,8 +1161,7 @@ private fun RoomUIImpl() {
                                                         if (isSoloMode) {
                                                             viewmodel?.seeks?.add(
                                                                 Pair(
-                                                                    (currentMs),
-                                                                    newPos * 1000
+                                                                    (currentMs), newPos * 1000
                                                                 )
                                                             )
                                                         }
@@ -1184,7 +1179,8 @@ private fun RoomUIImpl() {
                                                     modifier = Modifier.padding(start = 4.dp),
                                                     text = lyricist.strings.roomCustomSkipButton(
                                                         customSkipAmountString
-                                                    ), fontSize = 12.sp,
+                                                    ),
+                                                    fontSize = 12.sp,
                                                     maxLines = 1
                                                 )
                                             }
@@ -1211,8 +1207,7 @@ private fun RoomUIImpl() {
                                             composeScope.launch(Dispatchers.Main) {
                                                 viewmodel?.seeks?.add(
                                                     Pair(
-                                                        it.currentPositionMs(),
-                                                        f.toLong() * 1000
+                                                        it.currentPositionMs(), f.toLong() * 1000
                                                     )
                                                 )
                                             }
@@ -1241,10 +1236,8 @@ private fun RoomUIImpl() {
                                         modifier = Modifier.scale(scaleX = 1F, scaleY = 0.85F),
                                         thumbTrackGapSize = 0.dp,
                                         drawStopIndicator = null,
-                                        drawTick = { _, _ -> }
-                                    )
-                                }
-                            )
+                                        drawTick = { _, _ -> })
+                                })
                         }
                     }
 
@@ -1274,13 +1267,14 @@ private fun RoomUIImpl() {
 
 
                             DropdownMenu(
-                                modifier = Modifier
-                                    .background(color = MaterialTheme.colorScheme.tertiaryContainer),
-                                expanded = addmediacardvisible, properties = PopupProperties(
+                                modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
+                                expanded = addmediacardvisible,
+                                properties = PopupProperties(
                                     dismissOnBackPress = true,
                                     focusable = true,
                                     dismissOnClickOutside = true
-                                ), onDismissRequest = { addmediacardvisible = false }) {
+                                ),
+                                onDismissRequest = { addmediacardvisible = false }) {
 
                                 ComposeUtils.FancyText2(
                                     modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -1369,5 +1363,97 @@ private fun RoomUIImpl() {
         AddUrlPopup(visibilityState = addurlpopupstate)
         SeekToPositionPopup(visibilityState = seektopopupstate)
         if (!isSoloMode) ChatHistoryPopup(visibilityState = chathistorypopupstate)
+    }
+}
+
+// Custom composable with gradient text, outline, and icon
+@Composable
+fun GradientTextField(
+    modifier: Modifier = Modifier,
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    onSend: () -> Unit,
+    msgCanSend: Boolean = false,
+    singleLine: Boolean = false,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    colors: List<Color> = Paletting.SP_GRADIENT
+) {
+    val gradientBrush = Brush.linearGradient(colors = colors)
+
+    OutlinedTextField(
+        modifier = modifier
+            .alpha(0.75f)
+            .fillMaxWidth()
+            ,
+        singleLine = singleLine,
+        keyboardActions = keyboardActions,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = colors.first(),
+            unfocusedBorderColor = colors[1],
+            cursorColor = colors.last()
+        ),
+        label = {
+            Text(
+                text = label,
+                fontSize = 12.sp,
+                maxLines = 1,
+                style = TextStyle(brush = gradientBrush)
+            )
+        },
+        trailingIcon = {
+            if (msgCanSend) {
+                IconButton(onClick = onSend) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Send,
+                        contentDescription = "",
+                        modifier = Modifier.graphicsLayer(alpha = 0.99f)
+                            .drawWithCache {
+                                onDrawWithContent {
+                                    drawContent()
+                                    drawRect(
+                                        brush = gradientBrush,
+                                        blendMode = BlendMode.SrcAtop
+                                    )
+                                }
+                            }
+                    )
+                }
+            }
+        },
+        value = value,
+        onValueChange = onValueChange,
+        visualTransformation = VisualTransformation { text ->
+            val annotatedString = buildAnnotatedString {
+                text.text.forEachIndexed { index, char ->
+                    if (!char.isEmoji()) {
+                        withStyle(style = SpanStyle(brush = gradientBrush)) {
+                            append(char)
+                        }
+                    } else {
+                        append(char)
+                    }
+                }
+            }
+            TransformedText(annotatedString, OffsetMapping.Identity)
+        }
+    )
+}
+fun Char.isEmoji(): Boolean {
+    val codePoint = this.code
+    return when {
+        // Basic emoji ranges
+        codePoint in 0x2600..0x27BF -> true // Various symbols
+        codePoint in 0x1F600..0x1F64F -> true // Emoticons
+        codePoint in 0x1F300..0x1F5FF -> true // Misc symbols and pictographs
+        codePoint in 0x1F680..0x1F6FF -> true // Transport and map
+        codePoint in 0x1F700..0x1F77F -> true // Alchemical symbols
+        codePoint in 0x1F780..0x1F7FF -> true // Geometric shapes
+        codePoint in 0x1F800..0x1F8FF -> true // Supplemental arrows
+        codePoint in 0x1F900..0x1F9FF -> true // Supplemental symbols and pictographs
+        codePoint in 0x1FA00..0x1FA6F -> true // Chess symbols
+        codePoint in 0x1FA70..0x1FAFF -> true // Symbols and pictographs extended-A
+        this.isHighSurrogate() || this.isLowSurrogate() -> true // Surrogate pairs
+        else -> false
     }
 }
