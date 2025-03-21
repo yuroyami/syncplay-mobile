@@ -229,17 +229,17 @@ object RoomComposables {
             border = if (visibilityState) {
                 null
             } else {
-                BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT))
+                BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) }))
             },
-            colors = CardDefaults.cardColors(containerColor = if (visibilityState) Color.Transparent else MaterialTheme.colorScheme.tertiaryContainer),
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 6.dp),
+            colors = CardDefaults.cardColors(containerColor = if (visibilityState) Color.Transparent else MaterialTheme.colorScheme.tertiaryContainer.copy(0.5f)),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp),
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
                         brush = if (visibilityState) {
-                            Brush.linearGradient(colors = Paletting.SP_GRADIENT)
+                            Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })
                         } else {
                             Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
                         }
@@ -282,11 +282,9 @@ object RoomComposables {
             Surface(
                 modifier = modifier.width(150.dp).height(48.dp),
                 shape = RoundedCornerShape(24.dp),
-                border = BorderStroke(1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT)),
-                shadowElevation = 12.dp,
-                tonalElevation = 4.dp,
+                border = BorderStroke(1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
                 onClick = { onClick.invoke() },
-                contentColor = Color.DarkGray
+                contentColor = Color.DarkGray.copy(0.5f)
             ) {
                 Box(modifier = Modifier.fillMaxSize().padding(8.dp), contentAlignment = Alignment.Center) {
                     Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceAround) {

@@ -158,10 +158,9 @@ object CardSharedPlaylist {
 
         /* Now to the actual content in the card */
         Card(
-            shape = RoundedCornerShape(6.dp),
-            border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT)),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 6.dp),
+            shape = RoundedCornerShape(8.dp),
+            border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.5f)),
         ) {
             Column(modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.SpaceEvenly,
@@ -178,7 +177,6 @@ object CardSharedPlaylist {
                 /* The actual shared playlist */
                 LazyColumn(
                     modifier = Modifier
-                        .background(color = Color(60, 60, 60))
                         .fillMaxHeight(0.75f)
                         .fillMaxWidth()
                         .padding(8.dp)

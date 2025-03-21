@@ -8,7 +8,6 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -43,6 +42,8 @@ import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.AutoFixHigh
 import androidx.compose.material.icons.filled.AvTimer
 import androidx.compose.material.icons.filled.BrowseGallery
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.DoNotTouch
@@ -80,7 +81,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -283,11 +283,11 @@ private fun RoomUIImpl() {
             /** The touch interceptor to switch unlock button visibility */
             Box(
                 Modifier.fillMaxSize().clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = {
-                            unlockButtonVisibility.value = !unlockButtonVisibility.value
-                        })
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {
+                        unlockButtonVisibility.value = !unlockButtonVisibility.value
+                    })
             )
 
             Column(
@@ -407,9 +407,7 @@ private fun RoomUIImpl() {
 
             /* HUD below: We resort to using a combination of Boxes, Rows, and Columns. */
             AnimatedVisibility(
-                hudVisibility && hasVideo.value,
-                enter = fadeIn(),
-                exit = fadeOut()
+                hudVisibility && hasVideo.value, enter = fadeIn(), exit = fadeOut()
             ) {
                 Box(Modifier.fillMaxSize()) {
                     val blacky = Color.Black.copy(alpha = 0.8F)
@@ -464,7 +462,8 @@ private fun RoomUIImpl() {
                                         }
                                     }),
                                     colors = Paletting.SP_GRADIENT
-                                )                            }
+                                )
+                            }
                         }
                     }
 
@@ -475,7 +474,7 @@ private fun RoomUIImpl() {
                             modifier = Modifier.wrapContentWidth().align(Alignment.TopCenter)
                         ) {
                             if (!isSoloMode) {
-                                Row {
+                                Row(verticalAlignment = CenterVertically) {
                                     val pingo by remember { viewmodel!!.p.ping }
                                     Text(
 
@@ -582,7 +581,13 @@ private fun RoomUIImpl() {
                                 }
 
                                 DropdownMenu(
-                                    modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
+                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(
+                                        0.5f
+                                    ),
+                                    tonalElevation = 0.dp,
+                                    shadowElevation = 0.dp,
+                                    border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+                                    shape = RoundedCornerShape(8.dp),
                                     expanded = overflowmenustate.value,
                                     properties = PopupProperties(
                                         dismissOnBackPress = true,
@@ -601,27 +606,29 @@ private fun RoomUIImpl() {
                                     )
 
                                     /* Picture-in-Picture mode */
-                                    DropdownMenuItem(text = {
-                                        Row(verticalAlignment = CenterVertically) {
-                                            Icon(
-                                                modifier = Modifier.padding(2.dp),
-                                                imageVector = Icons.Filled.PictureInPicture,
-                                                contentDescription = "",
-                                                tint = Color.LightGray
-                                            )
+                                    DropdownMenuItem(
 
-                                            Spacer(Modifier.width(8.dp))
+                                        text = {
+                                            Row(verticalAlignment = CenterVertically) {
+                                                Icon(
+                                                    modifier = Modifier.padding(2.dp),
+                                                    imageVector = Icons.Filled.PictureInPicture,
+                                                    contentDescription = "",
+                                                    tint = Color.LightGray
+                                                )
 
-                                            Text(
-                                                color = Color.LightGray,
-                                                text = lyricist.strings.roomOverflowPip
-                                            )
-                                        }
-                                    }, onClick = {
-                                        overflowmenustate.value = false
+                                                Spacer(Modifier.width(8.dp))
 
-                                        viewmodel?.roomCallback?.onPictureInPicture(true)
-                                    })
+                                                Text(
+                                                    color = Color.LightGray,
+                                                    text = lyricist.strings.roomOverflowPip
+                                                )
+                                            }
+                                        }, onClick = {
+                                            overflowmenustate.value = false
+
+                                            viewmodel?.roomCallback?.onPictureInPicture(true)
+                                        })
 
                                     /* Chat history item */
                                     if (!isSoloMode) {
@@ -746,20 +753,19 @@ private fun RoomUIImpl() {
                             /** Control card (to control the player) */
                             FreeAnimatedVisibility(
                                 modifier = Modifier.zIndex(10f).wrapContentWidth()
-                                    .align(Alignment.CenterEnd).fillMaxHeight(cardHeight + 0.1f),
+                                    .align(Alignment.CenterEnd).fillMaxHeight(cardHeight ),
                                 enter = expandIn(),
                                 visible = controlcardvisible
                             ) {
                                 /** CONTROL CARD ------ PLAYER CONTROL CARD ----- PLAYER CONTROL CARD */
                                 Card(
                                     modifier = Modifier.zIndex(10f),
-                                    shape = CardDefaults.outlinedShape,
-                                    border = BorderStroke(2.dp, Color.Gray),
-                                    elevation = CardDefaults.outlinedCardElevation(defaultElevation = 8.dp),
-                                    colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+                                    shape = RoundedCornerShape(8.dp),
+                                    border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.5f)),
                                 ) {
                                     FlowColumn(
-                                        modifier = Modifier.padding(6.dp).fillMaxHeight(),
+                                        modifier = Modifier.padding(8.dp).fillMaxHeight(),
                                         verticalArrangement = Arrangement.SpaceEvenly,
                                         horizontalArrangement = Arrangement.Center
                                     ) {
@@ -839,7 +845,13 @@ private fun RoomUIImpl() {
                                             }
 
                                             DropdownMenu(
-                                                modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
+                                                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(
+                                                    0.5f
+                                                ),
+                                                tonalElevation = 0.dp,
+                                                shadowElevation = 0.dp,
+                                                border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+                                                shape = RoundedCornerShape(8.dp),
                                                 expanded = tracksPopup.value,
                                                 properties = PopupProperties(
                                                     dismissOnBackPress = true,
@@ -955,7 +967,13 @@ private fun RoomUIImpl() {
                                             }
 
                                             DropdownMenu(
-                                                modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
+                                                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(
+                                                    0.5f
+                                                ),
+                                                tonalElevation = 0.dp,
+                                                shadowElevation = 0.dp,
+                                                border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+                                                shape = RoundedCornerShape(8.dp),
                                                 expanded = tracksPopup.value,
                                                 properties = PopupProperties(
                                                     dismissOnBackPress = true,
@@ -1022,8 +1040,14 @@ private fun RoomUIImpl() {
                                                 }
 
                                                 DropdownMenu(
-                                                    modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
-                                                    expanded = chaptersPopup,
+                                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(
+                                                        0.5f
+                                                    ),
+                                                    tonalElevation = 0.dp,
+                                                    shadowElevation = 0.dp,
+                                                    border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+                                                    shape = RoundedCornerShape(8.dp),
+                                                        expanded = chaptersPopup,
                                                     properties = PopupProperties(
                                                         dismissOnBackPress = true,
                                                         focusable = true,
@@ -1077,7 +1101,7 @@ private fun RoomUIImpl() {
                     if (hasVideo.value) {/* Bottom-left row (Ready button) */
                         if (!isSoloMode) {
                             IconToggleButton(
-                                modifier = Modifier.width(112.dp).padding(8.dp)
+                                modifier = Modifier.width(112.dp).padding(4.dp)
                                     .align(Alignment.BottomStart),
                                 checked = ready,
                                 colors = IconButtonDefaults.iconToggleButtonColors(
@@ -1092,8 +1116,35 @@ private fun RoomUIImpl() {
                                     viewmodel!!.p.sendPacket(JsonSender.sendReadiness(b, true))
                                 }) {
                                 when (ready) {
-                                    true -> Text("Ready", fontSize = 14.sp)
-                                    false -> Text("Not Ready", fontSize = 13.sp)
+                                    true -> Row(verticalAlignment = CenterVertically) {
+                                        Icon(
+                                            modifier = Modifier.size(Paletting.USER_INFO_IC_SIZE.dp),
+                                            imageVector = if (ready) Icons.Filled.Check else Icons.Filled.Clear,
+                                            contentDescription = "",
+                                            tint = Paletting.ROOM_USER_READY_ICON
+
+
+                                        )
+                                        Spacer(Modifier.width(4.dp))
+                                        Text("Ready", fontSize = 14.sp)
+                                        Spacer(Modifier.width(4.dp))
+
+                                    }
+
+                                    false -> Row(verticalAlignment = CenterVertically) {
+                                        Icon(
+                                            modifier = Modifier.size(Paletting.USER_INFO_IC_SIZE.dp),
+                                            imageVector = if (ready) Icons.Filled.Check else Icons.Filled.Clear,
+                                            contentDescription = "",
+                                            tint = Paletting.ROOM_USER_UNREADY_ICON
+
+                                        )
+                                        Spacer(Modifier.width(4.dp))
+
+                                        Text("Not Ready", fontSize = 13.sp)
+                                        Spacer(Modifier.width(4.dp))
+
+                                    }
                                 }
                             }
                         }
@@ -1267,7 +1318,13 @@ private fun RoomUIImpl() {
 
 
                             DropdownMenu(
-                                modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(
+                                    0.5f
+                                ),
+                                tonalElevation = 0.dp,
+                                shadowElevation = 0.dp,
+                                border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+                                shape = RoundedCornerShape(8.dp),
                                 expanded = addmediacardvisible,
                                 properties = PopupProperties(
                                     dismissOnBackPress = true,
@@ -1382,10 +1439,7 @@ fun GradientTextField(
     val gradientBrush = Brush.linearGradient(colors = colors)
 
     OutlinedTextField(
-        modifier = modifier
-            .alpha(0.75f)
-            .fillMaxWidth()
-            ,
+        modifier = modifier.alpha(0.75f).fillMaxWidth(),
         singleLine = singleLine,
         keyboardActions = keyboardActions,
         colors = OutlinedTextFieldDefaults.colors(
@@ -1407,17 +1461,14 @@ fun GradientTextField(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Send,
                         contentDescription = "",
-                        modifier = Modifier.graphicsLayer(alpha = 0.99f)
-                            .drawWithCache {
+                        modifier = Modifier.graphicsLayer(alpha = 0.99f).drawWithCache {
                                 onDrawWithContent {
                                     drawContent()
                                     drawRect(
-                                        brush = gradientBrush,
-                                        blendMode = BlendMode.SrcAtop
+                                        brush = gradientBrush, blendMode = BlendMode.SrcAtop
                                     )
                                 }
-                            }
-                    )
+                            })
                 }
             }
         },
@@ -1436,9 +1487,9 @@ fun GradientTextField(
                 }
             }
             TransformedText(annotatedString, OffsetMapping.Identity)
-        }
-    )
+        })
 }
+
 fun Char.isEmoji(): Boolean {
     val codePoint = this.code
     return when {
