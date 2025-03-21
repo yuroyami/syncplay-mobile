@@ -71,77 +71,7 @@ fun GestureInterceptor(
 
     var vertdragOffset by remember { mutableStateOf(Offset.Zero) }
 
-    Box(modifier = Modifier.fillMaxSize()
-        .pointerInput(g, v) {
-            detectTapGestures(
-                onDoubleTap = if (g && v) { offset ->
-                    scope.launch {
-                        if (offset.x < dimensions.wPX.times(0.25f)) {
-                            PlayerUtils.seekBckwd()
-
-                            val press = PressInteraction.Press(Offset.Zero)
-                            seekLeftInteraction.emit(press)
-                            delay(150)
-                            seekLeftInteraction.emit(PressInteraction.Release(press))
-                        }
-                        if (offset.x > dimensions.wPX.times(0.85f)) {
-                            PlayerUtils.seekFrwrd()
-
-                            val press = PressInteraction.Press(Offset.Zero)
-                            seekRightInteraction.emit(press)
-                            delay(150)
-                            seekRightInteraction.emit(PressInteraction.Release(press))
-                        }
-                    }
-                } else null,
-                onTap = { onSingleTap.invoke() },
-            )
-        }
-        .pointerInput(g, v) {
-            if (g && v) {
-                detectVerticalDragGestures(
-                    onDragStart = {
-                        initialBrightness = gestureCallback.getCurrentBrightness()
-                        initialVolume = gestureCallback.getCurrentVolume()
-                    },
-                    onDragEnd = {
-                        dragdistance = 0F
-                        currentBrightness = -1f
-                        currentVolume = -1
-                    },
-                    onVerticalDrag = { pntr, f ->
-                        dragdistance += f
-
-                        vertdragOffset = pntr.position
-
-                        if (pntr.position.x >= dimensions.wPX * 0.5f) {
-                            /** Volume adjusting */
-                            val h = dimensions.hPX / 1.5
-                            val maxVolume = gestureCallback.getMaxVolume()
-
-                            var newVolume = (initialVolume + (-dragdistance * maxVolume / h)).roundToInt()
-
-                            if (newVolume > maxVolume) newVolume = maxVolume
-                            if (newVolume < 0) newVolume = 0
-
-                            currentVolume = newVolume //ui
-
-                            gestureCallback.changeCurrentVolume(newVolume)
-                        } else {
-                            /** Brightness adjusting */
-                            val h = dimensions.hPX / 1.5
-                            val maxBright = gestureCallback.getMaxBrightness()
-                            val newBright = (initialBrightness + (-dragdistance * maxBright / h)).toFloat()
-
-                            currentBrightness = newBright //ui
-
-                            gestureCallback.changeCurrentBrightness(newBright.coerceIn(0f, 1f))
-                        }
-                    }
-                )
-            }
-        }
-    ) {
+    Box(    ) {
         /* Seek animators, their only purpose is to animate a seek action */
         if (g) {
             Box(modifier = Modifier
@@ -169,6 +99,77 @@ fun GestureInterceptor(
                     )
                 ) {}
             )
+            Box(modifier = Modifier.fillMaxSize()
+                .pointerInput(g, v) {
+                    detectTapGestures(
+                        onDoubleTap = if (g && v) { offset ->
+                            scope.launch {
+                                if (offset.x < dimensions.wPX.times(0.35f)) {
+                                    PlayerUtils.seekBckwd()
+
+                                    val press = PressInteraction.Press(Offset.Zero)
+                                    seekLeftInteraction.emit(press)
+                                    delay(150)
+                                    seekLeftInteraction.emit(PressInteraction.Release(press))
+                                }
+                                if (offset.x > dimensions.wPX.times(0.65f)) {
+                                    PlayerUtils.seekFrwrd()
+
+                                    val press = PressInteraction.Press(Offset.Zero)
+                                    seekRightInteraction.emit(press)
+                                    delay(150)
+                                    seekRightInteraction.emit(PressInteraction.Release(press))
+                                }
+                            }
+                        } else null,
+                        onTap = { onSingleTap.invoke() },
+                    )
+                }
+                .pointerInput(g, v) {
+                    if (g && v) {
+                        detectVerticalDragGestures(
+                            onDragStart = {
+                                initialBrightness = gestureCallback.getCurrentBrightness()
+                                initialVolume = gestureCallback.getCurrentVolume()
+                            },
+                            onDragEnd = {
+                                dragdistance = 0F
+                                currentBrightness = -1f
+                                currentVolume = -1
+                            },
+                            onVerticalDrag = { pntr, f ->
+                                dragdistance += f
+
+                                vertdragOffset = pntr.position
+
+                                if (pntr.position.x >= dimensions.wPX * 0.5f) {
+                                    /** Volume adjusting */
+                                    val h = dimensions.hPX / 1.5
+                                    val maxVolume = gestureCallback.getMaxVolume()
+
+                                    var newVolume = (initialVolume + (-dragdistance * maxVolume / h)).roundToInt()
+
+                                    if (newVolume > maxVolume) newVolume = maxVolume
+                                    if (newVolume < 0) newVolume = 0
+
+                                    currentVolume = newVolume //ui
+
+                                    gestureCallback.changeCurrentVolume(newVolume)
+                                } else {
+                                    /** Brightness adjusting */
+                                    val h = dimensions.hPX / 1.5
+                                    val maxBright = gestureCallback.getMaxBrightness()
+                                    val newBright = (initialBrightness + (-dragdistance * maxBright / h)).toFloat()
+
+                                    currentBrightness = newBright //ui
+
+                                    gestureCallback.changeCurrentBrightness(newBright.coerceIn(0f, 1f))
+                                }
+                            }
+                        )
+                    }
+                }
+            ){}
             with(LocalDensity.current) {
                 if (currentBrightness != -1f) {
                     Row(
