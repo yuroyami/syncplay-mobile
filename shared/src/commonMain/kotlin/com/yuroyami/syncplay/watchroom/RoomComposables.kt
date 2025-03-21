@@ -15,6 +15,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -288,15 +289,16 @@ object RoomComposables {
                 contentColor = Color.DarkGray
             ) {
                 Box(modifier = Modifier.fillMaxSize().padding(8.dp), contentAlignment = Alignment.Center) {
-                    Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                    Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceAround) {
+
                         Icon(
                             tint = Color.DarkGray, imageVector = Icons.Filled.AddToQueue, contentDescription = "",
                             modifier = Modifier.size(32.dp).gradientOverlay() //.align(Alignment.Center)
                         )
 
-                        Spacer(modifier = Modifier.width(6.dp))
 
-                        Text(modifier = Modifier.fillMaxWidth().gradientOverlay(),
+
+                        Text(modifier = Modifier.gradientOverlay(),
                             text = lyricist.strings.roomButtonDescAdd, textAlign = TextAlign.Center, maxLines = 1,
                             fontSize = 14.sp, color = Color.DarkGray, fontWeight = FontWeight.Bold
                         )
