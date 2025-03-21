@@ -139,7 +139,7 @@ kotlin {
             api("org.conscrypt:conscrypt-android:2.5.2") //TLSv1.3 with backward compatibility
 
             /* Video player engine: Media3 (ExoPlayer and its extensions) */
-            val media3 = "1.5.1"
+            val media3 = "1.6.0-rc02"
             api("androidx.media3:media3-exoplayer:$media3")
             api("androidx.media3:media3-exoplayer-dash:$media3")
             api("androidx.media3:media3-exoplayer-hls:$media3")
@@ -152,8 +152,9 @@ kotlin {
             api("androidx.media3:media3-datasource:$media3")
             api("androidx.media3:media3-common:$media3")
 
+
             /* Video player engine: VLC (via libVLC) */
-            api("org.videolan.android:libvlc-all:4.0.0-eap15")
+            api("org.videolan.android:libvlc-all:4.0.0-eap18")
 
         }
 
