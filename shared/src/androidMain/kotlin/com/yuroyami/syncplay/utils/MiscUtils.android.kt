@@ -3,6 +3,7 @@ package com.yuroyami.syncplay.utils
 import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.content.Context
+import android.media.AudioManager
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.provider.OpenableColumns
@@ -10,7 +11,9 @@ import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
@@ -19,6 +22,13 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
 import kotlin.math.roundToInt
+
+@Composable
+actual fun getSystemMaxVolume(): Int {
+    val audioManager = LocalContext.current.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    return audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+}
+
 
 actual fun getPlatform(): PLATFORM = PLATFORM.Android
 
@@ -109,5 +119,5 @@ actual fun String.format(vararg args: String): String {
 }
 
 actual fun getSystemLanguageCode(): String {
-    return androidx.compose.ui.text.intl.Locale.current.toLanguageTag().also { loggy(it, 0) }
+    return Locale.current.toLanguageTag().also { loggy(it, 0) }
 }

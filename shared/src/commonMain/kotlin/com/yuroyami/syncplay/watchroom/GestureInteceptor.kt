@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import com.yuroyami.syncplay.player.PlayerUtils
+import com.yuroyami.syncplay.utils.getSystemMaxVolume
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
@@ -58,6 +59,8 @@ fun GestureInterceptor(
 
     val g by gestureState
     val v by videoState
+
+val volumeSteps = getSystemMaxVolume()
 
     val seekLeftInteraction = remember { MutableInteractionSource() }
     val seekRightInteraction = remember { MutableInteractionSource() }
@@ -194,8 +197,7 @@ fun GestureInterceptor(
                         verticalAlignment = CenterVertically
                     ) {
                         Icon(imageVector = Icons.AutoMirrored.Filled.VolumeUp, "")
-                        //TODO '/30' should be platform specific
-                        Text("Volume: $currentVolume/30", color = Color.Black)
+                        Text("Volume: $currentVolume/$volumeSteps", color = Color.Black)
                     }
                 }
             }
