@@ -128,7 +128,7 @@ fun GestureInterceptor(
                                     while (isActive) {
                                         PlayerUtils.seekBckwd()
                                         seekLeftInteraction.emit(press)
-                                        delay(100)
+                                        delay(200)
                                         seekLeftInteraction.emit(PressInteraction.Release(press))
                                     }
                                 }
@@ -145,7 +145,7 @@ fun GestureInterceptor(
 
                                     val press = PressInteraction.Press(Offset.Zero)
                                     seekLeftInteraction.emit(press)
-                                    delay(150)
+                                    delay(200)
                                     seekLeftInteraction.emit(PressInteraction.Release(press))
                                 }
                                 if (offset.x > dimensions.wPX.times(0.65f)) {
