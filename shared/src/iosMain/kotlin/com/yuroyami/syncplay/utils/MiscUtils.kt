@@ -23,6 +23,12 @@ import platform.Foundation.timeIntervalSince1970
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
+@Composable
+actual fun getSystemMaxVolume(): Int {
+    // iOS doesn't expose a step count; choose a fallback value.
+    return 16
+}
+
 actual fun getPlatform(): PLATFORM = PLATFORM.IOS
 
 actual fun loggy(s: String?, checkpoint: Int) = println(s.toString())

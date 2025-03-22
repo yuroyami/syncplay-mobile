@@ -664,7 +664,8 @@ object ComposeUtils {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(brush = Brush.linearGradient(backgroundGradient()))
+                            .background(brush = Brush.linearGradient(backgroundGradient().map { it.copy(alpha = 0.5f) }))
+
                     ) {
                         content()
                     }

@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
+import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
@@ -48,8 +49,10 @@ import com.yuroyami.syncplay.watchroom.dispatchOSD
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.lyricist
 import com.yuroyami.syncplay.watchroom.viewmodel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.util.Collections
 import kotlin.math.abs
@@ -101,6 +104,16 @@ class ExoPlayer : BasePlayer() {
                     )
                 )
                 .setWakeMode(C.WAKE_MODE_NETWORK) /* Prevent the service from being killed during playback */
+                .setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(C.USAGE_MEDIA)
+                        .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                        .build(),
+                    true // Handle audio focus automatically
+                ).setRenderersFactory(
+                    DefaultRenderersFactory(context)
+                        .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)  // Change to ON
+                )
                 .build()
 
             exoplayer?.videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT /* Starter scaling */
@@ -229,7 +242,9 @@ class ExoPlayer : BasePlayer() {
     override suspend fun analyzeTracks(mediafile: MediaFile) {
         viewmodel?.media?.audioTracks?.clear()
         viewmodel?.media?.subtitleTracks?.clear()
-        val tracks = exoplayer?.currentTracks ?: return
+        playerScopeMain.launch {
+            withContext(Dispatchers.Main) {
+        val tracks = exoplayer?.currentTracks ?: return@withContext
         for (group in tracks.groups) {
             val trackGroup = group.mediaTrackGroup
             val trackType = group.type
@@ -253,7 +268,7 @@ class ExoPlayer : BasePlayer() {
                     } else {
                         viewmodel?.media?.audioTracks?.add(exoTrack)
                     }
-                }
+                }}}
             }
         }
     }

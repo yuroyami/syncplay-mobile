@@ -72,7 +72,7 @@ object PopupSeekToPosition {
             widthPercent = 0.6f,
             heightPercent = 0.9f,
             strokeWidth = 0.5f,
-            cardBackgroundColor = Color.DarkGray,
+            cardBackgroundColor = Color.DarkGray.copy(0.5f),
             onDismiss = { visibilityState.value = false }
         ) {
             val focusManager = LocalFocusManager.current
@@ -207,7 +207,7 @@ object PopupSeekToPosition {
                         visibilityState.value = false
                         viewmodel?.player?.playerScopeIO?.launch {
                             val currentMs = withContext(Dispatchers.Main) { viewmodel?.player!!.currentPositionMs() }
-                            val newPos = (currentMs) + (90 * 1000L)
+                            val newPos = (currentMs) + (customSkipAmount * 1000L)
 
                             RoomUtils.sendSeek(newPos)
                             viewmodel?.player?.seekTo(newPos)

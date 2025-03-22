@@ -3,6 +3,9 @@ package com.yuroyami.syncplay.utils
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.Dp
 
+@Composable
+expect fun getSystemMaxVolume(): Int
+
 
 /** Retrieving which platform the native code is running on */
 enum class PLATFORM { Android, IOS, }

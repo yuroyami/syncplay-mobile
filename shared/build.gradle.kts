@@ -60,7 +60,7 @@ kotlin {
 
         commonMain.dependencies {
             /* Forcing Kotlin libs to match the compiler */
-            api("org.jetbrains.kotlin:kotlin-stdlib:2.0.20")
+            api("org.jetbrains.kotlin:kotlin-stdlib:2.1.20")
 
             //Strings internationalization and localization
             api("cafe.adriel.lyricist:lyricist:$lyricist")
@@ -89,7 +89,7 @@ kotlin {
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0-RC.2")
 
             /* Jetpack Datastore for preferences and settings (accessible in Compose in real-time) */
-            val datastore = "1.1.1"
+            val datastore = "1.1.3"
             api("androidx.datastore:datastore-preferences-core:$datastore")
 
             /* Compose core dependencies */
@@ -110,13 +110,13 @@ kotlin {
             implementation("io.github.alexzhirkevich:compottie:1.1.2") //1.1.2
 
             /* Annotations */
-            api("androidx.annotation:annotation:1.9.0-alpha02")
+            api("androidx.annotation:annotation:1.9.1")
 
         }
 
         androidMain.dependencies {
             /* Backward compatibility APIs */
-            api("androidx.core:core-ktx:1.14.0-alpha01")
+            api("androidx.core:core-ktx:1.15.0")
             api("androidx.appcompat:appcompat:1.7.0")
 
             /* SAF DocumentFile manager with backward compatibility */
@@ -132,14 +132,14 @@ kotlin {
             }
 
             /*  Activity's compose support with backward compatibility */
-            api("androidx.activity:activity-compose:1.9.1")
+            api("androidx.activity:activity-compose:1.10.1")
 
             /* Network and TLS */
             api("io.netty:netty-all:4.1.112.Final")
             api("org.conscrypt:conscrypt-android:2.5.2") //TLSv1.3 with backward compatibility
 
             /* Video player engine: Media3 (ExoPlayer and its extensions) */
-            val media3 = "1.4.1"
+            val media3 = "1.6.0-rc02"
             api("androidx.media3:media3-exoplayer:$media3")
             api("androidx.media3:media3-exoplayer-dash:$media3")
             api("androidx.media3:media3-exoplayer-hls:$media3")
@@ -152,8 +152,9 @@ kotlin {
             api("androidx.media3:media3-datasource:$media3")
             api("androidx.media3:media3-common:$media3")
 
+
             /* Video player engine: VLC (via libVLC) */
-            api("org.videolan.android:libvlc-all:4.0.0-eap15")
+            api("org.videolan.android:libvlc-all:4.0.0-eap18")
 
         }
 

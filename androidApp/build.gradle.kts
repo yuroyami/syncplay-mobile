@@ -32,9 +32,9 @@ android {
     defaultConfig {
         applicationId = "com.reddnek.syncplay"
         minSdk = 21
-        targetSdk = 34
-        versionCode = 1000015001 //Changing versionName semantic projection from 1.XXX.XXX.XXX to 1.XX.XX.XX
-        versionName = "0.15.1"
+        targetSdk = 35
+        versionCode = 1000015002 //Changing versionName semantic projection from 1.XXX.XXX.XXX to 1.XX.XX.XX
+        versionName = "0.15.2"
         signingConfig = signingConfigs.getByName("github")
         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
