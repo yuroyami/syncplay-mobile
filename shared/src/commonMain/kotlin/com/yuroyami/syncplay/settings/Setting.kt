@@ -3,6 +3,8 @@ package com.yuroyami.syncplay.settings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -35,6 +37,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -103,21 +107,22 @@ sealed class Setting<T>(
                         onClick?.let { it() }
                     },
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                leadingContent = {
-                    SmartFancyIcon(
-                        tintColors = styling.iconTints,
-                        icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
-                    )
-                },
+
                 headlineContent = {
-                    FlexibleFancyText(
-                        text = title,
-                        fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                        strokeColors = styling.titleStroke ?: listOf(),
-                        shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
-                        size = styling.titleSize,
-                        font = styling.titleFont
-                    )
+                    Row(verticalAlignment = CenterVertically) {
+                        SmartFancyIcon(
+                            tintColors = styling.iconTints,
+                            icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
+                        )
+                        FlexibleFancyText(
+                            text = title,
+                            fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
+                            strokeColors = styling.titleStroke ?: listOf(),
+                            shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                            size = styling.titleSize,
+                            font = styling.titleFont
+                        )
+                    }
                 },
                 supportingContent = {
                     Text(
@@ -177,21 +182,23 @@ sealed class Setting<T>(
                         dialog = true
                     },
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                leadingContent = {
-                    SmartFancyIcon(
-                        tintColors = styling.iconTints,
-                        icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
-                    )
-                },
                 headlineContent = {
-                    FlexibleFancyText(
-                        text = title,
-                        fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                        strokeColors = styling.titleStroke ?: listOf(),
-                        shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
-                        size = styling.titleSize,
-                        font = styling.titleFont
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ){
+                        SmartFancyIcon(
+                            tintColors = styling.iconTints,
+                            icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
+                        )
+                        FlexibleFancyText(
+                            text = title,
+                            fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
+                            strokeColors = styling.titleStroke ?: listOf(),
+                            shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                            size = styling.titleSize,
+                            font = styling.titleFont
+                        )
+                    }
                 },
                 supportingContent = {
                     Text(
@@ -229,22 +236,25 @@ sealed class Setting<T>(
                         popupVisibility.value = true
                     },
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                leadingContent = {
-                    SmartFancyIcon(
-                        tintColors = styling.iconTints,
-                        shadowColors = styling.iconShadows,
-                        icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
-                    )
-                },
+
                 headlineContent = {
-                    FlexibleFancyText(
-                        text = title,
-                        fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                        strokeColors = styling.titleStroke ?: listOf(),
-                        shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
-                        size = styling.titleSize,
-                        font = styling.titleFont
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ){
+                        SmartFancyIcon(
+                            tintColors = styling.iconTints,
+                            shadowColors = styling.iconShadows,
+                            icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
+                        )
+                        FlexibleFancyText(
+                            text = title,
+                            fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
+                            strokeColors = styling.titleStroke ?: listOf(),
+                            shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                            size = styling.titleSize,
+                            font = styling.titleFont
+                        )
+                    }
                 },
                 supportingContent = {
                     Text(
@@ -290,13 +300,7 @@ sealed class Setting<T>(
                         }
                     },
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                leadingContent = {
-                    SmartFancyIcon(
-                        tintColors = styling.iconTints,
-                        shadowColors = styling.iconShadows,
-                        icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
-                    )
-                },
+
                 trailingContent = {
                     if (type == SettingType.CheckboxSettingType) {
                         Checkbox(
@@ -323,14 +327,21 @@ sealed class Setting<T>(
                     }
                 },
                 headlineContent = {
-                    FlexibleFancyText(
-                        text = title,
-                        fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                        strokeColors = styling.titleStroke ?: listOf(),
-                        shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
-                        size = styling.titleSize,
-                        font = styling.titleFont
-                    )
+                    Row(verticalAlignment = CenterVertically) {
+                        SmartFancyIcon(
+                            tintColors = styling.iconTints,
+                            shadowColors = styling.iconShadows,
+                            icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
+                        )
+                        FlexibleFancyText(
+                            text = title,
+                            fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
+                            strokeColors = styling.titleStroke ?: listOf(),
+                            shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                            size = styling.titleSize,
+                            font = styling.titleFont
+                        )
+                    }
                 },
                 supportingContent = {
                     Text(
@@ -394,22 +405,22 @@ sealed class Setting<T>(
                         dialogOpen.value = true
                     },
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                leadingContent = {
-                    SmartFancyIcon(
-                        tintColors = styling.iconTints,
-                        shadowColors = styling.iconShadows,
-                        icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
-                    )
-                },
                 headlineContent = {
-                    FlexibleFancyText(
-                        text = title,
-                        fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                        strokeColors = styling.titleStroke ?: listOf(),
-                        shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
-                        size = styling.titleSize,
-                        font = styling.titleFont
-                    )
+                    Row(verticalAlignment = CenterVertically) {
+                        SmartFancyIcon(
+                            tintColors = styling.iconTints,
+                            shadowColors = styling.iconShadows,
+                            icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
+                        )
+                        FlexibleFancyText(
+                            text = title,
+                            fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
+                            strokeColors = styling.titleStroke ?: listOf(),
+                            shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                            size = styling.titleSize,
+                            font = styling.titleFont
+                        )
+                    }
                 },
                 trailingContent = {
                     Icon(imageVector = Icons.AutoMirrored.Filled.List, "")
@@ -451,22 +462,32 @@ sealed class Setting<T>(
 
                     ) {},
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                leadingContent = {
-                    SmartFancyIcon(
-                        tintColors = styling.iconTints,
-                        shadowColors = styling.iconShadows,
-                        icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
-                    )
-                },
                 headlineContent = {
-                    FlexibleFancyText(
-                        text = title,
-                        fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                        strokeColors = styling.titleStroke ?: listOf(),
-                        shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
-                        size = styling.titleSize,
-                        font = styling.titleFont
-                    )
+                    Row(verticalAlignment = CenterVertically) {
+                        SmartFancyIcon(
+                            tintColors = styling.iconTints,
+                            shadowColors = styling.iconShadows,
+                            icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
+                        )
+
+                        FlexibleFancyText(
+                            text = title,
+                            fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
+                            strokeColors = styling.titleStroke ?: listOf(),
+                            shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                            size = styling.titleSize,
+                            font = styling.titleFont
+                        )
+                        Spacer(Modifier.weight(1f))
+                        Text(
+                            text = (value.value).toString(),
+                            style = TextStyle(
+                                color = MaterialTheme.colorScheme.primary,
+                                fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default,
+                                fontSize = (13).sp
+                            )
+                        )
+                    }
                 },
                 supportingContent = {
                     Column {
@@ -496,16 +517,7 @@ sealed class Setting<T>(
                         )
                     }
                 },
-                trailingContent = {
-                    Text(
-                        text = (value.value).toString(),
-                        style = TextStyle(
-                            color = MaterialTheme.colorScheme.primary,
-                            fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default,
-                            fontSize = (13).sp
-                        )
-                    )
-                }
+
             )
         }
     }
@@ -535,30 +547,30 @@ sealed class Setting<T>(
                         colorDialogState.value = true
                     },
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                leadingContent = {
-                    SmartFancyIcon(
-                        tintColors = styling.iconTints,
-                        shadowColors = styling.iconShadows,
-                        icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
-                    )
-                },
                 headlineContent = {
-                    FlexibleFancyText(
-                        text = title,
-                        fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                        strokeColors = styling.titleStroke ?: listOf(),
-                        shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
-                        size = styling.titleSize,
-                        font = styling.titleFont
-                    )
+                    Row(verticalAlignment = CenterVertically) {
+                        SmartFancyIcon(
+                            tintColors = styling.iconTints,
+                            shadowColors = styling.iconShadows,
+                            icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
+                        )
+                        FlexibleFancyText(
+                            text = title,
+                            fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
+                            strokeColors = styling.titleStroke ?: listOf(),
+                            shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                            size = styling.titleSize,
+                            font = styling.titleFont
+                        )
+                        Spacer(Modifier.weight(1f))
+                        Button(
+                            onClick = { colorDialogState.value = true },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(color.value)),
+                            modifier = Modifier.size(24.dp)
+                        ) {}
+                    }
                 },
-                trailingContent = {
-                    Button(
-                        onClick = { colorDialogState.value = true },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(color.value)),
-                        modifier = Modifier.size(24.dp)
-                    ) {}
-                },
+
                 supportingContent = {
                     Text(
                         text = summary,
@@ -605,63 +617,65 @@ sealed class Setting<T>(
                         }
                     },
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                leadingContent = {
-                    SmartFancyIcon(
-                        tintColors = styling.iconTints,
-                        shadowColors = styling.iconShadows,
-                        icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
-                    )
-                },
-                trailingContent = {
-                    TextField(
-                        modifier = Modifier.width(64.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        singleLine = true,
-                        value = string,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        keyboardActions = KeyboardActions(onDone = {
-                            focusManager.clearFocus()
-                        }),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.primary,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.primary,
-                            disabledContainerColor = MaterialTheme.colorScheme.primary,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            disabledIndicatorColor = Color.Transparent,
-                        ),
-                        onValueChange = {
-                            scope.launch {
-                                writeValue(key, it)
-                            }
-                        },
-                        textStyle = TextStyle(
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default,
-                            fontSize = 12.sp,
-                            textAlign = TextAlign.Center
-                        ),
-                        label = {}
-                    )
-                },
+
                 headlineContent = {
-                    FlexibleFancyText(
-                        text = title,
-                        fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                        strokeColors = styling.titleStroke ?: listOf(),
-                        shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
-                        size = styling.titleSize,
-                        font = styling.titleFont
-                    )
+                    Row(verticalAlignment = CenterVertically) {
+                        SmartFancyIcon(
+                            tintColors = styling.iconTints,
+                            shadowColors = styling.iconShadows,
+                            icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
+                        )
+                        FlexibleFancyText(
+                            text = title,
+                            fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
+                            strokeColors = styling.titleStroke ?: listOf(),
+                            shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                            size = styling.titleSize,
+                            font = styling.titleFont
+                        )
+                    }
                 },
                 supportingContent = {
-                    Text(
-                        text = summary,
-                        style = TextStyle(
-                            color = styling.summaryColor,
-                            fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
+                    Column {
+                        Text(
+                            text = summary,
+                            style = TextStyle(
+                                color = styling.summaryColor,
+                                fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
+                            )
                         )
-                    )
+                        TextField(
+
+                            shape = RoundedCornerShape(16.dp),
+                            singleLine = true,
+                            value = string,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            keyboardActions = KeyboardActions(onDone = {
+                                focusManager.clearFocus()
+                            }),
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = MaterialTheme.colorScheme.primary,
+                                unfocusedContainerColor = MaterialTheme.colorScheme.primary,
+                                disabledContainerColor = MaterialTheme.colorScheme.primary,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                disabledIndicatorColor = Color.Transparent,
+                            ),
+                            onValueChange = {
+                                scope.launch {
+                                    writeValue(key, it)
+                                }
+                            },
+                            textStyle = TextStyle(
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default,
+                                fontSize = 12.sp,
+                                textAlign = TextAlign.Center
+                            ),
+                            label = {}
+                        )
+
+                    }
                 }
             )
         }

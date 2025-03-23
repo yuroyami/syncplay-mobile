@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowColumn
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,6 +29,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
@@ -497,7 +499,7 @@ private fun RoomUIImpl() {
                                     fontSize = 11.sp,
                                     color = Paletting.OLD_SP_PINK
                                 )
-                                AnimatedVisibility (pingo == null) {
+                                AnimatedVisibility (pingo == null && viewmodel!!.p.session.userList.value.isNotEmpty() ) {
                                     Button(
                                         onClick = {
                                             viewmodel!!.p.connect()
@@ -510,7 +512,18 @@ private fun RoomUIImpl() {
                                         Text(text = "Reconnect", color = Color.White)
                                     }
                                 }
-                            }
+
+
+                                AnimatedVisibility (pingo == null && viewmodel!!.p.session.userList.value.isNotEmpty() ) {
+
+                                    Text(
+                                        text = "Try changing network engine in Settings > Network to Ktor if you're experiencing connection issues.",
+                                        color = Color.White,
+                                        modifier = Modifier.fillMaxWidth(0.3f),
+                                        textAlign = TextAlign.Center,
+                                        fontSize = 12.sp
+                                    )
+                                }}
 
                             val osd by remember { osdMsg }
                             if (osd.isNotEmpty()) Text(
