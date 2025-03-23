@@ -496,7 +496,7 @@ private fun RoomUIImpl() {
                             }
 
                             val osd by remember { osdMsg }
-                            Text(
+                            if (osd.isNotEmpty()) Text(
                                 modifier = Modifier.fillMaxWidth(0.3f),
                                 fontSize = 11.sp,
                                 lineHeight = (Paletting.USER_INFO_TXT_SIZE + 4).sp,
@@ -505,6 +505,23 @@ private fun RoomUIImpl() {
                                 textAlign = TextAlign.Center,
                                 fontWeight = FontWeight.W300
                             )
+                            if (osd.isEmpty()) viewmodel!!.media?.let {
+                                val filename = it.fileName.lowercase()
+                                if (filename.contains(Regex("(s|season)(\\d{1,2})(e|episode)(\\d{1,2})"))) {
+                                    val season =
+                                        Regex("(s|season)(\\d{1,2})").find(filename)?.groupValues?.get(
+                                            2
+                                        )?.toInt() ?: 0
+                                    val episode =
+                                        Regex("(e|episode)(\\d{1,2})").find(filename)?.groupValues?.get(
+                                            2
+                                        )?.toInt() ?: 0
+                                    Text(
+                                        text = "S${season}E${episode}",
+                                        color = Paletting.SP_PALE,
+                                    )
+                                }
+                            }
                         }
                     }
 
@@ -586,7 +603,12 @@ private fun RoomUIImpl() {
                                     ),
                                     tonalElevation = 0.dp,
                                     shadowElevation = 0.dp,
-                                    border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+                                    border = BorderStroke(
+                                        width = 1.dp,
+                                        brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
+                                            it.copy(alpha = 0.5f)
+                                        })
+                                    ),
                                     shape = RoundedCornerShape(8.dp),
                                     expanded = overflowmenustate.value,
                                     properties = PopupProperties(
@@ -753,7 +775,7 @@ private fun RoomUIImpl() {
                             /** Control card (to control the player) */
                             FreeAnimatedVisibility(
                                 modifier = Modifier.zIndex(10f).wrapContentWidth()
-                                    .align(Alignment.CenterEnd).fillMaxHeight(cardHeight ),
+                                    .align(Alignment.CenterEnd).fillMaxHeight(cardHeight),
                                 enter = expandIn(),
                                 visible = controlcardvisible
                             ) {
@@ -761,8 +783,17 @@ private fun RoomUIImpl() {
                                 Card(
                                     modifier = Modifier.zIndex(10f),
                                     shape = RoundedCornerShape(8.dp),
-                                    border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
-                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.5f)),
+                                    border = BorderStroke(
+                                        width = 1.dp,
+                                        brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
+                                            it.copy(alpha = 0.5f)
+                                        })
+                                    ),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(
+                                            0.5f
+                                        )
+                                    ),
                                 ) {
                                     FlowColumn(
                                         modifier = Modifier.padding(8.dp).fillMaxHeight(),
@@ -850,7 +881,12 @@ private fun RoomUIImpl() {
                                                 ),
                                                 tonalElevation = 0.dp,
                                                 shadowElevation = 0.dp,
-                                                border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+                                                border = BorderStroke(
+                                                    width = 1.dp,
+                                                    brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
+                                                        it.copy(alpha = 0.5f)
+                                                    })
+                                                ),
                                                 shape = RoundedCornerShape(8.dp),
                                                 expanded = tracksPopup.value,
                                                 properties = PopupProperties(
@@ -972,7 +1008,12 @@ private fun RoomUIImpl() {
                                                 ),
                                                 tonalElevation = 0.dp,
                                                 shadowElevation = 0.dp,
-                                                border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+                                                border = BorderStroke(
+                                                    width = 1.dp,
+                                                    brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
+                                                        it.copy(alpha = 0.5f)
+                                                    })
+                                                ),
                                                 shape = RoundedCornerShape(8.dp),
                                                 expanded = tracksPopup.value,
                                                 properties = PopupProperties(
@@ -1045,9 +1086,14 @@ private fun RoomUIImpl() {
                                                     ),
                                                     tonalElevation = 0.dp,
                                                     shadowElevation = 0.dp,
-                                                    border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+                                                    border = BorderStroke(
+                                                        width = 1.dp,
+                                                        brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
+                                                            it.copy(alpha = 0.5f)
+                                                        })
+                                                    ),
                                                     shape = RoundedCornerShape(8.dp),
-                                                        expanded = chaptersPopup,
+                                                    expanded = chaptersPopup,
                                                     properties = PopupProperties(
                                                         dismissOnBackPress = true,
                                                         focusable = true,
@@ -1204,7 +1250,8 @@ private fun RoomUIImpl() {
                                                     viewmodel?.player?.playerScopeIO?.launch {
                                                         val currentMs =
                                                             withContext(Dispatchers.Main) { viewmodel?.player!!.currentPositionMs() }
-                                                        val newPos = (currentMs) + (customSkipAmount * 1000L)
+                                                        val newPos =
+                                                            (currentMs) + (customSkipAmount * 1000L)
 
                                                         sendSeek(newPos)
                                                         viewmodel?.player?.seekTo(newPos)
@@ -1323,7 +1370,12 @@ private fun RoomUIImpl() {
                                 ),
                                 tonalElevation = 0.dp,
                                 shadowElevation = 0.dp,
-                                border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+                                border = BorderStroke(
+                                    width = 1.dp,
+                                    brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
+                                        it.copy(alpha = 0.5f)
+                                    })
+                                ),
                                 shape = RoundedCornerShape(8.dp),
                                 expanded = addmediacardvisible,
                                 properties = PopupProperties(
@@ -1462,13 +1514,13 @@ fun GradientTextField(
                         imageVector = Icons.AutoMirrored.Filled.Send,
                         contentDescription = "",
                         modifier = Modifier.graphicsLayer(alpha = 0.99f).drawWithCache {
-                                onDrawWithContent {
-                                    drawContent()
-                                    drawRect(
-                                        brush = gradientBrush, blendMode = BlendMode.SrcAtop
-                                    )
-                                }
-                            })
+                            onDrawWithContent {
+                                drawContent()
+                                drawRect(
+                                    brush = gradientBrush, blendMode = BlendMode.SrcAtop
+                                )
+                            }
+                        })
                 }
             }
         },
