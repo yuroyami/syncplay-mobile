@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
@@ -64,6 +65,8 @@ import androidx.compose.material.icons.filled.SubtitlesOff
 import androidx.compose.material.icons.filled.Theaters
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.VideoSettings
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -474,8 +477,8 @@ private fun RoomUIImpl() {
                             modifier = Modifier.wrapContentWidth().align(Alignment.TopCenter)
                         ) {
                             if (!isSoloMode) {
+                                val pingo by remember { viewmodel!!.p.ping }
                                 Row(verticalAlignment = CenterVertically) {
-                                    val pingo by remember { viewmodel!!.p.ping }
                                     Text(
 
                                         text = if (pingo == null) lyricist.strings.roomPingDisconnected else lyricist.strings.roomPingConnected(
@@ -492,7 +495,19 @@ private fun RoomUIImpl() {
                                     fontSize = 11.sp,
                                     color = Paletting.OLD_SP_PINK
                                 )
-                                lyricist.strings.roomDetailsCurrentRoom
+                                AnimatedVisibility (pingo == null) {
+                                    Button(
+                                        onClick = {
+                                            viewmodel!!.p.connect()
+                                        },
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color.Red
+                                        ),
+                                        shape = CircleShape
+                                    ) {
+                                        Text(text = "Reconnect", color = Color.White)
+                                    }
+                                }
                             }
 
                             val osd by remember { osdMsg }
