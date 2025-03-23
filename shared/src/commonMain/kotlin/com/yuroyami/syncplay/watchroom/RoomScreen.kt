@@ -468,7 +468,7 @@ private fun RoomUIImpl() {
                     }
 
                     /* Top-Center info: Overall info (PING + ROOMNAME + OSD Messages) */
-                    if (!isSoloMode && !pipModeObserver) {
+                    if (!pipModeObserver) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.wrapContentWidth().align(Alignment.TopCenter)
