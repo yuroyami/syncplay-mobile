@@ -114,6 +114,8 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -124,6 +126,7 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
@@ -226,6 +229,8 @@ private fun RoomUIImpl() {
     val directive = getSyncplayFont()
 
     val composeScope = rememberCoroutineScope { Dispatchers.IO }
+    val density = LocalDensity.current
+
 
     LaunchedEffect(null) {
         /** Starting ping update */
@@ -339,7 +344,7 @@ private fun RoomUIImpl() {
                 remember { if (!isSoloMode) viewmodel!!.p.session.messageSequence else mutableStateListOf() }
             var ready by remember { mutableStateOf(viewmodel!!.setReadyDirectly) }
             var controlcardvisible by remember { mutableStateOf(false) }
-            var addmediacardvisible by remember { mutableStateOf(viewmodel!!.media?.fileName.isNullOrEmpty()&& viewmodel!!.p.session.sharedPlaylist.isEmpty()&& viewmodel!!.p.session.spIndex.value == -1) }
+            var addmediacardvisible by remember { mutableStateOf(viewmodel!!.media?.fileName.isNullOrEmpty() && viewmodel!!.p.session.sharedPlaylist.isEmpty() && viewmodel!!.p.session.spIndex.value == -1) }
 
             val gestures = valueFlow(MISC_GESTURES, true).collectAsState(initial = true)
 
@@ -499,22 +504,20 @@ private fun RoomUIImpl() {
                                     fontSize = 11.sp,
                                     color = Paletting.OLD_SP_PINK
                                 )
-                                AnimatedVisibility (pingo == null && viewmodel!!.p.session.userList.value.isNotEmpty() ) {
+                                AnimatedVisibility(pingo == null && viewmodel!!.p.session.userList.value.isNotEmpty()) {
                                     Button(
                                         onClick = {
                                             viewmodel!!.p.connect()
-                                        },
-                                        colors = ButtonDefaults.buttonColors(
+                                        }, colors = ButtonDefaults.buttonColors(
                                             containerColor = Color.Red
-                                        ),
-                                        shape = CircleShape
+                                        ), shape = CircleShape
                                     ) {
                                         Text(text = "Reconnect", color = Color.White)
                                     }
                                 }
 
 
-                                AnimatedVisibility (pingo == null && viewmodel!!.p.session.userList.value.isNotEmpty() ) {
+                                AnimatedVisibility(pingo == null && viewmodel!!.p.session.userList.value.isNotEmpty()) {
 
                                     Text(
                                         text = "Try changing network engine in Settings > Network to Ktor if you're experiencing connection issues.",
@@ -523,7 +526,8 @@ private fun RoomUIImpl() {
                                         textAlign = TextAlign.Center,
                                         fontSize = 12.sp
                                     )
-                                }}
+                                }
+                            }
 
                             val osd by remember { osdMsg }
                             if (osd.isNotEmpty()) Text(
@@ -1225,6 +1229,11 @@ private fun RoomUIImpl() {
                             }
                         }
 
+                        val chapters = remember(
+                            viewmodel?.media?.fileName
+                        ) { viewmodel?.media?.chapters ?: emptyList() }
+
+
                         /* Bottom-mid row (Slider + seek buttons + timestamps) */
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -1267,15 +1276,19 @@ private fun RoomUIImpl() {
                                         }
                                         val customSkipToFront by PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT.settingBooleanState()
 
+                                        val customSkipAmount by PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT.settingIntState()
                                         if (customSkipToFront) {
-                                            val customSkipAmount by PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT.settingIntState()
                                             val customSkipAmountString by derivedStateOf {
                                                 timeStamper(
                                                     customSkipAmount
                                                 )
                                             }
                                             TextButton(
-                                                modifier = Modifier.gradientOverlay(),
+                                                modifier = Modifier.gradientOverlay().background(
+                                                    brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
+                                                        it.copy(alpha = 0.1f)
+                                                    }), shape = CircleShape
+                                                ),
                                                 onClick = {
                                                     viewmodel?.player?.playerScopeIO?.launch {
                                                         val currentMs =
@@ -1313,6 +1326,40 @@ private fun RoomUIImpl() {
                                                 )
                                             }
                                         }
+
+                                        if (viewmodel?.media?.chapters?.isNotEmpty() == true) {
+                                            TextButton(
+                                                modifier = Modifier.gradientOverlay().background(
+                                                    brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
+                                                        it.copy(alpha = 0.1f)
+                                                    }), shape = CircleShape
+                                                ), onClick = {
+                                                    viewmodel?.player?.playerScopeIO?.launch {
+                                                        val currentMs =
+                                                            withContext(Dispatchers.Main) { viewmodel?.player!!.currentPositionMs() }
+                                                        val nextChapter =
+                                                            viewmodel?.media?.chapters?.filter { it.timestamp > currentMs }
+                                                                ?.minByOrNull { it.timestamp }
+                                                        if (nextChapter != null) {
+                                                            viewmodel?.player?.seekTo(nextChapter.timestamp)
+                                                        } else {
+                                                            // fallback if no chapter is ahead
+                                                            viewmodel?.player?.seekTo(currentMs + (customSkipAmount * 1000L))
+                                                        }
+                                                    }
+                                                }) {
+                                                Icon(
+                                                    imageVector = Icons.Filled.FastForward,
+                                                    contentDescription = null
+                                                )
+                                                Text(
+                                                    modifier = Modifier.padding(start = 4.dp),
+                                                    text = "Skip chapter",
+                                                    fontSize = 12.sp,
+                                                    maxLines = 1
+                                                )
+                                            }
+                                        }
                                     }
                                 }
 
@@ -1324,6 +1371,13 @@ private fun RoomUIImpl() {
                                     modifier = Modifier.alpha(0.85f).gradientOverlay(),
                                 )
 
+                            }
+                            LaunchedEffect(viewmodel?.media?.fileName) {
+                                composeScope.launch {
+                                    viewmodel?.player?.analyzeChapters(
+                                        viewmodel?.media ?: return@launch
+                                    )
+                                }
                             }
                             Slider(
                                 value = slidervalue.toFloat(),
@@ -1358,13 +1412,51 @@ private fun RoomUIImpl() {
                                         modifier = Modifier.alpha(0.6f)
                                     )
                                 },
-                                track = {
-                                    SliderDefaults.Track(
-                                        sliderState = it,
-                                        modifier = Modifier.scale(scaleX = 1F, scaleY = 0.85F),
-                                        thumbTrackGapSize = 0.dp,
-                                        drawStopIndicator = null,
-                                        drawTick = { _, _ -> })
+                                track = { sliderState ->
+                                    // Assuming media duration is available in ms
+                                    val mediaDuration = viewmodel?.media?.fileDuration ?: 1L
+
+                                    // Capture track width
+                                    var trackWidth by remember { mutableStateOf(0) }
+
+                                    Box(
+                                        modifier = Modifier.fillMaxWidth()
+                                            .onSizeChanged { trackWidth = it.width }) {
+                                        // Draw the slider track
+                                        SliderDefaults.Track(
+                                            sliderState = sliderState,
+                                            modifier = Modifier.fillMaxWidth()
+                                                .scale(scaleX = 1F, scaleY = 0.85F),
+                                            thumbTrackGapSize = 0.dp,
+                                            drawStopIndicator = null,
+                                            drawTick = { _, _ -> })
+
+
+                                        chapters.forEach { chapter ->
+                                            if (chapter.timestamp / 1000 != 0L) {
+                                                // Calculate horizontal position fraction based on chapter timestamp
+                                                val positionFraction =
+                                                    (chapter.timestamp / mediaDuration.toFloat()) / 1000
+                                                Box(
+                                                    modifier = Modifier.offset {
+                                                        // 4.dp to pixels
+                                                        val offsetAdjustment =
+                                                            with(density) { 4.dp.toPx() }
+                                                        IntOffset(
+                                                            (positionFraction * trackWidth).toInt() - offsetAdjustment.toInt(),
+                                                            0
+                                                        )
+                                                    }.align(Alignment.CenterStart)
+
+                                                        .size(8.dp).clip(CircleShape)
+                                                        .background(Color.White).clickable {
+                                                            viewmodel?.player?.jumpToChapter(chapter)
+
+                                                        })
+                                            }
+                                        }
+
+                                    }
                                 })
                         }
                     }
@@ -1467,11 +1559,11 @@ private fun RoomUIImpl() {
 
                     /** PLAY BUTTON */
                     val playing = remember { viewmodel!!.isNowPlaying }
-                    val animatedColor by animateColorAsState(animationSpec = tween(500),
-                        targetValue = if (playing.value)
-                            Paletting.SP_GRADIENT.last().copy(alpha = 0.1f)
-                        else
-                            Paletting.SP_GRADIENT.first().copy(alpha = 0.1f)
+                    val animatedColor by animateColorAsState(
+                        animationSpec = tween(500),
+                        targetValue = if (playing.value) Paletting.SP_GRADIENT.last()
+                            .copy(alpha = 0.1f)
+                        else Paletting.SP_GRADIENT.first().copy(alpha = 0.1f)
                     )
                     if (hasVideo.value) {
                         FancyIcon2(
@@ -1481,10 +1573,8 @@ private fun RoomUIImpl() {
                             },
                             size = (ROOM_ICON_SIZE * 2.25).roundToInt(),
                             shadowColor = Color.Black,
-                            modifier = Modifier.align(Alignment.Center)
-                                .background(
-                                shape = CircleShape,
-                                color = animatedColor
+                            modifier = Modifier.align(Alignment.Center).background(
+                                shape = CircleShape, color = animatedColor
                             )
                         ) {
                             composeScope.launch(Dispatchers.Main) {
