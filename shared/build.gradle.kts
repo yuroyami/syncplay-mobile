@@ -136,7 +136,7 @@ kotlin {
 
             /* Network and TLS */
             api("io.netty:netty-all:4.1.112.Final")
-            api("org.conscrypt:conscrypt-android:2.5.2") //TLSv1.3 with backward compatibility
+            api("org.conscrypt:conscrypt-android:2.5.3") //TLSv1.3 with backward compatibility
 
             /* Video player engine: Media3 (ExoPlayer and its extensions) */
             val media3 = "1.6.0-rc02"

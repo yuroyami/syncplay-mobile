@@ -7,7 +7,7 @@ plugins {
 
     id("org.jetbrains.kotlin.plugin.compose") version kotlin apply false
 
-    val agp = "8.10.0-beta01"
+    val agp = "8.11.0-alpha02"
     id("com.android.application") version agp apply false
     id("com.android.library") version agp apply false
 
