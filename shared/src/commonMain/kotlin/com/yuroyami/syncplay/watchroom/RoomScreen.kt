@@ -1,6 +1,8 @@
 package com.yuroyami.syncplay.watchroom
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -1452,6 +1454,12 @@ private fun RoomUIImpl() {
 
                     /** PLAY BUTTON */
                     val playing = remember { viewmodel!!.isNowPlaying }
+                    val animatedColor by animateColorAsState(animationSpec = tween(500),
+                        targetValue = if (playing.value)
+                            Paletting.SP_GRADIENT.last().copy(alpha = 0.1f)
+                        else
+                            Paletting.SP_GRADIENT.first().copy(alpha = 0.1f)
+                    )
                     if (hasVideo.value) {
                         FancyIcon2(
                             icon = when (playing.value) {
@@ -1461,6 +1469,10 @@ private fun RoomUIImpl() {
                             size = (ROOM_ICON_SIZE * 2.25).roundToInt(),
                             shadowColor = Color.Black,
                             modifier = Modifier.align(Alignment.Center)
+                                .background(
+                                shape = CircleShape,
+                                color = animatedColor
+                            )
                         ) {
                             composeScope.launch(Dispatchers.Main) {
                                 if (viewmodel?.player?.isPlaying() == true) {
