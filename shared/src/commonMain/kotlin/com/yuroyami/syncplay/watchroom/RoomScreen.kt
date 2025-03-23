@@ -337,7 +337,7 @@ private fun RoomUIImpl() {
                 remember { if (!isSoloMode) viewmodel!!.p.session.messageSequence else mutableStateListOf() }
             var ready by remember { mutableStateOf(viewmodel!!.setReadyDirectly) }
             var controlcardvisible by remember { mutableStateOf(false) }
-            var addmediacardvisible by remember { mutableStateOf(false) }
+            var addmediacardvisible by remember { mutableStateOf(viewmodel!!.media?.fileName.isNullOrEmpty()&& viewmodel!!.p.session.sharedPlaylist.isEmpty()&& viewmodel!!.p.session.spIndex.value == -1) }
 
             val gestures = valueFlow(MISC_GESTURES, true).collectAsState(initial = true)
 
