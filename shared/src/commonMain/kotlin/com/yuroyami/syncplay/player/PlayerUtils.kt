@@ -15,14 +15,14 @@ object PlayerUtils {
 
     /** This pauses playback on the main (necessary) thread **/
     fun pausePlayback() {
-        if (viewmodel?.background == true) return;
+        if (viewmodel?.background == true) return
         viewmodel?.player?.pause()
         viewmodel?.roomCallback?.onPlayback(true)
     }
 
     /** This resumes playback on the main thread, and hides system UI **/
     fun playPlayback() {
-        if (viewmodel?.background == true) return;
+        if (viewmodel?.background == true) return
         viewmodel?.player?.play()
         viewmodel?.roomCallback?.onPlayback(false)
     }
@@ -31,10 +31,15 @@ object PlayerUtils {
         viewmodel?.player?.playerScopeIO?.launch {
             val dec = valueSuspendingly(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP, 10)
 
-            val currentMs = withContext(Dispatchers.Main) { viewmodel?.player!!.currentPositionMs() }
-            var newPos = (currentMs) - (dec * 1000L)
+            val currentMs =
+                withContext(Dispatchers.Main) { viewmodel?.player!!.currentPositionMs() }
+            var newPos = ((currentMs) - (dec * 1000L)).coerceIn(
+                0, viewmodel?.media?.fileDuration?.toLong()?.times(1000L) ?: 0
+            )
 
-            if (newPos < 0) { newPos = 0 }
+            if (newPos < 0) {
+                newPos = 0
+            }
 
             RoomUtils.sendSeek(newPos)
             viewmodel?.player?.seekTo(newPos)
@@ -49,15 +54,15 @@ object PlayerUtils {
         viewmodel?.player?.playerScopeIO?.launch {
             val inc = valueSuspendingly(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP, 10)
 
-            val currentMs = withContext(Dispatchers.Main) { viewmodel?.player!!.currentPositionMs() }
-            val newPos = (currentMs) + (inc * 1000L)
-//            if (media != null) {
-//                if (newPos > media?.fileDuration!!.toLong()) {
-//                    newPos = media?.fileDuration!!.toLong()
-//                }
-//            }
+            val currentMs =
+                withContext(Dispatchers.Main) { viewmodel?.player!!.currentPositionMs() }
+            val newPos = ((currentMs) + (inc * 1000L)).coerceIn(
+                0,
+                viewmodel?.media?.fileDuration?.toLong()?.times(1000L) ?: 0
+            )
+
             RoomUtils.sendSeek(newPos)
-             viewmodel?.player?.seekTo(newPos)
+            viewmodel?.player?.seekTo(newPos)
 
             if (isSoloMode) {
                 viewmodel?.seeks?.add(Pair((currentMs), newPos * 1000))

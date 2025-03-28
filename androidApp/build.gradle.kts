@@ -1,3 +1,5 @@
+import org.gradle.kotlin.dsl.coreLibraryDesugaring
+
 plugins {
     id("org.jetbrains.kotlin.android")
     id("com.android.application")
@@ -68,6 +70,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions {
         jvmTarget = "17"
@@ -127,5 +130,7 @@ android {
 dependencies {
     implementation(projects.shared)
     implementation(files("libs/ext.aar")) /* ExoPlayer's FFmpeg extension  */
+    coreLibraryDesugaring ("com.android.tools:desugar_jdk_libs:2.1.5")
+
 }
 

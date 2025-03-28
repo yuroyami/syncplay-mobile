@@ -1,6 +1,8 @@
 package com.yuroyami.syncplay.watchroom
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowColumn
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -26,10 +29,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
@@ -64,6 +69,8 @@ import androidx.compose.material.icons.filled.SubtitlesOff
 import androidx.compose.material.icons.filled.Theaters
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.VideoSettings
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -107,6 +114,8 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -117,6 +126,7 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
@@ -219,6 +229,8 @@ private fun RoomUIImpl() {
     val directive = getSyncplayFont()
 
     val composeScope = rememberCoroutineScope { Dispatchers.IO }
+    val density = LocalDensity.current
+
 
     LaunchedEffect(null) {
         /** Starting ping update */
@@ -332,7 +344,7 @@ private fun RoomUIImpl() {
                 remember { if (!isSoloMode) viewmodel!!.p.session.messageSequence else mutableStateListOf() }
             var ready by remember { mutableStateOf(viewmodel!!.setReadyDirectly) }
             var controlcardvisible by remember { mutableStateOf(false) }
-            var addmediacardvisible by remember { mutableStateOf(false) }
+            var addmediacardvisible by remember { mutableStateOf(viewmodel!!.media?.fileName.isNullOrEmpty() && viewmodel!!.p.session.sharedPlaylist.isEmpty() && viewmodel!!.p.session.spIndex.value == -1) }
 
             val gestures = valueFlow(MISC_GESTURES, true).collectAsState(initial = true)
 
@@ -468,14 +480,14 @@ private fun RoomUIImpl() {
                     }
 
                     /* Top-Center info: Overall info (PING + ROOMNAME + OSD Messages) */
-                    if (!isSoloMode && !pipModeObserver) {
+                    if (!pipModeObserver) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.wrapContentWidth().align(Alignment.TopCenter)
                         ) {
                             if (!isSoloMode) {
+                                val pingo by remember { viewmodel!!.p.ping }
                                 Row(verticalAlignment = CenterVertically) {
-                                    val pingo by remember { viewmodel!!.p.ping }
                                     Text(
 
                                         text = if (pingo == null) lyricist.strings.roomPingDisconnected else lyricist.strings.roomPingConnected(
@@ -492,11 +504,33 @@ private fun RoomUIImpl() {
                                     fontSize = 11.sp,
                                     color = Paletting.OLD_SP_PINK
                                 )
-                                lyricist.strings.roomDetailsCurrentRoom
+                                AnimatedVisibility(pingo == null && viewmodel!!.p.session.userList.value.isNotEmpty()) {
+                                    Button(
+                                        onClick = {
+                                            viewmodel!!.p.connect()
+                                        }, colors = ButtonDefaults.buttonColors(
+                                            containerColor = Color.Red
+                                        ), shape = CircleShape
+                                    ) {
+                                        Text(text = "Reconnect", color = Color.White)
+                                    }
+                                }
+
+
+                                AnimatedVisibility(pingo == null && viewmodel!!.p.session.userList.value.isNotEmpty()) {
+
+                                    Text(
+                                        text = "Try changing network engine in Settings > Network to Ktor if you're experiencing connection issues.",
+                                        color = Color.White,
+                                        modifier = Modifier.fillMaxWidth(0.3f),
+                                        textAlign = TextAlign.Center,
+                                        fontSize = 12.sp
+                                    )
+                                }
                             }
 
                             val osd by remember { osdMsg }
-                            Text(
+                            if (osd.isNotEmpty()) Text(
                                 modifier = Modifier.fillMaxWidth(0.3f),
                                 fontSize = 11.sp,
                                 lineHeight = (Paletting.USER_INFO_TXT_SIZE + 4).sp,
@@ -505,6 +539,23 @@ private fun RoomUIImpl() {
                                 textAlign = TextAlign.Center,
                                 fontWeight = FontWeight.W300
                             )
+                            if (osd.isEmpty()) viewmodel!!.media?.let {
+                                val filename = it.fileName.lowercase()
+                                if (filename.contains(Regex("(s|season)(\\d{1,2})(e|episode)(\\d{1,2})"))) {
+                                    val season =
+                                        Regex("(s|season)(\\d{1,2})").find(filename)?.groupValues?.get(
+                                            2
+                                        )?.toInt() ?: 0
+                                    val episode =
+                                        Regex("(e|episode)(\\d{1,2})").find(filename)?.groupValues?.get(
+                                            2
+                                        )?.toInt() ?: 0
+                                    Text(
+                                        text = "S${season}E${episode}",
+                                        color = Paletting.SP_PALE,
+                                    )
+                                }
+                            }
                         }
                     }
 
@@ -586,7 +637,12 @@ private fun RoomUIImpl() {
                                     ),
                                     tonalElevation = 0.dp,
                                     shadowElevation = 0.dp,
-                                    border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+                                    border = BorderStroke(
+                                        width = 1.dp,
+                                        brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
+                                            it.copy(alpha = 0.5f)
+                                        })
+                                    ),
                                     shape = RoundedCornerShape(8.dp),
                                     expanded = overflowmenustate.value,
                                     properties = PopupProperties(
@@ -753,7 +809,7 @@ private fun RoomUIImpl() {
                             /** Control card (to control the player) */
                             FreeAnimatedVisibility(
                                 modifier = Modifier.zIndex(10f).wrapContentWidth()
-                                    .align(Alignment.CenterEnd).fillMaxHeight(cardHeight ),
+                                    .align(Alignment.CenterEnd).fillMaxHeight(cardHeight),
                                 enter = expandIn(),
                                 visible = controlcardvisible
                             ) {
@@ -761,8 +817,17 @@ private fun RoomUIImpl() {
                                 Card(
                                     modifier = Modifier.zIndex(10f),
                                     shape = RoundedCornerShape(8.dp),
-                                    border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
-                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.5f)),
+                                    border = BorderStroke(
+                                        width = 1.dp,
+                                        brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
+                                            it.copy(alpha = 0.5f)
+                                        })
+                                    ),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(
+                                            0.5f
+                                        )
+                                    ),
                                 ) {
                                     FlowColumn(
                                         modifier = Modifier.padding(8.dp).fillMaxHeight(),
@@ -850,7 +915,12 @@ private fun RoomUIImpl() {
                                                 ),
                                                 tonalElevation = 0.dp,
                                                 shadowElevation = 0.dp,
-                                                border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+                                                border = BorderStroke(
+                                                    width = 1.dp,
+                                                    brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
+                                                        it.copy(alpha = 0.5f)
+                                                    })
+                                                ),
                                                 shape = RoundedCornerShape(8.dp),
                                                 expanded = tracksPopup.value,
                                                 properties = PopupProperties(
@@ -972,7 +1042,12 @@ private fun RoomUIImpl() {
                                                 ),
                                                 tonalElevation = 0.dp,
                                                 shadowElevation = 0.dp,
-                                                border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+                                                border = BorderStroke(
+                                                    width = 1.dp,
+                                                    brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
+                                                        it.copy(alpha = 0.5f)
+                                                    })
+                                                ),
                                                 shape = RoundedCornerShape(8.dp),
                                                 expanded = tracksPopup.value,
                                                 properties = PopupProperties(
@@ -1045,9 +1120,14 @@ private fun RoomUIImpl() {
                                                     ),
                                                     tonalElevation = 0.dp,
                                                     shadowElevation = 0.dp,
-                                                    border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+                                                    border = BorderStroke(
+                                                        width = 1.dp,
+                                                        brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
+                                                            it.copy(alpha = 0.5f)
+                                                        })
+                                                    ),
                                                     shape = RoundedCornerShape(8.dp),
-                                                        expanded = chaptersPopup,
+                                                    expanded = chaptersPopup,
                                                     properties = PopupProperties(
                                                         dismissOnBackPress = true,
                                                         focusable = true,
@@ -1149,6 +1229,11 @@ private fun RoomUIImpl() {
                             }
                         }
 
+                        val chapters = remember(
+                            viewmodel?.media?.fileName
+                        ) { viewmodel?.media?.chapters ?: emptyList() }
+
+
                         /* Bottom-mid row (Slider + seek buttons + timestamps) */
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -1191,20 +1276,25 @@ private fun RoomUIImpl() {
                                         }
                                         val customSkipToFront by PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT.settingBooleanState()
 
+                                        val customSkipAmount by PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT.settingIntState()
                                         if (customSkipToFront) {
-                                            val customSkipAmount by PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT.settingIntState()
                                             val customSkipAmountString by derivedStateOf {
                                                 timeStamper(
                                                     customSkipAmount
                                                 )
                                             }
                                             TextButton(
-                                                modifier = Modifier.gradientOverlay(),
+                                                modifier = Modifier.gradientOverlay().background(
+                                                    brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
+                                                        it.copy(alpha = 0.1f)
+                                                    }), shape = CircleShape
+                                                ),
                                                 onClick = {
                                                     viewmodel?.player?.playerScopeIO?.launch {
                                                         val currentMs =
                                                             withContext(Dispatchers.Main) { viewmodel?.player!!.currentPositionMs() }
-                                                        val newPos = (currentMs) + (customSkipAmount * 1000L)
+                                                        val newPos =
+                                                            (currentMs) + (customSkipAmount * 1000L)
 
                                                         sendSeek(newPos)
                                                         viewmodel?.player?.seekTo(newPos)
@@ -1236,6 +1326,40 @@ private fun RoomUIImpl() {
                                                 )
                                             }
                                         }
+
+                                        if (viewmodel?.media?.chapters?.isNotEmpty() == true) {
+                                            TextButton(
+                                                modifier = Modifier.gradientOverlay().background(
+                                                    brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
+                                                        it.copy(alpha = 0.1f)
+                                                    }), shape = CircleShape
+                                                ), onClick = {
+                                                    viewmodel?.player?.playerScopeIO?.launch {
+                                                        val currentMs =
+                                                            withContext(Dispatchers.Main) { viewmodel?.player!!.currentPositionMs() }
+                                                        val nextChapter =
+                                                            viewmodel?.media?.chapters?.filter { it.timestamp > currentMs }
+                                                                ?.minByOrNull { it.timestamp }
+                                                        if (nextChapter != null) {
+                                                            viewmodel?.player?.seekTo(nextChapter.timestamp)
+                                                        } else {
+                                                            // fallback if no chapter is ahead
+                                                            viewmodel?.player?.seekTo(currentMs + (customSkipAmount * 1000L))
+                                                        }
+                                                    }
+                                                }) {
+                                                Icon(
+                                                    imageVector = Icons.Filled.FastForward,
+                                                    contentDescription = null
+                                                )
+                                                Text(
+                                                    modifier = Modifier.padding(start = 4.dp),
+                                                    text = "Skip chapter",
+                                                    fontSize = 12.sp,
+                                                    maxLines = 1
+                                                )
+                                            }
+                                        }
                                     }
                                 }
 
@@ -1247,6 +1371,13 @@ private fun RoomUIImpl() {
                                     modifier = Modifier.alpha(0.85f).gradientOverlay(),
                                 )
 
+                            }
+                            LaunchedEffect(viewmodel?.media?.fileName) {
+                                composeScope.launch {
+                                    viewmodel?.player?.analyzeChapters(
+                                        viewmodel?.media ?: return@launch
+                                    )
+                                }
                             }
                             Slider(
                                 value = slidervalue.toFloat(),
@@ -1281,13 +1412,51 @@ private fun RoomUIImpl() {
                                         modifier = Modifier.alpha(0.6f)
                                     )
                                 },
-                                track = {
-                                    SliderDefaults.Track(
-                                        sliderState = it,
-                                        modifier = Modifier.scale(scaleX = 1F, scaleY = 0.85F),
-                                        thumbTrackGapSize = 0.dp,
-                                        drawStopIndicator = null,
-                                        drawTick = { _, _ -> })
+                                track = { sliderState ->
+                                    // Assuming media duration is available in ms
+                                    val mediaDuration = viewmodel?.media?.fileDuration ?: 1L
+
+                                    // Capture track width
+                                    var trackWidth by remember { mutableStateOf(0) }
+
+                                    Box(
+                                        modifier = Modifier.fillMaxWidth()
+                                            .onSizeChanged { trackWidth = it.width }) {
+                                        // Draw the slider track
+                                        SliderDefaults.Track(
+                                            sliderState = sliderState,
+                                            modifier = Modifier.fillMaxWidth()
+                                                .scale(scaleX = 1F, scaleY = 0.85F),
+                                            thumbTrackGapSize = 0.dp,
+                                            drawStopIndicator = null,
+                                            drawTick = { _, _ -> })
+
+
+                                        chapters.forEach { chapter ->
+                                            if (chapter.timestamp / 1000 != 0L) {
+                                                // Calculate horizontal position fraction based on chapter timestamp
+                                                val positionFraction =
+                                                    (chapter.timestamp / mediaDuration.toFloat()) / 1000
+                                                Box(
+                                                    modifier = Modifier.offset {
+                                                        // 4.dp to pixels
+                                                        val offsetAdjustment =
+                                                            with(density) { 4.dp.toPx() }
+                                                        IntOffset(
+                                                            (positionFraction * trackWidth).toInt() - offsetAdjustment.toInt(),
+                                                            0
+                                                        )
+                                                    }.align(Alignment.CenterStart)
+
+                                                        .size(8.dp).clip(CircleShape)
+                                                        .background(Color.White).clickable {
+                                                            viewmodel?.player?.jumpToChapter(chapter)
+
+                                                        })
+                                            }
+                                        }
+
+                                    }
                                 })
                         }
                     }
@@ -1323,7 +1492,12 @@ private fun RoomUIImpl() {
                                 ),
                                 tonalElevation = 0.dp,
                                 shadowElevation = 0.dp,
-                                border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+                                border = BorderStroke(
+                                    width = 1.dp,
+                                    brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
+                                        it.copy(alpha = 0.5f)
+                                    })
+                                ),
                                 shape = RoundedCornerShape(8.dp),
                                 expanded = addmediacardvisible,
                                 properties = PopupProperties(
@@ -1385,6 +1559,12 @@ private fun RoomUIImpl() {
 
                     /** PLAY BUTTON */
                     val playing = remember { viewmodel!!.isNowPlaying }
+                    val animatedColor by animateColorAsState(
+                        animationSpec = tween(500),
+                        targetValue = if (playing.value) Paletting.SP_GRADIENT.last()
+                            .copy(alpha = 0.1f)
+                        else Paletting.SP_GRADIENT.first().copy(alpha = 0.1f)
+                    )
                     if (hasVideo.value) {
                         FancyIcon2(
                             icon = when (playing.value) {
@@ -1393,7 +1573,9 @@ private fun RoomUIImpl() {
                             },
                             size = (ROOM_ICON_SIZE * 2.25).roundToInt(),
                             shadowColor = Color.Black,
-                            modifier = Modifier.align(Alignment.Center)
+                            modifier = Modifier.align(Alignment.Center).background(
+                                shape = CircleShape, color = animatedColor
+                            )
                         ) {
                             composeScope.launch(Dispatchers.Main) {
                                 if (viewmodel?.player?.isPlaying() == true) {
@@ -1462,13 +1644,13 @@ fun GradientTextField(
                         imageVector = Icons.AutoMirrored.Filled.Send,
                         contentDescription = "",
                         modifier = Modifier.graphicsLayer(alpha = 0.99f).drawWithCache {
-                                onDrawWithContent {
-                                    drawContent()
-                                    drawRect(
-                                        brush = gradientBrush, blendMode = BlendMode.SrcAtop
-                                    )
-                                }
-                            })
+                            onDrawWithContent {
+                                drawContent()
+                                drawRect(
+                                    brush = gradientBrush, blendMode = BlendMode.SrcAtop
+                                )
+                            }
+                        })
                 }
             }
         },

@@ -1,5 +1,7 @@
 package com.yuroyami.syncplay.home
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.BorderStroke
@@ -25,18 +27,24 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Redo
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Api
 import androidx.compose.material.icons.filled.BookmarkAdd
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MeetingRoom
 import androidx.compose.material.icons.filled.PersonPin
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Widgets
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgeDefaults
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -62,6 +70,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -74,6 +83,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -99,6 +109,7 @@ import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_NIGHTMODE
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_PLAYER_ENGINE
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_SP_MEDIA_DIRS
 import com.yuroyami.syncplay.settings.SettingCategory
 import com.yuroyami.syncplay.settings.SettingsUI
 import com.yuroyami.syncplay.settings.sgGLOBAL
@@ -123,7 +134,8 @@ import syncplaymobile.shared.generated.resources.swift
 import syncplaymobile.shared.generated.resources.syncplay_logo_gradient
 import syncplaymobile.shared.generated.resources.vlc
 
-private val LocalGlobalSettings = staticCompositionLocalOf<List<SettingCategory>> {  error("No Global Settings provided") }
+private val LocalGlobalSettings =
+    staticCompositionLocalOf<List<SettingCategory>> { error("No Global Settings provided") }
 lateinit var snacky: SnackbarHostState
 
 /** This is what previously used to be HomeActivity before we migrated towards KMM.*/
@@ -161,27 +173,32 @@ fun HomeScreen(savedConfig: HomeConfig) {
                 /* The top bar contains a syncplay logo, text, nightmode toggle button, and a setting button + its screen */
                 topBar = {
                     Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth()
                             //.wrapContentHeight()
                             .background(color = Color.Transparent /* Paletting.BG_DARK_1 */),
-                        shape = RoundedCornerShape(topEnd = 0.dp, topStart = 0.dp, bottomEnd = 12.dp, bottomStart = 12.dp),
+                        shape = RoundedCornerShape(
+                            topEnd = 0.dp, topStart = 0.dp, bottomEnd = 12.dp, bottomStart = 12.dp
+                        ),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
                         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 12.dp),
                     ) {
                         /* Settings Button */
                         val settingState = remember { mutableIntStateOf(0) }
 
-                        Column(horizontalAlignment = CenterHorizontally) {
+                        Column(
+                            horizontalAlignment = CenterHorizontally,
+                            modifier = Modifier.animateContentSize()
+                        ) {
                             ListItem(
-                                modifier = Modifier.fillMaxWidth()
-                                    .padding(bottom = 12.dp, top = (TopAppBarDefaults.windowInsets.asPaddingValues().calculateTopPadding() + 12.dp)),
+                                modifier = Modifier.fillMaxWidth().padding(
+                                    top = (TopAppBarDefaults.windowInsets.asPaddingValues()
+                                        .calculateTopPadding())
+                                ),
                                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                                 trailingContent = {
                                     Row(verticalAlignment = CenterVertically) {
                                         NightModeToggler(
-                                            modifier = Modifier.size(58.dp),
-                                            state = nightMode
+                                            modifier = Modifier.size(58.dp), state = nightMode
                                         )
 
                                         IconButton(
@@ -212,7 +229,8 @@ fun HomeScreen(savedConfig: HomeConfig) {
                                                         else -> Icons.AutoMirrored.Filled.Redo
                                                     },
                                                     contentDescription = "",
-                                                    modifier = Modifier.size(30.dp).gradientOverlay(),
+                                                    modifier = Modifier.size(30.dp)
+                                                        .gradientOverlay(),
                                                 )
                                             }
                                         }
@@ -221,17 +239,25 @@ fun HomeScreen(savedConfig: HomeConfig) {
 
                                 /* Syncplay Header (logo + text) */
                                 headlineContent = {
-                                    Row(modifier = Modifier.clickable(
-                                        enabled = true,
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = ripple(
-                                            bounded = false,
-                                            color = Color(100, 100, 100, 200)
-                                        )
-                                    ) { aboutpopupState.value = true }
+                                    Row(
+                                        modifier = Modifier.clip(CircleShape).background(
+                                            brush = Brush.linearGradient(
+                                                colors = listOf(
+                                                    Paletting.SP_GRADIENT.first().copy(0.05f),
+                                                    Paletting.SP_GRADIENT.last().copy(0.05f)
+                                                )
+                                            )
+                                        ).clickable(
+                                            enabled = true,
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = ripple(
+                                                bounded = false, color = Color(100, 100, 100, 200)
+                                            )
+                                        ) { aboutpopupState.value = true }.padding(16.dp)
                                     ) {
                                         Image(
-                                            imageVector = vectorResource(Res.drawable.syncplay_logo_gradient), contentDescription = "",
+                                            imageVector = vectorResource(Res.drawable.syncplay_logo_gradient),
+                                            contentDescription = "",
                                             modifier = Modifier.height(32.dp).aspectRatio(1f)
                                         )
 
@@ -259,8 +285,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
                                             )
 
                                             Text(
-                                                text = "Syncplay",
-                                                style = TextStyle(
+                                                text = "Syncplay", style = TextStyle(
                                                     brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT),
                                                     fontFamily = FontFamily(Font(Res.font.Directive4_Regular)),
                                                     fontSize = 24.sp,
@@ -269,12 +294,10 @@ fun HomeScreen(savedConfig: HomeConfig) {
                                         }
                                     }
                                 },
-                            )
-                            /* Settings */
+                            )/* Settings */
 
                             androidx.compose.animation.AnimatedVisibility(
-                                modifier = Modifier
-                                    .fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth(),
                                 visible = settingState.intValue != 0,
                                 enter = scaleIn(),
                                 exit = scaleOut()
@@ -285,9 +308,26 @@ fun HomeScreen(savedConfig: HomeConfig) {
                                     state = settingState,
                                     onCardClicked = {
                                         settingState.intValue = 2
-                                    }
-                                )
+                                    })
                             }
+                            val dirs = valueFlow(
+                                PREF_SP_MEDIA_DIRS,
+                                emptySet<String>()
+                            ).collectAsState(initial = emptySet())
+                            var loaded by remember { mutableStateOf(false) }
+                            LaunchedEffect(Unit) {
+                                loaded = true
+                            }
+                            AnimatedVisibility(dirs.value.isEmpty() && loaded && settingState.intValue != 2) {
+                                Text(
+                                    modifier = Modifier.fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp)).clickable{
+                                            settingState.intValue = 2
+                                        }.padding(16.dp),
+                                    text = "Don't forget to set default media directories in Settings > General > Media Directories for Shared Playlist!",
+                                    style = TextStyle(
+                                        color = MaterialTheme.colorScheme.onSurface,)
+                                )}
                         }
                     }
                 },
@@ -295,8 +335,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
                 /* The actual content of the log-in screen */
                 content = { paddingValues ->
                     Column(
-                        modifier = Modifier
-                            .fillMaxSize()
+                        modifier = Modifier.fillMaxSize()
                             .windowInsetsPadding(BottomAppBarDefaults.windowInsets)
                             .verticalScroll(rememberScrollState()),
                         horizontalAlignment = CenterHorizontally,
@@ -354,7 +393,11 @@ fun HomeScreen(savedConfig: HomeConfig) {
                                     modifier = Modifier.gradientOverlay(),
                                     singleLine = true,
                                     label = { Text(lyricist.strings.connectUsernameB) },
-                                    leadingIcon = { Icon(imageVector = Icons.Filled.PersonPin, "") },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Filled.PersonPin, ""
+                                        )
+                                    },
                                     supportingText = { /* Text(stringResource(R.string.connect_username_c), fontSize = 10.sp) */ },
                                     keyboardActions = KeyboardActions(onDone = {
                                         focusManager.moveFocus(focusDirection = FocusDirection.Next)
@@ -369,9 +412,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
 
                         /* Roomname */
                         Column(
-                            modifier = Modifier
-                                .wrapContentHeight()
-                                .fillMaxWidth(),
+                            modifier = Modifier.wrapContentHeight().fillMaxWidth(),
                             horizontalAlignment = CenterHorizontally,
                         ) {
 
@@ -407,7 +448,11 @@ fun HomeScreen(savedConfig: HomeConfig) {
                                     modifier = Modifier.gradientOverlay(),
                                     singleLine = true,
                                     label = { Text(lyricist.strings.connectRoomnameB) },
-                                    leadingIcon = { Icon(imageVector = Icons.Filled.MeetingRoom, "") },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Filled.MeetingRoom, ""
+                                        )
+                                    },
                                     supportingText = { /* Text(stringResource(R.string.connect_roomname_c), fontSize = 10.sp) */ },
                                     keyboardActions = KeyboardActions(onDone = {
                                         focusManager.moveFocus(focusDirection = FocusDirection.Next)
@@ -421,9 +466,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
                         val expanded = remember { mutableStateOf(false) }
 
                         Column(
-                            modifier = Modifier
-                                .wrapContentHeight()
-                                .fillMaxWidth(),
+                            modifier = Modifier.wrapContentHeight().fillMaxWidth(),
                             horizontalAlignment = CenterHorizontally,
                         ) {
                             FlexibleFancyText(
@@ -440,11 +483,9 @@ fun HomeScreen(savedConfig: HomeConfig) {
 
 
                             ExposedDropdownMenuBox(
-                                expanded = expanded.value,
-                                onExpandedChange = {
+                                expanded = expanded.value, onExpandedChange = {
                                     expanded.value = !expanded.value
-                                }
-                            ) {
+                                }) {
                                 Box {
                                     OutlinedTextField(
                                         modifier = Modifier.focusable(false),
@@ -460,43 +501,47 @@ fun HomeScreen(savedConfig: HomeConfig) {
                                         onValueChange = { },
                                     )
                                     OutlinedTextField(
-                                        modifier = Modifier
-                                            .menuAnchor()
-                                            .gradientOverlay(),
+                                        modifier = Modifier.menuAnchor().gradientOverlay(),
                                         singleLine = true,
                                         readOnly = true,
-                                        value = selectedServer.replace("151.80.32.178", "syncplay.pl"),
+                                        value = selectedServer.replace(
+                                            "151.80.32.178", "syncplay.pl"
+                                        ),
                                         supportingText = { /* Text(stringResource(R.string.connect_server_c), fontSize = 9.sp) */ },
                                         onValueChange = { },
-                                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded.value) }
-                                    )
+                                        trailingIcon = {
+                                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded.value)
+                                        })
                                 }
                                 ExposedDropdownMenu(
                                     modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
                                     expanded = expanded.value,
                                     onDismissRequest = {
                                         expanded.value = false
-                                    }
-                                ) {
+                                    }) {
                                     servers.forEach { server ->
-                                        DropdownMenuItem(
-                                            text = { Text(server.replace("151.80.32.178", "syncplay.pl"), color = Color.White) },
-                                            onClick = {
-                                                selectedServer = server
-                                                expanded.value = false
+                                        DropdownMenuItem(text = {
+                                            Text(
+                                                server.replace(
+                                                    "151.80.32.178", "syncplay.pl"
+                                                ), color = Color.White
+                                            )
+                                        }, onClick = {
+                                            selectedServer = server
+                                            expanded.value = false
 
-                                                if (server != servers[5]) {
-                                                    serverAddress = "syncplay.pl"
-                                                    serverPort = selectedServer.substringAfter("syncplay.pl:")
-                                                    serverIsPublic = true
-                                                    serverPassword = ""
-                                                } else {
-                                                    serverIsPublic = false
-                                                    serverAddress = ""
-                                                    serverPort = ""
-                                                }
+                                            if (server != servers[5]) {
+                                                serverAddress = "syncplay.pl"
+                                                serverPort =
+                                                    selectedServer.substringAfter("syncplay.pl:")
+                                                serverIsPublic = true
+                                                serverPassword = ""
+                                            } else {
+                                                serverIsPublic = false
+                                                serverAddress = ""
+                                                serverPort = ""
                                             }
-                                        )
+                                        })
                                     }
                                 }
                             }
@@ -504,7 +549,10 @@ fun HomeScreen(savedConfig: HomeConfig) {
                             Spacer(modifier = Modifier.height(12.dp))
 
                             if (!serverIsPublic) {
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceEvenly
+                                ) {
                                     TextField(
                                         modifier = Modifier.fillMaxWidth(0.5f),
                                         shape = RoundedCornerShape(16.dp),
@@ -561,8 +609,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
                                         ),
                                         label = {
                                             Text("Port", color = Color.Gray)
-                                        }
-                                    )
+                                        })
                                 }
 
                                 Spacer(modifier = Modifier.height(10.dp))
@@ -603,13 +650,17 @@ fun HomeScreen(savedConfig: HomeConfig) {
 
                         /* Buttons */
                         val defaultEngine = remember { getDefaultEngine() }
-                        val player = valueFlow(MISC_PLAYER_ENGINE, defaultEngine).collectAsState(initial = defaultEngine)
+                        val player = valueFlow(
+                            MISC_PLAYER_ENGINE, defaultEngine
+                        ).collectAsState(initial = defaultEngine)
 
                         Column(horizontalAlignment = CenterHorizontally) {
                             Row(horizontalArrangement = Arrangement.Center) {
                                 /* shortcut button */
                                 Button(
-                                    border = BorderStroke(width = 2.dp, color = MaterialTheme.colorScheme.primary),
+                                    border = BorderStroke(
+                                        width = 2.dp, color = MaterialTheme.colorScheme.primary
+                                    ),
                                     modifier = Modifier.height(54.dp).aspectRatio(1.6f),
                                     shape = RoundedCornerShape(25),
                                     onClick = {
@@ -622,19 +673,37 @@ fun HomeScreen(savedConfig: HomeConfig) {
                                                 serverPassword
                                             )
                                         )
+                                    }) {
+                                    BadgedBox(
+                                        badge = {
+                                            Badge(
+                                                modifier = Modifier.padding(8.dp),
+                                                containerColor = BadgeDefaults.containerColor.copy(0.5f)
+                                            ) {
+
+                                                Icon(
+                                                    imageVector = Icons.Filled.Add,
+                                                    "",
+                                                    modifier = Modifier.fillMaxSize()
+                                                )
+                                            }
+                                        }) {
+
+                                        Icon(
+                                            imageVector = Icons.Filled.Widgets,
+                                            "",
+                                            modifier = Modifier.fillMaxSize()
+                                        )
                                     }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.BookmarkAdd, "",
-                                        modifier = Modifier.fillMaxSize()
-                                    )
                                 }
 
                                 Spacer(modifier = Modifier.width(10.dp))
 
 
                                 Button(
-                                    border = BorderStroke(width = 2.dp, color = MaterialTheme.colorScheme.primary),
+                                    border = BorderStroke(
+                                        width = 2.dp, color = MaterialTheme.colorScheme.primary
+                                    ),
                                     modifier = Modifier.height(54.dp).aspectRatio(1.6f),
                                     shape = RoundedCornerShape(25),
                                     onClick = {
@@ -642,12 +711,12 @@ fun HomeScreen(savedConfig: HomeConfig) {
                                             if (defaultEngine != BasePlayer.ENGINE.ANDROID_EXOPLAYER.name) {
                                                 writeValue(
                                                     MISC_PLAYER_ENGINE,
-                                                    BasePlayer.ENGINE.valueOf(player.value).getNextPlayer().name
+                                                    BasePlayer.ENGINE.valueOf(player.value)
+                                                        .getNextPlayer().name
                                                 )
                                             }
                                         }
-                                    }
-                                ) {
+                                    }) {
                                     Image(
                                         painter = painterResource(
                                             with(Res.drawable) {
@@ -659,8 +728,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
                                                     BasePlayer.ENGINE.IOS_VLC.name -> vlc
                                                     else -> exoplayer
                                                 }
-                                            }
-                                        ),
+                                            }),
                                         contentScale = ContentScale.FillHeight,
                                         contentDescription = "",
                                         modifier = Modifier.fillMaxSize()
@@ -680,9 +748,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
                                         BasePlayer.ENGINE.IOS_VLC.name -> "VLC (Experimental, Unstable)"
                                         else -> "Undefined"
                                     }
-                                ),
-                                textAlign = TextAlign.Center,
-                                fontSize = 9.sp
+                                ), textAlign = TextAlign.Center, fontSize = 9.sp
                             )
                         }
                         Spacer(modifier = Modifier.height(10.dp))
@@ -694,8 +760,9 @@ fun HomeScreen(savedConfig: HomeConfig) {
                         val snacktxtEmptyPORT = lyricist.strings.connectPortEmptyError
 
                         Button(
-                            border = BorderStroke(width = 2.dp, color = MaterialTheme.colorScheme.primary),
-                            modifier = Modifier.fillMaxWidth(0.8f),
+                            border = BorderStroke(
+                                width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT)),
+                            modifier = Modifier,
                             onClick = {
                                 /* Trimming whitespaces */
                                 textUsername = textUsername.trim()
@@ -774,8 +841,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
 
                         Spacer(modifier = Modifier.height(10.dp))
                     }
-                }
-            )
+                })
 
             AProposPopup(aboutpopupState)
         }

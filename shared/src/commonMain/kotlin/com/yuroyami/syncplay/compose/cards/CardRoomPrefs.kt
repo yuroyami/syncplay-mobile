@@ -26,6 +26,7 @@ import com.yuroyami.syncplay.compose.ComposeUtils.FancyIcon2
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.settings.SettingsUI
 import com.yuroyami.syncplay.settings.SettingsUI.SettingsGrid
+import com.yuroyami.syncplay.settings.SettingsUI.SettingsGridLayout
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.watchroom.LocalRoomSettings
 import com.yuroyami.syncplay.watchroom.lyricist
@@ -67,9 +68,9 @@ object CardRoomPrefs {
                 ) {
                     SettingsGrid(
                         modifier = Modifier.fillMaxSize(),
+                        layoutOrientation = SettingsGridLayout.SETTINGS_GRID_HORIZONTAL_FLOW,
                         settingcategories = LocalRoomSettings.current,
                         state = settingState,
-                        layoutOrientation = SettingsUI.SettingsGridLayout.SETTINGS_GRID_HORIZONTAL_GRID,
                         titleSize = 9f,
                         cardSize = 48f,
                         onCardClicked = {

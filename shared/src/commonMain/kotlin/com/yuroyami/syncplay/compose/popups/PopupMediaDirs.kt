@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,9 +18,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ClearAll
@@ -47,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -92,13 +96,11 @@ object PopupMediaDirs {
             heightPercent = 0.85f,
             strokeWidth = 0.5f,
             cardBackgroundColor = Color.DarkGray,
-            onDismiss = { visibilityState.value = false }
-        ) {
+            onDismiss = { visibilityState.value = false }) {
 
             var directoryPicker by remember { mutableStateOf(false) }
             DirectoryPicker(
-                show = directoryPicker,
-                title = "Select directory to save playlist to as a file"
+                show = directoryPicker, title = "Select directory to save playlist to as a file"
             ) { directoryUri ->
                 directoryPicker = false
                 if (directoryUri == null) return@DirectoryPicker
@@ -137,49 +139,48 @@ object PopupMediaDirs {
                     shape = RoundedCornerShape(size = 6.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.LightGray)
                 ) {
-                    val dirs = valueFlow(PREF_SP_MEDIA_DIRS, emptySet<String>()).collectAsState(initial = emptySet())
+                    val dirs = valueFlow(
+                        PREF_SP_MEDIA_DIRS,
+                        emptySet<String>()
+                    ).collectAsState(initial = emptySet())
 
-                    LazyVerticalGrid(
-                        columns = GridCells.Adaptive(66.dp),
+                    LazyColumn(
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        items(dirs.value.toList()) {item ->
+                        items(dirs.value.toList()) { item ->
 
                             Box {
                                 val itemMenuState = remember { mutableStateOf(false) }
 
-                                Column(
-                                    modifier = Modifier
-                                        .padding(4.dp)
-                                        .clickable(
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(4.dp).clickable(
                                             interactionSource = remember { MutableInteractionSource() },
                                             indication = ripple(color = Paletting.OLD_SP_PINK)
-                                        ) { itemMenuState.value = true }, horizontalAlignment = Alignment.CenterHorizontally
+                                        ) { itemMenuState.value = true },
+                                    verticalAlignment = CenterVertically
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Filled.Folder, "",
-                                        tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(64.dp)
+                                        imageVector = Icons.Filled.Folder,
+                                        "",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(32.dp)
                                     )
 
-                                    val name = (Uri.parseOrNull(item)?.pathSegments?.last() ?: "Undefined")
-                                        .substringAfter("primary:") //Android: Primary storage prefix removal
+                                    val name = (Uri.parseOrNull(item)?.pathSegments?.last()
+                                        ?: "Undefined").substringAfter("primary:") //Android: Primary storage prefix removal
                                         .substringAfter("secondary:")//Android: Secondary storage prefix removal
                                         .substringAfterLast("/")
 
                                     Text(
                                         text = name,
-                                        fontFamily = FontFamily(getRegularFont()),
-                                        fontSize = 8.sp,
-                                        textAlign = TextAlign.Center,
-                                        lineHeight = 10.sp,
+                                        textAlign = TextAlign.Start,
                                         maxLines = 5,
                                         color = Color(35, 35, 35),
-                                        modifier = Modifier.width(62.dp)
                                     )
                                 }
 
                                 DropdownMenu(
-                                    modifier = Modifier.background(color = Color.DarkGray),
+                                    modifier = Modifier.background(color = Color.DarkGray.copy(0.5f)),
                                     expanded = itemMenuState.value,
                                     properties = PopupProperties(
                                         dismissOnBackPress = true,
@@ -191,27 +192,42 @@ object PopupMediaDirs {
 
                                     //Item action: Delete
                                     DropdownMenuItem(
-                                        text = { Text(color = Color.LightGray, text = localz.strings.mediaDirectoriesDelete, fontSize = 12.sp) },
-                                        leadingIcon = { Icon(imageVector = Icons.Filled.Delete, "", tint = Color.LightGray) },
+                                        text = {
+                                        Text(
+                                            color = Color.LightGray,
+                                            text = localz.strings.mediaDirectoriesDelete,
+                                            fontSize = 12.sp
+                                        )
+                                    },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Filled.Delete,
+                                                "",
+                                                tint = Color.LightGray
+                                            )
+                                        },
                                         onClick = {
                                             itemMenuState.value = false
 
                                             scope.launch {
-                                                val paths = valueBlockingly(PREF_SP_MEDIA_DIRS, emptySet<String>()).toMutableSet()
+                                                val paths = valueBlockingly(
+                                                    PREF_SP_MEDIA_DIRS,
+                                                    emptySet<String>()
+                                                ).toMutableSet()
 
                                                 if (paths.contains(item)) {
                                                     paths.remove(item)
                                                     writeValue(PREF_SP_MEDIA_DIRS, paths)
                                                 }
                                             }
-                                        }
-                                    )
+                                        })
 
                                     Text(
                                         text = "Path: $item",
-                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp),
-                                        fontSize = 8.sp,
-                                        lineHeight = 9.sp,
+                                        modifier = Modifier.padding(
+                                            horizontal = 14.dp,
+                                            vertical = 4.dp
+                                        ),
                                         color = Color.LightGray,
                                         overflow = TextOverflow.Visible,
                                         style = TextStyle(
@@ -275,23 +291,18 @@ object PopupMediaDirs {
 
 
         if (cleardialog) {
-            AlertDialog(
-                onDismissRequest = { cleardialog = false },
-                confirmButton = {
-                    TextButton(onClick = {
-                        cleardialog = false
-                        scope.launch {
-                            writeValue(PREF_SP_MEDIA_DIRS, emptySet<String>())
-                        }
-                    }) { Text(localz.strings.yes) }
-                },
-                dismissButton = {
-                    TextButton(onClick = {
-                        cleardialog = false
-                    }) { Text(localz.strings.no) }
-                },
-                text = { Text(localz.strings.settingResetdefaultDialog) }
-            )
+            AlertDialog(onDismissRequest = { cleardialog = false }, confirmButton = {
+                TextButton(onClick = {
+                    cleardialog = false
+                    scope.launch {
+                        writeValue(PREF_SP_MEDIA_DIRS, emptySet<String>())
+                    }
+                }) { Text(localz.strings.yes) }
+            }, dismissButton = {
+                TextButton(onClick = {
+                    cleardialog = false
+                }) { Text(localz.strings.no) }
+            }, text = { Text(localz.strings.settingResetdefaultDialog) })
         }
     }
 }

@@ -1,5 +1,10 @@
 package com.yuroyami.syncplay.watchroom
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -12,10 +17,13 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Brightness6
+import androidx.compose.material.icons.filled.FastForward
+import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
@@ -34,8 +42,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType.Companion.LongPress
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.player.PlayerUtils
 import com.yuroyami.syncplay.utils.getSystemMaxVolume
 import kotlinx.coroutines.Dispatchers
@@ -55,6 +67,7 @@ fun GestureInterceptor(
     gestureState: State<Boolean>, videoState: State<Boolean>, onSingleTap: () -> Unit
 ) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
+    var hudVisibility by remember { viewmodel!!.hudVisibilityState }
 
     val g by gestureState
     val v by videoState
@@ -74,7 +87,8 @@ fun GestureInterceptor(
     var vertdragOffset by remember { mutableStateOf(Offset.Zero) }
 
     Box {
-        /* Seek animators, their only purpose is to animate a seek action */
+        var fastForward by remember { mutableStateOf(false) }
+        var fastRewind by remember { mutableStateOf(false) }
         if (g) {
             Box(
                 modifier = Modifier.align(Alignment.CenterStart).fillMaxHeight().fillMaxWidth(0.1f)
@@ -85,6 +99,23 @@ fun GestureInterceptor(
                             bounded = false, color = Color(100, 100, 100, 190)
                         )
                     ) {})
+            {
+                AnimatedVisibility(
+                    visible = fastRewind,
+                    enter = scaleIn() + fadeIn(),
+                    exit = scaleOut() + fadeOut(),
+                    modifier = Modifier.align(Alignment.Center)
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.FastRewind,
+                        contentDescription = "",
+                        tint = Color.White,
+                        modifier = Modifier.align(Alignment.Center).size(64.dp)
+                    )
+                }
+
+            }
 
             Box(
                 modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(0.1f)
@@ -94,119 +125,161 @@ fun GestureInterceptor(
                         indication = ripple(
                             bounded = false, color = Color(100, 100, 100, 190)
                         )
-                    ) {})
+                    ) {
+
+                    }) {
+                AnimatedVisibility(
+                    visible = fastForward,
+                    enter = scaleIn() + fadeIn(),
+                    exit = scaleOut() + fadeOut(),
+                    modifier = Modifier.align(Alignment.Center)
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.FastForward,
+                        contentDescription = "",
+                        tint = Color.White,
+                        modifier = Modifier.align(Alignment.Center).size(64.dp)
+                    )
+                }
+            }
+            val haptic = LocalHapticFeedback.current
+
             Box(modifier = Modifier.fillMaxSize().pointerInput(g, v) {
-                    detectTapGestures(
+                detectTapGestures(
 
-                        onPress = { offset ->
-                            if (g && v && offset.x > dimensions.wPX.times(0.65f)) {
-                                val press = PressInteraction.Press(offset)
-                                val job = scope.launch {
+                    onPress = { offset ->
+                        if (g && v && offset.x > dimensions.wPX.times(0.65f)) {
+                            val press = PressInteraction.Press(offset)
+
+                            val job = scope.launch {
+                                delay(1000)
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                delay(1000)
+
+                                fastForward = true
+                                seekRightInteraction.emit(press)
+                                while (isActive) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
+                                    PlayerUtils.seekFrwrd()
                                     seekRightInteraction.emit(press)
-                                    delay(1000) // wait 1 second before fast forwarding
+                                    delay(200)
                                     seekRightInteraction.emit(PressInteraction.Release(press))
-
-                                    while (isActive) {
-                                        PlayerUtils.seekFrwrd()
-                                        seekRightInteraction.emit(press)
-                                        delay(100)
-                                        seekRightInteraction.emit(PressInteraction.Release(press))
-                                    }
                                 }
-                                tryAwaitRelease()
-                                job.cancel()
-                                seekRightInteraction.emit(PressInteraction.Release(press))
-
                             }
-                            if (g && v && offset.x < dimensions.wPX.times(0.35f)) {
-                                val press = PressInteraction.Press(offset)
-                                val job = scope.launch {
-                                    seekLeftInteraction.emit(press)
-                                    delay(1000) // wait 1 second before rewinding
-                                    seekLeftInteraction.emit(PressInteraction.Release(press))
+                            tryAwaitRelease()
+                            job.cancel()
+                            fastForward = false
+                            seekRightInteraction.emit(PressInteraction.Release(press))
 
-                                    while (isActive) {
-                                        PlayerUtils.seekBckwd()
-                                        seekLeftInteraction.emit(press)
-                                        delay(200)
-                                        seekLeftInteraction.emit(PressInteraction.Release(press))
-                                    }
-                                }
-                                tryAwaitRelease()
-                                job.cancel()
-                                seekLeftInteraction.emit(PressInteraction.Release(press))
-
-                            }
-                        },
-                        onDoubleTap = if (g && v) { offset ->
-                            scope.launch {
-                                if (offset.x < dimensions.wPX.times(0.35f)) {
+                        }
+                        if (g && v && offset.x < dimensions.wPX.times(0.35f)) {
+                            val press = PressInteraction.Press(offset)
+                            val job = scope.launch {
+                                delay(1000)
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                delay(1000)
+                                fastRewind = true
+                                seekLeftInteraction.emit(press)
+                                while (isActive) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
                                     PlayerUtils.seekBckwd()
-
-                                    val press = PressInteraction.Press(Offset.Zero)
                                     seekLeftInteraction.emit(press)
                                     delay(200)
                                     seekLeftInteraction.emit(PressInteraction.Release(press))
                                 }
-                                if (offset.x > dimensions.wPX.times(0.65f)) {
-                                    PlayerUtils.seekFrwrd()
-
-                                    val press = PressInteraction.Press(Offset.Zero)
-                                    seekRightInteraction.emit(press)
-                                    delay(150)
-                                    seekRightInteraction.emit(PressInteraction.Release(press))
-                                }
                             }
-                        } else null,
-                        onTap = { onSingleTap.invoke() },
-                    )
-                }.pointerInput(g, v) {
-                    if (g && v) {
-                        detectVerticalDragGestures(onDragStart = {
+                            tryAwaitRelease()
+                            job.cancel()
+                            fastRewind = false
+                            seekLeftInteraction.emit(PressInteraction.Release(press))
+
+                        }
+                    },
+                    onDoubleTap = if (g && v) { offset ->
+                        scope.launch {
+                            if (offset.x < dimensions.wPX.times(0.35f)) {
+                                PlayerUtils.seekBckwd()
+                                haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+
+                                val press = PressInteraction.Press(Offset.Zero)
+                                seekLeftInteraction.emit(press)
+                                delay(200)
+                                seekLeftInteraction.emit(PressInteraction.Release(press))
+                            }
+                            if (offset.x > dimensions.wPX.times(0.65f)) {
+                                PlayerUtils.seekFrwrd()
+                                haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+
+                                val press = PressInteraction.Press(Offset.Zero)
+                                seekRightInteraction.emit(press)
+                                delay(150)
+                                seekRightInteraction.emit(PressInteraction.Release(press))
+                            }
+                        }
+                    } else null,
+                    onTap = { onSingleTap.invoke()
+                        if (hudVisibility) {
+                            haptic.performHapticFeedback(HapticFeedbackType.ToggleOff)
+
+                        }else {
+                            haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
+
+                        } },
+                )
+            }.pointerInput(g, v) {
+                if (g && v) {
+                    var lastVolume = 0
+                    var lastBrightness = 0f
+
+                    detectVerticalDragGestures(
+                        onDragStart = {
                             initialBrightness = gestureCallback.getCurrentBrightness()
                             initialVolume = gestureCallback.getCurrentVolume()
-                        }, onDragEnd = {
+                            lastBrightness = initialBrightness
+                            lastVolume = initialVolume
+                        },
+                        onDragEnd = {
                             dragdistance = 0F
                             currentBrightness = -1f
                             currentVolume = -1
-                        }, onVerticalDrag = { pntr, f ->
+                        },
+                        onVerticalDrag = { pntr, f ->
                             dragdistance += f
-
                             vertdragOffset = pntr.position
 
                             if (pntr.position.x >= dimensions.wPX * 0.5f) {
-                                /** Volume adjusting */
-                                val h = dimensions.hPX / 1.5
+                                // Volume adjusting
+                                val h = dimensions.hPX / 1.5f
                                 val maxVolume = gestureCallback.getMaxVolume()
-
-                                var newVolume =
-                                    (initialVolume + (-dragdistance * maxVolume / h)).roundToInt()
-
+                                var newVolume = (initialVolume + (-dragdistance * maxVolume / h)).roundToInt()
                                 if (newVolume > maxVolume) newVolume = maxVolume
                                 if (newVolume < 0) newVolume = 0
 
-                                currentVolume = newVolume //ui
-
+                                currentVolume = newVolume
+                                if (newVolume != lastVolume) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
+                                    lastVolume = newVolume
+                                }
                                 gestureCallback.changeCurrentVolume(newVolume)
                             } else {
-                                /** Brightness adjusting */
-                                val h = dimensions.hPX / 1.5
+                                // Brightness adjusting in 5% increments
+                                val h = dimensions.hPX / 1.5f
                                 val maxBright = gestureCallback.getMaxBrightness()
-                                val newBright =
-                                    (initialBrightness + (-dragdistance * maxBright / h)).toFloat()
+                                var newBright = initialBrightness + (-dragdistance * maxBright / h)
+                                newBright = if (newBright > 0.1f) (newBright / 0.05f).roundToInt() * 0.05f else newBright
 
-                                currentBrightness = newBright //ui
-
-                                gestureCallback.changeCurrentBrightness(
-                                    newBright.coerceIn(
-                                        0f,
-                                        1f
-                                    )
-                                )
+                                currentBrightness = newBright.coerceIn(0f, 1f)
+                                if (newBright != lastBrightness) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
+                                    lastBrightness = newBright
+                                }
+                                gestureCallback.changeCurrentBrightness(newBright.coerceIn(0f, 1f))
                             }
-                        })
-                    }
+                        }
+                    )
                 }
+            }
 
             ) {}
             with(LocalDensity.current) {
@@ -214,7 +287,7 @@ fun GestureInterceptor(
                     Row(
                         modifier = Modifier.offset(
                             (vertdragOffset.x + 100).toDp(), vertdragOffset.y.toDp()
-                        ).background(Color.LightGray).clip(RoundedCornerShape(25)),
+                        ).clip(RoundedCornerShape(25)).background(Color.LightGray),
                         verticalAlignment = CenterVertically
                     ) {
                         Icon(imageVector = Icons.Filled.Brightness6, "")
@@ -230,7 +303,7 @@ fun GestureInterceptor(
                     Row(
                         modifier = Modifier.offset(
                             (vertdragOffset.x - 500).toDp(), vertdragOffset.y.toDp()
-                        ).background(Color.LightGray).clip(RoundedCornerShape(25)),
+                        ).clip(RoundedCornerShape(25)).background(Color.LightGray),
                         verticalAlignment = CenterVertically
                     ) {
                         Icon(imageVector = Icons.AutoMirrored.Filled.VolumeUp, "")
