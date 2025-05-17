@@ -1,5 +1,4 @@
 import org.gradle.kotlin.dsl.coreLibraryDesugaring
-
 plugins {
     id("org.jetbrains.kotlin.android")
     id("com.android.application")
@@ -9,16 +8,9 @@ plugins {
 
 val exoOnly = false
 
-val abiCodes = mapOf(
-    "armeabi-v7a" to 1,
-    "arm64-v8a" to 2,
-    "x86" to 3,
-    "x86_64" to 4
-)
-
 android {
     namespace = "com.yuroyami.syncplay"
-    compileSdk = 35
+    compileSdk = 36
 
     ndkVersion = "26.3.11579264"
 
@@ -68,27 +60,27 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
         isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "21"
     }
 
     if (!exoOnly) {
         splits {
+            val abiCodes = listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
             abi {
                 isEnable = true
                 reset()
-                abiCodes.forEach { (abi, _) ->
+                for (abi in abiCodes) {
                     val exists = file("$projectDir/src/main/jniLibs/$abi").exists()
                     if (exists) {
                         include(abi)
                     }
                 }
                 isUniversalApk = true
-
             }
         }
     } else {
@@ -130,7 +122,7 @@ android {
 dependencies {
     implementation(projects.shared)
     implementation(files("libs/ext.aar")) /* ExoPlayer's FFmpeg extension  */
-    coreLibraryDesugaring ("com.android.tools:desugar_jdk_libs:2.1.5")
+    coreLibraryDesugaring (libs.desugaring)
 
 }
 

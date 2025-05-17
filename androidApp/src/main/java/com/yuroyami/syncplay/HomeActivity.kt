@@ -38,6 +38,7 @@ import com.yuroyami.syncplay.watchroom.viewmodel
 
 class HomeActivity : ComponentActivity() {
 
+    @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen() /* This will be called only on cold starts */
 
@@ -48,7 +49,6 @@ class HomeActivity : ComponentActivity() {
         /** Adjusting the appearance of system window decor */
         /* Tweaking some window UI elements */
         window.attributes = window.attributes.apply {
-            @Suppress("DEPRECATION")
             flags = flags and WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS.inv()
         }
         window.statusBarColor = Color.Transparent.toArgb()

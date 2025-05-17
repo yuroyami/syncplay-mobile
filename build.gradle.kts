@@ -1,18 +1,14 @@
 plugins {
-    val kotlin = "2.1.20"
-    id("org.jetbrains.kotlin.multiplatform") version kotlin apply false
-    id("org.jetbrains.kotlin.android") version kotlin apply false
-    id("org.jetbrains.kotlin.native.cocoapods") version kotlin apply false
-    kotlin("plugin.serialization") version kotlin apply false
+    alias(libs.plugins.kotlin.multiplatform).apply(false)
+    alias(libs.plugins.kotlin.android).apply(false)
+    alias(libs.plugins.kotlin.cocoapods).apply(false)
 
-    id("org.jetbrains.kotlin.plugin.compose") version kotlin apply false
+    alias(libs.plugins.compose.compiler).apply(false)
+    alias(libs.plugins.compose).apply(false)
 
-    val agp = "8.11.0-alpha02"
-    id("com.android.application") version agp apply false
-    id("com.android.library") version agp apply false
+    alias(libs.plugins.android.application).apply(false)
+    alias(libs.plugins.android.library).apply(false)
 
-    val compose = "1.8.0-alpha04"
-    id("org.jetbrains.compose") version compose apply false
-
-    id("com.google.devtools.ksp") version "$kotlin-1.0.31" apply false
+    alias(libs.plugins.kSerialization).apply(false)
+    alias(libs.plugins.ksp).apply(false)
 }
