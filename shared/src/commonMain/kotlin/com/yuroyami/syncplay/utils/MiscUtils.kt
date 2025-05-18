@@ -3,6 +3,7 @@ package com.yuroyami.syncplay.utils
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.unit.Dp
+import co.touchlab.kermit.Logger
 
 @Composable
 expect fun getSystemMaxVolume(): Int
@@ -13,7 +14,7 @@ enum class PLATFORM { Android, IOS, }
 expect fun getPlatform(): PLATFORM
 
 /** logging functionality (Uses println on iOS, and Log.e on Android) */
-expect fun loggy(s: String?, checkpoint: Int = 0)
+fun loggy(s: String?, checkpoint: Int = 0) = Logger.e("SYNCPLAY_LOG: $s")
 
 /** Gets the default video playback engine on each platform (mpv on Android, AVPlayer on iOS) */
 expect fun getDefaultEngine(): String

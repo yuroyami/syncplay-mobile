@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -61,6 +60,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
 /** Main class that does the required logic and UI for a single Setting.
@@ -75,7 +76,7 @@ import kotlin.math.roundToInt
  * */
 sealed class Setting<T>(
     val type: SettingType = SettingType.OneClickSettingType, val key: String = "",
-    val title: String = "", val summary: String = "",
+    val title: StringResource, val summary: StringResource,
     val defaultValue: T? = null,
     val icon: ImageVector? = null, val enabled: Boolean = true, val styling: SettingStyling = SettingStyling()
 ) {
@@ -88,7 +89,7 @@ sealed class Setting<T>(
     /** ======= Now to specific types of SETTINGs and their respective child classes ======= */
 
     class OneClickSetting(
-        type: SettingType, key: String, summary: String, title: String, defaultValue: Any? = null,
+        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Any? = null,
         icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling,
         val onClick: (() -> Unit)? = null,
     ) : Setting<Any>(
@@ -115,7 +116,7 @@ sealed class Setting<T>(
                             icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
                         )
                         FlexibleFancyText(
-                            text = title,
+                            text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
                             shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
@@ -126,7 +127,7 @@ sealed class Setting<T>(
                 },
                 supportingContent = {
                     Text(
-                        text = summary,
+                        text = stringResource(summary),
                         style = TextStyle(
                             color = styling.summaryColor,
                             fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
@@ -138,9 +139,9 @@ sealed class Setting<T>(
     }
 
     class YesNoDialogSetting(
-        type: SettingType, key: String, summary: String, title: String, defaultValue: Any? = null,
+        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Any? = null,
         icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling,
-        val rationale: String,
+        val rationale: StringResource,
         val onYes: (CoroutineScope.() -> Unit)? = null,
         val onNo: (CoroutineScope.() -> Unit)? = null
         //TODO: Show "done" message (i.e: Operation successfully carried out) in a snackbar message
@@ -169,7 +170,7 @@ sealed class Setting<T>(
                             onNo?.invoke(scope)
                         }) { Text(lyricist.strings.no) }
                     },
-                    text = { Text(rationale) }
+                    text = { Text(stringResource(rationale)) }
                 )
             }
             ListItem(
@@ -191,7 +192,7 @@ sealed class Setting<T>(
                             icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
                         )
                         FlexibleFancyText(
-                            text = title,
+                            text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
                             shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
@@ -202,7 +203,7 @@ sealed class Setting<T>(
                 },
                 supportingContent = {
                     Text(
-                        text = summary,
+                        text = stringResource(summary),
                         style = TextStyle(
                             color = styling.summaryColor,
                             fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
@@ -214,7 +215,7 @@ sealed class Setting<T>(
     }
 
     class PopupSetting(
-        type: SettingType, key: String, summary: String, title: String, defaultValue: Any? = null,
+        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Any? = null,
         icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling,
         val popupComposable: @Composable() ((MutableState<Boolean>) -> Unit)? = null
     ) : Setting<Any>(
@@ -247,7 +248,7 @@ sealed class Setting<T>(
                             icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
                         )
                         FlexibleFancyText(
-                            text = title,
+                            text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
                             shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
@@ -258,7 +259,7 @@ sealed class Setting<T>(
                 },
                 supportingContent = {
                     Text(
-                        text = summary,
+                        text = stringResource(summary),
                         style = TextStyle(
                             color = styling.summaryColor,
                             fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
@@ -273,7 +274,7 @@ sealed class Setting<T>(
     }
 
     class BooleanSetting(
-        type: SettingType, key: String, summary: String, title: String, defaultValue: Boolean?,
+        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Boolean?,
         icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling,
         val onBooleanChanged: (Boolean) -> Unit = {},
     ) : Setting<Boolean>(
@@ -334,7 +335,7 @@ sealed class Setting<T>(
                             icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
                         )
                         FlexibleFancyText(
-                            text = title,
+                            text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
                             shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
@@ -345,7 +346,7 @@ sealed class Setting<T>(
                 },
                 supportingContent = {
                     Text(
-                        text = summary,
+                        text = stringResource(summary),
                         style = TextStyle(
                             color = styling.summaryColor,
                             fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
@@ -357,7 +358,7 @@ sealed class Setting<T>(
     }
 
     class MultiChoiceSetting(
-        type: SettingType, key: String, summary: String, title: String, defaultValue: String?,
+        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: String?,
         icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling,
         val entryKeys: List<String> = listOf(),
         val entryValues: List<String> = listOf(),
@@ -379,7 +380,7 @@ sealed class Setting<T>(
             if (dialogOpen.value) {
                 MultiChoiceDialog(
                     items = entryKeys,
-                    title = title,
+                    title = stringResource(title),
                     onDismiss = { dialogOpen.value = false },
                     selectedItem = renderedValues.indexOf(selectedItem.value),
                     onItemClick = { i ->
@@ -413,7 +414,7 @@ sealed class Setting<T>(
                             icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
                         )
                         FlexibleFancyText(
-                            text = title,
+                            text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
                             shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
@@ -427,7 +428,7 @@ sealed class Setting<T>(
                 },
                 supportingContent = {
                     Text(
-                        text = summary,
+                        text = stringResource(summary),
                         style = TextStyle(
                             color = styling.summaryColor,
                             fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
@@ -439,7 +440,7 @@ sealed class Setting<T>(
     }
 
     class SliderSetting(
-        type: SettingType, key: String, summary: String, title: String, defaultValue: Int?,
+        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Int?,
         icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling,
         val maxValue: Int = 100,
         val minValue: Int = 0,
@@ -471,7 +472,7 @@ sealed class Setting<T>(
                         )
 
                         FlexibleFancyText(
-                            text = title,
+                            text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
                             shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
@@ -492,7 +493,7 @@ sealed class Setting<T>(
                 supportingContent = {
                     Column {
                         Text(
-                            text = summary,
+                            text = stringResource(summary),
                             style = TextStyle(
                                 color = styling.summaryColor,
                                 fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
@@ -523,7 +524,7 @@ sealed class Setting<T>(
     }
 
     class ColorSetting(
-        type: SettingType, key: String, summary: String, title: String, defaultValue: Int?,
+        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Int?,
         icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling
     ) : Setting<Int>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
@@ -555,7 +556,7 @@ sealed class Setting<T>(
                             icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
                         )
                         FlexibleFancyText(
-                            text = title,
+                            text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
                             shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
@@ -573,7 +574,7 @@ sealed class Setting<T>(
 
                 supportingContent = {
                     Text(
-                        text = summary,
+                        text = stringResource(summary),
                         style = TextStyle(
                             color = styling.summaryColor,
                             fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
@@ -591,7 +592,7 @@ sealed class Setting<T>(
     }
 
     class TextFieldSetting(
-        type: SettingType, key: String, summary: String, title: String, defaultValue: String?,
+        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: String?,
         icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling
     ) : Setting<String>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
@@ -626,7 +627,7 @@ sealed class Setting<T>(
                             icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
                         )
                         FlexibleFancyText(
-                            text = title,
+                            text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
                             shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
@@ -638,7 +639,7 @@ sealed class Setting<T>(
                 supportingContent = {
                     Column {
                         Text(
-                            text = summary,
+                            text = stringResource(summary),
                             style = TextStyle(
                                 color = styling.summaryColor,
                                 fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,

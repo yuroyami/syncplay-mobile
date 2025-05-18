@@ -11,8 +11,20 @@ import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.Setting
 import com.yuroyami.syncplay.settings.SettingType
 import com.yuroyami.syncplay.settings.settingROOMstyle
-import com.yuroyami.syncplay.watchroom.lyricist
 import com.yuroyami.syncplay.watchroom.viewmodel
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.ui_setting_mpv_debug_summary
+import syncplaymobile.shared.generated.resources.ui_setting_mpv_debug_title
+import syncplaymobile.shared.generated.resources.ui_setting_mpv_interpolation_summary
+import syncplaymobile.shared.generated.resources.ui_setting_mpv_interpolation_title
+import syncplaymobile.shared.generated.resources.ui_setting_mpv_profile_summary
+import syncplaymobile.shared.generated.resources.ui_setting_mpv_profile_title
+import syncplaymobile.shared.generated.resources.ui_setting_mpv_vidsync_summary
+import syncplaymobile.shared.generated.resources.ui_setting_mpv_vidsync_title
+import syncplaymobile.shared.generated.resources.uisetting_mpv_gpunext_summary
+import syncplaymobile.shared.generated.resources.uisetting_mpv_gpunext_title
+import syncplaymobile.shared.generated.resources.uisetting_mpv_hardware_acceleration_summary
+import syncplaymobile.shared.generated.resources.uisetting_mpv_hardware_acceleration_title
 
 val vidsyncEntries = listOf(
     "audio", "display-resample", "display-resample-vdrop", "display-resample-desync", "display-tempo",
@@ -27,8 +39,8 @@ val mpvRoomSettings = listOf(
     Setting.BooleanSetting(
         type = SettingType.ToggleSettingType,
         key = DataStoreKeys.PREF_MPV_HARDWARE_ACCELERATION,
-        title = lyricist.strings.uisettingMpvHardwareAccelerationTitle,
-        summary = lyricist.strings.uisettingMpvHardwareAccelerationSummary,
+        title = Res.string.uisetting_mpv_hardware_acceleration_title,
+        summary = Res.string.uisetting_mpv_hardware_acceleration_summary,
         defaultValue = true,
         icon = Icons.Filled.Speed,
         styling = settingROOMstyle,
@@ -40,8 +52,8 @@ val mpvRoomSettings = listOf(
     Setting.BooleanSetting(
         type = SettingType.ToggleSettingType,
         key = DataStoreKeys.PREF_MPV_GPU_NEXT,
-        title = lyricist.strings.uisettingMpvGpunextTitle,
-        summary = lyricist.strings.uisettingMpvGpunextSummary,
+        title = Res.string.uisetting_mpv_gpunext_title,
+        summary = Res.string.uisetting_mpv_gpunext_summary,
         defaultValue = true,
         icon = Icons.Filled.Memory,
         styling = settingROOMstyle,
@@ -53,8 +65,8 @@ val mpvRoomSettings = listOf(
     Setting.MultiChoiceSetting(
         type = SettingType.MultiChoicePopupSettingType,
         key = DataStoreKeys.PREF_MPV_VIDSYNC,
-        title = lyricist.strings.uiSettingMpvVidsyncTitle,
-        summary = lyricist.strings.uiSettingMpvVidsyncSummary,
+        title = Res.string.ui_setting_mpv_vidsync_title,
+        summary = Res.string.ui_setting_mpv_vidsync_summary,
         defaultValue = vidsyncEntries.first(),
         icon = Icons.Filled.SlowMotionVideo,
         styling = settingROOMstyle,
@@ -69,8 +81,8 @@ val mpvRoomSettings = listOf(
     Setting.BooleanSetting(
         type = SettingType.CheckboxSettingType,
         key = DataStoreKeys.PREF_MPV_INTERPOLATION,
-        title = lyricist.strings.uiSettingMpvInterpolationTitle,
-        summary = lyricist.strings.uiSettingMpvInterpolationSummary,
+        title = Res.string.ui_setting_mpv_interpolation_title,
+        summary = Res.string.ui_setting_mpv_interpolation_summary,
         defaultValue = false,
         icon = Icons.Filled.Animation,
         styling = settingROOMstyle,
@@ -82,8 +94,8 @@ val mpvRoomSettings = listOf(
     Setting.MultiChoiceSetting(
         type = SettingType.MultiChoicePopupSettingType,
         key = DataStoreKeys.PREF_MPV_PROFILE,
-        title = lyricist.strings.uiSettingMpvProfileTitle,
-        summary = lyricist.strings.uiSettingMpvProfileSummary,
+        title = Res.string.ui_setting_mpv_profile_title,
+        summary = Res.string.ui_setting_mpv_profile_summary,
         defaultValue = profileEntries.first(),
         icon = Icons.Filled.SupervisedUserCircle,
         styling = settingROOMstyle,
@@ -97,8 +109,8 @@ val mpvRoomSettings = listOf(
     Setting.SliderSetting(
         type = SettingType.CheckboxSettingType,
         key = DataStoreKeys.PREF_MPV_DEBUG_MODE,
-        title = lyricist.strings.uiSettingMpvDebugTitle,
-        summary = lyricist.strings.uiSettingMpvDebugSummary,
+        title = Res.string.ui_setting_mpv_debug_title,
+        summary = Res.string.ui_setting_mpv_debug_summary,
         defaultValue = 0,
         maxValue = 3,
         icon = Icons.Filled.Adb,

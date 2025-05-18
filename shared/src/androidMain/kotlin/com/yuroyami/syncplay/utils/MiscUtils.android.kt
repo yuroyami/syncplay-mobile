@@ -6,7 +6,6 @@ import android.media.AudioManager
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.provider.OpenableColumns
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.ClipEntry
@@ -29,10 +28,7 @@ actual fun getSystemMaxVolume(): Int {
     return audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
 }
 
-
 actual fun getPlatform(): PLATFORM = PLATFORM.Android
-
-actual fun loggy(s: String?, checkpoint: Int) { Log.e("SYNCPLAY",  s.toString()) }
 
 var defaultEngineAndroid = BasePlayer.ENGINE.ANDROID_EXOPLAYER.name
 

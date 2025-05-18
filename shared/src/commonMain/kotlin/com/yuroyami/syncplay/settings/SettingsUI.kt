@@ -49,8 +49,8 @@ import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.compose.getRegularFont
-import com.yuroyami.syncplay.settings.SettingsUI.SettingCategoryCard
 import com.yuroyami.syncplay.ui.Paletting
+import org.jetbrains.compose.resources.stringResource
 
 /** Object class that will wrap everything related to settings (including composables for UI) */
 object SettingsUI {
@@ -184,7 +184,7 @@ object SettingsUI {
             }
 
             FancyText2(
-                string = categ.title,
+                string = stringResource(categ.title),
                 solid = Color.Transparent,
                 size = titleSize,
                 font = getRegularFont()
@@ -225,7 +225,7 @@ object SettingsUI {
             Spacer(modifier = Modifier.width(8.dp))
             FancyText2(
                 modifier = Modifier.basicMarquee(),
-                string = categ.title,
+                string = stringResource(categ.title),
                 solid = Color.Transparent,
                 size = 18f,
                 font = getRegularFont()

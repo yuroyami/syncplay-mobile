@@ -8,16 +8,46 @@ import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.TrackChoices
 import com.yuroyami.syncplay.player.BasePlayer
+import com.yuroyami.syncplay.player.PlayerUtils.pausePlayback
+import com.yuroyami.syncplay.player.PlayerUtils.playPlayback
+import com.yuroyami.syncplay.protocol.JsonSender
+import com.yuroyami.syncplay.protocol.ProtocolCallback
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.settings.DataStoreKeys
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_TLS_ENABLE
 import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.ui.LifecycleWatchdog
+import com.yuroyami.syncplay.utils.PlaylistUtils
+import com.yuroyami.syncplay.utils.RoomUtils.broadcastMessage
+import com.yuroyami.syncplay.utils.RoomUtils.checkFileMismatches
+import com.yuroyami.syncplay.utils.loggy
+import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_attempting_connect
+import syncplaymobile.shared.generated.resources.room_attempting_reconnection
+import syncplaymobile.shared.generated.resources.room_attempting_tls
+import syncplaymobile.shared.generated.resources.room_connected_to_server
+import syncplaymobile.shared.generated.resources.room_connection_failed
+import syncplaymobile.shared.generated.resources.room_guy_joined
+import syncplaymobile.shared.generated.resources.room_guy_left
+import syncplaymobile.shared.generated.resources.room_guy_paused
+import syncplaymobile.shared.generated.resources.room_guy_played
+import syncplaymobile.shared.generated.resources.room_isplayingfile
+import syncplaymobile.shared.generated.resources.room_rewinded
+import syncplaymobile.shared.generated.resources.room_seeked
+import syncplaymobile.shared.generated.resources.room_shared_playlist_changed
+import syncplaymobile.shared.generated.resources.room_shared_playlist_updated
+import syncplaymobile.shared.generated.resources.room_tls_not_supported
+import syncplaymobile.shared.generated.resources.room_tls_supported
+import syncplaymobile.shared.generated.resources.room_you_joined_room
 
 //var lyricist: Lyricist<Strings>  = Lyricist("en", Stringies)
 
@@ -96,7 +126,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
         viewmodel?.setReadyDirectly = valueBlockingly(DataStoreKeys.PREF_READY_FIRST_HAND, true)
 
         with (viewmodel!!) {
-            /* p.syncplayCallback = object : ProtocolCallback {
+            p.syncplayCallback = object : ProtocolCallback {
                 override fun onSomeonePaused(pauser: String) {
                     loggy("SYNCPLAY Protocol: Someone ($pauser) paused.", 1001)
 
@@ -105,7 +135,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                     }
 
                     broadcastMessage(
-                        message = lyricist.strings.roomGuyPaused.invoke(pauser, timeStamper(p.currentVideoPosition.toLong())),
+                        message = { getString(Res.string.room_guy_paused, pauser, timeStamper(p.currentVideoPosition.toLong())) },
                         isChat = false
                     )
                 }
@@ -117,25 +147,25 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                         playPlayback()
                     }
 
-                    broadcastMessage(message = lyricist.strings.roomGuyPlayed.invoke(player), isChat = false)
+                    broadcastMessage(message = { getString(Res.string.room_guy_played, player) }, isChat = false)
                 }
 
                 override fun onChatReceived(chatter: String, chatmessage: String) {
                     loggy("SYNCPLAY Protocol: $chatter sent: $chatmessage", 1003)
 
-                    broadcastMessage(message = chatmessage, isChat = true, chatter = chatter)
+                    broadcastMessage(message = { chatmessage }, isChat = true, chatter = chatter)
                 }
 
                 override fun onSomeoneJoined(joiner: String) {
                     loggy("SYNCPLAY Protocol: $joiner joined the room.", 1004)
 
-                    broadcastMessage(message = lyricist.strings.roomGuyJoined(joiner), isChat = false)
+                    broadcastMessage(message = { getString(Res.string.room_guy_joined, joiner) }, isChat = false)
                 }
 
                 override fun onSomeoneLeft(leaver: String) {
                     loggy("SYNCPLAY Protocol: $leaver left the room.", 1005)
 
-                    broadcastMessage(message = lyricist.strings.roomGuyLeft(leaver), isChat = false)
+                    broadcastMessage(message = { getString(Res.string.room_guy_left,leaver) }, isChat = false)
 
                     /* If the setting is enabled, pause playback **/
                     if (viewmodel?.player?.hasMedia() == true) {
@@ -160,7 +190,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                     /* Saving seek so it can be undone on mistake */
                     viewmodel?.seeks?.add(Pair(oldPos * 1000, newPos * 1000))
 
-                    broadcastMessage(message = lyricist.strings.roomSeeked(seeker, timeStamper(oldPos), timeStamper(newPos)), isChat = false)
+                    broadcastMessage(message = { getString(Res.string.room_seeked,seeker, timeStamper(oldPos), timeStamper(newPos)) }, isChat = false)
 
                     if (seeker != p.session.currentUsername) {
                         viewmodel?.player?.seekTo((toPosition * 1000.0).toLong())
@@ -172,7 +202,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
                     viewmodel?.player?.seekTo((toPosition * 1000.0).toLong())
 
-                    broadcastMessage(message = lyricist.strings.roomRewinded(behinder), isChat = false)
+                    broadcastMessage(message = { getString(Res.string.room_rewinded,behinder) }, isChat = false)
                 }
 
                 override fun onReceivedList() {
@@ -184,12 +214,11 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                     loggy("SYNCPLAY Protocol: $person loaded: $file - Duration: $fileduration", 1009)
 
                     broadcastMessage(
-                        message =
-                        lyricist.strings.roomIsplayingfile(
+                        message = { getString(Res.string.room_isplayingfile,
                             person,
                             file ?: "",
                             timeStamper(fileduration?.toLong() ?: 0)
-                        ),
+                        ) },
                         isChat = false
                     )
 
@@ -200,13 +229,13 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                     loggy("SYNCPLAY Protocol: Playlist updated by $user", 1010)
 
                     /** Selecting first item on list **/
-                    if (p.session.sharedPlaylist.size != 0 && p.session.spIndex.intValue == -1) {
+                    if (p.session.sharedPlaylist.isNotEmpty() && p.session.spIndex.intValue == -1) {
                         //changePlaylistSelection(0)
                     }
 
                     /** Telling user that the playlist has been updated/changed **/
                     if (user == "") return
-                    broadcastMessage(message = lyricist.strings.roomSharedPlaylistUpdated(user), isChat = false)
+                    broadcastMessage(message = { getString(Res.string.room_shared_playlist_updated,user) }, isChat = false)
                 }
 
                 override fun onPlaylistIndexChanged(user: String, index: Int) {
@@ -219,7 +248,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
                     /** Telling user that the playlist selection/index has been changed **/
                     if (user == "") return
-                    broadcastMessage(message = lyricist.strings.roomSharedPlaylistChanged(user), isChat = false)
+                    broadcastMessage(message = { getString(Res.string.room_shared_playlist_changed,user) }, isChat = false)
                 }
 
                 override fun onConnected() {
@@ -236,10 +265,10 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
 
                     /** Telling user that they're connected **/
-                    broadcastMessage(message = lyricist.strings.roomConnectedToServer, isChat = false)
+                    broadcastMessage(message = { getString(Res.string.room_connected_to_server) }, isChat = false)
 
                     /** Telling user which room they joined **/
-                    broadcastMessage(message = lyricist.strings.roomYouJoinedRoom(p.session.currentRoom), isChat = false)
+                    broadcastMessage(message = { getString(Res.string.room_you_joined_room,p.session.currentRoom) }, isChat = false)
 
                     /** Resubmit any ongoing file being played **/
                     if (viewmodel?.media != null) {
@@ -259,10 +288,10 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                     /** Telling user that a connection attempt is on **/
                     broadcastMessage(
                         message =
-                        lyricist.strings.roomAttemptingConnect(
+                            { getString(Res.string.room_attempting_connect,
                             if (p.session.serverHost == "151.80.32.178") "syncplay.pl" else p.session.serverHost,
                             p.session.serverPort.toString()
-                        ),
+                        ) },
                         isChat = false
                     )
                 }
@@ -275,7 +304,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
                     /** Telling user that connection has failed **/
                     broadcastMessage(
-                        message = lyricist.strings.roomConnectionFailed,
+                        message = { getString(Res.string.room_connection_failed) },
                         isChat = false, isError = true
                     )
 
@@ -291,7 +320,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                     p.state = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
 
                     /** Telling user that the connection has been lost **/
-                    broadcastMessage(message = lyricist.strings.roomAttemptingReconnection, isChat = false, isError = true)
+                    broadcastMessage(message = { getString(Res.string.room_attempting_reconnection) }, isChat = false, isError = true)
 
                     /** Attempting reconnection **/
                     p.reconnect()
@@ -301,7 +330,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                     loggy("SYNCPLAY Protocol: Checking TLS...", 1016)
 
                     /** Telling user that the app is checking whether the chosen server supports TLS **/
-                    broadcastMessage(lyricist.strings.roomAttemptingTls, isChat = false)
+                    broadcastMessage(message = { getString(Res.string.room_attempting_tls) }, isChat = false)
                 }
 
                 override fun onReceivedTLS(supported: Boolean) {
@@ -309,11 +338,11 @@ fun prepareProtocol(joinInfo: JoinInfo) {
 
                     /** Deciding next step based on whether the server supports TLS or not **/
                     if (supported) {
-                        broadcastMessage(lyricist.strings.roomTlsSupported, isChat = false)
+                        broadcastMessage(message = { getString(Res.string.room_tls_supported) }, isChat = false)
                         p.tls = Constants.TLS.TLS_YES
                         p.upgradeTls()
                     } else {
-                        broadcastMessage(lyricist.strings.roomTlsNotSupported, isChat = false, isError = true)
+                        broadcastMessage(message = { getString(Res.string.room_tls_not_supported) }, isChat = false, isError = true)
                         p.tls = Constants.TLS.TLS_NO
                     }
                     p.sendPacket(
@@ -324,7 +353,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                         )
                     )
                 }
-            } */
+            }
 
             /** Getting information from joining info argument **/
             p.session.serverHost = joinInfo.address

@@ -1,6 +1,178 @@
 package com.yuroyami.syncplay.settings
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.filled.BookmarkRemove
+import androidx.compose.material.icons.filled.BorderColor
+import androidx.compose.material.icons.filled.Brush
+import androidx.compose.material.icons.filled.ClearAll
+import androidx.compose.material.icons.filled.ClosedCaptionOff
+import androidx.compose.material.icons.filled.ConnectWithoutContact
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.FastForward
+import androidx.compose.material.icons.filled.FastRewind
+import androidx.compose.material.icons.filled.FormatListNumbered
+import androidx.compose.material.icons.filled.FormatSize
+import androidx.compose.material.icons.filled.FrontHand
+import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.HourglassBottom
+import androidx.compose.material.icons.filled.HourglassEmpty
+import androidx.compose.material.icons.filled.HourglassTop
+import androidx.compose.material.icons.filled.Hub
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.Opacity
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Pin
+import androidx.compose.material.icons.filled.SettingsInputComponent
+import androidx.compose.material.icons.filled.SettingsSuggest
+import androidx.compose.material.icons.filled.SortByAlpha
+import androidx.compose.material.icons.filled.Stream
+import androidx.compose.material.icons.filled.TaskAlt
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.Update
+import androidx.compose.material.icons.filled.VideoLabel
+import androidx.compose.material.icons.filled.VideoSettings
+import androidx.compose.material.icons.filled.Web
+import androidx.compose.ui.graphics.toArgb
+import androidx.datastore.preferences.core.edit
+import com.yuroyami.syncplay.compose.popups.PopupMediaDirs.MediaDirsPopup
+import com.yuroyami.syncplay.lyricist.langMap
+import com.yuroyami.syncplay.player.BasePlayer
+import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_ADVANCED
+import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_EXOPLAYER
+import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_GENERAL
+import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_LANG
+import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_NETWORK
+import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_SYNCING
+import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_INROOM_ADVANCED
+import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_INROOM_CHATCOLORS
+import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_INROOM_CHATPROPS
+import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_INROOM_MPV
+import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_INROOM_PLAYERSETTINGS
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_AUDIO_LANG
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_CC_LANG
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_DISPLAY_LANG
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_ERASE_SHORTCUTS
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_FILE_MISMATCH_WARNING
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_GLOBAL_CLEAR_ALL
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_COLOR_ERRORMSG
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_COLOR_FRIENDTAG
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_COLOR_SELFTAG
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_COLOR_SYSTEMMSG
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_COLOR_TIMESTAMP
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_COLOR_USERMSG
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_ACTIVATE_STAMP
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_BG_OPACITY
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_BOX_ACTION
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_FADING_DURATION
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_FONTSIZE
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_MAXCOUNT
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_SHADOW
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_RESET_DEFAULT
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MAX_BUFFER
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MIN_BUFFER
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_READY_FIRST_HAND
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_REMEMBER_INFO
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_SEEK_BUFFER
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_SP_MEDIA_DIRS
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_TLS_ENABLE
 import com.yuroyami.syncplay.ui.Paletting
+import com.yuroyami.syncplay.utils.PLATFORM
+import com.yuroyami.syncplay.utils.getPlatform
+import com.yuroyami.syncplay.watchroom.homeCallback
+import com.yuroyami.syncplay.watchroom.viewmodel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.launch
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.media_directories
+import syncplaymobile.shared.generated.resources.media_directories_setting_summary
+import syncplaymobile.shared.generated.resources.setting_audio_default_language_summry
+import syncplaymobile.shared.generated.resources.setting_audio_default_language_title
+import syncplaymobile.shared.generated.resources.setting_cc_default_language_summry
+import syncplaymobile.shared.generated.resources.setting_cc_default_language_title
+import syncplaymobile.shared.generated.resources.setting_display_language_summry
+import syncplaymobile.shared.generated.resources.setting_display_language_title
+import syncplaymobile.shared.generated.resources.setting_erase_shortcuts_dialog
+import syncplaymobile.shared.generated.resources.setting_erase_shortcuts_summary
+import syncplaymobile.shared.generated.resources.setting_erase_shortcuts_title
+import syncplaymobile.shared.generated.resources.setting_max_buffer_summary
+import syncplaymobile.shared.generated.resources.setting_max_buffer_title
+import syncplaymobile.shared.generated.resources.setting_min_buffer_summary
+import syncplaymobile.shared.generated.resources.setting_min_buffer_title
+import syncplaymobile.shared.generated.resources.setting_pause_if_someone_left_summary
+import syncplaymobile.shared.generated.resources.setting_pause_if_someone_left_title
+import syncplaymobile.shared.generated.resources.setting_playback_buffer_summary
+import syncplaymobile.shared.generated.resources.setting_playback_buffer_title
+import syncplaymobile.shared.generated.resources.setting_ready_firsthand_summary
+import syncplaymobile.shared.generated.resources.setting_ready_firsthand_title
+import syncplaymobile.shared.generated.resources.setting_remember_join_info_summary
+import syncplaymobile.shared.generated.resources.setting_remember_join_info_title
+import syncplaymobile.shared.generated.resources.setting_resetdefault_dialog
+import syncplaymobile.shared.generated.resources.setting_resetdefault_summary
+import syncplaymobile.shared.generated.resources.setting_resetdefault_title
+import syncplaymobile.shared.generated.resources.setting_tls_summary
+import syncplaymobile.shared.generated.resources.setting_tls_title
+import syncplaymobile.shared.generated.resources.setting_warn_file_mismatch_summary
+import syncplaymobile.shared.generated.resources.setting_warn_file_mismatch_title
+import syncplaymobile.shared.generated.resources.settings_categ_advanced
+import syncplaymobile.shared.generated.resources.settings_categ_exoplayer
+import syncplaymobile.shared.generated.resources.settings_categ_general
+import syncplaymobile.shared.generated.resources.settings_categ_language
+import syncplaymobile.shared.generated.resources.settings_categ_network
+import syncplaymobile.shared.generated.resources.settings_categ_syncing
+import syncplaymobile.shared.generated.resources.uisetting_categ_chat_colors
+import syncplaymobile.shared.generated.resources.uisetting_categ_chat_properties
+import syncplaymobile.shared.generated.resources.uisetting_categ_mpv
+import syncplaymobile.shared.generated.resources.uisetting_categ_player_settings
+import syncplaymobile.shared.generated.resources.uisetting_custom_seek_amount_summary
+import syncplaymobile.shared.generated.resources.uisetting_custom_seek_amount_title
+import syncplaymobile.shared.generated.resources.uisetting_custom_seek_front_summary
+import syncplaymobile.shared.generated.resources.uisetting_custom_seek_front_title
+import syncplaymobile.shared.generated.resources.uisetting_error_color_summary
+import syncplaymobile.shared.generated.resources.uisetting_error_color_title
+import syncplaymobile.shared.generated.resources.uisetting_friend_color_summary
+import syncplaymobile.shared.generated.resources.uisetting_friend_color_title
+import syncplaymobile.shared.generated.resources.uisetting_human_color_summary
+import syncplaymobile.shared.generated.resources.uisetting_human_color_title
+import syncplaymobile.shared.generated.resources.uisetting_messagery_alpha_summary
+import syncplaymobile.shared.generated.resources.uisetting_messagery_alpha_title
+import syncplaymobile.shared.generated.resources.uisetting_msgboxaction_summary
+import syncplaymobile.shared.generated.resources.uisetting_msgboxaction_title
+import syncplaymobile.shared.generated.resources.uisetting_msgcount_summary
+import syncplaymobile.shared.generated.resources.uisetting_msgcount_title
+import syncplaymobile.shared.generated.resources.uisetting_msglife_summary
+import syncplaymobile.shared.generated.resources.uisetting_msglife_title
+import syncplaymobile.shared.generated.resources.uisetting_msgoutline_summary
+import syncplaymobile.shared.generated.resources.uisetting_msgoutline_title
+import syncplaymobile.shared.generated.resources.uisetting_msgshadow_summary
+import syncplaymobile.shared.generated.resources.uisetting_msgshadow_title
+import syncplaymobile.shared.generated.resources.uisetting_msgsize_summary
+import syncplaymobile.shared.generated.resources.uisetting_msgsize_title
+import syncplaymobile.shared.generated.resources.uisetting_reconnect_interval_summary
+import syncplaymobile.shared.generated.resources.uisetting_reconnect_interval_title
+import syncplaymobile.shared.generated.resources.uisetting_resetdefault_summary
+import syncplaymobile.shared.generated.resources.uisetting_resetdefault_title
+import syncplaymobile.shared.generated.resources.uisetting_seek_backward_jump_summary
+import syncplaymobile.shared.generated.resources.uisetting_seek_backward_jump_title
+import syncplaymobile.shared.generated.resources.uisetting_seek_forward_jump_summary
+import syncplaymobile.shared.generated.resources.uisetting_seek_forward_jump_title
+import syncplaymobile.shared.generated.resources.uisetting_self_color_summary
+import syncplaymobile.shared.generated.resources.uisetting_self_color_title
+import syncplaymobile.shared.generated.resources.uisetting_subtitle_size_summary
+import syncplaymobile.shared.generated.resources.uisetting_subtitle_size_title
+import syncplaymobile.shared.generated.resources.uisetting_system_color_summary
+import syncplaymobile.shared.generated.resources.uisetting_system_color_title
+import syncplaymobile.shared.generated.resources.uisetting_timestamp_color_title
+import syncplaymobile.shared.generated.resources.uisetting_timestamp_summary
+import syncplaymobile.shared.generated.resources.uisetting_timestamp_title
 
 lateinit var obtainerCallback: SettingObtainerCallback
 
@@ -25,16 +197,15 @@ val settingROOMstyle = SettingStyling(
     iconTints = listOf(Paletting.OLD_SP_YELLOW),
     iconShadows = Paletting.SP_GRADIENT
 )
-
 private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
     get() {
-        return mutableListOf<Pair<Setting<out Any>, String>>()}/*.apply {
+        return mutableListOf<Pair<Setting<out Any>, String>>().apply {
             add(
-                BooleanSetting(
+                Setting.BooleanSetting(
                     type = SettingType.CheckboxSettingType,
                     key = PREF_REMEMBER_INFO,
-                    title = lyricist.strings.settingRememberJoinInfoTitle,
-                    summary = lyricist.strings.settingRememberJoinInfoSummary,
+                    title = Res.string.setting_remember_join_info_title,
+                    summary = Res.string.setting_remember_join_info_summary,
                     defaultValue = true,
                     icon = Icons.Filled.Face,
                     styling = settingGLOBALstyle
@@ -44,11 +215,11 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
                 Setting.YesNoDialogSetting(
                     type = SettingType.YesNoDialogSettingType,
                     key = PREF_ERASE_SHORTCUTS,
-                    title = lyricist.strings.settingEraseShortcutsTitle,
-                    summary = lyricist.strings.settingEraseShortcutsSummary,
+                    title = Res.string.setting_erase_shortcuts_title,
+                    summary = Res.string.setting_erase_shortcuts_summary,
                     defaultValue = true,
                     icon = Icons.Filled.BookmarkRemove,
-                    rationale = lyricist.strings.settingEraseShortcutsDialog,
+                    rationale = Res.string.setting_erase_shortcuts_dialog,
                     onYes = {
                         homeCallback?.onEraseConfigShortcuts()
                     },
@@ -58,8 +229,8 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
             add(Setting.PopupSetting(
                 type = SettingType.PopupSettingType,
                 key = PREF_SP_MEDIA_DIRS,
-                title = lyricist.strings.mediaDirectories,
-                summary = lyricist.strings.mediaDirectoriesSettingSummary,
+                title = Res.string.media_directories,
+                summary = Res.string.media_directories_setting_summary,
                 icon = Icons.AutoMirrored.Filled.QueueMusic,
                 styling = settingGLOBALstyle,
                 popupComposable = { s ->
@@ -68,11 +239,11 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
             ) to CATEG_GLOBAL_GENERAL)
 
             if (getPlatform() == PLATFORM.Android) {
-                add(MultiChoiceSetting(
+                add(Setting.MultiChoiceSetting(
                     type = SettingType.MultiChoicePopupSettingType,
                     key = PREF_DISPLAY_LANG,
-                    title = lyricist.strings.settingDisplayLanguageTitle,
-                    summary = lyricist.strings.settingDisplayLanguageSummry,
+                    title = Res.string.setting_display_language_title,
+                    summary = Res.string.setting_display_language_summry,
                     defaultValue = "en",
                     icon = Icons.Filled.Translate,
                     styling = settingGLOBALstyle,
@@ -84,11 +255,11 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
                 ) to CATEG_GLOBAL_LANG)
             } else {
                 add(
-                    OneClickSetting(
+                    Setting.OneClickSetting(
                         type = SettingType.OneClickSettingType,
                         key = PREF_DISPLAY_LANG,
-                        title = lyricist.strings.settingDisplayLanguageTitle,
-                        summary = lyricist.strings.settingDisplayLanguageSummry,
+                        title = Res.string.setting_display_language_title,
+                        summary = Res.string.setting_display_language_summry,
                         icon = Icons.Filled.Translate,
                         styling = settingGLOBALstyle,
                         onClick = {
@@ -98,11 +269,11 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
             }
 
             add(
-                TextFieldSetting(
+                Setting.TextFieldSetting(
                     type = SettingType.TextFieldSettingType,
                     key = PREF_AUDIO_LANG,
-                    title = lyricist.strings.settingAudioDefaultLanguageTitle,
-                    summary = lyricist.strings.settingAudioDefaultLanguageSummry,
+                    title = Res.string.setting_audio_default_language_title,
+                    summary = Res.string.setting_audio_default_language_summry,
                     defaultValue = "und",
                     icon = Icons.Filled.GraphicEq,
                     styling = settingGLOBALstyle,
@@ -110,13 +281,11 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                TextFieldSetting(
+                Setting.TextFieldSetting(
                     type = SettingType.TextFieldSettingType,
                     key = PREF_CC_LANG,
-                    title = lyricist
-                        .strings.settingCcDefaultLanguageTitle,
-                    summary = lyricist
-                        .strings.settingCcDefaultLanguageSummry,
+                    title = Res.string.setting_cc_default_language_title,
+                    summary = Res.string.setting_cc_default_language_summry,
                     defaultValue = "eng",
                     icon = Icons.Filled.ClosedCaptionOff,
                     styling = settingGLOBALstyle,
@@ -124,13 +293,11 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                BooleanSetting(
+                Setting.BooleanSetting(
                     type = SettingType.CheckboxSettingType,
                     key = PREF_READY_FIRST_HAND,
-                    title = lyricist
-                        .strings.settingReadyFirsthandTitle,
-                    summary = lyricist
-                        .strings.settingReadyFirsthandSummary,
+                    title = Res.string.setting_ready_firsthand_title,
+                    summary = Res.string.setting_ready_firsthand_summary,
                     defaultValue = true,
                     icon = Icons.Filled.TaskAlt,
                     styling = settingGLOBALstyle,
@@ -138,13 +305,11 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                BooleanSetting(
+                Setting.BooleanSetting(
                     type = SettingType.CheckboxSettingType,
                     key = PREF_PAUSE_ON_SOMEONE_LEAVE,
-                    title = lyricist
-                        .strings.settingPauseIfSomeoneLeftTitle,
-                    summary = lyricist
-                        .strings.settingPauseIfSomeoneLeftSummary,
+                    title = Res.string.setting_pause_if_someone_left_title,
+                    summary = Res.string.setting_pause_if_someone_left_summary,
                     defaultValue = true,
                     icon = Icons.Filled.FrontHand,
                     styling = settingGLOBALstyle,
@@ -152,75 +317,61 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                BooleanSetting(
+                Setting.BooleanSetting(
                     type = SettingType.CheckboxSettingType,
                     key = PREF_FILE_MISMATCH_WARNING,
-                    title = lyricist
-                        .strings.settingWarnFileMismatchTitle,
-                    summary = lyricist
-                        .strings.settingWarnFileMismatchSummary,
+                    title = Res.string.setting_warn_file_mismatch_title,
+                    summary = Res.string.setting_warn_file_mismatch_summary,
                     defaultValue = true,
                     icon = Icons.Filled.ErrorOutline,
                     styling = settingGLOBALstyle,
                 ) to CATEG_GLOBAL_SYNCING
             )
 
-            add(
-                MultiChoiceSetting(
-                    type = SettingType.MultiChoicePopupSettingType,
-                    key = PREF_HASH_FILENAME,
-                    title = lyricist
-                        .strings.settingFileinfoBehaviourNameTitle,
-                    summary = lyricist
-                        .strings.settingFileinfoBehaviourNameSummary,
-                    defaultValue = "1",
-                    icon = Icons.Filled.DesignServices,
-                    styling = settingGLOBALstyle,
-                    entryKeys =
-                    listOf(
-                        lyricist
-                            .strings.settingFileinfoBehaviorA,
-                        lyricist
-                            .strings.settingFileinfoBehaviorB,
-                        lyricist
-                            .strings.settingFileinfoBehaviorC
-                    ),
-                    entryValues = listOf("1", "2", "3")
-                ) to CATEG_GLOBAL_SYNCING
-            )
+//            TODO add(
+//                Setting.MultiChoiceSetting(
+//                    type = SettingType.MultiChoicePopupSettingType,
+//                    key = PREF_HASH_FILENAME,
+//                    title = Res.string.setting_fileinfo_behaviour_name_title,
+//                    summary = Res.string.setting_fileinfo_behaviour_name_summary,
+//                    defaultValue = "1",
+//                    icon = Icons.Filled.DesignServices,
+//                    styling = settingGLOBALstyle,
+//                    entryKeys =
+//                        listOf(
+//                            Res.string.setting_fileinfo_behavior_a,
+//                            Res.string.setting_fileinfo_behavior_b,
+//                            Res.string.setting_fileinfo_behavior_c
+//                        ),
+//                    entryValues = listOf("1", "2", "3")
+//                ) to CATEG_GLOBAL_SYNCING
+//            )
+
+//            todo add(
+//                Setting.MultiChoiceSetting(
+//                    type = SettingType.MultiChoicePopupSettingType,
+//                    key = PREF_HASH_FILESIZE,
+//                    title = Res.string.setting_fileinfo_behaviour_size_title,
+//                    summary = Res.string.setting_fileinfo_behaviour_size_summary,
+//                    defaultValue = "1",
+//                    icon = Icons.Filled.DesignServices,
+//                    styling = settingGLOBALstyle,
+//                    entryKeys =
+//                        listOf(
+//                            Res.string.setting_fileinfo_behavior_a,
+//                            Res.string.setting_fileinfo_behavior_b,
+//                            Res.string.setting_fileinfo_behavior_c
+//                        ),
+//                    entryValues = listOf("1", "2", "3"),
+//                ) to CATEG_GLOBAL_SYNCING
+//            )
 
             add(
-                MultiChoiceSetting(
-                    type = SettingType.MultiChoicePopupSettingType,
-                    key = PREF_HASH_FILESIZE,
-                    title = lyricist
-                        .strings.settingFileinfoBehaviourSizeTitle,
-                    summary = lyricist
-                        .strings.settingFileinfoBehaviourSizeSummary,
-                    defaultValue = "1",
-                    icon = Icons.Filled.DesignServices,
-                    styling = settingGLOBALstyle,
-                    entryKeys =
-                    listOf(
-                        lyricist
-                            .strings.settingFileinfoBehaviorA,
-                        lyricist
-                            .strings.settingFileinfoBehaviorB,
-                        lyricist
-                            .strings.settingFileinfoBehaviorC
-                    ),
-                    entryValues = listOf("1", "2", "3"),
-                ) to CATEG_GLOBAL_SYNCING
-            )
-
-            add(
-                SliderSetting(
+                Setting.SliderSetting(
                     type = SettingType.SliderSettingType,
                     key = PREF_MAX_BUFFER,
-                    title = lyricist
-                        .strings.settingMaxBufferTitle,
-                    summary = lyricist
-                        .strings.settingMaxBufferSummary,
+                    title = Res.string.setting_max_buffer_title,
+                    summary = Res.string.setting_max_buffer_summary,
                     defaultValue = 30,
                     icon = Icons.Filled.HourglassTop,
                     styling = settingGLOBALstyle,
@@ -230,13 +381,11 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                SliderSetting(
+                Setting.SliderSetting(
                     type = SettingType.SliderSettingType,
                     key = PREF_MIN_BUFFER,
-                    title = lyricist
-                        .strings.settingMinBufferTitle,
-                    summary = lyricist
-                        .strings.settingMinBufferSummary,
+                    title = Res.string.setting_min_buffer_title,
+                    summary = Res.string.setting_min_buffer_summary,
                     defaultValue = 15,
                     icon = Icons.Filled.HourglassBottom,
                     styling = settingGLOBALstyle,
@@ -246,13 +395,11 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                SliderSetting(
+                Setting.SliderSetting(
                     type = SettingType.SliderSettingType,
                     key = PREF_SEEK_BUFFER,
-                    title = lyricist
-                        .strings.settingPlaybackBufferTitle,
-                    summary = lyricist
-                        .strings.settingPlaybackBufferSummary,
+                    title = Res.string.setting_playback_buffer_title,
+                    summary = Res.string.setting_playback_buffer_summary,
                     defaultValue = 2500,
                     icon = Icons.Filled.HourglassEmpty,
                     styling = settingGLOBALstyle,
@@ -261,39 +408,39 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
                 ) to CATEG_GLOBAL_EXOPLAYER
             )
 
-            add(
-                MultiChoiceSetting(
-                    type = SettingType.MultiChoicePopupSettingType,
-                    key = PREF_NETWORK_ENGINE,
-                    title = lyricist.strings.settingNetworkEngineTitle,
-                    summary = lyricist.strings.settingNetworkEngineSummary,
-                    defaultValue = if (getPlatform() == PLATFORM.Android) "netty" else "swiftnio",
-                    icon = Icons.Filled.Lan,
-                    styling = settingGLOBALstyle,
-                    entryKeys =
-                    mutableListOf(lyricist.strings.settingNetworkEngineKtor).apply {
-                        if (getPlatform() == PLATFORM.Android) {
-                            add(lyricist.strings.settingNetworkEngineNetty)
-                        } else {
-                            add(lyricist.strings.settingNetworkEngineSwiftNIO)
-                        }
-                    },
-                    entryValues = mutableListOf("ktor").apply {
-                        if (getPlatform() == PLATFORM.Android) {
-                            add("netty")
-                        } else {
-                            add("swiftnio")
-                        }
-                    }
-                ) to CATEG_GLOBAL_NETWORK
-            )
+//            TODO add(
+//                Setting.MultiChoiceSetting(
+//                    type = SettingType.MultiChoicePopupSettingType,
+//                    key = PREF_NETWORK_ENGINE,
+//                    title = Res.string.setting_network_engine_title,
+//                    summary = Res.string.setting_network_engine_summary,
+//                    defaultValue = if (getPlatform() == PLATFORM.Android) "netty" else "swiftnio",
+//                    icon = Icons.Filled.Lan,
+//                    styling = settingGLOBALstyle,
+//                    entryKeys =
+//                        mutableListOf(Res.string.setting_network_engine_ktor).apply {
+//                            if (getPlatform() == PLATFORM.Android) {
+//                                add(Res.string.setting_network_engine_netty)
+//                            } else {
+//                                add(Res.string.setting_network_engine_swift_nio)
+//                            }
+//                        },
+//                    entryValues = mutableListOf("ktor").apply {
+//                        if (getPlatform() == PLATFORM.Android) {
+//                            add("netty")
+//                        } else {
+//                            add("swiftnio")
+//                        }
+//                    }
+//                ) to CATEG_GLOBAL_NETWORK
+//            )
 
             add(
-                BooleanSetting(
+                Setting.BooleanSetting(
                     type = SettingType.ToggleSettingType,
                     key = PREF_TLS_ENABLE,
-                    title = lyricist.strings.settingTlsTitle,
-                    summary = lyricist.strings.settingTlsSummary,
+                    title = Res.string.setting_tls_title,
+                    summary = Res.string.setting_tls_summary,
                     defaultValue = true,
                     icon = Icons.Filled.Key,
                     styling = settingGLOBALstyle,
@@ -304,13 +451,11 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
                 Setting.YesNoDialogSetting(
                     type = SettingType.OneClickSettingType,
                     key = PREF_GLOBAL_CLEAR_ALL,
-                    title = lyricist
-                        .strings.settingResetdefaultTitle,
-                    summary = lyricist
-                        .strings.settingResetdefaultSummary,
+                    title = Res.string.setting_resetdefault_title,
+                    summary = Res.string.setting_resetdefault_summary,
                     icon = Icons.Filled.ClearAll,
                     styling = settingGLOBALstyle,
-                    rationale = lyricist.strings.settingResetdefaultDialog,
+                    rationale = Res.string.setting_resetdefault_dialog,
                     onYes = {
                         launch(Dispatchers.IO) {
                             datastore.edit { preferences ->
@@ -327,13 +472,11 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
     get() {
         return mutableListOf<Pair<Setting<out Any>, String>>().apply {
             add(
-                ColorSetting(
+                Setting.ColorSetting(
                     type = SettingType.ColorSettingType,
                     key = PREF_INROOM_COLOR_TIMESTAMP,
-                    title = lyricist
-                        .strings.uisettingTimestampColorTitle,
-                    summary = lyricist
-                        .strings.uisettingTimestampSummary,
+                    title = Res.string.uisetting_timestamp_color_title,
+                    summary = Res.string.uisetting_timestamp_summary,
                     defaultValue = Paletting.MSG_TIMESTAMP.toArgb(),
                     icon = Icons.Filled.Brush,
                     styling = settingROOMstyle,
@@ -341,13 +484,11 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                ColorSetting(
+                Setting.ColorSetting(
                     type = SettingType.ColorSettingType,
                     key = PREF_INROOM_COLOR_SELFTAG,
-                    title = lyricist
-                        .strings.uisettingSelfColorTitle,
-                    summary = lyricist
-                        .strings.uisettingSelfColorSummary,
+                    title = Res.string.uisetting_self_color_title,
+                    summary = Res.string.uisetting_self_color_summary,
                     defaultValue = Paletting.MSG_SELF_TAG.toArgb(),
                     icon = Icons.Filled.Brush,
                     styling = settingROOMstyle,
@@ -355,13 +496,11 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                ColorSetting(
+                Setting.ColorSetting(
                     type = SettingType.ColorSettingType,
                     key = PREF_INROOM_COLOR_FRIENDTAG,
-                    title = lyricist
-                        .strings.uisettingFriendColorTitle,
-                    summary = lyricist
-                        .strings.uisettingFriendColorSummary,
+                    title = Res.string.uisetting_friend_color_title,
+                    summary = Res.string.uisetting_friend_color_summary,
                     defaultValue = Paletting.MSG_FRIEND_TAG.toArgb(),
                     icon = Icons.Filled.Brush,
                     styling = settingROOMstyle,
@@ -369,13 +508,11 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                ColorSetting(
+                Setting.ColorSetting(
                     type = SettingType.ColorSettingType,
                     key = PREF_INROOM_COLOR_SYSTEMMSG,
-                    title = lyricist
-                        .strings.uisettingSystemColorTitle,
-                    summary = lyricist
-                        .strings.uisettingSystemColorSummary,
+                    title = Res.string.uisetting_system_color_title,
+                    summary = Res.string.uisetting_system_color_summary,
                     defaultValue = Paletting.MSG_SYSTEM.toArgb(),
                     icon = Icons.Filled.Brush,
                     styling = settingROOMstyle,
@@ -383,13 +520,11 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                ColorSetting(
+                Setting.ColorSetting(
                     type = SettingType.ColorSettingType,
                     key = PREF_INROOM_COLOR_USERMSG,
-                    title = lyricist
-                        .strings.uisettingHumanColorTitle,
-                    summary = lyricist
-                        .strings.uisettingHumanColorSummary,
+                    title = Res.string.uisetting_human_color_title,
+                    summary = Res.string.uisetting_human_color_summary,
                     defaultValue = Paletting.MSG_CHAT.toArgb(),
                     icon = Icons.Filled.Brush,
                     styling = settingROOMstyle,
@@ -397,13 +532,11 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                ColorSetting(
+                Setting.ColorSetting(
                     type = SettingType.ColorSettingType,
                     key = PREF_INROOM_COLOR_ERRORMSG,
-                    title = lyricist
-                        .strings.uisettingErrorColorTitle,
-                    summary = lyricist
-                        .strings.uisettingErrorColorSummary,
+                    title = Res.string.uisetting_error_color_title,
+                    summary = Res.string.uisetting_error_color_summary,
                     defaultValue = Paletting.MSG_ERROR.toArgb(),
                     icon = Icons.Filled.Brush,
                     styling = settingROOMstyle,
@@ -411,13 +544,11 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                BooleanSetting(
+                Setting.BooleanSetting(
                     type = SettingType.ToggleSettingType,
                     key = PREF_INROOM_MSG_ACTIVATE_STAMP,
-                    title = lyricist
-                        .strings.uisettingTimestampTitle,
-                    summary = lyricist
-                        .strings.uisettingTimestampSummary,
+                    title = Res.string.uisetting_timestamp_title,
+                    summary = Res.string.uisetting_timestamp_summary,
                     defaultValue = true,
                     icon = Icons.Filled.Pin,
                     styling = settingROOMstyle,
@@ -425,13 +556,11 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                BooleanSetting(
+                Setting.BooleanSetting(
                     type = SettingType.ToggleSettingType,
                     key = PREF_INROOM_MSG_OUTLINE,
-                    title = lyricist
-                        .strings.uisettingMsgoutlineTitle,
-                    summary = lyricist
-                        .strings.uisettingMsgoutlineSummary,
+                    title = Res.string.uisetting_msgoutline_title,
+                    summary = Res.string.uisetting_msgoutline_summary,
                     defaultValue = true,
                     icon = Icons.Filled.BorderColor,
                     styling = settingROOMstyle,
@@ -439,13 +568,11 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                BooleanSetting(
+                Setting.BooleanSetting(
                     type = SettingType.ToggleSettingType,
                     key = PREF_INROOM_MSG_SHADOW,
-                    title = lyricist
-                        .strings.uisettingMsgshadowTitle,
-                    summary = lyricist
-                        .strings.uisettingMsgshadowSummary,
+                    title = Res.string.uisetting_msgshadow_title,
+                    summary = Res.string.uisetting_msgshadow_summary,
                     defaultValue = false,
                     icon = Icons.Filled.BorderColor,
                     styling = settingROOMstyle,
@@ -453,13 +580,11 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                SliderSetting(
+                Setting.SliderSetting(
                     type = SettingType.SliderSettingType,
                     key = PREF_INROOM_MSG_BG_OPACITY,
-                    title = lyricist
-                        .strings.uisettingMessageryAlphaTitle,
-                    summary = lyricist
-                        .strings.uisettingMessageryAlphaSummary,
+                    title = Res.string.uisetting_messagery_alpha_title,
+                    summary = Res.string.uisetting_messagery_alpha_summary,
                     defaultValue = 0,
                     icon = Icons.Filled.Opacity,
                     styling = settingROOMstyle,
@@ -469,13 +594,11 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                SliderSetting(
+                Setting.SliderSetting(
                     type = SettingType.SliderSettingType,
                     key = PREF_INROOM_MSG_FONTSIZE,
-                    title = lyricist
-                        .strings.uisettingMsgsizeTitle,
-                    summary = lyricist
-                        .strings.uisettingMsgsizeSummary,
+                    title = Res.string.uisetting_msgsize_title,
+                    summary = Res.string.uisetting_msgsize_summary,
                     defaultValue = 9,
                     icon = Icons.Filled.FormatSize,
                     styling = settingROOMstyle,
@@ -485,13 +608,11 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                SliderSetting(
+                Setting.SliderSetting(
                     type = SettingType.SliderSettingType,
                     key = PREF_INROOM_MSG_MAXCOUNT,
-                    title = lyricist
-                        .strings.uisettingMsgcountTitle,
-                    summary = lyricist
-                        .strings.uisettingMsgcountSummary,
+                    title = Res.string.uisetting_msgcount_title,
+                    summary = Res.string.uisetting_msgcount_summary,
                     defaultValue = 10,
                     icon = Icons.Filled.FormatListNumbered,
                     styling = settingROOMstyle,
@@ -501,13 +622,11 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                SliderSetting(
+                Setting.SliderSetting(
                     type = SettingType.SliderSettingType,
                     key = PREF_INROOM_MSG_FADING_DURATION,
-                    title = lyricist
-                        .strings.uisettingMsglifeTitle,
-                    summary = lyricist
-                        .strings.uisettingMsglifeSummary,
+                    title = Res.string.uisetting_msglife_title,
+                    summary = Res.string.uisetting_msglife_summary,
                     defaultValue = 3,
                     icon = Icons.Filled.Timer,
                     styling = settingROOMstyle,
@@ -517,26 +636,22 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                BooleanSetting(
+                Setting.BooleanSetting(
                     type = SettingType.ToggleSettingType,
                     key = PREF_INROOM_MSG_BOX_ACTION,
-                    title = lyricist
-                        .strings.uisettingMsgboxactionTitle,
-                    summary = lyricist
-                        .strings.uisettingMsgboxactionSummary,
+                    title = Res.string.uisetting_msgboxaction_title,
+                    summary = Res.string.uisetting_msgboxaction_summary,
                     defaultValue = true,
                     icon = Icons.Filled.Keyboard,
                     styling = settingROOMstyle,
                 ) to CATEG_INROOM_CHATPROPS
             )
 
-            add(SliderSetting(
+            add(Setting.SliderSetting(
                 type = SettingType.SliderSettingType,
                 key = DataStoreKeys.PREF_INROOM_PLAYER_SUBTITLE_SIZE,
-                title = lyricist
-                    .strings.uisettingSubtitleSizeTitle,
-                summary = lyricist
-                    .strings.uisettingSubtitleSizeSummary,
+                title = Res.string.uisetting_subtitle_size_title,
+                summary = Res.string.uisetting_subtitle_size_summary,
                 defaultValue = 16,
                 icon = Icons.Filled.SortByAlpha,
                 styling = settingROOMstyle,
@@ -571,11 +686,11 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
 
 
             add(
-                BooleanSetting(
+                Setting.BooleanSetting(
                     type = SettingType.CheckboxSettingType,
                     key = PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT,
-                    title = lyricist.strings.uisettingCustomSeekFrontTitle,
-                    summary = lyricist.strings.uisettingCustomSeekFrontSummary,
+                    title = Res.string.uisetting_custom_seek_front_title,
+                    summary = Res.string.uisetting_custom_seek_front_summary,
                     defaultValue = true,
                     icon = Icons.Filled.Update,
                     styling = settingROOMstyle,
@@ -583,11 +698,11 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                SliderSetting(
+                Setting.SliderSetting(
                     type = SettingType.SliderSettingType,
                     key = DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT,
-                    title = lyricist.strings.uisettingCustomSeekAmountTitle,
-                    summary = lyricist.strings.uisettingCustomSeekAmountSummary,
+                    title = Res.string.uisetting_custom_seek_amount_title,
+                    summary = Res.string.uisetting_custom_seek_amount_summary,
                     defaultValue = 90,
                     icon = Icons.Filled.Update,
                     styling = settingROOMstyle,
@@ -597,13 +712,11 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                SliderSetting(
+                Setting.SliderSetting(
                     type = SettingType.SliderSettingType,
                     key = DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP,
-                    title = lyricist
-                        .strings.uisettingSeekForwardJumpTitle,
-                    summary = lyricist
-                        .strings.uisettingSeekForwardJumpSummary,
+                    title = Res.string.uisetting_seek_forward_jump_title,
+                    summary = Res.string.uisetting_seek_forward_jump_summary,
                     defaultValue = 10,
                     icon = Icons.Filled.FastForward,
                     styling = settingROOMstyle,
@@ -613,13 +726,11 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
             )
 
             add(
-                SliderSetting(
+                Setting.SliderSetting(
                     type = SettingType.SliderSettingType,
                     key = DataStoreKeys.PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP,
-                    title = lyricist
-                        .strings.uisettingSeekBackwardJumpTitle,
-                    summary = lyricist
-                        .strings.uisettingSeekBackwardJumpSummary,
+                    title = Res.string.uisetting_seek_backward_jump_title,
+                    summary = Res.string.uisetting_seek_backward_jump_summary,
                     defaultValue = 10,
                     icon = Icons.Filled.FastRewind,
                     styling = settingROOMstyle,
@@ -642,14 +753,13 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
 //                ) to CATEG_INROOM_ADVANCED
 //            )
 
+
             add(
-                SliderSetting(
+                Setting.SliderSetting(
                     type = SettingType.SliderSettingType,
                     key = DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL,
-                    title = lyricist
-                        .strings.uisettingReconnectIntervalTitle,
-                    summary = lyricist
-                        .strings.uisettingReconnectIntervalSummary,
+                    title = Res.string.uisetting_reconnect_interval_title,
+                    summary = Res.string.uisetting_reconnect_interval_summary,
                     defaultValue = 2,
                     icon = Icons.Filled.Web,
                     styling = settingROOMstyle,
@@ -662,13 +772,11 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
                 Setting.YesNoDialogSetting(
                     type = SettingType.OneClickSettingType,
                     key = PREF_INROOM_RESET_DEFAULT,
-                    title = lyricist
-                        .strings.uisettingResetdefaultTitle,
-                    summary = lyricist
-                        .strings.uisettingResetdefaultSummary,
+                    title = Res.string.uisetting_resetdefault_title,
+                    summary = Res.string.uisetting_resetdefault_summary,
                     icon = Icons.Filled.ClearAll,
                     styling = settingROOMstyle,
-                    rationale = lyricist.strings.settingResetdefaultDialog,
+                    rationale = Res.string.setting_resetdefault_dialog,
                     onYes = {
                         launch(Dispatchers.IO) {
                             datastore.edit { preferences ->
@@ -679,27 +787,26 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
                 ) to CATEG_INROOM_ADVANCED
             )
         }
-    }*/
-
-fun sgGLOBAL() = mutableListOf<SettingCategory>() /* .apply {
+    }
+fun sgGLOBAL() = mutableListOf<SettingCategory>().apply {
     add(
         SettingCategory(
             keyID = CATEG_GLOBAL_GENERAL,
-            title = lyricist.strings.settingsCategGeneral,
+            title = Res.string.settings_categ_general,
             icon = Icons.Filled.SettingsSuggest
         )
     )
     add(
         SettingCategory(
             keyID = CATEG_GLOBAL_LANG,
-            title = lyricist.strings.settingsCategLanguage,
+            title = Res.string.settings_categ_language,
             icon = Icons.Filled.Translate,
         )
     )
     add(
         SettingCategory(
             keyID = CATEG_GLOBAL_SYNCING,
-            title = lyricist.strings.settingsCategSyncing,
+            title = Res.string.settings_categ_syncing,
             icon = Icons.Filled.ConnectWithoutContact
         )
     )
@@ -708,7 +815,7 @@ fun sgGLOBAL() = mutableListOf<SettingCategory>() /* .apply {
         add(
             SettingCategory(
                 keyID = CATEG_GLOBAL_EXOPLAYER,
-                title = lyricist.strings.settingsCategExoplayer,
+                title = Res.string.settings_categ_exoplayer,
                 icon = Icons.Filled.VideoSettings
             )
         )
@@ -716,7 +823,7 @@ fun sgGLOBAL() = mutableListOf<SettingCategory>() /* .apply {
     add(
         SettingCategory(
             keyID = CATEG_GLOBAL_NETWORK,
-            title = lyricist.strings.settingsCategNetwork,
+            title = Res.string.settings_categ_network,
             icon = Icons.Filled.Hub
         )
     )
@@ -724,37 +831,33 @@ fun sgGLOBAL() = mutableListOf<SettingCategory>() /* .apply {
     add(
         SettingCategory(
             keyID = CATEG_GLOBAL_ADVANCED,
-            title = lyricist.strings.settingsCategAdvanced,
+            title = Res.string.settings_categ_advanced,
             icon = Icons.Filled.Stream
         )
     )
     settingsGLOBAL.populate(this)
-}*/
+}
 
-fun sgROOM(): MutableList<SettingCategory> = mutableListOf() /* {
+fun sgROOM(): MutableList<SettingCategory> {
     val list = mutableListOf(
         SettingCategory(
             keyID = CATEG_INROOM_CHATCOLORS,
-            title = lyricist
-                .strings.uisettingCategChatColors,
+            title = Res.string.uisetting_categ_chat_colors,
             icon = Icons.Filled.Palette,
         ),
         SettingCategory(
             keyID = CATEG_INROOM_CHATPROPS,
-            title = lyricist
-                .strings.uisettingCategChatProperties,
+            title = Res.string.uisetting_categ_chat_properties,
             icon = Icons.AutoMirrored.Filled.Chat
         ),
         SettingCategory(
             keyID = CATEG_INROOM_PLAYERSETTINGS,
-            title = lyricist
-                .strings.uisettingCategPlayerSettings,
+            title = Res.string.uisetting_categ_player_settings,
             icon = Icons.Filled.VideoLabel,
         ),
         SettingCategory(
             keyID = CATEG_INROOM_ADVANCED,
-            title = lyricist
-                .strings.settingsCategAdvanced,
+            title = Res.string.settings_categ_advanced,
             icon = Icons.Filled.Stream
         )
 
@@ -763,7 +866,7 @@ fun sgROOM(): MutableList<SettingCategory> = mutableListOf() /* {
         list.add(
             SettingCategory(
                 keyID = CATEG_INROOM_MPV,
-                title = lyricist.strings.uisettingCategMpv,
+                title = Res.string.uisetting_categ_mpv,
                 icon = Icons.Filled.SettingsInputComponent
             )
         )
@@ -772,4 +875,4 @@ fun sgROOM(): MutableList<SettingCategory> = mutableListOf() /* {
     val allSettings = settingsROOM + moreSettings
     allSettings.populate(list)
     return list
-} */
+}
