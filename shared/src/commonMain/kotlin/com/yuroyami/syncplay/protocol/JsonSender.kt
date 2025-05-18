@@ -168,7 +168,7 @@ object JsonSender {
                 }
                 put("ignoringOnTheFly", ignore)
                 put("playstate", buildJsonObject {
-                    put("paused", !(play ?: false))
+                    put("paused", play != true)
                 })
             } else {
                 if (viewmodel!!.p.serverIgnFly != 0) {

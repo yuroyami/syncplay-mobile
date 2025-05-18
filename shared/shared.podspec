@@ -10,7 +10,6 @@ Pod::Spec.new do |spec|
     spec.libraries                = 'c++'
     spec.ios.deployment_target    = '14.0'
     spec.dependency 'MobileVLCKit', '3.6.1b1'
-    spec.dependency 'SPLPing'
                 
     if !Dir.exist?('build/cocoapods/framework/shared.framework') || Dir.empty?('build/cocoapods/framework/shared.framework')
         raise "
@@ -51,5 +50,5 @@ Pod::Spec.new do |spec|
             SCRIPT
         }
     ]
-    spec.resources = ['build\compose\cocoapods\compose-resources']
+    spec.resources = ['build/compose/cocoapods/compose-resources']
 end

@@ -254,12 +254,12 @@ object JsonHandler {
             /* Constant Traditional Pinging if no command is received. */
             protocol.sendPacket(
                 JsonSender.sendState(
-                    latency,
-                    clienttime,
-                    false,
-                    0,
-                    0,
-                    null
+                    servertime = latency,
+                    clienttime = clienttime,
+                    doSeek = false,
+                    seekPosition = 0,
+                    iChangeState = 0,
+                    play = null
                 )
             )
         }

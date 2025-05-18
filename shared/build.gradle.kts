@@ -37,7 +37,7 @@ kotlin {
         }
 
         pod("MobileVLCKit", libs.versions.libvlc.ios.get()) //Adds the VLC player engine to iOS
-        pod("SPLPing") //Light-weight Objective-C library to add the ICMP ping functionality
+        //pod("SPLPing", "1.1.8") //Light-weight Objective-C library to add the ICMP ping functionality
     }
 
     sourceSets {
@@ -123,6 +123,7 @@ kotlin {
 
             /* Video player engine: Media3 (ExoPlayer and its extensions) */
             implementation(libs.bundles.media3)
+            implementation(files(File(projectDir, "libs/ext.aar"))) /* ExoPlayer's FFmpeg extension  */
 
             /* Video player engine: VLC (via libVLC) */
             implementation(libs.libvlc.android)
@@ -254,7 +255,6 @@ android {
 }
 
 dependencies {
-    //implementation(files("libs/ext.aar")) /* ExoPlayer's FFmpeg extension  */
     coreLibraryDesugaring (libs.desugaring)
 }
 
