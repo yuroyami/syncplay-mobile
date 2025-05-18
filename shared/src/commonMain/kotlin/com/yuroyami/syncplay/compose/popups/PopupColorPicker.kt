@@ -2,7 +2,6 @@ package com.yuroyami.syncplay.compose.popups
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.SpaceEvenly
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -68,7 +67,7 @@ object PopupColorPicker {
             Column(
                 modifier = Modifier.fillMaxSize().padding(6.dp),
                 horizontalAlignment = CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceEvenly
+                verticalArrangement = SpaceEvenly
             ) {
 
                 /* The title */

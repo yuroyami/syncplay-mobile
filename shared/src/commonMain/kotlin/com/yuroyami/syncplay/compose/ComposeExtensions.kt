@@ -7,8 +7,6 @@ import syncplaymobile.shared.generated.resources.Helvetica_Regular
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.Res.readBytes
 
-suspend fun daynightAsset() = readBytes("files/daynight_toggle.json").decodeToString()
-
 @Composable
 fun getRegularFont() = Font(Res.font.Helvetica_Regular) //Helvetica
 

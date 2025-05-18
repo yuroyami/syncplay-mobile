@@ -49,7 +49,4 @@ expect fun getScreenSizeInfo(): ScreenSizeInfo
 /** Formats a string and replaces placeholders with actual keys */
 expect fun String.format(vararg args: String): String
 
-/** Gets the app's current locale lang code */
-expect fun getSystemLanguageCode(): String
-
 expect fun ClipEntry.getText(): String?

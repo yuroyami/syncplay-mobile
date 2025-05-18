@@ -12,7 +12,6 @@ import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
@@ -112,10 +111,6 @@ actual fun getScreenSizeInfo(): ScreenSizeInfo {
 
 actual fun String.format(vararg args: String): String {
     return String.format(this, *args)
-}
-
-actual fun getSystemLanguageCode(): String {
-    return Locale.current.toLanguageTag().also { loggy(it, 0) }
 }
 
 actual fun ClipEntry.getText(): String? {

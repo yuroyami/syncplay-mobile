@@ -98,7 +98,7 @@ abstract class BasePlayer {
     abstract fun isSeekable(): Boolean
 
     open fun seekTo(toPositionMs: Long) {
-        if (viewmodel?.background == true) return;
+        if (viewmodel?.background == true) return
     }
 
     abstract fun currentPositionMs(): Long
