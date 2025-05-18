@@ -1,4 +1,4 @@
--keep class com.yuroyami.syncplay.player.mpv.MPVLib {  *; }
+-keep class is.xyz.mpv.MPVLib {  *; }
 
 -keep class io.netty.**{*;}
 # netty

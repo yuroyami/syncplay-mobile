@@ -60,35 +60,35 @@ kotlin {
 
         commonMain.dependencies {
             /* Forcing Kotlin libs to match the compiler */
-            api(libs.kotlin.stdlib)
+            implementation(libs.kotlin.stdlib)
 
             /* Explicitly specifying a newer koroutines version */
             implementation(libs.kotlin.coroutines.core)
 
             /* Official JetBrains Kotlin Date 'n time manager (i.e: generating date from epoch) */
-            api(libs.kotlinx.datetime)
+            implementation(libs.kotlinx.datetime)
 
             /* JSON serializer/deserializer to communicate with Syncplay servers */
             implementation(libs.kotlinx.serialization.json)
 
             /* Network client */
-            api(libs.bundles.ktor)
+            implementation(libs.bundles.ktor)
 
             /* Android's "Uri" class but rewritten for Kotlin multiplatform */
             implementation("com.eygraber:uri-kmp:0.0.19")
 
             /* Jetpack Datastore for preferences and settings (accessible in Compose in real-time) */
-            api(libs.datastore)
+            implementation(libs.datastore)
 
             /* Compose core dependencies */
-            api(compose.runtime)
-            api(compose.foundation)
-            api(compose.material3)
-            api(compose.materialIconsExtended)
-            api(compose.components.resources)
+            implementation(compose.runtime)
+            implementation(compose.foundation)
+            implementation(compose.material3)
+            implementation(compose.materialIconsExtended)
+            implementation(compose.components.resources)
 
             /* ViewModel support */
-            api(libs.compose.viewmodel)
+            implementation(libs.compose.viewmodel)
 
             /* Helps with color calculations for color preferences */
             implementation(libs.colormath)
@@ -102,33 +102,33 @@ kotlin {
 
         androidMain.dependencies {
             /* Backward compatibility APIs */
-            api(libs.jetpack.core)
-            api(libs.jetpack.appcompat)
+            implementation(libs.jetpack.core)
+            implementation(libs.jetpack.appcompat)
 
             /* SAF DocumentFile manager with backward compatibility */
             implementation(libs.jetpack.documentfile)
 
             /* Splash Screen with backward compatibility */
-            api(libs.jetpack.splashscreen) //1.2.0 bugs our navbar opacity
+            implementation(libs.jetpack.splashscreen) //1.2.0 bugs our navbar opacity
 
             /* Extended coroutine support for Android threading */
-            api(libs.kotlin.coroutines.android)
+            implementation(libs.kotlin.coroutines.android)
 
             /*  Activity's compose support with backward compatibility */
-            api(libs.jetpack.activity.compose)
+            implementation(libs.jetpack.activity.compose)
 
             /* Network and TLS */
-            api(libs.netty)
-            api(libs.conscrypt) //TLSv1.3 with backward compatibility
+            implementation(libs.netty)
+            implementation(libs.conscrypt) //TLSv1.3 with backward compatibility
 
             /* Video player engine: Media3 (ExoPlayer and its extensions) */
-            api(libs.bundles.media3)
+            implementation(libs.bundles.media3)
 
             /* Video player engine: VLC (via libVLC) */
-            api(libs.libvlc.android)
+            implementation(libs.libvlc.android)
 
             /* Jetpack Home shortcut manager for quick launch with backward compatibility */
-            api("androidx.core:core-google-shortcuts:1.2.0-alpha01") {
+            implementation("androidx.core:core-google-shortcuts:1.2.0-alpha01") {
                 exclude(group = "com.google.crypto.tink", module = "tink-android")
                 exclude(group = "com.google.android.gms")
             }
