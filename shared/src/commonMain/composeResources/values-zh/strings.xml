@@ -46,7 +46,7 @@
     <!-- Room screen -->
     <string name="room_selected_vid">选择的视频文件: %s</string>
     <string name="room_selected_sub">选择的字幕文件: %s</string>
-    <string name="room_selected_sub_error">无效的字幕文件.支持的格式有: \'SRT\', \'TTML\', \'ASS\', \'SSA\', \'VTT\'</string>
+    <string name="room_selected_sub_error">无效的字幕文件.支持的格式有: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'</string>
     <string name="room_sub_error_load_vid_first">第一次加载视频</string>
     <string name="room_type_message">输入你要说的内容…</string>
     <string name="room_ready">准备</string>
@@ -67,7 +67,7 @@
     <string name="room_rewinded">由于播放时间差距大而倒退 %s</string>
     <string name="room_guy_left">%s 离开房间.</string>
     <string name="room_guy_joined">%s 您已经加入聊天室.</string>
-    <string name="room_isplayingfile">%1$s 正在播放 \'%2$s\' (%3$s)</string>
+    <string name="room_isplayingfile">%1$s 正在播放 '%2$s' (%3$s)</string>
     <string name="room_you_joined_room">你已经加入聊天室: %s</string>
     <string name="room_scaling_fit_screen">调整尺寸: 适合屏幕</string>
     <string name="room_scaling_fixed_width">调整尺寸: 固定宽度</string>
@@ -83,7 +83,7 @@
     <string name="room_details_current_room">当前的房间: %s</string>
     <string name="room_details_nofileplayed">(没有播放视频)</string>
     <string name="room_details_file_properties">时长: %1$s - 大小: %2$s MBs</string>
-    <string name="room_file_mismatch_warning_core">你的文件不同于 %s\'s 请按照以下方式进行归档:</string>
+    <string name="room_file_mismatch_warning_core">你的文件不同于 %s's 请按照以下方式进行归档:</string>
     <string name="room_file_mismatch_warning_name">名称.</string>
     <string name="room_file_mismatch_warning_duration">时长.</string>
     <string name="room_file_mismatch_warning_size">大小.</string>
@@ -161,11 +161,11 @@
     <string name="ui_setting_mpv_debug_title">启用调试</string>
     <string name="ui_setting_mpv_debug_summary">显示调试信息。</string>
     <string name="ui_setting_mpv_interpolation_title">帧率插值</string>
-    <string name="ui_setting_mpv_interpolation_summary">通过启用帧率插值来减少抖动。请注意，仅当将视频同步选项设置为其中一个 \'显示\' 模式时，才会应用此选项，否则将会被静默忽略。在某些情况下，这可能效果不佳。</string>
+    <string name="ui_setting_mpv_interpolation_summary">通过启用帧率插值来减少抖动。请注意，仅当将视频同步选项设置为其中一个 '显示' 模式时，才会应用此选项，否则将会被静默忽略。在某些情况下，这可能效果不佳。</string>
     <string name="ui_setting_mpv_vidsync_title">视频同步模式</string>
     <string name="ui_setting_mpv_vidsync_summary">控制 mpv 如何将视频同步，可以是音频（默认，推荐）或显示本身。</string>
     <string name="ui_setting_mpv_profile_title">渲染预设 (配置文件)</string>
-    <string name="ui_setting_mpv_profile_summary">根据内置的预设配置 mpv 的功能。默认为 \'fast\'，因为它适用于手机。从直播源流式传输时，使用 \'low-latency\' 可能更好。</string>
+    <string name="ui_setting_mpv_profile_summary">根据内置的预设配置 mpv 的功能。默认为 'fast'，因为它适用于手机。从直播源流式传输时，使用 'low-latency' 可能更好。</string>
     <string name="setting_night_mode_title">夜间模式</string>
     <string name="setting_night_mode_summary">选择夜间模式的行为。</string>
     <string name="setting_remember_join_info_title">记住加入过的服务器</string>
@@ -177,9 +177,9 @@
     <string name="setting_display_language_summry">选择Syncplay所显示的语言.</string>
     <string name="setting_display_language_toast">改变语言. 重启app使设置生效.</string>
     <string name="setting_audio_default_language_title">首选音频语言</string>
-    <string name="setting_audio_default_language_summry">设置自动加载您在此处设置的语言代码的音频轨道。例如，英语代码是\'en-US\'，日语是\'ja-JP\'。请谷歌\'IETF BCP 47 codes\'以获取更多信息。</string>
+    <string name="setting_audio_default_language_summry">设置自动加载您在此处设置的语言代码的音频轨道。例如，英语代码是'en-US'，日语是'ja-JP'。请谷歌'IETF BCP 47 codes'以获取更多信息。</string>
     <string name="setting_cc_default_language_title">首选字幕语言</string>
-    <string name="setting_cc_default_language_summry">设置自动加载您在此处设置的语言代码的字幕轨道。例如，英语代码是\'en-US\'，日语是\'ja-JP\'。请谷歌\'IETF BCP 47 codes\'以获取更多信息。</string>
+    <string name="setting_cc_default_language_summry">设置自动加载您在此处设置的语言代码的字幕轨道。例如，英语代码是'en-US'，日语是'ja-JP'。请谷歌'IETF BCP 47 codes'以获取更多信息。</string>
     <string name="setting_use_buffer_title">使用自定义缓冲区大小</string>
     <string name="setting_use_buffer_summary">如果您对播放器在播放前和播放期间的视频加载时间不满意, 您可以使用自定义缓冲区大小 (使用风险自负).</string>
     <string name="setting_max_buffer_title">自定义最大缓冲区大小</string>
@@ -262,7 +262,7 @@
     <string name="setting_network_engine_ktor">Ktor（实验性）</string>
 
     <!-- UI settings -->
-    <string name="uisetting_custom_seek_front_summary">启用此功能将在主播放器屏幕上显示自定义的\'跳过时长\'按钮，该按钮位于快退和快进按钮之间，方便访问。</string>
+    <string name="uisetting_custom_seek_front_summary">启用此功能将在主播放器屏幕上显示自定义的'跳过时长'按钮，该按钮位于快退和快进按钮之间，方便访问。</string>
     <string name="uisetting_custom_seek_front_title">在主屏幕上显示自定义跳过按钮</string>
     <string name="uisetting_custom_seek_amount_summary">默认跳过时长为90秒（1:30分钟），适合动漫。您可以在这里调整自定义跳过按钮的时长。</string>
     <string name="uisetting_custom_seek_amount_title">自定义跳过时长</string>

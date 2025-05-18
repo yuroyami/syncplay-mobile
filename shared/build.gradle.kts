@@ -13,13 +13,15 @@ plugins {
 
 @OptIn(ExperimentalKotlinGradlePluginApi::class)
 kotlin {
-
+    // Activating Android target (androidMain)
     androidTarget()
 
+    // Activating iOS targets (iosMain)
     iosX64()
     iosArm64()
     iosSimulatorArm64()
 
+    // iOS configuration
     cocoapods {
         summary = "Syncplay Common Code (Platform-agnostic)"
         homepage = "www.github.com/yuroyami/syncplay-mobile"
@@ -72,7 +74,6 @@ kotlin {
             /* Android's "Uri" class but rewritten for Kotlin multiplatform */
             implementation("com.eygraber:uri-kmp:0.0.19")
 
-
             /* Jetpack Datastore for preferences and settings (accessible in Compose in real-time) */
             api(libs.datastore)
 
@@ -88,11 +89,6 @@ kotlin {
 
             /* Helps with color calculations for color preferences */
             implementation(libs.colormath)
-
-            /* Compose multiplatform port of Android's lottie-compose. We only need Lottie for
-             * the day-night toggle button. This basically relies on lottie-compose for Android,
-             * and on skiko's lottie support (aka Skottie) on the iOS side, and other platforms.*/
-            implementation("io.github.alexzhirkevich:compottie:1.1.2") //1.1.2
 
             /* Hash digesters */
             implementation(libs.bundles.krypto)
@@ -157,7 +153,6 @@ android {
     kotlin {
         jvmToolchain(21)
     }
-
     buildFeatures {
         buildConfig = true
     }

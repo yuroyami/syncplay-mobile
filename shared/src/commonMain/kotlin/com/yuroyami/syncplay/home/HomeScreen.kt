@@ -41,6 +41,7 @@ import androidx.compose.material.icons.filled.MeetingRoom
 import androidx.compose.material.icons.filled.PersonPin
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Widgets
+import androidx.compose.material.icons.outlined.Tsunami
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgeDefaults
 import androidx.compose.material3.BadgedBox
@@ -63,6 +64,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -101,7 +103,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.compose.ComposeUtils.FlexibleFancyText
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
-import com.yuroyami.syncplay.compose.NightModeToggler
 import com.yuroyami.syncplay.compose.getRegularFont
 import com.yuroyami.syncplay.compose.popups.PopupAPropos.AProposPopup
 import com.yuroyami.syncplay.models.JoinInfo
@@ -158,7 +159,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
     CompositionLocalProvider(
         LocalGlobalSettings provides sgGLOBAL()
     ) {
-        val nightMode = valueFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
+        val nightMode by valueFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
 
         val servers = listOf(
             "syncplay.pl:8995",
@@ -169,7 +170,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
             stringResource(Res.string.connect_enter_custom_server)
         )
 
-        AppTheme(nightMode.value) {
+        AppTheme(nightMode) {
             /* Remembering stuff like scope for onClicks, snackBar host state for snackbars ... etc */
             val scope = rememberCoroutineScope { Dispatchers.IO }
             snacky = remember { SnackbarHostState() }
@@ -201,15 +202,20 @@ fun HomeScreen(savedConfig: HomeConfig) {
                             modifier = Modifier.animateContentSize()
                         ) {
                             ListItem(
-                                modifier = Modifier.fillMaxWidth().padding(
-                                    top = (TopAppBarDefaults.windowInsets.asPaddingValues()
-                                        .calculateTopPadding())
-                                ),
+                                modifier = Modifier.fillMaxWidth().padding(top = (TopAppBarDefaults.windowInsets.asPaddingValues().calculateTopPadding())),
                                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                                 trailingContent = {
                                     Row(verticalAlignment = CenterVertically) {
-                                        NightModeToggler(
-                                            modifier = Modifier.size(58.dp), state = nightMode
+                                        Switch(
+                                            checked = nightMode,
+                                            onCheckedChange = { b ->
+                                                scope.launch {
+                                                    writeValue(MISC_NIGHTMODE, b)
+                                                }
+                                            },
+                                            thumbContent = {
+                                                Icon(imageVector = Icons.Outlined.Tsunami, null)
+                                            }
                                         )
 
                                         IconButton(

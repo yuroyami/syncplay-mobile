@@ -12,6 +12,7 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.watchroom.viewmodel
 import java.io.File
@@ -79,16 +80,19 @@ fun getPathFromURI(context: Context, contentUri: Uri): String {
 
 fun ComponentActivity.bindWatchdog() {
     val watchdog = viewmodel!!.lifecycleWatchdog
-    val lifecycleObserver = LifecycleEventObserver { _, event ->
-        when (event) {
-            Lifecycle.Event.ON_CREATE -> watchdog.onCreate()
-            Lifecycle.Event.ON_START -> watchdog.onStart()
-            Lifecycle.Event.ON_RESUME -> watchdog.onResume()
-            Lifecycle.Event.ON_PAUSE -> watchdog.onPause()
-            Lifecycle.Event.ON_STOP -> watchdog.onStop()
-            else -> {}
+    val lifecycleObserver = object: LifecycleEventObserver {
+        override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
+            when (event) {
+                Lifecycle.Event.ON_CREATE -> watchdog.onCreate()
+                Lifecycle.Event.ON_START -> watchdog.onStart()
+                Lifecycle.Event.ON_RESUME -> watchdog.onResume()
+                Lifecycle.Event.ON_PAUSE -> watchdog.onPause()
+                Lifecycle.Event.ON_STOP -> watchdog.onStop()
+                else -> {}
+            }
         }
     }
+
     lifecycle.addObserver(lifecycleObserver)
 }
 

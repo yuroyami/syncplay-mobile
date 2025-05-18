@@ -46,7 +46,7 @@
     <!-- Room screen -->
     <string name="room_selected_vid">Выбран видео файл: %s</string>
     <string name="room_selected_sub">Загружен файл субтитров: %s</string>
-    <string name="room_selected_sub_error">Неверный файл субтитров. Поддерживаемые форматы: \'SRT\', \'TTML\', \'ASS\', \'SSA\', \'VTT\'</string>
+    <string name="room_selected_sub_error">Неверный файл субтитров. Поддерживаемые форматы: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'</string>
     <string name="room_sub_error_load_vid_first">Сначала загрузите видео</string>
     <string name="room_type_message">Введите ваше сообщение...</string>
     <string name="room_ready">Готово</string>
@@ -67,7 +67,7 @@
     <string name="room_rewinded">Перемотано из-за разницы во времени с %s</string>
     <string name="room_guy_left">%s покинул комнату.</string>
     <string name="room_guy_joined">%s присоединился к комнате.</string>
-    <string name="room_isplayingfile">%1$s воспроизводит \'%2$s\' (%3$s)</string>
+    <string name="room_isplayingfile">%1$s воспроизводит '%2$s' (%3$s)</string>
     <string name="room_you_joined_room">Вы присоединились к комнате: %s</string>
     <string name="room_scaling_fit_screen">Режим изменения размера: ПОДГОН К ЭКРАНУ</string>
     <string name="room_scaling_fixed_width">Режим изменения размера: ФИКСИРОВАННАЯ ШИРИНА</string>
@@ -161,25 +161,25 @@
     <string name="ui_setting_mpv_debug_title">Включить отладку</string>
     <string name="ui_setting_mpv_debug_summary">Показывать статистику и сведения о текущем бэкэнде.</string>
     <string name="ui_setting_mpv_interpolation_title">Интерполяция кадрового частоты</string>
-    <string name="ui_setting_mpv_interpolation_summary">Снизьте дрожание, включив интерполяцию кадровой частоты. Обратите внимание, что это будет применяться только в случае, если опция синхронизации видео установлена на один из режимов \'display\', в противном случае она будет молчаливо проигнорирована. Это может работать не очень хорошо в некоторых случаях.</string>
+    <string name="ui_setting_mpv_interpolation_summary">Снизьте дрожание, включив интерполяцию кадровой частоты. Обратите внимание, что это будет применяться только в случае, если опция синхронизации видео установлена на один из режимов 'display', в противном случае она будет молчаливо проигнорирована. Это может работать не очень хорошо в некоторых случаях.</string>
     <string name="ui_setting_mpv_vidsync_title">Режим синхронизации видео</string>
     <string name="ui_setting_mpv_vidsync_summary">Управляет тем, как mpv синхронизирует видео, либо с аудио (по умолчанию, рекомендуется), либо с самим экраном.</string>
     <string name="ui_setting_mpv_profile_title">Предустановка рендеринга (профиль)</string>
-    <string name="ui_setting_mpv_profile_summary">Настроить возможности mpv в соответствии с одним из встроенных предустановленных профилей. По умолчанию установлен \'fast\', так как это удобно для телефонов. Использование \'low-latency\' может быть полезным при передаче потоковых данных из живых источников.</string>
+    <string name="ui_setting_mpv_profile_summary">Настроить возможности mpv в соответствии с одним из встроенных предустановленных профилей. По умолчанию установлен 'fast', так как это удобно для телефонов. Использование 'low-latency' может быть полезным при передаче потоковых данных из живых источников.</string>
     <string name="setting_night_mode_title">Ночной режим</string>
     <string name="setting_night_mode_summary">Выберите поведение ночного режима.</string>
     <string name="setting_remember_join_info_title">Запомнить информацию о присоединении</string>
     <string name="setting_remember_join_info_summary">Включено по умолчанию. Это позволит SyncPlay сохранить ваш последний логин, имя комнаты и последний используемый официальный сервер.</string>
     <string name="setting_erase_shortcuts_title">Удалить все ярлыки домашнего экрана</string>
-    <string name="setting_erase_shortcuts_summary">Это удалит все \'быстрые запуски\' ярлыки домашнего экрана, которые вы создали через основной экран, чтобы сохранить настройки комнаты.</string>
+    <string name="setting_erase_shortcuts_summary">Это удалит все 'быстрые запуски' ярлыки домашнего экрана, которые вы создали через основной экран, чтобы сохранить настройки комнаты.</string>
     <string name="setting_erase_shortcuts_dialog">Вы действительно хотите удалить все существующие ярлыки?</string>
     <string name="setting_display_language_title">Язык отображения</string>
     <string name="setting_display_language_summry">Выберите язык, на котором отображается Syncplay.</string>
     <string name="setting_display_language_toast">Язык изменён. Перезапустите приложение, чтобы изменения вступили в силу полностью.</string>
     <string name="setting_audio_default_language_title">Предпочтительный язык звуковой дорожки</string>
-    <string name="setting_audio_default_language_summry">Автоматически загружать звуковую дорожку с установленным вами здесь языковым кодом. Например, для английского код - \'en-US\', для японского - \'ja-JP\'. Произведите поиск в Google по запросу \'IETF BCP 47 codes\' для получения дополнительной информации.</string>
+    <string name="setting_audio_default_language_summry">Автоматически загружать звуковую дорожку с установленным вами здесь языковым кодом. Например, для английского код - 'en-US', для японского - 'ja-JP'. Произведите поиск в Google по запросу 'IETF BCP 47 codes' для получения дополнительной информации.</string>
     <string name="setting_cc_default_language_title">Предпочтительный язык субтитров</string>
-    <string name="setting_cc_default_language_summry">Автоматически загружайте субтитры с установленным вами здесь языковым кодом. Например, для английского код - \'en-US\', для японского - \'ja-JP\'. Произведите поиск в Google по запросу \'IETF BCP 47 codes\' для получения дополнительной информации.</string>
+    <string name="setting_cc_default_language_summry">Автоматически загружайте субтитры с установленным вами здесь языковым кодом. Например, для английского код - 'en-US', для японского - 'ja-JP'. Произведите поиск в Google по запросу 'IETF BCP 47 codes' для получения дополнительной информации.</string>
     <string name="setting_use_buffer_title">Использовать пользовательские размеры буфера</string>
     <string name="setting_use_buffer_summary">Если вы не удвлетворены временем загрузки видео до и во время воспроизведения, вы можете использовать пользовательские размеры буфера (Используйте на свой страх и риск).</string>
     <string name="setting_max_buffer_title">Пользовательский максимальный размер буфера</string>
@@ -212,8 +212,8 @@
     <string name="uisetting_msgoutline_title">Контур сообщения в чате</string>
     <string name="uisetting_msgshadow_summary">Включите это, чтобы сообщения чата имели тень и избежать их слияния с фоновым видео.</string>
     <string name="uisetting_msgshadow_title">Тень сообщения в чате</string>
-    <string name="uisetting_msgboxaction_summary">Когда включено, нажатие кнопки \'OK\' на клавиатуре отправит сообщение. Когда отключено, оно просто закроет клавиатуру без действий.</string>
-    <string name="uisetting_msgboxaction_title">Реакция на нажатие кнопки \'OK\' на клавиатуре</string>
+    <string name="uisetting_msgboxaction_summary">Когда включено, нажатие кнопки 'OK' на клавиатуре отправит сообщение. Когда отключено, оно просто закроет клавиатуру без действий.</string>
+    <string name="uisetting_msgboxaction_title">Реакция на нажатие кнопки 'OK' на клавиатуре</string>
     <string name="uisetting_overview_alpha_summary">По умолчанию 40 (почти прозрачно), измените это, если хотите сделать панель Подробнее о комнате более читаемой, увеличив прозрачность.</string>
     <string name="uisetting_overview_alpha_title">Прозрачность заднего фона панели Подробнее о комнате</string>
     <string name="uisetting_messagery_alpha_summary">По умолчанию 0 (прозрачно). Максимальное значение 255 (100% непрозрачность). Улучшить читаемость сообщений увеличив непрозрачность заднего фона.</string>
@@ -262,7 +262,7 @@
     <string name="setting_network_engine_ktor">Ktor (Экспериментальный)</string>
 
     <!-- UI settings -->
-    <string name="uisetting_custom_seek_front_summary">Включение этой опции покажет кнопку \'Период пропуска\', находящуюся в всплывающем окне \'Перейти к позиции\', на главном экране плеера между кнопками перемотки назад и вперед для удобства доступа.</string>
+    <string name="uisetting_custom_seek_front_summary">Включение этой опции покажет кнопку 'Период пропуска', находящуюся в всплывающем окне 'Перейти к позиции', на главном экране плеера между кнопками перемотки назад и вперед для удобства доступа.</string>
     <string name="uisetting_custom_seek_front_title">Показать кнопку пропуска на главном экране</string>
     <string name="uisetting_custom_seek_amount_summary">По умолчанию продолжительность пропуска составляет 90 секунд (1:30 минуты), что идеально для аниме. Вы можете настроить эту продолжительность для кнопки пропуска здесь.</string>
     <string name="uisetting_custom_seek_amount_title">Продолжительность пропуска</string>

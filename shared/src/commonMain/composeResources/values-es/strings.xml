@@ -43,7 +43,7 @@
     <string name="connect_solomode">Ingresa al modo solo (solo reproductor)</string>
 
     <!-- Room Screen -->
-    <string name="room_selected_sub_error">Archivo de subtítulos no válido. Los formatos admitidos son: \'SRT\', \'TTML\', \'ASS\', \'SSA\', \'VTT\'</string>
+    <string name="room_selected_sub_error">Archivo de subtítulos no válido. Los formatos admitidos son: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'</string>
     <string name="room_sub_error_load_vid_first">Cargar video primero</string>
     <string name="room_type_message">Escribe tu mensaje…</string>
     <string name="room_ready">Listo</string>
@@ -133,15 +133,15 @@
     <string name="setting_remember_join_info_title">Recordar información de entrada</string>
     <string name="setting_remember_join_info_summary">Activar por defecto. Esto permitirá que SyncPlay guarde tu último nombre de usuario, nombre de sala y qué servidor oficial utilizaste por última vez.</string>
     <string name="setting_erase_shortcuts_title">Eliminar todos los accesos directos de inicio</string>
-    <string name="setting_erase_shortcuts_summary">Esto eliminará todos los accesos directos de inicio de \'ejecución rápida\' que creaste a través de la pantalla principal para guardar tus configuraciones de habitación.</string>
+    <string name="setting_erase_shortcuts_summary">Esto eliminará todos los accesos directos de inicio de 'ejecución rápida' que creaste a través de la pantalla principal para guardar tus configuraciones de habitación.</string>
     <string name="setting_erase_shortcuts_dialog">¿Realmente deseas borrar todos los accesos directos existentes?</string>
     <string name="setting_display_language_title">Idioma de visualización</string>
     <string name="setting_display_language_summry">Selecciona el idioma con el que SyncPlay se mostrará.</string>
     <string name="setting_display_language_toast">Idioma cambiado. Reinicia la aplicación para que la configuración tenga efecto completo.</string>
     <string name="setting_audio_default_language_title">Idioma preferido de la pista de audio</string>
-    <string name="setting_audio_default_language_summry">Carga automáticamente una pista de audio con el código de idioma que establezcas aquí. Por ejemplo, el código en inglés es \'en-US\', en japonés es \'ja-JP\'. Consulta \'Códigos BCP 47 de la IETF\' para obtener más información.</string>
+    <string name="setting_audio_default_language_summry">Carga automáticamente una pista de audio con el código de idioma que establezcas aquí. Por ejemplo, el código en inglés es 'en-US', en japonés es 'ja-JP'. Consulta 'Códigos BCP 47 de la IETF' para obtener más información.</string>
     <string name="setting_cc_default_language_title">Idioma preferido de subtítulos</string>
-    <string name="setting_cc_default_language_summry">Carga automáticamente una pista de subtítulos con el código de idioma que establezcas aquí. Por ejemplo, el código en inglés es \'en-US\', en japonés es \'ja-JP\'. Consulta \'Códigos BCP 47 de la IETF\' para obtener más información.</string>
+    <string name="setting_cc_default_language_summry">Carga automáticamente una pista de subtítulos con el código de idioma que establezcas aquí. Por ejemplo, el código en inglés es 'en-US', en japonés es 'ja-JP'. Consulta 'Códigos BCP 47 de la IETF' para obtener más información.</string>
     <string name="setting_use_buffer_title">Usar tamaños de búfer personalizados</string>
     <string name="setting_use_buffer_summary">Si no estás satisfecho con los tiempos de carga de video del reproductor antes y durante la reproducción, puedes usar tamaños de búfer personalizados (úsalo bajo tu propio riesgo).</string>
     <string name="setting_max_buffer_title">Tamaño máximo de búfer personalizado</string>
@@ -191,7 +191,7 @@
     <string name="uisetting_msgshadow_title">Sombra de mensajes de chat</string>
     <string name="uisetting_msgshadow_summary">Activa esto para darle a los mensajes de chat una sombra y reducir su fusión con el fondo del video.</string>
     <string name="uisetting_msgboxaction_title">Función del botón ACEPTAR del teclado</string>
-    <string name="uisetting_msgboxaction_summary">Cuando está habilitado, hacer clic en el botón \'ACEPTAR\' de tu teclado enviará el mensaje. Cuando está deshabilitado, simplemente cerrará el teclado sin hacer nada.</string>
+    <string name="uisetting_msgboxaction_summary">Cuando está habilitado, hacer clic en el botón 'ACEPTAR' de tu teclado enviará el mensaje. Cuando está deshabilitado, simplemente cerrará el teclado sin hacer nada.</string>
     <string name="uisetting_overview_alpha_title">Opacidad del fondo de detalles de la sala</string>
     <string name="uisetting_overview_alpha_summary">El valor predeterminado es 40 (casi transparente), cámbialo si quieres hacer más legible el panel de detalles de la sala aumentando la opacidad.</string>
     <string name="uisetting_messagery_alpha_title">Opacidad del fondo de mensajes</string>
@@ -237,13 +237,13 @@
     <string name="ui_setting_mpv_debug_title">Habilitar depuración</string>
     <string name="ui_setting_mpv_debug_summary">Mostrar información de depuración.</string>
     <string name="ui_setting_mpv_interpolation_title">Framerate Interpolation</string>
-    <string name="ui_setting_mpv_interpolation_summary">Reduzca el temblor habilitando la interpolación de fotogramas. Tenga en cuenta que esto solo se aplicará si la opción de sincronización de video está configurada en uno de los modos \'display\', de lo contrario se ignorará silenciosamente. Esto puede no funcionar bien en algunos casos.</string>
+    <string name="ui_setting_mpv_interpolation_summary">Reduzca el temblor habilitando la interpolación de fotogramas. Tenga en cuenta que esto solo se aplicará si la opción de sincronización de video está configurada en uno de los modos 'display', de lo contrario se ignorará silenciosamente. Esto puede no funcionar bien en algunos casos.</string>
     <string name="ui_setting_mpv_vidsync_title">Video sync mode</string>
     <string name="ui_setting_mpv_vidsync_summary">Controla cómo mpv sincroniza el video, ya sea con el audio (predeterminado, recomendado) o con la pantalla misma.</string>
     <string name="ui_setting_mpv_profile_title">Rendering preset (profile)</string>
-    <string name="ui_setting_mpv_profile_summary">Configura las capacidades de mpv según uno de los preajustes de perfil integrados. El predeterminado es \'fast\' ya que es adecuado para teléfonos. El uso de \'low-latency\' puede ser útil al transmitir desde fuentes en vivo.</string>
+    <string name="ui_setting_mpv_profile_summary">Configura las capacidades de mpv según uno de los preajustes de perfil integrados. El predeterminado es 'fast' ya que es adecuado para teléfonos. El uso de 'low-latency' puede ser útil al transmitir desde fuentes en vivo.</string>
     <string name="uisetting_custom_seek_front_title">Mostrar botón de salto personalizado en la pantalla principal</string>
-    <string name="uisetting_custom_seek_front_summary">Activar esta opción mostrará el botón \'Periodo de salto\' personalizado, que se encuentra en la ventana emergente \'Ir a posición\', en la pantalla principal del reproductor entre los botones de rebobinado y avance rápido para un acceso más fácil.</string>
+    <string name="uisetting_custom_seek_front_summary">Activar esta opción mostrará el botón 'Periodo de salto' personalizado, que se encuentra en la ventana emergente 'Ir a posición', en la pantalla principal del reproductor entre los botones de rebobinado y avance rápido para un acceso más fácil.</string>
     <string name="uisetting_custom_seek_amount_title">Duración de salto personalizada</string>
     <string name="uisetting_custom_seek_amount_summary">La duración de salto por defecto es de 90 segundos (1:30 minutos), lo que es ideal para anime. Puedes ajustar esta duración para el botón de salto personalizado aquí.</string>
 
@@ -259,7 +259,7 @@
     <string name="room_rewinded">Rebobinado por desincronización con %s</string>
     <string name="room_guy_left">%s dejó la sala</string>
     <string name="room_guy_joined">%s se unió a la sala.</string>
-    <string name="room_isplayingfile">%1$s está reproduciendo \'%2$s\' (%3$s)</string>
+    <string name="room_isplayingfile">%1$s está reproduciendo '%2$s' (%3$s)</string>
     <string name="room_you_joined_room">Te has unido a la sala: %s</string>
     <string name="room_sub_track_changed">Pista de subtítulos cambaida a: %s</string>
     <string name="room_audio_track_changed">Pista de audio cambiada a: %s</string>
