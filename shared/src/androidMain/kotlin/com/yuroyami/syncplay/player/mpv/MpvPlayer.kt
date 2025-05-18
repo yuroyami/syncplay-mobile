@@ -83,7 +83,7 @@ class MpvPlayer : BasePlayer() {
     }
 
     override fun hasMedia(): Boolean {
-        val c = MPVLib.getPropertyInt("playlist-count")
+        val c = MPVLib.getPropertyInt("playlist-count" as java.lang.String)
         return c != null && c > 0
     }
 
@@ -95,16 +95,16 @@ class MpvPlayer : BasePlayer() {
     override suspend fun analyzeTracks(mediafile: MediaFile) {
         viewmodel?.media?.subtitleTracks?.clear()
         viewmodel?.media?.audioTracks?.clear()
-        val count = MPVLib.getPropertyInt("track-list/count")!!
+        val count = MPVLib.getPropertyInt("track-list/count" as java.lang.String)!!
         // Note that because events are async, properties might disappear at any moment
         // so use ?: continue instead of !!
-        for (i in 0 until count) {
-            val type = MPVLib.getPropertyString("track-list/$i/type") ?: continue
+        for (i in 0 until count.toInt()) {
+            val type = MPVLib.getPropertyString("track-list/$i/type" as java.lang.String) ?: continue
             if (type != "audio" && type != "sub") continue
-            val mpvId = MPVLib.getPropertyInt("track-list/$i/id") ?: continue
-            val lang = MPVLib.getPropertyString("track-list/$i/lang")
-            val title = MPVLib.getPropertyString("track-list/$i/title")
-            val selected = MPVLib.getPropertyBoolean("track-list/$i/selected") ?: false
+            val mpvId = MPVLib.getPropertyInt("track-list/$i/id" as java.lang.String) ?: continue
+            val lang = MPVLib.getPropertyString("track-list/$i/lang" as java.lang.String)
+            val title = MPVLib.getPropertyString("track-list/$i/title" as java.lang.String)
+            val selected = MPVLib.getPropertyBoolean("track-list/$i/selected" as java.lang.String)?.booleanValue() ?: false
 
             /** Speculating the track name based on whatever info there is on it */
             val trackName = if (!lang.isNullOrEmpty() && !title.isNullOrEmpty())
@@ -122,7 +122,7 @@ class MpvPlayer : BasePlayer() {
                         object: Track {
                             override val name = trackName
                             override val type = TRACKTYPE.AUDIO
-                            override val index = mpvId
+                            override val index = mpvId.toInt()
                             override val selected = mutableStateOf(selected)
                         }
                     )
@@ -133,7 +133,7 @@ class MpvPlayer : BasePlayer() {
                         object: Track {
                             override val name = trackName
                             override val type = TRACKTYPE.SUBTITLE
-                            override val index = mpvId
+                            override val index = mpvId.toInt()
                             override val selected = mutableStateOf(selected)
                         }
                     )
@@ -146,9 +146,9 @@ class MpvPlayer : BasePlayer() {
         when (type) {
             TRACKTYPE.SUBTITLE -> {
                 if (track != null) {
-                    MPVLib.setPropertyInt("sid", track.index)
+                    MPVLib.setPropertyInt("sid" as java.lang.String, track.index as java.lang.Integer)
                 } else {
-                    MPVLib.setPropertyString("sid", "no")
+                    MPVLib.setPropertyString("sid" as java.lang.String, "no" as java.lang.String)
                 }
 
                 viewmodel?.currentTrackChoices?.subtitleSelectionIndexMpv = track?.index ?: -1
@@ -156,9 +156,9 @@ class MpvPlayer : BasePlayer() {
 
             TRACKTYPE.AUDIO -> {
                 if (track != null) {
-                    MPVLib.setPropertyInt("aid", track.index)
+                    MPVLib.setPropertyInt("aid" as java.lang.String, track.index as java.lang.Integer)
                 } else {
-                    MPVLib.setPropertyString("aid", "no")
+                    MPVLib.setPropertyString("aid" as java.lang.String, "no" as java.lang.String)
                 }
 
                 viewmodel?.currentTrackChoices?.audioSelectionIndexMpv = track?.index ?: -1
@@ -183,13 +183,13 @@ class MpvPlayer : BasePlayer() {
 
     override fun jumpToChapter(chapter: Chapter) {
         if (!ismpvInit) return
-        MPVLib.setPropertyInt("chapter", chapter.index)
+        MPVLib.setPropertyInt("chapter" as java.lang.String, chapter.index as java.lang.Integer)
     }
 
     override fun skipChapter() {
         if (!ismpvInit) return
 
-        MPVLib.command(arrayOf("add", "chapter", "1"))
+        MPVLib.command(arrayOf("add" as java.lang.String, "chapter" as java.lang.String, "1" as java.lang.String))
     }
 
     override fun reapplyTrackChoices() {
@@ -230,7 +230,7 @@ class MpvPlayer : BasePlayer() {
 
             if (mimeTypeValid) {
                 ctx.resolveUri(uri.toUri())?.let {
-                    MPVLib.command(arrayOf("sub-add", it, "cached"))
+                    MPVLib.command(arrayOf("sub-add" as java.lang.String, it as java.lang.String, "cached" as java.lang.String))
                 }
                 playerScopeMain.dispatchOSD {
                     getString(Res.string.room_selected_sub, filename)
@@ -345,8 +345,8 @@ class MpvPlayer : BasePlayer() {
     }
 
     override suspend fun switchAspectRatio(): String {
-        val currentAspect = MPVLib.getPropertyString("video-aspect-override")
-        val currentPanscan = MPVLib.getPropertyDouble("panscan")
+        val currentAspect = MPVLib.getPropertyString("video-aspect-override" as java.lang.String)
+        val currentPanscan = MPVLib.getPropertyDouble("panscan" as java.lang.String)
 
         loggy("currentAspect: $currentAspect and currentPanscan: $currentPanscan", 0)
 
@@ -370,11 +370,11 @@ class MpvPlayer : BasePlayer() {
         }
 
         if (enablePanscan) {
-            MPVLib.setPropertyString("video-aspect-override", "-1")
-            MPVLib.setPropertyDouble("panscan", 1.0)
+            MPVLib.setPropertyString("video-aspect-override" as java.lang.String, "-1" as java.lang.String)
+            MPVLib.setPropertyDouble("panscan" as java.lang.String, 1.0 as java.lang.Double)
         } else {
-            MPVLib.setPropertyString("video-aspect-override", nextAspect.first)
-            MPVLib.setPropertyDouble("panscan", 0.0)
+            MPVLib.setPropertyString("video-aspect-override" as java.lang.String, nextAspect.first as java.lang.String)
+            MPVLib.setPropertyDouble("panscan" as java.lang.String, 0.0 as java.lang.Double)
         }
 
         return nextAspect.second
@@ -397,7 +397,7 @@ class MpvPlayer : BasePlayer() {
             }
         }
 
-        MPVLib.setPropertyDouble("sub-scale", s)
+        MPVLib.setPropertyDouble("sub-scale" as java.lang.String, s as java.lang.Double)
     }
 
     /** MPV EXCLUSIVE */
@@ -431,6 +431,10 @@ class MpvPlayer : BasePlayer() {
             }
 
             override fun eventProperty(property: String, value: String) {
+            }
+
+            override fun eventProperty(property: String, value: Double) {
+
             }
 
             override fun event(eventId: Int) {
@@ -554,31 +558,31 @@ class MpvPlayer : BasePlayer() {
 
     fun toggleHardwareAcceleration(b: Boolean) {
         if (!ismpvInit) return
-        MPVLib.setOptionString("hwdec", if (b) "auto" else "no")
+        MPVLib.setOptionString("hwdec" as java.lang.String, if (b) "auto"  as java.lang.String else "no" as java.lang.String)
     }
 
     fun toggleGpuNext(b: Boolean) {
         if (!ismpvInit) return
-        MPVLib.setOptionString("vo", if (b) "gpu-next" else "gpu")
+        MPVLib.setOptionString("vo" as java.lang.String, if (b) "gpu-next" as java.lang.String else "gpu" as java.lang.String)
     }
 
     fun toggleInterpolation(b: Boolean) {
         if (!ismpvInit) return
-        MPVLib.setOptionString("interpolation", if (b) "yes" else "no")
+        MPVLib.setOptionString("interpolation" as java.lang.String, if (b) "yes"  as java.lang.String else "no" as java.lang.String)
     }
 
     fun toggleDebugMode(i: Int) {
         if (!ismpvInit) return
-        MPVLib.command(arrayOf("script-binding", "stats/display-page-$i"))
+        MPVLib.command(arrayOf("script-binding" as java.lang.String, "stats/display-page-$i" as java.lang.String))
     }
 
     fun setProfileMode(p: String) {
         if (!ismpvInit) return
-        MPVLib.setOptionString("profile", p)
+        MPVLib.setOptionString("profile" as java.lang.String, p as java.lang.String)
     }
 
     fun setVidSyncMode(m: String) {
         if (!ismpvInit) return
-        MPVLib.setOptionString("video-sync", m)
+        MPVLib.setOptionString("video-sync" as java.lang.String, m as java.lang.String)
     }
 }

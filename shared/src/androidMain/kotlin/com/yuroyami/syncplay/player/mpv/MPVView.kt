@@ -25,26 +25,26 @@ import kotlin.reflect.KProperty
 internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(context, attrs), SurfaceHolder.Callback {
     fun initialize(configDir: String, cacheDir: String) {
         MPVLib.create(contextObtainer.obtainAppContext())
-        MPVLib.setOptionString("config", "yes")
-        MPVLib.setOptionString("config-dir", configDir)
+        MPVLib.setOptionStringK("config", "yes")
+        MPVLib.setOptionStringK("config-dir", configDir)
         for (opt in arrayOf("gpu-shader-cache-dir", "icc-cache-dir"))
-            MPVLib.setOptionString(opt, cacheDir)
+            MPVLib.setOptionStringK(opt, cacheDir)
         initOptions() // do this before init() so user-supplied config can override our choices
         MPVLib.init()
         /* Hardcoded options: */
         // we need to call write-watch-later manually
-        MPVLib.setOptionString("save-position-on-quit", "no")
+        MPVLib.setOptionStringK("save-position-on-quit", "no")
         // would crash before the surface is attached
-        MPVLib.setOptionString("force-window", "no")
+        MPVLib.setOptionStringK("force-window", "no")
         // "no" wouldn't work and "yes" is not intended by the UI
-        MPVLib.setOptionString("idle", "once")
+        MPVLib.setOptionStringK("idle", "once")
 
         /** Applying syncplay-specific options */
         val playerOptions = PlayerOptions.get()
-        MPVLib.setOptionString("alang", playerOptions.audioPreference)
-        MPVLib.setOptionString("slang", playerOptions.ccPreference)
+        MPVLib.setOptionStringK("alang", playerOptions.audioPreference)
+        MPVLib.setOptionStringK("slang", playerOptions.ccPreference)
 
-        MPVLib.setPropertyBoolean("pause", true)
+        MPVLib.setPropertyBoolean("pause" as java.lang.String, true as java.lang.Boolean)
 
         holder.addCallback(this)
         observeProperties()
@@ -53,7 +53,7 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
     var voInUse: String = ""
     private fun initOptions() {
         // apply phone-optimized defaults
-        MPVLib.setOptionString("profile", "fast")
+        MPVLib.setOptionStringK("profile", "fast")
 
         voInUse = if (PREF_MPV_GPU_NEXT.settingBoolean()) "gpu-next" else "gpu"
 
@@ -62,14 +62,18 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
 
         // vo: set display fps as reported by android
         val refreshRate = @Suppress("DEPRECATION") if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            context.display?.refreshRate ?: 60f
+            context.display.refreshRate
         } else {
             val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-            wm.defaultDisplay.mode.refreshRate
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                wm.defaultDisplay.mode.refreshRate
+            } else {
+                60f
+            }
         }
 
         Log.v(TAG, "Display FPS: $refreshRate")
-        MPVLib.setOptionString("display-fps-override", refreshRate.toString())
+        MPVLib.setOptionStringK("display-fps-override", refreshRate.toString())
 
         // set non-complex options
         data class Property(val preference_name: String, val mpv_option: String)
@@ -92,7 +96,7 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
         for ((preference_name, mpv_option) in opts) {
             //val preference = sharedPreferences.getString(preference_name, "")
             //if (!preference.isNullOrBlank())
-                MPVLib.setOptionString(mpv_option, "")
+                MPVLib.setOptionStringK(mpv_option, "")
         }
 
         // set more options
@@ -100,41 +104,41 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
         val debandMode = "" //TODO: Preferencize: sharedPreferences.getString("video_debanding", "")
         if (debandMode == "gradfun") {
             // lower the default radius (16) to improve performance
-            MPVLib.setOptionString("vf", "gradfun=radius=12")
+            MPVLib.setOptionStringK("vf", "gradfun=radius=12")
         } else if (debandMode == "gpu") {
-            MPVLib.setOptionString("deband", "yes")
+            MPVLib.setOptionStringK("deband", "yes")
         }
 
-        MPVLib.setOptionString("video-sync", "audio")
+        MPVLib.setOptionStringK("video-sync", "audio")
 
 
         if (PREF_MPV_INTERPOLATION.settingBoolean())
-            MPVLib.setOptionString("interpolation", "yes")
+            MPVLib.setOptionStringK("interpolation", "yes")
 
-        MPVLib.setOptionString("gpu-debug", "no")
+        MPVLib.setOptionStringK("gpu-debug", "no")
 
         if (false /* TODO: sharedPreferences.getBoolean("video_fastdecode", false) */) {
-            MPVLib.setOptionString("vd-lavc-fast", "yes")
-            MPVLib.setOptionString("vd-lavc-skiploopfilter", "nonkey")
+            MPVLib.setOptionStringK("vd-lavc-fast", "yes")
+            MPVLib.setOptionStringK("vd-lavc-skiploopfilter", "nonkey")
         }
 
-        MPVLib.setOptionString("vo", voInUse)
-        MPVLib.setOptionString("gpu-context", "android")
-        MPVLib.setOptionString("opengl-es", "yes")
-        MPVLib.setOptionString("hwdec", hwdec)
-        MPVLib.setOptionString("hwdec-codecs", "h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1")
-        MPVLib.setOptionString("ao", "audiotrack,opensles")
-        MPVLib.setOptionString("tls-verify", "yes")
-        MPVLib.setOptionString("tls-ca-file", "${this.context.filesDir.path}/cacert.pem")
-        MPVLib.setOptionString("input-default-bindings", "yes")
+        MPVLib.setOptionStringK("vo", voInUse)
+        MPVLib.setOptionStringK("gpu-context", "android")
+        MPVLib.setOptionStringK("opengl-es", "yes")
+        MPVLib.setOptionStringK("hwdec", hwdec)
+        MPVLib.setOptionStringK("hwdec-codecs", "h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1")
+        MPVLib.setOptionStringK("ao", "audiotrack,opensles")
+        MPVLib.setOptionStringK("tls-verify", "yes")
+        MPVLib.setOptionStringK("tls-ca-file", "${this.context.filesDir.path}/cacert.pem")
+        MPVLib.setOptionStringK("input-default-bindings", "yes")
         // Limit demuxer cache since the defaults are too high for mobile devices
         val cacheMegs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) 64 else 32
-        MPVLib.setOptionString("demuxer-max-bytes", "${cacheMegs * 1024 * 1024}")
-        MPVLib.setOptionString("demuxer-max-back-bytes", "${cacheMegs * 1024 * 1024}")
+        MPVLib.setOptionStringK("demuxer-max-bytes", "${cacheMegs * 1024 * 1024}")
+        MPVLib.setOptionStringK("demuxer-max-back-bytes", "${cacheMegs * 1024 * 1024}")
         //
         val screenshotDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
         screenshotDir.mkdirs()
-        MPVLib.setOptionString("screenshot-directory", screenshotDir.path)
+        MPVLib.setOptionStringK("screenshot-directory", screenshotDir.path)
     }
 
     private var filePath: String? = null
@@ -178,7 +182,7 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
         )
 
         for ((name, format) in p)
-            MPVLib.observeProperty(name, format)
+            MPVLib.observeProperty(name as java.lang.String, format)
     }
 
     fun addObserver(o: MPVLib.EventObserver) {
@@ -198,15 +202,15 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
 
     fun loadChapters(): MutableList<Chapter> {
         val chapters = mutableListOf<Chapter>()
-        val count = MPVLib.getPropertyInt("chapter-list/count")!!
-        for (i in 0 until count) {
-            val title = MPVLib.getPropertyString("chapter-list/$i/title")
-            val time = MPVLib.getPropertyDouble("chapter-list/$i/time")!!
+        val count = MPVLib.getPropertyInt("chapter-list/count" as java.lang.String)!!
+        for (i in 0 until count.toInt()) {
+            val title = MPVLib.getPropertyString("chapter-list/$i/title" as java.lang.String)
+            val time = MPVLib.getPropertyDouble("chapter-list/$i/time" as java.lang.String)!!
             chapters.add(
                 Chapter(
                 index=i,
-                title=title,
-                time=time
+                title= title.toString(),
+                time= time.toDouble()
             )
             )
         }
@@ -216,48 +220,48 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
     // Property getters/setters
 
     var paused: Boolean
-        get() = MPVLib.getPropertyBoolean("pause")
-        set(value) = MPVLib.setPropertyBoolean("pause", value)
+        get() = MPVLib.getPropertyBoolean("pause" as java.lang.String) == true
+        set(value) = MPVLib.setPropertyBoolean("pause" as java.lang.String, value as java.lang.Boolean)
 
     var timePos: Int?
-        get() = MPVLib.getPropertyInt("time-pos")
-        set(progress) = MPVLib.setPropertyInt("time-pos", progress!!)
+        get() = MPVLib.getPropertyInt("time-pos" as java.lang.String)?.toInt()
+        set(progress) = MPVLib.setPropertyInt("time-pos" as java.lang.String, progress!! as java.lang.Integer)
 
     val hwdecActive: String
-        get() = MPVLib.getPropertyString("hwdec-current") ?: "no"
+        get() = MPVLib.getPropertyString("hwdec-current" as java.lang.String).toString() ?: "no"
 
     var playbackSpeed: Double?
-        get() = MPVLib.getPropertyDouble("speed")
-        set(speed) = MPVLib.setPropertyDouble("speed", speed!!)
+        get() = MPVLib.getPropertyDouble("speed" as java.lang.String)?.toDouble()
+        set(speed) = MPVLib.setPropertyDouble("speed" as java.lang.String, speed!! as java.lang.Double)
 
     var subDelay: Double?
-        get() = MPVLib.getPropertyDouble("sub-delay")
-        set(speed) = MPVLib.setPropertyDouble("sub-delay", speed!!)
+        get() = MPVLib.getPropertyDouble("sub-delay" as java.lang.String)?.toDouble()
+        set(speed) = MPVLib.setPropertyDouble("sub-delay" as java.lang.String, speed!! as java.lang.Double)
 
     var secondarySubDelay: Double?
-        get() = MPVLib.getPropertyDouble("secondary-sub-delay")
-        set(speed) = MPVLib.setPropertyDouble("secondary-sub-delay", speed!!)
+        get() = MPVLib.getPropertyDouble("secondary-sub-delay" as java.lang.String)?.toDouble()
+        set(speed) = MPVLib.setPropertyDouble("secondary-sub-delay" as java.lang.String, speed!! as java.lang.Double)
 
     val estimatedVfFps: Double?
-        get() = MPVLib.getPropertyDouble("estimated-vf-fps")
+        get() = MPVLib.getPropertyDouble("estimated-vf-fps" as java.lang.String)?.toDouble()
 
     val videoOutAspect: Double?
-        get() = MPVLib.getPropertyDouble("video-out-params/aspect")
+        get() = MPVLib.getPropertyDouble("video-out-params/aspect" as java.lang.String)?.toDouble()
 
     val videoOutRotation: Int?
-        get() = MPVLib.getPropertyInt("video-out-params/rotate")
+        get() = MPVLib.getPropertyInt("video-out-params/rotate" as java.lang.String)?.toInt()
 
     class TrackDelegate(private val name: String) {
         operator fun getValue(thisRef: Any?, property: KProperty<*>): Int {
-            val v = MPVLib.getPropertyString(name)
+            val v = MPVLib.getPropertyString(name as java.lang.String)?.toString()
             // we can get null here for "no" or other invalid value
             return v?.toIntOrNull() ?: -1
         }
         operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Int) {
             if (value == -1)
-                MPVLib.setPropertyString(name, "no")
+                MPVLib.setPropertyString(name as java.lang.String, "no" as java.lang.String)
             else
-                MPVLib.setPropertyInt(name, value)
+                MPVLib.setPropertyInt(name as java.lang.String, value as java.lang.Integer)
         }
     }
 
@@ -268,11 +272,6 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
 
     // Commands
 
-    fun cyclePause() = MPVLib.command(arrayOf("cycle", "pause"))
-    fun cycleAudio() = MPVLib.command(arrayOf("cycle", "audio"))
-    fun cycleSub() = MPVLib.command(arrayOf("cycle", "sub"))
-    fun cycleHwdec() = MPVLib.command(arrayOf("cycle-values", "hwdec", "auto", "no"))
-
     fun cycleSpeed() {
         val speeds = arrayOf(0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0)
         val currentSpeed = playbackSpeed ?: 1.0
@@ -281,8 +280,8 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
     }
 
     fun getRepeat(): Int {
-        return when (MPVLib.getPropertyString("loop-playlist") +
-                MPVLib.getPropertyString("loop-file")) {
+        return when (MPVLib.getPropertyString("loop-playlist" as java.lang.String).toString() +
+                MPVLib.getPropertyString("loop-file" as java.lang.String).toString()) {
             "noinf" -> 2
             "infno" -> 1
             else -> 0
@@ -293,15 +292,15 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
         val state = getRepeat()
         when (state) {
             0, 1 -> {
-                MPVLib.setPropertyString("loop-playlist", if (state == 1) "no" else "inf")
-                MPVLib.setPropertyString("loop-file", if (state == 1) "inf" else "no")
+                MPVLib.setPropertyString("loop-playlist" as java.lang.String, if (state == 1) "no"  as java.lang.String else "inf"  as java.lang.String)
+                MPVLib.setPropertyString("loop-file" as java.lang.String, if (state == 1) "inf"  as java.lang.String else "no"  as java.lang.String)
             }
-            2 -> MPVLib.setPropertyString("loop-file", "no")
+            2 -> MPVLib.setPropertyString("loop-file" as java.lang.String, "no" as java.lang.String)
         }
     }
 
     fun getShuffle(): Boolean {
-        return MPVLib.getPropertyBoolean("shuffle") == true
+        return MPVLib.getPropertyBoolean("shuffle" as java.lang.String) == true
     }
 
     fun changeShuffle(cycle: Boolean, value: Boolean = true) {
@@ -311,35 +310,35 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
         val newState = if (cycle) state.xor(value) else value
         if (state == newState)
             return
-        MPVLib.command(arrayOf(if (newState) "playlist-shuffle" else "playlist-unshuffle"))
-        MPVLib.setPropertyBoolean("shuffle", newState)
+        MPVLib.command(arrayOf(if (newState) "playlist-shuffle" as java.lang.String else "playlist-unshuffle" as java.lang.String))
+        MPVLib.setPropertyBoolean("shuffle" as java.lang.String, newState as java.lang.Boolean)
     }
 
     // Surface callbacks
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-        MPVLib.setPropertyString("android-surface-size", "${width}x$height")
+        MPVLib.setPropertyString("android-surface-size" as java.lang.String, "${width}x$height" as java.lang.String)
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
         Log.w(TAG, "attaching surface")
         MPVLib.attachSurface(holder.surface)
         // This forces mpv to render subs/osd/whatever into our surface even if it would ordinarily not
-        MPVLib.setOptionString("force-window", "yes")
+        MPVLib.setOptionStringK("force-window", "yes")
 
         if (filePath != null) {
-            MPVLib.command(arrayOf("loadfile", filePath as String))
+            MPVLib.command(arrayOf("loadfile" as java.lang.String, filePath as java.lang.String))
             filePath = null
         } else {
             // We disable video output when the context disappears, enable it back
-            MPVLib.setPropertyString("vo", voInUse)
+            MPVLib.setPropertyString("vo" as java.lang.String, voInUse as java.lang.String)
         }
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
         Log.w(TAG, "detaching surface")
-        MPVLib.setPropertyString("vo", "null")
-        MPVLib.setOptionString("force-window", "no")
+        MPVLib.setPropertyString("vo" as java.lang.String, "null" as java.lang.String)
+        MPVLib.setOptionStringK("force-window", "no")
         MPVLib.detachSurface()
     }
 
