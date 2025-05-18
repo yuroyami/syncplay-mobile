@@ -6,6 +6,8 @@ import android.view.Surface
 import androidx.annotation.Keep
 import java.util.concurrent.CopyOnWriteArrayList
 
+//package `is`.xyz.mpv
+
 @Suppress("unused")
 object MPVLib {
     init {
@@ -28,8 +30,8 @@ object MPVLib {
     @JvmStatic external fun grabThumbnail(dimension: Int): Bitmap
 
     // FIXME: get methods are actually nullable
-    @JvmStatic external fun getPropertyInt(property: java.lang.String): java.lang.Integer?
-    @JvmStatic external fun setPropertyInt(property: java.lang.String, value: java.lang.Integer)
+    @JvmStatic external fun getPropertyInt(property: java.lang.String): Integer?
+    @JvmStatic external fun setPropertyInt(property: java.lang.String, value: Integer)
     @JvmStatic external fun getPropertyDouble(property: java.lang.String): java.lang.Double?
     @JvmStatic external fun setPropertyDouble(property: java.lang.String, value: java.lang.Double)
     @JvmStatic external fun getPropertyBoolean(property: java.lang.String): java.lang.Boolean?
@@ -53,32 +55,38 @@ object MPVLib {
         observers.remove(o)
     }
 
-    @Keep @JvmStatic
+    @Keep
+    @JvmStatic
     fun eventProperty(property: String, value: Long) {
         observers.forEach { it.eventProperty(property, value) }
     }
 
-    @Keep @JvmStatic
+    @Keep
+    @JvmStatic
     fun eventProperty(property: String, value: Boolean) {
         observers.forEach { it.eventProperty(property, value) }
     }
 
-    @Keep @JvmStatic
+    @Keep
+    @JvmStatic
     fun eventProperty(property: String, value: Double) {
         observers.forEach { it.eventProperty(property, value) }
     }
 
-    @Keep @JvmStatic
+    @Keep
+    @JvmStatic
     fun eventProperty(property: String, value: String) {
         observers.forEach { it.eventProperty(property, value) }
     }
 
-    @Keep @JvmStatic
+    @Keep
+    @JvmStatic
     fun eventProperty(property: String) {
         observers.forEach { it.eventProperty(property) }
     }
 
-    @Keep @JvmStatic
+    @Keep
+    @JvmStatic
     fun event(eventId: Int) {
         observers.forEach { it.event(eventId) }
     }
@@ -97,7 +105,8 @@ object MPVLib {
         logObservers.remove(o)
     }
 
-    @Keep @JvmStatic
+    @Keep
+    @JvmStatic
     fun logMessage(prefix: String, level: Int, text: String) {
         logObservers.forEach { it.logMessage(prefix, level, text) }
     }

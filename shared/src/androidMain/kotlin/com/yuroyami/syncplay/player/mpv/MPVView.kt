@@ -225,7 +225,7 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
 
     var timePos: Int?
         get() = MPVLib.getPropertyInt("time-pos" as java.lang.String)?.toInt()
-        set(progress) = MPVLib.setPropertyInt("time-pos" as java.lang.String, progress!! as java.lang.Integer)
+        set(progress) = MPVLib.setPropertyInt("time-pos" as java.lang.String, progress!! as Integer)
 
     val hwdecActive: String
         get() = MPVLib.getPropertyString("hwdec-current" as java.lang.String).toString() ?: "no"
@@ -261,7 +261,7 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
             if (value == -1)
                 MPVLib.setPropertyString(name as java.lang.String, "no" as java.lang.String)
             else
-                MPVLib.setPropertyInt(name as java.lang.String, value as java.lang.Integer)
+                MPVLib.setPropertyInt(name as java.lang.String, value as Integer)
         }
     }
 

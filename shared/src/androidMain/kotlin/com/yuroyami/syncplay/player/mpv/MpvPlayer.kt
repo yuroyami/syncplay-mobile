@@ -99,7 +99,7 @@ class MpvPlayer : BasePlayer() {
         // Note that because events are async, properties might disappear at any moment
         // so use ?: continue instead of !!
         for (i in 0 until count.toInt()) {
-            val type = MPVLib.getPropertyString("track-list/$i/type" as java.lang.String) ?: continue
+            val type = MPVLib.getPropertyString("track-list/$i/type" as java.lang.String)?.toString() ?: continue
             if (type != "audio" && type != "sub") continue
             val mpvId = MPVLib.getPropertyInt("track-list/$i/id" as java.lang.String) ?: continue
             val lang = MPVLib.getPropertyString("track-list/$i/lang" as java.lang.String)
@@ -146,7 +146,7 @@ class MpvPlayer : BasePlayer() {
         when (type) {
             TRACKTYPE.SUBTITLE -> {
                 if (track != null) {
-                    MPVLib.setPropertyInt("sid" as java.lang.String, track.index as java.lang.Integer)
+                    MPVLib.setPropertyInt("sid" as java.lang.String, track.index as Integer)
                 } else {
                     MPVLib.setPropertyString("sid" as java.lang.String, "no" as java.lang.String)
                 }
@@ -156,7 +156,7 @@ class MpvPlayer : BasePlayer() {
 
             TRACKTYPE.AUDIO -> {
                 if (track != null) {
-                    MPVLib.setPropertyInt("aid" as java.lang.String, track.index as java.lang.Integer)
+                    MPVLib.setPropertyInt("aid" as java.lang.String, track.index as Integer)
                 } else {
                     MPVLib.setPropertyString("aid" as java.lang.String, "no" as java.lang.String)
                 }
@@ -183,7 +183,7 @@ class MpvPlayer : BasePlayer() {
 
     override fun jumpToChapter(chapter: Chapter) {
         if (!ismpvInit) return
-        MPVLib.setPropertyInt("chapter" as java.lang.String, chapter.index as java.lang.Integer)
+        MPVLib.setPropertyInt("chapter" as java.lang.String, chapter.index as Integer)
     }
 
     override fun skipChapter() {
@@ -345,8 +345,8 @@ class MpvPlayer : BasePlayer() {
     }
 
     override suspend fun switchAspectRatio(): String {
-        val currentAspect = MPVLib.getPropertyString("video-aspect-override" as java.lang.String)
-        val currentPanscan = MPVLib.getPropertyDouble("panscan" as java.lang.String)
+        val currentAspect = MPVLib.getPropertyString("video-aspect-override" as java.lang.String)?.toString()
+        val currentPanscan = MPVLib.getPropertyDouble("panscan" as java.lang.String)?.toDouble()
 
         loggy("currentAspect: $currentAspect and currentPanscan: $currentPanscan", 0)
 
@@ -488,6 +488,7 @@ class MpvPlayer : BasePlayer() {
                 ins.copyTo(out)
                 loggy("Copied asset file: $filename", 303)
             } catch (e: IOException) {
+                e.printStackTrace()
                 loggy("Failed to copy asset file: $filename", 304)
             } finally {
                 ins?.close()

@@ -17,5 +17,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "SyncplayMobile"
-//include(":androidApp")
 include(":shared")
