@@ -44,7 +44,6 @@ import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
 import com.yuroyami.syncplay.compose.getRegularFont
-import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
 import com.yuroyami.syncplay.settings.settingBooleanState
@@ -59,8 +58,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.Font
+import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.done
+import syncplaymobile.shared.generated.resources.room_custom_skip_button
 
 object PopupSeekToPosition {
 
@@ -223,7 +225,8 @@ object PopupSeekToPosition {
                 ) {
                     Icon(imageVector = Icons.Filled.AvTimer, "")
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(rememberStrings().strings.roomCustomSkipButton(customSkipAmountString), fontSize = 14.sp)
+
+                    Text(stringResource(Res.string.room_custom_skip_button, customSkipAmountString), fontSize = 14.sp)
                 }
 
                 /* Ok button */
@@ -262,7 +265,7 @@ object PopupSeekToPosition {
                 ) {
                     Icon(imageVector = Icons.Filled.Done, "")
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(rememberStrings().strings.done, fontSize = 14.sp)
+                    Text(stringResource(Res.string.done), fontSize = 14.sp)
                 }
             }
         }

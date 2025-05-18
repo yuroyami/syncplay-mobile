@@ -40,7 +40,6 @@ import androidx.compose.material.icons.filled.Web
 import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.preferences.core.edit
 import com.yuroyami.syncplay.compose.popups.PopupMediaDirs.MediaDirsPopup
-import com.yuroyami.syncplay.lyricist.langMap
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_ADVANCED
 import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_EXOPLAYER
@@ -84,6 +83,7 @@ import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_SEEK_BUFFER
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_SP_MEDIA_DIRS
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_TLS_ENABLE
 import com.yuroyami.syncplay.ui.Paletting
+import com.yuroyami.syncplay.utils.CommonUtils.langMap
 import com.yuroyami.syncplay.utils.PLATFORM
 import com.yuroyami.syncplay.utils.getPlatform
 import com.yuroyami.syncplay.watchroom.homeCallback

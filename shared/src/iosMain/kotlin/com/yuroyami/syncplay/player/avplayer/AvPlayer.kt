@@ -5,8 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.interop.UIKitView
-import cafe.adriel.lyricist.Lyricist
-import com.yuroyami.syncplay.lyricist.Stringies
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
@@ -66,6 +64,7 @@ import platform.darwin.NSObject
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_selected_sub
 import syncplaymobile.shared.generated.resources.room_selected_sub_error
+import syncplaymobile.shared.generated.resources.room_selected_vid
 import syncplaymobile.shared.generated.resources.room_sub_error_load_vid_first
 import kotlin.math.roundToLong
 
@@ -342,8 +341,9 @@ class AvPlayer : BasePlayer() {
             }
 
             /* Finally, show a a toast to the user that the media file has been added */
-            val lyricist = Lyricist("en", Stringies)
-            playerScopeMain.dispatchOSD(lyricist.strings.roomSelectedVid("${viewmodel?.media?.fileName}"))
+            playerScopeMain.dispatchOSD {
+                getString(Res.string.room_selected_vid,"${viewmodel?.media?.fileName}")
+            }
         }
     }
 

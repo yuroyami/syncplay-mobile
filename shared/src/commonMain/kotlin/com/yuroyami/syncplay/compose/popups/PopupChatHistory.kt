@@ -30,12 +30,13 @@ import com.yuroyami.syncplay.compose.ComposeUtils
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
 import com.yuroyami.syncplay.compose.getRegularFont
-import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.watchroom.LocalChatPalette
 import com.yuroyami.syncplay.watchroom.viewmodel
 import org.jetbrains.compose.resources.Font
+import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.close
 
 object PopupChatHistory {
 
@@ -92,10 +93,9 @@ object PopupChatHistory {
                         visibilityState.value = false
                     },
                 ) {
-                    val localz = rememberStrings()
                     Icon(imageVector = Icons.Filled.Close, "")
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(localz.strings.close, fontSize = 14.sp)
+                    Text(stringResource(Res.string.close), fontSize = 14.sp)
                 }
 
             }

@@ -19,9 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -64,9 +61,7 @@ import androidx.compose.ui.window.PopupProperties
 import com.eygraber.uri.Uri
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
-import com.yuroyami.syncplay.compose.getRegularFont
 import com.yuroyami.syncplay.filepicking.DirectoryPicker
-import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_SP_MEDIA_DIRS
 import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.settings.valueFlow
@@ -77,15 +72,24 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.Font
+import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.media_directories
+import syncplaymobile.shared.generated.resources.media_directories_add_folder
+import syncplaymobile.shared.generated.resources.media_directories_brief
+import syncplaymobile.shared.generated.resources.media_directories_clear_all
+import syncplaymobile.shared.generated.resources.media_directories_delete
+import syncplaymobile.shared.generated.resources.media_directories_save
+import syncplaymobile.shared.generated.resources.no
+import syncplaymobile.shared.generated.resources.setting_resetdefault_dialog
+import syncplaymobile.shared.generated.resources.yes
 
 object PopupMediaDirs {
 
     @OptIn(ExperimentalLayoutApi::class)
     @Composable
     fun MediaDirsPopup(visibilityState: MutableState<Boolean>) {
-        val localz = rememberStrings()
         val scope = rememberCoroutineScope { Dispatchers.IO }
 
         var cleardialog by remember { mutableStateOf(false) }
@@ -116,7 +120,7 @@ object PopupMediaDirs {
                 /* The title */
                 FancyText2(
                     modifier = Modifier.fillMaxWidth(),
-                    string = localz.strings.mediaDirectories,
+                    string = stringResource(Res.string.media_directories),
                     solid = Color.Black,
                     size = 18f,
                     font = Font(Res.font.Directive4_Regular)
@@ -124,7 +128,7 @@ object PopupMediaDirs {
 
                 /* Title's subtext */
                 Text(
-                    text = localz.strings.mediaDirectoriesBrief,
+                    text = stringResource(Res.string.media_directories_brief),
                     color = MaterialTheme.colorScheme.primary,
                     lineHeight = 14.sp,
                     fontSize = 10.sp,
@@ -195,7 +199,7 @@ object PopupMediaDirs {
                                         text = {
                                         Text(
                                             color = Color.LightGray,
-                                            text = localz.strings.mediaDirectoriesDelete,
+                                            text = stringResource(Res.string.media_directories_delete),
                                             fontSize = 12.sp
                                         )
                                     },
@@ -257,7 +261,7 @@ object PopupMediaDirs {
                     ) {
                         Icon(imageVector = Icons.Filled.ClearAll, "")
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(localz.strings.mediaDirectoriesClearAll, fontSize = 14.sp)
+                        Text(stringResource(Res.string.media_directories_clear_all), fontSize = 14.sp)
                     }
 
                     /* Add folder button */
@@ -270,7 +274,7 @@ object PopupMediaDirs {
                     ) {
                         Icon(imageVector = Icons.Filled.CreateNewFolder, "")
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(localz.strings.mediaDirectoriesAddFolder, fontSize = 14.sp)
+                        Text(stringResource(Res.string.media_directories_add_folder), fontSize = 14.sp)
                     }
 
                     /* Save button */
@@ -283,7 +287,7 @@ object PopupMediaDirs {
                     ) {
                         Icon(imageVector = Icons.Filled.Done, "")
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(localz.strings.mediaDirectoriesSave, fontSize = 14.sp)
+                        Text(stringResource(Res.string.media_directories_save), fontSize = 14.sp)
                     }
                 }
             }
@@ -297,12 +301,12 @@ object PopupMediaDirs {
                     scope.launch {
                         writeValue(PREF_SP_MEDIA_DIRS, emptySet<String>())
                     }
-                }) { Text(localz.strings.yes) }
+                }) { Text(stringResource(Res.string.yes)) }
             }, dismissButton = {
                 TextButton(onClick = {
                     cleardialog = false
-                }) { Text(localz.strings.no) }
-            }, text = { Text(localz.strings.settingResetdefaultDialog) })
+                }) { Text(stringResource(Res.string.no)) }
+            }, text = { Text(stringResource(Res.string.setting_resetdefault_dialog)) })
         }
     }
 }

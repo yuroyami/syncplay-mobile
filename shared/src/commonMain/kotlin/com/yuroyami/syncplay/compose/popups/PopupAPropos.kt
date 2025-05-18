@@ -33,11 +33,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
 import com.yuroyami.syncplay.compose.ComposeUtils.SyncplayishText
-import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.watchroom.homeCallback
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.connect_solomode
 import syncplaymobile.shared.generated.resources.github
 import syncplaymobile.shared.generated.resources.syncplay_logo_gradient
 
@@ -45,8 +46,6 @@ object PopupAPropos {
 
     @Composable
     fun AProposPopup(visibilityState: MutableState<Boolean>) {
-        val lyricist = rememberStrings()
-
         return RoomPopup(
             dialogOpen = visibilityState.value,
             widthPercent = 0.95f,
@@ -142,7 +141,7 @@ object PopupAPropos {
                     ) {
                         Icon(imageVector = Icons.Filled.Tv, "")
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(lyricist.strings.connectSolomode, textAlign = TextAlign.Center, fontSize = 14.sp)
+                        Text(stringResource(Res.string.connect_solomode), textAlign = TextAlign.Center, fontSize = 14.sp)
                     }
 
                     val uriHandler = LocalUriHandler.current

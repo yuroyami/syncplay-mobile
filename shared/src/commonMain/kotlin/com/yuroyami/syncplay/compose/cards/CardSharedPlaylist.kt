@@ -34,7 +34,6 @@ import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.outlined.PlayArrow
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -78,7 +77,6 @@ import com.yuroyami.syncplay.compose.popups.PopupMediaDirs.MediaDirsPopup
 import com.yuroyami.syncplay.filepicking.DirectoryPicker
 import com.yuroyami.syncplay.filepicking.FilePicker
 import com.yuroyami.syncplay.filepicking.MultipleFilePicker
-import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.CommonUtils
 import com.yuroyami.syncplay.utils.PlaylistUtils.addFiles
@@ -96,15 +94,27 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.Font
+import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.delete
+import syncplaymobile.shared.generated.resources.done
+import syncplaymobile.shared.generated.resources.play
+import syncplaymobile.shared.generated.resources.room_shared_playlist_button_add_file
+import syncplaymobile.shared.generated.resources.room_shared_playlist_button_add_folder
+import syncplaymobile.shared.generated.resources.room_shared_playlist_button_add_url
+import syncplaymobile.shared.generated.resources.room_shared_playlist_button_playlist_export
+import syncplaymobile.shared.generated.resources.room_shared_playlist_button_playlist_import
+import syncplaymobile.shared.generated.resources.room_shared_playlist_button_playlist_import_n_shuffle
+import syncplaymobile.shared.generated.resources.room_shared_playlist_button_set_media_directories
+import syncplaymobile.shared.generated.resources.room_shared_playlist_button_shuffle
+import syncplaymobile.shared.generated.resources.room_shared_playlist_button_shuffle_rest
 
 object CardSharedPlaylist {
 
     @Composable
     fun SharedPlaylistCard() {
         val scope = rememberCoroutineScope { Dispatchers.IO }
-        val lyricist = rememberStrings()
 
         /* ActivityResultLaunchers for various shared playlist actions */
         var mediaFilePicker by remember { mutableStateOf(false) }
@@ -234,7 +244,7 @@ object CardSharedPlaylist {
 
                                 //Item Action: Play
                                 DropdownMenuItem(
-                                    text = { Text(color = Color.LightGray, text = lyricist.strings.play) },
+                                    text = { Text(color = Color.LightGray, text = stringResource(Res.string.play)) },
                                     leadingIcon = { Icon(imageVector = Icons.Default.PlayCircle, "", tint = Color.LightGray) },
                                     onClick = {
                                         sendPlaylistSelection(index)
@@ -244,7 +254,7 @@ object CardSharedPlaylist {
 
                                 //Item Action: Delete
                                 DropdownMenuItem(
-                                    text = { Text(color = Color.LightGray, text = lyricist.strings.delete) },
+                                    text = { Text(color = Color.LightGray, text = stringResource(Res.string.delete)) },
                                     leadingIcon = { Icon(imageVector = Icons.Default.Delete, "", tint = Color.LightGray) },
                                     onClick = {
                                         deleteItemFromPlaylist(index)
@@ -332,7 +342,7 @@ object CardSharedPlaylist {
                                     Text(
                                         fontSize = txtsize.sp,
                                         color = Color.LightGray,
-                                        text = lyricist.strings.roomSharedPlaylistButtonShuffle
+                                        text = stringResource(Res.string.room_shared_playlist_button_shuffle)
                                     )
                                 },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Shuffle, "", tint = Color.LightGray) },
@@ -348,7 +358,7 @@ object CardSharedPlaylist {
                                     Text(
                                         fontSize = txtsize.sp,
                                         color = Color.LightGray,
-                                        text = lyricist.strings.roomSharedPlaylistButtonShuffleRest
+                                        text = stringResource(Res.string.room_shared_playlist_button_shuffle_rest)
                                     )
                                 },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Shuffle, "", tint = Color.LightGray) },
@@ -366,7 +376,7 @@ object CardSharedPlaylist {
                                     Text(
                                         fontSize = txtsize.sp,
                                         color = Color.LightGray,
-                                        text = lyricist.strings.roomSharedPlaylistButtonAddFile
+                                        text = stringResource(Res.string.room_shared_playlist_button_add_file)
                                     )
                                 },
                                 leadingIcon = { Icon(imageVector = Icons.AutoMirrored.Filled.NoteAdd, "", tint = Color.LightGray) },
@@ -382,7 +392,7 @@ object CardSharedPlaylist {
                                     Text(
                                         fontSize = txtsize.sp,
                                         color = Color.LightGray,
-                                        text = lyricist.strings.roomSharedPlaylistButtonAddUrl
+                                        text = stringResource(Res.string.room_shared_playlist_button_add_url)
                                     )
                                 },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.AddLink, "", tint = Color.LightGray) },
@@ -398,7 +408,7 @@ object CardSharedPlaylist {
                                     Text(
                                         fontSize = txtsize.sp,
                                         color = Color.LightGray,
-                                        text = lyricist.strings.roomSharedPlaylistButtonAddFolder
+                                        text = stringResource(Res.string.room_shared_playlist_button_add_folder)
                                     )
                                 },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.CreateNewFolder, "", tint = Color.LightGray) },
@@ -416,7 +426,7 @@ object CardSharedPlaylist {
                                     Text(
                                         fontSize = txtsize.sp,
                                         color = Color.LightGray,
-                                        text = lyricist.strings.roomSharedPlaylistButtonPlaylistImport
+                                        text = stringResource(Res.string.room_shared_playlist_button_playlist_import)
                                     )
                                 },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Download, "", tint = Color.LightGray) },
@@ -432,7 +442,7 @@ object CardSharedPlaylist {
                                     Text(
                                         fontSize = txtsize.sp,
                                         color = Color.LightGray,
-                                        text = lyricist.strings.roomSharedPlaylistButtonPlaylistImportNShuffle
+                                        text = stringResource(Res.string.room_shared_playlist_button_playlist_import_n_shuffle)
                                     )
                                 },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Download, "", tint = Color.LightGray) },
@@ -449,7 +459,7 @@ object CardSharedPlaylist {
                                     Text(
                                         fontSize = txtsize.sp,
                                         color = Color.LightGray,
-                                        text = lyricist.strings.roomSharedPlaylistButtonPlaylistExport
+                                        text = stringResource(Res.string.room_shared_playlist_button_playlist_export)
                                     )
                                 },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Save, "", tint = Color.LightGray) },
@@ -472,7 +482,7 @@ object CardSharedPlaylist {
                                     Text(
                                         fontSize = txtsize.sp,
                                         color = Color.LightGray,
-                                        text = lyricist.strings.roomSharedPlaylistButtonSetMediaDirectories
+                                        text = stringResource(Res.string.room_shared_playlist_button_set_media_directories)
                                     )
                                 },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Folder, "", tint = Color.LightGray) },
@@ -508,8 +518,6 @@ object CardSharedPlaylist {
 
     @Composable
     fun AddSPUrlsPopup(visibilityState: MutableState<Boolean>) {
-        val lyr = rememberStrings()
-
         return RoomPopup(
             dialogOpen = visibilityState.value,
             widthPercent = 0.9f,
@@ -592,7 +600,7 @@ object CardSharedPlaylist {
                 ) {
                     Icon(imageVector = Icons.Filled.Done, "")
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(lyr.strings.done, fontSize = 14.sp)
+                    Text(stringResource(Res.string.done), fontSize = 14.sp)
                 }
             }
         }

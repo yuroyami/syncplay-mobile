@@ -40,14 +40,15 @@ import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
 import com.yuroyami.syncplay.compose.getRegularFont
-import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.getText
 import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.Font
+import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.done
 
 object PopupAddUrl {
 
@@ -150,7 +151,7 @@ object PopupAddUrl {
                 ) {
                     Icon(imageVector = Icons.Filled.Done, "")
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(rememberStrings().strings.done, fontSize = 14.sp)
+                    Text(stringResource(Res.string.done), fontSize = 14.sp)
                 }
             }
         }

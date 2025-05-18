@@ -36,14 +36,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
-import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.colorpicker.ClassicColorPicker
 import com.yuroyami.syncplay.utils.colorpicker.HsvColor
 import org.jetbrains.compose.resources.Font
+import org.jetbrains.compose.resources.stringResource
+import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.done
 import kotlin.math.ceil
-import syncplaymobile.shared.generated.resources.*
 
 object PopupColorPicker {
 
@@ -112,8 +113,7 @@ object PopupColorPicker {
                     ) {
                         Icon(imageVector = Icons.Filled.Done, "", tint = Color.Black)
                         Spacer(modifier = Modifier.width(8.dp))
-                        val localz = rememberStrings()
-                        Text(localz.strings.done, fontSize = 14.sp, color = Color.Black)
+                        Text(stringResource(Res.string.done), fontSize = 14.sp, color = Color.Black)
                     }
 
                     Surface(

@@ -53,7 +53,6 @@ import com.yuroyami.syncplay.compose.ComposeUtils.FlexibleFancyText
 import com.yuroyami.syncplay.compose.ComposeUtils.MultiChoiceDialog
 import com.yuroyami.syncplay.compose.ComposeUtils.SmartFancyIcon
 import com.yuroyami.syncplay.compose.popups.PopupColorPicker.ColorPickingPopup
-import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.colorpicker.HsvColor
 import kotlinx.coroutines.CoroutineScope
@@ -62,6 +61,9 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.no
+import syncplaymobile.shared.generated.resources.yes
 import kotlin.math.roundToInt
 
 /** Main class that does the required logic and UI for a single Setting.
@@ -152,7 +154,6 @@ sealed class Setting<T>(
         @Composable
         override fun SettingComposable(modifier: Modifier) {
             val scope = rememberCoroutineScope { Dispatchers.IO }
-            val lyricist = rememberStrings()
 
             var dialog by remember { mutableStateOf(false) }
             if (dialog ) {
@@ -162,13 +163,13 @@ sealed class Setting<T>(
                         TextButton(onClick = {
                             dialog = false
                             onYes?.invoke(scope)
-                        }) { Text(lyricist.strings.yes) }
+                        }) { Text(stringResource(Res.string.yes)) }
                     },
                     dismissButton = {
                         TextButton(onClick = {
                             dialog = false
                             onNo?.invoke(scope)
-                        }) { Text(lyricist.strings.no) }
+                        }) { Text(stringResource(Res.string.no)) }
                     },
                     text = { Text(stringResource(rationale)) }
                 )

@@ -28,11 +28,9 @@ import androidx.media3.session.MediaSession
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.CaptionStyleCompat
 import androidx.media3.ui.PlayerView
-import cafe.adriel.lyricist.Lyricist
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.yuroyami.syncplay.databinding.ExoviewBinding
-import com.yuroyami.syncplay.lyricist.Stringies
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
@@ -59,6 +57,7 @@ import syncplaymobile.shared.generated.resources.room_scaling_fixed_width
 import syncplaymobile.shared.generated.resources.room_scaling_zoom
 import syncplaymobile.shared.generated.resources.room_selected_sub
 import syncplaymobile.shared.generated.resources.room_selected_sub_error
+import syncplaymobile.shared.generated.resources.room_selected_vid
 import syncplaymobile.shared.generated.resources.room_sub_error_load_vid_first
 import java.io.IOException
 import java.util.Collections
@@ -432,8 +431,9 @@ class ExoPlayer : BasePlayer() {
             }
 
             /* Finally, show a a toast to the user that the media file has been added */
-            val lyricist = Lyricist("en", Stringies)
-            playerScopeMain.dispatchOSD(lyricist.strings.roomSelectedVid("${viewmodel?.media?.fileName}"))
+            playerScopeMain.dispatchOSD {
+                getString(Res.string.room_selected_vid,"${viewmodel?.media?.fileName}")
+            }
         }
     }
 
