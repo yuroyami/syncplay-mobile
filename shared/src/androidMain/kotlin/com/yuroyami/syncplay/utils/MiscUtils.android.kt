@@ -1,6 +1,5 @@
 package com.yuroyami.syncplay.utils
 
-import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.content.Context
 import android.media.AudioManager
@@ -10,6 +9,7 @@ import android.provider.OpenableColumns
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -120,4 +120,8 @@ actual fun String.format(vararg args: String): String {
 
 actual fun getSystemLanguageCode(): String {
     return Locale.current.toLanguageTag().also { loggy(it, 0) }
+}
+
+actual fun ClipEntry.getText(): String? {
+    return this.clipData.getItemAt(0).text?.toString()
 }

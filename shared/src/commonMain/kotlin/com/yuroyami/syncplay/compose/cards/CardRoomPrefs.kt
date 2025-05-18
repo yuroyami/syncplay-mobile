@@ -18,21 +18,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.TopCenter
 import androidx.compose.ui.Alignment.Companion.TopEnd
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyIcon2
 import com.yuroyami.syncplay.compose.ComposeUtils.FancyText2
-import com.yuroyami.syncplay.settings.SettingsUI
 import com.yuroyami.syncplay.settings.SettingsUI.SettingsGrid
 import com.yuroyami.syncplay.settings.SettingsUI.SettingsGridLayout
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.watchroom.LocalRoomSettings
-import com.yuroyami.syncplay.watchroom.lyricist
 import org.jetbrains.compose.resources.Font
+import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_card_title_in_room_prefs
 
 object CardRoomPrefs {
 
@@ -48,7 +47,7 @@ object CardRoomPrefs {
             Box(modifier = Modifier.fillMaxSize()) {
                 FancyText2(
                     modifier = Modifier.align(TopCenter).padding(6.dp),
-                    string = lyricist.strings.roomCardTitleInRoomPrefs,
+                    string =  stringResource(Res.string.room_card_title_in_room_prefs),
                     solid = Color.Transparent,
                     size = 16f,
                     font = Font(Res.font.Directive4_Regular)

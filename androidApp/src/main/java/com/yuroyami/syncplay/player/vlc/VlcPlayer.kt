@@ -18,21 +18,24 @@ import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.PlayerUtils.trackProgress
 import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.utils.RoomUtils
-import com.yuroyami.syncplay.utils.RoomUtils.checkFileMismatches
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.watchroom.dispatchOSD
 import com.yuroyami.syncplay.watchroom.isSoloMode
-import com.yuroyami.syncplay.watchroom.lyricist
 import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
 import org.videolan.libvlc.LibVLC
 import org.videolan.libvlc.Media
 import org.videolan.libvlc.MediaPlayer
 import org.videolan.libvlc.interfaces.IMedia
 import org.videolan.libvlc.interfaces.IMedia.Track
 import org.videolan.libvlc.util.VLCVideoLayout
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_selected_sub
+import syncplaymobile.shared.generated.resources.room_selected_sub_error
+import syncplaymobile.shared.generated.resources.room_sub_error_load_vid_first
 import java.io.IOException
 import kotlin.math.abs
 
@@ -226,12 +229,17 @@ class VlcPlayer : BasePlayer() {
                     IMedia.Slave.Type.Subtitle, uri, true
                 ) //todo: catch error
 
-                playerScopeMain.dispatchOSD(lyricist.strings.roomSelectedSub(filename))
+                playerScopeMain.dispatchOSD {
+                    getString(Res.string.room_selected_sub, filename)
+                }
             } else {
-                playerScopeMain.dispatchOSD(lyricist.strings.roomSelectedSubError)
-            }
+                playerScopeMain.dispatchOSD {
+                    getString(Res.string.room_selected_sub_error)
+                }            }
         } else {
-            playerScopeMain.dispatchOSD(lyricist.strings.roomSubErrorLoadVidFirst)
+            playerScopeMain.dispatchOSD {
+                getString(Res.string.room_sub_error_load_vid_first)
+            }
         }
     }
 
@@ -310,7 +318,7 @@ class VlcPlayer : BasePlayer() {
         return vlcPlayer?.time ?: 0L
     }
 
-    override fun switchAspectRatio(): String {
+    override suspend fun switchAspectRatio(): String {
         val scaleTypes = MediaPlayer.ScaleType.getMainScaleTypes()
 
         val currentScale = vlcPlayer?.videoScale

@@ -15,16 +15,9 @@ val lyricist = "1.7.0"
 
 @OptIn(ExperimentalKotlinGradlePluginApi::class)
 kotlin {
-    //applyDefaultHierarchyTemplate()
 
     androidTarget()
-//    androidTarget {
-//        compilerOptions {
-//            jvmTarget.set(JvmTarget.JVM_21)
-//        }
-//    }
 
-    //If you're building on a Windows machine, make sure to remove the next 3 targets as they require Xcode.
     iosX64()
     iosArm64()
     iosSimulatorArm64()
@@ -49,6 +42,7 @@ kotlin {
             languageSettings {
                 optIn("org.jetbrains.compose.resources.ExperimentalResourceApi")
                 optIn("androidx.compose.material3.ExperimentalMaterial3Api")
+                optIn("androidx.compose.ui.ExperimentalComposeUiApi")
                 optIn("kotlin.RequiresOptIn")
                 optIn("kotlin.experimental.ExperimentalNativeApi")
                 optIn("kotlin.uuid.ExperimentalUuidApi")
@@ -161,10 +155,6 @@ android {
     compileSdk = 36
     namespace = "com.yuroyami.syncplay.shared"
 
-//    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-//    sourceSets["main"].res.srcDirs("src/androidMain/res")
-//    sourceSets["main"].resources.srcDirs("src/commonMain/resources")
-
     defaultConfig {
         minSdk = 21
     }
@@ -189,4 +179,9 @@ ksp {
 dependencies {
     ksp("cafe.adriel.lyricist:lyricist-processor:$lyricist")
     ksp("cafe.adriel.lyricist:lyricist-processor-xml:$lyricist")
+}
+
+compose.resources {
+    publicResClass = true
+    generateResClass = always
 }

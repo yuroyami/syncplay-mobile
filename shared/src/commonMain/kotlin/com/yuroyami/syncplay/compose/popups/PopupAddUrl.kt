@@ -26,12 +26,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ClipboardManager
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
@@ -42,7 +42,9 @@ import com.yuroyami.syncplay.compose.ComposeUtils.RoomPopup
 import com.yuroyami.syncplay.compose.getRegularFont
 import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.ui.Paletting
+import com.yuroyami.syncplay.utils.getText
 import com.yuroyami.syncplay.watchroom.viewmodel
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.Font
 import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
@@ -60,7 +62,9 @@ object PopupAddUrl {
             cardBackgroundColor = Color.DarkGray,
             onDismiss = { visibilityState.value = false }
         ) {
-            val clipboardManager: ClipboardManager = LocalClipboardManager.current
+            val scope = rememberCoroutineScope()
+
+            val clipboard = LocalClipboard.current
 
             Column(
                 modifier = Modifier.fillMaxSize().padding(6.dp),
@@ -106,7 +110,11 @@ object PopupAddUrl {
                     ),
                     trailingIcon = {
                         IconButton(onClick = {
-                            url.value = clipboardManager.getText().toString()
+                            scope.launch {
+                                clipboard.getClipEntry()?.getText()?.let { clipboardData ->
+                                    url.value = clipboardData
+                                }
+                            }
                         }) {
                             Icon(imageVector = Icons.Filled.ContentPaste, "", tint = MaterialTheme.colorScheme.primary)
                         }

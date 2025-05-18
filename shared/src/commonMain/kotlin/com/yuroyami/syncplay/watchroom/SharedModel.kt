@@ -2,38 +2,24 @@ package com.yuroyami.syncplay.watchroom
 
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
-import cafe.adriel.lyricist.Lyricist
 import com.yuroyami.syncplay.home.HomeCallback
-import com.yuroyami.syncplay.lyricist.Stringies
-import com.yuroyami.syncplay.lyricist.Strings
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.TrackChoices
 import com.yuroyami.syncplay.player.BasePlayer
-import com.yuroyami.syncplay.player.PlayerUtils.pausePlayback
-import com.yuroyami.syncplay.player.PlayerUtils.playPlayback
-import com.yuroyami.syncplay.protocol.JsonSender
-import com.yuroyami.syncplay.protocol.ProtocolCallback
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.settings.DataStoreKeys
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_TLS_ENABLE
 import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.ui.LifecycleWatchdog
-import com.yuroyami.syncplay.utils.PlaylistUtils
-import com.yuroyami.syncplay.utils.RoomUtils.broadcastMessage
-import com.yuroyami.syncplay.utils.RoomUtils.checkFileMismatches
-import com.yuroyami.syncplay.utils.loggy
-import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 
-var lyricist: Lyricist<Strings>  = Lyricist("en", Stringies)
+//var lyricist: Lyricist<Strings>  = Lyricist("en", Stringies)
 
 var homeCallback: HomeCallback? = null
 var viewmodel: SpViewModel? = null
@@ -110,13 +96,14 @@ fun prepareProtocol(joinInfo: JoinInfo) {
         viewmodel?.setReadyDirectly = valueBlockingly(DataStoreKeys.PREF_READY_FIRST_HAND, true)
 
         with (viewmodel!!) {
-            p.syncplayCallback = object : ProtocolCallback {
+            /* p.syncplayCallback = object : ProtocolCallback {
                 override fun onSomeonePaused(pauser: String) {
                     loggy("SYNCPLAY Protocol: Someone ($pauser) paused.", 1001)
 
                     if (pauser != p.session.currentUsername) {
                         pausePlayback()
                     }
+
                     broadcastMessage(
                         message = lyricist.strings.roomGuyPaused.invoke(pauser, timeStamper(p.currentVideoPosition.toLong())),
                         isChat = false
@@ -337,7 +324,7 @@ fun prepareProtocol(joinInfo: JoinInfo) {
                         )
                     )
                 }
-            }
+            } */
 
             /** Getting information from joining info argument **/
             p.session.serverHost = joinInfo.address

@@ -31,6 +31,12 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddToQueue
+import androidx.compose.material.icons.outlined.NetworkWifi
+import androidx.compose.material.icons.outlined.NetworkWifi1Bar
+import androidx.compose.material.icons.outlined.NetworkWifi2Bar
+import androidx.compose.material.icons.outlined.NetworkWifi3Bar
+import androidx.compose.material.icons.outlined.SignalWifi4Bar
+import androidx.compose.material.icons.outlined.SignalWifiConnectedNoInternet4
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -62,7 +68,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.compose.ComposeUtils
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
-import com.yuroyami.syncplay.compose.ComposeUtils.solidOverlay
 import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.settingBooleanState
@@ -71,13 +76,10 @@ import com.yuroyami.syncplay.ui.Paletting
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
-import syncplaymobile.shared.generated.resources.network_level_0
-import syncplaymobile.shared.generated.resources.network_level_1
-import syncplaymobile.shared.generated.resources.network_level_2
-import syncplaymobile.shared.generated.resources.network_level_3
-import syncplaymobile.shared.generated.resources.network_level_4
+import syncplaymobile.shared.generated.resources.room_button_desc_add
 import syncplaymobile.shared.generated.resources.syncplay_logo_gradient
 
 object RoomComposables {
@@ -169,7 +171,7 @@ object RoomComposables {
     }
 
     @Composable
-    fun fadingMessageLayout(hudVisibility: Boolean, pipModeObserver: Boolean) {
+    fun FadingMessageLayout(hudVisibility: Boolean, pipModeObserver: Boolean) {
         /** The layout for the fading messages & OSD messages (when HUD is hidden, or when screen is locked) */
         val fadingTimeout = DataStoreKeys.PREF_INROOM_MSG_FADING_DURATION.settingIntState()
         val palette = LocalChatPalette.current
@@ -297,7 +299,7 @@ object RoomComposables {
 
 
                         Text(modifier = Modifier.gradientOverlay(),
-                            text = lyricist.strings.roomButtonDescAdd, textAlign = TextAlign.Center, maxLines = 1,
+                            text = stringResource(Res.string.room_button_desc_add), textAlign = TextAlign.Center, maxLines = 1,
                             fontSize = 14.sp, color = Color.DarkGray, fontWeight = FontWeight.Bold
                         )
                     }
@@ -329,54 +331,36 @@ object RoomComposables {
         )
     }
 
-
-    /** Ping */
-    @Composable
-    fun PingRadar(pingValue: Int?) {
-        with(Res.drawable) {
-            when (pingValue) {
-                null -> {
-                    Image(
-                        painter = painterResource(network_level_0), "",
-                        modifier = Modifier.size(16.dp).solidOverlay(Color.Gray)
-                    )
-                }
-
-                in (0..90) -> {
-                    Image(
-                        painter = painterResource(network_level_4), "",
-                        modifier = Modifier.size(16.dp).solidOverlay(Color.Green)
-                    )
-                }
-
-                in (91..120) -> {
-                    Image(
-                        painter = painterResource(network_level_3), "",
-                        modifier = Modifier.size(16.dp).solidOverlay(Color.Yellow)
-                    )
-                }
-
-                in (121..160) -> {
-                    Image(
-                        painter = painterResource(network_level_3), "",
-                        modifier = Modifier.size(16.dp).solidOverlay(Color(255, 176, 66))
-                    )
-                }
-
-                in (161..200) -> {
-                    Image(
-                        painter = painterResource(network_level_2), "",
-                        modifier = Modifier.size(16.dp).solidOverlay(Color(181, 80, 25))
-                    )
-                }
-
-                else -> {
-                    Image(
-                        painter = painterResource(network_level_1), "",
-                        modifier = Modifier.size(16.dp).solidOverlay(Color.Red)
-                    )
-                }
+    sealed class PingLevel(
+        val icon: ImageVector,
+        val tint: Color
+    ) {
+        object NoInternet : PingLevel(Icons.Outlined.SignalWifiConnectedNoInternet4, Color.Gray)
+        object Excellent : PingLevel(Icons.Outlined.SignalWifi4Bar, Color.Green)
+        object Good : PingLevel(Icons.Outlined.NetworkWifi, Color.Yellow)
+        object Fair : PingLevel(Icons.Outlined.NetworkWifi3Bar, Color(255, 176, 66))
+        object Poor : PingLevel(Icons.Outlined.NetworkWifi2Bar, Color(181, 80, 25))
+        object Terrible : PingLevel(Icons.Outlined.NetworkWifi1Bar, Color.Red)
+        companion object {
+            fun from(ping: Int?): PingLevel = when (ping) {
+                null -> NoInternet
+                in 0..90 -> Excellent
+                in 91..120 -> Good
+                in 121..160 -> Fair
+                in 161..200 -> Poor
+                else -> Terrible
             }
         }
+    }
+
+    @Composable
+    fun PingRadar(pingValue: Int?) {
+        val pingLevel = PingLevel.from(pingValue)
+        Icon(
+            imageVector = pingLevel.icon,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = pingLevel.tint
+        )
     }
 }

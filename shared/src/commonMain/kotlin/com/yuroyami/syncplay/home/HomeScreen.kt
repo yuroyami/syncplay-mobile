@@ -36,7 +36,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Api
-import androidx.compose.material.icons.filled.BookmarkAdd
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MeetingRoom
 import androidx.compose.material.icons.filled.PersonPin
@@ -58,6 +57,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -104,7 +104,6 @@ import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.compose.NightModeToggler
 import com.yuroyami.syncplay.compose.getRegularFont
 import com.yuroyami.syncplay.compose.popups.PopupAPropos.AProposPopup
-import com.yuroyami.syncplay.lyricist.rememberStrings
 import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_NIGHTMODE
@@ -119,15 +118,27 @@ import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.getDefaultEngine
 import com.yuroyami.syncplay.watchroom.homeCallback
-import com.yuroyami.syncplay.watchroom.lyricist
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.connect_address_empty_error
+import syncplaymobile.shared.generated.resources.connect_button_current_engine
+import syncplaymobile.shared.generated.resources.connect_button_join
+import syncplaymobile.shared.generated.resources.connect_enter_custom_server
+import syncplaymobile.shared.generated.resources.connect_port_empty_error
+import syncplaymobile.shared.generated.resources.connect_roomname_a
+import syncplaymobile.shared.generated.resources.connect_roomname_b
+import syncplaymobile.shared.generated.resources.connect_roomname_empty_error
+import syncplaymobile.shared.generated.resources.connect_server_a
+import syncplaymobile.shared.generated.resources.connect_username_a
+import syncplaymobile.shared.generated.resources.connect_username_b
+import syncplaymobile.shared.generated.resources.connect_username_empty_error
 import syncplaymobile.shared.generated.resources.exoplayer
 import syncplaymobile.shared.generated.resources.mpv
 import syncplaymobile.shared.generated.resources.swift
@@ -142,7 +153,7 @@ lateinit var snacky: SnackbarHostState
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(savedConfig: HomeConfig) {
-    lyricist = rememberStrings()
+    //lyricist = rememberStrings()
 
     CompositionLocalProvider(
         LocalGlobalSettings provides sgGLOBAL()
@@ -155,7 +166,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
             "syncplay.pl:8997",
             "syncplay.pl:8998",
             "syncplay.pl:8999",
-            lyricist.strings.connectEnterCustomServer
+            stringResource(Res.string.connect_enter_custom_server)
         )
 
         AppTheme(nightMode.value) {
@@ -363,7 +374,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
                         ) {
 
                             FlexibleFancyText(
-                                text = lyricist.strings.connectUsernameA,
+                                text = stringResource(Res.string.connect_username_a),
                                 size = 20f,
                                 textAlign = TextAlign.Center,
                                 fillingColors = listOf(MaterialTheme.colorScheme.primary),
@@ -392,7 +403,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
                                 OutlinedTextField(
                                     modifier = Modifier.gradientOverlay(),
                                     singleLine = true,
-                                    label = { Text(lyricist.strings.connectUsernameB) },
+                                    label = { Text(stringResource(Res.string.connect_username_b)) },
                                     leadingIcon = {
                                         Icon(
                                             imageVector = Icons.Filled.PersonPin, ""
@@ -418,7 +429,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
 
 
                             FlexibleFancyText(
-                                text = lyricist.strings.connectRoomnameA,
+                                text = stringResource(Res.string.connect_roomname_a),
                                 size = 20f,
                                 textAlign = TextAlign.Center,
                                 fillingColors = listOf(MaterialTheme.colorScheme.primary),
@@ -447,7 +458,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
                                 OutlinedTextField(
                                     modifier = Modifier.gradientOverlay(),
                                     singleLine = true,
-                                    label = { Text(lyricist.strings.connectRoomnameB) },
+                                    label = { Text(stringResource(Res.string.connect_roomname_b)) },
                                     leadingIcon = {
                                         Icon(
                                             imageVector = Icons.Filled.MeetingRoom, ""
@@ -470,7 +481,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
                             horizontalAlignment = CenterHorizontally,
                         ) {
                             FlexibleFancyText(
-                                text = lyricist.strings.connectServerA,
+                                text = stringResource(Res.string.connect_server_a),
                                 size = 20f,
                                 textAlign = TextAlign.Center,
                                 fillingColors = listOf(MaterialTheme.colorScheme.primary),
@@ -501,7 +512,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
                                         onValueChange = { },
                                     )
                                     OutlinedTextField(
-                                        modifier = Modifier.menuAnchor().gradientOverlay(),
+                                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).gradientOverlay(),
                                         singleLine = true,
                                         readOnly = true,
                                         value = selectedServer.replace(
@@ -739,7 +750,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
                             Spacer(modifier = Modifier.height(4.dp))
 
                             Text(
-                                lyricist.strings.connectButtonCurrentEngine.invoke(
+                                stringResource(Res.string.connect_button_current_engine,
                                     when (player.value) {
                                         BasePlayer.ENGINE.ANDROID_EXOPLAYER.name -> "Google ExoPlayer (System)"
                                         BasePlayer.ENGINE.ANDROID_MPV.name -> "mpv (Default, Recommended)"
@@ -754,10 +765,10 @@ fun HomeScreen(savedConfig: HomeConfig) {
                         Spacer(modifier = Modifier.height(10.dp))
 
                         /* join button */
-                        val snacktxtEmptyUSER = lyricist.strings.connectUsernameEmptyError
-                        val snacktxtEmptyROOM = lyricist.strings.connectRoomnameEmptyError
-                        val snacktxtEmptyIP = lyricist.strings.connectAddressEmptyError
-                        val snacktxtEmptyPORT = lyricist.strings.connectPortEmptyError
+                        val snacktxtEmptyUSER = stringResource(Res.string.connect_username_empty_error)
+                        val snacktxtEmptyROOM = stringResource(Res.string.connect_roomname_empty_error)
+                        val snacktxtEmptyIP = stringResource(Res.string.connect_address_empty_error)
+                        val snacktxtEmptyPORT = stringResource(Res.string.connect_port_empty_error)
 
                         Button(
                             border = BorderStroke(
@@ -836,7 +847,7 @@ fun HomeScreen(savedConfig: HomeConfig) {
                         ) {
                             Icon(imageVector = Icons.Filled.Api, "")
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(lyricist.strings.connectButtonJoin, fontSize = 18.sp)
+                            Text(stringResource(Res.string.connect_button_join), fontSize = 18.sp)
                         }
 
                         Spacer(modifier = Modifier.height(10.dp))

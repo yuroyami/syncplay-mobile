@@ -20,7 +20,6 @@ import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.PlayerUtils.trackProgress
 import com.yuroyami.syncplay.protocol.JsonSender
-import com.yuroyami.syncplay.utils.RoomUtils.checkFileMismatches
 import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.contextObtainer
@@ -29,11 +28,15 @@ import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timeStamper
 import com.yuroyami.syncplay.watchroom.dispatchOSD
 import com.yuroyami.syncplay.watchroom.isSoloMode
-import com.yuroyami.syncplay.watchroom.lyricist
 import com.yuroyami.syncplay.watchroom.viewmodel
 import `is`.xyz.mpv.MPVLib
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_selected_sub
+import syncplaymobile.shared.generated.resources.room_selected_sub_error
+import syncplaymobile.shared.generated.resources.room_sub_error_load_vid_first
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -231,12 +234,17 @@ class MpvPlayer : BasePlayer() {
                 ctx.resolveUri(uri.toUri())?.let {
                     MPVLib.command(arrayOf("sub-add", it, "cached"))
                 }
-                playerScopeMain.dispatchOSD(lyricist.strings.roomSelectedSub(filename))
+                playerScopeMain.dispatchOSD {
+                    getString(Res.string.room_selected_sub, filename)
+                }
             } else {
-                playerScopeMain.dispatchOSD(lyricist.strings.roomSelectedSubError)
-            }
+                playerScopeMain.dispatchOSD {
+                    getString(Res.string.room_selected_sub_error)
+                }            }
         } else {
-            playerScopeMain.dispatchOSD(lyricist.strings.roomSubErrorLoadVidFirst)
+            playerScopeMain.dispatchOSD {
+                getString(Res.string.room_sub_error_load_vid_first)
+            }
         }
     }
 
@@ -283,7 +291,7 @@ class MpvPlayer : BasePlayer() {
                         mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
                         ismpvInit = true
                         mpvObserverAttach()
-                        mpvView.playFile(uri.toString())
+                        mpvView.playFile(uri)
                         mpvView.surfaceCreated(mpvView.holder)
                     }
                 }
@@ -338,7 +346,7 @@ class MpvPlayer : BasePlayer() {
         return mpvPos
     }
 
-    override fun switchAspectRatio(): String {
+    override suspend fun switchAspectRatio(): String {
         val currentAspect = MPVLib.getPropertyString("video-aspect-override")
         val currentPanscan = MPVLib.getPropertyDouble("panscan")
 

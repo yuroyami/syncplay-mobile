@@ -1,6 +1,7 @@
 package com.yuroyami.syncplay.utils
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.unit.Dp
 
 @Composable
@@ -49,3 +50,5 @@ expect fun String.format(vararg args: String): String
 
 /** Gets the app's current locale lang code */
 expect fun getSystemLanguageCode(): String
+
+expect fun ClipEntry.getText(): String?

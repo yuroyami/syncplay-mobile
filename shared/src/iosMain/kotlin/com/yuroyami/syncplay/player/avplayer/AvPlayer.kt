@@ -18,13 +18,13 @@ import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.watchroom.dispatchOSD
 import com.yuroyami.syncplay.watchroom.isSoloMode
-import com.yuroyami.syncplay.watchroom.lyricist
 import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import org.jetbrains.compose.resources.getString
 import platform.AVFoundation.AVLayerVideoGravityResize
 import platform.AVFoundation.AVLayerVideoGravityResizeAspect
 import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
@@ -63,6 +63,10 @@ import platform.QuartzCore.CATransaction
 import platform.QuartzCore.kCATransactionDisableActions
 import platform.UIKit.UIView
 import platform.darwin.NSObject
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_selected_sub
+import syncplaymobile.shared.generated.resources.room_selected_sub_error
+import syncplaymobile.shared.generated.resources.room_sub_error_load_vid_first
 import kotlin.math.roundToLong
 
 class AvPlayer : BasePlayer() {
@@ -255,12 +259,17 @@ class AvPlayer : BasePlayer() {
                 val subUri = NSURL.URLWithString(uri)!!
 
                 //TODO: Doesn't support loading external subs
-                playerScopeMain.dispatchOSD(lyricist.strings.roomSelectedSub(filename))
+                playerScopeMain.dispatchOSD {
+                    getString(Res.string.room_selected_sub, filename)
+                }
             } else {
-                playerScopeMain.dispatchOSD(lyricist.strings.roomSelectedSubError)
-            }
+                playerScopeMain.dispatchOSD {
+                    getString(Res.string.room_selected_sub_error)
+                }            }
         } else {
-            playerScopeMain.dispatchOSD(lyricist.strings.roomSubErrorLoadVidFirst)
+            playerScopeMain.dispatchOSD {
+                getString(Res.string.room_sub_error_load_vid_first)
+            }
         }
     }
 
@@ -361,7 +370,7 @@ class AvPlayer : BasePlayer() {
         return avPlayer?.currentTime()?.toMillis() ?: 0L
     }
 
-    override fun switchAspectRatio(): String {
+    override suspend fun switchAspectRatio(): String {
         val scales = listOf(
             AVLayerVideoGravityResize,
             AVLayerVideoGravityResizeAspect,

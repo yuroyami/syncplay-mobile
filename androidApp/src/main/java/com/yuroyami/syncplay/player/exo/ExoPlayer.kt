@@ -40,19 +40,26 @@ import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.PlayerOptions
 import com.yuroyami.syncplay.player.PlayerUtils.trackProgress
 import com.yuroyami.syncplay.protocol.JsonSender
-import com.yuroyami.syncplay.utils.RoomUtils.checkFileMismatches
 import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.watchroom.dispatchOSD
 import com.yuroyami.syncplay.watchroom.isSoloMode
-import com.yuroyami.syncplay.watchroom.lyricist
 import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.getString
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_scaling_fill_screen
+import syncplaymobile.shared.generated.resources.room_scaling_fit_screen
+import syncplaymobile.shared.generated.resources.room_scaling_fixed_height
+import syncplaymobile.shared.generated.resources.room_scaling_fixed_width
+import syncplaymobile.shared.generated.resources.room_scaling_zoom
+import syncplaymobile.shared.generated.resources.room_selected_sub
+import syncplaymobile.shared.generated.resources.room_selected_sub_error
+import syncplaymobile.shared.generated.resources.room_sub_error_load_vid_first
 import java.io.IOException
 import java.util.Collections
 import kotlin.math.abs
@@ -356,12 +363,18 @@ class ExoPlayer : BasePlayer() {
 
                 injectVideo(uri)
 
-                playerScopeMain.dispatchOSD(lyricist.strings.roomSelectedSub(filename))
+
+                playerScopeMain.dispatchOSD {
+                    getString(Res.string.room_selected_sub, filename)
+                }
             } else {
-                playerScopeMain.dispatchOSD(lyricist.strings.roomSelectedSubError)
-            }
+                playerScopeMain.dispatchOSD {
+                    getString(Res.string.room_selected_sub_error)
+                }            }
         } else {
-            playerScopeMain.dispatchOSD(lyricist.strings.roomSubErrorLoadVidFirst)
+            playerScopeMain.dispatchOSD {
+                getString(Res.string.room_sub_error_load_vid_first)
+            }
         }
 
     }
@@ -453,14 +466,14 @@ class ExoPlayer : BasePlayer() {
     }
 
     @SuppressLint("WrongConstant")
-    override fun switchAspectRatio(): String {
+    override suspend fun switchAspectRatio(): String {
         val resolutions = mutableMapOf<Int, String>()
 
-        resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIT] = lyricist.strings.roomScalingFitScreen
-        resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH] = lyricist.strings.roomScalingFixedWidth
-        resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT] = lyricist.strings.roomScalingFixedHeight
-        resolutions[AspectRatioFrameLayout.RESIZE_MODE_FILL] = lyricist.strings.roomScalingFillScreen
-        resolutions[AspectRatioFrameLayout.RESIZE_MODE_ZOOM] = lyricist.strings.roomScalingZoom
+        resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIT] = getString(Res.string.room_scaling_fit_screen)
+        resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH] = getString(Res.string.room_scaling_fixed_width)
+        resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT] = getString(Res.string.room_scaling_fixed_height)
+        resolutions[AspectRatioFrameLayout.RESIZE_MODE_FILL] = getString(Res.string.room_scaling_fill_screen)
+        resolutions[AspectRatioFrameLayout.RESIZE_MODE_ZOOM] = getString(Res.string.room_scaling_zoom)
 
         var nextRes = (exoView.resizeMode + 1)
         if (nextRes == 5) nextRes = 0

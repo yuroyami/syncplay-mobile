@@ -103,7 +103,7 @@ abstract class BasePlayer {
 
     abstract fun currentPositionMs(): Long
 
-    abstract fun switchAspectRatio(): String
+    abstract suspend fun switchAspectRatio(): String
 
     abstract fun collectInfoLocal(mediafile: MediaFile)
 

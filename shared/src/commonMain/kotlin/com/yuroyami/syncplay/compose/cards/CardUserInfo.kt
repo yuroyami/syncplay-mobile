@@ -35,11 +35,14 @@ import com.yuroyami.syncplay.compose.ComposeUtils
 import com.yuroyami.syncplay.compose.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.timeStamper
-import com.yuroyami.syncplay.watchroom.lyricist
 import com.yuroyami.syncplay.watchroom.viewmodel
 import org.jetbrains.compose.resources.Font
+import org.jetbrains.compose.resources.stringResource
+import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
-import syncplaymobile.shared.generated.resources.*
+import syncplaymobile.shared.generated.resources.room_card_title_user_info
+import syncplaymobile.shared.generated.resources.room_details_file_properties
+import syncplaymobile.shared.generated.resources.room_details_nofileplayed
 
 object CardUserInfo {
 
@@ -54,7 +57,7 @@ object CardUserInfo {
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .padding(vertical = 4.dp),
-                string = lyricist.strings.roomCardTitleUserInfo,
+                string = stringResource(Res.string.room_card_title_user_info),
                 solid = Color.Transparent,
                 size = 18f,
                 font = Font(Res.font.Directive4_Regular)
@@ -125,7 +128,7 @@ object CardUserInfo {
                             fontSize = Paletting.USER_INFO_TXT_SIZE.sp,
                             lineHeight = (Paletting.USER_INFO_TXT_SIZE + 4).sp,
                             color = Paletting.SP_CUTE_PINK,
-                            text = user.file?.fileName ?: lyricist.strings.roomDetailsNofileplayed,
+                            text = user.file?.fileName ?: stringResource(Res.string.room_details_nofileplayed),
                             fontWeight = FontWeight.W300
                         )
                     }
@@ -140,8 +143,8 @@ object CardUserInfo {
                             /* File properties */
                             val fileSize = user.file?.fileSize?.toDoubleOrNull()?.div(1000000.0)?.toString() ?: "???"
                             Text(
-                                text = lyricist.strings.roomDetailsFileProperties(
-                                    timeStamper(user.file?.fileDuration?.toLong() ?: 0),
+                                text = stringResource(
+                                    Res.string.room_details_file_properties, timeStamper(user.file?.fileDuration?.toLong() ?: 0),
                                     fileSize
                                 ),
                                 modifier = Modifier.fillMaxWidth(),

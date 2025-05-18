@@ -5,10 +5,13 @@ import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.settings.writeValue
 import com.yuroyami.syncplay.watchroom.dispatchOSD
-import com.yuroyami.syncplay.watchroom.lyricist
 import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
+import org.jetbrains.compose.resources.getString
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_shared_playlist_no_directories
+import syncplaymobile.shared.generated.resources.room_shared_playlist_not_found
 
 object PlaylistUtils {
 
@@ -132,7 +135,7 @@ object PlaylistUtils {
             val paths = valueBlockingly(DataStoreKeys.PREF_SP_MEDIA_DIRS, emptySet<String>())
 
             if (paths.isEmpty()) {
-                RoomUtils.broadcastMessage(lyricist.strings.roomSharedPlaylistNoDirectories, false)
+                RoomUtils.broadcastMessage(getString(Res.string.room_shared_playlist_no_directories), false)
             }
 
             var fileUri2Play: String? = null
@@ -148,7 +151,7 @@ object PlaylistUtils {
             }
             if (fileUri2Play == null) {
                 if (viewmodel?.media?.fileName != fileName) {
-                    val s = lyricist.strings.roomSharedPlaylistNotFound
+                    val s = getString(Res.string.room_shared_playlist_not_found)
                     CoroutineScope(currentCoroutineContext()).dispatchOSD(s)
                     RoomUtils.broadcastMessage(s, false)
                 }

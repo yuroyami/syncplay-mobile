@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowColumn
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,7 +28,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
@@ -179,11 +177,11 @@ import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timeStamper
 import com.yuroyami.syncplay.watchroom.RoomComposables.AddVideoButton
 import com.yuroyami.syncplay.watchroom.RoomComposables.ComposedMessagePalette
+import com.yuroyami.syncplay.watchroom.RoomComposables.FadingMessageLayout
 import com.yuroyami.syncplay.watchroom.RoomComposables.FreeAnimatedVisibility
 import com.yuroyami.syncplay.watchroom.RoomComposables.PingRadar
 import com.yuroyami.syncplay.watchroom.RoomComposables.RoomArtwork
 import com.yuroyami.syncplay.watchroom.RoomComposables.RoomTab
-import com.yuroyami.syncplay.watchroom.RoomComposables.fadingMessageLayout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -191,6 +189,21 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.stringResource
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_addmedia_offline
+import syncplaymobile.shared.generated.resources.room_addmedia_online
+import syncplaymobile.shared.generated.resources.room_custom_skip_button
+import syncplaymobile.shared.generated.resources.room_details_current_room
+import syncplaymobile.shared.generated.resources.room_overflow_leave_room
+import syncplaymobile.shared.generated.resources.room_overflow_msghistory
+import syncplaymobile.shared.generated.resources.room_overflow_pip
+import syncplaymobile.shared.generated.resources.room_overflow_title
+import syncplaymobile.shared.generated.resources.room_overflow_toggle_nightmode
+import syncplaymobile.shared.generated.resources.room_ping_connected
+import syncplaymobile.shared.generated.resources.room_ping_disconnected
+import syncplaymobile.shared.generated.resources.room_type_message
 import kotlin.math.roundToInt
 
 val osdMsg = mutableStateOf("")
@@ -203,6 +216,16 @@ fun CoroutineScope.dispatchOSD(s: String) {
         osdMsg.value = ""
     }
 }
+
+fun CoroutineScope.dispatchOSD(getter: suspend () -> String) {
+    osdJob?.cancel(null)
+    osdJob = launch(Dispatchers.IO) {
+        osdMsg.value = getter()
+        delay(2000) //TODO Option to change delay
+        osdMsg.value = ""
+    }
+}
+
 
 val LocalScreenSize = compositionLocalOf<ScreenSizeInfo> { error("No Screen Size Info provided") }
 val LocalChatPalette = compositionLocalOf<MessagePalette> { error("No Chat Palette provided") }
@@ -464,7 +487,7 @@ private fun RoomUIImpl() {
                                         msg = s
                                         msgCanSend = s.isNotBlank()
                                     },
-                                    label = lyricist.strings.roomTypeMessage,
+                                    label = stringResource(Res.string.room_type_message),
                                     onSend = onSend,
                                     msgCanSend = msgCanSend,
                                     singleLine = true,
@@ -490,8 +513,8 @@ private fun RoomUIImpl() {
                                 Row(verticalAlignment = CenterVertically) {
                                     Text(
 
-                                        text = if (pingo == null) lyricist.strings.roomPingDisconnected else lyricist.strings.roomPingConnected(
-                                            pingo!!.toInt().toString()
+                                        text = if (pingo == null) stringResource(Res.string.room_ping_disconnected) else stringResource(Res.string.room_ping_connected,
+                                            pingo.toString()
                                         ), color = Paletting.OLD_SP_PINK
                                     )
                                     Spacer(Modifier.width(4.dp))
@@ -500,7 +523,7 @@ private fun RoomUIImpl() {
                                 }
 
                                 Text(
-                                    text = lyricist.strings.roomDetailsCurrentRoom(viewmodel!!.p.session.currentRoom),
+                                    text = stringResource(Res.string.room_details_current_room, viewmodel!!.p.session.currentRoom),
                                     fontSize = 11.sp,
                                     color = Paletting.OLD_SP_PINK
                                 )
@@ -655,7 +678,7 @@ private fun RoomUIImpl() {
                                     ComposeUtils.FancyText2(
                                         modifier = Modifier.align(Alignment.CenterHorizontally)
                                             .padding(horizontal = 2.dp),
-                                        string = lyricist.strings.roomOverflowTitle,
+                                        string = stringResource(Res.string.room_overflow_title),
                                         solid = Color.Black,
                                         size = 14f,
                                         font = directive
@@ -677,7 +700,7 @@ private fun RoomUIImpl() {
 
                                                 Text(
                                                     color = Color.LightGray,
-                                                    text = lyricist.strings.roomOverflowPip
+                                                    text = stringResource(Res.string.room_overflow_pip),
                                                 )
                                             }
                                         }, onClick = {
@@ -701,7 +724,7 @@ private fun RoomUIImpl() {
 
                                                 Text(
                                                     color = Color.LightGray,
-                                                    text = lyricist.strings.roomOverflowMsghistory
+                                                    text = stringResource(Res.string.room_overflow_msghistory),
                                                 )
                                             }
                                         }, onClick = {
@@ -724,7 +747,7 @@ private fun RoomUIImpl() {
 
                                             Text(
                                                 color = Color.LightGray,
-                                                text = lyricist.strings.roomOverflowToggleNightmode
+                                                text = stringResource(Res.string.room_overflow_toggle_nightmode),
                                             )
                                         }
                                     }, onClick = {
@@ -751,7 +774,7 @@ private fun RoomUIImpl() {
 
                                             Text(
                                                 color = Color.LightGray,
-                                                text = lyricist.strings.roomOverflowLeaveRoom
+                                                text = stringResource(Res.string.room_overflow_leave_room),
                                             )
                                         }
                                     }, onClick = {
@@ -840,10 +863,11 @@ private fun RoomUIImpl() {
                                             size = ROOM_ICON_SIZE,
                                             shadowColor = Color.Black
                                         ) {
-                                            val newAspectRatio =
-                                                viewmodel?.player?.switchAspectRatio()
-                                            if (newAspectRatio != null) {
-                                                composeScope.dispatchOSD(newAspectRatio)
+                                            composeScope.launch(Dispatchers.IO) {
+                                                val newAspectRatio = viewmodel?.player?.switchAspectRatio()
+                                                if (newAspectRatio != null) {
+                                                    composeScope.dispatchOSD(newAspectRatio)
+                                                }
                                             }
                                         }
 
@@ -1308,9 +1332,7 @@ private fun RoomUIImpl() {
                                                         }
 
                                                         dispatchOSD(
-                                                            lyricist.strings.roomCustomSkipButton(
-                                                                customSkipAmountString
-                                                            )
+                                                            getString(Res.string.room_custom_skip_button, customSkipAmountString)
                                                         )
                                                     }
                                                 },
@@ -1318,9 +1340,7 @@ private fun RoomUIImpl() {
                                                 Icon(imageVector = Icons.Filled.AvTimer, "")
                                                 Text(
                                                     modifier = Modifier.padding(start = 4.dp),
-                                                    text = lyricist.strings.roomCustomSkipButton(
-                                                        customSkipAmountString
-                                                    ),
+                                                    text = stringResource(Res.string.room_custom_skip_button, customSkipAmountString),
                                                     fontSize = 12.sp,
                                                     maxLines = 1
                                                 )
@@ -1527,7 +1547,7 @@ private fun RoomUIImpl() {
                                         Spacer(Modifier.width(8.dp))
                                         Text(
                                             color = Color.LightGray,
-                                            text = lyricist.strings.roomAddmediaOffline
+                                            text = stringResource(Res.string.room_addmedia_offline),
                                         )
                                     }
                                 }, onClick = {
@@ -1546,7 +1566,7 @@ private fun RoomUIImpl() {
                                         Spacer(Modifier.width(8.dp))
                                         Text(
                                             color = Color.LightGray,
-                                            text = lyricist.strings.roomAddmediaOnline
+                                            text = stringResource(Res.string.room_addmedia_online),
                                         )
                                     }
                                 }, onClick = {
@@ -1592,7 +1612,7 @@ private fun RoomUIImpl() {
 
         /** Fading Message overlay */
         if (!isSoloMode) {
-            fadingMessageLayout(
+            FadingMessageLayout(
                 hudVisibility = hudVisibility, pipModeObserver = pipModeObserver
             )
         }

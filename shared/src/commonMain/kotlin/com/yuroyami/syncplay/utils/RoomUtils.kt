@@ -5,9 +5,14 @@ import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_FILE_MISMATCH_WARNING
 import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.watchroom.isSoloMode
-import com.yuroyami.syncplay.watchroom.lyricist
 import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_file_mismatch_warning_core
+import syncplaymobile.shared.generated.resources.room_file_mismatch_warning_duration
+import syncplaymobile.shared.generated.resources.room_file_mismatch_warning_name
+import syncplaymobile.shared.generated.resources.room_file_mismatch_warning_size
 
 /** Methods exclusive to Room functionality (messages, sending data to server, etc) */
 object RoomUtils {
@@ -64,7 +69,7 @@ object RoomUtils {
 
     /** Mismatches are: Name, Size, Duration. If 3 mismatches are detected, no error is thrown
      * since that would mean that the two files are completely and obviously different.*/
-    fun checkFileMismatches() {
+    suspend fun checkFileMismatches() {
         if (isSoloMode) return
 
         /** First, we check if user wanna be notified about file mismatchings */
@@ -81,15 +86,14 @@ object RoomUtils {
 
             if (nameMismatch && durationMismatch && sizeMismatch) continue /* 2 mismatches or less */
 
-            with(lyricist.strings) {
-                var warning = roomFileMismatchWarningCore(user.name)
 
-                if (nameMismatch) warning += roomFileMismatchWarningName
-                if (durationMismatch) warning += roomFileMismatchWarningDuration
-                if (sizeMismatch) warning += roomFileMismatchWarningSize
+            var warning = getString(Res.string.room_file_mismatch_warning_core,user.name)
 
-                broadcastMessage(warning, false, isError = true)
-            }
+            if (nameMismatch) warning += getString(Res.string.room_file_mismatch_warning_name)
+            if (durationMismatch) warning += getString(Res.string.room_file_mismatch_warning_duration)
+            if (sizeMismatch) warning += getString(Res.string.room_file_mismatch_warning_size)
+
+            broadcastMessage(warning, false, isError = true)
         }
     }
 

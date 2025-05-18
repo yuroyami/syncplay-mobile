@@ -32,6 +32,7 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.toKString
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
 import platform.AVFoundation.AVLayerVideoGravityResizeAspect
 import platform.AVFoundation.AVPlayerLayer
 import platform.Foundation.NSArray
@@ -41,6 +42,10 @@ import platform.Foundation.NSURL
 import platform.UIKit.UIColor
 import platform.UIKit.UIView
 import platform.darwin.NSObject
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_selected_sub
+import syncplaymobile.shared.generated.resources.room_selected_sub_error
+import syncplaymobile.shared.generated.resources.room_sub_error_load_vid_first
 import kotlin.math.abs
 
 class VlcPlayer : BasePlayer() {
@@ -206,12 +211,17 @@ class VlcPlayer : BasePlayer() {
                     true
                 )
 
-                playerScopeMain.dispatchOSD(lyricist.strings.roomSelectedSub(filename))
+                playerScopeMain.dispatchOSD {
+                    getString(Res.string.room_selected_sub, filename)
+                }
             } else {
-                playerScopeMain.dispatchOSD(lyricist.strings.roomSelectedSubError)
-            }
+                playerScopeMain.dispatchOSD {
+                    getString(Res.string.room_selected_sub_error)
+                }            }
         } else {
-            playerScopeMain.dispatchOSD(lyricist.strings.roomSubErrorLoadVidFirst)
+            playerScopeMain.dispatchOSD {
+                getString(Res.string.room_sub_error_load_vid_first)
+            }
         }
     }
 
@@ -317,7 +327,7 @@ class VlcPlayer : BasePlayer() {
         return vlcPlayer?.time?.value()?.longValue ?: 0L
     }
 
-    override fun switchAspectRatio(): String {
+    override suspend fun switchAspectRatio(): String {
         // Available aspect ratio options
         val aspectRatios = listOf(
             "1:1", "4:3", "16:9", "16:10", "2.21:1", "2.35:1"

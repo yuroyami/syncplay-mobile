@@ -1,108 +1,6 @@
 package com.yuroyami.syncplay.settings
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Chat
-import androidx.compose.material.icons.automirrored.filled.QueueMusic
-import androidx.compose.material.icons.filled.BookmarkRemove
-import androidx.compose.material.icons.filled.BorderColor
-import androidx.compose.material.icons.filled.Brush
-import androidx.compose.material.icons.filled.ClearAll
-import androidx.compose.material.icons.filled.ClosedCaptionOff
-import androidx.compose.material.icons.filled.ConnectWithoutContact
-import androidx.compose.material.icons.filled.DesignServices
-import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.Face
-import androidx.compose.material.icons.filled.FastForward
-import androidx.compose.material.icons.filled.FastRewind
-import androidx.compose.material.icons.filled.FormatListNumbered
-import androidx.compose.material.icons.filled.FormatSize
-import androidx.compose.material.icons.filled.FrontHand
-import androidx.compose.material.icons.filled.GraphicEq
-import androidx.compose.material.icons.filled.HourglassBottom
-import androidx.compose.material.icons.filled.HourglassEmpty
-import androidx.compose.material.icons.filled.HourglassTop
-import androidx.compose.material.icons.filled.Hub
-import androidx.compose.material.icons.filled.Key
-import androidx.compose.material.icons.filled.Keyboard
-import androidx.compose.material.icons.filled.Lan
-import androidx.compose.material.icons.filled.Opacity
-import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Pin
-import androidx.compose.material.icons.filled.SettingsInputComponent
-import androidx.compose.material.icons.filled.SettingsSuggest
-import androidx.compose.material.icons.filled.SortByAlpha
-import androidx.compose.material.icons.filled.Stream
-import androidx.compose.material.icons.filled.TaskAlt
-import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material.icons.filled.Translate
-import androidx.compose.material.icons.filled.Update
-import androidx.compose.material.icons.filled.VideoLabel
-import androidx.compose.material.icons.filled.VideoSettings
-import androidx.compose.material.icons.filled.Web
-import androidx.compose.ui.graphics.toArgb
-import androidx.datastore.preferences.core.edit
-import com.yuroyami.syncplay.compose.popups.PopupMediaDirs.MediaDirsPopup
-import com.yuroyami.syncplay.lyricist.langMap
-import com.yuroyami.syncplay.player.BasePlayer
-import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_ADVANCED
-import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_EXOPLAYER
-import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_GENERAL
-import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_LANG
-import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_NETWORK
-import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_SYNCING
-import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_INROOM_ADVANCED
-import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_INROOM_CHATCOLORS
-import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_INROOM_CHATPROPS
-import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_INROOM_MPV
-import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_INROOM_PLAYERSETTINGS
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_AUDIO_LANG
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_CC_LANG
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_DISPLAY_LANG
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_ERASE_SHORTCUTS
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_FILE_MISMATCH_WARNING
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_GLOBAL_CLEAR_ALL
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_HASH_FILENAME
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_HASH_FILESIZE
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_COLOR_ERRORMSG
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_COLOR_FRIENDTAG
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_COLOR_SELFTAG
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_COLOR_SYSTEMMSG
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_COLOR_TIMESTAMP
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_COLOR_USERMSG
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_ACTIVATE_STAMP
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_BG_OPACITY
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_BOX_ACTION
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_FADING_DURATION
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_FONTSIZE
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_MAXCOUNT
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_SHADOW
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_RESET_DEFAULT
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MAX_BUFFER
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MIN_BUFFER
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_NETWORK_ENGINE
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_READY_FIRST_HAND
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_REMEMBER_INFO
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_SEEK_BUFFER
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_SP_MEDIA_DIRS
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_TLS_ENABLE
-import com.yuroyami.syncplay.settings.Setting.BooleanSetting
-import com.yuroyami.syncplay.settings.Setting.ColorSetting
-import com.yuroyami.syncplay.settings.Setting.MultiChoiceSetting
-import com.yuroyami.syncplay.settings.Setting.OneClickSetting
-import com.yuroyami.syncplay.settings.Setting.SliderSetting
-import com.yuroyami.syncplay.settings.Setting.TextFieldSetting
 import com.yuroyami.syncplay.ui.Paletting
-import com.yuroyami.syncplay.utils.PLATFORM
-import com.yuroyami.syncplay.utils.getPlatform
-import com.yuroyami.syncplay.watchroom.homeCallback
-import com.yuroyami.syncplay.watchroom.lyricist
-import com.yuroyami.syncplay.watchroom.viewmodel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
-import kotlinx.coroutines.launch
 
 lateinit var obtainerCallback: SettingObtainerCallback
 
@@ -130,7 +28,7 @@ val settingROOMstyle = SettingStyling(
 
 private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
     get() {
-        return mutableListOf<Pair<Setting<out Any>, String>>().apply {
+        return mutableListOf<Pair<Setting<out Any>, String>>()}/*.apply {
             add(
                 BooleanSetting(
                     type = SettingType.CheckboxSettingType,
@@ -781,9 +679,9 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
                 ) to CATEG_INROOM_ADVANCED
             )
         }
-    }
+    }*/
 
-fun sgGLOBAL() = mutableListOf<SettingCategory>().apply {
+fun sgGLOBAL() = mutableListOf<SettingCategory>() /* .apply {
     add(
         SettingCategory(
             keyID = CATEG_GLOBAL_GENERAL,
@@ -831,9 +729,9 @@ fun sgGLOBAL() = mutableListOf<SettingCategory>().apply {
         )
     )
     settingsGLOBAL.populate(this)
-}
+}*/
 
-fun sgROOM(): MutableList<SettingCategory> {
+fun sgROOM(): MutableList<SettingCategory> = mutableListOf() /* {
     val list = mutableListOf(
         SettingCategory(
             keyID = CATEG_INROOM_CHATCOLORS,
@@ -874,4 +772,4 @@ fun sgROOM(): MutableList<SettingCategory> {
     val allSettings = settingsROOM + moreSettings
     allSettings.populate(list)
     return list
-}
+} */
