@@ -1,10 +1,10 @@
 package com.yuroyami.syncplay.protocol
 
-import androidx.compose.runtime.mutableStateOf
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.Session
 import com.yuroyami.syncplay.protocol.JsonSender.sendHello
 import com.yuroyami.syncplay.protocol.JsonSender.sendTLS
+import com.yuroyami.syncplay.protocol.parsing.JsonHandler
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.settings.valueSuspendingly
@@ -18,18 +18,18 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 abstract class SyncplayProtocol {
-    val jsonHandler = JsonHandler
-
     /** This refers to the event callback interface */
     var syncplayCallback: ProtocolCallback? = null
 
     /** Protocol-exclusive variables - should never change these initial values **/
     var serverIgnFly: Int = 0
     var clientIgnFly: Int = 0
-    var ping = mutableStateOf<Int?>(null)
+    var ping = MutableStateFlow<Int?>(null)
     val rewindThreshold = 12L /* This is as per official Syncplay, shouldn't be subject to change */
 
     /** Variables that track user status */
@@ -47,11 +47,10 @@ abstract class SyncplayProtocol {
     var tls: Constants.TLS = Constants.TLS.TLS_NO
 
     /** Coroutine scopes and dispatchers */
-    private val supervisorJob = SupervisorJob()
-    val protoScope = CoroutineScope(Dispatchers.IO + supervisorJob)
+    val protoScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     /** This method is responsible for bootstrapping (initializing) the Ktor TCP socket */
-    open fun connect() {
+    open suspend fun connect() {
         endConnection(false)
 
         /** Informing UI controllers that we are starting a connection attempt */
@@ -83,8 +82,8 @@ abstract class SyncplayProtocol {
 
     /** WRITING: This small method basically checks if the channel is active and writes to it, otherwise
      *  it queues the json to send in a special queue until the connection recovers. */
-    open fun sendPacket(json: String, isRetry: Boolean = false) {
-        protoScope.launch {
+    open suspend fun sendPacket(json: String, isRetry: Boolean = false) {
+        withContext(Dispatchers.IO) {
             try {
                 if (isSocketValid()) {
                     val finalOut = json + "\r\n"
@@ -113,6 +112,12 @@ abstract class SyncplayProtocol {
                     sendPacket(json, isRetry = true)
                 }
             }
+        }
+    }
+
+    fun handlePacket(data: String) {
+        protoScope.launch {
+            JsonHandler.parse(this@SyncplayProtocol, data)
         }
     }
 
@@ -145,11 +150,11 @@ abstract class SyncplayProtocol {
     }
 
     /********************************************************************************************
-     * Platform-specific (because we're using Netty on Android side, and plain Ktor on iOS side *
+     * Platform-specific (because we're using different engines on each platform)               *
      ********************************************************************************************/
 
     /** Attempts a connection to the host and port specified under [Session] */
-    abstract fun connectSocket()
+    abstract suspend fun connectSocket()
 
     /** Whether the currently established socket is valid (active) */
     abstract fun isSocketValid(): Boolean
@@ -161,7 +166,7 @@ abstract class SyncplayProtocol {
     abstract fun endConnection(terminating: Boolean)
 
     /** Writes the string to the socket */
-    abstract fun writeActualString(s: String)
+    abstract suspend fun writeActualString(s: String)
 
     /** Attempts to upgrade the plain TCP socket to a TLS secure socket */
     abstract fun upgradeTls()

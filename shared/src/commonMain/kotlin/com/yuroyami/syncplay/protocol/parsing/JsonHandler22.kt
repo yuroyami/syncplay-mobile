@@ -1,7 +1,9 @@
-package com.yuroyami.syncplay.protocol
+package com.yuroyami.syncplay.protocol.parsing
 
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.User
+import com.yuroyami.syncplay.protocol.JsonSender
+import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.utils.generateTimestampMillis
 import com.yuroyami.syncplay.utils.loggy
 import kotlinx.coroutines.launch
@@ -18,7 +20,7 @@ import kotlinx.serialization.json.jsonPrimitive
 
 /** Handlers that parse JSONs and control callbacks based on the incoming message from server */
 
-object JsonHandler {
+object JsonHandler22 {
 
     fun parse(protocol: SyncplayProtocol, json: String) {
         protocol.protoScope.launch {

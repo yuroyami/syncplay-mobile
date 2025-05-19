@@ -106,7 +106,7 @@ class SpProtocolApple: SyncplayProtocol, ChannelInboundHandler {
         let data = buffer.readData(length: readableBytes)!
         
         if let received = String(data: data, encoding: .utf8) {
-            self.jsonHandler.parse(protocol: self, json: received)
+            self.handlePacket(data: received)
         }
     }
     

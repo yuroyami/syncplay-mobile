@@ -49,8 +49,6 @@ import syncplaymobile.shared.generated.resources.room_tls_not_supported
 import syncplaymobile.shared.generated.resources.room_tls_supported
 import syncplaymobile.shared.generated.resources.room_you_joined_room
 
-//var lyricist: Lyricist<Strings>  = Lyricist("en", Stringies)
-
 var homeCallback: HomeCallback? = null
 var viewmodel: SpViewModel? = null
 

@@ -11,10 +11,11 @@ import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.readUTF8Line
 import io.ktor.utils.io.writeStringUtf8
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 class SpProtocolKtor : SyncplayProtocol() {
     override val engine = NetworkEngine.KTOR
@@ -24,10 +25,10 @@ class SpProtocolKtor : SyncplayProtocol() {
     private var input: ByteReadChannel? = null
     private var output: ByteWriteChannel? = null
 
-    override fun connectSocket() {
-        runBlocking {
+    override suspend fun connectSocket() {
+        withContext(Dispatchers.IO) {
             try {
-                socket = aSocket(SelectorManager(Dispatchers.Default))
+                socket = aSocket(SelectorManager(Dispatchers.IO))
                     .tcp()
                     .connect(session.serverHost, session.serverPort) {
                         socketTimeout = 10000
@@ -42,7 +43,7 @@ class SpProtocolKtor : SyncplayProtocol() {
                     while (true) {
                         connection?.input?.awaitContent()
                         input?.readUTF8Line()?.let {
-                            jsonHandler.parse(this@SpProtocolKtor, it)
+                           handlePacket(it)
                         }
 
                         delay(100)
@@ -50,6 +51,7 @@ class SpProtocolKtor : SyncplayProtocol() {
                 }
 
             } catch (e: Exception) {
+                e.printStackTrace()
                 syncplayCallback?.onConnectionFailed()
             }
         }
@@ -58,7 +60,7 @@ class SpProtocolKtor : SyncplayProtocol() {
     override fun isSocketValid() = connection?.socket?.isClosed != true && connection?.socket != null
 
     override fun endConnection(terminating: Boolean) {
-        try {
+        runCatching {
             /* Cleaning leftovers */
             socket?.close()
 
@@ -67,18 +69,16 @@ class SpProtocolKtor : SyncplayProtocol() {
 
                 protoScope.cancel("")
             }
-        } catch (_: Exception) {
         }
     }
 
-    override fun writeActualString(s: String) {
-        protoScope.launch {
-            try {
-                connection?.output?.writeStringUtf8(s)
-                connection?.output?.flush()
-            } catch (e: Exception) {
-                syncplayCallback?.onDisconnected()
-            }
+    override suspend fun writeActualString(s: String) {
+        try {
+            connection?.output?.writeStringUtf8(s)
+            connection?.output?.flush()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            syncplayCallback?.onDisconnected()
         }
     }
 
