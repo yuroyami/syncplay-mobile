@@ -18,7 +18,7 @@ import com.yuroyami.syncplay.screens.home.HomeScreenUI
 import com.yuroyami.syncplay.screens.room.RoomScreenUI
 import com.yuroyami.syncplay.utils.ScreenSizeInfo
 import com.yuroyami.syncplay.utils.rememberScreenSizeInfo
-import com.yuroyami.syncplay.watchroom.SyncplayViewmodel
+import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 import kotlinx.coroutines.Dispatchers
 
 /******

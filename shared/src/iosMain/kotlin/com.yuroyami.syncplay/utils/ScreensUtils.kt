@@ -6,7 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.uikit.ComposeUIViewControllerDelegate
 import androidx.compose.ui.window.ComposeUIViewController
-import com.yuroyami.syncplay.screens.home.HomeCallback
+import com.yuroyami.syncplay.viewmodel.PlatformCallback
 import com.yuroyami.syncplay.screens.home.HomeConfig
 import com.yuroyami.syncplay.home.HomeScreen
 import com.yuroyami.syncplay.screens.home.snacky
@@ -141,7 +141,7 @@ fun SyncplayController() = ComposeUIViewController(configure = {
     }
 }
 
-object Home : HomeCallback {
+object Home : PlatformCallback {
 
     override fun onLanguageChanged(newLang: String) {
         NSURL(string = UIApplicationOpenSettingsURLString).let { url ->

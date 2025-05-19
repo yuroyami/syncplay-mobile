@@ -32,7 +32,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C.STREAM_TYPE_MUSIC
-import com.yuroyami.syncplay.screens.home.HomeCallback
+import com.yuroyami.syncplay.viewmodel.PlatformCallback
 import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.BasePlayer.ENGINE
@@ -200,7 +200,7 @@ class SyncplayActivity : ComponentActivity() {
         }
 
         /** Language change listener */
-        homeCallback = object: HomeCallback {
+        homeCallback = object: PlatformCallback {
             override fun onLanguageChanged(newLang: String) {
                 runOnUiThread {
                     recreate()

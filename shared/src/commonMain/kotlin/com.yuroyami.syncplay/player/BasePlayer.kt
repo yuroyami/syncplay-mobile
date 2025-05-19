@@ -6,11 +6,9 @@ import com.eygraber.uri.Uri
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
-import com.yuroyami.syncplay.utils.PlaylistUtils
-import com.yuroyami.syncplay.utils.sha256
-import com.yuroyami.syncplay.utils.toHex
-import com.yuroyami.syncplay.watchroom.isSoloMode
-import com.yuroyami.syncplay.watchroom.viewmodel
+import com.yuroyami.syncplay.utils.CommonUtils.sha256
+import com.yuroyami.syncplay.utils.CommonUtils.toHex
+import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -29,7 +27,9 @@ import kotlinx.coroutines.SupervisorJob
  * This interface will be implemented by one of the players mentioned above, and will delegate
  * all the necessary functionality, in a platform-agnostic manner.
  */
-abstract class BasePlayer {
+abstract class BasePlayer(
+    val viewmodel: SyncplayViewmodel
+) {
 
     abstract val engine: ENGINE
 
@@ -40,6 +40,7 @@ abstract class BasePlayer {
         IOS_AVPLAYER,
         IOS_VLC;
 
+        /** Gets the platform-specific player that is next in line */
         fun getNextPlayer(): ENGINE {
             return when (this) {
                 ANDROID_EXOPLAYER -> ANDROID_MPV
@@ -98,7 +99,7 @@ abstract class BasePlayer {
     abstract fun isSeekable(): Boolean
 
     open fun seekTo(toPositionMs: Long) {
-        if (viewmodel?.background == true) return
+        if (viewmodel.background == true) return
     }
 
     abstract fun currentPositionMs(): Long
@@ -113,13 +114,13 @@ abstract class BasePlayer {
     abstract fun VideoPlayer(modifier: Modifier)
 
     fun onPlaybackEnded() {
-        if (!isSoloMode) {
+        if (!viewmodel.isSoloMode) {
             if (viewmodel?.p?.session?.sharedPlaylist?.isEmpty() == true) return
             val currentIndex = viewmodel?.p?.session?.spIndex?.intValue ?: return
             val playlistSize = viewmodel?.p?.session?.sharedPlaylist?.size ?: return
 
             val next = if (playlistSize == currentIndex + 1) 0 else currentIndex + 1
-            PlaylistUtils.sendPlaylistSelection(next)
+            viewmodel.sendPlaylistSelection(next)
 
         }
     }
@@ -139,5 +140,4 @@ abstract class BasePlayer {
             fileSizeHashed = sha256(fileSize).toHex()
         }
     }
-
 }

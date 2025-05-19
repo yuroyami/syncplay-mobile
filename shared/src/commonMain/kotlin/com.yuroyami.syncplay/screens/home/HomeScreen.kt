@@ -103,7 +103,6 @@ import com.yuroyami.syncplay.components.ComposeUtils.SmartFancyIcon
 import com.yuroyami.syncplay.components.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.components.getRegularFont
 import com.yuroyami.syncplay.components.popups.PopupAPropos.AProposPopup
-import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_NIGHTMODE
@@ -118,11 +117,12 @@ import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.getDefaultEngine
 import com.yuroyami.syncplay.watchroom.ThemeMenu
-import com.yuroyami.syncplay.watchroom.homeCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.Font
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
@@ -148,190 +148,35 @@ import syncplaymobile.shared.generated.resources.vlc
 
 private val LocalGlobalSettings = staticCompositionLocalOf<List<SettingCategory>> { error("No Global Settings provided") }
 
+val officialServers = listOf( "syncplay.pl:8995", "syncplay.pl:8996", "syncplay.pl:8997", "syncplay.pl:8998", "syncplay.pl:8999")
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreenUI() {
-    val scope = rememberCoroutineScope()
     val viewmodel = LocalViewmodel.current
-
+    val servers = officialServers + stringResource(Res.string.connect_enter_custom_server)
     val savedConfig = remember { JoinConfig.savedConfig() } //FIXME: Fetch this asynchronously
+
+    LaunchedEffect(null) {
+        //TODO get config and make UI visible only when config is obtained
+    }
 
     CompositionLocalProvider(
         LocalGlobalSettings provides sgGLOBAL()
     ) {
         val nightMode by valueFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
 
-        val servers = listOf(
-            "syncplay.pl:8995", "syncplay.pl:8996", "syncplay.pl:8997", "syncplay.pl:8998", "syncplay.pl:8999",
-            stringResource(Res.string.connect_enter_custom_server)
-        )
-
         AppTheme(nightMode) {
-            /* Remembering stuff like scope for onClicks, snackBar host state for snackbars ... etc */
+            val scope = rememberCoroutineScope { Dispatchers.IO }
             val snacky = remember { SnackbarHostState().also { viewmodel.snack = it } }
             val focusManager = LocalFocusManager.current
-
-            val aboutpopupState = remember { mutableStateOf(false) }
 
             /* Using a Scaffold manages our top-level layout */
             Scaffold(
                 snackbarHost = { SnackbarHost(snacky) },
-
-                /* The top bar contains a syncplay logo, text, nightmode toggle button, and a setting button + its screen */
                 topBar = {
-                    Card(
-                        modifier = Modifier.fillMaxWidth()
-                            .background(color = Color.Transparent /* Paletting.BG_DARK_1 */),
-                        shape = RoundedCornerShape(
-                            topEnd = 0.dp, topStart = 0.dp, bottomEnd = 12.dp, bottomStart = 12.dp
-                        ),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
-                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 12.dp),
-                    ) {
-                        /* Settings Button */
-                        val settingState = remember { mutableIntStateOf(0) }
-
-                        Column(
-                            horizontalAlignment = CenterHorizontally,
-                            modifier = Modifier.animateContentSize()
-                        ) {
-                            ListItem(
-                                modifier = Modifier.fillMaxWidth().padding(top = (TopAppBarDefaults.windowInsets.asPaddingValues().calculateTopPadding())),
-                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                                trailingContent = {
-                                    Row(verticalAlignment = CenterVertically) {
-                                        var themePopupState by remember { mutableStateOf(false) }
-                                        SmartFancyIcon(
-                                            icon = Icons.Outlined.Palette,
-                                            size = 38,
-                                            tintColors = Paletting.SP_GRADIENT,
-                                            shadowColors = listOf(MaterialTheme.colorScheme.primary),
-                                            onClick = {
-                                                themePopupState = true
-                                                //TODO Show theme popup
-                                                scope.launch {
-                                                 //   writeValue(MISC_NIGHTMODE, !nightMode)
-                                                }
-                                            }
-                                        )
-                                        ThemeMenu(themePopupState, onDismiss = { themePopupState = false })
-
-                                        SmartFancyIcon(
-                                            icon = when (settingState.intValue) {
-                                                0 -> Icons.Filled.Settings
-                                                1 -> Icons.Filled.Close
-                                                else -> Icons.AutoMirrored.Filled.Redo
-                                            },
-                                            size = 38,
-                                            tintColors = Paletting.SP_GRADIENT,
-                                            shadowColors = listOf(MaterialTheme.colorScheme.primary),
-                                            onClick = {
-                                                when (settingState.intValue) {
-                                                    0 -> settingState.intValue = 1
-                                                    1 -> settingState.intValue = 0
-                                                    else -> settingState.intValue = 1
-                                                }
-                                            }
-                                        )
-                                    }
-                                },
-
-                                /* Syncplay Header (logo + text) */
-                                headlineContent = {
-                                    Row(
-                                        modifier = Modifier.clip(CircleShape).background(
-                                            brush = Brush.linearGradient(
-                                                colors = listOf(
-                                                    Paletting.SP_GRADIENT.first().copy(0.05f),
-                                                    Paletting.SP_GRADIENT.last().copy(0.05f)
-                                                )
-                                            )
-                                        ).clickable(
-                                            enabled = true,
-                                            interactionSource = remember { MutableInteractionSource() },
-                                            indication = ripple(
-                                                bounded = false, color = Color(100, 100, 100, 200)
-                                            )
-                                        ) { aboutpopupState.value = true }.padding(16.dp)
-                                    ) {
-                                        Image(
-                                            imageVector = vectorResource(Res.drawable.syncplay_logo_gradient),
-                                            contentDescription = "",
-                                            modifier = Modifier.height(32.dp).aspectRatio(1f)
-                                        )
-
-                                        Spacer(modifier = Modifier.width(12.dp))
-
-                                        Box(modifier = Modifier.padding(bottom = 6.dp)) {
-                                            Text(
-                                                modifier = Modifier.wrapContentWidth(),
-                                                text = "Syncplay",
-                                                style = TextStyle(
-                                                    color = Paletting.SP_PALE,
-                                                    drawStyle = Stroke(
-                                                        miter = 10f,
-                                                        width = 2f,
-                                                        join = StrokeJoin.Round
-                                                    ),
-                                                    shadow = Shadow(
-                                                        color = Paletting.SP_INTENSE_PINK,
-                                                        offset = Offset(0f, 10f),
-                                                        blurRadius = 5f
-                                                    ),
-                                                    fontFamily = FontFamily(Font(Res.font.Directive4_Regular)),
-                                                    fontSize = 24.sp,
-                                                )
-                                            )
-
-                                            Text(
-                                                text = "Syncplay", style = TextStyle(
-                                                    brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT),
-                                                    fontFamily = FontFamily(Font(Res.font.Directive4_Regular)),
-                                                    fontSize = 24.sp,
-                                                )
-                                            )
-                                        }
-                                    }
-                                },
-                            )/* Settings */
-
-                            androidx.compose.animation.AnimatedVisibility(
-                                modifier = Modifier.fillMaxWidth(),
-                                visible = settingState.intValue != 0,
-                                enter = scaleIn(),
-                                exit = scaleOut()
-                            ) {
-                                SettingsUI.SettingsGrid(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    settingcategories = LocalGlobalSettings.current,
-                                    state = settingState,
-                                    onCardClicked = {
-                                        settingState.intValue = 2
-                                    })
-                            }
-                            val dirs = valueFlow(
-                                PREF_SP_MEDIA_DIRS,
-                                emptySet<String>()
-                            ).collectAsState(initial = emptySet())
-                            var loaded by remember { mutableStateOf(false) }
-                            LaunchedEffect(Unit) {
-                                loaded = true
-                            }
-                            AnimatedVisibility(dirs.value.isEmpty() && loaded && settingState.intValue != 2) {
-                                Text(
-                                    modifier = Modifier.fillMaxWidth()
-                                        .clip(RoundedCornerShape(8.dp)).clickable{
-                                            settingState.intValue = 2
-                                        }.padding(16.dp),
-                                    text = "Don't forget to set default media directories in Settings > General > Media Directories for Shared Playlist!",
-                                    style = TextStyle(
-                                        color = MaterialTheme.colorScheme.onSurface,)
-                                )}
-                        }
-                    }
+                    SyncplayTopBar()
                 },
-
-                /* The actual content of the log-in screen */
                 content = { paddingValues ->
                     Column(
                         modifier = Modifier.fillMaxSize()
@@ -663,8 +508,8 @@ fun HomeScreenUI() {
                                     modifier = Modifier.height(54.dp).aspectRatio(1.6f),
                                     shape = RoundedCornerShape(25),
                                     onClick = {
-                                        homeCallback?.onSaveConfigShortcut(
-                                            JoinInfo(
+                                        viewmodel.platform.onSaveConfigShortcut(
+                                            JoinConfig(
                                                 textUsername.replace("\\", "").trim(),
                                                 textRoomname.replace("\\", "").trim(),
                                                 serverAddress,
@@ -753,84 +598,44 @@ fun HomeScreenUI() {
                         Spacer(modifier = Modifier.height(10.dp))
 
                         /* join button */
-                        val snacktxtEmptyUSER = stringResource(Res.string.connect_username_empty_error)
-                        val snacktxtEmptyROOM = stringResource(Res.string.connect_roomname_empty_error)
-                        val snacktxtEmptyIP = stringResource(Res.string.connect_address_empty_error)
-                        val snacktxtEmptyPORT = stringResource(Res.string.connect_port_empty_error)
-
                         Button(
                             border = BorderStroke(
                                 width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT)),
                             modifier = Modifier,
                             onClick = {
-                                /* Trimming whitespaces */
-                                textUsername = textUsername.trim()
-                                textRoomname = textRoomname.trim()
-                                serverAddress = serverAddress.trim()
-                                serverPort = serverPort.trim()
-                                serverPassword = serverPassword.trim()
+                                scope.launch {
+                                    /* Trimming whitespaces */
+                                    textUsername = textUsername.trim()
+                                    textRoomname = textRoomname.trim()
+                                    serverAddress = serverAddress.trim()
+                                    serverPort = serverPort.trim()
+                                    serverPassword = serverPassword.trim()
 
-                                /* Checking whether username is empty */
-                                if (textUsername.isBlank()) {
-                                    scope.launch {
-                                        snacky.showSnackbar(snacktxtEmptyUSER)
+                                    val errorMessage: StringResource? = when {
+                                        textUsername.isBlank() -> Res.string.connect_username_empty_error
+                                        textRoomname.isBlank() -> Res.string.connect_roomname_empty_error
+                                        serverAddress.isBlank() -> Res.string.connect_address_empty_error
+                                        serverPort.isBlank() || serverPort.toIntOrNull() == null -> Res.string.connect_port_empty_error
+                                        else -> null
                                     }
-                                    return@Button
-                                }
 
-                                /* Taking the first 150 letters of the username if it's too long */
-                                textUsername.let {
-                                    if (it.length > 150) textUsername = it.substring(0, 149)
-                                }
-
-                                /* Taking only 35 letters from the roomname if it's too long */
-                                textRoomname.let {
-                                    if (it.length > 35) textRoomname = it.substring(0, 34)
-                                }
-
-                                /* Checking whether roomname is empty */
-                                if (textRoomname.isBlank()) {
-                                    scope.launch {
-                                        snacky.showSnackbar(snacktxtEmptyROOM)
+                                    if (errorMessage != null) {
+                                        snacky.showSnackbar(getString(errorMessage))
+                                        return@launch
                                     }
-                                    return@Button
+
+                                    val info = JoinConfig(
+                                        textUsername.replace("\\", "").trim().substring(0, 149),
+                                        textRoomname.replace("\\", "").trim().substring(0, 34),
+                                        serverAddress,
+                                        serverPort.toInt(),
+                                        serverPassword
+                                    )
+
+                                    info.save() //Remembering info
+
+                                    viewmodel.platform.onJoin(info)
                                 }
-
-                                /* Checking whether address is empty */
-                                if (serverAddress.isBlank()) {
-                                    scope.launch {
-                                        snacky.showSnackbar(snacktxtEmptyIP)
-                                    }
-                                    return@Button
-                                }
-
-                                /* Checking whether port is empty */
-                                if (serverPort.isBlank()) {
-                                    scope.launch {
-                                        snacky.showSnackbar(snacktxtEmptyPORT)
-                                    }
-                                    return@Button
-                                }
-
-                                /* Checking whether port is a number */
-                                if (serverPort.toIntOrNull() == null) {
-                                    scope.launch {
-                                        snacky.showSnackbar(snacktxtEmptyPORT)
-                                    }
-                                    return@Button
-                                }
-
-                                val info = JoinInfo(
-                                    textUsername.replace("\\", "").trim(),
-                                    textRoomname.replace("\\", "").trim(),
-                                    serverAddress,
-                                    serverPort.toInt(),
-                                    serverPassword
-                                )
-
-                                info.remember() //Remembering info
-
-                                homeCallback?.onJoin(info.get())
                             },
                         ) {
                             Icon(imageVector = Icons.Filled.Api, "")
@@ -840,9 +645,163 @@ fun HomeScreenUI() {
 
                         Spacer(modifier = Modifier.height(10.dp))
                     }
-                })
+                }
+            )
+        }
+    }
+}
 
-            AProposPopup(aboutpopupState)
+
+@Composable
+fun SyncplayTopBar() {
+    val aboutpopupState = remember { mutableStateOf(false) }
+
+    AProposPopup(aboutpopupState)
+
+    Card(
+        modifier = Modifier.fillMaxWidth()
+            .background(color = Color.Transparent /* Paletting.BG_DARK_1 */),
+        shape = RoundedCornerShape(
+            topEnd = 0.dp, topStart = 0.dp, bottomEnd = 12.dp, bottomStart = 12.dp
+        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 12.dp),
+    ) {
+        /* Settings Button */
+        val settingState = remember { mutableIntStateOf(0) }
+
+        Column(
+            horizontalAlignment = CenterHorizontally,
+            modifier = Modifier.animateContentSize()
+        ) {
+            ListItem(
+                modifier = Modifier.fillMaxWidth().padding(top = (TopAppBarDefaults.windowInsets.asPaddingValues().calculateTopPadding())),
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                trailingContent = {
+                    Row(verticalAlignment = CenterVertically) {
+                        var themePopupState by remember { mutableStateOf(false) }
+                        SmartFancyIcon(
+                            icon = Icons.Outlined.Palette,
+                            size = 38,
+                            tintColors = Paletting.SP_GRADIENT,
+                            shadowColors = listOf(MaterialTheme.colorScheme.primary),
+                            onClick = {
+                                themePopupState = true
+                            }
+                        )
+                        ThemeMenu(themePopupState, onDismiss = { themePopupState = false })
+
+                        SmartFancyIcon(
+                            icon = when (settingState.intValue) {
+                                0 -> Icons.Filled.Settings
+                                1 -> Icons.Filled.Close
+                                else -> Icons.AutoMirrored.Filled.Redo
+                            },
+                            size = 38,
+                            tintColors = Paletting.SP_GRADIENT,
+                            shadowColors = listOf(MaterialTheme.colorScheme.primary),
+                            onClick = {
+                                when (settingState.intValue) {
+                                    0 -> settingState.intValue = 1
+                                    1 -> settingState.intValue = 0
+                                    else -> settingState.intValue = 1
+                                }
+                            }
+                        )
+                    }
+                },
+
+                /* Syncplay Header (logo + text) */
+                headlineContent = {
+                    Row(
+                        modifier = Modifier.clip(CircleShape).background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(
+                                    Paletting.SP_GRADIENT.first().copy(0.05f),
+                                    Paletting.SP_GRADIENT.last().copy(0.05f)
+                                )
+                            )
+                        ).clickable(
+                            enabled = true,
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = ripple(
+                                bounded = false, color = Color(100, 100, 100, 200)
+                            )
+                        ) { aboutpopupState.value = true }.padding(16.dp)
+                    ) {
+                        Image(
+                            imageVector = vectorResource(Res.drawable.syncplay_logo_gradient),
+                            contentDescription = "",
+                            modifier = Modifier.height(32.dp).aspectRatio(1f)
+                        )
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Box(modifier = Modifier.padding(bottom = 6.dp)) {
+                            Text(
+                                modifier = Modifier.wrapContentWidth(),
+                                text = "Syncplay",
+                                style = TextStyle(
+                                    color = Paletting.SP_PALE,
+                                    drawStyle = Stroke(
+                                        miter = 10f,
+                                        width = 2f,
+                                        join = StrokeJoin.Round
+                                    ),
+                                    shadow = Shadow(
+                                        color = Paletting.SP_INTENSE_PINK,
+                                        offset = Offset(0f, 10f),
+                                        blurRadius = 5f
+                                    ),
+                                    fontFamily = FontFamily(Font(Res.font.Directive4_Regular)),
+                                    fontSize = 24.sp,
+                                )
+                            )
+
+                            Text(
+                                text = "Syncplay", style = TextStyle(
+                                    brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT),
+                                    fontFamily = FontFamily(Font(Res.font.Directive4_Regular)),
+                                    fontSize = 24.sp,
+                                )
+                            )
+                        }
+                    }
+                },
+            )/* Settings */
+
+            androidx.compose.animation.AnimatedVisibility(
+                modifier = Modifier.fillMaxWidth(),
+                visible = settingState.intValue != 0,
+                enter = scaleIn(),
+                exit = scaleOut()
+            ) {
+                SettingsUI.SettingsGrid(
+                    modifier = Modifier.fillMaxWidth(),
+                    settingcategories = LocalGlobalSettings.current,
+                    state = settingState,
+                    onCardClicked = {
+                        settingState.intValue = 2
+                    })
+            }
+            val dirs = valueFlow(
+                PREF_SP_MEDIA_DIRS,
+                emptySet<String>()
+            ).collectAsState(initial = emptySet())
+            var loaded by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) {
+                loaded = true
+            }
+            AnimatedVisibility(dirs.value.isEmpty() && loaded && settingState.intValue != 2) {
+                Text(
+                    modifier = Modifier.fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp)).clickable{
+                            settingState.intValue = 2
+                        }.padding(16.dp),
+                    text = "Don't forget to set default media directories in Settings > General > Media Directories for Shared Playlist!",
+                    style = TextStyle(
+                        color = MaterialTheme.colorScheme.onSurface,)
+                )}
         }
     }
 }
