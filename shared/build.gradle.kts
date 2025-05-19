@@ -1,6 +1,4 @@
-@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
 @file:Suppress("UnstableApiUsage")
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.cocoapods)
@@ -12,9 +10,10 @@ plugins {
 
     alias(libs.plugins.kSerialization)
     //id("com.google.devtools.ksp")
+
+    alias(libs.plugins.touchlab.skie)
 }
 
-@OptIn(ExperimentalKotlinGradlePluginApi::class)
 kotlin {
     // Activating Android target (androidMain)
     androidTarget()
@@ -89,6 +88,7 @@ kotlin {
 
             /* ViewModel support */
             implementation(libs.compose.viewmodel)
+            implementation(libs.compose.navigation)
 
             /* Helps with color calculations for color preferences */
             implementation(libs.colormath)
@@ -166,8 +166,8 @@ android {
         applicationId = "com.reddnek.syncplay"
         minSdk = 21
         targetSdk = 35
-        versionCode = 1000015002 //Changing versionName semantic projection from 1.XXX.XXX.XXX to 1.XX.XX.XX
-        versionName = "0.15.2"
+        versionCode = 1_001_000_00_1 //1 XXX XXX XX X (last X is for prerelease versions such as RC)
+        versionName = "1.0.0-RC1"
         signingConfig = signingConfigs.getByName("github")
         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
@@ -247,9 +247,8 @@ android {
     }
 
     dependenciesInfo {
-        // Disables dependency metadata when building APKs.
+        // Disables dependency metadata when building APKs & Android App Bundles.
         includeInApk = false
-        // Disables dependency metadata when building Android App Bundles.
         includeInBundle = false
     }
 }

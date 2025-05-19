@@ -24,33 +24,21 @@
         android:supportsRtl="false"
         android:usesCleartextTraffic="true"
         android:enableOnBackInvokedCallback="false"
-        tools:targetApi="23">
+        tools:targetApi="36">
 
         <activity
-            android:name=".HomeActivity"
+            android:name=".SyncplayActivity"
             android:configChanges="orientation|keyboardHidden|screenLayout|screenSize|smallestScreenSize"
             android:exported="true"
             android:imeOptions="flagNoExtractUi"
             android:theme="@style/SplashTheme"
-            android:windowSoftInputMode="adjustPan">
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustNothing">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity
-            android:name=".WatchActivity"
-            android:configChanges="orientation|keyboardHidden|screenLayout|screenSize|smallestScreenSize"
-            android:exported="true"
-            android:imeOptions="flagNoExtractUi"
-            android:resizeableActivity="true"
-            android:screenOrientation="sensorLandscape"
-            android:supportsPictureInPicture="true"
-            android:theme="@style/SyncplayTheme"
-            android:launchMode="singleTask"
-            android:windowSoftInputMode="adjustNothing"
-            tools:ignore="DiscouragedApi" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
