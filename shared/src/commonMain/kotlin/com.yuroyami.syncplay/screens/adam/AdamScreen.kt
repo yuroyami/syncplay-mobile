@@ -3,12 +3,13 @@ package com.yuroyami.syncplay.screens.adam
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -17,7 +18,6 @@ import androidx.navigation.compose.rememberNavController
 import com.yuroyami.syncplay.screens.home.HomeScreenUI
 import com.yuroyami.syncplay.screens.room.RoomScreenUI
 import com.yuroyami.syncplay.utils.ScreenSizeInfo
-import com.yuroyami.syncplay.utils.rememberScreenSizeInfo
 import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 import kotlinx.coroutines.Dispatchers
 
@@ -30,60 +30,57 @@ import kotlinx.coroutines.Dispatchers
 val LocalNavigator = compositionLocalOf<NavController> { error("No Navigator provided yet") }
 val LocalViewmodel = compositionLocalOf<SyncplayViewmodel> { error("No Viewmodel provided yet") }
 val LocalScreenSize = compositionLocalOf<ScreenSizeInfo> { error("No Screen Size Info provided") }
-val LocalSoloMode = compositionLocalOf<Boolean> { false }
+val LocalScreen = compositionLocalOf<Screen> { error("No Screen provided") }
 
 sealed class Screen(val label: String) {
     data object Home : Screen("home")
     data object Room : Screen("room")
     data object SoloMode : Screen("solo_room")
+
+    companion object {
+        fun fromLabel(label: String?): Screen = when (label) {
+            Home.label -> Home
+            Room.label -> Room
+            SoloMode.label -> SoloMode
+            else -> Home
+        }
+    }
 }
 
 @Composable
 fun AdamScreen() {
     val scope = rememberCoroutineScope { Dispatchers.Default }
-    val haptic = LocalHapticFeedback.current
-
-    /* Create our global long-lived viewmodel */
-    val viewmodel = viewModel(
-        key = "syncplay_viewmodel",
-        modelClass = SyncplayViewmodel::class,
-        factory = viewModelFactory { initializer { SyncplayViewmodel() } }
-    )
-
+    val viewmodel = viewModel<SyncplayViewmodel>()
     val navigator = rememberNavController()
     val navEntry by navigator.currentBackStackEntryAsState()
+    val haptic = LocalHapticFeedback.current
+    val windowInfo = LocalWindowInfo.current.containerSize
+    val screenSizeInfo = remember(windowInfo) {
+        ScreenSizeInfo(
+            heightPx = windowInfo.height,
+            widthPx = windowInfo.width
+        )
+    }
 
-    val screenSizeInfo = rememberScreenSizeInfo()
+    val currentScreen by remember {
+        derivedStateOf {
+            Screen.fromLabel(navEntry?.destination?.route)
+        }
+    }
 
     CompositionLocalProvider(
         LocalViewmodel provides viewmodel,
         LocalNavigator provides navigator,
         LocalScreenSize provides screenSizeInfo,
+        LocalScreen provides currentScreen
     ) {
         NavHost(
             navController = navigator,
             startDestination = Screen.Home.label
         ) {
-            with(Screen.Home) {
-                composable(label) {
-                    HomeScreenUI()
-                }
-            }
-
-            with(Screen.Room) {
-                composable(label) {
-                    RoomScreenUI()
-                }
-            }
-            with(Screen.SoloMode) {
-                composable(label) {
-                    CompositionLocalProvider(
-                        LocalSoloMode provides true
-                    ) {
-                        RoomScreenUI()
-                    }
-                }
-            }
+            composable(Screen.Home.label) { HomeScreenUI() }
+            composable(Screen.Room.label) { RoomScreenUI() }
+            composable(Screen.SoloMode.label) { RoomScreenUI() }
         }
     }
 }

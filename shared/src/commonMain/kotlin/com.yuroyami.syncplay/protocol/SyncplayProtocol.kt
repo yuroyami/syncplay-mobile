@@ -127,7 +127,7 @@ abstract class SyncplayProtocol {
         }
     }
 
-    fun onError() {
+    private fun onError() {
         syncplayCallback?.onDisconnected()
     }
 

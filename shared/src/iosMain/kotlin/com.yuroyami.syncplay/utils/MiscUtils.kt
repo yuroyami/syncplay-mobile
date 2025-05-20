@@ -29,9 +29,7 @@ actual fun getSystemMaxVolume(): Int {
     return 16
 }
 
-actual fun getPlatform(): PLATFORM = PLATFORM.IOS
-
-actual fun loggy(s: String?, checkpoint: Int) = println(s.toString())
+actual val platform: PLATFORM = PLATFORM.IOS
 
 actual fun getDefaultEngine(): String = BasePlayer.ENGINE.IOS_VLC.name
 
@@ -64,23 +62,6 @@ actual suspend fun pingIcmp(host: String, packet: Int): Int? {
     return withTimeoutOrNull(1000) { future.await() }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
-@Composable
-actual fun getScreenSizeInfo(): ScreenSizeInfo {
-    val density = LocalDensity.current
-    val config = LocalWindowInfo.current.containerSize
-
-
-    return remember(density, config) {
-        ScreenSizeInfo(
-            hPX = config.height,
-            wPX = config.width,
-            hDP = with(density) { config.height.toDp() },
-            wDP = with(density) { config.width.toDp() }
-        )
-    }
-}
-
 @OptIn(BetaInteropApi::class)
 actual fun String.format(vararg args: String): String {
     // This ugly work around is because varargs can't be passed to Objective-C...
@@ -96,9 +77,4 @@ actual fun String.format(vararg args: String): String {
         4 -> NSString.create(f, locale = null, args[0].cstr, args[1].cstr, args[2].cstr, args[3].cstr).toString()
         else -> NSString.create(f, locale = null, args[0].cstr, args[1].cstr, args[2].cstr, args[3].cstr, args[4].cstr).toString()
     }
-}
-
-
-actual fun getSystemLanguageCode(): String {
-    return NSLocale.currentLocale.languageCode
 }

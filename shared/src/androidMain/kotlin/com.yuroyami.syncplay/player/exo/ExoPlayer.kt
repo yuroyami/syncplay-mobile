@@ -163,7 +163,7 @@ class ExoPlayer : BasePlayer() {
                         val duration = exoplayer!!.duration.div(1000.0)
                         viewmodel?.timeFull?.longValue = abs(duration.toLong())
 
-                        if (isSoloMode) return
+                        if (viewmodel.isSoloMode) return
                         if (duration != viewmodel?.media?.fileDuration) {
                             playerScopeIO.launch launch2@{
 
@@ -184,8 +184,8 @@ class ExoPlayer : BasePlayer() {
                             viewmodel?.isNowPlaying?.value = isPlaying //Just to inform UI
 
                             //Tell server about playback state change
-                            if (!isSoloMode) {
-                                sendPlayback(isPlaying)
+                            if (!viewmodel.isSoloMode) {
+                                viewmodel.sendPlayback(isPlaying)
                                 viewmodel!!.p.paused = !isPlaying
                             }
 
@@ -215,7 +215,7 @@ class ExoPlayer : BasePlayer() {
                 }
             })
 
-            playerScopeMain.trackProgress(intervalMillis = 500L)
+            viewmodel.trackProgress(intervalMillis = 500L)
         }
     }
 

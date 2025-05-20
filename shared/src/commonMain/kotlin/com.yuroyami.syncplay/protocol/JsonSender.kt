@@ -5,11 +5,10 @@ import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_HASH_FILENAME
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_HASH_FILESIZE
 import com.yuroyami.syncplay.settings.valueBlockingly
-import com.yuroyami.syncplay.utils.md5
-import com.yuroyami.syncplay.utils.toHex
-import com.yuroyami.syncplay.watchroom.viewmodel
+import com.yuroyami.syncplay.utils.CommonUtils.md5
+import com.yuroyami.syncplay.utils.CommonUtils.toHex
+import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
@@ -137,7 +136,7 @@ object JsonSender {
         return Json.encodeToString(wrapper)
     }
 
-    fun sendState(
+    fun SyncplayViewmodel.sendState(
         servertime: Double?,
         clienttime: Double,
         doSeek: Boolean?,
@@ -150,33 +149,33 @@ object JsonSender {
                 if (doSeek == true) {
                     put("position", seekPosition.toDouble() / 1000.0)
                 } else {
-                    put("position", viewmodel!!.p.currentVideoPosition.toFloat())
+                    put("position", p.currentVideoPosition.toFloat())
                 }
-                put("paused", viewmodel!!.p.paused)
+                put("paused", p.paused)
                 put("doSeek", doSeek)
             }
 
             val ping = buildJsonObject {
                 servertime?.let { put("latencyCalculation", it) }
                 put("clientLatencyCalculation", clienttime)
-                put("clientRtt", viewmodel!!.p.ping.value ?: 0)
+                put("clientRtt", p.ping.value ?: 0)
             }
 
             if (iChangeState == 1) {
                 val ignore = buildJsonObject {
-                    put("client", viewmodel!!.p.clientIgnFly)
+                    put("client", p.clientIgnFly)
                 }
                 put("ignoringOnTheFly", ignore)
                 put("playstate", buildJsonObject {
                     put("paused", play != true)
                 })
             } else {
-                if (viewmodel!!.p.serverIgnFly != 0) {
+                if (p.serverIgnFly != 0) {
                     val ignore = buildJsonObject {
-                        put("server", viewmodel!!.p.serverIgnFly)
+                        put("server", p.serverIgnFly)
                     }
                     put("ignoringOnTheFly", ignore)
-                    viewmodel!!.p.serverIgnFly = 0
+                    p.serverIgnFly = 0
                 }
             }
 

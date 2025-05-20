@@ -23,7 +23,7 @@ actual fun getSystemMaxVolume(): Int {
     return audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
 }
 
-actual fun getPlatform(): PLATFORM = PLATFORM.Android
+actual val platform: PLATFORM = PLATFORM.Android
 
 var defaultEngineAndroid = BasePlayer.ENGINE.ANDROID_EXOPLAYER.name
 

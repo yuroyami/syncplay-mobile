@@ -1,10 +1,8 @@
 package com.yuroyami.syncplay.utils
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Dp
 import co.touchlab.kermit.Logger
 
@@ -14,7 +12,7 @@ expect fun getSystemMaxVolume(): Int
 
 /** Retrieving which platform the native code is running on */
 enum class PLATFORM { Android, IOS, }
-expect fun getPlatform(): PLATFORM
+expect val platform: PLATFORM
 
 /** logging functionality (Uses println on iOS, and Log.e on Android) */
 fun loggy(s: String?, checkpoint: Int = 0) = Logger.e("SYNCPLAY_LOG: $s")
@@ -51,18 +49,6 @@ data class ScreenSizeInfo(val heightPx: Int, val widthPx: Int) {
 
     @Composable
     fun widthDp(): Dp = with(LocalDensity.current) { widthPx.toDp() }
-}
-
-@Composable
-fun rememberScreenSizeInfo(): ScreenSizeInfo {
-    val windowInfo = LocalWindowInfo.current.containerSize
-
-    return remember(windowInfo) {
-        ScreenSizeInfo(
-            heightPx = windowInfo.height,
-            widthPx = windowInfo.width
-        )
-    }
 }
 
 /** Formats a string and replaces placeholders with actual keys */

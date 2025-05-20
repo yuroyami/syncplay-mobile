@@ -148,7 +148,7 @@ import syncplaymobile.shared.generated.resources.vlc
 
 private val LocalGlobalSettings = staticCompositionLocalOf<List<SettingCategory>> { error("No Global Settings provided") }
 
-val officialServers = listOf( "syncplay.pl:8995", "syncplay.pl:8996", "syncplay.pl:8997", "syncplay.pl:8998", "syncplay.pl:8999")
+val officialServers = listOf("syncplay.pl:8995", "syncplay.pl:8996", "syncplay.pl:8997", "syncplay.pl:8998", "syncplay.pl:8999")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -248,9 +248,9 @@ fun HomeScreenUI() {
                                     }),
                                     value = textUsername,
                                     onValueChange = { s ->
-                                        textUsername = s
-
-                                    })
+                                        textUsername = s.trim()
+                                    }
+                                )
                             }
                         }
 
@@ -302,7 +302,7 @@ fun HomeScreenUI() {
                                         focusManager.moveFocus(focusDirection = FocusDirection.Next)
                                     }),
                                     value = textRoomname,
-                                    onValueChange = { s -> textRoomname = s })
+                                    onValueChange = { s -> textRoomname = s.trim() })
                             }
                         }
 
@@ -410,7 +410,7 @@ fun HomeScreenUI() {
                                             unfocusedIndicatorColor = Color.Transparent,
                                             disabledIndicatorColor = Color.Transparent,
                                         ),
-                                        onValueChange = { serverAddress = it },
+                                        onValueChange = { serverAddress = it.trim() },
                                         keyboardActions = KeyboardActions(onDone = {
                                             focusManager.moveFocus(FocusDirection.Next)
                                         }),
@@ -443,7 +443,7 @@ fun HomeScreenUI() {
                                             unfocusedIndicatorColor = Color.Transparent,
                                             disabledIndicatorColor = Color.Transparent,
                                         ),
-                                        onValueChange = { serverPort = it },
+                                        onValueChange = { serverPort = it.trim() },
                                         textStyle = TextStyle(
                                             brush = Brush.linearGradient(
                                                 colors = Paletting.SP_GRADIENT
@@ -583,7 +583,8 @@ fun HomeScreenUI() {
                             Spacer(modifier = Modifier.height(4.dp))
 
                             Text(
-                                stringResource(Res.string.connect_button_current_engine,
+                                stringResource(
+                                    Res.string.connect_button_current_engine,
                                     when (player.value) {
                                         BasePlayer.ENGINE.ANDROID_EXOPLAYER.name -> "Google ExoPlayer (System)"
                                         BasePlayer.ENGINE.ANDROID_MPV.name -> "mpv (Default, Recommended)"
@@ -600,17 +601,11 @@ fun HomeScreenUI() {
                         /* join button */
                         Button(
                             border = BorderStroke(
-                                width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT)),
+                                width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT)
+                            ),
                             modifier = Modifier,
                             onClick = {
                                 scope.launch {
-                                    /* Trimming whitespaces */
-                                    textUsername = textUsername.trim()
-                                    textRoomname = textRoomname.trim()
-                                    serverAddress = serverAddress.trim()
-                                    serverPort = serverPort.trim()
-                                    serverPassword = serverPassword.trim()
-
                                     val errorMessage: StringResource? = when {
                                         textUsername.isBlank() -> Res.string.connect_username_empty_error
                                         textRoomname.isBlank() -> Res.string.connect_roomname_empty_error
@@ -650,7 +645,6 @@ fun HomeScreenUI() {
         }
     }
 }
-
 
 @Composable
 fun SyncplayTopBar() {
@@ -795,13 +789,15 @@ fun SyncplayTopBar() {
             AnimatedVisibility(dirs.value.isEmpty() && loaded && settingState.intValue != 2) {
                 Text(
                     modifier = Modifier.fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp)).clickable{
+                        .clip(RoundedCornerShape(8.dp)).clickable {
                             settingState.intValue = 2
                         }.padding(16.dp),
                     text = "Don't forget to set default media directories in Settings > General > Media Directories for Shared Playlist!",
                     style = TextStyle(
-                        color = MaterialTheme.colorScheme.onSurface,)
-                )}
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                )
+            }
         }
     }
 }

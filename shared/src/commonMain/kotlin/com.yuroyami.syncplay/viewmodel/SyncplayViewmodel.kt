@@ -12,6 +12,7 @@ import com.yuroyami.syncplay.models.Message
 import com.yuroyami.syncplay.models.TrackChoices
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.protocol.JsonSender
+import com.yuroyami.syncplay.protocol.JsonSender.sendState
 import com.yuroyami.syncplay.protocol.ProtocolCallback
 import com.yuroyami.syncplay.protocol.SpProtocolKtor
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
@@ -28,8 +29,8 @@ import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.iterateDirectory
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timeStamper
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -124,7 +125,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
         if (isSoloMode) return
 
         p?.sendPacketAsync(
-            JsonSender.sendState(
+            sendState(
                 servertime = null, clienttime = generateTimestampMillis() / 1000.0,
                 doSeek = null, seekPosition = 0, iChangeState = 1, play = play
             )
@@ -135,7 +136,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
         if (isSoloMode) return
         player?.playerScopeMain?.launch {
             p?.sendPacket(
-                JsonSender.sendState(
+                sendState(
                     null, (generateTimestampMillis() / 1000.0), true,
                     newpos, 1,
                     play = player?.isPlaying() == true,
@@ -211,14 +212,14 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     fun pausePlayback() {
         if (background == true) return
         player?.pause()
-        platformCallback?.onPlayback(true)
+        platform?.onPlayback(true)
     }
 
     /** This resumes playback on the main thread, and hides system UI **/
     fun playPlayback() {
         if (background == true) return
         player?.play()
-        platformCallback?.onPlayback(false)
+        platform?.onPlayback(false)
     }
 
     fun seekBckwd() {
@@ -265,9 +266,9 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     }
 
     /** Tracks progress CONTINUOUSLY and updates it to UI (and server, if no solo mode) */
-    fun CoroutineScope.trackProgress(intervalMillis: Long) {
+    fun trackProgress(intervalMillis: Long) {
         if (playerTrackerJob == null) {
-            playerTrackerJob = launch {
+            playerTrackerJob = viewModelScope.launch(Dispatchers.IO) {
                 while (true) {
                     if (player?.isSeekable() == true) {
                         val progress = (player?.currentPositionMs()?.div(1000L)) ?: 0L
