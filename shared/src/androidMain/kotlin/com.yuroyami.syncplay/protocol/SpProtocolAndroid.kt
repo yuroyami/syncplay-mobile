@@ -1,6 +1,7 @@
 package com.yuroyami.syncplay.protocol
 
 import com.yuroyami.syncplay.utils.loggy
+import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
@@ -18,7 +19,7 @@ import io.netty.handler.codec.string.StringDecoder
 import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.ssl.SslContextBuilder
 
-class SpProtocolAndroid : SyncplayProtocol() {
+class SpProtocolAndroid(viewmodel: SyncplayViewmodel) : SyncplayProtocol(viewmodel) {
 
     override val engine = NetworkEngine.NETTY
 
@@ -50,7 +51,7 @@ class SpProtocolAndroid : SyncplayProtocol() {
         /** Listening to the connection progress */
         f.addListener(ChannelFutureListener { future ->
             if (!future.isSuccess) {
-                syncplayCallback?.onConnectionFailed()
+                syncplayCallback.onConnectionFailed()
             } else {
                 /* This is the channel, only variable we should memorize from the entire bootstrap/connection phase */
                 channel = f.channel()
@@ -78,7 +79,7 @@ class SpProtocolAndroid : SyncplayProtocol() {
         val f = channel?.writeAndFlush(s)
         f?.addListener(ChannelFutureListener { future ->
             if (!future.isSuccess) {
-                syncplayCallback?.onDisconnected()
+                syncplayCallback.onDisconnected()
             }
         })
         f?.await(10000)
@@ -102,7 +103,7 @@ class SpProtocolAndroid : SyncplayProtocol() {
         @Deprecated("Deprecated in Java")
         override fun exceptionCaught(ctx: ChannelHandlerContext?, cause: Throwable?) {
             super.exceptionCaught(ctx, cause)
-            syncplayCallback?.onDisconnected()
+            syncplayCallback.onDisconnected()
         }
     }
 

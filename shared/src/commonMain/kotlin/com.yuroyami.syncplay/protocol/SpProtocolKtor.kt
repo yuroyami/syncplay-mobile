@@ -1,5 +1,6 @@
 package com.yuroyami.syncplay.protocol
 
+import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.Connection
 import io.ktor.network.sockets.Socket
@@ -17,7 +18,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class SpProtocolKtor : SyncplayProtocol() {
+class SpProtocolKtor(viewmodel: SyncplayViewmodel) : SyncplayProtocol(viewmodel) {
     override val engine = NetworkEngine.KTOR
 
     private var socket: Socket? = null

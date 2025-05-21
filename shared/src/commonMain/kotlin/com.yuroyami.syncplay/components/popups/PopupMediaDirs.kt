@@ -7,7 +7,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -61,13 +60,14 @@ import androidx.compose.ui.window.PopupProperties
 import com.eygraber.uri.Uri
 import com.yuroyami.syncplay.components.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.components.ComposeUtils.SyncplayPopup
-import com.yuroyami.syncplay.filepicking.DirectoryPicker
+import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_SP_MEDIA_DIRS
 import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.settings.valueFlow
 import com.yuroyami.syncplay.settings.writeValue
 import com.yuroyami.syncplay.ui.Paletting
-import com.yuroyami.syncplay.utils.PlaylistUtils
+import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLauncher
+import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -87,11 +87,10 @@ import syncplaymobile.shared.generated.resources.yes
 
 object PopupMediaDirs {
 
-    @OptIn(ExperimentalLayoutApi::class)
     @Composable
     fun MediaDirsPopup(visibilityState: MutableState<Boolean>) {
         val scope = rememberCoroutineScope { Dispatchers.IO }
-
+        val viewmodel = LocalViewmodel.current
         var cleardialog by remember { mutableStateOf(false) }
 
         SyncplayPopup(
@@ -101,15 +100,13 @@ object PopupMediaDirs {
             strokeWidth = 0.5f,
             onDismiss = { visibilityState.value = false }) {
 
-            var directoryPicker by remember { mutableStateOf(false) }
-            DirectoryPicker(
-                show = directoryPicker, title = "Select directory to save playlist to as a file"
+            var directoryPicker = rememberDirectoryPickerLauncher(
+                title = "Select directory to save playlist to as a file"
             ) { directoryUri ->
-                directoryPicker = false
-                if (directoryUri == null) return@DirectoryPicker
+                if (directoryUri == null) return@rememberDirectoryPickerLauncher
 
                 scope.launch {
-                    PlaylistUtils.saveFolderPathAsMediaDirectory(directoryUri)
+                    viewmodel.saveFolderPathAsMediaDirectory(directoryUri.path)
                 }
             }
             Column(
@@ -268,7 +265,7 @@ object PopupMediaDirs {
                         border = BorderStroke(width = 1.dp, color = Color.Black),
                         modifier = Modifier.wrapContentWidth(),
                         onClick = {
-                            directoryPicker = true
+                            directoryPicker.launch()
                         },
                     ) {
                         Icon(imageVector = Icons.Filled.CreateNewFolder, "")

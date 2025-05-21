@@ -40,9 +40,9 @@ import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.components.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.components.ComposeUtils.SyncplayPopup
 import com.yuroyami.syncplay.components.getRegularFont
+import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.getText
-import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
@@ -61,7 +61,7 @@ object PopupAddUrl {
             onDismiss = { visibilityState.value = false }
         ) {
             val scope = rememberCoroutineScope()
-
+            val viewmodel = LocalViewmodel.current
             val clipboard = LocalClipboard.current
 
             Column(
@@ -141,7 +141,7 @@ object PopupAddUrl {
                         visibilityState.value = false
 
                         if (url.value.trim().isNotBlank()) {
-                            viewmodel?.player?.injectVideo(url.value.trim(), isUrl = true)
+                            viewmodel.player?.injectVideo(url.value.trim(), isUrl = true)
                         }
 
                     },

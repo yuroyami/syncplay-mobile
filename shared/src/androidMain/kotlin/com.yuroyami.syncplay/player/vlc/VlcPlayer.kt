@@ -15,15 +15,11 @@ import com.yuroyami.syncplay.databinding.VlcviewBinding
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.player.BasePlayer
-import com.yuroyami.syncplay.player.PlayerUtils.trackProgress
-import com.yuroyami.syncplay.protocol.JsonSender
-import com.yuroyami.syncplay.utils.RoomUtils
+import com.yuroyami.syncplay.protocol.sending.Packet
+import com.yuroyami.syncplay.screens.room.dispatchOSD
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.getFileName
-import com.yuroyami.syncplay.screens.room.dispatchOSD
 import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
-import com.yuroyami.syncplay.watchroom.isSoloMode
-import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
@@ -69,7 +65,7 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
         vlcPlayer?.attachViews(vlcView, null, true, false)
 
         vlcAttachObserver()
-        playerScopeMain.trackProgress(intervalMillis = 250L)
+        viewmodel.trackProgress(intervalMillis = 250L)
     }
 
     override fun destroy() {
@@ -115,11 +111,11 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
     }
 
     override suspend fun analyzeTracks(mediafile: MediaFile) {
-        viewmodel?.media?.subtitleTracks?.clear()
-        viewmodel?.media?.audioTracks?.clear()
+        viewmodel.media?.subtitleTracks?.clear()
+        viewmodel.media?.audioTracks?.clear()
         val audioTracks = vlcPlayer?.getTracks(Track.Type.Audio)
         audioTracks?.forEachIndexed { i, tracky ->
-            viewmodel?.media?.audioTracks?.add(
+            viewmodel.media?.audioTracks?.add(
                 object : VlcTrack {
                     override val name = tracky.name
                     override val type = TRACKTYPE.AUDIO
@@ -132,7 +128,7 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
 
         val subtitleTracks = vlcPlayer?.getTracks(Track.Type.Text)
         subtitleTracks?.forEachIndexed { i, tracky ->
-            viewmodel?.media?.subtitleTracks?.add(
+            viewmodel.media?.subtitleTracks?.add(
                 object : VlcTrack {
                     override val name = tracky.name
                     override val type = TRACKTYPE.SUBTITLE
@@ -155,7 +151,7 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
                     vlcPlayer?.unselectTrackType(Track.Type.Text)
                 }
 
-                viewmodel?.currentTrackChoices?.subtitleSelectionIdVlc = vlcTrack?.id ?: "-1"
+                viewmodel.currentTrackChoices.subtitleSelectionIdVlc = vlcTrack?.id ?: "-1"
             }
 
             TRACKTYPE.AUDIO -> {
@@ -165,7 +161,7 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
                     vlcPlayer?.unselectTrackType(Track.Type.Audio)
                 }
 
-                viewmodel?.currentTrackChoices?.audioSelectionIdVlc = vlcTrack?.id ?: "-1"
+                viewmodel.currentTrackChoices.audioSelectionIdVlc = vlcTrack?.id ?: "-1"
             }
         }
     }
@@ -193,16 +189,16 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
     }
 
     override fun reapplyTrackChoices() {
-        val subId = viewmodel?.currentTrackChoices?.subtitleSelectionIdVlc
-        val audioId = viewmodel?.currentTrackChoices?.audioSelectionIdVlc
+        val subId = viewmodel.currentTrackChoices.subtitleSelectionIdVlc
+        val audioId = viewmodel.currentTrackChoices.audioSelectionIdVlc
 
-        val ccMap = viewmodel?.media?.subtitleTracks?.map { it as VlcTrack }
-        val audioMap = viewmodel?.media?.subtitleTracks?.map { it as VlcTrack }
+        val ccMap = viewmodel.media?.subtitleTracks?.map { it as VlcTrack }
+        val audioMap = viewmodel.media?.subtitleTracks?.map { it as VlcTrack }
 
         val ccGet = ccMap?.firstOrNull { it.id == subId }
         val audioGet = audioMap?.firstOrNull { it.id == audioId }
 
-        with(viewmodel?.player ?: return) {
+        with(viewmodel.player ?: return) {
             if (subId == "-1") {
                 selectTrack(null, TRACKTYPE.SUBTITLE)
             } else if (ccGet != null) {
@@ -252,20 +248,20 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
     @SuppressLint("Recycle")
     override fun injectVideo(uri: String?, isUrl: Boolean) {
         /* Changing UI (hiding artwork, showing media controls) */
-        viewmodel?.hasVideoG?.value = true
+        viewmodel.hasVideoG.value = true
 
         playerScopeMain.launch {
             /* Creating a media file from the selected file */
-            if (uri != null || viewmodel?.media == null) {
-                viewmodel?.media = MediaFile()
-                viewmodel?.media?.uri = uri
+            if (uri != null || viewmodel.media == null) {
+                viewmodel.media = MediaFile()
+                viewmodel.media?.uri = uri
 
                 /* Obtaining info from it (size and name) */
                 if (isUrl) {
-                    viewmodel?.media?.url = uri.toString()
-                    viewmodel?.media?.let { collectInfoURL(it) }
+                    viewmodel.media?.url = uri.toString()
+                    viewmodel.media?.let { collectInfoURL(it) }
                 } else {
-                    viewmodel?.media?.let { collectInfoLocal(it) }
+                    viewmodel.media?.let { collectInfoLocal(it) }
                 }
             }
             /* Injecting the media into exoplayer */
@@ -283,8 +279,8 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
                 }
 
                 /* Goes back to the beginning for everyone */
-                if (!isSoloMode) {
-                    viewmodel!!.p.currentVideoPosition = 0.0
+                if (!viewmodel.isSoloMode) {
+                    viewmodel.p.currentVideoPosition = 0.0
                 }
             } catch (e: IOException) {
                 /* If, for some reason, the video didn't wanna load */
@@ -294,7 +290,7 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
 
             /* Finally, show a a toast to the user that the media file has been added */
             playerScopeMain.dispatchOSD {
-                getString(Res.string.room_selected_vid,"${viewmodel?.media?.fileName}")
+                getString(Res.string.room_selected_vid,"${viewmodel.media?.fileName}")
             }
         }
     }
@@ -352,24 +348,24 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
             when (event.type) {
                 MediaPlayer.Event.Playing -> {
                     if (vlcPlayer?.hasMedia() == true) {
-                        viewmodel?.isNowPlaying?.value = true //Just to inform UI
+                        viewmodel.isNowPlaying.value = true //Just to inform UI
 
                         //Tell server about playback state change
-                        if (!isSoloMode) {
-                            RoomUtils.sendPlayback(true)
-                            viewmodel!!.p.paused = false
+                        if (!viewmodel.isSoloMode) {
+                            viewmodel.sendPlayback(true)
+                            viewmodel.p.paused = false
                         }
                     }
                 }
 
                 MediaPlayer.Event.Paused -> {
                     if (vlcPlayer?.hasMedia() == true) {
-                        viewmodel?.isNowPlaying?.value = false //Just to inform UI
+                        viewmodel.isNowPlaying.value = false //Just to inform UI
 
                         //Tell server about playback state change
-                        if (!isSoloMode) {
-                            RoomUtils.sendPlayback(false)
-                            viewmodel!!.p.paused = true
+                        if (!viewmodel.isSoloMode) {
+                            viewmodel.sendPlayback(false)
+                            viewmodel.p.paused = true
                         }
                     }
                 }
@@ -384,14 +380,16 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
                         /* Updating our timeFull */
                         val duration = vlcPlayer!!.length.div(1000.0)
 
-                        viewmodel?.timeFull?.longValue = abs(duration.toLong())
+                        viewmodel.timeFull.longValue = abs(duration.toLong())
 
-                        if (isSoloMode) return@setEventListener
+                        if (viewmodel.isSoloMode) return@setEventListener
 
-                        if (duration != viewmodel?.media?.fileDuration) {
+                        if (duration != viewmodel.media?.fileDuration) {
                             playerScopeIO.launch launch2@{
-                                viewmodel?.media?.fileDuration = duration
-                                viewmodel!!.p.sendPacket(JsonSender.sendFile(viewmodel?.media ?: return@launch2))
+                                viewmodel.media?.fileDuration = duration
+                                viewmodel.p.send<Packet.File> {
+                                    media = viewmodel.media
+                                }.await()
                             }
                         }
                     }

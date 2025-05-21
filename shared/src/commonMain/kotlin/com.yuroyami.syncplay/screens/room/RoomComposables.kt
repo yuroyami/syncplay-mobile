@@ -48,6 +48,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -69,11 +70,11 @@ import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.components.ComposeUtils
 import com.yuroyami.syncplay.components.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.models.MessagePalette
+import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.settingBooleanState
 import com.yuroyami.syncplay.settings.settingIntState
 import com.yuroyami.syncplay.ui.Paletting
-import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
@@ -85,6 +86,7 @@ import syncplaymobile.shared.generated.resources.syncplay_logo_gradient
 
 object RoomComposables {
 
+    //TODO DONT DO THIS TO PRODUCE A MSG PALETTE
     @Composable
     fun ComposedMessagePalette(): MessagePalette {
         val colorTimestamp = DataStoreKeys.PREF_INROOM_COLOR_TIMESTAMP.settingIntState()
@@ -173,16 +175,18 @@ object RoomComposables {
 
     @Composable
     fun FadingMessageLayout(hudVisibility: Boolean, pipModeObserver: Boolean) {
+        val viewmodel = LocalViewmodel.current
+
         /** The layout for the fading messages & OSD messages (when HUD is hidden, or when screen is locked) */
         val fadingTimeout = DataStoreKeys.PREF_INROOM_MSG_FADING_DURATION.settingIntState()
         val palette = LocalChatPalette.current
 
         if (!hudVisibility) {
             var visibility by remember { mutableStateOf(false) }
-
-            LaunchedEffect(viewmodel!!.p.session.messageSequence.size) {
-                if (viewmodel!!.p.session.messageSequence.isNotEmpty()) {
-                    val lastMsg = viewmodel!!.p.session.messageSequence.last()
+            val msgs = remember { viewmodel.p.session.messageSequence }
+            LaunchedEffect(msgs.size) {
+                if (viewmodel.p.session.messageSequence.isNotEmpty()) {
+                    val lastMsg = viewmodel.p.session.messageSequence.last()
 
                     if (!lastMsg.isMainUser && !lastMsg.seen) {
                         visibility = true
@@ -206,7 +210,7 @@ object RoomComposables {
                             .fillMaxWidth(0.8f)
                             .focusable(false),
                         overflow = TextOverflow.Ellipsis,
-                        text = viewmodel!!.p.session.messageSequence.last().factorize(palette),
+                        text = viewmodel.p.session.messageSequence.last().factorize(palette),
                         lineHeight = if (pipModeObserver) 9.sp else 15.sp,
                         fontSize = if (pipModeObserver) 8.sp else 13.sp
                     )
@@ -273,8 +277,8 @@ object RoomComposables {
     }
 
     @Composable
-    fun AddVideoButton(modifier: Modifier, onClick: () -> Unit) {
-        if (viewmodel?.hasVideoG?.value == true) {
+    fun AddVideoButton(modifier: Modifier, expanded: Boolean, onClick: () -> Unit) {
+        if (!expanded) {
             ComposeUtils.FancyIcon2(
                 modifier = modifier,
                 icon = Icons.Filled.AddToQueue, size = Paletting.ROOM_ICON_SIZE + 6, shadowColor = Color.Black,
@@ -309,9 +313,14 @@ object RoomComposables {
         }
     }
 
-    /** There are 3 overloads for AnimatedVisibility in Jetpack Compose, two of them use ColumnScope
-     * or RowScope as receivers, so we cannot use the one that uses neither when we are adding it to
-     * a box that is contained in another column or row, we use this method to remove this ambiguity.
+    /**
+     * Jetpack Compose provides three overloads of `AnimatedVisibility`.
+     * Two of them have `ColumnScope` or `RowScope` as receivers, and one has neither.
+     *
+     * When adding `AnimatedVisibility` to a `Box` that's nested inside a `Column` or `Row`,
+     * this can lead to ambiguity due to receiver resolution.
+     *
+     * This method is used to eliminate that ambiguity by explicitly selecting the correct overload.
      */
     @Composable
     fun FreeAnimatedVisibility(
@@ -320,7 +329,7 @@ object RoomComposables {
         enter: EnterTransition = fadeIn() + expandIn(),
         exit: ExitTransition = shrinkOut() + fadeOut(),
         label: String = "AnimatedVisibility",
-        content: @Composable() AnimatedVisibilityScope.() -> Unit
+        content: @Composable AnimatedVisibilityScope.() -> Unit
     ) {
         AnimatedVisibility(
             visible = visible,
@@ -336,12 +345,12 @@ object RoomComposables {
         val icon: ImageVector,
         val tint: Color
     ) {
-        object NoInternet : PingLevel(Icons.Outlined.SignalWifiConnectedNoInternet4, Color.Gray)
-        object Excellent : PingLevel(Icons.Outlined.SignalWifi4Bar, Color.Green)
-        object Good : PingLevel(Icons.Outlined.NetworkWifi, Color.Yellow)
-        object Fair : PingLevel(Icons.Outlined.NetworkWifi3Bar, Color(255, 176, 66))
-        object Poor : PingLevel(Icons.Outlined.NetworkWifi2Bar, Color(181, 80, 25))
-        object Terrible : PingLevel(Icons.Outlined.NetworkWifi1Bar, Color.Red)
+        data object NoInternet : PingLevel(Icons.Outlined.SignalWifiConnectedNoInternet4, Color.Gray)
+        data object Excellent : PingLevel(Icons.Outlined.SignalWifi4Bar, Color.Green)
+        data object Good : PingLevel(Icons.Outlined.NetworkWifi, Color.Yellow)
+        data object Fair : PingLevel(Icons.Outlined.NetworkWifi3Bar, Color(255, 176, 66))
+        data object Poor : PingLevel(Icons.Outlined.NetworkWifi2Bar, Color(181, 80, 25))
+        data object Terrible : PingLevel(Icons.Outlined.NetworkWifi1Bar, Color.Red)
         companion object {
             fun from(ping: Int?): PingLevel = when (ping) {
                 null -> NoInternet

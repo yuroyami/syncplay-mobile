@@ -237,7 +237,7 @@ fun GestureInterceptor(
                     detectVerticalDragGestures(
                         onDragStart = {
                             initialBrightness = platformCallback.getCurrentBrightness()
-                            initialVolume = platformCallback.getCurrentVolume()
+                            initialVolume = viewmodel.player?.getCurrentVolume() ?: return@detectVerticalDragGestures
                             lastBrightness = initialBrightness
                             lastVolume = initialVolume
                         },
@@ -253,7 +253,7 @@ fun GestureInterceptor(
                             if (pntr.position.x >= dimensions.widthPx * 0.5f) {
                                 // Volume adjusting
                                 val h = dimensions.heightPx / 1.5f
-                                val maxVolume = platformCallback.getMaxVolume()
+                                val maxVolume = viewmodel.player?.getMaxVolume() ?: return@detectVerticalDragGestures
                                 var newVolume = (initialVolume + (-dragdistance * maxVolume / h)).roundToInt()
                                 if (newVolume > maxVolume) newVolume = maxVolume
                                 if (newVolume < 0) newVolume = 0
@@ -263,7 +263,7 @@ fun GestureInterceptor(
                                     haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
                                     lastVolume = newVolume
                                 }
-                                platformCallback.changeCurrentVolume(newVolume)
+                                viewmodel.player?.changeCurrentVolume(newVolume)
                             } else {
                                 // Brightness adjusting in 5% increments
                                 val h = dimensions.heightPx / 1.5f

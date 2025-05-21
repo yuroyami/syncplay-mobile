@@ -44,16 +44,14 @@ import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.components.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.components.ComposeUtils.SyncplayPopup
 import com.yuroyami.syncplay.components.getRegularFont
+import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.screens.room.dispatchOSD
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
 import com.yuroyami.syncplay.settings.settingBooleanState
 import com.yuroyami.syncplay.settings.settingIntState
 import com.yuroyami.syncplay.ui.Paletting
-import com.yuroyami.syncplay.utils.RoomUtils
 import com.yuroyami.syncplay.utils.timeStamper
-import com.yuroyami.syncplay.watchroom.isSoloMode
-import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -74,6 +72,7 @@ object PopupSeekToPosition {
             strokeWidth = 0.5f,
             onDismiss = { visibilityState.value = false }
         ) {
+            val viewmodel = LocalViewmodel.current
             val focusManager = LocalFocusManager.current
 
             Column(
@@ -204,15 +203,15 @@ object PopupSeekToPosition {
                     modifier = Modifier,
                     onClick = {
                         visibilityState.value = false
-                        viewmodel?.player?.playerScopeIO?.launch {
-                            val currentMs = withContext(Dispatchers.Main) { viewmodel?.player!!.currentPositionMs() }
+                        viewmodel.player?.playerScopeIO?.launch {
+                            val currentMs = withContext(Dispatchers.Main) { viewmodel.player!!.currentPositionMs() }
                             val newPos = (currentMs) + (customSkipAmount * 1000L)
 
-                            RoomUtils.sendSeek(newPos)
-                            viewmodel?.player?.seekTo(newPos)
+                            viewmodel.sendSeek(newPos)
+                            viewmodel.player?.seekTo(newPos)
 
-                            if (isSoloMode) {
-                                viewmodel?.seeks?.add(Pair((currentMs), newPos * 1000))
+                            if (viewmodel.isSoloMode) {
+                                viewmodel.seeks.add(Pair((currentMs), newPos * 1000))
                             }
 
                             //TODO: I18N
@@ -241,18 +240,18 @@ object PopupSeekToPosition {
                         if (ss >= 60) ss = 59
                         if (mm >= 60) mm = 59
 
-                        viewmodel?.player?.playerScopeMain?.launch {
+                        viewmodel.player?.playerScopeMain?.launch {
                             val ssMs = ss * 1000
                             val mmMs = mm * 60 * 1000
                             val hhMs = hh * 3600 * 1000
                             val result = ssMs + mmMs + hhMs
 
-                            if (isSoloMode) {
-                                if (viewmodel?.player == null) return@launch
-                                viewmodel?.seeks?.add(Pair(viewmodel?.player!!.currentPositionMs(), result))
+                            if (viewmodel.isSoloMode) {
+                                if (viewmodel.player == null) return@launch
+                                viewmodel.seeks.add(Pair(viewmodel.player!!.currentPositionMs(), result))
                             }
 
-                            viewmodel?.player?.seekTo(result)
+                            viewmodel.player?.seekTo(result)
 
                             //TODO: Need I18n
                             dispatchOSD("Seeking to ${timeStamper(result.div(1000L))}")

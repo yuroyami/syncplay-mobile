@@ -44,9 +44,9 @@ actual fun SyncplayViewmodel.instantiatePlayer(engine: BasePlayer.ENGINE) = when
     else -> null
 }
 
-actual fun instantiateNetworkEngineProtocol(engine: SyncplayProtocol.NetworkEngine) = when (engine) {
-    SyncplayProtocol.NetworkEngine.NETTY -> SpProtocolAndroid()
-    else -> SpProtocolKtor()
+actual fun SyncplayViewmodel.instantiateNetworkEngineProtocol(engine: SyncplayProtocol.NetworkEngine) = when (engine) {
+    SyncplayProtocol.NetworkEngine.NETTY -> SpProtocolAndroid(this)
+    else -> SpProtocolKtor(this)
 }
 
 actual fun generateTimestampMillis() = System.currentTimeMillis()

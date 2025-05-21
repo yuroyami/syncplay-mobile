@@ -30,8 +30,8 @@ import com.yuroyami.syncplay.components.ComposeUtils
 import com.yuroyami.syncplay.components.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.components.ComposeUtils.SyncplayPopup
 import com.yuroyami.syncplay.components.getRegularFont
+import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.screens.room.LocalChatPalette
-import com.yuroyami.syncplay.watchroom.viewmodel
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
@@ -39,11 +39,10 @@ import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.close
 
 object PopupChatHistory {
-
-
     @Composable
     fun ChatHistoryPopup(visibilityState: MutableState<Boolean>) {
-        val msgs = remember { viewmodel!!.p.session.messageSequence }
+        val viewmodel = LocalViewmodel.current
+        val msgs = remember { viewmodel.p.session.messageSequence }
         val palette = LocalChatPalette.current.copy(includeTimestamp = true) // We always show timestamp
 
         return SyncplayPopup(

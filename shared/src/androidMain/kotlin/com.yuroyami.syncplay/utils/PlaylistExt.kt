@@ -3,16 +3,15 @@ package com.yuroyami.syncplay.utils
 import android.provider.DocumentsContract
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import com.yuroyami.syncplay.protocol.JsonSender.sendPlaylistChange
-import com.yuroyami.syncplay.protocol.JsonSender.sendPlaylistIndex
-import com.yuroyami.syncplay.utils.PlaylistUtils.retrieveFile
-import com.yuroyami.syncplay.watchroom.viewmodel
+import androidx.lifecycle.viewModelScope
+import com.yuroyami.syncplay.protocol.sending.Packet
+import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 import kotlinx.coroutines.launch
 
 
-actual suspend fun addFolderToPlaylist(uri: String) {
+actual suspend fun SyncplayViewmodel.addFolderToPlaylist(uri: String) {
     /* First, we save it in our media directories as a common directory */
-    PlaylistUtils.saveFolderPathAsMediaDirectory(uri)
+    saveFolderPathAsMediaDirectory(uri)
 
     /* Now we get children files */
     val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
@@ -30,14 +29,18 @@ actual suspend fun addFolderToPlaylist(uri: String) {
     }
     newList.sort()
 
-    if (viewmodel?.p?.session!!.spIndex.intValue == -1) {
+    if (p.session.spIndex.intValue == -1) {
         retrieveFile(newList.first())
-        viewmodel?.p?.sendPacket(sendPlaylistIndex(0))
+        p.send<Packet.PlaylistIndex> {
+            index = 0
+        }.await()
     }
-    viewmodel?.p?.sendPacket(sendPlaylistChange(viewmodel?.p?.session!!.sharedPlaylist + newList))
+    p.send<Packet.PlaylistChange> {
+        files = p.session.sharedPlaylist + newList
+    }.await()
 }
 
-fun iterateDirectory(dir: DocumentFile, onFileDetected: (String) -> Unit) {
+fun SyncplayViewmodel.iterateDirectory(dir: DocumentFile, onFileDetected: (String) -> Unit) {
     val files = dir.listFiles()
 
     for (file in files) {
@@ -46,7 +49,7 @@ fun iterateDirectory(dir: DocumentFile, onFileDetected: (String) -> Unit) {
         } else {
             if (file.name == null) continue
 
-            if (!viewmodel?.p?.session!!.sharedPlaylist.contains(file.name!!)) {
+            if (!p.session.sharedPlaylist.contains(file.name!!)) {
                 onFileDetected(file.name!!)
             }
         }
@@ -77,7 +80,7 @@ actual fun iterateDirectory(uri: String, target: String, onFileFound: (String) -
         }
 
         if (file.isDirectory) {
-            iterateDirectory(file) {
+            iterateDirectory(file.uri.toString(), target) {
                 stuff(it)
             }
         } else {
@@ -87,14 +90,14 @@ actual fun iterateDirectory(uri: String, target: String, onFileFound: (String) -
 }
 
 
-actual fun savePlaylistLocally(toFolderUri: String) {
+actual fun SyncplayViewmodel.savePlaylistLocally(toFolderUri: String) {
     val context = contextObtainer.obtainAppContext()
     val folder = DocumentFile.fromTreeUri(context, toFolderUri.toUri())
     val txt = folder?.createFile("text/plain", "SharedPlaylist_${System.currentTimeMillis()}.txt")
 
     /** Converting the shared playlist to a text string, line by line */
     val stringBuilder = StringBuilder()
-    for (f in viewmodel!!.p.session.sharedPlaylist) {
+    for (f in p.session.sharedPlaylist) {
         stringBuilder.appendLine(f)
     }
     val string = stringBuilder.appendLine().trim().toString()
@@ -106,7 +109,7 @@ actual fun savePlaylistLocally(toFolderUri: String) {
     s?.close()
 }
 
-actual fun loadPlaylistLocally(fromUri: String, alsoShuffle: Boolean) {
+actual fun SyncplayViewmodel.loadPlaylistLocally(fromUri: String, alsoShuffle: Boolean) {
     val context = contextObtainer.obtainAppContext()
 
     /** Opening the input stream of the file */
@@ -122,7 +125,9 @@ actual fun loadPlaylistLocally(fromUri: String, alsoShuffle: Boolean) {
     if (alsoShuffle) lines.shuffle()
 
     /** Updating the shared playlist */
-    viewmodel?.viewmodelScope?.launch {
-        viewmodel?.p?.sendPacket(sendPlaylistChange(lines))
+    viewModelScope.launch {
+        p.send<Packet.PlaylistChange> {
+            files = lines
+        }.await()
     }
 }

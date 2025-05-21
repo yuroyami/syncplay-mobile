@@ -1,10 +1,9 @@
 package com.yuroyami.syncplay.utils
 
-import com.yuroyami.syncplay.protocol.JsonSender.sendPlaylistChange
-import com.yuroyami.syncplay.protocol.JsonSender.sendPlaylistIndex
+import androidx.lifecycle.viewModelScope
+import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.utils.CommonUtils.vidExs
-import com.yuroyami.syncplay.utils.PlaylistUtils.retrieveFile
-import com.yuroyami.syncplay.watchroom.viewmodel
+import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCObjectVar
@@ -26,17 +25,15 @@ import platform.Foundation.NSURLIsDirectoryKey
 import platform.Foundation.NSURLNameKey
 import platform.Foundation.NSUTF8StringEncoding
 import platform.Foundation.NSUserDefaults
-import platform.Foundation.URLByAppendingPathComponent
 import platform.Foundation.dataUsingEncoding
-import platform.Foundation.lastPathComponent
 import platform.Foundation.stringWithContentsOfURL
 import platform.Foundation.stringWithString
 import platform.Foundation.writeToURL
 
 @OptIn(BetaInteropApi::class)
-actual suspend fun addFolderToPlaylist(uri: String) {
+actual suspend fun SyncplayViewmodel.addFolderToPlaylist(uri: String) {
     /* First, we save it in our media directories as a common directory */
-    PlaylistUtils.saveFolderPathAsMediaDirectory(uri)
+    saveFolderPathAsMediaDirectory(uri)
 
     /* Now we get children files */
     val newList = mutableListOf<String>()
@@ -67,7 +64,7 @@ actual suspend fun addFolderToPlaylist(uri: String) {
 
             if (isDirectory == false && isValidMediaFileExtension(obj.path?.substringAfterLast("."))) {
                 val filename = obj.lastPathComponent
-                if (!viewmodel?.p?.session!!.sharedPlaylist.contains(filename)) newList.add(filename!!)
+                if (!p.session.sharedPlaylist.contains(filename)) newList.add(filename!!)
             }
 
             obj = enumerator?.nextObject() as? NSURL //Next object now
@@ -79,11 +76,15 @@ actual suspend fun addFolderToPlaylist(uri: String) {
 
     newList.sort()
 
-    if (viewmodel?.p?.session!!.spIndex.intValue == -1) {
+    if (p.session.spIndex.intValue == -1) {
         retrieveFile(newList.first())
-        viewmodel?.p?.sendPacket(sendPlaylistIndex(0))
+        p.send<Packet.PlaylistIndex> {
+            index = 0
+        }.await()
     }
-    viewmodel?.p?.sendPacket(sendPlaylistChange(viewmodel?.p?.session!!.sharedPlaylist + newList))
+    p.send<Packet.PlaylistChange> {
+        files = p.session.sharedPlaylist + newList
+    }.await()
 }
 
 @OptIn(BetaInteropApi::class)
@@ -152,7 +153,7 @@ actual fun iterateDirectory(uri: String, target: String, onFileFound: (String) -
 }
 
 
-actual fun savePlaylistLocally(toFolderUri: String) {
+actual fun SyncplayViewmodel.savePlaylistLocally(toFolderUri: String) {
     val destFolder = NSURL.URLWithString(toFolderUri) ?: return
     val destFile = destFolder.URLByAppendingPathComponent("SharedPlaylist_${generateTimestampMillis()}.txt")
         ?: return
@@ -160,7 +161,7 @@ actual fun savePlaylistLocally(toFolderUri: String) {
 
     /** Converting the shared playlist to a text string, line by line */
     val stringBuilder = StringBuilder()
-    for (f in viewmodel!!.p.session.sharedPlaylist) {
+    for (f in p.session.sharedPlaylist) {
         stringBuilder.appendLine(f)
     }
     val string = stringBuilder.appendLine().trim().toString()
@@ -168,7 +169,7 @@ actual fun savePlaylistLocally(toFolderUri: String) {
 
     val destFileAccess = destFile.startAccessingSecurityScopedResource()
 
-    viewmodel?.viewmodelScope?.launch {
+    viewModelScope?.launch {
         try {
             val data = (NSString.stringWithString(string) as NSString).dataUsingEncoding(NSUTF8StringEncoding)
             data?.writeToURL(destFile, true)
@@ -182,7 +183,7 @@ actual fun savePlaylistLocally(toFolderUri: String) {
     }
 }
 
-actual fun loadPlaylistLocally(fromUri: String, alsoShuffle: Boolean) {
+actual fun SyncplayViewmodel.loadPlaylistLocally(fromUri: String, alsoShuffle: Boolean) {
     val url = NSURL.fileURLWithPath(fromUri, isDirectory = false)
     val access = url.startAccessingSecurityScopedResource()
     val content = NSString.stringWithContentsOfURL(url, NSUTF8StringEncoding, null) ?: return
@@ -195,7 +196,11 @@ actual fun loadPlaylistLocally(fromUri: String, alsoShuffle: Boolean) {
     if (alsoShuffle) lines.shuffle()
 
     /** Updating the shared playlist */
-    viewmodel?.p?.sendPacket(sendPlaylistChange(lines))
+    viewModelScope.launch {
+        p.send<Packet.PlaylistChange> {
+            files = lines
+        }.await()
+    }
 }
 
 

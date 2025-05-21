@@ -19,9 +19,9 @@ actual fun SyncplayViewmodel.instantiatePlayer(engine: ENGINE) = when (engine) {
     else -> null
 }
 
-actual fun instantiateNetworkEngineProtocol(engine: SyncplayProtocol.NetworkEngine) = when (engine) {
+actual fun SyncplayViewmodel.instantiateNetworkEngineProtocol(engine: SyncplayProtocol.NetworkEngine) = when (engine) {
     SyncplayProtocol.NetworkEngine.SWIFTNIO -> instantiateSyncplayProtocolSwiftNIO!!.invoke()
-    else -> SpProtocolKtor()
+    else -> SpProtocolKtor(this)
 }
 
 @Composable

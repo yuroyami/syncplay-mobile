@@ -11,7 +11,6 @@ import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.Setting
 import com.yuroyami.syncplay.settings.SettingType
 import com.yuroyami.syncplay.settings.settingROOMstyle
-import com.yuroyami.syncplay.watchroom.viewmodel
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.ui_setting_mpv_debug_summary
 import syncplaymobile.shared.generated.resources.ui_setting_mpv_debug_title
@@ -45,7 +44,7 @@ val mpvRoomSettings = listOf(
         icon = Icons.Filled.Speed,
         styling = settingROOMstyle,
         onBooleanChanged = { b ->
-            (viewmodel?.player as? MpvPlayer)?.toggleHardwareAcceleration(b)
+            //TODO (viewmodel?.player as? MpvPlayer)?.toggleHardwareAcceleration(b)
         }
     ) to DataStoreKeys.CATEG_INROOM_MPV,
 
@@ -58,7 +57,7 @@ val mpvRoomSettings = listOf(
         icon = Icons.Filled.Memory,
         styling = settingROOMstyle,
         onBooleanChanged = { b ->
-            (viewmodel?.player as? MpvPlayer)?.toggleGpuNext(b)
+            //TODO (viewmodel?.player as? MpvPlayer)?.toggleGpuNext(b)
         }
     ) to DataStoreKeys.CATEG_INROOM_MPV,
 
@@ -73,7 +72,7 @@ val mpvRoomSettings = listOf(
         entryKeys = vidsyncEntries,
         entryValues = vidsyncEntries,
         onItemChosen = { i, s ->
-            (viewmodel?.player as? MpvPlayer)?.setVidSyncMode(s)
+            //TODO (viewmodel?.player as? MpvPlayer)?.setVidSyncMode(s)
         }
 
     ) to DataStoreKeys.CATEG_INROOM_MPV,
@@ -87,7 +86,7 @@ val mpvRoomSettings = listOf(
         icon = Icons.Filled.Animation,
         styling = settingROOMstyle,
         onBooleanChanged = { b ->
-            (viewmodel?.player as? MpvPlayer)?.toggleInterpolation(b)
+            //TODO (viewmodel?.player as? MpvPlayer)?.toggleInterpolation(b)
         }
     ) to DataStoreKeys.CATEG_INROOM_MPV,
 
@@ -102,7 +101,7 @@ val mpvRoomSettings = listOf(
         entryKeys = profileEntries,
         entryValues = profileEntries,
         onItemChosen = { _, s ->
-            (viewmodel?.player as? MpvPlayer)?.setProfileMode(s)
+            //TODO (viewmodel?.player as? MpvPlayer)?.setProfileMode(s)
         }
     ) to DataStoreKeys.CATEG_INROOM_MPV,
 
@@ -116,7 +115,7 @@ val mpvRoomSettings = listOf(
         icon = Icons.Filled.Adb,
         styling = settingROOMstyle,
         onValueChanged = { i ->
-            (viewmodel?.player as? MpvPlayer)?.toggleDebugMode(i)
+            //TODO (viewmodel?.player as? MpvPlayer)?.toggleDebugMode(i)
         }
     ) to DataStoreKeys.CATEG_INROOM_MPV,
 )

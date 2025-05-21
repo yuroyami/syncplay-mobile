@@ -33,9 +33,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.components.ComposeUtils
 import com.yuroyami.syncplay.components.ComposeUtils.gradientOverlay
+import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.timeStamper
-import com.yuroyami.syncplay.watchroom.viewmodel
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
@@ -48,6 +48,7 @@ object CardUserInfo {
 
     @Composable
     fun UserInfoCard() {
+        val viewmodel = LocalViewmodel.current
         Card(
             shape = RoundedCornerShape(8.dp),
             border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
@@ -63,7 +64,7 @@ object CardUserInfo {
                 font = Font(Res.font.Directive4_Regular)
             )
 
-            val userlist by viewmodel!!.p.session.userList.collectAsState()
+            val userlist by viewmodel.p.session.userList.collectAsState()
 
             LazyColumn(
                 modifier = Modifier
@@ -102,7 +103,7 @@ object CardUserInfo {
                             lineHeight = (Paletting.USER_INFO_TXT_SIZE + 6).sp,
                             fontSize = (Paletting.USER_INFO_TXT_SIZE + 2).sp,
                             color = Paletting.OLD_SP_YELLOW,
-                            fontWeight = if (user.name == viewmodel!!.p.session.currentUsername) FontWeight.W900 else FontWeight.W400
+                            fontWeight = if (user.name == viewmodel.p.session.currentUsername) FontWeight.W900 else FontWeight.W400
                         )
                     }
 

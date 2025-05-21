@@ -1,3 +1,4 @@
+@file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 package com.yuroyami.syncplay.player.mpv
 
 import android.content.Context
@@ -18,17 +19,13 @@ import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
-import com.yuroyami.syncplay.player.PlayerUtils.trackProgress
-import com.yuroyami.syncplay.protocol.JsonSender
-import com.yuroyami.syncplay.utils.RoomUtils.sendPlayback
+import com.yuroyami.syncplay.protocol.sending.Packet
+import com.yuroyami.syncplay.screens.room.dispatchOSD
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timeStamper
-import com.yuroyami.syncplay.screens.room.dispatchOSD
 import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
-import com.yuroyami.syncplay.watchroom.isSoloMode
-import com.yuroyami.syncplay.watchroom.viewmodel
 import `is`.xyz.mpv.MPVLib
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -123,8 +120,8 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
             Log.e("trck", "Found track $mpvId: $type, $title [$lang], $selected")
             when (type) {
                 "audio" -> {
-                    viewmodel?.media?.audioTracks?.add(
-                        object: Track {
+                    viewmodel.media?.audioTracks?.add(
+                        object : Track {
                             override val name = trackName
                             override val type = TRACKTYPE.AUDIO
                             override val index = mpvId.toInt()
@@ -134,8 +131,8 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
                 }
 
                 "sub" -> {
-                    viewmodel?.media?.subtitleTracks?.add(
-                        object: Track {
+                    viewmodel.media?.subtitleTracks?.add(
+                        object : Track {
                             override val name = trackName
                             override val type = TRACKTYPE.SUBTITLE
                             override val index = mpvId.toInt()
@@ -156,7 +153,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
                     MPVLib.setPropertyString("sid" as java.lang.String, "no" as java.lang.String)
                 }
 
-                viewmodel?.currentTrackChoices?.subtitleSelectionIndexMpv = track?.index ?: -1
+                viewmodel.currentTrackChoices.subtitleSelectionIndexMpv = track?.index ?: -1
             }
 
             TRACKTYPE.AUDIO -> {
@@ -166,7 +163,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
                     MPVLib.setPropertyString("aid" as java.lang.String, "no" as java.lang.String)
                 }
 
-                viewmodel?.currentTrackChoices?.audioSelectionIndexMpv = track?.index ?: -1
+                viewmodel.currentTrackChoices.audioSelectionIndexMpv = track?.index ?: -1
             }
         }
     }
@@ -198,16 +195,16 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
     }
 
     override fun reapplyTrackChoices() {
-        val subIndex = viewmodel?.currentTrackChoices?.subtitleSelectionIndexMpv
-        val audioIndex = viewmodel?.currentTrackChoices?.audioSelectionIndexMpv
+        val subIndex = viewmodel.currentTrackChoices.subtitleSelectionIndexMpv
+        val audioIndex = viewmodel.currentTrackChoices.audioSelectionIndexMpv
 
-        val ccMap = viewmodel?.media?.subtitleTracks
-        val audioMap = viewmodel?.media?.subtitleTracks
+        val ccMap = viewmodel.media?.subtitleTracks
+        val audioMap = viewmodel.media?.subtitleTracks
 
         val ccGet = ccMap?.firstOrNull { it.index == subIndex }
         val audioGet = audioMap?.firstOrNull { it.index == audioIndex }
 
-        with(viewmodel?.player ?: return) {
+        with(viewmodel.player ?: return) {
             if (subIndex == -1) {
                 selectTrack(null, TRACKTYPE.SUBTITLE)
             } else if (ccGet != null) {
@@ -243,7 +240,8 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
             } else {
                 playerScopeMain.dispatchOSD {
                     getString(Res.string.room_selected_sub_error)
-                }            }
+                }
+            }
         } else {
             playerScopeMain.dispatchOSD {
                 getString(Res.string.room_sub_error_load_vid_first)
@@ -300,8 +298,8 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
                 }
 
                 /* Goes back to the beginning for everyone */
-                if (!isSoloMode) {
-                    viewmodel!!.p.currentVideoPosition = 0.0
+                if (!viewmodel.isSoloMode) {
+                    viewmodel.p.currentVideoPosition = 0.0
                 }
             } catch (e: IOException) {
                 /* If, for some reason, the video didn't wanna load */
@@ -311,7 +309,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
 
             /* Finally, show a a toast to the user that the media file has been added */
             playerScopeMain.dispatchOSD {
-                getString(Res.string.room_selected_vid,"${viewmodel?.media?.fileName}")
+                getString(Res.string.room_selected_vid, "${viewmodel.media?.fileName}")
             }
         }
     }
@@ -416,7 +414,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
             override fun eventProperty(property: String, value: Long) {
                 when (property) {
                     "time-pos" -> mpvPos = value * 1000
-                    "duration" -> viewmodel?.timeFull?.longValue = value
+                    "duration" -> viewmodel.timeFull.longValue = value
                     //"file-size" -> value
                 }
             }
@@ -424,12 +422,12 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
             override fun eventProperty(property: String, value: Boolean) {
                 when (property) {
                     "pause" -> {
-                        viewmodel?.isNowPlaying?.value = !value //Just to inform UI
+                        viewmodel.isNowPlaying.value = !value //Just to inform UI
 
                         //Tell server about playback state change
-                        if (!isSoloMode) {
-                            sendPlayback(!value)
-                            viewmodel!!.p.paused = value
+                        if (!viewmodel.isSoloMode) {
+                            viewmodel.sendPlayback(!value)
+                            viewmodel.p.paused = value
                         }
                     }
                 }
@@ -445,21 +443,23 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
             override fun event(eventId: Int) {
                 when (eventId) {
                     MPVLib.mpvEventId.MPV_EVENT_START_FILE -> {
-                        viewmodel?.hasVideoG?.value = true
+                        viewmodel.hasVideoG.value = true
 
-                        if (isSoloMode) return
+                        if (viewmodel.isSoloMode) return
                         playerScopeIO.launch {
                             while (true) {
-                                if (viewmodel != null) {
-                                    if (viewmodel!!.timeFull.longValue.toDouble() > 0) {
-                                        viewmodel?.media?.fileDuration = viewmodel?.timeFull?.longValue?.toDouble()!!
-                                        viewmodel!!.p.sendPacket(JsonSender.sendFile(viewmodel?.media ?: return@launch))
-                                        break
-                                    }
+                                if (viewmodel.timeFull.longValue.toDouble() > 0) {
+                                    viewmodel.media?.fileDuration = viewmodel.timeFull.longValue?.toDouble()!!
+                                    viewmodel.p.send<Packet.File> {
+                                        media = viewmodel.media
+                                    }.await()
+                                    break
                                 }
+                                delay(10)
                             }
                         }
                     }
+
                     MPVLib.mpvEventId.MPV_EVENT_END_FILE -> {
                         pause()
                         onPlaybackEnded()
@@ -469,7 +469,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
         }
         mpvView.addObserver(observer)
 
-        playerScopeMain.trackProgress(intervalMillis = 500L)
+        viewmodel.trackProgress(intervalMillis = 500L)
     }
 
     //TODO
@@ -507,7 +507,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
             "file" -> data.path
             "content" -> openContentFd(this, data)
             "http", "https", "rtmp", "rtmps", "rtp", "rtsp", "mms", "mmst", "mmsh", "tcp", "udp"
-            -> data.toString()
+                -> data.toString()
 
             else -> null
         }
@@ -564,7 +564,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
 
     fun toggleHardwareAcceleration(b: Boolean) {
         if (!ismpvInit) return
-        MPVLib.setOptionString("hwdec" as java.lang.String, if (b) "auto"  as java.lang.String else "no" as java.lang.String)
+        MPVLib.setOptionString("hwdec" as java.lang.String, if (b) "auto" as java.lang.String else "no" as java.lang.String)
     }
 
     fun toggleGpuNext(b: Boolean) {
@@ -574,7 +574,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
 
     fun toggleInterpolation(b: Boolean) {
         if (!ismpvInit) return
-        MPVLib.setOptionString("interpolation" as java.lang.String, if (b) "yes"  as java.lang.String else "no" as java.lang.String)
+        MPVLib.setOptionString("interpolation" as java.lang.String, if (b) "yes" as java.lang.String else "no" as java.lang.String)
     }
 
     fun toggleDebugMode(i: Int) {

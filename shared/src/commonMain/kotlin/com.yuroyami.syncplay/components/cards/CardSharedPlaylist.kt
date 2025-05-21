@@ -74,25 +74,24 @@ import com.yuroyami.syncplay.components.ComposeUtils.SyncplayPopup
 import com.yuroyami.syncplay.components.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.components.getRegularFont
 import com.yuroyami.syncplay.components.popups.PopupMediaDirs.MediaDirsPopup
-import com.yuroyami.syncplay.filepicking.DirectoryPicker
-import com.yuroyami.syncplay.filepicking.FilePicker
-import com.yuroyami.syncplay.filepicking.MultipleFilePicker
+import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.screens.room.dispatchOSD
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.CommonUtils
-import com.yuroyami.syncplay.utils.PlaylistUtils.addFiles
-import com.yuroyami.syncplay.utils.PlaylistUtils.addURLs
-import com.yuroyami.syncplay.utils.PlaylistUtils.clearPlaylist
-import com.yuroyami.syncplay.utils.PlaylistUtils.deleteItemFromPlaylist
-import com.yuroyami.syncplay.utils.PlaylistUtils.sendPlaylistSelection
-import com.yuroyami.syncplay.utils.PlaylistUtils.shuffle
+import com.yuroyami.syncplay.utils.CommonUtils.vidExs
 import com.yuroyami.syncplay.utils.addFolderToPlaylist
 import com.yuroyami.syncplay.utils.loadPlaylistLocally
 import com.yuroyami.syncplay.utils.savePlaylistLocally
-import com.yuroyami.syncplay.watchroom.viewmodel
+import io.github.vinceglb.filekit.dialogs.FileKitMode
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLauncher
+import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.dialogs.compose.rememberFileSaverLauncher
+import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
@@ -114,53 +113,42 @@ object CardSharedPlaylist {
 
     @Composable
     fun SharedPlaylistCard() {
+        val viewmodel = LocalViewmodel.current
         val scope = rememberCoroutineScope { Dispatchers.IO }
 
         /* ActivityResultLaunchers for various shared playlist actions */
-        var mediaFilePicker by remember { mutableStateOf(false) }
-
-        MultipleFilePicker(
-            show = mediaFilePicker, fileExtensions = CommonUtils.vidExs,
+        val mediaFilePicker  = rememberFilePickerLauncher(
+            type = FileKitType.File(extensions = vidExs),
+            mode = FileKitMode.Multiple(),
             title = "Select one or multiple files to add to playlist"
         ) { files ->
-            mediaFilePicker = false
-            if (files?.isEmpty() == true || files == null) return@MultipleFilePicker
+            if (files?.isEmpty() == true || files == null) return@rememberFilePickerLauncher
 
-            addFiles(files.map { it.path })
+            viewmodel.addFiles(files.map { it.path })
         }
 
-        var mediaDirectoryPicker by remember { mutableStateOf(false) }
-        DirectoryPicker(
-            show = mediaDirectoryPicker,
+        val mediaDirectoryPicker =rememberDirectoryPickerLauncher(
             title = "Select directory to add its files to playlist"
         ) { directoryUri ->
-            mediaDirectoryPicker = false
-            if (directoryUri == null) return@DirectoryPicker
-
+            if (directoryUri == null) return@rememberDirectoryPickerLauncher
             scope.launch {
-                addFolderToPlaylist(directoryUri)
+                viewmodel.addFolderToPlaylist(directoryUri.path)
             }
         }
 
-        var playlistLoaderPicker by remember { mutableStateOf(false) }
         var shouldShuffle by remember { mutableStateOf(false) }
-        FilePicker(show = playlistLoaderPicker, fileExtensions = CommonUtils.playlistExs) { playlist ->
-            playlistLoaderPicker = false
-            if (playlist != null) {
-                loadPlaylistLocally(playlist.path, alsoShuffle = shouldShuffle)
+        val playlistLoadPicker = rememberFilePickerLauncher(
+            type = FileKitType.File(extensions = CommonUtils.playlistExs)
+        ) { playlistFile ->
+            if (playlistFile != null) {
+                viewmodel.loadPlaylistLocally(playlistFile.path, alsoShuffle = shouldShuffle)
             }
             shouldShuffle = false
         }
 
-        var playlistSaverPicker by remember { mutableStateOf(false) }
-        DirectoryPicker(
-            show = playlistSaverPicker,
-            title = "Select directory to save playlist to as a file"
-        ) { directoryUri ->
-            playlistSaverPicker = false
-            if (directoryUri == null) return@DirectoryPicker
-
-            savePlaylistLocally(directoryUri)
+        val playlistSaver = rememberFileSaverLauncher { directoryUri ->
+            if (directoryUri == null) return@rememberFileSaverLauncher
+            viewmodel.savePlaylistLocally(directoryUri.path)
         }
 
         val mediaDirsPopupState = remember { mutableStateOf(false) }
@@ -191,7 +179,7 @@ object CardSharedPlaylist {
                         .fillMaxWidth()
                         .padding(8.dp)
                 ) {
-                    itemsIndexed(viewmodel!!.p.session.sharedPlaylist) { index, item ->
+                    itemsIndexed(viewmodel.p.session.sharedPlaylist) { index, item ->
 
                         val itempopup = remember { mutableStateOf(false) }
 
@@ -205,7 +193,7 @@ object CardSharedPlaylist {
                                 ) { itempopup.value = true },
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                val spi by remember { viewmodel!!.p.session.spIndex }
+                                val spi by remember { viewmodel.p.session.spIndex }
                                 if (index == spi) {
                                     Icon(
                                         imageVector = Icons.Outlined.PlayArrow, "",
@@ -247,7 +235,7 @@ object CardSharedPlaylist {
                                     text = { Text(color = Color.LightGray, text = stringResource(Res.string.play)) },
                                     leadingIcon = { Icon(imageVector = Icons.Default.PlayCircle, "", tint = Color.LightGray) },
                                     onClick = {
-                                        sendPlaylistSelection(index)
+                                        viewmodel.sendPlaylistSelection(index)
                                         itempopup.value = false
                                     }
                                 )
@@ -257,7 +245,7 @@ object CardSharedPlaylist {
                                     text = { Text(color = Color.LightGray, text = stringResource(Res.string.delete)) },
                                     leadingIcon = { Icon(imageVector = Icons.Default.Delete, "", tint = Color.LightGray) },
                                     onClick = {
-                                        deleteItemFromPlaylist(index)
+                                        viewmodel.deleteItemFromPlaylist(index)
                                         itempopup.value = false
                                     }
                                 )
@@ -265,7 +253,7 @@ object CardSharedPlaylist {
 
                         }
 
-                        if (index < viewmodel!!.p.session.sharedPlaylist.lastIndex)
+                        if (index < viewmodel.p.session.sharedPlaylist.lastIndex)
                             HorizontalDivider(
                                 modifier = Modifier
                                     .gradientOverlay()
@@ -285,7 +273,7 @@ object CardSharedPlaylist {
                     FancyIcon2(
                         icon = Icons.AutoMirrored.Filled.NoteAdd, size = Paletting.ROOM_ICON_SIZE, shadowColor = Color.Black,
                         onClick = {
-                            mediaFilePicker = true
+                            mediaFilePicker.launch()
                         }
                     )
 
@@ -301,7 +289,7 @@ object CardSharedPlaylist {
                     FancyIcon2(
                         icon = Icons.Filled.CreateNewFolder, size = Paletting.ROOM_ICON_SIZE, shadowColor = Color.Black,
                         onClick = {
-                            mediaDirectoryPicker = true
+                            mediaDirectoryPicker.launch()
                         }
                     )
 
@@ -348,7 +336,7 @@ object CardSharedPlaylist {
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Shuffle, "", tint = Color.LightGray) },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
-                                    scope.launch { shuffle(false) }
+                                    scope.launch { viewmodel.shuffle(false) }
                                 }
                             )
 
@@ -364,7 +352,9 @@ object CardSharedPlaylist {
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Shuffle, "", tint = Color.LightGray) },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
-                                    scope.launch { shuffle(true) }
+                                    scope.launch {
+                                        viewmodel.shuffle(true)
+                                    }
                                 }
                             )
 
@@ -382,7 +372,7 @@ object CardSharedPlaylist {
                                 leadingIcon = { Icon(imageVector = Icons.AutoMirrored.Filled.NoteAdd, "", tint = Color.LightGray) },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
-                                    mediaFilePicker = true
+                                    mediaFilePicker.launch()
                                 }
                             )
 
@@ -414,7 +404,7 @@ object CardSharedPlaylist {
                                 leadingIcon = { Icon(imageVector = Icons.Filled.CreateNewFolder, "", tint = Color.LightGray) },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
-                                    mediaDirectoryPicker = true
+                                    mediaDirectoryPicker.launch()
                                 }
                             )
 
@@ -432,7 +422,7 @@ object CardSharedPlaylist {
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Download, "", tint = Color.LightGray) },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
-                                    playlistLoaderPicker = true
+                                    playlistLoadPicker.launch()
                                 }
                             )
 
@@ -448,7 +438,7 @@ object CardSharedPlaylist {
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Download, "", tint = Color.LightGray) },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
-                                    playlistLoaderPicker = true
+                                    playlistLoadPicker.launch()
                                     shouldShuffle = true
                                 }
                             )
@@ -465,12 +455,15 @@ object CardSharedPlaylist {
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Save, "", tint = Color.LightGray) },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
-                                    if (viewmodel!!.p.session.sharedPlaylist.isEmpty()) {
+                                    if (viewmodel.p.session.sharedPlaylist.isEmpty()) {
                                         scope.dispatchOSD("Shared Playlist is empty. Nothing to save.")
                                         return@DropdownMenuItem
                                     }
 
-                                    playlistSaverPicker = true
+                                    playlistSaver.launch(
+                                        suggestedName = "SharedPlaylist_${Clock.System.now()}",
+                                        extension = "txt"
+                                    )
                                 }
                             )
 
@@ -500,7 +493,7 @@ object CardSharedPlaylist {
                                 leadingIcon = { Icon(imageVector = Icons.Filled.ClearAll, "", tint = Color.LightGray) },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
-                                    clearPlaylist()
+                                    viewmodel.clearPlaylist()
                                 }
                             )
                         }
@@ -523,6 +516,8 @@ object CardSharedPlaylist {
             strokeWidth = 0.5f,
             onDismiss = { visibilityState.value = false }
         ) {
+            val viewmodel = LocalViewmodel.current
+
             val clipboardManager: ClipboardManager = LocalClipboardManager.current
 
             Column(
@@ -592,7 +587,7 @@ object CardSharedPlaylist {
                     onClick = {
                         visibilityState.value = false
 
-                        addURLs(urls.value.split("\n"))
+                        viewmodel.addURLs(urls.value.split("\n"))
                     },
                 ) {
                     Icon(imageVector = Icons.Filled.Done, "")

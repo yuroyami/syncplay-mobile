@@ -85,11 +85,8 @@ import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_TLS_ENABLE
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.CommonUtils.langMap
 import com.yuroyami.syncplay.utils.PLATFORM
-import com.yuroyami.syncplay.utils.getPlatform
 import com.yuroyami.syncplay.utils.platform
 import com.yuroyami.syncplay.utils.platformCallback
-import com.yuroyami.syncplay.watchroom.homeCallback
-import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -659,7 +656,7 @@ val settingsROOM: List<Pair<Setting<out Any>, String>>
                 maxValue = 200,
                 minValue = 2,
                 onValueChanged = { v ->
-                    viewmodel?.player?.changeSubtitleSize(v)
+                    //TODO viewmodel?.player?.changeSubtitleSize(v)
                 }
             ) to CATEG_INROOM_PLAYERSETTINGS)
 //                    Setting(
@@ -812,7 +809,7 @@ fun sgGLOBAL() = mutableListOf<SettingCategory>().apply {
         )
     )
 
-    if (getPlatform() == PLATFORM.Android) {
+    if (platform == PLATFORM.Android) {
         add(
             SettingCategory(
                 keyID = CATEG_GLOBAL_EXOPLAYER,
@@ -863,7 +860,8 @@ fun sgROOM(): MutableList<SettingCategory> {
         )
 
     )
-    if (viewmodel?.player?.engine == BasePlayer.ENGINE.ANDROID_MPV) {
+    /*
+    TODO if (viewmodel?.player?.engine == BasePlayer.ENGINE.ANDROID_MPV) {
         list.add(
             SettingCategory(
                 keyID = CATEG_INROOM_MPV,
@@ -873,7 +871,9 @@ fun sgROOM(): MutableList<SettingCategory> {
         )
     }
     val moreSettings = obtainerCallback.getMoreRoomSettings()
-    val allSettings = settingsROOM + moreSettings
+
+     */
+    val allSettings = settingsROOM //TODO + moreSettings
     allSettings.populate(list)
     return list
 }

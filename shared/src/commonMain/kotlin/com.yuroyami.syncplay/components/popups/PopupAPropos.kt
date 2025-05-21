@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.components.ComposeUtils.SyncplayPopup
 import com.yuroyami.syncplay.components.ComposeUtils.SyncplayishText
-import com.yuroyami.syncplay.watchroom.homeCallback
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
@@ -133,7 +132,7 @@ object PopupAPropos {
                         onClick = {
                             visibilityState.value = false
 
-                            homeCallback?.onJoin(null) //Passing null to indicate we're in offline mode
+                            //TODO platformCallback?.onJoin(null) //Passing null to indicate we're in offline mode
                         },
                     ) {
                         Icon(imageVector = Icons.Filled.Tv, "")

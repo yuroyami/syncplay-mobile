@@ -27,7 +27,7 @@ fun loggy(s: String?, checkpoint: Int = 0) = Logger.e("SYNCPLAY_LOG: $s")
 expect fun getDefaultEngine(): String
 expect fun SyncplayViewmodel.instantiatePlayer(engine: BasePlayer.ENGINE): BasePlayer?
 
-expect fun instantiateNetworkEngineProtocol(engine: SyncplayProtocol.NetworkEngine): SyncplayProtocol
+expect fun SyncplayViewmodel.instantiateNetworkEngineProtocol(engine: SyncplayProtocol.NetworkEngine): SyncplayProtocol
 
 /** Generates the system's current Epoch millis */
 expect fun generateTimestampMillis(): Long

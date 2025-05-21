@@ -1499,11 +1499,14 @@ private fun RoomUIImpl() {
 
                         /* The button of adding media */
                         Box {
-                            AddVideoButton(modifier = Modifier, onClick = {
-                                addmediacardvisible = !addmediacardvisible
-                                controlcardvisible = false
-                            })
-
+                            AddVideoButton(
+                                modifier = Modifier,
+                                expanded = viewmodel.hasVideoG?.value == true,
+                                onClick = {
+                                    addmediacardvisible = !addmediacardvisible
+                                    controlcardvisible = false
+                                }
+                            )
 
                             DropdownMenu(
                                 containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(
