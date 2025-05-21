@@ -6,7 +6,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import co.touchlab.kermit.Logger
 import com.yuroyami.syncplay.player.BasePlayer
+import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.viewmodel.PlatformCallback
+import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 
 
 lateinit var platformCallback: PlatformCallback
@@ -23,7 +25,9 @@ fun loggy(s: String?, checkpoint: Int = 0) = Logger.e("SYNCPLAY_LOG: $s")
 
 /** Gets the default video playback engine on each platform (mpv on Android, AVPlayer on iOS) */
 expect fun getDefaultEngine(): String
-expect fun instantiatePlayer(engine: BasePlayer.ENGINE): BasePlayer?
+expect fun SyncplayViewmodel.instantiatePlayer(engine: BasePlayer.ENGINE): BasePlayer?
+
+expect fun instantiateNetworkEngineProtocol(engine: SyncplayProtocol.NetworkEngine): SyncplayProtocol
 
 /** Generates the system's current Epoch millis */
 expect fun generateTimestampMillis(): Long
@@ -55,8 +59,4 @@ data class ScreenSizeInfo(val heightPx: Int, val widthPx: Int) {
     @Composable
     fun widthDp(): Dp = with(LocalDensity.current) { widthPx.toDp() }
 }
-
-/** Formats a string and replaces placeholders with actual keys */
-expect fun String.format(vararg args: String): String
-
 expect fun ClipEntry.getText(): String?

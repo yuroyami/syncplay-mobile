@@ -23,7 +23,7 @@ object CommonUtils {
 
     suspend fun SyncplayViewmodel.beginPingUpdate() {
         while (true) {
-            p?.ping?.value = if (p.isSocketValid() == true) { //if (p.connection?.socket?.isActive == true && p.connection != null) {
+            p.ping.value = if (p.isSocketValid()) {
                 pingIcmp(p.session.serverHost, 32)
             } else null
             delay(1000)

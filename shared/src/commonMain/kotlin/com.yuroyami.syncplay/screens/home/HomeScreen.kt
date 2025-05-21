@@ -623,12 +623,13 @@ fun HomeScreenUI() {
 
                                     viewmodel.joinRoom(
                                         JoinConfig(
-                                        textUsername.replace("\\", "").trim().substring(0, 149),
-                                        textRoomname.replace("\\", "").trim().substring(0, 34),
-                                        serverAddress,
-                                        serverPort.toInt(),
-                                        serverPassword
-                                    ))
+                                            textUsername.replace("\\", "").trim().substring(0, 149),
+                                            textRoomname.replace("\\", "").trim().substring(0, 34),
+                                            serverAddress,
+                                            serverPort.toInt(),
+                                            serverPassword
+                                        )
+                                    )
                                 }
                             },
                         ) {

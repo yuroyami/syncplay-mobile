@@ -11,6 +11,7 @@ import com.yuroyami.syncplay.settings.valueSuspendingly
 import com.yuroyami.syncplay.utils.PLATFORM
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.platform
+import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -25,9 +26,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.reflect.KClass
 
-abstract class SyncplayProtocol {
+abstract class SyncplayProtocol(
+    val viewmodel: SyncplayViewmodel
+) {
     /** This refers to the event callback interface */
-    var syncplayCallback: ProtocolCallback? = null
+    var syncplayCallback = viewmodel
 
     /** Protocol-exclusive variables - should never change these initial values **/
     var serverIgnFly: Int = 0
@@ -50,14 +53,15 @@ abstract class SyncplayProtocol {
     var tls: Constants.TLS = Constants.TLS.TLS_NO
 
     /** Coroutine scopes and dispatchers */
-    val protoScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    val protoJob = SupervisorJob()
+    val protoScope = CoroutineScope(Dispatchers.IO + protoJob)
 
     /** This method is responsible for bootstrapping (initializing) the Ktor TCP socket */
     open suspend fun connect() {
         endConnection(false)
 
         /** Informing UI controllers that we are starting a connection attempt */
-        syncplayCallback?.onConnectionAttempt()
+        syncplayCallback.onConnectionAttempt()
         state = Constants.CONNECTIONSTATE.STATE_CONNECTING
 
         /** Bootstrapping our Ktor client  */
@@ -67,13 +71,13 @@ abstract class SyncplayProtocol {
             /** if the TLS mode is [Constants.TLS.TLS_ASK], then the the first packet to send
              * concerns an opportunistic TLS check with the server, otherwise, a Hello would be first */
             if (tls == Constants.TLS.TLS_ASK) {
-                send<Packet.TLS>()
+                send<Packet.TLS>().await()
             } else {
                 send<Packet.Hello> {
                     username = session.currentUsername
                     roomname = session.currentRoom
                     serverPassword = session.currentPassword
-                }
+                }.await()
             }
         } catch (e: Exception) {
             loggy(e.stackTraceToString(), 205)

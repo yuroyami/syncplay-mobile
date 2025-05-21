@@ -1,8 +1,10 @@
 package com.yuroyami.syncplay.player.exo
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
+import android.media.AudioManager
 import android.util.TypedValue
 import android.view.LayoutInflater
 import androidx.compose.runtime.Composable
@@ -43,6 +45,7 @@ import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.screens.room.dispatchOSD
+import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.Dispatchers
@@ -64,7 +67,9 @@ import java.util.Collections
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-class ExoPlayer : BasePlayer() {
+class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
+    lateinit var audioManager: AudioManager
+
     override val engine = ENGINE.ANDROID_EXOPLAYER
 
     /*-- Exoplayer-related properties --*/
@@ -81,6 +86,8 @@ class ExoPlayer : BasePlayer() {
 
     override fun initialize() {
         val context = exoView.context
+
+        audioManager = context.applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
         playerScopeMain.launch {
             /** LoadControl (Buffering manager) and track selector (for track language preference) **/
@@ -235,6 +242,18 @@ class ExoPlayer : BasePlayer() {
                 return@AndroidView exoView
             }
         )
+    }
+
+    override fun getMaxVolume(): Int {
+        TODO("Not yet implemented")
+    }
+
+    override fun getCurrentVolume(): Int {
+        TODO("Not yet implemented")
+    }
+
+    override fun changeCurrentVolume(v: Int) {
+        TODO("Not yet implemented")
     }
 
     override fun hasMedia(): Boolean {

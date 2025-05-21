@@ -1,3 +1,4 @@
+@file:Suppress("DeferredResultUnused")
 package com.yuroyami.syncplay.viewmodel
 
 import androidx.compose.material3.SnackbarDuration
@@ -13,7 +14,6 @@ import com.yuroyami.syncplay.models.Message
 import com.yuroyami.syncplay.models.TrackChoices
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.protocol.ProtocolCallback
-import com.yuroyami.syncplay.protocol.SpProtocolKtor
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.screens.adam.Screen
@@ -30,6 +30,7 @@ import com.yuroyami.syncplay.ui.LifecycleWatchdog
 import com.yuroyami.syncplay.utils.generateTimestampMillis
 import com.yuroyami.syncplay.utils.getDefaultEngine
 import com.yuroyami.syncplay.utils.getFileName
+import com.yuroyami.syncplay.utils.instantiateNetworkEngineProtocol
 import com.yuroyami.syncplay.utils.instantiatePlayer
 import com.yuroyami.syncplay.utils.iterateDirectory
 import com.yuroyami.syncplay.utils.loggy
@@ -71,7 +72,7 @@ import syncplaymobile.shared.generated.resources.room_you_joined_room
 class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     lateinit var nav: NavController
 
-    var p: SyncplayProtocol = SpProtocolKtor() //If it is not initialized, it means we're in Solo Mode
+    lateinit var p: SyncplayProtocol
 
     val isSoloMode = false
 
@@ -131,6 +132,9 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
 
             setReadyDirectly = valueSuspendingly(DataStoreKeys.PREF_READY_FIRST_HAND, true)
 
+            val networkEngine = SyncplayProtocol.getPreferredEngine()
+            p = instantiateNetworkEngineProtocol(networkEngine)
+
             p.session.serverHost = joinConfig.ip.takeIf { it != "syncplay.pl" } ?: "151.80.32.178"
             p.session.serverPort = joinConfig.port
             p.session.currentUsername = joinConfig.user
@@ -147,7 +151,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
             /** Connecting (via TLS or noTLS) */
             val tls = valueSuspendingly(PREF_TLS_ENABLE, default = true)
             if (tls && p.supportsTLS()) {
-                p.syncplayCallback?.onTLSCheck()
+                onTLSCheck()
                 p.tls = Constants.TLS.TLS_ASK
             }
 
@@ -204,14 +208,14 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
             So first, we initialize it, customize it, then add it to our long list of messages */
             val msg = Message(
                 sender = if (isChat) chatter else null,
-                isMainUser = chatter == p?.session?.currentUsername,
+                isMainUser = chatter == p.session.currentUsername,
                 content = message.invoke(),
                 isError = isError
             )
 
             /** Adding the message instance to our message sequence **/
             withContext(Dispatchers.Main) {
-                p?.session?.messageSequence?.add(msg)
+                p.session.messageSequence.add(msg)
             }
         }
     }
@@ -255,14 +259,14 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     fun pausePlayback() {
         if (background == true) return
         player?.pause()
-        platformCallback?.onPlayback(true)
+        platformCallback.onPlayback(true)
     }
 
     /** This resumes playback on the main thread, and hides system UI **/
     fun playPlayback() {
         if (background == true) return
         player?.play()
-        platformCallback?.onPlayback(false)
+        platformCallback.onPlayback(false)
     }
 
     fun seekBckwd() {
@@ -283,7 +287,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
             player?.seekTo(newPos)
 
             if (isSoloMode) {
-                seeks?.add(Pair(currentMs, newPos * 1000))
+                seeks.add(Pair(currentMs, newPos * 1000))
             }
         }
     }
@@ -303,7 +307,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
             player?.seekTo(newPos)
 
             if (isSoloMode) {
-                seeks?.add(Pair((currentMs), newPos * 1000))
+                seeks.add(Pair((currentMs), newPos * 1000))
             }
         }
     }
@@ -317,11 +321,11 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
                         val progress = (player?.currentPositionMs()?.div(1000L)) ?: 0L
 
                         /* Informing UI */
-                        timeCurrent?.longValue = progress
+                        timeCurrent.longValue = progress
 
                         /* Informing protocol */
                         if (!isSoloMode) {
-                            p?.currentVideoPosition = progress.toDouble()
+                            p.currentVideoPosition = progress.toDouble()
                         }
                     }
                     delay(intervalMillis)
@@ -399,7 +403,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
             p.session.sharedPlaylist.add(filename)
         }
         p.send<Packet.PlaylistChange> {
-            files = p.session!!.sharedPlaylist
+            files = p.session.sharedPlaylist
         }
     }
 
@@ -415,13 +419,13 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
 
     /** This will delete an item from playlist at a given index 'i' */
     fun deleteItemFromPlaylist(i: Int) {
-        p?.session?.sharedPlaylist?.removeAt(i)
+        p.session.sharedPlaylist.removeAt(i)
         p.send<Packet.PlaylistChange> {
-            files = p?.session!!.sharedPlaylist
+            files = p.session.sharedPlaylist
         }
 
-        if (p!!.session.sharedPlaylist.isEmpty()) {
-            p?.session?.spIndex?.intValue = -1
+        if (p.session.sharedPlaylist.isEmpty()) {
+            p.session.spIndex.intValue = -1
         }
     }
 
@@ -438,7 +442,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
         if (p.session.sharedPlaylist.size < (index + 1)) return /* In rare cases when this was called on an empty list */
         if (index != p.session.spIndex.intValue) {
             /* If the file on that index isn't playing, play the file */
-            retrieveFile(p!!.session.sharedPlaylist[index])
+            retrieveFile(p.session.sharedPlaylist[index])
         }
     }
 
@@ -548,7 +552,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
 
         /* Rare cases where a user can see his own self disconnected */
         if (leaver == p.session.currentUsername) {
-            p.syncplayCallback?.onDisconnected()
+            onDisconnected()
         }
     }
 
@@ -559,7 +563,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
         val newPos = toPosition.toLong()
 
         /* Saving seek so it can be undone on mistake */
-        seeks?.add(Pair(oldPos * 1000, newPos * 1000))
+        seeks.add(Pair(oldPos * 1000, newPos * 1000))
 
         broadcastMessage(message = { getString(Res.string.room_seeked,seeker, timeStamper(oldPos), timeStamper(newPos)) }, isChat = false)
 

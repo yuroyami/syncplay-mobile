@@ -9,14 +9,12 @@ import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
-import com.yuroyami.syncplay.player.PlayerUtils.trackProgress
-import com.yuroyami.syncplay.protocol.JsonSender
+import com.yuroyami.syncplay.protocol.sending.Packet
+import com.yuroyami.syncplay.screens.room.dispatchOSD
 import com.yuroyami.syncplay.utils.collectInfoLocaliOS
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
-import com.yuroyami.syncplay.screens.room.dispatchOSD
-import com.yuroyami.syncplay.watchroom.isSoloMode
-import com.yuroyami.syncplay.watchroom.viewmodel
+import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.delay
@@ -46,7 +44,9 @@ import platform.AVFoundation.rate
 import platform.AVFoundation.seekToTime
 import platform.AVFoundation.seekableTimeRanges
 import platform.AVFoundation.selectMediaOption
+import platform.AVFoundation.setVolume
 import platform.AVFoundation.timeControlStatus
+import platform.AVFoundation.volume
 import platform.AVKit.AVPlayerViewController
 import platform.CoreGraphics.CGRect
 import platform.CoreMedia.CMTime
@@ -66,10 +66,10 @@ import syncplaymobile.shared.generated.resources.room_selected_sub
 import syncplaymobile.shared.generated.resources.room_selected_sub_error
 import syncplaymobile.shared.generated.resources.room_selected_vid
 import syncplaymobile.shared.generated.resources.room_sub_error_load_vid_first
+import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
-class AvPlayer : BasePlayer() {
-
+class AvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
     override val engine = ENGINE.IOS_AVPLAYER
 
     /*-- Exoplayer-related properties --*/
@@ -87,7 +87,7 @@ class AvPlayer : BasePlayer() {
         //avView.view.setBackgroundColor(UIColor.clearColor())
         //avPlayerLayer!!.setBackgroundColor(UIColor.clearColor().CGColor)
         avView.showsPlaybackControls = false
-        playerScopeMain.trackProgress(intervalMillis = 250L)
+        viewmodel.trackProgress(intervalMillis = 250L)
     }
 
     private fun reassign() {
@@ -152,8 +152,8 @@ class AvPlayer : BasePlayer() {
         // Check if the AVPlayer is initialized
         if (avPlayer == null || avMedia == null) return
 
-        viewmodel?.media?.subtitleTracks?.clear()
-        viewmodel?.media?.audioTracks?.clear()
+        viewmodel.media?.subtitleTracks?.clear()
+        viewmodel.media?.audioTracks?.clear()
 
         //Groups
         val asset = avPlayer?.currentItem?.asset ?: return
@@ -273,20 +273,20 @@ class AvPlayer : BasePlayer() {
     }
 
     override fun injectVideo(uri: String?, isUrl: Boolean) {
-        viewmodel?.hasVideoG?.value = true
+        viewmodel.hasVideoG.value = true
 
         playerScopeMain.launch {
             /* Creating a media file from the selected file */
-            if (uri != null || viewmodel?.media == null) {
-                viewmodel?.media = MediaFile()
-                viewmodel?.media?.uri = uri
+            if (uri != null || viewmodel.media == null) {
+                viewmodel.media = MediaFile()
+                viewmodel.media?.uri = uri
 
                 /* Obtaining info from it (size and name) */
                 if (isUrl) {
-                    viewmodel?.media?.url = uri.toString()
-                    viewmodel?.media?.let { collectInfoURL(it) }
+                    viewmodel.media?.url = uri.toString()
+                    viewmodel.media?.let { collectInfoURL(it) }
                 } else {
-                    viewmodel?.media?.let { collectInfoLocal(it) }
+                    viewmodel.media?.let { collectInfoLocal(it) }
                 }
             }
             /* Injecting the media into avplayer */
@@ -315,13 +315,15 @@ class AvPlayer : BasePlayer() {
 
                         val duration = avMedia!!.asset.duration.toMillis().div(1000.0)
 
-                        viewmodel?.timeFull?.longValue = kotlin.math.abs(duration.toLong())
+                        viewmodel.timeFull.longValue = kotlin.math.abs(duration.toLong())
 
-                        if (!isSoloMode) {
-                            if (duration != viewmodel?.media?.fileDuration) {
+                        if (!viewmodel.isSoloMode) {
+                            if (duration != viewmodel.media?.fileDuration) {
                                 playerScopeIO.launch launch2@{
-                                    viewmodel?.media?.fileDuration = duration
-                                    viewmodel!!.p.sendPacket(JsonSender.sendFile(viewmodel?.media ?: return@launch2))
+                                    viewmodel.media?.fileDuration = duration
+                                    viewmodel.p.send<Packet.File> {
+                                        media = viewmodel.media
+                                    }.await()
                                 }
                             }
                         }
@@ -331,8 +333,8 @@ class AvPlayer : BasePlayer() {
                 }
 
                 /* Goes back to the beginning for everyone */
-                if (!isSoloMode) {
-                    viewmodel?.p?.currentVideoPosition = 0.0
+                if (!viewmodel.isSoloMode) {
+                    viewmodel.p.currentVideoPosition = 0.0
                 }
             } catch (e: Exception) {
                 /* If, for some reason, the video didn't wanna load */
@@ -342,7 +344,7 @@ class AvPlayer : BasePlayer() {
 
             /* Finally, show a a toast to the user that the media file has been added */
             playerScopeMain.dispatchOSD {
-                getString(Res.string.room_selected_vid,"${viewmodel?.media?.fileName}")
+                getString(Res.string.room_selected_vid,"${viewmodel.media?.fileName}")
             }
         }
     }
@@ -405,5 +407,13 @@ class AvPlayer : BasePlayer() {
     interface AvTrack : Track {
         val sOption: AVMediaSelectionOption
         val sGroup: AVMediaSelectionGroup
+    }
+
+    val MAX_VOLUME = 100
+    override fun getMaxVolume() = MAX_VOLUME
+    override fun getCurrentVolume(): Int = (avPlayer?.volume?.times(MAX_VOLUME))?.roundToInt() ?: 0
+    override fun changeCurrentVolume(v: Int) {
+        val clampedVolume = v.toFloat().coerceIn(0.0f, MAX_VOLUME.toFloat()) / MAX_VOLUME
+        avPlayer?.setVolume(clampedVolume)
     }
 }

@@ -1,13 +1,20 @@
 package com.yuroyami.syncplay.protocol
 
+/**
+ * The iOS implementation of the network engine uses SwiftNIO,
+ * a native iOS network client implemented entirely in pure Swift.
+ *
+ * Thanks to its strong resemblance to Java's Netty,
+ * SwiftNIO is highly stable, fully reliable, and includes built-in TLS support.
+ * In contrast, Ktor on iOS has shown several issues: it frequently crashes,
+ * lacks proper TLS support, and suffers from poor concurrency handling.
+ *
+ * The SwiftNIO-based implementation can be found in the native iOS module.
+ *
+ * Unfortunately, SwiftNIO is a pure Swift framework with no Objective-C
+ * interoperability, making it impossible to call directly from Kotlin.
+ *
+ * See: ```iosApp/iosApp/SpProtocollApple.swift```
+ */
 class SpProtocolApple {
-
-    /** The implementation of the native iOS network client is done in pure Swift
-     * using SwiftNIO due to its extreme resemblance with Java's Netty.
-     * It's also as stable and completely reliable, and supports TLS.
-     *
-     * Unlike Ktor, which is contrary to all above:
-     * keeps causing crashes, doesn't support TLS, terrible concurrency...etc
-     *
-     * You can find said SwiftNIO implementation in iosApp native code */
 }

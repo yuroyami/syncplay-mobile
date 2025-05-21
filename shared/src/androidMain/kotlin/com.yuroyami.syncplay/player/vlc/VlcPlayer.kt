@@ -2,12 +2,14 @@ package com.yuroyami.syncplay.player.vlc
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.media.AudioManager
 import android.view.LayoutInflater
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
+import androidx.media3.common.C.STREAM_TYPE_MUSIC
 import androidx.media3.common.MimeTypes
 import com.yuroyami.syncplay.databinding.VlcviewBinding
 import com.yuroyami.syncplay.models.Chapter
@@ -19,6 +21,7 @@ import com.yuroyami.syncplay.utils.RoomUtils
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.screens.room.dispatchOSD
+import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.delay
@@ -38,7 +41,9 @@ import syncplaymobile.shared.generated.resources.room_sub_error_load_vid_first
 import java.io.IOException
 import kotlin.math.abs
 
-class VlcPlayer : BasePlayer() {
+class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
+    lateinit var audioManager: AudioManager
+
     private lateinit var ctx: Context
 
     override val engine = ENGINE.ANDROID_VLC
@@ -57,6 +62,8 @@ class VlcPlayer : BasePlayer() {
 
     override fun initialize() {
         ctx = vlcView.context.applicationContext
+        audioManager = ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+
         libvlc = LibVLC(ctx, listOf("-vv"))
         vlcPlayer = MediaPlayer(libvlc)
         vlcPlayer?.attachViews(vlcView, null, true, false)
@@ -394,6 +401,13 @@ class VlcPlayer : BasePlayer() {
 
     }
 
+    override fun getMaxVolume() = audioManager.getStreamMaxVolume(STREAM_TYPE_MUSIC)
+    override fun getCurrentVolume() = audioManager.getStreamVolume(STREAM_TYPE_MUSIC)
+    override fun changeCurrentVolume(v: Int) {
+        if (!audioManager.isVolumeFixed) {
+            audioManager.setStreamVolume(STREAM_TYPE_MUSIC, v, 0)
+        }
+    }
 
     fun toggleHW(enable: Boolean) {
         vlcMedia?.setHWDecoderEnabled(enable, true)

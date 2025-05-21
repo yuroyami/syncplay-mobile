@@ -2,6 +2,7 @@ package com.yuroyami.syncplay.player.mpv
 
 import android.content.Context
 import android.content.res.AssetManager
+import android.media.AudioManager
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.util.Log
@@ -11,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
+import androidx.media3.common.C.STREAM_TYPE_MUSIC
 import com.yuroyami.syncplay.databinding.MpvviewBinding
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
@@ -24,6 +26,7 @@ import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timeStamper
 import com.yuroyami.syncplay.screens.room.dispatchOSD
+import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 import com.yuroyami.syncplay.watchroom.isSoloMode
 import com.yuroyami.syncplay.watchroom.viewmodel
 import `is`.xyz.mpv.MPVLib
@@ -43,7 +46,8 @@ import java.io.InputStream
 import java.io.OutputStream
 import kotlin.math.roundToLong
 
-class MpvPlayer : BasePlayer() {
+class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
+    lateinit var audioManager: AudioManager
 
     override val engine = ENGINE.ANDROID_MPV
 
@@ -61,6 +65,7 @@ class MpvPlayer : BasePlayer() {
 
     override fun initialize() {
         ctx = mpvView.context.applicationContext
+        audioManager = ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
         copyAssets(ctx)
     }
@@ -93,8 +98,8 @@ class MpvPlayer : BasePlayer() {
     }
 
     override suspend fun analyzeTracks(mediafile: MediaFile) {
-        viewmodel?.media?.subtitleTracks?.clear()
-        viewmodel?.media?.audioTracks?.clear()
+        viewmodel.media?.subtitleTracks?.clear()
+        viewmodel.media?.audioTracks?.clear()
         val count = MPVLib.getPropertyInt("track-list/count" as java.lang.String)!!
         // Note that because events are async, properties might disappear at any moment
         // so use ?: continue instead of !!
@@ -248,21 +253,21 @@ class MpvPlayer : BasePlayer() {
 
     override fun injectVideo(uri: String?, isUrl: Boolean) {
         /* Changing UI (hiding artwork, showing media controls) */
-        viewmodel?.hasVideoG?.value = true
+        viewmodel.hasVideoG.value = true
         val ctx = mpvView.context ?: return
 
         playerScopeMain.launch {
             /* Creating a media file from the selected file */
-            if (uri != null || viewmodel?.media == null) {
-                viewmodel?.media = MediaFile()
-                viewmodel?.media?.uri = uri
+            if (uri != null || viewmodel.media == null) {
+                viewmodel.media = MediaFile()
+                viewmodel.media?.uri = uri
 
                 /* Obtaining info from it (size and name) */
                 if (isUrl) {
-                    viewmodel?.media?.url = uri.toString()
-                    viewmodel?.media?.let { collectInfoURL(it) }
+                    viewmodel.media?.url = uri.toString()
+                    viewmodel.media?.let { collectInfoURL(it) }
                 } else {
-                    viewmodel?.media?.let { collectInfoLocal(it) }
+                    viewmodel.media?.let { collectInfoLocal(it) }
                 }
             }
             /* Injecting the media into exoplayer */
@@ -585,5 +590,13 @@ class MpvPlayer : BasePlayer() {
     fun setVidSyncMode(m: String) {
         if (!ismpvInit) return
         MPVLib.setOptionString("video-sync" as java.lang.String, m as java.lang.String)
+    }
+
+    override fun getMaxVolume() = audioManager.getStreamMaxVolume(STREAM_TYPE_MUSIC)
+    override fun getCurrentVolume() = audioManager.getStreamVolume(STREAM_TYPE_MUSIC)
+    override fun changeCurrentVolume(v: Int) {
+        if (!audioManager.isVolumeFixed) {
+            audioManager.setStreamVolume(STREAM_TYPE_MUSIC, v, 0)
+        }
     }
 }

@@ -112,6 +112,10 @@ abstract class BasePlayer(
     @Composable
     abstract fun VideoPlayer(modifier: Modifier)
 
+    abstract fun getMaxVolume(): Int
+    abstract fun getCurrentVolume(): Int
+    abstract fun changeCurrentVolume(v: Int)
+
     fun onPlaybackEnded() {
         if (!viewmodel.isSoloMode) {
             if (viewmodel?.p?.session?.sharedPlaylist?.isEmpty() == true) return

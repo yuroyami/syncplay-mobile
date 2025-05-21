@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
-import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -26,7 +25,6 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
-import androidx.media3.common.C.STREAM_TYPE_MUSIC
 import com.yuroyami.syncplay.screens.adam.AdamScreen
 import com.yuroyami.syncplay.screens.home.JoinConfig
 import com.yuroyami.syncplay.settings.DataStoreKeys
@@ -46,9 +44,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class SyncplayActivity : ComponentActivity() {
-
-    lateinit var audioManager: AudioManager
-
     //TODO NEED REFERENCE TO VIEWMODEL
 
     @Suppress("DEPRECATION")
@@ -68,8 +63,6 @@ class SyncplayActivity : ComponentActivity() {
         window.statusBarColor = Color.Transparent.toArgb()
         window.navigationBarColor = Color.Transparent.toArgb()
         WindowCompat.setDecorFitsSystemWindows(window, false)
-
-        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
         /** Telling Android that it should keep the screen on, use cut-out mode and go full-screen */
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -116,14 +109,6 @@ class SyncplayActivity : ComponentActivity() {
             }
 
             //TODO override fun getMoreRoomSettings() = if (viewmodel?.player?.engine == ENGINE.ANDROID_MPV) mpvRoomSettings else listOf()
-
-            override fun getMaxVolume() = audioManager.getStreamMaxVolume(STREAM_TYPE_MUSIC)
-            override fun getCurrentVolume() = audioManager.getStreamVolume(STREAM_TYPE_MUSIC)
-            override fun changeCurrentVolume(v: Int) {
-                if (!audioManager.isVolumeFixed) {
-                    audioManager.setStreamVolume(STREAM_TYPE_MUSIC, v, 0)
-                }
-            }
 
             override fun getMaxBrightness() = 1f
             override fun getCurrentBrightness(): Float {
