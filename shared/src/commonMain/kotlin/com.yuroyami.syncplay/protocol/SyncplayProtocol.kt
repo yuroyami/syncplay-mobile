@@ -89,7 +89,7 @@ abstract class SyncplayProtocol {
         transmitPacket(jsonPacket, packetClass = T::class)
     }
 
-    suspend fun transmitPacket(json: Packet.Companion.SendablePacket, packetClass: KClass<out Packet>, isRetry: Boolean = false){
+    suspend fun transmitPacket(json: Packet.Companion.SendablePacket, packetClass: KClass<out Packet>? = null, isRetry: Boolean = false){
         withContext(Dispatchers.IO) {
             try {
                 if (isSocketValid()) {
@@ -98,7 +98,7 @@ abstract class SyncplayProtocol {
                     writeActualString(finalOut)
                 } else {
                     /** Queuing any pending outgoing messages */
-                    if (packetClass != Packet.Hello::class) {
+                    if (packetClass != Packet.Hello::class && packetClass != null) {
                         session.outboundQueue.add(json)
                     }
                     if (state == Constants.CONNECTIONSTATE.STATE_CONNECTED) {

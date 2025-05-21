@@ -47,9 +47,10 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
-import com.yuroyami.syncplay.player.PlayerUtils
+import com.yuroyami.syncplay.screens.adam.LocalScreenSize
+import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.utils.getSystemMaxVolume
-import com.yuroyami.syncplay.watchroom.viewmodel
+import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
@@ -57,7 +58,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-lateinit var gestureCallback: GestureCallback
 var dragdistance = 0f
 var initialVolume = 0
 var initialBrightness = 0f
@@ -66,8 +66,10 @@ var initialBrightness = 0f
 fun GestureInterceptor(
     gestureState: State<Boolean>, videoState: State<Boolean>, onSingleTap: () -> Unit
 ) {
+    val viewmodel = LocalViewmodel.current
+
     val scope = rememberCoroutineScope { Dispatchers.IO }
-    var hudVisibility by remember { viewmodel!!.hudVisibilityState }
+    var hudVisibility by remember { viewmodel.hudVisibilityState }
 
     val g by gestureState
     val v by videoState
@@ -149,7 +151,7 @@ fun GestureInterceptor(
                 detectTapGestures(
 
                     onPress = { offset ->
-                        if (g && v && offset.x > dimensions.wPX.times(0.65f)) {
+                        if (g && v && offset.x > dimensions.widthPx.times(0.65f)) {
                             val press = PressInteraction.Press(offset)
 
                             val job = scope.launch {
@@ -161,7 +163,7 @@ fun GestureInterceptor(
                                 seekRightInteraction.emit(press)
                                 while (isActive) {
                                     haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                    PlayerUtils.seekFrwrd()
+                                    //TODO PlayerUtils.seekFrwrd()
                                     seekRightInteraction.emit(press)
                                     delay(200)
                                     seekRightInteraction.emit(PressInteraction.Release(press))
@@ -173,7 +175,7 @@ fun GestureInterceptor(
                             seekRightInteraction.emit(PressInteraction.Release(press))
 
                         }
-                        if (g && v && offset.x < dimensions.wPX.times(0.35f)) {
+                        if (g && v && offset.x < dimensions.widthPx.times(0.35f)) {
                             val press = PressInteraction.Press(offset)
                             val job = scope.launch {
                                 delay(1000)
@@ -183,7 +185,7 @@ fun GestureInterceptor(
                                 seekLeftInteraction.emit(press)
                                 while (isActive) {
                                     haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                    PlayerUtils.seekBckwd()
+                                    //TODO PlayerUtils.seekBckwd()
                                     seekLeftInteraction.emit(press)
                                     delay(200)
                                     seekLeftInteraction.emit(PressInteraction.Release(press))
@@ -198,8 +200,8 @@ fun GestureInterceptor(
                     },
                     onDoubleTap = if (g && v) { offset ->
                         scope.launch {
-                            if (offset.x < dimensions.wPX.times(0.35f)) {
-                                PlayerUtils.seekBckwd()
+                            if (offset.x < dimensions.widthPx.times(0.35f)) {
+                                //TODO PlayerUtils.seekBckwd()
                                 haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
 
                                 val press = PressInteraction.Press(Offset.Zero)
@@ -207,8 +209,8 @@ fun GestureInterceptor(
                                 delay(200)
                                 seekLeftInteraction.emit(PressInteraction.Release(press))
                             }
-                            if (offset.x > dimensions.wPX.times(0.65f)) {
-                                PlayerUtils.seekFrwrd()
+                            if (offset.x > dimensions.widthPx.times(0.65f)) {
+                                //TODO PlayerUtils.seekFrwrd()
                                 haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
 
                                 val press = PressInteraction.Press(Offset.Zero)
@@ -234,8 +236,8 @@ fun GestureInterceptor(
 
                     detectVerticalDragGestures(
                         onDragStart = {
-                            initialBrightness = gestureCallback.getCurrentBrightness()
-                            initialVolume = gestureCallback.getCurrentVolume()
+                            initialBrightness = platformCallback.getCurrentBrightness()
+                            initialVolume = platformCallback.getCurrentVolume()
                             lastBrightness = initialBrightness
                             lastVolume = initialVolume
                         },
@@ -248,10 +250,10 @@ fun GestureInterceptor(
                             dragdistance += f
                             vertdragOffset = pntr.position
 
-                            if (pntr.position.x >= dimensions.wPX * 0.5f) {
+                            if (pntr.position.x >= dimensions.widthPx * 0.5f) {
                                 // Volume adjusting
-                                val h = dimensions.hPX / 1.5f
-                                val maxVolume = gestureCallback.getMaxVolume()
+                                val h = dimensions.heightPx / 1.5f
+                                val maxVolume = platformCallback.getMaxVolume()
                                 var newVolume = (initialVolume + (-dragdistance * maxVolume / h)).roundToInt()
                                 if (newVolume > maxVolume) newVolume = maxVolume
                                 if (newVolume < 0) newVolume = 0
@@ -261,11 +263,11 @@ fun GestureInterceptor(
                                     haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
                                     lastVolume = newVolume
                                 }
-                                gestureCallback.changeCurrentVolume(newVolume)
+                                platformCallback.changeCurrentVolume(newVolume)
                             } else {
                                 // Brightness adjusting in 5% increments
-                                val h = dimensions.hPX / 1.5f
-                                val maxBright = gestureCallback.getMaxBrightness()
+                                val h = dimensions.heightPx / 1.5f
+                                val maxBright = platformCallback.getMaxBrightness()
                                 var newBright = initialBrightness + (-dragdistance * maxBright / h)
                                 newBright = if (newBright > 0.1f) (newBright / 0.05f).roundToInt() * 0.05f else newBright
 
@@ -274,7 +276,7 @@ fun GestureInterceptor(
                                     haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
                                     lastBrightness = newBright
                                 }
-                                gestureCallback.changeCurrentBrightness(newBright.coerceIn(0f, 1f))
+                                platformCallback.changeCurrentBrightness(newBright.coerceIn(0f, 1f))
                             }
                         }
                     )

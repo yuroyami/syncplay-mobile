@@ -143,12 +143,9 @@ import com.yuroyami.syncplay.components.popups.PopupSeekToPosition.SeekToPositio
 import com.yuroyami.syncplay.filepicking.FilePicker
 import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.player.BasePlayer.TRACKTYPE
-import com.yuroyami.syncplay.player.PlayerUtils.pausePlayback
-import com.yuroyami.syncplay.player.PlayerUtils.playPlayback
-import com.yuroyami.syncplay.player.PlayerUtils.seekBckwd
-import com.yuroyami.syncplay.player.PlayerUtils.seekFrwrd
-import com.yuroyami.syncplay.protocol.JsonSender
+import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.screens.adam.LocalScreenSize
+import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.screens.room.RoomComposables.AddVideoButton
 import com.yuroyami.syncplay.screens.room.RoomComposables.ComposedMessagePalette
 import com.yuroyami.syncplay.screens.room.RoomComposables.FadingMessageLayout
@@ -177,12 +174,9 @@ import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.Paletting.ROOM_ICON_SIZE
 import com.yuroyami.syncplay.utils.CommonUtils
-import com.yuroyami.syncplay.utils.RoomUtils
-import com.yuroyami.syncplay.utils.RoomUtils.sendSeek
 import com.yuroyami.syncplay.utils.loggy
+import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.utils.timeStamper
-import com.yuroyami.syncplay.watchroom.isSoloMode
-import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -244,6 +238,8 @@ fun RoomScreenUI() {
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun RoomUIImpl() {
+    val viewmodel = LocalViewmodel.current
+    val isSoloMode = viewmodel.isSoloMode
 
     val nightMode = valueFlow(MISC_NIGHTMODE, true).collectAsState(initial = true)
 
@@ -255,8 +251,8 @@ private fun RoomUIImpl() {
 
     LaunchedEffect(null) {
         /** Starting ping update */
-        if (viewmodel?.pingUpdateJob == null && !isSoloMode) {
-            viewmodel?.pingUpdateJob = composeScope.launch(Dispatchers.IO) {
+        if (viewmodel.pingUpdateJob == null && !isSoloMode) {
+            viewmodel.pingUpdateJob = composeScope.launch(Dispatchers.IO) {
                 CommonUtils.beginPingUpdate()
             }
         }
@@ -266,10 +262,10 @@ private fun RoomUIImpl() {
         val focusManager = LocalFocusManager.current
         val screensizeinfo = LocalScreenSize.current
 
-        val hasVideo = remember { viewmodel!!.hasVideoG }
-        var hudVisibility by remember { viewmodel!!.hudVisibilityState }
+        val hasVideo = remember { viewmodel.hasVideoG }
+        var hudVisibility by remember { viewmodel.hudVisibilityState }
 
-        val pipModeObserver by remember { viewmodel!!.pipMode }
+        val pipModeObserver by remember { viewmodel.pipMode }
         var locked by remember { mutableStateOf(false) }
 
         val addurlpopupstate = remember { mutableStateOf(false) }
@@ -289,7 +285,7 @@ private fun RoomUIImpl() {
             showVideoPicker = false
             file?.path?.let {
                 loggy(it, 0)
-                viewmodel?.player?.injectVideo(it, false)
+                viewmodel.player?.injectVideo(it, false)
             }
         }
 
@@ -297,7 +293,7 @@ private fun RoomUIImpl() {
         FilePicker(show = showSubtitlePicker, fileExtensions = CommonUtils.ccExs) { file ->
             showSubtitlePicker = false
             file?.path?.let {
-                viewmodel?.player?.loadExternalSub(it)
+                viewmodel.player?.loadExternalSub(it)
             }
         }
 
@@ -307,7 +303,7 @@ private fun RoomUIImpl() {
         }
 
         /** video surface */
-        viewmodel?.player?.VideoPlayer(Modifier.fillMaxSize().alpha(if (hasVideo.value) 1f else 0f))
+        viewmodel.player?.VideoPlayer(Modifier.fillMaxSize().alpha(if (hasVideo.value) 1f else 0f))
 
         /** Lock layout, This is what appears when the user locks the screen */
         val unlockButtonVisibility = remember { mutableStateOf(false) }
@@ -362,10 +358,10 @@ private fun RoomUIImpl() {
             var msg by remember { mutableStateOf("") }
             var msgCanSend by remember { mutableStateOf(false) }
             val msgs =
-                remember { if (!isSoloMode) viewmodel!!.p.session.messageSequence else mutableStateListOf() }
-            var ready by remember { mutableStateOf(viewmodel!!.setReadyDirectly) }
+                remember { if (!isSoloMode) viewmodel.p.session.messageSequence else mutableStateListOf() }
+            var ready by remember { mutableStateOf(viewmodel.setReadyDirectly) }
             var controlcardvisible by remember { mutableStateOf(false) }
-            var addmediacardvisible by remember { mutableStateOf(viewmodel!!.media?.fileName.isNullOrEmpty() && viewmodel!!.p.session.sharedPlaylist.isEmpty() && viewmodel!!.p.session.spIndex.value == -1) }
+            var addmediacardvisible by remember { mutableStateOf(viewmodel.media?.fileName.isNullOrEmpty() && viewmodel.p.session.sharedPlaylist.isEmpty() && viewmodel.p.session.spIndex.value == -1) }
 
             val gestures = valueFlow(MISC_GESTURES, true).collectAsState(initial = true)
 
@@ -373,12 +369,12 @@ private fun RoomUIImpl() {
             val sharedplaylistVisibility = remember { mutableStateOf(false) }
             val inroomprefsVisibility = remember { mutableStateOf(false) }
 
-            if (!viewmodel!!.startupSlide) {
+            if (!viewmodel.startupSlide) {
                 LaunchedEffect(null) {
                     composeScope.launch {
                         delay(600)
                         userinfoVisibility.value = true
-                        viewmodel!!.startupSlide = true
+                        viewmodel.startupSlide = true
                     }
                 }
             }
@@ -430,7 +426,7 @@ private fun RoomUIImpl() {
 
             /* Gestures Interceptor */
             GestureInterceptor(
-                gestureState = gestures, videoState = viewmodel!!.hasVideoG, onSingleTap = {
+                gestureState = gestures, videoState = viewmodel.hasVideoG, onSingleTap = {
                     hudVisibility = !hudVisibility
                     if (!hudVisibility) {/* Hide any popups */
                         controlcardvisible = false
@@ -471,7 +467,7 @@ private fun RoomUIImpl() {
                                         t
                                     }
                                     if (msgToSend.isNotBlank()) {
-                                        RoomUtils.sendMessage(msgToSend)
+                                        viewmodel.sendMessage(msgToSend)
                                     }
                                     msg = ""
                                     msgCanSend = false
@@ -507,7 +503,7 @@ private fun RoomUIImpl() {
                             modifier = Modifier.wrapContentWidth().align(Alignment.TopCenter)
                         ) {
                             if (!isSoloMode) {
-                                val pingo by viewmodel!!.p.ping.collectAsState()
+                                val pingo by viewmodel.p.ping.collectAsState()
 
                                 Row(verticalAlignment = CenterVertically) {
                                     Text(
@@ -522,15 +518,15 @@ private fun RoomUIImpl() {
                                 }
 
                                 Text(
-                                    text = stringResource(Res.string.room_details_current_room, viewmodel!!.p.session.currentRoom),
+                                    text = stringResource(Res.string.room_details_current_room, viewmodel.p.session.currentRoom),
                                     fontSize = 11.sp,
                                     color = Paletting.OLD_SP_PINK
                                 )
-                                AnimatedVisibility(pingo == null && viewmodel!!.p.session.userList.value.isNotEmpty()) {
+                                AnimatedVisibility(pingo == null && viewmodel.p.session.userList.value.isNotEmpty()) {
                                     Button(
                                         onClick = {
                                             composeScope.launch(Dispatchers.IO) {
-                                                viewmodel!!.p.connect()
+                                                viewmodel.p.connect()
                                             }
                                         }, colors = ButtonDefaults.buttonColors(
                                             containerColor = Color.Red
@@ -541,7 +537,7 @@ private fun RoomUIImpl() {
                                 }
 
 
-                                AnimatedVisibility(pingo == null && viewmodel!!.p.session.userList.value.isNotEmpty()) {
+                                AnimatedVisibility(pingo == null && viewmodel.p.session.userList.value.isNotEmpty()) {
 
                                     Text(
                                         text = "Try changing network engine in Settings > Network to Ktor if you're experiencing connection issues.",
@@ -563,7 +559,7 @@ private fun RoomUIImpl() {
                                 textAlign = TextAlign.Center,
                                 fontWeight = FontWeight.W300
                             )
-                            if (osd.isEmpty()) viewmodel!!.media?.let {
+                            if (osd.isEmpty()) viewmodel.media?.let {
                                 val filename = it.fileName.lowercase()
                                 if (filename.contains(Regex("(s|season)(\\d{1,2})(e|episode)(\\d{1,2})"))) {
                                     val season =
@@ -707,7 +703,7 @@ private fun RoomUIImpl() {
                                         }, onClick = {
                                             overflowmenustate.value = false
 
-                                            viewmodel?.roomCallback?.onPictureInPicture(true)
+                                            platformCallback.onPictureInPicture(true)
                                         })
 
                                     /* Chat history item */
@@ -779,9 +775,9 @@ private fun RoomUIImpl() {
                                             )
                                         }
                                     }, onClick = {
-                                        viewmodel?.p?.endConnection(true)
-                                        viewmodel?.player?.destroy()
-                                        viewmodel?.roomCallback?.onLeave()
+                                        viewmodel.p.endConnection(true)
+                                        viewmodel.player?.destroy()
+                                        platformCallback.onLeave()
                                     })
                                 }
                             }
@@ -798,8 +794,8 @@ private fun RoomUIImpl() {
                                 FreeAnimatedVisibility(
                                     modifier = Modifier.fillMaxWidth(cardWidth)
                                         .fillMaxHeight(cardHeight),
-                                    enter = slideInHorizontally(initialOffsetX = { (screensizeinfo.wPX * 1.3).toInt() }),
-                                    exit = slideOutHorizontally(targetOffsetX = { (screensizeinfo.wPX * 1.3).toInt() }),
+                                    enter = slideInHorizontally(initialOffsetX = { (screensizeinfo.widthPx * 1.3).toInt() }),
+                                    exit = slideOutHorizontally(targetOffsetX = { (screensizeinfo.widthPx * 1.3).toInt() }),
                                     visible = !inroomprefsVisibility.value && userinfoVisibility.value && !sharedplaylistVisibility.value
                                 ) {
                                     UserInfoCard()
@@ -811,8 +807,8 @@ private fun RoomUIImpl() {
                                 FreeAnimatedVisibility(
                                     modifier = Modifier.fillMaxWidth(cardWidth)
                                         .fillMaxHeight(cardHeight),
-                                    enter = slideInHorizontally(initialOffsetX = { (screensizeinfo.wPX * 1.3).toInt() }),
-                                    exit = slideOutHorizontally(targetOffsetX = { (screensizeinfo.wPX * 1.3).toInt() }),
+                                    enter = slideInHorizontally(initialOffsetX = { (screensizeinfo.widthPx * 1.3).toInt() }),
+                                    exit = slideOutHorizontally(targetOffsetX = { (screensizeinfo.widthPx * 1.3).toInt() }),
                                     visible = !inroomprefsVisibility.value && !userinfoVisibility.value && sharedplaylistVisibility.value
                                 ) {
                                     SharedPlaylistCard()
@@ -823,8 +819,8 @@ private fun RoomUIImpl() {
                             FreeAnimatedVisibility(
                                 modifier = Modifier.fillMaxWidth(cardWidth)
                                     .fillMaxHeight(cardHeight),
-                                enter = slideInHorizontally(initialOffsetX = { (screensizeinfo.wPX * 1.3).toInt() }),
-                                exit = slideOutHorizontally(targetOffsetX = { (screensizeinfo.wPX * 1.3).toInt() }),
+                                enter = slideInHorizontally(initialOffsetX = { (screensizeinfo.widthPx * 1.3).toInt() }),
+                                exit = slideOutHorizontally(targetOffsetX = { (screensizeinfo.widthPx * 1.3).toInt() }),
                                 visible = inroomprefsVisibility.value && !userinfoVisibility.value && !sharedplaylistVisibility.value
                             ) {
                                 InRoomSettingsCard()
@@ -865,7 +861,7 @@ private fun RoomUIImpl() {
                                             shadowColor = Color.Black
                                         ) {
                                             composeScope.launch(Dispatchers.IO) {
-                                                val newAspectRatio = viewmodel?.player?.switchAspectRatio()
+                                                val newAspectRatio = viewmodel.player?.switchAspectRatio()
                                                 if (newAspectRatio != null) {
                                                     composeScope.dispatchOSD(newAspectRatio)
                                                 }
@@ -901,18 +897,17 @@ private fun RoomUIImpl() {
                                             size = ROOM_ICON_SIZE,
                                             shadowColor = Color.Black
                                         ) {
-                                            if (viewmodel?.seeks?.isEmpty() == true) {
+                                            if (viewmodel.seeks.isEmpty()) {
                                                 composeScope.dispatchOSD("There is no recent seek in the room.")
                                                 return@FancyIcon2
                                             }
 
                                             controlcardvisible = false
 
-                                            val lastSeek =
-                                                viewmodel?.seeks?.last() ?: return@FancyIcon2
-                                            viewmodel?.player?.seekTo(lastSeek.first)
-                                            sendSeek(lastSeek.first)
-                                            viewmodel?.seeks?.remove(lastSeek)
+                                            val lastSeek = viewmodel.seeks.lastOrNull() ?: return@FancyIcon2
+                                            viewmodel.player?.seekTo(lastSeek.first)
+                                            viewmodel.sendSeek(lastSeek.first)
+                                            viewmodel.seeks.remove(lastSeek)
                                             composeScope.dispatchOSD("Seek undone.")
                                         }
 
@@ -927,8 +922,8 @@ private fun RoomUIImpl() {
                                                 shadowColor = Color.Black
                                             ) {
                                                 composeScope.launch {
-                                                    viewmodel?.player?.analyzeTracks(
-                                                        viewmodel?.media ?: return@launch
+                                                    viewmodel.player?.analyzeTracks(
+                                                        viewmodel.media ?: return@launch
                                                     )
                                                     tracksPopup.value = true
                                                 }
@@ -1005,7 +1000,7 @@ private fun RoomUIImpl() {
 
                                                     }
                                                 }, onClick = {
-                                                    viewmodel?.player?.selectTrack(
+                                                    viewmodel.player?.selectTrack(
                                                         null, TRACKTYPE.SUBTITLE
                                                     )
                                                     tracksPopup.value = false
@@ -1013,14 +1008,14 @@ private fun RoomUIImpl() {
 
                                                 })
 
-                                                for (track in (viewmodel?.media?.subtitleTracks)
+                                                for (track in (viewmodel.media?.subtitleTracks)
                                                     ?: listOf()) {
                                                     DropdownMenuItem(text = {
                                                         Row(verticalAlignment = CenterVertically) {
                                                             Checkbox(
                                                                 checked = track.selected.value,
                                                                 onCheckedChange = {
-                                                                    viewmodel?.player?.selectTrack(
+                                                                    viewmodel.player?.selectTrack(
                                                                         track, TRACKTYPE.SUBTITLE
                                                                     )
                                                                     tracksPopup.value = false
@@ -1032,7 +1027,7 @@ private fun RoomUIImpl() {
                                                             )
                                                         }
                                                     }, onClick = {
-                                                        viewmodel?.player?.selectTrack(
+                                                        viewmodel.player?.selectTrack(
                                                             track, TRACKTYPE.SUBTITLE
                                                         )
 
@@ -1054,8 +1049,8 @@ private fun RoomUIImpl() {
                                                 shadowColor = Color.Black
                                             ) {
                                                 composeScope.launch {
-                                                    viewmodel?.player?.analyzeTracks(
-                                                        viewmodel?.media ?: return@launch
+                                                    viewmodel.player?.analyzeTracks(
+                                                        viewmodel.media ?: return@launch
                                                     )
                                                     tracksPopup.value = true
                                                 }
@@ -1092,14 +1087,14 @@ private fun RoomUIImpl() {
                                                     font = directive
                                                 )
 
-                                                for (track in (viewmodel?.media?.audioTracks
+                                                for (track in (viewmodel.media?.audioTracks
                                                     ?: listOf())) {
                                                     DropdownMenuItem(text = {
                                                         Row(verticalAlignment = CenterVertically) {
                                                             Checkbox(
                                                                 checked = track.selected.value,
                                                                 onCheckedChange = {
-                                                                    viewmodel?.player?.selectTrack(
+                                                                    viewmodel.player?.selectTrack(
                                                                         track, TRACKTYPE.AUDIO
                                                                     )
                                                                     tracksPopup.value = false
@@ -1111,7 +1106,7 @@ private fun RoomUIImpl() {
                                                             )
                                                         }
                                                     }, onClick = {
-                                                        viewmodel?.player?.selectTrack(
+                                                        viewmodel.player?.selectTrack(
                                                             track, TRACKTYPE.AUDIO
                                                         )
                                                         tracksPopup.value = false
@@ -1122,7 +1117,7 @@ private fun RoomUIImpl() {
 
 
                                         /* Chapters */
-                                        if (viewmodel?.player?.supportsChapters == true) {
+                                        if (viewmodel.player?.supportsChapters == true) {
                                             Box {
                                                 var chaptersPopup by remember { mutableStateOf(false) }
 
@@ -1132,8 +1127,8 @@ private fun RoomUIImpl() {
                                                     shadowColor = Color.Black
                                                 ) {
                                                     composeScope.launch {
-                                                        viewmodel?.player?.analyzeChapters(
-                                                            viewmodel?.media ?: return@launch
+                                                        viewmodel.player?.analyzeChapters(
+                                                            viewmodel.media ?: return@launch
                                                         )
                                                         chaptersPopup = !chaptersPopup
                                                     }
@@ -1176,11 +1171,11 @@ private fun RoomUIImpl() {
                                                             )
                                                         }
                                                     }, onClick = {
-                                                        viewmodel?.player?.skipChapter()
+                                                        viewmodel.player?.skipChapter()
                                                         chaptersPopup = false
                                                     })
 
-                                                    for (chapter in (viewmodel?.media?.chapters
+                                                    for (chapter in (viewmodel.media?.chapters
                                                         ?: listOf())) {
                                                         DropdownMenuItem(text = {
                                                             Row(verticalAlignment = CenterVertically) {
@@ -1190,7 +1185,7 @@ private fun RoomUIImpl() {
                                                                 )
                                                             }
                                                         }, onClick = {
-                                                            viewmodel?.player?.jumpToChapter(chapter)
+                                                            viewmodel.player?.jumpToChapter(chapter)
                                                             chaptersPopup = false
                                                         })
                                                     }
@@ -1217,8 +1212,11 @@ private fun RoomUIImpl() {
                                 ),
                                 onCheckedChange = { b ->
                                     ready = b
-                                    viewmodel!!.p.ready = b
-                                    viewmodel!!.p.sendPacketAsync(JsonSender.sendReadiness(b, true))
+                                    viewmodel.p.ready = b
+                                    viewmodel.p.send<Packet.Readiness> {
+                                        isReady = b
+                                        manuallyInitiated = true
+                                    }
                                 }) {
                                 when (ready) {
                                     true -> Row(verticalAlignment = CenterVertically) {
@@ -1255,8 +1253,8 @@ private fun RoomUIImpl() {
                         }
 
                         val chapters = remember(
-                            viewmodel?.media?.fileName
-                        ) { viewmodel?.media?.chapters ?: emptyList() }
+                            viewmodel.media?.fileName
+                        ) { viewmodel.media?.chapters ?: emptyList() }
 
 
                         /* Bottom-mid row (Slider + seek buttons + timestamps) */
@@ -1265,15 +1263,15 @@ private fun RoomUIImpl() {
                             modifier = Modifier.align(Alignment.BottomCenter).padding(4.dp)
                                 .fillMaxWidth()
                         ) {
-                            var slidervalue by remember { viewmodel!!.timeCurrent }
-                            val slidermax by remember { viewmodel!!.timeFull }
+                            var slidervalue by remember { viewmodel.timeCurrent }
+                            val slidermax by remember { viewmodel.timeFull }
                             val interactionSource = remember { MutableInteractionSource() }
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(0.75f), verticalAlignment = Bottom
                             ) {
                                 Text(
-                                    text = timeStamper(remember { viewmodel!!.timeCurrent }.longValue),
+                                    text = timeStamper(remember { viewmodel.timeCurrent }.longValue),
                                     modifier = Modifier.alpha(0.85f).gradientOverlay(),
                                 )
 
@@ -1288,7 +1286,7 @@ private fun RoomUIImpl() {
                                                 size = ROOM_ICON_SIZE + 6,
                                                 shadowColor = Color.Black
                                             ) {
-                                                seekBckwd()
+                                                viewmodel.seekBckwd()
                                             }
 
                                             FancyIcon2(
@@ -1296,7 +1294,7 @@ private fun RoomUIImpl() {
                                                 size = ROOM_ICON_SIZE + 6,
                                                 shadowColor = Color.Black
                                             ) {
-                                                seekFrwrd()
+                                                viewmodel.seekFrwrd()
                                             }
                                         }
                                         val customSkipToFront by PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT.settingBooleanState()
@@ -1315,17 +1313,17 @@ private fun RoomUIImpl() {
                                                     }), shape = CircleShape
                                                 ),
                                                 onClick = {
-                                                    viewmodel?.player?.playerScopeIO?.launch {
+                                                    viewmodel.player?.playerScopeIO?.launch {
                                                         val currentMs =
-                                                            withContext(Dispatchers.Main) { viewmodel?.player!!.currentPositionMs() }
+                                                            withContext(Dispatchers.Main) { viewmodel.player!!.currentPositionMs() }
                                                         val newPos =
                                                             (currentMs) + (customSkipAmount * 1000L)
 
-                                                        sendSeek(newPos)
-                                                        viewmodel?.player?.seekTo(newPos)
+                                                        viewmodel.sendSeek(newPos)
+                                                        viewmodel.player?.seekTo(newPos)
 
                                                         if (isSoloMode) {
-                                                            viewmodel?.seeks?.add(
+                                                            viewmodel.seeks.add(
                                                                 Pair(
                                                                     (currentMs), newPos * 1000
                                                                 )
@@ -1348,24 +1346,24 @@ private fun RoomUIImpl() {
                                             }
                                         }
 
-                                        if (viewmodel?.media?.chapters?.isNotEmpty() == true) {
+                                        if (viewmodel.media?.chapters?.isNotEmpty() == true) {
                                             TextButton(
                                                 modifier = Modifier.gradientOverlay().background(
                                                     brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
                                                         it.copy(alpha = 0.1f)
                                                     }), shape = CircleShape
                                                 ), onClick = {
-                                                    viewmodel?.player?.playerScopeIO?.launch {
+                                                    viewmodel.player?.playerScopeIO?.launch {
                                                         val currentMs =
-                                                            withContext(Dispatchers.Main) { viewmodel?.player!!.currentPositionMs() }
+                                                            withContext(Dispatchers.Main) { viewmodel.player!!.currentPositionMs() }
                                                         val nextChapter =
-                                                            viewmodel?.media?.chapters?.filter { it.timestamp > currentMs }
+                                                            viewmodel.media?.chapters?.filter { it.timestamp > currentMs }
                                                                 ?.minByOrNull { it.timestamp }
                                                         if (nextChapter != null) {
-                                                            viewmodel?.player?.seekTo(nextChapter.timestamp)
+                                                            viewmodel.player?.seekTo(nextChapter.timestamp)
                                                         } else {
                                                             // fallback if no chapter is ahead
-                                                            viewmodel?.player?.seekTo(currentMs + (customSkipAmount * 1000L))
+                                                            viewmodel.player?.seekTo(currentMs + (customSkipAmount * 1000L))
                                                         }
                                                     }
                                                 }) {
@@ -1384,7 +1382,7 @@ private fun RoomUIImpl() {
                                     }
                                 }
 
-                                val timeFullR = remember { viewmodel!!.timeFull }
+                                val timeFullR = remember { viewmodel.timeFull }
                                 Text(
                                     text = if (timeFullR.longValue >= Long.MAX_VALUE / 1000L) "???" else timeStamper(
                                         timeFullR.longValue
@@ -1393,10 +1391,10 @@ private fun RoomUIImpl() {
                                 )
 
                             }
-                            LaunchedEffect(viewmodel?.media?.fileName) {
+                            LaunchedEffect(viewmodel.media?.fileName) {
                                 composeScope.launch {
-                                    viewmodel?.player?.analyzeChapters(
-                                        viewmodel?.media ?: return@launch
+                                    viewmodel.player?.analyzeChapters(
+                                        viewmodel.media ?: return@launch
                                     )
                                 }
                             }
@@ -1404,11 +1402,11 @@ private fun RoomUIImpl() {
                                 value = slidervalue.toFloat(),
                                 valueRange = (0f..(slidermax.toFloat())),
                                 onValueChange = { f ->
-                                    viewmodel?.player?.seekTo(f.toLong() * 1000L)
+                                    viewmodel.player?.seekTo(f.toLong() * 1000L)
                                     if (isSoloMode) {
-                                        viewmodel?.player?.let {
+                                        viewmodel.player?.let {
                                             composeScope.launch(Dispatchers.Main) {
-                                                viewmodel?.seeks?.add(
+                                                viewmodel.seeks.add(
                                                     Pair(
                                                         it.currentPositionMs(), f.toLong() * 1000
                                                     )
@@ -1420,7 +1418,7 @@ private fun RoomUIImpl() {
                                     slidervalue = f.toLong()
                                 },
                                 onValueChangeFinished = {
-                                    sendSeek(slidervalue * 1000L)
+                                    viewmodel.sendSeek(slidervalue * 1000L)
                                 },
                                 modifier = Modifier.alpha(0.82f).fillMaxWidth(0.75f)
                                     .padding(horizontal = 12.dp),
@@ -1435,7 +1433,7 @@ private fun RoomUIImpl() {
                                 },
                                 track = { sliderState ->
                                     // Assuming media duration is available in ms
-                                    val mediaDuration = viewmodel?.media?.fileDuration ?: 1L
+                                    val mediaDuration = viewmodel.media?.fileDuration ?: 1L
 
                                     // Capture track width
                                     var trackWidth by remember { mutableStateOf(0) }
@@ -1471,7 +1469,7 @@ private fun RoomUIImpl() {
 
                                                         .size(8.dp).clip(CircleShape)
                                                         .background(Color.White).clickable {
-                                                            viewmodel?.player?.jumpToChapter(chapter)
+                                                            viewmodel.player?.jumpToChapter(chapter)
 
                                                         })
                                             }
@@ -1579,7 +1577,7 @@ private fun RoomUIImpl() {
                     }
 
                     /** PLAY BUTTON */
-                    val playing = remember { viewmodel!!.isNowPlaying }
+                    val playing = remember { viewmodel.isNowPlaying }
                     val animatedColor by animateColorAsState(
                         animationSpec = tween(500),
                         targetValue = if (playing.value) Paletting.SP_GRADIENT.last()
@@ -1599,10 +1597,10 @@ private fun RoomUIImpl() {
                             )
                         ) {
                             composeScope.launch(Dispatchers.Main) {
-                                if (viewmodel?.player?.isPlaying() == true) {
-                                    pausePlayback()
+                                if (viewmodel.player?.isPlaying() == true) {
+                                    viewmodel.pausePlayback()
                                 } else {
-                                    playPlayback()
+                                    viewmodel.playPlayback()
                                 }
                             }
                         }

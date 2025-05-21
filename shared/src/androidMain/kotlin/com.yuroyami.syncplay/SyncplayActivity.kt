@@ -33,7 +33,6 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C.STREAM_TYPE_MUSIC
 import com.yuroyami.syncplay.viewmodel.PlatformCallback
-import com.yuroyami.syncplay.models.JoinInfo
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.BasePlayer.ENGINE
 import com.yuroyami.syncplay.player.PlayerUtils.pausePlayback
@@ -46,9 +45,6 @@ import com.yuroyami.syncplay.protocol.SpProtocolAndroid
 import com.yuroyami.syncplay.protocol.SpProtocolKtor
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.screens.adam.AdamScreen
-import com.yuroyami.syncplay.screens.room.GestureCallback
-import com.yuroyami.syncplay.screens.room.RoomCallback
-import com.yuroyami.syncplay.screens.room.gestureCallback
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_NIGHTMODE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_SUBTITLE_SIZE
@@ -63,11 +59,7 @@ import com.yuroyami.syncplay.utils.bindWatchdog
 import com.yuroyami.syncplay.utils.changeLanguage
 import com.yuroyami.syncplay.utils.defaultEngineAndroid
 import com.yuroyami.syncplay.utils.loggy
-import com.yuroyami.syncplay.watchroom.SpViewModel
-import com.yuroyami.syncplay.watchroom.homeCallback
-import com.yuroyami.syncplay.watchroom.isSoloMode
-import com.yuroyami.syncplay.watchroom.prepareProtocol
-import com.yuroyami.syncplay.watchroom.viewmodel
+import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -78,8 +70,6 @@ class SyncplayActivity : ComponentActivity() {
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen() /* This will be called only on cold starts */
-
-        if (BuildConfig.FLAVOR != "noLibs") defaultEngineAndroid = BasePlayer.ENGINE.ANDROID_MPV.name
 
         /** Communicates the lifecycle with our common code */
         bindWatchdog()
@@ -124,11 +114,10 @@ class SyncplayActivity : ComponentActivity() {
             else -> {}
         }
 
-        obtainerCallback = object : SettingObtainerCallback {
-            override fun getMoreRoomSettings() = if (viewmodel?.player?.engine == ENGINE.ANDROID_MPV) mpvRoomSettings else listOf()
-        }
+        platformCallback = object : PlatformCallback {
 
-        gestureCallback = object : GestureCallback {
+            override fun getMoreRoomSettings() = if (viewmodel?.player?.engine == ENGINE.ANDROID_MPV) mpvRoomSettings else listOf()
+
             override fun getMaxVolume() = audioManager.getStreamMaxVolume(STREAM_TYPE_MUSIC)
             override fun getCurrentVolume() = audioManager.getStreamVolume(STREAM_TYPE_MUSIC)
             override fun changeCurrentVolume(v: Int) {
@@ -166,9 +155,7 @@ class SyncplayActivity : ComponentActivity() {
                 attrs.screenBrightness = v.coerceIn(0f, 1f)
                 window.attributes = attrs
             }
-        }
 
-        viewmodel?.roomCallback = object : RoomCallback {
             override fun onLeave() {
                 /* TODO val intent = Intent(this@WatchActivity, HomeActivity::class.java)
                 intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)

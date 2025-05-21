@@ -5,7 +5,6 @@ import com.yuroyami.syncplay.screens.home.JoinConfig
 interface PlatformCallback {
     fun onLanguageChanged(newLang: String)
 
-
     fun onSaveConfigShortcut(joinInfo: JoinConfig)
     fun onEraseConfigShortcuts()
 

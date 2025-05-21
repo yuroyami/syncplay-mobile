@@ -117,6 +117,7 @@ import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.ThemeMenu
 import com.yuroyami.syncplay.utils.getDefaultEngine
+import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -509,7 +510,7 @@ fun HomeScreenUI() {
                                     modifier = Modifier.height(54.dp).aspectRatio(1.6f),
                                     shape = RoundedCornerShape(25),
                                     onClick = {
-                                        viewmodel.platform.onSaveConfigShortcut(
+                                        platformCallback.onSaveConfigShortcut(
                                             JoinConfig(
                                                 textUsername.replace("\\", "").trim(),
                                                 textRoomname.replace("\\", "").trim(),
@@ -528,7 +529,7 @@ fun HomeScreenUI() {
 
                                                 Icon(
                                                     imageVector = Icons.Filled.Add,
-                                                    "",
+                                                    contentDescription = null,
                                                     modifier = Modifier.fillMaxSize()
                                                 )
                                             }
@@ -536,7 +537,7 @@ fun HomeScreenUI() {
 
                                         Icon(
                                             imageVector = Icons.Filled.Widgets,
-                                            "",
+                                            contentDescription = null,
                                             modifier = Modifier.fillMaxSize()
                                         )
                                     }

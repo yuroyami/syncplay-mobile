@@ -86,6 +86,8 @@ import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.CommonUtils.langMap
 import com.yuroyami.syncplay.utils.PLATFORM
 import com.yuroyami.syncplay.utils.getPlatform
+import com.yuroyami.syncplay.utils.platform
+import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.watchroom.homeCallback
 import com.yuroyami.syncplay.watchroom.viewmodel
 import kotlinx.coroutines.Dispatchers
@@ -174,7 +176,6 @@ import syncplaymobile.shared.generated.resources.uisetting_timestamp_color_title
 import syncplaymobile.shared.generated.resources.uisetting_timestamp_summary
 import syncplaymobile.shared.generated.resources.uisetting_timestamp_title
 
-lateinit var obtainerCallback: SettingObtainerCallback
 
 interface SettingObtainerCallback {
     fun getMoreRoomSettings(): List<Pair<Setting<out Any>, String>>
@@ -221,7 +222,7 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
                     icon = Icons.Filled.BookmarkRemove,
                     rationale = Res.string.setting_erase_shortcuts_dialog,
                     onYes = {
-                        homeCallback?.onEraseConfigShortcuts()
+                        platformCallback.onEraseConfigShortcuts()
                     },
                     styling = settingGLOBALstyle
                 ) to CATEG_GLOBAL_GENERAL
@@ -238,7 +239,7 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
                 }
             ) to CATEG_GLOBAL_GENERAL)
 
-            if (getPlatform() == PLATFORM.Android) {
+            if (platform == PLATFORM.Android) {
                 add(Setting.MultiChoiceSetting(
                     type = SettingType.MultiChoicePopupSettingType,
                     key = PREF_DISPLAY_LANG,
@@ -250,7 +251,7 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
                     entryKeys = langMap.keys.toList(),
                     entryValues = langMap.values.toList(),
                     onItemChosen = { _, v ->
-                        homeCallback?.onLanguageChanged(v)
+                        platformCallback.onLanguageChanged(v)
                     }
                 ) to CATEG_GLOBAL_LANG)
             } else {
@@ -263,7 +264,7 @@ private val settingsGLOBAL: List<Pair<Setting<out Any>, String>>
                         icon = Icons.Filled.Translate,
                         styling = settingGLOBALstyle,
                         onClick = {
-                            homeCallback?.onLanguageChanged("")
+                            platformCallback.onLanguageChanged("")
                         }
                     ) to CATEG_GLOBAL_LANG)
             }

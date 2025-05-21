@@ -2,8 +2,8 @@ package com.yuroyami.syncplay.protocol.parsing
 
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.User
-import com.yuroyami.syncplay.protocol.JsonSender
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
+import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.utils.generateTimestampMillis
 import com.yuroyami.syncplay.utils.loggy
 import kotlinx.coroutines.launch
@@ -191,9 +191,10 @@ object JsonHandler {
         hello.username?.let { username ->
             p.session.currentUsername = username
         }
-
-        p.sendPacket(JsonSender.sendJoined(p.session.currentRoom))
-        p.sendPacket(JsonSender.sendEmptyList())
+        p.send<Packet.Joined> {
+            roomname = p.session.currentRoom
+        }.await()
+        p.send<Packet.EmptyList>().await()
         p.syncplayCallback?.onConnected()
     }
 
@@ -206,7 +207,7 @@ object JsonHandler {
         }
 
         // Fetch a list of users anyway
-        p.sendPacket(JsonSender.sendEmptyList())
+        p.send<Packet.EmptyList>().await()
     }
 
     private fun handleUserSet(userObject: JsonObject, p: SyncplayProtocol) {
@@ -318,18 +319,23 @@ object JsonHandler {
                 protocol.clientIgnFly = 0
 
                 if (!jsonString.contains("client\":")) {
-                    protocol.sendPacket(
-                        JsonSender.sendState(
-                            latency, clientTime, null, 0,
-                            iChangeState = 0, play = null
-                        )
-                    )
+                    protocol.send<Packet.State> {
+                        serverTime = latency
+                        this.clientTime = clientTime
+                        this.doSeek = null
+                        seekPosition = 0
+                        changeState = 0
+                        play = null
+                    }.await()
                 } else {
-                    protocol.sendPacket(
-                        JsonSender.sendState(
-                            latency, clientTime, doSeek, 0, 0, null
-                        )
-                    )
+                    protocol.send<Packet.State> {
+                        serverTime = latency
+                        this.clientTime = clientTime
+                        this.doSeek = doSeek
+                        seekPosition = 0
+                        changeState = 0
+                        play = null
+                    }.await()
                 }
             }
         } ?: run {
@@ -346,16 +352,14 @@ object JsonHandler {
             }
 
             // Constant traditional pinging
-            protocol.sendPacket(
-                JsonSender.sendState(
-                    servertime = latency,
-                    clienttime = clientTime,
-                    doSeek = false,
-                    seekPosition = 0,
-                    iChangeState = 0,
-                    play = null
-                )
-            )
+            protocol.send<Packet.State> {
+                serverTime = latency
+                this.clientTime = clientTime
+                this.doSeek = false
+                seekPosition = 0
+                changeState = 0
+                play = null
+            }.await()
         }
     }
 

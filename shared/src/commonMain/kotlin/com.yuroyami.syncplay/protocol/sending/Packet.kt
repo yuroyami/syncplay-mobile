@@ -99,6 +99,17 @@ sealed class Packet {
         }
     }
 
+    class EmptyList : Packet() {
+        override fun build(): String {
+            val emptylist = buildJsonObject {
+                putJsonArray("List") {
+                    //TODO: Check equivalent in Python code
+                }
+            }
+            return Json.encodeToString(emptylist)
+        }
+    }
+
     class Readiness : Packet() {
         var isReady: Boolean = false
         var manuallyInitiated: Boolean = false

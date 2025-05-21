@@ -5,10 +5,13 @@ import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import co.touchlab.kermit.Logger
+import com.yuroyami.syncplay.viewmodel.PlatformCallback
+
+
+lateinit var platformCallback: PlatformCallback
 
 @Composable
 expect fun getSystemMaxVolume(): Int
-
 
 /** Retrieving which platform the native code is running on */
 enum class PLATFORM { Android, IOS, }

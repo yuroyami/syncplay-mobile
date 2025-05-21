@@ -12,11 +12,10 @@ import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Message
 import com.yuroyami.syncplay.models.TrackChoices
 import com.yuroyami.syncplay.player.BasePlayer
-import com.yuroyami.syncplay.protocol.JsonSender
-import com.yuroyami.syncplay.protocol.JsonSender.sendState
 import com.yuroyami.syncplay.protocol.ProtocolCallback
 import com.yuroyami.syncplay.protocol.SpProtocolKtor
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
+import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.screens.adam.Screen
 import com.yuroyami.syncplay.screens.home.JoinConfig
 import com.yuroyami.syncplay.screens.room.dispatchOSD
@@ -72,8 +71,6 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     var p: SyncplayProtocol = SpProtocolKtor() //If it is not initialized, it means we're in Solo Mode
 
     val isSoloMode = false
-
-    lateinit var platform: PlatformCallback
 
     var player: BasePlayer? = null
     var media: MediaFile? = null
@@ -158,32 +155,38 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     fun sendPlayback(play: Boolean) {
         if (isSoloMode) return
 
-        p?.sendPacketAsync(
-            sendState(
-                servertime = null, clienttime = generateTimestampMillis() / 1000.0,
-                doSeek = null, seekPosition = 0, iChangeState = 1, play = play
-            )
-        )
+        p.send<Packet.State> {
+            serverTime = null
+            clientTime = generateTimestampMillis() / 1000.0
+            doSeek = null
+            seekPosition = 0
+            changeState = 1
+            this.play = play
+        }
     }
 
     fun sendSeek(newpos: Long) {
         if (isSoloMode) return
+
         player?.playerScopeMain?.launch {
-            p?.sendPacket(
-                sendState(
-                    null, (generateTimestampMillis() / 1000.0), true,
-                    newpos, 1,
-                    play = player?.isPlaying() == true,
-                )
-            )
+            p.send<Packet.State> {
+                serverTime = null
+                clientTime = generateTimestampMillis() / 1000.0
+                doSeek = true
+                seekPosition = newpos
+                changeState = 1
+                this.play = player?.isPlaying() == true
+            }
         }
     }
 
     /** Sends a chat message to the server **/
-    fun sendMessage(message: String) {
+    fun sendMessage(msg: String) {
         if (isSoloMode) return
 
-        p?.sendPacketAsync(JsonSender.sendChat(message))
+        p.send<Packet.Chat> {
+            message = msg
+        }
     }
 
     /** This broadcasts a message to show it in the chat section **/
@@ -350,7 +353,9 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
         }
 
         /* Announcing a new updated list to the room members */
-        p.sendPacket(JsonSender.sendPlaylistChange(p.session.sharedPlaylist))
+        p.send<Packet.PlaylistChange> {
+            files = p.session.sharedPlaylist
+        }
     }
 
     /** Adds URLs from the url adding popup */
@@ -360,8 +365,9 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
         for (s in string) {
             if (!p.session.sharedPlaylist.contains(s)) l.add(s)
         }
-
-        p.sendPacketAsync(JsonSender.sendPlaylistChange(l))
+        p.send<Packet.PlaylistChange> {
+            files = l
+        }
     }
 
     /** Adding a file to the playlist: This basically adds one file name to the playlist, then,
@@ -378,24 +384,36 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
             /* If there is no duplicate, then we proceed, we check if the list is empty */
             if (p.session.sharedPlaylist.isEmpty() && p.session.spIndex.intValue == -1) {
                 player?.injectVideo(uri, true)
-                p?.sendPacketAsync(JsonSender.sendPlaylistIndex(0))
+
+                p.send<Packet.PlaylistIndex> {
+                    index = 0
+                }
+                //TODO MAKE NON=ASYNC
             }
             p.session.sharedPlaylist.add(filename)
         }
-        p.sendPacketAsync(JsonSender.sendPlaylistChange(p?.session!!.sharedPlaylist))
+        p.send<Packet.PlaylistChange> {
+            files = p.session!!.sharedPlaylist
+        }
     }
 
 
     /** Clears the shared playlist */
     fun clearPlaylist() {
         if (p.session.sharedPlaylist.isEmpty()) return
-        p.sendPacketAsync(JsonSender.sendPlaylistChange(emptyList()))
+
+        p.send<Packet.PlaylistChange> {
+            files = emptyList()
+        }
     }
 
     /** This will delete an item from playlist at a given index 'i' */
     fun deleteItemFromPlaylist(i: Int) {
         p?.session?.sharedPlaylist?.removeAt(i)
-        p?.sendPacketAsync(JsonSender.sendPlaylistChange(p?.session!!.sharedPlaylist))
+        p.send<Packet.PlaylistChange> {
+            files = p?.session!!.sharedPlaylist
+        }
+
         if (p!!.session.sharedPlaylist.isEmpty()) {
             p?.session?.spIndex?.intValue = -1
         }
@@ -403,8 +421,10 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
 
     /** This is to send a playlist selection change to the server.
      * This occurs when a user selects a different item from the shared playlist. */
-    fun sendPlaylistSelection(index: Int) {
-        p?.sendPacketAsync(JsonSender.sendPlaylistIndex(index))
+    fun sendPlaylistSelection(i: Int) {
+        p.send<Packet.PlaylistIndex> {
+            index = i
+        }
     }
 
     /** This is to change playlist selection in response other users' selection */
@@ -605,7 +625,10 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
         /** Set as ready first-hand */
         if (media == null) {
             p.ready = setReadyDirectly
-            p.sendPacket(JsonSender.sendReadiness(setReadyDirectly, false))
+            p.send<Packet.Readiness> {
+                this.isReady = setReadyDirectly
+                manuallyInitiated = false
+            }
         }
 
 
@@ -617,12 +640,15 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
 
         /** Resubmit any ongoing file being played **/
         if (media != null) {
-            p.sendPacket(JsonSender.sendFile(media!!))
+            p.send<Packet.File> {
+                this@send.media = this@SyncplayViewmodel.media
+            }.await()
         }
 
         /** Pass any messages that have been pending due to disconnection, then clear the queue */
         for (m in p.session.outboundQueue) {
-            p.sendPacket(m)
+            p.transmitPacket(m)
+
         }
         p.session.outboundQueue.clear()
     }
@@ -690,13 +716,12 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
             broadcastMessage(message = { getString(Res.string.room_tls_not_supported) }, isChat = false, isError = true)
             p.tls = Constants.TLS.TLS_NO
         }
-        p.sendPacket(
-            JsonSender.sendHello(
-                p.session.currentUsername,
-                p.session.currentRoom,
-                p.session.currentPassword
-            )
-        )
+
+        p.send<Packet.Hello> {
+            username = p.session.currentUsername
+            roomname = p.session.currentRoom
+            serverPassword = p.session.currentPassword
+        }
     }
 
     /**************** OTHER ***************/

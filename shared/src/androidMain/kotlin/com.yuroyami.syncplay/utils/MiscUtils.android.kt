@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import com.yuroyami.syncplay.BuildConfig
 import com.yuroyami.syncplay.player.BasePlayer
 import java.io.BufferedReader
 import java.io.File
@@ -25,21 +26,12 @@ actual fun getSystemMaxVolume(): Int {
 
 actual val platform: PLATFORM = PLATFORM.Android
 
-var defaultEngineAndroid = BasePlayer.ENGINE.ANDROID_EXOPLAYER.name
+var defaultEngineAndroid = if (BuildConfig.FLAVOR != "noLibs") BasePlayer.ENGINE.ANDROID_EXOPLAYER.name else BasePlayer.ENGINE.ANDROID_MPV.name
 
 actual fun getDefaultEngine(): String = defaultEngineAndroid
 
 actual fun generateTimestampMillis() = System.currentTimeMillis()
 
-//@SuppressLint("DefaultLocale")
-//actual fun timeStamper(seconds: Number): String {
-//    val secs = seconds.toLong()
-//    return if (secs < 3600) {
-//        String.format("%02d:%02d", (secs / 60) % 60, secs % 60)
-//    } else {
-//        String.format("%02d:%02d:%02d", secs / 3600, (secs / 60) % 60, secs % 60)
-//    }
-//}
 
 actual fun getFolderName(uri: String): String? {
     val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
