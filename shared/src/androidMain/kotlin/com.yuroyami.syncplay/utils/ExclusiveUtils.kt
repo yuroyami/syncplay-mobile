@@ -6,11 +6,9 @@ import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
 import com.yuroyami.syncplay.models.MediaFile
-import com.yuroyami.syncplay.watchroom.viewmodel
+import com.yuroyami.syncplay.utils.CommonUtils.sha256
+import com.yuroyami.syncplay.utils.CommonUtils.toHex
 import java.util.Locale
 
 /** This is used specifically in the case where common code needs access to some context.
@@ -48,6 +46,7 @@ fun getRealSizeFromUri(context: Context, uri: Uri): Long? {
 }
 
 fun ComponentActivity.bindWatchdog() {
+    /* TODO
     val watchdog = viewmodel!!.lifecycleWatchdog
     val lifecycleObserver = object: LifecycleEventObserver {
         override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
@@ -63,5 +62,7 @@ fun ComponentActivity.bindWatchdog() {
     }
 
     lifecycle.addObserver(lifecycleObserver)
+
+     */
 }
 

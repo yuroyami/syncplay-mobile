@@ -1,13 +1,10 @@
 package com.yuroyami.syncplay.utils
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalWindowInfo
-import cocoapods.SPLPing.SPLPing
-import cocoapods.SPLPing.SPLPingConfiguration
+import androidx.compose.ui.platform.ClipEntry
 import com.yuroyami.syncplay.player.BasePlayer
+import com.yuroyami.syncplay.player.BasePlayer.ENGINE
+import com.yuroyami.syncplay.player.vlc.VlcPlayer
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.cstr
 import kotlinx.coroutines.CompletableDeferred
@@ -18,10 +15,17 @@ import platform.Foundation.NSString
 import platform.Foundation.NSURL
 import platform.Foundation.create
 import platform.Foundation.currentLocale
-import platform.Foundation.languageCode
 import platform.Foundation.timeIntervalSince1970
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
+
+
+actual fun instantiatePlayer(engine: BasePlayer.ENGINE) = when (engine) {
+    ENGINE.IOS_AVPLAYER -> AvPlayer()
+    ENGINE.IOS_VLC -> VlcPlayer()
+    else -> null
+}
+
 
 @Composable
 actual fun getSystemMaxVolume(): Int {
@@ -77,4 +81,8 @@ actual fun String.format(vararg args: String): String {
         4 -> NSString.create(f, locale = null, args[0].cstr, args[1].cstr, args[2].cstr, args[3].cstr).toString()
         else -> NSString.create(f, locale = null, args[0].cstr, args[1].cstr, args[2].cstr, args[3].cstr, args[4].cstr).toString()
     }
+}
+
+actual fun ClipEntry.getText(): String? {
+    return this.getPlainText()
 }

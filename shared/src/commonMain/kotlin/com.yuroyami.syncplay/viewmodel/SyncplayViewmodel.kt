@@ -28,9 +28,12 @@ import com.yuroyami.syncplay.settings.valueSuspendingly
 import com.yuroyami.syncplay.settings.writeValue
 import com.yuroyami.syncplay.ui.LifecycleWatchdog
 import com.yuroyami.syncplay.utils.generateTimestampMillis
+import com.yuroyami.syncplay.utils.getDefaultEngine
 import com.yuroyami.syncplay.utils.getFileName
+import com.yuroyami.syncplay.utils.instantiatePlayer
 import com.yuroyami.syncplay.utils.iterateDirectory
 import com.yuroyami.syncplay.utils.loggy
+import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -137,6 +140,9 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
             withContext(Dispatchers.Main) {
                 nav.navigate(Screen.Room.label)
             }
+
+            val engine = BasePlayer.ENGINE.valueOf(valueSuspendingly(DataStoreKeys.MISC_PLAYER_ENGINE, getDefaultEngine()))
+            player = instantiatePlayer(engine)
 
             /** Connecting (via TLS or noTLS) */
             val tls = valueSuspendingly(PREF_TLS_ENABLE, default = true)
@@ -249,14 +255,14 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     fun pausePlayback() {
         if (background == true) return
         player?.pause()
-        platform?.onPlayback(true)
+        platformCallback?.onPlayback(true)
     }
 
     /** This resumes playback on the main thread, and hides system UI **/
     fun playPlayback() {
         if (background == true) return
         player?.play()
-        platform?.onPlayback(false)
+        platformCallback?.onPlayback(false)
     }
 
     fun seekBckwd() {

@@ -1,16 +1,11 @@
 package com.yuroyami.syncplay
 
 import android.annotation.SuppressLint
-import android.app.PendingIntent
-import android.app.PendingIntent.FLAG_IMMUTABLE
-import android.app.PictureInPictureParams
-import android.app.RemoteAction
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
-import android.graphics.drawable.Icon
 import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
@@ -32,24 +27,11 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C.STREAM_TYPE_MUSIC
-import com.yuroyami.syncplay.viewmodel.PlatformCallback
-import com.yuroyami.syncplay.player.BasePlayer
-import com.yuroyami.syncplay.player.BasePlayer.ENGINE
-import com.yuroyami.syncplay.player.PlayerUtils.pausePlayback
-import com.yuroyami.syncplay.player.PlayerUtils.playPlayback
-import com.yuroyami.syncplay.player.exo.ExoPlayer
-import com.yuroyami.syncplay.player.mpv.MpvPlayer
-import com.yuroyami.syncplay.player.mpv.mpvRoomSettings
-import com.yuroyami.syncplay.player.vlc.VlcPlayer
-import com.yuroyami.syncplay.protocol.SpProtocolAndroid
-import com.yuroyami.syncplay.protocol.SpProtocolKtor
-import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.screens.adam.AdamScreen
+import com.yuroyami.syncplay.screens.home.JoinConfig
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_NIGHTMODE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_SUBTITLE_SIZE
-import com.yuroyami.syncplay.settings.SettingObtainerCallback
-import com.yuroyami.syncplay.settings.obtainerCallback
 import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.settings.valueFlow
 import com.yuroyami.syncplay.settings.valueSuspendingly
@@ -57,15 +39,17 @@ import com.yuroyami.syncplay.utils.UIUtils.cutoutMode
 import com.yuroyami.syncplay.utils.UIUtils.hideSystemUI
 import com.yuroyami.syncplay.utils.bindWatchdog
 import com.yuroyami.syncplay.utils.changeLanguage
-import com.yuroyami.syncplay.utils.defaultEngineAndroid
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.platformCallback
+import com.yuroyami.syncplay.viewmodel.PlatformCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class SyncplayActivity : ComponentActivity() {
 
     lateinit var audioManager: AudioManager
+
+    //TODO NEED REFERENCE TO VIEWMODEL
 
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -92,31 +76,46 @@ class SyncplayActivity : ComponentActivity() {
         hideSystemUI(false)
         cutoutMode(true)
 
-
-        /** Checking whether this APK at this point supports multi-engine players */
-        val engine = BasePlayer.ENGINE.valueOf(
-            valueBlockingly(DataStoreKeys.MISC_PLAYER_ENGINE, defaultEngineAndroid)
-        )
-
-        when (engine) {
-            ENGINE.ANDROID_EXOPLAYER -> {
-                viewmodel?.player = ExoPlayer()
+        /** Binding common logic with platform logic */
+        platformCallback = object: PlatformCallback {
+            override fun onLanguageChanged(newLang: String) {
+                runOnUiThread {
+                    recreate()
+                }
             }
 
-            ENGINE.ANDROID_MPV -> {
-                viewmodel?.player = MpvPlayer()
+            override fun onSaveConfigShortcut(joinConfig: JoinConfig) {
+                val shortcutIntent = Intent(this@SyncplayActivity, SyncplayActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    action = Intent.ACTION_MAIN
+                    putExtra("quickLaunch", true)
+                    putExtra("name", joinConfig.user.trim())
+                    putExtra("room", joinConfig.room.trim())
+                    putExtra("serverip", joinConfig.ip.trim())
+                    putExtra("serverport", joinConfig.port)
+                    putExtra("serverpw", joinConfig.pw)
+                }
+
+
+                val shortcutId = "${joinConfig.user}${joinConfig.room}${joinConfig.ip}${joinConfig.port}"
+                val shortcutInfo = ShortcutInfoCompat.Builder(this@SyncplayActivity, shortcutId)
+                    .setShortLabel(joinConfig.room)
+                    .setIcon(IconCompat.createWithResource(this@SyncplayActivity, R.mipmap.ic_launcher))
+                    .setIntent(shortcutIntent)
+                    .build()
+
+                ShortcutManagerCompat.addDynamicShortcuts(this@SyncplayActivity, listOf(shortcutInfo))
+
+                if (ShortcutManagerCompat.isRequestPinShortcutSupported(this@SyncplayActivity)) {
+                    ShortcutManagerCompat.requestPinShortcut(this@SyncplayActivity, shortcutInfo, null)
+                }
             }
 
-            ENGINE.ANDROID_VLC -> {
-                viewmodel?.player = VlcPlayer()
+            override fun onEraseConfigShortcuts() {
+                ShortcutManagerCompat.removeAllDynamicShortcuts(this@SyncplayActivity)
             }
 
-            else -> {}
-        }
-
-        platformCallback = object : PlatformCallback {
-
-            override fun getMoreRoomSettings() = if (viewmodel?.player?.engine == ENGINE.ANDROID_MPV) mpvRoomSettings else listOf()
+            //TODO override fun getMoreRoomSettings() = if (viewmodel?.player?.engine == ENGINE.ANDROID_MPV) mpvRoomSettings else listOf()
 
             override fun getMaxVolume() = audioManager.getStreamMaxVolume(STREAM_TYPE_MUSIC)
             override fun getCurrentVolume() = audioManager.getStreamVolume(STREAM_TYPE_MUSIC)
@@ -186,79 +185,18 @@ class SyncplayActivity : ComponentActivity() {
             AdamScreen()
         }
 
-        /** Language change listener */
-        homeCallback = object: PlatformCallback {
-            override fun onLanguageChanged(newLang: String) {
-                runOnUiThread {
-                    recreate()
-                }
-            }
-
-            override fun onJoin(joinInfo: JoinInfo?) {
-                viewmodel = SpViewModel()
-
-                joinInfo?.let {
-                    val networkEngine = SyncplayProtocol.getPreferredEngine()
-                    viewmodel!!.p = if (networkEngine == SyncplayProtocol.NetworkEngine.KTOR) {
-                        SpProtocolKtor()
-                    } else {
-                        SpProtocolAndroid()
-                    }
-
-                    prepareProtocol(it)
-                }
-
-                val intent = Intent(this@SyncplayActivity, WatchActivity::class.java)
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                startActivity(intent)
-                finish()
-            }
-
-            override fun onSaveConfigShortcut(joinInfo: JoinInfo) {
-
-                val shortcutIntent = Intent(this@SyncplayActivity, SyncplayActivity::class.java)
-                shortcutIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                shortcutIntent.action = Intent.ACTION_MAIN
-                shortcutIntent.putExtra("quickLaunch", true)
-                shortcutIntent.putExtra("name", joinInfo.username.trim())
-                shortcutIntent.putExtra("room", joinInfo.roomname.trim())
-                shortcutIntent.putExtra("serverip", joinInfo.address.trim())
-                shortcutIntent.putExtra("serverport", joinInfo.port)
-                shortcutIntent.putExtra("serverpw", joinInfo.password)
-
-                val shortcutId = "${joinInfo.username}${joinInfo.roomname}${joinInfo.address}${joinInfo.port}"
-                val shortcutLabel = joinInfo.roomname
-                val shortcutIcon = IconCompat.createWithResource(this@SyncplayActivity, R.mipmap.ic_launcher)
-
-                val shortcutInfo = ShortcutInfoCompat.Builder(this@SyncplayActivity, shortcutId)
-                    .setShortLabel(shortcutLabel)
-                    .setIcon(shortcutIcon)
-                    .setIntent(shortcutIntent)
-                    .build()
-
-                ShortcutManagerCompat.addDynamicShortcuts(this@SyncplayActivity, listOf(shortcutInfo))
-
-                if (ShortcutManagerCompat.isRequestPinShortcutSupported(this@SyncplayActivity)) {
-                    ShortcutManagerCompat.requestPinShortcut(this@SyncplayActivity, shortcutInfo, null)
-                }
-            }
-
-            override fun onEraseConfigShortcuts() {
-                ShortcutManagerCompat.removeAllDynamicShortcuts(this@SyncplayActivity)
-            }
-        }
-
         /** Maybe there is a shortcut intent */
         if (intent?.getBooleanExtra("quickLaunch", false) == true) {
             intent.apply {
-                val info = JoinInfo(
-                    username = getStringExtra("name") ?: "",
-                    roomname = getStringExtra("room") ?: "",
-                    address = getStringExtra("serverip") ?: "",
+                val info = JoinConfig(
+                    user = getStringExtra("name") ?: "",
+                    room = getStringExtra("room") ?: "",
+                    ip = getStringExtra("serverip") ?: "",
                     port = getIntExtra("serverport", 80),
-                    password = getStringExtra("serverpw") ?: ""
+                    pw = getStringExtra("serverpw") ?: ""
                 )
-                homeCallback?.onJoin(info.get())
+
+                //TODO LAUNCH SHORTCUT
             }
         }
 
@@ -282,27 +220,27 @@ class SyncplayActivity : ComponentActivity() {
         /* Loading subtitle appearance */
         lifecycleScope.launch(Dispatchers.Main) {
             val ccsize = valueSuspendingly(PREF_INROOM_PLAYER_SUBTITLE_SIZE, 16)
-            (viewmodel?.player as? ExoPlayer)?.retweakSubtitleAppearance(ccsize.toFloat())
+            //TODO  (viewmodel?.player as? ExoPlayer)?.retweakSubtitleAppearance(ccsize.toFloat())
         }
     }
 
     fun terminate() {
-        if (!isSoloMode) {
-            viewmodel?.p?.endConnection(true)
-        }
+        //TODO if (!isSoloMode) {
+            //TODO viewmodel?.p?.endConnection(true)
+        //TODO }
 
         finish()
-        viewmodel = null
+        //TODO viewmodel = null
     }
 
     /* Let's inform Jetpack Compose that we entered picture in picture, to adjust some UI settings */
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
-        viewmodel?.pipMode?.value = isInPictureInPictureMode
+        //TODO viewmodel?.pipMode?.value = isInPictureInPictureMode
 
         if (!isInPictureInPictureMode) {
-            viewmodel?.player?.pause()
+            //TODO viewmodel?.player?.pause()
         }
     }
 
@@ -311,17 +249,18 @@ class SyncplayActivity : ComponentActivity() {
 
         if (!isPipAllowed) return
 
-        viewmodel?.pipMode?.value = true
+        //TODO viewmodel?.pipMode?.value = true
         //moveTaskToBack(true)
         updatePiPParams()
         enterPictureInPictureMode()
-        viewmodel?.hudVisibilityState?.value = false
+        //TODO viewmodel?.hudVisibilityState?.value = false
     }
 
     private fun updatePiPParams() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
             return
 
+        /*
         val intent = Intent("pip")
         val pendingIntent = PendingIntent.getBroadcast(
             this, 6969, intent,
@@ -341,13 +280,15 @@ class SyncplayActivity : ComponentActivity() {
         }
 
         val params = with(PictureInPictureParams.Builder()) {
-            setActions(if (viewmodel?.hasVideoG?.value == true) listOf(action) else listOf())
+            //TODO setActions(if (viewmodel?.hasVideoG?.value == true) listOf(action) else listOf())
         }
 
         try {
-            setPictureInPictureParams(params.build())
+            //TODO setPictureInPictureParams(params.build())
         } catch (_: IllegalArgumentException) {
         }
+
+         */
     }
 
     private val pipBroadcastReceiver = object : BroadcastReceiver() {
@@ -357,9 +298,9 @@ class SyncplayActivity : ComponentActivity() {
                     val pausePlayValue = it.getIntExtra("pause_zero_play_one", -1)
 
                     if (pausePlayValue == 1) {
-                        playPlayback()
+                        //TODO playPlayback()
                     } else {
-                        pausePlayback()
+                        //TODO pausePlayback()
                     }
                 }
             }
@@ -380,7 +321,7 @@ class SyncplayActivity : ComponentActivity() {
         hideSystemUI(false)
 
         /** Applying track choices again so the player doesn't forget about track choices **/
-        viewmodel?.player?.reapplyTrackChoices()
+        //TODO viewmodel?.player?.reapplyTrackChoices()
     }
 
     override fun onDestroy() {

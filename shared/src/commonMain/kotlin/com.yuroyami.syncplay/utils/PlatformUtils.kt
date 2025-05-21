@@ -5,6 +5,7 @@ import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import co.touchlab.kermit.Logger
+import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.viewmodel.PlatformCallback
 
 
@@ -22,6 +23,7 @@ fun loggy(s: String?, checkpoint: Int = 0) = Logger.e("SYNCPLAY_LOG: $s")
 
 /** Gets the default video playback engine on each platform (mpv on Android, AVPlayer on iOS) */
 expect fun getDefaultEngine(): String
+expect fun instantiatePlayer(engine: BasePlayer.ENGINE): BasePlayer?
 
 /** Generates the system's current Epoch millis */
 expect fun generateTimestampMillis(): Long

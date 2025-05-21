@@ -1,7 +1,6 @@
 package com.yuroyami.syncplay.utils
 
-import com.yuroyami.syncplay.watchroom.viewmodel
-import kotlinx.coroutines.Deferred
+import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -22,10 +21,10 @@ object CommonUtils {
 
     private fun Int.fixDigits() = this.toString().padStart(2, '0')
 
-    suspend fun beginPingUpdate() {
+    suspend fun SyncplayViewmodel.beginPingUpdate() {
         while (true) {
-            viewmodel?.p?.ping?.value = if (viewmodel?.p?.isSocketValid() == true) { //if (p.connection?.socket?.isActive == true && p.connection != null) {
-                pingIcmp(viewmodel!!.p.session.serverHost, 32)
+            p?.ping?.value = if (p.isSocketValid() == true) { //if (p.connection?.socket?.isActive == true && p.connection != null) {
+                pingIcmp(p.session.serverHost, 32)
             } else null
             delay(1000)
         }

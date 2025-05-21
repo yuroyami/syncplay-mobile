@@ -13,6 +13,10 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.yuroyami.syncplay.BuildConfig
 import com.yuroyami.syncplay.player.BasePlayer
+import com.yuroyami.syncplay.player.BasePlayer.ENGINE
+import com.yuroyami.syncplay.player.exo.ExoPlayer
+import com.yuroyami.syncplay.player.mpv.MpvPlayer
+import com.yuroyami.syncplay.player.vlc.VlcPlayer
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
@@ -26,12 +30,17 @@ actual fun getSystemMaxVolume(): Int {
 
 actual val platform: PLATFORM = PLATFORM.Android
 
-var defaultEngineAndroid = if (BuildConfig.FLAVOR != "noLibs") BasePlayer.ENGINE.ANDROID_EXOPLAYER.name else BasePlayer.ENGINE.ANDROID_MPV.name
 
-actual fun getDefaultEngine(): String = defaultEngineAndroid
+actual fun getDefaultEngine(): String = if (BuildConfig.FLAVOR != "noLibs") BasePlayer.ENGINE.ANDROID_EXOPLAYER.name else BasePlayer.ENGINE.ANDROID_MPV.name
+
+actual fun instantiatePlayer(engine: BasePlayer.ENGINE) = when (engine) {
+    ENGINE.ANDROID_EXOPLAYER -> ExoPlayer()
+    ENGINE.ANDROID_MPV -> MpvPlayer()
+    ENGINE.ANDROID_VLC -> VlcPlayer()
+    else -> null
+}
 
 actual fun generateTimestampMillis() = System.currentTimeMillis()
-
 
 actual fun getFolderName(uri: String): String? {
     val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
