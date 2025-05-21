@@ -5,7 +5,6 @@ import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.utils.CommonUtils.md5
-import com.yuroyami.syncplay.utils.CommonUtils.toHex
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
@@ -45,7 +44,7 @@ sealed class Packet {
                 put("username", username)
 
                 if (serverPassword.isNotEmpty()) {
-                    put("password", md5(serverPassword).toHex().lowercase())
+                    put("password", md5(serverPassword).toHexString(HexFormat.Default))
                 }
 
                 put("room", buildJsonObject {

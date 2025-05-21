@@ -3,7 +3,6 @@ package com.yuroyami.syncplay.utils
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.utils.CommonUtils.sha256
-import com.yuroyami.syncplay.utils.CommonUtils.toHex
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSFileSize
 import platform.Foundation.NSNumber
@@ -15,8 +14,8 @@ fun collectInfoLocaliOS(media: MediaFile) {
         fileSize = getFileSize(uri!!).toString()
 
         /** Hashing name and size in case they're used **/
-        fileNameHashed = sha256(fileName).toHex()
-        fileSizeHashed = sha256(fileSize).toHex()
+        fileNameHashed = sha256(fileName).toHexString(HexFormat.UpperCase)
+        fileSizeHashed = sha256(fileSize).toHexString(HexFormat.UpperCase)
     }
 }
 

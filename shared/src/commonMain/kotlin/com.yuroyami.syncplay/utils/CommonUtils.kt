@@ -63,18 +63,22 @@ object CommonUtils {
 
     fun sha256(str: String) = SHA256().digest(str.encodeToByteArray())
 
-    /** Hex Digester for hashers **/
-    fun ByteArray.toHex(): String {
-        //return joinToString(separator = "") { byte -> "%02x".format(byte) }
-
-        val hexChars = "0123456789ABCDEF".toCharArray()
-        val result = CharArray(size * 2)
-        var index = 0
-        for (byte in this) {
-            val value = byte.toInt() and 0xFF
-            result[index++] = hexChars[value shr 4]
-            result[index++] = hexChars[value and 0x0F]
+    fun Char.isEmoji(): Boolean {
+        val codePoint = this.code
+        return when {
+            // Basic emoji ranges
+            codePoint in 0x2600..0x27BF -> true // Various symbols
+            codePoint in 0x1F600..0x1F64F -> true // Emoticons
+            codePoint in 0x1F300..0x1F5FF -> true // Misc symbols and pictographs
+            codePoint in 0x1F680..0x1F6FF -> true // Transport and map
+            codePoint in 0x1F700..0x1F77F -> true // Alchemical symbols
+            codePoint in 0x1F780..0x1F7FF -> true // Geometric shapes
+            codePoint in 0x1F800..0x1F8FF -> true // Supplemental arrows
+            codePoint in 0x1F900..0x1F9FF -> true // Supplemental symbols and pictographs
+            codePoint in 0x1FA00..0x1FA6F -> true // Chess symbols
+            codePoint in 0x1FA70..0x1FAFF -> true // Symbols and pictographs extended-A
+            this.isHighSurrogate() || this.isLowSurrogate() -> true // Surrogate pairs
+            else -> false
         }
-        return result.concatToString()
     }
 }

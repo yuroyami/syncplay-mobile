@@ -140,7 +140,6 @@ import com.yuroyami.syncplay.components.getSyncplayFont
 import com.yuroyami.syncplay.components.popups.PopupAddUrl.AddUrlPopup
 import com.yuroyami.syncplay.components.popups.PopupChatHistory.ChatHistoryPopup
 import com.yuroyami.syncplay.components.popups.PopupSeekToPosition.SeekToPositionPopup
-import com.yuroyami.syncplay.filepicking.FilePicker
 import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.player.BasePlayer.TRACKTYPE
 import com.yuroyami.syncplay.protocol.sending.Packet
@@ -174,9 +173,13 @@ import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.Paletting.ROOM_ICON_SIZE
 import com.yuroyami.syncplay.utils.CommonUtils
+import com.yuroyami.syncplay.utils.CommonUtils.isEmoji
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.utils.timeStamper
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -253,7 +256,7 @@ private fun RoomUIImpl() {
         /** Starting ping update */
         if (viewmodel.pingUpdateJob == null && !isSoloMode) {
             viewmodel.pingUpdateJob = composeScope.launch(Dispatchers.IO) {
-                CommonUtils.beginPingUpdate()
+                //todo CommonUtils.beginPingUpdate()
             }
         }
     }
@@ -280,22 +283,19 @@ private fun RoomUIImpl() {
         val keyboardOkFunction by PREF_INROOM_MSG_BOX_ACTION.settingBooleanState()
 
         /* Some file picking stuff */
-        var showVideoPicker by remember { mutableStateOf(false) }
-        FilePicker(show = showVideoPicker, fileExtensions = CommonUtils.vidExs) { file ->
-            showVideoPicker = false
+        val videoPicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = CommonUtils.vidExs)) { file ->
             file?.path?.let {
                 loggy(it, 0)
                 viewmodel.player?.injectVideo(it, false)
             }
         }
 
-        var showSubtitlePicker by remember { mutableStateOf(false) }
-        FilePicker(show = showSubtitlePicker, fileExtensions = CommonUtils.ccExs) { file ->
-            showSubtitlePicker = false
+        val subtitlePicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = CommonUtils.ccExs)) { file ->
             file?.path?.let {
                 viewmodel.player?.loadExternalSub(it)
             }
         }
+
 
         /** Room artwork underlay (when no video is loaded) */
         if (!hasVideo.value) {
@@ -979,7 +979,7 @@ private fun RoomUIImpl() {
                                                     tracksPopup.value = false
                                                     controlcardvisible = false
 
-                                                    showSubtitlePicker = true
+                                                    subtitlePicker.launch()
                                                 })
 
 
@@ -1551,7 +1551,7 @@ private fun RoomUIImpl() {
                                     }
                                 }, onClick = {
                                     addmediacardvisible = false
-                                    showVideoPicker = true
+                                    videoPicker.launch()
                                 })
 
                                 //From network URL
@@ -1689,23 +1689,4 @@ fun GradientTextField(
             }
             TransformedText(annotatedString, OffsetMapping.Identity)
         })
-}
-
-fun Char.isEmoji(): Boolean {
-    val codePoint = this.code
-    return when {
-        // Basic emoji ranges
-        codePoint in 0x2600..0x27BF -> true // Various symbols
-        codePoint in 0x1F600..0x1F64F -> true // Emoticons
-        codePoint in 0x1F300..0x1F5FF -> true // Misc symbols and pictographs
-        codePoint in 0x1F680..0x1F6FF -> true // Transport and map
-        codePoint in 0x1F700..0x1F77F -> true // Alchemical symbols
-        codePoint in 0x1F780..0x1F7FF -> true // Geometric shapes
-        codePoint in 0x1F800..0x1F8FF -> true // Supplemental arrows
-        codePoint in 0x1F900..0x1F9FF -> true // Supplemental symbols and pictographs
-        codePoint in 0x1FA00..0x1FA6F -> true // Chess symbols
-        codePoint in 0x1FA70..0x1FAFF -> true // Symbols and pictographs extended-A
-        this.isHighSurrogate() || this.isLowSurrogate() -> true // Surrogate pairs
-        else -> false
-    }
 }

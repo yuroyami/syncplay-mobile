@@ -8,7 +8,6 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.utils.CommonUtils.sha256
-import com.yuroyami.syncplay.utils.CommonUtils.toHex
 import java.util.Locale
 
 /** This is used specifically in the case where common code needs access to some context.
@@ -34,8 +33,8 @@ fun collectInfoLocalAndroid(media: MediaFile, context: Context) {
         fileSize = getRealSizeFromUri(context, uri!!.toUri())?.toDouble()?.toLong().toString()
 
         /** Hashing name and size in case they're used **/
-        fileNameHashed = sha256(fileName).toHex()
-        fileSizeHashed = sha256(fileSize).toHex()
+        fileNameHashed = sha256(fileName).toHexString(HexFormat.UpperCase)
+        fileSizeHashed = sha256(fileSize).toHexString(HexFormat.UpperCase)
     }
 }
 

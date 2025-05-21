@@ -104,6 +104,8 @@ kotlin {
 
             /* Logging */
             implementation(libs.logging.kermit)
+
+            implementation("io.github.vinceglb:filekit-dialogs-compose:0.10.0-beta04")
         }
 
         androidMain.dependencies {
