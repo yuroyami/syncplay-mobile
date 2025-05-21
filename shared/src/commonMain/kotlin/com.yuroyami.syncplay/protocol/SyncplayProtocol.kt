@@ -2,25 +2,28 @@ package com.yuroyami.syncplay.protocol
 
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.Session
-import com.yuroyami.syncplay.protocol.JsonSender.sendHello
-import com.yuroyami.syncplay.protocol.JsonSender.sendTLS
 import com.yuroyami.syncplay.protocol.parsing.JsonHandler
+import com.yuroyami.syncplay.protocol.sending.Packet
+import com.yuroyami.syncplay.protocol.sending.Packet.Companion.createPacketInstance
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.settings.valueSuspendingly
 import com.yuroyami.syncplay.utils.PLATFORM
-import com.yuroyami.syncplay.utils.getPlatform
 import com.yuroyami.syncplay.utils.loggy
+import com.yuroyami.syncplay.utils.platform
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.reflect.KClass
 
 abstract class SyncplayProtocol {
     /** This refers to the event callback interface */
@@ -64,15 +67,13 @@ abstract class SyncplayProtocol {
             /** if the TLS mode is [Constants.TLS.TLS_ASK], then the the first packet to send
              * concerns an opportunistic TLS check with the server, otherwise, a Hello would be first */
             if (tls == Constants.TLS.TLS_ASK) {
-                sendPacket(sendTLS())
+                send<Packet.TLS>()
             } else {
-                sendPacket(
-                    sendHello(
-                        session.currentUsername,
-                        session.currentRoom,
-                        session.currentPassword
-                    )
-                )
+                send<Packet.Hello> {
+                    username = session.currentUsername
+                    roomname = session.currentRoom
+                    serverPassword = session.currentPassword
+                }
             }
         } catch (e: Exception) {
             loggy(e.stackTraceToString(), 205)
@@ -82,22 +83,24 @@ abstract class SyncplayProtocol {
 
     /** WRITING: This small method basically checks if the channel is active and writes to it, otherwise
      *  it queues the json to send in a special queue until the connection recovers. */
-    open suspend fun sendPacket(json: String, isRetry: Boolean = false) {
+    inline fun <reified T : Packet> send(
+        noinline init: T.() -> Unit = {}
+    ): Deferred<Unit> = protoScope.async(Dispatchers.IO) {
+        val packetInstance = createPacketInstance<T>().apply(init)
+        val jsonPacket = packetInstance.build()
+        transmitPacket(jsonPacket, packetClass = T::class)
+    }
+
+    suspend fun transmitPacket(json: Packet.Companion.SendablePacket, packetClass: KClass<out Packet>, isRetry: Boolean = false){
         withContext(Dispatchers.IO) {
             try {
                 if (isSocketValid()) {
                     val finalOut = json + "\r\n"
                     //loggy("Client: $finalOut", 206)
                     writeActualString(finalOut)
-
                 } else {
                     /** Queuing any pending outgoing messages */
-                    if (json != sendHello(
-                            session.currentUsername,
-                            session.currentRoom,
-                            session.currentPassword
-                        )
-                    ) {
+                    if (packetClass != Packet.Hello::class) {
                         session.outboundQueue.add(json)
                     }
                     if (state == Constants.CONNECTIONSTATE.STATE_CONNECTED) {
@@ -109,15 +112,9 @@ abstract class SyncplayProtocol {
                 if (isRetry) {
                     onError()
                 } else {
-                    sendPacket(json, isRetry = true)
+                    transmitPacket(json, packetClass, isRetry = true)
                 }
             }
-        }
-    }
-
-    fun sendPacketAsync(json: String) {
-        protoScope.launch {
-            sendPacket(json)
         }
     }
 
@@ -187,7 +184,7 @@ abstract class SyncplayProtocol {
 
     companion object {
         fun getPreferredEngine(): NetworkEngine {
-            val defaultEngine = if (getPlatform() == PLATFORM.Android) NetworkEngine.NETTY else NetworkEngine.SWIFTNIO
+            val defaultEngine = if (platform == PLATFORM.Android) NetworkEngine.NETTY else NetworkEngine.SWIFTNIO
             val engineName = valueBlockingly(DataStoreKeys.PREF_NETWORK_ENGINE, defaultEngine.name.lowercase())
             return NetworkEngine.valueOf(engineName.uppercase())
         }

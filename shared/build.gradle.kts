@@ -15,6 +15,11 @@ plugins {
 }
 
 kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+        freeCompilerArgs.add("-Xnested-type-aliases")
+    }
+
     // Activating Android target (androidMain)
     androidTarget()
 
@@ -39,7 +44,7 @@ kotlin {
         //pod("SPLPing", "1.1.8") //Light-weight Objective-C library to add the ICMP ping functionality
         //
     }
-
+    
     sourceSets {
         all {
             languageSettings {

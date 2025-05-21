@@ -2,6 +2,7 @@ package com.yuroyami.syncplay.screens.adam
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -66,6 +67,10 @@ fun AdamScreen() {
         derivedStateOf {
             Screen.fromLabel(navEntry?.destination?.route)
         }
+    }
+
+    LaunchedEffect(navigator) {
+        viewmodel.nav = navigator
     }
 
     CompositionLocalProvider(

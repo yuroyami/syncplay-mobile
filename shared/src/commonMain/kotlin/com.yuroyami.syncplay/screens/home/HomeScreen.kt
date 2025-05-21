@@ -115,8 +115,8 @@ import com.yuroyami.syncplay.settings.valueFlow
 import com.yuroyami.syncplay.settings.writeValue
 import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.ui.Paletting
+import com.yuroyami.syncplay.ui.ThemeMenu
 import com.yuroyami.syncplay.utils.getDefaultEngine
-import com.yuroyami.syncplay.watchroom.ThemeMenu
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -390,6 +390,7 @@ fun HomeScreenUI() {
                                 }
                             }
 
+
                             Spacer(modifier = Modifier.height(12.dp))
 
                             if (!serverIsPublic) {
@@ -619,17 +620,14 @@ fun HomeScreenUI() {
                                         return@launch
                                     }
 
-                                    val info = JoinConfig(
+                                    viewmodel.joinRoom(
+                                        JoinConfig(
                                         textUsername.replace("\\", "").trim().substring(0, 149),
                                         textRoomname.replace("\\", "").trim().substring(0, 34),
                                         serverAddress,
                                         serverPort.toInt(),
                                         serverPassword
-                                    )
-
-                                    info.save() //Remembering info
-
-                                    viewmodel.platform.onJoin(info)
+                                    ))
                                 }
                             },
                         ) {

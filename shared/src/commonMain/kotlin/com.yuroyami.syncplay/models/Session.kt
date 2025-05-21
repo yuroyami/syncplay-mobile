@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateListOf
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /*************************************************************************************************
- * Session wrapper class. It encapsulates all information and data we need about a session.
+ * Session wrapper class. It encapsulates all information and data we need about a room session.
  *
  * In summary, a session is the status of the room, for example, the users in the room, properties
  * of the room (name, server, password, features...etc), as well as the shared playlist if there is

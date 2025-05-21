@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.watchroom
+package com.yuroyami.syncplay.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

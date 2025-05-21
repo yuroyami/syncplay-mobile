@@ -13,10 +13,6 @@ data class JoinConfig(
     var pw: String = "",
 ) {
     companion object {
-        fun String.turnIntoOfficialIpIfApplicable(): String {
-            return if (this == "syncplay.pl") "151.80.32.178" else this
-        }
-
         fun savedConfig() = JoinConfig(
             user = valueBlockingly(DataStoreKeys.MISC_JOIN_USERNAME, "user" + (0..9999).random().toString()),
             room = valueBlockingly(DataStoreKeys.MISC_JOIN_ROOMNAME, "room" + (0..9999).random().toString()),

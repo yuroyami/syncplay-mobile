@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Message
@@ -16,10 +17,13 @@ import com.yuroyami.syncplay.protocol.JsonSender.sendState
 import com.yuroyami.syncplay.protocol.ProtocolCallback
 import com.yuroyami.syncplay.protocol.SpProtocolKtor
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
+import com.yuroyami.syncplay.screens.adam.Screen
+import com.yuroyami.syncplay.screens.home.JoinConfig
 import com.yuroyami.syncplay.screens.room.dispatchOSD
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_FILE_MISMATCH_WARNING
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_TLS_ENABLE
 import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.settings.valueSuspendingly
 import com.yuroyami.syncplay.settings.writeValue
@@ -63,6 +67,8 @@ import syncplaymobile.shared.generated.resources.room_tls_supported
 import syncplaymobile.shared.generated.resources.room_you_joined_room
 
 class SyncplayViewmodel: ViewModel(), ProtocolCallback {
+    lateinit var nav: NavController
+
     var p: SyncplayProtocol = SpProtocolKtor() //If it is not initialized, it means we're in Solo Mode
 
     val isSoloMode = false
@@ -116,6 +122,34 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
         }
 
         override fun onPause() {}
+    }
+
+
+    fun joinRoom(joinConfig: JoinConfig) {
+        viewModelScope.launch {
+            joinConfig.save() //Remembering info
+
+            setReadyDirectly = valueSuspendingly(DataStoreKeys.PREF_READY_FIRST_HAND, true)
+
+            p.session.serverHost = joinConfig.ip.takeIf { it != "syncplay.pl" } ?: "151.80.32.178"
+            p.session.serverPort = joinConfig.port
+            p.session.currentUsername = joinConfig.user
+            p.session.currentRoom = joinConfig.room
+            p.session.currentPassword = joinConfig.pw
+
+            withContext(Dispatchers.Main) {
+                nav.navigate(Screen.Room.label)
+            }
+
+            /** Connecting (via TLS or noTLS) */
+            val tls = valueSuspendingly(PREF_TLS_ENABLE, default = true)
+            if (tls && p.supportsTLS()) {
+                p.syncplayCallback?.onTLSCheck()
+                p.tls = Constants.TLS.TLS_ASK
+            }
+
+            p.connect()
+        }
     }
 
     /*********** Room Utilities *************/
