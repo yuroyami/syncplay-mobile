@@ -83,9 +83,7 @@ abstract class SyncplayProtocol {
 
     /** WRITING: This small method basically checks if the channel is active and writes to it, otherwise
      *  it queues the json to send in a special queue until the connection recovers. */
-    inline fun <reified T : Packet> send(
-        noinline init: T.() -> Unit = {}
-    ): Deferred<Unit> = protoScope.async(Dispatchers.IO) {
+    inline fun <reified T : Packet> send(noinline init: T.() -> Unit = {}): Deferred<Unit> = protoScope.async(Dispatchers.IO) {
         val packetInstance = createPacketInstance<T>().apply(init)
         val jsonPacket = packetInstance.build()
         transmitPacket(jsonPacket, packetClass = T::class)

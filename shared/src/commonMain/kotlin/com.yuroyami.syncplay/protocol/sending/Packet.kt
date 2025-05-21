@@ -1,11 +1,11 @@
 package com.yuroyami.syncplay.protocol.sending
 
 import com.yuroyami.syncplay.models.MediaFile
+import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.utils.CommonUtils.md5
 import com.yuroyami.syncplay.utils.CommonUtils.toHex
-import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
@@ -16,14 +16,14 @@ sealed class Packet {
     companion object {
         typealias SendablePacket = String
 
-        inline fun <reified T : Packet> createPacketInstance(): T {
+        inline fun <reified T : Packet> SyncplayProtocol.createPacketInstance(): T {
             return when (T::class) {
                 Hello::class -> Hello() as T
                 Joined::class -> Joined() as T
                 Readiness::class -> Readiness() as T
                 File::class -> File() as T
                 Chat::class -> Chat() as T
-                State::class -> State() as T
+                State::class -> State(this) as T
                 PlaylistChange::class -> PlaylistChange() as T
                 PlaylistIndex::class -> PlaylistIndex() as T
                 TLS::class -> TLS() as T
@@ -169,8 +169,7 @@ sealed class Packet {
         }
     }
 
-    class State : Packet() {
-        private var viewModel: SyncplayViewmodel? = null
+    class State(private var p: SyncplayProtocol) : Packet() {
         var serverTime: Double? = null
         var clientTime: Double = 0.0
         var doSeek: Boolean? = null
@@ -178,16 +177,7 @@ sealed class Packet {
         var changeState: Int = 0
         var play: Boolean? = null
 
-        fun withViewModel(vm: SyncplayViewmodel): State {
-            viewModel = vm
-            return this
-        }
-
         override fun build(): String {
-            requireNotNull(viewModel) { "SyncplayViewmodel must be provided" }
-
-            val p = viewModel.p
-
             val state = buildJsonObject {
                 val playstate = buildJsonObject {
                     if (doSeek == true) {
