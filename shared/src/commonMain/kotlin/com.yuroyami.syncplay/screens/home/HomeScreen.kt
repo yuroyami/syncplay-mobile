@@ -114,11 +114,13 @@ import com.yuroyami.syncplay.settings.valueFlow
 import com.yuroyami.syncplay.settings.writeValue
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.ThemeMenu
+import com.yuroyami.syncplay.utils.CommonUtils.substringSafely
 import com.yuroyami.syncplay.utils.getDefaultEngine
 import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
@@ -154,10 +156,12 @@ val officialServers = listOf("syncplay.pl:8995", "syncplay.pl:8996", "syncplay.p
 fun HomeScreenUI() {
     val viewmodel = LocalViewmodel.current
     val servers = officialServers + stringResource(Res.string.connect_enter_custom_server)
-    val savedConfig = remember { JoinConfig.savedConfig() } //FIXME: Fetch this asynchronously
+    var savedConfig by remember { mutableStateOf<JoinConfig?>(null) }
 
     LaunchedEffect(null) {
-        //TODO get config and make UI visible only when config is obtained
+        withContext(Dispatchers.IO) {
+            savedConfig = JoinConfig.savedConfig()
+        }
     }
 
     CompositionLocalProvider(
@@ -174,158 +178,101 @@ fun HomeScreenUI() {
                 SyncplayTopBar()
             },
             content = { paddingValues ->
-                Column(
-                    modifier = Modifier.fillMaxSize()
-                        .windowInsetsPadding(BottomAppBarDefaults.windowInsets)
-                        .verticalScroll(rememberScrollState()),
-                    horizontalAlignment = CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceAround
-                ) {
-                    /* Instead of consuming paddingValues, we create a spacer with that height */
-                    Spacer(modifier = Modifier.height(paddingValues.calculateTopPadding()))
-
-                    /* higher-level variables which are needed for logging in */
-                    var textUsername by remember { mutableStateOf(savedConfig.user) }
-                    var textRoomname by remember { mutableStateOf(savedConfig.room) }
-
-                    var serverIsPublic by remember { mutableStateOf(true) }
-
-                    var selectedServer by remember { mutableStateOf("${savedConfig.ip}:${savedConfig.port}") }
-
-                    var serverAddress by remember { mutableStateOf(savedConfig.ip) }
-                    var serverPort by remember { mutableStateOf(savedConfig.port.toString()) }
-                    var serverPassword by remember { mutableStateOf(savedConfig.pw) }
-
-                    /* Username */
+                savedConfig?.let { config ->
                     Column(
-                        modifier = Modifier.wrapContentHeight().fillMaxWidth(),
+                        modifier = Modifier.fillMaxSize()
+                            .windowInsetsPadding(BottomAppBarDefaults.windowInsets)
+                            .verticalScroll(rememberScrollState()),
                         horizontalAlignment = CenterHorizontally,
+                        verticalArrangement = Arrangement.SpaceAround
                     ) {
+                        /* Instead of consuming paddingValues, we create a spacer with that height */
+                        Spacer(modifier = Modifier.height(paddingValues.calculateTopPadding()))
 
-                        FlexibleFancyText(
-                            text = stringResource(Res.string.connect_username_a),
-                            size = 20f,
-                            textAlign = TextAlign.Center,
-                            fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = Font(Res.font.Directive4_Regular),
-                            shadowColors = listOf(Color.Gray)
-                        )
+                        /* higher-level variables which are needed for logging in */
+                        var textUsername by remember { mutableStateOf(config.user) }
+                        var textRoomname by remember { mutableStateOf(config.room) }
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                        var serverIsPublic by remember { mutableStateOf(true) }
 
-                        Box(contentAlignment = Alignment.Center) {
-                            OutlinedTextField(
-                                modifier = Modifier.focusable(false),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                    unfocusedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                    disabledContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                ),
-                                singleLine = true,
-                                readOnly = true,
-                                value = "",
-                                label = { Text(" ") },
-                                supportingText = { },
-                                onValueChange = { },
+                        var selectedServer by remember { mutableStateOf("${config.ip}:${config.port}") }
+
+                        var serverAddress by remember { mutableStateOf(config.ip) }
+                        var serverPort by remember { mutableStateOf(config.port.toString()) }
+                        var serverPassword by remember { mutableStateOf(config.pw) }
+
+                        /* Username */
+                        Column(
+                            modifier = Modifier.wrapContentHeight().fillMaxWidth(),
+                            horizontalAlignment = CenterHorizontally,
+                        ) {
+
+                            FlexibleFancyText(
+                                text = stringResource(Res.string.connect_username_a),
+                                size = 20f,
+                                textAlign = TextAlign.Center,
+                                fillingColors = listOf(MaterialTheme.colorScheme.primary),
+                                font = Font(Res.font.Directive4_Regular),
+                                shadowColors = listOf(Color.Gray)
                             )
 
-                            OutlinedTextField(
-                                modifier = Modifier.gradientOverlay(),
-                                singleLine = true,
-                                label = { Text(stringResource(Res.string.connect_username_b)) },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Filled.PersonPin, ""
-                                    )
-                                },
-                                supportingText = { /* Text(stringResource(R.string.connect_username_c), fontSize = 10.sp) */ },
-                                keyboardActions = KeyboardActions(onDone = {
-                                    focusManager.moveFocus(focusDirection = FocusDirection.Next)
-                                }),
-                                value = textUsername,
-                                onValueChange = { s ->
-                                    textUsername = s.trim()
-                                }
-                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Box(contentAlignment = Alignment.Center) {
+                                OutlinedTextField(
+                                    modifier = Modifier.focusable(false),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                        unfocusedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                        disabledContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                    ),
+                                    singleLine = true,
+                                    readOnly = true,
+                                    value = "",
+                                    label = { Text(" ") },
+                                    supportingText = { },
+                                    onValueChange = { },
+                                )
+
+                                OutlinedTextField(
+                                    modifier = Modifier.gradientOverlay(),
+                                    singleLine = true,
+                                    label = { Text(stringResource(Res.string.connect_username_b)) },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Filled.PersonPin, ""
+                                        )
+                                    },
+                                    supportingText = { /* Text(stringResource(R.string.connect_username_c), fontSize = 10.sp) */ },
+                                    keyboardActions = KeyboardActions(onDone = {
+                                        focusManager.moveFocus(focusDirection = FocusDirection.Next)
+                                    }),
+                                    value = textUsername,
+                                    onValueChange = { s ->
+                                        textUsername = s.trim()
+                                    }
+                                )
+                            }
                         }
-                    }
 
-                    /* Roomname */
-                    Column(
-                        modifier = Modifier.wrapContentHeight().fillMaxWidth(),
-                        horizontalAlignment = CenterHorizontally,
-                    ) {
+                        /* Roomname */
+                        Column(
+                            modifier = Modifier.wrapContentHeight().fillMaxWidth(),
+                            horizontalAlignment = CenterHorizontally,
+                        ) {
 
 
-                        FlexibleFancyText(
-                            text = stringResource(Res.string.connect_roomname_a),
-                            size = 20f,
-                            textAlign = TextAlign.Center,
-                            fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = Font(Res.font.Directive4_Regular),
-                            shadowColors = listOf(Color.Gray)
-                        )
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        Box {
-                            OutlinedTextField(
-                                modifier = Modifier.focusable(false),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                    unfocusedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                    disabledContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                ),
-                                singleLine = true,
-                                readOnly = true,
-                                value = "",
-                                label = { Text(" ") },
-                                supportingText = { Text("") },
-                                onValueChange = { },
+                            FlexibleFancyText(
+                                text = stringResource(Res.string.connect_roomname_a),
+                                size = 20f,
+                                textAlign = TextAlign.Center,
+                                fillingColors = listOf(MaterialTheme.colorScheme.primary),
+                                font = Font(Res.font.Directive4_Regular),
+                                shadowColors = listOf(Color.Gray)
                             )
 
-                            OutlinedTextField(
-                                modifier = Modifier.gradientOverlay(),
-                                singleLine = true,
-                                label = { Text(stringResource(Res.string.connect_roomname_b)) },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Filled.MeetingRoom, ""
-                                    )
-                                },
-                                supportingText = { /* Text(stringResource(R.string.connect_roomname_c), fontSize = 10.sp) */ },
-                                keyboardActions = KeyboardActions(onDone = {
-                                    focusManager.moveFocus(focusDirection = FocusDirection.Next)
-                                }),
-                                value = textRoomname,
-                                onValueChange = { s -> textRoomname = s.trim() })
-                        }
-                    }
+                            Spacer(modifier = Modifier.height(10.dp))
 
-                    /* Server */
-                    val expanded = remember { mutableStateOf(false) }
-
-                    Column(
-                        modifier = Modifier.wrapContentHeight().fillMaxWidth(),
-                        horizontalAlignment = CenterHorizontally,
-                    ) {
-                        FlexibleFancyText(
-                            text = stringResource(Res.string.connect_server_a),
-                            size = 20f,
-                            textAlign = TextAlign.Center,
-                            fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = Font(Res.font.Directive4_Regular),
-                            shadowColors = listOf(Color.Gray)
-                        )
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-
-
-                        ExposedDropdownMenuBox(
-                            expanded = expanded.value, onExpandedChange = {
-                                expanded.value = !expanded.value
-                            }) {
                             Box {
                                 OutlinedTextField(
                                     modifier = Modifier.focusable(false),
@@ -337,68 +284,192 @@ fun HomeScreenUI() {
                                     singleLine = true,
                                     readOnly = true,
                                     value = "",
+                                    label = { Text(" ") },
                                     supportingText = { Text("") },
                                     onValueChange = { },
                                 )
-                                OutlinedTextField(
-                                    modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).gradientOverlay(),
-                                    singleLine = true,
-                                    readOnly = true,
-                                    value = selectedServer.replace(
-                                        "151.80.32.178", "syncplay.pl"
-                                    ),
-                                    supportingText = { /* Text(stringResource(R.string.connect_server_c), fontSize = 9.sp) */ },
-                                    onValueChange = { },
-                                    trailingIcon = {
-                                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded.value)
-                                    })
-                            }
-                            ExposedDropdownMenu(
-                                modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
-                                expanded = expanded.value,
-                                onDismissRequest = {
-                                    expanded.value = false
-                                }) {
-                                servers.forEach { server ->
-                                    DropdownMenuItem(text = {
-                                        Text(
-                                            server.replace(
-                                                "151.80.32.178", "syncplay.pl"
-                                            ), color = Color.White
-                                        )
-                                    }, onClick = {
-                                        selectedServer = server
-                                        expanded.value = false
 
-                                        if (server != servers[5]) {
-                                            serverAddress = "syncplay.pl"
-                                            serverPort =
-                                                selectedServer.substringAfter("syncplay.pl:")
-                                            serverIsPublic = true
-                                            serverPassword = ""
-                                        } else {
-                                            serverIsPublic = false
-                                            serverAddress = ""
-                                            serverPort = ""
-                                        }
-                                    })
+                                OutlinedTextField(
+                                    modifier = Modifier.gradientOverlay(),
+                                    singleLine = true,
+                                    label = { Text(stringResource(Res.string.connect_roomname_b)) },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Filled.MeetingRoom, ""
+                                        )
+                                    },
+                                    supportingText = { /* Text(stringResource(R.string.connect_roomname_c), fontSize = 10.sp) */ },
+                                    keyboardActions = KeyboardActions(onDone = {
+                                        focusManager.moveFocus(focusDirection = FocusDirection.Next)
+                                    }),
+                                    value = textRoomname,
+                                    onValueChange = { s -> textRoomname = s.trim() })
+                            }
+                        }
+
+                        /* Server */
+                        val expanded = remember { mutableStateOf(false) }
+
+                        Column(
+                            modifier = Modifier.wrapContentHeight().fillMaxWidth(),
+                            horizontalAlignment = CenterHorizontally,
+                        ) {
+                            FlexibleFancyText(
+                                text = stringResource(Res.string.connect_server_a),
+                                size = 20f,
+                                textAlign = TextAlign.Center,
+                                fillingColors = listOf(MaterialTheme.colorScheme.primary),
+                                font = Font(Res.font.Directive4_Regular),
+                                shadowColors = listOf(Color.Gray)
+                            )
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+
+
+                            ExposedDropdownMenuBox(
+                                expanded = expanded.value, onExpandedChange = {
+                                    expanded.value = !expanded.value
+                                }) {
+                                Box {
+                                    OutlinedTextField(
+                                        modifier = Modifier.focusable(false),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                            unfocusedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                            disabledContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                        ),
+                                        singleLine = true,
+                                        readOnly = true,
+                                        value = "",
+                                        supportingText = { Text("") },
+                                        onValueChange = { },
+                                    )
+                                    OutlinedTextField(
+                                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).gradientOverlay(),
+                                        singleLine = true,
+                                        readOnly = true,
+                                        value = selectedServer.replace(
+                                            "151.80.32.178", "syncplay.pl"
+                                        ),
+                                        supportingText = { /* Text(stringResource(R.string.connect_server_c), fontSize = 9.sp) */ },
+                                        onValueChange = { },
+                                        trailingIcon = {
+                                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded.value)
+                                        })
+                                }
+                                ExposedDropdownMenu(
+                                    modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
+                                    expanded = expanded.value,
+                                    onDismissRequest = {
+                                        expanded.value = false
+                                    }) {
+                                    servers.forEach { server ->
+                                        DropdownMenuItem(text = {
+                                            Text(
+                                                server.replace(
+                                                    "151.80.32.178", "syncplay.pl"
+                                                ), color = Color.White
+                                            )
+                                        }, onClick = {
+                                            selectedServer = server
+                                            expanded.value = false
+
+                                            if (server != servers[5]) {
+                                                serverAddress = "syncplay.pl"
+                                                serverPort =
+                                                    selectedServer.substringAfter("syncplay.pl:")
+                                                serverIsPublic = true
+                                                serverPassword = ""
+                                            } else {
+                                                serverIsPublic = false
+                                                serverAddress = ""
+                                                serverPort = ""
+                                            }
+                                        })
+                                    }
                                 }
                             }
-                        }
 
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(12.dp))
 
-                        if (!serverIsPublic) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceEvenly
-                            ) {
+                            if (!serverIsPublic) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceEvenly
+                                ) {
+                                    TextField(
+                                        modifier = Modifier.fillMaxWidth(0.5f),
+                                        shape = RoundedCornerShape(16.dp),
+                                        singleLine = true,
+                                        value = serverAddress,
+                                        colors = TextFieldDefaults.colors(
+                                            focusedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                            unfocusedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                            disabledContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                            focusedIndicatorColor = Color.Transparent,
+                                            unfocusedIndicatorColor = Color.Transparent,
+                                            disabledIndicatorColor = Color.Transparent,
+                                        ),
+                                        onValueChange = { serverAddress = it.trim() },
+                                        keyboardActions = KeyboardActions(onDone = {
+                                            focusManager.moveFocus(FocusDirection.Next)
+                                        }),
+                                        textStyle = TextStyle(
+                                            brush = Brush.linearGradient(
+                                                colors = Paletting.SP_GRADIENT
+                                            ),
+                                            fontFamily = FontFamily(getRegularFont()),
+                                            fontSize = 16.sp,
+                                        ),
+                                        label = {
+                                            Text("IP Address", color = Color.Gray)
+                                        })
+
+
+                                    TextField(
+                                        modifier = Modifier.fillMaxWidth(0.5f),
+                                        shape = RoundedCornerShape(16.dp),
+                                        singleLine = true,
+                                        value = serverPort,
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                        keyboardActions = KeyboardActions(onDone = {
+                                            focusManager.moveFocus(FocusDirection.Next)
+                                        }),
+                                        colors = TextFieldDefaults.colors(
+                                            focusedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                            unfocusedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                            disabledContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                            focusedIndicatorColor = Color.Transparent,
+                                            unfocusedIndicatorColor = Color.Transparent,
+                                            disabledIndicatorColor = Color.Transparent,
+                                        ),
+                                        onValueChange = { serverPort = it.trim() },
+                                        textStyle = TextStyle(
+                                            brush = Brush.linearGradient(
+                                                colors = Paletting.SP_GRADIENT
+                                            ),
+                                            fontFamily = FontFamily(getRegularFont()),
+                                            fontSize = 16.sp,
+                                        ),
+                                        label = {
+                                            Text("Port", color = Color.Gray)
+                                        })
+                                }
+
+                                Spacer(modifier = Modifier.height(10.dp))
+
                                 TextField(
-                                    modifier = Modifier.fillMaxWidth(0.5f),
+                                    modifier = Modifier.fillMaxWidth(0.8f),
                                     shape = RoundedCornerShape(16.dp),
                                     singleLine = true,
-                                    value = serverAddress,
+                                    enabled = !serverIsPublic,
+                                    value = serverPassword,
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                                    keyboardActions = KeyboardActions(onDone = {
+                                        focusManager.moveFocus(FocusDirection.Next)
+                                    }),
                                     colors = TextFieldDefaults.colors(
                                         focusedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
                                         unfocusedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
@@ -407,10 +478,7 @@ fun HomeScreenUI() {
                                         unfocusedIndicatorColor = Color.Transparent,
                                         disabledIndicatorColor = Color.Transparent,
                                     ),
-                                    onValueChange = { serverAddress = it.trim() },
-                                    keyboardActions = KeyboardActions(onDone = {
-                                        focusManager.moveFocus(FocusDirection.Next)
-                                    }),
+                                    onValueChange = { serverPassword = it },
                                     textStyle = TextStyle(
                                         brush = Brush.linearGradient(
                                             colors = Paletting.SP_GRADIENT
@@ -419,225 +487,163 @@ fun HomeScreenUI() {
                                         fontSize = 16.sp,
                                     ),
                                     label = {
-                                        Text("IP Address", color = Color.Gray)
+                                        Text("Password (empty if undefined)", color = Color.Gray)
                                     })
 
-
-                                TextField(
-                                    modifier = Modifier.fillMaxWidth(0.5f),
-                                    shape = RoundedCornerShape(16.dp),
-                                    singleLine = true,
-                                    value = serverPort,
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                    keyboardActions = KeyboardActions(onDone = {
-                                        focusManager.moveFocus(FocusDirection.Next)
-                                    }),
-                                    colors = TextFieldDefaults.colors(
-                                        focusedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                        unfocusedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                        disabledContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                        focusedIndicatorColor = Color.Transparent,
-                                        unfocusedIndicatorColor = Color.Transparent,
-                                        disabledIndicatorColor = Color.Transparent,
-                                    ),
-                                    onValueChange = { serverPort = it.trim() },
-                                    textStyle = TextStyle(
-                                        brush = Brush.linearGradient(
-                                            colors = Paletting.SP_GRADIENT
-                                        ),
-                                        fontFamily = FontFamily(getRegularFont()),
-                                        fontSize = 16.sp,
-                                    ),
-                                    label = {
-                                        Text("Port", color = Color.Gray)
-                                    })
+                                Spacer(modifier = Modifier.height(10.dp))
                             }
-
-                            Spacer(modifier = Modifier.height(10.dp))
-
-                            TextField(
-                                modifier = Modifier.fillMaxWidth(0.8f),
-                                shape = RoundedCornerShape(16.dp),
-                                singleLine = true,
-                                enabled = !serverIsPublic,
-                                value = serverPassword,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                                keyboardActions = KeyboardActions(onDone = {
-                                    focusManager.moveFocus(FocusDirection.Next)
-                                }),
-                                colors = TextFieldDefaults.colors(
-                                    focusedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                    unfocusedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                    disabledContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                    focusedIndicatorColor = Color.Transparent,
-                                    unfocusedIndicatorColor = Color.Transparent,
-                                    disabledIndicatorColor = Color.Transparent,
-                                ),
-                                onValueChange = { serverPassword = it },
-                                textStyle = TextStyle(
-                                    brush = Brush.linearGradient(
-                                        colors = Paletting.SP_GRADIENT
-                                    ),
-                                    fontFamily = FontFamily(getRegularFont()),
-                                    fontSize = 16.sp,
-                                ),
-                                label = {
-                                    Text("Password (empty if undefined)", color = Color.Gray)
-                                })
-
-                            Spacer(modifier = Modifier.height(10.dp))
                         }
-                    }
 
-                    /* Buttons */
-                    val defaultEngine = remember { getDefaultEngine() }
-                    val player = valueFlow(
-                        MISC_PLAYER_ENGINE, defaultEngine
-                    ).collectAsState(initial = defaultEngine)
+                        /* Buttons */
+                        val defaultEngine = remember { getDefaultEngine() }
+                        val player = valueFlow(
+                            MISC_PLAYER_ENGINE, defaultEngine
+                        ).collectAsState(initial = defaultEngine)
 
-                    Column(horizontalAlignment = CenterHorizontally) {
-                        Row(horizontalArrangement = Arrangement.Center) {
-                            /* shortcut button */
-                            Button(
-                                border = BorderStroke(
-                                    width = 2.dp, color = MaterialTheme.colorScheme.primary
-                                ),
-                                modifier = Modifier.height(54.dp).aspectRatio(1.6f),
-                                shape = RoundedCornerShape(25),
-                                onClick = {
-                                    platformCallback.onSaveConfigShortcut(
-                                        JoinConfig(
-                                            textUsername.replace("\\", "").trim(),
-                                            textRoomname.replace("\\", "").trim(),
-                                            serverAddress,
-                                            serverPort.toInt(),
-                                            serverPassword
-                                        )
-                                    )
-                                }) {
-                                BadgedBox(
-                                    badge = {
-                                        Badge(
-                                            modifier = Modifier.padding(8.dp),
-                                            containerColor = BadgeDefaults.containerColor.copy(0.5f)
-                                        ) {
-
-                                            Icon(
-                                                imageVector = Icons.Filled.Add,
-                                                contentDescription = null,
-                                                modifier = Modifier.fillMaxSize()
+                        Column(horizontalAlignment = CenterHorizontally) {
+                            Row(horizontalArrangement = Arrangement.Center) {
+                                /* shortcut button */
+                                Button(
+                                    border = BorderStroke(
+                                        width = 2.dp, color = MaterialTheme.colorScheme.primary
+                                    ),
+                                    modifier = Modifier.height(54.dp).aspectRatio(1.6f),
+                                    shape = RoundedCornerShape(25),
+                                    onClick = {
+                                        platformCallback.onSaveConfigShortcut(
+                                            JoinConfig(
+                                                textUsername.replace("\\", "").trim(),
+                                                textRoomname.replace("\\", "").trim(),
+                                                serverAddress,
+                                                serverPort.toInt(),
+                                                serverPassword
                                             )
+                                        )
+                                    }) {
+                                    BadgedBox(
+                                        badge = {
+                                            Badge(
+                                                modifier = Modifier.padding(8.dp),
+                                                containerColor = BadgeDefaults.containerColor.copy(0.5f)
+                                            ) {
+
+                                                Icon(
+                                                    imageVector = Icons.Filled.Add,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.fillMaxSize()
+                                                )
+                                            }
+                                        }) {
+
+                                        Icon(
+                                            imageVector = Icons.Filled.Widgets,
+                                            contentDescription = null,
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(10.dp))
+
+
+                                Button(
+                                    border = BorderStroke(
+                                        width = 2.dp, color = MaterialTheme.colorScheme.primary
+                                    ),
+                                    modifier = Modifier.height(54.dp).aspectRatio(1.6f),
+                                    shape = RoundedCornerShape(25),
+                                    onClick = {
+                                        scope.launch(Dispatchers.IO) {
+                                            if (defaultEngine != BasePlayer.ENGINE.ANDROID_EXOPLAYER.name) {
+                                                writeValue(
+                                                    MISC_PLAYER_ENGINE,
+                                                    BasePlayer.ENGINE.valueOf(player.value)
+                                                        .getNextPlayer().name
+                                                )
+                                            }
                                         }
                                     }) {
-
-                                    Icon(
-                                        imageVector = Icons.Filled.Widgets,
-                                        contentDescription = null,
+                                    Image(
+                                        painter = painterResource(
+                                            with(Res.drawable) {
+                                                when (player.value) {
+                                                    BasePlayer.ENGINE.ANDROID_EXOPLAYER.name -> exoplayer
+                                                    BasePlayer.ENGINE.ANDROID_MPV.name -> mpv
+                                                    BasePlayer.ENGINE.ANDROID_VLC.name -> vlc
+                                                    BasePlayer.ENGINE.IOS_AVPLAYER.name -> swift
+                                                    BasePlayer.ENGINE.IOS_VLC.name -> vlc
+                                                    else -> exoplayer
+                                                }
+                                            }),
+                                        contentScale = ContentScale.FillHeight,
+                                        contentDescription = "",
                                         modifier = Modifier.fillMaxSize()
                                     )
                                 }
                             }
 
-                            Spacer(modifier = Modifier.width(10.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
 
-
-                            Button(
-                                border = BorderStroke(
-                                    width = 2.dp, color = MaterialTheme.colorScheme.primary
-                                ),
-                                modifier = Modifier.height(54.dp).aspectRatio(1.6f),
-                                shape = RoundedCornerShape(25),
-                                onClick = {
-                                    scope.launch(Dispatchers.IO) {
-                                        if (defaultEngine != BasePlayer.ENGINE.ANDROID_EXOPLAYER.name) {
-                                            writeValue(
-                                                MISC_PLAYER_ENGINE,
-                                                BasePlayer.ENGINE.valueOf(player.value)
-                                                    .getNextPlayer().name
-                                            )
-                                        }
+                            Text(
+                                stringResource(
+                                    Res.string.connect_button_current_engine,
+                                    when (player.value) {
+                                        BasePlayer.ENGINE.ANDROID_EXOPLAYER.name -> "Google ExoPlayer (System)"
+                                        BasePlayer.ENGINE.ANDROID_MPV.name -> "mpv (Default, Recommended)"
+                                        BasePlayer.ENGINE.ANDROID_VLC.name -> "VLC (Experimental, Unstable)"
+                                        BasePlayer.ENGINE.IOS_AVPLAYER.name -> "Apple AVPlayer (System)"
+                                        BasePlayer.ENGINE.IOS_VLC.name -> "VLC (Experimental, Unstable)"
+                                        else -> "Undefined"
                                     }
-                                }) {
-                                Image(
-                                    painter = painterResource(
-                                        with(Res.drawable) {
-                                            when (player.value) {
-                                                BasePlayer.ENGINE.ANDROID_EXOPLAYER.name -> exoplayer
-                                                BasePlayer.ENGINE.ANDROID_MPV.name -> mpv
-                                                BasePlayer.ENGINE.ANDROID_VLC.name -> vlc
-                                                BasePlayer.ENGINE.IOS_AVPLAYER.name -> swift
-                                                BasePlayer.ENGINE.IOS_VLC.name -> vlc
-                                                else -> exoplayer
-                                            }
-                                        }),
-                                    contentScale = ContentScale.FillHeight,
-                                    contentDescription = "",
-                                    modifier = Modifier.fillMaxSize()
+                                ), textAlign = TextAlign.Center, fontSize = 9.sp
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        /* join button */
+                        Button(
+                            border = BorderStroke(
+                                width = 1.dp, brush = Brush.sweepGradient(
+                                    colors = Paletting.SP_GRADIENT,
+                                    center = Offset.Unspecified // Will use center of the composable
                                 )
-                            }
+                            ),
+                            shape = RoundedCornerShape(20),
+                            modifier = Modifier.height(56.dp).fillMaxWidth(0.92f),
+                            onClick = {
+                                scope.launch {
+                                    val errorMessage: StringResource? = when {
+                                        textUsername.isBlank() -> Res.string.connect_username_empty_error
+                                        textRoomname.isBlank() -> Res.string.connect_roomname_empty_error
+                                        serverAddress.isBlank() -> Res.string.connect_address_empty_error
+                                        serverPort.isBlank() || serverPort.toIntOrNull() == null -> Res.string.connect_port_empty_error
+                                        else -> null
+                                    }
+
+                                    if (errorMessage != null) {
+                                        snacky.showSnackbar(getString(errorMessage))
+                                        return@launch
+                                    }
+
+                                    viewmodel.joinRoom(
+                                        JoinConfig(
+                                            textUsername.replace("\\", "").trim().substringSafely(0, 149),
+                                            textRoomname.replace("\\", "").trim().substringSafely(0, 34),
+                                            serverAddress,
+                                            serverPort.toInt(),
+                                            serverPassword
+                                        )
+                                    )
+                                }
+                            },
+                        ) {
+                            Icon(imageVector = Icons.Filled.Api, "")
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(Res.string.connect_button_join), fontSize = 18.sp)
                         }
 
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Text(
-                            stringResource(
-                                Res.string.connect_button_current_engine,
-                                when (player.value) {
-                                    BasePlayer.ENGINE.ANDROID_EXOPLAYER.name -> "Google ExoPlayer (System)"
-                                    BasePlayer.ENGINE.ANDROID_MPV.name -> "mpv (Default, Recommended)"
-                                    BasePlayer.ENGINE.ANDROID_VLC.name -> "VLC (Experimental, Unstable)"
-                                    BasePlayer.ENGINE.IOS_AVPLAYER.name -> "Apple AVPlayer (System)"
-                                    BasePlayer.ENGINE.IOS_VLC.name -> "VLC (Experimental, Unstable)"
-                                    else -> "Undefined"
-                                }
-                            ), textAlign = TextAlign.Center, fontSize = 9.sp
-                        )
+                        Spacer(modifier = Modifier.height(10.dp))
                     }
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    /* join button */
-                    Button(
-                        border = BorderStroke(
-                            width = 1.dp, brush = Brush.sweepGradient(
-                                colors = Paletting.SP_GRADIENT,
-                                center = Offset.Unspecified // Will use center of the composable
-                            )
-                        ),
-                        shape = RoundedCornerShape(20),
-                        modifier = Modifier.height(56.dp).fillMaxWidth(0.92f),
-                        onClick = {
-                            scope.launch {
-                                val errorMessage: StringResource? = when {
-                                    textUsername.isBlank() -> Res.string.connect_username_empty_error
-                                    textRoomname.isBlank() -> Res.string.connect_roomname_empty_error
-                                    serverAddress.isBlank() -> Res.string.connect_address_empty_error
-                                    serverPort.isBlank() || serverPort.toIntOrNull() == null -> Res.string.connect_port_empty_error
-                                    else -> null
-                                }
-
-                                if (errorMessage != null) {
-                                    snacky.showSnackbar(getString(errorMessage))
-                                    return@launch
-                                }
-
-                                viewmodel.joinRoom(
-                                    JoinConfig(
-                                        textUsername.replace("\\", "").trim().substring(0, 149),
-                                        textRoomname.replace("\\", "").trim().substring(0, 34),
-                                        serverAddress,
-                                        serverPort.toInt(),
-                                        serverPassword
-                                    )
-                                )
-                            }
-                        },
-                    ) {
-                        Icon(imageVector = Icons.Filled.Api, "")
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(Res.string.connect_button_join), fontSize = 18.sp)
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
                 }
             }
         )

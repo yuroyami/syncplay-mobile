@@ -45,6 +45,14 @@ sealed class Screen(val label: String) {
             SoloMode.label -> SoloMode
             else -> Home
         }
+
+        fun NavController.navigateTo(screen: Screen, noReturn: Boolean = true) {
+            navigate(screen.label) {
+                if (noReturn) {
+                    popUpTo(0) { inclusive = true }
+                }
+            }
+        }
     }
 }
 

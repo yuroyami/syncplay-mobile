@@ -602,7 +602,7 @@ object ComposeUtils {
     @Composable
     fun SyncplayPopup(
         dialogOpen: Boolean,
-        alpha: Float = 0.75f,
+        alpha: Float = 0.88f,
         cardCornerRadius: Int = 10,
         strokeWidth: Float = 1.5f,
         widthPercent: Float = 0f,
@@ -624,15 +624,15 @@ object ComposeUtils {
             ) {
                 Card(
                     modifier = Modifier
+                        .run { if (widthPercent == 0f) this else fillMaxWidth(widthPercent) }
+                        .run { if (heightPercent == 0f) this else fillMaxHeight(heightPercent) }
+                        .padding(24.dp)
                         .background(
                             shape = RoundedCornerShape(size = cardCornerRadius.dp),
                             brush = Brush.linearGradient(
-                                backgroundGradient().map { it.copy(alpha = alpha) }
+                                backgroundGradient.map { it.copy(alpha = alpha) }
                             )
-                        )
-                        .run { if (widthPercent == 0f) this else fillMaxWidth(widthPercent) }
-                        .run { if (heightPercent == 0f) this else fillMaxHeight(heightPercent) }
-                        .padding(24.dp), //Safe margin to prevent popup from covering all the screen
+                        ), //Safe margin to prevent popup from covering all the screen
                     shape = RoundedCornerShape(size = cardCornerRadius.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.Transparent),
                     border = BorderStroke(width = strokeWidth.dp, brush = Brush.linearGradient(Paletting.SP_GRADIENT))

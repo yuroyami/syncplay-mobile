@@ -19,6 +19,7 @@ sealed class Packet {
             return when (T::class) {
                 Hello::class -> Hello() as T
                 Joined::class -> Joined() as T
+                EmptyList::class -> EmptyList() as T
                 Readiness::class -> Readiness() as T
                 File::class -> File() as T
                 Chat::class -> Chat() as T

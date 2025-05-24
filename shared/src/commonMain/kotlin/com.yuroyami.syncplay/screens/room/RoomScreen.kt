@@ -143,8 +143,11 @@ import com.yuroyami.syncplay.components.popups.PopupSeekToPosition.SeekToPositio
 import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.player.BasePlayer.TRACKTYPE
 import com.yuroyami.syncplay.protocol.sending.Packet
+import com.yuroyami.syncplay.screens.adam.LocalNavigator
 import com.yuroyami.syncplay.screens.adam.LocalScreenSize
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.screens.adam.Screen
+import com.yuroyami.syncplay.screens.adam.Screen.Companion.navigateTo
 import com.yuroyami.syncplay.screens.room.RoomComposables.AddVideoButton
 import com.yuroyami.syncplay.screens.room.RoomComposables.ComposedMessagePalette
 import com.yuroyami.syncplay.screens.room.RoomComposables.FadingMessageLayout
@@ -170,6 +173,7 @@ import com.yuroyami.syncplay.settings.writeValue
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.Paletting.ROOM_ICON_SIZE
 import com.yuroyami.syncplay.utils.CommonUtils
+import com.yuroyami.syncplay.utils.CommonUtils.beginPingUpdate
 import com.yuroyami.syncplay.utils.CommonUtils.isEmoji
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.platformCallback
@@ -239,6 +243,7 @@ fun RoomScreenUI() {
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun RoomUIImpl() {
+    val nav = LocalNavigator.current
     val viewmodel = LocalViewmodel.current
     val isSoloMode = viewmodel.isSoloMode
 
@@ -248,11 +253,12 @@ private fun RoomUIImpl() {
     val density = LocalDensity.current
 
 
+    /* Starting ping update */
     LaunchedEffect(null) {
-        /** Starting ping update */
-        if (viewmodel.pingUpdateJob == null && !isSoloMode) {
-            viewmodel.pingUpdateJob = composeScope.launch(Dispatchers.IO) {
-                //todo CommonUtils.beginPingUpdate()
+        if (!isSoloMode) {
+            // Using withContext to tie the coroutine to the composition scope (where leaving the composition would stop this process)
+            withContext(Dispatchers.IO) {
+                viewmodel.beginPingUpdate()
             }
         }
     }
@@ -519,7 +525,19 @@ private fun RoomUIImpl() {
                                 fontSize = 11.sp,
                                 color = Paletting.OLD_SP_PINK
                             )
-                            AnimatedVisibility(pingo == null && viewmodel.p.session.userList.value.isNotEmpty()) {
+
+                            var showReconnectButton by remember { mutableStateOf(false) }
+                            LaunchedEffect(pingo, viewmodel.p.session.userList.value.isNotEmpty()) {
+                                if (pingo == null && viewmodel.p.session.userList.value.isNotEmpty()) {
+                                    delay(3000)
+                                    // Check again after delay in case pingo changed
+                                    if (pingo == null) showReconnectButton = true
+                                } else {
+                                    showReconnectButton = false
+                                }
+                            }
+
+                            AnimatedVisibility(showReconnectButton) {
                                 Button(
                                     onClick = {
                                         composeScope.launch(Dispatchers.IO) {
@@ -774,6 +792,7 @@ private fun RoomUIImpl() {
                                 }, onClick = {
                                     viewmodel.p.endConnection(true)
                                     viewmodel.player?.destroy()
+                                    nav.navigateTo(Screen.Home)
                                     platformCallback.onRoomEnterOrLeave(PlatformCallback.RoomEvent.LEAVE)
                                 })
                             }

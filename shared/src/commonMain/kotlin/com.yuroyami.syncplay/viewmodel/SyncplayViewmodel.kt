@@ -17,6 +17,7 @@ import com.yuroyami.syncplay.protocol.ProtocolCallback
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.screens.adam.Screen
+import com.yuroyami.syncplay.screens.adam.Screen.Companion.navigateTo
 import com.yuroyami.syncplay.screens.home.JoinConfig
 import com.yuroyami.syncplay.screens.room.dispatchOSD
 import com.yuroyami.syncplay.settings.DataStoreKeys
@@ -97,7 +98,6 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
 
     var currentTrackChoices: TrackChoices = TrackChoices()
 
-    var pingUpdateJob: Job? = null
     var playerTrackerJob: Job? = null
 
     //TODO Lifecycle Stuff
@@ -143,7 +143,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
 
             withContext(Dispatchers.Main) {
                 platformCallback.onRoomEnterOrLeave(PlatformCallback.RoomEvent.ENTER)
-                nav.navigate(Screen.Room.label)
+                nav.navigateTo(Screen.Room)
             }
 
             val engine = BasePlayer.ENGINE.valueOf(valueSuspendingly(DataStoreKeys.MISC_PLAYER_ENGINE, getDefaultEngine()))
@@ -315,6 +315,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
 
     /** Tracks progress CONTINUOUSLY and updates it to UI (and server, if no solo mode) */
     fun trackProgress(intervalMillis: Long) {
+        //TODO: Don't keep job reference like this
         if (playerTrackerJob == null) {
             playerTrackerJob = viewModelScope.launch(Dispatchers.IO) {
                 while (true) {

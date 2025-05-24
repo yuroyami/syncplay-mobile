@@ -81,4 +81,6 @@ object CommonUtils {
             else -> false
         }
     }
+
+    fun String.substringSafely(start: Int, end: Int) = substring(start.coerceAtLeast(0), end.coerceAtMost(length))
 }

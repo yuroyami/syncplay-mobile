@@ -4,7 +4,6 @@ import android.os.Build
 import android.view.View
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 
@@ -25,7 +24,6 @@ object UIUtils {
     fun ComponentActivity.hideSystemUI(useDeprecated: Boolean = false) {
         runOnUiThread {
             if (!useDeprecated) {
-                WindowCompat.setDecorFitsSystemWindows(window, false)
                 WindowInsetsControllerCompat(window, window.decorView).let { controller ->
                     controller.hide(WindowInsetsCompat.Type.systemBars())
                     controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
@@ -56,7 +54,6 @@ object UIUtils {
     fun ComponentActivity.showSystemUI(useDeprecated: Boolean = false) {
         runOnUiThread {
             if (!useDeprecated) {
-                WindowCompat.setDecorFitsSystemWindows(window, true)
                 WindowInsetsControllerCompat(window, window.decorView).let { controller ->
                     controller.show(WindowInsetsCompat.Type.systemBars())
                     controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_DEFAULT

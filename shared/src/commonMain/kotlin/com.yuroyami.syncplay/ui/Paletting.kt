@@ -62,14 +62,13 @@ object Paletting {
     const val USER_INFO_IC_SIZE = 16
     const val USER_INFO_TXT_SIZE = 10
 
-    @Composable
-    fun backgroundGradient(): List<Color> {
-        return listOf(
+
+    val backgroundGradient: List<Color>
+    @Composable get() = listOf(
             MaterialTheme.colorScheme.background,
             MaterialTheme.colorScheme.surface,
             MaterialTheme.colorScheme.background
         )
-    }
 
     @Composable
     fun isInDarkMode(): Boolean {

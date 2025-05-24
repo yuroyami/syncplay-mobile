@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
@@ -139,12 +140,17 @@ class SyncplayActivity : ComponentActivity() {
             override fun onRoomEnterOrLeave(event: PlatformCallback.RoomEvent) {
                 when (event) {
                     PlatformCallback.RoomEvent.ENTER -> {
+                        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
                         hideSystemUI()
                         cutoutMode(true)
                     }
                     PlatformCallback.RoomEvent.LEAVE -> {
-                        showSystemUI()
                         cutoutMode(false)
+                        showSystemUI()
+                        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_USER
+                        //Workaround to force Compose to retain its window insets
+                        WindowCompat.setDecorFitsSystemWindows(window, true)
+                        WindowCompat.setDecorFitsSystemWindows(window, false)
                     }
                 }
             }

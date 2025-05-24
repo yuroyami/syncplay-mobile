@@ -6,11 +6,7 @@ object DataStoreKeys {
     /** ------------ Joining info -------------*/
 
     /* Log-in (join) info */
-    const val MISC_JOIN_USERNAME = "misc_join_info_username"
-    const val MISC_JOIN_ROOMNAME = "misc_join_info_roomname"
-    const val MISC_JOIN_SERVER_ADDRESS = "misc_join_info_server_address"
-    const val MISC_JOIN_SERVER_PORT = "misc_join_info_server_port"
-    const val MISC_JOIN_SERVER_PW = "misc_join_info_server_password"
+    const val MISC_JOIN_CONFIG = "misc_join_config"
     const val MISC_PLAYER_ENGINE = "misc_player_engine"
     const val MISC_GESTURES = "misc_gestures"
 
