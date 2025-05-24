@@ -12,7 +12,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.yuroyami.syncplay.BuildConfig
-import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.BasePlayer.ENGINE
 import com.yuroyami.syncplay.player.exo.ExoPlayer
 import com.yuroyami.syncplay.player.mpv.MpvPlayer
@@ -34,10 +33,9 @@ actual fun getSystemMaxVolume(): Int {
 
 actual val platform: PLATFORM = PLATFORM.Android
 
+actual fun getDefaultEngine(): String = if (BuildConfig.FLAVOR == "noLibs") ENGINE.ANDROID_EXOPLAYER.name else ENGINE.ANDROID_MPV.name
 
-actual fun getDefaultEngine(): String = if (BuildConfig.FLAVOR != "noLibs") BasePlayer.ENGINE.ANDROID_EXOPLAYER.name else BasePlayer.ENGINE.ANDROID_MPV.name
-
-actual fun SyncplayViewmodel.instantiatePlayer(engine: BasePlayer.ENGINE) = when (engine) {
+actual fun SyncplayViewmodel.instantiatePlayer(engine: ENGINE) = when (engine) {
     ENGINE.ANDROID_EXOPLAYER -> ExoPlayer(this)
     ENGINE.ANDROID_MPV -> MpvPlayer(this)
     ENGINE.ANDROID_VLC -> VlcPlayer(this)

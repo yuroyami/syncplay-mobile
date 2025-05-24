@@ -14,8 +14,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.pm.ShortcutInfoCompat
@@ -28,23 +26,23 @@ import androidx.lifecycle.lifecycleScope
 import com.yuroyami.syncplay.screens.adam.AdamScreen
 import com.yuroyami.syncplay.screens.home.JoinConfig
 import com.yuroyami.syncplay.settings.DataStoreKeys
-import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_NIGHTMODE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_SUBTITLE_SIZE
 import com.yuroyami.syncplay.settings.valueBlockingly
-import com.yuroyami.syncplay.settings.valueFlow
 import com.yuroyami.syncplay.settings.valueSuspendingly
 import com.yuroyami.syncplay.utils.UIUtils.cutoutMode
 import com.yuroyami.syncplay.utils.UIUtils.hideSystemUI
+import com.yuroyami.syncplay.utils.UIUtils.showSystemUI
 import com.yuroyami.syncplay.utils.bindWatchdog
 import com.yuroyami.syncplay.utils.changeLanguage
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.viewmodel.PlatformCallback
+import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class SyncplayActivity : ComponentActivity() {
-    //TODO NEED REFERENCE TO VIEWMODEL
+    var viewmodel: SyncplayViewmodel? = null
 
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,12 +60,10 @@ class SyncplayActivity : ComponentActivity() {
         }
         window.statusBarColor = Color.Transparent.toArgb()
         window.navigationBarColor = Color.Transparent.toArgb()
-        WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        /** Telling Android that it should keep the screen on, use cut-out mode and go full-screen */
+        /** Telling Android that it should keep the screen on */
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        hideSystemUI(false)
-        cutoutMode(true)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
         /** Binding common logic with platform logic */
         platformCallback = object: PlatformCallback {
@@ -140,11 +136,17 @@ class SyncplayActivity : ComponentActivity() {
                 window.attributes = attrs
             }
 
-            override fun onLeave() {
-                /* TODO val intent = Intent(this@WatchActivity, HomeActivity::class.java)
-                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-                startActivity(intent)
-                terminate() */
+            override fun onRoomEnterOrLeave(event: PlatformCallback.RoomEvent) {
+                when (event) {
+                    PlatformCallback.RoomEvent.ENTER -> {
+                        hideSystemUI()
+                        cutoutMode(true)
+                    }
+                    PlatformCallback.RoomEvent.LEAVE -> {
+                        showSystemUI()
+                        cutoutMode(false)
+                    }
+                }
             }
 
             override fun onPlayback(paused: Boolean) {
@@ -160,20 +162,20 @@ class SyncplayActivity : ComponentActivity() {
 
         /****** Composing UI using Jetpack Compose *******/
         setContent {
-            val nightMode by valueFlow(MISC_NIGHTMODE, false).collectAsState(initial = false)
-
-            LaunchedEffect(null, nightMode) {
-                WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = !nightMode
+            LaunchedEffect(null) {
+                WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
             }
 
             //MainUI
-            AdamScreen()
+            AdamScreen { vm ->
+                viewmodel = vm
+            }
         }
 
         /** Maybe there is a shortcut intent */
         if (intent?.getBooleanExtra("quickLaunch", false) == true) {
             intent.apply {
-                val info = JoinConfig(
+                val config = JoinConfig(
                     user = getStringExtra("name") ?: "",
                     room = getStringExtra("room") ?: "",
                     ip = getStringExtra("serverip") ?: "",
@@ -181,7 +183,7 @@ class SyncplayActivity : ComponentActivity() {
                     pw = getStringExtra("serverpw") ?: ""
                 )
 
-                //TODO LAUNCH SHORTCUT
+                viewmodel?.joinRoom(config)
             }
         }
 
@@ -282,10 +284,11 @@ class SyncplayActivity : ComponentActivity() {
                 if (it.action == "pip") {
                     val pausePlayValue = it.getIntExtra("pause_zero_play_one", -1)
 
+                    //TODO CHECK IF IN ROOM IN THE FIRST PLACE
                     if (pausePlayValue == 1) {
-                        //TODO playPlayback()
+                        viewmodel?.playPlayback()
                     } else {
-                        //TODO pausePlayback()
+                        viewmodel?.pausePlayback()
                     }
                 }
             }
@@ -303,7 +306,7 @@ class SyncplayActivity : ComponentActivity() {
         }
 
 
-        hideSystemUI(false)
+        //TODO hideSystemUI(false)
 
         /** Applying track choices again so the player doesn't forget about track choices **/
         //TODO viewmodel?.player?.reapplyTrackChoices()

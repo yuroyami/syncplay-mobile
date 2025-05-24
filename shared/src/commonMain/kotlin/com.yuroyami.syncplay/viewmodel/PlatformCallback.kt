@@ -12,7 +12,8 @@ interface PlatformCallback {
     fun getMaxBrightness(): Float
     fun changeCurrentBrightness(v: Float)
 
-    fun onLeave()
+    enum class RoomEvent { LEAVE, ENTER }
+    fun onRoomEnterOrLeave(event: RoomEvent)
 
     fun onPlayback(paused: Boolean)
 

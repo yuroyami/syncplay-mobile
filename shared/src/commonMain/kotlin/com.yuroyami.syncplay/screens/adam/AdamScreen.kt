@@ -18,9 +18,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.yuroyami.syncplay.screens.home.HomeScreenUI
 import com.yuroyami.syncplay.screens.room.RoomScreenUI
+import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.utils.ScreenSizeInfo
 import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
-import kotlinx.coroutines.Dispatchers
 
 /******
  * This is called the AdamScreen mainly because it is the root/parent composable.
@@ -49,8 +49,9 @@ sealed class Screen(val label: String) {
 }
 
 @Composable
-fun AdamScreen() {
-    val scope = rememberCoroutineScope { Dispatchers.Default }
+fun AdamScreen(onViewmodelReady: (SyncplayViewmodel) -> Unit) {
+
+    val scope = rememberCoroutineScope()
     val viewmodel = viewModel<SyncplayViewmodel>()
     val navigator = rememberNavController()
     val navEntry by navigator.currentBackStackEntryAsState()
@@ -69,23 +70,28 @@ fun AdamScreen() {
         }
     }
 
+    LaunchedEffect(viewmodel) {
+        onViewmodelReady.invoke(viewmodel)
+    }
     LaunchedEffect(navigator) {
         viewmodel.nav = navigator
     }
 
-    CompositionLocalProvider(
-        LocalViewmodel provides viewmodel,
-        LocalNavigator provides navigator,
-        LocalScreenSize provides screenSizeInfo,
-        LocalScreen provides currentScreen
-    ) {
-        NavHost(
-            navController = navigator,
-            startDestination = Screen.Home.label
+    AppTheme {
+        CompositionLocalProvider(
+            LocalViewmodel provides viewmodel,
+            LocalNavigator provides navigator,
+            LocalScreenSize provides screenSizeInfo,
+            LocalScreen provides currentScreen
         ) {
-            composable(Screen.Home.label) { HomeScreenUI() }
-            composable(Screen.Room.label) { RoomScreenUI() }
-            composable(Screen.SoloMode.label) { RoomScreenUI() }
+            NavHost(
+                navController = navigator,
+                startDestination = Screen.Home.label
+            ) {
+                composable(Screen.Home.label) { HomeScreenUI() }
+                composable(Screen.Room.label) { RoomScreenUI() }
+                composable(Screen.SoloMode.label) { RoomScreenUI() }
+            }
         }
     }
 }

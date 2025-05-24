@@ -11,7 +11,6 @@ object DataStoreKeys {
     const val MISC_JOIN_SERVER_ADDRESS = "misc_join_info_server_address"
     const val MISC_JOIN_SERVER_PORT = "misc_join_info_server_port"
     const val MISC_JOIN_SERVER_PW = "misc_join_info_server_password"
-    const val MISC_NIGHTMODE = "misc_nightmode"
     const val MISC_PLAYER_ENGINE = "misc_player_engine"
     const val MISC_GESTURES = "misc_gestures"
 

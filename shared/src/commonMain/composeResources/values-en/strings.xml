@@ -248,26 +248,26 @@
     <string name="uisetting_custom_seek_amount_summary">The default skip duration is 90 seconds (1:30 minutes), which is ideal for anime. You can adjust this duration for the custom skip button here.</string>
 
     <!-- String templates (with placeholders) -->
-    <string name="connect_button_current_engine">Current engine: %s</string>
-    <string name="room_selected_vid">Selected video file: %s</string>
-    <string name="room_selected_sub">Loaded subtitle file: %s</string>
-    <string name="room_ping_connected">Connected - %s ms</string>
+    <string name="connect_button_current_engine">Current engine: %1$s</string>
+    <string name="room_selected_vid">Selected video file: %1$s</string>
+    <string name="room_selected_sub">Loaded subtitle file: %1$s</string>
+    <string name="room_ping_connected">Connected - %1$s ms</string>
     <string name="room_attempting_connect">Attempting to connect to %1$s:%2$s</string>
-    <string name="room_guy_played">%s unpaused</string>
+    <string name="room_guy_played">%1$s unpaused</string>
     <string name="room_guy_paused">%1$s paused at %2$s</string>
     <string name="room_seeked">%1$s jumped from %2$s to %3$s</string>
-    <string name="room_rewinded">Rewinded due to time difference with %s</string>
-    <string name="room_guy_left">%s left the room.</string>
-    <string name="room_guy_joined">%s joined the room.</string>
+    <string name="room_rewinded">Rewinded due to time difference with %1$s</string>
+    <string name="room_guy_left">%1$s left the room.</string>
+    <string name="room_guy_joined">%1$s joined the room.</string>
     <string name="room_isplayingfile">%1$s is playing '%2$s' (%3$s)</string>
-    <string name="room_you_joined_room">You have joined the room: %s</string>
-    <string name="room_sub_track_changed">Subtitle Track changed to: %s</string>
-    <string name="room_audio_track_changed">Audio Track changed to: %s</string>
-    <string name="room_details_current_room">Room: %s</string>
+    <string name="room_you_joined_room">You have joined the room: %1$s</string>
+    <string name="room_sub_track_changed">Subtitle Track changed to: %1$s</string>
+    <string name="room_audio_track_changed">Audio Track changed to: %1$s</string>
+    <string name="room_details_current_room">Room: %1$s</string>
     <string name="room_details_file_properties">Duration: %1$s - Size: %2$s MBs</string>
-    <string name="room_file_mismatch_warning_core">Your file is different from %s's file in the following ways:</string>
-    <string name="room_shared_playlist_updated">%s updated the playlist</string>
-    <string name="room_shared_playlist_changed">%s changed the playlist current selection</string>
-    <string name="room_custom_skip_button">Skip %s</string>
+    <string name="room_file_mismatch_warning_core">Your file is different from %1$s's file in the following ways:</string>
+    <string name="room_shared_playlist_updated">%1$s updated the playlist</string>
+    <string name="room_shared_playlist_changed">%1$s changed the playlist current selection</string>
+    <string name="room_custom_skip_button">Skip %1$s</string>
     <string name="media_directories_setting_summary">Syncplay will search any media directories you specify here in order to find a name that a shared playlist is playing.</string>
 </resources>

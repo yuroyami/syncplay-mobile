@@ -1,6 +1,5 @@
 package com.yuroyami.syncplay.utils
 
-import android.annotation.TargetApi
 import android.os.Build
 import android.view.View
 import android.view.WindowManager
@@ -11,19 +10,19 @@ import androidx.core.view.WindowInsetsControllerCompat
 
 object UIUtils {
     /** A function to control cutout mode (expanding window content beyond notch (front camera) **/
-    @TargetApi(Build.VERSION_CODES.P)
     fun ComponentActivity.cutoutMode(enable: Boolean) {
-        if (enable) {
-            window.attributes?.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-        } else {
-            window.attributes?.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            if (enable) {
+                window.attributes?.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+
+            } else {
+                window.attributes?.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER
+            }
         }
     }
 
-
-    /** Completely revised and working versions for "System UI" manipulators. **/
     @Suppress("DEPRECATION")
-    fun ComponentActivity.hideSystemUI(useDeprecated: Boolean) {
+    fun ComponentActivity.hideSystemUI(useDeprecated: Boolean = false) {
         runOnUiThread {
             if (!useDeprecated) {
                 WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -48,6 +47,23 @@ object UIUtils {
                 }
                 window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
                 window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
+
+            }
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    fun ComponentActivity.showSystemUI(useDeprecated: Boolean = false) {
+        runOnUiThread {
+            if (!useDeprecated) {
+                WindowCompat.setDecorFitsSystemWindows(window, true)
+                WindowInsetsControllerCompat(window, window.decorView).let { controller ->
+                    controller.show(WindowInsetsCompat.Type.systemBars())
+                    controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_DEFAULT
+                }
+            } else {
+                val decorView: View = window.decorView
+                decorView.systemUiVisibility = decorView.systemUiVisibility or View.SYSTEM_UI_FLAG_VISIBLE
 
             }
         }

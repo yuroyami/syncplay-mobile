@@ -248,26 +248,26 @@
     <string name="uisetting_custom_seek_amount_summary">المدة الافتراضية للتخطي هي 90 ثانية (1:30 دقيقة)، وهي مثالية للأنمي. يمكنك ضبط هذه المدة لزر التخطي المخصص هنا.</string>
 
     <!-- String templates (with placeholders) -->
-    <string name="connect_button_current_engine">المحرك الحالي: %s</string>
-    <string name="room_selected_vid">الفيديو المحدد: %s</string>
-    <string name="room_selected_sub">تم تحميل ملف الترجمة: %s</string>
-    <string name="room_ping_connected">متصل - PING: %s مللي ثانية</string>
+    <string name="connect_button_current_engine">المحرك الحالي: %1$s</string>
+    <string name="room_selected_vid">الفيديو المحدد: %1$s</string>
+    <string name="room_selected_sub">تم تحميل ملف الترجمة: %1$s</string>
+    <string name="room_ping_connected">متصل - PING: %1$s مللي ثانية</string>
     <string name="room_attempting_connect">محاولة الاتصال بـ %1$s:%2$s</string>
-    <string name="room_guy_played">%s استأنف التشغيل</string>
+    <string name="room_guy_played">%1$s استأنف التشغيل</string>
     <string name="room_guy_paused">%1$s قام بإيقاف التشغيل في %2$s</string>
     <string name="room_seeked">%1$s قفز من %2$s إلى %3$s</string>
-    <string name="room_rewinded">تمت إعادة التشغيل بسبب اختلاف التوقيت مع %s</string>
-    <string name="room_guy_left">%s غادر الغرفة.</string>
-    <string name="room_guy_joined">%s انضم إلى الغرفة.</string>
+    <string name="room_rewinded">تمت إعادة التشغيل بسبب اختلاف التوقيت مع %1$s</string>
+    <string name="room_guy_left">%1$s غادر الغرفة.</string>
+    <string name="room_guy_joined">%1$s انضم إلى الغرفة.</string>
     <string name="room_isplayingfile">%1$s يشغل '%2$s' (%3$s)</string>
-    <string name="room_you_joined_room">لقد انضممت إلى الغرفة: %s</string>
-    <string name="room_sub_track_changed">تم تغيير مسار الترجمة إلى: %s</string>
-    <string name="room_audio_track_changed">تم تغيير مسار الصوت إلى: %s</string>
-    <string name="room_details_current_room">الغرفة الحالية: %s</string>
+    <string name="room_you_joined_room">لقد انضممت إلى الغرفة: %1$s</string>
+    <string name="room_sub_track_changed">تم تغيير مسار الترجمة إلى: %1$s</string>
+    <string name="room_audio_track_changed">تم تغيير مسار الصوت إلى: %1$s</string>
+    <string name="room_details_current_room">الغرفة الحالية: %1$s</string>
     <string name="room_details_file_properties">المدة: %1$s - الحجم: %2$s ميغابايت</string>
-    <string name="room_file_mismatch_warning_core">ملفك مختلف عن ملف %s في النقاط التالية:</string>
-    <string name="room_shared_playlist_updated">حدث %s للقائمة</string>
-    <string name="room_shared_playlist_changed">غيّر %s اختيار القائمة</string>
-    <string name="room_custom_skip_button">تخطي %s</string>
+    <string name="room_file_mismatch_warning_core">ملفك مختلف عن ملف %1$s في النقاط التالية:</string>
+    <string name="room_shared_playlist_updated">حدث %1$s للقائمة</string>
+    <string name="room_shared_playlist_changed">غيّر %1$s اختيار القائمة</string>
+    <string name="room_custom_skip_button">تخطي %1$s</string>
     <string name="media_directories_setting_summary">سيقوم Syncplay بالبحث في أي مجلدات وسائط تحددها هنا للعثور على اسم يتم تشغيله في قائمة تشغيل مشتركة.</string>
 </resources>

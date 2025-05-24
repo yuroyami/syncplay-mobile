@@ -142,6 +142,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
             p.session.currentPassword = joinConfig.pw
 
             withContext(Dispatchers.Main) {
+                platformCallback.onRoomEnterOrLeave(PlatformCallback.RoomEvent.ENTER)
                 nav.navigate(Screen.Room.label)
             }
 

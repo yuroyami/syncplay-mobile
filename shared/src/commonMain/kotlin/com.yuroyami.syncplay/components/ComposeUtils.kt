@@ -60,7 +60,8 @@ import androidx.compose.ui.window.DialogProperties
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.Paletting.backgroundGradient
 import org.jetbrains.compose.resources.Font
-import syncplaymobile.shared.generated.resources.*
+import syncplaymobile.shared.generated.resources.Directive4_Regular
+import syncplaymobile.shared.generated.resources.Res
 
 /** Contains a bunch of composable functions that are frequently reused */
 object ComposeUtils {

@@ -44,14 +44,14 @@
     <string name="connect_solomode">进入单人模式（仅视频播放器）。</string>
 
     <!-- Room screen -->
-    <string name="room_selected_vid">选择的视频文件: %s</string>
-    <string name="room_selected_sub">选择的字幕文件: %s</string>
+    <string name="room_selected_vid">选择的视频文件: %1$s</string>
+    <string name="room_selected_sub">选择的字幕文件: %1$s</string>
     <string name="room_selected_sub_error">无效的字幕文件.支持的格式有: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'</string>
     <string name="room_sub_error_load_vid_first">第一次加载视频</string>
     <string name="room_type_message">输入你要说的内容…</string>
     <string name="room_ready">准备</string>
     <string name="room_not_ready">未准备</string>
-    <string name="room_ping_connected">连接 - 延迟: %s ms</string>
+    <string name="room_ping_connected">连接 - 延迟: %1$s ms</string>
     <string name="room_ping_disconnected">断开连接</string>
     <string name="room_empty_message_error">发送内容为空!</string>
     <string name="room_attempting_connect">试图连接到 %1$s:%2$s</string>
@@ -61,36 +61,36 @@
     <string name="room_attempting_tls">尝试建立安全连接</string>
     <string name="room_tls_supported">安全连接已建立（TLS）</string>
     <string name="room_tls_not_supported">服务器不支持 TLS</string>
-    <string name="room_guy_played">%s 恢复播放</string>
+    <string name="room_guy_played">%1$s 恢复播放</string>
     <string name="room_guy_paused">%1$s 暂停 在 %2$s</string>
     <string name="room_seeked">%1$s 跳转 从 %2$s 到 %3$s</string>
-    <string name="room_rewinded">由于播放时间差距大而倒退 %s</string>
-    <string name="room_guy_left">%s 离开房间.</string>
-    <string name="room_guy_joined">%s 您已经加入聊天室.</string>
+    <string name="room_rewinded">由于播放时间差距大而倒退 %1$s</string>
+    <string name="room_guy_left">%1$s 离开房间.</string>
+    <string name="room_guy_joined">%1$s 您已经加入聊天室.</string>
     <string name="room_isplayingfile">%1$s 正在播放 '%2$s' (%3$s)</string>
-    <string name="room_you_joined_room">你已经加入聊天室: %s</string>
+    <string name="room_you_joined_room">你已经加入聊天室: %1$s</string>
     <string name="room_scaling_fit_screen">调整尺寸: 适合屏幕</string>
     <string name="room_scaling_fixed_width">调整尺寸: 固定宽度</string>
     <string name="room_scaling_fixed_height">调整尺寸: 固定高度</string>
     <string name="room_scaling_fill_screen">调整尺寸: 铺满屏幕</string>
     <string name="room_scaling_zoom">调整尺寸: 裁剪放大</string>
-    <string name="room_sub_track_changed">字幕轨道更改为: %s</string>
-    <string name="room_audio_track_changed">音轨更改为: %s</string>
+    <string name="room_sub_track_changed">字幕轨道更改为: %1$s</string>
+    <string name="room_audio_track_changed">音轨更改为: %1$s</string>
     <string name="room_audio_track_not_found">没有发现音频 !</string>
     <string name="room_sub_track_disable">禁用字幕</string>
     <string name="room_track_track">轨道</string>
     <string name="room_sub_track_notfound">没有发现字幕 !</string>
-    <string name="room_details_current_room">当前的房间: %s</string>
+    <string name="room_details_current_room">当前的房间: %1$s</string>
     <string name="room_details_nofileplayed">(没有播放视频)</string>
     <string name="room_details_file_properties">时长: %1$s - 大小: %2$s MBs</string>
-    <string name="room_file_mismatch_warning_core">你的文件不同于 %s's 请按照以下方式进行归档:</string>
+    <string name="room_file_mismatch_warning_core">你的文件不同于 %1$s's 请按照以下方式进行归档:</string>
     <string name="room_file_mismatch_warning_name">名称.</string>
     <string name="room_file_mismatch_warning_duration">时长.</string>
     <string name="room_file_mismatch_warning_size">大小.</string>
     <string name="room_shared_playlist">房间的分享播放列表</string>
     <string name="room_shared_playlist_brief">导入一个文件或一个目录，包括文件名到播放列表. 单击文件链接，让所有用户播放它.</string>
-    <string name="room_shared_playlist_updated">%s 更新播放列表</string>
-    <string name="room_shared_playlist_changed">%s 更改了当前选择的播放列表</string>
+    <string name="room_shared_playlist_updated">%1$s 更新播放列表</string>
+    <string name="room_shared_playlist_changed">%1$s 更改了当前选择的播放列表</string>
     <string name="room_shared_playlist_no_directories">您没有为共享播放列表指定任何媒体目录. 手动添加文件.</string>
     <string name="room_shared_playlist_not_found">Syncplay找不到当前正在媒体目录中的共享播放列表中播放的文件.</string>
     <string name="room_shared_playlist_not_featured">此房间或服务器没有共享播放列表功能.</string>
@@ -128,7 +128,7 @@
     <string name="room_overflow_leave_room">离开房间</string>
     <string name="room_card_title_user_info">用户信息</string>
     <string name="room_card_title_in_room_prefs">房间偏好设置</string>
-    <string name="room_custom_skip_button">跳过 %s</string>
+    <string name="room_custom_skip_button">跳过 %1$s</string>
 
     <!-- Media directories -->
     <string name="media_directories">共享播放列表的媒体目录</string>

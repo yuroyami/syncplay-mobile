@@ -151,9 +151,9 @@ kotlin {
     }
 }
 
-val exoOnly = false
-
 android {
+    val exoOnly = false
+
     namespace = "com.yuroyami.syncplay"
     compileSdk = 36
 

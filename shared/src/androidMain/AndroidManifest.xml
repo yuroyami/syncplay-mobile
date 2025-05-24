@@ -24,14 +24,13 @@
         android:supportsRtl="false"
         android:usesCleartextTraffic="true"
         android:enableOnBackInvokedCallback="false"
+        android:theme="@style/SplashTheme"
         tools:targetApi="36">
-
         <activity
             android:name=".SyncplayActivity"
             android:configChanges="orientation|keyboardHidden|screenLayout|screenSize|smallestScreenSize"
             android:exported="true"
             android:imeOptions="flagNoExtractUi"
-            android:theme="@style/SplashTheme"
             android:launchMode="singleTask"
             android:windowSoftInputMode="adjustNothing">
             <intent-filter>

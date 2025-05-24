@@ -248,26 +248,26 @@
     <string name="uisetting_custom_seek_amount_summary">La duración de salto por defecto es de 90 segundos (1:30 minutos), lo que es ideal para anime. Puedes ajustar esta duración para el botón de salto personalizado aquí.</string>
 
     <!-- String templates (with placeholders) -->
-    <string name="connect_button_current_engine">Motor actual: %s</string>
-    <string name="room_selected_vid">Archivo de vídeo seleccionado: %s</string>
-    <string name="room_selected_sub">Archivo de subtítulos seleccionado: %s</string>
-    <string name="room_ping_connected">Conectado - PING: %s ms</string>
+    <string name="connect_button_current_engine">Motor actual: %1$s</string>
+    <string name="room_selected_vid">Archivo de vídeo seleccionado: %1$s</string>
+    <string name="room_selected_sub">Archivo de subtítulos seleccionado: %1$s</string>
+    <string name="room_ping_connected">Conectado - PING: %1$s ms</string>
     <string name="room_attempting_connect">Intentando conectarse a %1$s:%2$s</string>
-    <string name="room_guy_played">%s reanudó la reproducción</string>
+    <string name="room_guy_played">%1$s reanudó la reproducción</string>
     <string name="room_guy_paused">%1$s pausó en %2$s</string>
     <string name="room_seeked">%1$s saltó desde %2$s a %3$s</string>
-    <string name="room_rewinded">Rebobinado por desincronización con %s</string>
-    <string name="room_guy_left">%s dejó la sala</string>
-    <string name="room_guy_joined">%s se unió a la sala.</string>
+    <string name="room_rewinded">Rebobinado por desincronización con %1$s</string>
+    <string name="room_guy_left">%1$s dejó la sala</string>
+    <string name="room_guy_joined">%1$s se unió a la sala.</string>
     <string name="room_isplayingfile">%1$s está reproduciendo '%2$s' (%3$s)</string>
-    <string name="room_you_joined_room">Te has unido a la sala: %s</string>
-    <string name="room_sub_track_changed">Pista de subtítulos cambaida a: %s</string>
-    <string name="room_audio_track_changed">Pista de audio cambiada a: %s</string>
-    <string name="room_details_current_room">Sala actual: %s</string>
+    <string name="room_you_joined_room">Te has unido a la sala: %1$s</string>
+    <string name="room_sub_track_changed">Pista de subtítulos cambaida a: %1$s</string>
+    <string name="room_audio_track_changed">Pista de audio cambiada a: %1$s</string>
+    <string name="room_details_current_room">Sala actual: %1$s</string>
     <string name="room_details_file_properties">Duración: %1$s - Tamaño: %2$s MB</string>
-    <string name="room_file_mismatch_warning_core">Tu archivo difiere del archivo de %s en los siguientes aspectos:</string>
-    <string name="room_shared_playlist_updated">%s actualizó la lista de reproducción</string>
-    <string name="room_shared_playlist_changed">%s cambió la selección actual de la lista de reproducción</string>
-    <string name="room_custom_skip_button">Saltar %s</string>
+    <string name="room_file_mismatch_warning_core">Tu archivo difiere del archivo de %1$s en los siguientes aspectos:</string>
+    <string name="room_shared_playlist_updated">%1$s actualizó la lista de reproducción</string>
+    <string name="room_shared_playlist_changed">%1$s cambió la selección actual de la lista de reproducción</string>
+    <string name="room_custom_skip_button">Saltar %1$s</string>
     <string name="media_directories_setting_summary">Syncplay buscará en los directorios de medios que especifiques aquí para encontrar el nombre que está reproduciendo una lista de reproducción compartida.</string>
 </resources>

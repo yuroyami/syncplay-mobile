@@ -44,14 +44,14 @@
     <string name="connect_solomode">Войти в режим соло (только видеоплеер)</string>
 
     <!-- Room screen -->
-    <string name="room_selected_vid">Выбран видео файл: %s</string>
-    <string name="room_selected_sub">Загружен файл субтитров: %s</string>
+    <string name="room_selected_vid">Выбран видео файл: %1$s</string>
+    <string name="room_selected_sub">Загружен файл субтитров: %1$s</string>
     <string name="room_selected_sub_error">Неверный файл субтитров. Поддерживаемые форматы: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'</string>
     <string name="room_sub_error_load_vid_first">Сначала загрузите видео</string>
     <string name="room_type_message">Введите ваше сообщение...</string>
     <string name="room_ready">Готово</string>
     <string name="room_not_ready">Не готово</string>
-    <string name="room_ping_connected">Подключено - PING: %s мс</string>
+    <string name="room_ping_connected">Подключено - PING: %1$s мс</string>
     <string name="room_ping_disconnected">Отключено</string>
     <string name="room_empty_message_error">Введите что-то!</string>
     <string name="room_attempting_connect">Попытка подключения к %1$s:%2$s</string>
@@ -61,36 +61,36 @@
     <string name="room_attempting_tls">Попытка установить защищенное соединение</string>
     <string name="room_tls_supported">Установлено защищенное соединение (TLS)</string>
     <string name="room_tls_not_supported">Сервер не поддерживает TLS</string>
-    <string name="room_guy_played">%s возобновил воспроизведение</string>
+    <string name="room_guy_played">%1$s возобновил воспроизведение</string>
     <string name="room_guy_paused">%1$s поставил на паузу на %2$s</string>
     <string name="room_seeked">%1$s перешел с %2$s на %3$s</string>
-    <string name="room_rewinded">Перемотано из-за разницы во времени с %s</string>
-    <string name="room_guy_left">%s покинул комнату.</string>
-    <string name="room_guy_joined">%s присоединился к комнате.</string>
+    <string name="room_rewinded">Перемотано из-за разницы во времени с %1$s</string>
+    <string name="room_guy_left">%1$s покинул комнату.</string>
+    <string name="room_guy_joined">%1$s присоединился к комнате.</string>
     <string name="room_isplayingfile">%1$s воспроизводит '%2$s' (%3$s)</string>
-    <string name="room_you_joined_room">Вы присоединились к комнате: %s</string>
+    <string name="room_you_joined_room">Вы присоединились к комнате: %1$s</string>
     <string name="room_scaling_fit_screen">Режим изменения размера: ПОДГОН К ЭКРАНУ</string>
     <string name="room_scaling_fixed_width">Режим изменения размера: ФИКСИРОВАННАЯ ШИРИНА</string>
     <string name="room_scaling_fixed_height">Режим изменения размера: ФИКСИРОВАННАЯ ВЫСОТА</string>
     <string name="room_scaling_fill_screen">Режим изменения размера: ЗАПОЛНЕНИЕ ЭКРАНА</string>
     <string name="room_scaling_zoom">Режим изменения размера: Масштабирование</string>
-    <string name="room_sub_track_changed">Дорожка с субтитрами изменёна на: %s</string>
-    <string name="room_audio_track_changed">Звуковая дорожка изменена на: %s</string>
+    <string name="room_sub_track_changed">Дорожка с субтитрами изменёна на: %1$s</string>
+    <string name="room_audio_track_changed">Звуковая дорожка изменена на: %1$s</string>
     <string name="room_audio_track_not_found">Звуковая дорожка не найдена!</string>
     <string name="room_sub_track_disable">Отключить субтитры</string>
     <string name="room_track_track">Дорожка</string>
     <string name="room_sub_track_notfound">Субтитры не найдены!</string>
-    <string name="room_details_current_room">Комната: %s</string>
+    <string name="room_details_current_room">Комната: %1$s</string>
     <string name="room_details_nofileplayed">(Нет воспроизводимого файла)</string>
     <string name="room_details_file_properties">Длительность: %1$s - Размер: %2$s МБ</string>
-    <string name="room_file_mismatch_warning_core">Ваш файл отличается от файла %s следующим образом:</string>
+    <string name="room_file_mismatch_warning_core">Ваш файл отличается от файла %1$s следующим образом:</string>
     <string name="room_file_mismatch_warning_name">Имя.</string>
     <string name="room_file_mismatch_warning_duration">Длительность.</string>
     <string name="room_file_mismatch_warning_size">Размер.</string>
     <string name="room_shared_playlist">Общий список вопроизведения комнаты</string>
     <string name="room_shared_playlist_brief">Импортируйте файл или папку, чтобы включить название файла (названия файлов) в список вопроизведения. Щелкните по строке с файлом чтобы дать всем пользователям вопроизвести его.</string>
-    <string name="room_shared_playlist_updated">%s обновил список вопроизведения</string>
-    <string name="room_shared_playlist_changed">%s изменил выделение в текущем списке воспроизведения</string>
+    <string name="room_shared_playlist_updated">%1$s обновил список вопроизведения</string>
+    <string name="room_shared_playlist_changed">%1$s изменил выделение в текущем списке воспроизведения</string>
     <string name="room_shared_playlist_no_directories">Вы не указали папки с медиа файдами для общих списков вопроизведения. Добавьте файлы вручную.</string>
     <string name="room_shared_playlist_not_found">Syncplay не может найти текущий воспроизводимый файл из общего списка воспроизведения в ваших папках с медиа.</string>
     <string name="room_shared_playlist_not_featured">В этой комнате или на сервере, функция Общих списков вопроизведения не включена.</string>
@@ -128,7 +128,7 @@
     <string name="room_overflow_leave_room">Покинуть комнату</string>
     <string name="room_card_title_user_info">Сведения о пользователе</string>
     <string name="room_card_title_in_room_prefs">Настройки комнаты</string>
-    <string name="room_custom_skip_button">Пропустить %s</string>
+    <string name="room_custom_skip_button">Пропустить %1$s</string>
 
     <!-- Media directories -->
     <string name="media_directories">Папки с медиа для общего списка воспроизведения</string>
