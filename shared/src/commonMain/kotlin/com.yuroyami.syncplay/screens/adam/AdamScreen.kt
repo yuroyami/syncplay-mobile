@@ -8,6 +8,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -18,6 +19,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.yuroyami.syncplay.screens.home.HomeScreenUI
 import com.yuroyami.syncplay.screens.room.RoomScreenUI
+import com.yuroyami.syncplay.settings.SettingStyling
 import com.yuroyami.syncplay.ui.AppTheme
 import com.yuroyami.syncplay.utils.ScreenSizeInfo
 import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
@@ -32,6 +34,7 @@ val LocalNavigator = compositionLocalOf<NavController> { error("No Navigator pro
 val LocalViewmodel = compositionLocalOf<SyncplayViewmodel> { error("No Viewmodel provided yet") }
 val LocalScreenSize = compositionLocalOf<ScreenSizeInfo> { error("No Screen Size Info provided") }
 val LocalScreen = compositionLocalOf<Screen> { error("No Screen provided") }
+val LocalSettingStyling = staticCompositionLocalOf<SettingStyling> { error("No Setting Styling provided") }
 
 sealed class Screen(val label: String) {
     data object Home : Screen("home")

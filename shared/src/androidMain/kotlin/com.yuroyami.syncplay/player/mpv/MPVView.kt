@@ -12,7 +12,7 @@ import com.yuroyami.syncplay.player.PlayerOptions
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MPV_GPU_NEXT
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MPV_HARDWARE_ACCELERATION
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MPV_INTERPOLATION
-import com.yuroyami.syncplay.settings.settingBoolean
+import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.utils.contextObtainer
 import `is`.xyz.mpv.MPVLib
 import `is`.xyz.mpv.MPVLib.mpvFormat.MPV_FORMAT_DOUBLE
@@ -55,9 +55,9 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
         // apply phone-optimized defaults
         MPVLib.setOptionStringK("profile", "fast")
 
-        voInUse = if (PREF_MPV_GPU_NEXT.settingBoolean()) "gpu-next" else "gpu"
 
-        val hwdec = if (PREF_MPV_HARDWARE_ACCELERATION.settingBoolean()) "auto" else "no"
+        voInUse = if (valueBlockingly(PREF_MPV_GPU_NEXT, true)) "gpu-next" else "gpu"
+        val hwdec = if (valueBlockingly(PREF_MPV_HARDWARE_ACCELERATION, true)) "auto" else "no"
 
 
         // vo: set display fps as reported by android
@@ -112,7 +112,7 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
         MPVLib.setOptionStringK("video-sync", "audio")
 
 
-        if (PREF_MPV_INTERPOLATION.settingBoolean())
+        if (valueBlockingly(PREF_MPV_INTERPOLATION, false))
             MPVLib.setOptionStringK("interpolation", "yes")
 
         MPVLib.setOptionStringK("gpu-debug", "no")

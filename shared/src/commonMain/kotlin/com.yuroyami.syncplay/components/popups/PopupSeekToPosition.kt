@@ -48,8 +48,7 @@ import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.screens.room.dispatchOSD
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
-import com.yuroyami.syncplay.settings.settingBooleanState
-import com.yuroyami.syncplay.settings.settingIntState
+import com.yuroyami.syncplay.settings.valueAsState
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.Dispatchers
@@ -193,8 +192,8 @@ object PopupSeekToPosition {
                 }
 
                 /* Custom Skip intro */
-                val customSkipToFront by PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT.settingBooleanState()
-                val customSkipAmount by PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT.settingIntState()
+                val customSkipToFront by PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT.valueAsState(true)
+                val customSkipAmount by PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT.valueAsState(90)
                 val customSkipAmountString by derivedStateOf { timeStamper(customSkipAmount) }
 
                 Button(

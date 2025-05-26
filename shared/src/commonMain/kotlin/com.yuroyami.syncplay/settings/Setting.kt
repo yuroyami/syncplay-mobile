@@ -51,9 +51,10 @@ import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.components.ComposeUtils.FlexibleFancyText
 import com.yuroyami.syncplay.components.ComposeUtils.MultiChoiceDialog
 import com.yuroyami.syncplay.components.ComposeUtils.SmartFancyIcon
-import com.yuroyami.syncplay.components.popups.PopupColorPicker.ColorPickingPopup
-import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.components.colorpicker.HsvColor
+import com.yuroyami.syncplay.components.popups.PopupColorPicker.ColorPickingPopup
+import com.yuroyami.syncplay.screens.adam.LocalSettingStyling
+import com.yuroyami.syncplay.ui.Paletting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -73,13 +74,12 @@ import kotlin.math.roundToInt
  * @param icon Icon for the setting, it's null by default so no icon will be shown unless you pass an [ImageVector] for it
  * @param defaultValue The default value of the setting, can be of any type but will throw an exception when incompatible
  * @param enabled Whether the setting is enabled, this is true by default if you don't pass any value so it's optional.
- * @param styling The styling used for the setting appearance (Fonts, sizes, colors for icon, title, summary, padding etc)
  * */
 sealed class Setting<T>(
     val type: SettingType = SettingType.OneClickSettingType, val key: String = "",
     val title: StringResource, val summary: StringResource,
-    val defaultValue: T? = null,
-    val icon: ImageVector? = null, val enabled: Boolean = true, val styling: SettingStyling = SettingStyling()
+    val defaultValue: T,
+    val icon: ImageVector? = null, val enabled: Boolean = true,
 ) {
     /** This is the abstract function that will be called by Compose UI in order to draw the setting.
      * Each setting type has its own UI, so within this sealed class, we override it and draw it respectively;
@@ -90,15 +90,17 @@ sealed class Setting<T>(
     /** ======= Now to specific types of SETTINGs and their respective child classes ======= */
 
     class OneClickSetting(
-        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Any? = null,
-        icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling,
+        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Any = Any(),
+        icon: ImageVector?, enabled: Boolean = true,
         val onClick: (() -> Unit)? = null,
     ) : Setting<Any>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
-        icon = icon, enabled = enabled, styling = styling
+        icon = icon, enabled = enabled
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
+            val styling = LocalSettingStyling.current
+
             ListItem(
                 modifier = modifier
                     .fillMaxWidth()
@@ -140,19 +142,20 @@ sealed class Setting<T>(
     }
 
     class YesNoDialogSetting(
-        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Any? = null,
-        icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling,
+        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Any = Any(),
+        icon: ImageVector?, enabled: Boolean = true,
         val rationale: StringResource,
         val onYes: (CoroutineScope.() -> Unit)? = null,
         val onNo: (CoroutineScope.() -> Unit)? = null
         //TODO: Show "done" message (i.e: Operation successfully carried out) in a snackbar message
     ) : Setting<Any>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
-        icon = icon, enabled = enabled, styling = styling
+        icon = icon, enabled = enabled
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
             val scope = rememberCoroutineScope { Dispatchers.IO }
+            val styling = LocalSettingStyling.current
 
             var dialog by remember { mutableStateOf(false) }
             if (dialog ) {
@@ -215,15 +218,16 @@ sealed class Setting<T>(
     }
 
     class PopupSetting(
-        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Any? = null,
-        icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling,
+        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Any = Any(),
+        icon: ImageVector?, enabled: Boolean = true,
         val popupComposable: @Composable() ((MutableState<Boolean>) -> Unit)? = null
     ) : Setting<Any>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
-        icon = icon, enabled = enabled, styling = styling
+        icon = icon, enabled = enabled
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
+            val styling = LocalSettingStyling.current
             val popupVisibility = remember { mutableStateOf(false) }
 
             ListItem(
@@ -274,18 +278,20 @@ sealed class Setting<T>(
     }
 
     class BooleanSetting(
-        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Boolean?,
-        icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling,
+        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Boolean,
+        icon: ImageVector?, enabled: Boolean = true,
         val onBooleanChanged: (Boolean) -> Unit = {},
     ) : Setting<Boolean>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
-        icon = icon, enabled = enabled, styling = styling
+        icon = icon, enabled = enabled
     ) {
         /** A boolean setting UI composable function. This either creates a CheckboxSetting or a ToggleSetting
          * based on the parameter [type] that is passed, whether it is a checkbox setting, or a toggle button. */
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val boolean = getSettingState()
+            val boolean by key.valueAsState(defaultValue)
+
+            val styling = LocalSettingStyling.current
             val scope = rememberCoroutineScope { Dispatchers.IO }
 
             ListItem(
@@ -297,7 +303,7 @@ sealed class Setting<T>(
 
                     ) {
                         scope.launch {
-                            writeValue(key, !boolean.value)
+                            writeValue(key, !boolean)
                         }
                     },
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -305,7 +311,7 @@ sealed class Setting<T>(
                 trailingContent = {
                     if (type == SettingType.CheckboxSettingType) {
                         Checkbox(
-                            checked = boolean.value,
+                            checked = boolean,
                             enabled = enabled,
                             onCheckedChange = { b ->
                                 scope.launch {
@@ -316,7 +322,7 @@ sealed class Setting<T>(
                         )
                     } else {
                         Switch(
-                            checked = boolean.value,
+                            checked = boolean,
                             enabled = enabled,
                             onCheckedChange = { b ->
                                 scope.launch {
@@ -358,21 +364,23 @@ sealed class Setting<T>(
     }
 
     class MultiChoiceSetting(
-        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: String?,
-        icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling,
-        val entryKeys: List<String> = listOf(),
-        val entryValues: List<String> = listOf(),
+        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: String,
+        icon: ImageVector?, enabled: Boolean = true,
+        val entryKeys: List<String>,
+        val entryValues: List<String>,
         val onItemChosen: ((index: Int, value: String) -> Unit)? = null
     ) : Setting<String>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
-        icon = icon, enabled = enabled, styling = styling
+        icon = icon, enabled = enabled
     ) {
-        /** A multi-choice setting which shows a popup dialog when clicked.
-         * @exception SettingCreationException When [entryKeys] and [entryValues] are not passed/specified. */
+        /** A multi-choice setting which shows a popup dialog when clicked.*/
         @Composable
         override fun SettingComposable(modifier: Modifier) {
+            val selectedItem by key.valueAsState(defaultValue)
+
+            val styling = LocalSettingStyling.current
             val dialogOpen = remember { mutableStateOf(false) }
-            val selectedItem = getSettingState()
+
             val scope = rememberCoroutineScope { Dispatchers.IO }
 
             val renderedValues = entryValues
@@ -382,7 +390,7 @@ sealed class Setting<T>(
                     items = entryKeys,
                     title = stringResource(title),
                     onDismiss = { dialogOpen.value = false },
-                    selectedItem = renderedValues.indexOf(selectedItem.value),
+                    selectedItem = renderedValues.indexOf(selectedItem),
                     onItemClick = { i ->
                         dialogOpen.value = false
 
@@ -440,18 +448,20 @@ sealed class Setting<T>(
     }
 
     class SliderSetting(
-        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Int?,
-        icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling,
+        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Int,
+        icon: ImageVector?, enabled: Boolean = true,
         val maxValue: Int = 100,
         val minValue: Int = 0,
         val onValueChanged: ((newValue: Int) -> Unit)? = null,
     ) : Setting<Int>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
-        icon = icon, enabled = enabled, styling = styling
+        icon = icon, enabled = enabled
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val value = getSettingState()
+            val value by key.valueAsState(defaultValue)
+
+            val styling = LocalSettingStyling.current
             val scope = rememberCoroutineScope { Dispatchers.IO }
 
             ListItem(
@@ -481,7 +491,7 @@ sealed class Setting<T>(
                         )
                         Spacer(Modifier.weight(1f))
                         Text(
-                            text = (value.value).toString(),
+                            text = (value).toString(),
                             style = TextStyle(
                                 color = MaterialTheme.colorScheme.primary,
                                 fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default,
@@ -501,11 +511,11 @@ sealed class Setting<T>(
                         )
 
                         Slider(
-                            value = value.value.toFloat(),
+                            value = value.toFloat(),
                             enabled = enabled,
                             valueRange = (minValue.toFloat())..(maxValue.toFloat()),
                             onValueChange = { f ->
-                                if (f != value.value.toFloat()) {
+                                if (f != value.toFloat()) {
                                     onValueChanged?.invoke(f.roundToInt())
                                 }
 
@@ -524,16 +534,18 @@ sealed class Setting<T>(
     }
 
     class ColorSetting(
-        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Int?,
-        icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling
+        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Int,
+        icon: ImageVector?, enabled: Boolean = true
     ) : Setting<Int>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
-        icon = icon, enabled = enabled, styling = styling
+        icon = icon, enabled = enabled
     ) {
         /** A color setting UI composable function. Clicking this would displays a popup to the user. */
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val color = getSettingState()
+            val color by key.valueAsState(defaultValue)
+
+            val styling = LocalSettingStyling.current
             val colorDialogState = remember { mutableStateOf(false) }
             val scope = rememberCoroutineScope { Dispatchers.IO }
 
@@ -566,7 +578,7 @@ sealed class Setting<T>(
                         Spacer(Modifier.weight(1f))
                         Button(
                             onClick = { colorDialogState.value = true },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(color.value)),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(color)),
                             modifier = Modifier.size(24.dp)
                         ) {}
                     }
@@ -583,7 +595,7 @@ sealed class Setting<T>(
                 }
             )
 
-            ColorPickingPopup(colorDialogState, initialColor = HsvColor.from(Color(color.value)), onColorChanged = { hsvColor ->
+            ColorPickingPopup(colorDialogState, initialColor = HsvColor.from(Color(color)), onColorChanged = { hsvColor ->
                 scope.launch {
                     writeValue(key, hsvColor.toColor().toArgb())
                 }
@@ -592,16 +604,18 @@ sealed class Setting<T>(
     }
 
     class TextFieldSetting(
-        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: String?,
-        icon: ImageVector?, enabled: Boolean = true, styling: SettingStyling
+        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: String,
+        icon: ImageVector?, enabled: Boolean = true
     ) : Setting<String>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
-        icon = icon, enabled = enabled, styling = styling
+        icon = icon, enabled = enabled
     ) {
         /** A string setting UI composable function. It has a textfield next to it */
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val string by getSettingState()
+            val string by key.valueAsState(defaultValue)
+
+            val styling = LocalSettingStyling.current
             val scope = rememberCoroutineScope()
             val focusManager = LocalFocusManager.current
 

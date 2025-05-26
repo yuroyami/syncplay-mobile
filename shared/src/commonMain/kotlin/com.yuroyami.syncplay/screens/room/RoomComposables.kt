@@ -58,6 +58,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -71,8 +72,7 @@ import com.yuroyami.syncplay.components.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.settings.DataStoreKeys
-import com.yuroyami.syncplay.settings.settingBooleanState
-import com.yuroyami.syncplay.settings.settingIntState
+import com.yuroyami.syncplay.settings.valueAsState
 import com.yuroyami.syncplay.ui.Paletting
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.Font
@@ -88,13 +88,13 @@ object RoomComposables {
     //TODO DONT DO THIS TO PRODUCE A MSG PALETTE
     @Composable
     fun ComposedMessagePalette(): MessagePalette {
-        val colorTimestamp = DataStoreKeys.PREF_INROOM_COLOR_TIMESTAMP.settingIntState()
-        val colorSelftag = DataStoreKeys.PREF_INROOM_COLOR_SELFTAG.settingIntState()
-        val colorFriendtag = DataStoreKeys.PREF_INROOM_COLOR_FRIENDTAG.settingIntState()
-        val colorSystem = DataStoreKeys.PREF_INROOM_COLOR_SYSTEMMSG.settingIntState()
-        val colorUserchat = DataStoreKeys.PREF_INROOM_COLOR_USERMSG.settingIntState()
-        val colorError = DataStoreKeys.PREF_INROOM_COLOR_ERRORMSG.settingIntState()
-        val msgIncludeTimestamp = DataStoreKeys.PREF_INROOM_MSG_ACTIVATE_STAMP.settingBooleanState()
+        val colorTimestamp = DataStoreKeys.PREF_INROOM_COLOR_TIMESTAMP.valueAsState(Paletting.MSG_TIMESTAMP.toArgb())
+        val colorSelftag = DataStoreKeys.PREF_INROOM_COLOR_SELFTAG.valueAsState(Paletting.MSG_SELF_TAG.toArgb())
+        val colorFriendtag = DataStoreKeys.PREF_INROOM_COLOR_FRIENDTAG.valueAsState(Paletting.MSG_FRIEND_TAG.toArgb())
+        val colorSystem = DataStoreKeys.PREF_INROOM_COLOR_SYSTEMMSG.valueAsState(Paletting.MSG_SYSTEM.toArgb())
+        val colorUserchat = DataStoreKeys.PREF_INROOM_COLOR_USERMSG.valueAsState(Paletting.MSG_CHAT.toArgb())
+        val colorError = DataStoreKeys.PREF_INROOM_COLOR_ERRORMSG.valueAsState(Paletting.MSG_ERROR.toArgb())
+        val msgIncludeTimestamp = DataStoreKeys.PREF_INROOM_MSG_ACTIVATE_STAMP.valueAsState(true)
 
         return MessagePalette(
                 timestampColor = Color(colorTimestamp.value),
@@ -177,7 +177,7 @@ object RoomComposables {
         val viewmodel = LocalViewmodel.current
 
         /** The layout for the fading messages & OSD messages (when HUD is hidden, or when screen is locked) */
-        val fadingTimeout = DataStoreKeys.PREF_INROOM_MSG_FADING_DURATION.settingIntState()
+        val fadingTimeout = DataStoreKeys.PREF_INROOM_MSG_FADING_DURATION.valueAsState(3)
         val palette = LocalChatPalette.current
 
         if (!hudVisibility) {

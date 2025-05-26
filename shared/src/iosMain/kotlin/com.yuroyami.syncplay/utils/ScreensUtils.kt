@@ -4,7 +4,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.uikit.ComposeUIViewControllerDelegate
 import androidx.compose.ui.window.ComposeUIViewController
 import com.yuroyami.syncplay.screens.adam.AdamScreen
-import com.yuroyami.syncplay.screens.home.JoinConfig
+import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.viewmodel.PlatformCallback
 import platform.AVKit.AVPictureInPictureController
 import platform.Foundation.NSURL

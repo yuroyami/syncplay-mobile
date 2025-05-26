@@ -1,5 +1,8 @@
 package com.yuroyami.syncplay.settings
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
@@ -66,6 +69,7 @@ suspend inline fun <reified T> valueSuspendingly(key: String, default: T): T {
     return valueFlow(key, default).first()
 }
 
+//TODO: Use nullable valueFlow without defaults
 suspend inline fun <reified T> valueSusQuick(key: String, default: T): T? {
     return valueFlow(key, default).firstOrNull()
 }
@@ -76,4 +80,10 @@ suspend inline fun <reified T> valueSusQuick(key: String, default: T): T? {
  */
 inline fun <reified T> valueBlockingly(key: String, default: T): T {
     return runBlocking { valueFlow(key, default).firstOrNull() ?: default }
+}
+
+
+@Composable
+inline fun <reified T> String.valueAsState(default: T): State<T> {
+    return valueFlow(this, default).collectAsState(initial = default)
 }

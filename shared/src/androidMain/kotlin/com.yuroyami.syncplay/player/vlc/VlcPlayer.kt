@@ -102,6 +102,9 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
         )
     }
 
+    //TODO
+    override fun configurableSettings() = null
+
     override fun hasMedia(): Boolean {
         return vlcPlayer?.hasMedia() == true
     }

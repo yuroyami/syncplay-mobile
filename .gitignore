@@ -40,3 +40,4 @@ libpostproc.so
 libswresample.so
 lbswscale.so
 Pods/
+*.mychanges

@@ -68,7 +68,6 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -77,7 +76,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
@@ -103,13 +101,13 @@ import com.yuroyami.syncplay.components.ComposeUtils.SmartFancyIcon
 import com.yuroyami.syncplay.components.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.components.getRegularFont
 import com.yuroyami.syncplay.components.popups.PopupAPropos.AProposPopup
+import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_PLAYER_ENGINE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_SP_MEDIA_DIRS
-import com.yuroyami.syncplay.settings.SettingCategory
+import com.yuroyami.syncplay.settings.SETTINGS_GLOBAL
 import com.yuroyami.syncplay.settings.SettingsUI
-import com.yuroyami.syncplay.settings.sgGLOBAL
 import com.yuroyami.syncplay.settings.valueFlow
 import com.yuroyami.syncplay.settings.writeValue
 import com.yuroyami.syncplay.ui.Paletting
@@ -147,8 +145,6 @@ import syncplaymobile.shared.generated.resources.swift
 import syncplaymobile.shared.generated.resources.syncplay_logo_gradient
 import syncplaymobile.shared.generated.resources.vlc
 
-private val LocalGlobalSettings = staticCompositionLocalOf<List<SettingCategory>> { error("No Global Settings provided") }
-
 val officialServers = listOf("syncplay.pl:8995", "syncplay.pl:8996", "syncplay.pl:8997", "syncplay.pl:8998", "syncplay.pl:8999")
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -164,9 +160,6 @@ fun HomeScreenUI() {
         }
     }
 
-    CompositionLocalProvider(
-        LocalGlobalSettings provides sgGLOBAL()
-    ) {
         val scope = rememberCoroutineScope { Dispatchers.IO }
         val snacky = remember { SnackbarHostState().also { viewmodel.snack = it } }
         val focusManager = LocalFocusManager.current
@@ -648,7 +641,6 @@ fun HomeScreenUI() {
             }
         )
     }
-}
 
 @Composable
 fun SyncplayTopBar() {
@@ -768,6 +760,7 @@ fun SyncplayTopBar() {
                 },
             )/* Settings */
 
+
             androidx.compose.animation.AnimatedVisibility(
                 modifier = Modifier.fillMaxWidth(),
                 visible = settingState.intValue != 0,
@@ -776,7 +769,7 @@ fun SyncplayTopBar() {
             ) {
                 SettingsUI.SettingsGrid(
                     modifier = Modifier.fillMaxWidth(),
-                    settingcategories = LocalGlobalSettings.current,
+                    settings = SETTINGS_GLOBAL,
                     state = settingState,
                     onCardClicked = {
                         settingState.intValue = 2

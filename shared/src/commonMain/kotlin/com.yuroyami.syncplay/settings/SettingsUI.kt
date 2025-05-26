@@ -63,7 +63,7 @@ object SettingsUI {
     @Composable
     fun SettingsGrid(
         modifier: Modifier = Modifier,
-        settingcategories: List<SettingCategory>,
+        settings: SettingCollection,
         state: MutableState<Int>,
         layoutOrientation: SettingsGridLayout = SettingsGridLayout.SETTINGS_GRID_VERTICAL_GRID,
         titleSize: Float = 12f,

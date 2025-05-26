@@ -39,10 +39,10 @@ import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.PlayerOptions
 import com.yuroyami.syncplay.protocol.sending.Packet
+import com.yuroyami.syncplay.screens.room.dispatchOSD
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
-import com.yuroyami.syncplay.screens.room.dispatchOSD
 import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -239,6 +239,8 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
             }
         )
     }
+
+    override fun configurableSettings() = null
 
     override fun getMaxVolume(): Int {
         TODO("Not yet implemented")

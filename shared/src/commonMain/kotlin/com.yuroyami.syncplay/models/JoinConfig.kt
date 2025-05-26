@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.home
+package com.yuroyami.syncplay.models
 
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.valueSusQuick
@@ -19,7 +19,7 @@ data class JoinConfig(
     companion object {
         suspend fun savedConfig(): JoinConfig {
             val cfg = withTimeoutOrNull(250) { valueSusQuick<String?>(DataStoreKeys.MISC_JOIN_CONFIG, null) }
-            return if (cfg != null) Json.decodeFromString<JoinConfig>(cfg) else JoinConfig()
+            return if (cfg != null) Json.Default.decodeFromString<JoinConfig>(cfg) else JoinConfig()
         }
     }
 
@@ -27,7 +27,7 @@ data class JoinConfig(
         val saveInfo = valueSuspendingly(DataStoreKeys.PREF_REMEMBER_INFO, true)
 
         if (saveInfo) {
-            writeValue(DataStoreKeys.MISC_JOIN_CONFIG, Json.encodeToString(this))
+            writeValue(DataStoreKeys.MISC_JOIN_CONFIG, Json.Default.encodeToString(this))
         }
     }
 }

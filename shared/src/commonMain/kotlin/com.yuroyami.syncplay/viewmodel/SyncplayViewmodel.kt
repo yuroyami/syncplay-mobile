@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import com.yuroyami.syncplay.models.Constants
+import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Message
 import com.yuroyami.syncplay.models.TrackChoices
@@ -18,7 +19,6 @@ import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.screens.adam.Screen
 import com.yuroyami.syncplay.screens.adam.Screen.Companion.navigateTo
-import com.yuroyami.syncplay.screens.home.JoinConfig
 import com.yuroyami.syncplay.screens.room.dispatchOSD
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_FILE_MISMATCH_WARNING

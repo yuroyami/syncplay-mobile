@@ -1,5 +1,15 @@
 package com.yuroyami.syncplay.settings
 
+import com.yuroyami.syncplay.settings.SettingType.CheckboxSettingType
+import com.yuroyami.syncplay.settings.SettingType.ColorSettingType
+import com.yuroyami.syncplay.settings.SettingType.MultiChoicePopupSettingType
+import com.yuroyami.syncplay.settings.SettingType.OneClickSettingType
+import com.yuroyami.syncplay.settings.SettingType.PopupSettingType
+import com.yuroyami.syncplay.settings.SettingType.SliderSettingType
+import com.yuroyami.syncplay.settings.SettingType.TextFieldSettingType
+import com.yuroyami.syncplay.settings.SettingType.ToggleSettingType
+
+
 /** Defines the type of a setting (preference).
  * @property [OneClickSettingType]
  * @property [MultiChoicePopupSettingType]
@@ -49,7 +59,7 @@ enum class SettingType {
     /** PopupSetting is a [SettingType] for a setting whose function is to show a popup.
      * The popup does not return any value, and has custom content (Composable).
      * This is entirely different from [MultiChoicePopupSettingType], this is closer in nature
-     * to [OneClickSettingType] but takes a [Composable] parameter rather than an [onClick].
+     * to [OneClickSettingType] but takes a [androidx.compose.runtime.Composable] parameter rather than an [androidx.compose.ui.semantics.onClick].
      *
      * This has no direct counterpart in XML preferences. */
     PopupSettingType,

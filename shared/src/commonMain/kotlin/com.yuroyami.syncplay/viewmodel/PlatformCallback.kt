@@ -1,6 +1,6 @@
 package com.yuroyami.syncplay.viewmodel
 
-import com.yuroyami.syncplay.screens.home.JoinConfig
+import com.yuroyami.syncplay.models.JoinConfig
 
 interface PlatformCallback {
     fun onLanguageChanged(newLang: String)

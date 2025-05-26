@@ -165,9 +165,8 @@ import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_SHADOW
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
 import com.yuroyami.syncplay.settings.SettingCategory
-import com.yuroyami.syncplay.settings.settingBooleanState
-import com.yuroyami.syncplay.settings.settingIntState
 import com.yuroyami.syncplay.settings.sgROOM
+import com.yuroyami.syncplay.settings.valueAsState
 import com.yuroyami.syncplay.settings.valueFlow
 import com.yuroyami.syncplay.settings.writeValue
 import com.yuroyami.syncplay.ui.Paletting
@@ -277,12 +276,12 @@ private fun RoomUIImpl() {
     val chathistorypopupstate = remember { mutableStateOf(false) }
     val seektopopupstate = remember { mutableStateOf(false) }
 
-    val msgBoxOpacity = PREF_INROOM_MSG_BG_OPACITY.settingIntState()
-    val msgOutline by PREF_INROOM_MSG_OUTLINE.settingBooleanState()
-    val msgShadow by PREF_INROOM_MSG_SHADOW.settingBooleanState()
-    val msgFontSize = PREF_INROOM_MSG_FONTSIZE.settingIntState()
-    val msgMaxCount by PREF_INROOM_MSG_MAXCOUNT.settingIntState()
-    val keyboardOkFunction by PREF_INROOM_MSG_BOX_ACTION.settingBooleanState()
+    val msgBoxOpacity = PREF_INROOM_MSG_BG_OPACITY.valueAsState(0)
+    val msgOutline by PREF_INROOM_MSG_OUTLINE.valueAsState(true)
+    val msgShadow by PREF_INROOM_MSG_SHADOW.valueAsState(false)
+    val msgFontSize = PREF_INROOM_MSG_FONTSIZE.valueAsState(9)
+    val msgMaxCount by PREF_INROOM_MSG_MAXCOUNT.valueAsState(10)
+    val keyboardOkFunction by PREF_INROOM_MSG_BOX_ACTION.valueAsState(true)
 
     /* Some file picking stuff */
     val videoPicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = CommonUtils.vidExs)) { file ->
@@ -1313,9 +1312,8 @@ private fun RoomUIImpl() {
                                             viewmodel.seekFrwrd()
                                         }
                                     }
-                                    val customSkipToFront by PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT.settingBooleanState()
-
-                                    val customSkipAmount by PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT.settingIntState()
+                                    val customSkipToFront by PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT.valueAsState(true)
+                                    val customSkipAmount by PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT.valueAsState(90)
                                     if (customSkipToFront) {
                                         val customSkipAmountString by derivedStateOf {
                                             timeStamper(
