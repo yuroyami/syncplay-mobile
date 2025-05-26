@@ -21,6 +21,8 @@ import com.yuroyami.syncplay.settings.SettingType.ToggleSettingType
  * @property [TextFieldSettingType]
  */
 enum class SettingType {
+    HeadlessSettingType,
+
     /** OneClickSetting is a [SettingType] for a setting whose function is based upon one click only.
      * That means, that the setting will not read/write any value,
      * but instead, just initiates a lambda function (onClick).

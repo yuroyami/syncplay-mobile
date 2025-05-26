@@ -6,7 +6,7 @@ import com.eygraber.uri.Uri
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
-import com.yuroyami.syncplay.settings.SettingBundle
+import com.yuroyami.syncplay.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.utils.CommonUtils.sha256
 import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 import kotlinx.coroutines.CoroutineScope
@@ -70,7 +70,7 @@ abstract class BasePlayer(
     abstract fun destroy()
 
     /** Called by Compose to check whether there are any extra settings for this player */
-    abstract fun configurableSettings(): SettingBundle?
+    abstract fun configurableSettings(): ExtraSettingBundle?
 
     /** Returns whether the current player has any media loaded */
     abstract fun hasMedia(): Boolean

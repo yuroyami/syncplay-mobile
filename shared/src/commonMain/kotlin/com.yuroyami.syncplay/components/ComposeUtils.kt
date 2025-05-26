@@ -486,9 +486,9 @@ object ComposeUtils {
     @Composable
     fun MultiChoiceDialog(
         title: String = "",
-        items: List<String>,
+        items: Map<String, String>,
         selectedItem: Int,
-        onItemClick: (Int) -> Unit,
+        onItemClick: (Int, String) -> Unit,
         onDismiss: () -> Unit,
     ) {
         Dialog(onDismissRequest = { onDismiss() }) {
@@ -531,14 +531,14 @@ object ComposeUtils {
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = ripple(bounded = true, color = Paletting.SP_ORANGE)
                                 ) {
-                                    onItemClick(index)
+                                    onItemClick(index, item)
                                     onDismiss()
                                 }
                             ) {
                                 RadioButton(
                                     selected = index == selectedItem,
                                     onClick = {
-                                        onItemClick(index)
+                                        onItemClick(index, item)
                                         onDismiss()
                                     }
                                 )

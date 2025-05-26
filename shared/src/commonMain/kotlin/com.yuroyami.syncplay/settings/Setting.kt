@@ -63,6 +63,7 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.no
+import syncplaymobile.shared.generated.resources.okay
 import syncplaymobile.shared.generated.resources.yes
 import kotlin.math.roundToInt
 
@@ -88,6 +89,13 @@ sealed class Setting<T>(
     abstract fun SettingComposable(modifier: Modifier)
 
     /** ======= Now to specific types of SETTINGs and their respective child classes ======= */
+    class HeadlessSetting(key: String, defaultValue: Any): Setting<Any>(
+        type = SettingType.HeadlessSettingType, key = key, summary = Res.string.okay, title = Res.string.okay, defaultValue = defaultValue,
+        icon = null, enabled = true
+    ) {
+        @Composable
+        override fun SettingComposable(modifier: Modifier) {}
+    }
 
     class OneClickSetting(
         type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Any = Any(),
@@ -366,8 +374,7 @@ sealed class Setting<T>(
     class MultiChoiceSetting(
         type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: String,
         icon: ImageVector?, enabled: Boolean = true,
-        val entryKeys: List<String>,
-        val entryValues: List<String>,
+        val entries: Map<Pair<StringResource?, String?>, Pair<StringResource?, String?>>,
         val onItemChosen: ((index: Int, value: String) -> Unit)? = null
     ) : Setting<String>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
@@ -383,21 +390,21 @@ sealed class Setting<T>(
 
             val scope = rememberCoroutineScope { Dispatchers.IO }
 
-            val renderedValues = entryValues
-
             if (dialogOpen.value) {
                 MultiChoiceDialog(
-                    items = entryKeys,
+                    items = entryKeys.map { s ->
+                        s.first?.let { stringResource(it) } ?: s.second!!
+                    },
                     title = stringResource(title),
                     onDismiss = { dialogOpen.value = false },
-                    selectedItem = renderedValues.indexOf(selectedItem),
-                    onItemClick = { i ->
+                    selectedItem = entryValues.indexOf(selectedItem),
+                    onItemClick = { i, s ->
                         dialogOpen.value = false
 
                         scope.launch {
-                            writeValue(key, renderedValues[i])
+                            writeValue(key, s)
 
-                            onItemChosen?.let { it(i, renderedValues[i]) }
+                            onItemChosen?.let { it(i, s) }
 
                         }
                     })

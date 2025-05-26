@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Brush
 import androidx.compose.material.icons.filled.ClearAll
 import androidx.compose.material.icons.filled.ClosedCaptionOff
 import androidx.compose.material.icons.filled.ConnectWithoutContact
+import androidx.compose.material.icons.filled.DesignServices
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.FastForward
@@ -53,6 +54,8 @@ import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_DISPLAY_LANG
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_ERASE_SHORTCUTS
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_FILE_MISMATCH_WARNING
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_GLOBAL_CLEAR_ALL
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_HASH_FILENAME
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_HASH_FILESIZE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_COLOR_ERRORMSG
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_COLOR_FRIENDTAG
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_COLOR_SELFTAG
@@ -95,6 +98,13 @@ import syncplaymobile.shared.generated.resources.setting_display_language_title
 import syncplaymobile.shared.generated.resources.setting_erase_shortcuts_dialog
 import syncplaymobile.shared.generated.resources.setting_erase_shortcuts_summary
 import syncplaymobile.shared.generated.resources.setting_erase_shortcuts_title
+import syncplaymobile.shared.generated.resources.setting_fileinfo_behavior_a
+import syncplaymobile.shared.generated.resources.setting_fileinfo_behavior_b
+import syncplaymobile.shared.generated.resources.setting_fileinfo_behavior_c
+import syncplaymobile.shared.generated.resources.setting_fileinfo_behaviour_name_summary
+import syncplaymobile.shared.generated.resources.setting_fileinfo_behaviour_name_title
+import syncplaymobile.shared.generated.resources.setting_fileinfo_behaviour_size_summary
+import syncplaymobile.shared.generated.resources.setting_fileinfo_behaviour_size_title
 import syncplaymobile.shared.generated.resources.setting_max_buffer_summary
 import syncplaymobile.shared.generated.resources.setting_max_buffer_title
 import syncplaymobile.shared.generated.resources.setting_min_buffer_summary
@@ -166,7 +176,7 @@ import syncplaymobile.shared.generated.resources.uisetting_timestamp_summary
 import syncplaymobile.shared.generated.resources.uisetting_timestamp_title
 
 
-typealias SettingBundle = Pair<String, SettingSet>
+typealias ExtraSettingBundle = Pair<SettingCategory, SettingSet>
 
 typealias SettingSet = List<Setting<out Any>>
 typealias SettingCollection = Map<SettingCategory, SettingSet>
@@ -245,8 +255,8 @@ val SETTINGS_GLOBAL: SettingCollection = buildMap {
                     summary = Res.string.setting_display_language_summry,
                     defaultValue = "en",
                     icon = Icons.Filled.Translate,
-                    entryKeys = langMap.keys.toList(),
-                    entryValues = langMap.values.toList(),
+                    entryKeys = langMap.keys.map { Pair(first = null, second = it) },
+                    entryValues = langMap.values.map { Pair(first = null, second = it) },
                     onItemChosen = { _, v ->
                         platformCallback.onLanguageChanged(v)
                     }
@@ -305,46 +315,39 @@ val SETTINGS_GLOBAL: SettingCollection = buildMap {
                 summary = Res.string.setting_warn_file_mismatch_summary,
                 defaultValue = true,
                 icon = Icons.Filled.ErrorOutline,
+            ),
+            Setting.MultiChoiceSetting(
+                type = SettingType.MultiChoicePopupSettingType,
+                key = PREF_HASH_FILENAME,
+                title = Res.string.setting_fileinfo_behaviour_name_title,
+                summary = Res.string.setting_fileinfo_behaviour_name_summary,
+                defaultValue = "1",
+                icon = Icons.Filled.DesignServices,
+                entryKeys =
+                    listOf(
+                        Pair(first = Res.string.setting_fileinfo_behavior_a, second = null),
+                        Pair(first = Res.string.setting_fileinfo_behavior_b, second = null),
+                        Pair(first = Res.string.setting_fileinfo_behavior_c, second = null)
+                    ),
+                entryValues = listOf(Pair(null,"1"), Pair(null,"2"), Pair(null,"3"))
+            ),
+            Setting.MultiChoiceSetting(
+                type = SettingType.MultiChoicePopupSettingType,
+                key = PREF_HASH_FILESIZE,
+                title = Res.string.setting_fileinfo_behaviour_size_title,
+                summary = Res.string.setting_fileinfo_behaviour_size_summary,
+                defaultValue = "1",
+                icon = Icons.Filled.DesignServices,
+                entryKeys =
+                    listOf(
+                        Pair(first = Res.string.setting_fileinfo_behavior_a, second = null),
+                        Pair(first = Res.string.setting_fileinfo_behavior_b, second = null),
+                        Pair(first = Res.string.setting_fileinfo_behavior_c, second = null)
+                    ),
+                entryValues = listOf(Pair(null,"1"), Pair(null,"2"), Pair(null,"3")),
             )
         )
     )
-
-    //            TODO add(
-//                Setting.MultiChoiceSetting(
-//                    type = SettingType.MultiChoicePopupSettingType,
-//                    key = PREF_HASH_FILENAME,
-//                    title = Res.string.setting_fileinfo_behaviour_name_title,
-//                    summary = Res.string.setting_fileinfo_behaviour_name_summary,
-//                    defaultValue = "1",
-//                    icon = Icons.Filled.DesignServices,
-//                    styling = settingGLOBALstyle,
-//                    entryKeys =
-//                        listOf(
-//                            Res.string.setting_fileinfo_behavior_a,
-//                            Res.string.setting_fileinfo_behavior_b,
-//                            Res.string.setting_fileinfo_behavior_c
-//                        ),
-//                    entryValues = listOf("1", "2", "3")
-//                ) to CATEG_GLOBAL_SYNCING
-//            )
-
-//            todo add(
-//                Setting.MultiChoiceSetting(
-//                    type = SettingType.MultiChoicePopupSettingType,
-//                    key = PREF_HASH_FILESIZE,
-//                    title = Res.string.setting_fileinfo_behaviour_size_title,
-//                    summary = Res.string.setting_fileinfo_behaviour_size_summary,
-//                    defaultValue = "1",
-//                    icon = Icons.Filled.DesignServices,
-//                    styling = settingGLOBALstyle,
-//                    entryKeys =
-//                        listOf(
-//                            Res.string.setting_fileinfo_behavior_a,
-//                            Res.string.setting_fileinfo_behavior_b,
-//                            Res.string.setting_fileinfo_behavior_c
-//                        ),
-//                    entryValues = listOf("1", "2", "3"),
-//                ) to CATEG_GLOBAL_SYNCING
 
     if (platform == PLATFORM.Android) {
         put(

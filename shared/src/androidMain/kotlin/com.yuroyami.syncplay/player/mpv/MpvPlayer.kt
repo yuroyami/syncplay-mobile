@@ -21,7 +21,7 @@ import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.screens.room.dispatchOSD
-import com.yuroyami.syncplay.settings.SettingBundle
+import com.yuroyami.syncplay.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
@@ -85,7 +85,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
             update = {})
     }
 
-    override fun configurableSettings(): SettingBundle = getExtraSettings()
+    override fun configurableSettings(): ExtraSettingBundle = getExtraSettings()
 
     override fun hasMedia(): Boolean {
         val c = MPVLib.getPropertyInt("playlist-count" as java.lang.String)

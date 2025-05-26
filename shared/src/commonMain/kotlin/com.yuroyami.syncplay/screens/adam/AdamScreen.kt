@@ -17,7 +17,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.screens.home.HomeScreenUI
+import com.yuroyami.syncplay.screens.room.RoomComposables.ComposedMessagePalette
 import com.yuroyami.syncplay.screens.room.RoomScreenUI
 import com.yuroyami.syncplay.settings.SettingStyling
 import com.yuroyami.syncplay.ui.AppTheme
@@ -35,6 +37,7 @@ val LocalViewmodel = compositionLocalOf<SyncplayViewmodel> { error("No Viewmodel
 val LocalScreenSize = compositionLocalOf<ScreenSizeInfo> { error("No Screen Size Info provided") }
 val LocalScreen = compositionLocalOf<Screen> { error("No Screen provided") }
 val LocalSettingStyling = staticCompositionLocalOf<SettingStyling> { error("No Setting Styling provided") }
+val LocalChatPalette = compositionLocalOf<MessagePalette> { error("No Chat Palette provided") }
 
 sealed class Screen(val label: String) {
     data object Home : Screen("home")
@@ -93,7 +96,8 @@ fun AdamScreen(onViewmodelReady: (SyncplayViewmodel) -> Unit) {
             LocalViewmodel provides viewmodel,
             LocalNavigator provides navigator,
             LocalScreenSize provides screenSizeInfo,
-            LocalScreen provides currentScreen
+            LocalScreen provides currentScreen,
+            LocalChatPalette provides ComposedMessagePalette()
         ) {
             NavHost(
                 navController = navigator,

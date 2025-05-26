@@ -4,13 +4,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Adb
 import androidx.compose.material.icons.filled.Animation
 import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.SettingsInputComponent
 import androidx.compose.material.icons.filled.SlowMotionVideo
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.SupervisedUserCircle
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_INROOM_MPV
+import com.yuroyami.syncplay.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.settings.Setting
-import com.yuroyami.syncplay.settings.SettingBundle
+import com.yuroyami.syncplay.settings.SettingCategory
 import com.yuroyami.syncplay.settings.SettingType
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.ui_setting_mpv_debug_summary
@@ -21,13 +23,14 @@ import syncplaymobile.shared.generated.resources.ui_setting_mpv_profile_summary
 import syncplaymobile.shared.generated.resources.ui_setting_mpv_profile_title
 import syncplaymobile.shared.generated.resources.ui_setting_mpv_vidsync_summary
 import syncplaymobile.shared.generated.resources.ui_setting_mpv_vidsync_title
+import syncplaymobile.shared.generated.resources.uisetting_categ_mpv
 import syncplaymobile.shared.generated.resources.uisetting_mpv_gpunext_summary
 import syncplaymobile.shared.generated.resources.uisetting_mpv_gpunext_title
 import syncplaymobile.shared.generated.resources.uisetting_mpv_hardware_acceleration_summary
 import syncplaymobile.shared.generated.resources.uisetting_mpv_hardware_acceleration_title
 
 
-fun MpvPlayer.getExtraSettings(): SettingBundle {
+fun MpvPlayer.getExtraSettings(): ExtraSettingBundle {
     val vidsyncEntries = listOf(
         "audio", "display-resample", "display-resample-vdrop", "display-resample-desync", "display-tempo",
         "display-vdrop", "display-adrop", "display-desync", "desync"
@@ -38,7 +41,11 @@ fun MpvPlayer.getExtraSettings(): SettingBundle {
     )
 
     return Pair(
-        first = CATEG_INROOM_MPV,
+        first = SettingCategory(
+            keyID = CATEG_INROOM_MPV,
+            title = Res.string.uisetting_categ_mpv,
+            icon = Icons.Filled.SettingsInputComponent
+        ),
         second = buildList {
             add(
                 Setting.BooleanSetting(

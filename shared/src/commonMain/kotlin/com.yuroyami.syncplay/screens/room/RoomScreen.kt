@@ -88,10 +88,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -99,7 +97,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.Bottom
 import androidx.compose.ui.Alignment.Companion.CenterVertically
@@ -140,16 +137,15 @@ import com.yuroyami.syncplay.components.getSyncplayFont
 import com.yuroyami.syncplay.components.popups.PopupAddUrl.AddUrlPopup
 import com.yuroyami.syncplay.components.popups.PopupChatHistory.ChatHistoryPopup
 import com.yuroyami.syncplay.components.popups.PopupSeekToPosition.SeekToPositionPopup
-import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.player.BasePlayer.TRACKTYPE
 import com.yuroyami.syncplay.protocol.sending.Packet
+import com.yuroyami.syncplay.screens.adam.LocalChatPalette
 import com.yuroyami.syncplay.screens.adam.LocalNavigator
 import com.yuroyami.syncplay.screens.adam.LocalScreenSize
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.screens.adam.Screen
 import com.yuroyami.syncplay.screens.adam.Screen.Companion.navigateTo
 import com.yuroyami.syncplay.screens.room.RoomComposables.AddVideoButton
-import com.yuroyami.syncplay.screens.room.RoomComposables.ComposedMessagePalette
 import com.yuroyami.syncplay.screens.room.RoomComposables.FadingMessageLayout
 import com.yuroyami.syncplay.screens.room.RoomComposables.FreeAnimatedVisibility
 import com.yuroyami.syncplay.screens.room.RoomComposables.PingRadar
@@ -164,8 +160,6 @@ import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_SHADOW
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
-import com.yuroyami.syncplay.settings.SETTINGS_ROOM
-import com.yuroyami.syncplay.settings.SettingCollection
 import com.yuroyami.syncplay.settings.valueAsState
 import com.yuroyami.syncplay.settings.valueFlow
 import com.yuroyami.syncplay.settings.writeValue
@@ -226,22 +220,9 @@ fun CoroutineScope.dispatchOSD(getter: suspend () -> String) {
 }
 
 
-val LocalChatPalette = compositionLocalOf<MessagePalette> { error("No Chat Palette provided") }
-val LocalRoomSettings = staticCompositionLocalOf<SettingCollection> { error("No Room Settings provided") }
-
-@Composable
-fun RoomScreenUI() {
-    CompositionLocalProvider(
-        LocalRoomSettings provides SETTINGS_ROOM,
-        LocalChatPalette provides ComposedMessagePalette()
-    ) {
-        RoomUIImpl()
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-private fun RoomUIImpl() {
+fun RoomScreenUI() {
     val nav = LocalNavigator.current
     val viewmodel = LocalViewmodel.current
     val isSoloMode = viewmodel.isSoloMode
