@@ -165,12 +165,14 @@ import syncplaymobile.shared.generated.resources.uisetting_timestamp_color_title
 import syncplaymobile.shared.generated.resources.uisetting_timestamp_summary
 import syncplaymobile.shared.generated.resources.uisetting_timestamp_title
 
-typealias SettingSet = List<Setting<out Any>>
+
 typealias SettingBundle = Pair<String, SettingSet>
+
+typealias SettingSet = List<Setting<out Any>>
 typealias SettingCollection = Map<SettingCategory, SettingSet>
 
 /* Styles */
-private val settingGLOBALstyle = SettingStyling(
+val settingGLOBALstyle = SettingStyling(
     titleFilling = listOf(Paletting.OLD_SP_YELLOW),
     titleShadow = Paletting.SP_GRADIENT,
     iconSize = 32f,

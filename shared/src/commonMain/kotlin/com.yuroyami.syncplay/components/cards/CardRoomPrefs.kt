@@ -67,7 +67,7 @@ object CardRoomPrefs {
                 ) {
                     SettingsGrid(
                         modifier = Modifier.fillMaxSize(),
-                        layoutOrientation = Layout.SETTINGS_ROOM,
+                        layout = Layout.SETTINGS_ROOM,
                         settings = LocalRoomSettings.current,
                         state = settingState,
                         titleSize = 9f,

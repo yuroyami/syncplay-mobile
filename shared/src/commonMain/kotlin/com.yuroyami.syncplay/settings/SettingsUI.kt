@@ -32,6 +32,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.components.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.components.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.components.getRegularFont
+import com.yuroyami.syncplay.screens.adam.LocalSettingStyling
 import com.yuroyami.syncplay.ui.Paletting
 import org.jetbrains.compose.resources.stringResource
 
@@ -61,7 +63,7 @@ object SettingsUI {
         modifier: Modifier = Modifier,
         settings: SettingCollection,
         state: MutableState<Int>,
-        layoutOrientation: Layout,
+        layout: Layout,
         titleSize: Float = 12f,
         cardSize: Float = 64f,
         gridColumns: Int = 3,
@@ -75,7 +77,7 @@ object SettingsUI {
             modifier = modifier, visible = state.value == 1, exit = fadeOut(), enter = fadeIn()
         ) {
 
-            when (layoutOrientation) {
+            when (layout) {
                 Layout.SETTINGS_ROOM -> {
                     /** FlowRow arranges cards horizontally, then creates another row when space doesn't suffice */
                     FlowRow(
@@ -108,10 +110,10 @@ object SettingsUI {
                         contentPadding = PaddingValues(8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        settings.keys.forEach { category ->
+                        settings.keys.forEachIndexed { i, category ->
                             item {
                                 SettingCategoryCard2(
-                                    0,
+                                    i,
                                     categ = category,
                                     onClick = {
                                         onEnteredSomeCategory()
@@ -125,16 +127,23 @@ object SettingsUI {
             }
         }
 
-        AnimatedVisibility(
-            modifier = modifier, visible = state.value == 2, exit = fadeOut(), enter = fadeIn()
+        CompositionLocalProvider(
+            LocalSettingStyling provides when (layout) {
+                Layout.SETTINGS_ROOM -> settingROOMstyle
+                Layout.SETTINGS_GLOBAL -> settingGLOBALstyle
+            }
         ) {
-            val vss = rememberScrollState()
+            AnimatedVisibility(
+                modifier = modifier, visible = state.value == 2, exit = fadeOut(), enter = fadeIn()
+            ) {
+                val vss = rememberScrollState()
 
-            enteredCategory?.let { accessedCategory ->
-                SettingScreen(
-                    modifier = Modifier.verticalScroll(vss),
-                    settingcategory = accessedCategory
-                )
+                enteredCategory?.let { accessedCategory ->
+                    SettingScreen(
+                        modifier = Modifier.verticalScroll(vss),
+                        settingList = settings[accessedCategory]!!
+                    )
+                }
             }
         }
     }
@@ -227,14 +236,14 @@ object SettingsUI {
     }
 
     @Composable
-    fun SettingScreen(modifier: Modifier = Modifier, settingcategory: SettingCategory) {
+    fun SettingScreen(modifier: Modifier = Modifier, settingList: SettingSet) {
         Column(modifier = modifier.fillMaxWidth()) {
-            for ((index, setting) in settingcategory.settingList.withIndex()) {
+            settingList.forEachIndexed { index, setting ->
                 /** Creating the setting composable */
                 setting.SettingComposable(Modifier)
 
                 /** Creating dividers between (and only between) each setting and another */
-                if (index != settingcategory.settingList.lastIndex) {
+                if (index != settingList.lastIndex) {
                     HorizontalDivider(Modifier.padding(horizontal = 32.dp))
                 }
             }

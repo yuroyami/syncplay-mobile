@@ -7,6 +7,4 @@ data class SettingCategory(
     val keyID: String,
     val title: StringResource,
     val icon: ImageVector
-) {
-    var settingList: MutableList<Setting<out Any>> = mutableListOf()
-}
+)
