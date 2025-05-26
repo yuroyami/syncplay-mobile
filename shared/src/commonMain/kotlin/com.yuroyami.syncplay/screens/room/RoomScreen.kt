@@ -164,8 +164,8 @@ import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_SHADOW
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
-import com.yuroyami.syncplay.settings.SettingCategory
-import com.yuroyami.syncplay.settings.sgROOM
+import com.yuroyami.syncplay.settings.SETTINGS_ROOM
+import com.yuroyami.syncplay.settings.SettingCollection
 import com.yuroyami.syncplay.settings.valueAsState
 import com.yuroyami.syncplay.settings.valueFlow
 import com.yuroyami.syncplay.settings.writeValue
@@ -227,12 +227,12 @@ fun CoroutineScope.dispatchOSD(getter: suspend () -> String) {
 
 
 val LocalChatPalette = compositionLocalOf<MessagePalette> { error("No Chat Palette provided") }
-val LocalRoomSettings = staticCompositionLocalOf<MutableList<SettingCategory>> { error("No Room Settings provided") }
+val LocalRoomSettings = staticCompositionLocalOf<SettingCollection> { error("No Room Settings provided") }
 
 @Composable
 fun RoomScreenUI() {
     CompositionLocalProvider(
-        LocalRoomSettings provides sgROOM(),
+        LocalRoomSettings provides SETTINGS_ROOM,
         LocalChatPalette provides ComposedMessagePalette()
     ) {
         RoomUIImpl()

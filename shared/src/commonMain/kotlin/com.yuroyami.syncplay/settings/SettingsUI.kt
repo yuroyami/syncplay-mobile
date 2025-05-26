@@ -11,24 +11,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowColumn
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyGridItemScope
-import androidx.compose.foundation.lazy.grid.LazyGridScope
-import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -39,8 +33,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,8 +51,8 @@ import org.jetbrains.compose.resources.stringResource
 /** Object class that will wrap everything related to settings (including composables for UI) */
 object SettingsUI {
 
-    enum class SettingsGridLayout {
-        SETTINGS_GRID_HORIZONTAL_FLOW, SETTINGS_GRID_VERTICAL_FLOW, SETTINGS_GRID_HORIZONTAL_GRID, SETTINGS_GRID_VERTICAL_GRID
+    enum class Layout {
+        SETTINGS_ROOM, SETTINGS_GLOBAL
     }
 
     @OptIn(ExperimentalLayoutApi::class)
@@ -65,15 +61,14 @@ object SettingsUI {
         modifier: Modifier = Modifier,
         settings: SettingCollection,
         state: MutableState<Int>,
-        layoutOrientation: SettingsGridLayout = SettingsGridLayout.SETTINGS_GRID_VERTICAL_GRID,
+        layoutOrientation: Layout,
         titleSize: Float = 12f,
         cardSize: Float = 64f,
-        gridRows: Int = 2,
         gridColumns: Int = 3,
-        onCardClicked: (Int) -> Unit = {},
+        onEnteredSomeCategory: () -> Unit = {},
     ) {
-        /** Variable to store which card is currently clicked */
-        val clickedCardIndex = remember { mutableStateOf(settingcategories[0]) }
+        /** Variable to store which category is accessed (null means we're at the root level, no category selected */
+        var enteredCategory by remember { mutableStateOf<SettingCategory?>(null) }
 
         /** We have to wrap our settings grid with AnimatedVisibility in order to do animations */
         AnimatedVisibility(
@@ -81,20 +76,7 @@ object SettingsUI {
         ) {
 
             when (layoutOrientation) {
-                SettingsGridLayout.SETTINGS_GRID_VERTICAL_FLOW -> {
-                    /** FlowColumn basically arranges cards vertically, then creates another column when space doesn't suffice */
-                    FlowColumn(
-                        modifier = Modifier.fillMaxHeight(),
-                        verticalArrangement = Arrangement.SpaceEvenly,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        SettingCategoryIterator(
-                            clickedCardIndex, settingcategories, titleSize, cardSize, onCardClicked
-                        )
-                    }
-                }
-
-                SettingsGridLayout.SETTINGS_GRID_HORIZONTAL_FLOW -> {
+                Layout.SETTINGS_ROOM -> {
                     /** FlowRow arranges cards horizontally, then creates another row when space doesn't suffice */
                     FlowRow(
                         modifier = Modifier.fillMaxWidth(),
@@ -102,25 +84,23 @@ object SettingsUI {
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         maxItemsInEachRow = gridColumns
                     ) {
-                        SettingCategoryIterator(
-                            clickedCardIndex, settingcategories, titleSize, cardSize, onCardClicked
-                        )
+
+                        settings.keys.forEach { category ->
+                            SettingCategoryCard1(
+                                0,
+                                categ = category,
+                                titleSize = titleSize,
+                                cardSize = cardSize,
+                                onClick = {
+                                    onEnteredSomeCategory()
+                                    enteredCategory = category
+                                }
+                            )
+                        }
                     }
                 }
 
-                SettingsGridLayout.SETTINGS_GRID_HORIZONTAL_GRID -> {
-                    LazyHorizontalGrid(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                        rows = GridCells.Fixed(gridRows)
-                    ) {
-                        iteratorSettingCategoryGrid(
-                            clickedCardIndex, settingcategories, titleSize, cardSize, onCardClicked
-                        )
-                    }
-                }
-
-                SettingsGridLayout.SETTINGS_GRID_VERTICAL_GRID -> {
+                Layout.SETTINGS_GLOBAL -> {
                     LazyVerticalGrid(
                         modifier = Modifier,
                         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -128,10 +108,18 @@ object SettingsUI {
                         contentPadding = PaddingValues(8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-
-                        iteratorSettingCategoryGrid(
-                            clickedCardIndex, settingcategories, titleSize, cardSize, onCardClicked
-                        )
+                        settings.keys.forEach { category ->
+                            item {
+                                SettingCategoryCard2(
+                                    0,
+                                    categ = category,
+                                    onClick = {
+                                        onEnteredSomeCategory()
+                                        enteredCategory = category
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -140,14 +128,19 @@ object SettingsUI {
         AnimatedVisibility(
             modifier = modifier, visible = state.value == 2, exit = fadeOut(), enter = fadeIn()
         ) {
-            SettingScreen(
-                modifier = Modifier.verticalScroll(rememberScrollState()), clickedCardIndex.value
-            )
+            val vss = rememberScrollState()
+
+            enteredCategory?.let { accessedCategory ->
+                SettingScreen(
+                    modifier = Modifier.verticalScroll(vss),
+                    settingcategory = accessedCategory
+                )
+            }
         }
     }
 
     @Composable
-    fun SettingCategoryCard(
+    fun SettingCategoryCard1(
         index: Int,
         modifier: Modifier = Modifier,
         categ: SettingCategory,
@@ -193,12 +186,10 @@ object SettingsUI {
     }
 
     @Composable
-    fun LazyGridItemScope.SettingCategoryCard(
+    fun SettingCategoryCard2(
         index: Int,
         modifier: Modifier = Modifier,
         categ: SettingCategory,
-        titleSize: Float,
-        cardSize: Float,
         onClick: () -> Unit,
     ) {
 
@@ -247,49 +238,6 @@ object SettingsUI {
                     HorizontalDivider(Modifier.padding(horizontal = 32.dp))
                 }
             }
-        }
-    }
-
-    @Composable
-    private fun SettingCategoryIterator(
-        clickedCardIndex: MutableState<SettingCategory>,
-        settingcategories: List<SettingCategory>,
-        titleSize: Float = 13f,
-        cardSize: Float = 64f,
-        onCardClicked: (Int) -> Unit = {},
-    ) {
-        /** Iterating through our cards and invoking them one by one */
-        for ((index, category) in settingcategories.withIndex()) {
-            SettingCategoryCard(
-                index,
-                categ = category,
-                titleSize = titleSize,
-                cardSize = cardSize,
-                onClick = {
-                    clickedCardIndex.value = settingcategories[index]
-                    onCardClicked(index)
-                })
-        }
-    }
-
-    private fun LazyGridScope.iteratorSettingCategoryGrid(
-        clickedCardIndex: MutableState<SettingCategory>,
-        settingcategories: List<SettingCategory>,
-        titleSize: Float = 13f,
-        cardSize: Float = 64f,
-        onCardClicked: (Int) -> Unit = {},
-    ) {
-
-        itemsIndexed(settingcategories) { i, sg ->
-            SettingCategoryCard(
-                i,
-                categ = sg,
-                titleSize = titleSize,
-                cardSize = cardSize,
-                onClick = {
-                    clickedCardIndex.value = settingcategories[i]
-                    onCardClicked(i)
-                })
         }
     }
 }

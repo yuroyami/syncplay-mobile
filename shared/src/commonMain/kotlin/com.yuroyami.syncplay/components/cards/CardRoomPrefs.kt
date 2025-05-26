@@ -23,10 +23,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.components.ComposeUtils.FancyIcon2
 import com.yuroyami.syncplay.components.ComposeUtils.FancyText2
-import com.yuroyami.syncplay.settings.SettingsUI.SettingsGrid
-import com.yuroyami.syncplay.settings.SettingsUI.SettingsGridLayout
-import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.screens.room.LocalRoomSettings
+import com.yuroyami.syncplay.settings.SettingsUI.Layout
+import com.yuroyami.syncplay.settings.SettingsUI.SettingsGrid
+import com.yuroyami.syncplay.ui.Paletting
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
@@ -67,12 +67,12 @@ object CardRoomPrefs {
                 ) {
                     SettingsGrid(
                         modifier = Modifier.fillMaxSize(),
-                        layoutOrientation = SettingsGridLayout.SETTINGS_GRID_HORIZONTAL_FLOW,
-                        settingcategories = LocalRoomSettings.current,
+                        layoutOrientation = Layout.SETTINGS_ROOM,
+                        settings = LocalRoomSettings.current,
                         state = settingState,
                         titleSize = 9f,
                         cardSize = 48f,
-                        onCardClicked = {
+                        onEnteredSomeCategory = {
                             settingState.intValue = 2
                         }
                     )

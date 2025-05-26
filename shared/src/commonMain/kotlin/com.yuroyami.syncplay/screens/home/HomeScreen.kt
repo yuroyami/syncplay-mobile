@@ -771,7 +771,8 @@ fun SyncplayTopBar() {
                     modifier = Modifier.fillMaxWidth(),
                     settings = SETTINGS_GLOBAL,
                     state = settingState,
-                    onCardClicked = {
+                    layoutOrientation = SettingsUI.Layout.SETTINGS_GLOBAL,
+                    onEnteredSomeCategory = {
                         settingState.intValue = 2
                     })
             }
