@@ -18,8 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -487,8 +485,8 @@ object ComposeUtils {
     fun MultiChoiceDialog(
         title: String = "",
         items: Map<String, String>,
-        selectedItem: Int,
-        onItemClick: (Int, String) -> Unit,
+        selectedItem: Map.Entry<String, String>,
+        onItemClick: (Map.Entry<String, String>) -> Unit,
         onDismiss: () -> Unit,
     ) {
         Dialog(onDismissRequest = { onDismiss() }) {
@@ -522,8 +520,8 @@ object ComposeUtils {
                         }
                     }
 
-                    LazyColumn(modifier = Modifier.padding(all = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        itemsIndexed(items) { index, item ->
+                    Column(modifier = Modifier.padding(all = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        items.entries.forEach{ item ->
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -531,19 +529,19 @@ object ComposeUtils {
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = ripple(bounded = true, color = Paletting.SP_ORANGE)
                                 ) {
-                                    onItemClick(index, item)
+                                    onItemClick(item)
                                     onDismiss()
                                 }
                             ) {
                                 RadioButton(
-                                    selected = index == selectedItem,
+                                    selected = item == selectedItem,
                                     onClick = {
-                                        onItemClick(index, item)
+                                        onItemClick(item)
                                         onDismiss()
                                     }
                                 )
                                 Text(
-                                    text = item, modifier = Modifier
+                                    text = item.key, modifier = Modifier
                                         .fillMaxWidth(0.75f)
                                         .padding(start = 8.dp)
                                 )

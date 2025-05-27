@@ -374,8 +374,8 @@ sealed class Setting<T>(
     class MultiChoiceSetting(
         type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: String,
         icon: ImageVector?, enabled: Boolean = true,
-        val entries: Map<Pair<StringResource?, String?>, Pair<StringResource?, String?>>,
-        val onItemChosen: ((index: Int, value: String) -> Unit)? = null
+        val entries: @Composable () -> Map<String, String>,
+        val onItemChosen: ((value: String) -> Unit)? = null
     ) : Setting<String>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
         icon = icon, enabled = enabled
@@ -383,6 +383,8 @@ sealed class Setting<T>(
         /** A multi-choice setting which shows a popup dialog when clicked.*/
         @Composable
         override fun SettingComposable(modifier: Modifier) {
+            val actualEntries = entries.invoke()
+
             val selectedItem by key.valueAsState(defaultValue)
 
             val styling = LocalSettingStyling.current
@@ -392,20 +394,16 @@ sealed class Setting<T>(
 
             if (dialogOpen.value) {
                 MultiChoiceDialog(
-                    items = entryKeys.map { s ->
-                        s.first?.let { stringResource(it) } ?: s.second!!
-                    },
+                    items = actualEntries,
                     title = stringResource(title),
                     onDismiss = { dialogOpen.value = false },
-                    selectedItem = entryValues.indexOf(selectedItem),
-                    onItemClick = { i, s ->
+                    selectedItem = actualEntries.entries.first { it.value == selectedItem },
+                    onItemClick = { item ->
                         dialogOpen.value = false
 
                         scope.launch {
-                            writeValue(key, s)
-
-                            onItemChosen?.let { it(i, s) }
-
+                            writeValue(key, item.value)
+                            onItemChosen?.let { it(item.value) }
                         }
                     })
             }

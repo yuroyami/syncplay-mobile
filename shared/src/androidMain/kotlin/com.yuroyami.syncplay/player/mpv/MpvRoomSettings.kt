@@ -81,9 +81,8 @@ fun MpvPlayer.getExtraSettings(): ExtraSettingBundle {
                 summary = Res.string.ui_setting_mpv_vidsync_summary,
                 defaultValue = vidsyncEntries.first(),
                 icon = Icons.Filled.SlowMotionVideo,
-                entryKeys = vidsyncEntries,
-                entryValues = vidsyncEntries,
-                onItemChosen = { i, s ->
+                entries =  { vidsyncEntries.associateBy { it } },
+                onItemChosen = { s ->
                     setVidSyncMode(s)
                 }
             ))
@@ -109,9 +108,8 @@ fun MpvPlayer.getExtraSettings(): ExtraSettingBundle {
                 summary = Res.string.ui_setting_mpv_profile_summary,
                 defaultValue = profileEntries.first(),
                 icon = Icons.Filled.SupervisedUserCircle,
-                entryKeys = profileEntries,
-                entryValues = profileEntries,
-                onItemChosen = { _, s ->
+                entries = { profileEntries.associateBy { it } },
+                onItemChosen = { s ->
                     setProfileMode(s)
                 }
             ))

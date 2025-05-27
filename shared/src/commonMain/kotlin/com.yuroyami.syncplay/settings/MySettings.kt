@@ -88,6 +88,7 @@ import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.media_directories
 import syncplaymobile.shared.generated.resources.media_directories_setting_summary
@@ -199,242 +200,241 @@ val settingROOMstyle = SettingStyling(
     iconShadows = Paletting.SP_GRADIENT
 )
 
-val SETTINGS_GLOBAL: SettingCollection = buildMap {
-    put(
-        SettingCategory(
-            keyID = CATEG_GLOBAL_GENERAL,
-            title = Res.string.settings_categ_general,
-            icon = Icons.Filled.SettingsSuggest
-        ),
-        listOf(
-            Setting.BooleanSetting(
-                type = SettingType.CheckboxSettingType,
-                key = PREF_REMEMBER_INFO,
-                title = Res.string.setting_remember_join_info_title,
-                summary = Res.string.setting_remember_join_info_summary,
-                defaultValue = true,
-                icon = Icons.Filled.Face
-            ),
-            Setting.YesNoDialogSetting(
-                type = SettingType.YesNoDialogSettingType,
-                key = PREF_ERASE_SHORTCUTS,
-                title = Res.string.setting_erase_shortcuts_title,
-                summary = Res.string.setting_erase_shortcuts_summary,
-                defaultValue = true,
-                icon = Icons.Filled.BookmarkRemove,
-                rationale = Res.string.setting_erase_shortcuts_dialog,
-                onYes = {
-                    platformCallback.onEraseConfigShortcuts()
-                }
-            ),
-            Setting.PopupSetting(
-                type = SettingType.PopupSettingType,
-                key = PREF_SP_MEDIA_DIRS,
-                title = Res.string.media_directories,
-                summary = Res.string.media_directories_setting_summary,
-                icon = Icons.AutoMirrored.Filled.QueueMusic,
-                popupComposable = { s ->
-                    MediaDirsPopup(s)
-                }
-            )
-        )
-    )
-
-    put(
-        SettingCategory(
-            keyID = CATEG_GLOBAL_LANG,
-            title = Res.string.settings_categ_language,
-            icon = Icons.Filled.Translate,
-        ),
-        listOf(
-            if (platform == PLATFORM.Android) {
-                Setting.MultiChoiceSetting(
-                    type = SettingType.MultiChoicePopupSettingType,
-                    key = PREF_DISPLAY_LANG,
-                    title = Res.string.setting_display_language_title,
-                    summary = Res.string.setting_display_language_summry,
-                    defaultValue = "en",
-                    icon = Icons.Filled.Translate,
-                    entryKeys = langMap.keys.map { Pair(first = null, second = it) },
-                    entryValues = langMap.values.map { Pair(first = null, second = it) },
-                    onItemChosen = { _, v ->
-                        platformCallback.onLanguageChanged(v)
-                    }
-                )
-            } else {
-                Setting.OneClickSetting(
-                    type = SettingType.OneClickSettingType,
-                    key = PREF_DISPLAY_LANG,
-                    title = Res.string.setting_display_language_title,
-                    summary = Res.string.setting_display_language_summry,
-                    icon = Icons.Filled.Translate,
-                    onClick = {
-                        platformCallback.onLanguageChanged("")
-                    }
-                )
-            },
-            Setting.TextFieldSetting(
-                type = SettingType.TextFieldSettingType,
-                key = PREF_CC_LANG,
-                title = Res.string.setting_cc_default_language_title,
-                summary = Res.string.setting_cc_default_language_summry,
-                defaultValue = "eng",
-                icon = Icons.Filled.ClosedCaptionOff,
-            )
-        )
-    )
-
-
-    put(
-        SettingCategory(
-            keyID = CATEG_GLOBAL_SYNCING,
-            title = Res.string.settings_categ_syncing,
-            icon = Icons.Filled.ConnectWithoutContact
-        ),
-        listOf(
-            Setting.BooleanSetting(
-                type = SettingType.CheckboxSettingType,
-                key = PREF_READY_FIRST_HAND,
-                title = Res.string.setting_ready_firsthand_title,
-                summary = Res.string.setting_ready_firsthand_summary,
-                defaultValue = true,
-                icon = Icons.Filled.TaskAlt,
-            ),
-            Setting.BooleanSetting(
-                type = SettingType.CheckboxSettingType,
-                key = PREF_PAUSE_ON_SOMEONE_LEAVE,
-                title = Res.string.setting_pause_if_someone_left_title,
-                summary = Res.string.setting_pause_if_someone_left_summary,
-                defaultValue = true,
-                icon = Icons.Filled.FrontHand,
-            ),
-            Setting.BooleanSetting(
-                type = SettingType.CheckboxSettingType,
-                key = PREF_FILE_MISMATCH_WARNING,
-                title = Res.string.setting_warn_file_mismatch_title,
-                summary = Res.string.setting_warn_file_mismatch_summary,
-                defaultValue = true,
-                icon = Icons.Filled.ErrorOutline,
-            ),
-            Setting.MultiChoiceSetting(
-                type = SettingType.MultiChoicePopupSettingType,
-                key = PREF_HASH_FILENAME,
-                title = Res.string.setting_fileinfo_behaviour_name_title,
-                summary = Res.string.setting_fileinfo_behaviour_name_summary,
-                defaultValue = "1",
-                icon = Icons.Filled.DesignServices,
-                entryKeys =
-                    listOf(
-                        Pair(first = Res.string.setting_fileinfo_behavior_a, second = null),
-                        Pair(first = Res.string.setting_fileinfo_behavior_b, second = null),
-                        Pair(first = Res.string.setting_fileinfo_behavior_c, second = null)
-                    ),
-                entryValues = listOf(Pair(null,"1"), Pair(null,"2"), Pair(null,"3"))
-            ),
-            Setting.MultiChoiceSetting(
-                type = SettingType.MultiChoicePopupSettingType,
-                key = PREF_HASH_FILESIZE,
-                title = Res.string.setting_fileinfo_behaviour_size_title,
-                summary = Res.string.setting_fileinfo_behaviour_size_summary,
-                defaultValue = "1",
-                icon = Icons.Filled.DesignServices,
-                entryKeys =
-                    listOf(
-                        Pair(first = Res.string.setting_fileinfo_behavior_a, second = null),
-                        Pair(first = Res.string.setting_fileinfo_behavior_b, second = null),
-                        Pair(first = Res.string.setting_fileinfo_behavior_c, second = null)
-                    ),
-                entryValues = listOf(Pair(null,"1"), Pair(null,"2"), Pair(null,"3")),
-            )
-        )
-    )
-
-    if (platform == PLATFORM.Android) {
+val SETTINGS_GLOBAL: SettingCollection by lazy {
+    buildMap {
         put(
             SettingCategory(
-                keyID = CATEG_GLOBAL_EXOPLAYER,
-                title = Res.string.settings_categ_exoplayer,
-                icon = Icons.Filled.VideoSettings
+                keyID = CATEG_GLOBAL_GENERAL,
+                title = Res.string.settings_categ_general,
+                icon = Icons.Filled.SettingsSuggest
             ),
             listOf(
-                Setting.SliderSetting(
-                    type = SettingType.SliderSettingType,
-                    key = PREF_MAX_BUFFER,
-                    title = Res.string.setting_max_buffer_title,
-                    summary = Res.string.setting_max_buffer_summary,
-                    defaultValue = 30,
-                    icon = Icons.Filled.HourglassTop,
-                    maxValue = 60,
-                    minValue = 1,
+                Setting.BooleanSetting(
+                    type = SettingType.CheckboxSettingType,
+                    key = PREF_REMEMBER_INFO,
+                    title = Res.string.setting_remember_join_info_title,
+                    summary = Res.string.setting_remember_join_info_summary,
+                    defaultValue = true,
+                    icon = Icons.Filled.Face
                 ),
-                Setting.SliderSetting(
-                    type = SettingType.SliderSettingType,
-                    key = PREF_MIN_BUFFER,
-                    title = Res.string.setting_min_buffer_title,
-                    summary = Res.string.setting_min_buffer_summary,
-                    defaultValue = 15,
-                    icon = Icons.Filled.HourglassBottom,
-                    maxValue = 30,
-                    minValue = 1,
+                Setting.YesNoDialogSetting(
+                    type = SettingType.YesNoDialogSettingType,
+                    key = PREF_ERASE_SHORTCUTS,
+                    title = Res.string.setting_erase_shortcuts_title,
+                    summary = Res.string.setting_erase_shortcuts_summary,
+                    defaultValue = true,
+                    icon = Icons.Filled.BookmarkRemove,
+                    rationale = Res.string.setting_erase_shortcuts_dialog,
+                    onYes = {
+                        platformCallback.onEraseConfigShortcuts()
+                    }
                 ),
-                Setting.SliderSetting(
-                    type = SettingType.SliderSettingType,
-                    key = PREF_SEEK_BUFFER,
-                    title = Res.string.setting_playback_buffer_title,
-                    summary = Res.string.setting_playback_buffer_summary,
-                    defaultValue = 2500,
-                    icon = Icons.Filled.HourglassEmpty,
-                    maxValue = 15000,
-                    minValue = 100,
+                Setting.PopupSetting(
+                    type = SettingType.PopupSettingType,
+                    key = PREF_SP_MEDIA_DIRS,
+                    title = Res.string.media_directories,
+                    summary = Res.string.media_directories_setting_summary,
+                    icon = Icons.AutoMirrored.Filled.QueueMusic,
+                    popupComposable = { s ->
+                        MediaDirsPopup(s)
+                    }
                 )
             )
         )
-    }
 
-    put(
-        SettingCategory(
-            keyID = CATEG_GLOBAL_NETWORK,
-            title = Res.string.settings_categ_network,
-            icon = Icons.Filled.Hub
-        ),
-        listOf(
-            Setting.BooleanSetting(
-                type = SettingType.ToggleSettingType,
-                key = PREF_TLS_ENABLE,
-                title = Res.string.setting_tls_title,
-                summary = Res.string.setting_tls_summary,
-                defaultValue = true,
-                icon = Icons.Filled.Key,
-            )
-        )
-    )
-
-    put(
-        SettingCategory(
-            keyID = CATEG_GLOBAL_ADVANCED,
-            title = Res.string.settings_categ_advanced,
-            icon = Icons.Filled.Stream
-        ),
-        listOf(
-            Setting.YesNoDialogSetting(
-                type = SettingType.OneClickSettingType,
-                key = PREF_GLOBAL_CLEAR_ALL,
-                title = Res.string.setting_resetdefault_title,
-                summary = Res.string.setting_resetdefault_summary,
-                icon = Icons.Filled.ClearAll,
-                rationale = Res.string.setting_resetdefault_dialog,
-                onYes = {
-                    launch(Dispatchers.IO) {
-                        datastore.edit { preferences ->
-                            preferences.clear()
+        put(
+            SettingCategory(
+                keyID = CATEG_GLOBAL_LANG,
+                title = Res.string.settings_categ_language,
+                icon = Icons.Filled.Translate,
+            ),
+            listOf(
+                if (platform == PLATFORM.Android) {
+                    Setting.MultiChoiceSetting(
+                        type = SettingType.MultiChoicePopupSettingType,
+                        key = PREF_DISPLAY_LANG,
+                        title = Res.string.setting_display_language_title,
+                        summary = Res.string.setting_display_language_summry,
+                        defaultValue = "en",
+                        icon = Icons.Filled.Translate,
+                        entries = { langMap },
+                        onItemChosen = { v ->
+                            platformCallback.onLanguageChanged(v)
                         }
-                    }
+                    )
+                } else {
+                    Setting.OneClickSetting(
+                        type = SettingType.OneClickSettingType,
+                        key = PREF_DISPLAY_LANG,
+                        title = Res.string.setting_display_language_title,
+                        summary = Res.string.setting_display_language_summry,
+                        icon = Icons.Filled.Translate,
+                        onClick = {
+                            platformCallback.onLanguageChanged("")
+                        }
+                    )
                 },
+                Setting.TextFieldSetting(
+                    type = SettingType.TextFieldSettingType,
+                    key = PREF_CC_LANG,
+                    title = Res.string.setting_cc_default_language_title,
+                    summary = Res.string.setting_cc_default_language_summry,
+                    defaultValue = "eng",
+                    icon = Icons.Filled.ClosedCaptionOff,
+                )
             )
         )
-    )
 
-    //            TODO add(
+        put(
+            SettingCategory(
+                keyID = CATEG_GLOBAL_SYNCING,
+                title = Res.string.settings_categ_syncing,
+                icon = Icons.Filled.ConnectWithoutContact
+            ),
+            listOf(
+                Setting.BooleanSetting(
+                    type = SettingType.CheckboxSettingType,
+                    key = PREF_READY_FIRST_HAND,
+                    title = Res.string.setting_ready_firsthand_title,
+                    summary = Res.string.setting_ready_firsthand_summary,
+                    defaultValue = true,
+                    icon = Icons.Filled.TaskAlt,
+                ),
+                Setting.BooleanSetting(
+                    type = SettingType.CheckboxSettingType,
+                    key = PREF_PAUSE_ON_SOMEONE_LEAVE,
+                    title = Res.string.setting_pause_if_someone_left_title,
+                    summary = Res.string.setting_pause_if_someone_left_summary,
+                    defaultValue = true,
+                    icon = Icons.Filled.FrontHand,
+                ),
+                Setting.BooleanSetting(
+                    type = SettingType.CheckboxSettingType,
+                    key = PREF_FILE_MISMATCH_WARNING,
+                    title = Res.string.setting_warn_file_mismatch_title,
+                    summary = Res.string.setting_warn_file_mismatch_summary,
+                    defaultValue = true,
+                    icon = Icons.Filled.ErrorOutline,
+                ),
+                Setting.MultiChoiceSetting(
+                    type = SettingType.MultiChoicePopupSettingType,
+                    key = PREF_HASH_FILENAME,
+                    title = Res.string.setting_fileinfo_behaviour_name_title,
+                    summary = Res.string.setting_fileinfo_behaviour_name_summary,
+                    defaultValue = "1",
+                    icon = Icons.Filled.DesignServices,
+                    entries = {
+                        mapOf(
+                            stringResource(Res.string.setting_fileinfo_behavior_a) to "1",
+                            stringResource(Res.string.setting_fileinfo_behavior_b) to "2",
+                            stringResource(Res.string.setting_fileinfo_behavior_c) to "3"
+                        )
+                    },
+                ),
+                Setting.MultiChoiceSetting(
+                    type = SettingType.MultiChoicePopupSettingType,
+                    key = PREF_HASH_FILESIZE,
+                    title = Res.string.setting_fileinfo_behaviour_size_title,
+                    summary = Res.string.setting_fileinfo_behaviour_size_summary,
+                    defaultValue = "1",
+                    icon = Icons.Filled.DesignServices,
+                    entries = {
+                        mapOf(
+                            stringResource(Res.string.setting_fileinfo_behavior_a) to "1",
+                            stringResource(Res.string.setting_fileinfo_behavior_b) to "2",
+                            stringResource(Res.string.setting_fileinfo_behavior_c) to "3"
+                        )
+                    }
+                )
+            )
+        )
+
+        if (platform == PLATFORM.Android) {
+            put(
+                SettingCategory(
+                    keyID = CATEG_GLOBAL_EXOPLAYER,
+                    title = Res.string.settings_categ_exoplayer,
+                    icon = Icons.Filled.VideoSettings
+                ),
+                listOf(
+                    Setting.SliderSetting(
+                        type = SettingType.SliderSettingType,
+                        key = PREF_MAX_BUFFER,
+                        title = Res.string.setting_max_buffer_title,
+                        summary = Res.string.setting_max_buffer_summary,
+                        defaultValue = 30,
+                        icon = Icons.Filled.HourglassTop,
+                        maxValue = 60,
+                        minValue = 1,
+                    ),
+                    Setting.SliderSetting(
+                        type = SettingType.SliderSettingType,
+                        key = PREF_MIN_BUFFER,
+                        title = Res.string.setting_min_buffer_title,
+                        summary = Res.string.setting_min_buffer_summary,
+                        defaultValue = 15,
+                        icon = Icons.Filled.HourglassBottom,
+                        maxValue = 30,
+                        minValue = 1,
+                    ),
+                    Setting.SliderSetting(
+                        type = SettingType.SliderSettingType,
+                        key = PREF_SEEK_BUFFER,
+                        title = Res.string.setting_playback_buffer_title,
+                        summary = Res.string.setting_playback_buffer_summary,
+                        defaultValue = 2500,
+                        icon = Icons.Filled.HourglassEmpty,
+                        maxValue = 15000,
+                        minValue = 100,
+                    )
+                )
+            )
+        }
+
+        put(
+            SettingCategory(
+                keyID = CATEG_GLOBAL_NETWORK,
+                title = Res.string.settings_categ_network,
+                icon = Icons.Filled.Hub
+            ),
+            listOf(
+                Setting.BooleanSetting(
+                    type = SettingType.ToggleSettingType,
+                    key = PREF_TLS_ENABLE,
+                    title = Res.string.setting_tls_title,
+                    summary = Res.string.setting_tls_summary,
+                    defaultValue = true,
+                    icon = Icons.Filled.Key,
+                )
+            )
+        )
+
+        put(
+            SettingCategory(
+                keyID = CATEG_GLOBAL_ADVANCED,
+                title = Res.string.settings_categ_advanced,
+                icon = Icons.Filled.Stream
+            ),
+            listOf(
+                Setting.YesNoDialogSetting(
+                    type = SettingType.OneClickSettingType,
+                    key = PREF_GLOBAL_CLEAR_ALL,
+                    title = Res.string.setting_resetdefault_title,
+                    summary = Res.string.setting_resetdefault_summary,
+                    icon = Icons.Filled.ClearAll,
+                    rationale = Res.string.setting_resetdefault_dialog,
+                    onYes = {
+                        launch(Dispatchers.IO) {
+                            datastore.edit { preferences ->
+                                preferences.clear()
+                            }
+                        }
+                    },
+                )
+            )
+        )
+
+        //            TODO add(
 //                Setting.MultiChoiceSetting(
 //                    type = SettingType.MultiChoicePopupSettingType,
 //                    key = PREF_NETWORK_ENGINE,
@@ -460,6 +460,7 @@ val SETTINGS_GLOBAL: SettingCollection = buildMap {
 //                    }
 //                ) to CATEG_GLOBAL_NETWORK
 //            )
+    }
 }
 
 val SETTINGS_ROOM: SettingCollection = buildMap {
