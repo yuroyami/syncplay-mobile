@@ -14,6 +14,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
+import androidx.media3.common.C.STREAM_TYPE_MUSIC
 import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
@@ -240,18 +241,14 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
         )
     }
 
-    override fun configurableSettings() = null
+    override fun configurableSettings() = getExtraSettings()
 
-    override fun getMaxVolume(): Int {
-        TODO("Not yet implemented")
-    }
-
-    override fun getCurrentVolume(): Int {
-        TODO("Not yet implemented")
-    }
-
+    override fun getMaxVolume() = audioManager.getStreamMaxVolume(STREAM_TYPE_MUSIC)
+    override fun getCurrentVolume() = audioManager.getStreamVolume(STREAM_TYPE_MUSIC)
     override fun changeCurrentVolume(v: Int) {
-        TODO("Not yet implemented")
+        if (!audioManager.isVolumeFixed) {
+            audioManager.setStreamVolume(STREAM_TYPE_MUSIC, v, 0)
+        }
     }
 
     override fun hasMedia(): Boolean {

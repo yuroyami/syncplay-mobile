@@ -17,12 +17,10 @@ import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.material.icons.filled.FormatListNumbered
 import androidx.compose.material.icons.filled.FormatSize
 import androidx.compose.material.icons.filled.FrontHand
-import androidx.compose.material.icons.filled.HourglassBottom
-import androidx.compose.material.icons.filled.HourglassEmpty
-import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.Lan
 import androidx.compose.material.icons.filled.Opacity
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Pin
@@ -34,13 +32,11 @@ import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled.VideoLabel
-import androidx.compose.material.icons.filled.VideoSettings
 import androidx.compose.material.icons.filled.Web
 import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.preferences.core.edit
 import com.yuroyami.syncplay.components.popups.PopupMediaDirs.MediaDirsPopup
 import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_ADVANCED
-import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_EXOPLAYER
 import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_GENERAL
 import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_LANG
 import com.yuroyami.syncplay.settings.DataStoreKeys.CATEG_GLOBAL_NETWORK
@@ -72,12 +68,10 @@ import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_SHADOW
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_RESET_DEFAULT
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MAX_BUFFER
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_MIN_BUFFER
+import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_NETWORK_ENGINE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_READY_FIRST_HAND
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_REMEMBER_INFO
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_SEEK_BUFFER
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_SP_MEDIA_DIRS
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_TLS_ENABLE
 import com.yuroyami.syncplay.ui.Paletting
@@ -106,14 +100,13 @@ import syncplaymobile.shared.generated.resources.setting_fileinfo_behaviour_name
 import syncplaymobile.shared.generated.resources.setting_fileinfo_behaviour_name_title
 import syncplaymobile.shared.generated.resources.setting_fileinfo_behaviour_size_summary
 import syncplaymobile.shared.generated.resources.setting_fileinfo_behaviour_size_title
-import syncplaymobile.shared.generated.resources.setting_max_buffer_summary
-import syncplaymobile.shared.generated.resources.setting_max_buffer_title
-import syncplaymobile.shared.generated.resources.setting_min_buffer_summary
-import syncplaymobile.shared.generated.resources.setting_min_buffer_title
+import syncplaymobile.shared.generated.resources.setting_network_engine_ktor
+import syncplaymobile.shared.generated.resources.setting_network_engine_netty
+import syncplaymobile.shared.generated.resources.setting_network_engine_summary
+import syncplaymobile.shared.generated.resources.setting_network_engine_swift_nio
+import syncplaymobile.shared.generated.resources.setting_network_engine_title
 import syncplaymobile.shared.generated.resources.setting_pause_if_someone_left_summary
 import syncplaymobile.shared.generated.resources.setting_pause_if_someone_left_title
-import syncplaymobile.shared.generated.resources.setting_playback_buffer_summary
-import syncplaymobile.shared.generated.resources.setting_playback_buffer_title
 import syncplaymobile.shared.generated.resources.setting_ready_firsthand_summary
 import syncplaymobile.shared.generated.resources.setting_ready_firsthand_title
 import syncplaymobile.shared.generated.resources.setting_remember_join_info_summary
@@ -126,7 +119,6 @@ import syncplaymobile.shared.generated.resources.setting_tls_title
 import syncplaymobile.shared.generated.resources.setting_warn_file_mismatch_summary
 import syncplaymobile.shared.generated.resources.setting_warn_file_mismatch_title
 import syncplaymobile.shared.generated.resources.settings_categ_advanced
-import syncplaymobile.shared.generated.resources.settings_categ_exoplayer
 import syncplaymobile.shared.generated.resources.settings_categ_general
 import syncplaymobile.shared.generated.resources.settings_categ_language
 import syncplaymobile.shared.generated.resources.settings_categ_network
@@ -177,10 +169,11 @@ import syncplaymobile.shared.generated.resources.uisetting_timestamp_summary
 import syncplaymobile.shared.generated.resources.uisetting_timestamp_title
 
 
-typealias ExtraSettingBundle = Pair<SettingCategory, SettingSet>
-
 typealias SettingSet = List<Setting<out Any>>
 typealias SettingCollection = Map<SettingCategory, SettingSet>
+
+typealias ExtraSettingBundle = Pair<SettingCategory, SettingSet>
+
 
 /* Styles */
 val settingGLOBALstyle = SettingStyling(
@@ -349,48 +342,6 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
             )
         )
 
-        if (platform == PLATFORM.Android) {
-            put(
-                SettingCategory(
-                    keyID = CATEG_GLOBAL_EXOPLAYER,
-                    title = Res.string.settings_categ_exoplayer,
-                    icon = Icons.Filled.VideoSettings
-                ),
-                listOf(
-                    Setting.SliderSetting(
-                        type = SettingType.SliderSettingType,
-                        key = PREF_MAX_BUFFER,
-                        title = Res.string.setting_max_buffer_title,
-                        summary = Res.string.setting_max_buffer_summary,
-                        defaultValue = 30,
-                        icon = Icons.Filled.HourglassTop,
-                        maxValue = 60,
-                        minValue = 1,
-                    ),
-                    Setting.SliderSetting(
-                        type = SettingType.SliderSettingType,
-                        key = PREF_MIN_BUFFER,
-                        title = Res.string.setting_min_buffer_title,
-                        summary = Res.string.setting_min_buffer_summary,
-                        defaultValue = 15,
-                        icon = Icons.Filled.HourglassBottom,
-                        maxValue = 30,
-                        minValue = 1,
-                    ),
-                    Setting.SliderSetting(
-                        type = SettingType.SliderSettingType,
-                        key = PREF_SEEK_BUFFER,
-                        title = Res.string.setting_playback_buffer_title,
-                        summary = Res.string.setting_playback_buffer_summary,
-                        defaultValue = 2500,
-                        icon = Icons.Filled.HourglassEmpty,
-                        maxValue = 15000,
-                        minValue = 100,
-                    )
-                )
-            )
-        }
-
         put(
             SettingCategory(
                 keyID = CATEG_GLOBAL_NETWORK,
@@ -405,6 +356,35 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
                     summary = Res.string.setting_tls_summary,
                     defaultValue = true,
                     icon = Icons.Filled.Key,
+                ),
+
+                Setting.MultiChoiceSetting(
+                    type = SettingType.MultiChoicePopupSettingType,
+                    key = PREF_NETWORK_ENGINE,
+                    title = Res.string.setting_network_engine_title,
+                    summary = Res.string.setting_network_engine_summary,
+                    defaultValue = if (platform == PLATFORM.Android) "netty" else "swiftnio",
+                    icon = Icons.Filled.Lan,
+                    entries = @androidx.compose.runtime.Composable {
+                        buildMap {
+                            if (platform == PLATFORM.Android) {
+                                put(
+                                    stringResource(Res.string.setting_network_engine_netty),
+                                    "netty"
+                                )
+                            } else {
+                                put(
+                                    stringResource(Res.string.setting_network_engine_swift_nio),
+                                    "swiftnio"
+                                )
+                            }
+
+                            put(
+                                stringResource(Res.string.setting_network_engine_ktor),
+                                "ktor"
+                            )
+                        }
+                    }
                 )
             )
         )
@@ -433,33 +413,6 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
                 )
             )
         )
-
-        //            TODO add(
-//                Setting.MultiChoiceSetting(
-//                    type = SettingType.MultiChoicePopupSettingType,
-//                    key = PREF_NETWORK_ENGINE,
-//                    title = Res.string.setting_network_engine_title,
-//                    summary = Res.string.setting_network_engine_summary,
-//                    defaultValue = if (getPlatform() == PLATFORM.Android) "netty" else "swiftnio",
-//                    icon = Icons.Filled.Lan,
-//                    styling = settingGLOBALstyle,
-//                    entryKeys =
-//                        mutableListOf(Res.string.setting_network_engine_ktor).apply {
-//                            if (getPlatform() == PLATFORM.Android) {
-//                                add(Res.string.setting_network_engine_netty)
-//                            } else {
-//                                add(Res.string.setting_network_engine_swift_nio)
-//                            }
-//                        },
-//                    entryValues = mutableListOf("ktor").apply {
-//                        if (getPlatform() == PLATFORM.Android) {
-//                            add("netty")
-//                        } else {
-//                            add("swiftnio")
-//                        }
-//                    }
-//                ) to CATEG_GLOBAL_NETWORK
-//            )
     }
 }
 

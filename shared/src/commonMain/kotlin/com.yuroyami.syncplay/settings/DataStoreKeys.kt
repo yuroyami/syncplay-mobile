@@ -30,12 +30,6 @@ object DataStoreKeys {
     const val PREF_HASH_FILENAME = "pref_hash_filename"
     const val PREF_HASH_FILESIZE = "pref_hash_filesize"
 
-    /* Exoplayer */
-    const val CATEG_GLOBAL_EXOPLAYER = "categ_global_exoplayer"
-    const val PREF_MAX_BUFFER = "pref_max_buffer_size"
-    const val PREF_MIN_BUFFER = "pref_min_buffer_size"
-    const val PREF_SEEK_BUFFER = "pref_seek_buffer_size"
-
     /* Network */
     const val CATEG_GLOBAL_NETWORK = "categ_global_network"
     const val PREF_NETWORK_ENGINE = "pref_network_engine"
@@ -87,6 +81,12 @@ object DataStoreKeys {
     const val PREF_MPV_VIDSYNC = "pref_mpv_video_sync"
     const val PREF_MPV_PROFILE = "pref_mpv_profile"
     const val PREF_MPV_INTERPOLATION = "pref_mpv_interpolation"
+
+    /* Exoplayer Settings */
+    const val CATEG_INROOM_EXOPLAYER = "categ_global_exoplayer"
+    const val PREF_EXO_MAX_BUFFER = "pref_max_buffer_size"
+    const val PREF_EXO_MIN_BUFFER = "pref_min_buffer_size"
+    const val PREF_EXO_SEEK_BUFFER = "pref_seek_buffer_size"
 
     /* Advanced */
     const val CATEG_INROOM_ADVANCED = "categ_inroom_advanced"

@@ -22,6 +22,9 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.runBlocking
 import okio.Path.Companion.toPath
 
+
+//TODO Refactor Datastore to only access datastore.data flow collection only ONCE
+
 fun createDataStore(
     producePath: () -> String,
 ): DataStore<Preferences> = PreferenceDataStoreFactory.createWithPath(
