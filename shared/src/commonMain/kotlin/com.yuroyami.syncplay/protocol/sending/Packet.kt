@@ -195,7 +195,7 @@ sealed class Packet {
 
                 if (clientIgnoreIsNotSet && positionAndPausedIsSet) {
                     val playstate = buildJsonObject {
-                        put("position", (position?.toDouble() ?: 0.0) / 1000.0)
+                        put("position", (position?.toDouble() ?: 0.0))
                         put("paused", play?.let { !it } )
                         if (doSeek != null) put("doSeek", doSeek)
                     }

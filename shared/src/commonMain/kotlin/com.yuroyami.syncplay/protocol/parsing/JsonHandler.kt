@@ -83,7 +83,7 @@ data class UserEvent(
 data class FileData(
     val name: String? = null,
     val duration: Double? = null,
-    val size: String? = null
+    val size: Long? = null
 )
 
 @Serializable
@@ -186,8 +186,7 @@ object JsonHandler {
                 }
             } catch (e: SerializationException) {
                 loggy("Serialization error: ${e.message}", 1)
-            } catch (e: Exception) {
-                loggy(e.stackTraceToString(), 1)
+                throw e
             }
     }
 
@@ -237,6 +236,7 @@ object JsonHandler {
             }
         } catch (e: SerializationException) {
             loggy("Error parsing user data: ${e.message}", 1)
+            throw e
         }
     }
 
@@ -276,7 +276,7 @@ object JsonHandler {
                             MediaFile().apply {
                                 fileName = fileData.name
                                 fileDuration = fileData.duration ?: 0.0
-                                fileSize = fileData.size ?: ""
+                                fileSize = fileData.size?.toString() ?: ""
                             }
                         } else null
                     }
@@ -285,6 +285,7 @@ object JsonHandler {
                 newList.add(user)
             } catch (e: SerializationException) {
                 loggy("Error parsing user list data: ${e.message}", 1)
+                throw e
             }
         }
 
@@ -297,8 +298,6 @@ object JsonHandler {
     var lastGlobalUpdate: Instant? = null
     const val SEEK_THRESHOLD = 1L
     private suspend fun handleState(state: StateData, protocol: SyncplayProtocol, jsonString: String) {
-        val latency = state.ping?.latencyCalculation
-
         var position: Double? = null
         var paused: Boolean? = null
         var doSeek: Boolean? = null
@@ -324,6 +323,7 @@ object JsonHandler {
             doSeek = playstate.doSeek
             setBy = playstate.setBy
         }
+
 
         state.ping?.let { ping ->
             latencyCalculation = ping.latencyCalculation
@@ -352,6 +352,7 @@ object JsonHandler {
                     if (paused) player.pause() else player.play()
                 }
             }
+
             lastGlobalUpdate = Clock.System.now()
 
             if (doSeek == true && setBy != null) {
@@ -397,7 +398,7 @@ object JsonHandler {
                 this.position = player.currentPositionMs().div(1000L) // if dontSlowDownWithMe useGlobalPosition or else usePlayerPosition
                 changeState = if (surelyPausedChanged) 1 else 0
                 play = player.isPlaying()
-            }.await()
+            }
         } else {
             protocol.send<Packet.State> {
                 serverTime = latencyCalculation
@@ -405,7 +406,7 @@ object JsonHandler {
                 this.position = null
                 changeState = 0
                 play = null
-            }.await()
+            }
         }
 
     }

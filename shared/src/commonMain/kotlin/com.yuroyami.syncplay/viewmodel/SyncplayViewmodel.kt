@@ -168,20 +168,20 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
         p.send<Packet.State> {
             serverTime = null
             doSeek = null
-            position = 0
+            position = null //FIXME 0
             changeState = 1
             this.play = play
         }
     }
 
-    fun sendSeek(newpos: Long) {
+    fun sendSeek(newPosMs: Long) {
         if (isSoloMode) return
 
         player?.playerScopeMain?.launch {
             p.send<Packet.State> {
                 serverTime = null
                 doSeek = true
-                position = newpos
+                position = newPosMs / 1000L
                 changeState = 1
                 this.play = player?.isPlaying() == true
             }
@@ -321,6 +321,8 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
 
                         /* Informing UI */
                         timeCurrent.longValue = progress
+
+                        if (!isSoloMode) p.globalPosition = player?.currentPositionMs()?.div(1000.0) ?: 0.0
                     }
                     delay(intervalMillis)
                 }

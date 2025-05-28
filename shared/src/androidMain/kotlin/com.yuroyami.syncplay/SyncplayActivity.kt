@@ -193,8 +193,10 @@ class SyncplayActivity : ComponentActivity() {
             }
         }
 
-        Thread.setDefaultUncaughtExceptionHandler { t, t2 ->
-            loggy(t2.stackTraceToString())
+        if (!BuildConfig.DEBUG) {
+            Thread.setDefaultUncaughtExceptionHandler { t, t2 ->
+                loggy(t2.stackTraceToString())
+            }
         }
     }
 

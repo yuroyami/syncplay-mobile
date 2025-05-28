@@ -23,6 +23,7 @@ kotlin {
     // Activating Android target (androidMain)
     androidTarget()
 
+
     // Activating iOS targets (iosMain)
     iosX64()
     iosArm64()
