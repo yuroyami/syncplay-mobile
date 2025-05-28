@@ -28,7 +28,6 @@ import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.settings.valueSuspendingly
 import com.yuroyami.syncplay.settings.writeValue
 import com.yuroyami.syncplay.ui.LifecycleWatchdog
-import com.yuroyami.syncplay.utils.generateTimestampMillis
 import com.yuroyami.syncplay.utils.getDefaultEngine
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.instantiateNetworkEngineProtocol
@@ -127,7 +126,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
 
 
     fun joinRoom(joinConfig: JoinConfig) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             joinConfig.save() //Remembering info
 
             setReadyDirectly = valueSuspendingly(DataStoreKeys.PREF_READY_FIRST_HAND, true)
@@ -141,7 +140,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
             p.session.currentRoom = joinConfig.room
             p.session.currentPassword = joinConfig.pw
 
-            withContext(Dispatchers.Main) {
+            launch(Dispatchers.Main) {
                 platformCallback.onRoomEnterOrLeave(PlatformCallback.RoomEvent.ENTER)
                 nav.navigateTo(Screen.Room)
             }
@@ -168,9 +167,8 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
 
         p.send<Packet.State> {
             serverTime = null
-            clientTime = generateTimestampMillis() / 1000.0
             doSeek = null
-            seekPosition = 0
+            position = 0
             changeState = 1
             this.play = play
         }
@@ -182,9 +180,8 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
         player?.playerScopeMain?.launch {
             p.send<Packet.State> {
                 serverTime = null
-                clientTime = generateTimestampMillis() / 1000.0
                 doSeek = true
-                seekPosition = newpos
+                position = newpos
                 changeState = 1
                 this.play = player?.isPlaying() == true
             }
@@ -324,11 +321,6 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
 
                         /* Informing UI */
                         timeCurrent.longValue = progress
-
-                        /* Informing protocol */
-                        if (!isSoloMode) {
-                            p.currentVideoPosition = progress.toDouble()
-                        }
                     }
                     delay(intervalMillis)
                 }
@@ -512,7 +504,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
         }
 
         broadcastMessage(
-            message = { getString(Res.string.room_guy_paused, pauser, timeStamper(p.currentVideoPosition.toLong())) },
+            message = { getString(Res.string.room_guy_paused, pauser, timeStamper(p.globalPosition)) },
             isChat = false
         )
     }
@@ -558,11 +550,11 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
         }
     }
 
-    override fun onSomeoneSeeked(seeker: String, toPosition: Double) {
+    override fun onSomeoneSeeked(seeker: String, toPosition: Long) {
         loggy("SYNCPLAY Protocol: $seeker seeked to: $toPosition", 1006)
 
-        val oldPos = p.currentVideoPosition.toLong()
-        val newPos = toPosition.toLong()
+        val oldPos = p.globalPosition
+        val newPos = toPosition
 
         /* Saving seek so it can be undone on mistake */
         seeks.add(Pair(oldPos * 1000, newPos * 1000))
@@ -574,10 +566,10 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
         }
     }
 
-    override fun onSomeoneBehind(behinder: String, toPosition: Double) {
+    override fun onSomeoneBehind(behinder: String, toPosition: Long) {
         loggy("SYNCPLAY Protocol: $behinder is behind. Rewinding to $toPosition", 1007)
 
-        player?.seekTo((toPosition * 1000.0).toLong())
+        player?.seekTo(toPosition * 1000L)
 
         broadcastMessage(message = { getString(Res.string.room_rewinded,behinder) }, isChat = false)
     }

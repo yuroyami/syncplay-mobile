@@ -280,11 +280,6 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
                         vlcPlayer?.play(media)
                     }
                 }
-
-                /* Goes back to the beginning for everyone */
-                if (!viewmodel.isSoloMode) {
-                    viewmodel.p.currentVideoPosition = 0.0
-                }
             } catch (e: IOException) {
                 /* If, for some reason, the video didn't wanna load */
                 e.printStackTrace()
@@ -356,7 +351,6 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
                         //Tell server about playback state change
                         if (!viewmodel.isSoloMode) {
                             viewmodel.sendPlayback(true)
-                            viewmodel.p.paused = false
                         }
                     }
                 }
@@ -368,7 +362,6 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
                         //Tell server about playback state change
                         if (!viewmodel.isSoloMode) {
                             viewmodel.sendPlayback(false)
-                            viewmodel.p.paused = true
                         }
                     }
                 }

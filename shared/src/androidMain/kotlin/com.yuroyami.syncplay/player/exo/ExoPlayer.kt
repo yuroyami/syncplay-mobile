@@ -190,7 +190,6 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
                             //Tell server about playback state change
                             if (!viewmodel.isSoloMode) {
                                 viewmodel.sendPlayback(isPlaying)
-                                viewmodel.p.paused = !isPlaying
                             }
 
                             if (exoplayer!!.playbackState == ExoPlayer.STATE_ENDED) {
@@ -430,11 +429,6 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
                 /* Injecting it into ExoPlayer and getting relevant info **/
                 exoplayer?.setMediaItem(vid) /* This loads the media into ExoPlayer **/
                 exoplayer?.prepare() /* This prepares it and makes the first frame visible */
-
-                /* Goes back to the beginning for everyone */
-                if (!viewmodel.isSoloMode) {
-                    viewmodel.p.currentVideoPosition = 0.0
-                }
 
                 /* Updating play button */
                 exoplayer?.duration?.let { viewmodel.timeFull.longValue = if (it < 0) 0 else it }

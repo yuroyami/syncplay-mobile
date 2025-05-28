@@ -38,12 +38,11 @@ abstract class SyncplayProtocol(
     var ping = MutableStateFlow<Int?>(null)
     val rewindThreshold = 12L /* This is as per official Syncplay, shouldn't be subject to change */
 
-    /** Variables that track user status */
-    var paused: Boolean = true
-    var ready = false
+    /** Global server values that the user often needs to adjust to (see handleState) */
+    var globalPaused: Boolean = true //Latest server paused state
+    var globalPosition: Long = 0L //Latest server video position
 
-    /** Variables related to current video properties which will be fed to Syncplay Server for syncing */
-    var currentVideoPosition: Double = 0.0
+    var ready = false
 
     /** A protocol instance is always defined and accompanied by a session **/
     var session = Session()
@@ -81,7 +80,7 @@ abstract class SyncplayProtocol(
             }
         } catch (e: Exception) {
             loggy(e.stackTraceToString(), 205)
-            syncplayCallback?.onConnectionFailed()
+            syncplayCallback.onConnectionFailed()
         }
     }
 

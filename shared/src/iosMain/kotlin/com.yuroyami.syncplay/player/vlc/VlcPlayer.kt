@@ -279,7 +279,7 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
 
                 /* Goes back to the beginning for everyone */
                 if (!viewmodel.isSoloMode) {
-                    viewmodel.p.currentVideoPosition = 0.0
+                    viewmodel.p.currentVideoPosition = 0L
                 }
             } catch (e: Exception) {
                 /* If, for some reason, the video didn't want to load */

@@ -24,9 +24,9 @@ class PlayerOptions private constructor() {
     companion object {
         fun get(): PlayerOptions {
             val options = PlayerOptions()
-            options.maxBuffer = valueBlockingly(DataStoreKeys.PREF_MAX_BUFFER, 30) * 1000
-            options.minBuffer = valueBlockingly(DataStoreKeys.PREF_MIN_BUFFER, 15) * 1000
-            options.playbackBuffer = valueBlockingly(DataStoreKeys.PREF_SEEK_BUFFER, 2000)
+            options.maxBuffer = valueBlockingly(DataStoreKeys.PREF_EXO_MAX_BUFFER, 30) * 1000
+            options.minBuffer = valueBlockingly(DataStoreKeys.PREF_EXO_MIN_BUFFER, 15) * 1000
+            options.playbackBuffer = valueBlockingly(DataStoreKeys.PREF_EXO_SEEK_BUFFER, 2000)
 
             options.ccPreference = valueBlockingly(DataStoreKeys.PREF_CC_LANG, "eng")
             options.audioPreference = valueBlockingly(DataStoreKeys.PREF_AUDIO_LANG, "und")
@@ -35,9 +35,9 @@ class PlayerOptions private constructor() {
 
         suspend fun getSuspendingly(): PlayerOptions {
             val options = PlayerOptions()
-            options.maxBuffer = valueSuspendingly(DataStoreKeys.PREF_MAX_BUFFER, 30) * 1000
-            options.minBuffer = valueSuspendingly(DataStoreKeys.PREF_MIN_BUFFER, 15) * 1000
-            options.playbackBuffer = valueSuspendingly(DataStoreKeys.PREF_SEEK_BUFFER, 2000)
+            options.maxBuffer = valueSuspendingly(DataStoreKeys.PREF_EXO_MAX_BUFFER, 30) * 1000
+            options.minBuffer = valueSuspendingly(DataStoreKeys.PREF_EXO_MIN_BUFFER, 15) * 1000
+            options.playbackBuffer = valueSuspendingly(DataStoreKeys.PREF_EXO_SEEK_BUFFER, 2000)
 
             options.ccPreference =  valueSuspendingly(DataStoreKeys.PREF_CC_LANG, "eng")
             options.audioPreference = valueSuspendingly(DataStoreKeys.PREF_AUDIO_LANG, "und")

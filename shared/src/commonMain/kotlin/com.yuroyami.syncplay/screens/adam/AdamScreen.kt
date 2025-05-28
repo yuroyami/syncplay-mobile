@@ -64,7 +64,6 @@ sealed class Screen(val label: String) {
 
 @Composable
 fun AdamScreen(onViewmodelReady: (SyncplayViewmodel) -> Unit) {
-
     val scope = rememberCoroutineScope()
     val viewmodel = viewModel<SyncplayViewmodel>()
     val navigator = rememberNavController()

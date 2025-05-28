@@ -5,6 +5,7 @@ import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.utils.CommonUtils.md5
+import com.yuroyami.syncplay.utils.generateTimestampMillis
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
@@ -102,9 +103,7 @@ sealed class Packet {
     class EmptyList : Packet() {
         override fun build(): String {
             val emptylist = buildJsonObject {
-                putJsonArray("List") {
-                    //TODO: Check equivalent in Python code
-                }
+                putJsonArray("List") {}
             }
             return Json.encodeToString(emptylist)
         }
@@ -182,50 +181,51 @@ sealed class Packet {
 
     class State(private var p: SyncplayProtocol) : Packet() {
         var serverTime: Double? = null
-        var clientTime: Double = 0.0
+        val clientTime: Double
+            get() = generateTimestampMillis() / 1000.0
         var doSeek: Boolean? = null
-        var seekPosition: Long = 0
+        var position: Long? = null
         var changeState: Int = 0
         var play: Boolean? = null
 
         override fun build(): String {
-            val state = buildJsonObject {
-                val playstate = buildJsonObject {
-                    if (doSeek == true) {
-                        put("position", seekPosition.toDouble() / 1000.0)
-                    } else {
-                        put("position", p.currentVideoPosition.toFloat())
+            val state = buildJsonObject state@ {
+                val positionAndPausedIsSet = position != null && play != null
+                val clientIgnoreIsNotSet = p.clientIgnFly == 0 || p.serverIgnFly != 0
+
+                if (clientIgnoreIsNotSet && positionAndPausedIsSet) {
+                    val playstate = buildJsonObject {
+                        put("position", (position?.toDouble() ?: 0.0) / 1000.0)
+                        put("paused", play?.let { !it } )
+                        if (doSeek != null) put("doSeek", doSeek)
                     }
-                    put("paused", p.paused)
-                    put("doSeek", doSeek)
+                    put("playstate", playstate)
                 }
+
 
                 val ping = buildJsonObject {
                     serverTime?.let { put("latencyCalculation", it) }
                     put("clientLatencyCalculation", clientTime)
                     put("clientRtt", p.ping.value ?: 0)
                 }
+                put("ping", ping)
 
                 if (changeState == 1) {
-                    val ignore = buildJsonObject {
-                        put("client", p.clientIgnFly)
-                    }
-                    put("ignoringOnTheFly", ignore)
-                    put("playstate", buildJsonObject {
-                        put("paused", play != true)
-                    })
-                } else {
-                    if (p.serverIgnFly != 0) {
-                        val ignore = buildJsonObject {
-                            put("server", p.serverIgnFly)
-                        }
-                        put("ignoringOnTheFly", ignore)
-                        p.serverIgnFly = 0
-                    }
+                    p.clientIgnFly += 1 //Important!
                 }
 
-                put("playstate", playstate)
-                put("ping", ping)
+                if (p.clientIgnFly != 0 || p.serverIgnFly != 0) {
+                    val ignoringOnTheFly = buildJsonObject {
+                        if (p.serverIgnFly != 0) {
+                            put("server", p.serverIgnFly)
+                            p.serverIgnFly = 0
+                        }
+                        if (p.clientIgnFly != 0) {
+                            put("client", p.clientIgnFly)
+                        }
+                    }
+                    put("ignoringOnTheFly", ignoringOnTheFly)
+                }
             }
 
             val statewrapper = buildJsonObject {

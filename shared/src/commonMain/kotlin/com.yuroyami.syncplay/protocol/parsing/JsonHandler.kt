@@ -4,14 +4,16 @@ import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.User
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.protocol.sending.Packet
-import com.yuroyami.syncplay.utils.generateTimestampMillis
 import com.yuroyami.syncplay.utils.loggy
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlin.math.abs
 
 // Top-level message containers
 @Serializable
@@ -85,6 +87,18 @@ data class FileData(
 )
 
 @Serializable
+data class UserData(
+    val isReady: Boolean? = null,
+    val file: FileData? = null
+)
+
+@Serializable
+data class ChatData(
+    val username: String? = null,
+    val message: String? = null
+)
+
+@Serializable
 data class StateData(
     val ping: PingData? = null,
     val ignoringOnTheFly: IgnoringOnTheFlyData? = null,
@@ -93,7 +107,9 @@ data class StateData(
 
 @Serializable
 data class PingData(
-    val latencyCalculation: Double? = null
+    val latencyCalculation: Double? = null,
+    val clientLatencyCalculation: Double? = null,
+    val serverRtt: Double? = null
 )
 
 @Serializable
@@ -105,21 +121,9 @@ data class IgnoringOnTheFlyData(
 @Serializable
 data class PlaystateData(
     val doSeek: Boolean? = null,
-    val position: Double? = null,
+    val position: Long? = null,
     val setBy: String? = null,
     val paused: Boolean? = null
-)
-
-@Serializable
-data class UserData(
-    val isReady: Boolean? = null,
-    val file: FileData? = null
-)
-
-@Serializable
-data class ChatData(
-    val username: String? = null,
-    val message: String? = null
 )
 
 @Serializable
@@ -195,7 +199,7 @@ object JsonHandler {
             roomname = p.session.currentRoom
         }.await()
         p.send<Packet.EmptyList>().await()
-        p.syncplayCallback?.onConnected()
+        p.syncplayCallback.onConnected()
     }
 
     private suspend fun handleSet(set: SetData, p: SyncplayProtocol) {
@@ -218,14 +222,14 @@ object JsonHandler {
 
             userData.event?.let { event ->
                 when {
-                    event.left != null -> p.syncplayCallback?.onSomeoneLeft(userName)
-                    event.joined != null -> p.syncplayCallback?.onSomeoneJoined(userName)
+                    event.left != null -> p.syncplayCallback.onSomeoneLeft(userName)
+                    event.joined != null -> p.syncplayCallback.onSomeoneJoined(userName)
                     else -> {}
                 }
             }
 
             userData.file?.let { file ->
-                p.syncplayCallback?.onSomeoneLoadedFile(
+                p.syncplayCallback.onSomeoneLoadedFile(
                     userName,
                     file.name ?: "",
                     file.duration ?: 0.0
@@ -240,7 +244,7 @@ object JsonHandler {
         val user = playlistIndex.user ?: return
         val index = playlistIndex.index ?: return
 
-        p.syncplayCallback?.onPlaylistIndexChanged(user, index)
+        p.syncplayCallback.onPlaylistIndexChanged(user, index)
         p.session.spIndex.intValue = index
     }
 
@@ -250,7 +254,7 @@ object JsonHandler {
 
         p.session.sharedPlaylist.clear()
         p.session.sharedPlaylist.addAll(files)
-        p.syncplayCallback?.onPlaylistUpdated(user)
+        p.syncplayCallback.onPlaylistUpdated(user)
     }
 
     private fun handleList(list: JsonObject, p: SyncplayProtocol) {
@@ -286,92 +290,135 @@ object JsonHandler {
 
         p.protoScope.launch {
             p.session.userList.emit(newList)
-            p.syncplayCallback?.onReceivedList()
+            p.syncplayCallback.onReceivedList()
         }
     }
 
+    var lastGlobalUpdate: Instant? = null
+    const val SEEK_THRESHOLD = 1L
     private suspend fun handleState(state: StateData, protocol: SyncplayProtocol, jsonString: String) {
-        val clientTime = generateTimestampMillis() / 1000.0
         val latency = state.ping?.latencyCalculation
 
+        var position: Long? = null
+        var paused: Boolean? = null
+        var doSeek: Boolean? = null
+        var setBy: String? = null
+
+        val messageAge = 0.0
+        var latencyCalculation: Double? = null
+
         state.ignoringOnTheFly?.let { ignoringOnTheFly ->
-            if (jsonString.contains("server\":")) {
-                val playstate = state.playstate ?: return
-                val doSeek = playstate.doSeek
-                val position = playstate.position ?: return
-                val setBy = playstate.setBy ?: ""
-
-                when (doSeek) {
-                    true -> protocol.syncplayCallback?.onSomeoneSeeked(setBy, position)
-                    false, null -> {
-                        val isPaused = playstate.paused ?: jsonString.contains("\"paused\": true", true)
-                        protocol.paused = isPaused
-
-                        if (!protocol.paused) {
-                            protocol.syncplayCallback?.onSomeonePlayed(setBy)
-                        } else {
-                            protocol.syncplayCallback?.onSomeonePaused(setBy)
-                        }
-                    }
-                }
-
-                protocol.serverIgnFly = ignoringOnTheFly.server ?: 0
+            if (ignoringOnTheFly.server != null) {
+                protocol.serverIgnFly = ignoringOnTheFly.server
                 protocol.clientIgnFly = 0
-
-                if (!jsonString.contains("client\":")) {
-                    protocol.send<Packet.State> {
-                        serverTime = latency
-                        this.clientTime = clientTime
-                        this.doSeek = null
-                        seekPosition = 0
-                        changeState = 0
-                        play = null
-                    }.await()
-                } else {
-                    protocol.send<Packet.State> {
-                        serverTime = latency
-                        this.clientTime = clientTime
-                        this.doSeek = doSeek
-                        seekPosition = 0
-                        changeState = 0
-                        play = null
-                    }.await()
+            } else if (ignoringOnTheFly.client != null) {
+                if (protocol.clientIgnFly == ignoringOnTheFly.client) {
+                    protocol.clientIgnFly = 0
                 }
             }
-        } ?: run {
-            // Handle case without ignoringOnTheFly
-            val playstate = state.playstate
-            val position = playstate?.position
-            val positionOf = playstate?.setBy?.takeIf { it.isNotEmpty() }
+        }
 
-            // Rewind check if someone is behind
-            if (positionOf != null && positionOf != protocol.session.currentUsername && position != null) {
-                if (position < (protocol.currentVideoPosition - protocol.rewindThreshold)) {
-                    protocol.syncplayCallback?.onSomeoneBehind(positionOf, position)
+        state.playstate?.let { playstate ->
+            position = playstate.position ?: 0L
+            paused = playstate.paused
+            doSeek = playstate.doSeek
+            setBy = playstate.setBy
+        }
+
+        state.ping?.let { ping ->
+            latencyCalculation = ping.latencyCalculation
+
+            ping.clientLatencyCalculation?.let { timestamp ->
+                val serverRtt = ping.serverRtt!!
+
+                //TODO self.pingServer.receiveMessage(timestampSenderRtt)
+            }
+            //TODO messageAge = pingService.getLastForwardDelay()
+        }
+
+        val player = protocol.viewmodel.player
+
+        if (position != null && paused != null && protocol.clientIgnFly == 0 && player != null) {
+            val pausedChanged = protocol.globalPaused != paused || paused == player.isPlaying()
+            val diff = player.currentPositionMs() / 1000.0 - position
+
+            /* Updating Global State */
+            protocol.globalPaused = paused
+            protocol.globalPosition = position
+
+            if (lastGlobalUpdate == null) {
+                if (protocol.viewmodel.media != null) {
+                    player.seekTo(position * 1000)
+                    if (paused) player.pause() else player.play()
                 }
             }
+            lastGlobalUpdate = Clock.System.now()
 
-            // Constant traditional pinging
+            if (doSeek == true && setBy != null) {
+                protocol.syncplayCallback.onSomeoneSeeked(setBy, position)
+            }
+
+            //Rewind check if someone is behind
+            if (diff > protocol.rewindThreshold && doSeek != true /* && rewindOnDesync pref */) {
+                protocol.syncplayCallback.onSomeoneBehind(setBy ?: "", position)
+            }
+
+            //if (fastforwardOnDesyncPref && (currentUser.canControl() == false or dontSlowDownWithMe == true)
+            //      if (diff < (constants.FASTFORWARD_BEHIND_THRESHOLD * -1)  && doSeek != true
+            //          if (behindFirstDetected == true)
+            //              behindFirstDetected = now()
+            //          else
+            //              durationBehind = now() - behindFirstDetected
+            //              if (durationBehind > if (durationBehind > (self._config['fastforwardThreshold']-constants.FASTFORWARD_BEHIND_THRESHOLD))\ and (diff < (self._config['fastforwardThreshold'] * -1))
+            //                  madeChangeOnPlayer = fastforwardPlayerDueToTimeDifference(position, setBy)
+            //                  behindFirstDetected = now() + constants.FASTFORWARD_RESET_THRESHOLD
+            //      else behindFirstDetected = null
+
+
+//            if self._player.speedSupported and not doSeek and not paused and  not self._config['slowOnDesync'] == False:
+//                madeChangeOnPlayer = self._slowDownToCoverTimeDifference(diff, setBy)
+
+
+            if (pausedChanged) {
+                if (!paused) protocol.syncplayCallback.onSomeonePlayed(setBy ?: "")
+                if (paused) protocol.syncplayCallback.onSomeonePaused(setBy ?: "")
+            }
+        }
+
+        if (lastGlobalUpdate != null && player != null && position != null) {
+            val playerDiff = abs(player.currentPositionMs() / 1000.0 - position)
+            val globalDiff = abs(protocol.globalPosition - position)
+            val surelyPausedChanged = protocol.globalPaused != paused && paused == player.isPlaying()
+            val seeked = playerDiff > SEEK_THRESHOLD && globalDiff > SEEK_THRESHOLD
+
             protocol.send<Packet.State> {
-                serverTime = latency
-                this.clientTime = clientTime
-                this.doSeek = false
-                seekPosition = 0
+                serverTime = latencyCalculation
+                this.doSeek = seeked
+                this.position = player.currentPositionMs().div(1000L) // if dontSlowDownWithMe useGlobalPosition or else usePlayerPosition
+                changeState = if (surelyPausedChanged) 1 else 0
+                play = player.isPlaying()
+            }.await()
+        } else {
+            protocol.send<Packet.State> {
+                serverTime = latencyCalculation
+                this.doSeek = null
+                this.position = null
                 changeState = 0
                 play = null
             }.await()
         }
+
     }
 
     private fun handleChat(chat: ChatData, p: SyncplayProtocol) {
         val sender = chat.username ?: return
         val message = chat.message ?: return
-        p.syncplayCallback?.onChatReceived(sender, message)
+        p.syncplayCallback.onChatReceived(sender, message)
     }
 
     private suspend fun handleTLS(tls: TLSData, p: SyncplayProtocol) {
         tls.startTLS?.let { startTLS ->
-            p.syncplayCallback?.onReceivedTLS(startTLS)
+            p.syncplayCallback.onReceivedTLS(startTLS)
         }
     }
 
