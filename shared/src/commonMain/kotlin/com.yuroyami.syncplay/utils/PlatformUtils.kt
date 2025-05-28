@@ -21,7 +21,7 @@ enum class PLATFORM { Android, IOS, }
 expect val platform: PLATFORM
 
 /** logging functionality (Uses println on iOS, and Log.e on Android) */
-fun loggy(s: String?, checkpoint: Int = 0) = Logger.e("iLOG: $s")
+fun loggy(s: String?, checkpoint: Int = 0) = Logger.e(s.toString())
 
 /** Gets the default video playback engine on each platform (mpv on Android, AVPlayer on iOS) */
 expect fun getDefaultEngine(): String

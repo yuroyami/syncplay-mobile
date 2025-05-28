@@ -121,7 +121,7 @@ data class IgnoringOnTheFlyData(
 @Serializable
 data class PlaystateData(
     val doSeek: Boolean? = null,
-    val position: Long? = null,
+    val position: Double? = null,
     val setBy: String? = null,
     val paused: Boolean? = null
 )
@@ -299,7 +299,7 @@ object JsonHandler {
     private suspend fun handleState(state: StateData, protocol: SyncplayProtocol, jsonString: String) {
         val latency = state.ping?.latencyCalculation
 
-        var position: Long? = null
+        var position: Double? = null
         var paused: Boolean? = null
         var doSeek: Boolean? = null
         var setBy: String? = null
@@ -319,7 +319,7 @@ object JsonHandler {
         }
 
         state.playstate?.let { playstate ->
-            position = playstate.position ?: 0L
+            position = playstate.position ?: 0.0
             paused = playstate.paused
             doSeek = playstate.doSeek
             setBy = playstate.setBy
@@ -348,7 +348,7 @@ object JsonHandler {
 
             if (lastGlobalUpdate == null) {
                 if (protocol.viewmodel.media != null) {
-                    player.seekTo(position * 1000)
+                    player.seekTo((position * 1000.0).toLong())
                     if (paused) player.pause() else player.play()
                 }
             }

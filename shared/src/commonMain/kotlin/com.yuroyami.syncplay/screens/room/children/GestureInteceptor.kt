@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.room
+package com.yuroyami.syncplay.screens.room.children
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn

@@ -40,7 +40,7 @@ abstract class SyncplayProtocol(
 
     /** Global server values that the user often needs to adjust to (see handleState) */
     var globalPaused: Boolean = true //Latest server paused state
-    var globalPosition: Long = 0L //Latest server video position
+    var globalPosition: Double = 0.0 //Latest server video position
 
     var ready = false
 
@@ -97,7 +97,7 @@ abstract class SyncplayProtocol(
             try {
                 if (isSocketValid()) {
                     val finalOut = json + "\r\n"
-                    //loggy("Client: $finalOut", 206)
+                    loggy("Client>>> $finalOut", 206)
                     writeActualString(finalOut)
                 } else {
                     /** Queuing any pending outgoing messages */
@@ -126,7 +126,7 @@ abstract class SyncplayProtocol(
     }
 
     private fun onError() {
-        syncplayCallback?.onDisconnected()
+        syncplayCallback.onDisconnected()
     }
 
     fun terminateScope() {

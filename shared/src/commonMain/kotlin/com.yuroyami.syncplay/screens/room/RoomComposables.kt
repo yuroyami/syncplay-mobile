@@ -4,30 +4,19 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddToQueue
@@ -37,52 +26,29 @@ import androidx.compose.material.icons.outlined.NetworkWifi2Bar
 import androidx.compose.material.icons.outlined.NetworkWifi3Bar
 import androidx.compose.material.icons.outlined.SignalWifi4Bar
 import androidx.compose.material.icons.outlined.SignalWifiConnectedNoInternet4
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.components.ComposeUtils
 import com.yuroyami.syncplay.components.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.models.MessagePalette
-import com.yuroyami.syncplay.screens.adam.LocalChatPalette
-import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.valueAsState
 import com.yuroyami.syncplay.ui.Paletting
-import kotlinx.coroutines.delay
-import org.jetbrains.compose.resources.Font
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_button_desc_add
-import syncplaymobile.shared.generated.resources.syncplay_logo_gradient
 
 object RoomComposables {
 
@@ -108,173 +74,9 @@ object RoomComposables {
             )
     }
 
-    /** The Syncplay artwork that is displayed in the video frame when no video is loaded */
-    @Composable
-    fun RoomArtwork(pipModeObserver: Boolean) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = Paletting.backgroundGradient
-                    )
-                ),
-        ) {
-            Column(
-                modifier = Modifier
-                    .wrapContentWidth()
-                    .align(Alignment.Center),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
 
-                Image(
-                    painter = painterResource(Res.drawable.syncplay_logo_gradient), contentDescription = "",
-                    modifier = Modifier
-                        .height(if (pipModeObserver) 40.dp else 84.dp)
-                        .aspectRatio(1f)
-                       // .radiantOverlay(offset = Offset(x = 50f, y = 80f))
-                )
 
-                Spacer(modifier = Modifier.width(14.dp))
 
-                Box(modifier = Modifier.padding(bottom = 6.dp)) {
-                    Text(
-                        modifier = Modifier.wrapContentWidth(),
-                        text = "Syncplay",
-                        style = TextStyle(
-                            color = Paletting.SP_PALE,
-                            drawStyle = Stroke(
-                                miter = 10f,
-                                width = 2f,
-                                join = StrokeJoin.Round
-                            ),
-                            shadow = Shadow(
-                                color = Paletting.SP_INTENSE_PINK,
-                                offset = Offset(0f, 10f),
-                                blurRadius = 5f
-                            ),
-                            fontFamily = FontFamily(Font(Res.font.Directive4_Regular))
-                        ),
-                        fontSize = if (pipModeObserver) 8.sp else 26.sp,
-                    )
-                    Text(
-                        modifier = Modifier.wrapContentWidth(),
-                        text = "Syncplay",
-                        style = TextStyle(
-                            brush = Brush.linearGradient(
-                                colors = Paletting.SP_GRADIENT
-                            ),
-                            fontFamily = FontFamily(Font(Res.font.Directive4_Regular))
-                        ),
-                        fontSize = if (pipModeObserver) 8.sp else 26.sp,
-                    )
-                }
-            }
-        }
-    }
-
-    @Composable
-    fun FadingMessageLayout(hudVisibility: Boolean, pipModeObserver: Boolean) {
-        val viewmodel = LocalViewmodel.current
-
-        /** The layout for the fading messages & OSD messages (when HUD is hidden, or when screen is locked) */
-        val fadingTimeout = DataStoreKeys.PREF_INROOM_MSG_FADING_DURATION.valueAsState(3)
-        val palette = LocalChatPalette.current
-
-        if (!hudVisibility) {
-            var visibility by remember { mutableStateOf(false) }
-            val msgs = remember { viewmodel.p.session.messageSequence }
-            LaunchedEffect(msgs.size) {
-                if (viewmodel.p.session.messageSequence.isNotEmpty()) {
-                    val lastMsg = viewmodel.p.session.messageSequence.last()
-
-                    if (!lastMsg.isMainUser && !lastMsg.seen) {
-                        visibility = true
-                        delay(fadingTimeout.value.toLong() * 1000L)
-                        visibility = false
-                    }
-                }
-            }
-
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(24.dp),
-                horizontalAlignment = Alignment.Start
-            ) {
-                AnimatedVisibility(
-                    enter = fadeIn(animationSpec = keyframes { durationMillis = 100 }),
-                    exit = fadeOut(animationSpec = keyframes { durationMillis = 500 }),
-                    visible = visibility,
-                ) {
-                    Text(
-                        modifier = Modifier
-                            .fillMaxWidth(0.8f)
-                            .focusable(false),
-                        overflow = TextOverflow.Ellipsis,
-                        text = viewmodel.p.session.messageSequence.last().factorize(palette),
-                        lineHeight = if (pipModeObserver) 9.sp else 15.sp,
-                        fontSize = if (pipModeObserver) 8.sp else 13.sp
-                    )
-                }
-            }
-        }
-    }
-
-    @Composable
-    fun RoomTab(icon: ImageVector, visibilityState: Boolean, onClick: () -> Unit) {
-        Card(
-            modifier = Modifier
-                .width(48.dp)
-                .aspectRatio(1f)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(color = Paletting.SP_ORANGE)
-                ) {
-                    onClick.invoke()
-
-                },
-            shape = RoundedCornerShape(6.dp),
-            border = if (visibilityState) {
-                null
-            } else {
-                BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) }))
-            },
-            colors = CardDefaults.cardColors(containerColor = if (visibilityState) Color.Transparent else MaterialTheme.colorScheme.tertiaryContainer.copy(0.5f)),
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = if (visibilityState) {
-                            Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })
-                        } else {
-                            Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
-                        }
-                    )
-            ) {
-                if (visibilityState) {
-                    Icon(
-                        tint = Color.DarkGray,
-                        imageVector = icon,
-                        contentDescription = "",
-                        modifier = Modifier
-                            .size(32.dp)
-                            .align(Alignment.Center)
-                    )
-                } else {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = "",
-                        modifier = Modifier
-                            .size(32.dp)
-                            .align(Alignment.Center)
-                            .gradientOverlay()
-                    )
-                }
-
-            }
-        }
-    }
 
     @Composable
     fun AddVideoButton(modifier: Modifier, expanded: Boolean, onClick: () -> Unit) {

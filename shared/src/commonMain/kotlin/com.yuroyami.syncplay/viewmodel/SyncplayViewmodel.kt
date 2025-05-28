@@ -550,11 +550,11 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
         }
     }
 
-    override fun onSomeoneSeeked(seeker: String, toPosition: Long) {
+    override fun onSomeoneSeeked(seeker: String, toPosition: Double) {
         loggy("SYNCPLAY Protocol: $seeker seeked to: $toPosition", 1006)
 
-        val oldPos = p.globalPosition
-        val newPos = toPosition
+        val oldPos = p.globalPosition.toLong()
+        val newPos = toPosition.toLong()
 
         /* Saving seek so it can be undone on mistake */
         seeks.add(Pair(oldPos * 1000, newPos * 1000))
@@ -566,10 +566,10 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
         }
     }
 
-    override fun onSomeoneBehind(behinder: String, toPosition: Long) {
+    override fun onSomeoneBehind(behinder: String, toPosition: Double) {
         loggy("SYNCPLAY Protocol: $behinder is behind. Rewinding to $toPosition", 1007)
 
-        player?.seekTo(toPosition * 1000L)
+        player?.seekTo((toPosition * 1000L).toLong())
 
         broadcastMessage(message = { getString(Res.string.room_rewinded,behinder) }, isChat = false)
     }

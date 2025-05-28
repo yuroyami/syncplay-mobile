@@ -15,9 +15,9 @@ interface ProtocolCallback {
 
     fun onSomeoneLeft(leaver: String)
 
-    fun onSomeoneSeeked(seeker: String, toPosition: Long)
+    fun onSomeoneSeeked(seeker: String, toPosition: Double)
 
-    fun onSomeoneBehind(behinder: String, toPosition: Long)
+    fun onSomeoneBehind(behinder: String, toPosition: Double)
 
     fun onReceivedList()
 

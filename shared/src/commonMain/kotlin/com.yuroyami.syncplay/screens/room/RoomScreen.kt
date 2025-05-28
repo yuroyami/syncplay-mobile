@@ -146,11 +146,12 @@ import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.screens.adam.Screen
 import com.yuroyami.syncplay.screens.adam.Screen.Companion.navigateTo
 import com.yuroyami.syncplay.screens.room.RoomComposables.AddVideoButton
-import com.yuroyami.syncplay.screens.room.RoomComposables.FadingMessageLayout
 import com.yuroyami.syncplay.screens.room.RoomComposables.FreeAnimatedVisibility
 import com.yuroyami.syncplay.screens.room.RoomComposables.PingRadar
-import com.yuroyami.syncplay.screens.room.RoomComposables.RoomArtwork
-import com.yuroyami.syncplay.screens.room.RoomComposables.RoomTab
+import com.yuroyami.syncplay.screens.room.children.FadingMessageLayout
+import com.yuroyami.syncplay.screens.room.children.GestureInterceptor
+import com.yuroyami.syncplay.screens.room.children.RoomArtwork
+import com.yuroyami.syncplay.screens.room.children.RoomTab
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_GESTURES
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_BG_OPACITY
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_BOX_ACTION
@@ -1496,7 +1497,7 @@ fun RoomScreenUI() {
                     Box {
                         AddVideoButton(
                             modifier = Modifier,
-                            expanded = viewmodel.hasVideoG?.value == true,
+                            expanded = viewmodel.hasVideoG?.value != true,
                             onClick = {
                                 addmediacardvisible = !addmediacardvisible
                                 controlcardvisible = false
