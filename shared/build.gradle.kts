@@ -1,4 +1,7 @@
 @file:Suppress("UnstableApiUsage")
+
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.cocoapods)
@@ -156,6 +159,7 @@ kotlin {
 
 android {
     val exoOnly = false
+    val forGPlay = false
 
     namespace = "com.yuroyami.syncplay"
     compileSdk = 36
@@ -165,22 +169,35 @@ android {
     }
 
     signingConfigs {
-        create("github") {
-            storeFile = file("${rootDir}/keystore/keystore.jks")
-            keyAlias = "keystore"
-            keyPassword = "az90az09"
-            storePassword = "az90az09"
+        val localProperties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localProperties.load(localPropertiesFile.inputStream())
+        }
+
+        val keystore = file("${rootDir}/keystore/syncplaykeystore.jks")
+        if (keystore.exists()) {
+            create("syncplay_keystore") {
+                storeFile = keystore
+                keyAlias = localProperties.getProperty("yuroyami.keyAlias")
+                keyPassword = localProperties.getProperty("yuroyami.keyPassword")
+                storePassword = localProperties.getProperty("yuroyami.storePassword")
+            }
         }
     }
 
     defaultConfig {
-        applicationId = "com.reddnek.syncplay"
+        applicationId = if (forGPlay) "com.yuroyami.syncplay" else "com.reddnek.syncplay"
         minSdk = 21
         targetSdk = 35 //TODO We only update to targetSdk 36 when we resolve the 16KB native libs alignment issue
         versionCode = 1_000_016_00_0 //1 XXX XXX XX X (last X is for prerelease versions such as RC)
         versionName = "0.16.0"
-        signingConfig = signingConfigs.getByName("github")
+
         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+
+        signingConfigs.findByName("syncplay_keystore")?.let { config ->
+            signingConfig = config
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
