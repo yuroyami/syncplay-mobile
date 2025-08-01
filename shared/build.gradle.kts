@@ -61,6 +61,7 @@ kotlin {
                 optIn("androidx.compose.material3.ExperimentalMaterial3ExpressiveApi")
                 optIn("kotlinx.cinterop.ExperimentalForeignApi") //for iOS
                 optIn("kotlinx.cinterop.BetaInteropApi") //for iOS
+                optIn("kotlin.time.ExperimentalTime")
             }
         }
 

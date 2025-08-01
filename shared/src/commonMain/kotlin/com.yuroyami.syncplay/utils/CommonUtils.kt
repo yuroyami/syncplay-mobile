@@ -2,7 +2,7 @@ package com.yuroyami.syncplay.utils
 
 import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 import kotlinx.coroutines.delay
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.kotlincrypto.hash.md.MD5
