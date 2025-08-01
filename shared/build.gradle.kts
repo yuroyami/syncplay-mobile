@@ -81,7 +81,7 @@ kotlin {
             implementation(libs.bundles.ktor)
 
             /* Android's "Uri" class but rewritten for Kotlin multiplatform */
-            implementation("com.eygraber:uri-kmp:0.0.19")
+            implementation(libs.uriKmp)
 
             /* Jetpack Datastore for preferences and settings (accessible in Compose in real-time) */
             implementation(libs.datastore)
@@ -106,7 +106,8 @@ kotlin {
             /* Logging */
             implementation(libs.logging.kermit)
 
-            implementation("io.github.vinceglb:filekit-dialogs-compose:0.10.0")
+            /* File opener/saver multiplatform */
+            implementation(libs.filekit)
         }
 
         androidMain.dependencies {
@@ -174,9 +175,9 @@ android {
     defaultConfig {
         applicationId = "com.reddnek.syncplay"
         minSdk = 21
-        targetSdk = 35
-        versionCode = 1_001_000_00_1 //1 XXX XXX XX X (last X is for prerelease versions such as RC)
-        versionName = "1.0.0-RC1"
+        targetSdk = 35 //TODO We only update to targetSdk 36 when we resolve the 16KB native libs alignment issue
+        versionCode = 1_000_016_00_0 //1 XXX XXX XX X (last X is for prerelease versions such as RC)
+        versionName = "0.16.0"
         signingConfig = signingConfigs.getByName("github")
         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
