@@ -18,6 +18,7 @@ import com.yuroyami.syncplay.databinding.MpvviewBinding
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
+import com.yuroyami.syncplay.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.screens.room.dispatchOSD
@@ -44,10 +45,8 @@ import java.io.InputStream
 import java.io.OutputStream
 import kotlin.math.roundToLong
 
-class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
+class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPlayerEngine.Mpv) {
     lateinit var audioManager: AudioManager
-
-    override val engine = Engine.ANDROID_MPV
 
     var mpvPos = 0L
     private lateinit var observer: MPVLib.EventObserver

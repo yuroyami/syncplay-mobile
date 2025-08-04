@@ -56,7 +56,7 @@ package com.yuroyami.syncplay.player.vlc
 //import kotlin.math.abs
 //
 //class VlcPlayer : BasePlayer() {
-//    override val engine = Engine.IOS_VLC
+//    override val engine = PlayerEngine.IOS_VLC
 //
 //    private var libvlc: VLCLibrary? = null
 //    var vlcPlayer: VLCMediaPlayer? = null

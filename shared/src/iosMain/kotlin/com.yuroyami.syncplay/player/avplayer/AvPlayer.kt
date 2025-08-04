@@ -8,9 +8,11 @@ import androidx.compose.ui.interop.UIKitView
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
+import com.yuroyami.syncplay.player.ApplePlayerEngine
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.screens.room.dispatchOSD
+import com.yuroyami.syncplay.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.utils.collectInfoLocaliOS
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
@@ -69,8 +71,7 @@ import syncplaymobile.shared.generated.resources.room_sub_error_load_vid_first
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
-class AvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
-    override val engine = Engine.IOS_AVPLAYER
+class AvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, ApplePlayerEngine.AVPlayer) {
 
     /*-- Exoplayer-related properties --*/
     var avPlayer: AVPlayer? = null
@@ -111,6 +112,10 @@ class AvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
         avPlayer?.finalize()
         avPlayer = null
         avContainer = null
+    }
+
+    override fun configurableSettings(): ExtraSettingBundle? {
+        TODO("Not yet implemented")
     }
 
     @OptIn(ExperimentalForeignApi::class)

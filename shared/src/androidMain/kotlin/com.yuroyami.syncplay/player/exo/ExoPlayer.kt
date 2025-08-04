@@ -37,6 +37,7 @@ import com.yuroyami.syncplay.databinding.ExoviewBinding
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
+import com.yuroyami.syncplay.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.PlayerOptions
 import com.yuroyami.syncplay.protocol.sending.Packet
@@ -64,10 +65,8 @@ import java.util.Collections
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
+class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPlayerEngine.Exoplayer) {
     lateinit var audioManager: AudioManager
-
-    override val engine = Engine.ANDROID_EXOPLAYER
 
     /*-- Exoplayer-related properties --*/
     var exoplayer: ExoPlayer? = null

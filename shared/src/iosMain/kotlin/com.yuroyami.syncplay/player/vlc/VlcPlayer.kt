@@ -14,6 +14,7 @@ import cocoapods.MobileVLCKit.VLCTime
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
+import com.yuroyami.syncplay.player.ApplePlayerEngine
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.screens.room.dispatchOSD
@@ -44,9 +45,7 @@ import syncplaymobile.shared.generated.resources.room_sub_error_load_vid_first
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
-    override val engine = Engine.IOS_VLC
-
+class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, ApplePlayerEngine.VLC) {
     private var libvlc: VLCLibrary? = null
     var vlcPlayer: VLCMediaPlayer? = null
     private var vlcView: UIView? = null

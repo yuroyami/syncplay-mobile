@@ -28,29 +28,9 @@ import kotlinx.coroutines.SupervisorJob
  * all the necessary functionality, in a platform-agnostic manner.
  */
 abstract class BasePlayer(
-    val viewmodel: SyncplayViewmodel
+    val viewmodel: SyncplayViewmodel,
+    val engine: PlayerEngine
 ) {
-
-    abstract val engine: Engine
-
-    enum class Engine(val label: String) {
-        ANDROID_EXOPLAYER("Exoplayer"),
-        ANDROID_MPV("mpv"),
-        ANDROID_VLC("VLC"),
-        IOS_AVPLAYER("AVPlayer"),
-        IOS_VLC("VLC");
-
-        /** Gets the platform-specific player that is next in line */
-        fun getNextPlayer(): Engine {
-            return when (this) {
-                ANDROID_EXOPLAYER -> ANDROID_MPV
-                ANDROID_MPV -> ANDROID_VLC
-                ANDROID_VLC -> ANDROID_EXOPLAYER
-                IOS_AVPLAYER -> IOS_VLC
-                IOS_VLC -> IOS_AVPLAYER
-            }
-        }
-    }
 
     enum class TRACKTYPE {
         AUDIO , SUBTITLE

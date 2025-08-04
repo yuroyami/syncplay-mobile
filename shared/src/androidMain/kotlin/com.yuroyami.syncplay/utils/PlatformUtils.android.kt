@@ -11,11 +11,8 @@ import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import com.yuroyami.syncplay.BuildConfig
-import com.yuroyami.syncplay.player.BasePlayer.Engine
-import com.yuroyami.syncplay.player.exo.ExoPlayer
-import com.yuroyami.syncplay.player.mpv.MpvPlayer
-import com.yuroyami.syncplay.player.vlc.VlcPlayer
+import com.yuroyami.syncplay.player.AndroidPlayerEngine
+import com.yuroyami.syncplay.player.PlayerEngine
 import com.yuroyami.syncplay.protocol.SpProtocolAndroid
 import com.yuroyami.syncplay.protocol.SpProtocolKtor
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
@@ -33,14 +30,7 @@ actual fun getSystemMaxVolume(): Int {
 
 actual val platform: PLATFORM = PLATFORM.Android
 
-actual fun getDefaultEngine(): String = if (BuildConfig.FLAVOR == "noLibs") Engine.ANDROID_EXOPLAYER.name else Engine.ANDROID_MPV.name
-
-actual fun SyncplayViewmodel.instantiatePlayer(engine: Engine) = when (engine) {
-    Engine.ANDROID_EXOPLAYER -> ExoPlayer(this)
-    Engine.ANDROID_MPV -> MpvPlayer(this)
-    Engine.ANDROID_VLC -> VlcPlayer(this)
-    else -> null
-}
+actual val availablePlatformPlayerPlayerEngines: List<PlayerEngine> = listOf(AndroidPlayerEngine.Exoplayer, AndroidPlayerEngine.Mpv, AndroidPlayerEngine.VLC)
 
 actual fun SyncplayViewmodel.instantiateNetworkEngineProtocol(engine: SyncplayProtocol.NetworkEngine) = when (engine) {
     SyncplayProtocol.NetworkEngine.NETTY -> SpProtocolAndroid(this)
@@ -99,13 +89,3 @@ actual suspend fun pingIcmp(host: String, packet: Int): Int? {
 actual fun ClipEntry.getText(): String? {
     return this.clipData.getItemAt(0).text?.toString()
 }
-
-@Suppress("KotlinConstantConditions")
-actual val availablePlatformEngines: List<Engine>
-    get() = buildList {
-        add(Engine.ANDROID_EXOPLAYER)
-        if (BuildConfig.FLAVOR == "withLibs") {
-            add(Engine.ANDROID_MPV)
-            add(Engine.ANDROID_VLC)
-        }
-    }

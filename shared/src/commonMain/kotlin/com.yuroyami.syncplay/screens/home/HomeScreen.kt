@@ -6,7 +6,6 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -43,7 +42,6 @@ import androidx.compose.material.icons.outlined.MeetingRoom
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.PersonPin
 import androidx.compose.material3.BottomAppBarDefaults
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonGroup
 import androidx.compose.material3.ButtonGroupScope
 import androidx.compose.material3.Card
@@ -100,6 +98,7 @@ import com.yuroyami.syncplay.components.ComposeUtils.SmartFancyIcon
 import com.yuroyami.syncplay.components.popups.PopupAPropos.AProposPopup
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.player.BasePlayer
+import com.yuroyami.syncplay.player.PlayerEngine
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_PLAYER_ENGINE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_SP_MEDIA_DIRS
@@ -112,6 +111,7 @@ import com.yuroyami.syncplay.ui.Paletting.SP_GRADIENT
 import com.yuroyami.syncplay.ui.ThemeMenu
 import com.yuroyami.syncplay.utils.CommonUtils.substringSafely
 import com.yuroyami.syncplay.utils.availablePlatformEngines
+import com.yuroyami.syncplay.utils.availablePlatformPlayerPlayerEngines
 import com.yuroyami.syncplay.utils.getDefaultEngine
 import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
@@ -344,57 +344,38 @@ fun HomeScreenUI() {
                     }
 
                     /* Buttons */
-                    val defaultEngine = remember { getDefaultEngine() }
+                    val defaultEngine = availablePlatformPlayerPlayerEngines.first { it.isDefault }.name
                     val player = valueFlow(MISC_PLAYER_ENGINE, defaultEngine).collectAsState(initial = defaultEngine)
+
+                   /* val name = stringResource(
+                        Res.string.connect_button_current_engine,
+                        when (player.value) {
+                            BasePlayer.PlayerEngine.ANDROID_EXOPLAYER.name -> "Google ExoPlayer (System)"
+                            BasePlayer.PlayerEngine.ANDROID_MPV.name -> "mpv (Default, Recommended)"
+                            BasePlayer.PlayerEngine.ANDROID_VLC.name -> "VLC (Experimental, Unstable)"
+                            BasePlayer.PlayerEngine.IOS_AVPLAYER.name -> "Apple AVPlayer (System)"
+                            BasePlayer.PlayerEngine.IOS_VLC.name -> "VLC (Experimental, Unstable)"
+                            else -> "Undefined"
+                        }
+                    )*/
 
                     ButtonGroup(
                         overflowIndicator = { state -> },
                         modifier = Modifier.fillMaxWidth(0.75f),
                     ) {
-                        availablePlatformEngines.forEach { engine ->
-                            engineButton(engine = engine)
-                        }
-                    }
-
-                    Column(horizontalAlignment = CenterHorizontally) {
-                        Row(horizontalArrangement = Arrangement.Center) {
-                            Button(
-                                border = BorderStroke(
-                                    width = 2.dp, color = MaterialTheme.colorScheme.primary
-                                ),
-                                modifier = Modifier.height(54.dp).aspectRatio(1.6f),
-                                shape = RoundedCornerShape(25),
-                                onClick = {
+                        availablePlatformPlayerPlayerEngines.forEach { engine ->
+                            engineButton(
+                                engine = engine,
+                                isSelected = true,
+                                onSelectEngine = { b ->
                                     scope.launch(Dispatchers.IO) {
-                                        if (defaultEngine != BasePlayer.Engine.ANDROID_EXOPLAYER.name) {
-                                            writeValue(
-                                                MISC_PLAYER_ENGINE,
-                                                BasePlayer.Engine.valueOf(player.value)
-                                                    .getNextPlayer().name
-                                            )
-                                        }
+                                        writeValue(MISC_PLAYER_ENGINE, engine.name)
                                     }
-                                }) {
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Text(
-                            stringResource(
-                                Res.string.connect_button_current_engine,
-                                when (player.value) {
-                                    BasePlayer.Engine.ANDROID_EXOPLAYER.name -> "Google ExoPlayer (System)"
-                                    BasePlayer.Engine.ANDROID_MPV.name -> "mpv (Default, Recommended)"
-                                    BasePlayer.Engine.ANDROID_VLC.name -> "VLC (Experimental, Unstable)"
-                                    BasePlayer.Engine.IOS_AVPLAYER.name -> "Apple AVPlayer (System)"
-                                    BasePlayer.Engine.IOS_VLC.name -> "VLC (Experimental, Unstable)"
-                                    else -> "Undefined"
                                 }
-                            ), textAlign = TextAlign.Center, fontSize = 9.sp
-                        )
+                            )
+                        }
                     }
-                    Spacer(modifier = Modifier.height(10.dp))
+
 
                     /* join button + shortcut saver */
                     SplitButtonLayout(
@@ -677,21 +658,25 @@ fun HomeTextField(
     }
 }
 
-fun ButtonGroupScope.engineButton(engine: BasePlayer.Engine) {
+fun ButtonGroupScope.engineButton(
+    engine: PlayerEngine,
+    isSelected: Boolean,
+    onSelectEngine: (Boolean) -> Unit
+) {
     toggleableItem(
-        checked = true,
-        onCheckedChange = { b -> },
-        label = "",//engine.label,
+        checked = isSelected,
+        onCheckedChange = { b -> onSelectEngine(b) },
+        label = engine.name,
         icon = {
             Image(
                 painter = painterResource(
                     with(Res.drawable) {
                         when (engine) {
-                            BasePlayer.Engine.ANDROID_EXOPLAYER -> exoplayer
-                            BasePlayer.Engine.ANDROID_MPV -> mpv
-                            BasePlayer.Engine.ANDROID_VLC -> vlc
-                            BasePlayer.Engine.IOS_AVPLAYER -> swift
-                            BasePlayer.Engine.IOS_VLC -> vlc
+                            PlayerEngine.ANDROID_EXOPLAYER -> exoplayer
+                            PlayerEngine.ANDROID_MPV -> mpv
+                            BasePlayer.PlayerEngine.ANDROID_VLC -> vlc
+                            BasePlayer.PlayerEngine.IOS_AVPLAYER -> swift
+                            BasePlayer.PlayerEngine.IOS_VLC -> vlc
                         }
                     }),
                 contentDescription = null

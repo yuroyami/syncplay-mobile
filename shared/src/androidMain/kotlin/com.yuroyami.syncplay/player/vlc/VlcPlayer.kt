@@ -14,6 +14,7 @@ import androidx.media3.common.MimeTypes
 import com.yuroyami.syncplay.databinding.VlcviewBinding
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
+import com.yuroyami.syncplay.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.screens.room.dispatchOSD
@@ -37,12 +38,10 @@ import syncplaymobile.shared.generated.resources.room_sub_error_load_vid_first
 import java.io.IOException
 import kotlin.math.abs
 
-class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
+class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPlayerEngine.VLC) {
     lateinit var audioManager: AudioManager
 
     private lateinit var ctx: Context
-
-    override val engine = Engine.ANDROID_VLC
 
     private var libvlc: LibVLC? = null
     private var vlcPlayer: MediaPlayer? = null

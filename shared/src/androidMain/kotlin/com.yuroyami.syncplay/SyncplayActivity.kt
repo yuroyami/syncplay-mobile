@@ -105,7 +105,7 @@ class SyncplayActivity : ComponentActivity() {
                 ShortcutManagerCompat.removeAllDynamicShortcuts(this@SyncplayActivity)
             }
 
-            //TODO override fun getMoreRoomSettings() = if (viewmodel?.player?.engine == Engine.ANDROID_MPV) mpvRoomSettings else listOf()
+            //TODO override fun getMoreRoomSettings() = if (viewmodel?.player?.engine == PlayerEngine.ANDROID_MPV) mpvRoomSettings else listOf()
 
             override fun getMaxBrightness() = 1f
             override fun getCurrentBrightness(): Float {
