@@ -42,7 +42,7 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
 
     private lateinit var ctx: Context
 
-    override val engine = ENGINE.ANDROID_VLC
+    override val engine = Engine.ANDROID_VLC
 
     private var libvlc: LibVLC? = null
     private var vlcPlayer: MediaPlayer? = null

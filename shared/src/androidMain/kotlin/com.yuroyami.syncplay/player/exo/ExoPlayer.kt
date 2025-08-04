@@ -67,7 +67,7 @@ import kotlin.math.roundToInt
 class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
     lateinit var audioManager: AudioManager
 
-    override val engine = ENGINE.ANDROID_EXOPLAYER
+    override val engine = Engine.ANDROID_EXOPLAYER
 
     /*-- Exoplayer-related properties --*/
     var exoplayer: ExoPlayer? = null

@@ -24,8 +24,8 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
-import com.yuroyami.syncplay.screens.adam.AdamScreen
 import com.yuroyami.syncplay.models.JoinConfig
+import com.yuroyami.syncplay.screens.adam.AdamScreen
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_SUBTITLE_SIZE
 import com.yuroyami.syncplay.settings.valueBlockingly
@@ -105,7 +105,7 @@ class SyncplayActivity : ComponentActivity() {
                 ShortcutManagerCompat.removeAllDynamicShortcuts(this@SyncplayActivity)
             }
 
-            //TODO override fun getMoreRoomSettings() = if (viewmodel?.player?.engine == ENGINE.ANDROID_MPV) mpvRoomSettings else listOf()
+            //TODO override fun getMoreRoomSettings() = if (viewmodel?.player?.engine == Engine.ANDROID_MPV) mpvRoomSettings else listOf()
 
             override fun getMaxBrightness() = 1f
             override fun getCurrentBrightness(): Float {

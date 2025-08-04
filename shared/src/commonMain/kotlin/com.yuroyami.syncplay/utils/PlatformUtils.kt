@@ -20,12 +20,14 @@ expect fun getSystemMaxVolume(): Int
 enum class PLATFORM { Android, IOS, }
 expect val platform: PLATFORM
 
+expect val availablePlatformEngines: List<BasePlayer.Engine>
+
 /** logging functionality (Uses println on iOS, and Log.e on Android) */
 fun loggy(s: String?, checkpoint: Int = 0) = Logger.e(s.toString())
 
 /** Gets the default video playback engine on each platform (mpv on Android, AVPlayer on iOS) */
 expect fun getDefaultEngine(): String
-expect fun SyncplayViewmodel.instantiatePlayer(engine: BasePlayer.ENGINE): BasePlayer?
+expect fun SyncplayViewmodel.instantiatePlayer(engine: BasePlayer.Engine): BasePlayer?
 
 expect fun SyncplayViewmodel.instantiateNetworkEngineProtocol(engine: SyncplayProtocol.NetworkEngine): SyncplayProtocol
 

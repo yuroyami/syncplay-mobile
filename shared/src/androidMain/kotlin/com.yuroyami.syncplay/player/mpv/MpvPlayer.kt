@@ -47,7 +47,7 @@ import kotlin.math.roundToLong
 class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
     lateinit var audioManager: AudioManager
 
-    override val engine = ENGINE.ANDROID_MPV
+    override val engine = Engine.ANDROID_MPV
 
     var mpvPos = 0L
     private lateinit var observer: MPVLib.EventObserver

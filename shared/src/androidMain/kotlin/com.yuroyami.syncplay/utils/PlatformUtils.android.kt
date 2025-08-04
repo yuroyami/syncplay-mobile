@@ -12,7 +12,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.yuroyami.syncplay.BuildConfig
-import com.yuroyami.syncplay.player.BasePlayer.ENGINE
+import com.yuroyami.syncplay.player.BasePlayer.Engine
 import com.yuroyami.syncplay.player.exo.ExoPlayer
 import com.yuroyami.syncplay.player.mpv.MpvPlayer
 import com.yuroyami.syncplay.player.vlc.VlcPlayer
@@ -33,12 +33,12 @@ actual fun getSystemMaxVolume(): Int {
 
 actual val platform: PLATFORM = PLATFORM.Android
 
-actual fun getDefaultEngine(): String = if (BuildConfig.FLAVOR == "noLibs") ENGINE.ANDROID_EXOPLAYER.name else ENGINE.ANDROID_MPV.name
+actual fun getDefaultEngine(): String = if (BuildConfig.FLAVOR == "noLibs") Engine.ANDROID_EXOPLAYER.name else Engine.ANDROID_MPV.name
 
-actual fun SyncplayViewmodel.instantiatePlayer(engine: ENGINE) = when (engine) {
-    ENGINE.ANDROID_EXOPLAYER -> ExoPlayer(this)
-    ENGINE.ANDROID_MPV -> MpvPlayer(this)
-    ENGINE.ANDROID_VLC -> VlcPlayer(this)
+actual fun SyncplayViewmodel.instantiatePlayer(engine: Engine) = when (engine) {
+    Engine.ANDROID_EXOPLAYER -> ExoPlayer(this)
+    Engine.ANDROID_MPV -> MpvPlayer(this)
+    Engine.ANDROID_VLC -> VlcPlayer(this)
     else -> null
 }
 
@@ -99,3 +99,13 @@ actual suspend fun pingIcmp(host: String, packet: Int): Int? {
 actual fun ClipEntry.getText(): String? {
     return this.clipData.getItemAt(0).text?.toString()
 }
+
+@Suppress("KotlinConstantConditions")
+actual val availablePlatformEngines: List<Engine>
+    get() = buildList {
+        add(Engine.ANDROID_EXOPLAYER)
+        if (BuildConfig.FLAVOR == "withLibs") {
+            add(Engine.ANDROID_MPV)
+            add(Engine.ANDROID_VLC)
+        }
+    }

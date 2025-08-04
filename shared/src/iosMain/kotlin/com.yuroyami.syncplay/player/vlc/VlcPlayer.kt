@@ -45,7 +45,7 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
-    override val engine = ENGINE.IOS_VLC
+    override val engine = Engine.IOS_VLC
 
     private var libvlc: VLCLibrary? = null
     var vlcPlayer: VLCMediaPlayer? = null

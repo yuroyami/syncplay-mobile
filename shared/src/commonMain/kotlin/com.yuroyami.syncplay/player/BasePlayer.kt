@@ -31,17 +31,17 @@ abstract class BasePlayer(
     val viewmodel: SyncplayViewmodel
 ) {
 
-    abstract val engine: ENGINE
+    abstract val engine: Engine
 
-    enum class ENGINE {
-        ANDROID_EXOPLAYER,
-        ANDROID_MPV,
-        ANDROID_VLC,
-        IOS_AVPLAYER,
-        IOS_VLC;
+    enum class Engine(val label: String) {
+        ANDROID_EXOPLAYER("Exoplayer"),
+        ANDROID_MPV("mpv"),
+        ANDROID_VLC("VLC"),
+        IOS_AVPLAYER("AVPlayer"),
+        IOS_VLC("VLC");
 
         /** Gets the platform-specific player that is next in line */
-        fun getNextPlayer(): ENGINE {
+        fun getNextPlayer(): Engine {
             return when (this) {
                 ANDROID_EXOPLAYER -> ANDROID_MPV
                 ANDROID_MPV -> ANDROID_VLC

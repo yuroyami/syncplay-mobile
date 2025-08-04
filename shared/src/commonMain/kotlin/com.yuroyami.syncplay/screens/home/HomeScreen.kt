@@ -35,20 +35,17 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Redo
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Api
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material.icons.outlined.Lan
 import androidx.compose.material.icons.outlined.MeetingRoom
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.PersonPin
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgeDefaults
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonGroup
+import androidx.compose.material3.ButtonGroupScope
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -89,7 +86,6 @@ import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -115,6 +111,7 @@ import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.Paletting.SP_GRADIENT
 import com.yuroyami.syncplay.ui.ThemeMenu
 import com.yuroyami.syncplay.utils.CommonUtils.substringSafely
+import com.yuroyami.syncplay.utils.availablePlatformEngines
 import com.yuroyami.syncplay.utils.getDefaultEngine
 import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
@@ -350,52 +347,17 @@ fun HomeScreenUI() {
                     val defaultEngine = remember { getDefaultEngine() }
                     val player = valueFlow(MISC_PLAYER_ENGINE, defaultEngine).collectAsState(initial = defaultEngine)
 
+                    ButtonGroup(
+                        overflowIndicator = { state -> },
+                        modifier = Modifier.fillMaxWidth(0.75f),
+                    ) {
+                        availablePlatformEngines.forEach { engine ->
+                            engineButton(engine = engine)
+                        }
+                    }
+
                     Column(horizontalAlignment = CenterHorizontally) {
                         Row(horizontalArrangement = Arrangement.Center) {
-                            /* shortcut button */
-                            Button(
-                                border = BorderStroke(
-                                    width = 2.dp, color = MaterialTheme.colorScheme.primary
-                                ),
-                                modifier = Modifier.height(54.dp).aspectRatio(1.6f),
-                                shape = RoundedCornerShape(25),
-                                onClick = {
-                                    platformCallback.onSaveConfigShortcut(
-                                        JoinConfig(
-                                            textUsername.replace("\\", "").trim(),
-                                            textRoomname.replace("\\", "").trim(),
-                                            serverAddress,
-                                            serverPort.toInt(),
-                                            serverPassword
-                                        )
-                                    )
-                                }) {
-                                BadgedBox(
-                                    badge = {
-                                        Badge(
-                                            modifier = Modifier.padding(8.dp),
-                                            containerColor = BadgeDefaults.containerColor.copy(0.5f)
-                                        ) {
-
-                                            Icon(
-                                                imageVector = Icons.Filled.Add,
-                                                contentDescription = null,
-                                                modifier = Modifier.fillMaxSize()
-                                            )
-                                        }
-                                    }) {
-
-                                    Icon(
-                                        imageVector = Icons.Filled.Widgets,
-                                        contentDescription = null,
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.width(10.dp))
-
-
                             Button(
                                 border = BorderStroke(
                                     width = 2.dp, color = MaterialTheme.colorScheme.primary
@@ -404,31 +366,15 @@ fun HomeScreenUI() {
                                 shape = RoundedCornerShape(25),
                                 onClick = {
                                     scope.launch(Dispatchers.IO) {
-                                        if (defaultEngine != BasePlayer.ENGINE.ANDROID_EXOPLAYER.name) {
+                                        if (defaultEngine != BasePlayer.Engine.ANDROID_EXOPLAYER.name) {
                                             writeValue(
                                                 MISC_PLAYER_ENGINE,
-                                                BasePlayer.ENGINE.valueOf(player.value)
+                                                BasePlayer.Engine.valueOf(player.value)
                                                     .getNextPlayer().name
                                             )
                                         }
                                     }
                                 }) {
-                                Image(
-                                    painter = painterResource(
-                                        with(Res.drawable) {
-                                            when (player.value) {
-                                                BasePlayer.ENGINE.ANDROID_EXOPLAYER.name -> exoplayer
-                                                BasePlayer.ENGINE.ANDROID_MPV.name -> mpv
-                                                BasePlayer.ENGINE.ANDROID_VLC.name -> vlc
-                                                BasePlayer.ENGINE.IOS_AVPLAYER.name -> swift
-                                                BasePlayer.ENGINE.IOS_VLC.name -> vlc
-                                                else -> exoplayer
-                                            }
-                                        }),
-                                    contentScale = ContentScale.FillHeight,
-                                    contentDescription = "",
-                                    modifier = Modifier.fillMaxSize()
-                                )
                             }
                         }
 
@@ -438,11 +384,11 @@ fun HomeScreenUI() {
                             stringResource(
                                 Res.string.connect_button_current_engine,
                                 when (player.value) {
-                                    BasePlayer.ENGINE.ANDROID_EXOPLAYER.name -> "Google ExoPlayer (System)"
-                                    BasePlayer.ENGINE.ANDROID_MPV.name -> "mpv (Default, Recommended)"
-                                    BasePlayer.ENGINE.ANDROID_VLC.name -> "VLC (Experimental, Unstable)"
-                                    BasePlayer.ENGINE.IOS_AVPLAYER.name -> "Apple AVPlayer (System)"
-                                    BasePlayer.ENGINE.IOS_VLC.name -> "VLC (Experimental, Unstable)"
+                                    BasePlayer.Engine.ANDROID_EXOPLAYER.name -> "Google ExoPlayer (System)"
+                                    BasePlayer.Engine.ANDROID_MPV.name -> "mpv (Default, Recommended)"
+                                    BasePlayer.Engine.ANDROID_VLC.name -> "VLC (Experimental, Unstable)"
+                                    BasePlayer.Engine.IOS_AVPLAYER.name -> "Apple AVPlayer (System)"
+                                    BasePlayer.Engine.IOS_VLC.name -> "VLC (Experimental, Unstable)"
                                     else -> "Undefined"
                                 }
                             ), textAlign = TextAlign.Center, fontSize = 9.sp
@@ -450,7 +396,7 @@ fun HomeScreenUI() {
                     }
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    /* join button */
+                    /* join button + shortcut saver */
                     SplitButtonLayout(
                         modifier = Modifier.fillMaxWidth(0.75f),
                         leadingButton = {
@@ -496,8 +442,20 @@ fun HomeScreenUI() {
                             SplitButtonDefaults.TrailingButton(
                                 contentPadding = PaddingValues(vertical = 24.dp),
                                 checked = checked,
-                                onCheckedChange = { b -> checked = b },
+                                onCheckedChange = { b ->
+                                    checked = b
+                                    platformCallback.onSaveConfigShortcut(
+                                        JoinConfig(
+                                            textUsername.replace("\\", "").trim(),
+                                            textRoomname.replace("\\", "").trim(),
+                                            serverAddress,
+                                            serverPort.toInt(),
+                                            serverPassword
+                                        )
+                                    )
+                                },
                                 content = {
+                                    //Icons.Outlined.Widgets
                                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = checked)
                                 }
                             )
@@ -542,7 +500,7 @@ fun SyncplayTopBar() {
                         SmartFancyIcon(
                             icon = Icons.Outlined.Palette,
                             size = 38,
-                            tintColors = Paletting.SP_GRADIENT,
+                            tintColors = SP_GRADIENT,
                             shadowColors = listOf(MaterialTheme.colorScheme.primary),
                             onClick = {
                                 themePopupState = true
@@ -557,7 +515,7 @@ fun SyncplayTopBar() {
                                 else -> Icons.AutoMirrored.Filled.Redo
                             },
                             size = 38,
-                            tintColors = Paletting.SP_GRADIENT,
+                            tintColors = SP_GRADIENT,
                             shadowColors = listOf(MaterialTheme.colorScheme.primary),
                             onClick = {
                                 when (settingState.intValue) {
@@ -576,8 +534,8 @@ fun SyncplayTopBar() {
                         modifier = Modifier.clip(CircleShape).background(
                             brush = Brush.linearGradient(
                                 colors = listOf(
-                                    Paletting.SP_GRADIENT.first().copy(0.05f),
-                                    Paletting.SP_GRADIENT.last().copy(0.05f)
+                                    SP_GRADIENT.first().copy(0.05f),
+                                    SP_GRADIENT.last().copy(0.05f)
                                 )
                             )
                         ).clickable(
@@ -619,7 +577,7 @@ fun SyncplayTopBar() {
 
                             Text(
                                 text = "Syncplay", style = TextStyle(
-                                    brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT),
+                                    brush = Brush.linearGradient(colors = SP_GRADIENT),
                                     fontFamily = FontFamily(Font(Res.font.Directive4_Regular)),
                                     fontSize = 24.sp,
                                 )
@@ -630,7 +588,7 @@ fun SyncplayTopBar() {
             )/* Settings */
 
 
-            androidx.compose.animation.AnimatedVisibility(
+            AnimatedVisibility(
                 modifier = Modifier.fillMaxWidth(),
                 visible = settingState.intValue != 0,
                 enter = scaleIn(),
@@ -717,4 +675,27 @@ fun HomeTextField(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 21.dp)
         )
     }
+}
+
+fun ButtonGroupScope.engineButton(engine: BasePlayer.Engine) {
+    toggleableItem(
+        checked = true,
+        onCheckedChange = { b -> },
+        label = "",//engine.label,
+        icon = {
+            Image(
+                painter = painterResource(
+                    with(Res.drawable) {
+                        when (engine) {
+                            BasePlayer.Engine.ANDROID_EXOPLAYER -> exoplayer
+                            BasePlayer.Engine.ANDROID_MPV -> mpv
+                            BasePlayer.Engine.ANDROID_VLC -> vlc
+                            BasePlayer.Engine.IOS_AVPLAYER -> swift
+                            BasePlayer.Engine.IOS_VLC -> vlc
+                        }
+                    }),
+                contentDescription = null
+            )
+        }
+    )
 }

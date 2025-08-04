@@ -146,7 +146,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
                 nav.navigateTo(Screen.Room)
             }
 
-            val engine = BasePlayer.ENGINE.valueOf(valueSuspendingly(DataStoreKeys.MISC_PLAYER_ENGINE, getDefaultEngine()))
+            val engine = BasePlayer.Engine.valueOf(valueSuspendingly(DataStoreKeys.MISC_PLAYER_ENGINE, getDefaultEngine()))
             player = instantiatePlayer(engine)
 
             /** Connecting (via TLS or noTLS) */

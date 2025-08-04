@@ -2,7 +2,7 @@ package com.yuroyami.syncplay.utils
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ClipEntry
-import com.yuroyami.syncplay.player.BasePlayer.ENGINE
+import com.yuroyami.syncplay.player.BasePlayer.Engine
 import com.yuroyami.syncplay.player.avplayer.AvPlayer
 import com.yuroyami.syncplay.player.vlc.VlcPlayer
 import com.yuroyami.syncplay.protocol.SpProtocolKtor
@@ -13,9 +13,9 @@ import platform.Foundation.NSURL
 import platform.Foundation.timeIntervalSince1970
 import kotlin.math.roundToLong
 
-actual fun SyncplayViewmodel.instantiatePlayer(engine: ENGINE) = when (engine) {
-    ENGINE.IOS_AVPLAYER -> AvPlayer(this)
-    ENGINE.IOS_VLC -> VlcPlayer(this)
+actual fun SyncplayViewmodel.instantiatePlayer(engine: Engine) = when (engine) {
+    Engine.IOS_AVPLAYER -> AvPlayer(this)
+    Engine.IOS_VLC -> VlcPlayer(this)
     else -> null
 }
 
@@ -32,7 +32,7 @@ actual fun getSystemMaxVolume(): Int {
 
 actual val platform: PLATFORM = PLATFORM.IOS
 
-actual fun getDefaultEngine(): String = ENGINE.IOS_VLC.name
+actual fun getDefaultEngine(): String = Engine.IOS_VLC.name
 
 actual fun generateTimestampMillis(): Long {
     return (NSDate().timeIntervalSince1970 * 1000).roundToLong()
@@ -70,3 +70,9 @@ actual suspend fun pingIcmp(host: String, packet: Int): Int? {
 actual fun ClipEntry.getText(): String? {
     return this.getPlainText()
 }
+
+actual val availablePlatformEngines: List<Engine>
+    get() = buildList {
+        add(Engine.IOS_AVPLAYER)
+        add(Engine.IOS_VLC)
+    }

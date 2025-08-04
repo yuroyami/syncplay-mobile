@@ -70,7 +70,7 @@ import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
 class AvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel) {
-    override val engine = ENGINE.IOS_AVPLAYER
+    override val engine = Engine.IOS_AVPLAYER
 
     /*-- Exoplayer-related properties --*/
     var avPlayer: AVPlayer? = null
