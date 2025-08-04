@@ -130,9 +130,8 @@ abstract class SyncplayProtocol(
     }
 
     fun terminateScope() {
-        try {
+        runCatching {
             protoScope.cancel()
-        } catch (_: Exception) {
         }
     }
 

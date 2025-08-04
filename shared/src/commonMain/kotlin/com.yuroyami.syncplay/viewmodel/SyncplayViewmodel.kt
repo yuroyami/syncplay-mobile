@@ -68,6 +68,7 @@ import syncplaymobile.shared.generated.resources.room_shared_playlist_updated
 import syncplaymobile.shared.generated.resources.room_tls_not_supported
 import syncplaymobile.shared.generated.resources.room_tls_supported
 import syncplaymobile.shared.generated.resources.room_you_joined_room
+import kotlin.experimental.ExperimentalTypeInference
 
 class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     lateinit var nav: NavController
@@ -732,16 +733,26 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
 
     /**************** OTHER ***************/
     var snack = SnackbarHostState()
-    fun snackIt(string: String, abruptly: Boolean = true) {
+
+    fun snackItAsync(string: String, abruptly: Boolean = true) {
         viewModelScope.launch(Dispatchers.Main) {
-            if (abruptly) {
-                snack.currentSnackbarData?.dismiss()
-            }
-            snack.showSnackbar(
-                message = string,
-                duration = SnackbarDuration.Short
-            )
+            snackItImpl(string, abruptly)
         }
+    }
+
+    @OptIn(ExperimentalTypeInference::class)
+    suspend fun snackIt(text: String, abruptly: Boolean = true) {
+        snackItImpl(text, abruptly)
+    }
+
+    private suspend fun snackItImpl(string: String, abruptly: Boolean = true) {
+        if (abruptly) {
+            snack.currentSnackbarData?.dismiss()
+        }
+        snack.showSnackbar(
+            message = string,
+            duration = SnackbarDuration.Short
+        )
     }
 
     override fun onCleared() {

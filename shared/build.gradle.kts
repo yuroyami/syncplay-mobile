@@ -93,13 +93,17 @@ kotlin {
             /* Compose core dependencies */
             implementation(compose.runtime)
             implementation(compose.foundation)
-            implementation(compose.material3)
+            //implementation(compose.material3)
+            implementation("org.jetbrains.compose.material3:material3:1.9.0-alpha04") //Temporary to get android's m3 1.4.0 functionality until material3 is updated to 1.4.0 stable
             implementation(compose.materialIconsExtended)
             implementation(compose.components.resources)
 
             /* ViewModel support */
             implementation(libs.compose.viewmodel)
             implementation(libs.compose.navigation)
+
+            /* ComposableHorizons' unstyled composables for more granularly-controlled components */
+            implementation(libs.compose.unstyled)
 
             /* Helps with color calculations for color preferences */
             implementation(libs.colormath)

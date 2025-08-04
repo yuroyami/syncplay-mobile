@@ -74,22 +74,22 @@ class SyncplayActivity : ComponentActivity() {
                 }
             }
 
-            override fun onSaveConfigShortcut(joinConfig: JoinConfig) {
+            override fun onSaveConfigShortcut(joinInfo: JoinConfig) {
                 val shortcutIntent = Intent(this@SyncplayActivity, SyncplayActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                     action = Intent.ACTION_MAIN
                     putExtra("quickLaunch", true)
-                    putExtra("name", joinConfig.user.trim())
-                    putExtra("room", joinConfig.room.trim())
-                    putExtra("serverip", joinConfig.ip.trim())
-                    putExtra("serverport", joinConfig.port)
-                    putExtra("serverpw", joinConfig.pw)
+                    putExtra("name", joinInfo.user.trim())
+                    putExtra("room", joinInfo.room.trim())
+                    putExtra("serverip", joinInfo.ip.trim())
+                    putExtra("serverport", joinInfo.port)
+                    putExtra("serverpw", joinInfo.pw)
                 }
 
 
-                val shortcutId = "${joinConfig.user}${joinConfig.room}${joinConfig.ip}${joinConfig.port}"
+                val shortcutId = "${joinInfo.user}${joinInfo.room}${joinInfo.ip}${joinInfo.port}"
                 val shortcutInfo = ShortcutInfoCompat.Builder(this@SyncplayActivity, shortcutId)
-                    .setShortLabel(joinConfig.room)
+                    .setShortLabel(joinInfo.room)
                     .setIcon(IconCompat.createWithResource(this@SyncplayActivity, R.mipmap.ic_launcher))
                     .setIntent(shortcutIntent)
                     .build()

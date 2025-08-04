@@ -16,6 +16,7 @@ filekit = "0.10.0"
 colormath = "3.6.1"
 skie = "0.10.5"
 uriKmp = "0.0.20"
+compose-unstyled = "1.39.0"
 
 ###################### Android-only
 coreSplashscreen = "1.1.0-rc01"
@@ -51,6 +52,7 @@ datastore = { module = "androidx.datastore:datastore-preferences-core", version.
 filekit = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekit" }
 colormath = { module = "com.github.ajalt.colormath:colormath", version.ref = "colormath" }
 uriKmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
+compose-unstyled = { module = "com.composables:core", version.ref = "compose-unstyled"}
 
 ## Android-only
 kotlin-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "koroutines" }

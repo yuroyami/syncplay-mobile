@@ -18,6 +18,7 @@ import io.netty.handler.codec.Delimiters
 import io.netty.handler.codec.string.StringDecoder
 import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.ssl.SslContextBuilder
+import kotlinx.coroutines.cancel
 
 class SpProtocolAndroid(viewmodel: SyncplayViewmodel) : SyncplayProtocol(viewmodel) {
 
