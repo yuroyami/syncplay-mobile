@@ -204,6 +204,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
         isCoreLibraryDesugaringEnabled = true
     }
+
     kotlin {
         jvmToolchain(21)
     }
@@ -212,6 +213,7 @@ android {
         buildConfig = true
         viewBinding = true //I prefer using viewbinding to quickly inflate player XML views.
     }
+
     buildTypes {
         release {
             isMinifyEnabled = exoOnly
@@ -221,6 +223,7 @@ android {
             applicationIdSuffix = ".new"
         }
     }
+
     packaging {
         //jniLibs.useLegacyPackaging = true
         resources {
