@@ -2,7 +2,9 @@ package com.yuroyami.syncplay.screens.room
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.yuroyami.syncplay.screens.room.subcomponents.RoomAdvancedControlButton
+import com.yuroyami.syncplay.screens.room.subcomponents.RoomBottomBarVideoControlRow
+import com.yuroyami.syncplay.screens.room.subcomponents.RoomMediaAdderButton
+import com.yuroyami.syncplay.screens.room.subcomponents.RoomReadyButton
+import com.yuroyami.syncplay.screens.room.subcomponents.RoomVideoSeekbar
 
 
 @Composable
@@ -21,7 +28,18 @@ fun RoomBottomBarSection(modifier: Modifier) {
         BottomBarBlackUnderlay()
 
         Row(modifier = Modifier.fillMaxWidth()) {
+            //Ready Toggle Button
+            RoomReadyButton()
 
+            Column(verticalArrangement = Arrangement.Bottom) {
+                RoomVideoSeekbar()
+
+                RoomBottomBarVideoControlRow(modifier = Modifier)
+            }
+
+            RoomAdvancedControlButton()
+
+            RoomMediaAdderButton()
         }
     }
 }

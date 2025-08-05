@@ -64,27 +64,26 @@ fun RoomScreenUI() {
         )
 
         if (lockedMode) {
-
             /* A simple layout that has a hideable button that unlocks the screen after locking it */
             RoomUnlockableLayout(tabController)
-
         } else {
             AnimatedVisibility(isHUDVisible, enter = fadeIn(), exit = fadeOut()) {
                 if (!isInPipMode) {
                     /* Playback Gesture Interceptor */
                     RoomGestureInterceptor(modifier = Modifier.fillMaxSize())
-
-                    /* UI Layout */
                     if (!soloMode) {
+                        /* Chat Section (Top to the left): has the text input field and the chat messages */
                         RoomChatSection(
                             modifier = Modifier.align(Alignment.TopStart).fillMaxWidth(0.32f)
                         )
 
+                        /* Status section (top center): Has connection status, ping, room name, episode and also occasional room OSD messages */
                         RoomStatusInfoSection(
                             modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth(0.26f)
                         )
                     }
 
+                    /* Tab section (top to the right): Has the row of tabs (but not the actual cards that slide in when tabs are clicked) */
                     RoomTabSection(
                         modifier = Modifier.align(Alignment.TopEnd).fillMaxWidth(0.35f),
                         tabController = tabController,
@@ -92,8 +91,14 @@ fun RoomScreenUI() {
                             popupStateChatHistory.value = true
                         }
                     )
+
+                    /* BottomBar: Ready Button - Seekbar (and the buttons above it) - Advanced Controls (like selecting tracks) - Media Add Button */
+                    RoomBottomBarSection(
+                        modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                    )
                 }
 
+                /* In the dead center, we put the play button */
                 RoomPlayButton(
                     modifier = Modifier.align(Alignment.Center)
                 )
