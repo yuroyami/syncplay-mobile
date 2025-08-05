@@ -84,7 +84,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     var setReadyDirectly = false
     val seeks = mutableListOf<Pair<Long, Long>>()
 
-    var startupSlide = false
+    var hasDoneStartupSlideAnimation = false
 
     /* Related to playback status */
     val isNowPlaying = mutableStateOf(false)

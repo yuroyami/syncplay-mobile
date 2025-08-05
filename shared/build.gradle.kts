@@ -18,14 +18,8 @@ plugins {
 }
 
 kotlin {
-    compilerOptions {
-        freeCompilerArgs.add("-Xexpect-actual-classes")
-        freeCompilerArgs.add("-Xnested-type-aliases")
-    }
-
     // Activating Android target (androidMain)
     androidTarget()
-
 
     // Activating iOS targets (iosMain)
     iosX64()
@@ -65,6 +59,9 @@ kotlin {
                 optIn("kotlinx.cinterop.ExperimentalForeignApi") //for iOS
                 optIn("kotlinx.cinterop.BetaInteropApi") //for iOS
                 optIn("kotlin.time.ExperimentalTime")
+                enableLanguageFeature("ExplicitBackingFields")
+                enableLanguageFeature("NestedTypeAliases") //Equivalent to -Xnested-type-aliases compiler flag
+                enableLanguageFeature("ExpectActualClasses") //Equivalent to "-Xexpect-actual-classes compiler flag
             }
         }
 

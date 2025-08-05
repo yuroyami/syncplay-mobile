@@ -187,7 +187,6 @@ fun RoomScreenUI2() {
     val viewmodel = LocalViewmodel.current
     val isSoloMode = viewmodel.isSoloMode
 
-    val directive = getSyncplayFont()
 
     val composeScope = rememberCoroutineScope { Dispatchers.IO }
     val density = LocalDensity.current
@@ -216,19 +215,6 @@ fun RoomScreenUI2() {
 
         val gestures = valueFlow(MISC_GESTURES, true).collectAsState(initial = true)
 
-        val userinfoVisibility = remember { mutableStateOf(false) }
-        val sharedplaylistVisibility = remember { mutableStateOf(false) }
-        val inroomprefsVisibility = remember { mutableStateOf(false) }
-
-        if (!viewmodel.startupSlide) {
-            LaunchedEffect(null) {
-                composeScope.launch {
-                    delay(600)
-                    userinfoVisibility.value = true
-                    viewmodel.startupSlide = true
-                }
-            }
-        }
 
 
 
@@ -242,204 +228,6 @@ fun RoomScreenUI2() {
                     horizontalAlignment = Alignment.End
                 ) {
                     /* The tabs row */
-                    Row(
-                        modifier = Modifier.fillMaxWidth().height(50.dp)
-                            .padding(top = 15.dp, end = 4.dp),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = CenterVertically
-                    ) {
-
-                        /* The tabs in the top-right corner *//* In-room settings */
-                        RoomTab(
-                            icon = Icons.Filled.AutoFixHigh,
-                            visibilityState = inroomprefsVisibility.value
-                        ) {
-                            sharedplaylistVisibility.value = false
-                            userinfoVisibility.value = false
-                            inroomprefsVisibility.value = !inroomprefsVisibility.value
-                        }
-
-                        Spacer(Modifier.width(12.dp))
-
-                        /* Shared Playlist */
-                        if (!isSoloMode) {
-                            RoomTab(
-                                icon = Icons.AutoMirrored.Filled.PlaylistPlay,
-                                visibilityState = sharedplaylistVisibility.value
-                            ) {
-                                sharedplaylistVisibility.value = !sharedplaylistVisibility.value
-                                userinfoVisibility.value = false
-                                inroomprefsVisibility.value = false
-                            }
-
-                            Spacer(Modifier.width(12.dp))
-                        }
-
-                        /* User Info card tab */
-                        if (!isSoloMode) {
-                            RoomTab(
-                                icon = Icons.Filled.Groups,
-                                visibilityState = userinfoVisibility.value
-                            ) {
-                                userinfoVisibility.value = !userinfoVisibility.value
-                                sharedplaylistVisibility.value = false
-                                inroomprefsVisibility.value = false
-                            }
-
-                            Spacer(Modifier.width(12.dp))
-                        }
-
-
-                        /** Lock card */
-                        RoomTab(icon = Icons.Filled.Lock, visibilityState = false) {
-                            locked = true
-                            hudVisibility = false
-                        }
-
-                        Spacer(Modifier.width(6.dp))
-
-                        Box {
-                            val overflowmenustate = remember { mutableStateOf(false) }
-                            FancyIcon2(
-                                icon = Icons.Filled.MoreVert,
-                                size = ROOM_ICON_SIZE,
-                                shadowColor = Color.Black
-                            ) {
-                                overflowmenustate.value = !overflowmenustate.value
-                            }
-
-                            DropdownMenu(
-                                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(
-                                    0.5f
-                                ),
-                                tonalElevation = 0.dp,
-                                shadowElevation = 0.dp,
-                                border = BorderStroke(
-                                    width = 1.dp,
-                                    brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
-                                        it.copy(alpha = 0.5f)
-                                    })
-                                ),
-                                shape = RoundedCornerShape(8.dp),
-                                expanded = overflowmenustate.value,
-                                properties = PopupProperties(
-                                    dismissOnBackPress = true,
-                                    focusable = true,
-                                    dismissOnClickOutside = true
-                                ),
-                                onDismissRequest = { overflowmenustate.value = false }) {
-
-                                ComposeUtils.FancyText2(
-                                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                                        .padding(horizontal = 2.dp),
-                                    string = stringResource(Res.string.room_overflow_title),
-                                    solid = Color.Black,
-                                    size = 14f,
-                                    font = directive
-                                )
-
-                                /* Picture-in-Picture mode */
-                                DropdownMenuItem(
-
-                                    text = {
-                                        Row(verticalAlignment = CenterVertically) {
-                                            Icon(
-                                                modifier = Modifier.padding(2.dp),
-                                                imageVector = Icons.Filled.PictureInPicture,
-                                                contentDescription = "",
-                                                tint = Color.LightGray
-                                            )
-
-                                            Spacer(Modifier.width(8.dp))
-
-                                            Text(
-                                                color = Color.LightGray,
-                                                text = stringResource(Res.string.room_overflow_pip),
-                                            )
-                                        }
-                                    }, onClick = {
-                                        overflowmenustate.value = false
-
-                                        platformCallback.onPictureInPicture(true)
-                                    })
-
-                                /* Chat history item */
-                                if (!isSoloMode) {
-                                    DropdownMenuItem(text = {
-                                        Row(verticalAlignment = CenterVertically) {
-                                            Icon(
-                                                modifier = Modifier.padding(2.dp),
-                                                imageVector = Icons.Filled.Forum,
-                                                contentDescription = "",
-                                                tint = Color.LightGray
-                                            )
-
-                                            Spacer(Modifier.width(8.dp))
-
-                                            Text(
-                                                color = Color.LightGray,
-                                                text = stringResource(Res.string.room_overflow_msghistory),
-                                            )
-                                        }
-                                    }, onClick = {
-                                        overflowmenustate.value = false
-                                        chathistorypopupstate.value = true
-                                    })
-                                }
-
-                                /* Toggle Dark mode */
-                                DropdownMenuItem(text = {
-                                    Row(verticalAlignment = CenterVertically) {
-                                        Icon(
-                                            modifier = Modifier.padding(2.dp),
-                                            imageVector = Icons.Filled.DarkMode,
-                                            contentDescription = "",
-                                            tint = Color.LightGray
-                                        )
-
-                                        Spacer(Modifier.width(8.dp))
-
-                                        Text(
-                                            color = Color.LightGray,
-                                            text = stringResource(Res.string.room_overflow_toggle_nightmode),
-                                        )
-                                    }
-                                }, onClick = {
-                                    overflowmenustate.value = false
-
-                                    //TODO val newMode = !valueBlockingly(MISC_NIGHTMODE, true)
-
-                                    composeScope.launch {
-                                        //TODO writeValue(MISC_NIGHTMODE, newMode)
-                                    }
-                                })
-
-                                /* Leave room item */
-                                DropdownMenuItem(text = {
-                                    Row(verticalAlignment = CenterVertically) {
-                                        Icon(
-                                            modifier = Modifier.padding(2.dp),
-                                            imageVector = Icons.AutoMirrored.Filled.Logout,
-                                            contentDescription = "",
-                                            tint = Color.LightGray
-                                        )
-
-                                        Spacer(Modifier.width(8.dp))
-
-                                        Text(
-                                            color = Color.LightGray,
-                                            text = stringResource(Res.string.room_overflow_leave_room),
-                                        )
-                                    }
-                                }, onClick = {
-                                    viewmodel.p.endConnection(true)
-                                    viewmodel.player?.destroy()
-                                    nav.navigateTo(Screen.Home)
-                                    platformCallback.onRoomEnterOrLeave(PlatformCallback.RoomEvent.LEAVE)
-                                })
-                            }
-                        }
-                    }
 
                     Spacer(Modifier.height(20.dp))
 
@@ -1236,35 +1024,7 @@ fun RoomScreenUI2() {
                     }
                 }
 
-                /** PLAY BUTTON */
-                val playing = remember { viewmodel.isNowPlaying }
-                val animatedColor by animateColorAsState(
-                    animationSpec = tween(500),
-                    targetValue = if (playing.value) Paletting.SP_GRADIENT.last()
-                        .copy(alpha = 0.1f)
-                    else Paletting.SP_GRADIENT.first().copy(alpha = 0.1f)
-                )
-                if (hasVideo.value) {
-                    FancyIcon2(
-                        icon = when (playing.value) {
-                            true -> Icons.Filled.Pause
-                            false -> Icons.Filled.PlayArrow
-                        },
-                        size = (ROOM_ICON_SIZE * 2.25).roundToInt(),
-                        shadowColor = Color.Black,
-                        modifier = Modifier.align(Alignment.Center).background(
-                            shape = CircleShape, color = animatedColor
-                        )
-                    ) {
-                        composeScope.launch(Dispatchers.Main) {
-                            if (viewmodel.player?.isPlaying() == true) {
-                                viewmodel.pausePlayback()
-                            } else {
-                                viewmodel.playPlayback()
-                            }
-                        }
-                    }
-                }
+
             }
     }
 }

@@ -22,10 +22,12 @@ import com.yuroyami.syncplay.components.popups.PopupAddUrl.AddUrlPopup
 import com.yuroyami.syncplay.components.popups.PopupChatHistory.ChatHistoryPopup
 import com.yuroyami.syncplay.components.popups.PopupSeekToPosition.SeekToPositionPopup
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.screens.room.subcomponents.RoomPlayButton
 import com.yuroyami.syncplay.screens.room.subcomponents.RoomUnlockableLayout
 import com.yuroyami.syncplay.utils.CommonUtils.beginPingUpdate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -40,7 +42,8 @@ fun RoomScreenUI() {
     val isHUDVisible by viewmodel.visibleHUD.collectAsState()
     val isInPipMode by viewmodel.hasEnteredPipMode.collectAsState()
 
-    val lockedMode = remember { mutableStateOf(false) }
+    val tabController = remember { TabController() }
+    val lockedMode by tabController.tabLock.collectAsState()
 
     val popupStateAddUrl = remember { mutableStateOf(false) }
     val popupStateChatHistory = remember { mutableStateOf(false) }
@@ -49,7 +52,7 @@ fun RoomScreenUI() {
     Box(modifier = Modifier.fillMaxSize().padding(14.dp)) {
         /* Room Background Artwork */
         if (!hasVideo) {
-            RoomArtwork()
+            RoomBackgroundArtwork()
         }
 
         /* Video Surface */
@@ -60,31 +63,40 @@ fun RoomScreenUI() {
                 .alpha(if (hasVideo) 1f else 0f) //The video composable has to be alive at all times, we just hide it when there's no video
         )
 
-        if (lockedMode.value) {
+        if (lockedMode) {
 
             /* A simple layout that has a hideable button that unlocks the screen after locking it */
-            RoomUnlockableLayout(lockedMode)
+            RoomUnlockableLayout(tabController)
 
         } else {
             AnimatedVisibility(isHUDVisible, enter = fadeIn(), exit = fadeOut()) {
-                /* Playback Gesture Interceptor */
-                RoomGestureInterceptor(modifier = Modifier.fillMaxSize())
+                if (!isInPipMode) {
+                    /* Playback Gesture Interceptor */
+                    RoomGestureInterceptor(modifier = Modifier.fillMaxSize())
 
-                /* UI Layout */
-                if (!soloMode && !isInPipMode) {
-                    RoomChatSection(
-                        modifier = Modifier.align(Alignment.TopStart).fillMaxWidth(0.32f)
-                    )
+                    /* UI Layout */
+                    if (!soloMode) {
+                        RoomChatSection(
+                            modifier = Modifier.align(Alignment.TopStart).fillMaxWidth(0.32f)
+                        )
 
-                    RoomStatusInfoSection(
-                        modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth(0.26f)
+                        RoomStatusInfoSection(
+                            modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth(0.26f)
+                        )
+                    }
+
+                    RoomTabSection(
+                        modifier = Modifier.align(Alignment.TopEnd).fillMaxWidth(0.35f),
+                        tabController = tabController,
+                        onShowChatHistory = {
+                            popupStateChatHistory.value = true
+                        }
                     )
                 }
 
-                RoomTabSection(
-                    modifier = Modifier.align(Alignment.TopEnd).fillMaxWidth(0.35f)
+                RoomPlayButton(
+                    modifier = Modifier.align(Alignment.Center)
                 )
-
             }
         }
 
@@ -110,4 +122,11 @@ fun RoomScreenUI() {
         }
     }
 
+    if (!viewmodel.hasDoneStartupSlideAnimation) {
+        LaunchedEffect(null) {
+            delay(600)
+            tabController.toggleUserInfo(true)
+            viewmodel.hasDoneStartupSlideAnimation = true
+        }
+    }
 }

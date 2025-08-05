@@ -36,7 +36,7 @@ import syncplaymobile.shared.generated.resources.syncplay_logo_gradient
 
 /** The Syncplay artwork that is displayed in the video frame when no video is loaded */
 @Composable
-fun RoomArtwork() {
+fun RoomBackgroundArtwork() {
     val viewmodel = LocalViewmodel.current
     val isInPipMode by viewmodel.hasEnteredPipMode.collectAsState()
 

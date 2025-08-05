@@ -72,8 +72,6 @@ fun RoomGestureInterceptor(modifier: Modifier) {
     val hasVideo by viewmodel.hasVideo.collectAsState()
     val visibleHUD by viewmodel.visibleHUD.collectAsState()
 
-
-
     val volumeSteps = getSystemMaxVolume()
 
     val seekLeftInteraction = remember { MutableInteractionSource() }

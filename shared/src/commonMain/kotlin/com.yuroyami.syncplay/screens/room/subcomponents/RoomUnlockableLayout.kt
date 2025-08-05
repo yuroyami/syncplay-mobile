@@ -16,7 +16,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,15 +28,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.components.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.screens.room.TabController
 import com.yuroyami.syncplay.ui.Paletting
 
 
 @Composable
-fun RoomUnlockableLayout(lockState: MutableState<Boolean>) {
+fun RoomUnlockableLayout(tabController: TabController) {
     val viewmodel = LocalViewmodel.current
+    val lockedMode by tabController.tabLock.collectAsState()
     val isInPipMode by viewmodel.hasEnteredPipMode.collectAsState()
 
-    if (lockState.value) {
+    if (lockedMode) {
         val unlockButtonVisibility = remember { mutableStateOf(false) }
 
         Box(
@@ -58,7 +59,7 @@ fun RoomUnlockableLayout(lockState: MutableState<Boolean>) {
                         interactionSource = remember { MutableInteractionSource() },
                         indication = ripple(color = Paletting.SP_ORANGE)
                     ) {
-                        lockState.value = false
+                        tabController.tabLock.value = false
                         viewmodel.visibleHUD.value = true
                     },
                     shape = RoundedCornerShape(6.dp),
