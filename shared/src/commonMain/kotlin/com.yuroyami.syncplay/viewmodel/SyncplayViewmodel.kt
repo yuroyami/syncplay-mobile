@@ -90,7 +90,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
 
     val hasVideo = MutableStateFlow(false)
     val hasEnteredPipMode = MutableStateFlow(false)
-    val visibleHUD = MutableStateFlow(false)
+    val visibleHUD = MutableStateFlow(true)
 
     var currentTrackChoices: TrackChoices = TrackChoices()
 

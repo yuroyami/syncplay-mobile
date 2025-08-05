@@ -220,13 +220,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                     } else null,
                     onTap = {
                         viewmodel.visibleHUD.value = !viewmodel.visibleHUD.value
-                        haptic.performHapticFeedback(
-                            when (viewmodel.visibleHUD.value) {
-                                true -> HapticFeedbackType.ToggleOff
-                                false -> HapticFeedbackType.ToggleOn
-                            }
-                        )
-
+                        haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                         //TODO controlcardvisible = false
                         //     addmediacardvisible = false
                     },

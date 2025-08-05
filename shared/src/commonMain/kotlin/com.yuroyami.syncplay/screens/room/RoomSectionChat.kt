@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,7 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
@@ -69,7 +67,7 @@ fun RoomChatSection(modifier: Modifier) {
     Column(modifier = modifier) {
         ChatTextField(viewmodel = viewmodel, modifier = Modifier.fillMaxWidth())
 
-        ChatBox(viewmodel = viewmodel, modifier = Modifier.fillMaxSize().padding(12.dp))
+        ChatBox(viewmodel = viewmodel, modifier = Modifier.fillMaxSize())
     }
 }
 
@@ -85,12 +83,12 @@ fun ChatBox(modifier: Modifier = Modifier, viewmodel: SyncplayViewmodel) {
     val msgFontSize = PREF_INROOM_MSG_FONTSIZE.valueAsState(9)
     val msgMaxCount by PREF_INROOM_MSG_MAXCOUNT.valueAsState(10)
 
-
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(4.dp))
-            .background(color = if (hasVideo) Color(50, 50, 50, msgBoxOpacity.value) else Color.Transparent)
-            .padding(top = 64.dp)
+            .background(
+                color = if (hasVideo) Color(50, 50, 50, msgBoxOpacity.value) else Color.Transparent,
+                shape = RoundedCornerShape(4.dp)
+            )
     ) {
         val latestChatMessages = chatMessages.takeLast(msgMaxCount)
 
@@ -100,7 +98,6 @@ fun ChatBox(modifier: Modifier = Modifier, viewmodel: SyncplayViewmodel) {
             modifier = Modifier.fillMaxWidth()
         ) {
             items(latestChatMessages) { chatMessage ->
-
                 /* Once seen, don't use it in fading message */
                 SideEffect {
                     chatMessage.seen = true

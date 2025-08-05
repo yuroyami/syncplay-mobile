@@ -72,7 +72,7 @@ fun RoomMediaAdderButton() {
     Box {
         AddVideoButton(
             modifier = Modifier,
-            expanded = hasVideo,
+            expanded = !hasVideo,
             onClick = {
                 addMediaCardVisibility = !addMediaCardVisibility
                 //TODO controlcardvisible = false

@@ -10,11 +10,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.screens.room.subcomponents.RoomAdvancedControlButton
 import com.yuroyami.syncplay.screens.room.subcomponents.RoomBottomBarVideoControlRow
 import com.yuroyami.syncplay.screens.room.subcomponents.RoomMediaAdderButton
@@ -24,23 +27,31 @@ import com.yuroyami.syncplay.screens.room.subcomponents.RoomVideoSeekbar
 
 @Composable
 fun RoomBottomBarSection(modifier: Modifier) {
+    val viewmodel = LocalViewmodel.current
+    val hasVideo by viewmodel.hasVideo.collectAsState()
+
     Box(modifier) {
-        BottomBarBlackUnderlay()
+        if (hasVideo) BottomBarBlackUnderlay()
 
-        Row(modifier = Modifier.fillMaxWidth()) {
-            //Ready Toggle Button
-            RoomReadyButton()
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            if (hasVideo) {
+                //Ready Toggle Button
+                RoomReadyButton()
 
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.Bottom
-            ) {
-                RoomVideoSeekbar(modifier = Modifier.fillMaxWidth())
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.Bottom
+                ) {
+                    RoomVideoSeekbar(modifier = Modifier.fillMaxWidth())
 
-                RoomBottomBarVideoControlRow(modifier = Modifier.fillMaxWidth())
+                    RoomBottomBarVideoControlRow(modifier = Modifier.fillMaxWidth())
+                }
+
+                RoomAdvancedControlButton()
             }
-
-            RoomAdvancedControlButton()
 
             RoomMediaAdderButton()
         }

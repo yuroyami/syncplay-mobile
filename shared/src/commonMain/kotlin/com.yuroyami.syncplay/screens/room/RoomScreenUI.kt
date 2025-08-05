@@ -50,7 +50,7 @@ fun RoomScreenUI() {
     val popupStateChatHistory = remember { mutableStateOf(false) }
     val popupStateSeekToPosition = remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize().padding(14.dp)) {
+    Box(modifier = Modifier.fillMaxSize()) {
         /* Room Background Artwork */
         if (!hasVideo) {
             RoomBackgroundArtwork()
@@ -68,25 +68,32 @@ fun RoomScreenUI() {
             /* A simple layout that has a hideable button that unlocks the screen after locking it */
             RoomUnlockableLayout(tabController)
         } else {
-            AnimatedVisibility(isHUDVisible, enter = fadeIn(), exit = fadeOut()) {
-                if (!isInPipMode) {
-                    /* Playback Gesture Interceptor */
-                    RoomGestureInterceptor(modifier = Modifier.fillMaxSize())
-                    if (!soloMode) {
+            /* Playback Gesture Interceptor */
+            RoomGestureInterceptor(modifier = Modifier.fillMaxSize())
+
+            AnimatedVisibility(
+                modifier = Modifier.fillMaxSize(),
+                visible = isHUDVisible,
+                enter = fadeIn(), exit = fadeOut()
+            ) {
+                // We need to wrap all HUD elements in this Box because AnimatedVisibility breaks the original Box scope,
+                // which breaks our ability to position elements freely on the screen (e.g., topStart, bottomEnd, etc.).
+                Box(modifier = Modifier.fillMaxSize()) {
+                    if (!isInPipMode && !soloMode) {
                         /* Chat Section (Top to the left): has the text input field and the chat messages */
                         RoomChatSection(
-                            modifier = Modifier.align(Alignment.TopStart).fillMaxWidth(0.32f)
+                            modifier = Modifier.align(Alignment.TopStart).fillMaxWidth(0.35f).padding(8.dp)
                         )
 
                         /* Status section (top center): Has connection status, ping, room name, episode and also occasional room OSD messages */
                         RoomStatusInfoSection(
-                            modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth(0.26f)
+                            modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth(0.28f).padding(8.dp)
                         )
                     }
 
                     /* Tab section (top to the right): Has the row of tabs (but not the actual cards that slide in when tabs are clicked) */
                     RoomTabSection(
-                        modifier = Modifier.align(Alignment.TopEnd).fillMaxWidth(0.35f),
+                        modifier = Modifier.align(Alignment.TopEnd).fillMaxWidth(0.38f).padding(8.dp),
                         tabController = tabController,
                         onShowChatHistory = {
                             popupStateChatHistory.value = true
@@ -95,7 +102,10 @@ fun RoomScreenUI() {
 
                     /* Card section (to the right middle) */
                     RoomSectionSlidingCards(
-                        modifier = Modifier.align(Alignment.CenterEnd).fillMaxWidth(0.36f).fillMaxHeight(0.72f),
+                        modifier = Modifier.align(Alignment.CenterEnd)
+                            .fillMaxWidth(0.38f).fillMaxHeight(0.72f)
+                            .padding(top = 14.dp)
+                            .padding(8.dp),
                         tabController = tabController
                     )
 
@@ -104,12 +114,12 @@ fun RoomScreenUI() {
                         modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
                     )
                 }
-
-                /* In the dead center, we put the play button */
-                RoomPlayButton(
-                    modifier = Modifier.align(Alignment.Center)
-                )
             }
+
+            /* In the dead center, we put the play button */
+            RoomPlayButton(
+                modifier = Modifier.align(Alignment.Center)
+            )
         }
 
         if (!soloMode) {

@@ -107,45 +107,55 @@ fun RoomTabSection(modifier: Modifier, tabController: TabController, onShowChatH
         /* In-room settings */
         RoomTab(
             icon = Icons.Filled.AutoFixHigh,
-            visibilityState = stateRoomPreferences
-        ) {
-            tabController.toggleRoomPreferences()
-        }
+            visibilityState = stateRoomPreferences,
+            onClick = { tabController.toggleRoomPreferences() }
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
 
         /* Shared Playlist */
         if (!viewmodel.isSoloMode) {
             RoomTab(
                 icon = Icons.AutoMirrored.Filled.PlaylistPlay,
-                visibilityState = stateSharedPlaylist
-            ) {
-                tabController.toggleSharedPlaylist()
-            }
+                visibilityState = stateSharedPlaylist,
+                onClick = {
+                    tabController.toggleSharedPlaylist()
+                }
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
 
             /* User Info card tab */
             RoomTab(
                 icon = Icons.Filled.Groups,
-                visibilityState = stateUserInfo
-            ) {
-                tabController.toggleUserInfo()
-            }
+                visibilityState = stateUserInfo, onClick = {
+                    tabController.toggleUserInfo()
+                }
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
         }
 
         /** Lock card */
-        RoomTab(icon = Icons.Filled.Lock, visibilityState = false) {
-            tabController.tabLock.value = true
-            viewmodel.visibleHUD.value = false
-        }
+        RoomTab(
+            icon = Icons.Filled.Lock,
+            visibilityState = false,
+            onClick = {
+                tabController.tabLock.value = true
+                viewmodel.visibleHUD.value = false
+            }
+        )
 
         Spacer(Modifier.width(6.dp))
 
         Box {
-            val overflowmenustate = remember { mutableStateOf(false) }
+            val overflowMenuState = remember { mutableStateOf(false) }
             FancyIcon2(
                 icon = Icons.Filled.MoreVert,
                 size = ROOM_ICON_SIZE,
                 shadowColor = Color.Black
             ) {
-                overflowmenustate.value = !overflowmenustate.value
+                overflowMenuState.value = !overflowMenuState.value
             }
 
             DropdownMenu(
@@ -161,13 +171,13 @@ fun RoomTabSection(modifier: Modifier, tabController: TabController, onShowChatH
                     })
                 ),
                 shape = RoundedCornerShape(8.dp),
-                expanded = overflowmenustate.value,
+                expanded = overflowMenuState.value,
                 properties = PopupProperties(
                     dismissOnBackPress = true,
                     focusable = true,
                     dismissOnClickOutside = true
                 ),
-                onDismissRequest = { overflowmenustate.value = false }) {
+                onDismissRequest = { overflowMenuState.value = false }) {
 
                 ComposeUtils.FancyText2(
                     modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -198,7 +208,7 @@ fun RoomTabSection(modifier: Modifier, tabController: TabController, onShowChatH
                             )
                         }
                     }, onClick = {
-                        overflowmenustate.value = false
+                        overflowMenuState.value = false
 
                         platformCallback.onPictureInPicture(true)
                     })
@@ -222,7 +232,7 @@ fun RoomTabSection(modifier: Modifier, tabController: TabController, onShowChatH
                             )
                         }
                     }, onClick = {
-                        overflowmenustate.value = false
+                        overflowMenuState.value = false
                         onShowChatHistory()
                     })
                 }
@@ -246,7 +256,7 @@ fun RoomTabSection(modifier: Modifier, tabController: TabController, onShowChatH
                             )
                         }
                     }, onClick = {
-                        overflowmenustate.value = false
+                        overflowMenuState.value = false
 
                         //TODO Toggle Theme Changer Popup
                     })
