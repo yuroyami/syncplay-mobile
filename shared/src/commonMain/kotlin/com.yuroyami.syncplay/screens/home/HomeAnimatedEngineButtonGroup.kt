@@ -29,7 +29,7 @@ import com.yuroyami.syncplay.player.PlayerEngine
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
-fun AnimatedEngineButtonGroup(
+fun HomeAnimatedEngineButtonGroup(
     engines: List<PlayerEngine>,
     selectedEngine: String,
     onSelectEngine: (PlayerEngine) -> Unit,
@@ -51,7 +51,7 @@ fun AnimatedEngineButtonGroup(
             Card(
                 modifier = Modifier
                     .weight(animatedWeight)
-                    .height(48.dp),
+                    .height(56.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = if (isSelected) 
                         MaterialTheme.colorScheme.primary 
@@ -72,7 +72,7 @@ fun AnimatedEngineButtonGroup(
                 ) {
                     Image(
                         painter = painterResource(engine.img),
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(26.dp),
                         contentDescription = null
                     )
                     
@@ -86,6 +86,7 @@ fun AnimatedEngineButtonGroup(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = engine.name,
+                                maxLines = 1,
                                 color = if (isSelected) 
                                     MaterialTheme.colorScheme.onPrimary 
                                 else 

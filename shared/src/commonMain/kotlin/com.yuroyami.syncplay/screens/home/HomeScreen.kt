@@ -337,7 +337,7 @@ fun HomeScreenUI() {
                         val defaultEngine = availablePlatformPlayerEngines.first { it.isDefault }.name
                         val selectedEngine by valueFlow(MISC_PLAYER_ENGINE, defaultEngine).collectAsState(initial = defaultEngine)
 
-                        AnimatedEngineButtonGroup(
+                        HomeAnimatedEngineButtonGroup(
                             modifier = Modifier.fillMaxWidth(0.75f),
                             engines = availablePlatformPlayerEngines,
                             selectedEngine = selectedEngine,
@@ -358,7 +358,7 @@ fun HomeScreenUI() {
                         modifier = Modifier.fillMaxWidth(0.75f),
                         leadingButton = {
                             SplitButtonDefaults.LeadingButton(
-                                contentPadding = PaddingValues(vertical = 24.dp),
+                                contentPadding = PaddingValues(vertical = 21.dp),
                                 modifier = Modifier.fillMaxWidth(0.85f),
                                 onClick = {
                                     scope.launch {
@@ -397,7 +397,7 @@ fun HomeScreenUI() {
                             var checked by remember { mutableStateOf(false) }
 
                             SplitButtonDefaults.TrailingButton(
-                                contentPadding = PaddingValues(vertical = 24.dp),
+                                contentPadding = PaddingValues(vertical = 21.dp),
                                 checked = checked,
                                 onCheckedChange = { b ->
                                     checked = b

@@ -1,0 +1,113 @@
+package com.yuroyami.syncplay.screens.room
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.unit.dp
+import com.yuroyami.syncplay.components.popups.PopupAddUrl.AddUrlPopup
+import com.yuroyami.syncplay.components.popups.PopupChatHistory.ChatHistoryPopup
+import com.yuroyami.syncplay.components.popups.PopupSeekToPosition.SeekToPositionPopup
+import com.yuroyami.syncplay.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.screens.room.subcomponents.RoomUnlockableLayout
+import com.yuroyami.syncplay.utils.CommonUtils.beginPingUpdate
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.withContext
+
+@Composable
+fun RoomScreenUI() {
+    val viewmodel = LocalViewmodel.current
+    val roomIoScope = rememberCoroutineScope { Dispatchers.IO }
+    val roomMainScope = rememberCoroutineScope { Dispatchers.Main }
+    val roomDefaultScope = rememberCoroutineScope { Dispatchers.Default }
+
+    val soloMode = remember { viewmodel.isSoloMode }
+    val hasVideo by viewmodel.hasVideo.collectAsState()
+    val isHUDVisible by viewmodel.visibleHUD.collectAsState()
+    val isInPipMode by viewmodel.hasEnteredPipMode.collectAsState()
+
+    val lockedMode = remember { mutableStateOf(false) }
+
+    val popupStateAddUrl = remember { mutableStateOf(false) }
+    val popupStateChatHistory = remember { mutableStateOf(false) }
+    val popupStateSeekToPosition = remember { mutableStateOf(false) }
+
+    Box(modifier = Modifier.fillMaxSize().padding(14.dp)) {
+        /* Room Background Artwork */
+        if (!hasVideo) {
+            RoomArtwork()
+        }
+
+        /* Video Surface */
+        val player = remember { viewmodel.player }
+        player?.VideoPlayer(
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(if (hasVideo) 1f else 0f) //The video composable has to be alive at all times, we just hide it when there's no video
+        )
+
+        if (lockedMode.value) {
+
+            /* A simple layout that has a hideable button that unlocks the screen after locking it */
+            RoomUnlockableLayout(lockedMode)
+
+        } else {
+            AnimatedVisibility(isHUDVisible, enter = fadeIn(), exit = fadeOut()) {
+                /* Playback Gesture Interceptor */
+                RoomGestureInterceptor(modifier = Modifier.fillMaxSize())
+
+                /* UI Layout */
+                if (!soloMode && !isInPipMode) {
+                    RoomChatSection(
+                        modifier = Modifier.align(Alignment.TopStart).fillMaxWidth(0.32f)
+                    )
+
+                    RoomStatusInfoSection(
+                        modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth(0.26f)
+                    )
+                }
+
+                RoomTabSection(
+                    modifier = Modifier.align(Alignment.TopEnd).fillMaxWidth(0.35f)
+                )
+
+            }
+        }
+
+        if (!soloMode) {
+            FadingMessageLayout()
+        }
+    }
+
+
+    /** Popups */
+    AddUrlPopup(visibilityState = popupStateAddUrl)
+    if (!soloMode) ChatHistoryPopup(visibilityState = popupStateChatHistory)
+    SeekToPositionPopup(visibilityState = popupStateSeekToPosition)
+
+    LaunchedEffect(Unit) {
+        if (!soloMode) {
+            /* Starts ping updates when not in solo mode.
+             * Uses withContext(Dispatchers.IO) to tie the ping coroutine to the composition scope,
+             * ensuring that if composition is cancelled (room is exited), ping updating is cancelled as well. */
+            withContext(Dispatchers.IO) {
+                viewmodel.beginPingUpdate()
+            }
+        }
+    }
+
+}

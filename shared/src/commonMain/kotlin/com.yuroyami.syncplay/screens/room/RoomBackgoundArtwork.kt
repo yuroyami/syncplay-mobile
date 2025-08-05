@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.room.children
+package com.yuroyami.syncplay.screens.room
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -24,6 +26,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.Paletting
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
@@ -33,15 +36,14 @@ import syncplaymobile.shared.generated.resources.syncplay_logo_gradient
 
 /** The Syncplay artwork that is displayed in the video frame when no video is loaded */
 @Composable
-fun RoomArtwork(pipModeObserver: Boolean) {
+fun RoomArtwork() {
+    val viewmodel = LocalViewmodel.current
+    val isInPipMode by viewmodel.hasEnteredPipMode.collectAsState()
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.linearGradient(
-                    colors = Paletting.backgroundGradient
-                )
-            ),
+            .background(brush = Brush.linearGradient(colors = Paletting.backgroundGradient)),
     ) {
         Column(
             modifier = Modifier
@@ -52,10 +54,7 @@ fun RoomArtwork(pipModeObserver: Boolean) {
 
             Image(
                 painter = painterResource(Res.drawable.syncplay_logo_gradient), contentDescription = "",
-                modifier = Modifier
-                    .height(if (pipModeObserver) 40.dp else 84.dp)
-                    .aspectRatio(1f)
-                // .radiantOverlay(offset = Offset(x = 50f, y = 80f))
+                modifier = Modifier.height(if (isInPipMode) 40.dp else 84.dp).aspectRatio(1f)
             )
 
             Spacer(modifier = Modifier.width(14.dp))
@@ -66,10 +65,7 @@ fun RoomArtwork(pipModeObserver: Boolean) {
                     text = "Syncplay",
                     style = TextStyle(
                         color = Paletting.SP_PALE,
-                        drawStyle = Stroke(
-                            miter = 10f,
-                            width = 2f,
-                            join = StrokeJoin.Round
+                        drawStyle = Stroke(miter = 10f, width = 2f, join = StrokeJoin.Round
                         ),
                         shadow = Shadow(
                             color = Paletting.SP_INTENSE_PINK,
@@ -78,18 +74,16 @@ fun RoomArtwork(pipModeObserver: Boolean) {
                         ),
                         fontFamily = FontFamily(Font(Res.font.Directive4_Regular))
                     ),
-                    fontSize = if (pipModeObserver) 8.sp else 26.sp,
+                    fontSize = if (isInPipMode) 8.sp else 26.sp,
                 )
                 Text(
                     modifier = Modifier.wrapContentWidth(),
                     text = "Syncplay",
                     style = TextStyle(
-                        brush = Brush.linearGradient(
-                            colors = Paletting.SP_GRADIENT
-                        ),
+                        brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT),
                         fontFamily = FontFamily(Font(Res.font.Directive4_Regular))
                     ),
-                    fontSize = if (pipModeObserver) 8.sp else 26.sp,
+                    fontSize = if (isInPipMode) 8.sp else 26.sp,
                 )
             }
         }

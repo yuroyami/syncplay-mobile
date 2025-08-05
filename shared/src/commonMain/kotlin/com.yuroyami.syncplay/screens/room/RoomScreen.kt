@@ -1,3 +1,5 @@
+@file:JvmName("RoomScreenUIKt")
+
 package com.yuroyami.syncplay.screens.room
 
 import androidx.compose.animation.AnimatedVisibility
@@ -17,7 +19,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowColumn
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -30,16 +31,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.NoteAdd
 import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AddLink
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.AutoFixHigh
@@ -76,12 +73,9 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -92,7 +86,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -103,31 +96,20 @@ import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.input.TransformedText
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import com.yuroyami.syncplay.components.ComposeUtils
-import com.yuroyami.syncplay.components.ComposeUtils.ChatAnnotatedText
 import com.yuroyami.syncplay.components.ComposeUtils.FancyIcon2
 import com.yuroyami.syncplay.components.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.components.cards.CardRoomPrefs.InRoomSettingsCard
@@ -139,26 +121,13 @@ import com.yuroyami.syncplay.components.popups.PopupChatHistory.ChatHistoryPopup
 import com.yuroyami.syncplay.components.popups.PopupSeekToPosition.SeekToPositionPopup
 import com.yuroyami.syncplay.player.BasePlayer.TRACKTYPE
 import com.yuroyami.syncplay.protocol.sending.Packet
-import com.yuroyami.syncplay.screens.adam.LocalChatPalette
 import com.yuroyami.syncplay.screens.adam.LocalNavigator
 import com.yuroyami.syncplay.screens.adam.LocalScreenSize
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.screens.adam.Screen
 import com.yuroyami.syncplay.screens.adam.Screen.Companion.navigateTo
-import com.yuroyami.syncplay.screens.room.RoomComposables.AddVideoButton
-import com.yuroyami.syncplay.screens.room.RoomComposables.FreeAnimatedVisibility
-import com.yuroyami.syncplay.screens.room.RoomComposables.PingRadar
-import com.yuroyami.syncplay.screens.room.children.FadingMessageLayout
-import com.yuroyami.syncplay.screens.room.children.GestureInterceptor
-import com.yuroyami.syncplay.screens.room.children.RoomArtwork
-import com.yuroyami.syncplay.screens.room.children.RoomTab
+import com.yuroyami.syncplay.screens.room.subcomponents.PingIndicator
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_GESTURES
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_BG_OPACITY
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_BOX_ACTION
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_FONTSIZE
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_MAXCOUNT
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_SHADOW
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
 import com.yuroyami.syncplay.settings.valueAsState
@@ -168,7 +137,6 @@ import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.Paletting.ROOM_ICON_SIZE
 import com.yuroyami.syncplay.utils.CommonUtils
 import com.yuroyami.syncplay.utils.CommonUtils.beginPingUpdate
-import com.yuroyami.syncplay.utils.CommonUtils.isEmoji
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.utils.timeStamper
@@ -197,19 +165,10 @@ import syncplaymobile.shared.generated.resources.room_overflow_title
 import syncplaymobile.shared.generated.resources.room_overflow_toggle_nightmode
 import syncplaymobile.shared.generated.resources.room_ping_connected
 import syncplaymobile.shared.generated.resources.room_ping_disconnected
-import syncplaymobile.shared.generated.resources.room_type_message
 import kotlin.math.roundToInt
 
 val osdMsg = mutableStateOf("")
 var osdJob: Job? = null
-fun CoroutineScope.dispatchOSD(s: String) {
-    osdJob?.cancel(null)
-    osdJob = launch(Dispatchers.IO) {
-        osdMsg.value = s
-        delay(2000) //TODO Option to change delay
-        osdMsg.value = ""
-    }
-}
 
 fun CoroutineScope.dispatchOSD(getter: suspend () -> String) {
     osdJob?.cancel(null)
@@ -223,7 +182,7 @@ fun CoroutineScope.dispatchOSD(getter: suspend () -> String) {
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun RoomScreenUI() {
+fun RoomScreenUI2() {
     val nav = LocalNavigator.current
     val viewmodel = LocalViewmodel.current
     val isSoloMode = viewmodel.isSoloMode
@@ -233,37 +192,9 @@ fun RoomScreenUI() {
     val composeScope = rememberCoroutineScope { Dispatchers.IO }
     val density = LocalDensity.current
 
-
-    /* Starting ping update */
-    LaunchedEffect(null) {
-        if (!isSoloMode) {
-            // Using withContext to tie the coroutine to the composition scope (where leaving the composition would stop this process)
-            withContext(Dispatchers.IO) {
-                viewmodel.beginPingUpdate()
-            }
-        }
-    }
-
-
     val focusManager = LocalFocusManager.current
     val screensizeinfo = LocalScreenSize.current
 
-    val hasVideo = remember { viewmodel.hasVideoG }
-    var hudVisibility by remember { viewmodel.hudVisibilityState }
-
-    val pipModeObserver by remember { viewmodel.pipMode }
-    var locked by remember { mutableStateOf(false) }
-
-    val addurlpopupstate = remember { mutableStateOf(false) }
-    val chathistorypopupstate = remember { mutableStateOf(false) }
-    val seektopopupstate = remember { mutableStateOf(false) }
-
-    val msgBoxOpacity = PREF_INROOM_MSG_BG_OPACITY.valueAsState(0)
-    val msgOutline by PREF_INROOM_MSG_OUTLINE.valueAsState(true)
-    val msgShadow by PREF_INROOM_MSG_SHADOW.valueAsState(false)
-    val msgFontSize = PREF_INROOM_MSG_FONTSIZE.valueAsState(9)
-    val msgMaxCount by PREF_INROOM_MSG_MAXCOUNT.valueAsState(10)
-    val keyboardOkFunction by PREF_INROOM_MSG_BOX_ACTION.valueAsState(true)
 
     /* Some file picking stuff */
     val videoPicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = CommonUtils.vidExs)) { file ->
@@ -279,69 +210,6 @@ fun RoomScreenUI() {
         }
     }
 
-
-    /** Room artwork underlay (when no video is loaded) */
-    if (!hasVideo.value) {
-        RoomArtwork(pipModeObserver)
-    }
-
-    /** video surface */
-    viewmodel.player?.VideoPlayer(Modifier.fillMaxSize().alpha(if (hasVideo.value) 1f else 0f))
-
-    /** Lock layout, This is what appears when the user locks the screen */
-    val unlockButtonVisibility = remember { mutableStateOf(false) }
-
-    if (locked) {
-        /** The touch interceptor to switch unlock button visibility */
-        Box(
-            Modifier.fillMaxSize().clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = {
-                    unlockButtonVisibility.value = !unlockButtonVisibility.value
-                })
-        )
-
-        Column(
-            modifier = Modifier.fillMaxSize().padding(top = 15.dp, end = 44.dp),
-            horizontalAlignment = Alignment.End
-        ) {
-            /** Unlock Card */
-            if (unlockButtonVisibility.value && !pipModeObserver) {
-                Card(
-                    modifier = Modifier.width(48.dp).alpha(0.5f).aspectRatio(1f).clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(color = Paletting.SP_ORANGE)
-                    ) {
-                        locked = false
-                        hudVisibility = true
-                    },
-                    shape = RoundedCornerShape(6.dp),
-                    border = BorderStroke(
-                        width = 1.dp,
-                        brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT)
-                    ),
-                    colors = CardDefaults.cardColors(containerColor = Color.DarkGray),
-                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 6.dp),
-                ) {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        Icon(
-                            imageVector = Icons.Filled.NoEncryption,
-                            contentDescription = "",
-                            modifier = Modifier.size(32.dp).align(Alignment.Center)
-                                .gradientOverlay()
-                        )
-                    }
-                }
-            }
-        }
-    } else {
-        /** ACTUAL ROOM HUD AND LAYOUT */
-
-        var msg by remember { mutableStateOf("") }
-        var msgCanSend by remember { mutableStateOf(false) }
-        val msgs =
-            remember { if (!isSoloMode) viewmodel.p.session.messageSequence else mutableStateListOf() }
         var ready by remember { mutableStateOf(viewmodel.setReadyDirectly) }
         var controlcardvisible by remember { mutableStateOf(false) }
         var addmediacardvisible by remember { mutableStateOf(viewmodel.media?.fileName.isNullOrEmpty() && viewmodel.p.session.sharedPlaylist.isEmpty() && viewmodel.p.session.spIndex.value == -1) }
@@ -362,218 +230,11 @@ fun RoomScreenUI() {
             }
         }
 
-        AnimatedVisibility(hudVisibility, enter = fadeIn(), exit = fadeOut()) {
-            Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
-                /* Top row (Message input box + Messages) */
-                Column(
-                    modifier = Modifier.fillMaxWidth(0.32f).align(Alignment.TopStart),
-                    horizontalAlignment = Alignment.Start
-                ) {
-                    /* Messages */
-                    if (!isSoloMode) {
-                        Box(
-                            modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(
-                                color = if (hasVideo.value || MaterialTheme.colorScheme.primary != Paletting.OLD_SP_YELLOW) Color(
-                                    50, 50, 50, msgBoxOpacity.value
-                                ) else Color.Transparent
-                            ).padding(top = 64.dp)
-                        ) {
-                            //val lastMessages = msgs.toList().takeLast(msgMaxCount)
-                            val lastMessages = msgs.takeLast(msgMaxCount)
 
-                            LazyColumn(
-                                contentPadding = PaddingValues(8.dp),
-                                userScrollEnabled = false,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                items(lastMessages) {
-                                    LaunchedEffect(null) {
-                                        it.seen =
-                                            true /* Once seen, don't use it in fading message */
-                                    }
-
-                                    ChatAnnotatedText(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        text = it.factorize(LocalChatPalette.current),
-                                        size = if (pipModeObserver) 6f else (msgFontSize.value.toFloat()),
-                                        hasShadow = msgShadow,
-                                        hasStroke = msgOutline
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        /* Gestures Interceptor */
-        GestureInterceptor(
-            gestureState = gestures, videoState = viewmodel.hasVideoG, onSingleTap = {
-                hudVisibility = !hudVisibility
-                if (!hudVisibility) {/* Hide any popups */
-                    controlcardvisible = false
-                    addmediacardvisible = false
-                }
-            })
-
-        /* HUD below: We resort to using a combination of Boxes, Rows, and Columns. */
-        AnimatedVisibility(
-            hudVisibility && hasVideo.value, enter = fadeIn(), exit = fadeOut()
-        ) {
-            Box(Modifier.fillMaxSize()) {
-                val blacky = Color.Black.copy(alpha = 0.8F)
-                Box(
-                    modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
-                        .height(84.dp).background(
-                            brush = Brush.verticalGradient(
-                                listOf(Color.Transparent, blacky, blacky, blacky)
-                            )
-                        ).clickable(false) {})
-            }
-        }
 
         AnimatedVisibility(hudVisibility, enter = fadeIn(), exit = fadeOut()) {
             Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
-                /* Top row (Message input box + Messages) */
-                Column(
-                    modifier = Modifier.fillMaxWidth(0.32f).align(Alignment.TopStart),
-                    horizontalAlignment = Alignment.Start
-                ) {
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        /** Message input box */
-                        if (!isSoloMode && !pipModeObserver) {
-                            val onSend = {
-                                val msgToSend = msg.run {
-                                    var t = replace("\\", "")
-                                    if (t.length > 150) t = t.substring(0, 149)
-                                    t
-                                }
-                                if (msgToSend.isNotBlank()) {
-                                    viewmodel.sendMessage(msgToSend)
-                                }
-                                msg = ""
-                                msgCanSend = false
 
-                                focusManager.clearFocus()
-                            }
-
-                            GradientTextField(
-                                value = msg,
-                                onValueChange = { s ->
-                                    msg = s
-                                    msgCanSend = s.isNotBlank()
-                                },
-                                label = stringResource(Res.string.room_type_message),
-                                onSend = onSend,
-                                msgCanSend = msgCanSend,
-                                singleLine = true,
-                                keyboardActions = KeyboardActions(onDone = {
-                                    if (keyboardOkFunction) {
-                                        onSend()
-                                    }
-                                }),
-                                colors = Paletting.SP_GRADIENT
-                            )
-                        }
-                    }
-                }
-
-                /* Top-Center info: Overall info (PING + ROOMNAME + OSD Messages) */
-                if (!pipModeObserver) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.wrapContentWidth().align(Alignment.TopCenter)
-                    ) {
-                        if (!isSoloMode) {
-                            val pingo by viewmodel.p.ping.collectAsState()
-
-                            Row(verticalAlignment = CenterVertically) {
-                                Text(
-
-                                    text = if (pingo == null) stringResource(Res.string.room_ping_disconnected) else stringResource(
-                                        Res.string.room_ping_connected,
-                                        pingo.toString()
-                                    ), color = Paletting.OLD_SP_PINK
-                                )
-                                Spacer(Modifier.width(4.dp))
-
-                                PingRadar(pingo)
-                            }
-
-                            Text(
-                                text = stringResource(Res.string.room_details_current_room, viewmodel.p.session.currentRoom),
-                                fontSize = 11.sp,
-                                color = Paletting.OLD_SP_PINK
-                            )
-
-                            var showReconnectButton by remember { mutableStateOf(false) }
-                            LaunchedEffect(pingo, viewmodel.p.session.userList.value.isNotEmpty()) {
-                                if (pingo == null && viewmodel.p.session.userList.value.isNotEmpty()) {
-                                    delay(3000)
-                                    // Check again after delay in case pingo changed
-                                    if (pingo == null) showReconnectButton = true
-                                } else {
-                                    showReconnectButton = false
-                                }
-                            }
-
-                            AnimatedVisibility(showReconnectButton) {
-                                Button(
-                                    onClick = {
-                                        composeScope.launch(Dispatchers.IO) {
-                                            viewmodel.p.connect()
-                                        }
-                                    }, colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color.Red
-                                    ), shape = CircleShape
-                                ) {
-                                    Text(text = "Reconnect", color = Color.White)
-                                }
-                            }
-
-
-                            AnimatedVisibility(pingo == null && viewmodel.p.session.userList.value.isNotEmpty()) {
-
-                                Text(
-                                    text = "Try changing network engine in Settings > Network to Ktor if you're experiencing connection issues.",
-                                    color = Color.White,
-                                    modifier = Modifier.fillMaxWidth(0.3f),
-                                    textAlign = TextAlign.Center,
-                                    fontSize = 12.sp
-                                )
-                            }
-                        }
-
-                        val osd by remember { osdMsg }
-                        if (osd.isNotEmpty()) Text(
-                            modifier = Modifier.fillMaxWidth(0.3f),
-                            fontSize = 11.sp,
-                            lineHeight = (Paletting.USER_INFO_TXT_SIZE + 4).sp,
-                            color = Paletting.SP_PALE,
-                            text = osd,
-                            textAlign = TextAlign.Center,
-                            fontWeight = FontWeight.W300
-                        )
-                        if (osd.isEmpty()) viewmodel.media?.let {
-                            val filename = it.fileName.lowercase()
-                            if (filename.contains(Regex("(s|season)(\\d{1,2})(e|episode)(\\d{1,2})"))) {
-                                val season =
-                                    Regex("(s|season)(\\d{1,2})").find(filename)?.groupValues?.get(
-                                        2
-                                    )?.toInt() ?: 0
-                                val episode =
-                                    Regex("(e|episode)(\\d{1,2})").find(filename)?.groupValues?.get(
-                                        2
-                                    )?.toInt() ?: 0
-                                Text(
-                                    text = "S${season}E${episode}",
-                                    color = Paletting.SP_PALE,
-                                )
-                            }
-                        }
-                    }
-                }
 
                 /* Card tabs (Top-right row) and the Cards below them  */
                 Column(
@@ -860,7 +521,7 @@ fun RoomScreenUI() {
                                         composeScope.launch(Dispatchers.IO) {
                                             val newAspectRatio = viewmodel.player?.switchAspectRatio()
                                             if (newAspectRatio != null) {
-                                                composeScope.dispatchOSD(newAspectRatio)
+                                                composeScope.dispatchOSD { newAspectRatio }
                                             }
                                         }
                                     }
@@ -874,7 +535,7 @@ fun RoomScreenUI() {
                                     ) {
                                         composeScope.launch {
                                             writeValue(MISC_GESTURES, !gestures.value)
-                                            dispatchOSD(if (gestures.value) "Gestures enabled" else "Gestures disabled")
+                                            dispatchOSD { if (gestures.value) "Gestures enabled" else "Gestures disabled" }
                                         }
                                     }
 
@@ -895,7 +556,7 @@ fun RoomScreenUI() {
                                         shadowColor = Color.Black
                                     ) {
                                         if (viewmodel.seeks.isEmpty()) {
-                                            composeScope.dispatchOSD("There is no recent seek in the room.")
+                                            composeScope.dispatchOSD { "There is no recent seek in the room." }
                                             return@FancyIcon2
                                         }
 
@@ -905,7 +566,7 @@ fun RoomScreenUI() {
                                         viewmodel.player?.seekTo(lastSeek.first)
                                         viewmodel.sendSeek(lastSeek.first)
                                         viewmodel.seeks.remove(lastSeek)
-                                        composeScope.dispatchOSD("Seek undone.")
+                                        composeScope.dispatchOSD { "Seek undone." }
                                     }
 
                                     /* Subtitle Tracks */
@@ -1326,9 +987,9 @@ fun RoomScreenUI() {
                                                         )
                                                     }
 
-                                                    dispatchOSD(
+                                                    dispatchOSD {
                                                         getString(Res.string.room_custom_skip_button, customSkipAmountString)
-                                                    )
+                                                    }
                                                 }
                                             },
                                         ) {
@@ -1605,86 +1266,5 @@ fun RoomScreenUI() {
                     }
                 }
             }
-        }
     }
-
-    /** Fading Message overlay */
-    if (!isSoloMode) {
-        FadingMessageLayout(
-            hudVisibility = hudVisibility, pipModeObserver = pipModeObserver
-        )
-    }
-
-
-    /** Popups */
-    AddUrlPopup(visibilityState = addurlpopupstate)
-    SeekToPositionPopup(visibilityState = seektopopupstate)
-    if (!isSoloMode) ChatHistoryPopup(visibilityState = chathistorypopupstate)
-}
-
-// Custom composable with gradient text, outline, and icon
-@Composable
-fun GradientTextField(
-    modifier: Modifier = Modifier,
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    onSend: () -> Unit,
-    msgCanSend: Boolean = false,
-    singleLine: Boolean = false,
-    keyboardActions: KeyboardActions = KeyboardActions.Default,
-    colors: List<Color> = Paletting.SP_GRADIENT
-) {
-    val gradientBrush = Brush.linearGradient(colors = colors)
-
-    OutlinedTextField(
-        modifier = modifier.alpha(0.75f).fillMaxWidth(),
-        singleLine = singleLine,
-        keyboardActions = keyboardActions,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = colors.first(),
-            unfocusedBorderColor = colors[1],
-            cursorColor = colors.last()
-        ),
-        label = {
-            Text(
-                text = label,
-                fontSize = 12.sp,
-                maxLines = 1,
-                style = TextStyle(brush = gradientBrush)
-            )
-        },
-        trailingIcon = {
-            if (msgCanSend) {
-                IconButton(onClick = onSend) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = "",
-                        modifier = Modifier.graphicsLayer(alpha = 0.99f).drawWithCache {
-                            onDrawWithContent {
-                                drawContent()
-                                drawRect(
-                                    brush = gradientBrush, blendMode = BlendMode.SrcAtop
-                                )
-                            }
-                        })
-                }
-            }
-        },
-        value = value,
-        onValueChange = onValueChange,
-        visualTransformation = VisualTransformation { text ->
-            val annotatedString = buildAnnotatedString {
-                text.text.forEachIndexed { index, char ->
-                    if (!char.isEmoji()) {
-                        withStyle(style = SpanStyle(brush = gradientBrush)) {
-                            append(char)
-                        }
-                    } else {
-                        append(char)
-                    }
-                }
-            }
-            TransformedText(annotatedString, OffsetMapping.Identity)
-        })
 }

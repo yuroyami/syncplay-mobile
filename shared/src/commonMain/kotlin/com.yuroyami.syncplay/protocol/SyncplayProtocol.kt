@@ -92,7 +92,7 @@ abstract class SyncplayProtocol(
         transmitPacket(jsonPacket, packetClass = T::class)
     }
 
-    suspend fun transmitPacket(json: Packet.Companion.SendablePacket, packetClass: KClass<out Packet>? = null, isRetry: Boolean = false){
+    suspend fun transmitPacket(json: Packet.Companion.SendablePacket, packetClass: KClass<out Packet>? = null, isRetry: Boolean = false) {
         withContext(Dispatchers.IO) {
             try {
                 if (isSocketValid()) {

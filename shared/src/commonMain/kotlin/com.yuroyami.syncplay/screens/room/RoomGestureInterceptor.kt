@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.room.children
+package com.yuroyami.syncplay.screens.room
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -28,7 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -49,6 +49,8 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.screens.adam.LocalScreenSize
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_GESTURES
+import com.yuroyami.syncplay.settings.valueFlow
 import com.yuroyami.syncplay.utils.getSystemMaxVolume
 import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
@@ -63,16 +65,14 @@ var initialVolume = 0
 var initialBrightness = 0f
 
 @Composable
-fun GestureInterceptor(
-    gestureState: State<Boolean>, videoState: State<Boolean>, onSingleTap: () -> Unit
-) {
+fun RoomGestureInterceptor(modifier: Modifier) {
     val viewmodel = LocalViewmodel.current
-
     val scope = rememberCoroutineScope { Dispatchers.IO }
-    var hudVisibility by remember { viewmodel.hudVisibilityState }
+    val gesturesEnabled by valueFlow(MISC_GESTURES, true).collectAsState(initial = true)
+    val hasVideo by viewmodel.hasVideo.collectAsState()
+    val visibleHUD by viewmodel.visibleHUD.collectAsState()
 
-    val g by gestureState
-    val v by videoState
+
 
     val volumeSteps = getSystemMaxVolume()
 
@@ -88,10 +88,10 @@ fun GestureInterceptor(
 
     var vertdragOffset by remember { mutableStateOf(Offset.Zero) }
 
-    Box {
+    Box(modifier) {
         var fastForward by remember { mutableStateOf(false) }
         var fastRewind by remember { mutableStateOf(false) }
-        if (g) {
+        if (gesturesEnabled) {
             Box(
                 modifier = Modifier.align(Alignment.CenterStart).fillMaxHeight().fillMaxWidth(0.1f)
                     .clickable(
@@ -147,11 +147,11 @@ fun GestureInterceptor(
             }
             val haptic = LocalHapticFeedback.current
 
-            Box(modifier = Modifier.fillMaxSize().pointerInput(g, v) {
+            Box(modifier = Modifier.fillMaxSize().pointerInput(gesturesEnabled, hasVideo) {
                 detectTapGestures(
 
                     onPress = { offset ->
-                        if (g && v && offset.x > dimensions.widthPx.times(0.65f)) {
+                        if (gesturesEnabled && hasVideo && offset.x > dimensions.widthPx.times(0.65f)) {
                             val press = PressInteraction.Press(offset)
 
                             val job = scope.launch {
@@ -175,7 +175,7 @@ fun GestureInterceptor(
                             seekRightInteraction.emit(PressInteraction.Release(press))
 
                         }
-                        if (g && v && offset.x < dimensions.widthPx.times(0.35f)) {
+                        if (gesturesEnabled && hasVideo && offset.x < dimensions.widthPx.times(0.35f)) {
                             val press = PressInteraction.Press(offset)
                             val job = scope.launch {
                                 delay(1000)
@@ -198,7 +198,7 @@ fun GestureInterceptor(
 
                         }
                     },
-                    onDoubleTap = if (g && v) { offset ->
+                    onDoubleTap = if (gesturesEnabled && hasVideo) { offset ->
                         scope.launch {
                             if (offset.x < dimensions.widthPx.times(0.35f)) {
                                 //TODO PlayerUtils.seekBckwd()
@@ -220,17 +220,21 @@ fun GestureInterceptor(
                             }
                         }
                     } else null,
-                    onTap = { onSingleTap.invoke()
-                        if (hudVisibility) {
-                            haptic.performHapticFeedback(HapticFeedbackType.ToggleOff)
+                    onTap = {
+                        viewmodel.visibleHUD.value = !viewmodel.visibleHUD.value
+                        haptic.performHapticFeedback(
+                            when (viewmodel.visibleHUD.value) {
+                                true -> HapticFeedbackType.ToggleOff
+                                false -> HapticFeedbackType.ToggleOn
+                            }
+                        )
 
-                        }else {
-                            haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
-
-                        } },
+                        //TODO controlcardvisible = false
+                        //     addmediacardvisible = false
+                    },
                 )
-            }.pointerInput(g, v) {
-                if (g && v) {
+            }.pointerInput(gesturesEnabled, hasVideo) {
+                if (gesturesEnabled && hasVideo) {
                     var lastVolume = 0
                     var lastBrightness = 0f
 

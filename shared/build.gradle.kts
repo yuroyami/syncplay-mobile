@@ -94,6 +94,7 @@ kotlin {
             implementation(compose.runtime)
             implementation(compose.foundation)
             //implementation(compose.material3)
+            //noinspection UseTomlInstead
             implementation("org.jetbrains.compose.material3:material3:1.9.0-alpha04") //Temporary to get android's m3 1.4.0 functionality until material3 is updated to 1.4.0 stable
             implementation(compose.materialIconsExtended)
             implementation(compose.components.resources)
@@ -106,7 +107,7 @@ kotlin {
             implementation(libs.compose.unstyled)
 
             /* Helps with color calculations for color preferences */
-            implementation(libs.colormath)
+            implementation(libs.kolorpicker)
 
             /* Hash digesters */
             implementation(libs.bundles.krypto)
@@ -192,7 +193,7 @@ android {
 
     defaultConfig {
         applicationId = if (forGPlay) "com.yuroyami.syncplay" else "com.reddnek.syncplay"
-        minSdk = 21
+        minSdk = 24
         targetSdk = 35 //TODO We only update to targetSdk 36 when we resolve the 16KB native libs alignment issue
         versionCode = 1_000_016_00_0 //1 XXX XXX XX X (last X is for prerelease versions such as RC)
         versionName = "0.16.0"
@@ -224,7 +225,7 @@ android {
         }
         debug {
             isDebuggable = true
-            applicationIdSuffix = ".new"
+            applicationIdSuffix = ".debug"
         }
     }
 

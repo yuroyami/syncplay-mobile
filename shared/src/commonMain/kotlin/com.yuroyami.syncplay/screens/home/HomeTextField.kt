@@ -1,7 +1,7 @@
 package com.yuroyami.syncplay.screens.home
 
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -42,7 +42,7 @@ fun HomeTextField(
 
     val cornerRadiusAnimated by animateDpAsState(
         targetValue = if (dropdownState?.value == true) 0.dp else cornerRadius,
-        animationSpec = tween(durationMillis = 150)
+        animationSpec = spring()
     )
 
     UnstyledTextField(

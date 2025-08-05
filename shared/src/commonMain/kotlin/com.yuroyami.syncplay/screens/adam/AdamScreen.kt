@@ -19,7 +19,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.screens.home.HomeScreenUI
-import com.yuroyami.syncplay.screens.room.RoomComposables.ComposedMessagePalette
+import com.yuroyami.syncplay.screens.room.ComposedMessagePalette
 import com.yuroyami.syncplay.screens.room.RoomScreenUI
 import com.yuroyami.syncplay.settings.SettingStyling
 import com.yuroyami.syncplay.ui.AppTheme
@@ -73,7 +73,7 @@ fun AdamScreen(onViewmodelReady: (SyncplayViewmodel) -> Unit) {
             LocalNavigator provides navigator,
             LocalScreenSize provides screenSizeInfo,
             LocalScreen provides currentScreen,
-            LocalChatPalette provides ComposedMessagePalette()
+            LocalChatPalette provides ComposedMessagePalette() //TODO
         ) {
             NavHost(
                 navController = navigator,

@@ -13,7 +13,7 @@ ksp = "2.2.0-2.0.2"
 krypto = "0.7.0"
 datastore = "1.2.0-alpha02"
 filekit = "0.10.0"
-colormath = "3.6.1"
+kolorpicker = "0.1.2"
 skie = "0.10.5"
 uriKmp = "0.0.20"
 compose-unstyled = "1.39.0"
@@ -50,7 +50,7 @@ krypto-md = { module = "org.kotlincrypto.hash:md", version.ref = "krypto" }
 krypto-sha2 = { module = "org.kotlincrypto.hash:sha2", version.ref = "krypto" }
 datastore = { module = "androidx.datastore:datastore-preferences-core", version.ref = "datastore" }
 filekit = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekit" }
-colormath = { module = "com.github.ajalt.colormath:colormath", version.ref = "colormath" }
+kolorpicker = { module = "com.kborowy:kolor-picker", version.ref = "kolorpicker" }
 uriKmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
 compose-unstyled = { module = "com.composables:core", version.ref = "compose-unstyled"}
 

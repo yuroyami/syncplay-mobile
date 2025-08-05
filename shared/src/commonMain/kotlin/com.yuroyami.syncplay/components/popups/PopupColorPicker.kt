@@ -21,8 +21,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
@@ -33,11 +35,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kborowy.colorpicker.KolorPicker
 import com.yuroyami.syncplay.components.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.components.ComposeUtils.SyncplayPopup
 import com.yuroyami.syncplay.ui.Paletting
-import com.yuroyami.syncplay.components.colorpicker.ClassicColorPicker
-import com.yuroyami.syncplay.components.colorpicker.HsvColor
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
@@ -50,8 +51,8 @@ object PopupColorPicker {
     @Composable
     fun ColorPickingPopup(
         visibilityState: MutableState<Boolean>,
-        initialColor: HsvColor = HsvColor.from(Color.Black),
-        onColorChanged: (HsvColor) -> Unit,
+        initialColor: Color = Color.Black,
+        onColorChanged: (Color) -> Unit,
         onDefaultReset: () -> Unit
     ) {
         return SyncplayPopup(
@@ -61,7 +62,7 @@ object PopupColorPicker {
             strokeWidth = 0.5f,
             onDismiss = { visibilityState.value = false }
         ) {
-            val color = remember { mutableStateOf(initialColor) }
+            var color by remember { mutableStateOf(initialColor) }
 
             Column(
                 modifier = Modifier.fillMaxSize().padding(6.dp),
@@ -79,11 +80,11 @@ object PopupColorPicker {
                 )
 
                 /* The card that holds the color picker */
-                ClassicColorPicker(
+                KolorPicker(
                     modifier = Modifier.fillMaxWidth(0.8f).weight(3f).padding(6.dp),
-                    color = initialColor,
-                    onColorChanged = { clr: HsvColor ->
-                        color.value = clr
+                    initialColor = initialColor,
+                    onColorSelected = { clr ->
+                        color = clr
                         onColorChanged(clr)
                     }
                 )
@@ -115,13 +116,13 @@ object PopupColorPicker {
                     }
 
                     Surface(
-                        color = color.value.toColor(),
+                        color = color,
                         border = BorderStroke(0.5.dp, Color.Gray),
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier.weight(0.5f).padding(6.dp)
                     ) {
                         Canvas(
-                            modifier = Modifier.fillMaxSize().alpha(1.0f - color.value.alpha)
+                            modifier = Modifier.fillMaxSize().alpha(1.0f - color.alpha)
                         ) {
                             clipRect {
                                 val darkColor = Color.LightGray

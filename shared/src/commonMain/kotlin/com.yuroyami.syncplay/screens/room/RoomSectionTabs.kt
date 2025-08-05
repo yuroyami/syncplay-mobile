@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.room.children
+package com.yuroyami.syncplay.screens.room
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -26,6 +26,11 @@ import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.components.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.ui.Paletting
 
+
+@Composable
+fun RoomTabSection(modifier: Modifier) {
+
+}
 
 @Composable
 fun RoomTab(icon: ImageVector, visibilityState: Boolean, onClick: () -> Unit) {

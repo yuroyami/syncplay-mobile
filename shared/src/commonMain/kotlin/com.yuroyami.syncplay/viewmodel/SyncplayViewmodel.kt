@@ -41,6 +41,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.getString
@@ -68,14 +69,12 @@ import syncplaymobile.shared.generated.resources.room_shared_playlist_updated
 import syncplaymobile.shared.generated.resources.room_tls_not_supported
 import syncplaymobile.shared.generated.resources.room_tls_supported
 import syncplaymobile.shared.generated.resources.room_you_joined_room
-import kotlin.experimental.ExperimentalTypeInference
 
 class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     lateinit var nav: NavController
 
     lateinit var p: SyncplayProtocol
 
-    val isSoloMode = false
 
     var player: BasePlayer? = null
     var media: MediaFile? = null
@@ -92,9 +91,9 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     val timeFull = mutableLongStateOf(0L)
     val timeCurrent = mutableLongStateOf(0L)
 
-    val hasVideoG = mutableStateOf(false)
-    val hudVisibilityState = mutableStateOf(true)
-    val pipMode = mutableStateOf(false)
+    val hasVideo = MutableStateFlow(false)
+    val hasEnteredPipMode = MutableStateFlow(false)
+    val visibleHUD = MutableStateFlow(false)
 
     var currentTrackChoices: TrackChoices = TrackChoices()
 
@@ -110,7 +109,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
         }
 
         override fun onStop() {
-            if (!pipMode.value) {
+            if (!hasEnteredPipMode.value) {
                 background = true
                 player?.pause()
             }
@@ -732,30 +731,26 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
         }
     }
 
-    /**************** OTHER ***************/
-    var snack = SnackbarHostState()
 
+    /** Tells us whether we're in solo mode to deactivate some online components */
+    val isSoloMode: Boolean
+        get() = nav.currentBackStackEntry?.destination?.route == Screen.SoloMode.label
+
+
+    /********** Snack-related functionality ***********/
+    var snack = SnackbarHostState()
     fun snackItAsync(string: String, abruptly: Boolean = true) {
         viewModelScope.launch(Dispatchers.Main) {
-            snackItImpl(string, abruptly)
+            snackIt(string, abruptly)
         }
     }
 
-    @OptIn(ExperimentalTypeInference::class)
-    suspend fun snackIt(text: String, abruptly: Boolean = true) {
-        snackItImpl(text, abruptly)
+    suspend fun snackIt(string: String, abruptly: Boolean = true) {
+        if (abruptly) snack.currentSnackbarData?.dismiss()
+        snack.showSnackbar(message = string, duration = SnackbarDuration.Short)
     }
 
-    private suspend fun snackItImpl(string: String, abruptly: Boolean = true) {
-        if (abruptly) {
-            snack.currentSnackbarData?.dismiss()
-        }
-        snack.showSnackbar(
-            message = string,
-            duration = SnackbarDuration.Short
-        )
-    }
-
+    /** End of viewmodel */
     override fun onCleared() {
         super.onCleared()
     }

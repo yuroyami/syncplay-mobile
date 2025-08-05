@@ -51,7 +51,6 @@ import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.components.ComposeUtils.FlexibleFancyText
 import com.yuroyami.syncplay.components.ComposeUtils.MultiChoiceDialog
 import com.yuroyami.syncplay.components.ComposeUtils.SmartFancyIcon
-import com.yuroyami.syncplay.components.colorpicker.HsvColor
 import com.yuroyami.syncplay.components.popups.PopupColorPicker.ColorPickingPopup
 import com.yuroyami.syncplay.screens.adam.LocalSettingStyling
 import com.yuroyami.syncplay.ui.Paletting
@@ -600,9 +599,9 @@ sealed class Setting<T>(
                 }
             )
 
-            ColorPickingPopup(colorDialogState, initialColor = HsvColor.from(Color(color)), onColorChanged = { hsvColor ->
+            ColorPickingPopup(colorDialogState, initialColor = Color(color), onColorChanged = { color ->
                 scope.launch {
-                    writeValue(key, hsvColor.toColor().toArgb())
+                    writeValue(key, color.toArgb())
                 }
             }, onDefaultReset = { scope.launch { writeValue(key, defaultValue) } })
         }

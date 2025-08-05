@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.room.children
+package com.yuroyami.syncplay.screens.room
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.keyframes
@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,14 +29,17 @@ import kotlinx.coroutines.delay
 
 
 @Composable
-fun FadingMessageLayout(hudVisibility: Boolean, pipModeObserver: Boolean) {
+fun FadingMessageLayout() {
     val viewmodel = LocalViewmodel.current
+
+    val isInPiPMode by viewmodel.hasEnteredPipMode.collectAsState()
+    val isHUDVisible by viewmodel.visibleHUD.collectAsState()
 
     /** The layout for the fading messages & OSD messages (when HUD is hidden, or when screen is locked) */
     val fadingTimeout = DataStoreKeys.PREF_INROOM_MSG_FADING_DURATION.valueAsState(3)
     val palette = LocalChatPalette.current
 
-    if (!hudVisibility) {
+    if (!isHUDVisible) {
         var visibility by remember { mutableStateOf(false) }
         val msgs = remember { viewmodel.p.session.messageSequence }
         LaunchedEffect(msgs.size) {
@@ -65,8 +69,8 @@ fun FadingMessageLayout(hudVisibility: Boolean, pipModeObserver: Boolean) {
                         .focusable(false),
                     overflow = TextOverflow.Ellipsis,
                     text = viewmodel.p.session.messageSequence.last().factorize(palette),
-                    lineHeight = if (pipModeObserver) 9.sp else 15.sp,
-                    fontSize = if (pipModeObserver) 8.sp else 13.sp
+                    lineHeight = if (isInPiPMode) 9.sp else 15.sp,
+                    fontSize = if (isInPiPMode) 8.sp else 13.sp
                 )
             }
         }
