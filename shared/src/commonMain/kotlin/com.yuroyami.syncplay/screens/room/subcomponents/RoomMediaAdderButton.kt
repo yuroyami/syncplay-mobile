@@ -60,7 +60,7 @@ fun RoomMediaAdderButton() {
     val viewmodel = LocalViewmodel.current
     val hasVideo by viewmodel.hasVideo.collectAsState()
 
-    var addMediaCardVisibility by remember { mutableStateOf(viewmodel.media?.fileName.isNullOrEmpty() && viewmodel.p.session.sharedPlaylist.isEmpty() && viewmodel.p.session.spIndex.value == -1) }
+    var addMediaCardVisibility by remember { mutableStateOf(!viewmodel.hasDoneStartupSlideAnimation) }
 
     val videoPicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = CommonUtils.vidExs)) { file ->
         file?.path?.let {
@@ -69,7 +69,7 @@ fun RoomMediaAdderButton() {
         }
     }
 
-    Box {
+    Box(modifier = Modifier.padding(4.dp)) {
         AddVideoButton(
             modifier = Modifier,
             expanded = !hasVideo,

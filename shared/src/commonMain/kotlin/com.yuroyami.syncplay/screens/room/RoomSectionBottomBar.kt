@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
@@ -31,27 +30,28 @@ fun RoomBottomBarSection(modifier: Modifier) {
     val hasVideo by viewmodel.hasVideo.collectAsState()
 
     Box(modifier) {
-        if (hasVideo) BottomBarBlackUnderlay()
+        if (hasVideo) BottomBarBlackUnderlay(modifier = Modifier.align(Alignment.BottomCenter))
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
+            modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.Bottom
         ) {
-            if (hasVideo) {
-                //Ready Toggle Button
-                RoomReadyButton()
+            //if (hasVideo) {
+            //Ready Toggle Button
+            RoomReadyButton()
 
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.Bottom
-                ) {
-                    RoomVideoSeekbar(modifier = Modifier.fillMaxWidth())
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Bottom
+            ) {
+                RoomVideoSeekbar(modifier = Modifier.fillMaxWidth())
 
-                    RoomBottomBarVideoControlRow(modifier = Modifier.fillMaxWidth())
-                }
-
-                RoomAdvancedControlButton()
+                RoomBottomBarVideoControlRow(modifier = Modifier.fillMaxWidth())
             }
+
+            RoomAdvancedControlButton()
+            //}
 
             RoomMediaAdderButton()
         }
@@ -59,20 +59,18 @@ fun RoomBottomBarSection(modifier: Modifier) {
 }
 
 @Composable
-fun BottomBarBlackUnderlay() {
-    Box(Modifier.fillMaxSize()) {
-        val blacky = Color.Black.copy(alpha = 0.8F)
+fun BottomBarBlackUnderlay(modifier: Modifier) {
+    val blacky = Color.Black.copy(alpha = 0.7F)
 
-        Box(
-            modifier = Modifier.align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .height(84.dp)
-                .background(
-                    brush = Brush.verticalGradient(
-                        listOf(Color.Transparent, blacky, blacky, blacky)
-                    )
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(84.dp)
+            .background(
+                brush = Brush.verticalGradient(
+                    listOf(Color.Transparent, blacky, blacky, blacky)
                 )
-                .clickable(false) {}
-        )
-    }
+            )
+            .clickable(false) {}
+    )
 }
