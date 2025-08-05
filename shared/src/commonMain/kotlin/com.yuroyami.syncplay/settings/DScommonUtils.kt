@@ -35,6 +35,16 @@ fun createDataStore(
 
 lateinit var datastore: DataStore<Preferences>
 
+// Cache the data flow - access it only once!
+private val datastoreDataFlow: Flow<Preferences> by lazy { datastore.data }
+//val someflow = preferencesFlow.map { preferences ->
+//    preferences[preferencesKey] ?: default
+//}.shareIn(
+//    scope = applicationScope,
+//    started = SharingStarted.WhileSubscribed(5000),
+//    replay = 1
+//)
+
 /** Flow obtainers, these are the ones that are gonna return flows to read from */
 @Suppress("UNCHECKED_CAST")
 inline fun <reified T> prefKeyMapper(name: String): Preferences.Key<T> {
@@ -50,6 +60,7 @@ inline fun <reified T> prefKeyMapper(name: String): Preferences.Key<T> {
         else -> throw IllegalArgumentException("Unsupported type: ${T::class}")
     } as Preferences.Key<T>
 }
+
 
 inline fun <reified T> valueFlow(key: String, default: T): Flow<T> {
     return datastore.data.mapNotNull { preferences ->

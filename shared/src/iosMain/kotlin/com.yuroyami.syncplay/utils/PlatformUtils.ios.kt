@@ -3,6 +3,7 @@ package com.yuroyami.syncplay.utils
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ClipEntry
 import com.yuroyami.syncplay.player.ApplePlayerEngine
+import com.yuroyami.syncplay.player.PlayerEngine
 import com.yuroyami.syncplay.protocol.SpProtocolKtor
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
@@ -61,4 +62,4 @@ actual fun ClipEntry.getText(): String? {
     return this.getPlainText()
 }
 
-actual val availablePlatformPlayerPlayerEngines: List<PlayerEngine> = listOf(ApplePlayerEngine.AVPlayer, ApplePlayerEngine.VLC)
+actual val availablePlatformPlayerEngines: List<PlayerEngine> = listOf(ApplePlayerEngine.AVPlayer, ApplePlayerEngine.VLC)

@@ -21,6 +21,7 @@ import com.yuroyami.syncplay.screens.adam.Screen
 import com.yuroyami.syncplay.screens.adam.Screen.Companion.navigateTo
 import com.yuroyami.syncplay.screens.room.dispatchOSD
 import com.yuroyami.syncplay.settings.DataStoreKeys
+import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_PLAYER_ENGINE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_FILE_MISMATCH_WARNING
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_TLS_ENABLE
@@ -28,10 +29,9 @@ import com.yuroyami.syncplay.settings.valueBlockingly
 import com.yuroyami.syncplay.settings.valueSuspendingly
 import com.yuroyami.syncplay.settings.writeValue
 import com.yuroyami.syncplay.ui.LifecycleWatchdog
-import com.yuroyami.syncplay.utils.getDefaultEngine
+import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.instantiateNetworkEngineProtocol
-import com.yuroyami.syncplay.utils.instantiatePlayer
 import com.yuroyami.syncplay.utils.iterateDirectory
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.platformCallback
@@ -146,8 +146,9 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
                 nav.navigateTo(Screen.Room)
             }
 
-            val engine = BasePlayer.PlayerEngine.valueOf(valueSuspendingly(DataStoreKeys.MISC_PLAYER_ENGINE, getDefaultEngine()))
-            player = instantiatePlayer(engine)
+            val defaultEngine = availablePlatformPlayerEngines.first { it.isDefault }.name //TODO
+            val engine = availablePlatformPlayerEngines.first { it.name == valueSuspendingly(MISC_PLAYER_ENGINE, defaultEngine) }
+            player = engine.instantiate(this@SyncplayViewmodel)
 
             /** Connecting (via TLS or noTLS) */
             val tls = valueSuspendingly(PREF_TLS_ENABLE, default = true)

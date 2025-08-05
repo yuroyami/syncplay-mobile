@@ -2,8 +2,6 @@ package com.yuroyami.syncplay.screens.home
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Image
@@ -29,28 +27,24 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.filled.Api
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material.icons.outlined.Lan
 import androidx.compose.material.icons.outlined.MeetingRoom
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.PersonPin
 import androidx.compose.material3.BottomAppBarDefaults
-import androidx.compose.material3.ButtonGroup
-import androidx.compose.material3.ButtonGroupScope
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -64,7 +58,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -76,29 +69,23 @@ import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.composeunstyled.TextInput
 import com.yuroyami.syncplay.components.ComposeUtils.FlexibleFancyText
 import com.yuroyami.syncplay.components.ComposeUtils.SmartFancyIcon
 import com.yuroyami.syncplay.components.popups.PopupAPropos.AProposPopup
 import com.yuroyami.syncplay.models.JoinConfig
-import com.yuroyami.syncplay.player.BasePlayer
-import com.yuroyami.syncplay.player.PlayerEngine
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_PLAYER_ENGINE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_SP_MEDIA_DIRS
@@ -110,9 +97,7 @@ import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.Paletting.SP_GRADIENT
 import com.yuroyami.syncplay.ui.ThemeMenu
 import com.yuroyami.syncplay.utils.CommonUtils.substringSafely
-import com.yuroyami.syncplay.utils.availablePlatformEngines
-import com.yuroyami.syncplay.utils.availablePlatformPlayerPlayerEngines
-import com.yuroyami.syncplay.utils.getDefaultEngine
+import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -121,13 +106,11 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.connect_address_empty_error
-import syncplaymobile.shared.generated.resources.connect_button_current_engine
 import syncplaymobile.shared.generated.resources.connect_button_join
 import syncplaymobile.shared.generated.resources.connect_enter_custom_server
 import syncplaymobile.shared.generated.resources.connect_port_empty_error
@@ -136,14 +119,7 @@ import syncplaymobile.shared.generated.resources.connect_roomname_empty_error
 import syncplaymobile.shared.generated.resources.connect_server_a
 import syncplaymobile.shared.generated.resources.connect_username_a
 import syncplaymobile.shared.generated.resources.connect_username_empty_error
-import syncplaymobile.shared.generated.resources.exoplayer
-import syncplaymobile.shared.generated.resources.mpv
-import syncplaymobile.shared.generated.resources.swift
 import syncplaymobile.shared.generated.resources.syncplay_logo_gradient
-import syncplaymobile.shared.generated.resources.vlc
-import com.composeunstyled.Icon as UnstyledIcon
-import com.composeunstyled.Text as UnstyledText
-import com.composeunstyled.TextField as UnstyledTextField
 
 val officialServers = listOf("syncplay.pl:8995", "syncplay.pl:8996", "syncplay.pl:8997", "syncplay.pl:8998", "syncplay.pl:8999")
 
@@ -344,38 +320,38 @@ fun HomeScreenUI() {
                     }
 
                     /* Buttons */
-                    val defaultEngine = availablePlatformPlayerPlayerEngines.first { it.isDefault }.name
-                    val player = valueFlow(MISC_PLAYER_ENGINE, defaultEngine).collectAsState(initial = defaultEngine)
-
-                   /* val name = stringResource(
-                        Res.string.connect_button_current_engine,
-                        when (player.value) {
-                            BasePlayer.PlayerEngine.ANDROID_EXOPLAYER.name -> "Google ExoPlayer (System)"
-                            BasePlayer.PlayerEngine.ANDROID_MPV.name -> "mpv (Default, Recommended)"
-                            BasePlayer.PlayerEngine.ANDROID_VLC.name -> "VLC (Experimental, Unstable)"
-                            BasePlayer.PlayerEngine.IOS_AVPLAYER.name -> "Apple AVPlayer (System)"
-                            BasePlayer.PlayerEngine.IOS_VLC.name -> "VLC (Experimental, Unstable)"
-                            else -> "Undefined"
-                        }
-                    )*/
-
-                    ButtonGroup(
-                        overflowIndicator = { state -> },
-                        modifier = Modifier.fillMaxWidth(0.75f),
+                    Column(
+                        modifier = Modifier.wrapContentHeight().fillMaxWidth(),
+                        horizontalAlignment = CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        availablePlatformPlayerPlayerEngines.forEach { engine ->
-                            engineButton(
-                                engine = engine,
-                                isSelected = true,
-                                onSelectEngine = { b ->
-                                    scope.launch(Dispatchers.IO) {
+                        FlexibleFancyText(
+                            text = "Choose your video engine", //TODO Localize
+                            size = 18f,
+                            textAlign = TextAlign.Center,
+                            fillingColors = listOf(MaterialTheme.colorScheme.primary),
+                            font = Font(Res.font.Directive4_Regular),
+                            shadowColors = listOf(Color.Gray)
+                        )
+
+                        //TODO Move to an extension function that retrieves current engine
+                        val defaultEngine = availablePlatformPlayerEngines.first { it.isDefault }.name
+                        val selectedEngine by valueFlow(MISC_PLAYER_ENGINE, defaultEngine).collectAsState(initial = defaultEngine)
+
+                        AnimatedEngineButtonGroup(
+                            modifier = Modifier.fillMaxWidth(0.75f),
+                            engines = availablePlatformPlayerEngines,
+                            selectedEngine = selectedEngine,
+                            onSelectEngine = { engine ->
+                                scope.launch(Dispatchers.IO) {
+                                    if (engine.isAvailable) {
                                         writeValue(MISC_PLAYER_ENGINE, engine.name)
+                                    } else {
+                                        viewmodel.snackIt("This engine is unavailable. Did you download the right APK?") //TODO Localize
                                     }
                                 }
-                            )
-                        }
+                            }
+                        )
                     }
-
 
                     /* join button + shortcut saver */
                     SplitButtonLayout(
@@ -436,8 +412,7 @@ fun HomeScreenUI() {
                                     )
                                 },
                                 content = {
-                                    //Icons.Outlined.Widgets
-                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = checked)
+                                    Icon(imageVector = Icons.Filled.Widgets, null)
                                 }
                             )
                         }
@@ -610,77 +585,3 @@ fun SyncplayTopBar() {
 }
 
 
-@Composable
-fun HomeTextField(
-    modifier: Modifier,
-    icon: ImageVector? = null,
-    label: String? = null,
-    value: String,
-    dropdownState: MutableState<Boolean>? = null,
-    onValueChange: (String) -> Unit,
-    type: KeyboardType? = null,
-    cornerRadius: Dp = 40.dp
-) {
-    val focusManager = LocalFocusManager.current
-
-    val cornerRadiusAnimated by animateDpAsState(
-        targetValue = if (dropdownState?.value == true) 0.dp else cornerRadius,
-        animationSpec = tween(durationMillis = 150)
-    )
-
-    UnstyledTextField(
-        modifier = modifier,
-        value = value,
-        onValueChange = onValueChange,
-        textColor = Color.White,
-        singleLine = true,
-        editable = dropdownState == null,
-        keyboardActions = KeyboardActions(
-            onDone = {
-                focusManager.moveFocus(focusDirection = FocusDirection.Next)
-            }
-        ),
-        cursorBrush = Brush.verticalGradient(colors = SP_GRADIENT),
-        keyboardOptions = KeyboardOptions(keyboardType = type ?: KeyboardType.Text)
-    ) {
-        TextInput(
-            leading = if (icon != null) { { UnstyledIcon(imageVector = icon, contentDescription = null, modifier = Modifier.padding(end = 4.dp), tint = Color.White) } } else null,
-            trailing = {
-                dropdownState?.let { expandedDropdown ->
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedDropdown.value)
-                }
-            },
-            shape = RoundedCornerShape(cornerRadiusAnimated),
-            placeholder = if (label != null) { { UnstyledText(label, color = Color.Gray) } } else null,
-            backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 21.dp)
-        )
-    }
-}
-
-fun ButtonGroupScope.engineButton(
-    engine: PlayerEngine,
-    isSelected: Boolean,
-    onSelectEngine: (Boolean) -> Unit
-) {
-    toggleableItem(
-        checked = isSelected,
-        onCheckedChange = { b -> onSelectEngine(b) },
-        label = engine.name,
-        icon = {
-            Image(
-                painter = painterResource(
-                    with(Res.drawable) {
-                        when (engine) {
-                            PlayerEngine.ANDROID_EXOPLAYER -> exoplayer
-                            PlayerEngine.ANDROID_MPV -> mpv
-                            BasePlayer.PlayerEngine.ANDROID_VLC -> vlc
-                            BasePlayer.PlayerEngine.IOS_AVPLAYER -> swift
-                            BasePlayer.PlayerEngine.IOS_VLC -> vlc
-                        }
-                    }),
-                contentDescription = null
-            )
-        }
-    )
-}

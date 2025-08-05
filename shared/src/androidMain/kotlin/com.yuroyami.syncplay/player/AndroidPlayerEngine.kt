@@ -8,6 +8,8 @@ import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 import org.jetbrains.compose.resources.DrawableResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.exoplayer
+import syncplaymobile.shared.generated.resources.mpv
+import syncplaymobile.shared.generated.resources.vlc
 
 @Suppress("KotlinConstantConditions")
 sealed class AndroidPlayerEngine: PlayerEngine {
@@ -25,6 +27,7 @@ sealed class AndroidPlayerEngine: PlayerEngine {
         override val isAvailable: Boolean = BuildConfig.FLAVOR == "withLibs"
         override val isDefault: Boolean = BuildConfig.FLAVOR == "withLibs"
         override val name: String = "mpv"
+        override val img: DrawableResource = Res.drawable.mpv
 
         override fun instantiate(viewmodel: SyncplayViewmodel): BasePlayer = MpvPlayer(viewmodel)
     }
@@ -33,6 +36,7 @@ sealed class AndroidPlayerEngine: PlayerEngine {
         override val isAvailable: Boolean = BuildConfig.FLAVOR == "withLibs"
         override val isDefault: Boolean = false
         override val name: String=  "VLC"
+        override val img: DrawableResource = Res.drawable.vlc
 
         override fun instantiate(viewmodel: SyncplayViewmodel): BasePlayer = VlcPlayer(viewmodel)
     }

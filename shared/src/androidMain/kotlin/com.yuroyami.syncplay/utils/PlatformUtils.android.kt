@@ -30,7 +30,7 @@ actual fun getSystemMaxVolume(): Int {
 
 actual val platform: PLATFORM = PLATFORM.Android
 
-actual val availablePlatformPlayerPlayerEngines: List<PlayerEngine> = listOf(AndroidPlayerEngine.Exoplayer, AndroidPlayerEngine.Mpv, AndroidPlayerEngine.VLC)
+actual val availablePlatformPlayerEngines: List<PlayerEngine> = listOf(AndroidPlayerEngine.Exoplayer, AndroidPlayerEngine.Mpv, AndroidPlayerEngine.VLC)
 
 actual fun SyncplayViewmodel.instantiateNetworkEngineProtocol(engine: SyncplayProtocol.NetworkEngine) = when (engine) {
     SyncplayProtocol.NetworkEngine.NETTY -> SpProtocolAndroid(this)
