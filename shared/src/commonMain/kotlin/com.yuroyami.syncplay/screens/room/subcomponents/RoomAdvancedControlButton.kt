@@ -36,6 +36,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
@@ -45,15 +46,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.components.ComposeUtils
 import com.yuroyami.syncplay.components.ComposeUtils.FancyIcon2
+import com.yuroyami.syncplay.components.syncplayFont
 import com.yuroyami.syncplay.player.BasePlayer.TRACKTYPE
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.screens.room.dispatchOSD
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_GESTURES
+import com.yuroyami.syncplay.settings.valueFlow
 import com.yuroyami.syncplay.settings.writeValue
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.Paletting.ROOM_ICON_SIZE
+import com.yuroyami.syncplay.utils.CommonUtils
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -64,14 +71,16 @@ fun RoomAdvancedControlButton() {
     val hasVideo by viewmodel.hasVideo.collectAsState()
 
     if (hasVideo) {
+        var controlPanelVisibility by remember { mutableStateOf(false) }
+
         FancyIcon2(
             modifier = Modifier.offset(y = (-2).dp),
             icon = Icons.Filled.VideoSettings,
             size = ROOM_ICON_SIZE + 6,
             shadowColor = Color.Black,
             onClick = {
-                controlcardvisible = !controlcardvisible
-                addmediacardvisible = false
+                //TODO controlcardvisible = !controlcardvisible
+                //TODO addmediacardvisible = false
             }
         )
     }
@@ -79,6 +88,15 @@ fun RoomAdvancedControlButton() {
 
 @Composable
 fun RoomAdvancedControlCard() {
+    val viewmodel = LocalViewmodel.current
+    val composeScope = rememberCoroutineScope()
+
+    val subtitlePicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = CommonUtils.ccExs)) { file ->
+        file?.path?.let {
+            viewmodel.player?.loadExternalSub(it)
+        }
+    }
+
     /** CONTROL CARD ------ PLAYER CONTROL CARD ----- PLAYER CONTROL CARD */
     Card(
         modifier = Modifier.zIndex(10f),
@@ -109,21 +127,23 @@ fun RoomAdvancedControlCard() {
                 composeScope.launch(Dispatchers.IO) {
                     val newAspectRatio = viewmodel.player?.switchAspectRatio()
                     if (newAspectRatio != null) {
-                        composeScope.dispatchOSD { newAspectRatio }
+                        viewmodel.dispatchOSD { newAspectRatio }
                     }
                 }
             }
 
             /* Seek Gesture (DoNotTouch for disabling it) */
+            val gesturesEnabled by valueFlow(MISC_GESTURES, true).collectAsState(initial = true)
+
             FancyIcon2(
-                icon = when (gestures.value) {
+                icon = when (gesturesEnabled) {
                     true -> Icons.Filled.TouchApp
                     false -> Icons.Filled.DoNotTouch
                 }, size = ROOM_ICON_SIZE, shadowColor = Color.Black
             ) {
-                composeScope.launch {
-                    writeValue(MISC_GESTURES, !gestures.value)
-                    dispatchOSD { if (gestures.value) "Gestures enabled" else "Gestures disabled" }
+                composeScope.launch(Dispatchers.IO) {
+                    writeValue(MISC_GESTURES, !gesturesEnabled)
+                    viewmodel.dispatchOSD { if (gesturesEnabled) "Gestures enabled" else "Gestures disabled" } //TODO Localize
                 }
             }
 
@@ -133,8 +153,8 @@ fun RoomAdvancedControlCard() {
                 size = ROOM_ICON_SIZE,
                 shadowColor = Color.Black
             ) {
-                controlcardvisible = false
-                seektopopupstate.value = true
+                //TODO controlcardvisible = false
+                //TODO seektopopupstate.value = true
             }
 
             /* Undo Last Seek */
@@ -144,17 +164,17 @@ fun RoomAdvancedControlCard() {
                 shadowColor = Color.Black
             ) {
                 if (viewmodel.seeks.isEmpty()) {
-                    composeScope.dispatchOSD { "There is no recent seek in the room." }
+                    viewmodel.dispatchOSD { "There is no recent seek in the room." }
                     return@FancyIcon2
                 }
 
-                controlcardvisible = false
+                //TODO controlcardvisible = false
 
                 val lastSeek = viewmodel.seeks.lastOrNull() ?: return@FancyIcon2
                 viewmodel.player?.seekTo(lastSeek.first)
                 viewmodel.sendSeek(lastSeek.first)
                 viewmodel.seeks.remove(lastSeek)
-                composeScope.dispatchOSD { "Seek undone." }
+                viewmodel.dispatchOSD { "Seek undone." }
             }
 
             /* Subtitle Tracks */
@@ -203,7 +223,7 @@ fun RoomAdvancedControlCard() {
                         string = "Subtitle Track",
                         solid = Color.Black,
                         size = 14f,
-                        font = directive
+                        font = syncplayFont
                     )
 
                     DropdownMenuItem(text = {
@@ -223,7 +243,7 @@ fun RoomAdvancedControlCard() {
                         }
                     }, onClick = {
                         tracksPopup.value = false
-                        controlcardvisible = false
+                        //TODO controlcardvisible = false
 
                         subtitlePicker.launch()
                     })
@@ -250,7 +270,7 @@ fun RoomAdvancedControlCard() {
                             null, TRACKTYPE.SUBTITLE
                         )
                         tracksPopup.value = false
-                        controlcardvisible = false
+                        //TODO controlcardvisible = false
 
                     })
 
@@ -278,7 +298,7 @@ fun RoomAdvancedControlCard() {
                             )
 
                             tracksPopup.value = false
-                            controlcardvisible = false
+                            //TODO controlcardvisible = false
 
                         })
                     }
@@ -294,7 +314,7 @@ fun RoomAdvancedControlCard() {
                     size = ROOM_ICON_SIZE,
                     shadowColor = Color.Black
                 ) {
-                    composeScope.launch {
+                    viewmodel.viewModelScope.launch {
                         viewmodel.player?.analyzeTracks(
                             viewmodel.media ?: return@launch
                         )
@@ -330,7 +350,7 @@ fun RoomAdvancedControlCard() {
                         string = "Audio Track",
                         solid = Color.Black,
                         size = 14f,
-                        font = directive
+                        font = syncplayFont
                     )
 
                     for (track in (viewmodel.media?.audioTracks
@@ -372,7 +392,7 @@ fun RoomAdvancedControlCard() {
                         size = ROOM_ICON_SIZE,
                         shadowColor = Color.Black
                     ) {
-                        composeScope.launch {
+                        viewmodel.viewModelScope.launch {
                             viewmodel.player?.analyzeChapters(
                                 viewmodel.media ?: return@launch
                             )
@@ -406,7 +426,7 @@ fun RoomAdvancedControlCard() {
                             string = "Chapters",
                             solid = Color.Black,
                             size = 14f,
-                            font = directive
+                            font = syncplayFont
                         )
 
                         DropdownMenuItem(text = {
@@ -439,4 +459,5 @@ fun RoomAdvancedControlCard() {
                 }
             }
         }
+    }
 }

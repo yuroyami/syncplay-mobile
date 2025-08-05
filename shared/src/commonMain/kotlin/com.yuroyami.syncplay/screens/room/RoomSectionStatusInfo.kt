@@ -110,7 +110,7 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                 }
             }
 
-            val osd by remember { osdMsg }
+            val osd by remember { viewmodel.osdMsg }
             if (osd.isNotEmpty()) Text(
                 modifier = Modifier.fillMaxWidth(0.3f),
                 fontSize = 11.sp,

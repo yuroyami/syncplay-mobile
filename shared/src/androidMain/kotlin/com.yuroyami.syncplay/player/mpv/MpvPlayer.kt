@@ -21,7 +21,6 @@ import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.protocol.sending.Packet
-import com.yuroyami.syncplay.screens.room.dispatchOSD
 import com.yuroyami.syncplay.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.getFileName
@@ -236,16 +235,16 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                 ctx.resolveUri(uri.toUri())?.let {
                     MPVLib.command(arrayOf("sub-add" as java.lang.String, it as java.lang.String, "cached" as java.lang.String))
                 }
-                playerScopeMain.dispatchOSD {
+                viewmodel.dispatchOSD {
                     getString(Res.string.room_selected_sub, filename)
                 }
             } else {
-                playerScopeMain.dispatchOSD {
+                viewmodel.dispatchOSD {
                     getString(Res.string.room_selected_sub_error)
                 }
             }
         } else {
-            playerScopeMain.dispatchOSD {
+            viewmodel.dispatchOSD {
                 getString(Res.string.room_sub_error_load_vid_first)
             }
         }
@@ -253,7 +252,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
 
     override fun injectVideo(uri: String?, isUrl: Boolean) {
         /* Changing UI (hiding artwork, showing media controls) */
-        viewmodel.hasVideoG.value = true
+        viewmodel.hasVideo.value = true
         val ctx = mpvView.context ?: return
 
         playerScopeMain.launch {
@@ -301,11 +300,11 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
             } catch (e: IOException) {
                 /* If, for some reason, the video didn't wanna load */
                 e.printStackTrace()
-                playerScopeMain.dispatchOSD("There was a problem loading this file.")
+                viewmodel.dispatchOSD { "There was a problem loading this file." }
             }
 
             /* Finally, show a a toast to the user that the media file has been added */
-            playerScopeMain.dispatchOSD {
+            viewmodel.dispatchOSD {
                 getString(Res.string.room_selected_vid, "${viewmodel.media?.fileName}")
             }
         }
@@ -411,7 +410,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
             override fun eventProperty(property: String, value: Long) {
                 when (property) {
                     "time-pos" -> mpvPos = value * 1000
-                    "duration" -> viewmodel.timeFull.longValue = value
+                    "duration" -> viewmodel.timeFull.value = value
                     //"file-size" -> value
                 }
             }
@@ -439,13 +438,13 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
             override fun event(eventId: Int) {
                 when (eventId) {
                     MPVLib.mpvEventId.MPV_EVENT_START_FILE -> {
-                        viewmodel.hasVideoG.value = true
+                        viewmodel.hasVideo.value = true
 
                         if (viewmodel.isSoloMode) return
                         playerScopeIO.launch {
                             while (true) {
-                                if (viewmodel.timeFull.longValue.toDouble() > 0) {
-                                    viewmodel.media?.fileDuration = viewmodel.timeFull.longValue?.toDouble()!!
+                                if (viewmodel.timeFull.value.toDouble() > 0) {
+                                    viewmodel.media?.fileDuration = viewmodel.timeFull.value?.toDouble()!!
                                     viewmodel.p.send<Packet.File> {
                                         media = viewmodel.media
                                     }.await()

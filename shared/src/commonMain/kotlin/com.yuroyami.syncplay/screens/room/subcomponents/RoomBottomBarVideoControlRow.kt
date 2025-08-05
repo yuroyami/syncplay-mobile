@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.components.ComposeUtils.FancyIcon2
 import com.yuroyami.syncplay.components.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.screens.room.dispatchOSD
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_GESTURES
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
@@ -97,7 +96,7 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
                             )
                         }
 
-                        dispatchOSD {
+                        viewmodel.dispatchOSD {
                             getString(Res.string.room_custom_skip_button, customSkipAmountString)
                         }
                     }

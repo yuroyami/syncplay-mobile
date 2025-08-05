@@ -3,7 +3,6 @@ package com.yuroyami.syncplay.viewmodel
 
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -19,7 +18,6 @@ import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.screens.adam.Screen
 import com.yuroyami.syncplay.screens.adam.Screen.Companion.navigateTo
-import com.yuroyami.syncplay.screens.room.dispatchOSD
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_PLAYER_ENGINE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_FILE_MISMATCH_WARNING
@@ -75,7 +73,6 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
 
     lateinit var p: SyncplayProtocol
 
-
     var player: BasePlayer? = null
     var media: MediaFile? = null
 
@@ -88,8 +85,8 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
 
     /* Related to playback status */
     val isNowPlaying = mutableStateOf(false)
-    val timeFull = mutableLongStateOf(0L)
-    val timeCurrent = mutableLongStateOf(0L)
+    val timeFull = MutableStateFlow<Long>(0L)
+    val timeCurrent = MutableStateFlow<Long>(0L)
 
     val hasVideo = MutableStateFlow(false)
     val hasEnteredPipMode = MutableStateFlow(false)
@@ -98,6 +95,8 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     var currentTrackChoices: TrackChoices = TrackChoices()
 
     var playerTrackerJob: Job? = null
+
+    val osdMsg = mutableStateOf("")
 
     //TODO Lifecycle Stuff
 
@@ -321,7 +320,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
                         val progress = (player?.currentPositionMs()?.div(1000L)) ?: 0L
 
                         /* Informing UI */
-                        timeCurrent.longValue = progress
+                        timeCurrent.value = progress
 
                         if (!isSoloMode) p.globalPosition = player?.currentPositionMs()?.div(1000.0) ?: 0.0
                     }
@@ -748,6 +747,20 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     suspend fun snackIt(string: String, abruptly: Boolean = true) {
         if (abruptly) snack.currentSnackbarData?.dismiss()
         snack.showSnackbar(message = string, duration = SnackbarDuration.Short)
+    }
+
+
+    /******** Room OSD functionality */
+    var osdJob: Job? = null
+    fun dispatchOSD(getter: suspend () -> String) {
+        runCatching {
+            osdJob?.cancel(null)
+        }
+        osdJob = viewModelScope.launch(Dispatchers.IO) {
+            osdMsg.value = getter()
+            delay(2000) //TODO Don't hardcore delay, make it a setting
+            osdMsg.value = ""
+        }
     }
 
     /** End of viewmodel */

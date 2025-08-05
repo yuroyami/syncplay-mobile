@@ -24,6 +24,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
@@ -57,6 +60,8 @@ fun RoomMediaAdderButton() {
     val viewmodel = LocalViewmodel.current
     val hasVideo by viewmodel.hasVideo.collectAsState()
 
+    var addMediaCardVisibility by remember { mutableStateOf(viewmodel.media?.fileName.isNullOrEmpty() && viewmodel.p.session.sharedPlaylist.isEmpty() && viewmodel.p.session.spIndex.value == -1) }
+
     val videoPicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = CommonUtils.vidExs)) { file ->
         file?.path?.let {
             loggy(it, 0)
@@ -69,8 +74,8 @@ fun RoomMediaAdderButton() {
             modifier = Modifier,
             expanded = hasVideo,
             onClick = {
-                addmediacardvisible = !addmediacardvisible
-                controlcardvisible = false
+                addMediaCardVisibility = !addMediaCardVisibility
+                //TODO controlcardvisible = false
             }
         )
 
@@ -87,13 +92,13 @@ fun RoomMediaAdderButton() {
                 })
             ),
             shape = RoundedCornerShape(8.dp),
-            expanded = addmediacardvisible,
+            expanded = addMediaCardVisibility,
             properties = PopupProperties(
                 dismissOnBackPress = true,
                 focusable = true,
                 dismissOnClickOutside = true
             ),
-            onDismissRequest = { addmediacardvisible = false }) {
+            onDismissRequest = { addMediaCardVisibility = false }) {
 
             ComposeUtils.FancyText2(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -119,7 +124,7 @@ fun RoomMediaAdderButton() {
                     )
                 }
             }, onClick = {
-                addmediacardvisible = false
+                addMediaCardVisibility = false
                 videoPicker.launch()
             })
 
@@ -138,13 +143,12 @@ fun RoomMediaAdderButton() {
                     )
                 }
             }, onClick = {
-                addmediacardvisible = false
-                addurlpopupstate.value = true
+                addMediaCardVisibility = false
+                //TODO addurlpopupstate.value = true
             })
         }
     }
 }
-
 
 @Composable
 fun AddVideoButton(modifier: Modifier, expanded: Boolean, onClick: () -> Unit) {
@@ -165,13 +169,10 @@ fun AddVideoButton(modifier: Modifier, expanded: Boolean, onClick: () -> Unit) {
         ) {
             Box(modifier = Modifier.fillMaxSize().padding(8.dp), contentAlignment = Alignment.Center) {
                 Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceAround) {
-
                     Icon(
                         tint = Color.DarkGray, imageVector = Icons.Filled.AddToQueue, contentDescription = "",
                         modifier = Modifier.size(32.dp).gradientOverlay() //.align(Alignment.Center)
                     )
-
-
 
                     Text(
                         modifier = Modifier.gradientOverlay(),

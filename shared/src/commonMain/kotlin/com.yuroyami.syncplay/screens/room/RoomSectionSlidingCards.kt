@@ -3,31 +3,35 @@ package com.yuroyami.syncplay.screens.room
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.yuroyami.syncplay.components.cards.CardRoomPrefs.InRoomSettingsCard
 import com.yuroyami.syncplay.components.cards.CardSharedPlaylist.SharedPlaylistCard
 import com.yuroyami.syncplay.components.cards.CardUserInfo.UserInfoCard
+import com.yuroyami.syncplay.screens.adam.LocalScreenSize
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 
 @Composable
-fun RoomSectionSlidingCards(modifier: Modifier) {
+fun RoomSectionSlidingCards(modifier: Modifier, tabController: TabController) {
+    val screenSize = LocalScreenSize.current
     val viewmodel = LocalViewmodel.current
 
+    val stateUserInfo by tabController.tabCardUserInfo.collectAsState()
+    val stateSharedPlaylist by tabController.tabCardSharedPlaylist.collectAsState()
+    val stateRoomPreferences by tabController.tabCardRoomPreferences.collectAsState()
+
     /* The cards below */
-    val cardWidth = 0.36f
-    val cardHeight = 0.72f
     Box(modifier) {
         /** User-info card (toggled on and off) */
         if (!viewmodel.isSoloMode) {
             FreeAnimatedVisibility(
-                modifier = Modifier.fillMaxWidth(cardWidth)
-                    .fillMaxHeight(cardHeight),
-                enter = slideInHorizontally(initialOffsetX = { (screensizeinfo.widthPx * 1.3).toInt() }),
-                exit = slideOutHorizontally(targetOffsetX = { (screensizeinfo.widthPx * 1.3).toInt() }),
-                visible = !inroomprefsVisibility.value && userinfoVisibility.value && !sharedplaylistVisibility.value
+                modifier = Modifier.fillMaxSize(),
+                enter = slideInHorizontally(initialOffsetX = { (screenSize.widthPx * 1.3).toInt() }),
+                exit = slideOutHorizontally(targetOffsetX = { (screenSize.widthPx * 1.3).toInt() }),
+                visible = stateUserInfo
             ) {
                 UserInfoCard()
             }
@@ -36,11 +40,10 @@ fun RoomSectionSlidingCards(modifier: Modifier) {
         /** Shared Playlist card (toggled on and off) */
         if (!viewmodel.isSoloMode) {
             FreeAnimatedVisibility(
-                modifier = Modifier.fillMaxWidth(cardWidth)
-                    .fillMaxHeight(cardHeight),
-                enter = slideInHorizontally(initialOffsetX = { (screensizeinfo.widthPx * 1.3).toInt() }),
-                exit = slideOutHorizontally(targetOffsetX = { (screensizeinfo.widthPx * 1.3).toInt() }),
-                visible = !inroomprefsVisibility.value && !userinfoVisibility.value && sharedplaylistVisibility.value
+                modifier = Modifier.fillMaxSize(),
+                enter = slideInHorizontally(initialOffsetX = { (screenSize.widthPx * 1.3).toInt() }),
+                exit = slideOutHorizontally(targetOffsetX = { (screenSize.widthPx * 1.3).toInt() }),
+                visible = stateSharedPlaylist
             ) {
                 SharedPlaylistCard()
             }
@@ -48,11 +51,10 @@ fun RoomSectionSlidingCards(modifier: Modifier) {
 
         /** In-room card (toggled on and off) */
         FreeAnimatedVisibility(
-            modifier = Modifier.fillMaxWidth(cardWidth)
-                .fillMaxHeight(cardHeight),
-            enter = slideInHorizontally(initialOffsetX = { (screensizeinfo.widthPx * 1.3).toInt() }),
-            exit = slideOutHorizontally(targetOffsetX = { (screensizeinfo.widthPx * 1.3).toInt() }),
-            visible = inroomprefsVisibility.value && !userinfoVisibility.value && !sharedplaylistVisibility.value
+            modifier = Modifier.fillMaxSize(),
+            enter = slideInHorizontally(initialOffsetX = { (screenSize.widthPx * 1.3).toInt() }),
+            exit = slideOutHorizontally(targetOffsetX = { (screenSize.widthPx * 1.3).toInt() }),
+            visible = stateRoomPreferences
         ) {
             InRoomSettingsCard()
         }

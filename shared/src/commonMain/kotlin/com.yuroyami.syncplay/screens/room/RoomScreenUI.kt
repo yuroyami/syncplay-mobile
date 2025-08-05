@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -92,6 +93,12 @@ fun RoomScreenUI() {
                         }
                     )
 
+                    /* Card section (to the right middle) */
+                    RoomSectionSlidingCards(
+                        modifier = Modifier.align(Alignment.CenterEnd).fillMaxWidth(0.36f).fillMaxHeight(0.72f),
+                        tabController = tabController
+                    )
+
                     /* BottomBar: Ready Button - Seekbar (and the buttons above it) - Advanced Controls (like selecting tracks) - Media Add Button */
                     RoomBottomBarSection(
                         modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
@@ -109,7 +116,6 @@ fun RoomScreenUI() {
             FadingMessageLayout()
         }
     }
-
 
     /** Popups */
     AddUrlPopup(visibilityState = popupStateAddUrl)

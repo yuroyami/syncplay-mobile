@@ -31,10 +31,13 @@ fun RoomBottomBarSection(modifier: Modifier) {
             //Ready Toggle Button
             RoomReadyButton()
 
-            Column(verticalArrangement = Arrangement.Bottom) {
-                RoomVideoSeekbar()
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Bottom
+            ) {
+                RoomVideoSeekbar(modifier = Modifier.fillMaxWidth())
 
-                RoomBottomBarVideoControlRow(modifier = Modifier)
+                RoomBottomBarVideoControlRow(modifier = Modifier.fillMaxWidth())
             }
 
             RoomAdvancedControlButton()

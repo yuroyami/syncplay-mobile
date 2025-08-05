@@ -45,7 +45,6 @@ import com.yuroyami.syncplay.components.ComposeUtils.FancyText2
 import com.yuroyami.syncplay.components.ComposeUtils.SyncplayPopup
 import com.yuroyami.syncplay.components.getRegularFont
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.screens.room.dispatchOSD
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
 import com.yuroyami.syncplay.settings.valueAsState
@@ -213,8 +212,8 @@ object PopupSeekToPosition {
                                 viewmodel.seeks.add(Pair((currentMs), newPos * 1000))
                             }
 
-                            //TODO: I18N
-                            dispatchOSD("Skipping  of time")
+                            //TODO: Localize
+                            viewmodel.dispatchOSD { "Skipping  of time" }
                         }
                     },
                 ) {
@@ -252,8 +251,8 @@ object PopupSeekToPosition {
 
                             viewmodel.player?.seekTo(result)
 
-                            //TODO: Need I18n
-                            dispatchOSD("Seeking to ${timeStamper(result.div(1000L))}")
+                            //TODO: Localize
+                            viewmodel.dispatchOSD {"Seeking to ${timeStamper(result.div(1000L))}" }
                         }
 
                     },

@@ -2,6 +2,7 @@ package com.yuroyami.syncplay.screens.room.subcomponents
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
@@ -10,8 +11,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,12 +29,14 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
+import com.yuroyami.syncplay.components.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
-fun RoomVideoSeekbar() {
+fun RoomVideoSeekbar(modifier: Modifier) {
     val viewmodel = LocalViewmodel.current
 
     val chapters = remember(
@@ -45,14 +50,32 @@ fun RoomVideoSeekbar() {
             )
         }
     }
+
+    val videoCurrentTime by viewmodel.timeCurrent.collectAsState()
+    val videoFullDuration by viewmodel.timeFull.collectAsState()
+    val interactionSource = remember { MutableInteractionSource() }
+
+    //TODO
+    Text(
+        text = timeStamper(videoCurrentTime),
+        modifier = Modifier.alpha(0.85f).gradientOverlay(),
+    )
+
+    //TODO
+    Text(
+        text = if (videoFullDuration >= Long.MAX_VALUE / 1000L) "???" else timeStamper(videoFullDuration),
+        modifier = Modifier.alpha(0.85f).gradientOverlay(),
+    )
+
     Slider(
-        value = slidervalue.toFloat(),
-        valueRange = (0f..(slidermax.toFloat())),
+        value = videoCurrentTime.toFloat(),
+        valueRange = (0f..(videoFullDuration.toFloat())),
         onValueChange = { f ->
             viewmodel.player?.seekTo(f.toLong() * 1000L)
-            if (isSoloMode) {
+
+            if (viewmodel.isSoloMode) {
                 viewmodel.player?.let {
-                    composeScope.launch(Dispatchers.Main) {
+                    viewmodel.viewModelScope.launch(Dispatchers.Main) {
                         viewmodel.seeks.add(
                             Pair(
                                 it.currentPositionMs(), f.toLong() * 1000
@@ -62,12 +85,13 @@ fun RoomVideoSeekbar() {
                 }
             }
 
-            slidervalue = f.toLong()
+            viewmodel.timeCurrent.value = f.toLong()
         },
         onValueChangeFinished = {
-            viewmodel.sendSeek(slidervalue * 1000L)
+            viewmodel.sendSeek(videoCurrentTime * 1000L)
         },
-        modifier = Modifier.alpha(0.82f).fillMaxWidth(0.75f)
+        modifier = modifier
+            .alpha(0.82f)
             .padding(horizontal = 12.dp),
         interactionSource = interactionSource,
         steps = 500,
@@ -104,24 +128,20 @@ fun RoomVideoSeekbar() {
                         val positionFraction =
                             (chapter.timestamp / mediaDuration.toFloat()) / 1000
                         Box(
-                            modifier = Modifier.offset {
-                                // 4.dp to pixels
-                                val offsetAdjustment =
-                                    with(density) { 4.dp.toPx() }
-                                IntOffset(
-                                    (positionFraction * trackWidth).toInt() - offsetAdjustment.toInt(),
-                                    0
-                                )
-                            }.align(Alignment.CenterStart)
-
+                            modifier = Modifier
+                                .offset {
+                                    // 4.dp to pixels
+                                    val offsetAdjustment = with(density) { 4.dp.toPx() }
+                                    IntOffset((positionFraction * trackWidth).toInt() - offsetAdjustment.toInt(), 0)
+                                }.align(Alignment.CenterStart)
                                 .size(8.dp).clip(CircleShape)
                                 .background(Color.White).clickable {
                                     viewmodel.player?.jumpToChapter(chapter)
-
-                                })
+                                }
+                        )
                     }
                 }
-
             }
-        })
+        }
+    )
 }

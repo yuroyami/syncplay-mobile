@@ -41,7 +41,6 @@ import com.yuroyami.syncplay.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.player.BasePlayer
 import com.yuroyami.syncplay.player.PlayerOptions
 import com.yuroyami.syncplay.protocol.sending.Packet
-import com.yuroyami.syncplay.screens.room.dispatchOSD
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
@@ -164,7 +163,7 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                     if (!isLoading && exoplayer != null) {
                         /* Updating our timeFull */
                         val duration = exoplayer!!.duration.div(1000.0)
-                        viewmodel.timeFull.longValue = abs(duration.toLong())
+                        viewmodel.timeFull.value = abs(duration.toLong())
 
                         if (viewmodel.isSoloMode) return
                         if (duration != viewmodel.media?.fileDuration) {
@@ -375,15 +374,15 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                 injectVideo(uri)
 
 
-                playerScopeMain.dispatchOSD {
+                viewmodel.dispatchOSD {
                     getString(Res.string.room_selected_sub, filename)
                 }
             } else {
-                playerScopeMain.dispatchOSD {
+                viewmodel.dispatchOSD {
                     getString(Res.string.room_selected_sub_error)
                 }            }
         } else {
-            playerScopeMain.dispatchOSD {
+            viewmodel.dispatchOSD {
                 getString(Res.string.room_sub_error_load_vid_first)
             }
         }
@@ -392,7 +391,7 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
 
     override fun injectVideo(uri: String?, isUrl: Boolean) {
         /* Changing UI (hiding artwork, showing media controls) */
-        viewmodel.hasVideoG.value = true
+        viewmodel.hasVideo.value = true
 
         playerScopeMain.launch {
             /* Creating a media file from the selected file */
@@ -430,15 +429,15 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                 exoplayer?.prepare() /* This prepares it and makes the first frame visible */
 
                 /* Updating play button */
-                exoplayer?.duration?.let { viewmodel.timeFull.longValue = if (it < 0) 0 else it }
+                exoplayer?.duration?.let { viewmodel.timeFull.value = if (it < 0) 0 else it }
             } catch (e: IOException) {
                 /* If, for some reason, the video didn't wanna load */
                 e.printStackTrace()
-                playerScopeMain.dispatchOSD("There was a problem loading this file.")
+                viewmodel.dispatchOSD {"There was a problem loading this file." }
             }
 
             /* Finally, show a a toast to the user that the media file has been added */
-            playerScopeMain.dispatchOSD {
+            viewmodel.dispatchOSD {
                 getString(Res.string.room_selected_vid,"${viewmodel.media?.fileName}")
             }
         }

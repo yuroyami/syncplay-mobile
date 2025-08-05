@@ -75,7 +75,6 @@ import com.yuroyami.syncplay.components.ComposeUtils.gradientOverlay
 import com.yuroyami.syncplay.components.getRegularFont
 import com.yuroyami.syncplay.components.popups.PopupMediaDirs.MediaDirsPopup
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.screens.room.dispatchOSD
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.CommonUtils
 import com.yuroyami.syncplay.utils.CommonUtils.vidExs
@@ -91,7 +90,6 @@ import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
-import kotlin.time.Clock
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
@@ -108,6 +106,7 @@ import syncplaymobile.shared.generated.resources.room_shared_playlist_button_pla
 import syncplaymobile.shared.generated.resources.room_shared_playlist_button_set_media_directories
 import syncplaymobile.shared.generated.resources.room_shared_playlist_button_shuffle
 import syncplaymobile.shared.generated.resources.room_shared_playlist_button_shuffle_rest
+import kotlin.time.Clock
 
 object CardSharedPlaylist {
 
@@ -456,7 +455,7 @@ object CardSharedPlaylist {
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
                                     if (viewmodel.p.session.sharedPlaylist.isEmpty()) {
-                                        scope.dispatchOSD("Shared Playlist is empty. Nothing to save.")
+                                        viewmodel.dispatchOSD { "Shared Playlist is empty. Nothing to save." }
                                         return@DropdownMenuItem
                                     }
 
