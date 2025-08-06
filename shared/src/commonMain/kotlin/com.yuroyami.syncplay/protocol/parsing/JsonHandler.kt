@@ -5,15 +5,17 @@ import com.yuroyami.syncplay.models.User
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.utils.loggy
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlin.time.Clock
-import kotlin.time.Instant
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlin.math.abs
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 // Top-level message containers
 @Serializable
@@ -168,7 +170,9 @@ object JsonHandler {
                     }
                     element.containsKey("State") -> {
                         val message = json.decodeFromString<StateMessage>(jsonString)
-                        handleState(message.State, protocol, jsonString)
+                        withContext(Dispatchers.Main) {
+                            handleState(message.State, protocol, jsonString)
+                        }
                     }
                     element.containsKey("Chat") -> {
                         val message = json.decodeFromString<ChatMessage>(jsonString)

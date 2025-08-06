@@ -314,7 +314,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     fun trackProgress(intervalMillis: Long) {
         //TODO: Don't keep job reference like this
         if (playerTrackerJob == null) {
-            playerTrackerJob = viewModelScope.launch(Dispatchers.IO) {
+            playerTrackerJob = viewModelScope.launch(Dispatchers.Main) {
                 while (true) {
                     if (player?.isSeekable() == true) {
                         val progress = (player?.currentPositionMs()?.div(1000L)) ?: 0L
@@ -539,14 +539,16 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
         broadcastMessage(message = { getString(Res.string.room_guy_left,leaver) }, isChat = false)
 
         /* If the setting is enabled, pause playback **/
-        if (player?.hasMedia() == true) {
-            val pauseOnLeft = valueBlockingly(PREF_PAUSE_ON_SOMEONE_LEAVE, true)
-            if (pauseOnLeft) {
-                pausePlayback()
+        viewModelScope.launch(Dispatchers.Main) {
+            if (player?.hasMedia() == true) {
+                val pauseOnLeft = valueBlockingly(PREF_PAUSE_ON_SOMEONE_LEAVE, true)
+                if (pauseOnLeft) {
+                    pausePlayback()
+                }
             }
         }
 
-        /* Rare cases where a user can see his own self disconnected */
+        /* Rare cases where a user can see their own self disconnected */
         if (leaver == p.session.currentUsername) {
             onDisconnected()
         }
