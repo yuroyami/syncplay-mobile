@@ -1,5 +1,6 @@
 package com.yuroyami.syncplay.player
 
+import androidx.annotation.CallSuper
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.eygraber.uri.Uri
@@ -81,6 +82,7 @@ abstract class BasePlayer(
 
     abstract fun isSeekable(): Boolean
 
+    @CallSuper
     open fun seekTo(toPositionMs: Long) {
         if (viewmodel.background == true) return
     }
