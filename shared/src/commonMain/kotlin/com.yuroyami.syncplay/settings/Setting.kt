@@ -48,12 +48,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.components.FlexibleFancyText
-import com.yuroyami.syncplay.components.MultiChoiceDialog
-import com.yuroyami.syncplay.components.SmartFancyIcon
-import com.yuroyami.syncplay.components.popups.PopupColorPicker.ColorPickingPopup
+import com.yuroyami.syncplay.ui.utils.FlexibleFancyText
+import com.yuroyami.syncplay.ui.utils.MultiChoiceDialog
+import com.yuroyami.syncplay.ui.utils.SmartFancyIcon
+import com.yuroyami.syncplay.ui.popups.PopupColorPicker.ColorPickingPopup
 import com.yuroyami.syncplay.screens.adam.LocalSettingStyling
-import com.yuroyami.syncplay.ui.Paletting
+import com.yuroyami.syncplay.ui.theme.Paletting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
