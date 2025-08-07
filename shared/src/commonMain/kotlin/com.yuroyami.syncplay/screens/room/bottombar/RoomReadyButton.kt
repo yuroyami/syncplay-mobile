@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.room.subcomponents
+package com.yuroyami.syncplay.screens.room.bottombar
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -34,6 +34,7 @@ fun RowScope.RoomReadyButton() {
 
     if (!viewmodel.isSoloMode) {
         var ready by remember { mutableStateOf(viewmodel.setReadyDirectly) }
+
 
         IconToggleButton(
             modifier = Modifier.width(112.dp).padding(4.dp),

@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.room.subcomponents
+package com.yuroyami.syncplay.screens.room.bottombar
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -37,9 +37,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
-import com.yuroyami.syncplay.components.ComposeUtils
-import com.yuroyami.syncplay.components.ComposeUtils.FancyIcon2
-import com.yuroyami.syncplay.components.ComposeUtils.gradientOverlay
+import com.yuroyami.syncplay.components.FancyIcon2
+import com.yuroyami.syncplay.components.FancyText2
+import com.yuroyami.syncplay.components.gradientOverlay
 import com.yuroyami.syncplay.components.syncplayFont
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.Paletting
@@ -100,7 +100,7 @@ fun RoomMediaAdderButton() {
             ),
             onDismissRequest = { addMediaCardVisibility = false }) {
 
-            ComposeUtils.FancyText2(
+            FancyText2(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
                     .padding(horizontal = 2.dp),
                 string = "Add media",
@@ -155,7 +155,7 @@ fun AddVideoButton(modifier: Modifier, expanded: Boolean, onClick: () -> Unit) {
     if (!expanded) {
         FancyIcon2(
             modifier = modifier,
-            icon = Icons.Filled.AddToQueue, size = Paletting.ROOM_ICON_SIZE + 6, shadowColor = Color.Black,
+            icon = Icons.Filled.AddToQueue, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black,
             onClick = {
                 onClick.invoke()
             })
@@ -168,7 +168,7 @@ fun AddVideoButton(modifier: Modifier, expanded: Boolean, onClick: () -> Unit) {
             contentColor = Color.DarkGray.copy(0.5f)
         ) {
             Box(modifier = Modifier.fillMaxSize().padding(8.dp), contentAlignment = Alignment.Center) {
-                Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceAround) {
+                Row(modifier = Modifier.fillMaxSize(), verticalAlignment = CenterVertically, horizontalArrangement = Arrangement.SpaceAround) {
                     Icon(
                         tint = Color.DarkGray, imageVector = Icons.Filled.AddToQueue, contentDescription = "",
                         modifier = Modifier.size(32.dp).gradientOverlay() //.align(Alignment.Center)

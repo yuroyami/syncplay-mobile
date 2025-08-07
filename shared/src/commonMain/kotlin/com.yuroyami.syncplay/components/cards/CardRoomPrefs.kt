@@ -25,8 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.yuroyami.syncplay.components.ComposeUtils.FancyIcon2
-import com.yuroyami.syncplay.components.ComposeUtils.FancyText2
+import com.yuroyami.syncplay.components.FancyIcon2
+import com.yuroyami.syncplay.components.FancyText2
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.settings.SETTINGS_ROOM
 import com.yuroyami.syncplay.settings.SettingCollection

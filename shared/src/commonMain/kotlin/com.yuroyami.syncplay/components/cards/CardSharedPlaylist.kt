@@ -68,10 +68,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
-import com.yuroyami.syncplay.components.ComposeUtils.FancyIcon2
-import com.yuroyami.syncplay.components.ComposeUtils.FancyText2
-import com.yuroyami.syncplay.components.ComposeUtils.SyncplayPopup
-import com.yuroyami.syncplay.components.ComposeUtils.gradientOverlay
+import com.yuroyami.syncplay.components.FancyIcon2
+import com.yuroyami.syncplay.components.FancyText2
+import com.yuroyami.syncplay.components.SyncplayPopup
+import com.yuroyami.syncplay.components.gradientOverlay
 import com.yuroyami.syncplay.components.getRegularFont
 import com.yuroyami.syncplay.components.popups.PopupMediaDirs.MediaDirsPopup
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel

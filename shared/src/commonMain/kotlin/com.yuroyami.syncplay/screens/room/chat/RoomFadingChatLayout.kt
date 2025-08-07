@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.room
+package com.yuroyami.syncplay.screens.room.chat
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.keyframes

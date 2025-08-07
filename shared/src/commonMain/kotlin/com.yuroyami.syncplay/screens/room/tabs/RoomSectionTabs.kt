@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.room
+package com.yuroyami.syncplay.screens.room.tabs
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -37,13 +37,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
-import com.yuroyami.syncplay.components.ComposeUtils
-import com.yuroyami.syncplay.components.ComposeUtils.FancyIcon2
+import com.yuroyami.syncplay.components.FancyIcon2
+import com.yuroyami.syncplay.components.FancyText2
 import com.yuroyami.syncplay.components.syncplayFont
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.screens.adam.Screen
 import com.yuroyami.syncplay.screens.adam.Screen.Companion.navigateTo
-import com.yuroyami.syncplay.screens.room.subcomponents.RoomTab
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.ui.Paletting.ROOM_ICON_SIZE
 import com.yuroyami.syncplay.utils.platformCallback
@@ -179,7 +178,7 @@ fun RoomTabSection(modifier: Modifier, tabController: TabController, onShowChatH
                 ),
                 onDismissRequest = { overflowMenuState.value = false }) {
 
-                ComposeUtils.FancyText2(
+                FancyText2(
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                         .padding(horizontal = 2.dp),
                     string = stringResource(Res.string.room_overflow_title),

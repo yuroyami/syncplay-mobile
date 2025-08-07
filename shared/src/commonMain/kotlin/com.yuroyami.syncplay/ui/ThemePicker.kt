@@ -16,7 +16,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.components.ComposeUtils.SyncplayPopup
+import com.yuroyami.syncplay.components.SyncplayPopup
 
 /**
  * Defines a Theme.

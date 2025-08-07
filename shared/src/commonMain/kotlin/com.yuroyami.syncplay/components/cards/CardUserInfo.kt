@@ -31,8 +31,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.components.ComposeUtils
-import com.yuroyami.syncplay.components.ComposeUtils.gradientOverlay
+import com.yuroyami.syncplay.components.FancyText2
+import com.yuroyami.syncplay.components.gradientOverlay
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.Paletting
 import com.yuroyami.syncplay.utils.timeStamper
@@ -54,7 +54,7 @@ object CardUserInfo {
             border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.5f)),
         ) {
-            ComposeUtils.FancyText2(
+            FancyText2(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .padding(vertical = 4.dp),

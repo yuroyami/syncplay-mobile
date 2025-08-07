@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.room
+package com.yuroyami.syncplay.screens.room.slidingcards
 
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -8,11 +8,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import com.yuroyami.syncplay.components.FreeAnimatedVisibility
 import com.yuroyami.syncplay.components.cards.CardRoomPrefs.InRoomSettingsCard
 import com.yuroyami.syncplay.components.cards.CardSharedPlaylist.SharedPlaylistCard
 import com.yuroyami.syncplay.components.cards.CardUserInfo.UserInfoCard
 import com.yuroyami.syncplay.screens.adam.LocalScreenSize
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.screens.room.tabs.TabController
 
 @Composable
 fun RoomSectionSlidingCards(modifier: Modifier, tabController: TabController) {

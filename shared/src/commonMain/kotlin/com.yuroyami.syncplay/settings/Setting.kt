@@ -48,9 +48,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.components.ComposeUtils.FlexibleFancyText
-import com.yuroyami.syncplay.components.ComposeUtils.MultiChoiceDialog
-import com.yuroyami.syncplay.components.ComposeUtils.SmartFancyIcon
+import com.yuroyami.syncplay.components.FlexibleFancyText
+import com.yuroyami.syncplay.components.MultiChoiceDialog
+import com.yuroyami.syncplay.components.SmartFancyIcon
 import com.yuroyami.syncplay.components.popups.PopupColorPicker.ColorPickingPopup
 import com.yuroyami.syncplay.screens.adam.LocalSettingStyling
 import com.yuroyami.syncplay.ui.Paletting

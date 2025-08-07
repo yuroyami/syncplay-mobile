@@ -30,8 +30,8 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.components.ComposeUtils.SyncplayPopup
-import com.yuroyami.syncplay.components.ComposeUtils.SyncplayishText
+import com.yuroyami.syncplay.components.SyncplayPopup
+import com.yuroyami.syncplay.components.SyncplayishText
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource

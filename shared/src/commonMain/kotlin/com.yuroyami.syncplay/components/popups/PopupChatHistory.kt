@@ -26,9 +26,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.components.ComposeUtils
-import com.yuroyami.syncplay.components.ComposeUtils.FancyText2
-import com.yuroyami.syncplay.components.ComposeUtils.SyncplayPopup
+import com.yuroyami.syncplay.components.FancyText2
+import com.yuroyami.syncplay.components.FlexibleFancyAnnotatedText
+import com.yuroyami.syncplay.components.SyncplayPopup
 import com.yuroyami.syncplay.components.getRegularFont
 import com.yuroyami.syncplay.screens.adam.LocalChatPalette
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
@@ -74,7 +74,7 @@ object PopupChatHistory {
                     modifier = Modifier.fillMaxHeight(0.7f).background(Color(50, 50, 50, 50))
                 ) {
                     items(msgs) {
-                        ComposeUtils.FlexibleFancyAnnotatedText(
+                        FlexibleFancyAnnotatedText(
                             modifier = Modifier.fillMaxWidth(),
                             text = it.factorize(palette),
                             size = 10f,

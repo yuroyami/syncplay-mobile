@@ -47,8 +47,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.components.ComposeUtils
-import com.yuroyami.syncplay.components.ComposeUtils.FancyIcon2
+import com.yuroyami.syncplay.components.FancyIcon2
+import com.yuroyami.syncplay.components.FancyText2
 import com.yuroyami.syncplay.components.syncplayFont
 import com.yuroyami.syncplay.player.BasePlayer.TRACKTYPE
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
@@ -218,7 +218,7 @@ fun RoomAdvancedControlCard() {
                         tracksPopup.value = !tracksPopup.value
                     }) {
 
-                    ComposeUtils.FancyText2(
+                    FancyText2(
                         modifier = Modifier.align(Alignment.CenterHorizontally),
                         string = "Subtitle Track",
                         solid = Color.Black,
@@ -345,7 +345,7 @@ fun RoomAdvancedControlCard() {
                         tracksPopup.value = !tracksPopup.value
                     }) {
 
-                    ComposeUtils.FancyText2(
+                    FancyText2(
                         modifier = Modifier.align(Alignment.CenterHorizontally),
                         string = "Audio Track",
                         solid = Color.Black,
@@ -421,7 +421,7 @@ fun RoomAdvancedControlCard() {
                         ),
                         onDismissRequest = { chaptersPopup = false }) {
 
-                        ComposeUtils.FancyText2(
+                        FancyText2(
                             modifier = Modifier.align(Alignment.CenterHorizontally),
                             string = "Chapters",
                             solid = Color.Black,

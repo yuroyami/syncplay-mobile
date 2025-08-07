@@ -21,8 +21,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.components.ComposeUtils.FancyIcon2
-import com.yuroyami.syncplay.components.ComposeUtils.gradientOverlay
+import com.yuroyami.syncplay.components.FancyIcon2
+import com.yuroyami.syncplay.components.gradientOverlay
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_GESTURES
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT

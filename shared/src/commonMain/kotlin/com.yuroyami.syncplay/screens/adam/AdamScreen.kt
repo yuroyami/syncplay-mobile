@@ -17,9 +17,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.yuroyami.syncplay.components.ComposedMessagePalette
 import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.screens.home.HomeScreenUI
-import com.yuroyami.syncplay.screens.room.ComposedMessagePalette
 import com.yuroyami.syncplay.screens.room.RoomScreenUI
 import com.yuroyami.syncplay.settings.SettingStyling
 import com.yuroyami.syncplay.ui.AppTheme

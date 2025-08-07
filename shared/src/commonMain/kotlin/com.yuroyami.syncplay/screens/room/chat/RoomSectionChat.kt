@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.room
+package com.yuroyami.syncplay.screens.room.chat
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -42,7 +42,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.components.ComposeUtils.ChatAnnotatedText
+import com.yuroyami.syncplay.components.ChatAnnotatedText
 import com.yuroyami.syncplay.screens.adam.LocalChatPalette
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_BG_OPACITY

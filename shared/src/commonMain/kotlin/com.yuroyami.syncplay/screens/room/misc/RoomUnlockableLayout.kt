@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.room.subcomponents
+package com.yuroyami.syncplay.screens.room.misc
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -26,9 +26,9 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.yuroyami.syncplay.components.ComposeUtils.gradientOverlay
+import com.yuroyami.syncplay.components.gradientOverlay
 import com.yuroyami.syncplay.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.screens.room.TabController
+import com.yuroyami.syncplay.screens.room.tabs.TabController
 import com.yuroyami.syncplay.ui.Paletting
 
 

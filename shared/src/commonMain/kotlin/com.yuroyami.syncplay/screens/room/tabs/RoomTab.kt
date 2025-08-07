@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.room.subcomponents
+package com.yuroyami.syncplay.screens.room.tabs
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -23,7 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.composeunstyled.buildModifier
-import com.yuroyami.syncplay.components.ComposeUtils.gradientOverlay
+import com.yuroyami.syncplay.components.gradientOverlay
 import com.yuroyami.syncplay.ui.Paletting
 
 @Composable

@@ -43,8 +43,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.yuroyami.syncplay.components.ComposeUtils.FancyText2
-import com.yuroyami.syncplay.components.ComposeUtils.gradientOverlay
+import com.yuroyami.syncplay.components.FancyText2
+import com.yuroyami.syncplay.components.gradientOverlay
 import com.yuroyami.syncplay.components.getRegularFont
 import com.yuroyami.syncplay.screens.adam.LocalSettingStyling
 import com.yuroyami.syncplay.ui.Paletting

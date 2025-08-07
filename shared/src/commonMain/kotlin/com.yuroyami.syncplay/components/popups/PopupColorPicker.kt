@@ -36,8 +36,8 @@ import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kborowy.colorpicker.KolorPicker
-import com.yuroyami.syncplay.components.ComposeUtils.FancyText2
-import com.yuroyami.syncplay.components.ComposeUtils.SyncplayPopup
+import com.yuroyami.syncplay.components.FancyText2
+import com.yuroyami.syncplay.components.SyncplayPopup
 import com.yuroyami.syncplay.ui.Paletting
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource

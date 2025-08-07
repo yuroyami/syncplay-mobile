@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.room
+package com.yuroyami.syncplay.screens.room.misc
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

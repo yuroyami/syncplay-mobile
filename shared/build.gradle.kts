@@ -18,6 +18,8 @@ plugins {
 }
 
 kotlin {
+    jvmToolchain(21)
+
     // Activating Android target (androidMain)
     androidTarget()
 
@@ -166,9 +168,9 @@ android {
     namespace = "com.yuroyami.syncplay"
     compileSdk = 36
 
-    sourceSets["main"].java.apply {
+    /*sourceSets["main"].java.apply {
         srcDirs(srcDirs , "src/androidMain/java")
-    }
+    }*/
 
     signingConfigs {
         val localProperties = Properties()
