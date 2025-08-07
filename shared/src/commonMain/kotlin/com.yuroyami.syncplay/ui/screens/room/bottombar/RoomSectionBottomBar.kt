@@ -48,7 +48,7 @@ fun RoomBottomBarSection(modifier: Modifier) {
             RoomAdvancedControlButton()
             //}
 
-            RoomMediaAdderButton()
+            RoomMediaAddButton()
         }
     }
 }

@@ -4,11 +4,14 @@ import android.content.ContentResolver
 import android.content.Context
 import android.media.AudioManager
 import android.net.Uri
+import android.os.Build
 import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.yuroyami.syncplay.player.AndroidPlayerEngine
@@ -88,4 +91,18 @@ actual suspend fun pingIcmp(host: String, packet: Int): Int? {
 
 actual fun ClipEntry.getText(): String? {
     return this.clipData.getItemAt(0).text?.toString()
+}
+
+@Composable
+actual fun HideSystemBars() {
+    val view = LocalView.current
+
+    //We use a side effect here because it is guaranteed to be executed after all the composition is concluded, which means right after a popup finishes appearing.
+    SideEffect {
+        if (Build.VERSION.SDK_INT >= 30) {
+            view.windowInsetsController?.hide(
+                android.view.WindowInsets.Type.systemBars()
+            )
+        }
+    }
 }

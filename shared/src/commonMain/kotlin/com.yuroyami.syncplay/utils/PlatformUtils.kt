@@ -58,3 +58,6 @@ data class ScreenSizeInfo(val heightPx: Int, val widthPx: Int) {
     fun widthDp(): Dp = with(LocalDensity.current) { widthPx.toDp() }
 }
 expect fun ClipEntry.getText(): String?
+
+@Composable
+expect fun HideSystemBars()

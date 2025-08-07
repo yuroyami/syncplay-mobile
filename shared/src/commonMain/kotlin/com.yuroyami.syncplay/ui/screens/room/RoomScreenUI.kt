@@ -19,10 +19,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
-import com.yuroyami.syncplay.ui.screens.room.bottombar.PopupAddUrl.AddUrlPopup
-import com.yuroyami.syncplay.ui.screens.room.tabs.PopupChatHistory.ChatHistoryPopup
-import com.yuroyami.syncplay.ui.screens.room.bottombar.PopupSeekToPosition.SeekToPositionPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.room.bottombar.PopupSeekToPosition.SeekToPositionPopup
 import com.yuroyami.syncplay.ui.screens.room.bottombar.RoomBottomBarSection
 import com.yuroyami.syncplay.ui.screens.room.chat.FadingMessageLayout
 import com.yuroyami.syncplay.ui.screens.room.chat.RoomChatSection
@@ -32,6 +30,7 @@ import com.yuroyami.syncplay.ui.screens.room.misc.RoomPlayButton
 import com.yuroyami.syncplay.ui.screens.room.misc.RoomUnlockableLayout
 import com.yuroyami.syncplay.ui.screens.room.slidingcards.RoomSectionSlidingCards
 import com.yuroyami.syncplay.ui.screens.room.statinfo.RoomStatusInfoSection
+import com.yuroyami.syncplay.ui.screens.room.tabs.PopupChatHistory.ChatHistoryPopup
 import com.yuroyami.syncplay.ui.screens.room.tabs.RoomTabSection
 import com.yuroyami.syncplay.ui.screens.room.tabs.TabController
 import com.yuroyami.syncplay.utils.CommonUtils.beginPingUpdate
@@ -55,7 +54,6 @@ fun RoomScreenUI() {
     val tabController = remember { TabController() }
     val lockedMode by tabController.tabLock.collectAsState()
 
-    val popupStateAddUrl = remember { mutableStateOf(false) }
     val popupStateChatHistory = remember { mutableStateOf(false) }
     val popupStateSeekToPosition = remember { mutableStateOf(false) }
 
@@ -137,7 +135,6 @@ fun RoomScreenUI() {
     }
 
     /** Popups */
-    AddUrlPopup(visibilityState = popupStateAddUrl)
     if (!soloMode) ChatHistoryPopup(visibilityState = popupStateChatHistory)
     SeekToPositionPopup(visibilityState = popupStateSeekToPosition)
 
