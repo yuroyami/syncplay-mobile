@@ -499,7 +499,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
 
     /** Protocol Callback */
     override fun onSomeonePaused(pauser: String) {
-        loggy("SYNCPLAY Protocol: Someone ($pauser) paused.", 1001)
+        loggy("SYNCPLAY Protocol: Someone ($pauser) paused.")
 
         if (pauser != p.session.currentUsername) {
             pausePlayback()
@@ -512,7 +512,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     }
 
     override fun onSomeonePlayed(player: String) {
-        loggy("SYNCPLAY Protocol: Someone ($player) unpaused.", 1002)
+        loggy("SYNCPLAY Protocol: Someone ($player) unpaused.")
 
         if (player != p.session.currentUsername) {
             playPlayback()
@@ -522,19 +522,19 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     }
 
     override fun onChatReceived(chatter: String, chatmessage: String) {
-        loggy("SYNCPLAY Protocol: $chatter sent: $chatmessage", 1003)
+        loggy("SYNCPLAY Protocol: $chatter sent: $chatmessage")
 
         broadcastMessage(message = { chatmessage }, isChat = true, chatter = chatter)
     }
 
     override fun onSomeoneJoined(joiner: String) {
-        loggy("SYNCPLAY Protocol: $joiner joined the room.", 1004)
+        loggy("SYNCPLAY Protocol: $joiner joined the room.")
 
         broadcastMessage(message = { getString(Res.string.room_guy_joined, joiner) }, isChat = false)
     }
 
     override fun onSomeoneLeft(leaver: String) {
-        loggy("SYNCPLAY Protocol: $leaver left the room.", 1005)
+        loggy("SYNCPLAY Protocol: $leaver left the room.")
 
         broadcastMessage(message = { getString(Res.string.room_guy_left,leaver) }, isChat = false)
 
@@ -555,7 +555,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     }
 
     override fun onSomeoneSeeked(seeker: String, toPosition: Double) {
-        loggy("SYNCPLAY Protocol: $seeker seeked to: $toPosition", 1006)
+        loggy("SYNCPLAY Protocol: $seeker seeked to: $toPosition")
 
         val oldPos = p.globalPosition.toLong()
         val newPos = toPosition.toLong()
@@ -571,7 +571,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     }
 
     override fun onSomeoneBehind(behinder: String, toPosition: Double) {
-        loggy("SYNCPLAY Protocol: $behinder is behind. Rewinding to $toPosition", 1007)
+        loggy("SYNCPLAY Protocol: $behinder is behind. Rewinding to $toPosition")
 
         player?.seekTo((toPosition * 1000L).toLong())
 
@@ -579,12 +579,12 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     }
 
     override fun onReceivedList() {
-        loggy("SYNCPLAY Protocol: Received list update.", 1008)
+        loggy("SYNCPLAY Protocol: Received list update.")
 
     }
 
     override fun onSomeoneLoadedFile(person: String, file: String?, fileduration: Double?) {
-        loggy("SYNCPLAY Protocol: $person loaded: $file - Duration: $fileduration", 1009)
+        loggy("SYNCPLAY Protocol: $person loaded: $file - Duration: $fileduration")
 
         broadcastMessage(
             message = { getString(Res.string.room_isplayingfile,
@@ -599,7 +599,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     }
 
     override fun onPlaylistUpdated(user: String) {
-        loggy("SYNCPLAY Protocol: Playlist updated by $user", 1010)
+        loggy("SYNCPLAY Protocol: Playlist updated by $user")
 
         /** Selecting first item on list **/
         if (p.session.sharedPlaylist.isNotEmpty() && p.session.spIndex.intValue == -1) {
@@ -612,7 +612,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     }
 
     override fun onPlaylistIndexChanged(user: String, index: Int) {
-        loggy("SYNCPLAY Protocol: Playlist index changed by $user to $index", 1011)
+        loggy("SYNCPLAY Protocol: Playlist index changed by $user to $index")
 
         /** Changing the selection for the user, to load the file at the given index **/
         viewModelScope.launch {
@@ -625,7 +625,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     }
 
     override suspend fun onConnected() {
-        loggy("SYNCPLAY Protocol: Connected!", 1012)
+        loggy("SYNCPLAY Protocol: Connected!")
 
         /** Adjusting connection state */
         p.state = Constants.CONNECTIONSTATE.STATE_CONNECTED
@@ -662,7 +662,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     }
 
     override fun onConnectionAttempt() {
-        loggy("SYNCPLAY Protocol: Attempting connection...", 1013)
+        loggy("SYNCPLAY Protocol: Attempting connection...")
 
         /** Telling user that a connection attempt is on **/
         broadcastMessage(
@@ -676,7 +676,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     }
 
     override fun onConnectionFailed() {
-        loggy("SYNCPLAY Protocol: Connection failed :/", 1014)
+        loggy("SYNCPLAY Protocol: Connection failed :/")
 
         /** Adjusting connection state */
         p.state = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
@@ -692,7 +692,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     }
 
     override fun onDisconnected() {
-        loggy("SYNCPLAY Protocol: Disconnected.", 1015)
+        loggy("SYNCPLAY Protocol: Disconnected.")
 
 
         /** Adjusting connection state */
@@ -706,14 +706,14 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     }
 
     override fun onTLSCheck() {
-        loggy("SYNCPLAY Protocol: Checking TLS...", 1016)
+        loggy("SYNCPLAY Protocol: Checking TLS...")
 
         /** Telling user that the app is checking whether the chosen server supports TLS **/
         broadcastMessage(message = { getString(Res.string.room_attempting_tls) }, isChat = false)
     }
 
     override suspend fun onReceivedTLS(supported: Boolean) {
-        loggy("SYNCPLAY Protocol: Received TLS...", 1017)
+        loggy("SYNCPLAY Protocol: Received TLS...")
 
         /** Deciding next step based on whether the server supports TLS or not **/
         if (supported) {
@@ -732,11 +732,9 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
         }
     }
 
-
     /** Tells us whether we're in solo mode to deactivate some online components */
     val isSoloMode: Boolean
         get() = nav.currentBackStackEntry?.destination?.route == Screen.SoloMode.label
-
 
     /********** Snack-related functionality ***********/
     var snack = SnackbarHostState()
@@ -750,7 +748,6 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
         if (abruptly) snack.currentSnackbarData?.dismiss()
         snack.showSnackbar(message = string, duration = SnackbarDuration.Short)
     }
-
 
     /******** Room OSD functionality */
     var osdJob: Job? = null

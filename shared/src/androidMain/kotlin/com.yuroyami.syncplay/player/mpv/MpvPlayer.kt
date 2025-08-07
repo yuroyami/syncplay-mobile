@@ -276,7 +276,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                 uri?.let {
                     if (!isUrl) {
                         ctx.resolveUri(it.toUri())?.let { it2 ->
-                            loggy("Final path $it2", 301)
+                            loggy("Final path $it2")
                             if (ismpvInit) {
                                 MPVLib.destroy()
                             }
@@ -347,7 +347,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
         val currentAspect = MPVLib.getPropertyString("video-aspect-override" as java.lang.String)?.toString()
         val currentPanscan = MPVLib.getPropertyDouble("panscan" as java.lang.String)?.toDouble()
 
-        loggy("currentAspect: $currentAspect and currentPanscan: $currentPanscan", 0)
+        loggy("currentAspect: $currentAspect and currentPanscan: $currentPanscan")
 
         val aspectRatios = listOf(
             "-1.000000" to "Original",
@@ -481,15 +481,15 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                 // Note that .available() officially returns an *estimated* number of bytes available
                 // this is only true for generic streams, asset streams return the full file size
                 if (outFile.length() == ins.available().toLong()) {
-                    loggy("Skipping copy of asset file (exists same size): $filename", 302)
+                    loggy("Skipping copy of asset file (exists same size): $filename")
                     continue
                 }
                 out = FileOutputStream(outFile)
                 ins.copyTo(out)
-                loggy("Copied asset file: $filename", 303)
+                loggy("Copied asset file: $filename")
             } catch (e: IOException) {
                 e.printStackTrace()
-                loggy("Failed to copy asset file: $filename", 304)
+                loggy("Failed to copy asset file: $filename")
             } finally {
                 ins?.close()
                 out?.close()

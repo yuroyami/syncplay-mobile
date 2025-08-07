@@ -131,7 +131,7 @@ class SyncplayActivity : ComponentActivity() {
             }
 
             override fun changeCurrentBrightness(v: Float) {
-                loggy("Brightness: $v", 0)
+                loggy("Brightness: $v")
                 val attrs = window.attributes
                 attrs.screenBrightness = v.coerceIn(0f, 1f)
                 window.attributes = attrs

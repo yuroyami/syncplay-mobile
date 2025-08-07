@@ -189,7 +189,7 @@ object JsonHandler {
                     else -> loggy("Dropped error: unknown-command-server-error")
                 }
             } catch (e: SerializationException) {
-                loggy("Serialization error: ${e.message}", 1)
+                loggy("Serialization error: ${e.message}")
                 throw e
             }
     }
@@ -239,7 +239,7 @@ object JsonHandler {
                 )
             }
         } catch (e: SerializationException) {
-            loggy("Error parsing user data: ${e.message}", 1)
+            loggy("Error parsing user data: ${e.message}")
             throw e
         }
     }
@@ -288,7 +288,7 @@ object JsonHandler {
 
                 newList.add(user)
             } catch (e: SerializationException) {
-                loggy("Error parsing user list data: ${e.message}", 1)
+                loggy("Error parsing user list data: ${e.message}")
                 throw e
             }
         }
@@ -430,7 +430,7 @@ object JsonHandler {
     private fun handleError(error: ErrorData, p: SyncplayProtocol) {
         // Implement error handling as needed
         error.message?.let { message ->
-            loggy("Server error: $message", 1)
+            loggy("Server error: $message")
         }
     }
 }

@@ -86,23 +86,23 @@ fun RoomMediaAddButton() {
 
     val videoPicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = CommonUtils.vidExs)) { file ->
         file?.path?.let {
-            loggy(it, 0)
+            loggy(it)
             viewmodel.player?.injectVideo(it, false)
         }
     }
     val popupStateAddUrl = remember { mutableStateOf(false) }
     AddUrlPopup(visibilityState = popupStateAddUrl)
 
+
     Box(modifier = Modifier.padding(4.dp)) {
         AddVideoButton(
-            modifier = Modifier,
+            modifier = Modifier.padding(2.dp),
             expanded = !hasVideo,
             onClick = {
                 addMediaCardVisibility = !addMediaCardVisibility
                 //TODO controlcardvisible = false
             }
         )
-
 
         DropdownMenu(
             containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(
@@ -120,11 +120,11 @@ fun RoomMediaAddButton() {
             expanded = addMediaCardVisibility,
             properties = PopupProperties(
                 dismissOnBackPress = true,
-                focusable = true,
                 dismissOnClickOutside = true
             ),
-            onDismissRequest = { addMediaCardVisibility = false }
+            onDismissRequest = { addMediaCardVisibility = !addMediaCardVisibility }
         ) {
+            //HideSystemBars()
             FancyText2(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
                     .padding(horizontal = 2.dp),
@@ -181,9 +181,8 @@ fun AddVideoButton(modifier: Modifier, expanded: Boolean, onClick: () -> Unit) {
         FancyIcon2(
             modifier = modifier,
             icon = Icons.Filled.AddToQueue, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black,
-            onClick = {
-                onClick.invoke()
-            })
+            onClick = onClick
+        )
     } else {
         Surface(
             modifier = modifier.width(150.dp).height(48.dp),

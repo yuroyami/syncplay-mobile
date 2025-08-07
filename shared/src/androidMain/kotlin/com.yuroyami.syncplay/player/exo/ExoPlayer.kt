@@ -212,7 +212,7 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                 }
 
                 override fun onPlayerError(error: PlaybackException) {
-                    loggy("Player error: ${error.message ?: ""}", 301)
+                    loggy("Player error: ${error.message ?: ""}")
                 }
             })
 

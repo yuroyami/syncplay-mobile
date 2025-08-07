@@ -79,7 +79,7 @@ abstract class SyncplayProtocol(
                 }.await()
             }
         } catch (e: Exception) {
-            loggy(e.stackTraceToString(), 205)
+            loggy(e.stackTraceToString())
             syncplayCallback.onConnectionFailed()
         }
     }
@@ -97,7 +97,7 @@ abstract class SyncplayProtocol(
             try {
                 if (isSocketValid()) {
                     val finalOut = json + "\r\n"
-                    loggy("Client>>> $finalOut", 206)
+                    loggy("Client>>> $finalOut")
                     writeActualString(finalOut)
                 } else {
                     /** Queuing any pending outgoing messages */
@@ -109,7 +109,7 @@ abstract class SyncplayProtocol(
                     }
                 }
             } catch (e: Exception) {
-                loggy(e.stackTraceToString(), 207)
+                loggy(e.stackTraceToString())
                 if (isRetry) {
                     onError()
                 } else {

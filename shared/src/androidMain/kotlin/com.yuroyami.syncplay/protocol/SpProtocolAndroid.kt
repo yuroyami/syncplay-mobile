@@ -18,7 +18,6 @@ import io.netty.handler.codec.Delimiters
 import io.netty.handler.codec.string.StringDecoder
 import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.ssl.SslContextBuilder
-import kotlinx.coroutines.cancel
 
 class SpProtocolAndroid(viewmodel: SyncplayViewmodel) : SyncplayProtocol(viewmodel) {
 
@@ -92,7 +91,7 @@ class SpProtocolAndroid(viewmodel: SyncplayViewmodel) : SyncplayProtocol(viewmod
         override fun userEventTriggered(ctx: ChannelHandlerContext?, evt: Any?) {
             super.userEventTriggered(ctx, evt)
 
-            loggy("Channel event: ${evt.toString()}", 0)
+            loggy("Channel event: ${evt.toString()}")
         }
 
         override fun channelRead0(ctx: ChannelHandlerContext?, msg: String?) {

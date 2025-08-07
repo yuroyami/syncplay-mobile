@@ -84,7 +84,7 @@ actual suspend fun pingIcmp(host: String, packet: Int): Int? {
                 .toDouble().roundToInt()
         }
     } catch (e: Exception) {
-        loggy(e.stackTraceToString(), 69)
+        loggy(e.stackTraceToString())
         return null
     }
 }

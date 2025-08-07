@@ -113,8 +113,8 @@ fun RoomScreenUI() {
                     /* Card section (to the right middle) */
                     RoomSectionSlidingCards(
                         modifier = Modifier.align(Alignment.CenterEnd)
-                            .fillMaxWidth(0.37f).fillMaxHeight(0.76f)
-                            .padding(top = 22.dp, end = 6.dp),
+                            .fillMaxWidth(0.37f).fillMaxHeight()
+                            .padding(top = 68.dp, end = 6.dp, bottom = 58.dp),
                         tabController = tabController
                     )
 

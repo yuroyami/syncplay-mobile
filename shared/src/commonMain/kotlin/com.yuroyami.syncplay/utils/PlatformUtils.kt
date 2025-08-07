@@ -23,7 +23,16 @@ expect val platform: PLATFORM
 expect val availablePlatformPlayerEngines: List<PlayerEngine>
 
 /** logging functionality (Uses println on iOS, and Log.e on Android) */
-fun loggy(s: String?, checkpoint: Int = 0) = Logger.e(s.toString())
+fun loggy(s: Any?) {
+    Logger.e(
+        if (s is Exception) {
+            s.stackTraceToString()
+        } else {
+            s.toString()
+        }
+    )
+
+}
 
 expect fun SyncplayViewmodel.instantiateNetworkEngineProtocol(engine: SyncplayProtocol.NetworkEngine): SyncplayProtocol
 

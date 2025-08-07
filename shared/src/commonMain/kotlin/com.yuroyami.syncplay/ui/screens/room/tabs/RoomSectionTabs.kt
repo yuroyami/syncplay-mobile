@@ -103,16 +103,18 @@ fun RoomTabSection(modifier: Modifier, tabController: TabController, onShowChatH
         /* The tabs in the top-right corner */
         /* In-room settings */
         RoomTab(
+            modifier = Modifier.width(48.dp),
             icon = Icons.Filled.AutoFixHigh,
             visibilityState = stateRoomPreferences,
             onClick = { tabController.toggleRoomPreferences() }
         )
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.weight(1f))
 
         /* Shared Playlist */
         if (!viewmodel.isSoloMode) {
             RoomTab(
+                modifier = Modifier.width(48.dp),
                 icon = Icons.AutoMirrored.Filled.PlaylistPlay,
                 visibilityState = stateSharedPlaylist,
                 onClick = {
@@ -120,21 +122,23 @@ fun RoomTabSection(modifier: Modifier, tabController: TabController, onShowChatH
                 }
             )
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.weight(1f))
 
             /* User Info card tab */
             RoomTab(
+                modifier = Modifier.width(48.dp),
                 icon = Icons.Filled.Groups,
                 visibilityState = stateUserInfo, onClick = {
                     tabController.toggleUserInfo()
                 }
             )
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.weight(1f))
         }
 
         /** Lock card */
         RoomTab(
+            modifier = Modifier.width(48.dp),
             icon = Icons.Filled.Lock,
             visibilityState = false,
             onClick = {
@@ -143,7 +147,7 @@ fun RoomTabSection(modifier: Modifier, tabController: TabController, onShowChatH
             }
         )
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.weight(1f))
 
         Box {
             val overflowMenuState = remember { mutableStateOf(false) }
@@ -171,7 +175,6 @@ fun RoomTabSection(modifier: Modifier, tabController: TabController, onShowChatH
                 expanded = overflowMenuState.value,
                 properties = PopupProperties(
                     dismissOnBackPress = true,
-                    focusable = true,
                     dismissOnClickOutside = true
                 ),
                 onDismissRequest = { overflowMenuState.value = false }) {

@@ -25,10 +25,9 @@ import com.yuroyami.syncplay.ui.theme.Paletting
 import com.yuroyami.syncplay.ui.utils.gradientOverlay
 
 @Composable
-fun RowScope.RoomTab(icon: ImageVector, visibilityState: Boolean, onClick: () -> Unit) {
+fun RowScope.RoomTab(modifier: Modifier, icon: ImageVector, visibilityState: Boolean, onClick: () -> Unit) {
     Card(
-        modifier = Modifier
-            .weight(1f)
+        modifier = modifier
             .aspectRatio(1f)
             .padding(3.dp)
             /*.clickable(
