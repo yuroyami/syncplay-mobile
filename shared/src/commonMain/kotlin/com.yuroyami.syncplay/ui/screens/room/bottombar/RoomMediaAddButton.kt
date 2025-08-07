@@ -38,7 +38,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
@@ -52,6 +51,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
+import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Paletting
 import com.yuroyami.syncplay.ui.theme.Paletting.ROOM_ICON_SIZE
@@ -78,12 +78,10 @@ import syncplaymobile.shared.generated.resources.room_addmedia_online
 import syncplaymobile.shared.generated.resources.room_button_desc_add
 
 @Composable
-fun RoomMediaAddButton() {
+fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
     val viewmodel = LocalViewmodel.current
+    val cardController = LocalCardController.current
     val hasVideo by viewmodel.hasVideo.collectAsState()
-
-    //TODO var addMediaCardVisibility by remember { mutableStateOf(!viewmodel.hasDoneStartupSlideAnimation) }
-    var addMediaCardVisibility by remember { mutableStateOf(false) }
 
     val videoPicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = CommonUtils.vidExs)) { file ->
         file?.path?.let {
@@ -100,15 +98,13 @@ fun RoomMediaAddButton() {
             modifier = Modifier.padding(2.dp),
             expanded = !hasVideo,
             onClick = {
-                addMediaCardVisibility = !addMediaCardVisibility
-                //TODO controlcardvisible = false
+                popupStateAddMedia.value = !popupStateAddMedia.value
+                cardController.controlPanel.value = false
             }
         )
 
         DropdownMenu(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(
-                0.75f
-            ),
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
             tonalElevation = 0.dp,
             shadowElevation = 0.dp,
             border = BorderStroke(
@@ -118,14 +114,13 @@ fun RoomMediaAddButton() {
                 })
             ),
             shape = RoundedCornerShape(8.dp),
-            expanded = addMediaCardVisibility,
+            expanded = popupStateAddMedia.value,
             properties = PopupProperties(
                 dismissOnBackPress = true,
                 dismissOnClickOutside = true
             ),
-            onDismissRequest = { addMediaCardVisibility = !addMediaCardVisibility }
+            onDismissRequest = { popupStateAddMedia.value = false }
         ) {
-            //HideSystemBars()
             FancyText2(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
                     .padding(horizontal = 2.dp),
@@ -136,42 +131,50 @@ fun RoomMediaAddButton() {
             )
 
             //From storage
-            DropdownMenuItem(text = {
-                Row(verticalAlignment = CenterVertically) {
-                    FancyIcon2(
-                        icon = Icons.Filled.CreateNewFolder,
-                        size = ROOM_ICON_SIZE,
-                        shadowColor = Color.Black
-                    ) {}
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        color = Color.LightGray,
-                        text = stringResource(Res.string.room_addmedia_offline),
-                    )
+            DropdownMenuItem(
+                text = {
+                    Row(verticalAlignment = CenterVertically) {
+                        FancyIcon2(
+                            icon = Icons.Filled.CreateNewFolder,
+                            size = ROOM_ICON_SIZE,
+                            shadowColor = Color.Black
+                        ) {}
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            color = Color.LightGray,
+                            text = stringResource(Res.string.room_addmedia_offline),
+                        )
+                    }
+                },
+                onClick = {
+                    popupStateAddMedia.value = false
+                    cardController.controlPanel.value = false
+                    videoPicker.launch()
                 }
-            }, onClick = {
-                addMediaCardVisibility = false
-                videoPicker.launch()
-            })
+            )
 
             //From network URL
-            DropdownMenuItem(text = {
-                Row(verticalAlignment = CenterVertically) {
-                    FancyIcon2(
-                        icon = Icons.Filled.AddLink,
-                        size = ROOM_ICON_SIZE,
-                        shadowColor = Color.Black
-                    ) {}
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        color = Color.LightGray,
-                        text = stringResource(Res.string.room_addmedia_online),
-                    )
+            DropdownMenuItem(
+                text = {
+                    Row(verticalAlignment = CenterVertically) {
+                        FancyIcon2(
+                            icon = Icons.Filled.AddLink,
+                            size = ROOM_ICON_SIZE,
+                            shadowColor = Color.Black
+                        ) {}
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            color = Color.LightGray,
+                            text = stringResource(Res.string.room_addmedia_online),
+                        )
+                    }
+                },
+                onClick = {
+                    popupStateAddMedia.value = false
+                    cardController.controlPanel.value = false
+                    popupStateAddUrl.value = true
                 }
-            }, onClick = {
-                addMediaCardVisibility = false
-                //TODO addurlpopupstate.value = true
-            })
+            )
         }
     }
 }

@@ -92,19 +92,7 @@ fun RoomSeekbar(modifier: Modifier) {
         if (newValue.isNaN()) return@LaunchedEffect
 
         //Listening to changes to seekbar values
-        viewmodel.player?.seekTo(newValue.roundToLong() * 1000L)
-
-        if (viewmodel.isSoloMode) {
-            viewmodel.player?.let {
-                viewmodel.viewModelScope.launch(Dispatchers.Main) {
-                    viewmodel.seeks.add(
-                        Pair(
-                            it.currentPositionMs(), newValue.roundToLong() * 1000
-                        )
-                    )
-                }
-            }
-        }
+        if (isPressed) viewmodel.player?.seekTo(newValue.roundToLong() * 1000L)
 
         viewmodel.timeCurrent.value = newValue.roundToLong()
     }
@@ -112,10 +100,24 @@ fun RoomSeekbar(modifier: Modifier) {
     var lastVideoPosBeforePress: Long by remember { mutableLongStateOf(0L) }
 
     LaunchedEffect(isPressed) {
+        val newValue = videoFullDuration * sliderState.value
+
         if (!isPressed) {
             //Only seek if the difference satisfies a 1-second gap
-            if (abs(lastVideoPosBeforePress - videoCurrentTime) > 1000f) {
-                //TODO viewmodel.sendSeek(videoCurrentTime * 1000L)
+            if (abs(lastVideoPosBeforePress - newValue) > 1000f) {
+                //TODO viewmodel.sendSeek(newValue * 1000L)
+
+                if (viewmodel.isSoloMode) {
+                    viewmodel.player?.let {
+                        viewmodel.viewModelScope.launch(Dispatchers.Main) {
+                            viewmodel.seeks.add(
+                                Pair(
+                                    it.currentPositionMs(), newValue.roundToLong() * 1000
+                                )
+                            )
+                        }
+                    }
+                }
             }
         } else {
             lastVideoPosBeforePress = videoCurrentTime

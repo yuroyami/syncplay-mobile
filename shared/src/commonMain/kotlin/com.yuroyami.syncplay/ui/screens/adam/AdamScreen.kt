@@ -20,6 +20,7 @@ import com.yuroyami.syncplay.screens.adam.Screen
 import com.yuroyami.syncplay.settings.SettingStyling
 import com.yuroyami.syncplay.ui.screens.home.HomeScreenUI
 import com.yuroyami.syncplay.ui.screens.room.RoomScreenUI
+import com.yuroyami.syncplay.ui.screens.room.tabs.CardController
 import com.yuroyami.syncplay.ui.theme.AppTheme
 import com.yuroyami.syncplay.ui.utils.messagePalette
 import com.yuroyami.syncplay.utils.ScreenSizeInfo
@@ -37,6 +38,7 @@ val LocalScreenSize = compositionLocalOf<ScreenSizeInfo> { error("No Screen Size
 val LocalScreen = compositionLocalOf<Screen> { error("No Screen provided") }
 val LocalSettingStyling = staticCompositionLocalOf<SettingStyling> { error("No Setting Styling provided") }
 val LocalChatPalette = compositionLocalOf<MessagePalette> { error("No Chat Palette provided") }
+val LocalCardController = compositionLocalOf<CardController> { error("No CardController provided yet") }
 
 @Composable
 fun AdamScreen(onViewmodelReady: (SyncplayViewmodel) -> Unit) {

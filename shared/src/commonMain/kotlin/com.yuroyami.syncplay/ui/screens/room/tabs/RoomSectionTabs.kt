@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.yuroyami.syncplay.screens.adam.Screen
 import com.yuroyami.syncplay.screens.adam.Screen.Companion.navigateTo
+import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Paletting
 import com.yuroyami.syncplay.ui.utils.FancyIcon2
@@ -54,11 +55,13 @@ import syncplaymobile.shared.generated.resources.room_overflow_msghistory
 import syncplaymobile.shared.generated.resources.room_overflow_pip
 import syncplaymobile.shared.generated.resources.room_overflow_title
 
-class TabController {
+class CardController {
     val tabCardUserInfo = MutableStateFlow(false)
     val tabCardSharedPlaylist = MutableStateFlow(false)
     val tabCardRoomPreferences = MutableStateFlow(false)
     val tabLock = MutableStateFlow(false)
+
+    val controlPanel = MutableStateFlow(true)
 
     fun toggleUserInfo(forcedState: Boolean? = null) {
         tabCardUserInfo.value = forcedState ?: !tabCardUserInfo.value
@@ -86,13 +89,14 @@ class TabController {
 }
 
 @Composable
-fun RoomTabSection(modifier: Modifier, tabController: TabController, onShowChatHistory: () -> Unit) {
+fun RoomTabSection(modifier: Modifier, onShowChatHistory: () -> Unit) {
     val viewmodel = LocalViewmodel.current
+    val cardController = LocalCardController.current
 
-    val stateUserInfo by tabController.tabCardUserInfo.collectAsState()
-    val stateSharedPlaylist by tabController.tabCardSharedPlaylist.collectAsState()
-    val stateRoomPreferences by tabController.tabCardRoomPreferences.collectAsState()
-    val stateRoomLock by tabController.tabLock.collectAsState()
+    val stateUserInfo by cardController.tabCardUserInfo.collectAsState()
+    val stateSharedPlaylist by cardController.tabCardSharedPlaylist.collectAsState()
+    val stateRoomPreferences by cardController.tabCardRoomPreferences.collectAsState()
+    val stateRoomLock by cardController.tabLock.collectAsState()
 
     Row(
         modifier = modifier.fillMaxWidth().height(48.dp).padding(top = 18.dp, end = 4.dp),
@@ -106,7 +110,7 @@ fun RoomTabSection(modifier: Modifier, tabController: TabController, onShowChatH
             modifier = Modifier.width(48.dp),
             icon = Icons.Filled.AutoFixHigh,
             visibilityState = stateRoomPreferences,
-            onClick = { tabController.toggleRoomPreferences() }
+            onClick = { cardController.toggleRoomPreferences() }
         )
 
         Spacer(modifier = Modifier.weight(1f))
@@ -118,7 +122,7 @@ fun RoomTabSection(modifier: Modifier, tabController: TabController, onShowChatH
                 icon = Icons.AutoMirrored.Filled.PlaylistPlay,
                 visibilityState = stateSharedPlaylist,
                 onClick = {
-                    tabController.toggleSharedPlaylist()
+                    cardController.toggleSharedPlaylist()
                 }
             )
 
@@ -129,7 +133,7 @@ fun RoomTabSection(modifier: Modifier, tabController: TabController, onShowChatH
                 modifier = Modifier.width(48.dp),
                 icon = Icons.Filled.Groups,
                 visibilityState = stateUserInfo, onClick = {
-                    tabController.toggleUserInfo()
+                    cardController.toggleUserInfo()
                 }
             )
 
@@ -142,7 +146,7 @@ fun RoomTabSection(modifier: Modifier, tabController: TabController, onShowChatH
             icon = Icons.Filled.Lock,
             visibilityState = false,
             onClick = {
-                tabController.tabLock.value = true
+                cardController.tabLock.value = true
                 viewmodel.visibleHUD.value = false
             }
         )

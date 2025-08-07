@@ -29,6 +29,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Paletting
 import com.yuroyami.syncplay.ui.utils.gradientOverlay
@@ -36,9 +37,11 @@ import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
-fun RoomUnlockableLayout(tabController: TabController) {
+fun RoomUnlockableLayout() {
     val viewmodel = LocalViewmodel.current
-    val lockedMode by tabController.tabLock.collectAsState()
+    val cardController = LocalCardController.current
+
+    val lockedMode by cardController.tabLock.collectAsState()
     val isInPipMode by viewmodel.hasEnteredPipMode.collectAsState()
 
     if (lockedMode) {
@@ -71,7 +74,7 @@ fun RoomUnlockableLayout(tabController: TabController) {
                             interactionSource = remember { MutableInteractionSource() },
                             indication = ripple(color = Paletting.SP_ORANGE)
                         ) {
-                            tabController.tabLock.value = false
+                            cardController.tabLock.value = false
                             viewmodel.visibleHUD.value = true
                         },
                     shape = RoundedCornerShape(6.dp),
