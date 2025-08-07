@@ -37,6 +37,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -687,26 +689,25 @@ fun FreeAnimatedVisibility(
     )
 }
 
-//TODO DONT DO THIS TO PRODUCE A MSG PALETTE
-@Composable
-fun ComposedMessagePalette(): MessagePalette {
-    val colorTimestamp = DataStoreKeys.PREF_INROOM_COLOR_TIMESTAMP.valueAsState(Paletting.MSG_TIMESTAMP.toArgb())
-    val colorSelftag = DataStoreKeys.PREF_INROOM_COLOR_SELFTAG.valueAsState(Paletting.MSG_SELF_TAG.toArgb())
-    val colorFriendtag = DataStoreKeys.PREF_INROOM_COLOR_FRIENDTAG.valueAsState(Paletting.MSG_FRIEND_TAG.toArgb())
-    val colorSystem = DataStoreKeys.PREF_INROOM_COLOR_SYSTEMMSG.valueAsState(Paletting.MSG_SYSTEM.toArgb())
-    val colorUserchat = DataStoreKeys.PREF_INROOM_COLOR_USERMSG.valueAsState(Paletting.MSG_CHAT.toArgb())
-    val colorError = DataStoreKeys.PREF_INROOM_COLOR_ERRORMSG.valueAsState(Paletting.MSG_ERROR.toArgb())
-    val msgIncludeTimestamp = DataStoreKeys.PREF_INROOM_MSG_ACTIVATE_STAMP.valueAsState(true)
+val messagePalette: State<MessagePalette>
+    @Composable get() {
+        val colorTimestamp = DataStoreKeys.PREF_INROOM_COLOR_TIMESTAMP.valueAsState(Paletting.MSG_TIMESTAMP.toArgb())
+        val colorSelftag = DataStoreKeys.PREF_INROOM_COLOR_SELFTAG.valueAsState(Paletting.MSG_SELF_TAG.toArgb())
+        val colorFriendtag = DataStoreKeys.PREF_INROOM_COLOR_FRIENDTAG.valueAsState(Paletting.MSG_FRIEND_TAG.toArgb())
+        val colorSystem = DataStoreKeys.PREF_INROOM_COLOR_SYSTEMMSG.valueAsState(Paletting.MSG_SYSTEM.toArgb())
+        val colorUserchat = DataStoreKeys.PREF_INROOM_COLOR_USERMSG.valueAsState(Paletting.MSG_CHAT.toArgb())
+        val colorError = DataStoreKeys.PREF_INROOM_COLOR_ERRORMSG.valueAsState(Paletting.MSG_ERROR.toArgb())
+        val msgIncludeTimestamp = DataStoreKeys.PREF_INROOM_MSG_ACTIVATE_STAMP.valueAsState(true)
 
-    return MessagePalette(
-        timestampColor = Color(colorTimestamp.value),
-        selftagColor = Color(colorSelftag.value),
-        friendtagColor = Color(colorFriendtag.value),
-        systemmsgColor = Color(colorSystem.value),
-        usermsgColor = Color(colorUserchat.value),
-        errormsgColor = Color(colorError.value),
-        includeTimestamp = msgIncludeTimestamp.value
-    )
-}
-
-
+        return derivedStateOf {
+            MessagePalette(
+                timestampColor = Color(colorTimestamp.value),
+                selftagColor = Color(colorSelftag.value),
+                friendtagColor = Color(colorFriendtag.value),
+                systemmsgColor = Color(colorSystem.value),
+                usermsgColor = Color(colorUserchat.value),
+                errormsgColor = Color(colorError.value),
+                includeTimestamp = msgIncludeTimestamp.value
+            )
+        }
+    }

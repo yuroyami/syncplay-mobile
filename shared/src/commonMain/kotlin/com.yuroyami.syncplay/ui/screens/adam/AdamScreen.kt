@@ -7,9 +7,7 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -23,7 +21,7 @@ import com.yuroyami.syncplay.screens.room.RoomScreenUI
 import com.yuroyami.syncplay.settings.SettingStyling
 import com.yuroyami.syncplay.ui.screens.home.HomeScreenUI
 import com.yuroyami.syncplay.ui.theme.AppTheme
-import com.yuroyami.syncplay.ui.utils.ComposedMessagePalette
+import com.yuroyami.syncplay.ui.utils.messagePalette
 import com.yuroyami.syncplay.utils.ScreenSizeInfo
 import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 
@@ -42,11 +40,9 @@ val LocalChatPalette = compositionLocalOf<MessagePalette> { error("No Chat Palet
 
 @Composable
 fun AdamScreen(onViewmodelReady: (SyncplayViewmodel) -> Unit) {
-    val scope = rememberCoroutineScope()
     val viewmodel = viewModel<SyncplayViewmodel>()
     val navigator = rememberNavController()
     val navEntry by navigator.currentBackStackEntryAsState()
-    val haptic = LocalHapticFeedback.current
     val windowInfo = LocalWindowInfo.current.containerSize
     val screenSizeInfo = remember(windowInfo) {
         ScreenSizeInfo(
@@ -74,7 +70,7 @@ fun AdamScreen(onViewmodelReady: (SyncplayViewmodel) -> Unit) {
             LocalNavigator provides navigator,
             LocalScreenSize provides screenSizeInfo,
             LocalScreen provides currentScreen,
-            LocalChatPalette provides ComposedMessagePalette() //TODO
+            LocalChatPalette provides messagePalette.value
         ) {
             NavHost(
                 navController = navigator,
