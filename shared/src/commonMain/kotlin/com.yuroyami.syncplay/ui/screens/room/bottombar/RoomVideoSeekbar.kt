@@ -134,6 +134,7 @@ fun RoomVideoSeekbar(modifier: Modifier) {
                         .clip(RoundedCornerShape(trackRoundedness))
                         .background(Color.Gray).onGloballyPositioned {
                             trackWidthPx = it.size.width
+
                         }
                 ) {
                     if (!isPressed) {
