@@ -106,7 +106,7 @@ fun RoomMediaAddButton() {
 
         DropdownMenu(
             containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(
-                0.5f
+                0.75f
             ),
             tonalElevation = 0.dp,
             shadowElevation = 0.dp,

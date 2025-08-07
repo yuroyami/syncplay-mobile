@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.room
+package com.yuroyami.syncplay.ui.screens.room
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -27,7 +27,7 @@ import com.yuroyami.syncplay.ui.screens.room.chat.RoomChatSection
 import com.yuroyami.syncplay.ui.screens.room.misc.RoomBackgroundArtwork
 import com.yuroyami.syncplay.ui.screens.room.misc.RoomGestureInterceptor
 import com.yuroyami.syncplay.ui.screens.room.misc.RoomPlayButton
-import com.yuroyami.syncplay.ui.screens.room.misc.RoomUnlockableLayout
+import com.yuroyami.syncplay.ui.screens.room.tabs.RoomUnlockableLayout
 import com.yuroyami.syncplay.ui.screens.room.slidingcards.RoomSectionSlidingCards
 import com.yuroyami.syncplay.ui.screens.room.statinfo.RoomStatusInfoSection
 import com.yuroyami.syncplay.ui.screens.room.tabs.PopupChatHistory.ChatHistoryPopup

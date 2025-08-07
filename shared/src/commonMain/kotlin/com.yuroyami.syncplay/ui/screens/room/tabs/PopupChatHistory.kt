@@ -96,7 +96,6 @@ object PopupChatHistory {
                     Spacer(modifier = Modifier.Companion.width(8.dp))
                     Text(stringResource(Res.string.close), fontSize = 14.sp)
                 }
-
             }
         }
     }

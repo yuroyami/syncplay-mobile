@@ -41,7 +41,6 @@ import com.yuroyami.syncplay.screens.adam.Screen
 import com.yuroyami.syncplay.screens.adam.Screen.Companion.navigateTo
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Paletting
-import com.yuroyami.syncplay.ui.theme.Paletting.ROOM_ICON_SIZE
 import com.yuroyami.syncplay.ui.utils.FancyIcon2
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.syncplayFont
@@ -96,7 +95,7 @@ fun RoomTabSection(modifier: Modifier, tabController: TabController, onShowChatH
     val stateRoomLock by tabController.tabLock.collectAsState()
 
     Row(
-        modifier = modifier.fillMaxWidth().height(48.dp).padding(top = 15.dp, end = 4.dp),
+        modifier = modifier.fillMaxWidth().height(48.dp).padding(top = 18.dp, end = 4.dp),
         horizontalArrangement = Arrangement.End,
         verticalAlignment = CenterVertically
     ) {
@@ -109,7 +108,7 @@ fun RoomTabSection(modifier: Modifier, tabController: TabController, onShowChatH
             onClick = { tabController.toggleRoomPreferences() }
         )
 
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(12.dp))
 
         /* Shared Playlist */
         if (!viewmodel.isSoloMode) {
@@ -121,7 +120,7 @@ fun RoomTabSection(modifier: Modifier, tabController: TabController, onShowChatH
                 }
             )
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
             /* User Info card tab */
             RoomTab(
@@ -131,7 +130,7 @@ fun RoomTabSection(modifier: Modifier, tabController: TabController, onShowChatH
                 }
             )
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(12.dp))
         }
 
         /** Lock card */
@@ -144,13 +143,13 @@ fun RoomTabSection(modifier: Modifier, tabController: TabController, onShowChatH
             }
         )
 
-        Spacer(Modifier.width(6.dp))
+        Spacer(modifier = Modifier.width(12.dp))
 
         Box {
             val overflowMenuState = remember { mutableStateOf(false) }
             FancyIcon2(
                 icon = Icons.Filled.MoreVert,
-                size = ROOM_ICON_SIZE,
+                size = 48,
                 shadowColor = Color.Black
             ) {
                 overflowMenuState.value = !overflowMenuState.value

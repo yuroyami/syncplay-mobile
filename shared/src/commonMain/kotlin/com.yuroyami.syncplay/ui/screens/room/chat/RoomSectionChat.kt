@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.outlined.GifBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -42,8 +43,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.ui.screens.adam.LocalChatPalette
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_BG_OPACITY
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_BOX_ACTION
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_FONTSIZE
@@ -51,6 +50,8 @@ import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_MAXCOUNT
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_MSG_SHADOW
 import com.yuroyami.syncplay.settings.valueAsState
+import com.yuroyami.syncplay.ui.screens.adam.LocalChatPalette
+import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Paletting
 import com.yuroyami.syncplay.ui.utils.ChatAnnotatedText
 import com.yuroyami.syncplay.utils.CommonUtils.isEmoji
@@ -68,50 +69,6 @@ fun RoomChatSection(modifier: Modifier) {
         ChatTextField(viewmodel = viewmodel, modifier = Modifier.fillMaxWidth())
 
         ChatBox(viewmodel = viewmodel, modifier = Modifier.fillMaxSize())
-    }
-}
-
-@Composable
-fun ChatBox(modifier: Modifier = Modifier, viewmodel: SyncplayViewmodel) {
-    val hasVideo by viewmodel.hasVideo.collectAsState()
-
-    val chatMessages = remember { if (!viewmodel.isSoloMode) viewmodel.p.session.messageSequence else mutableStateListOf() }
-
-    val msgBoxOpacity = PREF_INROOM_MSG_BG_OPACITY.valueAsState(0)
-    val msgOutline by PREF_INROOM_MSG_OUTLINE.valueAsState(true)
-    val msgShadow by PREF_INROOM_MSG_SHADOW.valueAsState(false)
-    val msgFontSize = PREF_INROOM_MSG_FONTSIZE.valueAsState(9)
-    val msgMaxCount by PREF_INROOM_MSG_MAXCOUNT.valueAsState(10)
-
-    Box(
-        modifier = modifier
-            .background(
-                color = if (hasVideo) Color(50, 50, 50, msgBoxOpacity.value) else Color.Transparent,
-                shape = RoundedCornerShape(4.dp)
-            )
-    ) {
-        val latestChatMessages = chatMessages.takeLast(msgMaxCount)
-
-        LazyColumn(
-            contentPadding = PaddingValues(8.dp),
-            userScrollEnabled = false,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            items(latestChatMessages) { chatMessage ->
-                /* Once seen, don't use it in fading message */
-                SideEffect {
-                    chatMessage.seen = true
-                }
-
-                ChatAnnotatedText(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = chatMessage.factorize(LocalChatPalette.current),
-                    size = /* TODO if (pipModeObserver) 6f else*/ (msgFontSize.value.toFloat()),
-                    hasShadow = msgShadow,
-                    hasStroke = msgOutline
-                )
-            }
-        }
     }
 }
 
@@ -159,7 +116,24 @@ fun ChatTextField(
                 }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = "",
+                        contentDescription = null,
+                        modifier = Modifier.graphicsLayer(alpha = 0.99f).drawWithCache {
+                            onDrawWithContent {
+                                drawContent()
+                                drawRect(
+                                    brush = gradientBrush, blendMode = BlendMode.SrcAtop
+                                )
+                            }
+                        }
+                    )
+                }
+            } else {
+                IconButton(onClick = {
+                    viewmodel.dispatchOSD { "GIF Feature is coming soon!" }
+                }) {
+                    Icon(
+                        imageVector = Icons.Outlined.GifBox,
+                        contentDescription = null,
                         modifier = Modifier.graphicsLayer(alpha = 0.99f).drawWithCache {
                             onDrawWithContent {
                                 drawContent()
@@ -187,5 +161,50 @@ fun ChatTextField(
                 }
             }
             TransformedText(annotatedString, OffsetMapping.Identity)
-        })
+        }
+    )
+}
+
+@Composable
+fun ChatBox(modifier: Modifier = Modifier, viewmodel: SyncplayViewmodel) {
+    val hasVideo by viewmodel.hasVideo.collectAsState()
+
+    val chatMessages = remember { if (!viewmodel.isSoloMode) viewmodel.p.session.messageSequence else mutableStateListOf() }
+
+    val msgBoxOpacity = PREF_INROOM_MSG_BG_OPACITY.valueAsState(0)
+    val msgOutline by PREF_INROOM_MSG_OUTLINE.valueAsState(true)
+    val msgShadow by PREF_INROOM_MSG_SHADOW.valueAsState(false)
+    val msgFontSize = PREF_INROOM_MSG_FONTSIZE.valueAsState(9)
+    val msgMaxCount by PREF_INROOM_MSG_MAXCOUNT.valueAsState(10)
+
+    Box(
+        modifier = modifier
+            .background(
+                color = if (hasVideo) Color(50, 50, 50, msgBoxOpacity.value) else Color.Transparent,
+                shape = RoundedCornerShape(4.dp)
+            )
+    ) {
+        val latestChatMessages = chatMessages.takeLast(msgMaxCount)
+
+        LazyColumn(
+            contentPadding = PaddingValues(8.dp),
+            userScrollEnabled = false,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            items(latestChatMessages) { chatMessage ->
+                /* Once seen, don't use it in fading message */
+                SideEffect {
+                    chatMessage.seen = true
+                }
+
+                ChatAnnotatedText(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = chatMessage.factorize(LocalChatPalette.current),
+                    size = /* TODO if (pipModeObserver) 6f else*/ (msgFontSize.value.toFloat()),
+                    hasShadow = msgShadow,
+                    hasStroke = msgOutline
+                )
+            }
+        }
+    }
 }
