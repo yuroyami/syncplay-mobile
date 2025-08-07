@@ -2,7 +2,6 @@ package com.yuroyami.syncplay.ui.screens.room.tabs
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
@@ -14,7 +13,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,25 +30,26 @@ fun RowScope.RoomTab(icon: ImageVector, visibilityState: Boolean, onClick: () ->
         modifier = Modifier
             .weight(1f)
             .aspectRatio(1f)
-            .clickable(
+            .padding(3.dp)
+            /*.clickable(
                 interactionSource = null,
                 indication = ripple(color = Paletting.SP_ORANGE),
                 onClick = onClick
-            ),
+            )*/,
         shape = RoundedCornerShape(6.dp),
         border = BorderStroke(
-            width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })
+            width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT)
         ).takeUnless { visibilityState },
-        colors = CardDefaults.cardColors(containerColor = if (visibilityState) Color.Transparent else MaterialTheme.colorScheme.tertiaryContainer.copy(0.5f)),
+        colors = CardDefaults.cardColors(containerColor = if (visibilityState) Color.Transparent else MaterialTheme.colorScheme.tertiaryContainer),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp),
+        onClick = onClick
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     brush = Brush.linearGradient(
-                        colors = if (visibilityState) Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) }
-                                 else listOf(Color.Transparent, Color.Transparent)
+                        colors = if (visibilityState) Paletting.SP_GRADIENT else listOf(Color.Transparent, Color.Transparent)
                     )
                 )
         ) {

@@ -37,9 +37,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.screens.adam.Screen
 import com.yuroyami.syncplay.screens.adam.Screen.Companion.navigateTo
+import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Paletting
 import com.yuroyami.syncplay.ui.theme.Paletting.ROOM_ICON_SIZE
 import com.yuroyami.syncplay.ui.utils.FancyIcon2
@@ -96,8 +96,7 @@ fun RoomTabSection(modifier: Modifier, tabController: TabController, onShowChatH
     val stateRoomLock by tabController.tabLock.collectAsState()
 
     Row(
-        modifier = modifier.fillMaxWidth().height(50.dp)
-            .padding(top = 15.dp, end = 4.dp),
+        modifier = modifier.fillMaxWidth().height(48.dp).padding(top = 15.dp, end = 4.dp),
         horizontalArrangement = Arrangement.End,
         verticalAlignment = CenterVertically
     ) {

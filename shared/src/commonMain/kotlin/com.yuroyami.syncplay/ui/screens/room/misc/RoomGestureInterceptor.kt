@@ -46,11 +46,12 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
-import com.yuroyami.syncplay.ui.screens.adam.LocalScreenSize
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_GESTURES
 import com.yuroyami.syncplay.settings.valueFlow
+import com.yuroyami.syncplay.ui.screens.adam.LocalScreenSize
+import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.utils.getSystemMaxVolume
 import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
@@ -143,7 +144,9 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                     )
                 }
             }
+
             val haptic = LocalHapticFeedback.current
+            val softwareKB = LocalSoftwareKeyboardController.current
 
             Box(modifier = Modifier.fillMaxSize().pointerInput(gesturesEnabled, hasVideo) {
                 detectTapGestures(
@@ -221,6 +224,9 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                     onTap = {
                         viewmodel.visibleHUD.value = !viewmodel.visibleHUD.value
                         haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+
+                        if (!viewmodel.visibleHUD.value) softwareKB?.hide()
+
                         //TODO controlcardvisible = false
                         //     addmediacardvisible = false
                     },
