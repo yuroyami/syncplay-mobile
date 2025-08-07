@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 
 
@@ -25,29 +26,29 @@ fun RoomBottomBarSection(modifier: Modifier) {
     val hasVideo by viewmodel.hasVideo.collectAsState()
 
     Box(modifier) {
-        if (hasVideo) BottomBarBlackUnderlay(modifier = Modifier.align(Alignment.BottomCenter))
+        if (hasVideo) BottomBarBlackUnderlay(modifier = Modifier.align(Alignment.BottomCenter).zIndex(1f))
 
         Row(
-            modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter),
+            modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).zIndex(999f),
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.Bottom
         ) {
-            //if (hasVideo) {
-            //Ready Toggle Button
-            RoomReadyButton()
+            if (hasVideo) {
+                //Ready Toggle Button
+                RoomReadyButton()
 
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.Bottom,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                //RoomBottomBarVideoControlRow(modifier = Modifier.fillMaxWidth())
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.Bottom,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    //RoomBottomBarVideoControlRow(modifier = Modifier.fillMaxWidth())
 
-                RoomVideoSeekbar(modifier = Modifier.fillMaxWidth())
+                    RoomSeekbar(modifier = Modifier.fillMaxWidth())
+                }
+
+                RoomAdvancedControlButton()
             }
-
-            RoomAdvancedControlButton()
-            //}
 
             RoomMediaAddButton()
         }

@@ -1,6 +1,7 @@
 package com.yuroyami.syncplay.ui.screens.room
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
@@ -19,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.screens.room.bottombar.PopupSeekToPosition.SeekToPositionPopup
 import com.yuroyami.syncplay.ui.screens.room.bottombar.RoomBottomBarSection
@@ -84,7 +86,7 @@ fun RoomScreenUI() {
             AnimatedVisibility(
                 modifier = Modifier.fillMaxSize(),
                 visible = isHUDVisible,
-                enter = fadeIn(), exit = fadeOut()
+                enter = fadeIn(animationSpec = keyframes { durationMillis = 75 }), exit = fadeOut(animationSpec = keyframes { durationMillis = 75 })
             ) {
                 // We need to wrap all HUD elements in this Box because AnimatedVisibility breaks the original Box scope,
                 // which breaks our ability to position elements freely on the screen (e.g., topStart, bottomEnd, etc.).
@@ -114,6 +116,7 @@ fun RoomScreenUI() {
                     RoomSectionSlidingCards(
                         modifier = Modifier.align(Alignment.CenterEnd)
                             .fillMaxWidth(0.37f).fillMaxHeight()
+                            .zIndex(10f)
                             .padding(top = 68.dp, end = 6.dp, bottom = 58.dp),
                         tabController = tabController
                     )
