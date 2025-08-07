@@ -27,11 +27,11 @@ import com.yuroyami.syncplay.ui.screens.room.chat.RoomChatSection
 import com.yuroyami.syncplay.ui.screens.room.misc.RoomBackgroundArtwork
 import com.yuroyami.syncplay.ui.screens.room.misc.RoomGestureInterceptor
 import com.yuroyami.syncplay.ui.screens.room.misc.RoomPlayButton
-import com.yuroyami.syncplay.ui.screens.room.tabs.RoomUnlockableLayout
 import com.yuroyami.syncplay.ui.screens.room.slidingcards.RoomSectionSlidingCards
 import com.yuroyami.syncplay.ui.screens.room.statinfo.RoomStatusInfoSection
 import com.yuroyami.syncplay.ui.screens.room.tabs.PopupChatHistory.ChatHistoryPopup
 import com.yuroyami.syncplay.ui.screens.room.tabs.RoomTabSection
+import com.yuroyami.syncplay.ui.screens.room.tabs.RoomUnlockableLayout
 import com.yuroyami.syncplay.ui.screens.room.tabs.TabController
 import com.yuroyami.syncplay.utils.CommonUtils.beginPingUpdate
 import com.yuroyami.syncplay.utils.HideSystemBars
@@ -113,9 +113,8 @@ fun RoomScreenUI() {
                     /* Card section (to the right middle) */
                     RoomSectionSlidingCards(
                         modifier = Modifier.align(Alignment.CenterEnd)
-                            .fillMaxWidth(0.38f).fillMaxHeight(0.72f)
-                            .padding(top = 14.dp)
-                            .padding(8.dp),
+                            .fillMaxWidth(0.37f).fillMaxHeight(0.76f)
+                            .padding(top = 22.dp, end = 6.dp),
                         tabController = tabController
                     )
 
