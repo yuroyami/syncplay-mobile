@@ -62,7 +62,6 @@ import com.yuroyami.syncplay.ui.utils.getRegularFont
 import com.yuroyami.syncplay.ui.utils.gradientOverlay
 import com.yuroyami.syncplay.ui.utils.syncplayFont
 import com.yuroyami.syncplay.utils.CommonUtils
-import com.yuroyami.syncplay.utils.HideSystemBars
 import com.yuroyami.syncplay.utils.getText
 import com.yuroyami.syncplay.utils.loggy
 import io.github.vinceglb.filekit.dialogs.FileKitType
@@ -126,8 +125,6 @@ fun RoomMediaAddButton() {
             ),
             onDismissRequest = { addMediaCardVisibility = false }
         ) {
-            HideSystemBars()
-
             FancyText2(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
                     .padding(horizontal = 2.dp),

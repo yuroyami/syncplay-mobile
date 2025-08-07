@@ -57,9 +57,11 @@ fun AdamScreen(onViewmodelReady: (SyncplayViewmodel) -> Unit) {
         }
     }
 
+
     LaunchedEffect(viewmodel) {
         onViewmodelReady.invoke(viewmodel)
     }
+
     LaunchedEffect(navigator) {
         viewmodel.nav = navigator
     }

@@ -34,6 +34,7 @@ import com.yuroyami.syncplay.ui.screens.room.tabs.PopupChatHistory.ChatHistoryPo
 import com.yuroyami.syncplay.ui.screens.room.tabs.RoomTabSection
 import com.yuroyami.syncplay.ui.screens.room.tabs.TabController
 import com.yuroyami.syncplay.utils.CommonUtils.beginPingUpdate
+import com.yuroyami.syncplay.utils.HideSystemBars
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
@@ -41,6 +42,8 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun RoomScreenUI() {
+    HideSystemBars() //This little trick will prevent the navigation bar from appearing when we show popup dialogs/dropdown menus.
+
     val viewmodel = LocalViewmodel.current
     val roomIoScope = rememberCoroutineScope { Dispatchers.IO }
     val roomMainScope = rememberCoroutineScope { Dispatchers.Main }
