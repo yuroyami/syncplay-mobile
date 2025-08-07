@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -37,12 +38,13 @@ fun RoomBottomBarSection(modifier: Modifier) {
             RoomReadyButton()
 
             Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.Bottom
+                modifier = Modifier.weight(1f).padding(bottom = 6.dp),
+                verticalArrangement = Arrangement.Bottom,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                RoomVideoSeekbar(modifier = Modifier.fillMaxWidth())
+                //RoomBottomBarVideoControlRow(modifier = Modifier.fillMaxWidth())
 
-                RoomBottomBarVideoControlRow(modifier = Modifier.fillMaxWidth())
+                RoomVideoSeekbar(modifier = Modifier.fillMaxWidth())
             }
 
             RoomAdvancedControlButton()

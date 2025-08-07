@@ -82,7 +82,8 @@ fun RoomMediaAddButton() {
     val viewmodel = LocalViewmodel.current
     val hasVideo by viewmodel.hasVideo.collectAsState()
 
-    var addMediaCardVisibility by remember { mutableStateOf(!viewmodel.hasDoneStartupSlideAnimation) }
+    //TODO var addMediaCardVisibility by remember { mutableStateOf(!viewmodel.hasDoneStartupSlideAnimation) }
+    var addMediaCardVisibility by remember { mutableStateOf(false) }
 
     val videoPicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = CommonUtils.vidExs)) { file ->
         file?.path?.let {
