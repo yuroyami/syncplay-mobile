@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.room.misc
+package com.yuroyami.syncplay.ui.screens.room.misc
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -47,8 +47,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
-import com.yuroyami.syncplay.screens.adam.LocalScreenSize
-import com.yuroyami.syncplay.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalScreenSize
+import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_GESTURES
 import com.yuroyami.syncplay.settings.valueFlow
 import com.yuroyami.syncplay.utils.getSystemMaxVolume

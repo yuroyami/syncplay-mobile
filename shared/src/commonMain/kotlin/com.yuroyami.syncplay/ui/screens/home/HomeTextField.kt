@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.home
+package com.yuroyami.syncplay.ui.screens.home
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring

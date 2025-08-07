@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.room.statinfo
+package com.yuroyami.syncplay.ui.screens.room.statinfo
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons

@@ -74,7 +74,7 @@ import com.yuroyami.syncplay.ui.utils.SyncplayPopup
 import com.yuroyami.syncplay.ui.utils.gradientOverlay
 import com.yuroyami.syncplay.ui.utils.getRegularFont
 import com.yuroyami.syncplay.ui.popups.PopupMediaDirs.MediaDirsPopup
-import com.yuroyami.syncplay.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Paletting
 import com.yuroyami.syncplay.utils.CommonUtils
 import com.yuroyami.syncplay.utils.CommonUtils.vidExs

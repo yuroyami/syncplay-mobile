@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.room.misc
+package com.yuroyami.syncplay.ui.screens.room.misc
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -26,7 +26,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Paletting
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource

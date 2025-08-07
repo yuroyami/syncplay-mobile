@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.adam
+package com.yuroyami.syncplay.ui.screens.adam
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -17,12 +17,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.yuroyami.syncplay.ui.utils.ComposedMessagePalette
 import com.yuroyami.syncplay.models.MessagePalette
-import com.yuroyami.syncplay.screens.home.HomeScreenUI
+import com.yuroyami.syncplay.screens.adam.Screen
 import com.yuroyami.syncplay.screens.room.RoomScreenUI
 import com.yuroyami.syncplay.settings.SettingStyling
+import com.yuroyami.syncplay.ui.screens.home.HomeScreenUI
 import com.yuroyami.syncplay.ui.theme.AppTheme
+import com.yuroyami.syncplay.ui.utils.ComposedMessagePalette
 import com.yuroyami.syncplay.utils.ScreenSizeInfo
 import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 
@@ -56,7 +57,7 @@ fun AdamScreen(onViewmodelReady: (SyncplayViewmodel) -> Unit) {
 
     val currentScreen by remember {
         derivedStateOf {
-            Screen.fromLabel(navEntry?.destination?.route)
+            Screen.Companion.fromLabel(navEntry?.destination?.route)
         }
     }
 

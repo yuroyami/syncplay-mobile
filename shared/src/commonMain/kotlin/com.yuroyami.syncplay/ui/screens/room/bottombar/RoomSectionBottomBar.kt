@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.room.bottombar
+package com.yuroyami.syncplay.ui.screens.room.bottombar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,10 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.yuroyami.syncplay.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.screens.room.subcomponents.RoomAdvancedControlButton
-import com.yuroyami.syncplay.screens.room.subcomponents.RoomBottomBarVideoControlRow
-import com.yuroyami.syncplay.screens.room.subcomponents.RoomVideoSeekbar
+import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 
 
 @Composable

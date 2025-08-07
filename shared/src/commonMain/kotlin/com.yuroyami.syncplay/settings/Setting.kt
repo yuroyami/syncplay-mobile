@@ -52,7 +52,7 @@ import com.yuroyami.syncplay.ui.utils.FlexibleFancyText
 import com.yuroyami.syncplay.ui.utils.MultiChoiceDialog
 import com.yuroyami.syncplay.ui.utils.SmartFancyIcon
 import com.yuroyami.syncplay.ui.popups.PopupColorPicker.ColorPickingPopup
-import com.yuroyami.syncplay.screens.adam.LocalSettingStyling
+import com.yuroyami.syncplay.ui.screens.adam.LocalSettingStyling
 import com.yuroyami.syncplay.ui.theme.Paletting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

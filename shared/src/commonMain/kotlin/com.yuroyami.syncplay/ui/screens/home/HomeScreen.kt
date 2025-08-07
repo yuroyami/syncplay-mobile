@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.home
+package com.yuroyami.syncplay.ui.screens.home
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -82,20 +82,20 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.ui.utils.FlexibleFancyText
-import com.yuroyami.syncplay.ui.utils.SmartFancyIcon
-import com.yuroyami.syncplay.ui.screens.home.PopupAPropos.AProposPopup
 import com.yuroyami.syncplay.models.JoinConfig
-import com.yuroyami.syncplay.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_PLAYER_ENGINE
 import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_SP_MEDIA_DIRS
 import com.yuroyami.syncplay.settings.SETTINGS_GLOBAL
 import com.yuroyami.syncplay.settings.SettingsUI
 import com.yuroyami.syncplay.settings.valueFlow
 import com.yuroyami.syncplay.settings.writeValue
+import com.yuroyami.syncplay.ui.screens.home.PopupAPropos.AProposPopup
 import com.yuroyami.syncplay.ui.theme.Paletting
 import com.yuroyami.syncplay.ui.theme.Paletting.SP_GRADIENT
 import com.yuroyami.syncplay.ui.theme.ThemeMenu
+import com.yuroyami.syncplay.ui.utils.FlexibleFancyText
+import com.yuroyami.syncplay.ui.utils.SmartFancyIcon
 import com.yuroyami.syncplay.utils.CommonUtils.substringSafely
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.platformCallback

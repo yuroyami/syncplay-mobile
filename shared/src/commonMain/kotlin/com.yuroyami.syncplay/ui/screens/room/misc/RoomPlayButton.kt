@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.room.misc
+package com.yuroyami.syncplay.ui.screens.room.misc
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -14,10 +14,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.ui.utils.FancyIcon2
-import com.yuroyami.syncplay.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Paletting
 import com.yuroyami.syncplay.ui.theme.Paletting.ROOM_ICON_SIZE
+import com.yuroyami.syncplay.ui.utils.FancyIcon2
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt

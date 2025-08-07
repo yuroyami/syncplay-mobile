@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.room.chat
+package com.yuroyami.syncplay.ui.screens.room.chat
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.keyframes
@@ -21,8 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.screens.adam.LocalChatPalette
-import com.yuroyami.syncplay.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalChatPalette
+import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.valueAsState
 import kotlinx.coroutines.delay

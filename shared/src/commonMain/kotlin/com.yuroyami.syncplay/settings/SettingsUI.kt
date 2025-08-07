@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.gradientOverlay
 import com.yuroyami.syncplay.ui.utils.getRegularFont
-import com.yuroyami.syncplay.screens.adam.LocalSettingStyling
+import com.yuroyami.syncplay.ui.screens.adam.LocalSettingStyling
 import com.yuroyami.syncplay.ui.theme.Paletting
 import org.jetbrains.compose.resources.stringResource
 

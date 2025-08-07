@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.room.statinfo
+package com.yuroyami.syncplay.ui.screens.room.statinfo
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
@@ -26,7 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Paletting
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
