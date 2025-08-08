@@ -192,7 +192,7 @@ android {
 
     defaultConfig {
         applicationId = if (forGPlay) "com.yuroyami.syncplay" else "com.reddnek.syncplay"
-        minSdk = 24
+        minSdk = 21
         targetSdk = 35 //TODO We only update to targetSdk 36 when we resolve the 16KB native libs alignment issue
         versionCode = 1_000_016_00_0 //1 XXX XXX XX X (last X is for prerelease versions such as RC)
         versionName = "0.16.0"
