@@ -50,7 +50,7 @@ when you're physically apart.
 
 It includes real-time chat functionality, enabling seamless communication while enjoying synchronized playback on your Android or iOS device. You can use Syncplay Mobile with your friends who also use Syncplay Mobile, or Syncplay on PC.
 
-**Cannot run on Android versions below Android 5.0 Marshmallow and iOS 14.0**
+**Requires at least Android 5.0 Lollipop or iOS 14.0**
 
 <p align="center">  
   <img src = "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS1.png" width=150 alt="">  
