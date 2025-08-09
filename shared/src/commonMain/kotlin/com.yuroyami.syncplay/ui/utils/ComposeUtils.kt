@@ -145,7 +145,8 @@ fun FancyIcon2(
             .alpha(0.9f)
             .wrapContentSize()
             .size(size.dp),
-        onClick = { onClick() }) {
+        onClick = onClick
+    ) {
         Box(
             modifier = Modifier
                 .padding(4.dp)

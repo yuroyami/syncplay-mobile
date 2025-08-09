@@ -38,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
@@ -67,6 +68,7 @@ import com.yuroyami.syncplay.utils.loggy
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.path
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
@@ -79,9 +81,12 @@ import syncplaymobile.shared.generated.resources.room_button_desc_add
 
 @Composable
 fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
+    var showPopup by remember { popupStateAddMedia }
+
     val viewmodel = LocalViewmodel.current
     val cardController = LocalCardController.current
     val hasVideo by viewmodel.hasVideo.collectAsState()
+    val popupStateAddUrl = remember { mutableStateOf(false) }
 
     val videoPicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = CommonUtils.vidExs)) { file ->
         file?.path?.let {
@@ -89,20 +94,18 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
             viewmodel.player?.injectVideo(it, false)
         }
     }
-    val popupStateAddUrl = remember { mutableStateOf(false) }
-    AddUrlPopup(visibilityState = popupStateAddUrl)
-
 
     Box(modifier = Modifier.padding(4.dp)) {
         AddVideoButton(
             modifier = Modifier.padding(2.dp),
             expanded = !hasVideo,
             onClick = {
-                popupStateAddMedia.value = !popupStateAddMedia.value
+                showPopup = !showPopup
                 cardController.controlPanel.value = false
             }
         )
 
+        val scope = rememberCoroutineScope()
         DropdownMenu(
             containerColor = MaterialTheme.colorScheme.tertiaryContainer,
             tonalElevation = 0.dp,
@@ -114,12 +117,17 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
                 })
             ),
             shape = RoundedCornerShape(8.dp),
-            expanded = popupStateAddMedia.value,
+            expanded = showPopup,
             properties = PopupProperties(
                 dismissOnBackPress = true,
                 dismissOnClickOutside = true
             ),
-            onDismissRequest = { popupStateAddMedia.value = false }
+            onDismissRequest = {
+                scope.launch {
+                    delay(100)
+                    if (showPopup) showPopup = false
+                }
+            }
         ) {
             FancyText2(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -147,7 +155,7 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
                     }
                 },
                 onClick = {
-                    popupStateAddMedia.value = false
+                    showPopup = false
                     cardController.controlPanel.value = false
                     videoPicker.launch()
                 }
@@ -170,13 +178,15 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
                     }
                 },
                 onClick = {
-                    popupStateAddMedia.value = false
+                    showPopup = false
                     cardController.controlPanel.value = false
                     popupStateAddUrl.value = true
                 }
             )
         }
     }
+
+    AddUrlPopup(visibilityState = popupStateAddUrl)
 }
 
 @Composable
@@ -192,7 +202,7 @@ fun AddVideoButton(modifier: Modifier, expanded: Boolean, onClick: () -> Unit) {
             modifier = modifier.width(150.dp).height(48.dp),
             shape = RoundedCornerShape(24.dp),
             border = BorderStroke(1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
-            onClick = { onClick.invoke() },
+            onClick = onClick,
             contentColor = Color.DarkGray.copy(0.5f)
         ) {
             Box(modifier = Modifier.fillMaxSize().padding(8.dp), contentAlignment = Alignment.Center) {

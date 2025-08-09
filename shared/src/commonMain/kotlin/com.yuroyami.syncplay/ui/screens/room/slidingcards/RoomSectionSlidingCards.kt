@@ -45,11 +45,13 @@ fun RoomSectionSlidingCards(modifier: Modifier) {
     /* The cards below */
     Column(modifier) {
         Box(modifier = Modifier.fillMaxWidth(0.37f).weight(1f).align(Alignment.End).padding(4.dp)) {
+            val inTransition = slideInHorizontally(initialOffsetX = { (screenSize.widthPx * 1.3).toInt() })
+            val outTransition = slideOutHorizontally(targetOffsetX = { (screenSize.widthPx * 1.3).toInt() })
+
             /** User-info card (toggled on and off) */
             if (!viewmodel.isSoloMode) {
                 FreeAnimatedVisibility(
-                    enter = slideInHorizontally(initialOffsetX = { (screenSize.widthPx * 1.3).toInt() }),
-                    exit = slideOutHorizontally(targetOffsetX = { (screenSize.widthPx * 1.3).toInt() }),
+                    enter = inTransition, exit = outTransition,
                     visible = stateUserInfo,
                     modifier = Modifier.fillMaxHeight()
                 ) {
@@ -60,8 +62,7 @@ fun RoomSectionSlidingCards(modifier: Modifier) {
             /** Shared Playlist card (toggled on and off) */
             if (!viewmodel.isSoloMode) {
                 FreeAnimatedVisibility(
-                    enter = slideInHorizontally(initialOffsetX = { (screenSize.widthPx * 1.3).toInt() }),
-                    exit = slideOutHorizontally(targetOffsetX = { (screenSize.widthPx * 1.3).toInt() }),
+                    enter = inTransition, exit = outTransition,
                     visible = stateSharedPlaylist,
                     modifier = Modifier.fillMaxHeight()
                 ) {
@@ -71,8 +72,7 @@ fun RoomSectionSlidingCards(modifier: Modifier) {
 
             /** In-room card (toggled on and off) */
             FreeAnimatedVisibility(
-                enter = slideInHorizontally(initialOffsetX = { (screenSize.widthPx * 1.3).toInt() }),
-                exit = slideOutHorizontally(targetOffsetX = { (screenSize.widthPx * 1.3).toInt() }),
+                enter = inTransition, exit = outTransition,
                 visible = stateRoomPreferences,
                 modifier = Modifier.fillMaxHeight()
             ) {
