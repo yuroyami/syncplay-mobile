@@ -1,17 +1,21 @@
 package com.yuroyami.syncplay.ui.screens.room.tabs
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.keyframes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
@@ -19,19 +23,28 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composables.core.ScrollArea
+import com.composables.core.VerticalScrollbar
+import com.composables.core.rememberScrollAreaState
+import com.composeunstyled.Thumb
 import com.yuroyami.syncplay.ui.screens.adam.LocalChatPalette
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.FlexibleFancyAnnotatedText
 import com.yuroyami.syncplay.ui.utils.SyncplayPopup
 import com.yuroyami.syncplay.ui.utils.getRegularFont
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
@@ -42,6 +55,8 @@ object PopupChatHistory {
     @Composable
     fun ChatHistoryPopup(visibilityState: MutableState<Boolean>) {
         val viewmodel = LocalViewmodel.current
+        val scope = rememberCoroutineScope()
+
         val msgs = remember { viewmodel.p.session.messageSequence }
         val palette = LocalChatPalette.current.copy(includeTimestamp = true) // We always show timestamp
 
@@ -69,19 +84,44 @@ object PopupChatHistory {
                 )
 
                 /* The actual messages */
-                LazyColumn(
-                    contentPadding = PaddingValues(8.dp),
-                    modifier = Modifier.Companion.fillMaxHeight(0.7f).background(Color(50, 50, 50, 50))
+                val lazyListState: LazyListState = rememberLazyListState()
+                val scrollAreaState = rememberScrollAreaState(lazyListState)
+
+                ScrollArea(
+                    scrollAreaState,
+                    modifier = Modifier.weight(1f)
                 ) {
-                    items(msgs) {
-                        FlexibleFancyAnnotatedText(
-                            modifier = Modifier.Companion.fillMaxWidth(),
-                            text = it.factorize(palette),
-                            size = 10f,
-                            font = getRegularFont(),
-                            lineHeight = 14.sp,
-                            overflow = TextOverflow.Companion.Ellipsis,
-                        )
+                    LazyColumn(
+                        state = lazyListState,
+                        contentPadding = PaddingValues(8.dp),
+                        modifier = Modifier.fillMaxSize(1f).background(Color(50, 50, 50, 50))
+                    ) {
+                        items(msgs) {
+                            FlexibleFancyAnnotatedText(
+                                modifier = Modifier.Companion.fillMaxWidth(),
+                                text = it.factorize(palette),
+                                size = 10f,
+                                font = getRegularFont(),
+                                lineHeight = 14.sp,
+                                overflow = TextOverflow.Companion.Ellipsis,
+                            )
+                        }
+                    }
+
+                    val scrollBarAlpha by animateFloatAsState(
+                        targetValue = if (lazyListState.isScrollInProgress) 1f else 0f,
+                        animationSpec = keyframes { durationMillis = if (lazyListState.isScrollInProgress) 50 else 250 }
+                    )
+                    VerticalScrollbar(
+                        modifier = Modifier.align(Alignment.TopEnd).weight(1f).width(4.dp).alpha(scrollBarAlpha)
+                    ) {
+                        Thumb(Modifier.background(Color.Gray), shape = RoundedCornerShape(100))
+                    }
+                }
+
+                SideEffect {
+                    scope.launch {
+                        lazyListState.scrollToItem(msgs.size - 1)
                     }
                 }
 
