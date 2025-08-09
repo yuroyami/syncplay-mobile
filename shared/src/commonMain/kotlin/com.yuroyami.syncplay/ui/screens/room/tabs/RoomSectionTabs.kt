@@ -99,7 +99,7 @@ fun RoomTabSection(modifier: Modifier, onShowChatHistory: () -> Unit) {
     val stateRoomLock by cardController.tabLock.collectAsState()
 
     Row(
-        modifier = modifier.fillMaxWidth().height(48.dp).padding(top = 18.dp, end = 4.dp),
+        modifier = modifier.fillMaxWidth().height(54.dp).padding(top = 18.dp, end = 4.dp),
         horizontalArrangement = Arrangement.End,
         verticalAlignment = CenterVertically
     ) {
@@ -107,7 +107,7 @@ fun RoomTabSection(modifier: Modifier, onShowChatHistory: () -> Unit) {
         /* The tabs in the top-right corner */
         /* In-room settings */
         RoomTab(
-            modifier = Modifier.width(48.dp),
+            modifier = Modifier.width(54.dp),
             icon = Icons.Filled.AutoFixHigh,
             visibilityState = stateRoomPreferences,
             onClick = { cardController.toggleRoomPreferences() }
@@ -118,7 +118,7 @@ fun RoomTabSection(modifier: Modifier, onShowChatHistory: () -> Unit) {
         /* Shared Playlist */
         if (!viewmodel.isSoloMode) {
             RoomTab(
-                modifier = Modifier.width(48.dp),
+                modifier = Modifier.width(54.dp),
                 icon = Icons.AutoMirrored.Filled.PlaylistPlay,
                 visibilityState = stateSharedPlaylist,
                 onClick = {
@@ -130,7 +130,7 @@ fun RoomTabSection(modifier: Modifier, onShowChatHistory: () -> Unit) {
 
             /* User Info card tab */
             RoomTab(
-                modifier = Modifier.width(48.dp),
+                modifier = Modifier.width(54.dp),
                 icon = Icons.Filled.Groups,
                 visibilityState = stateUserInfo, onClick = {
                     cardController.toggleUserInfo()
@@ -142,7 +142,7 @@ fun RoomTabSection(modifier: Modifier, onShowChatHistory: () -> Unit) {
 
         /** Lock card */
         RoomTab(
-            modifier = Modifier.width(48.dp),
+            modifier = Modifier.width(54.dp),
             icon = Icons.Filled.Lock,
             visibilityState = false,
             onClick = {

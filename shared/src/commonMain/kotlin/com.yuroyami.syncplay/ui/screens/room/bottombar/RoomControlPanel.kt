@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
@@ -48,7 +49,6 @@ import com.yuroyami.syncplay.settings.writeValue
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Paletting
-import com.yuroyami.syncplay.ui.theme.Paletting.ROOM_ICON_SIZE
 import com.yuroyami.syncplay.ui.utils.FancyIcon2
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.syncplayFont
@@ -71,18 +71,18 @@ fun RoomControlPanelButton(modifier: Modifier, popupStateAddMedia: MutableState<
         FancyIcon2(
             modifier = modifier,
             icon = Icons.Filled.VideoSettings,
-            size = ROOM_ICON_SIZE + 6,
+            size = 48,
             shadowColor = Color.Black,
             onClick = {
                 popupStateAddMedia.value = false
-                cardController.controlPanel.value = true
+                cardController.controlPanel.value = !cardController.controlPanel.value
             }
         )
     }
 }
 
 @Composable
-fun RoomControlPanelCard(modifier: Modifier) {
+fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
     val viewmodel = LocalViewmodel.current
     val cardController = LocalCardController.current
 
@@ -94,6 +94,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
         }
     }
 
+    val iconSize = (height.value - 2).toInt()
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.SpaceEvenly
@@ -101,7 +102,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
         /* Aspect Ratio */
         FancyIcon2(
             icon = Icons.Filled.AspectRatio,
-            size = ROOM_ICON_SIZE,
+            size = iconSize,
             shadowColor = Color.Black
         ) {
             composeScope.launch(Dispatchers.IO) {
@@ -119,7 +120,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
             icon = when (gesturesEnabled) {
                 true -> Icons.Filled.TouchApp
                 false -> Icons.Filled.DoNotTouch
-            }, size = ROOM_ICON_SIZE, shadowColor = Color.Black
+            }, size =iconSize, shadowColor = Color.Black
         ) {
             composeScope.launch(Dispatchers.IO) {
                 writeValue(MISC_GESTURES, !gesturesEnabled)
@@ -130,7 +131,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
         /* Seek To */
         FancyIcon2(
             icon = Icons.Filled.BrowseGallery,
-            size = ROOM_ICON_SIZE,
+            size = iconSize,
             shadowColor = Color.Black
         ) {
             cardController.controlPanel.value = false
@@ -140,7 +141,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
         /* Undo Last Seek */
         FancyIcon2(
             icon = Icons.Filled.History,
-            size = ROOM_ICON_SIZE,
+            size = iconSize,
             shadowColor = Color.Black
         ) {
             if (viewmodel.seeks.isEmpty()) {
@@ -161,10 +162,9 @@ fun RoomControlPanelCard(modifier: Modifier) {
         Box {
             val tracksPopup = remember { mutableStateOf(false) }
 
-
             FancyIcon2(
                 icon = Icons.Filled.Subtitles,
-                size = ROOM_ICON_SIZE,
+                size = iconSize,
                 shadowColor = Color.Black
             ) {
                 composeScope.launch {
@@ -291,7 +291,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
 
             FancyIcon2(
                 icon = Icons.Filled.SpeakerGroup,
-                size = ROOM_ICON_SIZE,
+                size = iconSize,
                 shadowColor = Color.Black
             ) {
                 viewmodel.viewModelScope.launch {
@@ -369,7 +369,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
 
                 FancyIcon2(
                     icon = Icons.Filled.Theaters,
-                    size = ROOM_ICON_SIZE,
+                    size = iconSize,
                     shadowColor = Color.Black
                 ) {
                     viewmodel.viewModelScope.launch {

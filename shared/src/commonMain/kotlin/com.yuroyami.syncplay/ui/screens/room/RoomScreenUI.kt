@@ -5,7 +5,6 @@ import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -119,9 +118,13 @@ fun RoomScreenUI() {
                         /* Card section (to the right middle) */
                         RoomSectionSlidingCards(
                             modifier = Modifier.align(Alignment.CenterEnd)
-                                .fillMaxWidth(0.37f).fillMaxHeight()
+                                .fillMaxSize()
                                 .zIndex(10f)
-                                .padding(top = 68.dp, end = 6.dp, bottom = 58.dp)
+                                .padding(
+                                    top = 74.dp,
+                                    bottom = 58.dp,
+                                    end = 6.dp,
+                                )
                         )
 
                         /* BottomBar: Ready Button - Seekbar (and the buttons above it) - Advanced Controls (like selecting tracks) - Media Add Button */
