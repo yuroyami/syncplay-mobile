@@ -71,7 +71,7 @@ fun RoomControlPanelButton(modifier: Modifier, popupStateAddMedia: MutableState<
         FancyIcon2(
             modifier = modifier,
             icon = Icons.Filled.VideoSettings,
-            size = 48,
+            size = 47,
             shadowColor = Color.Black,
             onClick = {
                 popupStateAddMedia.value = false

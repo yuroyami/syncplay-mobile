@@ -52,7 +52,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
-import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Paletting
 import com.yuroyami.syncplay.ui.theme.Paletting.ROOM_ICON_SIZE
@@ -84,7 +83,7 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
     var showPopup by remember { popupStateAddMedia }
 
     val viewmodel = LocalViewmodel.current
-    val cardController = LocalCardController.current
+
     val hasVideo by viewmodel.hasVideo.collectAsState()
     val popupStateAddUrl = remember { mutableStateOf(false) }
 
@@ -101,7 +100,6 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
             expanded = !hasVideo,
             onClick = {
                 showPopup = !showPopup
-                cardController.controlPanel.value = false
             }
         )
 
@@ -156,7 +154,6 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
                 },
                 onClick = {
                     showPopup = false
-                    cardController.controlPanel.value = false
                     videoPicker.launch()
                 }
             )
@@ -179,7 +176,6 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
                 },
                 onClick = {
                     showPopup = false
-                    cardController.controlPanel.value = false
                     popupStateAddUrl.value = true
                 }
             )

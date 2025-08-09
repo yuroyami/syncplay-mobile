@@ -61,7 +61,7 @@ class CardController {
     val tabCardRoomPreferences = MutableStateFlow(false)
     val tabLock = MutableStateFlow(false)
 
-    val controlPanel = MutableStateFlow(true)
+    val controlPanel = MutableStateFlow(false)
 
     fun toggleUserInfo(forcedState: Boolean? = null) {
         tabCardUserInfo.value = forcedState ?: !tabCardUserInfo.value
