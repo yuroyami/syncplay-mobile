@@ -64,6 +64,8 @@ fun RoomSeekbar(modifier: Modifier) {
         }
     }
 
+    //TODO USE A LOCAL SLIDERVALUE STATE AND ONLY UPDATE IT GRACEFULLY
+
     val videoCurrentTime by viewmodel.timeCurrent.collectAsState()
     val videoFullDuration by viewmodel.timeFull.collectAsState()
 
