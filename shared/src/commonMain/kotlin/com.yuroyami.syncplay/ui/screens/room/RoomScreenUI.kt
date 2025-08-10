@@ -131,13 +131,14 @@ fun RoomScreenUI() {
                         RoomBottomBarSection(
                             modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
                         )
+
+
+                        /* In the dead center, we put the play button */
+                        RoomPlayButton(
+                            modifier = Modifier.align(Alignment.Center)
+                        )
                     }
                 }
-
-                /* In the dead center, we put the play button */
-                RoomPlayButton(
-                    modifier = Modifier.align(Alignment.Center)
-                )
             }
 
             if (!soloMode) {

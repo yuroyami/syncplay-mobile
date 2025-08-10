@@ -84,7 +84,7 @@ abstract class BasePlayer(
 
     @CallSuper
     open fun seekTo(toPositionMs: Long) {
-        if (viewmodel.background == true) return
+        if (viewmodel.background) return
     }
 
     abstract fun currentPositionMs(): Long

@@ -1,7 +1,5 @@
 package com.yuroyami.syncplay.ui.screens.room.tabs
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.keyframes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,7 +13,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
@@ -24,25 +21,21 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.composables.core.ScrollArea
-import com.composables.core.VerticalScrollbar
-import com.composables.core.rememberScrollAreaState
-import com.composeunstyled.Thumb
 import com.yuroyami.syncplay.ui.screens.adam.LocalChatPalette
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.FlexibleFancyAnnotatedText
 import com.yuroyami.syncplay.ui.utils.SyncplayPopup
+import com.yuroyami.syncplay.ui.utils.drawVerticalScrollbar
 import com.yuroyami.syncplay.ui.utils.getRegularFont
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.Font
@@ -69,53 +62,77 @@ object PopupChatHistory {
             onDismiss = { visibilityState.value = false }
         ) {
             Column(
-                modifier = Modifier.Companion.fillMaxSize().padding(6.dp),
-                horizontalAlignment = Alignment.Companion.CenterHorizontally,
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween,
             ) {
 
                 /* The title */
                 FancyText2(
-                    modifier = Modifier.Companion.padding(6.dp),
+                    modifier = Modifier.padding(6.dp),
                     string = "Chat History",
-                    solid = Color.Companion.Black,
+                    solid = Color.Black,
                     size = 18f,
                     font = Font(Res.font.Directive4_Regular)
                 )
 
                 /* The actual messages */
-                val lazyListState: LazyListState = rememberLazyListState()
-                val scrollAreaState = rememberScrollAreaState(lazyListState)
+//                val lazyListState: LazyListState = rememberLazyListState()
+//                val scrollAreaState = rememberScrollAreaState(lazyListState)
+//
+//                ScrollArea(
+//                    state = scrollAreaState,
+//                    modifier = Modifier.weight(1f)
+//                ) {
+//
+//                    LazyColumn(
+//                        state = lazyListState,
+//                        contentPadding = PaddingValues(8.dp),
+//                        modifier = Modifier.fillMaxSize().background(Color(50, 50, 50, 50))
+//                    ) {
+//                        items(msgs) { msg ->
+//                            repeat(5) {
+//                                FlexibleFancyAnnotatedText(
+//                                    modifier = Modifier.fillMaxWidth(),
+//                                    text = msg.factorize(palette),
+//                                    size = 10f,
+//                                    font = getRegularFont(),
+//                                    lineHeight = 14.sp,
+//                                    overflow = TextOverflow.Ellipsis,
+//                                )
+//                            }
+//                        }
+//                    }
+//
+//                    VerticalScrollbar(
+//                        modifier = Modifier
+//                            .align(Alignment.CenterEnd)
+//                            .fillMaxHeight().width(4.dp)
+//                    ) {
+//                        Thumb(
+//                            modifier = Modifier.background(Color.Gray),
+//                            thumbVisibility = ThumbVisibility.HideWhileIdle(fadeIn(), fadeOut(), hideDelay = 50.milliseconds)
+//                        )
+//                    }
+//                }
 
-                ScrollArea(
-                    scrollAreaState,
-                    modifier = Modifier.weight(1f)
+                val lazyListState: LazyListState = rememberLazyListState()
+                LazyColumn(
+                    state = lazyListState,
+                    contentPadding = PaddingValues(8.dp),
+                    modifier = Modifier.weight(1f).background(Color(50, 50, 50, 50)).drawVerticalScrollbar(lazyListState).clipToBounds()
                 ) {
-                    LazyColumn(
-                        state = lazyListState,
-                        contentPadding = PaddingValues(8.dp),
-                        modifier = Modifier.fillMaxSize(1f).background(Color(50, 50, 50, 50))
-                    ) {
-                        items(msgs) {
+                    items(msgs) { msg ->
+                        repeat(5) {
                             FlexibleFancyAnnotatedText(
-                                modifier = Modifier.Companion.fillMaxWidth(),
-                                text = it.factorize(palette),
+                                modifier = Modifier.fillMaxWidth(),
+                                text = msg.factorize(palette),
                                 size = 10f,
                                 font = getRegularFont(),
                                 lineHeight = 14.sp,
-                                overflow = TextOverflow.Companion.Ellipsis,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
-                    }
-
-                    val scrollBarAlpha by animateFloatAsState(
-                        targetValue = if (lazyListState.isScrollInProgress) 1f else 0f,
-                        animationSpec = keyframes { durationMillis = if (lazyListState.isScrollInProgress) 50 else 250 }
-                    )
-                    VerticalScrollbar(
-                        modifier = Modifier.align(Alignment.TopEnd).weight(1f).width(4.dp).alpha(scrollBarAlpha)
-                    ) {
-                        Thumb(Modifier.background(Color.Gray), shape = RoundedCornerShape(100))
                     }
                 }
 
@@ -127,13 +144,13 @@ object PopupChatHistory {
 
                 /* Exit button */
                 Button(
-                    modifier = Modifier.Companion.padding(8.dp),
+                    modifier = Modifier.padding(8.dp),
                     onClick = {
                         visibilityState.value = false
                     },
                 ) {
                     Icon(imageVector = Icons.Filled.Close, "")
-                    Spacer(modifier = Modifier.Companion.width(8.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(Res.string.close), fontSize = 14.sp)
                 }
             }

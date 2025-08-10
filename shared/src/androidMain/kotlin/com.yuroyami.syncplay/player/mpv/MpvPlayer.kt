@@ -313,17 +313,13 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
     override fun pause() {
         if (!ismpvInit) return
 
-        playerScopeIO.launch {
-            mpvView.paused = true
-        }
+        mpvView.paused = true
     }
 
     override fun play() {
         if (!ismpvInit) return
 
-        playerScopeIO.launch {
-            mpvView.paused = false
-        }
+        mpvView.paused = false
     }
 
     override fun isSeekable(): Boolean {
@@ -334,9 +330,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
         if (!ismpvInit) return
         super.seekTo(toPositionMs)
 
-        playerScopeIO.launch {
-            mpvView.timePos = toPositionMs.toInt() / 1000
-        }
+        mpvView.timePos = toPositionMs.toInt() / 1000
     }
 
     override fun currentPositionMs(): Long {
