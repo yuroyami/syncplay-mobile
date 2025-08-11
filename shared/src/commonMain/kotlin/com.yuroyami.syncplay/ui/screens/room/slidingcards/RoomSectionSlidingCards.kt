@@ -21,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
-import com.yuroyami.syncplay.ui.screens.adam.LocalScreenSize
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.screens.room.bottombar.RoomControlPanelCard
 import com.yuroyami.syncplay.ui.screens.room.slidingcards.CardRoomPrefs.InRoomSettingsCard
@@ -29,13 +28,12 @@ import com.yuroyami.syncplay.ui.screens.room.slidingcards.CardSharedPlaylist.Sha
 import com.yuroyami.syncplay.ui.screens.room.slidingcards.CardUserInfo.UserInfoCard
 import com.yuroyami.syncplay.ui.theme.Paletting
 import com.yuroyami.syncplay.ui.utils.FreeAnimatedVisibility
+import com.yuroyami.syncplay.ui.utils.screenWidthPx
 
 @Composable
 fun RoomSectionSlidingCards(modifier: Modifier) {
     val viewmodel = LocalViewmodel.current
     val cardController = LocalCardController.current
-    val screenSize = LocalScreenSize.current
-
     val stateUserInfo by cardController.tabCardUserInfo.collectAsState()
     val stateSharedPlaylist by cardController.tabCardSharedPlaylist.collectAsState()
     val stateRoomPreferences by cardController.tabCardRoomPreferences.collectAsState()
@@ -45,8 +43,9 @@ fun RoomSectionSlidingCards(modifier: Modifier) {
     /* The cards below */
     Column(modifier) {
         Box(modifier = Modifier.fillMaxWidth(0.37f).weight(1f).align(Alignment.End).padding(4.dp)) {
-            val inTransition = slideInHorizontally(initialOffsetX = { (screenSize.widthPx * 1.3).toInt() })
-            val outTransition = slideOutHorizontally(targetOffsetX = { (screenSize.widthPx * 1.3).toInt() })
+            val screenW = screenWidthPx
+            val inTransition = slideInHorizontally(initialOffsetX = { (screenW * 1.3).toInt() })
+            val outTransition = slideOutHorizontally(targetOffsetX = { (screenW * 1.3).toInt() })
 
             /** User-info card (toggled on and off) */
             if (!viewmodel.isSoloMode) {

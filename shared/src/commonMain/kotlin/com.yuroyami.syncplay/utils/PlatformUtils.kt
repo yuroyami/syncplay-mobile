@@ -58,14 +58,6 @@ expect fun getFolderName(uri: String): String?
 /** Pings a host once and retrieves the round trip time (RTT) */
 expect suspend fun pingIcmp(host: String, packet: Int): Int?
 
-/** Gets the screen size info */
-data class ScreenSizeInfo(val heightPx: Int, val widthPx: Int) {
-    @Composable
-    fun heightDp(): Dp = with(LocalDensity.current) { heightPx.toDp() }
-
-    @Composable
-    fun widthDp(): Dp = with(LocalDensity.current) { widthPx.toDp() }
-}
 expect fun ClipEntry.getText(): String?
 
 @Composable

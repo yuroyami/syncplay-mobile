@@ -6,6 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -53,9 +55,7 @@ import com.composeunstyled.Thumb as UnstyledThumb
 fun RoomSeekbar(modifier: Modifier) {
     val viewmodel = LocalViewmodel.current
 
-    val chapters = remember(
-        viewmodel.media?.fileName
-    ) { viewmodel.media?.chapters ?: emptyList() }
+    val chapters = remember(viewmodel.media?.fileName) { viewmodel.media?.chapters ?: emptyList() }
 
     LaunchedEffect(viewmodel.media?.fileName) {
         viewmodel.viewModelScope.launch {
@@ -65,17 +65,27 @@ fun RoomSeekbar(modifier: Modifier) {
         }
     }
 
-    //TODO USE A LOCAL SLIDERVALUE STATE AND ONLY UPDATE IT GRACEFULLY
-
-    val sliderValue by remember { mutableFloatStateOf(0f) }
+    var sliderValue by remember { mutableFloatStateOf(0f) }
 
     val videoCurrentTimeMs by viewmodel.timeCurrentMs.collectAsState()
     val videoFullDurationMs by viewmodel.timeFullMs.collectAsState()
 
     val sliderInteractionSource = remember { MutableInteractionSource() }
-    val isPressed by sliderInteractionSource.collectIsDraggedAsState()
+    val isSliderBeingDragged by sliderInteractionSource.collectIsDraggedAsState()
+    val isSliderBeingPressed by sliderInteractionSource.collectIsPressedAsState()
+    val isSliderBeingFocused by sliderInteractionSource.collectIsFocusedAsState()
+
+    val isSliderInUse by remember { derivedStateOf { isSliderBeingFocused || isSliderBeingPressed || isSliderBeingDragged } }
+
+    LaunchedEffect(videoCurrentTimeMs) {
+        //This passively updates slider value when video progresses
+        if (!isSliderInUse) {
+            sliderValue = videoCurrentTimeMs.toFloat()
+        }
+    }
 
     val currentTimeText by derivedStateOf { timeStamper(milliseconds = videoCurrentTimeMs) }
+    val currentSliderValueText by derivedStateOf { timeStamper(milliseconds = sliderValue) }
     val fullTimeText by derivedStateOf { if (videoFullDurationMs >= Long.MAX_VALUE) "???" else timeStamper(videoFullDurationMs) }
 
     var trackWidthPx by remember { mutableIntStateOf(0) }
@@ -84,10 +94,11 @@ fun RoomSeekbar(modifier: Modifier) {
         Slider(
             value = sliderValue,
             onValueChange = { newVal ->
-                viewmodel.player?.seekTo(newVal.roundToLong() * 1000L)
+                sliderValue = newVal
+                viewmodel.player?.seekTo(newVal.roundToLong())
             },
             onValueChangeFinished = {
-                viewmodel.sendSeek((sliderValue * 1000L).roundToLong())
+                viewmodel.sendSeek(sliderValue.roundToLong())
 
                 if (viewmodel.isSoloMode) {
                     viewmodel.player?.let {
@@ -105,14 +116,14 @@ fun RoomSeekbar(modifier: Modifier) {
                     color = Color.DarkGray.copy(0.8f),
                     modifier = Modifier
                         .height(26.dp)
-                        .width(if (isPressed) 8.dp else 8.dp) // keep it thin always
+                        .width(if (isSliderBeingDragged) 8.dp else 8.dp) // keep it thin always
                         .shadow(4.dp, CircleShape),
                     shape = CircleShape
                 )
             },
             track = { state ->
-                val trackThickness by animateDpAsState(targetValue = if (isPressed) 12.dp else 24.dp)
-                val trackRoundedness by animateIntAsState(targetValue = if (isPressed) 20 else 35)
+                val trackThickness by animateDpAsState(targetValue = if (isSliderBeingDragged) 12.dp else 24.dp)
+                val trackRoundedness by animateIntAsState(targetValue = if (isSliderBeingDragged) 20 else 35)
 
                 Box(
                     modifier = Modifier
@@ -147,7 +158,7 @@ fun RoomSeekbar(modifier: Modifier) {
                         }
                     }
 
-                    if (!isPressed) {
+                    if (!isSliderBeingDragged) {
                         //Current video position text
                         FlexibleFancyText(
                             modifier = Modifier.alpha(0.85f).padding(horizontal = 8.dp).align(CenterStart),
@@ -170,7 +181,7 @@ fun RoomSeekbar(modifier: Modifier) {
             },
         )
 
-        if (videoFullDurationMs > 0 && isPressed) {
+        if (videoFullDurationMs > 0 && isSliderBeingDragged) {
             val density = LocalDensity.current
             var bubbleTextWidth by remember { mutableIntStateOf(0) }
 
@@ -197,7 +208,7 @@ fun RoomSeekbar(modifier: Modifier) {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "$currentTimeText / $fullTimeText",
+                    text = "$currentSliderValueText / $fullTimeText",
                     fontSize = 11.sp,
                     modifier = Modifier.gradientOverlay(),
                     color = Color.White

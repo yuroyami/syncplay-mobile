@@ -50,8 +50,9 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_GESTURES
 import com.yuroyami.syncplay.settings.valueFlow
-import com.yuroyami.syncplay.ui.screens.adam.LocalScreenSize
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.utils.screenHeightPx
+import com.yuroyami.syncplay.ui.utils.screenWidthPx
 import com.yuroyami.syncplay.utils.getSystemMaxVolume
 import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
@@ -78,7 +79,8 @@ fun RoomGestureInterceptor(modifier: Modifier) {
     val seekLeftInteraction = remember { MutableInteractionSource() }
     val seekRightInteraction = remember { MutableInteractionSource() }
 
-    val dimensions = LocalScreenSize.current
+    val h = screenHeightPx
+    val w = screenWidthPx
 
     //TODO: Individual gesture toggling option
 
@@ -152,7 +154,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                 detectTapGestures(
 
                     onPress = { offset ->
-                        if (gesturesEnabled && hasVideo && offset.x > dimensions.widthPx.times(0.65f)) {
+                        if (gesturesEnabled && hasVideo && offset.x > w.times(0.65f)) {
                             val press = PressInteraction.Press(offset)
 
                             val job = scope.launch {
@@ -176,7 +178,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                             seekRightInteraction.emit(PressInteraction.Release(press))
 
                         }
-                        if (gesturesEnabled && hasVideo && offset.x < dimensions.widthPx.times(0.35f)) {
+                        if (gesturesEnabled && hasVideo && offset.x < w.times(0.35f)) {
                             val press = PressInteraction.Press(offset)
                             val job = scope.launch {
                                 delay(1000)
@@ -201,7 +203,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                     },
                     onDoubleTap = if (gesturesEnabled && hasVideo) { offset ->
                         scope.launch {
-                            if (offset.x < dimensions.widthPx.times(0.35f)) {
+                            if (offset.x < w.times(0.35f)) {
                                 //TODO PlayerUtils.seekBckwd()
                                 haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
 
@@ -210,7 +212,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                 delay(200)
                                 seekLeftInteraction.emit(PressInteraction.Release(press))
                             }
-                            if (offset.x > dimensions.widthPx.times(0.65f)) {
+                            if (offset.x > w.times(0.65f)) {
                                 //TODO PlayerUtils.seekFrwrd()
                                 haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
 
@@ -252,11 +254,11 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                             dragdistance += f
                             vertdragOffset = pntr.position
 
-                            if (pntr.position.x >= dimensions.widthPx * 0.5f) {
+                            if (pntr.position.x >= w * 0.5f) {
                                 // Volume adjusting
-                                val h = dimensions.heightPx / 1.5f
+                                val height = h / 1.5f
                                 val maxVolume = viewmodel.player?.getMaxVolume() ?: return@detectVerticalDragGestures
-                                var newVolume = (initialVolume + (-dragdistance * maxVolume / h)).roundToInt()
+                                var newVolume = (initialVolume + (-dragdistance * maxVolume / height)).roundToInt()
                                 if (newVolume > maxVolume) newVolume = maxVolume
                                 if (newVolume < 0) newVolume = 0
 
@@ -268,9 +270,9 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                 viewmodel.player?.changeCurrentVolume(newVolume)
                             } else {
                                 // Brightness adjusting in 5% increments
-                                val h = dimensions.heightPx / 1.5f
+                                val height = h / 1.5f
                                 val maxBright = platformCallback.getMaxBrightness()
-                                var newBright = initialBrightness + (-dragdistance * maxBright / h)
+                                var newBright = initialBrightness + (-dragdistance * maxBright / height)
                                 newBright = if (newBright > 0.1f) (newBright / 0.05f).roundToInt() * 0.05f else newBright
 
                                 currentBrightness = newBright.coerceIn(0f, 1f)

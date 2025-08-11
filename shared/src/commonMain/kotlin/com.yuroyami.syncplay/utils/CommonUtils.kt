@@ -2,16 +2,20 @@ package com.yuroyami.syncplay.utils
 
 import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 import kotlinx.coroutines.delay
-import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.kotlincrypto.hash.md.MD5
 import org.kotlincrypto.hash.sha2.SHA256
+import kotlin.time.Clock
 
 /*****
  * Bunch of Kotlin/Native utils that don't need to be commonized via expect/actual
  */
 object CommonUtils {
+
+    /** Generates current millisecond time */
+    val timeMillis: Long
+        get() = Clock.System.now().toEpochMilliseconds()
 
     /** Generates the current clock timestamp */
     fun generateClockstamp(): String {

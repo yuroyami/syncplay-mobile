@@ -55,6 +55,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -76,6 +77,12 @@ import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Helvetica_Regular
 import syncplaymobile.shared.generated.resources.Res
 
+
+val screenHeightPx: Int
+    @Composable get() = LocalWindowInfo.current.containerSize.height
+
+val screenWidthPx: Int
+    @Composable get() = LocalWindowInfo.current.containerSize.width
 
 @Composable
 fun getRegularFont() = Font(Res.font.Helvetica_Regular) //Helvetica
