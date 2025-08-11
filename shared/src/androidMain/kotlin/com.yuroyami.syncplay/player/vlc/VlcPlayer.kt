@@ -372,15 +372,15 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                 MediaPlayer.Event.LengthChanged -> {
                     if (vlcPlayer?.hasMedia() == true) {
                         /* Updating our timeFull */
-                        val duration = vlcPlayer!!.length.div(1000.0)
+                        val durationMs = vlcPlayer!!.length
 
-                        viewmodel.timeFull.value = abs(duration.toLong())
+                        viewmodel.timeFullMs.value = abs(durationMs)
 
                         if (viewmodel.isSoloMode) return@setEventListener
 
-                        if (duration != viewmodel.media?.fileDuration) {
+                        if (durationMs / 1000.0 != viewmodel.media?.fileDuration) {
                             playerScopeIO.launch launch2@{
-                                viewmodel.media?.fileDuration = duration
+                                viewmodel.media?.fileDuration = durationMs / 1000.0
                                 viewmodel.p.send<Packet.File> {
                                     media = viewmodel.media
                                 }.await()

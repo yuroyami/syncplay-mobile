@@ -404,7 +404,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
             override fun eventProperty(property: String, value: Long) {
                 when (property) {
                     "time-pos" -> mpvPos = value * 1000
-                    "duration" -> viewmodel.timeFull.value = value
+                    "duration" -> viewmodel.timeFullMs.value = value * 1000
                     //"file-size" -> value
                 }
             }
@@ -437,8 +437,8 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                         if (viewmodel.isSoloMode) return
                         playerScopeIO.launch {
                             while (true) {
-                                if (viewmodel.timeFull.value.toDouble() > 0) {
-                                    viewmodel.media?.fileDuration = viewmodel.timeFull.value?.toDouble()!!
+                                if (viewmodel.timeFullMs.value.toDouble() > 0) {
+                                    viewmodel.media?.fileDuration = viewmodel.timeFullMs.value / 1000.0
                                     viewmodel.p.send<Packet.File> {
                                         media = viewmodel.media
                                     }.await()
