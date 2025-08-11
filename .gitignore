@@ -41,3 +41,6 @@ libswresample.so
 lbswscale.so
 Pods/
 *.mychanges
+
+# Hide python files which i offload into my project for quickly viewing syncplay official code
+*.py

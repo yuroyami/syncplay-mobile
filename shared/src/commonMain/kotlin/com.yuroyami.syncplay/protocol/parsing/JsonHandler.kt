@@ -4,6 +4,7 @@ import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.User
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.protocol.sending.Packet
+import com.yuroyami.syncplay.utils.PingService
 import com.yuroyami.syncplay.utils.loggy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -14,6 +15,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlin.math.abs
+import kotlin.math.roundToLong
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -141,6 +143,8 @@ data class ErrorData(
 
 
 object JsonHandler {
+
+    val pingService = PingService()
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -307,7 +311,7 @@ object JsonHandler {
         var doSeek: Boolean? = null
         var setBy: String? = null
 
-        val messageAge = 0.0
+        var messageAge = 0.0
         var latencyCalculation: Double? = null
 
         state.ignoringOnTheFly?.let { ignoringOnTheFly ->
@@ -328,16 +332,15 @@ object JsonHandler {
             setBy = playstate.setBy
         }
 
-
         state.ping?.let { ping ->
             latencyCalculation = ping.latencyCalculation
 
             ping.clientLatencyCalculation?.let { timestamp ->
-                val serverRtt = ping.serverRtt!!
+                val serverRtt = ping.serverRtt ?: return@let
 
-                //TODO self.pingServer.receiveMessage(timestampSenderRtt)
+                pingService.receiveMessage(timestamp.roundToLong(), serverRtt)
             }
-            //TODO messageAge = pingService.getLastForwardDelay()
+            messageAge = pingService.forwardDelay
         }
 
         val player = protocol.viewmodel.player
@@ -349,6 +352,8 @@ object JsonHandler {
             /* Updating Global State */
             protocol.globalPaused = paused
             protocol.globalPositionMs = position * 1000L
+            if (!paused) protocol.globalPositionMs += messageAge //Account for network drift
+
 
             if (lastGlobalUpdate == null) {
                 if (protocol.viewmodel.media != null) {
@@ -359,11 +364,13 @@ object JsonHandler {
 
             lastGlobalUpdate = Clock.System.now()
 
+
+
             if (doSeek == true && setBy != null) {
                 protocol.syncplayCallback.onSomeoneSeeked(setBy, position)
             }
 
-            //Rewind check if someone is behind
+            /* Rewind check if someone is behind */
             if (diff > protocol.rewindThreshold && doSeek != true /* && rewindOnDesync pref */) {
                 protocol.syncplayCallback.onSomeoneBehind(setBy ?: "", position)
             }
@@ -379,9 +386,8 @@ object JsonHandler {
             //                  behindFirstDetected = now() + constants.FASTFORWARD_RESET_THRESHOLD
             //      else behindFirstDetected = null
 
-
-//            if self._player.speedSupported and not doSeek and not paused and  not self._config['slowOnDesync'] == False:
-//                madeChangeOnPlayer = self._slowDownToCoverTimeDifference(diff, setBy)
+            //if self._player.speedSupported and not doSeek and not paused and  not self._config['slowOnDesync'] == False:
+            //madeChangeOnPlayer = self._slowDownToCoverTimeDifference(diff, setBy)
 
 
             if (pausedChanged) {

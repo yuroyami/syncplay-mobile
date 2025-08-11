@@ -49,7 +49,6 @@ fun AdamScreen(onViewmodelReady: (SyncplayViewmodel) -> Unit) {
         }
     }
 
-
     LaunchedEffect(viewmodel) {
         onViewmodelReady.invoke(viewmodel)
     }

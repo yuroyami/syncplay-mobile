@@ -8,7 +8,7 @@ class PingService {
     }
 
     private var rtt: Double = 0.0
-    private var forwardDelay: Double = 0.0
+    var forwardDelay: Double = 0.0
     private var avrRtt: Double = 0.0
     
     fun receiveMessage(timestamp: Long?, senderRtt: Double) {
