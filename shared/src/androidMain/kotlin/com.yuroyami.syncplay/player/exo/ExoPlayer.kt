@@ -162,13 +162,13 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
 
                     if (!isLoading && exoplayer != null) {
                         /* Updating our timeFull */
-                        val duration = exoplayer!!.duration.div(1000.0)
-                        viewmodel.timeFull.value = abs(duration.toLong())
+                        val durationMs = exoplayer!!.duration
+                        viewmodel.timeFullMs.value = abs(durationMs.toLong())
 
                         if (viewmodel.isSoloMode) return
-                        if (duration != viewmodel.media?.fileDuration) {
-                            playerScopeIO.launch launch2@{
-                                viewmodel.media?.fileDuration = duration
+                        if (durationMs / 1000.0 != viewmodel.media?.fileDuration) {
+                            playerScopeIO.launch {
+                                viewmodel.media?.fileDuration = durationMs / 1000.0
                                 viewmodel.p.send<Packet.File> {
                                     media = viewmodel.media
                                 }.await()
@@ -429,7 +429,7 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                 exoplayer?.prepare() /* This prepares it and makes the first frame visible */
 
                 /* Updating play button */
-                exoplayer?.duration?.let { viewmodel.timeFull.value = if (it < 0) 0 else it }
+                exoplayer?.duration?.let { viewmodel.timeFullMs.value = if (it < 0) 0 else it }
             } catch (e: IOException) {
                 /* If, for some reason, the video didn't wanna load */
                 e.printStackTrace()

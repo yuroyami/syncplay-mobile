@@ -40,8 +40,8 @@ expect fun SyncplayViewmodel.instantiateNetworkEngineProtocol(engine: SyncplayPr
 expect fun generateTimestampMillis(): Long
 
 /** Converts seconds into a readable hh:mm:ss format */
-fun timeStamper(seconds: Number): String {
-    val secs = seconds.toLong()
+fun timeStamper(milliseconds: Number): String {
+    val secs = (milliseconds.toLong() / 1000L)
     return if (secs < 3600) {
         "${(secs / 60) % 60}:${(secs % 60).toString().padStart(2, '0')}".padStart(5, '0')
     } else {

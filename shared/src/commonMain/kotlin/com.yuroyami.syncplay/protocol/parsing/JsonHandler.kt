@@ -348,11 +348,11 @@ object JsonHandler {
 
             /* Updating Global State */
             protocol.globalPaused = paused
-            protocol.globalPosition = position
+            protocol.globalPositionMs = position * 1000L
 
             if (lastGlobalUpdate == null) {
                 if (protocol.viewmodel.media != null) {
-                    player.seekTo((position * 1000.0).toLong())
+                    player.seekTo(position.toLong())
                     if (paused) player.pause() else player.play()
                 }
             }
@@ -392,7 +392,7 @@ object JsonHandler {
 
         if (lastGlobalUpdate != null && player != null && position != null) {
             val playerDiff = abs(player.currentPositionMs() / 1000.0 - position)
-            val globalDiff = abs(protocol.globalPosition - position)
+            val globalDiff = abs(protocol.globalPositionMs / 1000.0 - position)
             val surelyPausedChanged = protocol.globalPaused != paused && paused == player.isPlaying()
             val seeked = playerDiff > SEEK_THRESHOLD && globalDiff > SEEK_THRESHOLD
 

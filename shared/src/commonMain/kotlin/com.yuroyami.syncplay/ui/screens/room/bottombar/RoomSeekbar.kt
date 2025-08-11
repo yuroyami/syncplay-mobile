@@ -23,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -66,42 +67,39 @@ fun RoomSeekbar(modifier: Modifier) {
 
     //TODO USE A LOCAL SLIDERVALUE STATE AND ONLY UPDATE IT GRACEFULLY
 
-    val videoCurrentTime by viewmodel.timeCurrent.collectAsState()
-    val videoFullDuration by viewmodel.timeFull.collectAsState()
+    val sliderValue by remember { mutableFloatStateOf(0f) }
+
+    val videoCurrentTimeMs by viewmodel.timeCurrentMs.collectAsState()
+    val videoFullDurationMs by viewmodel.timeFullMs.collectAsState()
 
     val sliderInteractionSource = remember { MutableInteractionSource() }
     val isPressed by sliderInteractionSource.collectIsDraggedAsState()
 
-    val currentTimeText by derivedStateOf { timeStamper(videoCurrentTime) }
-    val fullTimeText by derivedStateOf { if (videoFullDuration >= Long.MAX_VALUE / 1000L) "???" else timeStamper(videoFullDuration) }
+    val currentTimeText by derivedStateOf { timeStamper(milliseconds = videoCurrentTimeMs) }
+    val fullTimeText by derivedStateOf { if (videoFullDurationMs >= Long.MAX_VALUE) "???" else timeStamper(videoFullDurationMs) }
 
     var trackWidthPx by remember { mutableIntStateOf(0) }
 
     Box(modifier) {
         Slider(
-            value = videoCurrentTime.toFloat(),
-            onValueChange = { f ->
-                viewmodel.player?.seekTo(f.roundToLong() * 1000L)
-                viewmodel.timeCurrent.value = f.roundToLong()
+            value = sliderValue,
+            onValueChange = { newVal ->
+                viewmodel.player?.seekTo(newVal.roundToLong() * 1000L)
             },
             onValueChangeFinished = {
-                viewmodel.sendSeek(videoCurrentTime * 1000L)
+                viewmodel.sendSeek((sliderValue * 1000L).roundToLong())
 
                 if (viewmodel.isSoloMode) {
                     viewmodel.player?.let {
                         viewmodel.viewModelScope.launch(Dispatchers.Main) {
-                            viewmodel.seeks.add(
-                                Pair(
-                                    it.currentPositionMs(), videoCurrentTime * 1000
-                                )
-                            )
+                            viewmodel.seeks.add(Pair(it.currentPositionMs(), videoCurrentTimeMs))
                         }
                     }
                 }
             },
             modifier = modifier.height(56.dp),
             interactionSource = sliderInteractionSource,
-            valueRange = 0f..(videoFullDuration.toFloat()),
+            valueRange = 0f..(videoFullDurationMs.toFloat()),
             thumb = {
                 UnstyledThumb(
                     color = Color.DarkGray.copy(0.8f),
@@ -128,7 +126,7 @@ fun RoomSeekbar(modifier: Modifier) {
                     chapters.forEach { chapter ->
                         if (chapter.timestamp / 1000 != 0L) {
                             // Calculate horizontal position fraction based on chapter timestamp
-                            val positionFraction = (chapter.timestamp / videoFullDuration.toFloat().coerceAtLeast(1f))
+                            val positionFraction = (chapter.timestamp / videoFullDurationMs.toFloat().coerceAtLeast(1f))
                             Box(
                                 modifier = Modifier
                                     .offset {
@@ -172,12 +170,12 @@ fun RoomSeekbar(modifier: Modifier) {
             },
         )
 
-        if (videoFullDuration > 0 && isPressed) {
+        if (videoFullDurationMs > 0 && isPressed) {
             val density = LocalDensity.current
             var bubbleTextWidth by remember { mutableIntStateOf(0) }
 
             val bubbleOffset by derivedStateOf {
-                val sliderFraction = videoCurrentTime / videoFullDuration.toFloat().coerceAtLeast(1f)
+                val sliderFraction = sliderValue / videoFullDurationMs.toFloat().coerceAtLeast(1f)
                 val sliderPx = trackWidthPx * sliderFraction
                 val bubbleHalfPx = with(density) { bubbleTextWidth / 2 }
 

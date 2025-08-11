@@ -39,13 +39,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.settings.DataStoreKeys
 import com.yuroyami.syncplay.settings.valueAsState
+import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.theme.Paletting
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.SyncplayPopup
 import com.yuroyami.syncplay.ui.utils.getRegularFont
-import com.yuroyami.syncplay.ui.theme.Paletting
 import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -250,7 +250,7 @@ object PopupSeekToPosition {
                             viewmodel.player?.seekTo(result)
 
                             //TODO: Localize
-                            viewmodel.dispatchOSD { "Seeking to ${timeStamper(result.div(1000L))}" }
+                            viewmodel.dispatchOSD { "Seeking to ${timeStamper(result)}" }
                         }
 
                     },

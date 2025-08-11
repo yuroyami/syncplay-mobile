@@ -40,7 +40,7 @@ abstract class SyncplayProtocol(
 
     /** Global server values that the user often needs to adjust to (see handleState) */
     var globalPaused: Boolean = true //Latest server paused state
-    var globalPosition: Double = 0.0 //Latest server video position
+    var globalPositionMs: Double = 0.0 //Latest server video position
 
     var ready = false
 

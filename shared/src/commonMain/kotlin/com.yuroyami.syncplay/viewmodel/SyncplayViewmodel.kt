@@ -85,8 +85,8 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
 
     /* Related to playback status */
     val isNowPlaying = mutableStateOf(false)
-    val timeFull = MutableStateFlow<Long>(0L)
-    val timeCurrent = MutableStateFlow<Long>(0L)
+    val timeFullMs = MutableStateFlow<Long>(0L)
+    val timeCurrentMs = MutableStateFlow<Long>(0L)
 
     val hasVideo = MutableStateFlow(false)
     val hasEnteredPipMode = MutableStateFlow(false)
@@ -317,12 +317,12 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
             playerTrackerJob = viewModelScope.launch(Dispatchers.Main) {
                 while (true) {
                     if (player?.isSeekable() == true) {
-                        val progress = (player?.currentPositionMs()?.div(1000L)) ?: 0L
+                        val progressMs = player?.currentPositionMs() ?: 0L
 
                         /* Informing UI */
-                        timeCurrent.value = progress
+                        timeCurrentMs.value = progressMs
 
-                        if (!isSoloMode) p.globalPosition = player?.currentPositionMs()?.div(1000.0) ?: 0.0
+                        if (!isSoloMode) p.globalPositionMs = player?.currentPositionMs()?.toDouble() ?: 0.0
                     }
                     delay(intervalMillis)
                 }
@@ -506,7 +506,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
         }
 
         broadcastMessage(
-            message = { getString(Res.string.room_guy_paused, pauser, timeStamper(p.globalPosition)) },
+            message = { getString(Res.string.room_guy_paused, pauser, timeStamper(p.globalPositionMs)) },
             isChat = false
         )
     }
@@ -557,17 +557,15 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
     override fun onSomeoneSeeked(seeker: String, toPosition: Double) {
         loggy("SYNCPLAY Protocol: $seeker seeked to: $toPosition")
 
-        val oldPos = p.globalPosition.toLong()
-        val newPos = toPosition.toLong()
+        val oldPosMs = p.globalPositionMs.toLong()
+        val newPosMs = toPosition.toLong() * 1000L
 
         /* Saving seek so it can be undone on mistake */
-        seeks.add(Pair(oldPos * 1000, newPos * 1000))
+        seeks.add(Pair(oldPosMs, newPosMs))
 
-        broadcastMessage(message = { getString(Res.string.room_seeked,seeker, timeStamper(oldPos), timeStamper(newPos)) }, isChat = false)
+        if (seeker != p.session.currentUsername) player?.seekTo(newPosMs)
 
-        if (seeker != p.session.currentUsername) {
-            player?.seekTo((toPosition * 1000.0).toLong())
-        }
+        broadcastMessage(message = { getString(Res.string.room_seeked,seeker, timeStamper(oldPosMs), timeStamper(newPosMs)) }, isChat = false)
     }
 
     override fun onSomeoneBehind(behinder: String, toPosition: Double) {
@@ -590,7 +588,7 @@ class SyncplayViewmodel: ViewModel(), ProtocolCallback {
             message = { getString(Res.string.room_isplayingfile,
                 person,
                 file ?: "",
-                timeStamper(fileduration?.toLong() ?: 0)
+                timeStamper(fileduration?.toLong()?.times(1000L) ?: 0)
             ) },
             isChat = false
         )
