@@ -116,6 +116,10 @@ kotlin {
 
             /* File opener/saver multiplatform */
             implementation(libs.filekit)
+
+
+            implementation("io.github.compose-fluent:fluent:v0.1.0")
+            implementation("io.github.compose-fluent:fluent-icons-extended:v0.1.0") // If you want to use full fluent icons.
         }
 
         androidMain.dependencies {

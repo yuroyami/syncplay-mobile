@@ -5,7 +5,7 @@ import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -70,7 +70,7 @@ fun RoomSeekbar(modifier: Modifier) {
     val videoFullDuration by viewmodel.timeFull.collectAsState()
 
     val sliderInteractionSource = remember { MutableInteractionSource() }
-    val isPressed by sliderInteractionSource.collectIsPressedAsState()
+    val isPressed by sliderInteractionSource.collectIsDraggedAsState()
 
     val currentTimeText by derivedStateOf { timeStamper(videoCurrentTime) }
     val fullTimeText by derivedStateOf { if (videoFullDuration >= Long.MAX_VALUE / 1000L) "???" else timeStamper(videoFullDuration) }
@@ -168,13 +168,11 @@ fun RoomSeekbar(modifier: Modifier) {
                             //strokeColors = listOf(Color.Black)
                         )
                     }
-
-
                 }
             },
         )
 
-        if (videoFullDuration > 0) {
+        if (videoFullDuration > 0 && isPressed) {
             val density = LocalDensity.current
             var bubbleTextWidth by remember { mutableIntStateOf(0) }
 
@@ -188,26 +186,24 @@ fun RoomSeekbar(modifier: Modifier) {
                 rawOffset.coerceIn(0f, (trackWidthPx - bubbleTextWidth).toFloat())
             }
 
-            if (isPressed) {
-                Box(
-                    modifier = Modifier
-                        .offset(y = (-28).dp) // Move the bubble above the thumb needle
-                        .offset(x = with(density) { bubbleOffset.toDp() })
-                        .align(CenterStart)
-                        .background(Color.DarkGray.copy(0.8f), shape = RoundedCornerShape(8.dp))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                        .onGloballyPositioned {
-                            bubbleTextWidth = it.size.width
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "$currentTimeText / $fullTimeText",
-                        fontSize = 11.sp,
-                        modifier = Modifier.gradientOverlay(),
-                        color = Color.White
-                    )
-                }
+            Box(
+                modifier = Modifier
+                    .offset(y = (-28).dp) // Move the bubble above the thumb needle
+                    .offset(x = with(density) { bubbleOffset.toDp() })
+                    .align(CenterStart)
+                    .background(Color.DarkGray.copy(0.8f), shape = RoundedCornerShape(8.dp))
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                    .onGloballyPositioned {
+                        bubbleTextWidth = it.size.width
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "$currentTimeText / $fullTimeText",
+                    fontSize = 11.sp,
+                    modifier = Modifier.gradientOverlay(),
+                    color = Color.White
+                )
             }
         }
     }
