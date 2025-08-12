@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.player.mpv
+package com.yuroyami.syncplay.logic.player.mpv
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Adb

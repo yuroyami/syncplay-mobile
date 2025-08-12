@@ -144,8 +144,6 @@ data class ErrorData(
 
 object JsonHandler {
 
-    val pingService = PingService()
-
     private val json = Json {
         ignoreUnknownKeys = true
         coerceInputValues = true

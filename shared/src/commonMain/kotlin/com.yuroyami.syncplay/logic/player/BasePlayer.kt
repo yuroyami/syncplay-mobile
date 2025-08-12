@@ -10,6 +10,7 @@ import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.logic.managers.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.utils.CommonUtils.sha256
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.settings.ExtraSettingBundle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO

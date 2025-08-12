@@ -6,7 +6,7 @@ import NIOExtras
 import NIOSSL
 import shared
 
-class SpProtocolApple: SyncplayProtocol, ChannelInboundHandler {
+class SwiftNioNetworkManager: SyncplayProtocol, ChannelInboundHandler {
     typealias InboundIn = ByteBuffer
     
     private var channel: Channel?

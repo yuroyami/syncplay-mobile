@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.player.exo
+package com.yuroyami.syncplay.logic.player.exo
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.HourglassBottom

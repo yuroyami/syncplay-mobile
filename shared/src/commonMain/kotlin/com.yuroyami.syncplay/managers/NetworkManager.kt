@@ -14,7 +14,10 @@ import com.yuroyami.syncplay.logic.AbstractManager
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
 import com.yuroyami.syncplay.logic.datastore.valueBlockingly
+import com.yuroyami.syncplay.logic.datastore.valueSuspendingly
+import com.yuroyami.syncplay.logic.protocol.JsonHandler
 import com.yuroyami.syncplay.logic.protocol.Packet
+import com.yuroyami.syncplay.managers.ProtocolManager.Companion.createPacketInstance
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +41,6 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
     var state: Constants.CONNECTIONSTATE = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
     var tls: Constants.TLS = Constants.TLS.TLS_NO
 
-
     enum class NetworkEngine {
         KTOR, NETTY, SWIFTNIO
     }
@@ -56,7 +58,7 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
         endConnection(false)
 
         /** Informing UI controllers that we are starting a connection attempt */
-        viewmodel.onConnectionAttempt()
+        viewmodel.callbackManager.onConnectionAttempt()
         state = Constants.CONNECTIONSTATE.STATE_CONNECTING
 
         /** Bootstrapping our Ktor client  */
@@ -69,14 +71,14 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
                 send<Packet.TLS>().await()
             } else {
                 send<Packet.Hello> {
-                    username = session.currentUsername
-                    roomname = session.currentRoom
-                    serverPassword = session.currentPassword
+                    username = viewmodel.sessionManager.session.currentUsername
+                    roomname = viewmodel.sessionManager.session.currentRoom
+                    serverPassword = viewmodel.sessionManager.session.currentPassword
                 }.await()
             }
         } catch (e: Exception) {
             loggy(e.stackTraceToString())
-            syncplayCallback.onConnectionFailed()
+            viewmodel.callbackManager.onConnectionFailed()
         }
     }
 
@@ -122,7 +124,7 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
     }
 
     private fun onError() {
-        syncplayCallback.onDisconnected()
+       viewmodel.callbackManager.onDisconnected()
     }
 
     fun terminateScope() {
@@ -133,13 +135,15 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
 
     /** WRITING: This small method basically checks if the channel is active and writes to it, otherwise
      *  it queues the json to send in a special queue until the connection recovers. */
-    inline fun <reified T : Packet> send(noinline init: T.() -> Unit = {}): Deferred<Unit> = protoScope.async(Dispatchers.IO) {
-        val packetInstance = createPacketInstance<T>().apply(init)
+    typealias SendablePacket = String
+
+    inline fun <reified T : Packet> send(noinline init: T.() -> Unit = {}): Deferred<Unit> = networkScope.async(Dispatchers.IO) {
+        val packetInstance = createPacketInstance<T>(protocolManager = viewmodel.protocolManager).apply(init)
         val jsonPacket = packetInstance.build()
         transmitPacket(jsonPacket, packetClass = T::class)
     }
 
-    suspend fun transmitPacket(json: Packet.Companion.SendablePacket, packetClass: KClass<out Packet>? = null, isRetry: Boolean = false) {
+    suspend fun transmitPacket(json: SendablePacket, packetClass: KClass<out Packet>? = null, isRetry: Boolean = false) {
         withContext(Dispatchers.IO) {
             try {
                 if (isSocketValid()) {
@@ -149,7 +153,7 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
                 } else {
                     /** Queuing any pending outgoing messages */
                     if (packetClass != Packet.Hello::class && packetClass != null) {
-                        session.outboundQueue.add(json)
+                        viewmodel.sessionManager.session.outboundQueue.add(json)
                     }
                     if (state == Constants.CONNECTIONSTATE.STATE_CONNECTED) {
                         onError()

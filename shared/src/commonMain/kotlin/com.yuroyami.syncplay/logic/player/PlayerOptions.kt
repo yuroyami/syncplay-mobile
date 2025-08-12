@@ -1,8 +1,8 @@
 package com.yuroyami.syncplay.logic.player
 
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.logic.managers.datastore.valueBlockingly
-import com.yuroyami.syncplay.logic.managers.datastore.valueSuspendingly
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
+import com.yuroyami.syncplay.logic.datastore.valueBlockingly
+import com.yuroyami.syncplay.logic.datastore.valueSuspendingly
 
 class PlayerOptions private constructor() {
 

@@ -1,10 +1,8 @@
-package com.yuroyami.syncplay.player
+package com.yuroyami.syncplay.logic.player
 
-import com.yuroyami.syncplay.player.avplayer.AvPlayer
-import com.yuroyami.syncplay.player.vlc.VlcPlayer
+import com.yuroyami.syncplay.logic.player.avplayer.AvPlayer
+import com.yuroyami.syncplay.logic.player.vlc.VlcPlayer
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
-import com.yuroyami.syncplay.logic.managers.player.BasePlayer
-import com.yuroyami.syncplay.logic.managers.player.PlayerEngine
 import org.jetbrains.compose.resources.DrawableResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.swift

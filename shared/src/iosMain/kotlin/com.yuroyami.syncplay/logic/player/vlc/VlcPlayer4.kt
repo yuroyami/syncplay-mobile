@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.player.vlc
+package com.yuroyami.syncplay.logic.player.vlc
 //
 //import androidx.annotation.MainThread
 //import androidx.compose.runtime.Composable

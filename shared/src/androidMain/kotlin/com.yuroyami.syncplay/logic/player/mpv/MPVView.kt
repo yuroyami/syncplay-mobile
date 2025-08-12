@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.player.mpv
+package com.yuroyami.syncplay.logic.player.mpv
 
 import android.content.Context
 import android.os.Build

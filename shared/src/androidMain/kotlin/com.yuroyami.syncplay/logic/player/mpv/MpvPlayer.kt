@@ -1,5 +1,6 @@
 @file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-package com.yuroyami.syncplay.player.mpv
+
+package com.yuroyami.syncplay.logic.player.mpv
 
 import android.content.Context
 import android.content.res.AssetManager
@@ -18,7 +19,7 @@ import com.yuroyami.syncplay.databinding.MpvviewBinding
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
-import com.yuroyami.syncplay.player.AndroidPlayerEngine
+import com.yuroyami.syncplay.logic.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.logic.managers.player.BasePlayer
 import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.logic.managers.settings.ExtraSettingBundle

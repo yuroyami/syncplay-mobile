@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.player.vlc
+package com.yuroyami.syncplay.logic.player.vlc
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -14,7 +14,7 @@ import cocoapods.MobileVLCKit.VLCTime
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
-import com.yuroyami.syncplay.player.ApplePlayerEngine
+import com.yuroyami.syncplay.logic.player.ApplePlayerEngine
 import com.yuroyami.syncplay.logic.managers.player.BasePlayer
 import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.screens.room.dispatchOSD

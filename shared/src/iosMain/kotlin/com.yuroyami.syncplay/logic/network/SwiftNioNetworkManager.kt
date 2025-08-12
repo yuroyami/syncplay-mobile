@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.protocol
+package com.yuroyami.syncplay.logic.network
 
 /**
  * The iOS implementation of the network engine uses SwiftNIO,
@@ -14,7 +14,6 @@ package com.yuroyami.syncplay.protocol
  * Unfortunately, SwiftNIO is a pure Swift framework with no Objective-C
  * interoperability, making it impossible to call directly from Kotlin.
  *
- * See: ```iosApp/iosApp/SpProtocollApple.swift```
+ * See: ```iosApp/iosApp/SwiftNioNetworkManager.swift```
  */
-class SpProtocolApple {
-}
+class SwiftNioNetworkManager

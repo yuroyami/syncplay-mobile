@@ -14,17 +14,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import com.yuroyami.syncplay.player.AndroidPlayerEngine
-import com.yuroyami.syncplay.logic.managers.player.PlayerEngine
-import com.yuroyami.syncplay.protocol.SpProtocolAndroid
-import com.yuroyami.syncplay.logic.managers.network.SpProtocolKtor
-import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.network.KtorNetworkManager
+import com.yuroyami.syncplay.logic.network.NettyNetworkManager
+import com.yuroyami.syncplay.logic.player.AndroidPlayerEngine
+import com.yuroyami.syncplay.logic.player.PlayerEngine
+import com.yuroyami.syncplay.managers.NetworkManager
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
 import kotlin.math.roundToInt
 
+//TODO: Don't do this EVERY RECOMPOSITION
 @Composable
 actual fun getSystemMaxVolume(): Int {
     val audioManager = LocalContext.current.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -35,9 +36,9 @@ actual val platform: PLATFORM = PLATFORM.Android
 
 actual val availablePlatformPlayerEngines: List<PlayerEngine> = listOf(AndroidPlayerEngine.Exoplayer, AndroidPlayerEngine.Mpv, AndroidPlayerEngine.VLC)
 
-actual fun SyncplayViewmodel.instantiateNetworkEngineProtocol(engine: SyncplayProtocol.NetworkEngine) = when (engine) {
-    SyncplayProtocol.NetworkEngine.NETTY -> SpProtocolAndroid(this)
-    else -> SpProtocolKtor(this)
+actual fun SyncplayViewmodel.instantiateNetworkManager(engine: NetworkManager.NetworkEngine) = when (engine) {
+    NetworkManager.NetworkEngine.NETTY -> NettyNetworkManager(this)
+    else -> KtorNetworkManager(this)
 }
 
 actual fun generateTimestampMillis() = System.currentTimeMillis()

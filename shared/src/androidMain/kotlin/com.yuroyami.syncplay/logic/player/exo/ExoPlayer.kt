@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.player.exo
+package com.yuroyami.syncplay.logic.player.exo
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -37,7 +37,7 @@ import com.yuroyami.syncplay.databinding.ExoviewBinding
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
-import com.yuroyami.syncplay.player.AndroidPlayerEngine
+import com.yuroyami.syncplay.logic.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.logic.managers.player.BasePlayer
 import com.yuroyami.syncplay.logic.managers.player.PlayerOptions
 import com.yuroyami.syncplay.protocol.sending.Packet

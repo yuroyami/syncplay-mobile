@@ -1,7 +1,8 @@
-package com.yuroyami.syncplay.protocol
+package com.yuroyami.syncplay.logic.network
 
-import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.managers.NetworkManager
+import com.yuroyami.syncplay.utils.loggy
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
@@ -19,7 +20,7 @@ import io.netty.handler.codec.string.StringDecoder
 import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.ssl.SslContextBuilder
 
-class SpProtocolAndroid(viewmodel: SyncplayViewmodel) : SyncplayProtocol(viewmodel) {
+class NettyNetworkManager(viewmodel: SyncplayViewmodel) : NetworkManager(viewmodel) {
 
     override val engine = NetworkEngine.NETTY
 
@@ -46,12 +47,15 @@ class SpProtocolAndroid(viewmodel: SyncplayViewmodel) : SyncplayProtocol(viewmod
             })
 
         /** After we're done bootstrapping Netty, now it's time to connect */
-        val f = b.connect(session.serverHost, session.serverPort)
+        val f = b.connect(
+            viewmodel.sessionManager.session.serverHost,
+            viewmodel.sessionManager.session.serverPort
+        )
 
         /** Listening to the connection progress */
         f.addListener(ChannelFutureListener { future ->
             if (!future.isSuccess) {
-                syncplayCallback.onConnectionFailed()
+                viewmodel.callbackManager.onConnectionFailed()
             } else {
                 /* This is the channel, only variable we should memorize from the entire bootstrap/connection phase */
                 channel = f.channel()
@@ -79,7 +83,7 @@ class SpProtocolAndroid(viewmodel: SyncplayViewmodel) : SyncplayProtocol(viewmod
         val f = channel?.writeAndFlush(s)
         f?.addListener(ChannelFutureListener { future ->
             if (!future.isSuccess) {
-                syncplayCallback.onDisconnected()
+                viewmodel.callbackManager.onDisconnected()
             }
         })
         f?.await(10000)
@@ -103,11 +107,12 @@ class SpProtocolAndroid(viewmodel: SyncplayViewmodel) : SyncplayProtocol(viewmod
         @Deprecated("Deprecated in Java")
         override fun exceptionCaught(ctx: ChannelHandlerContext?, cause: Throwable?) {
             super.exceptionCaught(ctx, cause)
-            syncplayCallback.onDisconnected()
+            viewmodel.callbackManager.onDisconnected()
         }
     }
 
     override fun supportsTLS() = true
+
     override fun upgradeTls() {
         val sslContext = SslContextBuilder
             .forClient()
@@ -116,7 +121,11 @@ class SpProtocolAndroid(viewmodel: SyncplayViewmodel) : SyncplayProtocol(viewmod
             .startTls(false) //This isn't necessary for clients, we already do it manually
             .build()
 
-        val h = sslContext.newHandler(pipeline.channel().alloc(), session.serverHost, session.serverPort)
+        val h = sslContext.newHandler(
+            pipeline.channel().alloc(),
+            viewmodel.sessionManager.session.serverHost,
+            viewmodel.sessionManager.session.serverPort
+        )
         pipeline.addFirst(h)
 
     }

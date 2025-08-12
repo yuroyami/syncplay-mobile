@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.player.avplayer
+package com.yuroyami.syncplay.logic.player.avplayer
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -8,7 +8,7 @@ import androidx.compose.ui.interop.UIKitView
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
-import com.yuroyami.syncplay.player.ApplePlayerEngine
+import com.yuroyami.syncplay.logic.player.ApplePlayerEngine
 import com.yuroyami.syncplay.logic.managers.player.BasePlayer
 import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.screens.room.dispatchOSD
@@ -17,6 +17,8 @@ import com.yuroyami.syncplay.utils.collectInfoLocaliOS
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.player.BasePlayer
+import com.yuroyami.syncplay.logic.settings.ExtraSettingBundle
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.delay
@@ -55,7 +57,6 @@ import platform.CoreMedia.CMTime
 import platform.CoreMedia.CMTimeGetSeconds
 import platform.CoreMedia.CMTimeMake
 import platform.Foundation.NSKeyValueObservingOptionNew
-import platform.Foundation.NSURL
 import platform.Foundation.NSURL.Companion.URLWithString
 import platform.Foundation.NSURL.Companion.fileURLWithPath
 import platform.Foundation.addObserver
@@ -68,6 +69,7 @@ import syncplaymobile.shared.generated.resources.room_selected_sub
 import syncplaymobile.shared.generated.resources.room_selected_sub_error
 import syncplaymobile.shared.generated.resources.room_selected_vid
 import syncplaymobile.shared.generated.resources.room_sub_error_load_vid_first
+import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
@@ -260,7 +262,7 @@ class AvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, ApplePlayer
             val mimeTypeValid = listOf("srt", "ass", "ssa", "ttml", "vtt").contains(extension)
 
             if (mimeTypeValid) {
-                val subUri = NSURL.URLWithString(uri)!!
+                val subUri = URLWithString(uri)!!
 
                 //TODO: Doesn't support loading external subs
                 playerScopeMain.dispatchOSD {
@@ -320,7 +322,7 @@ class AvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, ApplePlayer
 
                         val duration = avMedia!!.asset.duration.toMillis().div(1000.0)
 
-                        viewmodel.timeFull.longValue = kotlin.math.abs(duration.toLong())
+                        viewmodel.timeFull.longValue = abs(duration.toLong())
 
                         if (!viewmodel.isSoloMode) {
                             if (duration != viewmodel.media?.fileDuration) {

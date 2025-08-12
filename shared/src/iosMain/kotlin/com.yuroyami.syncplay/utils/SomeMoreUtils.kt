@@ -1,7 +1,7 @@
 package com.yuroyami.syncplay.utils
 
+import com.yuroyami.syncplay.managers.NetworkManager
 import com.yuroyami.syncplay.models.MediaFile
-import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.utils.CommonUtils.sha256
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSFileSize
@@ -25,5 +25,5 @@ fun getFileSize(s: String): Long {
     return fileSize?.longValue ?: 0
 }
 
-var instantiateSyncplayProtocolSwiftNIO: (() -> SyncplayProtocol)? = null
+var instantiateSwiftNioNetworkManager: (() -> NetworkManager)? = null
 

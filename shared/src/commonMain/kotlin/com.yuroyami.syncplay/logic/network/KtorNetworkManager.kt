@@ -1,7 +1,7 @@
 package com.yuroyami.syncplay.logic.network
 
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
-import com.yuroyami.syncplay.protocol.SyncplayProtocol
+import com.yuroyami.syncplay.managers.NetworkManager
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.Connection
 import io.ktor.network.sockets.Socket
@@ -18,7 +18,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class SpProtocolKtor(viewmodel: SyncplayViewmodel) : SyncplayProtocol(viewmodel) {
+class KtorNetworkManager(viewmodel: SyncplayViewmodel) : NetworkManager(viewmodel) {
     override val engine = NetworkEngine.KTOR
 
     private var socket: Socket? = null
@@ -31,7 +31,10 @@ class SpProtocolKtor(viewmodel: SyncplayViewmodel) : SyncplayProtocol(viewmodel)
             try {
                 socket = aSocket(SelectorManager(Dispatchers.IO))
                     .tcp()
-                    .connect(session.serverHost, session.serverPort) {
+                    .connect(
+                        viewmodel.sessionManager.session.serverHost,
+                        viewmodel.sessionManager.session.serverPort
+                    ) {
                         socketTimeout = 10000
                     }
 
@@ -40,7 +43,7 @@ class SpProtocolKtor(viewmodel: SyncplayViewmodel) : SyncplayProtocol(viewmodel)
                 input = connection?.input
                 output = connection?.output
 
-                protoScope.launch {
+                networkScope.launch {
                     while (true) {
                         connection?.input?.awaitContent()
                         input?.readUTF8Line()?.let {
@@ -53,7 +56,7 @@ class SpProtocolKtor(viewmodel: SyncplayViewmodel) : SyncplayProtocol(viewmodel)
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                syncplayCallback?.onConnectionFailed()
+                viewmodel.callbackManager.onConnectionFailed()
             }
         }
     }
@@ -68,7 +71,7 @@ class SpProtocolKtor(viewmodel: SyncplayViewmodel) : SyncplayProtocol(viewmodel)
             if (terminating) {
                 socket?.dispose()
 
-                protoScope.cancel("")
+                networkJob.cancel()
             }
         }
     }
@@ -79,7 +82,7 @@ class SpProtocolKtor(viewmodel: SyncplayViewmodel) : SyncplayProtocol(viewmodel)
             connection?.output?.flush()
         } catch (e: Exception) {
             e.printStackTrace()
-            syncplayCallback?.onDisconnected()
+            viewmodel.callbackManager.onDisconnected()
         }
     }
 

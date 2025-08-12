@@ -6,18 +6,6 @@ import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.MISC_PLAYER_ENGINE
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_TLS_ENABLE
 import com.yuroyami.syncplay.logic.datastore.valueSuspendingly
-import com.yuroyami.syncplay.models.Constants
-import com.yuroyami.syncplay.models.JoinConfig
-import com.yuroyami.syncplay.protocol.SyncplayProtocol
-import com.yuroyami.syncplay.screens.adam.Screen
-import com.yuroyami.syncplay.screens.adam.Screen.Companion.navigateTo
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys.MISC_PLAYER_ENGINE
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys.PREF_TLS_ENABLE
-import com.yuroyami.syncplay.logic.managers.datastore.valueSuspendingly
-import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
-import com.yuroyami.syncplay.utils.instantiateNetworkEngineProtocol
-import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.managers.LifecycleManager
 import com.yuroyami.syncplay.managers.NetworkManager
 import com.yuroyami.syncplay.managers.OSDManager
@@ -29,6 +17,13 @@ import com.yuroyami.syncplay.managers.SessionManager
 import com.yuroyami.syncplay.managers.SharedPlaylistManager
 import com.yuroyami.syncplay.managers.SnackManager
 import com.yuroyami.syncplay.managers.UIManager
+import com.yuroyami.syncplay.models.Constants
+import com.yuroyami.syncplay.models.JoinConfig
+import com.yuroyami.syncplay.screens.adam.Screen
+import com.yuroyami.syncplay.screens.adam.Screen.Companion.navigateTo
+import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
+import com.yuroyami.syncplay.utils.instantiateNetworkManager
+import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -43,7 +38,7 @@ class SyncplayViewmodel: ViewModel() {
     val playerManager: PlayerManager by lazy { PlayerManager(this) }
 
     /** Manages the network engine and events */
-    val networkManager: NetworkManager by lazy { NetworkManager(this) }
+    lateinit var networkManager: NetworkManager
 
     /** Manages the protocol and its  events */
     val protocolManager: ProtocolManager by lazy { ProtocolManager(this) }
@@ -69,12 +64,9 @@ class SyncplayViewmodel: ViewModel() {
     /** Displays snack messages in home screen */
     val snackManager: SnackManager by lazy { SnackManager(this) }
 
-
-
     var setReadyDirectly = false
 
     val seeks = mutableListOf<Pair<Long, Long>>()
-
 
     fun joinRoom(joinConfig: JoinConfig) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -82,8 +74,7 @@ class SyncplayViewmodel: ViewModel() {
 
             setReadyDirectly = valueSuspendingly(DataStoreKeys.PREF_READY_FIRST_HAND, true)
 
-            val networkEngine = networkManager.getPreferredEngine()
-            p = instantiateNetworkEngineProtocol(networkEngine)
+            networkManager = instantiateNetworkManager(engine = NetworkManager.getPreferredEngine())
 
             sessionManager.session.serverHost = joinConfig.ip.takeIf { it != "syncplay.pl" } ?: "151.80.32.178"
             sessionManager.session.serverPort = joinConfig.port

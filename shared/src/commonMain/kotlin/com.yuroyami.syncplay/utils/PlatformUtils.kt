@@ -34,7 +34,7 @@ fun loggy(s: Any?) {
 
 }
 
-expect fun SyncplayViewmodel.instantiateNetworkEngineProtocol(engine: NetworkManager.NetworkEngine): SyncplayProtocol
+expect fun SyncplayViewmodel.instantiateNetworkManager(engine: NetworkManager.NetworkEngine): NetworkManager
 
 /** Generates the system's current Epoch millis */
 expect fun generateTimestampMillis(): Long

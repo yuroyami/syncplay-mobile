@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.player.vlc
+package com.yuroyami.syncplay.logic.player.vlc
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -14,7 +14,7 @@ import androidx.media3.common.MimeTypes
 import com.yuroyami.syncplay.databinding.VlcviewBinding
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
-import com.yuroyami.syncplay.player.AndroidPlayerEngine
+import com.yuroyami.syncplay.logic.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.logic.managers.player.BasePlayer
 import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid

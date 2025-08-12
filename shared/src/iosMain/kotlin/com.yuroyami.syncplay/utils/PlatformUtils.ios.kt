@@ -2,19 +2,19 @@ package com.yuroyami.syncplay.utils
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ClipEntry
-import com.yuroyami.syncplay.player.ApplePlayerEngine
-import com.yuroyami.syncplay.logic.managers.player.PlayerEngine
-import com.yuroyami.syncplay.logic.managers.network.SpProtocolKtor
-import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.network.KtorNetworkManager
+import com.yuroyami.syncplay.logic.player.ApplePlayerEngine
+import com.yuroyami.syncplay.logic.player.PlayerEngine
+import com.yuroyami.syncplay.managers.NetworkManager
 import platform.Foundation.NSDate
 import platform.Foundation.NSURL
 import platform.Foundation.timeIntervalSince1970
 import kotlin.math.roundToLong
 
-actual fun SyncplayViewmodel.instantiateNetworkEngineProtocol(engine: SyncplayProtocol.NetworkEngine) = when (engine) {
-    SyncplayProtocol.NetworkEngine.SWIFTNIO -> instantiateSyncplayProtocolSwiftNIO!!.invoke()
-    else -> SpProtocolKtor(this)
+actual fun SyncplayViewmodel.instantiateNetworkManager(engine: NetworkManager.NetworkEngine) = when (engine) {
+    NetworkManager.NetworkEngine.SWIFTNIO -> instantiateSwiftNioNetworkManager!!.invoke()
+    else -> KtorNetworkManager(this)
 }
 
 @Composable
