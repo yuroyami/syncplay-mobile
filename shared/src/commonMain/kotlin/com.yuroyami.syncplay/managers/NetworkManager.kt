@@ -2,11 +2,6 @@ package com.yuroyami.syncplay.managers
 
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.logic.managers.protocol.JsonHandler
-import com.yuroyami.syncplay.protocol.sending.Packet
-import com.yuroyami.syncplay.protocol.sending.Packet.Companion.createPacketInstance
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.logic.managers.datastore.valueBlockingly
-import com.yuroyami.syncplay.logic.managers.datastore.valueSuspendingly
 import com.yuroyami.syncplay.utils.PLATFORM
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.platform
@@ -16,7 +11,7 @@ import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
 import com.yuroyami.syncplay.logic.datastore.valueBlockingly
 import com.yuroyami.syncplay.logic.datastore.valueSuspendingly
 import com.yuroyami.syncplay.logic.protocol.JsonHandler
-import com.yuroyami.syncplay.logic.protocol.Packet
+import com.yuroyami.syncplay.logic.protocol.PacketCreator
 import com.yuroyami.syncplay.managers.ProtocolManager.Companion.createPacketInstance
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -68,9 +63,9 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
             /** if the TLS mode is [Constants.TLS.TLS_ASK], then the the first packet to send
              * concerns an opportunistic TLS check with the server, otherwise, a Hello would be first */
             if (tls == Constants.TLS.TLS_ASK) {
-                send<Packet.TLS>().await()
+                send<PacketCreator.TLS>().await()
             } else {
-                send<Packet.Hello> {
+                send<PacketCreator.Hello> {
                     username = viewmodel.sessionManager.session.currentUsername
                     roomname = viewmodel.sessionManager.session.currentRoom
                     serverPassword = viewmodel.sessionManager.session.currentPassword
@@ -137,13 +132,13 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
      *  it queues the json to send in a special queue until the connection recovers. */
     typealias SendablePacket = String
 
-    inline fun <reified T : Packet> send(noinline init: T.() -> Unit = {}): Deferred<Unit> = networkScope.async(Dispatchers.IO) {
+    inline fun <reified T : PacketCreator> send(noinline init: T.() -> Unit = {}): Deferred<Unit> = networkScope.async(Dispatchers.IO) {
         val packetInstance = createPacketInstance<T>(protocolManager = viewmodel.protocolManager).apply(init)
         val jsonPacket = packetInstance.build()
         transmitPacket(jsonPacket, packetClass = T::class)
     }
 
-    suspend fun transmitPacket(json: SendablePacket, packetClass: KClass<out Packet>? = null, isRetry: Boolean = false) {
+    suspend fun transmitPacket(json: SendablePacket, packetClass: KClass<out PacketCreator>? = null, isRetry: Boolean = false) {
         withContext(Dispatchers.IO) {
             try {
                 if (isSocketValid()) {
@@ -152,7 +147,7 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
                     writeActualString(finalOut)
                 } else {
                     /** Queuing any pending outgoing messages */
-                    if (packetClass != Packet.Hello::class && packetClass != null) {
+                    if (packetClass != PacketCreator.Hello::class && packetClass != null) {
                         viewmodel.sessionManager.session.outboundQueue.add(json)
                     }
                     if (state == Constants.CONNECTIONSTATE.STATE_CONNECTED) {

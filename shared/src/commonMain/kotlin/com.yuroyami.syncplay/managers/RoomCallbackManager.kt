@@ -10,6 +10,7 @@ import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timeStamper
 import com.yuroyami.syncplay.logic.AbstractManager
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.protocol.ProtocolCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
@@ -117,7 +118,6 @@ class RoomCallbackManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmod
 
    override fun onReceivedList() {
         loggy("SYNCPLAY Protocol: Received list update.")
-
     }
 
     override fun onSomeoneLoadedFile(person: String, file: String?, fileduration: Double?) {

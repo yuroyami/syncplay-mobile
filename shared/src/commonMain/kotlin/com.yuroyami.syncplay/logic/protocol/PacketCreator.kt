@@ -12,11 +12,11 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 
-sealed class Packet {
+sealed class PacketCreator {
     abstract fun build(): String
 
     // Packet type definitions as sealed subclasses
-    class Hello : Packet() {
+    class Hello : PacketCreator() {
         var username: String = ""
         var roomname: String = ""
         var serverPassword: String = ""
@@ -51,7 +51,7 @@ sealed class Packet {
         }
     }
 
-    class Joined : Packet() {
+    class Joined : PacketCreator() {
         var roomname: String = ""
 
         override fun build(): String {
@@ -80,7 +80,7 @@ sealed class Packet {
         }
     }
 
-    class EmptyList : Packet() {
+    class EmptyList : PacketCreator() {
         override fun build(): String {
             val emptylist = buildJsonObject {
                 putJsonArray("List") {}
@@ -89,7 +89,7 @@ sealed class Packet {
         }
     }
 
-    class Readiness : Packet() {
+    class Readiness : PacketCreator() {
         var isReady: Boolean = false
         var manuallyInitiated: Boolean = false
 
@@ -111,7 +111,7 @@ sealed class Packet {
         }
     }
 
-    class File : Packet() {
+    class File : PacketCreator() {
         var media: MediaFile? = null
 
         override fun build(): String {
@@ -151,7 +151,7 @@ sealed class Packet {
         }
     }
 
-    class Chat : Packet() {
+    class Chat : PacketCreator() {
         var message: String = ""
 
         override fun build(): String {
@@ -163,7 +163,7 @@ sealed class Packet {
         }
     }
 
-    class State(private var p: ProtocolManager) : Packet() {
+    class State(private var p: ProtocolManager) : PacketCreator() {
         var serverTime: Double? = null
         val clientTime: Double
             get() = generateTimestampMillis() / 1000.0
@@ -220,7 +220,7 @@ sealed class Packet {
         }
     }
 
-    class PlaylistChange : Packet() {
+    class PlaylistChange : PacketCreator() {
         var files: List<String> = emptyList()
 
         override fun build(): String {
@@ -244,7 +244,7 @@ sealed class Packet {
         }
     }
 
-    class PlaylistIndex : Packet() {
+    class PlaylistIndex : PacketCreator() {
         var index: Int = 0
 
         override fun build(): String {
@@ -264,7 +264,7 @@ sealed class Packet {
         }
     }
 
-    class TLS : Packet() {
+    class TLS : PacketCreator() {
         override fun build(): String {
             val tls = buildJsonObject {
                 put("startTLS", "send")

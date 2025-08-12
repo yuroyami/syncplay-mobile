@@ -6,7 +6,7 @@ import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
 import com.yuroyami.syncplay.logic.datastore.valueSuspendingly
 import com.yuroyami.syncplay.logic.player.BasePlayer
-import com.yuroyami.syncplay.logic.protocol.Packet
+import com.yuroyami.syncplay.logic.protocol.PacketCreator
 import com.yuroyami.syncplay.models.Message
 import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
@@ -23,7 +23,7 @@ class RoomActionManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmode
     fun sendPlayback(play: Boolean) {
         if (viewmodel.isSoloMode) return
 
-        sender.send<Packet.State> {
+        sender.send<PacketCreator.State> {
             serverTime = null
             doSeek = null
             position = null //FIXME 0
@@ -36,7 +36,7 @@ class RoomActionManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmode
         if (viewmodel.isSoloMode) return
 
         player?.playerScopeMain?.launch {
-            sender.send<Packet.State> {
+            sender.send<PacketCreator.State> {
                 serverTime = null
                 doSeek = true
                 position = newPosMs / 1000L
@@ -50,7 +50,7 @@ class RoomActionManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmode
     fun sendMessage(msg: String) {
         if (viewmodel.isSoloMode) return
 
-        sender.send<Packet.Chat> {
+        sender.send<PacketCreator.Chat> {
             message = msg
         }
     }

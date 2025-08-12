@@ -32,8 +32,8 @@ class KtorNetworkManager(viewmodel: SyncplayViewmodel) : NetworkManager(viewmode
                 socket = aSocket(SelectorManager(Dispatchers.IO))
                     .tcp()
                     .connect(
-                        viewmodel.sessionManager.session.serverHost,
-                        viewmodel.sessionManager.session.serverPort
+                        hostname = viewmodel.sessionManager.session.serverHost,
+                        port = viewmodel.sessionManager.session.serverPort
                     ) {
                         socketTimeout = 10000
                     }
@@ -90,5 +90,4 @@ class KtorNetworkManager(viewmodel: SyncplayViewmodel) : NetworkManager(viewmode
     override fun upgradeTls() {
         //TODO("Opportunistic TLS not yet supported by Ktor")
     }
-
 }

@@ -1,9 +1,8 @@
 package com.yuroyami.syncplay.logic.protocol
 
+import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.User
-import com.yuroyami.syncplay.protocol.SyncplayProtocol
-import com.yuroyami.syncplay.logic.managers.protocol.PingService
 import com.yuroyami.syncplay.utils.loggy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -13,7 +12,6 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
-import kotlin.collections.iterator
 import kotlin.math.abs
 import kotlin.math.roundToLong
 import kotlin.time.Clock
@@ -142,14 +140,20 @@ data class ErrorData(
 )
 
 
-object JsonHandler {
+class PacketHandler(viewmodel: SyncplayViewmodel) {
+
+    val session = viewmodel.sessionManager.session
+    val protocol = viewmodel.protocolManager
+    val callback = viewmodel.callbackManager
+    val sender = viewmodel.networkManager
+    val player = viewmodel.playerManager.player
 
     private val json = Json {
         ignoreUnknownKeys = true
         coerceInputValues = true
     }
 
-    suspend fun parse(protocol: SyncplayProtocol, jsonString: String) {
+    suspend fun parse(viewmodel: SyncplayViewmodel, jsonString: String) {
             loggy("**SERVER** $jsonString")
 
             try {
@@ -160,33 +164,33 @@ object JsonHandler {
                 when {
                     element.containsKey("Hello") -> {
                         val message = json.decodeFromString<HelloMessage>(jsonString)
-                        handleHello(message.Hello, protocol)
+                        handleHello(message.Hello)
                     }
                     element.containsKey("Set") -> {
                         val message = json.decodeFromString<SetMessage>(jsonString)
-                        handleSet(message.Set, protocol)
+                        handleSet(message.Set)
                     }
                     element.containsKey("List") -> {
                         val message = json.decodeFromString<ListMessage>(jsonString)
-                        handleList(message.List, protocol)
+                        handleList(message.List)
                     }
                     element.containsKey("State") -> {
                         val message = json.decodeFromString<StateMessage>(jsonString)
                         withContext(Dispatchers.Main) {
-                            handleState(message.State, protocol, jsonString)
+                            handleState(message.State, jsonString)
                         }
                     }
                     element.containsKey("Chat") -> {
                         val message = json.decodeFromString<ChatMessage>(jsonString)
-                        handleChat(message.Chat, protocol)
+                        handleChat(message.Chat)
                     }
                     element.containsKey("Error") -> {
                         val message = json.decodeFromString<ErrorMessage>(jsonString)
-                        handleError(message.Error, protocol)
+                        handleError(message.Error)
                     }
                     element.containsKey("TLS") -> {
                         val message = json.decodeFromString<TLSMessage>(jsonString)
-                        handleTLS(message.TLS, protocol)
+                        handleTLS(message.TLS)
                     }
                     else -> loggy("Dropped error: unknown-command-server-error")
                 }
@@ -196,30 +200,32 @@ object JsonHandler {
             }
     }
 
-    private suspend fun handleHello(hello: HelloData, p: SyncplayProtocol) {
+    private suspend fun handleHello(hello: HelloData) {
         hello.username?.let { username ->
-            p.session.currentUsername = username
+            session.currentUsername = username
         }
-        p.send<Packet.Joined> {
-            roomname = p.session.currentRoom
+
+       sender.send<PacketCreator.Joined> {
+            roomname = session.currentRoom
         }.await()
-        p.send<Packet.EmptyList>().await()
-        p.syncplayCallback.onConnected()
+
+        sender.send<PacketCreator.EmptyList>().await()
+        callback.onConnected()
     }
 
-    private suspend fun handleSet(set: SetData, p: SyncplayProtocol) {
+    private suspend fun handleSet(set: SetData) {
         when {
-            set.user != null -> handleUserSet(set.user, p)
-            set.playlistIndex != null -> handlePlaylistIndex(set.playlistIndex, p)
-            set.playlistChange != null -> handlePlaylistChange(set.playlistChange, p)
+            set.user != null -> handleUserSet(set.user)
+            set.playlistIndex != null -> handlePlaylistIndex(set.playlistIndex)
+            set.playlistChange != null -> handlePlaylistChange(set.playlistChange)
             // Handle other set types as needed
         }
 
         // Fetch a list of users anyway
-        p.send<Packet.EmptyList>().await()
+        sender.send<PacketCreator.EmptyList>().await()
     }
 
-    private fun handleUserSet(userObject: JsonObject, p: SyncplayProtocol) {
+    private fun handleUserSet(userObject: JsonObject) {
         val userName = userObject.keys.firstOrNull() ?: return
 
         try {
@@ -227,14 +233,14 @@ object JsonHandler {
 
             userData.event?.let { event ->
                 when {
-                    event.left != null -> p.syncplayCallback.onSomeoneLeft(userName)
-                    event.joined != null -> p.syncplayCallback.onSomeoneJoined(userName)
+                    event.left != null -> callback.onSomeoneLeft(userName)
+                    event.joined != null -> callback.onSomeoneJoined(userName)
                     else -> {}
                 }
             }
 
             userData.file?.let { file ->
-                p.syncplayCallback.onSomeoneLoadedFile(
+                callback.onSomeoneLoadedFile(
                     userName,
                     file.name ?: "",
                     file.duration ?: 0.0
@@ -246,25 +252,25 @@ object JsonHandler {
         }
     }
 
-    private fun handlePlaylistIndex(playlistIndex: PlaylistIndexData, p: SyncplayProtocol) {
+    private fun handlePlaylistIndex(playlistIndex: PlaylistIndexData) {
         val user = playlistIndex.user ?: return
         val index = playlistIndex.index ?: return
 
-        p.syncplayCallback.onPlaylistIndexChanged(user, index)
-        p.session.spIndex.intValue = index
+        callback.onPlaylistIndexChanged(user, index)
+        session.spIndex.intValue = index
     }
 
-    private fun handlePlaylistChange(playlistChange: PlaylistChangeData, p: SyncplayProtocol) {
+    private fun handlePlaylistChange(playlistChange: PlaylistChangeData) {
         val user = playlistChange.user ?: ""
         val files = playlistChange.files ?: return
 
-        p.session.sharedPlaylist.clear()
-        p.session.sharedPlaylist.addAll(files)
-        p.syncplayCallback.onPlaylistUpdated(user)
+        session.sharedPlaylist.clear()
+        session.sharedPlaylist.addAll(files)
+        callback.onPlaylistUpdated(user)
     }
 
-    private fun handleList(list: JsonObject, p: SyncplayProtocol) {
-        val userlist = list[p.session.currentRoom] as? JsonObject ?: return
+    private fun handleList(list: JsonObject) {
+        val userlist = list[session.currentRoom] as? JsonObject ?: return
         val newList = mutableListOf<User>()
 
         var indexer = 1
@@ -275,7 +281,7 @@ object JsonHandler {
 
                 val user = User(
                     name = userName,
-                    index = if (userName != p.session.currentUsername) indexer++ else 0,
+                    index = if (userName != session.currentUsername) indexer++ else 0,
                     readiness = userData.isReady ?: false,
                     file = userData.file?.let { fileData ->
                         if (fileData.name != null) {
@@ -295,15 +301,15 @@ object JsonHandler {
             }
         }
 
-        p.protoScope.launch {
-            p.session.userList.emit(newList)
-            p.syncplayCallback.onReceivedList()
+        sender.networkScope.launch {
+            session.userList.emit(newList)
+            callback.onReceivedList()
         }
     }
 
     var lastGlobalUpdate: Instant? = null
-    const val SEEK_THRESHOLD = 1L
-    private suspend fun handleState(state: StateData, protocol: SyncplayProtocol, jsonString: String) {
+    val SEEK_THRESHOLD = 1L
+    private suspend fun handleState(state: StateData, jsonString: String) {
         var position: Double? = null
         var paused: Boolean? = null
         var doSeek: Boolean? = null
@@ -336,12 +342,10 @@ object JsonHandler {
             ping.clientLatencyCalculation?.let { timestamp ->
                 val serverRtt = ping.serverRtt ?: return@let
 
-                pingService.receiveMessage(timestamp.roundToLong(), serverRtt)
+                protocol.pingService.receiveMessage(timestamp.roundToLong(), serverRtt)
             }
-            messageAge = pingService.forwardDelay
+            messageAge = protocol.pingService.forwardDelay
         }
-
-        val player = protocol.viewmodel.player
 
         if (position != null && paused != null && protocol.clientIgnFly == 0 && player != null) {
             val pausedChanged = protocol.globalPaused != paused || paused == player.isPlaying()
@@ -354,7 +358,7 @@ object JsonHandler {
 
 
             if (lastGlobalUpdate == null) {
-                if (protocol.viewmodel.media != null) {
+                if (protocol.viewmodel.playerManager.media.value != null) {
                     player.seekTo(position.toLong())
                     if (paused) player.pause() else player.play()
                 }
@@ -365,12 +369,12 @@ object JsonHandler {
 
 
             if (doSeek == true && setBy != null) {
-                protocol.syncplayCallback.onSomeoneSeeked(setBy, position)
+                callback.onSomeoneSeeked(setBy, position)
             }
 
             /* Rewind check if someone is behind */
             if (diff > protocol.rewindThreshold && doSeek != true /* && rewindOnDesync pref */) {
-                protocol.syncplayCallback.onSomeoneBehind(setBy ?: "", position)
+                callback.onSomeoneBehind(setBy ?: "", position)
             }
 
             //if (fastforwardOnDesyncPref && (currentUser.canControl() == false or dontSlowDownWithMe == true)
@@ -389,8 +393,8 @@ object JsonHandler {
 
 
             if (pausedChanged) {
-                if (!paused) protocol.syncplayCallback.onSomeonePlayed(setBy ?: "")
-                if (paused) protocol.syncplayCallback.onSomeonePaused(setBy ?: "")
+                if (!paused) callback.onSomeonePlayed(setBy ?: "")
+                if (paused) callback.onSomeonePaused(setBy ?: "")
             }
         }
 
@@ -400,7 +404,7 @@ object JsonHandler {
             val surelyPausedChanged = protocol.globalPaused != paused && paused == player.isPlaying()
             val seeked = playerDiff > SEEK_THRESHOLD && globalDiff > SEEK_THRESHOLD
 
-            protocol.send<Packet.State> {
+            sender.send<PacketCreator.State> {
                 serverTime = latencyCalculation
                 this.doSeek = seeked
                 this.position = player.currentPositionMs().div(1000L) // if dontSlowDownWithMe useGlobalPosition or else usePlayerPosition
@@ -408,7 +412,7 @@ object JsonHandler {
                 play = player.isPlaying()
             }
         } else {
-            protocol.send<Packet.State> {
+            sender.send<PacketCreator.State> {
                 serverTime = latencyCalculation
                 this.doSeek = null
                 this.position = null
@@ -419,19 +423,19 @@ object JsonHandler {
 
     }
 
-    private fun handleChat(chat: ChatData, p: SyncplayProtocol) {
+    private fun handleChat(chat: ChatData) {
         val sender = chat.username ?: return
         val message = chat.message ?: return
-        p.syncplayCallback.onChatReceived(sender, message)
+        callback.onChatReceived(sender, message)
     }
 
-    private suspend fun handleTLS(tls: TLSData, p: SyncplayProtocol) {
+    private suspend fun handleTLS(tls: TLSData) {
         tls.startTLS?.let { startTLS ->
-            p.syncplayCallback.onReceivedTLS(startTLS)
+            callback.onReceivedTLS(startTLS)
         }
     }
 
-    private fun handleError(error: ErrorData, p: SyncplayProtocol) {
+    private fun handleError(error: ErrorData) {
         // Implement error handling as needed
         error.message?.let { message ->
             loggy("Server error: $message")

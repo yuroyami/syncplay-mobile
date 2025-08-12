@@ -2,17 +2,18 @@ package com.yuroyami.syncplay.managers
 
 import com.yuroyami.syncplay.logic.AbstractManager
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
-import com.yuroyami.syncplay.logic.protocol.Packet
-import com.yuroyami.syncplay.logic.protocol.Packet.Chat
-import com.yuroyami.syncplay.logic.protocol.Packet.EmptyList
-import com.yuroyami.syncplay.logic.protocol.Packet.File
-import com.yuroyami.syncplay.logic.protocol.Packet.Hello
-import com.yuroyami.syncplay.logic.protocol.Packet.Joined
-import com.yuroyami.syncplay.logic.protocol.Packet.PlaylistChange
-import com.yuroyami.syncplay.logic.protocol.Packet.PlaylistIndex
-import com.yuroyami.syncplay.logic.protocol.Packet.Readiness
-import com.yuroyami.syncplay.logic.protocol.Packet.State
-import com.yuroyami.syncplay.logic.protocol.Packet.TLS
+import com.yuroyami.syncplay.logic.protocol.PacketCreator
+import com.yuroyami.syncplay.logic.protocol.PacketCreator.Chat
+import com.yuroyami.syncplay.logic.protocol.PacketCreator.EmptyList
+import com.yuroyami.syncplay.logic.protocol.PacketCreator.File
+import com.yuroyami.syncplay.logic.protocol.PacketCreator.Hello
+import com.yuroyami.syncplay.logic.protocol.PacketCreator.Joined
+import com.yuroyami.syncplay.logic.protocol.PacketCreator.PlaylistChange
+import com.yuroyami.syncplay.logic.protocol.PacketCreator.PlaylistIndex
+import com.yuroyami.syncplay.logic.protocol.PacketCreator.Readiness
+import com.yuroyami.syncplay.logic.protocol.PacketCreator.State
+import com.yuroyami.syncplay.logic.protocol.PacketCreator.TLS
+import com.yuroyami.syncplay.logic.protocol.PacketHandler
 import com.yuroyami.syncplay.logic.protocol.PingService
 
 class ProtocolManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel) {
@@ -24,8 +25,10 @@ class ProtocolManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel)
     val rewindThreshold = 12L /* This is as per official Syncplay, shouldn't be subject to change */
     val pingService = PingService() //TODO
 
+    val packetHandler = PacketHandler(viewmodel)
+
     companion object {
-        inline fun <reified T : Packet> NetworkManager.createPacketInstance(protocolManager: ProtocolManager): T {
+        inline fun <reified T : PacketCreator> NetworkManager.createPacketInstance(protocolManager: ProtocolManager): T {
             return when (T::class) {
                 Hello::class -> Hello() as T
                 Joined::class -> Joined() as T

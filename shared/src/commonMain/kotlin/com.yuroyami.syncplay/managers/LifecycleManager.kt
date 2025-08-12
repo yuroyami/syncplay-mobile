@@ -55,9 +55,9 @@ class LifecycleManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel
      * Pauses playback unless in Picture-in-Picture mode.
      */
     fun onStop() {
-        if (!viewmodel.hasEnteredPipMode.value) {
+        if (!viewmodel.uiManager.hasEnteredPipMode.value) {
             background.value = true
-            viewmodel.player?.pause()
+            viewmodel.playerManager.player?.pause()
         }
     }
 
