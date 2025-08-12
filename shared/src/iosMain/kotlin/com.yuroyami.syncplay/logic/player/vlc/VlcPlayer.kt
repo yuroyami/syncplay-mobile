@@ -22,6 +22,7 @@ import com.yuroyami.syncplay.utils.collectInfoLocaliOS
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.player.BasePlayer
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.toKString

@@ -53,9 +53,9 @@ fun RoomScreenUI() {
     val roomDefaultScope = rememberCoroutineScope { Dispatchers.Default }
 
     val soloMode = remember { viewmodel.isSoloMode }
-    val hasVideo by viewmodel.hasVideo.collectAsState()
-    val isHUDVisible by viewmodel.visibleHUD.collectAsState()
-    val isInPipMode by viewmodel.hasEnteredPipMode.collectAsState()
+    val hasVideo by viewmodel.playerManager.hasVideo.collectAsState(initial = false)
+    val isHUDVisible by viewmodel.uiManager.visibleHUD.collectAsState()
+    val isInPipMode by viewmodel.uiManager.hasEnteredPipMode.collectAsState()
 
     val cardController = remember { CardController() }
     val lockedMode by cardController.tabLock.collectAsState()
@@ -73,8 +73,7 @@ fun RoomScreenUI() {
             }
 
             /* Video Surface */
-            val player = remember { viewmodel.player }
-            player?.VideoPlayer(
+            viewmodel.playerManager.player?.VideoPlayer(
                 modifier = Modifier
                     .fillMaxSize()
                     .alpha(if (hasVideo) 1f else 0f) //The video composable has to be alive at all times, we just hide it when there's no video
@@ -161,11 +160,11 @@ fun RoomScreenUI() {
             }
         }
 
-        if (!viewmodel.hasDoneStartupSlideAnimation) {
+        if (!viewmodel.uiManager.hasDoneStartupSlideAnimation) {
             LaunchedEffect(null) {
                 delay(600)
                 cardController.toggleUserInfo(true)
-                viewmodel.hasDoneStartupSlideAnimation = true
+                viewmodel.uiManager.hasDoneStartupSlideAnimation = true
             }
         }
     }

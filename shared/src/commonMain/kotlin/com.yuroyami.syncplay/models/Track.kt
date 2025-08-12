@@ -1,7 +1,7 @@
 package com.yuroyami.syncplay.models
 
 import androidx.compose.runtime.MutableState
-import com.yuroyami.syncplay.logic.managers.player.BasePlayer
+import com.yuroyami.syncplay.logic.player.BasePlayer
 
 /*****************************************************************************************
  * Track wrapper class. It encapsulates all info we need about a track in a track group  *

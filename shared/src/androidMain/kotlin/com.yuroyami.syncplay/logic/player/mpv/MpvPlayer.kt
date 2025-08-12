@@ -1,5 +1,4 @@
 @file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-
 package com.yuroyami.syncplay.logic.player.mpv
 
 import android.content.Context
@@ -16,18 +15,18 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import androidx.media3.common.C.STREAM_TYPE_MUSIC
 import com.yuroyami.syncplay.databinding.MpvviewBinding
+import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.player.AndroidPlayerEngine
+import com.yuroyami.syncplay.logic.player.BasePlayer
+import com.yuroyami.syncplay.logic.protocol.Packet
+import com.yuroyami.syncplay.logic.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
-import com.yuroyami.syncplay.logic.player.AndroidPlayerEngine
-import com.yuroyami.syncplay.logic.managers.player.BasePlayer
-import com.yuroyami.syncplay.protocol.sending.Packet
-import com.yuroyami.syncplay.logic.managers.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timeStamper
-import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import `is`.xyz.mpv.MPVLib
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -101,8 +100,8 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
     }
 
     override suspend fun analyzeTracks(mediafile: MediaFile) {
-        viewmodel.media?.subtitleTracks?.clear()
-        viewmodel.media?.audioTracks?.clear()
+        playerManager.media.value?.subtitleTracks?.clear()
+        playerManager.media.value?.audioTracks?.clear()
         val count = MPVLib.getPropertyInt("track-list/count" as java.lang.String)!!
         // Note that because events are async, properties might disappear at any moment
         // so use ?: continue instead of !!
@@ -126,7 +125,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
             Log.e("trck", "Found track $mpvId: $type, $title [$lang], $selected")
             when (type) {
                 "audio" -> {
-                    viewmodel.media?.audioTracks?.add(
+                    playerManager.media.value?.audioTracks?.add(
                         object : Track {
                             override val name = trackName
                             override val type = TRACKTYPE.AUDIO
@@ -137,7 +136,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                 }
 
                 "sub" -> {
-                    viewmodel.media?.subtitleTracks?.add(
+                    playerManager.media.value?.subtitleTracks?.add(
                         object : Track {
                             override val name = trackName
                             override val type = TRACKTYPE.SUBTITLE
@@ -159,7 +158,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                     MPVLib.setPropertyString("sid" as java.lang.String, "no" as java.lang.String)
                 }
 
-                viewmodel.currentTrackChoices.subtitleSelectionIndexMpv = track?.index ?: -1
+                playerManager.currentTrackChoices.subtitleSelectionIndexMpv = track?.index ?: -1
             }
 
             TRACKTYPE.AUDIO -> {
@@ -169,7 +168,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                     MPVLib.setPropertyString("aid" as java.lang.String, "no" as java.lang.String)
                 }
 
-                viewmodel.currentTrackChoices.audioSelectionIndexMpv = track?.index ?: -1
+                playerManager.currentTrackChoices.audioSelectionIndexMpv = track?.index ?: -1
             }
         }
     }
@@ -201,16 +200,16 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
     }
 
     override fun reapplyTrackChoices() {
-        val subIndex = viewmodel.currentTrackChoices.subtitleSelectionIndexMpv
-        val audioIndex = viewmodel.currentTrackChoices.audioSelectionIndexMpv
+        val subIndex = playerManager.currentTrackChoices.subtitleSelectionIndexMpv
+        val audioIndex = playerManager.currentTrackChoices.audioSelectionIndexMpv
 
-        val ccMap = viewmodel.media?.subtitleTracks
-        val audioMap = viewmodel.media?.subtitleTracks
+        val ccMap = playerManager.media.value?.subtitleTracks
+        val audioMap = playerManager.media.value?.subtitleTracks
 
         val ccGet = ccMap?.firstOrNull { it.index == subIndex }
         val audioGet = audioMap?.firstOrNull { it.index == audioIndex }
 
-        with(viewmodel.player ?: return) {
+        with(playerManager.player ?: return) {
             if (subIndex == -1) {
                 selectTrack(null, TRACKTYPE.SUBTITLE)
             } else if (ccGet != null) {
@@ -256,22 +255,20 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
     }
 
     override fun injectVideo(uri: String?, isUrl: Boolean) {
-        /* Changing UI (hiding artwork, showing media controls) */
-        viewmodel.hasVideo.value = true
         val ctx = mpvView.context ?: return
 
         playerScopeMain.launch {
             /* Creating a media file from the selected file */
-            if (uri != null || viewmodel.media == null) {
-                viewmodel.media = MediaFile()
-                viewmodel.media?.uri = uri
+            if (uri != null || playerManager.media == null) {
+                playerManager.media.value = MediaFile()
+                playerManager.media.value?.uri = uri
 
                 /* Obtaining info from it (size and name) */
                 if (isUrl) {
-                    viewmodel.media?.url = uri.toString()
-                    viewmodel.media?.let { collectInfoURL(it) }
+                    playerManager.media.value?.url = uri.toString()
+                    playerManager.media.value?.let { collectInfoURL(it) }
                 } else {
-                    viewmodel.media?.let { collectInfoLocal(it) }
+                    playerManager.media.value?.let { collectInfoLocal(it) }
                 }
             }
             /* Injecting the media into exoplayer */
@@ -310,7 +307,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
 
             /* Finally, show a a toast to the user that the media file has been added */
             viewmodel.osdManager.dispatchOSD {
-                getString(Res.string.room_selected_vid, "${viewmodel.media?.fileName}")
+                getString(Res.string.room_selected_vid, "${playerManager.media.value?.fileName}")
             }
         }
     }
@@ -409,7 +406,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
             override fun eventProperty(property: String, value: Long) {
                 when (property) {
                     "time-pos" -> mpvPos = value * 1000
-                    "duration" -> viewmodel.timeFullMs.value = value * 1000
+                    "duration" -> playerManager.timeFullMillis.value = value * 1000
                     //"file-size" -> value
                 }
             }
@@ -417,7 +414,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
             override fun eventProperty(property: String, value: Boolean) {
                 when (property) {
                     "pause" -> {
-                        viewmodel.isNowPlaying.value = !value //Just to inform UI
+                        playerManager.isNowPlaying.value = !value //Just to inform UI
 
                         //Tell server about playback state change
                         if (!viewmodel.isSoloMode) {
@@ -437,15 +434,14 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
             override fun event(eventId: Int) {
                 when (eventId) {
                     MPVLib.mpvEventId.MPV_EVENT_START_FILE -> {
-                        viewmodel.hasVideo.value = true
-
                         if (viewmodel.isSoloMode) return
                         playerScopeIO.launch {
                             while (true) {
-                                if (viewmodel.timeFullMs.value.toDouble() > 0) {
-                                    viewmodel.media?.fileDuration = viewmodel.timeFullMs.value / 1000.0
-                                    viewmodel.p.send<Packet.File> {
-                                        media = viewmodel.media
+                                if (playerManager.timeFullMillis.value.toDouble() > 0) {
+                                    playerManager.media.value?.fileDuration = playerManager.timeFullMillis.value / 1000.0
+
+                                    viewmodel.networkManager.send<Packet.File> {
+                                        media = playerManager.media.value
                                     }.await()
                                     break
                                 }

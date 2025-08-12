@@ -1,25 +1,29 @@
 package com.yuroyami.syncplay.managers
 
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.models.Message
-import com.yuroyami.syncplay.protocol.sending.Packet
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.logic.managers.datastore.valueSuspendingly
-import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.logic.AbstractManager
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
+import com.yuroyami.syncplay.logic.datastore.valueSuspendingly
+import com.yuroyami.syncplay.logic.player.BasePlayer
+import com.yuroyami.syncplay.logic.protocol.Packet
+import com.yuroyami.syncplay.models.Message
+import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class RoomActionManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmodel) {
+class RoomActionManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel) {
 
-    val p = viewmodel.p
+    val sender = viewmodel.networkManager
+
+    val player: BasePlayer?
+        get() = viewmodel.playerManager.player
 
     fun sendPlayback(play: Boolean) {
         if (viewmodel.isSoloMode) return
 
-        p.send<Packet.State> {
+        sender.send<Packet.State> {
             serverTime = null
             doSeek = null
             position = null //FIXME 0
@@ -31,13 +35,13 @@ class RoomActionManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmodel
     fun sendSeek(newPosMs: Long) {
         if (viewmodel.isSoloMode) return
 
-        viewmodel.player?.playerScopeMain?.launch {
-            p.send<Packet.State> {
+        player?.playerScopeMain?.launch {
+            sender.send<Packet.State> {
                 serverTime = null
                 doSeek = true
                 position = newPosMs / 1000L
                 changeState = 1
-                this.play = viewmodel.player?.isPlaying() == true
+                this.play = player!!.isPlaying() == true
             }
         }
     }
@@ -46,21 +50,22 @@ class RoomActionManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmodel
     fun sendMessage(msg: String) {
         if (viewmodel.isSoloMode) return
 
-        p.send<Packet.Chat> {
+        sender.send<Packet.Chat> {
             message = msg
         }
     }
 
     /** This pauses playback on the main (necessary) thread **/
     fun pausePlayback() {
-        if (background == true) return
+        if (viewmodel.lifecycleManager.isInBackground) return
+
         player?.pause()
         platformCallback.onPlayback(true)
     }
 
     /** This resumes playback on the main thread, and hides system UI **/
     fun playPlayback() {
-        if (background == true) return
+        if (viewmodel.lifecycleManager.isInBackground) return
         player?.play()
         platformCallback.onPlayback(false)
     }
@@ -72,7 +77,7 @@ class RoomActionManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmodel
             val currentMs =
                 withContext(Dispatchers.Main) { player!!.currentPositionMs() }
             var newPos = ((currentMs) - (dec * 1000L)).coerceIn(
-                0, media?.fileDuration?.toLong()?.times(1000L) ?: 0
+                0, viewmodel.playerManager.media.value?.fileDuration?.toLong()?.times(1000L) ?: 0
             )
 
             if (newPos < 0) {
@@ -82,8 +87,8 @@ class RoomActionManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmodel
             sendSeek(newPos)
             player?.seekTo(newPos)
 
-            if (isSoloMode) {
-                seeks.add(Pair(currentMs, newPos * 1000))
+            if (viewmodel.isSoloMode) {
+                viewmodel.seeks.add(Pair(currentMs, newPos * 1000))
             }
         }
     }
@@ -96,14 +101,14 @@ class RoomActionManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmodel
                 withContext(Dispatchers.Main) { player!!.currentPositionMs() }
             val newPos = ((currentMs) + (inc * 1000L)).coerceIn(
                 0,
-                media?.fileDuration?.toLong()?.times(1000L) ?: 0
+                viewmodel.playerManager.media.value?.fileDuration?.toLong()?.times(1000L) ?: 0
             )
 
             sendSeek(newPos)
             player?.seekTo(newPos)
 
-            if (isSoloMode) {
-                seeks.add(Pair((currentMs), newPos * 1000))
+            if (viewmodel.isSoloMode) {
+                viewmodel.seeks.add(Pair((currentMs), newPos * 1000))
             }
         }
     }
@@ -117,14 +122,14 @@ class RoomActionManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmodel
             So first, we initialize it, customize it, then add it to our long list of messages */
             val msg = Message(
                 sender = if (isChat) chatter else null,
-                isMainUser = chatter == p.session.currentUsername,
+                isMainUser = chatter == viewmodel.sessionManager.session.currentUsername,
                 content = message.invoke(),
                 isError = isError
             )
 
             /** Adding the message instance to our message sequence **/
             withContext(Dispatchers.Main) {
-                p.session.messageSequence.add(msg)
+                viewmodel.sessionManager.session.messageSequence.add(msg)
             }
         }
     }

@@ -11,6 +11,7 @@ import com.yuroyami.syncplay.logic.managers.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.utils.CommonUtils.sha256
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import com.yuroyami.syncplay.logic.settings.ExtraSettingBundle
+import com.yuroyami.syncplay.managers.PlayerManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -37,6 +38,7 @@ abstract class BasePlayer(
     val viewmodel: SyncplayViewmodel,
     val engine: PlayerEngine
 ) {
+    val playerManager: PlayerManager = viewmodel.playerManager
 
     enum class TRACKTYPE {
         AUDIO , SUBTITLE
@@ -109,9 +111,9 @@ abstract class BasePlayer(
 
     fun onPlaybackEnded() {
         if (!viewmodel.isSoloMode) {
-            if (viewmodel?.p?.session?.sharedPlaylist?.isEmpty() == true) return
-            val currentIndex = viewmodel?.p?.session?.spIndex?.intValue ?: return
-            val playlistSize = viewmodel?.p?.session?.sharedPlaylist?.size ?: return
+            if (viewmodel.sessionManager.session.sharedPlaylist.isEmpty()) return
+            val currentIndex = viewmodel.sessionManager.session.spIndex.intValue
+            val playlistSize = viewmodel.sessionManager.session.sharedPlaylist.size
 
             val next = if (playlistSize == currentIndex + 1) 0 else currentIndex + 1
             viewmodel.playlistManager.sendPlaylistSelection(next)
@@ -141,9 +143,9 @@ abstract class BasePlayer(
             while (isActive) {
                 if (isSeekable()) {
                     val pos = currentPositionMs()
-                    viewmodel.timeCurrentMs.value = pos
+                    playerManager.timeCurrentMillis = pos
                     if (!viewmodel.isSoloMode) {
-                        viewmodel.p.globalPositionMs = pos.toDouble()
+                        viewmodel.protocolManager.globalPositionMs = pos.toDouble()
                     }
                 }
                 delay(trackerJobInterval)

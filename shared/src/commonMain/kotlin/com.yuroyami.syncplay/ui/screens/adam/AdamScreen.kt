@@ -14,15 +14,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.settings.SettingStyling
 import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.screens.adam.Screen
-import com.yuroyami.syncplay.logic.managers.settings.SettingStyling
 import com.yuroyami.syncplay.ui.screens.home.HomeScreenUI
 import com.yuroyami.syncplay.ui.screens.room.RoomScreenUI
 import com.yuroyami.syncplay.ui.screens.room.tabs.CardController
 import com.yuroyami.syncplay.ui.theme.AppTheme
 import com.yuroyami.syncplay.ui.utils.messagePalette
-import com.yuroyami.syncplay.logic.SyncplayViewmodel
 
 /******
  * This is called the AdamScreen mainly because it is the root/parent composable.
@@ -36,6 +36,7 @@ val LocalScreen = compositionLocalOf<Screen> { error("No Screen provided") }
 val LocalSettingStyling = staticCompositionLocalOf<SettingStyling> { error("No Setting Styling provided") }
 val LocalChatPalette = compositionLocalOf<MessagePalette> { error("No Chat Palette provided") }
 val LocalCardController = compositionLocalOf<CardController> { error("No CardController provided yet") }
+
 
 @Composable
 fun AdamScreen(onViewmodelReady: (SyncplayViewmodel) -> Unit) {
@@ -54,7 +55,7 @@ fun AdamScreen(onViewmodelReady: (SyncplayViewmodel) -> Unit) {
     }
 
     LaunchedEffect(navigator) {
-        viewmodel.nav = navigator
+        viewmodel.uiManager.nav = navigator
     }
 
     AppTheme {
