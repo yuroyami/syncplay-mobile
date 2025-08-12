@@ -1,6 +1,6 @@
 package com.yuroyami.syncplay.utils
 
-import com.yuroyami.syncplay.logic.managers.SharedPlaylistManager
+import com.yuroyami.syncplay.managers.SharedPlaylistManager
 
 
 expect suspend fun SharedPlaylistManager.addFolderToPlaylist(uri: String)

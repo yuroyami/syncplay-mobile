@@ -7,7 +7,8 @@ import com.yuroyami.syncplay.logic.managers.player.PlayerEngine
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
 import com.yuroyami.syncplay.logic.PlatformCallback
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
-import com.yuroyami.syncplay.logic.managers.NetworkManager
+import com.yuroyami.syncplay.logic.player.PlayerEngine
+import com.yuroyami.syncplay.managers.NetworkManager
 
 
 lateinit var platformCallback: PlatformCallback

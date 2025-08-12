@@ -3,7 +3,7 @@ package com.yuroyami.syncplay.utils
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.utils.CommonUtils.vidExs
-import com.yuroyami.syncplay.logic.managers.SharedPlaylistManager
+import com.yuroyami.syncplay.managers.SharedPlaylistManager
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCObjectVar

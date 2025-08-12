@@ -2,6 +2,10 @@ package com.yuroyami.syncplay.logic
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.MISC_PLAYER_ENGINE
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_TLS_ENABLE
+import com.yuroyami.syncplay.logic.datastore.valueSuspendingly
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
@@ -14,22 +18,22 @@ import com.yuroyami.syncplay.logic.managers.datastore.valueSuspendingly
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.instantiateNetworkEngineProtocol
 import com.yuroyami.syncplay.utils.platformCallback
-import com.yuroyami.syncplay.logic.managers.LifecycleManager
-import com.yuroyami.syncplay.logic.managers.NetworkManager
-import com.yuroyami.syncplay.logic.managers.OSDManager
-import com.yuroyami.syncplay.logic.managers.PlayerManager
-import com.yuroyami.syncplay.logic.managers.RoomActionManager
-import com.yuroyami.syncplay.logic.managers.RoomCallbackManager
-import com.yuroyami.syncplay.logic.managers.SharedPlaylistManager
-import com.yuroyami.syncplay.logic.managers.SnackManager
-import com.yuroyami.syncplay.logic.managers.UIManager
+import com.yuroyami.syncplay.managers.LifecycleManager
+import com.yuroyami.syncplay.managers.NetworkManager
+import com.yuroyami.syncplay.managers.OSDManager
+import com.yuroyami.syncplay.managers.PlayerManager
+import com.yuroyami.syncplay.managers.ProtocolManager
+import com.yuroyami.syncplay.managers.RoomActionManager
+import com.yuroyami.syncplay.managers.RoomCallbackManager
+import com.yuroyami.syncplay.managers.SessionManager
+import com.yuroyami.syncplay.managers.SharedPlaylistManager
+import com.yuroyami.syncplay.managers.SnackManager
+import com.yuroyami.syncplay.managers.UIManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 
 class SyncplayViewmodel: ViewModel() {
-
-    lateinit var p: SyncplayProtocol
 
     /************ Managers ***************/
     /** Manages and holds UI state */
@@ -40,6 +44,12 @@ class SyncplayViewmodel: ViewModel() {
 
     /** Manages the network engine and events */
     val networkManager: NetworkManager by lazy { NetworkManager(this) }
+
+    /** Manages the protocol and its  events */
+    val protocolManager: ProtocolManager by lazy { ProtocolManager(this) }
+
+    /** Manages the current session instance (which is the room session */
+    val sessionManager: SessionManager by lazy { SessionManager(this) }
 
     /** Manages callback from the protocol (e.g: When someone pauses), in other words: Receiving actions */
     val callbackManager: RoomCallbackManager by lazy { RoomCallbackManager(this) }
@@ -72,32 +82,32 @@ class SyncplayViewmodel: ViewModel() {
 
             setReadyDirectly = valueSuspendingly(DataStoreKeys.PREF_READY_FIRST_HAND, true)
 
-            val networkEngine = SyncplayProtocol.getPreferredEngine()
+            val networkEngine = networkManager.getPreferredEngine()
             p = instantiateNetworkEngineProtocol(networkEngine)
 
-            p.session.serverHost = joinConfig.ip.takeIf { it != "syncplay.pl" } ?: "151.80.32.178"
-            p.session.serverPort = joinConfig.port
-            p.session.currentUsername = joinConfig.user
-            p.session.currentRoom = joinConfig.room
-            p.session.currentPassword = joinConfig.pw
+            sessionManager.session.serverHost = joinConfig.ip.takeIf { it != "syncplay.pl" } ?: "151.80.32.178"
+            sessionManager.session.serverPort = joinConfig.port
+            sessionManager.session.currentUsername = joinConfig.user
+            sessionManager.session.currentRoom = joinConfig.room
+            sessionManager.session.currentPassword = joinConfig.pw
 
             launch(Dispatchers.Main) {
                 platformCallback.onRoomEnterOrLeave(PlatformCallback.RoomEvent.ENTER)
-                nav.navigateTo(Screen.Room)
+                uiManager.nav.navigateTo(Screen.Room)
             }
 
             val defaultEngine = availablePlatformPlayerEngines.first { it.isDefault }.name //TODO
             val engine = availablePlatformPlayerEngines.first { it.name == valueSuspendingly(MISC_PLAYER_ENGINE, defaultEngine) }
-            player = engine.instantiate(this@SyncplayViewmodel)
+            playerManager.player = engine.instantiate(this@SyncplayViewmodel)
 
             /** Connecting (via TLS or noTLS) */
             val tls = valueSuspendingly(PREF_TLS_ENABLE, default = true)
-            if (tls && p.supportsTLS()) {
-                onTLSCheck()
-                p.tls = Constants.TLS.TLS_ASK
+            if (tls && networkManager.supportsTLS()) {
+                callbackManager.onTLSCheck()
+                networkManager.tls = Constants.TLS.TLS_ASK
             }
 
-            p.connect()
+            networkManager.connect()
         }
     }
 
@@ -137,7 +147,6 @@ class SyncplayViewmodel: ViewModel() {
     /** Tells us whether we're in solo mode to deactivate some online components */
     val isSoloMode: Boolean
         get() = uiManager.nav.currentBackStackEntry?.destination?.route == Screen.SoloMode.label
-
 
     /** End of viewmodel */
     override fun onCleared() {

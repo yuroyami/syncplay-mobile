@@ -6,7 +6,7 @@ import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
-import com.yuroyami.syncplay.logic.managers.SharedPlaylistManager
+import com.yuroyami.syncplay.managers.SharedPlaylistManager
 import kotlinx.coroutines.launch
 
 
