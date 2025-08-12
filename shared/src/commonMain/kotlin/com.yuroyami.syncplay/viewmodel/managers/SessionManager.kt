@@ -1,7 +1,12 @@
-package com.yuroyami.syncplay.models
+package com.yuroyami.syncplay.viewmodel.managers
 
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import com.yuroyami.syncplay.models.Message
+import com.yuroyami.syncplay.models.User
+import com.yuroyami.syncplay.viewmodel.AbstractManager
+import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /*************************************************************************************************
@@ -15,8 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * a room) then the session is overwritten and the protocol relaunches.
  ************************************************************************************************/
 
-class Session {
-
+class SessionManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmodel) {
     /** Variables related to joining info */
     var serverHost: String = "151.80.32.178"
     var serverPort: Int = 8997
@@ -25,21 +29,26 @@ class Session {
     var currentPassword: String = ""
 
     /** Variable that stores all users that exist within the room */
-    var userList = MutableStateFlow(listOf<User>())
+    val userList = MutableStateFlow(listOf<User>())
 
     /** Variable that stores all messages that have been sent/received */
-    var messageSequence = mutableStateListOf<Message>()
+    val messageSequence = mutableStateListOf<Message>()
 
     /** Outbound messages queue (When the connection is lost):
      *   This basically works like a waiting queue that stacks outgoing messages (JSONs)
      *   during disconnections, then it will be iterated-through and then cleared. */
-    var outboundQueue = mutableListOf<String>()
+    val outboundQueue = mutableListOf<String>()
 
     /** Variable that stores the shared playlist for the session */
-    var sharedPlaylist = mutableStateListOf<String>() /* List of files */
-    var spIndex = mutableIntStateOf(-1) /* Index of the currently playing file for the session */
+    val sharedPlaylist = mutableStateListOf<String>() /* List of files */
+    val spIndex = mutableIntStateOf(-1) /* Index of the currently playing file for the session */
 
-//    /** A list of media directories to look for shared playlist file names */
-//    var mediaDirectories = mutableListOf<String>()
+    val ready = mutableStateOf(viewmodel.setReadyDirectly)
 
+    val ping = MutableStateFlow<Int?>(null)
+
+    //TODO
+    fun invalidate() {
+
+    }
 }

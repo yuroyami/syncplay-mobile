@@ -1,7 +1,6 @@
 package com.yuroyami.syncplay.models
 
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import com.yuroyami.syncplay.player.BasePlayer
 
 /*****************************************************************************************
@@ -18,4 +17,5 @@ interface Track {
     val index: Int
 
     /** The current status of the track **/
-    val selected: MutableState<Boolean> }
+    val selected: MutableState<Boolean>
+}
