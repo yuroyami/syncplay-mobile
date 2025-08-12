@@ -151,11 +151,7 @@ kotlin {
             implementation(libs.libvlc.android)
 
             /* Jetpack Home shortcut manager for quick launch with backward compatibility */
-            implementation("androidx.core:core-google-shortcuts:1.2.0-alpha01") {
-                exclude(group = "com.google.crypto.tink", module = "tink-android")
-                exclude(group = "com.google.android.gms")
-            }
-
+            implementation(libs.google.shortcuts)
         }
 
         iosMain.dependencies {
@@ -289,6 +285,14 @@ android {
         // Disables dependency metadata when building APKs & Android App Bundles.
         includeInApk = false
         includeInBundle = false
+    }
+
+    // This block strips out odd, unused artifacts that the google-shortcuts library brings along,
+    // none of which are needed for its main features.
+    //This will remove them also from any other library that might use them
+    configurations.all {
+        exclude(group = "com.google.crypto.tink", module = "tink-android")
+        exclude(group = "com.google.android.gms")
     }
 }
 

@@ -63,6 +63,8 @@ import java.io.IOException
 import java.util.Collections
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPlayerEngine.Exoplayer) {
     lateinit var audioManager: AudioManager
@@ -78,6 +80,8 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
 
     override val supportsChapters: Boolean
         get() = false
+
+    override val trackerJobInterval: Duration = 500.milliseconds
 
     override fun initialize() {
         val context = exoView.context
@@ -187,7 +191,7 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
 
                             //Tell server about playback state change
                             if (!viewmodel.isSoloMode) {
-                                viewmodel.sendPlayback(isPlaying)
+                                viewmodel.actionManager.sendPlayback(isPlaying)
                             }
 
                             if (exoplayer!!.playbackState == ExoPlayer.STATE_ENDED) {
@@ -216,7 +220,7 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                 }
             })
 
-            viewmodel.trackProgress(intervalMillis = 500L)
+            startTrackingProgress()
         }
     }
 
@@ -374,15 +378,15 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                 injectVideo(uri)
 
 
-                viewmodel.dispatchOSD {
+                viewmodel.osdManager.dispatchOSD {
                     getString(Res.string.room_selected_sub, filename)
                 }
             } else {
-                viewmodel.dispatchOSD {
+                viewmodel.osdManager.dispatchOSD {
                     getString(Res.string.room_selected_sub_error)
                 }            }
         } else {
-            viewmodel.dispatchOSD {
+            viewmodel.osdManager.dispatchOSD {
                 getString(Res.string.room_sub_error_load_vid_first)
             }
         }
@@ -433,11 +437,11 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
             } catch (e: IOException) {
                 /* If, for some reason, the video didn't wanna load */
                 e.printStackTrace()
-                viewmodel.dispatchOSD {"There was a problem loading this file." }
+                viewmodel.osdManager.dispatchOSD {"There was a problem loading this file." }
             }
 
             /* Finally, show a a toast to the user that the media file has been added */
-            viewmodel.dispatchOSD {
+            viewmodel.osdManager.dispatchOSD {
                 getString(Res.string.room_selected_vid,"${viewmodel.media?.fileName}")
             }
         }

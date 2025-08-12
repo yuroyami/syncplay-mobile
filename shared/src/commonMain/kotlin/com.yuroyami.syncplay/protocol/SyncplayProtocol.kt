@@ -29,9 +29,6 @@ import kotlin.reflect.KClass
 abstract class SyncplayProtocol(
     val viewmodel: SyncplayViewmodel
 ) {
-    /** This refers to the event callback interface */
-    var syncplayCallback = viewmodel
-
     /** Protocol-exclusive variables - should never change these initial values **/
     var serverIgnFly: Int = 0
     var clientIgnFly: Int = 0
@@ -60,7 +57,7 @@ abstract class SyncplayProtocol(
         endConnection(false)
 
         /** Informing UI controllers that we are starting a connection attempt */
-        syncplayCallback.onConnectionAttempt()
+        viewmodel..onConnectionAttempt()
         state = Constants.CONNECTIONSTATE.STATE_CONNECTING
 
         /** Bootstrapping our Ktor client  */

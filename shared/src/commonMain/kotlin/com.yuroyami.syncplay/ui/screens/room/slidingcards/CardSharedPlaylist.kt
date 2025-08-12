@@ -68,14 +68,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
-import com.yuroyami.syncplay.ui.utils.FancyIcon2
-import com.yuroyami.syncplay.ui.utils.FancyText2
-import com.yuroyami.syncplay.ui.utils.SyncplayPopup
-import com.yuroyami.syncplay.ui.utils.gradientOverlay
-import com.yuroyami.syncplay.ui.utils.getRegularFont
 import com.yuroyami.syncplay.ui.popups.PopupMediaDirs.MediaDirsPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Paletting
+import com.yuroyami.syncplay.ui.utils.FancyIcon2
+import com.yuroyami.syncplay.ui.utils.FancyText2
+import com.yuroyami.syncplay.ui.utils.SyncplayPopup
+import com.yuroyami.syncplay.ui.utils.getRegularFont
+import com.yuroyami.syncplay.ui.utils.gradientOverlay
 import com.yuroyami.syncplay.utils.CommonUtils
 import com.yuroyami.syncplay.utils.CommonUtils.vidExs
 import com.yuroyami.syncplay.utils.addFolderToPlaylist
@@ -455,7 +455,7 @@ object CardSharedPlaylist {
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
                                     if (viewmodel.p.session.sharedPlaylist.isEmpty()) {
-                                        viewmodel.dispatchOSD { "Shared Playlist is empty. Nothing to save." }
+                                        viewmodel.osdManager.dispatchOSD { "Shared Playlist is empty. Nothing to save." }
                                         return@DropdownMenuItem
                                     }
 

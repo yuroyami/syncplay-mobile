@@ -131,7 +131,7 @@ fun ChatTextField(
                 }
             } else {
                 IconButton(onClick = {
-                    viewmodel.dispatchOSD { "GIF Feature is coming soon!" }
+                    viewmodel.osdManager.dispatchOSD { "GIF Feature is coming soon!" }
                 }) {
                     Icon(
                         imageVector = Icons.Outlined.GifBox,

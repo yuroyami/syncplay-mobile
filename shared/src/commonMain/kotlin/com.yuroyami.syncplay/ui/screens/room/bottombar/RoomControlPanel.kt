@@ -108,7 +108,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
             composeScope.launch(Dispatchers.IO) {
                 val newAspectRatio = viewmodel.player?.switchAspectRatio()
                 if (newAspectRatio != null) {
-                    viewmodel.dispatchOSD { newAspectRatio }
+                    viewmodel.osdManager.dispatchOSD { newAspectRatio }
                 }
             }
         }
@@ -124,7 +124,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
         ) {
             composeScope.launch(Dispatchers.IO) {
                 writeValue(MISC_GESTURES, !gesturesEnabled)
-                viewmodel.dispatchOSD { if (gesturesEnabled) "Gestures enabled" else "Gestures disabled" } //TODO Localize
+                viewmodel.osdManager.dispatchOSD { if (gesturesEnabled) "Gestures enabled" else "Gestures disabled" } //TODO Localize
             }
         }
 
@@ -145,7 +145,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
             shadowColor = Color.Black
         ) {
             if (viewmodel.seeks.isEmpty()) {
-                viewmodel.dispatchOSD { "There is no recent seek in the room." }
+                viewmodel.osdManager.dispatchOSD { "There is no recent seek in the room." }
                 return@FancyIcon2
             }
 
@@ -155,7 +155,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
             viewmodel.player?.seekTo(lastSeek.first)
             viewmodel.sendSeek(lastSeek.first)
             viewmodel.seeks.remove(lastSeek)
-            viewmodel.dispatchOSD { "Seek undone." }
+            viewmodel.osdManager.dispatchOSD { "Seek undone." }
         }
 
         /* Subtitle Tracks */

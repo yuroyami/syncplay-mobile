@@ -211,7 +211,7 @@ object PopupSeekToPosition {
                             }
 
                             //TODO: Localize
-                            viewmodel.dispatchOSD { "Skipping  of time" }
+                            viewmodel.osdManager.dispatchOSD { "Skipping  of time" }
                         }
                     },
                 ) {
@@ -250,7 +250,7 @@ object PopupSeekToPosition {
                             viewmodel.player?.seekTo(result)
 
                             //TODO: Localize
-                            viewmodel.dispatchOSD { "Seeking to ${timeStamper(result)}" }
+                            viewmodel.osdManager.dispatchOSD { "Seeking to ${timeStamper(result)}" }
                         }
 
                     },

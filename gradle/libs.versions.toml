@@ -1,4 +1,5 @@
-[versions] ####################################################### KMM
+[versions] #####################################################
+#KMM
 kotlin = "2.2.0"
 agp = "8.12.0"
 kermit = "2.0.6"
@@ -16,9 +17,9 @@ filekit = "0.10.0"
 kolorpicker = "1.0.0"
 skie = "0.10.5"
 uriKmp = "0.0.20"
-compose-unstyled = "1.39.0"
+compose-unstyled = "1.40.0"
 
-###################### Android-only
+#Android
 coreSplashscreen = "1.1.0-rc01"
 activityCompose = "1.12.0-alpha05"
 documentfile = "1.1.0"
@@ -31,11 +32,11 @@ netty = "4.1.121.Final" #"4.2.1" requires API 26
 conscrypt = "2.5.3"
 libvlc-android = "4.0.0-eap20"
 
-###################### iOS-only
+#iOS
 libvlc-ios = "3.6.1b1"
 
 [libraries] #######################################################################################
-## KMM
+#KMM
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 kotlin-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "koroutines" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "datetime" }
@@ -54,7 +55,7 @@ kolorpicker = { module = "com.kborowy:kolor-picker", version.ref = "kolorpicker"
 uriKmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
 compose-unstyled = { module = "com.composables:core", version.ref = "compose-unstyled"}
 
-## Android-only
+#Android
 kotlin-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "koroutines" }
 jetpack-core = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 jetpack-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
@@ -75,7 +76,6 @@ m3-datasource = { module = "androidx.media3:media3-datasource", version.ref = "m
 m3-common = { module = "androidx.media3:media3-common", version.ref = "media3" }
 netty = { module = "io.netty:netty-all", version.ref = "netty" }
 conscrypt = { module = "org.conscrypt:conscrypt-android", version.ref = "conscrypt" }
-#noinspection Aligned16KB
 libvlc-android = { module = "org.videolan.android:libvlc-all", version.ref = "libvlc-android" }
 google-shortcuts = { module = "androidx.core:core-google-shortcuts", version.ref = "shortcuts" }
 

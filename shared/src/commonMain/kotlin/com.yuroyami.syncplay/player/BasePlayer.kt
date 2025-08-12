@@ -14,6 +14,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlin.time.Duration
 
 /** This is an interface that wraps the needed player functionality for Syncplay.
  *
@@ -84,7 +88,7 @@ abstract class BasePlayer(
 
     @CallSuper
     open fun seekTo(toPositionMs: Long) {
-        if (viewmodel.background) return
+        if (viewmodel.lifecycleManager.isInBackground) return
     }
 
     abstract fun currentPositionMs(): Long
@@ -109,7 +113,7 @@ abstract class BasePlayer(
             val playlistSize = viewmodel?.p?.session?.sharedPlaylist?.size ?: return
 
             val next = if (playlistSize == currentIndex + 1) 0 else currentIndex + 1
-            viewmodel.sendPlaylistSelection(next)
+            viewmodel.playlistManager.sendPlaylistSelection(next)
 
         }
     }
@@ -129,4 +133,26 @@ abstract class BasePlayer(
             fileSizeHashed = sha256(fileSize).toHexString(HexFormat.UpperCase)
         }
     }
+
+    abstract val trackerJobInterval: Duration
+    private val playerTrackerJob by lazy {
+        playerScopeMain.launch {
+            while (isActive) {
+                if (isSeekable()) {
+                    val pos = currentPositionMs()
+                    viewmodel.timeCurrentMs.value = pos
+                    if (!viewmodel.isSoloMode) {
+                        viewmodel.p.globalPositionMs = pos.toDouble()
+                    }
+                }
+                delay(trackerJobInterval)
+            }
+        }
+    }
+
+    fun startTrackingProgress() {
+        // Accessing playerTrackerJob here will start it if it hasn't started yet
+        playerTrackerJob
+    }
+
 }

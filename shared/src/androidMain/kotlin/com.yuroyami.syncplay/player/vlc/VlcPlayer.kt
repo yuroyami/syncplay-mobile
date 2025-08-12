@@ -36,6 +36,8 @@ import syncplaymobile.shared.generated.resources.room_selected_vid
 import syncplaymobile.shared.generated.resources.room_sub_error_load_vid_first
 import java.io.IOException
 import kotlin.math.abs
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPlayerEngine.VLC) {
     lateinit var audioManager: AudioManager
@@ -54,6 +56,8 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
     override val supportsChapters: Boolean
         get() = true
 
+    override val trackerJobInterval: Duration = 250.milliseconds
+
     override fun initialize() {
         ctx = vlcView.context.applicationContext
         audioManager = ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -63,7 +67,7 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
         vlcPlayer?.attachViews(vlcView, null, true, false)
 
         vlcAttachObserver()
-        viewmodel.trackProgress(intervalMillis = 250L)
+        startTrackingProgress()
     }
 
     override fun destroy() {
@@ -232,15 +236,15 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                     IMedia.Slave.Type.Subtitle, uri, true
                 ) //todo: catch error
 
-                viewmodel.dispatchOSD {
+                viewmodel.osdManager.dispatchOSD {
                     getString(Res.string.room_selected_sub, filename)
                 }
             } else {
-                viewmodel.dispatchOSD {
+                viewmodel.osdManager.dispatchOSD {
                     getString(Res.string.room_selected_sub_error)
                 }            }
         } else {
-            viewmodel.dispatchOSD {
+            viewmodel.osdManager.dispatchOSD {
                 getString(Res.string.room_sub_error_load_vid_first)
             }
         }
@@ -281,11 +285,11 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
             } catch (e: IOException) {
                 /* If, for some reason, the video didn't wanna load */
                 e.printStackTrace()
-                viewmodel.dispatchOSD { "There was a problem loading this file." }
+                viewmodel.osdManager.dispatchOSD { "There was a problem loading this file." }
             }
 
             /* Finally, show a a toast to the user that the media file has been added */
-            viewmodel.dispatchOSD {
+            viewmodel.osdManager.dispatchOSD {
                 getString(Res.string.room_selected_vid,"${viewmodel.media?.fileName}")
             }
         }
@@ -348,7 +352,7 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
 
                         //Tell server about playback state change
                         if (!viewmodel.isSoloMode) {
-                            viewmodel.sendPlayback(true)
+                            viewmodel.actionManager.sendPlayback(true)
                         }
                     }
                 }
@@ -359,7 +363,7 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
 
                         //Tell server about playback state change
                         if (!viewmodel.isSoloMode) {
-                            viewmodel.sendPlayback(false)
+                            viewmodel.actionManager.sendPlayback(false)
                         }
                     }
                 }

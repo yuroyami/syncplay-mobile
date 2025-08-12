@@ -43,6 +43,8 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import kotlin.math.roundToLong
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPlayerEngine.Mpv) {
     lateinit var audioManager: AudioManager
@@ -58,6 +60,8 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
 
     override val supportsChapters: Boolean
         get() = true
+
+    override val trackerJobInterval: Duration = 500.milliseconds
 
     override fun initialize() {
         ctx = mpvView.context.applicationContext
@@ -235,16 +239,16 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                 ctx.resolveUri(uri.toUri())?.let {
                     MPVLib.command(arrayOf("sub-add" as java.lang.String, it as java.lang.String, "cached" as java.lang.String))
                 }
-                viewmodel.dispatchOSD {
+                viewmodel.osdManager.dispatchOSD {
                     getString(Res.string.room_selected_sub, filename)
                 }
             } else {
-                viewmodel.dispatchOSD {
+                viewmodel.osdManager.dispatchOSD {
                     getString(Res.string.room_selected_sub_error)
                 }
             }
         } else {
-            viewmodel.dispatchOSD {
+            viewmodel.osdManager.dispatchOSD {
                 getString(Res.string.room_sub_error_load_vid_first)
             }
         }
@@ -300,11 +304,11 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
             } catch (e: IOException) {
                 /* If, for some reason, the video didn't wanna load */
                 e.printStackTrace()
-                viewmodel.dispatchOSD { "There was a problem loading this file." }
+                viewmodel.osdManager.dispatchOSD { "There was a problem loading this file." }
             }
 
             /* Finally, show a a toast to the user that the media file has been added */
-            viewmodel.dispatchOSD {
+            viewmodel.osdManager.dispatchOSD {
                 getString(Res.string.room_selected_vid, "${viewmodel.media?.fileName}")
             }
         }
@@ -416,7 +420,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
 
                         //Tell server about playback state change
                         if (!viewmodel.isSoloMode) {
-                            viewmodel.sendPlayback(!value)
+                            viewmodel.actionManager.sendPlayback(!value)
                         }
                     }
                 }
@@ -458,7 +462,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
         }
         mpvView.addObserver(observer)
 
-        viewmodel.trackProgress(intervalMillis = 500L)
+        startTrackingProgress()
     }
 
     //TODO

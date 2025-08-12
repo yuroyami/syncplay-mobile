@@ -101,7 +101,7 @@ fun HomeScreenUI() {
 
     /* Using a Scaffold manages our top-level layout */
     Scaffold(
-        snackbarHost = { SnackbarHost(viewmodel.snack) },
+        snackbarHost = { SnackbarHost(viewmodel.snackManager.snack) },
         topBar = {
             HomeTopBar()
         },
@@ -308,7 +308,7 @@ fun HomeScreenUI() {
                                     if (engine.isAvailable) {
                                         writeValue(MISC_PLAYER_ENGINE, engine.name)
                                     } else {
-                                        viewmodel.snackIt("This engine is unavailable. Did you download the right APK?") //TODO Localize
+                                        viewmodel.snackManager.snackIt("This engine is unavailable. Did you download the right APK?") //TODO Localize
                                     }
                                 }
                             }
@@ -333,7 +333,7 @@ fun HomeScreenUI() {
                                         }
 
                                         if (errorMessage != null) {
-                                            viewmodel.snackIt(getString(errorMessage))
+                                            viewmodel.snackManager.snackIt(getString(errorMessage))
                                             return@launch
                                         }
 
