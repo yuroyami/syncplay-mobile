@@ -15,11 +15,11 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.yuroyami.syncplay.player.AndroidPlayerEngine
-import com.yuroyami.syncplay.player.PlayerEngine
+import com.yuroyami.syncplay.logic.managers.player.PlayerEngine
 import com.yuroyami.syncplay.protocol.SpProtocolAndroid
-import com.yuroyami.syncplay.protocol.SpProtocolKtor
+import com.yuroyami.syncplay.logic.managers.network.SpProtocolKtor
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
-import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader

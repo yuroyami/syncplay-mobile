@@ -42,10 +42,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.player.BasePlayer.TRACKTYPE
-import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_GESTURES
-import com.yuroyami.syncplay.settings.valueFlow
-import com.yuroyami.syncplay.settings.writeValue
+import com.yuroyami.syncplay.logic.managers.player.BasePlayer.TRACKTYPE
+import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys.MISC_GESTURES
+import com.yuroyami.syncplay.logic.managers.datastore.valueFlow
+import com.yuroyami.syncplay.logic.managers.datastore.writeValue
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Paletting

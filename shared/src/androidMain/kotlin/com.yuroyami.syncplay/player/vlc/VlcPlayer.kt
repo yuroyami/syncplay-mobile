@@ -15,11 +15,11 @@ import com.yuroyami.syncplay.databinding.VlcviewBinding
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.player.AndroidPlayerEngine
-import com.yuroyami.syncplay.player.BasePlayer
+import com.yuroyami.syncplay.logic.managers.player.BasePlayer
 import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.getFileName
-import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString

@@ -46,7 +46,7 @@ import com.yuroyami.syncplay.ui.utils.FancyIcon2
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.syncplayFont
 import com.yuroyami.syncplay.utils.platformCallback
-import com.yuroyami.syncplay.viewmodel.PlatformCallback
+import com.yuroyami.syncplay.logic.PlatformCallback
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res

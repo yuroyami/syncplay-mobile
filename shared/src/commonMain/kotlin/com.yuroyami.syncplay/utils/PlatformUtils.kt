@@ -2,13 +2,12 @@ package com.yuroyami.syncplay.utils
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ClipEntry
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
 import co.touchlab.kermit.Logger
-import com.yuroyami.syncplay.player.PlayerEngine
+import com.yuroyami.syncplay.logic.managers.player.PlayerEngine
 import com.yuroyami.syncplay.protocol.SyncplayProtocol
-import com.yuroyami.syncplay.viewmodel.PlatformCallback
-import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.PlatformCallback
+import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.managers.NetworkManager
 
 
 lateinit var platformCallback: PlatformCallback
@@ -34,7 +33,7 @@ fun loggy(s: Any?) {
 
 }
 
-expect fun SyncplayViewmodel.instantiateNetworkEngineProtocol(engine: SyncplayProtocol.NetworkEngine): SyncplayProtocol
+expect fun SyncplayViewmodel.instantiateNetworkEngineProtocol(engine: NetworkManager.NetworkEngine): SyncplayProtocol
 
 /** Generates the system's current Epoch millis */
 expect fun generateTimestampMillis(): Long

@@ -25,7 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.yuroyami.syncplay.player.PlayerEngine
+import com.yuroyami.syncplay.logic.managers.player.PlayerEngine
 import org.jetbrains.compose.resources.painterResource
 
 @Composable

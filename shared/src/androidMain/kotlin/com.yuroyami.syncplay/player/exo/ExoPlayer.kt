@@ -38,13 +38,13 @@ import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.AndroidPlayerEngine
-import com.yuroyami.syncplay.player.BasePlayer
-import com.yuroyami.syncplay.player.PlayerOptions
+import com.yuroyami.syncplay.logic.managers.player.BasePlayer
+import com.yuroyami.syncplay.logic.managers.player.PlayerOptions
 import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
-import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

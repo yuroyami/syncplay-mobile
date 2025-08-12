@@ -25,10 +25,10 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import com.yuroyami.syncplay.models.JoinConfig
-import com.yuroyami.syncplay.settings.DataStoreKeys
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_INROOM_PLAYER_SUBTITLE_SIZE
-import com.yuroyami.syncplay.settings.valueBlockingly
-import com.yuroyami.syncplay.settings.valueSuspendingly
+import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys
+import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys.PREF_INROOM_PLAYER_SUBTITLE_SIZE
+import com.yuroyami.syncplay.logic.managers.datastore.valueBlockingly
+import com.yuroyami.syncplay.logic.managers.datastore.valueSuspendingly
 import com.yuroyami.syncplay.ui.screens.adam.AdamScreen
 import com.yuroyami.syncplay.utils.bindWatchdog
 import com.yuroyami.syncplay.utils.changeLanguage
@@ -37,8 +37,8 @@ import com.yuroyami.syncplay.utils.hideSystemUI
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.utils.showSystemUI
-import com.yuroyami.syncplay.viewmodel.PlatformCallback
-import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.PlatformCallback
+import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 

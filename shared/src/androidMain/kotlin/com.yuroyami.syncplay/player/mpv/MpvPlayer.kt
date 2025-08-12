@@ -19,14 +19,14 @@ import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.player.AndroidPlayerEngine
-import com.yuroyami.syncplay.player.BasePlayer
+import com.yuroyami.syncplay.logic.managers.player.BasePlayer
 import com.yuroyami.syncplay.protocol.sending.Packet
-import com.yuroyami.syncplay.settings.ExtraSettingBundle
+import com.yuroyami.syncplay.logic.managers.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timeStamper
-import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import `is`.xyz.mpv.MPVLib
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

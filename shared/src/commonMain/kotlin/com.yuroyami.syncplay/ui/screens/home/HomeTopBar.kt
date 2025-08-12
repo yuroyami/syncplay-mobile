@@ -56,10 +56,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.settings.DataStoreKeys.PREF_SP_MEDIA_DIRS
-import com.yuroyami.syncplay.settings.SETTINGS_GLOBAL
-import com.yuroyami.syncplay.settings.SettingsUI
-import com.yuroyami.syncplay.settings.valueFlow
+import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
+import com.yuroyami.syncplay.logic.managers.settings.SETTINGS_GLOBAL
+import com.yuroyami.syncplay.logic.managers.settings.SettingsUI
+import com.yuroyami.syncplay.logic.managers.datastore.valueFlow
 import com.yuroyami.syncplay.ui.screens.home.PopupAPropos.AProposPopup
 import com.yuroyami.syncplay.ui.theme.Paletting
 import com.yuroyami.syncplay.ui.theme.Paletting.SP_GRADIENT

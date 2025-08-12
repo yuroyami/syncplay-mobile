@@ -1,6 +1,6 @@
 package com.yuroyami.syncplay.utils
 
-import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import kotlinx.coroutines.delay
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime

@@ -1,9 +1,9 @@
 package com.yuroyami.syncplay.models
 
-import com.yuroyami.syncplay.settings.DataStoreKeys
-import com.yuroyami.syncplay.settings.valueSusQuick
-import com.yuroyami.syncplay.settings.valueSuspendingly
-import com.yuroyami.syncplay.settings.writeValue
+import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys
+import com.yuroyami.syncplay.logic.managers.datastore.valueSusQuick
+import com.yuroyami.syncplay.logic.managers.datastore.valueSuspendingly
+import com.yuroyami.syncplay.logic.managers.datastore.writeValue
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json

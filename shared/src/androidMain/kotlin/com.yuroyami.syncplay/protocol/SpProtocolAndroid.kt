@@ -1,7 +1,7 @@
 package com.yuroyami.syncplay.protocol
 
 import com.yuroyami.syncplay.utils.loggy
-import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener

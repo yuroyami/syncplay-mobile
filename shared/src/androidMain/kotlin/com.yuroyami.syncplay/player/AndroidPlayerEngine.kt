@@ -4,7 +4,9 @@ import com.yuroyami.syncplay.BuildConfig
 import com.yuroyami.syncplay.player.exo.ExoPlayer
 import com.yuroyami.syncplay.player.mpv.MpvPlayer
 import com.yuroyami.syncplay.player.vlc.VlcPlayer
-import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.managers.player.BasePlayer
+import com.yuroyami.syncplay.logic.managers.player.PlayerEngine
 import org.jetbrains.compose.resources.DrawableResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.exoplayer

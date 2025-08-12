@@ -23,8 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.ui.screens.adam.LocalChatPalette
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.settings.DataStoreKeys
-import com.yuroyami.syncplay.settings.valueAsState
+import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys
+import com.yuroyami.syncplay.logic.managers.datastore.valueAsState
 import kotlinx.coroutines.delay
 
 

@@ -51,9 +51,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.models.JoinConfig
-import com.yuroyami.syncplay.settings.DataStoreKeys.MISC_PLAYER_ENGINE
-import com.yuroyami.syncplay.settings.valueFlow
-import com.yuroyami.syncplay.settings.writeValue
+import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys.MISC_PLAYER_ENGINE
+import com.yuroyami.syncplay.logic.managers.datastore.valueFlow
+import com.yuroyami.syncplay.logic.managers.datastore.writeValue
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.utils.FlexibleFancyText
 import com.yuroyami.syncplay.utils.CommonUtils.substringSafely

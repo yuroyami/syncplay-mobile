@@ -3,7 +3,7 @@ package com.yuroyami.syncplay.utils
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.utils.CommonUtils.vidExs
-import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.managers.SharedPlaylistManager
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCObjectVar
@@ -31,7 +31,7 @@ import platform.Foundation.stringWithString
 import platform.Foundation.writeToURL
 
 @OptIn(BetaInteropApi::class)
-actual suspend fun SyncplayViewmodel.addFolderToPlaylist(uri: String) {
+actual suspend fun SharedPlaylistManager.addFolderToPlaylist(uri: String) {
     /* First, we save it in our media directories as a common directory */
     saveFolderPathAsMediaDirectory(uri)
 
@@ -153,7 +153,7 @@ actual fun iterateDirectory(uri: String, target: String, onFileFound: (String) -
 }
 
 
-actual fun SyncplayViewmodel.savePlaylistLocally(toFolderUri: String) {
+actual fun SharedPlaylistManager.savePlaylistLocally(toFolderUri: String) {
     val destFolder = NSURL.URLWithString(toFolderUri) ?: return
     val destFile = destFolder.URLByAppendingPathComponent("SharedPlaylist_${generateTimestampMillis()}.txt")
         ?: return
@@ -183,7 +183,7 @@ actual fun SyncplayViewmodel.savePlaylistLocally(toFolderUri: String) {
     }
 }
 
-actual fun SyncplayViewmodel.loadPlaylistLocally(fromUri: String, alsoShuffle: Boolean) {
+actual fun SharedPlaylistManager.loadPlaylistLocally(fromUri: String, alsoShuffle: Boolean) {
     val url = NSURL.fileURLWithPath(fromUri, isDirectory = false)
     val access = url.startAccessingSecurityScopedResource()
     val content = NSString.stringWithContentsOfURL(url, NSUTF8StringEncoding, null) ?: return

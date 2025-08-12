@@ -5,11 +5,12 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.protocol.sending.Packet
-import com.yuroyami.syncplay.viewmodel.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.managers.SharedPlaylistManager
 import kotlinx.coroutines.launch
 
 
-actual suspend fun SyncplayViewmodel.addFolderToPlaylist(uri: String) {
+actual suspend fun SharedPlaylistManager.addFolderToPlaylist(uri: String) {
     /* First, we save it in our media directories as a common directory */
     saveFolderPathAsMediaDirectory(uri)
 
@@ -40,7 +41,7 @@ actual suspend fun SyncplayViewmodel.addFolderToPlaylist(uri: String) {
     }.await()
 }
 
-fun SyncplayViewmodel.iterateDirectory(dir: DocumentFile, onFileDetected: (String) -> Unit) {
+fun SharedPlaylistManager.iterateDirectory(dir: DocumentFile, onFileDetected: (String) -> Unit) {
     val files = dir.listFiles()
 
     for (file in files) {
@@ -90,7 +91,7 @@ actual fun iterateDirectory(uri: String, target: String, onFileFound: (String) -
 }
 
 
-actual fun SyncplayViewmodel.savePlaylistLocally(toFolderUri: String) {
+actual fun SharedPlaylistManager.savePlaylistLocally(toFolderUri: String) {
     val context = contextObtainer.obtainAppContext()
     val folder = DocumentFile.fromTreeUri(context, toFolderUri.toUri())
     val txt = folder?.createFile("text/plain", "SharedPlaylist_${System.currentTimeMillis()}.txt")

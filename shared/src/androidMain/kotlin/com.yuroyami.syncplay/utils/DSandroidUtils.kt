@@ -3,7 +3,7 @@ package com.yuroyami.syncplay.utils
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import com.yuroyami.syncplay.settings.createDataStore
+import com.yuroyami.syncplay.logic.managers.datastore.createDataStore
 
 fun dataStore(context: Context, fileName: String): DataStore<Preferences> =
     createDataStore(
