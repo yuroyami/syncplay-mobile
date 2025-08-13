@@ -1,10 +1,10 @@
 package com.yuroyami.syncplay.logic.player
 
 import com.yuroyami.syncplay.BuildConfig
+import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import com.yuroyami.syncplay.logic.player.exo.ExoPlayer
 import com.yuroyami.syncplay.logic.player.mpv.MpvPlayer
 import com.yuroyami.syncplay.logic.player.vlc.VlcPlayer
-import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import org.jetbrains.compose.resources.DrawableResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.exoplayer
@@ -12,9 +12,9 @@ import syncplaymobile.shared.generated.resources.mpv
 import syncplaymobile.shared.generated.resources.vlc
 
 @Suppress("KotlinConstantConditions")
-sealed class AndroidPlayerEngine: PlayerEngine {
+sealed interface AndroidPlayerEngine: PlayerEngine {
 
-    object Exoplayer: AndroidPlayerEngine() {
+    object Exoplayer: AndroidPlayerEngine {
         override val isAvailable: Boolean = true
         override val isDefault: Boolean = BuildConfig.FLAVOR == "noLibs"
         override val name: String = "Exoplayer"
@@ -23,7 +23,7 @@ sealed class AndroidPlayerEngine: PlayerEngine {
         override fun instantiate(viewmodel: SyncplayViewmodel): BasePlayer = ExoPlayer(viewmodel)
     }
 
-    object Mpv: AndroidPlayerEngine() {
+    object Mpv: AndroidPlayerEngine {
         override val isAvailable: Boolean = BuildConfig.FLAVOR == "withLibs"
         override val isDefault: Boolean = BuildConfig.FLAVOR == "withLibs"
         override val name: String = "mpv"
@@ -32,7 +32,7 @@ sealed class AndroidPlayerEngine: PlayerEngine {
         override fun instantiate(viewmodel: SyncplayViewmodel): BasePlayer = MpvPlayer(viewmodel)
     }
 
-    object VLC: AndroidPlayerEngine() {
+    object VLC: AndroidPlayerEngine {
         override val isAvailable: Boolean = BuildConfig.FLAVOR == "withLibs"
         override val isDefault: Boolean = false
         override val name: String=  "VLC"

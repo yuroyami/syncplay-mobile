@@ -12,14 +12,14 @@ import androidx.core.net.toUri
 import androidx.media3.common.C.STREAM_TYPE_MUSIC
 import androidx.media3.common.MimeTypes
 import com.yuroyami.syncplay.databinding.VlcviewBinding
+import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.player.AndroidPlayerEngine
+import com.yuroyami.syncplay.logic.player.BasePlayer
+import com.yuroyami.syncplay.logic.protocol.PacketCreator
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
-import com.yuroyami.syncplay.logic.player.AndroidPlayerEngine
-import com.yuroyami.syncplay.logic.managers.player.BasePlayer
-import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.getFileName
-import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
@@ -156,7 +156,7 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                     vlcPlayer?.unselectTrackType(Track.Type.Text)
                 }
 
-                viewmodel.currentTrackChoices.subtitleSelectionIdVlc = vlcTrack?.id ?: "-1"
+                viewmodel.playerManager.currentTrackChoices.subtitleSelectionIdVlc = vlcTrack?.id ?: "-1"
             }
 
             TRACKTYPE.AUDIO -> {
@@ -166,7 +166,7 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                     vlcPlayer?.unselectTrackType(Track.Type.Audio)
                 }
 
-                viewmodel.currentTrackChoices.audioSelectionIdVlc = vlcTrack?.id ?: "-1"
+                viewmodel.playerManager.currentTrackChoices.audioSelectionIdVlc = vlcTrack?.id ?: "-1"
             }
         }
     }
@@ -194,8 +194,8 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
     }
 
     override fun reapplyTrackChoices() {
-        val subId = viewmodel.currentTrackChoices.subtitleSelectionIdVlc
-        val audioId = viewmodel.currentTrackChoices.audioSelectionIdVlc
+        val subId = viewmodel.playerManager.currentTrackChoices.subtitleSelectionIdVlc
+        val audioId = viewmodel.playerManager.currentTrackChoices.audioSelectionIdVlc
 
         val ccMap = viewmodel.media?.subtitleTracks?.map { it as VlcTrack }
         val audioMap = viewmodel.media?.subtitleTracks?.map { it as VlcTrack }
@@ -252,13 +252,10 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
 
     @SuppressLint("Recycle")
     override fun injectVideo(uri: String?, isUrl: Boolean) {
-        /* Changing UI (hiding artwork, showing media controls) */
-        viewmodel.hasVideo.value = true
-
         playerScopeMain.launch {
             /* Creating a media file from the selected file */
             if (uri != null || viewmodel.media == null) {
-                viewmodel.media = MediaFile()
+                playerManager.media.value = MediaFile()
                 viewmodel.media?.uri = uri
 
                 /* Obtaining info from it (size and name) */
@@ -348,7 +345,7 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
             when (event.type) {
                 MediaPlayer.Event.Playing -> {
                     if (vlcPlayer?.hasMedia() == true) {
-                        viewmodel.isNowPlaying.value = true //Just to inform UI
+                        viewmodel.playerManager.isNowPlaying.value = true //Just to inform UI
 
                         //Tell server about playback state change
                         if (!viewmodel.isSoloMode) {
@@ -359,7 +356,7 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
 
                 MediaPlayer.Event.Paused -> {
                     if (vlcPlayer?.hasMedia() == true) {
-                        viewmodel.isNowPlaying.value = false //Just to inform UI
+                        viewmodel.playerManager.isNowPlaying.value = false //Just to inform UI
 
                         //Tell server about playback state change
                         if (!viewmodel.isSoloMode) {
@@ -378,14 +375,14 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                         /* Updating our timeFull */
                         val durationMs = vlcPlayer!!.length
 
-                        viewmodel.timeFullMs.value = abs(durationMs)
+                        viewmodel.playerManager.timeFullMillis.value = abs(durationMs)
 
                         if (viewmodel.isSoloMode) return@setEventListener
 
                         if (durationMs / 1000.0 != viewmodel.media?.fileDuration) {
                             playerScopeIO.launch launch2@{
                                 viewmodel.media?.fileDuration = durationMs / 1000.0
-                                viewmodel.p.send<Packet.File> {
+                                viewmodel.networkManager.send<PacketCreator.File> {
                                     media = viewmodel.media
                                 }.await()
                             }

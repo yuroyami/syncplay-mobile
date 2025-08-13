@@ -11,6 +11,9 @@ import com.yuroyami.syncplay.logic.player.PlayerEngine
 import com.yuroyami.syncplay.managers.NetworkManager
 
 
+/** Generates the system's current Epoch millis */
+expect fun generateTimestampMillis(): Long
+
 lateinit var platformCallback: PlatformCallback
 
 @Composable
@@ -35,9 +38,6 @@ fun loggy(s: Any?) {
 }
 
 expect fun SyncplayViewmodel.instantiateNetworkManager(engine: NetworkManager.NetworkEngine): NetworkManager
-
-/** Generates the system's current Epoch millis */
-expect fun generateTimestampMillis(): Long
 
 /** Converts seconds into a readable hh:mm:ss format */
 fun timeStamper(milliseconds: Number): String {

@@ -1,14 +1,13 @@
 package com.yuroyami.syncplay.logic.settings
 
-import com.yuroyami.syncplay.logic.managers.settings.SettingType.CheckboxSettingType
-import com.yuroyami.syncplay.logic.managers.settings.SettingType.ColorSettingType
-import com.yuroyami.syncplay.logic.managers.settings.SettingType.MultiChoicePopupSettingType
-import com.yuroyami.syncplay.logic.managers.settings.SettingType.OneClickSettingType
-import com.yuroyami.syncplay.logic.managers.settings.SettingType.PopupSettingType
-import com.yuroyami.syncplay.logic.managers.settings.SettingType.SliderSettingType
-import com.yuroyami.syncplay.logic.managers.settings.SettingType.TextFieldSettingType
-import com.yuroyami.syncplay.logic.managers.settings.SettingType.ToggleSettingType
-
+import com.yuroyami.syncplay.logic.settings.SettingType.CheckboxSettingType
+import com.yuroyami.syncplay.logic.settings.SettingType.ColorSettingType
+import com.yuroyami.syncplay.logic.settings.SettingType.MultiChoicePopupSettingType
+import com.yuroyami.syncplay.logic.settings.SettingType.OneClickSettingType
+import com.yuroyami.syncplay.logic.settings.SettingType.PopupSettingType
+import com.yuroyami.syncplay.logic.settings.SettingType.SliderSettingType
+import com.yuroyami.syncplay.logic.settings.SettingType.TextFieldSettingType
+import com.yuroyami.syncplay.logic.settings.SettingType.ToggleSettingType
 
 /** Defines the type of a setting (preference).
  * @property [OneClickSettingType]

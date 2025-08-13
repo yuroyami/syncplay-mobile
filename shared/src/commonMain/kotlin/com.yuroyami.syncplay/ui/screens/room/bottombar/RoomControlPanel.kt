@@ -42,10 +42,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.logic.managers.player.BasePlayer.TRACKTYPE
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys.MISC_GESTURES
-import com.yuroyami.syncplay.logic.managers.datastore.valueFlow
-import com.yuroyami.syncplay.logic.managers.datastore.writeValue
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.MISC_GESTURES
+import com.yuroyami.syncplay.logic.datastore.valueFlow
+import com.yuroyami.syncplay.logic.datastore.writeValue
+import com.yuroyami.syncplay.logic.player.BasePlayer
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Paletting
@@ -153,7 +153,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
 
             val lastSeek = viewmodel.seeks.lastOrNull() ?: return@FancyIcon2
             viewmodel.player?.seekTo(lastSeek.first)
-            viewmodel.sendSeek(lastSeek.first)
+            viewmodel.actionManager.sendSeek(lastSeek.first)
             viewmodel.seeks.remove(lastSeek)
             viewmodel.osdManager.dispatchOSD { "Seek undone." }
         }
@@ -168,9 +168,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                 shadowColor = Color.Black
             ) {
                 composeScope.launch {
-                    viewmodel.player?.analyzeTracks(
-                        viewmodel.media ?: return@launch
-                    )
+                    viewmodel.player?.analyzeTracks(viewmodel.media ?: return@launch)
                     tracksPopup.value = true
                 }
             }
@@ -247,7 +245,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                     }
                 }, onClick = {
                     viewmodel.player?.selectTrack(
-                        null, TRACKTYPE.SUBTITLE
+                        null, BasePlayer.TRACKTYPE.SUBTITLE
                     )
                     tracksPopup.value = false
                     cardController.controlPanel.value = false
@@ -262,7 +260,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                                 checked = track.selected.value,
                                 onCheckedChange = {
                                     viewmodel.player?.selectTrack(
-                                        track, TRACKTYPE.SUBTITLE
+                                        track, BasePlayer.TRACKTYPE.SUBTITLE
                                     )
                                     tracksPopup.value = false
                                 })
@@ -274,7 +272,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                         }
                     }, onClick = {
                         viewmodel.player?.selectTrack(
-                            track, TRACKTYPE.SUBTITLE
+                            track, BasePlayer.TRACKTYPE.SUBTITLE
                         )
 
                         tracksPopup.value = false
@@ -341,7 +339,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                                 checked = track.selected.value,
                                 onCheckedChange = {
                                     viewmodel.player?.selectTrack(
-                                        track, TRACKTYPE.AUDIO
+                                        track, BasePlayer.TRACKTYPE.AUDIO
                                     )
                                     tracksPopup.value = false
                                 })
@@ -353,7 +351,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                         }
                     }, onClick = {
                         viewmodel.player?.selectTrack(
-                            track, TRACKTYPE.AUDIO
+                            track, BasePlayer.TRACKTYPE.AUDIO
                         )
                         tracksPopup.value = false
                     })

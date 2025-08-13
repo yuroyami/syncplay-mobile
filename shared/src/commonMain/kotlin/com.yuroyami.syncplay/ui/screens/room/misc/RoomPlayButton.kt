@@ -28,7 +28,7 @@ fun RoomPlayButton(modifier: Modifier) {
     val hasVideo by viewmodel.hasVideo.collectAsState()
 
     /** PLAY BUTTON */
-    val playing = remember { viewmodel.isNowPlaying }
+    val playing = remember { viewmodel.playerManager.isNowPlaying }
     val animatedColor by animateColorAsState(
         animationSpec = tween(500),
         targetValue = if (playing.value) Paletting.SP_GRADIENT.last()
@@ -49,9 +49,9 @@ fun RoomPlayButton(modifier: Modifier) {
         ) {
             viewmodel.viewModelScope.launch(Dispatchers.Main) {
                 if (viewmodel.player?.isPlaying() == true) {
-                    viewmodel.pausePlayback()
+                    viewmodel.actionManager.pausePlayback()
                 } else {
-                    viewmodel.playPlayback()
+                    viewmodel.actionManager.playPlayback()
                 }
             }
         }

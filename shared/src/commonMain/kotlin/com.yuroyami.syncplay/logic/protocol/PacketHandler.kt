@@ -12,6 +12,8 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
 import kotlin.math.abs
 import kotlin.math.roundToLong
 import kotlin.time.Clock
@@ -139,6 +141,9 @@ data class ErrorData(
     val message: String? = null
 )
 
+@Serializable
+sealed interface SyncplayMessage
+
 
 class PacketHandler(viewmodel: SyncplayViewmodel) {
 
@@ -151,9 +156,17 @@ class PacketHandler(viewmodel: SyncplayViewmodel) {
     private val json = Json {
         ignoreUnknownKeys = true
         coerceInputValues = true
+
+        serializersModule = SerializersModule {
+            polymorphic(SyncplayMessage::class) {
+                //subclass(HelloMessage::class)
+                //subclass(SetMessage::class)
+                // ... etc
+            }
+        }
     }
 
-    suspend fun parse(viewmodel: SyncplayViewmodel, jsonString: String) {
+    suspend fun parse(jsonString: String) {
             loggy("**SERVER** $jsonString")
 
             try {

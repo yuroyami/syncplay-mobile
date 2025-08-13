@@ -1,18 +1,17 @@
 package com.yuroyami.syncplay.managers
 
-import com.yuroyami.syncplay.models.Constants
-import com.yuroyami.syncplay.logic.managers.protocol.JsonHandler
-import com.yuroyami.syncplay.utils.PLATFORM
-import com.yuroyami.syncplay.utils.loggy
-import com.yuroyami.syncplay.utils.platform
 import com.yuroyami.syncplay.logic.AbstractManager
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
 import com.yuroyami.syncplay.logic.datastore.valueBlockingly
 import com.yuroyami.syncplay.logic.datastore.valueSuspendingly
-import com.yuroyami.syncplay.logic.protocol.JsonHandler
 import com.yuroyami.syncplay.logic.protocol.PacketCreator
 import com.yuroyami.syncplay.managers.ProtocolManager.Companion.createPacketInstance
+import com.yuroyami.syncplay.managers.SessionManager.Session
+import com.yuroyami.syncplay.models.Constants
+import com.yuroyami.syncplay.utils.PLATFORM
+import com.yuroyami.syncplay.utils.loggy
+import com.yuroyami.syncplay.utils.platform
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -114,7 +113,7 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
 
     fun handlePacket(data: String) {
         networkScope.launch {
-            JsonHandler.parse(this@SyncplayProtocol, data)
+            viewmodel.protocolManager.packetHandler.parse(data)
         }
     }
 

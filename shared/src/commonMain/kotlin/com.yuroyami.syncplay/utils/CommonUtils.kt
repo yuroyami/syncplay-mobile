@@ -1,7 +1,9 @@
 package com.yuroyami.syncplay.utils
 
+import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.kotlincrypto.hash.md.MD5
@@ -13,10 +15,6 @@ import kotlin.time.Clock
  */
 object CommonUtils {
 
-    /** Generates current millisecond time */
-    val timeMillis: Long
-        get() = Clock.System.now().toEpochMilliseconds()
-
     /** Generates the current clock timestamp */
     fun generateClockstamp(): String {
         val c = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
@@ -26,9 +24,9 @@ object CommonUtils {
     private fun Int.fixDigits() = this.toString().padStart(2, '0')
 
     suspend fun SyncplayViewmodel.beginPingUpdate() {
-        while (true) {
-            p.ping.value = if (p.isSocketValid()) {
-                pingIcmp(p.session.serverHost, 32)
+        while (viewModelScope.isActive) {
+            ping.value = if (networkManager.isSocketValid()) {
+                pingIcmp(sessionManager.session.serverHost, 32)
             } else null
             delay(1000)
         }

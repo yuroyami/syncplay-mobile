@@ -21,11 +21,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys.MISC_GESTURES
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
-import com.yuroyami.syncplay.logic.managers.datastore.valueAsState
-import com.yuroyami.syncplay.logic.managers.datastore.valueFlow
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.MISC_GESTURES
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
+import com.yuroyami.syncplay.logic.datastore.valueAsState
+import com.yuroyami.syncplay.logic.datastore.valueFlow
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Paletting
 import com.yuroyami.syncplay.ui.theme.Paletting.ROOM_ICON_SIZE
@@ -53,7 +53,7 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
                 size = ROOM_ICON_SIZE + 6,
                 shadowColor = Color.Black
             ) {
-                viewmodel.seekBckwd()
+                viewmodel.actionManager.seekBckwd()
             }
 
             FancyIcon2(
@@ -61,7 +61,7 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
                 size = ROOM_ICON_SIZE + 6,
                 shadowColor = Color.Black
             ) {
-                viewmodel.seekFrwrd()
+                viewmodel.actionManager.seekFrwrd()
             }
         }
         val customSkipToFront by PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT.valueAsState(true)
@@ -85,7 +85,7 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
                         val newPos =
                             (currentMs) + (customSkipAmount * 1000L)
 
-                        viewmodel.sendSeek(newPos)
+                        viewmodel.actionManager.sendSeek(newPos)
                         viewmodel.player?.seekTo(newPos)
 
                         if (viewmodel.isSoloMode) {

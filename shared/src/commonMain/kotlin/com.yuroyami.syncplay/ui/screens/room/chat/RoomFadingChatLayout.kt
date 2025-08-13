@@ -21,10 +21,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
+import com.yuroyami.syncplay.logic.datastore.valueAsState
 import com.yuroyami.syncplay.ui.screens.adam.LocalChatPalette
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.logic.managers.datastore.valueAsState
 import kotlinx.coroutines.delay
 
 
@@ -32,8 +32,8 @@ import kotlinx.coroutines.delay
 fun FadingMessageLayout() {
     val viewmodel = LocalViewmodel.current
 
-    val isInPiPMode by viewmodel.hasEnteredPipMode.collectAsState()
-    val isHUDVisible by viewmodel.visibleHUD.collectAsState()
+    val isInPiPMode by viewmodel.uiManager.hasEnteredPipMode.collectAsState()
+    val isHUDVisible by viewmodel.uiManager.visibleHUD.collectAsState()
 
     /** The layout for the fading messages & OSD messages (when HUD is hidden, or when screen is locked) */
     val fadingTimeout = DataStoreKeys.PREF_INROOM_MSG_FADING_DURATION.valueAsState(3)
@@ -41,10 +41,10 @@ fun FadingMessageLayout() {
 
     if (!isHUDVisible) {
         var visibility by remember { mutableStateOf(false) }
-        val msgs = remember { viewmodel.p.session.messageSequence }
+        val msgs = remember { viewmodel.session.messageSequence }
         LaunchedEffect(msgs.size) {
-            if (viewmodel.p.session.messageSequence.isNotEmpty()) {
-                val lastMsg = viewmodel.p.session.messageSequence.last()
+            if (viewmodel.session.messageSequence.isNotEmpty()) {
+                val lastMsg = viewmodel.session.messageSequence.last()
 
                 if (!lastMsg.isMainUser && !lastMsg.seen) {
                     visibility = true
@@ -68,7 +68,7 @@ fun FadingMessageLayout() {
                         .fillMaxWidth(0.8f)
                         .focusable(false),
                     overflow = TextOverflow.Ellipsis,
-                    text = viewmodel.p.session.messageSequence.last().factorize(palette),
+                    text = viewmodel.session.messageSequence.last().factorize(palette),
                     lineHeight = if (isInPiPMode) 9.sp else 15.sp,
                     fontSize = if (isInPiPMode) 8.sp else 13.sp
                 )

@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.screens.adam
+package com.yuroyami.syncplay.ui.screens.adam
 
 import androidx.navigation.NavController
 

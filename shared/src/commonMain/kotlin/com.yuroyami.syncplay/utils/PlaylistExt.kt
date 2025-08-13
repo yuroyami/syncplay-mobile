@@ -2,7 +2,6 @@ package com.yuroyami.syncplay.utils
 
 import com.yuroyami.syncplay.managers.SharedPlaylistManager
 
-
 expect suspend fun SharedPlaylistManager.addFolderToPlaylist(uri: String)
 
 expect fun iterateDirectory(uri: String, target: String, onFileFound: (String) -> Unit)

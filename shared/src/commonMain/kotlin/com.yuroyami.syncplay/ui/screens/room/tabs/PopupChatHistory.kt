@@ -50,7 +50,7 @@ object PopupChatHistory {
         val viewmodel = LocalViewmodel.current
         val scope = rememberCoroutineScope()
 
-        val msgs = remember { viewmodel.p.session.messageSequence }
+        val msgs = remember { viewmodel.session.messageSequence }
         val palette = LocalChatPalette.current.copy(includeTimestamp = true) // We always show timestamp
 
         return SyncplayPopup(

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
@@ -44,19 +45,19 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_BG_OPACITY
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_BOX_ACTION
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_FONTSIZE
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_MAXCOUNT
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_SHADOW
-import com.yuroyami.syncplay.logic.managers.datastore.valueAsState
+import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_INROOM_MSG_BG_OPACITY
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_INROOM_MSG_BOX_ACTION
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_INROOM_MSG_FONTSIZE
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_INROOM_MSG_MAXCOUNT
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_INROOM_MSG_SHADOW
+import com.yuroyami.syncplay.logic.datastore.valueAsState
 import com.yuroyami.syncplay.ui.screens.adam.LocalChatPalette
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Paletting
 import com.yuroyami.syncplay.ui.utils.ChatAnnotatedText
 import com.yuroyami.syncplay.utils.CommonUtils.isEmoji
-import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_type_message
@@ -87,7 +88,7 @@ fun ChatTextField(
 
     fun send() {
         val msgToSend = msg.replace("\\", "").take(149)
-        if (msgToSend.isNotBlank()) viewmodel.sendMessage(msgToSend)
+        if (msgToSend.isNotBlank()) viewmodel.actionManager.sendMessage(msgToSend)
 
         msg = ""
         focusManager.clearFocus()
@@ -170,7 +171,7 @@ fun ChatTextField(
 fun ChatBox(modifier: Modifier = Modifier, viewmodel: SyncplayViewmodel) {
     val hasVideo by viewmodel.hasVideo.collectAsState()
 
-    val chatMessages = remember { if (!viewmodel.isSoloMode) viewmodel.p.session.messageSequence else mutableStateListOf() }
+    val chatMessages = remember { if (!viewmodel.isSoloMode) viewmodel.session.messageSequence else mutableStateListOf() }
 
     val msgBoxOpacity = PREF_INROOM_MSG_BG_OPACITY.valueAsState(0)
     val msgOutline by PREF_INROOM_MSG_OUTLINE.valueAsState(true)

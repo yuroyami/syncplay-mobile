@@ -6,6 +6,7 @@ import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.MISC_PLAYER_ENGINE
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_TLS_ENABLE
 import com.yuroyami.syncplay.logic.datastore.valueSuspendingly
+import com.yuroyami.syncplay.logic.player.BasePlayer
 import com.yuroyami.syncplay.managers.LifecycleManager
 import com.yuroyami.syncplay.managers.NetworkManager
 import com.yuroyami.syncplay.managers.OSDManager
@@ -19,13 +20,16 @@ import com.yuroyami.syncplay.managers.SnackManager
 import com.yuroyami.syncplay.managers.UIManager
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.JoinConfig
-import com.yuroyami.syncplay.screens.adam.Screen
-import com.yuroyami.syncplay.screens.adam.Screen.Companion.navigateTo
+import com.yuroyami.syncplay.models.MediaFile
+import com.yuroyami.syncplay.ui.screens.adam.Screen
+import com.yuroyami.syncplay.ui.screens.adam.Screen.Companion.navigateTo
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.instantiateNetworkManager
 import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class SyncplayViewmodel: ViewModel() {
@@ -63,6 +67,9 @@ class SyncplayViewmodel: ViewModel() {
 
     /** Displays snack messages in home screen */
     val snackManager: SnackManager by lazy { SnackManager(this) }
+
+    /*** Other */
+    val ping = MutableStateFlow<Int?>(null)
 
     var setReadyDirectly = false
 
@@ -138,6 +145,19 @@ class SyncplayViewmodel: ViewModel() {
     /** Tells us whether we're in solo mode to deactivate some online components */
     val isSoloMode: Boolean
         get() = uiManager.nav.currentBackStackEntry?.destination?.route == Screen.SoloMode.label
+
+    /** Extension property to quickly access some managers' properties */
+    val player: BasePlayer?
+        get() = playerManager.player
+
+    val session: SessionManager.Session
+        get() = sessionManager.session
+
+    val media: MediaFile?
+        get() = playerManager.media.value
+
+    val hasVideo: StateFlow<Boolean>
+        get() = playerManager.hasVideo
 
     /** End of viewmodel */
     override fun onCleared() {

@@ -48,8 +48,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys.MISC_GESTURES
-import com.yuroyami.syncplay.logic.managers.datastore.valueFlow
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.MISC_GESTURES
+import com.yuroyami.syncplay.logic.datastore.valueFlow
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.utils.screenHeightPx
 import com.yuroyami.syncplay.ui.utils.screenWidthPx
@@ -72,7 +72,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val gesturesEnabled by valueFlow(MISC_GESTURES, true).collectAsState(initial = true)
     val hasVideo by viewmodel.hasVideo.collectAsState()
-    val visibleHUD by viewmodel.visibleHUD.collectAsState()
+    val visibleHUD by viewmodel.uiManager.visibleHUD.collectAsState()
 
     val volumeSteps = getSystemMaxVolume()
 
@@ -224,10 +224,10 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                         }
                     } else null,
                     onTap = {
-                        viewmodel.visibleHUD.value = !viewmodel.visibleHUD.value
+                        viewmodel.uiManager.visibleHUD.value = !viewmodel.uiManager.visibleHUD.value
                         haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
 
-                        if (!viewmodel.visibleHUD.value) softwareKB?.hide()
+                        if (!viewmodel.uiManager.visibleHUD.value) softwareKB?.hide()
 
                         //TODO controlcardvisible = false
                         //     addmediacardvisible = false

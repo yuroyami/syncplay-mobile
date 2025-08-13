@@ -1,30 +1,25 @@
 package com.yuroyami.syncplay.managers
 
-import com.yuroyami.syncplay.protocol.sending.Packet
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.logic.managers.datastore.valueBlockingly
-import com.yuroyami.syncplay.logic.managers.datastore.writeValue
-import com.yuroyami.syncplay.utils.getFileName
-import com.yuroyami.syncplay.utils.iterateDirectory
 import com.yuroyami.syncplay.logic.AbstractManager
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
+import com.yuroyami.syncplay.logic.datastore.valueBlockingly
+import com.yuroyami.syncplay.logic.datastore.writeValue
+import com.yuroyami.syncplay.logic.protocol.PacketCreator
+import com.yuroyami.syncplay.utils.getFileName
+import com.yuroyami.syncplay.utils.iterateDirectory
 import org.jetbrains.compose.resources.getString
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_shared_playlist_no_directories
 import syncplaymobile.shared.generated.resources.room_shared_playlist_not_found
-import kotlin.collections.get
-import kotlin.text.get
-import kotlin.text.iterator
 
 class SharedPlaylistManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmodel) {
-
-    val p = viewmodel.p
 
     /** Shuffles the current playlist and sends it to the server.
      * @param mode False to shuffle all playlist, True to shuffle only the remaining non-played items in queue.*/
     suspend fun shuffle(mode: Boolean) {
         /* If the shared playlist is empty, do nothing */
-        if (p.session.spIndex.intValue < 0 || p.session.sharedPlaylist.isEmpty()) return
+        if (viewmodel.session.spIndex.intValue < 0 || viewmodel.session.sharedPlaylist.isEmpty()) return
 
 
         /* Shuffling as per the mode selected: False = shuffle all, True = Shuffle rest */
@@ -33,33 +28,33 @@ class SharedPlaylistManager(viewmodel: SyncplayViewmodel): AbstractManager(viewm
              * grp1 is gonna be the group that doesn't change (everything until current index)
              * grp2 is the group to be shuffled since it's the 'remaining group' */
 
-            val grp1 = p.session.sharedPlaylist.take(p.session.spIndex.intValue + 1).toMutableList()
-            val grp2 = p.session.sharedPlaylist.takeLast(p.session.sharedPlaylist.size - grp1.size).shuffled()
+            val grp1 = viewmodel.session.sharedPlaylist.take(viewmodel.session.spIndex.intValue + 1).toMutableList()
+            val grp2 = viewmodel.session.sharedPlaylist.takeLast(viewmodel.session.sharedPlaylist.size - grp1.size).shuffled()
             grp1.addAll(grp2)
-            p.session.sharedPlaylist.clear()
-            p.session.sharedPlaylist.addAll(grp1)
+            viewmodel.session.sharedPlaylist.clear()
+            viewmodel.session.sharedPlaylist.addAll(grp1)
         } else {
             /* Shuffling everything is easy as Kotlin gives us the 'shuffle()' method */
-            p.session.sharedPlaylist.shuffle()
+            viewmodel.session.sharedPlaylist.shuffle()
 
             /* Index won't change, but the file at the given index did change, play it */
-            retrieveFile(p.session.sharedPlaylist[p.session.spIndex.intValue])
+            retrieveFile(viewmodel.session.sharedPlaylist[viewmodel.session.spIndex.intValue])
         }
 
         /* Announcing a new updated list to the room members */
-        p.send<Packet.PlaylistChange> {
-            files = p.session.sharedPlaylist
+        viewmodel.networkManager.send<PacketCreator.PlaylistChange> {
+            files = viewmodel.session.sharedPlaylist
         }
     }
 
     /** Adds URLs from the url adding popup */
     fun addURLs(string: List<String>) {
         val l = mutableListOf<String>()
-        l.addAll(p.session.sharedPlaylist)
+        l.addAll(viewmodel.session.sharedPlaylist)
         for (s in string) {
-            if (!p.session.sharedPlaylist.contains(s)) l.add(s)
+            if (!viewmodel.session.sharedPlaylist.contains(s)) l.add(s)
         }
-        p.send<Packet.PlaylistChange> {
+        viewmodel.networkManager.send<PacketCreator.PlaylistChange> {
             files = l
         }
     }
@@ -73,60 +68,60 @@ class SharedPlaylistManager(viewmodel: SyncplayViewmodel): AbstractManager(viewm
             val filename = getFileName(uri) ?: return
 
             /* If the playlist already contains this file name, prevent adding it */
-            if (p.session.sharedPlaylist.contains(filename)) return
+            if (viewmodel.session.sharedPlaylist.contains(filename)) return
 
             /* If there is no duplicate, then we proceed, we check if the list is empty */
-            if (p.session.sharedPlaylist.isEmpty() && p.session.spIndex.intValue == -1) {
+            if (viewmodel.session.sharedPlaylist.isEmpty() && viewmodel.session.spIndex.intValue == -1) {
                 viewmodel.player?.injectVideo(uri, true)
 
-                p.send<Packet.PlaylistIndex> {
+                viewmodel.networkManager.send<PacketCreator.PlaylistIndex> {
                     index = 0
                 }
                 //TODO MAKE NON=ASYNC
             }
-            p.session.sharedPlaylist.add(filename)
+            viewmodel.session.sharedPlaylist.add(filename)
         }
-        p.send<Packet.PlaylistChange> {
-            files = p.session.sharedPlaylist
+        viewmodel.networkManager.send<PacketCreator.PlaylistChange> {
+            files = viewmodel.session.sharedPlaylist
         }
     }
 
 
     /** Clears the shared playlist */
     fun clearPlaylist() {
-        if (p.session.sharedPlaylist.isEmpty()) return
+        if (viewmodel.session.sharedPlaylist.isEmpty()) return
 
-        p.send<Packet.PlaylistChange> {
+        viewmodel.networkManager.send<PacketCreator.PlaylistChange> {
             files = emptyList()
         }
     }
 
     /** This will delete an item from playlist at a given index 'i' */
     fun deleteItemFromPlaylist(i: Int) {
-        p.session.sharedPlaylist.removeAt(i)
-        p.send<Packet.PlaylistChange> {
-            files = p.session.sharedPlaylist
+        viewmodel.session.sharedPlaylist.removeAt(i)
+        viewmodel.networkManager.send<PacketCreator.PlaylistChange> {
+            files = viewmodel.session.sharedPlaylist
         }
 
-        if (p.session.sharedPlaylist.isEmpty()) {
-            p.session.spIndex.intValue = -1
+        if (viewmodel.session.sharedPlaylist.isEmpty()) {
+            viewmodel.session.spIndex.intValue = -1
         }
     }
 
     /** This is to send a playlist selection change to the server.
      * This occurs when a user selects a different item from the shared playlist. */
     fun sendPlaylistSelection(i: Int) {
-        p.send<Packet.PlaylistIndex> {
+        viewmodel.networkManager.send<PacketCreator.PlaylistIndex> {
             index = i
         }
     }
 
     /** This is to change playlist selection in response other users' selection */
     suspend fun changePlaylistSelection(index: Int) {
-        if (p.session.sharedPlaylist.size < (index + 1)) return /* In rare cases when this was called on an empty list */
-        if (index != p.session.spIndex.intValue) {
+        if (viewmodel.session.sharedPlaylist.size < (index + 1)) return /* In rare cases when this was called on an empty list */
+        if (index != viewmodel.session.spIndex.intValue) {
             /* If the file on that index isn't playing, play the file */
-            retrieveFile(p.session.sharedPlaylist[index])
+            retrieveFile(viewmodel.session.sharedPlaylist[index])
         }
     }
 

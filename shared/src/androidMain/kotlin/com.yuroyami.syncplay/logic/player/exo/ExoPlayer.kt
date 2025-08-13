@@ -38,13 +38,13 @@ import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.logic.player.AndroidPlayerEngine
-import com.yuroyami.syncplay.logic.managers.player.BasePlayer
-import com.yuroyami.syncplay.logic.managers.player.PlayerOptions
-import com.yuroyami.syncplay.protocol.sending.Packet
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.player.BasePlayer
+import com.yuroyami.syncplay.logic.player.PlayerOptions
+import com.yuroyami.syncplay.logic.protocol.PacketCreator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -167,13 +167,13 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                     if (!isLoading && exoplayer != null) {
                         /* Updating our timeFull */
                         val durationMs = exoplayer!!.duration
-                        viewmodel.timeFullMs.value = abs(durationMs.toLong())
+                        playerManager.timeFullMillis.value = abs(durationMs)
 
                         if (viewmodel.isSoloMode) return
                         if (durationMs / 1000.0 != viewmodel.media?.fileDuration) {
                             playerScopeIO.launch {
                                 viewmodel.media?.fileDuration = durationMs / 1000.0
-                                viewmodel.p.send<Packet.File> {
+                                viewmodel.networkManager.send<PacketCreator.File> {
                                     media = viewmodel.media
                                 }.await()
                             }
@@ -187,7 +187,7 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
 
                     if (exoplayer != null && exoplayer?.mediaItemCount != 0) {
                         if (exoplayer!!.playbackState != ExoPlayer.STATE_BUFFERING) {
-                            viewmodel.isNowPlaying.value = isPlaying //Just to inform UI
+                            playerManager.isNowPlaying.value = isPlaying //Just to inform UI
 
                             //Tell server about playback state change
                             if (!viewmodel.isSoloMode) {
@@ -301,27 +301,27 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
 
         /* First, clearing our subtitle track selection (This helps troubleshoot many issues */
         exoplayer?.trackSelector?.parameters = builder.clearOverridesOfType(type.getExoType()).build()
-        viewmodel.currentTrackChoices.lastSubtitleOverride = null
+        playerManager.currentTrackChoices.lastSubtitleOverride = null
 
         /* Now, selecting our subtitle track should one be selected */
         if (exoTrack != null) {
             when (type) {
                 TRACKTYPE.SUBTITLE -> {
-                    viewmodel.currentTrackChoices.lastSubtitleOverride = TrackSelectionOverride(
+                    playerManager.currentTrackChoices.lastSubtitleOverride = TrackSelectionOverride(
                         exoTrack.trackGroup,
                         exoTrack.index
                     )
                 }
 
                 TRACKTYPE.AUDIO -> {
-                    viewmodel.currentTrackChoices.lastSubtitleOverride = TrackSelectionOverride(
+                    playerManager.currentTrackChoices.lastSubtitleOverride = TrackSelectionOverride(
                         exoTrack.trackGroup,
                         exoTrack.index
                     )
                 }
             }
             exoplayer?.trackSelector?.parameters = builder.addOverride(
-                viewmodel.currentTrackChoices.lastSubtitleOverride as TrackSelectionOverride
+                playerManager.currentTrackChoices.lastSubtitleOverride as TrackSelectionOverride
             ).build()
         }
     }
@@ -340,14 +340,14 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
 
                 var newParams = builder.build()
 
-                if (viewmodel.currentTrackChoices.lastAudioOverride != null) {
+                if (playerManager.currentTrackChoices.lastAudioOverride != null) {
                     newParams = newParams.buildUpon().addOverride(
-                        viewmodel.currentTrackChoices.lastAudioOverride as? TrackSelectionOverride ?: return@launch
+                        playerManager.currentTrackChoices.lastAudioOverride as? TrackSelectionOverride ?: return@launch
                     ).build()
                 }
-                if (viewmodel.currentTrackChoices.lastSubtitleOverride != null) {
+                if (playerManager.currentTrackChoices.lastSubtitleOverride != null) {
                     newParams = newParams.buildUpon().addOverride(
-                        viewmodel.currentTrackChoices.lastSubtitleOverride as? TrackSelectionOverride ?: return@launch
+                        playerManager.currentTrackChoices.lastSubtitleOverride as? TrackSelectionOverride ?: return@launch
                     ).build()
                 }
                 trackSelectionParameters = newParams
@@ -394,13 +394,10 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
     }
 
     override fun injectVideo(uri: String?, isUrl: Boolean) {
-        /* Changing UI (hiding artwork, showing media controls) */
-        viewmodel.hasVideo.value = true
-
         playerScopeMain.launch {
             /* Creating a media file from the selected file */
             if (uri != null || viewmodel.media == null) {
-                viewmodel.media = MediaFile()
+                playerManager.media.value = MediaFile()
                 viewmodel.media?.uri = uri
 
                 /* Obtaining info from it (size and name) */
@@ -433,7 +430,7 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                 exoplayer?.prepare() /* This prepares it and makes the first frame visible */
 
                 /* Updating play button */
-                exoplayer?.duration?.let { viewmodel.timeFullMs.value = if (it < 0) 0 else it }
+                exoplayer?.duration?.let { playerManager.timeFullMillis.value = if (it < 0) 0 else it }
             } catch (e: IOException) {
                 /* If, for some reason, the video didn't wanna load */
                 e.printStackTrace()

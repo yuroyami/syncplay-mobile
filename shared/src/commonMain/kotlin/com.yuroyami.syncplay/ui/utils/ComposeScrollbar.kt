@@ -2,10 +2,8 @@ package com.yuroyami.syncplay.ui.utils
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,38 +27,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 
-fun Modifier.drawHorizontalScrollbar(
-    state: ScrollState,
-    reverseScrolling: Boolean = false
-): Modifier = drawScrollbar(state, Orientation.Horizontal, reverseScrolling)
-
-fun Modifier.drawVerticalScrollbar(
-    state: ScrollState,
-    reverseScrolling: Boolean = false
-): Modifier = drawScrollbar(state, Orientation.Vertical, reverseScrolling)
-
-private fun Modifier.drawScrollbar(
-    state: ScrollState,
-    orientation: Orientation,
-    reverseScrolling: Boolean
-): Modifier = drawScrollbar(
-    orientation, reverseScrolling
-) { reverseDirection, atEnd, color, alpha ->
-    if (state.maxValue > 0) {
-        val canvasSize = if (orientation == Orientation.Horizontal) size.width else size.height
-        val totalSize = canvasSize + state.maxValue
-        val thumbSize = canvasSize / totalSize * canvasSize
-        val startOffset = state.value / totalSize * canvasSize
-        drawScrollbar(
-            orientation, reverseDirection, atEnd, color, alpha, thumbSize, startOffset
-        )
-    }
-}
-
-fun Modifier.drawHorizontalScrollbar(
-    state: LazyListState,
-    reverseScrolling: Boolean = false
-): Modifier = drawScrollbar(state, Orientation.Horizontal, reverseScrolling)
 
 fun Modifier.drawVerticalScrollbar(
     state: LazyListState,
@@ -88,37 +54,6 @@ private fun Modifier.drawScrollbar(
         }
         drawScrollbar(
             orientation, reverseDirection, atEnd, color, alpha, thumbSize, startOffset
-        )
-    }
-}
-
-fun Modifier.drawVerticalScrollbar(
-    state: LazyGridState,
-    spanCount: Int,
-    reverseScrolling: Boolean = false
-): Modifier = drawScrollbar(
-    Orientation.Vertical, reverseScrolling
-) { reverseDirection, atEnd, color, alpha ->
-    val layoutInfo = state.layoutInfo
-    val viewportSize = layoutInfo.viewportEndOffset - layoutInfo.viewportStartOffset
-    val items = layoutInfo.visibleItemsInfo
-    val rowCount = (items.size + spanCount - 1) / spanCount
-    var itemsSize = 0
-    for (i in 0 until rowCount) {
-        itemsSize += items[i * spanCount].size.height
-    }
-    if (items.size < layoutInfo.totalItemsCount || itemsSize > viewportSize) {
-        val estimatedItemSize = if (rowCount == 0) 0f else itemsSize.toFloat() / rowCount
-        val totalRow = (layoutInfo.totalItemsCount + spanCount - 1) / spanCount
-        val totalSize = estimatedItemSize * totalRow
-        val canvasSize = size.height
-        val thumbSize = viewportSize / totalSize * canvasSize
-        val startOffset = if (rowCount == 0) 0f else items.first().run {
-            val rowIndex = index / spanCount
-            (estimatedItemSize * rowIndex - offset.y) / totalSize * canvasSize
-        }
-        drawScrollbar(
-            Orientation.Vertical, reverseDirection, atEnd, color, alpha, thumbSize, startOffset
         )
     }
 }

@@ -32,7 +32,7 @@ fun RoomBottomBarSection(modifier: Modifier) {
     Box(modifier) {
         if (hasVideo) BottomBarBlackUnderlay(modifier = Modifier.align(Alignment.BottomCenter).zIndex(1f))
 
-        val stateAddMedia = remember { mutableStateOf(!viewmodel.hasDoneStartupSlideAnimation) }
+        val stateAddMedia = remember { mutableStateOf(!viewmodel.uiManager.hasDoneStartupSlideAnimation) }
 
         Row(
             modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).zIndex(999f),

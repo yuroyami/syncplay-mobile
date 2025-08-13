@@ -65,7 +65,7 @@ object CardUserInfo {
                 font = Font(Res.font.Directive4_Regular)
             )
 
-            val userlist by viewmodel.p.session.userList.collectAsState()
+            val userlist by viewmodel.session.userList.collectAsState()
 
             LazyColumn(
                 modifier = Modifier
@@ -104,7 +104,7 @@ object CardUserInfo {
                             lineHeight = (Paletting.USER_INFO_TXT_SIZE + 6).sp,
                             fontSize = (Paletting.USER_INFO_TXT_SIZE + 2).sp,
                             color = Paletting.OLD_SP_YELLOW,
-                            fontWeight = if (user.name == viewmodel.p.session.currentUsername) FontWeight.W900 else FontWeight.W400
+                            fontWeight = if (user.name == viewmodel.session.currentUsername) FontWeight.W900 else FontWeight.W400
                         )
                     }
 

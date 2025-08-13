@@ -1,8 +1,8 @@
 package com.yuroyami.syncplay
 
 import android.app.Application
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.logic.managers.datastore.datastore
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
+import com.yuroyami.syncplay.logic.datastore.datastore
 import com.yuroyami.syncplay.utils.ContextObtainer
 import com.yuroyami.syncplay.utils.contextObtainer
 import com.yuroyami.syncplay.utils.dataStore

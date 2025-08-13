@@ -50,7 +50,7 @@ fun RoomStatusInfoSection(modifier: Modifier) {
             modifier = modifier
         ) {
             if (!viewmodel.isSoloMode) {
-                val pingo by viewmodel.p.ping.collectAsState()
+                val pingo by viewmodel.ping.collectAsState()
 
                 Row(verticalAlignment = CenterVertically) {
                     Text(
@@ -66,14 +66,14 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                 }
 
                 Text(
-                    text = stringResource(Res.string.room_details_current_room, viewmodel.p.session.currentRoom),
+                    text = stringResource(Res.string.room_details_current_room, viewmodel.session.currentRoom),
                     fontSize = 11.sp,
                     color = Paletting.OLD_SP_PINK
                 )
 
                 var showReconnectButton by remember { mutableStateOf(false) }
-                LaunchedEffect(pingo, viewmodel.p.session.userList.value.isNotEmpty()) {
-                    if (pingo == null && viewmodel.p.session.userList.value.isNotEmpty()) {
+                LaunchedEffect(pingo, viewmodel.session.userList.value.isNotEmpty()) {
+                    if (pingo == null && viewmodel.session.userList.value.isNotEmpty()) {
                         delay(3000)
                         // Check again after delay in case pingo changed
                         if (pingo == null) showReconnectButton = true
@@ -86,7 +86,7 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                     Button(
                         onClick = {
                             viewmodel.viewModelScope.launch(Dispatchers.IO) {
-                                viewmodel.p.connect()
+                                viewmodel.networkManager.connect()
                             }
                         }, colors = ButtonDefaults.buttonColors(
                             containerColor = Color.Red
@@ -97,7 +97,7 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                 }
 
 
-                AnimatedVisibility(pingo == null && viewmodel.p.session.userList.value.isNotEmpty()) {
+                AnimatedVisibility(pingo == null && viewmodel.session.userList.value.isNotEmpty()) {
 
                     Text(
                         text = "Try changing network engine in Settings > Network to Ktor if you're experiencing connection issues.",

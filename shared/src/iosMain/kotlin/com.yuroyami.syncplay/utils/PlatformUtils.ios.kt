@@ -26,7 +26,7 @@ actual fun getSystemMaxVolume(): Int {
 actual val platform: PLATFORM = PLATFORM.IOS
 
 actual fun generateTimestampMillis(): Long {
-    return (NSDate().timeIntervalSince1970 * 1000).roundToLong()
+    return (NSDate().timeIntervalSince1970 * 1000.0).roundToLong()
 }
 
 actual fun getFileName(uri: String): String? {

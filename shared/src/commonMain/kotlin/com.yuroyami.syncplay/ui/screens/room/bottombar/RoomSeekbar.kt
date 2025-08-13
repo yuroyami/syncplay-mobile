@@ -67,8 +67,8 @@ fun RoomSeekbar(modifier: Modifier) {
 
     var sliderValue by remember { mutableFloatStateOf(0f) }
 
-    val videoCurrentTimeMs by viewmodel.timeCurrentMs.collectAsState()
-    val videoFullDurationMs by viewmodel.timeFullMs.collectAsState()
+    val videoCurrentTimeMs by viewmodel.playerManager.timeCurrentMillis.collectAsState()
+    val videoFullDurationMs by viewmodel.playerManager.timeFullMillis.collectAsState()
 
     val sliderInteractionSource = remember { MutableInteractionSource() }
     val isSliderBeingDragged by sliderInteractionSource.collectIsDraggedAsState()
@@ -98,7 +98,7 @@ fun RoomSeekbar(modifier: Modifier) {
                 viewmodel.player?.seekTo(newVal.roundToLong())
             },
             onValueChangeFinished = {
-                viewmodel.sendSeek(sliderValue.roundToLong())
+                viewmodel.actionManager.sendSeek(sliderValue.roundToLong())
 
                 if (viewmodel.isSoloMode) {
                     viewmodel.player?.let {

@@ -17,7 +17,6 @@ import androidx.navigation.compose.rememberNavController
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import com.yuroyami.syncplay.logic.settings.SettingStyling
 import com.yuroyami.syncplay.models.MessagePalette
-import com.yuroyami.syncplay.screens.adam.Screen
 import com.yuroyami.syncplay.ui.screens.home.HomeScreenUI
 import com.yuroyami.syncplay.ui.screens.room.RoomScreenUI
 import com.yuroyami.syncplay.ui.screens.room.tabs.CardController
@@ -44,11 +43,7 @@ fun AdamScreen(onViewmodelReady: (SyncplayViewmodel) -> Unit) {
     val navigator = rememberNavController()
     val navEntry by navigator.currentBackStackEntryAsState()
 
-    val currentScreen by remember {
-        derivedStateOf {
-            Screen.Companion.fromLabel(navEntry?.destination?.route)
-        }
-    }
+    val currentScreen by remember { derivedStateOf { Screen.fromLabel(navEntry?.destination?.route) } }
 
     LaunchedEffect(viewmodel) {
         onViewmodelReady.invoke(viewmodel)

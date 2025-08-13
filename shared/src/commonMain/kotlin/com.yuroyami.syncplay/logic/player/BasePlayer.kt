@@ -4,14 +4,13 @@ import androidx.annotation.CallSuper
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.eygraber.uri.Uri
-import com.yuroyami.syncplay.models.Chapter
-import com.yuroyami.syncplay.models.MediaFile
-import com.yuroyami.syncplay.models.Track
-import com.yuroyami.syncplay.logic.managers.settings.ExtraSettingBundle
-import com.yuroyami.syncplay.utils.CommonUtils.sha256
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import com.yuroyami.syncplay.logic.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.managers.PlayerManager
+import com.yuroyami.syncplay.models.Chapter
+import com.yuroyami.syncplay.models.MediaFile
+import com.yuroyami.syncplay.models.Track
+import com.yuroyami.syncplay.utils.CommonUtils.sha256
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -143,7 +142,7 @@ abstract class BasePlayer(
             while (isActive) {
                 if (isSeekable()) {
                     val pos = currentPositionMs()
-                    playerManager.timeCurrentMillis = pos
+                    playerManager.timeCurrentMillis.value = pos
                     if (!viewmodel.isSoloMode) {
                         viewmodel.protocolManager.globalPositionMs = pos.toDouble()
                     }

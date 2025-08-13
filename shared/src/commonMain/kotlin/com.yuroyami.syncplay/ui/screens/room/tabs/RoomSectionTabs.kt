@@ -37,8 +37,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
-import com.yuroyami.syncplay.screens.adam.Screen
-import com.yuroyami.syncplay.screens.adam.Screen.Companion.navigateTo
+import com.yuroyami.syncplay.ui.screens.adam.Screen
+import com.yuroyami.syncplay.ui.screens.adam.Screen.Companion.navigateTo
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Paletting
@@ -109,9 +109,8 @@ fun RoomTabSection(modifier: Modifier, onShowChatHistory: () -> Unit) {
         RoomTab(
             modifier = Modifier.width(54.dp),
             icon = Icons.Filled.AutoFixHigh,
-            visibilityState = stateRoomPreferences,
-            onClick = { cardController.toggleRoomPreferences() }
-        )
+            visibilityState = stateRoomPreferences
+        ) { cardController.toggleRoomPreferences() }
 
         Spacer(modifier = Modifier.weight(1f))
 
@@ -120,11 +119,10 @@ fun RoomTabSection(modifier: Modifier, onShowChatHistory: () -> Unit) {
             RoomTab(
                 modifier = Modifier.width(54.dp),
                 icon = Icons.AutoMirrored.Filled.PlaylistPlay,
-                visibilityState = stateSharedPlaylist,
-                onClick = {
-                    cardController.toggleSharedPlaylist()
-                }
-            )
+                visibilityState = stateSharedPlaylist
+            ) {
+                cardController.toggleSharedPlaylist()
+            }
 
             Spacer(modifier = Modifier.weight(1f))
 
@@ -132,10 +130,10 @@ fun RoomTabSection(modifier: Modifier, onShowChatHistory: () -> Unit) {
             RoomTab(
                 modifier = Modifier.width(54.dp),
                 icon = Icons.Filled.Groups,
-                visibilityState = stateUserInfo, onClick = {
-                    cardController.toggleUserInfo()
-                }
-            )
+                visibilityState = stateUserInfo
+            ) {
+                cardController.toggleUserInfo()
+            }
 
             Spacer(modifier = Modifier.weight(1f))
         }
@@ -144,12 +142,11 @@ fun RoomTabSection(modifier: Modifier, onShowChatHistory: () -> Unit) {
         RoomTab(
             modifier = Modifier.width(54.dp),
             icon = Icons.Filled.Lock,
-            visibilityState = false,
-            onClick = {
-                cardController.tabLock.value = true
-                viewmodel.visibleHUD.value = false
-            }
-        )
+            visibilityState = false
+        ) {
+            cardController.tabLock.value = true
+            viewmodel.uiManager.visibleHUD.value = false
+        }
 
         Spacer(modifier = Modifier.weight(1f))
 
@@ -284,9 +281,9 @@ fun RoomTabSection(modifier: Modifier, onShowChatHistory: () -> Unit) {
                         )
                     }
                 }, onClick = {
-                    viewmodel.p.endConnection(true)
+                    viewmodel.networkManager.endConnection(true)
                     viewmodel.player?.destroy()
-                    viewmodel.nav.navigateTo(Screen.Home)
+                    viewmodel.uiManager.nav.navigateTo(Screen.Home)
                     platformCallback.onRoomEnterOrLeave(PlatformCallback.RoomEvent.LEAVE)
                 })
             }

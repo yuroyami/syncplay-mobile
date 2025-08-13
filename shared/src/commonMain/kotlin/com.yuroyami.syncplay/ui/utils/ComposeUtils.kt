@@ -67,16 +67,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
+import com.yuroyami.syncplay.logic.datastore.valueAsState
 import com.yuroyami.syncplay.models.MessagePalette
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.logic.managers.datastore.valueAsState
 import com.yuroyami.syncplay.ui.theme.Paletting
 import com.yuroyami.syncplay.ui.theme.Paletting.backgroundGradient
 import org.jetbrains.compose.resources.Font
 import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Helvetica_Regular
 import syncplaymobile.shared.generated.resources.Res
-
 
 val screenHeightPx: Int
     @Composable get() = LocalWindowInfo.current.containerSize.height

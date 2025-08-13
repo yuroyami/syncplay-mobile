@@ -114,6 +114,7 @@ object CardSharedPlaylist {
     fun SharedPlaylistCard() {
         val viewmodel = LocalViewmodel.current
         val scope = rememberCoroutineScope { Dispatchers.IO }
+        val playlist = viewmodel.playlistManager
 
         /* ActivityResultLaunchers for various shared playlist actions */
         val mediaFilePicker  = rememberFilePickerLauncher(
@@ -123,7 +124,7 @@ object CardSharedPlaylist {
         ) { files ->
             if (files?.isEmpty() == true || files == null) return@rememberFilePickerLauncher
 
-            viewmodel.addFiles(files.map { it.path })
+            playlist.addFiles(files.map { it.path })
         }
 
         val mediaDirectoryPicker =rememberDirectoryPickerLauncher(
@@ -131,7 +132,7 @@ object CardSharedPlaylist {
         ) { directoryUri ->
             if (directoryUri == null) return@rememberDirectoryPickerLauncher
             scope.launch {
-                viewmodel.addFolderToPlaylist(directoryUri.path)
+                playlist.addFolderToPlaylist(directoryUri.path)
             }
         }
 
@@ -140,14 +141,14 @@ object CardSharedPlaylist {
             type = FileKitType.File(extensions = CommonUtils.playlistExs)
         ) { playlistFile ->
             if (playlistFile != null) {
-                viewmodel.loadPlaylistLocally(playlistFile.path, alsoShuffle = shouldShuffle)
+                playlist.loadPlaylistLocally(playlistFile.path, alsoShuffle = shouldShuffle)
             }
             shouldShuffle = false
         }
 
         val playlistSaver = rememberFileSaverLauncher { directoryUri ->
             if (directoryUri == null) return@rememberFileSaverLauncher
-            viewmodel.savePlaylistLocally(directoryUri.path)
+            playlist.savePlaylistLocally(directoryUri.path)
         }
 
         val mediaDirsPopupState = remember { mutableStateOf(false) }
@@ -178,7 +179,7 @@ object CardSharedPlaylist {
                         .fillMaxWidth()
                         .padding(8.dp)
                 ) {
-                    itemsIndexed(viewmodel.p.session.sharedPlaylist) { index, item ->
+                    itemsIndexed(viewmodel.session.sharedPlaylist) { index, item ->
 
                         val itempopup = remember { mutableStateOf(false) }
 
@@ -192,7 +193,7 @@ object CardSharedPlaylist {
                                 ) { itempopup.value = true },
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                val spi by remember { viewmodel.p.session.spIndex }
+                                val spi by remember { viewmodel.session.spIndex }
                                 if (index == spi) {
                                     Icon(
                                         imageVector = Icons.Outlined.PlayArrow, "",
@@ -234,7 +235,7 @@ object CardSharedPlaylist {
                                     text = { Text(color = Color.LightGray, text = stringResource(Res.string.play)) },
                                     leadingIcon = { Icon(imageVector = Icons.Default.PlayCircle, "", tint = Color.LightGray) },
                                     onClick = {
-                                        viewmodel.sendPlaylistSelection(index)
+                                        playlist.sendPlaylistSelection(index)
                                         itempopup.value = false
                                     }
                                 )
@@ -244,7 +245,7 @@ object CardSharedPlaylist {
                                     text = { Text(color = Color.LightGray, text = stringResource(Res.string.delete)) },
                                     leadingIcon = { Icon(imageVector = Icons.Default.Delete, "", tint = Color.LightGray) },
                                     onClick = {
-                                        viewmodel.deleteItemFromPlaylist(index)
+                                        playlist.deleteItemFromPlaylist(index)
                                         itempopup.value = false
                                     }
                                 )
@@ -252,7 +253,7 @@ object CardSharedPlaylist {
 
                         }
 
-                        if (index < viewmodel.p.session.sharedPlaylist.lastIndex)
+                        if (index < viewmodel.session.sharedPlaylist.lastIndex)
                             HorizontalDivider(
                                 modifier = Modifier
                                     .gradientOverlay()
@@ -335,7 +336,7 @@ object CardSharedPlaylist {
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Shuffle, "", tint = Color.LightGray) },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
-                                    scope.launch { viewmodel.shuffle(false) }
+                                    scope.launch { playlist.shuffle(false) }
                                 }
                             )
 
@@ -352,7 +353,7 @@ object CardSharedPlaylist {
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
                                     scope.launch {
-                                        viewmodel.shuffle(true)
+                                        playlist.shuffle(true)
                                     }
                                 }
                             )
@@ -454,7 +455,7 @@ object CardSharedPlaylist {
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Save, "", tint = Color.LightGray) },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
-                                    if (viewmodel.p.session.sharedPlaylist.isEmpty()) {
+                                    if (viewmodel.session.sharedPlaylist.isEmpty()) {
                                         viewmodel.osdManager.dispatchOSD { "Shared Playlist is empty. Nothing to save." }
                                         return@DropdownMenuItem
                                     }
@@ -492,7 +493,7 @@ object CardSharedPlaylist {
                                 leadingIcon = { Icon(imageVector = Icons.Filled.ClearAll, "", tint = Color.LightGray) },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
-                                    viewmodel.clearPlaylist()
+                                    playlist.clearPlaylist()
                                 }
                             )
                         }
@@ -515,8 +516,7 @@ object CardSharedPlaylist {
             strokeWidth = 0.5f,
             onDismiss = { visibilityState.value = false }
         ) {
-            val viewmodel = LocalViewmodel.current
-
+            val playlist = LocalViewmodel.current.playlistManager
             val clipboardManager: ClipboardManager = LocalClipboardManager.current
 
             Column(
@@ -586,7 +586,7 @@ object CardSharedPlaylist {
                     onClick = {
                         visibilityState.value = false
 
-                        viewmodel.addURLs(urls.value.split("\n"))
+                        playlist.addURLs(urls.value.split("\n"))
                     },
                 ) {
                     Icon(imageVector = Icons.Filled.Done, "")

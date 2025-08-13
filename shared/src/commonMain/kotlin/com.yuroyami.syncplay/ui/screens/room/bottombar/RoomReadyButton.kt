@@ -1,7 +1,6 @@
 package com.yuroyami.syncplay.ui.screens.room.bottombar
 
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -16,7 +15,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment.Companion.CenterVertically
@@ -24,17 +22,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.protocol.sending.Packet
+import com.yuroyami.syncplay.logic.protocol.PacketCreator
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Paletting
 
 @Composable
-fun RowScope.RoomReadyButton() {
+fun RoomReadyButton() {
     val viewmodel = LocalViewmodel.current
 
     if (!viewmodel.isSoloMode) {
-        var ready by remember { mutableStateOf(viewmodel.setReadyDirectly) }
+        //TODO var ready by remember { mutableStateOf(viewmodel.setReadyDirectly) }
 
+        var ready by remember { viewmodel.session.ready }
 
         IconToggleButton(
             modifier = Modifier.width(112.dp).padding(4.dp),
@@ -47,8 +46,8 @@ fun RowScope.RoomReadyButton() {
             ),
             onCheckedChange = { b ->
                 ready = b
-                viewmodel.p.ready = b
-                viewmodel.p.send<Packet.Readiness> {
+                viewmodel.sessionManager.session.ready.value = b
+                viewmodel.networkManager.send<PacketCreator.Readiness> {
                     isReady = b
                     manuallyInitiated = true
                 }

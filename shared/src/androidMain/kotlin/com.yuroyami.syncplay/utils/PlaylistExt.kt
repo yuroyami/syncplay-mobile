@@ -4,11 +4,9 @@ import android.provider.DocumentsContract
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.protocol.sending.Packet
-import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.protocol.PacketCreator
 import com.yuroyami.syncplay.managers.SharedPlaylistManager
 import kotlinx.coroutines.launch
-
 
 actual suspend fun SharedPlaylistManager.addFolderToPlaylist(uri: String) {
     /* First, we save it in our media directories as a common directory */
@@ -30,14 +28,14 @@ actual suspend fun SharedPlaylistManager.addFolderToPlaylist(uri: String) {
     }
     newList.sort()
 
-    if (p.session.spIndex.intValue == -1) {
+    if (viewmodel.session.spIndex.intValue == -1) {
         retrieveFile(newList.first())
-        p.send<Packet.PlaylistIndex> {
+        viewmodel.networkManager.send<PacketCreator.PlaylistIndex> {
             index = 0
         }.await()
     }
-    p.send<Packet.PlaylistChange> {
-        files = p.session.sharedPlaylist + newList
+    viewmodel.networkManager.send<PacketCreator.PlaylistChange> {
+        files = viewmodel.session.sharedPlaylist + newList
     }.await()
 }
 
@@ -50,7 +48,7 @@ fun SharedPlaylistManager.iterateDirectory(dir: DocumentFile, onFileDetected: (S
         } else {
             if (file.name == null) continue
 
-            if (!p.session.sharedPlaylist.contains(file.name!!)) {
+            if (!viewmodel.session.sharedPlaylist.contains(file.name!!)) {
                 onFileDetected(file.name!!)
             }
         }
@@ -98,7 +96,7 @@ actual fun SharedPlaylistManager.savePlaylistLocally(toFolderUri: String) {
 
     /** Converting the shared playlist to a text string, line by line */
     val stringBuilder = StringBuilder()
-    for (f in p.session.sharedPlaylist) {
+    for (f in viewmodel.session.sharedPlaylist) {
         stringBuilder.appendLine(f)
     }
     val string = stringBuilder.appendLine().trim().toString()
@@ -110,7 +108,7 @@ actual fun SharedPlaylistManager.savePlaylistLocally(toFolderUri: String) {
     s?.close()
 }
 
-actual fun SyncplayViewmodel.loadPlaylistLocally(fromUri: String, alsoShuffle: Boolean) {
+actual fun SharedPlaylistManager.loadPlaylistLocally(fromUri: String, alsoShuffle: Boolean) {
     val context = contextObtainer.obtainAppContext()
 
     /** Opening the input stream of the file */
@@ -126,8 +124,8 @@ actual fun SyncplayViewmodel.loadPlaylistLocally(fromUri: String, alsoShuffle: B
     if (alsoShuffle) lines.shuffle()
 
     /** Updating the shared playlist */
-    viewModelScope.launch {
-        p.send<Packet.PlaylistChange> {
+    viewmodel.viewModelScope.launch {
+        viewmodel.networkManager.send<PacketCreator.PlaylistChange> {
             files = lines
         }.await()
     }

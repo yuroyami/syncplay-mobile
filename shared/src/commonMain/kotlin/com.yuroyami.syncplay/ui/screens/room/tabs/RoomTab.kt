@@ -3,7 +3,6 @@ package com.yuroyami.syncplay.ui.screens.room.tabs
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -25,7 +24,7 @@ import com.yuroyami.syncplay.ui.theme.Paletting
 import com.yuroyami.syncplay.ui.utils.gradientOverlay
 
 @Composable
-fun RowScope.RoomTab(modifier: Modifier, icon: ImageVector, visibilityState: Boolean, onClick: () -> Unit) {
+fun RoomTab(modifier: Modifier, icon: ImageVector, visibilityState: Boolean, onClick: () -> Unit) {
     Card(
         modifier = modifier
             .aspectRatio(1f)

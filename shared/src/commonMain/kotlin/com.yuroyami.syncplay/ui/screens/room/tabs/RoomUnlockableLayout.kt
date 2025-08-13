@@ -42,7 +42,7 @@ fun RoomUnlockableLayout() {
     val cardController = LocalCardController.current
 
     val lockedMode by cardController.tabLock.collectAsState()
-    val isInPipMode by viewmodel.hasEnteredPipMode.collectAsState()
+    val isInPipMode by viewmodel.uiManager.hasEnteredPipMode.collectAsState()
 
     if (lockedMode) {
         var unlockButtonVisibility by remember { mutableStateOf(true) }
@@ -75,7 +75,7 @@ fun RoomUnlockableLayout() {
                             indication = ripple(color = Paletting.SP_ORANGE)
                         ) {
                             cardController.tabLock.value = false
-                            viewmodel.visibleHUD.value = true
+                            viewmodel.uiManager.visibleHUD.value = true
                         },
                     shape = RoundedCornerShape(6.dp),
                     border = BorderStroke(

@@ -38,7 +38,7 @@ import syncplaymobile.shared.generated.resources.syncplay_logo_gradient
 @Composable
 fun RoomBackgroundArtwork() {
     val viewmodel = LocalViewmodel.current
-    val isInPipMode by viewmodel.hasEnteredPipMode.collectAsState()
+    val isInPipMode by viewmodel.uiManager.hasEnteredPipMode.collectAsState()
 
     Box(
         modifier = Modifier
