@@ -2,7 +2,7 @@ package com.yuroyami.syncplay.managers
 
 import com.yuroyami.syncplay.logic.AbstractManager
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
-import kotlinx.atomicfu.atomic
+import kotlin.concurrent.Volatile
 
 /**
  * Manages lifecycle-related behavior for the app across platforms (Android Activity or iOS ViewController).
@@ -28,7 +28,8 @@ import kotlinx.atomicfu.atomic
 class LifecycleManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel) {
 
     /** Whether the app is currently in the background (true after [onStop] unless in PiP mode). */
-    val background = atomic(false)
+    @Volatile
+    var background = false
 
     /** Called when the component (activity or viewcontroller) is first created. */
     fun onCreate() {
@@ -37,12 +38,12 @@ class LifecycleManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel
 
     /** Called when the component is becoming visible. */
     fun onStart() {
-        background.value = false
+        background = false
     }
 
     /** Called when the component is visible and interactive. */
     fun onResume() {
-        background.value = false
+        background = false
     }
 
     /** Called when the component is no longer interactable but still partially visible. */
@@ -56,11 +57,11 @@ class LifecycleManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel
      */
     fun onStop() {
         if (!viewmodel.uiManager.hasEnteredPipMode.value) {
-            background.value = true
+            background = true
             viewmodel.playerManager.player?.pause()
         }
     }
 
     val isInBackground: Boolean
-        get() = background.value
+        get() = background
 }

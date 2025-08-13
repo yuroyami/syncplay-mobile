@@ -24,11 +24,13 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
+import com.yuroyami.syncplay.logic.PlatformCallback
+import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_INROOM_PLAYER_SUBTITLE_SIZE
+import com.yuroyami.syncplay.logic.datastore.valueBlockingly
+import com.yuroyami.syncplay.logic.datastore.valueSuspendingly
 import com.yuroyami.syncplay.models.JoinConfig
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys.PREF_INROOM_PLAYER_SUBTITLE_SIZE
-import com.yuroyami.syncplay.logic.managers.datastore.valueBlockingly
-import com.yuroyami.syncplay.logic.managers.datastore.valueSuspendingly
 import com.yuroyami.syncplay.ui.screens.adam.AdamScreen
 import com.yuroyami.syncplay.utils.bindWatchdog
 import com.yuroyami.syncplay.utils.changeLanguage
@@ -37,8 +39,6 @@ import com.yuroyami.syncplay.utils.hideSystemUI
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.utils.showSystemUI
-import com.yuroyami.syncplay.logic.PlatformCallback
-import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -288,15 +288,15 @@ class SyncplayActivity : ComponentActivity() {
 
     private val pipBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            intent?.let {
-                if (it.action == "pip") {
-                    val pausePlayValue = it.getIntExtra("pause_zero_play_one", -1)
+            intent?.let { intnt ->
+                if (intnt.action == "pip") {
+                    val pausePlayValue = intnt.getIntExtra("pause_zero_play_one", -1)
 
                     //TODO CHECK IF IN ROOM IN THE FIRST PLACE
                     if (pausePlayValue == 1) {
-                        viewmodel?.playPlayback()
+                        viewmodel?.actionManager?.playPlayback()
                     } else {
-                        viewmodel?.pausePlayback()
+                        viewmodel?.actionManager?.pausePlayback()
                     }
                 }
             }

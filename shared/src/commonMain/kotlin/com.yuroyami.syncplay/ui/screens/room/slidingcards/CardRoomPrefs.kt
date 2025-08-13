@@ -25,14 +25,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.yuroyami.syncplay.logic.settings.SETTINGS_ROOM
+import com.yuroyami.syncplay.logic.settings.SettingCollection
+import com.yuroyami.syncplay.logic.settings.SettingsUI
+import com.yuroyami.syncplay.logic.settings.SettingsUI.SettingsGrid
+import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.theme.Paletting
 import com.yuroyami.syncplay.ui.utils.FancyIcon2
 import com.yuroyami.syncplay.ui.utils.FancyText2
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.logic.managers.settings.SETTINGS_ROOM
-import com.yuroyami.syncplay.logic.managers.settings.SettingCollection
-import com.yuroyami.syncplay.logic.managers.settings.SettingsUI.Layout
-import com.yuroyami.syncplay.logic.managers.settings.SettingsUI.SettingsGrid
-import com.yuroyami.syncplay.ui.theme.Paletting
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
@@ -85,7 +85,7 @@ object CardRoomPrefs {
                     ) {
                         SettingsGrid(
                             modifier = Modifier.fillMaxSize(),
-                            layout = Layout.SETTINGS_ROOM,
+                            layout = SettingsUI.Layout.SETTINGS_ROOM,
                             settings = settings,
                             state = settingState,
                             titleSize = 9f,

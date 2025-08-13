@@ -25,7 +25,7 @@ class ProtocolManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel)
     val rewindThreshold = 12L /* This is as per official Syncplay, shouldn't be subject to change */
     val pingService = PingService() //TODO
 
-    val packetHandler = PacketHandler(viewmodel)
+    val packetHandler = PacketHandler(viewmodel, this)
 
     companion object {
         inline fun <reified T : PacketCreator> NetworkManager.createPacketInstance(protocolManager: ProtocolManager): T {

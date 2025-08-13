@@ -2,14 +2,15 @@ package com.yuroyami.syncplay.managers
 
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.models.Constants
-import com.yuroyami.syncplay.logic.managers.protocol.ProtocolCallback
-import com.yuroyami.syncplay.protocol.sending.Packet
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
-import com.yuroyami.syncplay.logic.managers.datastore.valueBlockingly
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
+import com.yuroyami.syncplay.logic.datastore.valueBlockingly
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timeStamper
 import com.yuroyami.syncplay.logic.AbstractManager
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
+import com.yuroyami.syncplay.logic.datastore.valueBlockingly
+import com.yuroyami.syncplay.logic.protocol.PacketCreator
 import com.yuroyami.syncplay.logic.protocol.ProtocolCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -36,17 +37,15 @@ import kotlin.text.iterator
 
 class RoomCallbackManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmodel), ProtocolCallback {
 
-    val p = viewmodel.p
-
     override fun onSomeonePaused(pauser: String) {
         loggy("SYNCPLAY Protocol: Someone ($pauser) paused.")
 
-        if (pauser != p.session.currentUsername) {
-            viewmodel.pausePlayback()
+        if (pauser != viewmodel.session.currentUsername) {
+            viewmodel.actionManager.pausePlayback()
         }
 
         viewmodel.actionManager.broadcastMessage(
-            message = { getString(Res.string.room_guy_paused, pauser, timeStamper(p.globalPositionMs)) },
+            message = { getString(Res.string.room_guy_paused, pauser, timeStamper(viewmodel.protocolManager.globalPositionMs)) },
             isChat = false
         )
     }
@@ -54,8 +53,8 @@ class RoomCallbackManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmod
     override fun onSomeonePlayed(player: String) {
         loggy("SYNCPLAY Protocol: Someone ($player) unpaused.")
 
-        if (player != p.session.currentUsername) {
-            viewmodel.playPlayback()
+        if (player != viewmodel.session.currentUsername) {
+            viewmodel.actionManager.playPlayback()
         }
 
         viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_guy_played, player) }, isChat = false)
@@ -83,13 +82,13 @@ class RoomCallbackManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmod
             if (viewmodel.player?.hasMedia() == true) {
                 val pauseOnLeft = valueBlockingly(PREF_PAUSE_ON_SOMEONE_LEAVE, true)
                 if (pauseOnLeft) {
-                    viewmodel.pausePlayback()
+                    viewmodel.actionManager.pausePlayback()
                 }
             }
         }
 
         /* Rare cases where a user can see their own self disconnected */
-        if (leaver == p.session.currentUsername) {
+        if (leaver == viewmodel.session.currentUsername) {
             onDisconnected()
         }
     }
@@ -97,13 +96,13 @@ class RoomCallbackManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmod
     override fun onSomeoneSeeked(seeker: String, toPosition: Double) {
         loggy("SYNCPLAY Protocol: $seeker seeked to: $toPosition")
 
-        val oldPosMs = p.globalPositionMs.toLong()
+        val oldPosMs = viewmodel.protocolManager.globalPositionMs.toLong()
         val newPosMs = toPosition.toLong() * 1000L
 
         /* Saving seek so it can be undone on mistake */
         viewmodel.seeks.add(Pair(oldPosMs, newPosMs))
 
-        if (seeker != p.session.currentUsername) viewmodel.player?.seekTo(newPosMs)
+        if (seeker != viewmodel.session.currentUsername) viewmodel.player?.seekTo(newPosMs)
 
         viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_seeked,seeker, timeStamper(oldPosMs), timeStamper(newPosMs)) }, isChat = false)
     }
@@ -139,7 +138,7 @@ class RoomCallbackManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmod
         loggy("SYNCPLAY Protocol: Playlist updated by $user")
 
         /** Selecting first item on list **/
-        if (p.session.sharedPlaylist.isNotEmpty() && p.session.spIndex.intValue == -1) {
+        if (viewmodel.session.sharedPlaylist.isNotEmpty() && viewmodel.session.spIndex.intValue == -1) {
             //changePlaylistSelection(0)
         }
 
@@ -153,7 +152,7 @@ class RoomCallbackManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmod
 
         /** Changing the selection for the user, to load the file at the given index **/
        viewmodel.viewModelScope.launch {
-           viewmodel.changePlaylistSelection(index)
+           viewmodel.playlistManager.changePlaylistSelection(index)
         }
 
         /** Telling user that the playlist selection/index has been changed **/
@@ -165,12 +164,12 @@ class RoomCallbackManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmod
         loggy("SYNCPLAY Protocol: Connected!")
 
         /** Adjusting connection state */
-        p.state = Constants.CONNECTIONSTATE.STATE_CONNECTED
+        viewmodel.networkManager.state = Constants.CONNECTIONSTATE.STATE_CONNECTED
 
         /** Set as ready first-hand */
         if (viewmodel.media == null) {
-            p.ready = viewmodel.setReadyDirectly
-            p.send<Packet.Readiness> {
+            viewmodel.session.ready.value = viewmodel.setReadyDirectly
+            viewmodel.networkManager.send<PacketCreator.Readiness> {
                 this.isReady = viewmodel.setReadyDirectly
                 manuallyInitiated = false
             }
@@ -181,21 +180,21 @@ class RoomCallbackManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmod
         viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_connected_to_server) }, isChat = false)
 
         /** Telling user which room they joined **/
-        viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_you_joined_room,p.session.currentRoom) }, isChat = false)
+        viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_you_joined_room,viewmodel.session.currentRoom) }, isChat = false)
 
         /** Resubmit any ongoing file being played **/
         if (viewmodel.media != null) {
-            p.send<Packet.File> {
+            viewmodel.networkManager.send<PacketCreator.File> {
                 this@send.media = viewmodel.media
             }.await()
         }
 
         /** Pass any messages that have been pending due to disconnection, then clear the queue */
-        for (m in p.session.outboundQueue) {
-            p.transmitPacket(m)
+        for (m in viewmodel.session.outboundQueue) {
+            viewmodel.networkManager.transmitPacket(m)
 
         }
-        p.session.outboundQueue.clear()
+        viewmodel.session.outboundQueue.clear()
     }
 
     override fun onConnectionAttempt() {
@@ -205,8 +204,8 @@ class RoomCallbackManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmod
         viewmodel.actionManager.broadcastMessage(
             message =
                 { getString(Res.string.room_attempting_connect,
-                    if (p.session.serverHost == "151.80.32.178") "syncplay.pl" else p.session.serverHost,
-                    p.session.serverPort.toString()
+                    if (viewmodel.session.serverHost == "151.80.32.178") "syncplay.pl" else viewmodel.session.serverHost,
+                    viewmodel.session.serverPort.toString()
                 ) },
             isChat = false
         )
@@ -216,7 +215,7 @@ class RoomCallbackManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmod
         loggy("SYNCPLAY Protocol: Connection failed :/")
 
         /** Adjusting connection state */
-        p.state = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
+        viewmodel.networkManager.state = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
 
         /** Telling user that connection has failed **/
         viewmodel.actionManager.broadcastMessage(
@@ -225,7 +224,7 @@ class RoomCallbackManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmod
         )
 
         /** Attempting reconnection **/
-        p.reconnect()
+        viewmodel.networkManager.reconnect()
     }
 
    override fun onDisconnected() {
@@ -233,13 +232,13 @@ class RoomCallbackManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmod
 
 
         /** Adjusting connection state */
-        p.state = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
+        viewmodel.networkManager.state = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
 
         /** Telling user that the connection has been lost **/
        viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_attempting_reconnection) }, isChat = false, isError = true)
 
         /** Attempting reconnection **/
-        p.reconnect()
+        viewmodel.networkManager.reconnect()
     }
 
     override fun onTLSCheck() {
@@ -255,17 +254,17 @@ class RoomCallbackManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmod
         /** Deciding next step based on whether the server supports TLS or not **/
         if (supported) {
             viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_tls_supported) }, isChat = false)
-            p.tls = Constants.TLS.TLS_YES
-            p.upgradeTls()
+            viewmodel.networkManager.tls = Constants.TLS.TLS_YES
+            viewmodel.networkManager.upgradeTls()
         } else {
             viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_tls_not_supported) }, isChat = false, isError = true)
-            p.tls = Constants.TLS.TLS_NO
+            viewmodel.networkManager.tls = Constants.TLS.TLS_NO
         }
 
-        p.send<Packet.Hello> {
-            username = p.session.currentUsername
-            roomname = p.session.currentRoom
-            serverPassword = p.session.currentPassword
+        viewmodel.networkManager.send<PacketCreator.Hello> {
+            username = viewmodel.session.currentUsername
+            roomname = viewmodel.session.currentRoom
+            serverPassword = viewmodel.session.currentPassword
         }
     }
 

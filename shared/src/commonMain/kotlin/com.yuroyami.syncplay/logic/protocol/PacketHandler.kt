@@ -1,6 +1,7 @@
 package com.yuroyami.syncplay.logic.protocol
 
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.managers.ProtocolManager
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.User
 import com.yuroyami.syncplay.utils.loggy
@@ -12,8 +13,6 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.modules.polymorphic
 import kotlin.math.abs
 import kotlin.math.roundToLong
 import kotlin.time.Clock
@@ -145,25 +144,24 @@ data class ErrorData(
 sealed interface SyncplayMessage
 
 
-class PacketHandler(viewmodel: SyncplayViewmodel) {
-
-    val session = viewmodel.sessionManager.session
-    val protocol = viewmodel.protocolManager
+class PacketHandler(
+    val viewmodel: SyncplayViewmodel,
+    val protocol: ProtocolManager
+) {
     val callback = viewmodel.callbackManager
     val sender = viewmodel.networkManager
-    val player = viewmodel.playerManager.player
 
     private val json = Json {
         ignoreUnknownKeys = true
         coerceInputValues = true
 
-        serializersModule = SerializersModule {
-            polymorphic(SyncplayMessage::class) {
-                //subclass(HelloMessage::class)
-                //subclass(SetMessage::class)
-                // ... etc
-            }
-        }
+//        serializersModule = SerializersModule {
+//            polymorphic(SyncplayMessage::class) {
+//                //subclass(HelloMessage::class)
+//                //subclass(SetMessage::class)
+//                // ... etc
+//            }
+//        }
     }
 
     suspend fun parse(jsonString: String) {
@@ -215,11 +213,11 @@ class PacketHandler(viewmodel: SyncplayViewmodel) {
 
     private suspend fun handleHello(hello: HelloData) {
         hello.username?.let { username ->
-            session.currentUsername = username
+            viewmodel.session.currentUsername = username
         }
 
        sender.send<PacketCreator.Joined> {
-            roomname = session.currentRoom
+            roomname = viewmodel.session.currentRoom
         }.await()
 
         sender.send<PacketCreator.EmptyList>().await()
@@ -270,20 +268,20 @@ class PacketHandler(viewmodel: SyncplayViewmodel) {
         val index = playlistIndex.index ?: return
 
         callback.onPlaylistIndexChanged(user, index)
-        session.spIndex.intValue = index
+        viewmodel.session.spIndex.intValue = index
     }
 
     private fun handlePlaylistChange(playlistChange: PlaylistChangeData) {
         val user = playlistChange.user ?: ""
         val files = playlistChange.files ?: return
 
-        session.sharedPlaylist.clear()
-        session.sharedPlaylist.addAll(files)
+        viewmodel.session.sharedPlaylist.clear()
+        viewmodel.session.sharedPlaylist.addAll(files)
         callback.onPlaylistUpdated(user)
     }
 
     private fun handleList(list: JsonObject) {
-        val userlist = list[session.currentRoom] as? JsonObject ?: return
+        val userlist = list[viewmodel.session.currentRoom] as? JsonObject ?: return
         val newList = mutableListOf<User>()
 
         var indexer = 1
@@ -294,7 +292,7 @@ class PacketHandler(viewmodel: SyncplayViewmodel) {
 
                 val user = User(
                     name = userName,
-                    index = if (userName != session.currentUsername) indexer++ else 0,
+                    index = if (userName != viewmodel.session.currentUsername) indexer++ else 0,
                     readiness = userData.isReady ?: false,
                     file = userData.file?.let { fileData ->
                         if (fileData.name != null) {
@@ -315,7 +313,7 @@ class PacketHandler(viewmodel: SyncplayViewmodel) {
         }
 
         sender.networkScope.launch {
-            session.userList.emit(newList)
+            viewmodel.session.userList.emit(newList)
             callback.onReceivedList()
         }
     }
@@ -333,11 +331,11 @@ class PacketHandler(viewmodel: SyncplayViewmodel) {
 
         state.ignoringOnTheFly?.let { ignoringOnTheFly ->
             if (ignoringOnTheFly.server != null) {
-                protocol.serverIgnFly = ignoringOnTheFly.server
-                protocol.clientIgnFly = 0
+                viewmodel.protocolManager.serverIgnFly = ignoringOnTheFly.server
+                viewmodel.protocolManager.clientIgnFly = 0
             } else if (ignoringOnTheFly.client != null) {
-                if (protocol.clientIgnFly == ignoringOnTheFly.client) {
-                    protocol.clientIgnFly = 0
+                if (viewmodel.protocolManager.clientIgnFly == ignoringOnTheFly.client) {
+                    viewmodel.protocolManager.clientIgnFly = 0
                 }
             }
         }
@@ -355,25 +353,25 @@ class PacketHandler(viewmodel: SyncplayViewmodel) {
             ping.clientLatencyCalculation?.let { timestamp ->
                 val serverRtt = ping.serverRtt ?: return@let
 
-                protocol.pingService.receiveMessage(timestamp.roundToLong(), serverRtt)
+                viewmodel.protocolManager.pingService.receiveMessage(timestamp.roundToLong(), serverRtt)
             }
-            messageAge = protocol.pingService.forwardDelay
+            messageAge = viewmodel.protocolManager.pingService.forwardDelay
         }
 
-        if (position != null && paused != null && protocol.clientIgnFly == 0 && player != null) {
-            val pausedChanged = protocol.globalPaused != paused || paused == player.isPlaying()
-            val diff = player.currentPositionMs() / 1000.0 - position
+        if (position != null && paused != null && viewmodel.protocolManager.clientIgnFly == 0 && viewmodel.player != null) {
+            val pausedChanged = viewmodel.protocolManager.globalPaused != paused || paused == viewmodel.player!!.isPlaying()
+            val diff = viewmodel.player!!.currentPositionMs() / 1000.0 - position
 
             /* Updating Global State */
-            protocol.globalPaused = paused
+            viewmodel.protocolManager.globalPaused = paused
             protocol.globalPositionMs = position * 1000L
             if (!paused) protocol.globalPositionMs += messageAge //Account for network drift
 
 
             if (lastGlobalUpdate == null) {
                 if (protocol.viewmodel.playerManager.media.value != null) {
-                    player.seekTo(position.toLong())
-                    if (paused) player.pause() else player.play()
+                    viewmodel.player?.seekTo(position.toLong())
+                    if (paused) viewmodel.player?.pause() else viewmodel.player?.play()
                 }
             }
 
@@ -411,18 +409,18 @@ class PacketHandler(viewmodel: SyncplayViewmodel) {
             }
         }
 
-        if (lastGlobalUpdate != null && player != null && position != null) {
-            val playerDiff = abs(player.currentPositionMs() / 1000.0 - position)
+        if (lastGlobalUpdate != null && viewmodel.player != null && position != null) {
+            val playerDiff = abs(viewmodel.player!!.currentPositionMs() / 1000.0 - position)
             val globalDiff = abs(protocol.globalPositionMs / 1000.0 - position)
-            val surelyPausedChanged = protocol.globalPaused != paused && paused == player.isPlaying()
+            val surelyPausedChanged = protocol.globalPaused != paused && paused == viewmodel.player!!.isPlaying()
             val seeked = playerDiff > SEEK_THRESHOLD && globalDiff > SEEK_THRESHOLD
 
             sender.send<PacketCreator.State> {
                 serverTime = latencyCalculation
                 this.doSeek = seeked
-                this.position = player.currentPositionMs().div(1000L) // if dontSlowDownWithMe useGlobalPosition or else usePlayerPosition
+                this.position = viewmodel.player!!.currentPositionMs().div(1000L) // if dontSlowDownWithMe useGlobalPosition or else usePlayerPosition
                 changeState = if (surelyPausedChanged) 1 else 0
-                play = player.isPlaying()
+                play = viewmodel.player!!.isPlaying()
             }
         } else {
             sender.send<PacketCreator.State> {

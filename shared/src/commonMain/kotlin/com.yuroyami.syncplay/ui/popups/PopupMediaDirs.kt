@@ -59,10 +59,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import com.eygraber.uri.Uri
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.logic.managers.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
-import com.yuroyami.syncplay.logic.managers.datastore.valueBlockingly
-import com.yuroyami.syncplay.logic.managers.datastore.valueFlow
-import com.yuroyami.syncplay.logic.managers.datastore.writeValue
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
+import com.yuroyami.syncplay.logic.datastore.valueBlockingly
+import com.yuroyami.syncplay.logic.datastore.valueFlow
+import com.yuroyami.syncplay.logic.datastore.writeValue
 import com.yuroyami.syncplay.ui.theme.Paletting
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.SyncplayPopup
@@ -101,13 +101,13 @@ object PopupMediaDirs {
             strokeWidth = 0.5f,
             onDismiss = { visibilityState.value = false }) {
 
-            var directoryPicker = rememberDirectoryPickerLauncher(
+            val directoryPicker = rememberDirectoryPickerLauncher(
                 title = "Select directory to save playlist to as a file"
             ) { directoryUri ->
                 if (directoryUri == null) return@rememberDirectoryPickerLauncher
 
                 scope.launch {
-                    viewmodel.saveFolderPathAsMediaDirectory(directoryUri.path)
+                    viewmodel.playlistManager.saveFolderPathAsMediaDirectory(directoryUri.path)
                 }
             }
             Column(

@@ -1,6 +1,6 @@
 package com.yuroyami.syncplay.logic.protocol
 
-import com.yuroyami.syncplay.utils.CommonUtils
+import com.yuroyami.syncplay.utils.generateTimestampMillis
 
 class PingService {
     companion object {
@@ -12,7 +12,7 @@ class PingService {
     private var avrRtt: Double = 0.0
 
     fun receiveMessage(timestamp: Long?, senderRtt: Double) {
-        rtt = (CommonUtils.timeMillis - (timestamp ?: return)) / 1000.0
+        rtt = (generateTimestampMillis() - (timestamp ?: return)) / 1000.0
         if (rtt < 0 || senderRtt < 0) return
 
         if (avrRtt == 0.0) avrRtt = rtt
