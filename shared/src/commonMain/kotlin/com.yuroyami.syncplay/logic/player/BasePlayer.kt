@@ -11,6 +11,7 @@ import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.utils.CommonUtils.sha256
+import com.yuroyami.syncplay.utils.getFileName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -18,6 +19,13 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.getString
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_selected_sub
+import syncplaymobile.shared.generated.resources.room_selected_sub_error
+import syncplaymobile.shared.generated.resources.room_selected_vid
+import syncplaymobile.shared.generated.resources.room_sub_error_load_vid_first
 import kotlin.time.Duration
 
 /** This is an interface that wraps the needed player functionality for Syncplay.
@@ -40,7 +48,7 @@ abstract class BasePlayer(
     val playerManager: PlayerManager = viewmodel.playerManager
 
     enum class TRACKTYPE {
-        AUDIO , SUBTITLE
+        AUDIO, SUBTITLE
     }
 
     private val playerSupervisorJob = SupervisorJob()
@@ -77,10 +85,71 @@ abstract class BasePlayer(
     abstract fun reapplyTrackChoices()
 
     /** Loads an external sub given the [uri] */
-    abstract fun loadExternalSub(uri: String)
+    fun loadExternalSub(uri: String) {
+        if (hasMedia()) {
+            val filename = getFileName(uri = uri).toString()
+            val extension = filename.substring(filename.length - 4).lowercase()
+
+            if (isValidSubtitleFile(extension)) {
+                loadExternalSubImpl(uri, extension)
+
+                viewmodel.osdManager.dispatchOSD {
+                    getString(Res.string.room_selected_sub, filename)
+                }
+            } else {
+                viewmodel.osdManager.dispatchOSD {
+                    getString(Res.string.room_selected_sub_error)
+                }
+            }
+        } else {
+            viewmodel.osdManager.dispatchOSD {
+                getString(Res.string.room_sub_error_load_vid_first)
+            }
+        }
+    }
+
+    abstract fun loadExternalSubImpl(uri: String, extension: String)
+
+    private fun isValidSubtitleFile(extension: String) =
+        listOf("srt", "ass", "ssa", "ttml", "vtt").any { it in extension.lowercase() }
+
 
     /** Loads a media located at [uri] */
-    abstract fun injectVideo(uri: String? = null, isUrl: Boolean = false)
+    suspend fun injectVideo(uri: String? = null, isUrl: Boolean = false) {
+        withContext(Dispatchers.Main) {
+            /* Creating a media file from the selected file */
+            val newMediaFile = MediaFile()
+            if (uri != null || viewmodel.media == null) {
+                newMediaFile.uri = uri
+
+                /* Obtaining info from it (size and name) */
+                if (isUrl) {
+                    newMediaFile.url = uri
+                    collectInfoURL(newMediaFile)
+                } else {
+                    collectInfoLocal(newMediaFile)
+                }
+            }
+
+            try {
+                injectVideoImpl(newMediaFile, isUrl)
+
+            } catch (e: Exception) {
+                /* If, for some reason, the video didn't wanna load */
+                e.printStackTrace()
+                viewmodel.osdManager.dispatchOSD { "There was a problem loading this file." }
+            }
+
+            playerManager.media.value = newMediaFile
+
+            /* Finally, show a a toast to the user that the media file has been added */
+            viewmodel.osdManager.dispatchOSD {
+                getString(Res.string.room_selected_vid, "${viewmodel.media?.fileName}")
+            }
+        }
+    }
+
+    abstract suspend fun injectVideoImpl(media: MediaFile, isUrl: Boolean)
 
     abstract fun pause()
 
@@ -121,7 +190,7 @@ abstract class BasePlayer(
     }
 
     fun collectInfoURL(media: MediaFile) {
-        with (media) {
+        with(media) {
             try {
                 /** Using Ktor's built-in URL support **/
                 fileName = Uri.parseOrNull(url!!)?.pathSegments?.last() ?: "Undefined"

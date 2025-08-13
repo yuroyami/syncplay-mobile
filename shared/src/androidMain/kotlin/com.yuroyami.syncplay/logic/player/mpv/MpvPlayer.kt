@@ -224,90 +224,41 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
         }
     }
 
-    override fun loadExternalSub(uri: String) {
-        if (hasMedia()) {
-            val filename = getFileName(uri = uri).toString()
-            val extension = filename.substring(filename.length - 4).lowercase()
-
-            val mimeTypeValid = (extension.contains("srt")
-                    || extension.contains("ass")
-                    || extension.contains("ssa")
-                    || extension.contains("ttml")
-                    || extension.contains("vtt"))
-
-            if (mimeTypeValid) {
-                ctx.resolveUri(uri.toUri())?.let {
-                    MPVLib.command(arrayOf("sub-add" as java.lang.String, it as java.lang.String, "cached" as java.lang.String))
-                }
-                viewmodel.osdManager.dispatchOSD {
-                    getString(Res.string.room_selected_sub, filename)
-                }
-            } else {
-                viewmodel.osdManager.dispatchOSD {
-                    getString(Res.string.room_selected_sub_error)
-                }
-            }
-        } else {
-            viewmodel.osdManager.dispatchOSD {
-                getString(Res.string.room_sub_error_load_vid_first)
-            }
+    override fun loadExternalSubImpl(uri: String, extension: String) {
+        ctx.resolveUri(uri.toUri())?.let { subUri ->
+            MPVLib.command(
+                arrayOf(
+                    "sub-add" as java.lang.String,
+                    subUri as java.lang.String,
+                    "cached" as java.lang.String)
+            )
         }
     }
 
-    override fun injectVideo(uri: String?, isUrl: Boolean) {
-        val ctx = mpvView.context ?: return
-
-        playerScopeMain.launch {
-            /* Creating a media file from the selected file */
-            if (uri != null || playerManager.media == null) {
-                playerManager.media.value = MediaFile()
-                playerManager.media.value?.uri = uri
-
-                /* Obtaining info from it (size and name) */
-                if (isUrl) {
-                    playerManager.media.value?.url = uri.toString()
-                    playerManager.media.value?.let { collectInfoURL(it) }
-                } else {
-                    playerManager.media.value?.let { collectInfoLocal(it) }
-                }
-            }
-            /* Injecting the media into exoplayer */
-            try {
-
-                delay(500)
-                uri?.let {
-                    if (!isUrl) {
-                        ctx.resolveUri(it.toUri())?.let { it2 ->
-                            loggy("Final path $it2")
-                            if (ismpvInit) {
-                                MPVLib.destroy()
-                            }
-                            mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
-                            ismpvInit = true
-                            mpvObserverAttach()
-                            mpvView.playFile(it2)
-                            mpvView.surfaceCreated(mpvView.holder)
-                        }
-                    } else {
-                        if (ismpvInit) {
-                            MPVLib.destroy()
-                        }
-                        mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
-                        ismpvInit = true
-                        mpvObserverAttach()
-                        mpvView.playFile(uri)
-                        mpvView.surfaceCreated(mpvView.holder)
+    override suspend fun injectVideoImpl(media: MediaFile, isUrl: Boolean) {
+        delay(500)
+        media.uri?.let { uri ->
+            if (!isUrl) {
+                ctx.resolveUri(uri.toUri())?.let { it2 ->
+                    loggy("Final path $it2")
+                    if (ismpvInit) {
+                        MPVLib.destroy()
                     }
+                    mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
+                    ismpvInit = true
+                    mpvObserverAttach()
+                    mpvView.playFile(it2)
+                    mpvView.surfaceCreated(mpvView.holder)
                 }
-            } catch (e: IOException) {
-                /* If, for some reason, the video didn't wanna load */
-                e.printStackTrace()
-                viewmodel.osdManager.dispatchOSD { "There was a problem loading this file." }
-            }
-
-            /* Finally, show a a toast to the user that the media file has been added */
-            viewmodel.osdManager.dispatchOSD {
-                getString(Res.string.room_selected_vid, "${playerManager.media.value?.fileName}")
+            } else {
+                if (ismpvInit) {
+                    MPVLib.destroy()
+                }
+                mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
+                ismpvInit = true
+                mpvObserverAttach()
+                mpvView.playFile(uri)
+                mpvView.surfaceCreated(mpvView.holder)
             }
         }
     }

@@ -218,76 +218,23 @@ class VlcPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
         }
     }
 
-    override fun loadExternalSub(uri: String) {
-        if (hasMedia()) {
-            val filename = getFileName(uri = uri).toString()
-            val extension = filename.substring(filename.length - 4)
-
-            val mimeType =
-                if (extension.contains("srt")) MimeTypes.APPLICATION_SUBRIP
-                else if ((extension.contains("ass"))
-                    || (extension.contains("ssa"))
-                ) MimeTypes.TEXT_SSA
-                else if (extension.contains("ttml")) MimeTypes.APPLICATION_TTML
-                else if (extension.contains("vtt")) MimeTypes.TEXT_VTT else ""
-
-            if (mimeType != "") {
-                vlcPlayer?.addSlave(
-                    IMedia.Slave.Type.Subtitle, uri, true
-                ) //todo: catch error
-
-                viewmodel.osdManager.dispatchOSD {
-                    getString(Res.string.room_selected_sub, filename)
-                }
-            } else {
-                viewmodel.osdManager.dispatchOSD {
-                    getString(Res.string.room_selected_sub_error)
-                }            }
-        } else {
-            viewmodel.osdManager.dispatchOSD {
-                getString(Res.string.room_sub_error_load_vid_first)
-            }
-        }
+    override fun loadExternalSubImpl(uri: String, extension: String) {
+        vlcPlayer?.addSlave(
+            IMedia.Slave.Type.Subtitle, uri, true
+        )
+        //todo: catch specific error
     }
 
-    @SuppressLint("Recycle")
-    override fun injectVideo(uri: String?, isUrl: Boolean) {
-        playerScopeMain.launch {
-            /* Creating a media file from the selected file */
-            if (uri != null || viewmodel.media == null) {
-                playerManager.media.value = MediaFile()
-                viewmodel.media?.uri = uri
-
-                /* Obtaining info from it (size and name) */
-                if (isUrl) {
-                    viewmodel.media?.url = uri.toString()
-                    viewmodel.media?.let { collectInfoURL(it) }
-                } else {
-                    viewmodel.media?.let { collectInfoLocal(it) }
-                }
-            }
-            /* Injecting the media into exoplayer */
-            try {
-
-                delay(500)
-                uri?.toUri()?.let {
-                    if (isUrl) {
-                        vlcPlayer?.play(it)
-                    } else {
-                        val desc = ctx.contentResolver.openFileDescriptor(it, "r")
-                        val media = Media(libvlc, desc?.fileDescriptor) //todo: global property to switch hw/sw
-                        vlcPlayer?.play(media)
-                    }
-                }
-            } catch (e: IOException) {
-                /* If, for some reason, the video didn't wanna load */
-                e.printStackTrace()
-                viewmodel.osdManager.dispatchOSD { "There was a problem loading this file." }
-            }
-
-            /* Finally, show a a toast to the user that the media file has been added */
-            viewmodel.osdManager.dispatchOSD {
-                getString(Res.string.room_selected_vid,"${viewmodel.media?.fileName}")
+    override suspend fun injectVideoImpl(media: MediaFile, isUrl: Boolean) {
+        delay(500)
+        media.uri?.toUri()?.let { uri ->
+            if (isUrl) {
+                vlcPlayer?.play(uri)
+            } else {
+                val desc = ctx.contentResolver.openFileDescriptor(uri, "r")
+                val media = Media(libvlc, desc?.fileDescriptor)
+                //todo: global property to switch hw/sw
+                vlcPlayer?.play(media)
             }
         }
     }

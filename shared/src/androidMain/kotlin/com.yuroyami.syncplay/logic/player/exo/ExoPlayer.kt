@@ -34,17 +34,16 @@ import androidx.media3.ui.PlayerView
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.yuroyami.syncplay.databinding.ExoviewBinding
-import com.yuroyami.syncplay.models.Chapter
-import com.yuroyami.syncplay.models.MediaFile
-import com.yuroyami.syncplay.models.Track
-import com.yuroyami.syncplay.logic.player.AndroidPlayerEngine
-import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
-import com.yuroyami.syncplay.utils.getFileName
-import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.logic.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.logic.player.BasePlayer
 import com.yuroyami.syncplay.logic.player.PlayerOptions
 import com.yuroyami.syncplay.logic.protocol.PacketCreator
+import com.yuroyami.syncplay.models.Chapter
+import com.yuroyami.syncplay.models.MediaFile
+import com.yuroyami.syncplay.models.Track
+import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
+import com.yuroyami.syncplay.utils.loggy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -55,11 +54,6 @@ import syncplaymobile.shared.generated.resources.room_scaling_fit_screen
 import syncplaymobile.shared.generated.resources.room_scaling_fixed_height
 import syncplaymobile.shared.generated.resources.room_scaling_fixed_width
 import syncplaymobile.shared.generated.resources.room_scaling_zoom
-import syncplaymobile.shared.generated.resources.room_selected_sub
-import syncplaymobile.shared.generated.resources.room_selected_sub_error
-import syncplaymobile.shared.generated.resources.room_selected_vid
-import syncplaymobile.shared.generated.resources.room_sub_error_load_vid_first
-import java.io.IOException
 import java.util.Collections
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -210,7 +204,7 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                     //timeFull.longValue = kotlin.math.abs(duration.toLong())
 
                     /* Repopulate audio and subtitle track lists with the new analysis of tracks **/
-                    playerScopeMain.launch lol@ {
+                    playerScopeMain.launch lol@{
                         analyzeTracks(viewmodel.media ?: return@lol)
                     }
                 }
@@ -265,31 +259,33 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
         viewmodel.media?.subtitleTracks?.clear()
         playerScopeMain.launch {
             withContext(Dispatchers.Main) {
-        val tracks = exoplayer?.currentTracks ?: return@withContext
-        for (group in tracks.groups) {
-            val trackGroup = group.mediaTrackGroup
-            val trackType = group.type
-            if (trackType == C.TRACK_TYPE_AUDIO || trackType == C.TRACK_TYPE_TEXT) {
-                for (i in (0 until trackGroup.length)) {
-                    val format = trackGroup.getFormat(i)
-                    val index = trackGroup.indexOf(format)
+                val tracks = exoplayer?.currentTracks ?: return@withContext
+                for (group in tracks.groups) {
+                    val trackGroup = group.mediaTrackGroup
+                    val trackType = group.type
+                    if (trackType == C.TRACK_TYPE_AUDIO || trackType == C.TRACK_TYPE_TEXT) {
+                        for (i in (0 until trackGroup.length)) {
+                            val format = trackGroup.getFormat(i)
+                            val index = trackGroup.indexOf(format)
 
-                    /** Creating a custom Track instance for every track in a track group **/
-                    val exoTrack = object: ExoTrack {
-                        override val trackGroup = trackGroup
-                        override val format = format
-                        override val name = "${format.label} [${format.language?.uppercase() ?: "UND"}]"
-                        override val type = trackType.toCommonType()
-                        override val index = index
-                        override val selected = mutableStateOf(group.isTrackSelected(index))
-                    }
+                            /** Creating a custom Track instance for every track in a track group **/
+                            val exoTrack = object : ExoTrack {
+                                override val trackGroup = trackGroup
+                                override val format = format
+                                override val name = "${format.label} [${format.language?.uppercase() ?: "UND"}]"
+                                override val type = trackType.toCommonType()
+                                override val index = index
+                                override val selected = mutableStateOf(group.isTrackSelected(index))
+                            }
 
-                    if (trackType == C.TRACK_TYPE_TEXT) {
-                        viewmodel.media?.subtitleTracks?.add(exoTrack)
-                    } else {
-                        viewmodel.media?.audioTracks?.add(exoTrack)
+                            if (trackType == C.TRACK_TYPE_TEXT) {
+                                viewmodel.media?.subtitleTracks?.add(exoTrack)
+                            } else {
+                                viewmodel.media?.audioTracks?.add(exoTrack)
+                            }
+                        }
                     }
-                }}}
+                }
             }
         }
     }
@@ -355,93 +351,48 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
         }
     }
 
-    override fun loadExternalSub(uri: String) {
-        if (hasMedia()) {
-            val filename = getFileName(uri = uri).toString()
-            val extension = filename.substring(filename.length - 4).lowercase()
+    override fun loadExternalSubImpl(uri: String, extension: String) {
+        viewmodel.media?.externalSub = MediaItem.SubtitleConfiguration.Builder(uri.toUri())
+            .setUri(uri.toUri())
+            .setMimeType(extension.mimeType)
+            .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
+            .build()
 
-            val mimeType =
-                if (extension.contains("srt")) MimeTypes.APPLICATION_SUBRIP
-                else if ((extension.contains("ass"))
-                    || (extension.contains("ssa"))
-                ) MimeTypes.TEXT_SSA
-                else if (extension.contains("ttml")) MimeTypes.APPLICATION_TTML
-                else if (extension.contains("vtt")) MimeTypes.TEXT_VTT else ""
-
-            if (mimeType != "") {
-                viewmodel.media?.externalSub = MediaItem.SubtitleConfiguration.Builder(uri.toUri())
-                    .setUri(uri.toUri())
-                    .setMimeType(mimeType)
-                    .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
-                    .build()
-
-                injectVideo(uri)
-
-
-                viewmodel.osdManager.dispatchOSD {
-                    getString(Res.string.room_selected_sub, filename)
-                }
-            } else {
-                viewmodel.osdManager.dispatchOSD {
-                    getString(Res.string.room_selected_sub_error)
-                }            }
-        } else {
-            viewmodel.osdManager.dispatchOSD {
-                getString(Res.string.room_sub_error_load_vid_first)
-            }
+        playerScopeMain.launch {
+            //Exo requires that we reload the video
+            injectVideo(uri)
         }
-
     }
 
-    override fun injectVideo(uri: String?, isUrl: Boolean) {
-        playerScopeMain.launch {
-            /* Creating a media file from the selected file */
-            if (uri != null || viewmodel.media == null) {
-                playerManager.media.value = MediaFile()
-                viewmodel.media?.uri = uri
-
-                /* Obtaining info from it (size and name) */
-                if (isUrl) {
-                    viewmodel.media?.url = uri
-                    viewmodel.media?.let { collectInfoURL(it) }
-                } else {
-                    viewmodel.media?.let { collectInfoLocal(it) }
-                }
-            }
-
-            /* Injecting the media into exoplayer */
-            try {
-                /* This is the builder responsible for building a MediaItem component for ExoPlayer **/
-                val vid = MediaItem.Builder()
-                    .setUri(viewmodel.media?.uri)
-                    .setMediaId(viewmodel.media?.uri.toString())
-                    .apply {
-                        setSubtitleConfigurations(
-                            Collections.singletonList(
-                                viewmodel.media?.externalSub
-                                        as? MediaItem.SubtitleConfiguration ?: return@apply
-                            )
-                        )
-                    }
-                    .build()
-
-                /* Injecting it into ExoPlayer and getting relevant info **/
-                exoplayer?.setMediaItem(vid) /* This loads the media into ExoPlayer **/
-                exoplayer?.prepare() /* This prepares it and makes the first frame visible */
-
-                /* Updating play button */
-                exoplayer?.duration?.let { playerManager.timeFullMillis.value = if (it < 0) 0 else it }
-            } catch (e: IOException) {
-                /* If, for some reason, the video didn't wanna load */
-                e.printStackTrace()
-                viewmodel.osdManager.dispatchOSD {"There was a problem loading this file." }
-            }
-
-            /* Finally, show a a toast to the user that the media file has been added */
-            viewmodel.osdManager.dispatchOSD {
-                getString(Res.string.room_selected_vid,"${viewmodel.media?.fileName}")
-            }
+    private val String.mimeType: String
+        get() = when {
+            contains("srt") -> MimeTypes.APPLICATION_SUBRIP
+            contains("ass") || contains("ssa") -> MimeTypes.TEXT_SSA
+            contains("ttml") -> MimeTypes.APPLICATION_TTML
+            contains("vtt") -> MimeTypes.TEXT_VTT
+            else -> ""
         }
+
+    override suspend fun injectVideoImpl(media: MediaFile, isUrl: Boolean) {
+        /* This is the builder responsible for building a MediaItem component for ExoPlayer **/
+        val vid = MediaItem.Builder()
+            .setUri(media.uri)
+            .setMediaId(media.uri.toString())
+            .apply {
+                setSubtitleConfigurations(
+                    Collections.singletonList(
+                        media.externalSub as? MediaItem.SubtitleConfiguration ?: return@apply
+                    )
+                )
+            }
+            .build()
+
+        /* Injecting it into ExoPlayer and getting relevant info **/
+        exoplayer?.setMediaItem(vid) /* This loads the media into ExoPlayer **/
+        exoplayer?.prepare() /* This prepares it and makes the first frame visible */
+
+        /* Updating play button */
+        exoplayer?.duration?.let { playerManager.timeFullMillis.value = if (it < 0) 0 else it }
     }
 
     override fun pause() {
@@ -529,7 +480,7 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
         }
     }
 
-    interface ExoTrack: Track {
+    interface ExoTrack : Track {
         val trackGroup: TrackGroup
         val format: Format
     }
