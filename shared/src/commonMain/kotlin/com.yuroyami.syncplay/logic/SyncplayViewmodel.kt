@@ -69,6 +69,11 @@ class SyncplayViewmodel: ViewModel() {
     val snackManager: SnackManager by lazy { SnackManager(this) }
 
     /*** Other */
+
+    /** Not to be confused with the protocol's ping. This is the result of the periodic
+     * ICMP pinging which will be shown on the top-center of the room.
+     * There are devices who don't support this natively, like Android emulators.
+     */
     val ping = MutableStateFlow<Int?>(null)
 
     var setReadyDirectly = false

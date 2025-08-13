@@ -5,7 +5,6 @@ import com.yuroyami.syncplay.logic.AbstractManager
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
 import com.yuroyami.syncplay.logic.datastore.valueSuspendingly
-import com.yuroyami.syncplay.logic.player.BasePlayer
 import com.yuroyami.syncplay.logic.protocol.PacketCreator
 import com.yuroyami.syncplay.models.Message
 import com.yuroyami.syncplay.utils.platformCallback
@@ -16,9 +15,6 @@ import kotlinx.coroutines.withContext
 class RoomActionManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel) {
 
     val sender = viewmodel.networkManager
-
-    val player: BasePlayer?
-        get() = viewmodel.playerManager.player
 
     fun sendPlayback(play: Boolean) {
         if (viewmodel.isSoloMode) return
@@ -35,13 +31,13 @@ class RoomActionManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmode
     fun sendSeek(newPosMs: Long) {
         if (viewmodel.isSoloMode) return
 
-        player?.playerScopeMain?.launch {
+        viewmodel.player?.playerScopeMain?.launch {
             sender.send<PacketCreator.State> {
                 serverTime = null
                 doSeek = true
                 position = newPosMs / 1000L
                 changeState = 1
-                this.play = player!!.isPlaying() == true
+                this.play = viewmodel.player!!.isPlaying() == true
             }
         }
     }
@@ -59,23 +55,23 @@ class RoomActionManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmode
     fun pausePlayback() {
         if (viewmodel.lifecycleManager.isInBackground) return
 
-        player?.pause()
+        viewmodel.player?.pause()
         platformCallback.onPlayback(true)
     }
 
     /** This resumes playback on the main thread, and hides system UI **/
     fun playPlayback() {
         if (viewmodel.lifecycleManager.isInBackground) return
-        player?.play()
+        viewmodel.player?.play()
         platformCallback.onPlayback(false)
     }
 
     fun seekBckwd() {
-        player?.playerScopeIO?.launch {
+        viewmodel.player?.playerScopeIO?.launch {
             val dec = valueSuspendingly(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP, 10)
 
             val currentMs =
-                withContext(Dispatchers.Main) { player!!.currentPositionMs() }
+                withContext(Dispatchers.Main) { viewmodel.player!!.currentPositionMs() }
             var newPos = ((currentMs) - (dec * 1000L)).coerceIn(
                 0, viewmodel.playerManager.media.value?.fileDuration?.toLong()?.times(1000L) ?: 0
             )
@@ -85,7 +81,7 @@ class RoomActionManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmode
             }
 
             sendSeek(newPos)
-            player?.seekTo(newPos)
+            viewmodel.player?.seekTo(newPos)
 
             if (viewmodel.isSoloMode) {
                 viewmodel.seeks.add(Pair(currentMs, newPos * 1000))
@@ -94,18 +90,18 @@ class RoomActionManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmode
     }
 
     fun seekFrwrd() {
-        player?.playerScopeIO?.launch {
+        viewmodel.player?.playerScopeIO?.launch {
             val inc = valueSuspendingly(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP, 10)
 
             val currentMs =
-                withContext(Dispatchers.Main) { player!!.currentPositionMs() }
+                withContext(Dispatchers.Main) { viewmodel.player!!.currentPositionMs() }
             val newPos = ((currentMs) + (inc * 1000L)).coerceIn(
                 0,
                 viewmodel.playerManager.media.value?.fileDuration?.toLong()?.times(1000L) ?: 0
             )
 
             sendSeek(newPos)
-            player?.seekTo(newPos)
+            viewmodel.player?.seekTo(newPos)
 
             if (viewmodel.isSoloMode) {
                 viewmodel.seeks.add(Pair((currentMs), newPos * 1000))

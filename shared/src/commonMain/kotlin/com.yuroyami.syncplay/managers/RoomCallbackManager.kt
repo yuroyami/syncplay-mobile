@@ -1,17 +1,15 @@
 package com.yuroyami.syncplay.managers
 
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.models.Constants
-import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
-import com.yuroyami.syncplay.logic.datastore.valueBlockingly
-import com.yuroyami.syncplay.utils.loggy
-import com.yuroyami.syncplay.utils.timeStamper
 import com.yuroyami.syncplay.logic.AbstractManager
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
 import com.yuroyami.syncplay.logic.datastore.valueBlockingly
 import com.yuroyami.syncplay.logic.protocol.PacketCreator
 import com.yuroyami.syncplay.logic.protocol.ProtocolCallback
+import com.yuroyami.syncplay.models.Constants
+import com.yuroyami.syncplay.utils.loggy
+import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
@@ -33,7 +31,6 @@ import syncplaymobile.shared.generated.resources.room_shared_playlist_updated
 import syncplaymobile.shared.generated.resources.room_tls_not_supported
 import syncplaymobile.shared.generated.resources.room_tls_supported
 import syncplaymobile.shared.generated.resources.room_you_joined_room
-import kotlin.text.iterator
 
 class RoomCallbackManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmodel), ProtocolCallback {
 
