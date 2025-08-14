@@ -1,0 +1,1 @@
+synchronize media playback (video/audio) on multiple devices
