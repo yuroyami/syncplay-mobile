@@ -94,7 +94,7 @@ kotlin {
             implementation(compose.foundation)
             //implementation(compose.material3)
             //noinspection UseTomlInstead
-            implementation("org.jetbrains.compose.material3:material3:1.9.0-alpha04") //Temporary to get android's m3 1.4.0 functionality until material3 is updated to 1.4.0 stable
+            implementation("org.jetbrains.compose.material3:material3:1.9.0-beta06") //Temporary to get android's m3 1.4.0 functionality until material3 is updated to 1.4.0 stable
             implementation(compose.materialIconsExtended)
             implementation(compose.components.resources)
 
@@ -117,9 +117,9 @@ kotlin {
             /* File opener/saver multiplatform */
             implementation(libs.filekit)
 
-
-            implementation("io.github.compose-fluent:fluent:v0.1.0")
-            implementation("io.github.compose-fluent:fluent-icons-extended:v0.1.0") // If you want to use full fluent icons.
+            /* Microsoft Fluent's Design System for Compose multplatform */
+            implementation(libs.fluent.designsystem)
+            implementation(libs.fluent.icons)
         }
 
         androidMain.dependencies {
@@ -192,7 +192,7 @@ android {
 
     defaultConfig {
         applicationId = if (forGPlay) "com.yuroyami.syncplay" else "com.reddnek.syncplay"
-        minSdk = 21
+        minSdk = 23
         targetSdk = 35 //TODO We only update to targetSdk 36 when we resolve the 16KB native libs alignment issue
         versionCode = 1_000_016_00_0 //1 XXX XXX XX X (last X is for prerelease versions such as RC)
         versionName = "0.16.0"

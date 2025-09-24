@@ -1,36 +1,37 @@
 [versions] #####################################################
 #KMM
-kotlin = "2.2.0"
-agp = "8.12.0-alpha05"
-kermit = "2.0.6"
-compose = "1.9.0-beta01"
-ktor  = "3.2.3"
-lifecycleViewmodelCompose = "2.9.1"
-navigationCompose = "2.9.0-beta04"
+kotlin = "2.2.20"
+agp = "8.13.0" #"9.0.0-alpha05"
+kermit = "2.0.8"
+compose = "1.9.0"
+ktor  = "3.3.0"
+lifecycleViewmodelCompose = "2.9.4"
+navigationCompose = "2.9.0"
 koroutines = "1.10.2"
 datetime = "0.7.1"
 kSerialization = "1.9.0"
-ksp = "2.2.0-2.0.2"
-krypto = "0.7.0"
-datastore = "1.2.0-alpha02"
-filekit = "0.10.0"
+ksp = "2.2.20-2.0.3"
+krypto = "0.8.0"
+datastore = "1.1.7"
+filekit = "0.11.0"
 kolorpicker = "1.0.0"
-skie = "0.10.5"
+skie = "0.10.6"
 uriKmp = "0.0.20"
-compose-unstyled = "1.40.0"
+compose-unstyled = "1.43.1"
+fluent-design-system = "v0.1.0"
 
 #Android
 coreSplashscreen = "1.1.0-rc01"
-activityCompose = "1.12.0-alpha05"
+activityCompose = "1.12.0-alpha08"
 documentfile = "1.1.0"
 shortcuts = "1.2.0-alpha01"
 appcompat = "1.7.1"
-coreKtx = "1.17.0-rc01"
+coreKtx = "1.17.0"
 desugaring = "2.1.5"
 media3 = "1.8.0"
 netty = "4.1.121.Final" #"4.2.1" requires API 26
 conscrypt = "2.5.3"
-libvlc-android = "4.0.0-eap20"
+libvlc-android = "4.0.0-eap22"
 
 #iOS
 libvlc-ios = "3.6.1b1"
@@ -54,6 +55,8 @@ filekit = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref =
 kolorpicker = { module = "com.kborowy:kolor-picker", version.ref = "kolorpicker" }
 uriKmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
 compose-unstyled = { module = "com.composables:core", version.ref = "compose-unstyled"}
+fluent-designsystem = { module = "io.github.compose-fluent:fluent", version.ref = "fluent-design-system" }
+fluent-icons = { module = "io.github.compose-fluent:fluent-icons-extended", version.ref = "fluent-design-system" }
 
 #Android
 kotlin-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "koroutines" }
