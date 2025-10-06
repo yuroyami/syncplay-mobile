@@ -29,6 +29,7 @@ import platform.Foundation.dataUsingEncoding
 import platform.Foundation.stringWithContentsOfURL
 import platform.Foundation.stringWithString
 import platform.Foundation.writeToURL
+import platform.posix.index
 
 @OptIn(BetaInteropApi::class)
 actual suspend fun SharedPlaylistManager.addFolderToPlaylist(uri: String) {
@@ -88,7 +89,7 @@ actual suspend fun SharedPlaylistManager.addFolderToPlaylist(uri: String) {
 }
 
 @OptIn(BetaInteropApi::class)
-actual fun iterateDirectory(uri: String, target: String, onFileFound: (String) -> Unit) {
+actual suspend fun iterateDirectory(uri: String, target: String, onFileFound: suspend (String) -> Unit) {
     val data = userDefaults().dataForKey(uri) ?: return
 
     val resolvedUrl = NSURL.URLByResolvingBookmarkData(

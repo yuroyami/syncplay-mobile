@@ -52,6 +52,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
+import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Paletting
 import com.yuroyami.syncplay.ui.theme.Paletting.ROOM_ICON_SIZE
@@ -90,7 +91,9 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
     val videoPicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = CommonUtils.vidExs)) { file ->
         file?.path?.let {
             loggy(it)
-            viewmodel.player?.injectVideo(it, false)
+            viewmodel.viewModelScope.launch {
+                viewmodel.player?.injectVideo(it, false)
+            }
         }
     }
 
@@ -308,7 +311,9 @@ fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
                     visibilityState.value = false
 
                     if (url.value.trim().isNotBlank()) {
-                        viewmodel.player?.injectVideo(url.value.trim(), isUrl = true)
+                        viewmodel.viewModelScope.launch {
+                            viewmodel.player?.injectVideo(url.value.trim(), isUrl = true)
+                        }
                     }
 
                 },

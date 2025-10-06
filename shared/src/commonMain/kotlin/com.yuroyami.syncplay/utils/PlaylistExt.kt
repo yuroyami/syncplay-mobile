@@ -4,7 +4,7 @@ import com.yuroyami.syncplay.managers.SharedPlaylistManager
 
 expect suspend fun SharedPlaylistManager.addFolderToPlaylist(uri: String)
 
-expect fun iterateDirectory(uri: String, target: String, onFileFound: (String) -> Unit)
+expect suspend fun iterateDirectory(uri: String, target: String, onFileFound: suspend (String) -> Unit)
 
 /** Saves the playlist as a plain text file (.txt) to the designated folder with a timestamp of the current time
  * @param toFolderUri The uri of the save folder */

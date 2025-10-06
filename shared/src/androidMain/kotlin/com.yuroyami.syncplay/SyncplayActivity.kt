@@ -239,6 +239,7 @@ class SyncplayActivity : ComponentActivity() {
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun initiatePIPmode() {
         val isPipAllowed = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
 

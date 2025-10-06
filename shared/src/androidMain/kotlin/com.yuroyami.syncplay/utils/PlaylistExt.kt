@@ -55,7 +55,7 @@ fun SharedPlaylistManager.iterateDirectory(dir: DocumentFile, onFileDetected: (S
     }
 }
 
-actual fun iterateDirectory(uri: String, target: String, onFileFound: (String) -> Unit) {
+actual suspend fun iterateDirectory(uri: String, target: String, onFileFound: suspend (String) -> Unit) {
     /** Will NOT work if Uri hasn't been declared persistent upon retrieving it */
     val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
         uri.toUri(),
@@ -72,7 +72,7 @@ actual fun iterateDirectory(uri: String, target: String, onFileFound: (String) -
     for (file in files) {
         loggy("Iterating: ${file.name}")
 
-        val stuff = fun (filename: String) {
+        suspend fun stuff(filename: String) {
             if (filename == target) {
                 onFileFound.invoke((tree.findFile(filename)?.uri).toString())
             }

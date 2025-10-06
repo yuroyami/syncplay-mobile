@@ -18,6 +18,7 @@ interface ContextObtainer {
 }
 lateinit var contextObtainer: ContextObtainer
 
+@Suppress("DEPRECATION")
 fun Context.changeLanguage(lang: String): Context {
     val locale = Locale(lang)
     Locale.setDefault(locale)

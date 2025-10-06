@@ -62,7 +62,7 @@ class SharedPlaylistManager(viewmodel: SyncplayViewmodel): AbstractManager(viewm
     /** Adding a file to the playlist: This basically adds one file name to the playlist, then,
      * adds the parent directory to the known media directories, after that, it informs the server
      * about it. The server will send back the new playlist which will invoke playlist updating */
-    fun addFiles(uris: List<String>) {
+    suspend fun addFiles(uris: List<String>) {
         for (uri in uris) {
             /* We get the file name */
             val filename = getFileName(uri) ?: return

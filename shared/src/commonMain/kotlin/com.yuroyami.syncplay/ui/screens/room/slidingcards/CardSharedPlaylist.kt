@@ -68,6 +68,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
+import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.ui.popups.PopupMediaDirs.MediaDirsPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Paletting
@@ -124,7 +125,9 @@ object CardSharedPlaylist {
         ) { files ->
             if (files?.isEmpty() == true || files == null) return@rememberFilePickerLauncher
 
-            playlist.addFiles(files.map { it.path })
+            viewmodel.viewModelScope.launch(Dispatchers.IO) {
+                playlist.addFiles(files.map { it.path })
+            }
         }
 
         val mediaDirectoryPicker =rememberDirectoryPickerLauncher(
