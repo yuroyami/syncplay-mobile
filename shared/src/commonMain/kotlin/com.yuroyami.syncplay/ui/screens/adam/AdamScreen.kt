@@ -22,6 +22,7 @@ import com.yuroyami.syncplay.ui.screens.room.RoomScreenUI
 import com.yuroyami.syncplay.ui.screens.room.tabs.CardController
 import com.yuroyami.syncplay.ui.theme.AppTheme
 import com.yuroyami.syncplay.ui.utils.messagePalette
+import io.github.composefluent.FluentTheme
 
 /******
  * This is called the AdamScreen mainly because it is the root/parent composable.

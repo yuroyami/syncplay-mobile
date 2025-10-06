@@ -118,8 +118,8 @@ kotlin {
             implementation(libs.filekit)
 
             /* Microsoft Fluent's Design System for Compose multiplatform */
-            implementation(libs.fluent.designsystem)
-            implementation(libs.fluent.icons)
+            //implementation(libs.fluent.designsystem) //Still immature to fully customize it
+            //implementation(libs.fluent.icons)
         }
 
         androidMain.dependencies {
