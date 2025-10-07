@@ -54,8 +54,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.ui.theme.Paletting
-import com.yuroyami.syncplay.ui.theme.Paletting.ROOM_ICON_SIZE
+import com.yuroyami.syncplay.ui.theme.Theming
+import com.yuroyami.syncplay.ui.theme.Theming.ROOM_ICON_SIZE
 import com.yuroyami.syncplay.ui.utils.FancyIcon2
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.SyncplayPopup
@@ -113,7 +113,7 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
             shadowElevation = 0.dp,
             border = BorderStroke(
                 width = 1.dp,
-                brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
+                brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map {
                     it.copy(alpha = 0.5f)
                 })
             ),
@@ -200,7 +200,7 @@ fun AddVideoButton(modifier: Modifier, expanded: Boolean, onClick: () -> Unit) {
         Surface(
             modifier = modifier.width(150.dp).height(48.dp),
             shape = RoundedCornerShape(24.dp),
-            border = BorderStroke(1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+            border = BorderStroke(1.dp, brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
             onClick = onClick,
             contentColor = Color.DarkGray.copy(0.5f)
         ) {
@@ -293,7 +293,7 @@ fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
                 onValueChange = { url.value = it },
                 textStyle = TextStyle(
                     brush = Brush.Companion.linearGradient(
-                        colors = Paletting.SP_GRADIENT
+                        colors = Theming.SP_GRADIENT
                     ),
                     fontFamily = FontFamily(getRegularFont()),
                     fontSize = 16.sp,

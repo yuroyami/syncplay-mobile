@@ -105,6 +105,9 @@ kotlin {
             /* ComposableHorizons' unstyled composables for more granularly-controlled components */
             implementation(libs.compose.unstyled)
 
+            /* MaterialKolor generates Material3 themes from seed colors */
+            implementation(libs.materialKolor)
+
             /* Helps with color calculations for color preferences */
             implementation(libs.kolorpicker)
 

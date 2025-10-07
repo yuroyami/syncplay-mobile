@@ -70,8 +70,8 @@ import androidx.compose.ui.window.DialogProperties
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
 import com.yuroyami.syncplay.logic.datastore.valueAsState
 import com.yuroyami.syncplay.models.MessagePalette
-import com.yuroyami.syncplay.ui.theme.Paletting
-import com.yuroyami.syncplay.ui.theme.Paletting.backgroundGradient
+import com.yuroyami.syncplay.ui.theme.Theming
+import com.yuroyami.syncplay.ui.theme.Theming.backgroundGradient
 import org.jetbrains.compose.resources.Font
 import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Helvetica_Regular
@@ -96,9 +96,9 @@ fun SyncplayishText(
     modifier: Modifier = Modifier,
     string: String,
     size: Float,
-    colorStops: List<Color> = Paletting.SP_GRADIENT,
-    stroke: Color = Paletting.SP_PALE,
-    shadow: Color = Paletting.SP_INTENSE_PINK,
+    colorStops: List<Color> = Theming.SP_GRADIENT,
+    stroke: Color = Theming.SP_PALE,
+    shadow: Color = Theming.SP_INTENSE_PINK,
     textAlign: TextAlign = TextAlign.Start,
 ) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
@@ -143,7 +143,7 @@ fun SyncplayishText(
 @Composable
 fun FancyIcon2(
     modifier: Modifier = Modifier,
-    icon: ImageVector, size: Int = Paletting.ROOM_ICON_SIZE, shadowColor: Color = Color.Gray,
+    icon: ImageVector, size: Int = Theming.ROOM_ICON_SIZE, shadowColor: Color = Color.Gray,
     onClick: () -> Unit = {},
 ) {
     IconButton(
@@ -185,9 +185,9 @@ fun FancyIcon2(
 fun SmartFancyIcon(
     modifier: Modifier = Modifier,
     icon: ImageVector,
-    size: Int = Paletting.ROOM_ICON_SIZE,
+    size: Int = Theming.ROOM_ICON_SIZE,
     tintColors: List<Color> = listOf(MaterialTheme.colorScheme.primary),
-    shadowColors: List<Color> = Paletting.SP_GRADIENT,
+    shadowColors: List<Color> = Theming.SP_GRADIENT,
     shadowOffset: Pair<Int, Int> = Pair(1, 1),
     alpha: Float = 0.95f,
     onClick: () -> Unit = {},
@@ -483,7 +483,7 @@ fun FancyText2(
             text = string,
             style = TextStyle(
                 brush = Brush.linearGradient(
-                    colors = Paletting.SP_GRADIENT
+                    colors = Theming.SP_GRADIENT
                 ),
                 textAlign = TextAlign.Center,
                 fontFamily = font?.let { FontFamily(it) } ?: FontFamily.Default,
@@ -530,7 +530,7 @@ fun MultiChoiceDialog(
                         Text(
                             text = title,
                             style = TextStyle(
-                                brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT),
+                                brush = Brush.linearGradient(colors = Theming.SP_GRADIENT),
                                 shadow = Shadow(offset = Offset(0f, 0f), blurRadius = 1f),
                                 fontFamily = FontFamily(Font(Res.font.Directive4_Regular)),
                                 fontSize = (15.6).sp
@@ -554,7 +554,7 @@ fun MultiChoiceDialog(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             modifier = Modifier.clickable(
                                 interactionSource = remember { MutableInteractionSource() },
-                                indication = ripple(bounded = true, color = Paletting.SP_ORANGE)
+                                indication = ripple(bounded = true, color = Theming.SP_ORANGE)
                             ) {
                                 onItemClick(item)
                                 onDismiss()
@@ -581,7 +581,7 @@ fun MultiChoiceDialog(
 }
 
 /** Adds a gradient overlay on the composable (Syncplay gradient by default) */
-fun Modifier.gradientOverlay(colors: List<Color> = Paletting.SP_GRADIENT): Modifier {
+fun Modifier.gradientOverlay(colors: List<Color> = Theming.SP_GRADIENT): Modifier {
     return this
         .graphicsLayer(alpha = 0.99f)
         .drawWithCache {
@@ -660,7 +660,7 @@ fun SyncplayPopup(
                     ), //Safe margin to prevent popup from covering all the screen
                 shape = RoundedCornerShape(size = cardCornerRadius.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                border = BorderStroke(width = strokeWidth.dp, brush = Brush.linearGradient(Paletting.SP_GRADIENT))
+                border = BorderStroke(width = strokeWidth.dp, brush = Brush.linearGradient(Theming.SP_GRADIENT))
             ) {
                 content()
             }
@@ -698,12 +698,12 @@ fun FreeAnimatedVisibility(
 
 val messagePalette: State<MessagePalette>
     @Composable get() {
-        val colorTimestamp = DataStoreKeys.PREF_INROOM_COLOR_TIMESTAMP.valueAsState(Paletting.MSG_TIMESTAMP.toArgb())
-        val colorSelftag = DataStoreKeys.PREF_INROOM_COLOR_SELFTAG.valueAsState(Paletting.MSG_SELF_TAG.toArgb())
-        val colorFriendtag = DataStoreKeys.PREF_INROOM_COLOR_FRIENDTAG.valueAsState(Paletting.MSG_FRIEND_TAG.toArgb())
-        val colorSystem = DataStoreKeys.PREF_INROOM_COLOR_SYSTEMMSG.valueAsState(Paletting.MSG_SYSTEM.toArgb())
-        val colorUserchat = DataStoreKeys.PREF_INROOM_COLOR_USERMSG.valueAsState(Paletting.MSG_CHAT.toArgb())
-        val colorError = DataStoreKeys.PREF_INROOM_COLOR_ERRORMSG.valueAsState(Paletting.MSG_ERROR.toArgb())
+        val colorTimestamp = DataStoreKeys.PREF_INROOM_COLOR_TIMESTAMP.valueAsState(Theming.MSG_TIMESTAMP.toArgb())
+        val colorSelftag = DataStoreKeys.PREF_INROOM_COLOR_SELFTAG.valueAsState(Theming.MSG_SELF_TAG.toArgb())
+        val colorFriendtag = DataStoreKeys.PREF_INROOM_COLOR_FRIENDTAG.valueAsState(Theming.MSG_FRIEND_TAG.toArgb())
+        val colorSystem = DataStoreKeys.PREF_INROOM_COLOR_SYSTEMMSG.valueAsState(Theming.MSG_SYSTEM.toArgb())
+        val colorUserchat = DataStoreKeys.PREF_INROOM_COLOR_USERMSG.valueAsState(Theming.MSG_CHAT.toArgb())
+        val colorError = DataStoreKeys.PREF_INROOM_COLOR_ERRORMSG.valueAsState(Theming.MSG_ERROR.toArgb())
         val msgIncludeTimestamp = DataStoreKeys.PREF_INROOM_MSG_ACTIVATE_STAMP.valueAsState(true)
 
         return derivedStateOf {

@@ -71,7 +71,7 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.ui.popups.PopupMediaDirs.MediaDirsPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.ui.theme.Paletting
+import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.FancyIcon2
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.SyncplayPopup
@@ -160,7 +160,7 @@ object CardSharedPlaylist {
         /* Now to the actual content in the card */
         Card(
             shape = RoundedCornerShape(8.dp),
-            border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+            border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.5f)),
         ) {
             Column(modifier = Modifier.fillMaxSize(),
@@ -192,7 +192,7 @@ object CardSharedPlaylist {
                                 .padding(horizontal = 5.dp)
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
-                                    indication = ripple(color = Paletting.SP_ORANGE)
+                                    indication = ripple(color = Theming.SP_ORANGE)
                                 ) { itempopup.value = true },
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -274,7 +274,7 @@ object CardSharedPlaylist {
 
                     /* Button to add file to Shared Playlist */
                     FancyIcon2(
-                        icon = Icons.AutoMirrored.Filled.NoteAdd, size = Paletting.ROOM_ICON_SIZE, shadowColor = Color.Black,
+                        icon = Icons.AutoMirrored.Filled.NoteAdd, size = Theming.ROOM_ICON_SIZE, shadowColor = Color.Black,
                         onClick = {
                             mediaFilePicker.launch()
                         }
@@ -282,7 +282,7 @@ object CardSharedPlaylist {
 
                     /* Button to add link to Shared Playlist */
                     FancyIcon2(
-                        icon = Icons.Filled.AddLink, size = Paletting.ROOM_ICON_SIZE, shadowColor = Color.Black,
+                        icon = Icons.Filled.AddLink, size = Theming.ROOM_ICON_SIZE, shadowColor = Color.Black,
                         onClick = {
                             addUrlsPopupState.value = true
                         }
@@ -290,7 +290,7 @@ object CardSharedPlaylist {
 
                     /* Button to add folder to Shared Playlist */
                     FancyIcon2(
-                        icon = Icons.Filled.CreateNewFolder, size = Paletting.ROOM_ICON_SIZE, shadowColor = Color.Black,
+                        icon = Icons.Filled.CreateNewFolder, size = Theming.ROOM_ICON_SIZE, shadowColor = Color.Black,
                         onClick = {
                             mediaDirectoryPicker.launch()
                         }
@@ -301,7 +301,7 @@ object CardSharedPlaylist {
                         val sharedplaylistOverflowState = remember { mutableStateOf(false) }
 
                         FancyIcon2(
-                            icon = Icons.Filled.MoreVert, size = Paletting.ROOM_ICON_SIZE, shadowColor = Color.Black,
+                            icon = Icons.Filled.MoreVert, size = Theming.ROOM_ICON_SIZE, shadowColor = Color.Black,
                             onClick = {
                                 sharedplaylistOverflowState.value = !sharedplaylistOverflowState.value
                             }
@@ -572,7 +572,7 @@ object CardSharedPlaylist {
                     onValueChange = { urls.value = it },
                     textStyle = TextStyle(
                         brush = Brush.linearGradient(
-                            colors = Paletting.SP_GRADIENT
+                            colors = Theming.SP_GRADIENT
                         ),
                         fontFamily = FontFamily(getRegularFont()),
                         fontSize = 16.sp,

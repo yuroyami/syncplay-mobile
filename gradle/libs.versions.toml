@@ -19,6 +19,7 @@ skie = "0.10.6"
 uriKmp = "0.0.21"
 compose-unstyled = "1.45.0"
 fluent-design-system = "v0.1.0"
+materialkolor = "3.0.1"
 
 #Android
 coreSplashscreen = "1.1.0-rc01"
@@ -55,6 +56,7 @@ filekit = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref =
 kolorpicker = { module = "com.kborowy:kolor-picker", version.ref = "kolorpicker" }
 uriKmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
 compose-unstyled = { module = "com.composables:core", version.ref = "compose-unstyled"}
+materialKolor = { module = "com.materialkolor:material-kolor", version.ref = "materialkolor" }
 fluent-designsystem = { module = "io.github.compose-fluent:fluent", version.ref = "fluent-design-system" }
 fluent-icons = { module = "io.github.compose-fluent:fluent-icons-extended", version.ref = "fluent-design-system" }
 

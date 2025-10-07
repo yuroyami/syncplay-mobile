@@ -44,7 +44,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.ui.screens.adam.LocalSettingStyling
-import com.yuroyami.syncplay.ui.theme.Paletting
+import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.getRegularFont
 import com.yuroyami.syncplay.ui.utils.gradientOverlay
@@ -163,14 +163,14 @@ object SettingsUI {
             Card(
                 modifier = Modifier.width(cardSize.dp).aspectRatio(1f).clickable(
                     interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(color = Paletting.SP_ORANGE)
+                    indication = ripple(color = Theming.SP_ORANGE)
 
                 ) {
                     onClick()
                 },
                 shape = RoundedCornerShape(8.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Paletting.SP_GRADIENT[index % 3].copy(0.1f)
+                    containerColor = Theming.SP_GRADIENT[index % 3].copy(0.1f)
                 ),
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
@@ -205,9 +205,9 @@ object SettingsUI {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth().clip(shape = RoundedCornerShape(8.dp))
-                .background(Paletting.SP_GRADIENT[index % 3].copy(0.1f)).clickable(
+                .background(Theming.SP_GRADIENT[index % 3].copy(0.1f)).clickable(
                     interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(color = Paletting.SP_ORANGE)
+                    indication = ripple(color = Theming.SP_ORANGE)
 
                 ) {
                     onClick()

@@ -15,8 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.ui.theme.Paletting
-import com.yuroyami.syncplay.ui.theme.Paletting.ROOM_ICON_SIZE
+import com.yuroyami.syncplay.ui.theme.Theming
+import com.yuroyami.syncplay.ui.theme.Theming.ROOM_ICON_SIZE
 import com.yuroyami.syncplay.ui.utils.FancyIcon2
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -31,9 +31,9 @@ fun RoomPlayButton(modifier: Modifier) {
     val playing = remember { viewmodel.playerManager.isNowPlaying }
     val animatedColor by animateColorAsState(
         animationSpec = tween(500),
-        targetValue = if (playing.value) Paletting.SP_GRADIENT.last()
+        targetValue = if (playing.value) Theming.SP_GRADIENT.last()
             .copy(alpha = 0.1f)
-        else Paletting.SP_GRADIENT.first().copy(alpha = 0.1f)
+        else Theming.SP_GRADIENT.first().copy(alpha = 0.1f)
     )
     if (hasVideo) {
         FancyIcon2(

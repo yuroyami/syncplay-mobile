@@ -4,7 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-object Paletting {
+object Theming {
 
     /** Main Syncplay Colors, found in logo */
     val SP_YELLOW = Color(255, 198, 4)
@@ -62,7 +62,6 @@ object Paletting {
     const val USER_INFO_IC_SIZE = 16
     const val USER_INFO_TXT_SIZE = 10
 
-
     val backgroundGradient: List<Color>
     @Composable get() = listOf(
             MaterialTheme.colorScheme.background,
@@ -70,8 +69,4 @@ object Paletting {
             MaterialTheme.colorScheme.background
         )
 
-    @Composable
-    fun isInDarkMode(): Boolean {
-        return MaterialTheme.colorScheme.primary == md_theme_dark_primary
-    }
 }

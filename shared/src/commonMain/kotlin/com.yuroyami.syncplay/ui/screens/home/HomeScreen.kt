@@ -101,7 +101,6 @@ fun HomeScreenUI() {
 
     /* Using a Scaffold manages our top-level layout */
     Scaffold(
-        containerColor = Color.Transparent,
         snackbarHost = { SnackbarHost(viewmodel.snackManager.snack) },
         topBar = {
             HomeTopBar()

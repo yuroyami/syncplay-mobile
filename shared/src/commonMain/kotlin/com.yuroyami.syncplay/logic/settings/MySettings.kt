@@ -39,7 +39,6 @@ import androidx.datastore.preferences.core.edit
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.CATEG_GLOBAL_GENERAL
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.CATEG_GLOBAL_ADVANCED
-import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.CATEG_GLOBAL_GENERAL
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.CATEG_GLOBAL_LANG
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.CATEG_GLOBAL_NETWORK
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.CATEG_GLOBAL_SYNCING
@@ -78,7 +77,7 @@ import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_TLS_ENABLE
 import com.yuroyami.syncplay.logic.datastore.datastore
 import com.yuroyami.syncplay.ui.popups.PopupMediaDirs.MediaDirsPopup
-import com.yuroyami.syncplay.ui.theme.Paletting
+import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.utils.CommonUtils.langMap
 import com.yuroyami.syncplay.utils.PLATFORM
 import com.yuroyami.syncplay.utils.platform
@@ -181,20 +180,20 @@ typealias ExtraSettingBundle = Pair<SettingCategory, SettingSet>
 
 /* Styles */
 val settingGLOBALstyle = SettingStyling(
-    titleFilling = listOf(Paletting.OLD_SP_YELLOW),
-    titleShadow = Paletting.SP_GRADIENT,
+    titleFilling = listOf(Theming.OLD_SP_YELLOW),
+    titleShadow = Theming.SP_GRADIENT,
     iconSize = 32f,
-    iconTints = listOf(Paletting.OLD_SP_YELLOW),
-    iconShadows = Paletting.SP_GRADIENT
+    iconTints = listOf(Theming.OLD_SP_YELLOW),
+    iconShadows = Theming.SP_GRADIENT
 )
 
 val settingROOMstyle = SettingStyling(
-    titleFilling = listOf(Paletting.OLD_SP_YELLOW),
-    titleShadow = Paletting.SP_GRADIENT,
+    titleFilling = listOf(Theming.OLD_SP_YELLOW),
+    titleShadow = Theming.SP_GRADIENT,
     titleSize = 11f,
     summarySize = 8f,
-    iconTints = listOf(Paletting.OLD_SP_YELLOW),
-    iconShadows = Paletting.SP_GRADIENT
+    iconTints = listOf(Theming.OLD_SP_YELLOW),
+    iconShadows = Theming.SP_GRADIENT
 )
 
 val SETTINGS_GLOBAL: SettingCollection by lazy {
@@ -433,7 +432,7 @@ val SETTINGS_ROOM: SettingCollection = buildMap {
                 key = PREF_INROOM_COLOR_TIMESTAMP,
                 title = Res.string.uisetting_timestamp_color_title,
                 summary = Res.string.uisetting_timestamp_summary,
-                defaultValue = Paletting.MSG_TIMESTAMP.toArgb(),
+                defaultValue = Theming.MSG_TIMESTAMP.toArgb(),
                 icon = Icons.Filled.Brush,
             ),
             Setting.ColorSetting(
@@ -441,21 +440,21 @@ val SETTINGS_ROOM: SettingCollection = buildMap {
                 key = PREF_INROOM_COLOR_SELFTAG,
                 title = Res.string.uisetting_self_color_title,
                 summary = Res.string.uisetting_self_color_summary,
-                defaultValue = Paletting.MSG_SELF_TAG.toArgb(),
+                defaultValue = Theming.MSG_SELF_TAG.toArgb(),
                 icon = Icons.Filled.Brush,
             ), Setting.ColorSetting(
                 type = SettingType.ColorSettingType,
                 key = PREF_INROOM_COLOR_FRIENDTAG,
                 title = Res.string.uisetting_friend_color_title,
                 summary = Res.string.uisetting_friend_color_summary,
-                defaultValue = Paletting.MSG_FRIEND_TAG.toArgb(),
+                defaultValue = Theming.MSG_FRIEND_TAG.toArgb(),
                 icon = Icons.Filled.Brush,
             ), Setting.ColorSetting(
                 type = SettingType.ColorSettingType,
                 key = PREF_INROOM_COLOR_SYSTEMMSG,
                 title = Res.string.uisetting_system_color_title,
                 summary = Res.string.uisetting_system_color_summary,
-                defaultValue = Paletting.MSG_SYSTEM.toArgb(),
+                defaultValue = Theming.MSG_SYSTEM.toArgb(),
                 icon = Icons.Filled.Brush,
             ),
             Setting.ColorSetting(
@@ -463,14 +462,14 @@ val SETTINGS_ROOM: SettingCollection = buildMap {
                 key = PREF_INROOM_COLOR_USERMSG,
                 title = Res.string.uisetting_human_color_title,
                 summary = Res.string.uisetting_human_color_summary,
-                defaultValue = Paletting.MSG_CHAT.toArgb(),
+                defaultValue = Theming.MSG_CHAT.toArgb(),
                 icon = Icons.Filled.Brush,
             ), Setting.ColorSetting(
                 type = SettingType.ColorSettingType,
                 key = PREF_INROOM_COLOR_ERRORMSG,
                 title = Res.string.uisetting_error_color_title,
                 summary = Res.string.uisetting_error_color_summary,
-                defaultValue = Paletting.MSG_ERROR.toArgb(),
+                defaultValue = Theming.MSG_ERROR.toArgb(),
                 icon = Icons.Filled.Brush,
             )
         )

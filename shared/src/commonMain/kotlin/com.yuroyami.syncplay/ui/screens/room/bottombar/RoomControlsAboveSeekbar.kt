@@ -27,8 +27,8 @@ import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_INROOM_PLAYER_CU
 import com.yuroyami.syncplay.logic.datastore.valueAsState
 import com.yuroyami.syncplay.logic.datastore.valueFlow
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.ui.theme.Paletting
-import com.yuroyami.syncplay.ui.theme.Paletting.ROOM_ICON_SIZE
+import com.yuroyami.syncplay.ui.theme.Theming
+import com.yuroyami.syncplay.ui.theme.Theming.ROOM_ICON_SIZE
 import com.yuroyami.syncplay.ui.utils.FancyIcon2
 import com.yuroyami.syncplay.ui.utils.gradientOverlay
 import com.yuroyami.syncplay.utils.timeStamper
@@ -74,7 +74,7 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
             }
             TextButton(
                 modifier = Modifier.gradientOverlay().background(
-                    brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
+                    brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map {
                         it.copy(alpha = 0.1f)
                     }), shape = CircleShape
                 ),
@@ -115,7 +115,7 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
         if (viewmodel.media?.chapters?.isNotEmpty() == true) {
             TextButton(
                 modifier = Modifier.gradientOverlay().background(
-                    brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
+                    brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map {
                         it.copy(alpha = 0.1f)
                     }), shape = CircleShape
                 ), onClick = {

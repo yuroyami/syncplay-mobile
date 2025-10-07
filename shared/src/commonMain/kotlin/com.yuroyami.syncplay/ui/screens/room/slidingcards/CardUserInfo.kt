@@ -32,7 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.ui.theme.Paletting
+import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.gradientOverlay
 import com.yuroyami.syncplay.utils.timeStamper
@@ -52,7 +52,7 @@ object CardUserInfo {
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(8.dp),
-            border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+            border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.5f)),
         ) {
             FancyText2(
@@ -76,19 +76,19 @@ object CardUserInfo {
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         /* User's readiness icon */
                         Icon(
-                            modifier = Modifier.size(Paletting.USER_INFO_IC_SIZE.dp),
+                            modifier = Modifier.size(Theming.USER_INFO_IC_SIZE.dp),
                             imageVector = if (user.readiness) Icons.Filled.Check else Icons.Filled.Clear,
                             contentDescription = "",
                             tint = when (user.readiness) {
-                                true -> Paletting.ROOM_USER_READY_ICON
-                                false -> Paletting.ROOM_USER_UNREADY_ICON
+                                true -> Theming.ROOM_USER_READY_ICON
+                                false -> Theming.ROOM_USER_UNREADY_ICON
                             }
                         )
 
                         /* User's 'person' icon, it doesn't change. */
                         Icon(
                             modifier = Modifier
-                                .size(Paletting.USER_INFO_IC_SIZE.dp)
+                                .size(Theming.USER_INFO_IC_SIZE.dp)
                                 .gradientOverlay(),
                             imageVector = Icons.Filled.Person,
                             contentDescription = "",
@@ -101,9 +101,9 @@ object CardUserInfo {
                                 .padding(horizontal = 4.dp)
                                 .fillMaxWidth(),
                             text = user.name,
-                            lineHeight = (Paletting.USER_INFO_TXT_SIZE + 6).sp,
-                            fontSize = (Paletting.USER_INFO_TXT_SIZE + 2).sp,
-                            color = Paletting.OLD_SP_YELLOW,
+                            lineHeight = (Theming.USER_INFO_TXT_SIZE + 6).sp,
+                            fontSize = (Theming.USER_INFO_TXT_SIZE + 2).sp,
+                            color = Theming.OLD_SP_YELLOW,
                             fontWeight = if (user.name == viewmodel.session.currentUsername) FontWeight.W900 else FontWeight.W400
                         )
                     }
@@ -112,24 +112,24 @@ object CardUserInfo {
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
 
                         /* Small spacer to align texts together */
-                        Spacer(Modifier.width((Paletting.USER_INFO_IC_SIZE * 1.25).dp))
+                        Spacer(Modifier.width((Theming.USER_INFO_IC_SIZE * 1.25).dp))
 
                         /* Small arrow to indicate user's file name */
                         Icon(
                             modifier = Modifier
-                                .size(Paletting.USER_INFO_IC_SIZE.dp)
+                                .size(Theming.USER_INFO_IC_SIZE.dp)
                                 .gradientOverlay(),
                             imageVector = Icons.Filled.SubdirectoryArrowRight,
                             contentDescription = "",
-                            tint = Paletting.OLD_SP_YELLOW
+                            tint = Theming.OLD_SP_YELLOW
                         )
 
                         /* Actual filename */
                         Text(
                             modifier = Modifier.fillMaxWidth(),
-                            fontSize = Paletting.USER_INFO_TXT_SIZE.sp,
-                            lineHeight = (Paletting.USER_INFO_TXT_SIZE + 4).sp,
-                            color = Paletting.SP_CUTE_PINK,
+                            fontSize = Theming.USER_INFO_TXT_SIZE.sp,
+                            lineHeight = (Theming.USER_INFO_TXT_SIZE + 4).sp,
+                            color = Theming.SP_CUTE_PINK,
                             text = user.file?.fileName ?: stringResource(Res.string.room_details_nofileplayed),
                             fontWeight = FontWeight.W300
                         )
@@ -140,7 +140,7 @@ object CardUserInfo {
                         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
 
                             /* Small spacer to align texts together */
-                            Spacer(Modifier.width((Paletting.USER_INFO_IC_SIZE * 2.5).dp))
+                            Spacer(Modifier.width((Theming.USER_INFO_IC_SIZE * 2.5).dp))
 
                             /* File properties */
                             val fileSize = user.file?.fileSize?.toDoubleOrNull()?.div(1000000.0)?.toString() ?: "???"
@@ -150,9 +150,9 @@ object CardUserInfo {
                                     fileSize
                                 ),
                                 modifier = Modifier.fillMaxWidth(),
-                                fontSize = (Paletting.USER_INFO_TXT_SIZE - 2).sp,
+                                fontSize = (Theming.USER_INFO_TXT_SIZE - 2).sp,
                                 fontWeight = FontWeight.W300,
-                                color = Paletting.SP_CUTE_PINK, /* Paletting.ROOM_USER_PERSON_ICON */
+                                color = Theming.SP_CUTE_PINK, /* Paletting.ROOM_USER_PERSON_ICON */
                             )
                         }
                     }

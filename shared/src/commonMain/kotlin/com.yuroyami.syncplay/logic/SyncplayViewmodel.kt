@@ -17,6 +17,7 @@ import com.yuroyami.syncplay.managers.RoomCallbackManager
 import com.yuroyami.syncplay.managers.SessionManager
 import com.yuroyami.syncplay.managers.SharedPlaylistManager
 import com.yuroyami.syncplay.managers.SnackManager
+import com.yuroyami.syncplay.managers.ThemeManager
 import com.yuroyami.syncplay.managers.UIManager
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.JoinConfig
@@ -67,6 +68,9 @@ class SyncplayViewmodel: ViewModel() {
 
     /** Displays snack messages in home screen */
     val snackManager: SnackManager by lazy { SnackManager(this) }
+
+    /** Manages themes */
+    val themeManager: ThemeManager by lazy { ThemeManager(this) }
 
     /*** Other */
 

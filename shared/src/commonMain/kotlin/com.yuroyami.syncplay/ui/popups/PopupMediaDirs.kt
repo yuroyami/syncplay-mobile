@@ -63,7 +63,7 @@ import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
 import com.yuroyami.syncplay.logic.datastore.valueBlockingly
 import com.yuroyami.syncplay.logic.datastore.valueFlow
 import com.yuroyami.syncplay.logic.datastore.writeValue
-import com.yuroyami.syncplay.ui.theme.Paletting
+import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.SyncplayPopup
 import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLauncher
@@ -156,7 +156,7 @@ object PopupMediaDirs {
                                 Row(
                                     modifier = Modifier.fillMaxWidth().padding(4.dp).clickable(
                                             interactionSource = remember { MutableInteractionSource() },
-                                            indication = ripple(color = Paletting.OLD_SP_PINK)
+                                            indication = ripple(color = Theming.OLD_SP_PINK)
                                         ) { itemMenuState.value = true },
                                     verticalAlignment = CenterVertically
                                 ) {

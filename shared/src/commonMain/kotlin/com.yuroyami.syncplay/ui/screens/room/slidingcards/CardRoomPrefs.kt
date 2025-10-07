@@ -30,7 +30,7 @@ import com.yuroyami.syncplay.logic.settings.SettingCollection
 import com.yuroyami.syncplay.logic.settings.SettingsUI
 import com.yuroyami.syncplay.logic.settings.SettingsUI.SettingsGrid
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.ui.theme.Paletting
+import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.FancyIcon2
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import org.jetbrains.compose.resources.Font
@@ -59,7 +59,7 @@ object CardRoomPrefs {
         roomSettings?.let { settings ->
             Card(
                 shape = RoundedCornerShape(8.dp),
-                border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+                border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.5f)),
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {

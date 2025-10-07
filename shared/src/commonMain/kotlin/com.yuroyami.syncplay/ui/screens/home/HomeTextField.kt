@@ -22,7 +22,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.composeunstyled.TextInput
-import com.yuroyami.syncplay.ui.theme.Paletting.SP_GRADIENT
+import com.yuroyami.syncplay.ui.theme.Theming.SP_GRADIENT
 import com.composeunstyled.Icon as UnstyledIcon
 import com.composeunstyled.Text as UnstyledText
 import com.composeunstyled.TextField as UnstyledTextField

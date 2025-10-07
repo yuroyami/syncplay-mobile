@@ -41,7 +41,7 @@ import com.yuroyami.syncplay.ui.screens.adam.Screen
 import com.yuroyami.syncplay.ui.screens.adam.Screen.Companion.navigateTo
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.ui.theme.Paletting
+import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.FancyIcon2
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.syncplayFont
@@ -168,7 +168,7 @@ fun RoomTabSection(modifier: Modifier, onShowChatHistory: () -> Unit) {
                 shadowElevation = 0.dp,
                 border = BorderStroke(
                     width = 1.dp,
-                    brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
+                    brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map {
                         it.copy(alpha = 0.5f)
                     })
                 ),

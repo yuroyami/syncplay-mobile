@@ -55,7 +55,7 @@ import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_INROOM_MSG_SHADO
 import com.yuroyami.syncplay.logic.datastore.valueAsState
 import com.yuroyami.syncplay.ui.screens.adam.LocalChatPalette
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.ui.theme.Paletting
+import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.ChatAnnotatedText
 import com.yuroyami.syncplay.utils.CommonUtils.isEmoji
 import org.jetbrains.compose.resources.stringResource
@@ -84,7 +84,7 @@ fun ChatTextField(
     var msg by remember { mutableStateOf("") }
     val canSendWithKeyboardOK by PREF_INROOM_MSG_BOX_ACTION.valueAsState(true)
 
-    val gradientBrush = Brush.linearGradient(colors = Paletting.SP_GRADIENT)
+    val gradientBrush = Brush.linearGradient(colors = Theming.SP_GRADIENT)
 
     fun send() {
         val msgToSend = msg.replace("\\", "").take(149)
@@ -99,9 +99,9 @@ fun ChatTextField(
         singleLine = true,
         keyboardActions = KeyboardActions(onDone = { if (canSendWithKeyboardOK) send() }),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Paletting.SP_GRADIENT.first(),
-            unfocusedBorderColor = Paletting.SP_GRADIENT[1],
-            cursorColor = Paletting.SP_GRADIENT.last()
+            focusedBorderColor = Theming.SP_GRADIENT.first(),
+            unfocusedBorderColor = Theming.SP_GRADIENT[1],
+            cursorColor = Theming.SP_GRADIENT.last()
         ),
         label = {
             Text(

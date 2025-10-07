@@ -26,7 +26,7 @@ import com.yuroyami.syncplay.ui.screens.room.bottombar.RoomControlPanelCard
 import com.yuroyami.syncplay.ui.screens.room.slidingcards.CardRoomPrefs.InRoomSettingsCard
 import com.yuroyami.syncplay.ui.screens.room.slidingcards.CardSharedPlaylist.SharedPlaylistCard
 import com.yuroyami.syncplay.ui.screens.room.slidingcards.CardUserInfo.UserInfoCard
-import com.yuroyami.syncplay.ui.theme.Paletting
+import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.FreeAnimatedVisibility
 import com.yuroyami.syncplay.ui.utils.screenWidthPx
 
@@ -92,7 +92,7 @@ fun RoomSectionSlidingCards(modifier: Modifier) {
                 shape = RoundedCornerShape(8.dp),
                 border = BorderStroke(
                     width = 1.dp,
-                    brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT.map {
+                    brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map {
                         it.copy(alpha = 0.5f)
                     })
                 ),

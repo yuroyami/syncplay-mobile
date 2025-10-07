@@ -1,8 +1,10 @@
 package com.yuroyami.syncplay.ui.screens.adam
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -20,7 +22,6 @@ import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.ui.screens.home.HomeScreenUI
 import com.yuroyami.syncplay.ui.screens.room.RoomScreenUI
 import com.yuroyami.syncplay.ui.screens.room.tabs.CardController
-import com.yuroyami.syncplay.ui.theme.AppTheme
 import com.yuroyami.syncplay.ui.utils.messagePalette
 
 /******
@@ -35,7 +36,6 @@ val LocalScreen = compositionLocalOf<Screen> { error("No Screen provided") }
 val LocalSettingStyling = staticCompositionLocalOf<SettingStyling> { error("No Setting Styling provided") }
 val LocalChatPalette = compositionLocalOf<MessagePalette> { error("No Chat Palette provided") }
 val LocalCardController = compositionLocalOf<CardController> { error("No CardController provided yet") }
-
 
 @Composable
 fun AdamScreen(onViewmodelReady: (SyncplayViewmodel) -> Unit) {
@@ -53,7 +53,11 @@ fun AdamScreen(onViewmodelReady: (SyncplayViewmodel) -> Unit) {
         viewmodel.uiManager.nav = navigator
     }
 
-    AppTheme {
+    val currentTheme by viewmodel.themeManager.currentTheme.collectAsState()
+
+    MaterialTheme(
+        colorScheme = currentTheme.scheme
+    ) {
         CompositionLocalProvider(
             LocalViewmodel provides viewmodel,
             LocalNavigator provides navigator,

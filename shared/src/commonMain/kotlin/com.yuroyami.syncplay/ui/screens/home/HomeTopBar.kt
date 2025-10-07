@@ -61,8 +61,8 @@ import com.yuroyami.syncplay.logic.datastore.valueFlow
 import com.yuroyami.syncplay.logic.settings.SETTINGS_GLOBAL
 import com.yuroyami.syncplay.logic.settings.SettingsUI
 import com.yuroyami.syncplay.ui.screens.home.PopupAPropos.AProposPopup
-import com.yuroyami.syncplay.ui.theme.Paletting
-import com.yuroyami.syncplay.ui.theme.Paletting.SP_GRADIENT
+import com.yuroyami.syncplay.ui.theme.Theming
+import com.yuroyami.syncplay.ui.theme.Theming.SP_GRADIENT
 import com.yuroyami.syncplay.ui.theme.ThemeMenu
 import com.yuroyami.syncplay.ui.utils.SmartFancyIcon
 import org.jetbrains.compose.resources.Font
@@ -161,14 +161,14 @@ fun HomeTopBar() {
                                 modifier = Modifier.wrapContentWidth(),
                                 text = "Syncplay",
                                 style = TextStyle(
-                                    color = Paletting.SP_PALE,
+                                    color = Theming.SP_PALE,
                                     drawStyle = Stroke(
                                         miter = 10f,
                                         width = 2f,
                                         join = StrokeJoin.Round
                                     ),
                                     shadow = Shadow(
-                                        color = Paletting.SP_INTENSE_PINK,
+                                        color = Theming.SP_INTENSE_PINK,
                                         offset = Offset(0f, 10f),
                                         blurRadius = 5f
                                     ),

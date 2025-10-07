@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.composeunstyled.buildModifier
-import com.yuroyami.syncplay.ui.theme.Paletting
+import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.gradientOverlay
 
 @Composable
@@ -36,7 +36,7 @@ fun RoomTab(modifier: Modifier, icon: ImageVector, visibilityState: Boolean, onC
             )*/,
         shape = RoundedCornerShape(6.dp),
         border = BorderStroke(
-            width = 1.dp, brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT)
+            width = 1.dp, brush = Brush.linearGradient(colors = Theming.SP_GRADIENT)
         ).takeUnless { visibilityState },
         colors = CardDefaults.cardColors(containerColor = if (visibilityState) Color.Transparent else MaterialTheme.colorScheme.tertiaryContainer),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp),
@@ -47,7 +47,7 @@ fun RoomTab(modifier: Modifier, icon: ImageVector, visibilityState: Boolean, onC
                 .fillMaxSize()
                 .background(
                     brush = Brush.linearGradient(
-                        colors = if (visibilityState) Paletting.SP_GRADIENT else listOf(Color.Transparent, Color.Transparent)
+                        colors = if (visibilityState) Theming.SP_GRADIENT else listOf(Color.Transparent, Color.Transparent)
                     )
                 )
         ) {

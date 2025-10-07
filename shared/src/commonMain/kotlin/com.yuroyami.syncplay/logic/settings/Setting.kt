@@ -55,7 +55,7 @@ import com.yuroyami.syncplay.ui.utils.MultiChoiceDialog
 import com.yuroyami.syncplay.ui.utils.SmartFancyIcon
 import com.yuroyami.syncplay.ui.popups.PopupColorPicker.ColorPickingPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalSettingStyling
-import com.yuroyami.syncplay.ui.theme.Paletting
+import com.yuroyami.syncplay.ui.theme.Theming
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -115,7 +115,7 @@ sealed class Setting<T>(
                     .fillMaxWidth()
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = true, color = Paletting.SP_ORANGE)
+                        indication = ripple(bounded = true, color = Theming.SP_ORANGE)
                     ) {
                         onClick?.let { it() }
                     },
@@ -131,7 +131,7 @@ sealed class Setting<T>(
                             text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
-                            shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                            shadowColors = styling.titleShadow ?: Theming.SP_GRADIENT,
                             size = styling.titleSize,
                             font = styling.titleFont
                         )
@@ -190,7 +190,7 @@ sealed class Setting<T>(
                     .fillMaxWidth()
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = true, color = Paletting.SP_ORANGE)
+                        indication = ripple(bounded = true, color = Theming.SP_ORANGE)
                     ) {
                         dialog = true
                     },
@@ -207,7 +207,7 @@ sealed class Setting<T>(
                             text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
-                            shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                            shadowColors = styling.titleShadow ?: Theming.SP_GRADIENT,
                             size = styling.titleSize,
                             font = styling.titleFont
                         )
@@ -244,7 +244,7 @@ sealed class Setting<T>(
                     .fillMaxWidth()
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = true, color = Paletting.SP_ORANGE)
+                        indication = ripple(bounded = true, color = Theming.SP_ORANGE)
 
                     ) {
                         popupVisibility.value = true
@@ -264,7 +264,7 @@ sealed class Setting<T>(
                             text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
-                            shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                            shadowColors = styling.titleShadow ?: Theming.SP_GRADIENT,
                             size = styling.titleSize,
                             font = styling.titleFont
                         )
@@ -308,7 +308,7 @@ sealed class Setting<T>(
                     .fillMaxWidth()
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = true, color = Paletting.SP_ORANGE)
+                        indication = ripple(bounded = true, color = Theming.SP_ORANGE)
 
                     ) {
                         scope.launch {
@@ -353,7 +353,7 @@ sealed class Setting<T>(
                             text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
-                            shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                            shadowColors = styling.titleShadow ?: Theming.SP_GRADIENT,
                             size = styling.titleSize,
                             font = styling.titleFont
                         )
@@ -414,7 +414,7 @@ sealed class Setting<T>(
                     .fillMaxWidth()
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = true, color = Paletting.SP_ORANGE)
+                        indication = ripple(bounded = true, color = Theming.SP_ORANGE)
 
                     ) {
                         dialogOpen.value = true
@@ -431,7 +431,7 @@ sealed class Setting<T>(
                             text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
-                            shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                            shadowColors = styling.titleShadow ?: Theming.SP_GRADIENT,
                             size = styling.titleSize,
                             font = styling.titleFont
                         )
@@ -475,7 +475,7 @@ sealed class Setting<T>(
                     .fillMaxWidth()
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = true, color = Paletting.SP_ORANGE)
+                        indication = ripple(bounded = true, color = Theming.SP_ORANGE)
 
                     ) {},
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -491,7 +491,7 @@ sealed class Setting<T>(
                             text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
-                            shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                            shadowColors = styling.titleShadow ?: Theming.SP_GRADIENT,
                             size = styling.titleSize,
                             font = styling.titleFont
                         )
@@ -560,7 +560,7 @@ sealed class Setting<T>(
                     .fillMaxWidth()
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = true, color = Paletting.SP_ORANGE)
+                        indication = ripple(bounded = true, color = Theming.SP_ORANGE)
 
                     ) {
                         colorDialogState.value = true
@@ -577,7 +577,7 @@ sealed class Setting<T>(
                             text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
-                            shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                            shadowColors = styling.titleShadow ?: Theming.SP_GRADIENT,
                             size = styling.titleSize,
                             font = styling.titleFont
                         )
@@ -630,7 +630,7 @@ sealed class Setting<T>(
                     .fillMaxWidth()
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = true, color = Paletting.SP_ORANGE)
+                        indication = ripple(bounded = true, color = Theming.SP_ORANGE)
 
                     ) {
                         scope.launch {
@@ -650,7 +650,7 @@ sealed class Setting<T>(
                             text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
-                            shadowColors = styling.titleShadow ?: Paletting.SP_GRADIENT,
+                            shadowColors = styling.titleShadow ?: Theming.SP_GRADIENT,
                             size = styling.titleSize,
                             font = styling.titleFont
                         )

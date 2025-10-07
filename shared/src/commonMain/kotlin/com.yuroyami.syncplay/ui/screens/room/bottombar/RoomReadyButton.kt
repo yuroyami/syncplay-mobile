@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.logic.protocol.PacketCreator
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.ui.theme.Paletting
+import com.yuroyami.syncplay.ui.theme.Theming
 
 @Composable
 fun RoomReadyButton() {
@@ -55,10 +55,10 @@ fun RoomReadyButton() {
             when (ready) {
                 true -> Row(verticalAlignment = CenterVertically) {
                     Icon(
-                        modifier = Modifier.size(Paletting.USER_INFO_IC_SIZE.dp),
+                        modifier = Modifier.size(Theming.USER_INFO_IC_SIZE.dp),
                         imageVector = if (ready) Icons.Filled.Check else Icons.Filled.Clear,
                         contentDescription = "",
-                        tint = Paletting.ROOM_USER_READY_ICON
+                        tint = Theming.ROOM_USER_READY_ICON
 
 
                     )
@@ -70,10 +70,10 @@ fun RoomReadyButton() {
 
                 false -> Row(verticalAlignment = CenterVertically) {
                     Icon(
-                        modifier = Modifier.size(Paletting.USER_INFO_IC_SIZE.dp),
+                        modifier = Modifier.size(Theming.USER_INFO_IC_SIZE.dp),
                         imageVector = if (ready) Icons.Filled.Check else Icons.Filled.Clear,
                         contentDescription = "",
-                        tint = Paletting.ROOM_USER_UNREADY_ICON
+                        tint = Theming.ROOM_USER_UNREADY_ICON
 
                     )
                     Spacer(Modifier.width(4.dp))

@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
 import com.yuroyami.syncplay.logic.datastore.valueAsState
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.ui.theme.Paletting
+import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.SyncplayPopup
 import com.yuroyami.syncplay.ui.utils.getRegularFont
@@ -123,7 +123,7 @@ object PopupSeekToPosition {
                         ),
                         onValueChange = { hours.value = it },
                         textStyle = TextStyle(
-                            brush = Brush.Companion.linearGradient(colors = Paletting.SP_GRADIENT),
+                            brush = Brush.Companion.linearGradient(colors = Theming.SP_GRADIENT),
                             fontFamily = FontFamily(getRegularFont()),
                             fontSize = 16.sp,
                         ),
@@ -152,7 +152,7 @@ object PopupSeekToPosition {
                         ),
                         onValueChange = { minutes.value = it },
                         textStyle = TextStyle(
-                            brush = Brush.Companion.linearGradient(colors = Paletting.SP_GRADIENT),
+                            brush = Brush.Companion.linearGradient(colors = Theming.SP_GRADIENT),
                             fontFamily = FontFamily(getRegularFont()),
                             fontSize = 16.sp,
                         ),
@@ -180,7 +180,7 @@ object PopupSeekToPosition {
                         ),
                         onValueChange = { seconds.value = it },
                         textStyle = TextStyle(
-                            brush = Brush.Companion.linearGradient(colors = Paletting.SP_GRADIENT),
+                            brush = Brush.Companion.linearGradient(colors = Theming.SP_GRADIENT),
                             fontFamily = FontFamily(getRegularFont()),
                             fontSize = 16.sp,
                         ),

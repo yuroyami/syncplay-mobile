@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.ui.theme.Paletting
+import com.yuroyami.syncplay.ui.theme.Theming
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
@@ -58,7 +58,7 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                         text = if (pingo == null) stringResource(Res.string.room_ping_disconnected) else stringResource(
                             Res.string.room_ping_connected,
                             pingo.toString()
-                        ), color = Paletting.OLD_SP_PINK
+                        ), color = Theming.OLD_SP_PINK
                     )
                     Spacer(Modifier.width(4.dp))
 
@@ -68,7 +68,7 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                 Text(
                     text = stringResource(Res.string.room_details_current_room, viewmodel.session.currentRoom),
                     fontSize = 11.sp,
-                    color = Paletting.OLD_SP_PINK
+                    color = Theming.OLD_SP_PINK
                 )
 
                 var showReconnectButton by remember { mutableStateOf(false) }
@@ -113,8 +113,8 @@ fun RoomStatusInfoSection(modifier: Modifier) {
             if (osd.isNotEmpty()) Text(
                 modifier = Modifier.fillMaxWidth(0.3f),
                 fontSize = 11.sp,
-                lineHeight = (Paletting.USER_INFO_TXT_SIZE + 4).sp,
-                color = Paletting.SP_PALE,
+                lineHeight = (Theming.USER_INFO_TXT_SIZE + 4).sp,
+                color = Theming.SP_PALE,
                 text = osd,
                 textAlign = TextAlign.Center,
                 fontWeight = FontWeight.W300
@@ -132,7 +132,7 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                         )?.toInt() ?: 0
                     Text(
                         text = "S${season}E${episode}",
-                        color = Paletting.SP_PALE,
+                        color = Theming.SP_PALE,
                     )
                 }
             }

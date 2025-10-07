@@ -31,7 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.ui.theme.Paletting
+import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.gradientOverlay
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
@@ -72,7 +72,7 @@ fun RoomUnlockableLayout() {
                         .align(Alignment.TopEnd)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
-                            indication = ripple(color = Paletting.SP_ORANGE)
+                            indication = ripple(color = Theming.SP_ORANGE)
                         ) {
                             cardController.tabLock.value = false
                             viewmodel.uiManager.visibleHUD.value = true
@@ -80,7 +80,7 @@ fun RoomUnlockableLayout() {
                     shape = RoundedCornerShape(6.dp),
                     border = BorderStroke(
                         width = 1.dp,
-                        brush = Brush.linearGradient(colors = Paletting.SP_GRADIENT)
+                        brush = Brush.linearGradient(colors = Theming.SP_GRADIENT)
                     ),
                     colors = CardDefaults.cardColors(containerColor = Color.DarkGray),
                     elevation = CardDefaults.elevatedCardElevation(defaultElevation = 6.dp),

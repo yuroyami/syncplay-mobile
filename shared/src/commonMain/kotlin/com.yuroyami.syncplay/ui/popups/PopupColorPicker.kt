@@ -36,7 +36,7 @@ import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kborowy.colorpicker.KolorPicker
-import com.yuroyami.syncplay.ui.theme.Paletting
+import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.SyncplayPopup
 import org.jetbrains.compose.resources.Font
@@ -103,7 +103,7 @@ object PopupColorPicker {
                     }
 
                     Button(
-                        colors = ButtonDefaults.buttonColors(containerColor = Paletting.OLD_SP_YELLOW),
+                        colors = ButtonDefaults.buttonColors(containerColor = Theming.OLD_SP_YELLOW),
                         border = BorderStroke(width = 1.dp, color = Color.Black),
                         modifier = Modifier.weight(1f).padding(6.dp),
                         onClick = {

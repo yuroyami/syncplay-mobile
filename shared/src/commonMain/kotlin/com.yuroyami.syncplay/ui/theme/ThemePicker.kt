@@ -7,69 +7,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Surface
+import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.yuroyami.syncplay.managers.ThemeManager
+import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.utils.SyncplayPopup
+import com.yuroyami.syncplay.ui.utils.solidOverlay
 
-/**
- * Defines a Theme.
- *
- * @param name The name of theme, appearing on the theme selection menu.
- * @param primary The primary color, used for button filling and primary texts and titles.
- * @param secondary The secondary color, used in secondary fillings such as textfield filling.
- * @param tertiary The tertiary color, used in texts and icons that are inside buttons (should go well with primary).
- * @param background The background color, used for backgrounds such as popup background or screen background.
- * @param isDarkTheme Whether it's a dark theme, which changes the behavior/contrast of the system bars.
- * @param usesSyncplayGradient Whether the standard Syncplay gradient is used to outline buttons and icons. When false, secondary is used.
- */
-data class Theme(
-    val name: String,
-    val primary: Color,
-    val secondary: Color,
-    val tertiary: Color,
-    val background: Color,
-    val isDarkTheme: Boolean,
-    val usesSyncplayGradient: Boolean
-)
-
-val lavenderTheme = Theme(
-    name = "Lavender",
-    primary = Color.Black,
-    secondary = Color.Red,
-    tertiary = Color.Magenta,
-    background = Color.Green,
-    isDarkTheme = false,
-    usesSyncplayGradient = false
-)
-
-val moonlightTheme = Theme(
-    name = "Moonlight",
-    primary = Color.Black,
-    secondary = Color.Red,
-    tertiary = Color.Magenta,
-    background = Color.Green,
-    isDarkTheme = true,
-    usesSyncplayGradient = true
-)
-
-val blackoledTheme = Theme(
-    name = "BLACKOLED",
-    primary = Color.White,
-    secondary = Color.Gray,
-    tertiary = Color.LightGray,
-    background = Color.Black,
-    isDarkTheme = true,
-    usesSyncplayGradient = true
-)
-
-val availableThemes = listOf(lavenderTheme, moonlightTheme, blackoledTheme)
+val availableThemes = listOf(ThemeManager.PYNCSLAY, ThemeManager.AMOLED, ThemeManager.GREEN_GOBLIN, ThemeManager.ALLEY_LAMPPOST)
 
 @Composable
 fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
@@ -77,11 +31,15 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
         dialogOpen = visible,
         onDismiss = onDismiss,
     ) {
-        Column {
-            Text("Choose a Theme")
+        val viewmodel = LocalViewmodel.current
+        val currentTheme by viewmodel.themeManager.currentTheme.collectAsState()
+
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            //TODO Localization
+            Text("Select a theme by clicking on it", modifier = Modifier.padding(6.dp))
 
             availableThemes.forEach { theme ->
-                ThemeEntry(theme)
+                ThemeEntry(theme, isSelected = currentTheme == theme)
             }
         }
     }
@@ -89,26 +47,31 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
 
 
 @Composable
-fun ThemeEntry(theme: Theme) {
-    Surface(
-        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+fun ThemeEntry(theme: ThemeManager.Companion.Theme, isSelected: Boolean) {
+    val viewmodel = LocalViewmodel.current
+
+    Card(
+        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp).solidOverlay(
+            if (isSelected) Color.Transparent else Color.Black.copy(alpha = 0.65f)
+        ),
         shape = RoundedCornerShape(8.dp),
         onClick = {
-
+            viewmodel.themeManager.currentTheme.value = theme
         }
     ) {
         Box(
             modifier = Modifier.fillMaxWidth().height(64.dp)
                 .background(
                     brush = Brush.linearGradient(
-                        colors = listOf(theme.primary, theme.secondary)
+                        colors = listOf(theme.scheme.primary, theme.scheme.secondary, theme.scheme.tertiary)
                     )
                 )
         ) {
             Text(
                 text = theme.name,
                 fontSize = 24.sp,
-                modifier = Modifier.align(Alignment.Center)
+                modifier = Modifier.align(Alignment.Center),
+                color = theme.scheme.onPrimary
             )
         }
     }
