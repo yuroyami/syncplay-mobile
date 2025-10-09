@@ -92,9 +92,9 @@ kotlin {
             /* Compose core dependencies */
             implementation(compose.runtime)
             implementation(compose.foundation)
-            //implementation(compose.material3)
+            implementation(compose.material3)
             //noinspection UseTomlInstead
-            implementation("org.jetbrains.compose.material3:material3:1.10.0-alpha01") //Temporary to get android's m3 1.5.0 expressive functionality until material3 is updated to 1.5.0 stable
+            //implementation("org.jetbrains.compose.material3:material3:1.10.0-alpha01") //Temporary to get android's m3 1.5.0 expressive functionality until material3 is updated to 1.5.0 stable
             implementation(compose.materialIconsExtended)
             implementation(compose.components.resources)
 
@@ -119,10 +119,6 @@ kotlin {
 
             /* File opener/saver multiplatform */
             implementation(libs.filekit)
-
-            /* Microsoft Fluent's Design System for Compose multiplatform */
-            //implementation(libs.fluent.designsystem) //Still immature to fully customize it
-            //implementation(libs.fluent.icons)
         }
 
         androidMain.dependencies {
