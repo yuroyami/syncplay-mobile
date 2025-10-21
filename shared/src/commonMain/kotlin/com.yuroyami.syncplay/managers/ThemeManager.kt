@@ -1,3 +1,4 @@
+@file:Suppress("SpellCheckingInspection")
 package com.yuroyami.syncplay.managers
 
 import androidx.compose.material3.ColorScheme
