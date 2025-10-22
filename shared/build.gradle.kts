@@ -101,6 +101,7 @@ kotlin {
             /* ViewModel support */
             implementation(libs.compose.viewmodel)
             implementation(libs.compose.navigation)
+            implementation(libs.compose.navigationevent)
 
             /* ComposableHorizons' unstyled composables for more granularly-controlled components */
             implementation(libs.compose.unstyled)
