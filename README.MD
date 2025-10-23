@@ -144,7 +144,7 @@ Some video players are more potent than others in certain areas. Here's a genera
 
 Syncplay is available in the following languages :
 
-[![Translation status](https://hosted.weblate.org/widget/syncplay-mobile/syncplay-mobile/multi-auto.svg)](https://hosted.weblate.org/engage/syncplay-mobile/)
+[![Translation status](https://hosted.weblate.org/widget/syncplay-mobile/syncplay-mobile/multi-auto.svg)](https://hosted.weblate.org/engage/syncplay-mobile)
 
 - Thanks to [@Zhaodaidai](https://github.com/Zhaodaidai) for the Chinese (Simplified) translation.
 - Thanks to [@DoncanC](https://github.com/DoncanC) for the Spanish translation.
