@@ -100,8 +100,9 @@ kotlin {
 
             /* ViewModel support */
             implementation(libs.compose.viewmodel)
-            implementation(libs.compose.navigation)
-            implementation(libs.compose.navigationevent)
+
+            /* Navigation support with the modern nav3 library */
+            implementation(libs.bundles.navigation3)
 
             /* ComposableHorizons' unstyled composables for more granularly-controlled components */
             implementation(libs.compose.unstyled)

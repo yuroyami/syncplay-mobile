@@ -24,8 +24,8 @@ class SessionManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmodel) {
 
     var session: Session = Session()
 
-    fun invalidate() {
-        session = Session()
+    override fun invalidate() {
+        session = Session() //invalidates the session and replaces it with a new empty one
     }
 
     inner class Session() {

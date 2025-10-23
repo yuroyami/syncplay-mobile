@@ -132,5 +132,4 @@ class RoomActionManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmode
             }
         }
     }
-
 }

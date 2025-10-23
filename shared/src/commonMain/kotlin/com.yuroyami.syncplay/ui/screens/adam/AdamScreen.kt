@@ -11,11 +11,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.ui.NavDisplay
 import com.yuroyami.syncplay.logic.SyncplayViewmodel
 import com.yuroyami.syncplay.logic.settings.SettingStyling
 import com.yuroyami.syncplay.models.MessagePalette
@@ -30,9 +27,8 @@ import com.yuroyami.syncplay.ui.utils.messagePalette
  * screen to another.
  */
 
-val LocalNavigator = compositionLocalOf<NavController> { error("No Navigator provided yet") }
 val LocalViewmodel = compositionLocalOf<SyncplayViewmodel> { error("No Viewmodel provided yet") }
-val LocalScreen = compositionLocalOf<Screen> { error("No Screen provided") }
+val LocalScreen = compositionLocalOf<Screen?> { error("No Screen provided") }
 val LocalSettingStyling = staticCompositionLocalOf<SettingStyling> { error("No Setting Styling provided") }
 val LocalChatPalette = compositionLocalOf<MessagePalette> { error("No Chat Palette provided") }
 val LocalCardController = compositionLocalOf<CardController> { error("No CardController provided yet") }
@@ -40,17 +36,11 @@ val LocalCardController = compositionLocalOf<CardController> { error("No CardCon
 @Composable
 fun AdamScreen(onViewmodelReady: (SyncplayViewmodel) -> Unit) {
     val viewmodel = viewModel<SyncplayViewmodel>()
-    val navigator = rememberNavController()
-    val navEntry by navigator.currentBackStackEntryAsState()
-
-    val currentScreen by remember { derivedStateOf { Screen.fromLabel(navEntry?.destination?.route) } }
+    val backstack = remember { viewmodel.uiManager.backStack }
+    val currentScreen by remember { derivedStateOf { backstack.lastOrNull() } }
 
     LaunchedEffect(viewmodel) {
         onViewmodelReady.invoke(viewmodel)
-    }
-
-    LaunchedEffect(navigator) {
-        viewmodel.uiManager.nav = navigator
     }
 
     val currentTheme by viewmodel.themeManager.currentTheme.collectAsState()
@@ -60,18 +50,23 @@ fun AdamScreen(onViewmodelReady: (SyncplayViewmodel) -> Unit) {
     ) {
         CompositionLocalProvider(
             LocalViewmodel provides viewmodel,
-            LocalNavigator provides navigator,
             LocalScreen provides currentScreen,
             LocalChatPalette provides messagePalette.value
         ) {
-            NavHost(
-                navController = navigator,
-                startDestination = Screen.Home.label
-            ) {
-                composable(Screen.Home.label) { HomeScreenUI() }
-                composable(Screen.Room.label) { RoomScreenUI() }
-                composable(Screen.SoloMode.label) { RoomScreenUI() }
-            }
+            NavDisplay(
+                backStack = viewmodel.uiManager.backStack,
+                entryProvider = entryProvider {
+                    entry<Screen.Home> {
+                        HomeScreenUI()
+                    }
+                    entry<Screen.Room> {
+                        RoomScreenUI()
+                    }
+                    entry<Screen.SoloMode> {
+                        RoomScreenUI()
+                    }
+                }
+            )
         }
     }
 }

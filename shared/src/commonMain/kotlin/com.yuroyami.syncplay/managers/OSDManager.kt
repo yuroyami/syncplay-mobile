@@ -26,4 +26,11 @@ class OSDManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmodel) {
             osdMsg.value = ""
         }
     }
+
+    override fun invalidate() {
+        osdMsg.value == ""
+        runCatching {
+            osdJob?.cancel(null)
+        }
+    }
 }

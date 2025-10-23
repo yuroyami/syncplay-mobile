@@ -24,9 +24,17 @@ class ProtocolManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel)
     var serverIgnFly: Int = 0
     var clientIgnFly: Int = 0
     val rewindThreshold = 12L /* This is as per official Syncplay, shouldn't be subject to change */
-    val pingService = PingService() //TODO
+    var pingService = PingService() //TODO
 
     val packetHandler = PacketHandler(viewmodel, this)
+
+    override fun invalidate() {
+        globalPaused = true
+        globalPositionMs = 0.0
+        serverIgnFly = 0
+        clientIgnFly = 0
+        pingService = PingService()
+    }
 
     companion object {
         @ProtocolDsl

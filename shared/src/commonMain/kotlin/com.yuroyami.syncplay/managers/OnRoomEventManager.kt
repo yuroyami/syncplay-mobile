@@ -270,5 +270,4 @@ class OnRoomEventManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmod
             serverPassword = viewmodel.session.currentPassword
         }
     }
-
 }

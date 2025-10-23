@@ -17,6 +17,8 @@ import kotlinx.coroutines.launch
 abstract class AbstractManager(
     val viewmodel: SyncplayViewmodel
 ) {
+    open fun invalidate() {}
+
     inline fun onMainThread(crossinline block: suspend () -> Unit) {
         viewmodel.viewModelScope.launch(Dispatchers.Main.immediate) {
             block()

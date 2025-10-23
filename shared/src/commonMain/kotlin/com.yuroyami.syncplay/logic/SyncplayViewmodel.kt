@@ -23,7 +23,6 @@ import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.ui.screens.adam.Screen
-import com.yuroyami.syncplay.ui.screens.adam.Screen.Companion.navigateTo
 import com.yuroyami.syncplay.utils.ProtocolDsl
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.instantiateNetworkManager
@@ -77,7 +76,7 @@ class SyncplayViewmodel: ViewModel() {
 
     /** Not to be confused with the protocol's ping. This is the result of the periodic
      * ICMP pinging which will be shown on the top-center of the room.
-     * There are devices who don't support this natively, like Android emulators.
+     * There are devices that don't support this natively, like Android emulators.
      */
     val ping = MutableStateFlow<Int?>(null)
 
@@ -102,7 +101,7 @@ class SyncplayViewmodel: ViewModel() {
 
             launch(Dispatchers.Main) {
                 platformCallback.onRoomEnterOrLeave(PlatformCallback.RoomEvent.ENTER)
-                uiManager.nav.navigateTo(Screen.Room)
+                uiManager.navigateTo(Screen.Room)
             }
 
             val defaultEngine = availablePlatformPlayerEngines.first { it.isDefault }.name //TODO
@@ -118,6 +117,22 @@ class SyncplayViewmodel: ViewModel() {
 
             networkManager.connect()
         }
+    }
+
+    fun leaveRoom() {
+        networkManager.endConnection(true)
+        viewModelScope.launch(Dispatchers.Main.immediate) {
+            player?.destroy()
+        }
+
+        platformCallback.onRoomEnterOrLeave(PlatformCallback.RoomEvent.LEAVE)
+
+        uiManager.invalidate() //<-- This will navigate back to home screen automatically
+        playerManager.invalidate()
+        networkManager.invalidate()
+        protocolManager.invalidate()
+        sessionManager.invalidate()
+        osdManager.invalidate()
     }
 
     /** Mismatches are: Name, Size, Duration. If 3 mismatches are detected, no error is thrown
@@ -155,7 +170,7 @@ class SyncplayViewmodel: ViewModel() {
 
     /** Tells us whether we're in solo mode to deactivate some online components */
     val isSoloMode: Boolean
-        get() = uiManager.nav.currentBackStackEntry?.destination?.route == Screen.SoloMode.label
+        get() = uiManager.backStack.lastOrNull() == Screen.SoloMode
 
     /** Extension property to quickly access some managers' properties */
     val player: BasePlayer?

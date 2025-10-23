@@ -32,4 +32,13 @@ class PlayerManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmodel) {
 
     var currentTrackChoices: TrackChoices = TrackChoices()
 
+    override fun invalidate() {
+        player = null
+        media.value = null
+        isNowPlaying.value = false
+        timeFullMillis.value = 0L
+        timeCurrentMillis.value = 0L
+        currentTrackChoices = TrackChoices()
+    }
+
 }

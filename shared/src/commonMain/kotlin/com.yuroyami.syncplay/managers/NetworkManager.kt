@@ -49,6 +49,11 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
     }
 
     /** This method is responsible for bootstrapping (initializing) the Ktor TCP socket */
+    override fun invalidate() {
+        state = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
+        tls = Constants.TLS.TLS_NO
+    }
+
     open suspend fun connect() {
         endConnection(false)
 

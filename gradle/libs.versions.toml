@@ -6,8 +6,8 @@ kermit = "2.0.8"
 compose = "1.10.0-alpha03"
 ktor  = "3.3.1"
 lifecycleViewmodelCompose = "2.10.0-alpha03"
-navigationEventCompose = "1.0.0-alpha02"
-navigationCompose = "2.9.1"
+navigation3Runtime = "1.0.0-beta01"
+navigation3Ui = "1.0.0-alpha03"
 koroutines = "1.10.2"
 datetime = "0.7.1"
 kSerialization = "1.9.0"
@@ -44,9 +44,9 @@ kotlin-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-co
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "datetime" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kSerialization" }
 logging-kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
-compose-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
-compose-navigation = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
-compose-navigationevent = { module = "org.jetbrains.androidx.navigationevent:navigationevent-compose", version.ref = "navigationEventCompose" }
+compose-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycleViewmodelCompose" }
+navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "navigation3Runtime" }
+navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "navigation3Ui" }
 ktor-network = { module = "io.ktor:ktor-network", version.ref = "ktor" }
 ktor-network-tls = { module = "io.ktor:ktor-network-tls", version.ref = "ktor" }
 krypto-digest = { module = "org.kotlincrypto.core:digest", version.ref = "krypto" }
@@ -90,6 +90,7 @@ media3 = [
     "m3-ui", "m3-session", "m3-extractor", "m3-decoder", "m3-datasource", "m3-common"
 ]
 krypto = ["krypto-digest", "krypto-md", "krypto-sha2"]
+navigation3 = ["navigation3-runtime", "navigation3-ui"]
 
 [plugins] ########################################################################################
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
