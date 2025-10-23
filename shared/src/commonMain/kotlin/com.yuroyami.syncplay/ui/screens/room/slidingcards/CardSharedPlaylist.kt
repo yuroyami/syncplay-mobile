@@ -77,11 +77,11 @@ import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.SyncplayPopup
 import com.yuroyami.syncplay.ui.utils.getRegularFont
 import com.yuroyami.syncplay.ui.utils.gradientOverlay
-import com.yuroyami.syncplay.utils.CommonUtils
-import com.yuroyami.syncplay.utils.CommonUtils.vidExs
 import com.yuroyami.syncplay.utils.addFolderToPlaylist
 import com.yuroyami.syncplay.utils.loadPlaylistLocally
+import com.yuroyami.syncplay.utils.playlistExs
 import com.yuroyami.syncplay.utils.savePlaylistLocally
+import com.yuroyami.syncplay.utils.vidExs
 import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLauncher
@@ -141,7 +141,7 @@ object CardSharedPlaylist {
 
         var shouldShuffle by remember { mutableStateOf(false) }
         val playlistLoadPicker = rememberFilePickerLauncher(
-            type = FileKitType.File(extensions = CommonUtils.playlistExs)
+            type = FileKitType.File(extensions = playlistExs)
         ) { playlistFile ->
             if (playlistFile != null) {
                 playlist.loadPlaylistLocally(playlistFile.path, alsoShuffle = shouldShuffle)

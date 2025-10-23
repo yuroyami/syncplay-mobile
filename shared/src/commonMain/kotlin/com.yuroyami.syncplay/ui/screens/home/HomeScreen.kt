@@ -56,9 +56,9 @@ import com.yuroyami.syncplay.logic.datastore.writeValue
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.utils.FlexibleFancyText
-import com.yuroyami.syncplay.utils.CommonUtils.substringSafely
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.platformCallback
+import com.yuroyami.syncplay.utils.substringSafely
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch

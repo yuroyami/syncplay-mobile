@@ -58,7 +58,10 @@ class LifecycleManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel
     fun onStop() {
         if (!viewmodel.uiManager.hasEnteredPipMode.value) {
             background = true
-            viewmodel.playerManager.player?.pause()
+
+            onMainThread {
+                viewmodel.playerManager.player?.pause()
+            }
         }
     }
 

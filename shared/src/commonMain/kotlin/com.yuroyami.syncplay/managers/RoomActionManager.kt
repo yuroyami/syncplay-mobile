@@ -54,15 +54,18 @@ class RoomActionManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmode
     /** This pauses playback on the main (necessary) thread **/
     fun pausePlayback() {
         if (viewmodel.lifecycleManager.isInBackground) return
-
-        viewmodel.player?.pause()
+        onMainThread {
+            viewmodel.player?.pause()
+        }
         platformCallback.onPlayback(true)
     }
 
     /** This resumes playback on the main thread, and hides system UI **/
     fun playPlayback() {
         if (viewmodel.lifecycleManager.isInBackground) return
-        viewmodel.player?.play()
+        onMainThread {
+            viewmodel.player?.play()
+        }
         platformCallback.onPlayback(false)
     }
 

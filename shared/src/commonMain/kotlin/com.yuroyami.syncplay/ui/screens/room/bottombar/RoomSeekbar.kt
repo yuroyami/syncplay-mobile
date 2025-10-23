@@ -28,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterStart
@@ -54,7 +55,7 @@ import com.composeunstyled.Thumb as UnstyledThumb
 @Composable
 fun RoomSeekbar(modifier: Modifier) {
     val viewmodel = LocalViewmodel.current
-
+    val scope = rememberCoroutineScope { Dispatchers.Main }
     val chapters = remember(viewmodel.media?.fileName) { viewmodel.media?.chapters ?: emptyList() }
 
     LaunchedEffect(viewmodel.media?.fileName) {
@@ -94,8 +95,10 @@ fun RoomSeekbar(modifier: Modifier) {
         Slider(
             value = sliderValue,
             onValueChange = { newVal ->
-                sliderValue = newVal
-                viewmodel.player?.seekTo(newVal.roundToLong())
+                scope.launch(Dispatchers.Main.immediate) {
+                    sliderValue = newVal
+                    viewmodel.player?.seekTo(newVal.roundToLong())
+                }
             },
             onValueChangeFinished = {
                 viewmodel.actionManager.sendSeek(sliderValue.roundToLong())
@@ -152,7 +155,9 @@ fun RoomSeekbar(modifier: Modifier) {
                                         interactionSource = null,
                                         indication = ripple()
                                     ) {
-                                        viewmodel.player?.jumpToChapter(chapter)
+                                        scope.launch(Dispatchers.Main.immediate) {
+                                            viewmodel.player?.jumpToChapter(chapter)
+                                        }
                                     }
                             )
                         }

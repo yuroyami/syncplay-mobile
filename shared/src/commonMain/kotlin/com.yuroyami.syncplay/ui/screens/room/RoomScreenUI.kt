@@ -36,8 +36,8 @@ import com.yuroyami.syncplay.ui.screens.room.tabs.CardController
 import com.yuroyami.syncplay.ui.screens.room.tabs.PopupChatHistory.ChatHistoryPopup
 import com.yuroyami.syncplay.ui.screens.room.tabs.RoomTabSection
 import com.yuroyami.syncplay.ui.screens.room.tabs.RoomUnlockableLayout
-import com.yuroyami.syncplay.utils.CommonUtils.beginPingUpdate
 import com.yuroyami.syncplay.utils.HideSystemBars
+import com.yuroyami.syncplay.utils.beginPingUpdate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay

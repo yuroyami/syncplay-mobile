@@ -1,6 +1,7 @@
 package com.yuroyami.syncplay.logic.player
 
 import androidx.annotation.CallSuper
+import androidx.annotation.UiThread
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.eygraber.uri.Uri
@@ -10,8 +11,8 @@ import com.yuroyami.syncplay.managers.PlayerManager
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
-import com.yuroyami.syncplay.utils.CommonUtils.sha256
 import com.yuroyami.syncplay.utils.getFileName
+import com.yuroyami.syncplay.utils.sha256
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -59,33 +60,34 @@ abstract class BasePlayer(
     abstract val supportsChapters: Boolean
 
     /** Called when the player is to be initialized */
+    @UiThread
     abstract fun initialize()
 
     /** Called when the player needs to be destroyed */
-    abstract fun destroy()
+    abstract suspend fun destroy()
 
     /** Called by Compose to check whether there are any extra settings for this player */
-    abstract fun configurableSettings(): ExtraSettingBundle?
+    abstract suspend fun configurableSettings(): ExtraSettingBundle?
 
     /** Returns whether the current player has any media loaded */
-    abstract fun hasMedia(): Boolean
+    abstract suspend fun hasMedia(): Boolean
 
     /** Returns whether the current player is in play state (unpaused) */
-    abstract fun isPlaying(): Boolean
+    abstract suspend fun isPlaying(): Boolean
 
     /** Called when the player ought to analyze the tracks of the currently loaded media */
     abstract suspend fun analyzeTracks(mediafile: MediaFile)
 
-    abstract fun selectTrack(track: Track?, type: TRACKTYPE)
+    abstract suspend fun selectTrack(track: Track?, type: TRACKTYPE)
 
     abstract suspend fun analyzeChapters(mediafile: MediaFile)
-    abstract fun jumpToChapter(chapter: Chapter)
-    abstract fun skipChapter()
+    abstract suspend fun jumpToChapter(chapter: Chapter)
+    abstract suspend fun skipChapter()
 
-    abstract fun reapplyTrackChoices()
+    abstract suspend fun reapplyTrackChoices()
 
     /** Loads an external sub given the [uri] */
-    fun loadExternalSub(uri: String) {
+    suspend fun loadExternalSub(uri: String) {
         if (hasMedia()) {
             val filename = getFileName(uri = uri).toString()
             val extension = filename.substring(filename.length - 4).lowercase()
@@ -108,7 +110,7 @@ abstract class BasePlayer(
         }
     }
 
-    abstract fun loadExternalSubImpl(uri: String, extension: String)
+    abstract suspend fun loadExternalSubImpl(uri: String, extension: String)
 
     private fun isValidSubtitleFile(extension: String) =
         listOf("srt", "ass", "ssa", "ttml", "vtt").any { it in extension.lowercase() }
@@ -151,24 +153,24 @@ abstract class BasePlayer(
 
     abstract suspend fun injectVideoImpl(media: MediaFile, isUrl: Boolean)
 
-    abstract fun pause()
+    abstract suspend fun pause()
 
-    abstract fun play()
+    abstract suspend fun play()
 
-    abstract fun isSeekable(): Boolean
+    abstract suspend fun isSeekable(): Boolean
 
     @CallSuper
-    open fun seekTo(toPositionMs: Long) {
+    open suspend fun seekTo(toPositionMs: Long) {
         if (viewmodel.lifecycleManager.isInBackground) return
     }
 
-    abstract fun currentPositionMs(): Long
+    abstract suspend fun currentPositionMs(): Long
 
     abstract suspend fun switchAspectRatio(): String
 
-    abstract fun collectInfoLocal(mediafile: MediaFile)
+    abstract suspend fun collectInfoLocal(mediafile: MediaFile)
 
-    abstract fun changeSubtitleSize(newSize: Int)
+    abstract suspend fun changeSubtitleSize(newSize: Int)
 
     @Composable
     abstract fun VideoPlayer(modifier: Modifier)
@@ -185,7 +187,6 @@ abstract class BasePlayer(
 
             val next = if (playlistSize == currentIndex + 1) 0 else currentIndex + 1
             viewmodel.playlistManager.sendPlaylistSelection(next)
-
         }
     }
 

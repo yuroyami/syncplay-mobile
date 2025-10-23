@@ -38,16 +38,18 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
-import com.yuroyami.syncplay.ui.screens.adam.Screen
-import com.yuroyami.syncplay.ui.screens.adam.Screen.Companion.navigateTo
+import androidx.lifecycle.viewModelScope
+import com.yuroyami.syncplay.logic.PlatformCallback
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.Screen
+import com.yuroyami.syncplay.ui.screens.adam.Screen.Companion.navigateTo
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.FancyIcon2
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.syncplayFont
 import com.yuroyami.syncplay.utils.platformCallback
-import com.yuroyami.syncplay.logic.PlatformCallback
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -283,7 +285,9 @@ fun RoomTabSection(modifier: Modifier, onShowChatHistory: () -> Unit) {
                     },
                     onClick = {
                         viewmodel.networkManager.endConnection(true)
-                        viewmodel.player?.destroy()
+                        viewmodel.viewModelScope.launch(Dispatchers.Main.immediate) {
+                            viewmodel.player?.destroy()
+                        }
                         viewmodel.uiManager.nav.navigateTo(Screen.Home)
                         platformCallback.onRoomEnterOrLeave(PlatformCallback.RoomEvent.LEAVE)
                     }

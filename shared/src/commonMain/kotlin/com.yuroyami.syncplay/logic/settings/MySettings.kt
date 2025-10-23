@@ -36,9 +36,9 @@ import androidx.compose.material.icons.filled.Web
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.preferences.core.edit
-import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.CATEG_GLOBAL_GENERAL
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.CATEG_GLOBAL_ADVANCED
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.CATEG_GLOBAL_GENERAL
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.CATEG_GLOBAL_LANG
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.CATEG_GLOBAL_NETWORK
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.CATEG_GLOBAL_SYNCING
@@ -78,8 +78,8 @@ import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_TLS_ENABLE
 import com.yuroyami.syncplay.logic.datastore.datastore
 import com.yuroyami.syncplay.ui.popups.PopupMediaDirs.MediaDirsPopup
 import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.utils.CommonUtils.langMap
 import com.yuroyami.syncplay.utils.PLATFORM
+import com.yuroyami.syncplay.utils.langMap
 import com.yuroyami.syncplay.utils.platform
 import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.Dispatchers

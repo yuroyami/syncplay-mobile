@@ -10,10 +10,10 @@ import com.yuroyami.syncplay.logic.player.BasePlayer
 import com.yuroyami.syncplay.managers.LifecycleManager
 import com.yuroyami.syncplay.managers.NetworkManager
 import com.yuroyami.syncplay.managers.OSDManager
+import com.yuroyami.syncplay.managers.OnRoomEventManager
 import com.yuroyami.syncplay.managers.PlayerManager
 import com.yuroyami.syncplay.managers.ProtocolManager
 import com.yuroyami.syncplay.managers.RoomActionManager
-import com.yuroyami.syncplay.managers.RoomCallbackManager
 import com.yuroyami.syncplay.managers.SessionManager
 import com.yuroyami.syncplay.managers.SharedPlaylistManager
 import com.yuroyami.syncplay.managers.SnackManager
@@ -24,6 +24,7 @@ import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.ui.screens.adam.Screen
 import com.yuroyami.syncplay.ui.screens.adam.Screen.Companion.navigateTo
+import com.yuroyami.syncplay.utils.ProtocolDsl
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.instantiateNetworkManager
 import com.yuroyami.syncplay.utils.platformCallback
@@ -52,7 +53,7 @@ class SyncplayViewmodel: ViewModel() {
     val sessionManager: SessionManager by lazy { SessionManager(this) }
 
     /** Manages callback from the protocol (e.g: When someone pauses), in other words: Receiving actions */
-    val callbackManager: RoomCallbackManager by lazy { RoomCallbackManager(this) }
+    val callbackManager: OnRoomEventManager by lazy { OnRoomEventManager(this) }
 
     /** Manages actions performed by the user to send them to the server (Sending actions) */
     val actionManager: RoomActionManager by lazy { RoomActionManager(this) }
@@ -84,6 +85,7 @@ class SyncplayViewmodel: ViewModel() {
 
     val seeks = mutableListOf<Pair<Long, Long>>()
 
+    @ProtocolDsl
     fun joinRoom(joinConfig: JoinConfig) {
         viewModelScope.launch(Dispatchers.IO) {
             joinConfig.save() //Remembering info

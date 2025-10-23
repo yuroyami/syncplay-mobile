@@ -52,7 +52,7 @@ import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.FancyIcon2
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.syncplayFont
-import com.yuroyami.syncplay.utils.CommonUtils
+import com.yuroyami.syncplay.utils.ccExs
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.path
@@ -83,14 +83,17 @@ fun RoomControlPanelButton(modifier: Modifier, popupStateAddMedia: MutableState<
 
 @Composable
 fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
+    val scope = rememberCoroutineScope()
     val viewmodel = LocalViewmodel.current
     val cardController = LocalCardController.current
 
     val composeScope = rememberCoroutineScope()
 
-    val subtitlePicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = CommonUtils.ccExs)) { file ->
+    val subtitlePicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = ccExs)) { file ->
         file?.path?.let {
-            viewmodel.player?.loadExternalSub(it)
+            scope.launch(Dispatchers.IO) {
+                viewmodel.player?.loadExternalSub(it)
+            }
         }
     }
 
@@ -120,7 +123,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
             icon = when (gesturesEnabled) {
                 true -> Icons.Filled.TouchApp
                 false -> Icons.Filled.DoNotTouch
-            }, size =iconSize, shadowColor = Color.Black
+            }, size = iconSize, shadowColor = Color.Black
         ) {
             composeScope.launch(Dispatchers.IO) {
                 writeValue(MISC_GESTURES, !gesturesEnabled)
@@ -152,7 +155,9 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
             cardController.controlPanel.value = false
 
             val lastSeek = viewmodel.seeks.lastOrNull() ?: return@FancyIcon2
-            viewmodel.player?.seekTo(lastSeek.first)
+            scope.launch(Dispatchers.Main.immediate) {
+                viewmodel.player?.seekTo(lastSeek.first)
+            }
             viewmodel.actionManager.sendSeek(lastSeek.first)
             viewmodel.seeks.remove(lastSeek)
             viewmodel.osdManager.dispatchOSD { "Seek undone." }
@@ -227,58 +232,61 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                 })
 
 
-                DropdownMenuItem(text = {
-                    Row(verticalAlignment = CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Filled.SubtitlesOff,
-                            "",
-                            tint = Color.LightGray
-                        )
+                DropdownMenuItem(
+                    text = {
+                        Row(verticalAlignment = CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Filled.SubtitlesOff,
+                                "",
+                                tint = Color.LightGray
+                            )
 
-                        Spacer(Modifier.width(2.dp))
+                            Spacer(Modifier.width(2.dp))
 
-                        Text(
-                            "Disable subtitles.",
-                            color = Color.LightGray
-                        )
+                            Text(
+                                "Disable subtitles.",
+                                color = Color.LightGray
+                            )
 
+                        }
+                    },
+                    onClick = {
+                        scope.launch(Dispatchers.Main.immediate) {
+                            viewmodel.player?.selectTrack(null, BasePlayer.TRACKTYPE.SUBTITLE)
+                            tracksPopup.value = false
+                            cardController.controlPanel.value = false
+                        }
                     }
-                }, onClick = {
-                    viewmodel.player?.selectTrack(
-                        null, BasePlayer.TRACKTYPE.SUBTITLE
-                    )
-                    tracksPopup.value = false
-                    cardController.controlPanel.value = false
-
-                })
+                )
 
                 for (track in (viewmodel.media?.subtitleTracks)
                     ?: listOf()) {
-                    DropdownMenuItem(text = {
-                        Row(verticalAlignment = CenterVertically) {
-                            Checkbox(
-                                checked = track.selected.value,
-                                onCheckedChange = {
-                                    viewmodel.player?.selectTrack(
-                                        track, BasePlayer.TRACKTYPE.SUBTITLE
-                                    )
-                                    tracksPopup.value = false
-                                })
+                    DropdownMenuItem(
+                        text = {
+                            Row(verticalAlignment = CenterVertically) {
+                                Checkbox(
+                                    checked = track.selected.value,
+                                    onCheckedChange = {
+                                        scope.launch(Dispatchers.Main.immediate) {
+                                            viewmodel.player?.selectTrack(track, BasePlayer.TRACKTYPE.SUBTITLE)
+                                            tracksPopup.value = false
+                                        }
+                                    })
 
-                            Text(
-                                color = Color.LightGray,
-                                text = track.name
-                            )
+                                Text(
+                                    color = Color.LightGray,
+                                    text = track.name
+                                )
+                            }
+                        },
+                        onClick = {
+                            scope.launch(Dispatchers.Main.immediate) {
+                                viewmodel.player?.selectTrack(track, BasePlayer.TRACKTYPE.SUBTITLE)
+                                tracksPopup.value = false
+                                cardController.controlPanel.value = false
+                            }
                         }
-                    }, onClick = {
-                        viewmodel.player?.selectTrack(
-                            track, BasePlayer.TRACKTYPE.SUBTITLE
-                        )
-
-                        tracksPopup.value = false
-                        cardController.controlPanel.value = false
-
-                    })
+                    )
                 }
             }
         }
@@ -338,10 +346,10 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                             Checkbox(
                                 checked = track.selected.value,
                                 onCheckedChange = {
-                                    viewmodel.player?.selectTrack(
-                                        track, BasePlayer.TRACKTYPE.AUDIO
-                                    )
-                                    tracksPopup.value = false
+                                    scope.launch(Dispatchers.Main.immediate) {
+                                        viewmodel.player?.selectTrack(track, BasePlayer.TRACKTYPE.AUDIO)
+                                        tracksPopup.value = false
+                                    }
                                 })
 
                             Text(
@@ -350,10 +358,10 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                             )
                         }
                     }, onClick = {
-                        viewmodel.player?.selectTrack(
-                            track, BasePlayer.TRACKTYPE.AUDIO
-                        )
-                        tracksPopup.value = false
+                        scope.launch(Dispatchers.Main.immediate) {
+                            viewmodel.player?.selectTrack(track, BasePlayer.TRACKTYPE.AUDIO)
+                            tracksPopup.value = false
+                        }
                     })
                 }
             }
@@ -407,31 +415,41 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                         font = syncplayFont
                     )
 
-                    DropdownMenuItem(text = {
-                        Row(verticalAlignment = CenterVertically) {
-                            Text(
-                                color = Color.LightGray,
-                                text = "Skip chapter"
-                            )
-                        }
-                    }, onClick = {
-                        viewmodel.player?.skipChapter()
-                        chaptersPopup = false
-                    })
-
-                    for (chapter in (viewmodel.media?.chapters
-                        ?: listOf())) {
-                        DropdownMenuItem(text = {
+                    DropdownMenuItem(
+                        text = {
                             Row(verticalAlignment = CenterVertically) {
                                 Text(
                                     color = Color.LightGray,
-                                    text = chapter.name
+                                    text = "Skip chapter"
                                 )
                             }
-                        }, onClick = {
-                            viewmodel.player?.jumpToChapter(chapter)
-                            chaptersPopup = false
-                        })
+                        },
+                        onClick = {
+                            scope.launch(Dispatchers.Main.immediate) {
+                                viewmodel.player?.skipChapter()
+                                chaptersPopup = false
+                            }
+                        }
+                    )
+
+                    for (chapter in (viewmodel.media?.chapters
+                        ?: listOf())) {
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = CenterVertically) {
+                                    Text(
+                                        color = Color.LightGray,
+                                        text = chapter.name
+                                    )
+                                }
+                            }, onClick = {
+                                scope.launch(Dispatchers.Main.immediate) {
+                                    viewmodel.player?.jumpToChapter(chapter)
+                                    chaptersPopup = false
+                                }
+
+                            }
+                        )
                     }
                 }
             }

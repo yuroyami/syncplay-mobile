@@ -32,7 +32,7 @@ import syncplaymobile.shared.generated.resources.room_tls_not_supported
 import syncplaymobile.shared.generated.resources.room_tls_supported
 import syncplaymobile.shared.generated.resources.room_you_joined_room
 
-class RoomCallbackManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmodel), ProtocolCallback {
+class OnRoomEventManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel), ProtocolCallback {
 
     override fun onSomeonePaused(pauser: String) {
         loggy("SYNCPLAY Protocol: Someone ($pauser) paused.")
@@ -99,7 +99,11 @@ class RoomCallbackManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmod
         /* Saving seek so it can be undone on mistake */
         viewmodel.seeks.add(Pair(oldPosMs, newPosMs))
 
-        if (seeker != viewmodel.session.currentUsername) viewmodel.player?.seekTo(newPosMs)
+        if (seeker != viewmodel.session.currentUsername) {
+            onMainThread {
+                viewmodel.player?.seekTo(newPosMs)
+            }
+        }
 
         viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_seeked,seeker, timeStamper(oldPosMs), timeStamper(newPosMs)) }, isChat = false)
     }
@@ -107,7 +111,9 @@ class RoomCallbackManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmod
     override fun onSomeoneBehind(behinder: String, toPosition: Double) {
         loggy("SYNCPLAY Protocol: $behinder is behind. Rewinding to $toPosition")
 
-        viewmodel.player?.seekTo((toPosition * 1000L).toLong())
+        onMainThread {
+            viewmodel.player?.seekTo((toPosition * 1000L).toLong())
+        }
 
         viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_rewinded,behinder) }, isChat = false)
     }

@@ -10,6 +10,7 @@ import com.yuroyami.syncplay.managers.ProtocolManager.Companion.createPacketInst
 import com.yuroyami.syncplay.managers.SessionManager.Session
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.utils.PLATFORM
+import com.yuroyami.syncplay.utils.ProtocolDsl
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.platform
 import kotlinx.coroutines.CoroutineScope
@@ -131,10 +132,14 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
      *  it queues the json to send in a special queue until the connection recovers. */
     typealias SendablePacket = String
 
-    inline fun <reified T : PacketCreator> send(noinline init: T.() -> Unit = {}): Deferred<Unit> = networkScope.async(Dispatchers.IO) {
-        val packetInstance = createPacketInstance<T>(protocolManager = viewmodel.protocolManager).apply(init)
-        val jsonPacket = packetInstance.build()
-        transmitPacket(jsonPacket, packetClass = T::class)
+    @ProtocolDsl
+    inline fun <reified T : PacketCreator> send(noinline init: suspend T.() -> Unit = {}): Deferred<Unit> {
+        return networkScope.async(Dispatchers.IO) {
+            val packetInstance = createPacketInstance<T>(protocolManager = viewmodel.protocolManager)
+            init(packetInstance)
+            val jsonPacket = packetInstance.build()
+            transmitPacket(jsonPacket, packetClass = T::class)
+        }
     }
 
     suspend fun transmitPacket(json: SendablePacket, packetClass: KClass<out PacketCreator>? = null, isRetry: Boolean = false) {

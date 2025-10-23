@@ -62,9 +62,9 @@ import com.yuroyami.syncplay.ui.utils.SyncplayPopup
 import com.yuroyami.syncplay.ui.utils.getRegularFont
 import com.yuroyami.syncplay.ui.utils.gradientOverlay
 import com.yuroyami.syncplay.ui.utils.syncplayFont
-import com.yuroyami.syncplay.utils.CommonUtils
 import com.yuroyami.syncplay.utils.getText
 import com.yuroyami.syncplay.utils.loggy
+import com.yuroyami.syncplay.utils.vidExs
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.path
@@ -88,7 +88,7 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
     val hasVideo by viewmodel.hasVideo.collectAsState()
     val popupStateAddUrl = remember { mutableStateOf(false) }
 
-    val videoPicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = CommonUtils.vidExs)) { file ->
+    val videoPicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = vidExs)) { file ->
         file?.path?.let {
             loggy(it)
             viewmodel.viewModelScope.launch {

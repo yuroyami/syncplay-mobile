@@ -4,8 +4,8 @@ import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
 import com.yuroyami.syncplay.logic.datastore.valueBlockingly
 import com.yuroyami.syncplay.managers.ProtocolManager
 import com.yuroyami.syncplay.models.MediaFile
-import com.yuroyami.syncplay.utils.CommonUtils.md5
 import com.yuroyami.syncplay.utils.generateTimestampMillis
+import com.yuroyami.syncplay.utils.md5
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject

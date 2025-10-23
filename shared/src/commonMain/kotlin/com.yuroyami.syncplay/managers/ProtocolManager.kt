@@ -15,6 +15,7 @@ import com.yuroyami.syncplay.logic.protocol.PacketCreator.State
 import com.yuroyami.syncplay.logic.protocol.PacketCreator.TLS
 import com.yuroyami.syncplay.logic.protocol.PacketHandler
 import com.yuroyami.syncplay.logic.protocol.PingService
+import com.yuroyami.syncplay.utils.ProtocolDsl
 
 class ProtocolManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel) {
     var globalPaused: Boolean = true //Latest server paused state
@@ -28,6 +29,7 @@ class ProtocolManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel)
     val packetHandler = PacketHandler(viewmodel, this)
 
     companion object {
+        @ProtocolDsl
         inline fun <reified T : PacketCreator> NetworkManager.createPacketInstance(protocolManager: ProtocolManager): T {
             return when (T::class) {
                 Hello::class -> Hello() as T

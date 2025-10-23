@@ -24,18 +24,13 @@ import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
-import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timeStamper
 import `is`.xyz.mpv.MPVLib
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.getString
-import syncplaymobile.shared.generated.resources.Res
-import syncplaymobile.shared.generated.resources.room_selected_sub
-import syncplaymobile.shared.generated.resources.room_selected_sub_error
-import syncplaymobile.shared.generated.resources.room_selected_vid
-import syncplaymobile.shared.generated.resources.room_sub_error_load_vid_first
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -70,9 +65,11 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
         copyAssets(ctx)
     }
 
-    override fun destroy() {
+    override suspend fun destroy() {
         if (!ismpvInit) return
-        mpvView.destroy()
+        withContext(Dispatchers.Main.immediate) {
+            mpvView.destroy()
+        }
     }
 
     @Composable
@@ -87,263 +84,288 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
             update = {})
     }
 
-    override fun configurableSettings(): ExtraSettingBundle = getExtraSettings()
+    override suspend fun configurableSettings(): ExtraSettingBundle = getExtraSettings()
 
-    override fun hasMedia(): Boolean {
-        val c = MPVLib.getPropertyInt("playlist-count" as java.lang.String)
-        return c != null && c > 0
+    override suspend fun hasMedia(): Boolean {
+        return withContext(Dispatchers.Main.immediate) {
+            val c = MPVLib.getPropertyInt("playlist-count" as java.lang.String)
+            c != null && c > 0
+        }
     }
 
-    override fun isPlaying(): Boolean {
-        return if (!ismpvInit) false
-        else !mpvView.paused
+    override suspend fun isPlaying(): Boolean {
+        return withContext(Dispatchers.Main.immediate) {
+            if (!ismpvInit) false else !mpvView.paused
+        }
     }
 
     override suspend fun analyzeTracks(mediafile: MediaFile) {
-        playerManager.media.value?.subtitleTracks?.clear()
-        playerManager.media.value?.audioTracks?.clear()
-        val count = MPVLib.getPropertyInt("track-list/count" as java.lang.String)!!
-        // Note that because events are async, properties might disappear at any moment
-        // so use ?: continue instead of !!
-        for (i in 0 until count.toInt()) {
-            val type = MPVLib.getPropertyString("track-list/$i/type" as java.lang.String)?.toString() ?: continue
-            if (type != "audio" && type != "sub") continue
-            val mpvId = MPVLib.getPropertyInt("track-list/$i/id" as java.lang.String) ?: continue
-            val lang = MPVLib.getPropertyString("track-list/$i/lang" as java.lang.String)
-            val title = MPVLib.getPropertyString("track-list/$i/title" as java.lang.String)
-            val selected = MPVLib.getPropertyBoolean("track-list/$i/selected" as java.lang.String)?.booleanValue() ?: false
+        withContext(Dispatchers.Main.immediate) {
+            playerManager.media.value?.subtitleTracks?.clear()
+            playerManager.media.value?.audioTracks?.clear()
+            val count = MPVLib.getPropertyInt("track-list/count" as java.lang.String)!!
+            // Note that because events are async, properties might disappear at any moment
+            // so use ?: continue instead of !!
+            for (i in 0 until count.toInt()) {
+                val type = MPVLib.getPropertyString("track-list/$i/type" as java.lang.String)?.toString() ?: continue
+                if (type != "audio" && type != "sub") continue
+                val mpvId = MPVLib.getPropertyInt("track-list/$i/id" as java.lang.String) ?: continue
+                val lang = MPVLib.getPropertyString("track-list/$i/lang" as java.lang.String)
+                val title = MPVLib.getPropertyString("track-list/$i/title" as java.lang.String)
+                val selected = MPVLib.getPropertyBoolean("track-list/$i/selected" as java.lang.String)?.booleanValue() ?: false
 
-            /** Speculating the track name based on whatever info there is on it */
-            val trackName = if (!lang.isNullOrEmpty() && !title.isNullOrEmpty())
-                "$title [$lang]"
-            else if (!lang.isNullOrEmpty() && title.isNullOrEmpty()) {
-                "$title [UND]"
-            } else if (!title.isNullOrEmpty() && lang.isNullOrEmpty())
-                "Track [$lang]"
-            else "Track $mpvId [UND]"
+                /** Speculating the track name based on whatever info there is on it */
+                val trackName = if (!lang.isNullOrEmpty() && !title.isNullOrEmpty())
+                    "$title [$lang]"
+                else if (!lang.isNullOrEmpty() && title.isNullOrEmpty()) {
+                    "$title [UND]"
+                } else if (!title.isNullOrEmpty() && lang.isNullOrEmpty())
+                    "Track [$lang]"
+                else "Track $mpvId [UND]"
 
-            Log.e("trck", "Found track $mpvId: $type, $title [$lang], $selected")
-            when (type) {
-                "audio" -> {
-                    playerManager.media.value?.audioTracks?.add(
-                        object : Track {
-                            override val name = trackName
-                            override val type = TRACKTYPE.AUDIO
-                            override val index = mpvId.toInt()
-                            override val selected = mutableStateOf(selected)
-                        }
-                    )
-                }
+                Log.e("trck", "Found track $mpvId: $type, $title [$lang], $selected")
+                when (type) {
+                    "audio" -> {
+                        playerManager.media.value?.audioTracks?.add(
+                            object : Track {
+                                override val name = trackName
+                                override val type = TRACKTYPE.AUDIO
+                                override val index = mpvId.toInt()
+                                override val selected = mutableStateOf(selected)
+                            }
+                        )
+                    }
 
-                "sub" -> {
-                    playerManager.media.value?.subtitleTracks?.add(
-                        object : Track {
-                            override val name = trackName
-                            override val type = TRACKTYPE.SUBTITLE
-                            override val index = mpvId.toInt()
-                            override val selected = mutableStateOf(selected)
-                        }
-                    )
+                    "sub" -> {
+                        playerManager.media.value?.subtitleTracks?.add(
+                            object : Track {
+                                override val name = trackName
+                                override val type = TRACKTYPE.SUBTITLE
+                                override val index = mpvId.toInt()
+                                override val selected = mutableStateOf(selected)
+                            }
+                        )
+                    }
                 }
             }
         }
     }
 
-    override fun selectTrack(track: Track?, type: TRACKTYPE) {
-        when (type) {
-            TRACKTYPE.SUBTITLE -> {
-                if (track != null) {
-                    MPVLib.setPropertyInt("sid" as java.lang.String, track.index as Integer)
-                } else {
-                    MPVLib.setPropertyString("sid" as java.lang.String, "no" as java.lang.String)
+    override suspend fun selectTrack(track: Track?, type: TRACKTYPE) {
+        withContext(Dispatchers.Main.immediate) {
+            when (type) {
+                TRACKTYPE.SUBTITLE -> {
+                    if (track != null) {
+                        MPVLib.setPropertyInt("sid" as java.lang.String, track.index as Integer)
+                    } else {
+                        MPVLib.setPropertyString("sid" as java.lang.String, "no" as java.lang.String)
+                    }
+
+                    playerManager.currentTrackChoices.subtitleSelectionIndexMpv = track?.index ?: -1
                 }
 
-                playerManager.currentTrackChoices.subtitleSelectionIndexMpv = track?.index ?: -1
-            }
+                TRACKTYPE.AUDIO -> {
+                    if (track != null) {
+                        MPVLib.setPropertyInt("aid" as java.lang.String, track.index as Integer)
+                    } else {
+                        MPVLib.setPropertyString("aid" as java.lang.String, "no" as java.lang.String)
+                    }
 
-            TRACKTYPE.AUDIO -> {
-                if (track != null) {
-                    MPVLib.setPropertyInt("aid" as java.lang.String, track.index as Integer)
-                } else {
-                    MPVLib.setPropertyString("aid" as java.lang.String, "no" as java.lang.String)
+                    playerManager.currentTrackChoices.audioSelectionIndexMpv = track?.index ?: -1
                 }
-
-                playerManager.currentTrackChoices.audioSelectionIndexMpv = track?.index ?: -1
             }
         }
     }
 
     override suspend fun analyzeChapters(mediafile: MediaFile) {
-        if (!ismpvInit) return
-        val chapters = mpvView.loadChapters()
-        if (chapters.isEmpty()) return
-        mediafile.chapters.clear()
-        mediafile.chapters.addAll(chapters.map {
-            val timestamp = " (${timeStamper(it.time.roundToLong())})"
-            Chapter(
-                it.index,
-                (it.title ?: "Chapter ${it.index}") + timestamp,
-                (it.time * 1000).roundToLong()
-            )
-        })
+        withContext(Dispatchers.Main.immediate) {
+            if (!ismpvInit) return@withContext
+            val chapters = mpvView.loadChapters()
+            if (chapters.isEmpty()) return@withContext
+            mediafile.chapters.clear()
+            mediafile.chapters.addAll(chapters.map {
+                val timestamp = " (${timeStamper(it.time.roundToLong())})"
+                Chapter(
+                    it.index,
+                    (it.title ?: "Chapter ${it.index}") + timestamp,
+                    (it.time * 1000).roundToLong()
+                )
+            })
+        }
     }
 
-    override fun jumpToChapter(chapter: Chapter) {
+    override suspend fun jumpToChapter(chapter: Chapter) {
         if (!ismpvInit) return
-        MPVLib.setPropertyInt("chapter" as java.lang.String, chapter.index as Integer)
+        withContext(Dispatchers.Main.immediate) {
+            MPVLib.setPropertyInt("chapter" as java.lang.String, chapter.index as Integer)
+        }
     }
 
-    override fun skipChapter() {
+    override suspend fun skipChapter() {
         if (!ismpvInit) return
 
-        MPVLib.command(arrayOf("add" as java.lang.String, "chapter" as java.lang.String, "1" as java.lang.String))
+        withContext(Dispatchers.Main.immediate) {
+            MPVLib.command(arrayOf("add" as java.lang.String, "chapter" as java.lang.String, "1" as java.lang.String))
+        }
     }
 
-    override fun reapplyTrackChoices() {
-        val subIndex = playerManager.currentTrackChoices.subtitleSelectionIndexMpv
-        val audioIndex = playerManager.currentTrackChoices.audioSelectionIndexMpv
+    override suspend fun reapplyTrackChoices() {
+        withContext(Dispatchers.Main.immediate) {
+            val subIndex = playerManager.currentTrackChoices.subtitleSelectionIndexMpv
+            val audioIndex = playerManager.currentTrackChoices.audioSelectionIndexMpv
 
-        val ccMap = playerManager.media.value?.subtitleTracks
-        val audioMap = playerManager.media.value?.subtitleTracks
+            val ccMap = playerManager.media.value?.subtitleTracks
+            val audioMap = playerManager.media.value?.subtitleTracks
 
-        val ccGet = ccMap?.firstOrNull { it.index == subIndex }
-        val audioGet = audioMap?.firstOrNull { it.index == audioIndex }
+            val ccGet = ccMap?.firstOrNull { it.index == subIndex }
+            val audioGet = audioMap?.firstOrNull { it.index == audioIndex }
 
-        with(playerManager.player ?: return) {
-            if (subIndex == -1) {
-                selectTrack(null, TRACKTYPE.SUBTITLE)
-            } else if (ccGet != null) {
-                selectTrack(ccGet, TRACKTYPE.SUBTITLE)
-            }
+            with(playerManager.player ?: return@withContext) {
+                if (subIndex == -1) {
+                    selectTrack(null, TRACKTYPE.SUBTITLE)
+                } else if (ccGet != null) {
+                    selectTrack(ccGet, TRACKTYPE.SUBTITLE)
+                }
 
-            if (audioIndex == -1) {
-                selectTrack(null, TRACKTYPE.AUDIO)
-            } else if (audioGet != null) {
-                selectTrack(audioGet, TRACKTYPE.AUDIO)
+                if (audioIndex == -1) {
+                    selectTrack(null, TRACKTYPE.AUDIO)
+                } else if (audioGet != null) {
+                    selectTrack(audioGet, TRACKTYPE.AUDIO)
+                }
             }
         }
     }
 
-    override fun loadExternalSubImpl(uri: String, extension: String) {
-        ctx.resolveUri(uri.toUri())?.let { subUri ->
-            MPVLib.command(
-                arrayOf(
-                    "sub-add" as java.lang.String,
-                    subUri as java.lang.String,
-                    "cached" as java.lang.String)
-            )
+    override suspend fun loadExternalSubImpl(uri: String, extension: String) {
+        withContext(Dispatchers.IO) {
+            ctx.resolveUri(uri.toUri())?.let { subUri ->
+                withContext(Dispatchers.Main) {
+                    MPVLib.command(
+                        arrayOf(
+                            "sub-add" as java.lang.String,
+                            subUri as java.lang.String,
+                            "cached" as java.lang.String
+                        )
+                    )
+                }
+            }
         }
     }
 
     override suspend fun injectVideoImpl(media: MediaFile, isUrl: Boolean) {
-        delay(500)
-        media.uri?.let { uri ->
-            if (!isUrl) {
-                ctx.resolveUri(uri.toUri())?.let { it2 ->
-                    loggy("Final path $it2")
+        withContext(Dispatchers.Main.immediate) {
+            delay(500)
+            media.uri?.let { uri ->
+                if (!isUrl) {
+                    ctx.resolveUri(uri.toUri())?.let { it2 ->
+                        loggy("Final path $it2")
+                        if (ismpvInit) {
+                            MPVLib.destroy()
+                        }
+                        mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
+                        ismpvInit = true
+                        mpvObserverAttach()
+                        mpvView.playFile(it2)
+                        mpvView.surfaceCreated(mpvView.holder)
+                    }
+                } else {
                     if (ismpvInit) {
                         MPVLib.destroy()
                     }
                     mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
                     ismpvInit = true
                     mpvObserverAttach()
-                    mpvView.playFile(it2)
+                    mpvView.playFile(uri)
                     mpvView.surfaceCreated(mpvView.holder)
                 }
-            } else {
-                if (ismpvInit) {
-                    MPVLib.destroy()
-                }
-                mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
-                ismpvInit = true
-                mpvObserverAttach()
-                mpvView.playFile(uri)
-                mpvView.surfaceCreated(mpvView.holder)
             }
         }
     }
 
-    override fun pause() {
+    override suspend fun pause() {
         if (!ismpvInit) return
 
         mpvView.paused = true
     }
 
-    override fun play() {
+    override suspend fun play() {
         if (!ismpvInit) return
 
         mpvView.paused = false
     }
 
-    override fun isSeekable(): Boolean {
+    override suspend fun isSeekable(): Boolean {
         return true
     }
 
-    override fun seekTo(toPositionMs: Long) {
+    override suspend fun seekTo(toPositionMs: Long) {
         if (!ismpvInit) return
         super.seekTo(toPositionMs)
 
         mpvView.timePos = toPositionMs.toInt() / 1000
     }
 
-    override fun currentPositionMs(): Long {
+    override suspend fun currentPositionMs(): Long {
         return mpvPos
     }
 
     override suspend fun switchAspectRatio(): String {
-        val currentAspect = MPVLib.getPropertyString("video-aspect-override" as java.lang.String)?.toString()
-        val currentPanscan = MPVLib.getPropertyDouble("panscan" as java.lang.String)?.toDouble()
+        return withContext(Dispatchers.Main.immediate) {
+            val currentAspect = MPVLib.getPropertyString("video-aspect-override" as java.lang.String)?.toString()
+            val currentPanscan = MPVLib.getPropertyDouble("panscan" as java.lang.String)?.toDouble()
 
-        loggy("currentAspect: $currentAspect and currentPanscan: $currentPanscan")
+            loggy("currentAspect: $currentAspect and currentPanscan: $currentPanscan")
 
-        val aspectRatios = listOf(
-            "-1.000000" to "Original",
-            "1.777778" to "16:9",
-            "1.600000" to "16:10",
-            "1.333333" to "4:3",
-            "2.350000" to "2.35:1",
-            "panscan" to "Pan/Scan"
-        )
+            val aspectRatios = listOf(
+                "-1.000000" to "Original",
+                "1.777778" to "16:9",
+                "1.600000" to "16:10",
+                "1.333333" to "4:3",
+                "2.350000" to "2.35:1",
+                "panscan" to "Pan/Scan"
+            )
 
-        var enablePanscan = false
-        val nextAspect = if (currentPanscan == 1.0) {
-            aspectRatios[0]
-        } else if (currentAspect == "2.350000") {
-            enablePanscan = true
-            aspectRatios[5]
-        } else {
-            aspectRatios[aspectRatios.indexOfFirst { it.first == currentAspect } + 1]
+            var enablePanscan = false
+            val nextAspect = if (currentPanscan == 1.0) {
+                aspectRatios[0]
+            } else if (currentAspect == "2.350000") {
+                enablePanscan = true
+                aspectRatios[5]
+            } else {
+                aspectRatios[aspectRatios.indexOfFirst { it.first == currentAspect } + 1]
+            }
+
+            if (enablePanscan) {
+                MPVLib.setPropertyString("video-aspect-override" as java.lang.String, "-1" as java.lang.String)
+                MPVLib.setPropertyDouble("panscan" as java.lang.String, 1.0 as java.lang.Double)
+            } else {
+                MPVLib.setPropertyString("video-aspect-override" as java.lang.String, nextAspect.first as java.lang.String)
+                MPVLib.setPropertyDouble("panscan" as java.lang.String, 0.0 as java.lang.Double)
+            }
+
+            return@withContext nextAspect.second
         }
-
-        if (enablePanscan) {
-            MPVLib.setPropertyString("video-aspect-override" as java.lang.String, "-1" as java.lang.String)
-            MPVLib.setPropertyDouble("panscan" as java.lang.String, 1.0 as java.lang.Double)
-        } else {
-            MPVLib.setPropertyString("video-aspect-override" as java.lang.String, nextAspect.first as java.lang.String)
-            MPVLib.setPropertyDouble("panscan" as java.lang.String, 0.0 as java.lang.Double)
-        }
-
-        return nextAspect.second
     }
 
-    override fun collectInfoLocal(mediafile: MediaFile) {
+    override suspend fun collectInfoLocal(mediafile: MediaFile) {
         collectInfoLocalAndroid(mediafile, ctx)
     }
 
-    override fun changeSubtitleSize(newSize: Int) {
+    override suspend fun changeSubtitleSize(newSize: Int) {
+        withContext(Dispatchers.Main.immediate) {
+            val s: Double = when {
+                newSize == 16 -> 1.0
+                newSize > 16 -> {
+                    1.0 + (newSize - 16) * 0.05
+                }
 
-        val s: Double = when {
-            newSize == 16 -> 1.0
-            newSize > 16 -> {
-                1.0 + (newSize - 16) * 0.05
+                else -> {
+                    1.0 - (16 - newSize) * (1.0 / 16)
+                }
             }
 
-            else -> {
-                1.0 - (16 - newSize) * (1.0 / 16)
-            }
+            MPVLib.setPropertyDouble("sub-scale" as java.lang.String, s as java.lang.Double)
         }
-
-        MPVLib.setPropertyDouble("sub-scale" as java.lang.String, s as java.lang.Double)
     }
 
     /** MPV EXCLUSIVE */
@@ -402,8 +424,10 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                     }
 
                     MPVLib.mpvEventId.MPV_EVENT_END_FILE -> {
-                        pause()
-                        onPlaybackEnded()
+                        playerScopeMain.launch {
+                            pause()
+                            onPlaybackEnded()
+                        }
                     }
                 }
             }

@@ -3,7 +3,7 @@ package com.yuroyami.syncplay.models
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
-import com.yuroyami.syncplay.utils.CommonUtils.generateClockstamp
+import com.yuroyami.syncplay.utils.generateClockstamp
 
 /***************************************************************************************************
  * Message wrapper class. It encapsulates all information and data we need about a single message  *

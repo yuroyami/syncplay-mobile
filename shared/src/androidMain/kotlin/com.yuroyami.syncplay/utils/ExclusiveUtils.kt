@@ -7,7 +7,6 @@ import androidx.activity.ComponentActivity
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.yuroyami.syncplay.models.MediaFile
-import com.yuroyami.syncplay.utils.CommonUtils.sha256
 import java.util.Locale
 
 /** This is used specifically in the case where common code needs access to some context.

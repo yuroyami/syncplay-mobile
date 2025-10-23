@@ -78,11 +78,11 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
     override val trackerJobInterval: Duration = 500.milliseconds
 
     override fun initialize() {
-        val context = exoView.context
+        playerScopeMain.launch(Dispatchers.Main.immediate) {
+            val context = exoView.context
 
-        audioManager = context.applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            audioManager = context.applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
-        playerScopeMain.launch {
             /** LoadControl (Buffering manager) and track selector (for track language preference) **/
             val options = PlayerOptions.getSuspendingly()
             val loadControl = DefaultLoadControl.Builder()
@@ -218,10 +218,12 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
         }
     }
 
-    override fun destroy() {
-        exoplayer?.stop()
-        exoplayer?.release()
-        exoplayer = null
+    override suspend fun destroy() {
+        withContext(Dispatchers.Main.immediate) {
+            exoplayer?.stop()
+            exoplayer?.release()
+            exoplayer = null
+        }
     }
 
     @Composable
@@ -236,7 +238,7 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
         )
     }
 
-    override fun configurableSettings() = getExtraSettings()
+    override suspend fun configurableSettings() = getExtraSettings()
 
     override fun getMaxVolume() = audioManager.getStreamMaxVolume(STREAM_TYPE_MUSIC)
     override fun getCurrentVolume() = audioManager.getStreamVolume(STREAM_TYPE_MUSIC)
@@ -246,12 +248,12 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
         }
     }
 
-    override fun hasMedia(): Boolean {
-        return exoplayer?.mediaItemCount != 0 && exoplayer != null
+    override suspend fun hasMedia(): Boolean {
+        return withContext(Dispatchers.Main.immediate) { exoplayer?.mediaItemCount != 0 && exoplayer != null }
     }
 
-    override fun isPlaying(): Boolean {
-        return exoplayer?.playbackState == Player.STATE_READY && exoplayer?.playWhenReady == true
+    override suspend fun isPlaying(): Boolean {
+        return withContext(Dispatchers.Main.immediate) { exoplayer?.playbackState == Player.STATE_READY && exoplayer?.playWhenReady == true }
     }
 
     override suspend fun analyzeTracks(mediafile: MediaFile) {
@@ -290,7 +292,7 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
         }
     }
 
-    override fun selectTrack(track: Track?, type: TRACKTYPE) {
+    override suspend fun selectTrack(track: Track?, type: TRACKTYPE) {
         val exoTrack = track as? ExoTrack
 
         val builder = exoplayer?.trackSelector?.parameters?.buildUpon() ?: return
@@ -323,13 +325,13 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
     }
 
     override suspend fun analyzeChapters(mediafile: MediaFile) {}
-    override fun jumpToChapter(chapter: Chapter) {}
-    override fun skipChapter() {}
+    override suspend fun jumpToChapter(chapter: Chapter) {}
+    override suspend fun skipChapter() {}
 
-    override fun reapplyTrackChoices() {
+    override suspend fun reapplyTrackChoices() {
         /* We need to cast MediaController to ExoPlayer since they're roughly the same */
-        playerScopeMain.launch {
-            analyzeTracks(viewmodel.media ?: return@launch)
+        withContext(Dispatchers.Main.immediate) {
+            analyzeTracks(viewmodel.media ?: return@withContext)
 
             exoplayer?.apply {
                 val builder = trackSelectionParameters.buildUpon()
@@ -338,12 +340,12 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
 
                 if (playerManager.currentTrackChoices.lastAudioOverride != null) {
                     newParams = newParams.buildUpon().addOverride(
-                        playerManager.currentTrackChoices.lastAudioOverride as? TrackSelectionOverride ?: return@launch
+                        playerManager.currentTrackChoices.lastAudioOverride as? TrackSelectionOverride ?: return@withContext
                     ).build()
                 }
                 if (playerManager.currentTrackChoices.lastSubtitleOverride != null) {
                     newParams = newParams.buildUpon().addOverride(
-                        playerManager.currentTrackChoices.lastSubtitleOverride as? TrackSelectionOverride ?: return@launch
+                        playerManager.currentTrackChoices.lastSubtitleOverride as? TrackSelectionOverride ?: return@withContext
                     ).build()
                 }
                 trackSelectionParameters = newParams
@@ -351,14 +353,14 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
         }
     }
 
-    override fun loadExternalSubImpl(uri: String, extension: String) {
+    override suspend fun loadExternalSubImpl(uri: String, extension: String) {
         viewmodel.media?.externalSub = MediaItem.SubtitleConfiguration.Builder(uri.toUri())
             .setUri(uri.toUri())
             .setMimeType(extension.mimeType)
             .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
             .build()
 
-        playerScopeMain.launch {
+        withContext(Dispatchers.Main.immediate) {
             //Exo requires that we reload the video
             injectVideo(uri)
         }
@@ -395,32 +397,32 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
         exoplayer?.duration?.let { playerManager.timeFullMillis.value = if (it < 0) 0 else it }
     }
 
-    override fun pause() {
-        playerScopeMain.launch {
+    override suspend fun pause() {
+        withContext(Dispatchers.Main.immediate) {
             exoplayer?.pause()
         }
     }
 
-    override fun play() {
-        playerScopeMain.launch {
+    override suspend fun play() {
+        withContext(Dispatchers.Main.immediate) {
             exoplayer?.play()
         }
     }
 
-    override fun isSeekable(): Boolean {
-        return exoplayer?.isCurrentMediaItemSeekable == true
+    override suspend fun isSeekable(): Boolean {
+        return withContext(Dispatchers.Main.immediate) { exoplayer?.isCurrentMediaItemSeekable == true }
     }
 
-    override fun seekTo(toPositionMs: Long) {
+    override suspend fun seekTo(toPositionMs: Long) {
         super.seekTo(toPositionMs)
-        playerScopeMain.launch {
+        withContext(Dispatchers.Main.immediate) {
             exoplayer?.seekTo((toPositionMs))
         }
     }
 
 
-    override fun currentPositionMs(): Long {
-        return exoplayer?.currentPosition ?: 0L
+    override suspend fun currentPositionMs(): Long {
+        return withContext(Dispatchers.Main.immediate) { exoplayer?.currentPosition ?: 0L }
     }
 
     @SuppressLint("WrongConstant")
@@ -440,12 +442,12 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
         return resolutions[nextRes]!!
     }
 
-    override fun collectInfoLocal(mediafile: MediaFile) {
+    override suspend fun collectInfoLocal(mediafile: MediaFile) {
         collectInfoLocalAndroid(mediafile, exoView.context)
     }
 
-    override fun changeSubtitleSize(newSize: Int) {
-        playerScopeMain.launch {
+    override suspend fun changeSubtitleSize(newSize: Int) {
+        withContext(Dispatchers.Main.immediate) {
             exoView.subtitleView?.setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, newSize.toFloat())
         }
     }
@@ -466,7 +468,7 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
         }
     }
 
-    fun retweakSubtitleAppearance(
+    suspend fun retweakSubtitleAppearance(
         size: Float,
         captionStyle: CaptionStyleCompat = CaptionStyleCompat(
             Color.WHITE, Color.TRANSPARENT, Color.TRANSPARENT,

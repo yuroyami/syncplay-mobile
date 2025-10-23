@@ -1,5 +1,10 @@
 package com.yuroyami.syncplay.logic
 
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.launch
+
 /**
  * Base class for all "manager" components in the Syncplay architecture.
  *
@@ -11,4 +16,16 @@ package com.yuroyami.syncplay.logic
  */
 abstract class AbstractManager(
     val viewmodel: SyncplayViewmodel
-)
+) {
+    inline fun onMainThread(crossinline block: suspend () -> Unit) {
+        viewmodel.viewModelScope.launch(Dispatchers.Main.immediate) {
+            block()
+        }
+    }
+
+    inline fun onIOThread(crossinline block: suspend () -> Unit) {
+        viewmodel.viewModelScope.launch(Dispatchers.IO) {
+            block()
+        }
+    }
+}

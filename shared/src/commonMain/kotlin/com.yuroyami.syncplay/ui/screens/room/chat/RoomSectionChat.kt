@@ -57,7 +57,7 @@ import com.yuroyami.syncplay.ui.screens.adam.LocalChatPalette
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.ChatAnnotatedText
-import com.yuroyami.syncplay.utils.CommonUtils.isEmoji
+import com.yuroyami.syncplay.utils.isEmoji
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_type_message
