@@ -88,7 +88,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
 
     override suspend fun hasMedia(): Boolean {
         return withContext(Dispatchers.Main.immediate) {
-            val c = MPVLib.getPropertyInt("playlist-count" as java.lang.String)
+            val c = MPVLib.getPropertyInt("playlist-count")
             c != null && c > 0
         }
     }
@@ -103,16 +103,16 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
         withContext(Dispatchers.Main.immediate) {
             playerManager.media.value?.subtitleTracks?.clear()
             playerManager.media.value?.audioTracks?.clear()
-            val count = MPVLib.getPropertyInt("track-list/count" as java.lang.String)!!
+            val count = MPVLib.getPropertyInt("track-list/count")!!
             // Note that because events are async, properties might disappear at any moment
             // so use ?: continue instead of !!
-            for (i in 0 until count.toInt()) {
-                val type = MPVLib.getPropertyString("track-list/$i/type" as java.lang.String)?.toString() ?: continue
+            for (i in 0 until count) {
+                val type = MPVLib.getPropertyString("track-list/$i/type") ?: continue
                 if (type != "audio" && type != "sub") continue
-                val mpvId = MPVLib.getPropertyInt("track-list/$i/id" as java.lang.String) ?: continue
-                val lang = MPVLib.getPropertyString("track-list/$i/lang" as java.lang.String)
-                val title = MPVLib.getPropertyString("track-list/$i/title" as java.lang.String)
-                val selected = MPVLib.getPropertyBoolean("track-list/$i/selected" as java.lang.String)?.booleanValue() ?: false
+                val mpvId = MPVLib.getPropertyInt("track-list/$i/id") ?: continue
+                val lang = MPVLib.getPropertyString("track-list/$i/lang")
+                val title = MPVLib.getPropertyString("track-list/$i/title")
+                val selected = MPVLib.getPropertyBoolean("track-list/$i/selected") ?: false
 
                 /** Speculating the track name based on whatever info there is on it */
                 val trackName = if (!lang.isNullOrEmpty() && !title.isNullOrEmpty())
@@ -130,7 +130,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                             object : Track {
                                 override val name = trackName
                                 override val type = TRACKTYPE.AUDIO
-                                override val index = mpvId.toInt()
+                                override val index = mpvId
                                 override val selected = mutableStateOf(selected)
                             }
                         )
@@ -141,7 +141,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                             object : Track {
                                 override val name = trackName
                                 override val type = TRACKTYPE.SUBTITLE
-                                override val index = mpvId.toInt()
+                                override val index = mpvId
                                 override val selected = mutableStateOf(selected)
                             }
                         )
@@ -156,9 +156,9 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
             when (type) {
                 TRACKTYPE.SUBTITLE -> {
                     if (track != null) {
-                        MPVLib.setPropertyInt("sid" as java.lang.String, track.index as Integer)
+                        MPVLib.setPropertyInt("sid", track.index)
                     } else {
-                        MPVLib.setPropertyString("sid" as java.lang.String, "no" as java.lang.String)
+                        MPVLib.setPropertyString("sid", "no")
                     }
 
                     playerManager.currentTrackChoices.subtitleSelectionIndexMpv = track?.index ?: -1
@@ -166,9 +166,9 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
 
                 TRACKTYPE.AUDIO -> {
                     if (track != null) {
-                        MPVLib.setPropertyInt("aid" as java.lang.String, track.index as Integer)
+                        MPVLib.setPropertyInt("aid", track.index)
                     } else {
-                        MPVLib.setPropertyString("aid" as java.lang.String, "no" as java.lang.String)
+                        MPVLib.setPropertyString("aid", "no")
                     }
 
                     playerManager.currentTrackChoices.audioSelectionIndexMpv = track?.index ?: -1
@@ -197,7 +197,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
     override suspend fun jumpToChapter(chapter: Chapter) {
         if (!ismpvInit) return
         withContext(Dispatchers.Main.immediate) {
-            MPVLib.setPropertyInt("chapter" as java.lang.String, chapter.index as Integer)
+            MPVLib.setPropertyInt("chapter", chapter.index)
         }
     }
 
@@ -205,7 +205,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
         if (!ismpvInit) return
 
         withContext(Dispatchers.Main.immediate) {
-            MPVLib.command(arrayOf("add" as java.lang.String, "chapter" as java.lang.String, "1" as java.lang.String))
+            MPVLib.command(arrayOf("add", "chapter", "1"))
         }
     }
 
@@ -242,9 +242,9 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                 withContext(Dispatchers.Main) {
                     MPVLib.command(
                         arrayOf(
-                            "sub-add" as java.lang.String,
-                            subUri as java.lang.String,
-                            "cached" as java.lang.String
+                            "sub-add",
+                            subUri,
+                            "cached"
                         )
                     )
                 }
@@ -311,8 +311,8 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
 
     override suspend fun switchAspectRatio(): String {
         return withContext(Dispatchers.Main.immediate) {
-            val currentAspect = MPVLib.getPropertyString("video-aspect-override" as java.lang.String)?.toString()
-            val currentPanscan = MPVLib.getPropertyDouble("panscan" as java.lang.String)?.toDouble()
+            val currentAspect = MPVLib.getPropertyString("video-aspect-override")
+            val currentPanscan = MPVLib.getPropertyDouble("panscan")
 
             loggy("currentAspect: $currentAspect and currentPanscan: $currentPanscan")
 
@@ -336,11 +336,11 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
             }
 
             if (enablePanscan) {
-                MPVLib.setPropertyString("video-aspect-override" as java.lang.String, "-1" as java.lang.String)
-                MPVLib.setPropertyDouble("panscan" as java.lang.String, 1.0 as java.lang.Double)
+                MPVLib.setPropertyString("video-aspect-override", "-1")
+                MPVLib.setPropertyDouble("panscan", 1.0)
             } else {
-                MPVLib.setPropertyString("video-aspect-override" as java.lang.String, nextAspect.first as java.lang.String)
-                MPVLib.setPropertyDouble("panscan" as java.lang.String, 0.0 as java.lang.Double)
+                MPVLib.setPropertyString("video-aspect-override", nextAspect.first)
+                MPVLib.setPropertyDouble("panscan", 0.0)
             }
 
             return@withContext nextAspect.second
@@ -364,7 +364,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                 }
             }
 
-            MPVLib.setPropertyDouble("sub-scale" as java.lang.String, s as java.lang.Double)
+            MPVLib.setPropertyDouble("sub-scale", s)
         }
     }
 
@@ -406,7 +406,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
 
             override fun event(eventId: Int) {
                 when (eventId) {
-                    MPVLib.mpvEventId.MPV_EVENT_START_FILE -> {
+                    MPVLib.MpvEvent.MPV_EVENT_START_FILE -> {
                         if (viewmodel.isSoloMode) return
                         playerScopeIO.launch {
                             while (true) {
@@ -423,7 +423,7 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                         }
                     }
 
-                    MPVLib.mpvEventId.MPV_EVENT_END_FILE -> {
+                    MPVLib.MpvEvent.MPV_EVENT_END_FILE -> {
                         playerScopeMain.launch {
                             pause()
                             onPlaybackEnded()
@@ -529,32 +529,32 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
 
     fun toggleHardwareAcceleration(b: Boolean) {
         if (!ismpvInit) return
-        MPVLib.setOptionString("hwdec" as java.lang.String, if (b) "auto" as java.lang.String else "no" as java.lang.String)
+        MPVLib.setOptionString("hwdec", if (b) "auto" else "no")
     }
 
     fun toggleGpuNext(b: Boolean) {
         if (!ismpvInit) return
-        MPVLib.setOptionString("vo" as java.lang.String, if (b) "gpu-next" as java.lang.String else "gpu" as java.lang.String)
+        MPVLib.setOptionString("vo", if (b) "gpu-next" else "gpu")
     }
 
     fun toggleInterpolation(b: Boolean) {
         if (!ismpvInit) return
-        MPVLib.setOptionString("interpolation" as java.lang.String, if (b) "yes" as java.lang.String else "no" as java.lang.String)
+        MPVLib.setOptionString("interpolation", if (b) "yes" else "no")
     }
 
     fun toggleDebugMode(i: Int) {
         if (!ismpvInit) return
-        MPVLib.command(arrayOf("script-binding" as java.lang.String, "stats/display-page-$i" as java.lang.String))
+        MPVLib.command(arrayOf("script-binding", "stats/display-page-$i"))
     }
 
     fun setProfileMode(p: String) {
         if (!ismpvInit) return
-        MPVLib.setOptionString("profile" as java.lang.String, p as java.lang.String)
+        MPVLib.setOptionString("profile", p)
     }
 
     fun setVidSyncMode(m: String) {
         if (!ismpvInit) return
-        MPVLib.setOptionString("video-sync" as java.lang.String, m as java.lang.String)
+        MPVLib.setOptionString("video-sync", m)
     }
 
     override fun getMaxVolume() = audioManager.getStreamMaxVolume(STREAM_TYPE_MUSIC)
