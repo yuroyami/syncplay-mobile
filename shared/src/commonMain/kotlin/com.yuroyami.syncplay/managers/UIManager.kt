@@ -1,8 +1,8 @@
 package com.yuroyami.syncplay.managers
 
 import androidx.compose.runtime.mutableStateListOf
-import com.yuroyami.syncplay.logic.AbstractManager
-import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.AbstractManager
+import com.yuroyami.syncplay.SyncplayViewmodel
 import com.yuroyami.syncplay.ui.screens.adam.Screen
 import kotlinx.coroutines.flow.MutableStateFlow
 

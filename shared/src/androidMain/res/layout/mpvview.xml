@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.yuroyami.syncplay.logic.player.mpv.MPVView
+<com.yuroyami.syncplay.managers.player.mpv.MPVView
     android:id="@+id/mpvview"
     android:layout_height="match_parent"
     android:layout_width="match_parent"

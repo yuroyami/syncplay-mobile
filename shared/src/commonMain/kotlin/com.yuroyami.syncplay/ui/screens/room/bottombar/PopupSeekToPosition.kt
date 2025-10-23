@@ -39,8 +39,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
-import com.yuroyami.syncplay.logic.datastore.valueAsState
+import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
+import com.yuroyami.syncplay.managers.datastore.valueAsState
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.FancyText2

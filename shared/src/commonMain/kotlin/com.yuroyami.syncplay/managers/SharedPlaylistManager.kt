@@ -1,11 +1,11 @@
 package com.yuroyami.syncplay.managers
 
-import com.yuroyami.syncplay.logic.AbstractManager
-import com.yuroyami.syncplay.logic.SyncplayViewmodel
-import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
-import com.yuroyami.syncplay.logic.datastore.valueBlockingly
-import com.yuroyami.syncplay.logic.datastore.writeValue
-import com.yuroyami.syncplay.logic.protocol.PacketCreator
+import com.yuroyami.syncplay.AbstractManager
+import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
+import com.yuroyami.syncplay.managers.datastore.valueBlockingly
+import com.yuroyami.syncplay.managers.datastore.writeValue
+import com.yuroyami.syncplay.managers.protocol.PacketCreator
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.iterateDirectory
 import org.jetbrains.compose.resources.getString

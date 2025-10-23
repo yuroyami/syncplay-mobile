@@ -15,8 +15,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_NEVER_SHOW_TIPS
-import com.yuroyami.syncplay.logic.datastore.writeValue
+import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_NEVER_SHOW_TIPS
+import com.yuroyami.syncplay.managers.datastore.writeValue
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO

@@ -1,3 +1,0 @@
-files:
-  - source: /shared/src/commonMain/composeResources/values-en/strings.xml
-    translation: /shared/src/commonMain/composeResources/values-%two_letters_code%/strings.xml

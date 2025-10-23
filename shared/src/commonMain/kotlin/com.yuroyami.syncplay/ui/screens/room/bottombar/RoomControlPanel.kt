@@ -42,10 +42,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.MISC_GESTURES
-import com.yuroyami.syncplay.logic.datastore.valueFlow
-import com.yuroyami.syncplay.logic.datastore.writeValue
-import com.yuroyami.syncplay.logic.player.BasePlayer
+import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_GESTURES
+import com.yuroyami.syncplay.managers.datastore.valueFlow
+import com.yuroyami.syncplay.managers.datastore.writeValue
+import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming

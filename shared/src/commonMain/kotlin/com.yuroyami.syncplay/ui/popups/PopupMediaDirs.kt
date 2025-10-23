@@ -58,11 +58,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import com.eygraber.uri.Uri
+import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
+import com.yuroyami.syncplay.managers.datastore.valueBlockingly
+import com.yuroyami.syncplay.managers.datastore.valueFlow
+import com.yuroyami.syncplay.managers.datastore.writeValue
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
-import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
-import com.yuroyami.syncplay.logic.datastore.valueBlockingly
-import com.yuroyami.syncplay.logic.datastore.valueFlow
-import com.yuroyami.syncplay.logic.datastore.writeValue
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.SyncplayPopup

@@ -2,9 +2,9 @@ package com.yuroyami.syncplay.managers
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.logic.AbstractManager
-import com.yuroyami.syncplay.logic.SyncplayViewmodel
-import com.yuroyami.syncplay.logic.player.BasePlayer
+import com.yuroyami.syncplay.AbstractManager
+import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.TrackChoices
 import kotlinx.coroutines.flow.MutableStateFlow

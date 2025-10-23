@@ -1,13 +1,13 @@
 package com.yuroyami.syncplay.managers
 
-import com.yuroyami.syncplay.logic.AbstractManager
-import com.yuroyami.syncplay.logic.SyncplayViewmodel
-import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
-import com.yuroyami.syncplay.logic.datastore.valueBlockingly
-import com.yuroyami.syncplay.logic.datastore.valueSuspendingly
-import com.yuroyami.syncplay.logic.protocol.PacketCreator
+import com.yuroyami.syncplay.AbstractManager
+import com.yuroyami.syncplay.SyncplayViewmodel
 import com.yuroyami.syncplay.managers.ProtocolManager.Companion.createPacketInstance
 import com.yuroyami.syncplay.managers.SessionManager.Session
+import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
+import com.yuroyami.syncplay.managers.datastore.valueBlockingly
+import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
+import com.yuroyami.syncplay.managers.protocol.PacketCreator
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.utils.PLATFORM
 import com.yuroyami.syncplay.utils.ProtocolDsl

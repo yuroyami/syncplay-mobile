@@ -2,11 +2,11 @@ package com.yuroyami.syncplay.utils
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ClipEntry
-import com.yuroyami.syncplay.logic.SyncplayViewmodel
-import com.yuroyami.syncplay.logic.network.KtorNetworkManager
-import com.yuroyami.syncplay.logic.player.ApplePlayerEngine
-import com.yuroyami.syncplay.logic.player.PlayerEngine
+import com.yuroyami.syncplay.SyncplayViewmodel
 import com.yuroyami.syncplay.managers.NetworkManager
+import com.yuroyami.syncplay.managers.network.KtorNetworkManager
+import com.yuroyami.syncplay.managers.player.ApplePlayerEngine
+import com.yuroyami.syncplay.managers.player.PlayerEngine
 import platform.Foundation.NSDate
 import platform.Foundation.NSURL
 import platform.Foundation.timeIntervalSince1970

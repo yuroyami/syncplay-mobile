@@ -3,9 +3,9 @@ package com.yuroyami.syncplay.utils
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.uikit.ComposeUIViewControllerDelegate
 import androidx.compose.ui.window.ComposeUIViewController
-import com.yuroyami.syncplay.ui.screens.adam.AdamScreen
+import com.yuroyami.syncplay.PlatformCallback
 import com.yuroyami.syncplay.models.JoinConfig
-import com.yuroyami.syncplay.logic.PlatformCallback
+import com.yuroyami.syncplay.ui.screens.adam.AdamScreen
 import platform.AVKit.AVPictureInPictureController
 import platform.Foundation.NSURL
 import platform.UIKit.UIApplication

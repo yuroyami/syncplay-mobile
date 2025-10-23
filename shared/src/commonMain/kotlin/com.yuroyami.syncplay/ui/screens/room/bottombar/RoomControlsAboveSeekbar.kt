@@ -21,11 +21,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.MISC_GESTURES
-import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT
-import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
-import com.yuroyami.syncplay.logic.datastore.valueAsState
-import com.yuroyami.syncplay.logic.datastore.valueFlow
+import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_GESTURES
+import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT
+import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
+import com.yuroyami.syncplay.managers.datastore.valueAsState
+import com.yuroyami.syncplay.managers.datastore.valueFlow
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.theme.Theming.ROOM_ICON_SIZE

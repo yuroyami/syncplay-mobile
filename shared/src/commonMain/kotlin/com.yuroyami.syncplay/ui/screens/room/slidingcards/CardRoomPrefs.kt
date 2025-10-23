@@ -24,10 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.yuroyami.syncplay.logic.settings.SETTINGS_ROOM
-import com.yuroyami.syncplay.logic.settings.SettingCollection
-import com.yuroyami.syncplay.logic.settings.SettingsUI
-import com.yuroyami.syncplay.logic.settings.SettingsUI.SettingsGrid
+import com.yuroyami.syncplay.managers.settings.SETTINGS_ROOM
+import com.yuroyami.syncplay.managers.settings.SettingCollection
+import com.yuroyami.syncplay.managers.settings.SettingsUI
+import com.yuroyami.syncplay.managers.settings.SettingsUI.SettingsGrid
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.screens.home.SettingGridState
 import com.yuroyami.syncplay.ui.theme.Theming

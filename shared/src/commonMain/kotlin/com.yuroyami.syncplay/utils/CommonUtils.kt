@@ -1,7 +1,7 @@
 package com.yuroyami.syncplay.utils
 
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.SyncplayViewmodel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.datetime.TimeZone

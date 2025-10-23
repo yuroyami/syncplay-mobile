@@ -7,8 +7,8 @@ import com.materialkolor.Contrast
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamicColorScheme
 import com.materialkolor.dynamiccolor.ColorSpec
-import com.yuroyami.syncplay.logic.AbstractManager
-import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.AbstractManager
+import com.yuroyami.syncplay.SyncplayViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import kotlinx.coroutines.flow.MutableStateFlow
 

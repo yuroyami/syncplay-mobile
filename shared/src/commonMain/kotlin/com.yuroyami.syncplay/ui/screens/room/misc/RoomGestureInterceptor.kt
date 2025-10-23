@@ -48,8 +48,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
-import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.MISC_GESTURES
-import com.yuroyami.syncplay.logic.datastore.valueFlow
+import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_GESTURES
+import com.yuroyami.syncplay.managers.datastore.valueFlow
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.utils.screenHeightPx
 import com.yuroyami.syncplay.ui.utils.screenWidthPx

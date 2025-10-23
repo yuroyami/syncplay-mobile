@@ -13,8 +13,8 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
-import com.yuroyami.syncplay.logic.SyncplayViewmodel
-import com.yuroyami.syncplay.logic.settings.SettingStyling
+import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.managers.settings.SettingStyling
 import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.ui.screens.home.HomeScreenUI
 import com.yuroyami.syncplay.ui.screens.room.RoomScreenUI

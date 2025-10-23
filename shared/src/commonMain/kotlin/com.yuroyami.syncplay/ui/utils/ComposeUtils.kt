@@ -67,8 +67,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
-import com.yuroyami.syncplay.logic.datastore.valueAsState
+import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
+import com.yuroyami.syncplay.managers.datastore.valueAsState
 import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.theme.Theming.backgroundGradient

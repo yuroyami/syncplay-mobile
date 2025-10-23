@@ -3,8 +3,8 @@ package com.yuroyami.syncplay.managers
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import com.yuroyami.syncplay.logic.AbstractManager
-import com.yuroyami.syncplay.logic.SyncplayViewmodel
+import com.yuroyami.syncplay.AbstractManager
+import com.yuroyami.syncplay.SyncplayViewmodel
 import com.yuroyami.syncplay.models.Message
 import com.yuroyami.syncplay.models.User
 import kotlinx.coroutines.flow.MutableStateFlow

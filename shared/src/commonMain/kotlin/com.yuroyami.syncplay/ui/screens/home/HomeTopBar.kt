@@ -53,8 +53,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.logic.settings.SETTINGS_GLOBAL
-import com.yuroyami.syncplay.logic.settings.SettingsUI
+import com.yuroyami.syncplay.managers.settings.SETTINGS_GLOBAL
+import com.yuroyami.syncplay.managers.settings.SettingsUI
 import com.yuroyami.syncplay.ui.screens.home.PopupAPropos.AProposPopup
 import com.yuroyami.syncplay.ui.theme.ThemeMenu
 import com.yuroyami.syncplay.ui.theme.Theming

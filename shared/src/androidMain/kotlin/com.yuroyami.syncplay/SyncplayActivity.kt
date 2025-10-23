@@ -24,12 +24,10 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
-import com.yuroyami.syncplay.logic.PlatformCallback
-import com.yuroyami.syncplay.logic.SyncplayViewmodel
-import com.yuroyami.syncplay.logic.datastore.DataStoreKeys
-import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_INROOM_PLAYER_SUBTITLE_SIZE
-import com.yuroyami.syncplay.logic.datastore.valueBlockingly
-import com.yuroyami.syncplay.logic.datastore.valueSuspendingly
+import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
+import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_PLAYER_SUBTITLE_SIZE
+import com.yuroyami.syncplay.managers.datastore.valueBlockingly
+import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.ui.screens.adam.AdamScreen
 import com.yuroyami.syncplay.utils.bindWatchdog

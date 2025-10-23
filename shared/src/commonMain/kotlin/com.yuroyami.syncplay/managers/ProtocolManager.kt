@@ -1,20 +1,20 @@
 package com.yuroyami.syncplay.managers
 
-import com.yuroyami.syncplay.logic.AbstractManager
-import com.yuroyami.syncplay.logic.SyncplayViewmodel
-import com.yuroyami.syncplay.logic.protocol.PacketCreator
-import com.yuroyami.syncplay.logic.protocol.PacketCreator.Chat
-import com.yuroyami.syncplay.logic.protocol.PacketCreator.EmptyList
-import com.yuroyami.syncplay.logic.protocol.PacketCreator.File
-import com.yuroyami.syncplay.logic.protocol.PacketCreator.Hello
-import com.yuroyami.syncplay.logic.protocol.PacketCreator.Joined
-import com.yuroyami.syncplay.logic.protocol.PacketCreator.PlaylistChange
-import com.yuroyami.syncplay.logic.protocol.PacketCreator.PlaylistIndex
-import com.yuroyami.syncplay.logic.protocol.PacketCreator.Readiness
-import com.yuroyami.syncplay.logic.protocol.PacketCreator.State
-import com.yuroyami.syncplay.logic.protocol.PacketCreator.TLS
-import com.yuroyami.syncplay.logic.protocol.PacketHandler
-import com.yuroyami.syncplay.logic.protocol.PingService
+import com.yuroyami.syncplay.AbstractManager
+import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.managers.protocol.PacketCreator
+import com.yuroyami.syncplay.managers.protocol.PacketCreator.Chat
+import com.yuroyami.syncplay.managers.protocol.PacketCreator.EmptyList
+import com.yuroyami.syncplay.managers.protocol.PacketCreator.File
+import com.yuroyami.syncplay.managers.protocol.PacketCreator.Hello
+import com.yuroyami.syncplay.managers.protocol.PacketCreator.Joined
+import com.yuroyami.syncplay.managers.protocol.PacketCreator.PlaylistChange
+import com.yuroyami.syncplay.managers.protocol.PacketCreator.PlaylistIndex
+import com.yuroyami.syncplay.managers.protocol.PacketCreator.Readiness
+import com.yuroyami.syncplay.managers.protocol.PacketCreator.State
+import com.yuroyami.syncplay.managers.protocol.PacketCreator.TLS
+import com.yuroyami.syncplay.managers.protocol.PacketHandler
+import com.yuroyami.syncplay.managers.protocol.PingService
 import com.yuroyami.syncplay.utils.ProtocolDsl
 
 class ProtocolManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel) {
