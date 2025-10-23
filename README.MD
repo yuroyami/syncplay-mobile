@@ -144,15 +144,16 @@ Some video players are more potent than others in certain areas. Here's a genera
 
 Syncplay is available in the following languages :
 
-- [x] English
-- [x] Arabic
-- [x] French
-- [x] Chinese (by [@Zhaodaidai](https://github.com/Zhaodaidai))
-- [x] Spanish (by [@DoncanC](https://github.com/DoncanC))
-- [x] Russian (by [@ivy-reps](https://github.com/ivy-reps))
+[![Crowdin](https://badges.crowdin.net/YOUR_PROJECT_NAME/localized.svg)](https://crowdin.com/project/YOUR_PROJECT_NAME)
+
+- Thanks to [@Zhaodaidai](https://github.com/Zhaodaidai) for the Chinese (Simplified) translation.
+- Thanks to [@DoncanC](https://github.com/DoncanC) for the Spanish translation.
+- Thanks to [@ivy-reps](https://github.com/ivy-reps) for the Russian translation.
 
 * If you want to contribute with a translation in a language that isn't available in Syncplay, or  
-  enhance the actual translations, please refer to [#30](https://github.com/yuroyami/syncplay-mobile/issues/30)
+  enhance the actual translations, you can click the image above to go to the Crowdin website
+  which is linked to this repository and you can easily add/edit/remove translations.
+* For more info, please refer to [#30](https://github.com/yuroyami/syncplay-mobile/issues/30)
 
 ## Feedback
 
