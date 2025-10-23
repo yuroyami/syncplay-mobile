@@ -44,6 +44,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.ui.screens.adam.LocalSettingStyling
+import com.yuroyami.syncplay.ui.screens.home.SettingGridState
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.getRegularFont
@@ -62,19 +63,18 @@ object SettingsUI {
     fun SettingsGrid(
         modifier: Modifier = Modifier,
         settings: SettingCollection,
-        state: MutableState<Int>,
+        state: MutableState<SettingGridState>,
         layout: Layout,
         titleSize: Float = 12f,
         cardSize: Float = 64f,
         gridColumns: Int = 3,
-        onEnteredSomeCategory: () -> Unit = {},
     ) {
         /** Variable to store which category is accessed (null means we're at the root level, no category selected */
         var enteredCategory by remember { mutableStateOf<SettingCategory?>(null) }
 
         /** We have to wrap our settings grid with AnimatedVisibility in order to do animations */
         AnimatedVisibility(
-            modifier = modifier, visible = state.value == 1, exit = fadeOut(), enter = fadeIn()
+            modifier = modifier, visible = state.value == SettingGridState.NAVIGATING_CATEGORIES, exit = fadeOut(), enter = fadeIn()
         ) {
 
             when (layout) {
@@ -94,7 +94,7 @@ object SettingsUI {
                                 titleSize = titleSize,
                                 cardSize = cardSize,
                                 onClick = {
-                                    onEnteredSomeCategory()
+                                    state.value = SettingGridState.INSIDE_CATEGORY
                                     enteredCategory = category
                                 }
                             )
@@ -116,7 +116,7 @@ object SettingsUI {
                                     i,
                                     categ = category,
                                     onClick = {
-                                        onEnteredSomeCategory()
+                                        state.value = SettingGridState.INSIDE_CATEGORY
                                         enteredCategory = category
                                     }
                                 )
@@ -134,7 +134,7 @@ object SettingsUI {
             }
         ) {
             AnimatedVisibility(
-                modifier = modifier, visible = state.value == 2, exit = fadeOut(), enter = fadeIn()
+                modifier = modifier, visible = state.value == SettingGridState.INSIDE_CATEGORY, exit = fadeOut(), enter = fadeIn()
             ) {
                 val vss = rememberScrollState()
 

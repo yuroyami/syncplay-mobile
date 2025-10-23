@@ -5,10 +5,11 @@ object DataStoreKeys {
 
     /** ------------ Joining info -------------*/
 
-    /* Log-in (join) info */
+    /* MISCELLANEOUS (i.e: join info) */
     const val MISC_JOIN_CONFIG = "misc_join_config"
     const val MISC_PLAYER_ENGINE = "misc_player_engine"
     const val MISC_GESTURES = "misc_gestures"
+    const val MISC_NEVER_SHOW_TIPS = "misc_never_show_tips"
 
     /* General */
     const val CATEG_GLOBAL_GENERAL = "categ_global_general"

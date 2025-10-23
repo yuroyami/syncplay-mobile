@@ -160,11 +160,11 @@ fun RoomScreenUI() {
             }
         }
 
-        if (!viewmodel.uiManager.hasDoneStartupSlideAnimation) {
+        if (!viewmodel.uiManager.hasEnteredRoomOnce) {
             LaunchedEffect(null) {
                 delay(600)
                 cardController.toggleUserInfo(true)
-                viewmodel.uiManager.hasDoneStartupSlideAnimation = true
+                viewmodel.uiManager.hasEnteredRoomOnce = true
             }
         }
     }

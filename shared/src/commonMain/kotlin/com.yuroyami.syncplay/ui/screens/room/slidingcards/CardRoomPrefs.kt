@@ -14,7 +14,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -30,6 +29,7 @@ import com.yuroyami.syncplay.logic.settings.SettingCollection
 import com.yuroyami.syncplay.logic.settings.SettingsUI
 import com.yuroyami.syncplay.logic.settings.SettingsUI.SettingsGrid
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.home.SettingGridState
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.FancyIcon2
 import com.yuroyami.syncplay.ui.utils.FancyText2
@@ -43,7 +43,7 @@ object CardRoomPrefs {
 
     @Composable
     fun InRoomSettingsCard() {
-        val settingState = remember { mutableIntStateOf(1) }
+        val settingState = remember { mutableStateOf(SettingGridState.NAVIGATING_CATEGORIES) }
         val viewmodel = LocalViewmodel.current
 
         var roomSettings: SettingCollection? by remember { mutableStateOf(null) }
@@ -71,11 +71,11 @@ object CardRoomPrefs {
                         font = Font(Res.font.Directive4_Regular)
                     )
 
-                    if (settingState.intValue == 2) {
+                    if (settingState.value == SettingGridState.INSIDE_CATEGORY) {
                         FancyIcon2(
                             modifier = Modifier.align(TopEnd).padding(6.dp),
                             icon = Icons.AutoMirrored.Filled.Redo, size = 32, shadowColor = Color.DarkGray,
-                            onClick = { settingState.intValue = 1 }
+                            onClick = { settingState.value = SettingGridState.NAVIGATING_CATEGORIES }
                         )
                     }
 
@@ -90,9 +90,6 @@ object CardRoomPrefs {
                             state = settingState,
                             titleSize = 9f,
                             cardSize = 48f,
-                            onEnteredSomeCategory = {
-                                settingState.intValue = 2
-                            }
                         )
                     }
                 }

@@ -247,6 +247,15 @@
     <string name="uisetting_custom_seek_amount_title">Custom Skip Duration</string>
     <string name="uisetting_custom_seek_amount_summary">The default skip duration is 90 seconds (1:30 minutes), which is ideal for anime. You can adjust this duration for the custom skip button here.</string>
 
+    <string-array name="tips">
+        <item>For shared playlists to work, Syncplay needs to know where your media files are stored. Add your media folders in 'Settings > General > Media Directories for Shared Playlist'.</item>
+        <item>Want to use the video player solo? Select a player, tap the Syncplay logo above, then choose 'Offline Mode'.</item>
+        <item>You can always reset settings to their default states by going to 'Settings -> Advanced -> Reset to Default'</item>
+        <item>Joining the same room repeatedly? Save it as a shortcut on your device for one-tap access by clicking the small button next to 'Join Room'.</item>
+        <item>Each player has different strengths. If one doesn't work well with your video format, try another.</item>
+        <item>Syncplay Mobile allows you to play media from direct links. However, YouTube is NOT supported, yet.</item>
+    </string-array>
+
     <!-- String templates (with placeholders) -->
     <string name="connect_button_current_engine">Current engine: %1$s</string>
     <string name="room_selected_vid">Selected video file: %1$s</string>

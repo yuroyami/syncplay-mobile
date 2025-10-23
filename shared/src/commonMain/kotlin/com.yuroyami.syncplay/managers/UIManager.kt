@@ -10,7 +10,7 @@ class UIManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmodel) {
 
     val backStack = mutableStateListOf<Screen>(Screen.Home)
 
-    var hasDoneStartupSlideAnimation = false
+    var hasEnteredRoomOnce = false
 
     val hasEnteredPipMode = MutableStateFlow(false)
     val visibleHUD = MutableStateFlow(true)

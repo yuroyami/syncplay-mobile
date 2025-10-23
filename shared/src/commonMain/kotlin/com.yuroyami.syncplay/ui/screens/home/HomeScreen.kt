@@ -50,10 +50,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.MISC_NEVER_SHOW_TIPS
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.MISC_PLAYER_ENGINE
 import com.yuroyami.syncplay.logic.datastore.valueFlow
+import com.yuroyami.syncplay.logic.datastore.valueSuspendingly
 import com.yuroyami.syncplay.logic.datastore.writeValue
 import com.yuroyami.syncplay.models.JoinConfig
+import com.yuroyami.syncplay.ui.popups.PopupDidYaKnow.DidYaKnowPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
 import com.yuroyami.syncplay.ui.utils.FlexibleFancyText
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
@@ -61,6 +64,7 @@ import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.utils.substringSafely
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.Font
@@ -100,6 +104,20 @@ fun HomeScreenUI() {
     val focusManager = LocalFocusManager.current
 
     /* Using a Scaffold manages our top-level layout */
+
+    val didYaKnowPopup = remember { mutableStateOf(false) }
+    DidYaKnowPopup(didYaKnowPopup)
+
+    LaunchedEffect(null) {
+        withContext(Dispatchers.IO) {
+            delay(1000)
+            val neverShowTips = valueSuspendingly(MISC_NEVER_SHOW_TIPS, false)
+            if (!viewmodel.uiManager.hasEnteredRoomOnce && !neverShowTips) {
+                didYaKnowPopup.value = true
+            }
+        }
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(viewmodel.snackManager.snack) },
         topBar = {
