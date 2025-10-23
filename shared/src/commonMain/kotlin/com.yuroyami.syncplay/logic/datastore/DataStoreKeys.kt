@@ -9,11 +9,11 @@ object DataStoreKeys {
     const val MISC_JOIN_CONFIG = "misc_join_config"
     const val MISC_PLAYER_ENGINE = "misc_player_engine"
     const val MISC_GESTURES = "misc_gestures"
-    const val MISC_NEVER_SHOW_TIPS = "misc_never_show_tips"
 
     /* General */
     const val CATEG_GLOBAL_GENERAL = "categ_global_general"
     const val PREF_REMEMBER_INFO = "pref_remember_info"
+    const val PREF_NEVER_SHOW_TIPS = "pref_never_show_tips"
     const val PREF_ERASE_SHORTCUTS = "pref_erase_shortcuts"
     const val PREF_SP_MEDIA_DIRS = "pref_syncplay_media_directories"
 

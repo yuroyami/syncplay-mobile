@@ -50,8 +50,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.MISC_NEVER_SHOW_TIPS
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.MISC_PLAYER_ENGINE
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_NEVER_SHOW_TIPS
 import com.yuroyami.syncplay.logic.datastore.valueFlow
 import com.yuroyami.syncplay.logic.datastore.valueSuspendingly
 import com.yuroyami.syncplay.logic.datastore.writeValue
@@ -111,7 +111,7 @@ fun HomeScreenUI() {
     LaunchedEffect(null) {
         withContext(Dispatchers.IO) {
             delay(1000)
-            val neverShowTips = valueSuspendingly(MISC_NEVER_SHOW_TIPS, false)
+            val neverShowTips = valueSuspendingly(PREF_NEVER_SHOW_TIPS, false)
             if (!viewmodel.uiManager.hasEnteredRoomOnce && !neverShowTips) {
                 didYaKnowPopup.value = true
             }

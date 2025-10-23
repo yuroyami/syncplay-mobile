@@ -132,6 +132,8 @@
     <string name="setting_night_mode_summary">Select the night mode behavior.</string>
     <string name="setting_remember_join_info_title">Remember joining info</string>
     <string name="setting_remember_join_info_summary">Enabled by default. This will allow SyncPlay to save your last username, roomname, and which official server you last used.</string>
+    <string name="setting_never_show_tips_title">Never show tips</string>
+    <string name="setting_never_show_tips_summary">This will prevent tips from showing up at app launch.</string>
     <string name="setting_erase_shortcuts_title">Erase all home shortcuts</string>
     <string name="setting_erase_shortcuts_summary">This will erase all the 'quick run' home shortcuts that you created via the main screen to save your room configs.</string>
     <string name="setting_erase_shortcuts_dialog">Do you really wish to erase all existing shortcuts ?</string>

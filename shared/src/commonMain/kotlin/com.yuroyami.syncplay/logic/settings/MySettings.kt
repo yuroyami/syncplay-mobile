@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Lan
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Opacity
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Pin
@@ -70,6 +71,7 @@ import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_INROOM_MSG_SHADO
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_INROOM_RESET_DEFAULT
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_NETWORK_ENGINE
+import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_NEVER_SHOW_TIPS
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_READY_FIRST_HAND
 import com.yuroyami.syncplay.logic.datastore.DataStoreKeys.PREF_REMEMBER_INFO
@@ -108,6 +110,8 @@ import syncplaymobile.shared.generated.resources.setting_network_engine_netty
 import syncplaymobile.shared.generated.resources.setting_network_engine_summary
 import syncplaymobile.shared.generated.resources.setting_network_engine_swift_nio
 import syncplaymobile.shared.generated.resources.setting_network_engine_title
+import syncplaymobile.shared.generated.resources.setting_never_show_tips_summary
+import syncplaymobile.shared.generated.resources.setting_never_show_tips_title
 import syncplaymobile.shared.generated.resources.setting_pause_if_someone_left_summary
 import syncplaymobile.shared.generated.resources.setting_pause_if_someone_left_title
 import syncplaymobile.shared.generated.resources.setting_ready_firsthand_summary
@@ -212,6 +216,14 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
                     summary = Res.string.setting_remember_join_info_summary,
                     defaultValue = true,
                     icon = Icons.Filled.Face
+                ),
+                Setting.BooleanSetting(
+                    type = SettingType.CheckboxSettingType,
+                    key = PREF_NEVER_SHOW_TIPS,
+                    title = Res.string.setting_never_show_tips_title,
+                    summary = Res.string.setting_never_show_tips_summary,
+                    defaultValue = false,
+                    icon = Icons.Filled.Lightbulb
                 ),
                 Setting.YesNoDialogSetting(
                     type = SettingType.YesNoDialogSettingType,
