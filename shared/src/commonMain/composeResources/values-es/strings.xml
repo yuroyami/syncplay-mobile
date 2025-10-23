@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Common -->
     <string name="yes">Sí</string>
@@ -13,12 +14,10 @@
     <string name="close">Cerrar</string>
     <string name="off">Apagado</string>
     <string name="on">Encendido</string>
-
     <!-- Tabs -->
     <string name="tab_connect">Conectar</string>
     <string name="tab_settings">Configuraciones</string>
     <string name="tab_about">Acerca</string>
-
     <!-- Connect Screen -->
     <string name="connect_username_a">Escribe tu nombre de usuario:</string>
     <string name="connect_username_b">Nombre de usuario</string>
@@ -41,9 +40,8 @@
     <string name="connect_port">Puerto</string>
     <string name="connect_nightmodeswitch">Cambia el modo día/noche.</string>
     <string name="connect_solomode">Ingresa al modo solo (solo reproductor)</string>
-
     <!-- Room Screen -->
-    <string name="room_selected_sub_error">Archivo de subtítulos no válido. Los formatos admitidos son: 'SRT', 'TTML', 'ASS', 'SSA', 'VTT'</string>
+    <string name="room_selected_sub_error">Archivo de subtítulos no válido. Los formatos admitidos son: \'SRT\', \'TTML\', \'ASS\', \'SSA\', \'VTT\'</string>
     <string name="room_sub_error_load_vid_first">Cargar video primero</string>
     <string name="room_type_message">Escribe tu mensaje…</string>
     <string name="room_ready">Listo</string>
@@ -108,7 +106,6 @@
     <string name="room_card_title_user_info">Información del usuario</string>
     <string name="room_card_title_in_room_prefs">Preferencias en la sala</string>
     <string name="room_audio_track_not_found">¡No se encontró audio!</string>
-
     <!-- Media Directories -->
     <string name="media_directories">Directorios de medios para Lista de reproducción compartida</string>
     <string name="media_directories_brief">Syncplay buscará en los directorios de medios que especifiques aquí para encontrar el nombre que está reproduciendo una lista de reproducción compartida. Es mucho mejor si especificas directorios pequeños, ya que la operación de búsqueda puede limitarse y ser muy lenta.</string>
@@ -118,7 +115,6 @@
     <string name="media_directories_add_folder">Agregar carpeta</string>
     <string name="media_directories_delete">Eliminar de la lista</string>
     <string name="media_directories_show_full_path">Mostrar ruta completa</string>
-
     <!-- Settings Categories -->
     <string name="settings_categ_general">General</string>
     <string name="settings_categ_language">Idioma</string>
@@ -126,22 +122,23 @@
     <string name="settings_categ_exoplayer">Exoplayer</string>
     <string name="settings_categ_network">Red</string>
     <string name="settings_categ_advanced">Avanzado</string>
-
     <!-- Settings -->
     <string name="setting_night_mode_title">Modo nocturno</string>
     <string name="setting_night_mode_summary">Selecciona el comportamiento del modo nocturno.</string>
     <string name="setting_remember_join_info_title">Recordar información de entrada</string>
     <string name="setting_remember_join_info_summary">Activar por defecto. Esto permitirá que SyncPlay guarde tu último nombre de usuario, nombre de sala y qué servidor oficial utilizaste por última vez.</string>
+    <string name="setting_never_show_tips_title">Never show tips</string>
+    <string name="setting_never_show_tips_summary">This will prevent tips from showing up at app launch.</string>
     <string name="setting_erase_shortcuts_title">Eliminar todos los accesos directos de inicio</string>
-    <string name="setting_erase_shortcuts_summary">Esto eliminará todos los accesos directos de inicio de 'ejecución rápida' que creaste a través de la pantalla principal para guardar tus configuraciones de habitación.</string>
+    <string name="setting_erase_shortcuts_summary">Esto eliminará todos los accesos directos de inicio de \'ejecución rápida\' que creaste a través de la pantalla principal para guardar tus configuraciones de habitación.</string>
     <string name="setting_erase_shortcuts_dialog">¿Realmente deseas borrar todos los accesos directos existentes?</string>
     <string name="setting_display_language_title">Idioma de visualización</string>
     <string name="setting_display_language_summry">Selecciona el idioma con el que SyncPlay se mostrará.</string>
     <string name="setting_display_language_toast">Idioma cambiado. Reinicia la aplicación para que la configuración tenga efecto completo.</string>
     <string name="setting_audio_default_language_title">Idioma preferido de la pista de audio</string>
-    <string name="setting_audio_default_language_summry">Carga automáticamente una pista de audio con el código de idioma que establezcas aquí. Por ejemplo, el código en inglés es 'en-US', en japonés es 'ja-JP'. Consulta 'Códigos BCP 47 de la IETF' para obtener más información.</string>
+    <string name="setting_audio_default_language_summry">Carga automáticamente una pista de audio con el código de idioma que establezcas aquí. Por ejemplo, el código en inglés es \'en-US\', en japonés es \'ja-JP\'. Consulta \'Códigos BCP 47 de la IETF\' para obtener más información.</string>
     <string name="setting_cc_default_language_title">Idioma preferido de subtítulos</string>
-    <string name="setting_cc_default_language_summry">Carga automáticamente una pista de subtítulos con el código de idioma que establezcas aquí. Por ejemplo, el código en inglés es 'en-US', en japonés es 'ja-JP'. Consulta 'Códigos BCP 47 de la IETF' para obtener más información.</string>
+    <string name="setting_cc_default_language_summry">Carga automáticamente una pista de subtítulos con el código de idioma que establezcas aquí. Por ejemplo, el código en inglés es \'en-US\', en japonés es \'ja-JP\'. Consulta \'Códigos BCP 47 de la IETF\' para obtener más información.</string>
     <string name="setting_use_buffer_title">Usar tamaños de búfer personalizados</string>
     <string name="setting_use_buffer_summary">Si no estás satisfecho con los tiempos de carga de video del reproductor antes y durante la reproducción, puedes usar tamaños de búfer personalizados (úsalo bajo tu propio riesgo).</string>
     <string name="setting_max_buffer_title">Tamaño máximo de búfer personalizado</string>
@@ -175,13 +172,11 @@
     <string name="setting_network_engine_netty">Netty (Recomendado)</string>
     <string name="setting_network_engine_swift_nio">SwiftNIO (Experimental)</string>
     <string name="setting_network_engine_ktor">Ktor (Experimental)</string>
-
     <!-- UI Settings Categories -->
     <string name="uisetting_categ_chat_colors">Colores del chat</string>
     <string name="uisetting_categ_player_settings">Configuración del reproductor</string>
     <string name="uisetting_categ_chat_properties">Propiedades del chat</string>
     <string name="uisetting_categ_mpv">mpv</string>
-
     <!-- UI Settings -->
     <string name="uisetting_apply">APLICAR</string>
     <string name="uisetting_timestamp_title">Marcas de tiempo en el chat</string>
@@ -191,7 +186,7 @@
     <string name="uisetting_msgshadow_title">Sombra de mensajes de chat</string>
     <string name="uisetting_msgshadow_summary">Activa esto para darle a los mensajes de chat una sombra y reducir su fusión con el fondo del video.</string>
     <string name="uisetting_msgboxaction_title">Función del botón ACEPTAR del teclado</string>
-    <string name="uisetting_msgboxaction_summary">Cuando está habilitado, hacer clic en el botón 'ACEPTAR' de tu teclado enviará el mensaje. Cuando está deshabilitado, simplemente cerrará el teclado sin hacer nada.</string>
+    <string name="uisetting_msgboxaction_summary">Cuando está habilitado, hacer clic en el botón \'ACEPTAR\' de tu teclado enviará el mensaje. Cuando está deshabilitado, simplemente cerrará el teclado sin hacer nada.</string>
     <string name="uisetting_overview_alpha_title">Opacidad del fondo de detalles de la sala</string>
     <string name="uisetting_overview_alpha_summary">El valor predeterminado es 40 (casi transparente), cámbialo si quieres hacer más legible el panel de detalles de la sala aumentando la opacidad.</string>
     <string name="uisetting_messagery_alpha_title">Opacidad del fondo de mensajes</string>
@@ -237,16 +232,23 @@
     <string name="ui_setting_mpv_debug_title">Habilitar depuración</string>
     <string name="ui_setting_mpv_debug_summary">Mostrar información de depuración.</string>
     <string name="ui_setting_mpv_interpolation_title">Framerate Interpolation</string>
-    <string name="ui_setting_mpv_interpolation_summary">Reduzca el temblor habilitando la interpolación de fotogramas. Tenga en cuenta que esto solo se aplicará si la opción de sincronización de video está configurada en uno de los modos 'display', de lo contrario se ignorará silenciosamente. Esto puede no funcionar bien en algunos casos.</string>
+    <string name="ui_setting_mpv_interpolation_summary">Reduzca el temblor habilitando la interpolación de fotogramas. Tenga en cuenta que esto solo se aplicará si la opción de sincronización de video está configurada en uno de los modos \'display\', de lo contrario se ignorará silenciosamente. Esto puede no funcionar bien en algunos casos.</string>
     <string name="ui_setting_mpv_vidsync_title">Video sync mode</string>
     <string name="ui_setting_mpv_vidsync_summary">Controla cómo mpv sincroniza el video, ya sea con el audio (predeterminado, recomendado) o con la pantalla misma.</string>
     <string name="ui_setting_mpv_profile_title">Rendering preset (profile)</string>
-    <string name="ui_setting_mpv_profile_summary">Configura las capacidades de mpv según uno de los preajustes de perfil integrados. El predeterminado es 'fast' ya que es adecuado para teléfonos. El uso de 'low-latency' puede ser útil al transmitir desde fuentes en vivo.</string>
+    <string name="ui_setting_mpv_profile_summary">Configura las capacidades de mpv según uno de los preajustes de perfil integrados. El predeterminado es \'fast\' ya que es adecuado para teléfonos. El uso de \'low-latency\' puede ser útil al transmitir desde fuentes en vivo.</string>
     <string name="uisetting_custom_seek_front_title">Mostrar botón de salto personalizado en la pantalla principal</string>
-    <string name="uisetting_custom_seek_front_summary">Activar esta opción mostrará el botón 'Periodo de salto' personalizado, que se encuentra en la ventana emergente 'Ir a posición', en la pantalla principal del reproductor entre los botones de rebobinado y avance rápido para un acceso más fácil.</string>
+    <string name="uisetting_custom_seek_front_summary">Activar esta opción mostrará el botón \'Periodo de salto\' personalizado, que se encuentra en la ventana emergente \'Ir a posición\', en la pantalla principal del reproductor entre los botones de rebobinado y avance rápido para un acceso más fácil.</string>
     <string name="uisetting_custom_seek_amount_title">Duración de salto personalizada</string>
     <string name="uisetting_custom_seek_amount_summary">La duración de salto por defecto es de 90 segundos (1:30 minutos), lo que es ideal para anime. Puedes ajustar esta duración para el botón de salto personalizado aquí.</string>
-
+    <string-array name="tips">
+        <item>For shared playlists to work, Syncplay needs to know where your media files are stored. Add your media folders in \'Settings &gt; General &gt; Media Directories for Shared Playlist\'.</item>
+        <item>Want to use the video player solo? Select a player, tap the Syncplay logo above, then choose \'Offline Mode\'.</item>
+        <item>You can always reset settings to their default states by going to \'Settings -&gt; Advanced -&gt; Reset to Default\'</item>
+        <item>Joining the same room repeatedly? Save it as a shortcut on your device for one-tap access by clicking the small button next to \'Join Room\'.</item>
+        <item>Each player has different strengths. If one doesn\'t work well with your video format, try another.</item>
+        <item>Syncplay Mobile allows you to play media from direct links. However, YouTube is NOT supported, yet.</item>
+    </string-array>
     <!-- String templates (with placeholders) -->
     <string name="connect_button_current_engine">Motor actual: %1$s</string>
     <string name="room_selected_vid">Archivo de vídeo seleccionado: %1$s</string>
@@ -259,7 +261,7 @@
     <string name="room_rewinded">Rebobinado por desincronización con %1$s</string>
     <string name="room_guy_left">%1$s dejó la sala</string>
     <string name="room_guy_joined">%1$s se unió a la sala.</string>
-    <string name="room_isplayingfile">%1$s está reproduciendo '%2$s' (%3$s)</string>
+    <string name="room_isplayingfile">%1$s está reproduciendo \'%2$s\' (%3$s)</string>
     <string name="room_you_joined_room">Te has unido a la sala: %1$s</string>
     <string name="room_sub_track_changed">Pista de subtítulos cambaida a: %1$s</string>
     <string name="room_audio_track_changed">Pista de audio cambiada a: %1$s</string>
