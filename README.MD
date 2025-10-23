@@ -144,7 +144,7 @@ Some video players are more potent than others in certain areas. Here's a genera
 
 Syncplay is available in the following languages :
 
-[![Crowdin](https://badges.crowdin.net/YOUR_PROJECT_NAME/localized.svg)](https://crowdin.com/project/YOUR_PROJECT_NAME)
+[![Crowdin](https://badges.crowdin.net/syncplay-mobile/localized.svg)](https://crowdin.com/project/syncplay-mobile)
 
 - Thanks to [@Zhaodaidai](https://github.com/Zhaodaidai) for the Chinese (Simplified) translation.
 - Thanks to [@DoncanC](https://github.com/DoncanC) for the Spanish translation.
