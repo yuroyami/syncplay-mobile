@@ -144,18 +144,14 @@ Some video players are more potent than others in certain areas. Here's a genera
 
 Syncplay is available in the following languages :
 
-[![Crowdin](https://badges.crowdin.net/syncplay-mobile/localized.svg)](https://crowdin.com/project/syncplay-mobile)
-
-<a href="https://crowdin.com/project/YOUR_PROJECT_NAME" rel="nofollow">
-  <img style="width:100%;max-width:700px" src="https://badges.crowdin.net/YOUR_PROJECT_NAME/localized.svg" alt="Crowdin">
-</a>
+[![Translation status](https://hosted.weblate.org/widget/syncplay-mobile/syncplay-mobile/multi-auto.svg)](https://hosted.weblate.org/engage/syncplay-mobile/)
 
 - Thanks to [@Zhaodaidai](https://github.com/Zhaodaidai) for the Chinese (Simplified) translation.
 - Thanks to [@DoncanC](https://github.com/DoncanC) for the Spanish translation.
 - Thanks to [@ivy-reps](https://github.com/ivy-reps) for the Russian translation.
 
 * If you want to contribute with a translation in a language that isn't available in Syncplay, or  
-  enhance the actual translations, you can click the image above to go to the Crowdin website
+  enhance the actual translations, you can click the image above to go to the Weblate website
   which is linked to this repository and you can easily add/edit/remove translations.
 * For more info, please refer to [#30](https://github.com/yuroyami/syncplay-mobile/issues/30)
 
