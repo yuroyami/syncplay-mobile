@@ -146,8 +146,8 @@ Syncplay is available in the following languages :
 
 [![Crowdin](https://badges.crowdin.net/syncplay-mobile/localized.svg)](https://crowdin.com/project/syncplay-mobile)
 
-<a href="https://crowdin.com/project/syncplay-mobile">
-  <img src="https://badges.crowdin.net/syncplay-mobile/localized.svg?type=large" alt="Translation Status" />
+<a href="https://crowdin.com/project/YOUR_PROJECT_NAME" rel="nofollow">
+  <img style="width:100%;max-width:700px" src="https://badges.crowdin.net/YOUR_PROJECT_NAME/localized.svg" alt="Crowdin">
 </a>
 
 - Thanks to [@Zhaodaidai](https://github.com/Zhaodaidai) for the Chinese (Simplified) translation.
