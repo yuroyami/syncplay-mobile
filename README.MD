@@ -14,7 +14,7 @@
   <a href="https://apt.izzysoft.de/fdroid/index/apk/com.reddnek.syncplay">  
     <img alt="Syncplay Android on IzzyOnDroid Repo" title="Syncplay Android" src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" width="200">  
   </a>  
-</p>   
+</p>
 <p align="center">  
   <a href="https://play.google.com/store/apps/details?id=com.yuroyami.syncplay">  
     <img alt="Syncplay Android on Google Play store" title="Syncplay Android" src="https://i0.wp.com/reefcentral.pt/wp-content/uploads/2019/04/get-on-google-play.png?fit=564%2C168&ssl=1" width="200">  
