@@ -146,6 +146,10 @@ Syncplay is available in the following languages :
 
 [![Crowdin](https://badges.crowdin.net/syncplay-mobile/localized.svg)](https://crowdin.com/project/syncplay-mobile)
 
+<a href="https://crowdin.com/project/syncplay-mobile">
+  <img src="https://badges.crowdin.net/syncplay-mobile/localized.svg?type=large" alt="Translation Status" />
+</a>
+
 - Thanks to [@Zhaodaidai](https://github.com/Zhaodaidai) for the Chinese (Simplified) translation.
 - Thanks to [@DoncanC](https://github.com/DoncanC) for the Spanish translation.
 - Thanks to [@ivy-reps](https://github.com/ivy-reps) for the Russian translation.
