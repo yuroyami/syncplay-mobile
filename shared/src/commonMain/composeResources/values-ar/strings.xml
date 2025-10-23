@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Common -->
     <string name="yes">نعم</string>
@@ -13,12 +14,10 @@
     <string name="close">إغلاق</string>
     <string name="off">إيقاف</string>
     <string name="on">تشغيل</string>
-
     <!-- Tabs -->
     <string name="tab_connect">الاتصال</string>
     <string name="tab_settings">الإعدادات</string>
     <string name="tab_about">حول</string>
-
     <!-- Connect Screen -->
     <string name="connect_username_a">اكتب اسم المستخدم الخاص بك:</string>
     <string name="connect_username_b">اسم المستخدم</string>
@@ -31,7 +30,7 @@
     <string name="connect_server_c">تأكد من أنك وأصدقاؤك انضممتم إلى نفس الخادم.</string>
     <string name="connect_button_join">الانضمام إلى الغرفة</string>
     <string name="connect_button_saveshortcut">حفظ التكوين الحالي كاختصار للرئيسية</string>
-    <string name="connect_footnote">Syncplay's Unofficial Android Client</string>
+    <string name="connect_footnote">Syncplay\'s Unofficial Android Client</string>
     <string name="connect_username_empty_error">يجب ألا يكون اسم المستخدم فارغًا</string>
     <string name="connect_roomname_empty_error">يجب ألا يكون اسم الغرفة فارغًا</string>
     <string name="connect_address_empty_error">يجب ألا يكون عنوان الخادم فارغًا</string>
@@ -41,9 +40,8 @@
     <string name="connect_port">المنفذ</string>
     <string name="connect_nightmodeswitch">تبديل وضع الليل/النهار.</string>
     <string name="connect_solomode">الدخول إلى وضع فردي (مشغل الفيديو فقط)</string>
-
     <!-- Room Screen -->
-    <string name="room_selected_sub_error">ملف ترجمة غير صالح. الصيغ المدعومة هي: 'SRT'، 'TTML'، 'ASS'، 'SSA'، 'VTT'</string>
+    <string name="room_selected_sub_error">ملف ترجمة غير صالح. الصيغ المدعومة هي: \'SRT\'، \'TTML\'، \'ASS\'، \'SSA\'، \'VTT\'</string>
     <string name="room_sub_error_load_vid_first">قم بتحميل الفيديو أولاً</string>
     <string name="room_type_message">اكتب رسالتك...</string>
     <string name="room_ready">جاهز</string>
@@ -108,7 +106,6 @@
     <string name="room_card_title_user_info">معلومات المستخدم</string>
     <string name="room_card_title_in_room_prefs">تفضيلات الغرفة</string>
     <string name="room_audio_track_not_found">لا يوجد صوت!</string>
-
     <!-- Media Directories -->
     <string name="media_directories">مجلدات الوسائط لقائمة التشغيل المشتركة</string>
     <string name="media_directories_brief">سيقوم Syncplay بالبحث في أي مجلدات وسائط تحددها هنا للعثور على اسم يتم تشغيله في قائمة تشغيل مشتركة. من الأفضل إذا قمت بتحديد مجلدات صغيرة حيث يمكن أن تتسبب عملية البحث في المشاكل وتكون بطيئة جدًا.</string>
@@ -118,7 +115,6 @@
     <string name="media_directories_add_folder">إضافة مجلد</string>
     <string name="media_directories_delete">إزالة من القائمة</string>
     <string name="media_directories_show_full_path">عرض المسار الكامل</string>
-
     <!-- Settings Categories -->
     <string name="settings_categ_general">إعدادات عامة</string>
     <string name="settings_categ_language">اللغة</string>
@@ -126,12 +122,13 @@
     <string name="settings_categ_exoplayer">Exoplayer</string>
     <string name="settings_categ_network">الشبكة</string>
     <string name="settings_categ_advanced">متقدم</string>
-
     <!-- Settings -->
     <string name="setting_night_mode_title">الوضع الليلي</string>
     <string name="setting_night_mode_summary">حدد سلوك الوضع الليلي.</string>
     <string name="setting_remember_join_info_title">تذكر معلومات الانضمام</string>
     <string name="setting_remember_join_info_summary">تمكينها افتراضيًا. سيتيح لـ SyncPlay حفظ اسم المستخدم الأخير، واسم الغرفة، وآخر خادم رسمي استخدمته.</string>
+    <string name="setting_never_show_tips_title">Never show tips</string>
+    <string name="setting_never_show_tips_summary">This will prevent tips from showing up at app launch.</string>
     <string name="setting_erase_shortcuts_title">حذف كل الاختصارات</string>
     <string name="setting_erase_shortcuts_summary">يحذف هذا الخيار جميع الاختصارات التي أضفتها من الشاشة الرئيسية التي تسمح لك بحفظ إعدادات جاهزة</string>
     <string name="setting_erase_shortcuts_dialog">هل تريد حقاً حذف جميع اختصارات الإعداد السريع التي أضفتها مسبقاً ؟</string>
@@ -139,9 +136,9 @@
     <string name="setting_display_language_summry">حدد لغتك المفضلة التي سيتم عرض Syncplay بها.</string>
     <string name="setting_display_language_toast">تغيير اللغة. أعد تشغيل التطبيق لتفعيل الإعداد بشكل كامل.</string>
     <string name="setting_audio_default_language_title">لغة المسار الصوتي المفضلة</string>
-    <string name="setting_audio_default_language_summry">قم بتحميل مسار صوتي بشكل تلقائي بلغة التي قمت بتحديدها هنا. على سبيل المثال، رمز اللغة الإنجليزية هو 'en-US'، واليابانية هي 'ja-JP'. ابحث في 'IETF BCP 47 codes' للمزيد من المعلومات.</string>
+    <string name="setting_audio_default_language_summry">قم بتحميل مسار صوتي بشكل تلقائي بلغة التي قمت بتحديدها هنا. على سبيل المثال، رمز اللغة الإنجليزية هو \'en-US\'، واليابانية هي \'ja-JP\'. ابحث في \'IETF BCP 47 codes\' للمزيد من المعلومات.</string>
     <string name="setting_cc_default_language_title">لغة العنوان الفرعي المفضلة</string>
-    <string name="setting_cc_default_language_summry">قم بتحميل مسار عنوان فرعي بلغة التي قمت بتحديدها هنا. على سبيل المثال، رمز اللغة الإنجليزية هو 'en-US'، واليابانية هي 'ja-JP'. ابحث في 'IETF BCP 47 codes' للمزيد من المعلومات.</string>
+    <string name="setting_cc_default_language_summry">قم بتحميل مسار عنوان فرعي بلغة التي قمت بتحديدها هنا. على سبيل المثال، رمز اللغة الإنجليزية هو \'en-US\'، واليابانية هي \'ja-JP\'. ابحث في \'IETF BCP 47 codes\' للمزيد من المعلومات.</string>
     <string name="setting_use_buffer_title">استخدام أحجام تخزين مؤقت مخصصة</string>
     <string name="setting_use_buffer_summary">إذا لم تكن راضيًا عن أوقات تحميل الفيديو من قبل اللاعب قبل وأثناء التشغيل، يمكنك استخدام أحجام تخزين مؤقت مخصصة (استخدم على مسؤوليتك الشخصية).</string>
     <string name="setting_max_buffer_title">حجم التخزين المؤقت الأقصى المخصص</string>
@@ -167,21 +164,19 @@
     <string name="setting_fileinfo_behaviour_name_summary">اختر الطريقة التي تظهر بها اسم ملف الوسائط الخاص بك للمستخدمين الآخرين.</string>
     <string name="setting_fileinfo_behaviour_size_title">إرسال معلومات حجم الملف</string>
     <string name="setting_fileinfo_behaviour_size_summary">اختر الطريقة التي تظهر بها حجم ملف الوسائط الخاص بك للمستخدمين الآخرين.</string>
-    <string name="setting_network_engine_title">محرك الشبة</string>
-    <string name="setting_network_engine_summary">يتحكم محرك الشبكة في الاتصال. يمكنك تجريب كل محرك على حدة و اختيار المحرك الأكثر استقراراً.</string>
     <string name="setting_fileinfo_behavior_a">أرسال البيانات أصلية</string>
     <string name="setting_fileinfo_behavior_b">إرسال البيانات مشفرة</string>
     <string name="setting_fileinfo_behavior_c">لا ترسل إطلاقاً</string>
+    <string name="setting_network_engine_title">محرك الشبة</string>
+    <string name="setting_network_engine_summary">يتحكم محرك الشبكة في الاتصال. يمكنك تجريب كل محرك على حدة و اختيار المحرك الأكثر استقراراً.</string>
     <string name="setting_network_engine_netty">Netty (مستحسَن)</string>
     <string name="setting_network_engine_swift_nio">SwiftNIO (تجريبي)</string>
     <string name="setting_network_engine_ktor">Ktor (تجريبي)</string>
-
     <!-- UI Settings Categories -->
     <string name="uisetting_categ_chat_colors">ألوان الدردشة</string>
     <string name="uisetting_categ_player_settings">إعدادات المشغل</string>
     <string name="uisetting_categ_chat_properties">خصائص الدردشة</string>
     <string name="uisetting_categ_mpv">mpv</string>
-
     <!-- UI Settings -->
     <string name="uisetting_apply">تطبيق</string>
     <string name="uisetting_timestamp_title">طوابع الزمن في الدردشة</string>
@@ -190,8 +185,8 @@
     <string name="uisetting_msgoutline_summary">فعّل هذا لإضفاء حدود لرسائل الدردشة، لتقليل الاندماج مع خلفية الفيديو.</string>
     <string name="uisetting_msgshadow_title">ظل رسائل الدردشة</string>
     <string name="uisetting_msgshadow_summary">فعّل هذا لإضفاء ظل لرسائل الدردشة، لتقليل الاندماج مع خلفية الفيديو.</string>
-    <string name="uisetting_msgboxaction_title">وظيفة زر 'موافق' على لوحة المفاتيح</string>
-    <string name="uisetting_msgboxaction_summary">عند تمكين هذا، سيقوم النقر على زر 'موافق' على لوحة المفاتيح بإرسال الرسالة. عند تعطيله، سيقوم ببساطة بإغلاق لوحة المفاتيح دون القيام بأي شيء.</string>
+    <string name="uisetting_msgboxaction_title">وظيفة زر \'موافق\' على لوحة المفاتيح</string>
+    <string name="uisetting_msgboxaction_summary">عند تمكين هذا، سيقوم النقر على زر \'موافق\' على لوحة المفاتيح بإرسال الرسالة. عند تعطيله، سيقوم ببساطة بإغلاق لوحة المفاتيح دون القيام بأي شيء.</string>
     <string name="uisetting_overview_alpha_title">شفافية خلفية تفاصيل الغرفة</string>
     <string name="uisetting_overview_alpha_summary">الإعداد الافتراضي هو 40 (شفاف تقريبًا)، قم بتغيير هذا إذا كنت ترغب في جعل لوحة تفاصيل الغرفة أكثر وضوحًا عن طريق زيادة الشفافية.</string>
     <string name="uisetting_messagery_alpha_title">شفافية خلفية الرسائل</string>
@@ -237,16 +232,23 @@
     <string name="ui_setting_mpv_debug_title">تمكين التصحيح</string>
     <string name="ui_setting_mpv_debug_summary">عرض معلومات التصحيح.</string>
     <string name="ui_setting_mpv_interpolation_title">تحوير تردد و معدل الإطارات</string>
-    <string name="ui_setting_mpv_interpolation_summary">تقليل التقطع عن طريق تمكين تحوير معدل الإطارات. تذكر أن هذا سيتم تطبيقه فقط إذا تم تعيين خيار مزامنة الفيديو على أحد أوضاع 'display'، وإلا فسيتم تجاهله بصمت. قد لا يعمل هذا بشكل جيد في بعض الحالات.</string>
+    <string name="ui_setting_mpv_interpolation_summary">تقليل التقطع عن طريق تمكين تحوير معدل الإطارات. تذكر أن هذا سيتم تطبيقه فقط إذا تم تعيين خيار مزامنة الفيديو على أحد أوضاع \'display\'، وإلا فسيتم تجاهله بصمت. قد لا يعمل هذا بشكل جيد في بعض الحالات.</string>
     <string name="ui_setting_mpv_vidsync_title">وضع مزامنة الفيديو</string>
     <string name="ui_setting_mpv_vidsync_summary">تحكم في كيفية مزامنة mpv للفيديو، سواء مع الصوت (الافتراضي، مُوصى به) أو مع جهاز العرض نفسه.</string>
     <string name="ui_setting_mpv_profile_title">الإعداد المسبق للتقديم (الملف الشخصي)</string>
-    <string name="ui_setting_mpv_profile_summary">يكوّن قدرات mpv وفقًا لأحد الإعدادات المسبقة للملف الشخصي المضمنة. الافتراضي هو 'fast' لأنه مناسب للهواتف. يمكن أن يكون استخدام 'low-latency' مفيدًا عند بث البيانات من مصادر مباشرة.</string>
+    <string name="ui_setting_mpv_profile_summary">يكوّن قدرات mpv وفقًا لأحد الإعدادات المسبقة للملف الشخصي المضمنة. الافتراضي هو \'fast\' لأنه مناسب للهواتف. يمكن أن يكون استخدام \'low-latency\' مفيدًا عند بث البيانات من مصادر مباشرة.</string>
     <string name="uisetting_custom_seek_front_title">عرض زر التخطي المخصص على الشاشة الرئيسية</string>
-    <string name="uisetting_custom_seek_front_summary">تمكين هذا سيعرض زر 'مدة التخطي' المخصص، الموجود في نافذة 'الانتقال إلى الموضع'، على الشاشة الرئيسية للاعب بين أزرار الرجوع السريع والتقديم السريع لسهولة الوصول.</string>
+    <string name="uisetting_custom_seek_front_summary">تمكين هذا سيعرض زر \'مدة التخطي\' المخصص، الموجود في نافذة \'الانتقال إلى الموضع\'، على الشاشة الرئيسية للاعب بين أزرار الرجوع السريع والتقديم السريع لسهولة الوصول.</string>
     <string name="uisetting_custom_seek_amount_title">مدة التخطي المخصصة</string>
     <string name="uisetting_custom_seek_amount_summary">المدة الافتراضية للتخطي هي 90 ثانية (1:30 دقيقة)، وهي مثالية للأنمي. يمكنك ضبط هذه المدة لزر التخطي المخصص هنا.</string>
-
+    <string-array name="tips">
+        <item>For shared playlists to work, Syncplay needs to know where your media files are stored. Add your media folders in \'Settings &gt; General &gt; Media Directories for Shared Playlist\'.</item>
+        <item>Want to use the video player solo? Select a player, tap the Syncplay logo above, then choose \'Offline Mode\'.</item>
+        <item>You can always reset settings to their default states by going to \'Settings -&gt; Advanced -&gt; Reset to Default\'</item>
+        <item>Joining the same room repeatedly? Save it as a shortcut on your device for one-tap access by clicking the small button next to \'Join Room\'.</item>
+        <item>Each player has different strengths. If one doesn\'t work well with your video format, try another.</item>
+        <item>Syncplay Mobile allows you to play media from direct links. However, YouTube is NOT supported, yet.</item>
+    </string-array>
     <!-- String templates (with placeholders) -->
     <string name="connect_button_current_engine">المحرك الحالي: %1$s</string>
     <string name="room_selected_vid">الفيديو المحدد: %1$s</string>
@@ -259,7 +261,7 @@
     <string name="room_rewinded">تمت إعادة التشغيل بسبب اختلاف التوقيت مع %1$s</string>
     <string name="room_guy_left">%1$s غادر الغرفة.</string>
     <string name="room_guy_joined">%1$s انضم إلى الغرفة.</string>
-    <string name="room_isplayingfile">%1$s يشغل '%2$s' (%3$s)</string>
+    <string name="room_isplayingfile">%1$s يشغل \'%2$s\' (%3$s)</string>
     <string name="room_you_joined_room">لقد انضممت إلى الغرفة: %1$s</string>
     <string name="room_sub_track_changed">تم تغيير مسار الترجمة إلى: %1$s</string>
     <string name="room_audio_track_changed">تم تغيير مسار الصوت إلى: %1$s</string>
