@@ -153,7 +153,7 @@ Syncplay is available in the following languages :
 * If you want to contribute with a translation in a language that isn't available in Syncplay, or  
   enhance the actual translations, you can click the image above to go to the Weblate website
   which is linked to this repository and you can easily add/edit/remove translations.
-* For more info, please refer to [#30](https://github.com/yuroyami/syncplay-mobile/issues/30)
+* For more info, please refer to [#132](https://github.com/yuroyami/syncplay-mobile/issues/30)
 
 ## Feedback
 
