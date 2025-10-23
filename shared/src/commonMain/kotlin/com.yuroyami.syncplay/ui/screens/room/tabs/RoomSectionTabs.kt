@@ -30,6 +30,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
@@ -47,7 +48,9 @@ import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.syncplayFont
 import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.logic.PlatformCallback
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_overflow_leave_room
@@ -90,6 +93,7 @@ class CardController {
 
 @Composable
 fun RoomTabSection(modifier: Modifier, onShowChatHistory: () -> Unit) {
+    val scope = rememberCoroutineScope()
     val viewmodel = LocalViewmodel.current
     val cardController = LocalCardController.current
 
@@ -161,28 +165,23 @@ fun RoomTabSection(modifier: Modifier, onShowChatHistory: () -> Unit) {
             }
 
             DropdownMenu(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(
-                    0.5f
-                ),
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.5f),
                 tonalElevation = 0.dp,
                 shadowElevation = 0.dp,
-                border = BorderStroke(
-                    width = 1.dp,
-                    brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map {
-                        it.copy(alpha = 0.5f)
-                    })
-                ),
+                border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
                 shape = RoundedCornerShape(8.dp),
                 expanded = overflowMenuState.value,
-                properties = PopupProperties(
-                    dismissOnBackPress = true,
-                    dismissOnClickOutside = true
-                ),
-                onDismissRequest = { overflowMenuState.value = false }) {
+                properties = PopupProperties(dismissOnBackPress = true, dismissOnClickOutside = true),
+                onDismissRequest = {
+                    scope.launch {
+                        delay(50)
+                        if (overflowMenuState.value) overflowMenuState.value = false
+                    }
+                }
+            ) {
 
                 FancyText2(
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                        .padding(horizontal = 2.dp),
+                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 2.dp),
                     string = stringResource(Res.string.room_overflow_title),
                     solid = Color.Black,
                     size = 14f,
@@ -264,28 +263,31 @@ fun RoomTabSection(modifier: Modifier, onShowChatHistory: () -> Unit) {
                 }
 
                 /* Leave room item */
-                DropdownMenuItem(text = {
-                    Row(verticalAlignment = CenterVertically) {
-                        Icon(
-                            modifier = Modifier.padding(2.dp),
-                            imageVector = Icons.AutoMirrored.Filled.Logout,
-                            contentDescription = "",
-                            tint = Color.LightGray
-                        )
+                DropdownMenuItem(
+                    text = {
+                        Row(verticalAlignment = CenterVertically) {
+                            Icon(
+                                modifier = Modifier.padding(2.dp),
+                                imageVector = Icons.AutoMirrored.Filled.Logout,
+                                contentDescription = "",
+                                tint = Color.LightGray
+                            )
 
-                        Spacer(Modifier.width(8.dp))
+                            Spacer(Modifier.width(8.dp))
 
-                        Text(
-                            color = Color.LightGray,
-                            text = stringResource(Res.string.room_overflow_leave_room),
-                        )
+                            Text(
+                                color = Color.LightGray,
+                                text = stringResource(Res.string.room_overflow_leave_room),
+                            )
+                        }
+                    },
+                    onClick = {
+                        viewmodel.networkManager.endConnection(true)
+                        viewmodel.player?.destroy()
+                        viewmodel.uiManager.nav.navigateTo(Screen.Home)
+                        platformCallback.onRoomEnterOrLeave(PlatformCallback.RoomEvent.LEAVE)
                     }
-                }, onClick = {
-                    viewmodel.networkManager.endConnection(true)
-                    viewmodel.player?.destroy()
-                    viewmodel.uiManager.nav.navigateTo(Screen.Home)
-                    platformCallback.onRoomEnterOrLeave(PlatformCallback.RoomEvent.LEAVE)
-                })
+                )
             }
         }
     }

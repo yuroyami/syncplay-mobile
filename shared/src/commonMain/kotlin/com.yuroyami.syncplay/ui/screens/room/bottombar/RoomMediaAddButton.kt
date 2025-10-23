@@ -125,7 +125,7 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
             ),
             onDismissRequest = {
                 scope.launch {
-                    delay(100)
+                    delay(50)
                     if (showPopup) showPopup = false
                 }
             }
