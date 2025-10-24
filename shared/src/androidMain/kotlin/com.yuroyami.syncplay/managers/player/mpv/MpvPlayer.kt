@@ -414,9 +414,9 @@ class MpvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
                                 if (playerManager.timeFullMillis.value.toDouble() > 0) {
                                     playerManager.media.value?.fileDuration = playerManager.timeFullMillis.value / 1000.0
 
-                                    viewmodel.networkManager.send<PacketCreator.File> {
+                                    viewmodel.networkManager.sendAsync<PacketCreator.File> {
                                         media = playerManager.media.value
-                                    }.await()
+                                    }
                                     break
                                 }
                                 delay(10)

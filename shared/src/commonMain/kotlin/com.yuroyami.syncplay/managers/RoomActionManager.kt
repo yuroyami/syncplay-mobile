@@ -19,7 +19,7 @@ class RoomActionManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmode
     fun sendPlayback(play: Boolean) {
         if (viewmodel.isSoloMode) return
 
-        sender.send<PacketCreator.State> {
+        sender.sendAsync<PacketCreator.State> {
             serverTime = null
             doSeek = null
             position = null //FIXME 0
@@ -31,14 +31,12 @@ class RoomActionManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmode
     fun sendSeek(newPosMs: Long) {
         if (viewmodel.isSoloMode) return
 
-        viewmodel.player?.playerScopeMain?.launch {
-            sender.send<PacketCreator.State> {
-                serverTime = null
-                doSeek = true
-                position = newPosMs / 1000L
-                changeState = 1
-                this.play = viewmodel.player!!.isPlaying() == true
-            }
+        sender.sendAsync<PacketCreator.State> {
+            serverTime = null
+            doSeek = true
+            position = newPosMs / 1000L
+            changeState = 1
+            this.play = viewmodel.player!!.isPlaying() == true
         }
     }
 
@@ -46,7 +44,7 @@ class RoomActionManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmode
     fun sendMessage(msg: String) {
         if (viewmodel.isSoloMode) return
 
-        sender.send<PacketCreator.Chat> {
+        sender.sendAsync<PacketCreator.Chat> {
             message = msg
         }
     }

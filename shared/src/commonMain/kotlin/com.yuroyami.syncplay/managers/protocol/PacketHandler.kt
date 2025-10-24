@@ -218,9 +218,9 @@ class PacketHandler(
 
        sender.send<PacketCreator.Joined> {
             roomname = viewmodel.session.currentRoom
-        }.await()
+       }
 
-        sender.send<PacketCreator.EmptyList>().await()
+        sender.send<PacketCreator.EmptyList>()
         callback.onConnected()
     }
 
@@ -233,7 +233,7 @@ class PacketHandler(
         }
 
         // Fetch a list of users anyway
-        sender.send<PacketCreator.EmptyList>().await()
+        sender.send<PacketCreator.EmptyList>()
     }
 
     private fun handleUserSet(userObject: JsonObject) {

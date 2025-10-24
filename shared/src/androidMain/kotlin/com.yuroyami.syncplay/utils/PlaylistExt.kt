@@ -3,10 +3,8 @@ package com.yuroyami.syncplay.utils
 import android.provider.DocumentsContract
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.managers.SharedPlaylistManager
 import com.yuroyami.syncplay.managers.protocol.PacketCreator
-import kotlinx.coroutines.launch
 
 actual suspend fun SharedPlaylistManager.addFolderToPlaylist(uri: String) {
     /* First, we save it in our media directories as a common directory */
@@ -32,11 +30,11 @@ actual suspend fun SharedPlaylistManager.addFolderToPlaylist(uri: String) {
         retrieveFile(newList.first())
         viewmodel.networkManager.send<PacketCreator.PlaylistIndex> {
             index = 0
-        }.await()
+        }
     }
     viewmodel.networkManager.send<PacketCreator.PlaylistChange> {
         files = viewmodel.session.sharedPlaylist + newList
-    }.await()
+    }
 }
 
 fun SharedPlaylistManager.iterateDirectory(dir: DocumentFile, onFileDetected: (String) -> Unit) {
@@ -117,16 +115,13 @@ actual fun SharedPlaylistManager.loadPlaylistLocally(fromUri: String, alsoShuffl
         s.close()
 
     /** Reading content */
-            val lines = string.split("\n").toMutableList()
-
+    val lines = string.split("\n").toMutableList()
 
     /** If the user chose the shuffling option along with it, then we shuffle it */
     if (alsoShuffle) lines.shuffle()
 
     /** Updating the shared playlist */
-    viewmodel.viewModelScope.launch {
-        viewmodel.networkManager.send<PacketCreator.PlaylistChange> {
-            files = lines
-        }.await()
+    viewmodel.networkManager.sendAsync<PacketCreator.PlaylistChange> {
+        files = lines
     }
 }

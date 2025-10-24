@@ -165,12 +165,11 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
 
                         if (viewmodel.isSoloMode) return
                         if (durationMs / 1000.0 != viewmodel.media?.fileDuration) {
-                            playerScopeIO.launch {
-                                viewmodel.media?.fileDuration = durationMs / 1000.0
-                                viewmodel.networkManager.send<PacketCreator.File> {
-                                    media = viewmodel.media
-                                }.await()
+                            viewmodel.media?.fileDuration = durationMs / 1000.0
+                            viewmodel.networkManager.sendAsync<PacketCreator.File> {
+                                media = viewmodel.media
                             }
+
                         }
                     }
                 }

@@ -189,7 +189,7 @@ class OnRoomEventManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmod
         if (viewmodel.media != null) {
             viewmodel.networkManager.send<PacketCreator.File> {
                 this@send.media = viewmodel.media
-            }.await()
+            }
         }
 
         /** Pass any messages that have been pending due to disconnection, then clear the queue */

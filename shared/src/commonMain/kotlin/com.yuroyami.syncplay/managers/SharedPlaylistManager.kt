@@ -54,7 +54,7 @@ class SharedPlaylistManager(viewmodel: SyncplayViewmodel): AbstractManager(viewm
         for (s in string) {
             if (!viewmodel.session.sharedPlaylist.contains(s)) l.add(s)
         }
-        viewmodel.networkManager.send<PacketCreator.PlaylistChange> {
+        viewmodel.networkManager.sendAsync<PacketCreator.PlaylistChange> {
             files = l
         }
     }
@@ -91,7 +91,7 @@ class SharedPlaylistManager(viewmodel: SyncplayViewmodel): AbstractManager(viewm
     fun clearPlaylist() {
         if (viewmodel.session.sharedPlaylist.isEmpty()) return
 
-        viewmodel.networkManager.send<PacketCreator.PlaylistChange> {
+        viewmodel.networkManager.sendAsync<PacketCreator.PlaylistChange> {
             files = emptyList()
         }
     }
@@ -99,7 +99,7 @@ class SharedPlaylistManager(viewmodel: SyncplayViewmodel): AbstractManager(viewm
     /** This will delete an item from playlist at a given index 'i' */
     fun deleteItemFromPlaylist(i: Int) {
         viewmodel.session.sharedPlaylist.removeAt(i)
-        viewmodel.networkManager.send<PacketCreator.PlaylistChange> {
+        viewmodel.networkManager.sendAsync<PacketCreator.PlaylistChange> {
             files = viewmodel.session.sharedPlaylist
         }
 
@@ -111,7 +111,7 @@ class SharedPlaylistManager(viewmodel: SyncplayViewmodel): AbstractManager(viewm
     /** This is to send a playlist selection change to the server.
      * This occurs when a user selects a different item from the shared playlist. */
     fun sendPlaylistSelection(i: Int) {
-        viewmodel.networkManager.send<PacketCreator.PlaylistIndex> {
+        viewmodel.networkManager.sendAsync<PacketCreator.PlaylistIndex> {
             index = i
         }
     }

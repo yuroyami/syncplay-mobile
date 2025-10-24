@@ -47,7 +47,7 @@ fun RoomReadyButton() {
             onCheckedChange = { b ->
                 ready = b
                 viewmodel.sessionManager.session.ready.value = b
-                viewmodel.networkManager.send<PacketCreator.Readiness> {
+                viewmodel.networkManager.sendAsync<PacketCreator.Readiness> {
                     isReady = b
                     manuallyInitiated = true
                 }

@@ -68,13 +68,13 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
             /** if the TLS mode is [Constants.TLS.TLS_ASK], then the the first packet to send
              * concerns an opportunistic TLS check with the server, otherwise, a Hello would be first */
             if (tls == Constants.TLS.TLS_ASK) {
-                send<PacketCreator.TLS>().await()
+                send<PacketCreator.TLS>()
             } else {
                 send<PacketCreator.Hello> {
                     username = viewmodel.sessionManager.session.currentUsername
                     roomname = viewmodel.sessionManager.session.currentRoom
                     serverPassword = viewmodel.sessionManager.session.currentPassword
-                }.await()
+                }
             }
         } catch (e: Exception) {
             loggy(e.stackTraceToString())
@@ -124,7 +124,7 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
     }
 
     private fun onError() {
-       viewmodel.callbackManager.onDisconnected()
+        viewmodel.callbackManager.onDisconnected()
     }
 
     fun terminateScope() {
@@ -138,13 +138,18 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
     typealias SendablePacket = String
 
     @ProtocolDsl
-    inline fun <reified T : PacketCreator> send(noinline init: suspend T.() -> Unit = {}): Deferred<Unit> {
+    inline fun <reified T : PacketCreator> sendAsync(noinline init: suspend T.() -> Unit = {}): Deferred<Unit> {
         return networkScope.async(Dispatchers.IO) {
-            val packetInstance = createPacketInstance<T>(protocolManager = viewmodel.protocolManager)
-            init(packetInstance)
-            val jsonPacket = packetInstance.build()
-            transmitPacket(jsonPacket, packetClass = T::class)
+            send(init)
         }
+    }
+
+    @ProtocolDsl
+    suspend inline fun <reified T : PacketCreator> send(noinline init: suspend T.() -> Unit = {}) {
+        val packetInstance = createPacketInstance<T>(protocolManager = viewmodel.protocolManager)
+        init(packetInstance)
+        val jsonPacket = packetInstance.build()
+        transmitPacket(jsonPacket, packetClass = T::class)
     }
 
     suspend fun transmitPacket(json: SendablePacket, packetClass: KClass<out PacketCreator>? = null, isRetry: Boolean = false) {
