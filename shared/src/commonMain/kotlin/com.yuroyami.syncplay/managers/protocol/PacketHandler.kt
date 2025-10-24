@@ -1,5 +1,6 @@
 package com.yuroyami.syncplay.managers.protocol
 
+import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.SyncplayViewmodel
 import com.yuroyami.syncplay.managers.ProtocolManager
 import com.yuroyami.syncplay.models.MediaFile
@@ -312,7 +313,7 @@ class PacketHandler(
             }
         }
 
-        sender.networkScope.launch {
+        viewmodel.viewModelScope.launch {
             viewmodel.session.userList.emit(newList)
             callback.onReceivedList()
         }

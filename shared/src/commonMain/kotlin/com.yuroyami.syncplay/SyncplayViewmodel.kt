@@ -120,7 +120,7 @@ class SyncplayViewmodel: ViewModel() {
     }
 
     fun leaveRoom() {
-        networkManager.endConnection(true)
+        networkManager.terminateExistingConnection()
         viewModelScope.launch(Dispatchers.Main.immediate) {
             player?.destroy()
         }

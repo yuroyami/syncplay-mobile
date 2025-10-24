@@ -233,7 +233,6 @@ class OnRoomEventManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmod
    override fun onDisconnected() {
         loggy("SYNCPLAY Protocol: Disconnected.")
 
-
         /** Adjusting connection state */
         viewmodel.networkManager.state = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
 

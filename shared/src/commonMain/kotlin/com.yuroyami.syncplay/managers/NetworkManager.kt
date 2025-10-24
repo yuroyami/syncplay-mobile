@@ -1,27 +1,23 @@
 package com.yuroyami.syncplay.managers
 
+import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
 import com.yuroyami.syncplay.SyncplayViewmodel
 import com.yuroyami.syncplay.managers.ProtocolManager.Companion.createPacketInstance
 import com.yuroyami.syncplay.managers.SessionManager.Session
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
 import com.yuroyami.syncplay.managers.datastore.valueBlockingly
-import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
 import com.yuroyami.syncplay.managers.protocol.PacketCreator
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.utils.PLATFORM
 import com.yuroyami.syncplay.utils.ProtocolDsl
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.platform
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -31,9 +27,6 @@ import kotlin.time.Duration.Companion.seconds
 abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel) {
 
     open val engine: NetworkEngine = NetworkEngine.SWIFTNIO
-
-    var networkJob = SupervisorJob()
-    var networkScope = CoroutineScope(Dispatchers.IO + networkJob)
 
     var state: Constants.CONNECTIONSTATE = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
     var tls: Constants.TLS = Constants.TLS.TLS_NO
@@ -54,14 +47,23 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
     override fun invalidate() {
         state = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
         tls = Constants.TLS.TLS_NO
-        runCatching { networkScope.cancel() }
-        runCatching { networkJob.cancel() }
-        networkJob = SupervisorJob()
-        networkScope = CoroutineScope(Dispatchers.IO + networkJob)
     }
 
     open suspend fun connect() {
-        endConnection(false)
+        loggy(
+            """
+            TRYING TO CONNECT SO MANY TIMES
+            TRYING TO CONNECT SO MANY TIMES
+            TRYING TO CONNECT SO MANY TIMES
+            TRYING TO CONNECT SO MANY TIMES
+            TRYING TO CONNECT SO MANY TIMES
+            TRYING TO CONNECT SO MANY TIMES
+            TRYING TO CONNECT SO MANY TIMES
+            TRYING TO CONNECT SO MANY TIMES
+            TRYING TO CONNECT SO MANY TIMES
+        """.trimIndent()
+        )
+        terminateExistingConnection()
 
         /** Informing UI controllers that we are starting a connection attempt */
         viewmodel.callbackManager.onConnectionAttempt()
@@ -95,7 +97,7 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
     abstract fun supportsTLS(): Boolean
 
     /** Ends the connection and cancels any read/write operations. Disposes of any references */
-    abstract fun endConnection(terminating: Boolean)
+    abstract fun terminateExistingConnection()
 
     /** Writes the string to the socket */
     abstract suspend fun writeActualString(s: String)
@@ -106,34 +108,29 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
     /** This method schedules reconnection ONLY IN in disconnected state */
     private var reconnectionJob: Job? = null
     fun reconnect() {
-        if (state == Constants.CONNECTIONSTATE.STATE_DISCONNECTED) {
-            if (reconnectionJob == null || reconnectionJob?.isCompleted == true) {
-                reconnectionJob = networkScope.launch {
-                    state = Constants.CONNECTIONSTATE.STATE_SCHEDULING_RECONNECT
-                    val reconnectionInterval = valueSuspendingly(DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL, 2) * 1000L
-
-                    delay(reconnectionInterval)
-
-                    connect()
-                }
-            }
-        }
+//TODO        if (state == Constants.CONNECTIONSTATE.STATE_DISCONNECTED) {
+//            if (reconnectionJob == null || reconnectionJob?.isCompleted == true) {
+//                reconnectionJob = networkScope.launch {
+//                    state = Constants.CONNECTIONSTATE.STATE_SCHEDULING_RECONNECT
+//                    val reconnectionInterval = valueSuspendingly(DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL, 2) * 1000L
+//
+//                    delay(reconnectionInterval)
+//
+//                    connect()
+//                }
+//            }
+//        }
     }
 
     fun handlePacket(data: String) {
-        networkScope.launch {
+        viewmodel.viewModelScope.launch(Dispatchers.Default) {
             viewmodel.protocolManager.packetHandler.parse(data)
         }
     }
 
     private fun onError() {
+        loggy("ON ERRORRRRRRRRRRRRRRRR")
         viewmodel.callbackManager.onDisconnected()
-    }
-
-    fun terminateScope() {
-        runCatching {
-            networkScope.cancel()
-        }
     }
 
     /** WRITING: This small method basically checks if the channel is active and writes to it, otherwise
@@ -142,7 +139,7 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
 
     @ProtocolDsl
     inline fun <reified T : PacketCreator> sendAsync(noinline init: suspend T.() -> Unit = {}): Deferred<Unit> {
-        return networkScope.async(Dispatchers.IO) {
+        return viewmodel.viewModelScope.async(Dispatchers.IO) {
             send(init)
         }
     }
@@ -169,7 +166,7 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
                     loggy("SOCKET INVALID")
                     /** Queuing any pending outgoing messages */
                     if (packetClass != PacketCreator.Hello::class && packetClass != null) {
-                        viewmodel.sessionManager.session.outboundQueue.add(json)
+                        //viewmodel.sessionManager.session.outboundQueue.add(json)
                     }
                     onError()
                 } else {

@@ -1,5 +1,6 @@
 package com.yuroyami.syncplay.managers.network
 
+import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.SyncplayViewmodel
 import com.yuroyami.syncplay.managers.NetworkManager
 import io.ktor.network.selector.SelectorManager
@@ -42,7 +43,7 @@ class KtorNetworkManager(viewmodel: SyncplayViewmodel) : NetworkManager(viewmode
                 input = connection?.input
                 output = connection?.output
 
-                networkScope.launch {
+                viewmodel.viewModelScope.launch {
                     while (true) {
                         connection?.input?.awaitContent()
                         input?.readUTF8Line()?.let {
@@ -60,16 +61,9 @@ class KtorNetworkManager(viewmodel: SyncplayViewmodel) : NetworkManager(viewmode
         }
     }
 
-    override fun endConnection(terminating: Boolean) {
+    override fun terminateExistingConnection() {
         runCatching {
-            /* Cleaning leftovers */
             socket?.close()
-
-            if (terminating) {
-                socket?.dispose()
-
-                networkJob.cancel()
-            }
         }
     }
 

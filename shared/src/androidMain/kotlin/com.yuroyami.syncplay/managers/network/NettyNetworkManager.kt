@@ -25,7 +25,6 @@ class NettyNetworkManager(viewmodel: SyncplayViewmodel) : NetworkManager(viewmod
     override val engine = NetworkEngine.NETTY
 
     /** Netty stuff */
-    @Volatile
     private var channel: Channel? = null
     lateinit var pipeline: ChannelPipeline
 
@@ -37,10 +36,7 @@ class NettyNetworkManager(viewmodel: SyncplayViewmodel) : NetworkManager(viewmod
             .handler(object : ChannelInitializer<SocketChannel>() {
                 override fun initChannel(ch: SocketChannel) {
                     pipeline = ch.pipeline()
-                    pipeline.addLast(
-                        "framer",
-                        DelimiterBasedFrameDecoder(8192, *Delimiters.lineDelimiter())
-                    )
+                    pipeline.addLast("framer", DelimiterBasedFrameDecoder(8192, *Delimiters.lineDelimiter()))
                     pipeline.addLast(StringDecoder())
                     pipeline.addLast(StringEncoder())
                     pipeline.addLast(Reader())
@@ -48,32 +44,23 @@ class NettyNetworkManager(viewmodel: SyncplayViewmodel) : NetworkManager(viewmod
             })
 
         /** After we're done bootstrapping Netty, now it's time to connect */
+
         val f = b.connect(
             viewmodel.sessionManager.session.serverHost,
             viewmodel.sessionManager.session.serverPort
         )
-
-        /** Listening to the connection progress */
-        f.addListener(ChannelFutureListener { future ->
-            if (!future.isSuccess) {
-                viewmodel.callbackManager.onConnectionFailed()
-            } else {
-                /* This is the channel, only variable we should memorize from the entire bootstrap/connection phase */
-                channel = f.channel()
-            }
-        })
-
-        if (!f.await(10000)) throw Exception()
+        val success = f.await(10000)
+        if (!success) {
+            viewmodel.callbackManager.onConnectionFailed()
+        } else {
+            /* This is the channel, only variable we should memorize from the entire bootstrap/connection phase */
+            channel = f.channel()
+        }
     }
 
-    override fun endConnection(terminating: Boolean) {
+    override fun terminateExistingConnection() {
         try {
-            /* Cleaning leftovers */
-            channel?.close()
-
-            if (terminating) {
-                terminateScope()
-            }
+            channel?.close()?.await()
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -83,6 +70,7 @@ class NettyNetworkManager(viewmodel: SyncplayViewmodel) : NetworkManager(viewmod
         val f = channel?.writeAndFlush(s)
         f?.addListener(ChannelFutureListener { future ->
             if (!future.isSuccess) {
+                loggy("OH NO, no future...")
                 viewmodel.callbackManager.onDisconnected()
             }
         })
@@ -99,13 +87,14 @@ class NettyNetworkManager(viewmodel: SyncplayViewmodel) : NetworkManager(viewmod
 
         override fun channelRead0(ctx: ChannelHandlerContext?, msg: String?) {
             if (msg != null) {
-                handlePacket( msg)
+                handlePacket(msg)
             }
         }
 
         @Deprecated("Deprecated in Java")
         override fun exceptionCaught(ctx: ChannelHandlerContext?, cause: Throwable?) {
             super.exceptionCaught(ctx, cause)
+            loggy("EXCEPTION CAUGHT IN NETTY: ${cause?.stackTraceToString()}")
             viewmodel.callbackManager.onDisconnected()
         }
     }

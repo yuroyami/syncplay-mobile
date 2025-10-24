@@ -2,6 +2,7 @@ package com.yuroyami.syncplay.utils
 
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.models.Constants
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.datetime.TimeZone
@@ -27,7 +28,7 @@ private fun Int.fixDigits() = this.toString().padStart(2, '0')
 
 suspend fun SyncplayViewmodel.beginPingUpdate() {
     while (viewModelScope.isActive) {
-        ping.value = if (networkManager.isSocketValid()) {
+        ping.value = if (networkManager.state == Constants.CONNECTIONSTATE.STATE_CONNECTED) {
             pingIcmp(sessionManager.session.serverHost, 32)
         } else null
         delay(1000)
