@@ -1,25 +1,27 @@
 [versions] #####################################################
-#KMM
-kotlin = "2.2.20"
+#KMM-Plugins
+kotlin = "2.2.21"
 agp = "8.13.0" #"9.0.0-alpha05"
-kermit = "2.0.8"
 compose = "1.10.0-alpha03"
+kSerialization = "1.9.0"
+ksp = "2.3.0"
+skie = "0.10.6"
+
+#KMM-Libs
+kermit = "2.0.8"
+krypto = "0.8.0"
+datastore = "1.2.0-beta01"
+filekit = "0.12.0"
+kolorpicker = "1.0.0"
+uriKmp = "0.0.21"
+compose-unstyled = "1.46.0"
+materialkolor = "5.0.0-alpha01"
 ktor  = "3.3.1"
 lifecycleViewmodelCompose = "2.10.0-alpha03"
 navigation3Runtime = "1.0.0-beta01"
 navigation3Ui = "1.0.0-alpha03"
 koroutines = "1.10.2"
 datetime = "0.7.1"
-kSerialization = "1.9.0"
-ksp = "2.2.20-2.0.4"
-krypto = "0.8.0"
-datastore = "1.2.0-beta01"
-filekit = "0.12.0"
-kolorpicker = "1.0.0"
-skie = "0.10.6"
-uriKmp = "0.0.21"
-compose-unstyled = "1.46.0"
-materialkolor = "5.0.0-alpha01"
 
 #Android
 coreSplashscreen = "1.1.0-rc01"
