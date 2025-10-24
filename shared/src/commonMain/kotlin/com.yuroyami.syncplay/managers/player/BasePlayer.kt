@@ -11,6 +11,7 @@ import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.utils.getFileName
+import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.sha256
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.CoroutineScope
@@ -120,6 +121,7 @@ abstract class BasePlayer(
     suspend fun injectVideo(uri: String? = null, isUrl: Boolean = false) {
         withContext(Dispatchers.Main) {
             /* Creating a media file from the selected file */
+            loggy("1")
             val newMediaFile = MediaFile()
             if (uri != null || viewmodel.media == null) {
                 newMediaFile.uri = uri
@@ -132,15 +134,18 @@ abstract class BasePlayer(
                     collectInfoLocal(newMediaFile)
                 }
             }
-
+            loggy("2")
             try {
                 injectVideoImpl(newMediaFile, isUrl)
+                loggy("3")
             } catch (e: Exception) {
+                loggy("3ex")
                 /* If, for some reason, the video didn't wanna load */
                 e.printStackTrace()
                 viewmodel.osdManager.dispatchOSD { "There was a problem loading this file." }
             }
 
+            loggy("4")
             playerManager.media.value = newMediaFile
 
             /* Finally, show a a toast to the user that the media file has been added */
