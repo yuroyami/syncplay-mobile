@@ -1,6 +1,6 @@
 package com.yuroyami.syncplay.managers.player
 
-import com.yuroyami.syncplay.RoomViewmodel
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import org.jetbrains.compose.resources.DrawableResource
 
 interface PlayerEngine {

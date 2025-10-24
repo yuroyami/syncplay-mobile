@@ -1,8 +1,8 @@
 package com.yuroyami.syncplay.managers.network
 
-import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.managers.NetworkManager
 import com.yuroyami.syncplay.utils.loggy
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener

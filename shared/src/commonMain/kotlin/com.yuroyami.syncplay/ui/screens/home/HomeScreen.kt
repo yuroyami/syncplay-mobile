@@ -50,7 +50,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.HomeViewmodel
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_PLAYER_ENGINE
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_NEVER_SHOW_TIPS
 import com.yuroyami.syncplay.managers.datastore.valueFlow
@@ -63,6 +62,7 @@ import com.yuroyami.syncplay.ui.utils.FlexibleFancyText
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.utils.substringSafely
+import com.yuroyami.syncplay.viewmodels.HomeViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay

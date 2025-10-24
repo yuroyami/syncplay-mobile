@@ -1,8 +1,9 @@
-package com.yuroyami.syncplay
+package com.yuroyami.syncplay.viewmodels
 
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.yuroyami.syncplay.PlatformCallback
 import com.yuroyami.syncplay.managers.SnackManager
 import com.yuroyami.syncplay.managers.ThemeManager
 import com.yuroyami.syncplay.models.JoinConfig

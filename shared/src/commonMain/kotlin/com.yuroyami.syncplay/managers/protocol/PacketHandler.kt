@@ -1,11 +1,11 @@
 package com.yuroyami.syncplay.managers.protocol
 
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.managers.ProtocolManager
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.User
 import com.yuroyami.syncplay.utils.loggy
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

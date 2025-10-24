@@ -46,7 +46,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_BG_OPACITY
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_BOX_ACTION
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_FONTSIZE
@@ -59,6 +58,7 @@ import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.ChatAnnotatedText
 import com.yuroyami.syncplay.utils.isEmoji
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_type_message

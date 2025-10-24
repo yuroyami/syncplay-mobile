@@ -1,10 +1,10 @@
 package com.yuroyami.syncplay.managers.player
 
 import com.yuroyami.syncplay.BuildConfig
-import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.managers.player.exo.ExoPlayer
 import com.yuroyami.syncplay.managers.player.mpv.MpvPlayer
 import com.yuroyami.syncplay.managers.player.vlc.VlcPlayer
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import org.jetbrains.compose.resources.DrawableResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.exoplayer

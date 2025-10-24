@@ -4,7 +4,7 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
-import com.yuroyami.syncplay.HomeViewmodel
+import com.yuroyami.syncplay.viewmodels.HomeViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 

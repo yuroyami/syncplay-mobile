@@ -2,12 +2,12 @@ package com.yuroyami.syncplay.managers
 
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
-import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
 import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
 import com.yuroyami.syncplay.managers.protocol.PacketCreator
 import com.yuroyami.syncplay.models.Message
 import com.yuroyami.syncplay.utils.platformCallback
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

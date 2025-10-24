@@ -1,7 +1,6 @@
 package com.yuroyami.syncplay.managers
 
 import com.yuroyami.syncplay.AbstractManager
-import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.managers.protocol.PacketCreator
 import com.yuroyami.syncplay.managers.protocol.PacketCreator.Chat
 import com.yuroyami.syncplay.managers.protocol.PacketCreator.EmptyList
@@ -16,6 +15,7 @@ import com.yuroyami.syncplay.managers.protocol.PacketCreator.TLS
 import com.yuroyami.syncplay.managers.protocol.PacketHandler
 import com.yuroyami.syncplay.managers.protocol.PingService
 import com.yuroyami.syncplay.utils.ProtocolDsl
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 
 class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     var globalPaused: Boolean = true //Latest server paused state

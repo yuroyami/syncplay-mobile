@@ -20,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
 import com.yuroyami.syncplay.ui.screens.room.bottombar.PopupSeekToPosition.SeekToPositionPopup
@@ -38,6 +37,7 @@ import com.yuroyami.syncplay.ui.screens.room.tabs.RoomTabSection
 import com.yuroyami.syncplay.ui.screens.room.tabs.RoomUnlockableLayout
 import com.yuroyami.syncplay.utils.HideSystemBars
 import com.yuroyami.syncplay.utils.beginPingUpdate
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay

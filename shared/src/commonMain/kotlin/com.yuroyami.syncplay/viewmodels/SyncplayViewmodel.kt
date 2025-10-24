@@ -1,9 +1,9 @@
-package com.yuroyami.syncplay
+package com.yuroyami.syncplay.viewmodels
 
 import androidx.lifecycle.ViewModel
 import com.yuroyami.syncplay.managers.ThemeManager
 
-class SyncplayViewmodel: ViewModel() {
+class SyncplayViewmodel : ViewModel() {
 
     /** Manages themes */
     val themeManager: ThemeManager by lazy { ThemeManager(this) }

@@ -1,8 +1,9 @@
-package com.yuroyami.syncplay
+package com.yuroyami.syncplay.viewmodels
 
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.yuroyami.syncplay.PlatformCallback
 import com.yuroyami.syncplay.managers.LifecycleManager
 import com.yuroyami.syncplay.managers.NetworkManager
 import com.yuroyami.syncplay.managers.OSDManager
@@ -15,8 +16,6 @@ import com.yuroyami.syncplay.managers.SharedPlaylistManager
 import com.yuroyami.syncplay.managers.ThemeManager
 import com.yuroyami.syncplay.managers.UIManager
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_PLAYER_ENGINE
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_TLS_ENABLE
 import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
 import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.models.Constants
@@ -83,7 +82,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
         viewModelScope.launch(Dispatchers.IO) {
             setReadyDirectly = valueSuspendingly(DataStoreKeys.PREF_READY_FIRST_HAND, true)
 
-            networkManager = instantiateNetworkManager(engine = NetworkManager.getPreferredEngine())
+            networkManager = instantiateNetworkManager(engine = NetworkManager.Companion.getPreferredEngine())
 
             joinConfig?.let {
                 sessionManager.session.serverHost = joinConfig.ip.takeIf { it != "syncplay.pl" } ?: "151.80.32.178"
@@ -93,7 +92,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
                 sessionManager.session.currentPassword = joinConfig.pw
 
                 /** Connecting (via TLS or noTLS) */
-                val tls = valueSuspendingly(PREF_TLS_ENABLE, default = true)
+                val tls = valueSuspendingly(DataStoreKeys.PREF_TLS_ENABLE, default = true)
                 if (tls && networkManager.supportsTLS()) {
                     callbackManager.onTLSCheck()
                     networkManager.tls = Constants.TLS.TLS_ASK
@@ -103,7 +102,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
             }
 
             val defaultEngine = availablePlatformPlayerEngines.first { it.isDefault }.name //TODO
-            val engine = availablePlatformPlayerEngines.first { it.name == valueSuspendingly(MISC_PLAYER_ENGINE, defaultEngine) }
+            val engine = availablePlatformPlayerEngines.first { it.name == valueSuspendingly(DataStoreKeys.MISC_PLAYER_ENGINE, defaultEngine) }
             playerManager.player = engine.instantiate(this@RoomViewmodel)
         }
     }

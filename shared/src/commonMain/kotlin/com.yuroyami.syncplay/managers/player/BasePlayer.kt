@@ -5,7 +5,6 @@ import androidx.annotation.UiThread
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.eygraber.uri.Uri
-import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.managers.PlayerManager
 import com.yuroyami.syncplay.managers.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.models.Chapter
@@ -13,6 +12,7 @@ import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.sha256
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO

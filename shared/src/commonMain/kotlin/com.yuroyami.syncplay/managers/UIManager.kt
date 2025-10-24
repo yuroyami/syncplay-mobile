@@ -1,7 +1,7 @@
 package com.yuroyami.syncplay.managers
 
 import com.yuroyami.syncplay.AbstractManager
-import com.yuroyami.syncplay.RoomViewmodel
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class UIManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {

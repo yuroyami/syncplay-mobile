@@ -2,7 +2,6 @@ package com.yuroyami.syncplay.managers
 
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
-import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.managers.ProtocolManager.Companion.createPacketInstance
 import com.yuroyami.syncplay.managers.SessionManager.Session
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
@@ -14,6 +13,7 @@ import com.yuroyami.syncplay.utils.PLATFORM
 import com.yuroyami.syncplay.utils.ProtocolDsl
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.platform
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO

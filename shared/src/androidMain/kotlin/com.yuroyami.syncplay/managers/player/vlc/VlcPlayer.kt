@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import androidx.media3.common.C.STREAM_TYPE_MUSIC
-import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.databinding.VlcviewBinding
 import com.yuroyami.syncplay.managers.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.managers.player.BasePlayer
@@ -18,6 +17,7 @@ import com.yuroyami.syncplay.managers.protocol.PacketCreator
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

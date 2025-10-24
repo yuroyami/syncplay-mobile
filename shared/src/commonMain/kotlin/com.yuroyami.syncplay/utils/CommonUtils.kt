@@ -1,8 +1,8 @@
 package com.yuroyami.syncplay.utils
 
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.models.Constants
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.datetime.TimeZone

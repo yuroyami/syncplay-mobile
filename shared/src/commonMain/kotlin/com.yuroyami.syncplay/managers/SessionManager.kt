@@ -4,9 +4,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import com.yuroyami.syncplay.AbstractManager
-import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.models.Message
 import com.yuroyami.syncplay.models.User
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /*************************************************************************************************

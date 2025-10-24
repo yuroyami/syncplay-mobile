@@ -14,12 +14,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.managers.NetworkManager
 import com.yuroyami.syncplay.managers.network.KtorNetworkManager
 import com.yuroyami.syncplay.managers.network.NettyNetworkManager
 import com.yuroyami.syncplay.managers.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.managers.player.PlayerEngine
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
