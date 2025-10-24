@@ -1,5 +1,6 @@
 package com.yuroyami.syncplay.managers.network
 
+import android.net.TrafficStats
 import com.yuroyami.syncplay.managers.NetworkManager
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
@@ -60,6 +61,8 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
             })
 
         /** After we're done bootstrapping Netty, now it's time to connect */
+        TrafficStats.setThreadStatsTag(0xF00DFAF) //Satisfies Android's StrictMode policy
+
         val f = b.connect(
             viewmodel.sessionManager.session.serverHost,
             viewmodel.sessionManager.session.serverPort

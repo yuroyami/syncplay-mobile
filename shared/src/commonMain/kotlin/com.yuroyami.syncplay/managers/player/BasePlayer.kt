@@ -135,7 +135,6 @@ abstract class BasePlayer(
 
             try {
                 injectVideoImpl(newMediaFile, isUrl)
-
             } catch (e: Exception) {
                 /* If, for some reason, the video didn't wanna load */
                 e.printStackTrace()
