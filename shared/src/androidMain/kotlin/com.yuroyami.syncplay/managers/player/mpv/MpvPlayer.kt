@@ -221,7 +221,7 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
             val ccGet = ccMap?.firstOrNull { it.index == subIndex }
             val audioGet = audioMap?.firstOrNull { it.index == audioIndex }
 
-            with(playerManager.player ?: return@withContext) {
+            with(playerManager.player) {
                 if (subIndex == -1) {
                     selectTrack(null, TRACKTYPE.SUBTITLE)
                 } else if (ccGet != null) {

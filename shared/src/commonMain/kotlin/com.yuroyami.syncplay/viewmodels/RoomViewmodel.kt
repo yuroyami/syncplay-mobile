@@ -82,13 +82,14 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
         viewModelScope.launch(Dispatchers.IO) {
             setReadyDirectly = valueSuspendingly(DataStoreKeys.PREF_READY_FIRST_HAND, true)
 
-            networkManager = instantiateNetworkManager(engine = NetworkManager.Companion.getPreferredEngine())
+            networkManager = instantiateNetworkManager(engine = NetworkManager.getPreferredEngine())
 
             joinConfig?.let {
                 launch {
                     val defaultEngine = availablePlatformPlayerEngines.first { it.isDefault }.name //TODO
                     val engine = availablePlatformPlayerEngines.first { it.name == valueSuspendingly(DataStoreKeys.MISC_PLAYER_ENGINE, defaultEngine) }
                     playerManager.player = engine.instantiate(this@RoomViewmodel)
+                    playerManager.isPlayerReady.value = true
                 }
                 launch {
                     sessionManager.session.serverHost = joinConfig.ip.takeIf { it != "syncplay.pl" } ?: "151.80.32.178"
@@ -153,7 +154,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
         get() = joinConfig == null
 
     /** Extension property to quickly access some managers' properties */
-    val player: BasePlayer?
+    val player: BasePlayer
         get() = playerManager.player
 
     val session: SessionManager.Session

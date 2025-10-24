@@ -68,11 +68,13 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
             }
 
             /* Video Surface */
-            viewmodel.playerManager.player?.VideoPlayer(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .alpha(if (hasVideo) 1f else 0f) //The video composable has to be alive at all times, we just hide it when there's no video
-            )
+            val playerIsReady by viewmodel.playerManager.isPlayerReady.collectAsState()
+            if (playerIsReady) {
+                viewmodel.player.VideoPlayer(
+                    //The video composable has to be alive at all times, we just hide it when there's no video
+                    modifier = Modifier.fillMaxSize().alpha(if (hasVideo) 1f else 0f)
+                )
+            }
 
             if (lockedMode) {
                 /* A simple layout that has a hideable button that unlocks the screen after locking it */

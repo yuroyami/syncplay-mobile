@@ -60,7 +60,7 @@ class LifecycleManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel
             background = true
 
             onMainThread {
-                viewmodel.playerManager.player?.pause()
+                viewmodel.player.pause()
             }
         }
     }

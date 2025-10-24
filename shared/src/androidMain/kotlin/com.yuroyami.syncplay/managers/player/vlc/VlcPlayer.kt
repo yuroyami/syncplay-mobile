@@ -17,6 +17,7 @@ import com.yuroyami.syncplay.managers.protocol.PacketCreator
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
+import com.yuroyami.syncplay.utils.contextObtainer
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -35,7 +36,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerEngine.VLC) {
     lateinit var audioManager: AudioManager
 
-    private lateinit var ctx: Context
+    private val ctx = contextObtainer()
 
     private var libvlc: LibVLC? = null
     private var vlcPlayer: MediaPlayer? = null
@@ -53,7 +54,6 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
 
     @UiThread
     override fun initialize() {
-        ctx = vlcView.context.applicationContext
         audioManager = ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
         libvlc = LibVLC(ctx, listOf("-vv"))
@@ -244,7 +244,7 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
                 if (isUrl) {
                     vlcPlayer?.play(uri)
                 } else {
-                    val desc = ctx.contentResolver.openFileDescriptor(uri, "r")
+                    val desc = contextObtainer().contentResolver.openFileDescriptor(uri, "r")
                     val media = Media(libvlc, desc?.fileDescriptor)
                     //todo: global property to switch hw/sw
                     vlcPlayer?.play(media)

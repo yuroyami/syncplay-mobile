@@ -42,6 +42,7 @@ import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
+import com.yuroyami.syncplay.utils.contextObtainer
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.Dispatchers
@@ -82,9 +83,9 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
 
     override fun initialize() {
         playerScopeMain.launch(Dispatchers.Main.immediate) {
-            val context = exoView.context
+            val context = contextObtainer()
 
-            audioManager = context.applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
             /** LoadControl (Buffering manager) and track selector (for track language preference) **/
             val options = PlayerOptions.getSuspendingly()
@@ -96,7 +97,7 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
                     options.playbackBuffer + 500
                 ).build()
 
-            val trackSelector = DefaultTrackSelector(context.applicationContext)
+            val trackSelector = DefaultTrackSelector(context)
             val params = trackSelector.buildUponParameters()
                 .setPreferredAudioLanguage(options.audioPreference)
                 .setPreferredTextLanguage(options.ccPreference)
@@ -104,7 +105,7 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
             trackSelector.parameters = params
 
             /** Building ExoPlayer to use FFmpeg Audio Renderer and also enable fast-seeking */
-            exoplayer = ExoPlayer.Builder(context.applicationContext)
+            exoplayer = ExoPlayer.Builder(context)
                 .setLoadControl(loadControl) /* We use the custom LoadControl we initialized before */
                 .setTrackSelector(trackSelector)
                 .setRenderersFactory(
