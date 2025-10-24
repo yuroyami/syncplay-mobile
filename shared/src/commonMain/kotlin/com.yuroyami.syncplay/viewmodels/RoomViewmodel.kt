@@ -85,25 +85,28 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
             networkManager = instantiateNetworkManager(engine = NetworkManager.Companion.getPreferredEngine())
 
             joinConfig?.let {
-                sessionManager.session.serverHost = joinConfig.ip.takeIf { it != "syncplay.pl" } ?: "151.80.32.178"
-                sessionManager.session.serverPort = joinConfig.port
-                sessionManager.session.currentUsername = joinConfig.user
-                sessionManager.session.currentRoom = joinConfig.room
-                sessionManager.session.currentPassword = joinConfig.pw
-
-                /** Connecting (via TLS or noTLS) */
-                val tls = valueSuspendingly(DataStoreKeys.PREF_TLS_ENABLE, default = true)
-                if (tls && networkManager.supportsTLS()) {
-                    callbackManager.onTLSCheck()
-                    networkManager.tls = Constants.TLS.TLS_ASK
+                launch {
+                    val defaultEngine = availablePlatformPlayerEngines.first { it.isDefault }.name //TODO
+                    val engine = availablePlatformPlayerEngines.first { it.name == valueSuspendingly(DataStoreKeys.MISC_PLAYER_ENGINE, defaultEngine) }
+                    playerManager.player = engine.instantiate(this@RoomViewmodel)
                 }
+                launch {
+                    sessionManager.session.serverHost = joinConfig.ip.takeIf { it != "syncplay.pl" } ?: "151.80.32.178"
+                    sessionManager.session.serverPort = joinConfig.port
+                    sessionManager.session.currentUsername = joinConfig.user
+                    sessionManager.session.currentRoom = joinConfig.room
+                    sessionManager.session.currentPassword = joinConfig.pw
 
-                networkManager.connect()
+                    /** Connecting (via TLS or noTLS) */
+                    val tls = valueSuspendingly(DataStoreKeys.PREF_TLS_ENABLE, default = true)
+                    if (tls && networkManager.supportsTLS()) {
+                        callbackManager.onTLSCheck()
+                        networkManager.tls = Constants.TLS.TLS_ASK
+                    }
+
+                    networkManager.connect()
+                }
             }
-
-            val defaultEngine = availablePlatformPlayerEngines.first { it.isDefault }.name //TODO
-            val engine = availablePlatformPlayerEngines.first { it.name == valueSuspendingly(DataStoreKeys.MISC_PLAYER_ENGINE, defaultEngine) }
-            playerManager.player = engine.instantiate(this@RoomViewmodel)
         }
     }
 

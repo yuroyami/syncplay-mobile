@@ -12,10 +12,7 @@ import java.util.Locale
 /** This is used specifically in the case where common code needs access to some context.
  * This is currently used to get file names for shared playlists without leaking the context globally.
  */
-interface ContextObtainer {
-    fun obtainAppContext(): Context
-}
-lateinit var contextObtainer: ContextObtainer
+lateinit var contextObtainer: () -> Context
 
 @Suppress("DEPRECATION")
 fun Context.changeLanguage(lang: String): Context {
@@ -26,11 +23,11 @@ fun Context.changeLanguage(lang: String): Context {
     return createConfigurationContext(config)
 }
 
-fun collectInfoLocalAndroid(media: MediaFile, context: Context) {
+fun collectInfoLocalAndroid(media: MediaFile) {
     with(media) {
         /** Using MiscUtils **/
         fileName = getFileName(uri!!)!!
-        fileSize = getRealSizeFromUri(context, uri!!.toUri())?.toDouble()?.toLong().toString()
+        fileSize = getRealSizeFromUri(contextObtainer.invoke(), uri!!.toUri())?.toDouble()?.toLong().toString()
 
         /** Hashing name and size in case they're used **/
         fileNameHashed = sha256(fileName).toHexString(HexFormat.UpperCase)

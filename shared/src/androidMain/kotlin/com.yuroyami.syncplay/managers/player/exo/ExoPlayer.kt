@@ -446,7 +446,7 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun collectInfoLocal(mediafile: MediaFile) {
-        collectInfoLocalAndroid(mediafile, exoView.context)
+        collectInfoLocalAndroid(mediafile)
     }
 
     override suspend fun changeSubtitleSize(newSize: Int) {

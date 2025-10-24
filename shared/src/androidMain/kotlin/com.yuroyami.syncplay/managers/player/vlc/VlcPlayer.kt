@@ -299,7 +299,7 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun collectInfoLocal(mediafile: MediaFile) {
-        collectInfoLocalAndroid(mediafile, ctx)
+        collectInfoLocalAndroid(mediafile)
     }
 
     override suspend fun changeSubtitleSize(newSize: Int) {

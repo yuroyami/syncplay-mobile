@@ -24,7 +24,7 @@ import kotlin.reflect.KProperty
 
 internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(context, attrs), SurfaceHolder.Callback {
     fun initialize(configDir: String, cacheDir: String) {
-        MPVLib.create(contextObtainer.obtainAppContext())
+        MPVLib.create(contextObtainer.invoke())
         MPVLib.setOptionString("config", "yes")
         MPVLib.setOptionString("config-dir", configDir)
         for (opt in arrayOf("gpu-shader-cache-dir", "icc-cache-dir"))
