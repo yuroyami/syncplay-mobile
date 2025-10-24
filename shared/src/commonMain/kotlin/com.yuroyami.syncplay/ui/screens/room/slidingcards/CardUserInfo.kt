@@ -31,7 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.gradientOverlay
@@ -48,7 +48,7 @@ object CardUserInfo {
 
     @Composable
     fun UserInfoCard() {
-        val viewmodel = LocalViewmodel.current
+        val viewmodel = LocalRoomViewmodel.current
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(8.dp),

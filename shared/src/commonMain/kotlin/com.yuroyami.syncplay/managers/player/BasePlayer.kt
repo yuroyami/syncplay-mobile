@@ -5,7 +5,7 @@ import androidx.annotation.UiThread
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.eygraber.uri.Uri
-import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.managers.PlayerManager
 import com.yuroyami.syncplay.managers.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.models.Chapter
@@ -43,7 +43,7 @@ import kotlin.time.Duration
  * all the necessary functionality, in a platform-agnostic manner.
  */
 abstract class BasePlayer(
-    val viewmodel: SyncplayViewmodel,
+    val viewmodel: RoomViewmodel,
     val engine: PlayerEngine
 ) {
     val playerManager: PlayerManager = viewmodel.playerManager

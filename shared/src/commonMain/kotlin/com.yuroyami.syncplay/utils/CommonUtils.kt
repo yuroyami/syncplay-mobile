@@ -1,7 +1,7 @@
 package com.yuroyami.syncplay.utils
 
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.models.Constants
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -26,7 +26,7 @@ fun generateClockstamp(): String {
 
 private fun Int.fixDigits() = this.toString().padStart(2, '0')
 
-suspend fun SyncplayViewmodel.beginPingUpdate() {
+suspend fun RoomViewmodel.beginPingUpdate() {
     while (viewModelScope.isActive) {
         ping.value = if (networkManager.state == Constants.CONNECTIONSTATE.STATE_CONNECTED) {
             pingIcmp(sessionManager.session.serverHost, 32)

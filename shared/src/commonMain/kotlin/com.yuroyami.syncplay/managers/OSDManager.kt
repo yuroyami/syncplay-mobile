@@ -3,14 +3,14 @@ package com.yuroyami.syncplay.managers
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
-import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.RoomViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class OSDManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmodel) {
+class OSDManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
     val osdMsg = mutableStateOf("")
 

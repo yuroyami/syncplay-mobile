@@ -14,7 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.theme.Theming.ROOM_ICON_SIZE
 import com.yuroyami.syncplay.ui.utils.FancyIcon2
@@ -24,7 +24,7 @@ import kotlin.math.roundToInt
 
 @Composable
 fun RoomPlayButton(modifier: Modifier) {
-    val viewmodel = LocalViewmodel.current
+    val viewmodel = LocalRoomViewmodel.current
     val hasVideo by viewmodel.hasVideo.collectAsState()
 
     /** PLAY BUTTON */

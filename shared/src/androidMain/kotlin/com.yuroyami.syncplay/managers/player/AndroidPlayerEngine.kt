@@ -1,7 +1,7 @@
 package com.yuroyami.syncplay.managers.player
 
 import com.yuroyami.syncplay.BuildConfig
-import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.managers.player.exo.ExoPlayer
 import com.yuroyami.syncplay.managers.player.mpv.MpvPlayer
 import com.yuroyami.syncplay.managers.player.vlc.VlcPlayer
@@ -20,7 +20,7 @@ sealed interface AndroidPlayerEngine: PlayerEngine {
         override val name: String = "Exoplayer"
         override val img: DrawableResource = Res.drawable.exoplayer
 
-        override fun instantiate(viewmodel: SyncplayViewmodel): BasePlayer = ExoPlayer(viewmodel)
+        override fun instantiate(viewmodel: RoomViewmodel): BasePlayer = ExoPlayer(viewmodel)
     }
 
     object Mpv: AndroidPlayerEngine {
@@ -29,7 +29,7 @@ sealed interface AndroidPlayerEngine: PlayerEngine {
         override val name: String = "mpv"
         override val img: DrawableResource = Res.drawable.mpv
 
-        override fun instantiate(viewmodel: SyncplayViewmodel): BasePlayer = MpvPlayer(viewmodel)
+        override fun instantiate(viewmodel: RoomViewmodel): BasePlayer = MpvPlayer(viewmodel)
     }
 
     object VLC: AndroidPlayerEngine {
@@ -38,6 +38,6 @@ sealed interface AndroidPlayerEngine: PlayerEngine {
         override val name: String=  "VLC"
         override val img: DrawableResource = Res.drawable.vlc
 
-        override fun instantiate(viewmodel: SyncplayViewmodel): BasePlayer = VlcPlayer(viewmodel)
+        override fun instantiate(viewmodel: RoomViewmodel): BasePlayer = VlcPlayer(viewmodel)
     }
 }

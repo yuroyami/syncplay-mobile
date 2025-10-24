@@ -33,7 +33,7 @@ import androidx.media3.ui.CaptionStyleCompat
 import androidx.media3.ui.PlayerView
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
-import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.databinding.ExoviewBinding
 import com.yuroyami.syncplay.managers.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.managers.player.BasePlayer
@@ -55,13 +55,16 @@ import syncplaymobile.shared.generated.resources.room_scaling_fixed_height
 import syncplaymobile.shared.generated.resources.room_scaling_fixed_width
 import syncplaymobile.shared.generated.resources.room_scaling_zoom
 import java.util.Collections
+import java.util.UUID
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
-class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPlayerEngine.Exoplayer) {
+class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerEngine.Exoplayer) {
     lateinit var audioManager: AudioManager
+
+    //TODO TERMINATE THE SESSION ON PLAYER DESTROY!!!! KEEP THIS SINGLE-SESSION ONLY
 
     /*-- Exoplayer-related properties --*/
     var exoplayer: ExoPlayer? = null
@@ -131,6 +134,7 @@ class ExoPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, AndroidPla
             /** Creating our MediaSession */
             session = MediaSession
                 .Builder(context, exoplayer!!)
+                .setId("session_${UUID.randomUUID()}")
                 .setCallback(object : MediaSession.Callback {
                     override fun onAddMediaItems(
                         mediaSession: MediaSession,

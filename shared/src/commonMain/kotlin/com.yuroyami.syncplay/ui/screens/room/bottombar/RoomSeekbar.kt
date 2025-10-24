@@ -43,7 +43,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.utils.FlexibleFancyText
 import com.yuroyami.syncplay.ui.utils.gradientOverlay
 import com.yuroyami.syncplay.utils.timeStamper
@@ -54,7 +54,7 @@ import com.composeunstyled.Thumb as UnstyledThumb
 
 @Composable
 fun RoomSeekbar(modifier: Modifier) {
-    val viewmodel = LocalViewmodel.current
+    val viewmodel = LocalRoomViewmodel.current
     val scope = rememberCoroutineScope { Dispatchers.Main }
     val chapters = remember(viewmodel.media?.fileName) { viewmodel.media?.chapters ?: emptyList() }
 

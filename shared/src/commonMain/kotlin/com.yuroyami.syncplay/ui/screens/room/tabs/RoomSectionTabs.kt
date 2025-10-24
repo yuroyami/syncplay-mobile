@@ -39,7 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.FancyIcon2
 import com.yuroyami.syncplay.ui.utils.FancyText2
@@ -91,7 +91,7 @@ class CardController {
 @Composable
 fun RoomTabSection(modifier: Modifier, onShowChatHistory: () -> Unit) {
     val scope = rememberCoroutineScope()
-    val viewmodel = LocalViewmodel.current
+    val viewmodel = LocalRoomViewmodel.current
     val cardController = LocalCardController.current
 
     val stateUserInfo by cardController.tabCardUserInfo.collectAsState()

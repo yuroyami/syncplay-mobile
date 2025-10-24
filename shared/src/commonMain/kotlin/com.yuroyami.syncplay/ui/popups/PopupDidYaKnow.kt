@@ -17,7 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_NEVER_SHOW_TIPS
 import com.yuroyami.syncplay.managers.datastore.writeValue
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -30,7 +30,7 @@ object PopupDidYaKnow {
     /** Use only once in AdamScreen rather than declaring it in two places */
     @Composable
     fun DidYaKnowPopup(state: MutableState<Boolean>) {
-        val viewmodel = LocalViewmodel.current
+        val viewmodel = LocalGlobalViewmodel.current
         val visible by remember { state }
         val tips = remember { mutableStateListOf<String>() }
 

@@ -1,6 +1,6 @@
 package com.yuroyami.syncplay.managers.network
 
-import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.managers.NetworkManager
 import com.yuroyami.syncplay.utils.loggy
 import io.netty.bootstrap.Bootstrap
@@ -20,7 +20,7 @@ import io.netty.handler.codec.string.StringDecoder
 import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.ssl.SslContextBuilder
 
-class NettyNetworkManager(viewmodel: SyncplayViewmodel) : NetworkManager(viewmodel) {
+class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
 
     override val engine = NetworkEngine.NETTY
 
@@ -39,12 +39,27 @@ class NettyNetworkManager(viewmodel: SyncplayViewmodel) : NetworkManager(viewmod
                     pipeline.addLast("framer", DelimiterBasedFrameDecoder(8192, *Delimiters.lineDelimiter()))
                     pipeline.addLast(StringDecoder())
                     pipeline.addLast(StringEncoder())
-                    pipeline.addLast(Reader())
+                    pipeline.addLast(object : SimpleChannelInboundHandler<String>() {
+                        override fun userEventTriggered(ctx: ChannelHandlerContext?, evt: Any?) {
+                            super.userEventTriggered(ctx, evt)
+                            loggy("Channel event: ${evt.toString()}")
+                        }
+
+                        override fun channelRead0(ctx: ChannelHandlerContext?, msg: String?) {
+                            if (msg != null) handlePacket(msg)
+                        }
+
+                        @Deprecated("Deprecated in Java")
+                        override fun exceptionCaught(ctx: ChannelHandlerContext?, cause: Throwable?) {
+                            super.exceptionCaught(ctx, cause)
+                            loggy("EXCEPTION CAUGHT IN NETTY: ${cause?.stackTraceToString()}")
+                            viewmodel.callbackManager.onDisconnected()
+                        }
+                    })
                 }
             })
 
         /** After we're done bootstrapping Netty, now it's time to connect */
-
         val f = b.connect(
             viewmodel.sessionManager.session.serverHost,
             viewmodel.sessionManager.session.serverPort
@@ -55,18 +70,33 @@ class NettyNetworkManager(viewmodel: SyncplayViewmodel) : NetworkManager(viewmod
         } else {
             /* This is the channel, only variable we should memorize from the entire bootstrap/connection phase */
             channel = f.channel()
+            loggy("$channel")
         }
     }
 
     override fun terminateExistingConnection() {
         try {
+            loggy(
+                """
+            terminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminating
+            terminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminating
+            terminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminating
+        """.trimIndent()
+            )
             channel?.close()?.await()
+            channel = null
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
     override suspend fun writeActualString(s: String) {
+        loggy("CHANNEL ${channel}")
+        loggy("WRITABLE ${channel?.isWritable}")
+        loggy("ACTIVE ${channel?.isActive}")
+        loggy("OPEN ${channel?.isOpen}")
+        loggy("REGISTERED ${channel?.isRegistered}")
+
         val f = channel?.writeAndFlush(s)
         f?.addListener(ChannelFutureListener { future ->
             if (!future.isSuccess) {
@@ -74,29 +104,6 @@ class NettyNetworkManager(viewmodel: SyncplayViewmodel) : NetworkManager(viewmod
                 viewmodel.callbackManager.onDisconnected()
             }
         })
-    }
-
-
-    /** NETTY READING: A small inner class that does the reading callback (Delegated by Netty) */
-    inner class Reader : SimpleChannelInboundHandler<String>() {
-        override fun userEventTriggered(ctx: ChannelHandlerContext?, evt: Any?) {
-            super.userEventTriggered(ctx, evt)
-
-            loggy("Channel event: ${evt.toString()}")
-        }
-
-        override fun channelRead0(ctx: ChannelHandlerContext?, msg: String?) {
-            if (msg != null) {
-                handlePacket(msg)
-            }
-        }
-
-        @Deprecated("Deprecated in Java")
-        override fun exceptionCaught(ctx: ChannelHandlerContext?, cause: Throwable?) {
-            super.exceptionCaught(ctx, cause)
-            loggy("EXCEPTION CAUGHT IN NETTY: ${cause?.stackTraceToString()}")
-            viewmodel.callbackManager.onDisconnected()
-        }
     }
 
     override fun supportsTLS() = true

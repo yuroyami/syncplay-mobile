@@ -24,13 +24,13 @@ import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
 import com.yuroyami.syncplay.managers.datastore.valueAsState
 import com.yuroyami.syncplay.ui.screens.adam.LocalChatPalette
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import kotlinx.coroutines.delay
 
 
 @Composable
 fun FadingMessageLayout() {
-    val viewmodel = LocalViewmodel.current
+    val viewmodel = LocalRoomViewmodel.current
 
     val isInPiPMode by viewmodel.uiManager.hasEnteredPipMode.collectAsState()
     val isHUDVisible by viewmodel.uiManager.visibleHUD.collectAsState()

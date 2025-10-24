@@ -15,14 +15,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
 import com.yuroyami.syncplay.ui.screens.room.bottombar.PopupSeekToPosition.SeekToPositionPopup
 import com.yuroyami.syncplay.ui.screens.room.bottombar.RoomBottomBarSection
 import com.yuroyami.syncplay.ui.screens.room.chat.FadingMessageLayout
@@ -44,13 +44,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 @Composable
-fun RoomScreenUI() {
+fun RoomScreenUI(viewmodel: RoomViewmodel) {
     HideSystemBars() //This little trick will prevent the navigation bar from appearing when we show popup dialogs/dropdown menus.
-
-    val viewmodel = LocalViewmodel.current
-    val roomIoScope = rememberCoroutineScope { Dispatchers.IO }
-    val roomMainScope = rememberCoroutineScope { Dispatchers.Main }
-    val roomDefaultScope = rememberCoroutineScope { Dispatchers.Default }
 
     val soloMode = remember { viewmodel.isSoloMode }
     val hasVideo by viewmodel.playerManager.hasVideo.collectAsState(initial = false)
@@ -152,19 +147,20 @@ fun RoomScreenUI() {
         LaunchedEffect(Unit) {
             if (!soloMode) {
                 /* Starts ping updates when not in solo mode.
-             * Uses withContext(Dispatchers.IO) to tie the ping coroutine to the composition scope,
-             * ensuring that if composition is cancelled (room is exited), ping updating is cancelled as well. */
+         * Uses withContext(Dispatchers.IO) to tie the ping coroutine to the composition scope,
+         * ensuring that if composition is cancelled (room is exited), ping updating is cancelled as well. */
                 withContext(Dispatchers.IO) {
                     viewmodel.beginPingUpdate()
                 }
             }
         }
 
-        if (!viewmodel.uiManager.hasEnteredRoomOnce) {
+        val globalViewmodel = LocalGlobalViewmodel.current
+        if (!globalViewmodel.hasEnteredRoomOnce) {
             LaunchedEffect(null) {
                 delay(600)
                 cardController.toggleUserInfo(true)
-                viewmodel.uiManager.hasEnteredRoomOnce = true
+                globalViewmodel.hasEnteredRoomOnce = true
             }
         }
     }

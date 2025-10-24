@@ -53,7 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.theme.Theming.ROOM_ICON_SIZE
 import com.yuroyami.syncplay.ui.utils.FancyIcon2
@@ -83,7 +83,7 @@ import syncplaymobile.shared.generated.resources.room_button_desc_add
 fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
     var showPopup by remember { popupStateAddMedia }
 
-    val viewmodel = LocalViewmodel.current
+    val viewmodel = LocalRoomViewmodel.current
 
     val hasVideo by viewmodel.hasVideo.collectAsState()
     val popupStateAddUrl = remember { mutableStateOf(false) }
@@ -231,7 +231,7 @@ fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
         onDismiss = { visibilityState.value = false }
     ) {
         val scope = rememberCoroutineScope()
-        val viewmodel = LocalViewmodel.current
+        val viewmodel = LocalRoomViewmodel.current
         val clipboard = LocalClipboard.current
 
         Column(

@@ -26,7 +26,7 @@ import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_PLAYER
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
 import com.yuroyami.syncplay.managers.datastore.valueAsState
 import com.yuroyami.syncplay.managers.datastore.valueFlow
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.theme.Theming.ROOM_ICON_SIZE
 import com.yuroyami.syncplay.ui.utils.FancyIcon2
@@ -42,7 +42,7 @@ import syncplaymobile.shared.generated.resources.room_custom_skip_button
 
 @Composable
 fun RoomBottomBarVideoControlRow(modifier: Modifier) {
-    val viewmodel = LocalViewmodel.current
+    val viewmodel = LocalRoomViewmodel.current
 
     val gesturesEnabled by valueFlow(MISC_GESTURES, true).collectAsState(initial = true)
 

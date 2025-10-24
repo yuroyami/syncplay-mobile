@@ -50,6 +50,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.yuroyami.syncplay.HomeViewmodel
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_PLAYER_ENGINE
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_NEVER_SHOW_TIPS
 import com.yuroyami.syncplay.managers.datastore.valueFlow
@@ -57,7 +58,7 @@ import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
 import com.yuroyami.syncplay.managers.datastore.writeValue
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.ui.popups.PopupDidYaKnow.DidYaKnowPopup
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
 import com.yuroyami.syncplay.ui.utils.FlexibleFancyText
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.platformCallback
@@ -87,8 +88,7 @@ val officialServers = listOf("syncplay.pl:8995", "syncplay.pl:8996", "syncplay.p
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreenUI() {
-    val viewmodel = LocalViewmodel.current
+fun HomeScreenUI(viewmodel: HomeViewmodel) {
     val servers = officialServers + stringResource(Res.string.connect_enter_custom_server)
     var savedConfig by remember { mutableStateOf<JoinConfig?>(null) }
 
@@ -108,11 +108,12 @@ fun HomeScreenUI() {
     val didYaKnowPopup = remember { mutableStateOf(false) }
     DidYaKnowPopup(didYaKnowPopup)
 
+    val globalViewmodel = LocalGlobalViewmodel.current
     LaunchedEffect(null) {
         withContext(Dispatchers.IO) {
             delay(1000)
             val neverShowTips = valueSuspendingly(PREF_NEVER_SHOW_TIPS, false)
-            if (!viewmodel.uiManager.hasEnteredRoomOnce && !neverShowTips) {
+            if (!globalViewmodel.hasEnteredRoomOnce && !neverShowTips) {
                 didYaKnowPopup.value = true
             }
         }

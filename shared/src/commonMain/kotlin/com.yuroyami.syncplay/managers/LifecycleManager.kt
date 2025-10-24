@@ -1,7 +1,7 @@
 package com.yuroyami.syncplay.managers
 
 import com.yuroyami.syncplay.AbstractManager
-import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.RoomViewmodel
 import kotlin.concurrent.Volatile
 
 /**
@@ -25,7 +25,7 @@ import kotlin.concurrent.Volatile
  *
  * @property background Atomic boolean indicating whether the app is considered in the background.
  */
-class LifecycleManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel) {
+class LifecycleManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
     /** Whether the app is currently in the background (true after [onStop] unless in PiP mode). */
     @Volatile

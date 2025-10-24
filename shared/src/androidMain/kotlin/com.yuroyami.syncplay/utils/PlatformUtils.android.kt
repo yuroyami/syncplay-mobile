@@ -14,7 +14,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.managers.NetworkManager
 import com.yuroyami.syncplay.managers.network.KtorNetworkManager
 import com.yuroyami.syncplay.managers.network.NettyNetworkManager
@@ -36,7 +36,7 @@ actual val platform: PLATFORM = PLATFORM.Android
 
 actual val availablePlatformPlayerEngines: List<PlayerEngine> = listOf(AndroidPlayerEngine.Exoplayer, AndroidPlayerEngine.Mpv, AndroidPlayerEngine.VLC)
 
-actual fun SyncplayViewmodel.instantiateNetworkManager(engine: NetworkManager.NetworkEngine) = when (engine) {
+actual fun RoomViewmodel.instantiateNetworkManager(engine: NetworkManager.NetworkEngine) = when (engine) {
     NetworkManager.NetworkEngine.NETTY -> NettyNetworkManager(this)
     else -> KtorNetworkManager(this)
 }

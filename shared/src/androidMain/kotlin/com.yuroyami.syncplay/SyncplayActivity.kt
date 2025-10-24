@@ -41,7 +41,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class SyncplayActivity : ComponentActivity() {
-    var viewmodel: SyncplayViewmodel? = null
+    var homeViewmodel: HomeViewmodel? = null
+    var roomViewmodel: RoomViewmodel? = null
 
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -172,9 +173,10 @@ class SyncplayActivity : ComponentActivity() {
             }
 
             //MainUI
-            AdamScreen { vm ->
-                viewmodel = vm
-            }
+            AdamScreen(
+                onHomeViewmodel = { homeViewmodel = it },
+                onRoomViewmodel = { roomViewmodel = it }
+            )
         }
 
         /** Maybe there is a shortcut intent */
@@ -188,7 +190,7 @@ class SyncplayActivity : ComponentActivity() {
                     pw = getStringExtra("serverpw") ?: ""
                 )
 
-                viewmodel?.joinRoom(config)
+                homeViewmodel?.joinRoom(config)
             }
         }
 
@@ -292,9 +294,9 @@ class SyncplayActivity : ComponentActivity() {
 
                     //TODO CHECK IF IN ROOM IN THE FIRST PLACE
                     if (pausePlayValue == 1) {
-                        viewmodel?.actionManager?.playPlayback()
+                        roomViewmodel?.actionManager?.playPlayback()
                     } else {
-                        viewmodel?.actionManager?.pausePlayback()
+                        roomViewmodel?.actionManager?.pausePlayback()
                     }
                 }
             }

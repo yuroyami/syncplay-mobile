@@ -26,7 +26,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
@@ -37,7 +37,7 @@ import syncplaymobile.shared.generated.resources.syncplay_logo_gradient
 /** The Syncplay artwork that is displayed in the video frame when no video is loaded */
 @Composable
 fun RoomBackgroundArtwork() {
-    val viewmodel = LocalViewmodel.current
+    val viewmodel = LocalRoomViewmodel.current
     val isInPipMode by viewmodel.uiManager.hasEnteredPipMode.collectAsState()
 
     Box(

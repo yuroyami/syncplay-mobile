@@ -1,7 +1,7 @@
 package com.yuroyami.syncplay.managers
 
 import com.yuroyami.syncplay.AbstractManager
-import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
 import com.yuroyami.syncplay.managers.datastore.valueBlockingly
 import com.yuroyami.syncplay.managers.datastore.writeValue
@@ -13,7 +13,7 @@ import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_shared_playlist_no_directories
 import syncplaymobile.shared.generated.resources.room_shared_playlist_not_found
 
-class SharedPlaylistManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmodel) {
+class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
     /** Shuffles the current playlist and sends it to the server.
      * @param mode False to shuffle all playlist, True to shuffle only the remaining non-played items in queue.*/

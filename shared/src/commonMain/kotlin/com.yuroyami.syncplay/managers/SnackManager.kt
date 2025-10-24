@@ -4,19 +4,19 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
-import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.HomeViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
- * Handles showing snackbars in a centralized way for the given [SyncplayViewmodel].
+ * Handles showing snackbars in a centralized way for the given [HomeViewmodel].
  * This is mostly used for HomeScreen.
  *
  * @property snack Snackbar host state used by the UI to display messages.
  *
  * @see [OSDManager] for the RoomScreen equivalent implementation that doesn't use a Snackbar.
  */
-class SnackManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel) {
+class SnackManager(val viewmodel: HomeViewmodel) : AbstractManager(viewmodel) {
 
     /** Holds the current state of the snackbar to be used by the UI. */
     var snack = SnackbarHostState()

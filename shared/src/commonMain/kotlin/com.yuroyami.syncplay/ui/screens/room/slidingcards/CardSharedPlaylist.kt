@@ -70,7 +70,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.ui.popups.PopupMediaDirs.MediaDirsPopup
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.FancyIcon2
 import com.yuroyami.syncplay.ui.utils.FancyText2
@@ -113,7 +113,7 @@ object CardSharedPlaylist {
 
     @Composable
     fun SharedPlaylistCard() {
-        val viewmodel = LocalViewmodel.current
+        val viewmodel = LocalRoomViewmodel.current
         val scope = rememberCoroutineScope { Dispatchers.IO }
         val playlist = viewmodel.playlistManager
 
@@ -519,7 +519,7 @@ object CardSharedPlaylist {
             strokeWidth = 0.5f,
             onDismiss = { visibilityState.value = false }
         ) {
-            val playlist = LocalViewmodel.current.playlistManager
+            val playlist = LocalRoomViewmodel.current.playlistManager
             val clipboardManager: ClipboardManager = LocalClipboardManager.current
 
             Column(

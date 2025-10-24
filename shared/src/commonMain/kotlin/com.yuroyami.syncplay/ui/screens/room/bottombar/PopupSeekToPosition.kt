@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
 import com.yuroyami.syncplay.managers.datastore.valueAsState
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.SyncplayPopup
@@ -67,7 +67,7 @@ object PopupSeekToPosition {
             strokeWidth = 0.5f,
             onDismiss = { visibilityState.value = false }
         ) {
-            val viewmodel = LocalViewmodel.current
+            val viewmodel = LocalRoomViewmodel.current
             val focusManager = LocalFocusManager.current
 
             Column(

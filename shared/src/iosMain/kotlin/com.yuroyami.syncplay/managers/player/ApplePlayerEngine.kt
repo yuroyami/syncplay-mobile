@@ -1,6 +1,5 @@
 package com.yuroyami.syncplay.managers.player
 
-import com.yuroyami.syncplay.SyncplayViewmodel
 import com.yuroyami.syncplay.managers.player.avplayer.AvPlayer
 import com.yuroyami.syncplay.managers.player.vlc.VlcPlayer
 import org.jetbrains.compose.resources.DrawableResource

@@ -4,7 +4,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import com.yuroyami.syncplay.AbstractManager
-import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.models.Message
 import com.yuroyami.syncplay.models.User
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * a room) then the session is overwritten and the protocol relaunches.
  ************************************************************************************************/
 
-class SessionManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmodel) {
+class SessionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
     var session: Session = Session()
 

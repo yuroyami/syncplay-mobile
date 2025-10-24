@@ -21,7 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.screens.room.bottombar.RoomControlPanelCard
 import com.yuroyami.syncplay.ui.screens.room.slidingcards.CardRoomPrefs.InRoomSettingsCard
 import com.yuroyami.syncplay.ui.screens.room.slidingcards.CardSharedPlaylist.SharedPlaylistCard
@@ -32,7 +32,7 @@ import com.yuroyami.syncplay.ui.utils.screenWidthPx
 
 @Composable
 fun RoomSectionSlidingCards(modifier: Modifier) {
-    val viewmodel = LocalViewmodel.current
+    val viewmodel = LocalRoomViewmodel.current
     val cardController = LocalCardController.current
     val stateUserInfo by cardController.tabCardUserInfo.collectAsState()
     val stateSharedPlaylist by cardController.tabCardSharedPlaylist.collectAsState()

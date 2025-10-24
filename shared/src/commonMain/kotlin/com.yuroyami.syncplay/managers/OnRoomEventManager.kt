@@ -2,7 +2,7 @@ package com.yuroyami.syncplay.managers
 
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
-import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
 import com.yuroyami.syncplay.managers.datastore.valueBlockingly
 import com.yuroyami.syncplay.managers.protocol.PacketCreator
@@ -32,7 +32,7 @@ import syncplaymobile.shared.generated.resources.room_tls_not_supported
 import syncplaymobile.shared.generated.resources.room_tls_supported
 import syncplaymobile.shared.generated.resources.room_you_joined_room
 
-class OnRoomEventManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel), ProtocolCallback {
+class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel), ProtocolCallback {
 
     override fun onSomeonePaused(pauser: String) {
         loggy("SYNCPLAY Protocol: Someone ($pauser) paused.")

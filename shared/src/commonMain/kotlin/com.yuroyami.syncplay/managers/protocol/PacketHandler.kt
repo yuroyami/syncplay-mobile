@@ -1,7 +1,7 @@
 package com.yuroyami.syncplay.managers.protocol
 
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.managers.ProtocolManager
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.User
@@ -146,7 +146,7 @@ sealed interface SyncplayMessage
 
 
 class PacketHandler(
-    val viewmodel: SyncplayViewmodel,
+    val viewmodel: RoomViewmodel,
     val protocol: ProtocolManager
 ) {
     val callback = viewmodel.callbackManager

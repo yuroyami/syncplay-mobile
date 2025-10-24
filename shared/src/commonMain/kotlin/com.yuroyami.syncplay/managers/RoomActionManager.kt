@@ -2,7 +2,7 @@ package com.yuroyami.syncplay.managers
 
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
-import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
 import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
 import com.yuroyami.syncplay.managers.protocol.PacketCreator
@@ -12,7 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class RoomActionManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel) {
+class RoomActionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
     val sender = viewmodel.networkManager
 

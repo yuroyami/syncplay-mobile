@@ -45,7 +45,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_BG_OPACITY
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_BOX_ACTION
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_FONTSIZE
@@ -54,7 +54,7 @@ import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_OU
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_SHADOW
 import com.yuroyami.syncplay.managers.datastore.valueAsState
 import com.yuroyami.syncplay.ui.screens.adam.LocalChatPalette
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.ChatAnnotatedText
 import com.yuroyami.syncplay.utils.isEmoji
@@ -65,7 +65,7 @@ import syncplaymobile.shared.generated.resources.room_type_message
 
 @Composable
 fun RoomChatSection(modifier: Modifier) {
-    val viewmodel = LocalViewmodel.current
+    val viewmodel = LocalRoomViewmodel.current
 
     Column(modifier = modifier) {
         ChatTextField(viewmodel = viewmodel, modifier = Modifier.fillMaxWidth())
@@ -77,7 +77,7 @@ fun RoomChatSection(modifier: Modifier) {
 @Composable
 fun ChatTextField(
     modifier: Modifier = Modifier,
-    viewmodel: SyncplayViewmodel
+    viewmodel: RoomViewmodel
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -168,7 +168,7 @@ fun ChatTextField(
 }
 
 @Composable
-fun ChatBox(modifier: Modifier = Modifier, viewmodel: SyncplayViewmodel) {
+fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel) {
     val hasVideo by viewmodel.hasVideo.collectAsState()
 
     val chatMessages = remember { if (!viewmodel.isSoloMode) viewmodel.session.messageSequence else mutableStateListOf() }

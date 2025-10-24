@@ -28,7 +28,7 @@ import com.yuroyami.syncplay.managers.settings.SETTINGS_ROOM
 import com.yuroyami.syncplay.managers.settings.SettingCollection
 import com.yuroyami.syncplay.managers.settings.SettingsUI
 import com.yuroyami.syncplay.managers.settings.SettingsUI.SettingsGrid
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.screens.home.SettingGridState
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.utils.FancyIcon2
@@ -44,7 +44,7 @@ object CardRoomPrefs {
     @Composable
     fun InRoomSettingsCard() {
         val settingState = remember { mutableStateOf(SettingGridState.NAVIGATING_CATEGORIES) }
-        val viewmodel = LocalViewmodel.current
+        val viewmodel = LocalRoomViewmodel.current
 
         var roomSettings: SettingCollection? by remember { mutableStateOf(null) }
 

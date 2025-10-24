@@ -50,7 +50,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_GESTURES
 import com.yuroyami.syncplay.managers.datastore.valueFlow
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.utils.screenHeightPx
 import com.yuroyami.syncplay.ui.utils.screenWidthPx
 import com.yuroyami.syncplay.utils.getSystemMaxVolume
@@ -68,7 +68,7 @@ var initialBrightness = 0f
 
 @Composable
 fun RoomGestureInterceptor(modifier: Modifier) {
-    val viewmodel = LocalViewmodel.current
+    val viewmodel = LocalRoomViewmodel.current
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val gesturesEnabled by valueFlow(MISC_GESTURES, true).collectAsState(initial = true)
     val hasVideo by viewmodel.hasVideo.collectAsState()

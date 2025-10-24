@@ -11,7 +11,6 @@ import cocoapods.MobileVLCKit.VLCMediaPlayer
 import cocoapods.MobileVLCKit.VLCMediaPlayerDelegateProtocol
 import cocoapods.MobileVLCKit.VLCMediaPlayerState
 import cocoapods.MobileVLCKit.VLCTime
-import com.yuroyami.syncplay.SyncplayViewmodel
 import com.yuroyami.syncplay.managers.player.ApplePlayerEngine
 import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.models.Chapter

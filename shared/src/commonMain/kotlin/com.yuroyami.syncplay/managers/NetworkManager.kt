@@ -2,7 +2,7 @@ package com.yuroyami.syncplay.managers
 
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
-import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.managers.ProtocolManager.Companion.createPacketInstance
 import com.yuroyami.syncplay.managers.SessionManager.Session
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
@@ -24,7 +24,7 @@ import kotlinx.coroutines.withTimeout
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
 
-abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel) {
+abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
     open val engine: NetworkEngine = NetworkEngine.SWIFTNIO
 
@@ -50,19 +50,6 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
     }
 
     open suspend fun connect() {
-        loggy(
-            """
-            TRYING TO CONNECT SO MANY TIMES
-            TRYING TO CONNECT SO MANY TIMES
-            TRYING TO CONNECT SO MANY TIMES
-            TRYING TO CONNECT SO MANY TIMES
-            TRYING TO CONNECT SO MANY TIMES
-            TRYING TO CONNECT SO MANY TIMES
-            TRYING TO CONNECT SO MANY TIMES
-            TRYING TO CONNECT SO MANY TIMES
-            TRYING TO CONNECT SO MANY TIMES
-        """.trimIndent()
-        )
         terminateExistingConnection()
 
         /** Informing UI controllers that we are starting a connection attempt */

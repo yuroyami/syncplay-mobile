@@ -3,16 +3,16 @@ package com.yuroyami.syncplay.managers
 
 import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.ViewModel
 import com.materialkolor.Contrast
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamicColorScheme
 import com.materialkolor.dynamiccolor.ColorSpec
 import com.yuroyami.syncplay.AbstractManager
-import com.yuroyami.syncplay.SyncplayViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import kotlinx.coroutines.flow.MutableStateFlow
 
-class ThemeManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel) {
+class ThemeManager(viewmodel: ViewModel) : AbstractManager(viewmodel) {
 
     val currentTheme = MutableStateFlow<Theme>(GREEN_GOBLIN)
 

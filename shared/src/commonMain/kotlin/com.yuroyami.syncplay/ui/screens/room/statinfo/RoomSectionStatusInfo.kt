@@ -26,7 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -41,7 +41,7 @@ import syncplaymobile.shared.generated.resources.room_ping_disconnected
 
 @Composable
 fun RoomStatusInfoSection(modifier: Modifier) {
-    val viewmodel = LocalViewmodel.current
+    val viewmodel = LocalRoomViewmodel.current
 
     /* Top-Center info: Overall info (PING + ROOMNAME + OSD Messages) */
     //TODO if (!pipModeObserver) {

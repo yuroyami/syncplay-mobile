@@ -1,7 +1,7 @@
 package com.yuroyami.syncplay.managers.network
 
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.managers.NetworkManager
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.Connection
@@ -18,7 +18,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class KtorNetworkManager(viewmodel: SyncplayViewmodel) : NetworkManager(viewmodel) {
+class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
     override val engine = NetworkEngine.KTOR
 
     private var socket: Socket? = null
@@ -65,6 +65,10 @@ class KtorNetworkManager(viewmodel: SyncplayViewmodel) : NetworkManager(viewmode
         runCatching {
             socket?.close()
         }
+        socket = null
+        connection = null
+        input = null
+        output = null
     }
 
     override suspend fun writeActualString(s: String) {

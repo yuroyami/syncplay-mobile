@@ -1,7 +1,7 @@
 package com.yuroyami.syncplay.managers
 
 import com.yuroyami.syncplay.AbstractManager
-import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.managers.protocol.PacketCreator
 import com.yuroyami.syncplay.managers.protocol.PacketCreator.Chat
 import com.yuroyami.syncplay.managers.protocol.PacketCreator.EmptyList
@@ -17,7 +17,7 @@ import com.yuroyami.syncplay.managers.protocol.PacketHandler
 import com.yuroyami.syncplay.managers.protocol.PingService
 import com.yuroyami.syncplay.utils.ProtocolDsl
 
-class ProtocolManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel) {
+class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     var globalPaused: Boolean = true //Latest server paused state
     var globalPositionMs: Double = 0.0 //Latest server video position
 

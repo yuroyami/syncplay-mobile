@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ClipEntry
 import co.touchlab.kermit.Logger
 import com.yuroyami.syncplay.PlatformCallback
-import com.yuroyami.syncplay.SyncplayViewmodel
+import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.managers.NetworkManager
 import com.yuroyami.syncplay.managers.player.PlayerEngine
 
@@ -35,7 +35,7 @@ fun loggy(s: Any?) {
 
 }
 
-expect fun SyncplayViewmodel.instantiateNetworkManager(engine: NetworkManager.NetworkEngine): NetworkManager
+expect fun RoomViewmodel.instantiateNetworkManager(engine: NetworkManager.NetworkEngine): NetworkManager
 
 /** Converts seconds into a readable hh:mm:ss format */
 fun timeStamper(milliseconds: Number): String {

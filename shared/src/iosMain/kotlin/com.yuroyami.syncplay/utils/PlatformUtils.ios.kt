@@ -2,7 +2,6 @@ package com.yuroyami.syncplay.utils
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ClipEntry
-import com.yuroyami.syncplay.SyncplayViewmodel
 import com.yuroyami.syncplay.managers.NetworkManager
 import com.yuroyami.syncplay.managers.network.KtorNetworkManager
 import com.yuroyami.syncplay.managers.player.ApplePlayerEngine

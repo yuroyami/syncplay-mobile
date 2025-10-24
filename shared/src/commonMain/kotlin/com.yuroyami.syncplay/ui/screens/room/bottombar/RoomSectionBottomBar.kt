@@ -21,18 +21,20 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import com.yuroyami.syncplay.ui.screens.adam.LocalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 
 
 @Composable
 fun RoomBottomBarSection(modifier: Modifier) {
-    val viewmodel = LocalViewmodel.current
+    val viewmodel = LocalRoomViewmodel.current
     val hasVideo by viewmodel.hasVideo.collectAsState()
 
     Box(modifier) {
         if (hasVideo) BottomBarBlackUnderlay(modifier = Modifier.align(Alignment.BottomCenter).zIndex(1f))
 
-        val stateAddMedia = remember { mutableStateOf(!viewmodel.uiManager.hasEnteredRoomOnce) }
+        val globalVm = LocalGlobalViewmodel.current
+        val stateAddMedia = remember { mutableStateOf(!globalVm.hasEnteredRoomOnce) }
 
         Row(
             modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).zIndex(999f),
