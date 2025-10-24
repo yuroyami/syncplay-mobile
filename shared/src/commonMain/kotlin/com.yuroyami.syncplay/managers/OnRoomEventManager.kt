@@ -76,7 +76,7 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
 
         /* If the setting is enabled, pause playback **/
         viewmodel.viewModelScope.launch(Dispatchers.Main) {
-            if (viewmodel.player?.hasMedia() == true) {
+            if (viewmodel.player.hasMedia()) {
                 val pauseOnLeft = valueBlockingly(PREF_PAUSE_ON_SOMEONE_LEAVE, true)
                 if (pauseOnLeft) {
                     viewmodel.actionManager.pausePlayback()
@@ -101,7 +101,7 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
 
         if (seeker != viewmodel.session.currentUsername) {
             onMainThread {
-                viewmodel.player?.seekTo(newPosMs)
+                viewmodel.player.seekTo(newPosMs)
             }
         }
 
@@ -112,7 +112,7 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         loggy("SYNCPLAY Protocol: $behinder is behind. Rewinding to $toPosition")
 
         onMainThread {
-            viewmodel.player?.seekTo((toPosition * 1000L).toLong())
+            viewmodel.player.seekTo((toPosition * 1000L).toLong())
         }
 
         viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_rewinded,behinder) }, isChat = false)

@@ -22,7 +22,7 @@ class RoomActionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmode
         sender.sendAsync<PacketCreator.State> {
             serverTime = null
             doSeek = null
-            position = null //FIXME 0
+            position = viewmodel.player.currentPositionMs().div(1000)
             changeState = 1
             this.play = play
         }
@@ -36,7 +36,7 @@ class RoomActionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmode
             doSeek = true
             position = newPosMs / 1000L
             changeState = 1
-            this.play = viewmodel.player!!.isPlaying() == true
+            this.play = viewmodel.player.isPlaying() == true
         }
     }
 
@@ -53,7 +53,7 @@ class RoomActionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmode
     fun pausePlayback() {
         if (viewmodel.lifecycleManager.isInBackground) return
         onMainThread {
-            viewmodel.player?.pause()
+            viewmodel.player.pause()
         }
         platformCallback.onPlayback(true)
     }
@@ -62,17 +62,17 @@ class RoomActionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmode
     fun playPlayback() {
         if (viewmodel.lifecycleManager.isInBackground) return
         onMainThread {
-            viewmodel.player?.play()
+            viewmodel.player.play()
         }
         platformCallback.onPlayback(false)
     }
 
     fun seekBckwd() {
-        viewmodel.player?.playerScopeIO?.launch {
+        viewmodel.player.playerScopeIO.launch {
             val dec = valueSuspendingly(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP, 10)
 
             val currentMs =
-                withContext(Dispatchers.Main) { viewmodel.player!!.currentPositionMs() }
+                withContext(Dispatchers.Main) { viewmodel.player.currentPositionMs() }
             var newPos = ((currentMs) - (dec * 1000L)).coerceIn(
                 0, viewmodel.playerManager.media.value?.fileDuration?.toLong()?.times(1000L) ?: 0
             )
@@ -82,7 +82,7 @@ class RoomActionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmode
             }
 
             sendSeek(newPos)
-            viewmodel.player?.seekTo(newPos)
+            viewmodel.player.seekTo(newPos)
 
             if (viewmodel.isSoloMode) {
                 viewmodel.seeks.add(Pair(currentMs, newPos * 1000))
@@ -91,18 +91,18 @@ class RoomActionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmode
     }
 
     fun seekFrwrd() {
-        viewmodel.player?.playerScopeIO?.launch {
+        viewmodel.player.playerScopeIO.launch {
             val inc = valueSuspendingly(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP, 10)
 
             val currentMs =
-                withContext(Dispatchers.Main) { viewmodel.player!!.currentPositionMs() }
+                withContext(Dispatchers.Main) { viewmodel.player.currentPositionMs() }
             val newPos = ((currentMs) + (inc * 1000L)).coerceIn(
                 0,
                 viewmodel.playerManager.media.value?.fileDuration?.toLong()?.times(1000L) ?: 0
             )
 
             sendSeek(newPos)
-            viewmodel.player?.seekTo(newPos)
+            viewmodel.player.seekTo(newPos)
 
             if (viewmodel.isSoloMode) {
                 viewmodel.seeks.add(Pair((currentMs), newPos * 1000))

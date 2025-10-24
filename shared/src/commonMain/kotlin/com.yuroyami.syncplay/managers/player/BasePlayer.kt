@@ -218,7 +218,7 @@ abstract class BasePlayer(
                     val pos = currentPositionMs()
                     playerManager.timeCurrentMillis.value = pos
                     if (!viewmodel.isSoloMode) {
-                        viewmodel.protocolManager.globalPositionMs = pos.toDouble()
+                        //viewmodel.protocolManager.globalPositionMs = pos.toDouble()
                     }
                 }
                 delay(trackerJobInterval)

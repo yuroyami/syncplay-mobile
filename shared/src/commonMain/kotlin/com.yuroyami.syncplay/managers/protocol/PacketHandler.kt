@@ -1,3 +1,5 @@
+@file:Suppress("PropertyName")
+
 package com.yuroyami.syncplay.managers.protocol
 
 import androidx.lifecycle.viewModelScope
@@ -359,9 +361,9 @@ class PacketHandler(
             messageAge = viewmodel.protocolManager.pingService.forwardDelay
         }
 
-        if (position != null && paused != null && viewmodel.protocolManager.clientIgnFly == 0 && viewmodel.player != null) {
-            val pausedChanged = viewmodel.protocolManager.globalPaused != paused || paused == viewmodel.player!!.isPlaying()
-            val diff = viewmodel.player!!.currentPositionMs() / 1000.0 - position
+        if (position != null && paused != null && viewmodel.protocolManager.clientIgnFly == 0) {
+            val pausedChanged = viewmodel.protocolManager.globalPaused != paused || paused == viewmodel.player.isPlaying()
+            val diff = viewmodel.player.currentPositionMs() / 1000.0 - position
 
             /* Updating Global State */
             viewmodel.protocolManager.globalPaused = paused
@@ -371,8 +373,8 @@ class PacketHandler(
 
             if (lastGlobalUpdate == null) {
                 if (protocol.viewmodel.playerManager.media.value != null) {
-                    viewmodel.player?.seekTo(position.toLong())
-                    if (paused) viewmodel.player?.pause() else viewmodel.player?.play()
+                    viewmodel.player.seekTo(position.toLong())
+                    if (paused) viewmodel.player.pause() else viewmodel.player.play()
                 }
             }
 
@@ -410,18 +412,18 @@ class PacketHandler(
             }
         }
 
-        if (lastGlobalUpdate != null && viewmodel.player != null && position != null) {
-            val playerDiff = abs(viewmodel.player!!.currentPositionMs() / 1000.0 - position)
+        if (lastGlobalUpdate != null && position != null) {
+            val playerDiff = abs(viewmodel.player.currentPositionMs() / 1000.0 - position)
             val globalDiff = abs(protocol.globalPositionMs / 1000.0 - position)
-            val surelyPausedChanged = protocol.globalPaused != paused && paused == viewmodel.player!!.isPlaying()
+            val surelyPausedChanged = protocol.globalPaused != paused && paused == viewmodel.player.isPlaying()
             val seeked = playerDiff > SEEK_THRESHOLD && globalDiff > SEEK_THRESHOLD
 
             sender.send<PacketCreator.State> {
                 serverTime = latencyCalculation
                 this.doSeek = seeked
-                this.position = viewmodel.player!!.currentPositionMs().div(1000L) // if dontSlowDownWithMe useGlobalPosition or else usePlayerPosition
+                this.position = viewmodel.player.currentPositionMs().div(1000L) // if dontSlowDownWithMe useGlobalPosition or else usePlayerPosition
                 changeState = if (surelyPausedChanged) 1 else 0
-                play = viewmodel.player!!.isPlaying()
+                play = viewmodel.player.isPlaying()
             }
         } else {
             sender.send<PacketCreator.State> {
