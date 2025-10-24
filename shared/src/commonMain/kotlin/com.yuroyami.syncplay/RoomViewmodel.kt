@@ -1,9 +1,8 @@
 package com.yuroyami.syncplay
 
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation3.runtime.NavBackStack
-import androidx.navigation3.runtime.NavKey
 import com.yuroyami.syncplay.managers.LifecycleManager
 import com.yuroyami.syncplay.managers.NetworkManager
 import com.yuroyami.syncplay.managers.OSDManager
@@ -26,6 +25,7 @@ import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.ui.screens.adam.Screen
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.instantiateNetworkManager
+import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -33,7 +33,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: NavBackStack<NavKey>) : ViewModel() {
+class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateList<Screen>) : ViewModel() {
 
     /************ Managers ***************/
     /** Manages and holds UI state */
@@ -91,27 +91,26 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: NavBackStack<Nav
                 sessionManager.session.currentUsername = joinConfig.user
                 sessionManager.session.currentRoom = joinConfig.room
                 sessionManager.session.currentPassword = joinConfig.pw
+
+                /** Connecting (via TLS or noTLS) */
+                val tls = valueSuspendingly(PREF_TLS_ENABLE, default = true)
+                if (tls && networkManager.supportsTLS()) {
+                    callbackManager.onTLSCheck()
+                    networkManager.tls = Constants.TLS.TLS_ASK
+                }
+
+                networkManager.connect()
             }
 
             val defaultEngine = availablePlatformPlayerEngines.first { it.isDefault }.name //TODO
             val engine = availablePlatformPlayerEngines.first { it.name == valueSuspendingly(MISC_PLAYER_ENGINE, defaultEngine) }
             playerManager.player = engine.instantiate(this@RoomViewmodel)
-
-            /** Connecting (via TLS or noTLS) */
-            val tls = valueSuspendingly(PREF_TLS_ENABLE, default = true)
-            if (tls && networkManager.supportsTLS()) {
-                callbackManager.onTLSCheck()
-                networkManager.tls = Constants.TLS.TLS_ASK
-            }
-
-            networkManager.connect()
         }
     }
 
     fun leaveRoom() {
+        backStack.removeLast()
         platformCallback.onRoomEnterOrLeave(PlatformCallback.RoomEvent.LEAVE)
-        backStack.clear()
-        backStack.add(Screen.Home)
     }
 
     /** Mismatches are: Name, Size, Duration. If 3 mismatches are detected, no error is thrown
@@ -166,9 +165,10 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: NavBackStack<Nav
 
     /** End of viewmodel */
     override fun onCleared() {
-        networkManager.terminateExistingConnection()
-        playerManager.invalidate()
+        loggy("²²²²²²²²²²²² Clearing viewmodel")
         networkManager.invalidate()
+        uiManager.invalidate()
+        playerManager.invalidate()
         protocolManager.invalidate()
         sessionManager.invalidate()
         osdManager.invalidate()

@@ -76,13 +76,7 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
 
     override fun terminateExistingConnection() {
         try {
-            loggy(
-                """
-            terminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminating
-            terminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminating
-            terminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminatingterminating
-        """.trimIndent()
-            )
+            loggy("Terminating network session.")
             channel?.close()?.await()
             channel = null
         } catch (e: Exception) {
@@ -91,11 +85,11 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
     }
 
     override suspend fun writeActualString(s: String) {
-        loggy("CHANNEL ${channel}")
-        loggy("WRITABLE ${channel?.isWritable}")
-        loggy("ACTIVE ${channel?.isActive}")
-        loggy("OPEN ${channel?.isOpen}")
-        loggy("REGISTERED ${channel?.isRegistered}")
+//        loggy("CHANNEL ${channel}")
+//        loggy("WRITABLE ${channel?.isWritable}")
+//        loggy("ACTIVE ${channel?.isActive}")
+//        loggy("OPEN ${channel?.isOpen}")
+//        loggy("REGISTERED ${channel?.isRegistered}")
 
         val f = channel?.writeAndFlush(s)
         f?.addListener(ChannelFutureListener { future ->

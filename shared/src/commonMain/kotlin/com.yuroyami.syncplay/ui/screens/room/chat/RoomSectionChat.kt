@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -186,7 +187,11 @@ fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel) {
                 shape = RoundedCornerShape(4.dp)
             )
     ) {
-        val latestChatMessages = chatMessages.takeLast(msgMaxCount)
+        val latestChatMessages by remember {
+            derivedStateOf {
+                chatMessages.takeLast(msgMaxCount)
+            }
+        }
 
         LazyColumn(
             contentPadding = PaddingValues(8.dp),

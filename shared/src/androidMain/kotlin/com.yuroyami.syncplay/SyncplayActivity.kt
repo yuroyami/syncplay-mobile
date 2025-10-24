@@ -41,9 +41,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class SyncplayActivity : ComponentActivity() {
-    var homeViewmodel: HomeViewmodel? = null
-    var roomViewmodel: RoomViewmodel? = null
-
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen() /* This will be called only on cold starts */
@@ -173,10 +170,7 @@ class SyncplayActivity : ComponentActivity() {
             }
 
             //MainUI
-            AdamScreen(
-                onHomeViewmodel = { homeViewmodel = it },
-                onRoomViewmodel = { roomViewmodel = it }
-            )
+            AdamScreen()
         }
 
         /** Maybe there is a shortcut intent */
@@ -190,7 +184,7 @@ class SyncplayActivity : ComponentActivity() {
                     pw = getStringExtra("serverpw") ?: ""
                 )
 
-                homeViewmodel?.joinRoom(config)
+                //todo homeViewmodel?.joinRoom(config)
             }
         }
 
@@ -294,9 +288,9 @@ class SyncplayActivity : ComponentActivity() {
 
                     //TODO CHECK IF IN ROOM IN THE FIRST PLACE
                     if (pausePlayValue == 1) {
-                        roomViewmodel?.actionManager?.playPlayback()
+                        //todo roomViewmodel?.actionManager?.playPlayback()
                     } else {
-                        roomViewmodel?.actionManager?.pausePlayback()
+                        //todo roomViewmodel?.actionManager?.pausePlayback()
                     }
                 }
             }

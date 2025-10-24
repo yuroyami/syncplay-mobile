@@ -1,9 +1,8 @@
 package com.yuroyami.syncplay
 
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation3.runtime.NavBackStack
-import androidx.navigation3.runtime.NavKey
 import com.yuroyami.syncplay.managers.SnackManager
 import com.yuroyami.syncplay.managers.ThemeManager
 import com.yuroyami.syncplay.models.JoinConfig
@@ -13,7 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 
-class HomeViewmodel(val backStack: NavBackStack<NavKey>) : ViewModel() {
+class HomeViewmodel(val backStack: SnapshotStateList<Screen>) : ViewModel() {
 
     /** Displays snack messages in home screen */
     val snackManager: SnackManager by lazy { SnackManager(this) }
@@ -25,9 +24,10 @@ class HomeViewmodel(val backStack: NavBackStack<NavKey>) : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             joinConfig?.save() //Remembering info
         }
-        platformCallback.onRoomEnterOrLeave(PlatformCallback.RoomEvent.ENTER)
-        backStack.clear()
         backStack.add(Screen.Room(joinConfig))
+        //backStack.removeFirst()
+        platformCallback.onRoomEnterOrLeave(PlatformCallback.RoomEvent.ENTER)
+
     }
 
     /** End of viewmodel */

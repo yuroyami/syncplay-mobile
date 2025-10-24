@@ -3,20 +3,20 @@ package com.yuroyami.syncplay.ui.screens.adam
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation3.runtime.entryProvider
-import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import androidx.savedstate.serialization.SavedStateConfiguration
 import com.yuroyami.syncplay.HomeViewmodel
 import com.yuroyami.syncplay.RoomViewmodel
 import com.yuroyami.syncplay.SyncplayViewmodel
@@ -41,15 +41,15 @@ val LocalChatPalette = compositionLocalOf<MessagePalette> { error("No Chat Palet
 val LocalCardController = compositionLocalOf<CardController> { error("No CardController provided yet") }
 
 @Composable
-fun AdamScreen(onHomeViewmodel: (HomeViewmodel) -> Unit, onRoomViewmodel: (RoomViewmodel) -> Unit) {
+fun AdamScreen() {
     val viewmodel = viewModel(
         key = "global_viewmodel",
         modelClass = SyncplayViewmodel::class,
         factory = viewModelFactory { initializer { SyncplayViewmodel() } }
     )
-    val backstack = rememberNavBackStack(SavedStateConfiguration.DEFAULT, Screen.Home)
+    val backstack = remember { mutableStateListOf<Screen>(Screen.Home) }
 
-    val currentScreen by remember { derivedStateOf { backstack.lastOrNull() as? Screen } }
+    val currentScreen by remember { derivedStateOf { backstack.lastOrNull() } }
     val currentTheme by viewmodel.themeManager.currentTheme.collectAsState()
 
     MaterialTheme(
@@ -62,6 +62,13 @@ fun AdamScreen(onHomeViewmodel: (HomeViewmodel) -> Unit, onRoomViewmodel: (RoomV
         ) {
             NavDisplay(
                 backStack = backstack,
+                onBack = {},
+                entryDecorators = listOf(
+                    //This allows the view-models created within entry scope to be scoped only for that entry
+                    //Meaning that they will be cleared once the entry (screen) leaves composition
+                    rememberSaveableStateHolderNavEntryDecorator(),
+                    rememberViewModelStoreNavEntryDecorator()
+                ),
                 entryProvider = entryProvider {
                     entry<Screen.Home> {
                         val viewmodel = viewModel(
@@ -70,9 +77,6 @@ fun AdamScreen(onHomeViewmodel: (HomeViewmodel) -> Unit, onRoomViewmodel: (RoomV
                             factory = viewModelFactory { initializer { HomeViewmodel(backStack = backstack) } }
                         )
 
-                        LaunchedEffect(null) {
-                            onHomeViewmodel.invoke(viewmodel)
-                        }
                         HomeScreenUI(viewmodel)
                     }
 
@@ -84,11 +88,11 @@ fun AdamScreen(onHomeViewmodel: (HomeViewmodel) -> Unit, onRoomViewmodel: (RoomV
                             factory = viewModelFactory { initializer { RoomViewmodel(joinConfig = room.joinConfig, backStack = backstack) } }
                         )
 
-                        LaunchedEffect(viewmodel) {
-                            onRoomViewmodel(viewmodel)
+                        CompositionLocalProvider(
+                            LocalRoomViewmodel provides viewmodel
+                        ) {
+                            RoomScreenUI(viewmodel)
                         }
-
-                        RoomScreenUI(viewmodel)
                     }
                 }
             )

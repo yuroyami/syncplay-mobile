@@ -7,6 +7,7 @@ import com.yuroyami.syncplay.managers.ProtocolManager.Companion.createPacketInst
 import com.yuroyami.syncplay.managers.SessionManager.Session
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
 import com.yuroyami.syncplay.managers.datastore.valueBlockingly
+import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
 import com.yuroyami.syncplay.managers.protocol.PacketCreator
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.utils.PLATFORM
@@ -18,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -45,6 +47,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
 
     /** This method is responsible for bootstrapping (initializing) the Ktor TCP socket */
     override fun invalidate() {
+        terminateExistingConnection()
         state = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
         tls = Constants.TLS.TLS_NO
     }
@@ -95,18 +98,18 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     /** This method schedules reconnection ONLY IN in disconnected state */
     private var reconnectionJob: Job? = null
     fun reconnect() {
-//TODO        if (state == Constants.CONNECTIONSTATE.STATE_DISCONNECTED) {
-//            if (reconnectionJob == null || reconnectionJob?.isCompleted == true) {
-//                reconnectionJob = networkScope.launch {
-//                    state = Constants.CONNECTIONSTATE.STATE_SCHEDULING_RECONNECT
-//                    val reconnectionInterval = valueSuspendingly(DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL, 2) * 1000L
-//
-//                    delay(reconnectionInterval)
-//
-//                    connect()
-//                }
-//            }
-//        }
+        if (state == Constants.CONNECTIONSTATE.STATE_DISCONNECTED) {
+            if (reconnectionJob == null || reconnectionJob?.isCompleted == true) {
+                reconnectionJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
+                    state = Constants.CONNECTIONSTATE.STATE_SCHEDULING_RECONNECT
+                    val reconnectionInterval = valueSuspendingly(DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL, 2) * 1000L
+
+                    delay(reconnectionInterval)
+
+                    connect()
+                }
+            }
+        }
     }
 
     fun handlePacket(data: String) {
