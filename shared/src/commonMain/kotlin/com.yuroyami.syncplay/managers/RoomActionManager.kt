@@ -23,7 +23,7 @@ class RoomActionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmode
         sender.sendAsync<PacketCreator.State> {
             serverTime = null
             doSeek = null
-            position = viewmodel.protocolManager.globalPositionMs.div(1000L).roundToLong() //withContext(Dispatchers.Main.immediate) { viewmodel.player.currentPositionMs().div(1000) }
+            position = withContext(Dispatchers.Main.immediate) { viewmodel.player.currentPositionMs().div(1000.0).roundToLong() }
             changeState = 1
             this.play = play
         }

@@ -24,7 +24,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     var serverIgnFly: Int = 0
     var clientIgnFly: Int = 0
     val rewindThreshold = 12L /* This is as per official Syncplay, shouldn't be subject to change */
-    var pingService = PingService() //TODO
+    var pingService = PingService()
 
     val packetHandler = PacketHandler(viewmodel, this)
 

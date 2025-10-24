@@ -7,7 +7,7 @@ class PingService {
         private const val PING_MOVING_AVERAGE_WEIGHT = 0.85
     }
 
-    private var rtt: Double = 0.0
+    var rtt: Double = 0.0
     var forwardDelay: Double = 0.0
     private var avrRtt: Double = 0.0
 

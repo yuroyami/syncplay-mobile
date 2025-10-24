@@ -358,7 +358,7 @@ class PacketHandler(
 
                 viewmodel.protocolManager.pingService.receiveMessage(timestamp.roundToLong(), serverRtt)
             }
-            messageAge = viewmodel.protocolManager.pingService.forwardDelay
+            messageAge = 10.0 //FIXME viewmodel.protocolManager.pingService.forwardDelay
         }
 
         if (position != null && paused != null && viewmodel.protocolManager.clientIgnFly == 0) {

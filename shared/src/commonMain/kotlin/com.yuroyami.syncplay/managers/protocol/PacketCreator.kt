@@ -186,11 +186,10 @@ sealed class PacketCreator {
                     put("playstate", playstate)
                 }
 
-
                 val ping = buildJsonObject {
                     serverTime?.let { put("latencyCalculation", it) }
                     put("clientLatencyCalculation", clientTime)
-                    put("clientRtt", 0) //TODO ping.value ?: 0)
+                    put("clientRtt", p.pingService.rtt)
                 }
                 put("ping", ping)
 
