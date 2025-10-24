@@ -47,6 +47,8 @@ fun AdamScreen() {
         modelClass = SyncplayViewmodel::class,
         factory = viewModelFactory { initializer { SyncplayViewmodel() } }
     )
+
+    //TODO: Use built-in for state-restorable rememberNavBackStack()
     val backstack = remember { mutableStateListOf<Screen>(Screen.Home) }
 
     val currentScreen by remember { derivedStateOf { backstack.lastOrNull() } }
