@@ -24,14 +24,16 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlin.reflect.KClass
+import kotlin.time.Duration.Companion.seconds
 
 abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(viewmodel) {
 
     open val engine: NetworkEngine = NetworkEngine.SWIFTNIO
 
-    val networkJob = SupervisorJob()
-    val networkScope = CoroutineScope(Dispatchers.IO + networkJob)
+    var networkJob = SupervisorJob()
+    var networkScope = CoroutineScope(Dispatchers.IO + networkJob)
 
     var state: Constants.CONNECTIONSTATE = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
     var tls: Constants.TLS = Constants.TLS.TLS_NO
@@ -52,6 +54,10 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
     override fun invalidate() {
         state = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
         tls = Constants.TLS.TLS_NO
+        runCatching { networkScope.cancel() }
+        runCatching { networkJob.cancel() }
+        networkJob = SupervisorJob()
+        networkScope = CoroutineScope(Dispatchers.IO + networkJob)
     }
 
     open suspend fun connect() {
@@ -84,9 +90,6 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
 
     /** Attempts a connection to the host and port specified under [Session] */
     abstract suspend fun connectSocket()
-
-    /** Whether the currently established socket is valid (active) */
-    abstract fun isSocketValid(): Boolean
 
     /** Whether the currently selected network engine supports TLS */
     abstract fun supportsTLS(): Boolean
@@ -152,28 +155,25 @@ abstract class NetworkManager(viewmodel: SyncplayViewmodel) : AbstractManager(vi
         transmitPacket(jsonPacket, packetClass = T::class)
     }
 
-    suspend fun transmitPacket(json: SendablePacket, packetClass: KClass<out PacketCreator>? = null, isRetry: Boolean = false) {
+    suspend fun transmitPacket(json: SendablePacket, packetClass: KClass<out PacketCreator>? = null, retryCounter: Int = 0) {
         withContext(Dispatchers.IO) {
             try {
-                if (isSocketValid()) {
+                withTimeout(10.seconds) {
                     val finalOut = json + "\r\n"
                     loggy("Client>>> $finalOut")
                     writeActualString(finalOut)
-                } else {
+                }
+            } catch (e: Exception) {
+                loggy(e.stackTraceToString())
+                if (retryCounter >= 3) {
+                    loggy("SOCKET INVALID")
                     /** Queuing any pending outgoing messages */
                     if (packetClass != PacketCreator.Hello::class && packetClass != null) {
                         viewmodel.sessionManager.session.outboundQueue.add(json)
                     }
-                    if (state == Constants.CONNECTIONSTATE.STATE_CONNECTED) {
-                        onError()
-                    }
-                }
-            } catch (e: Exception) {
-                loggy(e.stackTraceToString())
-                if (isRetry) {
                     onError()
                 } else {
-                    transmitPacket(json, packetClass, isRetry = true)
+                    transmitPacket(json, packetClass, retryCounter = +retryCounter)
                 }
             }
         }

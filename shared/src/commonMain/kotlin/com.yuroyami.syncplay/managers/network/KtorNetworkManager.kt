@@ -7,7 +7,6 @@ import io.ktor.network.sockets.Connection
 import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.connection
-import io.ktor.network.sockets.isClosed
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.readUTF8Line
@@ -60,8 +59,6 @@ class KtorNetworkManager(viewmodel: SyncplayViewmodel) : NetworkManager(viewmode
             }
         }
     }
-
-    override fun isSocketValid() = connection?.socket?.isClosed != true && connection?.socket != null
 
     override fun endConnection(terminating: Boolean) {
         runCatching {

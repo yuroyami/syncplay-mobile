@@ -65,7 +65,7 @@ class SyncplayActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         /** Binding common logic with platform logic */
-        platformCallback = object: PlatformCallback {
+        platformCallback = object : PlatformCallback {
             override fun onLanguageChanged(newLang: String) {
                 runOnUiThread {
                     recreate()
@@ -142,6 +142,7 @@ class SyncplayActivity : ComponentActivity() {
                         hideSystemUI()
                         cutoutMode(true)
                     }
+
                     PlatformCallback.RoomEvent.LEAVE -> {
                         cutoutMode(false)
                         showSystemUI()
@@ -191,10 +192,8 @@ class SyncplayActivity : ComponentActivity() {
             }
         }
 
-        if (!BuildConfig.DEBUG) {
-            Thread.setDefaultUncaughtExceptionHandler { t, t2 ->
-                loggy(t2.stackTraceToString())
-            }
+        Thread.setDefaultUncaughtExceptionHandler { t, t2 ->
+            loggy(t2.stackTraceToString())
         }
     }
 
@@ -219,7 +218,7 @@ class SyncplayActivity : ComponentActivity() {
 
     fun terminate() {
         //TODO if (!isSoloMode) {
-            //TODO viewmodel?.p?.endConnection(true)
+        //TODO viewmodel?.p?.endConnection(true)
         //TODO }
 
         finish()

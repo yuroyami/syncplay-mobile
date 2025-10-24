@@ -25,6 +25,7 @@ class NettyNetworkManager(viewmodel: SyncplayViewmodel) : NetworkManager(viewmod
     override val engine = NetworkEngine.NETTY
 
     /** Netty stuff */
+    @Volatile
     private var channel: Channel? = null
     lateinit var pipeline: ChannelPipeline
 
@@ -65,8 +66,6 @@ class NettyNetworkManager(viewmodel: SyncplayViewmodel) : NetworkManager(viewmod
         if (!f.await(10000)) throw Exception()
     }
 
-    override fun isSocketValid() = channel?.isActive == true
-
     override fun endConnection(terminating: Boolean) {
         try {
             /* Cleaning leftovers */
@@ -75,7 +74,8 @@ class NettyNetworkManager(viewmodel: SyncplayViewmodel) : NetworkManager(viewmod
             if (terminating) {
                 terminateScope()
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -86,7 +86,6 @@ class NettyNetworkManager(viewmodel: SyncplayViewmodel) : NetworkManager(viewmod
                 viewmodel.callbackManager.onDisconnected()
             }
         })
-        f?.await(10000)
     }
 
 

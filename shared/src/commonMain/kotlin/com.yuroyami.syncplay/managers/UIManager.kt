@@ -24,7 +24,7 @@ class UIManager(viewmodel: SyncplayViewmodel): AbstractManager(viewmodel) {
 
     fun popBackstack() {
         backStack.removeLastOrNull()
-        if (backStack.isEmpty()) backStack.add(Screen.Home) //safeguard against backstack complete clearance which is an invalid state
+        if (backStack.isEmpty()) backStack.add(Screen.Home) //safeguard against backstack complete clearance... which is an invalid state
     }
 
     override fun invalidate() {
