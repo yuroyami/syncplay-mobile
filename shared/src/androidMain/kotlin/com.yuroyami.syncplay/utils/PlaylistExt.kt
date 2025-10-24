@@ -17,7 +17,7 @@ actual suspend fun SharedPlaylistManager.addFolderToPlaylist(uri: String) {
     )
 
     /** Obtaining the children tree from the path **/
-    val tree = DocumentFile.fromTreeUri(contextObtainer.obtainAppContext(), childrenUri) ?: return
+    val tree = DocumentFile.fromTreeUri(contextObtainer.invoke(), childrenUri) ?: return
 
     /** We iterate through the children file tree and add them to playlist */
     val newList = mutableListOf<String>()
@@ -60,7 +60,7 @@ actual suspend fun iterateDirectory(uri: String, target: String, onFileFound: su
         DocumentsContract.getTreeDocumentId(uri.toUri())
     )
 
-    val context = contextObtainer.obtainAppContext()
+    val context = contextObtainer.invoke()
 
     /** Obtaining the children tree from the path **/
     val tree = DocumentFile.fromTreeUri(context, childrenUri) ?: return
@@ -88,7 +88,7 @@ actual suspend fun iterateDirectory(uri: String, target: String, onFileFound: su
 
 
 actual fun SharedPlaylistManager.savePlaylistLocally(toFolderUri: String) {
-    val context = contextObtainer.obtainAppContext()
+    val context = contextObtainer.invoke()
     val folder = DocumentFile.fromTreeUri(context, toFolderUri.toUri())
     val txt = folder?.createFile("text/plain", "SharedPlaylist_${System.currentTimeMillis()}.txt")
 
@@ -107,7 +107,7 @@ actual fun SharedPlaylistManager.savePlaylistLocally(toFolderUri: String) {
 }
 
 actual fun SharedPlaylistManager.loadPlaylistLocally(fromUri: String, alsoShuffle: Boolean) {
-    val context = contextObtainer.obtainAppContext()
+    val context = contextObtainer.invoke()
 
     /** Opening the input stream of the file */
         val s = context.contentResolver.openInputStream(fromUri.toUri()) ?: return

@@ -49,14 +49,14 @@ actual fun getFolderName(uri: String): String? {
         DocumentsContract.getTreeDocumentId(uri.toUri())
     )
 
-    val context = contextObtainer.obtainAppContext()
+    val context = contextObtainer.invoke()
     val d = DocumentFile.fromTreeUri(context, childrenUri)
     return d?.name
 }
 
 actual fun getFileName(uri: String): String? {
     val actualuri = uri.toUri()
-    val context = contextObtainer.obtainAppContext()
+    val context = contextObtainer.invoke()
     return when (actualuri.scheme) {
         ContentResolver.SCHEME_CONTENT -> context.getContentFileName(actualuri)
         else -> actualuri.path?.let(::File)?.name
