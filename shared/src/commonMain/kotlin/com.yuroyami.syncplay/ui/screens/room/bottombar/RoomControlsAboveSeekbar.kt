@@ -79,14 +79,12 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
                     }), shape = CircleShape
                 ),
                 onClick = {
-                    viewmodel.player?.playerScopeIO?.launch {
-                        val currentMs =
-                            withContext(Dispatchers.Main) { viewmodel.player!!.currentPositionMs() }
-                        val newPos =
-                            (currentMs) + (customSkipAmount * 1000L)
+                    viewmodel.player.playerScopeIO.launch {
+                        val currentMs = withContext(Dispatchers.Main) { viewmodel.player.currentPositionMs() }
+                        val newPos = (currentMs) + (customSkipAmount * 1000L)
 
                         viewmodel.actionManager.sendSeek(newPos)
-                        viewmodel.player?.seekTo(newPos)
+                        viewmodel.player.seekTo(newPos)
 
                         if (viewmodel.isSoloMode) {
                             viewmodel.seeks.add(

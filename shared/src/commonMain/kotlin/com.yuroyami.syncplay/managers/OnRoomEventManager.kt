@@ -91,21 +91,24 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     }
 
     override fun onSomeoneSeeked(seeker: String, toPosition: Double) {
+        if (seeker == viewmodel.session.currentUsername) return
+
         loggy("SYNCPLAY Protocol: $seeker seeked to: $toPosition")
 
-        val oldPosMs = viewmodel.protocolManager.globalPositionMs.toLong()
-        val newPosMs = toPosition.toLong() * 1000L
+        //val oldPosMs = viewmodel.protocolManager.globalPositionMs.toLong()
+        onMainThread {
+            val oldPosMs = viewmodel.player.currentPositionMs()
+            val newPosMs = toPosition.toLong() * 1000L
 
-        /* Saving seek so it can be undone on mistake */
-        viewmodel.seeks.add(Pair(oldPosMs, newPosMs))
+            /* Saving seek so it can be undone on mistake */
+            viewmodel.seeks.add(Pair(oldPosMs, newPosMs))
 
-        if (seeker != viewmodel.session.currentUsername) {
-            onMainThread {
+            if (seeker != viewmodel.session.currentUsername) {
                 viewmodel.player.seekTo(newPosMs)
             }
-        }
 
-        viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_seeked,seeker, timeStamper(oldPosMs), timeStamper(newPosMs)) }, isChat = false)
+            viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_seeked, seeker, timeStamper(oldPosMs), timeStamper(newPosMs)) }, isChat = false)
+        }
     }
 
     override fun onSomeoneBehind(behinder: String, toPosition: Double) {

@@ -27,6 +27,8 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -49,6 +51,9 @@ import com.yuroyami.syncplay.ui.utils.gradientOverlay
 import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_seeked
 import kotlin.math.roundToLong
 import com.composeunstyled.Thumb as UnstyledThumb
 
@@ -91,23 +96,32 @@ fun RoomSeekbar(modifier: Modifier) {
 
     var trackWidthPx by remember { mutableIntStateOf(0) }
 
+    var isSliding by remember { mutableStateOf(false) }
+    var preSlidePosition by remember { mutableLongStateOf(0L) }
+
     Box(modifier) {
         Slider(
             value = sliderValue,
             onValueChange = { newVal ->
-                scope.launch(Dispatchers.Main.immediate) {
-                    sliderValue = newVal
-                    viewmodel.player?.seekTo(newVal.roundToLong())
+                if (!isSliding) {
+                    preSlidePosition = viewmodel.player.currentPositionMs()
+                    isSliding = true
                 }
+                sliderValue = newVal
+                viewmodel.player.seekTo(newVal.roundToLong())
             },
             onValueChangeFinished = {
-                viewmodel.actionManager.sendSeek(sliderValue.roundToLong())
-
-                if (viewmodel.isSoloMode) {
-                    viewmodel.player?.let {
-                        viewmodel.viewModelScope.launch(Dispatchers.Main) {
-                            viewmodel.seeks.add(Pair(it.currentPositionMs(), videoCurrentTimeMs))
-                        }
+                if (isSliding) {
+                    isSliding = false
+                    viewmodel.seeks.add(Pair(preSlidePosition, sliderValue.roundToLong()))
+                    if (!viewmodel.isSoloMode) {
+                        viewmodel.actionManager.sendSeek(sliderValue.roundToLong())
+                        viewmodel.actionManager.broadcastMessage(
+                            message = {
+                                getString(Res.string.room_seeked, viewmodel.session.currentUsername, timeStamper(preSlidePosition), timeStamper(sliderValue.roundToLong()))
+                            },
+                            isChat = false
+                        )
                     }
                 }
             },
@@ -156,7 +170,7 @@ fun RoomSeekbar(modifier: Modifier) {
                                         indication = ripple()
                                     ) {
                                         scope.launch(Dispatchers.Main.immediate) {
-                                            viewmodel.player?.jumpToChapter(chapter)
+                                            viewmodel.player.jumpToChapter(chapter)
                                         }
                                     }
                             )

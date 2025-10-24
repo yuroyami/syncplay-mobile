@@ -363,13 +363,15 @@ class PacketHandler(
 
         if (position != null && paused != null && viewmodel.protocolManager.clientIgnFly == 0) {
             val pausedChanged = viewmodel.protocolManager.globalPaused != paused || paused == viewmodel.player.isPlaying()
-            val diff = viewmodel.player.currentPositionMs() / 1000.0 - position
+            val diff = withContext(Dispatchers.Main.immediate) { (viewmodel.player.currentPositionMs() / 1000.0) - position }
 
             /* Updating Global State */
             viewmodel.protocolManager.globalPaused = paused
             protocol.globalPositionMs = position * 1000L
             if (!paused) protocol.globalPositionMs += messageAge //Account for network drift
 
+            loggy("GLOBAL_POSITION_MS: ${protocol.globalPositionMs}")
+            loggy("msgAge: $messageAge")
 
             if (lastGlobalUpdate == null) {
                 if (protocol.viewmodel.playerManager.media.value != null) {
@@ -379,8 +381,6 @@ class PacketHandler(
             }
 
             lastGlobalUpdate = Clock.System.now()
-
-
 
             if (doSeek == true && setBy != null) {
                 callback.onSomeoneSeeked(setBy, position)
@@ -413,7 +413,7 @@ class PacketHandler(
         }
 
         if (lastGlobalUpdate != null && position != null) {
-            val playerDiff = abs(viewmodel.player.currentPositionMs() / 1000.0 - position)
+            val playerDiff = withContext(Dispatchers.Main.immediate) { abs(viewmodel.player.currentPositionMs() / 1000.0 - position) }
             val globalDiff = abs(protocol.globalPositionMs / 1000.0 - position)
             val surelyPausedChanged = protocol.globalPaused != paused && paused == viewmodel.player.isPlaying()
             val seeked = playerDiff > SEEK_THRESHOLD && globalDiff > SEEK_THRESHOLD
@@ -421,7 +421,7 @@ class PacketHandler(
             sender.send<PacketCreator.State> {
                 serverTime = latencyCalculation
                 this.doSeek = seeked
-                this.position = viewmodel.player.currentPositionMs().div(1000L) // if dontSlowDownWithMe useGlobalPosition or else usePlayerPosition
+                this.position = withContext(Dispatchers.Main.immediate) { viewmodel.player.currentPositionMs().div(1000L) } // if dontSlowDownWithMe useGlobalPosition or else usePlayerPosition
                 changeState = if (surelyPausedChanged) 1 else 0
                 play = viewmodel.player.isPlaying()
             }

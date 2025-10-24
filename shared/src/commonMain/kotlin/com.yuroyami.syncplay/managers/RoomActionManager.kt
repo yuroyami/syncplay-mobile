@@ -11,6 +11,7 @@ import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.roundToLong
 
 class RoomActionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
@@ -22,7 +23,7 @@ class RoomActionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmode
         sender.sendAsync<PacketCreator.State> {
             serverTime = null
             doSeek = null
-            position = viewmodel.player.currentPositionMs().div(1000)
+            position = viewmodel.protocolManager.globalPositionMs.div(1000L).roundToLong() //withContext(Dispatchers.Main.immediate) { viewmodel.player.currentPositionMs().div(1000) }
             changeState = 1
             this.play = play
         }
@@ -71,15 +72,10 @@ class RoomActionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmode
         viewmodel.player.playerScopeIO.launch {
             val dec = valueSuspendingly(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP, 10)
 
-            val currentMs =
-                withContext(Dispatchers.Main) { viewmodel.player.currentPositionMs() }
-            var newPos = ((currentMs) - (dec * 1000L)).coerceIn(
-                0, viewmodel.playerManager.media.value?.fileDuration?.toLong()?.times(1000L) ?: 0
-            )
+            val currentMs = withContext(Dispatchers.Main) { viewmodel.player.currentPositionMs() }
+            var newPos = ((currentMs) - (dec * 1000L)).coerceIn(0, viewmodel.playerManager.media.value?.fileDuration?.toLong()?.times(1000L) ?: 0)
 
-            if (newPos < 0) {
-                newPos = 0
-            }
+            if (newPos < 0) newPos = 0
 
             sendSeek(newPos)
             viewmodel.player.seekTo(newPos)
@@ -90,17 +86,13 @@ class RoomActionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmode
         }
     }
 
+    //TODO Start with main dispatcher then switch
     fun seekFrwrd() {
         viewmodel.player.playerScopeIO.launch {
             val inc = valueSuspendingly(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP, 10)
 
-            val currentMs =
-                withContext(Dispatchers.Main) { viewmodel.player.currentPositionMs() }
-            val newPos = ((currentMs) + (inc * 1000L)).coerceIn(
-                0,
-                viewmodel.playerManager.media.value?.fileDuration?.toLong()?.times(1000L) ?: 0
-            )
-
+            val currentMs = withContext(Dispatchers.Main) { viewmodel.player.currentPositionMs() }
+            val newPos = ((currentMs) + (inc * 1000L)).coerceIn(0, viewmodel.playerManager.media.value?.fileDuration?.toLong()?.times(1000L) ?: 0)
             sendSeek(newPos)
             viewmodel.player.seekTo(newPos)
 

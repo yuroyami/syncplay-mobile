@@ -3,6 +3,7 @@ package com.yuroyami.syncplay.managers.player.vlc
 import android.content.Context
 import android.media.AudioManager
 import android.view.LayoutInflater
+import androidx.annotation.MainThread
 import androidx.annotation.UiThread
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -271,17 +272,15 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         }
     }
 
-    override suspend fun seekTo(toPositionMs: Long) {
+    @UiThread
+    override fun seekTo(toPositionMs: Long) {
         super.seekTo(toPositionMs)
-        withContext(Dispatchers.Main.immediate) {
-            vlcPlayer?.setTime(toPositionMs, true)
-        }
+        vlcPlayer?.setTime(toPositionMs, true)
     }
 
-    override suspend fun currentPositionMs(): Long {
-        return withContext(Dispatchers.Main.immediate) {
-            vlcPlayer?.time ?: 0L
-        }
+    @MainThread
+    override fun currentPositionMs(): Long {
+        return vlcPlayer?.time ?: 0L
     }
 
     override suspend fun switchAspectRatio(): String {

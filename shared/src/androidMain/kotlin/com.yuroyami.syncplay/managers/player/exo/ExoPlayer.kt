@@ -7,6 +7,7 @@ import android.graphics.Typeface
 import android.media.AudioManager
 import android.util.TypedValue
 import android.view.LayoutInflater
+import androidx.annotation.UiThread
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
@@ -417,16 +418,15 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         return withContext(Dispatchers.Main.immediate) { exoplayer?.isCurrentMediaItemSeekable == true }
     }
 
-    override suspend fun seekTo(toPositionMs: Long) {
+    @UiThread
+    override fun seekTo(toPositionMs: Long) {
         super.seekTo(toPositionMs)
-        withContext(Dispatchers.Main.immediate) {
-            exoplayer?.seekTo((toPositionMs))
-        }
+        exoplayer?.seekTo((toPositionMs))
     }
 
-
-    override suspend fun currentPositionMs(): Long {
-        return withContext(Dispatchers.Main.immediate) { exoplayer?.currentPosition ?: 0L }
+    @UiThread
+    override fun currentPositionMs(): Long {
+        return exoplayer?.currentPosition ?: 0L
     }
 
     @SuppressLint("WrongConstant")

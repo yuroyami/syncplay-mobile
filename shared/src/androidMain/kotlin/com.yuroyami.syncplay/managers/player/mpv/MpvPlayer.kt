@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import android.view.LayoutInflater
+import androidx.annotation.UiThread
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
@@ -299,14 +300,15 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         return true
     }
 
-    override suspend fun seekTo(toPositionMs: Long) {
+    @UiThread
+    override fun seekTo(toPositionMs: Long) {
         if (!ismpvInit) return
         super.seekTo(toPositionMs)
 
         mpvView.timePos = toPositionMs.toInt() / 1000
     }
 
-    override suspend fun currentPositionMs(): Long {
+    override fun currentPositionMs(): Long {
         return mpvPos
     }
 

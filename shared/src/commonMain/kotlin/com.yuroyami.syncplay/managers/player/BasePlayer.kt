@@ -163,12 +163,14 @@ abstract class BasePlayer(
 
     abstract suspend fun isSeekable(): Boolean
 
+    @UiThread
     @CallSuper
-    open suspend fun seekTo(toPositionMs: Long) {
+    open fun seekTo(toPositionMs: Long) {
         if (viewmodel.lifecycleManager.isInBackground) return
     }
 
-    abstract suspend fun currentPositionMs(): Long
+    @UiThread
+    abstract fun currentPositionMs(): Long
 
     abstract suspend fun switchAspectRatio(): String
 

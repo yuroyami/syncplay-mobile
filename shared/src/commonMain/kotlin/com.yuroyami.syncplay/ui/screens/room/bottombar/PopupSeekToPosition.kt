@@ -236,18 +236,17 @@ object PopupSeekToPosition {
                         if (ss >= 60) ss = 59
                         if (mm >= 60) mm = 59
 
-                        viewmodel.player?.playerScopeMain?.launch {
+                        viewmodel.player.playerScopeMain.launch {
                             val ssMs = ss * 1000
                             val mmMs = mm * 60 * 1000
                             val hhMs = hh * 3600 * 1000
                             val result = ssMs + mmMs + hhMs
 
                             if (viewmodel.isSoloMode) {
-                                if (viewmodel.player == null) return@launch
-                                viewmodel.seeks.add(Pair(viewmodel.player!!.currentPositionMs(), result))
+                                viewmodel.seeks.add(Pair(viewmodel.player.currentPositionMs(), result))
                             }
 
-                            viewmodel.player?.seekTo(result)
+                            viewmodel.player.seekTo(result)
 
                             //TODO: Localize
                             viewmodel.osdManager.dispatchOSD { "Seeking to ${timeStamper(result)}" }
