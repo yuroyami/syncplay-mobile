@@ -38,6 +38,11 @@ static void prepare_environment(JNIEnv *env, jobject appctx) {
 
     if (!env->GetJavaVM(&g_vm) && g_vm)
         av_jni_set_java_vm(g_vm, NULL);
+
+    jobject global_appctx = env->NewGlobalRef(appctx);
+    if (global_appctx)
+        av_jni_set_android_app_ctx(global_appctx, NULL);
+
     init_methods_cache(env);
 }
 
@@ -51,7 +56,10 @@ jni_func(void, create, jobject appctx) {
     if (!g_mpv)
         die("context init failed");
 
-    mpv_request_log_messages(g_mpv, "v");
+    // use terminal log level but request verbose messages
+    // this way --msg-level can be used to adjust later
+    mpv_request_log_messages(g_mpv, "terminal-default");
+    mpv_set_option_string(g_mpv, "msg-level", "all=v");
 }
 
 jni_func(void, init) {
@@ -61,17 +69,17 @@ jni_func(void, init) {
     if (mpv_initialize(g_mpv) < 0)
         die("mpv init failed");
 
-#ifdef __aarch64__
-    ALOGV("You're using the 64-bit build of mpv!");
-#endif
-
     g_event_thread_request_exit = false;
-    pthread_create(&event_thread_id, NULL, event_thread, NULL);
+    if (pthread_create(&event_thread_id, NULL, event_thread, NULL) != 0)
+        die("thread create failed");
+    pthread_setname_np(event_thread_id, "event_thread");
 }
 
 jni_func(void, destroy) {
-    if (!g_mpv)
-        die("mpv destroy called but it's already destroyed");
+    if (!g_mpv) {
+        ALOGV("mpv destroy called but it's already destroyed");
+        return;
+    }
 
     // poke event thread and wait for it to exit
     g_event_thread_request_exit = true;
@@ -83,12 +91,12 @@ jni_func(void, destroy) {
 }
 
 jni_func(void, command, jobjectArray jarray) {
-    const char *arguments[128] = { 0 };
+    CHECK_MPV_INIT();
+
+    const char *arguments[128] = {0};
     int len = env->GetArrayLength(jarray);
-    if (!g_mpv)
-        die("Cannot run command: mpv is not initialized");
     if (len >= ARRAYLEN(arguments))
-        die("Cannot run command: too many arguments");
+        die("too many command arguments");
 
     for (int i = 0; i < len; ++i)
         arguments[i] = env->GetStringUTFChars((jstring)env->GetObjectArrayElement(jarray, i), NULL);

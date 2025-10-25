@@ -80,7 +80,7 @@ kotlin {
             /* JSON serializer/deserializer to communicate with Syncplay servers */
             implementation(libs.kotlinx.serialization.json)
 
-            /* Network client */
+            /* Network client *//**/
             implementation(libs.bundles.ktor)
 
             /* Android's "Uri" class but rewritten for Kotlin multiplatform */

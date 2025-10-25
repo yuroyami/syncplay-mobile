@@ -1,4 +1,7 @@
-APP_ABI := armeabi-v7a
+APP_ABI :=
+ifneq ($(PREFIX32),)
+APP_ABI += armeabi-v7a
+endif
 ifneq ($(PREFIX64),)
 APP_ABI += arm64-v8a
 endif
@@ -11,3 +14,4 @@ endif
 
 APP_PLATFORM := android-21
 APP_STL := c++_shared
+APP_SUPPORT_FLEXIBLE_PAGE_SIZES := true

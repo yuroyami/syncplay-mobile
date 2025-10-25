@@ -1,5 +1,8 @@
 LOCAL_PATH:= $(call my-dir)
 
+ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
+PREFIX = $(PREFIX32)
+endif
 ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
 PREFIX = $(PREFIX64)
 endif
@@ -18,7 +21,10 @@ include $(PREBUILT_SHARED_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_MODULE := libpostproc
 LOCAL_SRC_FILES := $(PREFIX)/lib/$(LOCAL_MODULE).so
+# only include if library file exists
+ifneq (,$(wildcard $(LOCAL_SRC_FILES)))
 include $(PREBUILT_SHARED_LIBRARY)
+endif
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := libavutil
