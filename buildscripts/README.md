@@ -1,4 +1,4 @@
-This folder contains all necessary scripts to build the Android native libraries for `syncplay-mobile`, including:
+This folder contains a few necessary scripts to build the Android native libraries for `syncplay-mobile`, including:
 - Core native components for the mpv video player (such as libmpv.so) across the 4 main Android architectures
 - FFmpeg Audio decoder for ExoPlayer (optional but recommended for full audio format support)
 
@@ -15,7 +15,7 @@ To get started, navigate to the `buildscripts` folder and execute:
 
 **Important:** Ensure the complete file path to `download.sh` contains no whitespace characters, as this will cause build errors.
 Example: This will not run because it has a white space in the folder name "Syncplay Mobile": 
-`usr/local/bin/Projects/Syncplay Mobile/buildscripts/downloadsh`
+`usr/local/bin/Projects/Syncplay Mobile/buildscripts/download.sh`
 
 ## Build
 

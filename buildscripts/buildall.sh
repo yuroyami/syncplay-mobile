@@ -6,7 +6,7 @@ cd "$( dirname "${BASH_SOURCE[0]}" )"
 cleanbuild=0
 nodeps=0
 clang=1
-target=mpv-android
+target=syncplay-withmpv
 arch=armv7l
 
 getdeps () {
@@ -105,7 +105,7 @@ CROSSFILE
 }
 
 build () {
-	if [ $1 != "mpv-android" ] && [ ! -d deps/$1 ]; then
+	if [ $1 != "syncplay-withmpv" ] && [ ! -d deps/$1 ]; then
 		printf >&2 '\e[1;31m%s\e[m\n' "Target $1 not found"
 		return 1
 	fi
@@ -118,7 +118,7 @@ build () {
 		done
 	fi
 	printf >&2 '\e[1;34m%s\e[m\n' "Building $1..."
-	if [ "$1" == "mpv-android" ]; then
+	if [ "$1" == "syncplay-withmpv" ]; then
 		pushd ..
 		BUILDSCRIPT=buildscripts/scripts/$1.sh
 	else
@@ -174,7 +174,7 @@ loadarch $arch
 setup_prefix
 build $target
 
-[ "$target" == "mpv-android" ] && \
-	ls -lh ../app/build/outputs/apk/{default,api29}/*/*.apk
+[ "$target" == "syncplay-withmpv" ] && \
+	ls -lh ../shared/build/outputs/apk/default/*/*.apk
 
 exit 0
