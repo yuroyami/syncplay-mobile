@@ -42,5 +42,12 @@ lbswscale.so
 Pods/
 *.mychanges
 
+buildscripts/deps
+buildscripts/sdk
+buildscripts/prefix
+buildscripts/prefix64
+*.h
+*.tgz
+
 # Hide python files which i offload into my project for quickly viewing syncplay official code
 *.py

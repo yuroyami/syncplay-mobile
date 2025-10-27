@@ -1,5 +1,10 @@
 deps
+deps/
 sdk
+sdk/
 prefix
+prefix/
 prefix64
+prefix64/
+*.h
 *.tgz
