@@ -35,7 +35,6 @@ import androidx.media3.ui.PlayerView
 import com.google.android.exoplayer2.ext.ffmpeg.FfmpegLibrary
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
-import com.yuroyami.syncplay.BuildConfig
 import com.yuroyami.syncplay.databinding.ExoviewBinding
 import com.yuroyami.syncplay.managers.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.managers.player.BasePlayer
@@ -115,15 +114,12 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
                 .setTrackSelector(trackSelector)
                 .setRenderersFactory(
                     DefaultRenderersFactory(context).setExtensionRendererMode(
-                        if (!BuildConfig.DEBUG) {
-                            //don't crash crash if no ffmpeg if release build cuz mode "prefer" falls back to platform renderer
-                            DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
-                        } else if (ffmpegAvailable) {
-                            DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON/* We force extensions, crash if no FFmpeg, meaning native libraries missing */
+                        if (ffmpegAvailable) {
+                            DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON/* We force extensions, crash if no FFmpeg, but `ffmpegAvailable` ensures they are*/
                         } else {
-                            DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF/* We use platform renderer, no crash */
+                            DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF/* We use platform renderer, crash if playing unsupported format which means ffmpeg is missing*/
                         }
-                    )
+                    ).setEnableDecoderFallback(true)
                 )
                 .setWakeMode(C.WAKE_MODE_NETWORK) /* Prevent the service from being killed during playback */
                 .setAudioAttributes(
