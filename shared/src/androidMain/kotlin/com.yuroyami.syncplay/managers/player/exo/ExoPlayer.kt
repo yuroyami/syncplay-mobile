@@ -32,8 +32,10 @@ import androidx.media3.session.MediaSession
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.CaptionStyleCompat
 import androidx.media3.ui.PlayerView
+import com.google.android.exoplayer2.ext.ffmpeg.FfmpegLibrary
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import com.yuroyami.syncplay.BuildConfig
 import com.yuroyami.syncplay.databinding.ExoviewBinding
 import com.yuroyami.syncplay.managers.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.managers.player.BasePlayer
@@ -106,12 +108,21 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
             trackSelector.parameters = params
 
             /** Building ExoPlayer to use FFmpeg Audio Renderer and also enable fast-seeking */
+            val ffmpegAvailable = FfmpegLibrary.isAvailable()
+
             exoplayer = ExoPlayer.Builder(context)
                 .setLoadControl(loadControl) /* We use the custom LoadControl we initialized before */
                 .setTrackSelector(trackSelector)
                 .setRenderersFactory(
                     DefaultRenderersFactory(context).setExtensionRendererMode(
-                        DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER /* We prefer extensions, such as FFmpeg */
+                        if (!BuildConfig.DEBUG) {
+                            //don't crash crash if no ffmpeg if release build cuz mode "prefer" falls back to platform renderer
+                            DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
+                        } else if (ffmpegAvailable) {
+                            DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON/* We force extensions, crash if no FFmpeg, meaning native libraries missing */
+                        } else {
+                            DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF/* We use platform renderer, no crash */
+                        }
                     )
                 )
                 .setWakeMode(C.WAKE_MODE_NETWORK) /* Prevent the service from being killed during playback */
@@ -121,9 +132,6 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
                         .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
                         .build(),
                     true // Handle audio focus automatically
-                ).setRenderersFactory(
-                    DefaultRenderersFactory(context)
-                        .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)  // Change to ON
                 )
                 .build()
 
