@@ -1,3 +1,0 @@
-[submodule "external/media"]
-	path = external/media
-	url = https://github.com/androidx/media.git
