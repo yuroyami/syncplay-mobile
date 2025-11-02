@@ -26,8 +26,8 @@ val abiCodes = mapOf(
     "x86_64" to "x86_64"
 )
 val mpvLibs = listOf(
-    "libavcodec.so",  "libavfilter.so", "libavformat.so",
-    "libmpv.so", "libplayer.so", "libpostproc.so",
+    "libavcodec.so",  "libavdevice.so", "libavfilter.so", "libavformat.so", "libavutil.so",
+    "libmpv.so", "libplayer.so",
     "libswresample.so", "libswscale.so"
 )
 val ndkRequired = "29.0.14206865"
@@ -39,7 +39,8 @@ kotlin {
     androidTarget {
         compilations.all {
             compileTaskProvider.configure {
-                dependsOn("runAndroidNativeBuildScripts")
+                dependsOn("runAndroidExoFFmpegBuildScript")
+                //dependsOn("runAndroidMpvNativeBuildScripts")
             }
         }
     }
@@ -364,10 +365,56 @@ afterEvaluate {
     logger.lifecycle("✓ NDK $actualVersion found at: ${ndkPath.absolutePath}")
 }
 
-tasks.register<Exec>("runAndroidNativeBuildScripts") {
+
+tasks.register<Exec>("runAndroidExoFFmpegBuildScript") {
     workingDir = File(rootProject.rootDir, "buildscripts")
 
     outputs.file(File(projectDir, "libs/exoffmpegaudio.aar"))
+
+    if (System.getProperty("os.name").startsWith("Windows")) {
+        //Windows doesn't support our buildscripts and therefore we can't build native libs for exoplayer media3 ffmpeg audio renderer.
+        //Final build should still work because the libs only affect an optional portion of the app.
+
+        doFirst {
+            logger.warn("Native library build is not supported on Windows. Skipping...")
+        }
+        isEnabled = false // Disable task on Windows
+    } else {
+        val androidExt = project.extensions.getByType<com.android.build.gradle.BaseExtension>()
+
+        doFirst {
+            val sdkPath = androidExt.sdkDirectory.absolutePath
+            val ndkPath = androidExt.ndkDirectory.absolutePath
+
+            environment("ANDROID_SDK_ROOT", sdkPath)
+            environment("ANDROID_NDK_HOME", ndkPath)
+
+            val osName = System.getProperty("os.name").lowercase()
+            val myOS = when {
+                osName.contains("mac") || osName.contains("darwin") -> "darwin"
+                osName.contains("linux") -> "linux"
+                osName.contains("windows") -> "windows"
+                else -> "unknown"
+            }
+
+            logger.lifecycle("Detected OS: $myOS")
+
+            val media3ver = libs.versions.media3.get()
+            commandLine("sh", "exoplayer_ffmpeg_build.sh", sdkPath, ndkPath, myOS, media3ver)
+
+
+            logger.lifecycle("Running: ${commandLine.joinToString(" ")}")
+        }
+    }
+
+    // Always run if output files are missing
+    outputs.upToDateWhen {
+        outputs.files.files.all { it.exists() }
+    }
+}
+
+tasks.register<Exec>("runAndroidMpvNativeBuildScripts") {
+    workingDir = File(rootProject.rootDir, "buildscripts")
 
     abiCodes.forEach { abiCode ->
         mpvLibs.forEach { mpvLib ->
@@ -442,13 +489,13 @@ tasks.register<Exec>("runAndroidNativeBuildScripts") {
             }
 
             //TODO: Add nasm dependency (which is required by dav1d on x86 and x64_86
-            commandLine("sh", "-c", """
-                sh mpv_download_deps.sh "$sdkPath" "$ndkPath" &&
+            commandLine("sh", "-c", $$"""
+                sh mpv_download_deps.sh "$$sdkPath" "$$ndkPath" &&
                 sh mpv_build.sh --arch armv7l mpv &&
                 sh mpv_build.sh --arch arm64 mpv &&
                 sh mpv_build.sh --arch x86 mpv &&
-                sh mpv_build.sh --arch x86_64 mpv
-                sh mpv_build.sh syncplay-withmpv
+                sh mpv_build.sh --arch x86_64 mpv &&
+                sh mpv_build.sh -n syncplay-withmpv
             """.trimIndent())
 
             logger.lifecycle("Running: ${commandLine.joinToString(" ")}")
@@ -461,7 +508,7 @@ tasks.register<Exec>("runAndroidNativeBuildScripts") {
     }
 }
 
-tasks.register<Exec>("cleanAndroidNativeLibs") {
+tasks.register<Exec>("cleanAndroidMpvNativeLibs") {
     workingDir = File(rootProject.rootDir, "buildscripts")
 
     commandLine("sh", "-c", "sh mpv_build.sh --clean && rm -rf prefix")
@@ -472,5 +519,5 @@ tasks.register<Exec>("cleanAndroidNativeLibs") {
 }
 
 tasks.named("clean") {
-    finalizedBy("cleanNativeLibs")
+    finalizedBy("cleanAndroidMpvNativeLibs")
 }

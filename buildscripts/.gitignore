@@ -6,5 +6,9 @@ prefix
 prefix/
 prefix64
 prefix64/
+decoder_ffmpeg/
+decoder_ffmpeg
+ffmpeg
+ffmpeg/
 *.h
 *.tgz
