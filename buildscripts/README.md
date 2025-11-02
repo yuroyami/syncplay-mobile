@@ -9,7 +9,13 @@ This folder contains the scripts required to build the **Android native librarie
 
 ### How does this interest me?
 
-In general, if your only goal is to 
+If all you want is a full build of Syncplay—with mpv integrated and ExoPlayer’s FFmpeg audio renderer working—just run the regular build task in Android Studio. It handles everything for you: downloading dependencies, building the mpv libraries, building the FFmpeg audio renderer, and wiring it all up before the app builds.
+
+The clean task is also linked to custom cleanup steps that clear out native libraries and their generated files.
+
+If you'd rather do it manually, check out "Typical Full Build Workflow" below for the full step-by-step process in case you need to debug or track down issues.
+
+
 ### Cleaning Builds
 
 To clean build artifacts before rebuilding:
