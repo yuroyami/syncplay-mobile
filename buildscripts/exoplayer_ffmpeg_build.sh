@@ -14,7 +14,7 @@ fi
 
 echo "▶️  Starting FFmpeg build for ExoPlayer"
 
-ANDROID_ABI=23
+ANDROID_ABI=21
 
 # Paths
 FFMPEG_MODULE_PATH="$(pwd)/media3/libraries/decoder_ffmpeg/src/main"
@@ -128,6 +128,7 @@ echo "🔧 Compiling for armeabi-v7a..."
 make -j$JOBS
 make install-libs
 make clean
+rm -f config.h config.mak
 
 ./configure \
     --libdir=android-libs/arm64-v8a \
@@ -143,6 +144,7 @@ echo "🔧 Compiling for arm64-v8a..."
 make -j$JOBS
 make install-libs
 make clean
+rm -f config.h config.mak
 
 ./configure \
     --libdir=android-libs/x86 \
@@ -159,6 +161,7 @@ echo "🔧 Compiling for x86..."
 make -j$JOBS
 make install-libs
 make clean
+rm -f config.h config.mak
 
 echo "Building FFmpeg: x86_64"
 ./configure \
@@ -176,8 +179,6 @@ echo "🔧 Compiling for x86_64..."
 make -j$JOBS
 make install-libs
 make clean
-
-
-echo "✅ FFmpeg build complete. Output is under: $FFMPEG_MODULE_PATH/ffmpeg"
+rm -f config.h config.mak
 
 echo "✅ FFmpeg build complete. Output at: $JNI_LIBS_DIR"
