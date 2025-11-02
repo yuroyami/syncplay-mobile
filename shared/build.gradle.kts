@@ -17,11 +17,25 @@ plugins {
     alias(libs.plugins.touchlab.skie)
 }
 
+val abiCodes = listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+val mpvLibs = listOf(
+    "libavcodec.so",  "libavfilter.so", "libavformat.so",
+    "libmpv.so", "libplayer.so", "libpostproc.so",
+    "libswresample.so", "libswscale.so"
+)
+val ndkRequired = "29.0.14206865"
+
 kotlin {
     jvmToolchain(21)
 
     // Activating Android target (androidMain)
-    androidTarget()
+    androidTarget {
+        compilations.all {
+            compileTaskProvider.configure {
+                dependsOn("runAndroidNativeBuildScripts")
+            }
+        }
+    }
 
     // Activating iOS targets (iosMain)
     iosX64()
@@ -169,6 +183,8 @@ android {
     namespace = "com.yuroyami.syncplay"
     compileSdk = 36
 
+    ndkVersion = ndkRequired
+
     /*sourceSets["main"].java.apply {
         srcDirs(srcDirs , "src/androidMain/java")
     }*/
@@ -241,7 +257,6 @@ android {
 
     if (!exoOnly) {
         splits {
-            val abiCodes = listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
             abi {
                 isEnable = true
                 reset()
@@ -258,16 +273,9 @@ android {
         packaging {
             jniLibs {
                 //mpv libs
-                excludes += ("**/libavcodec.so")
-                excludes += ("**/libavdevice.so")
-                excludes += ("**/libavfilter.so")
-                excludes += ("**/libavformat.so")
-                excludes += ("**/libavutil.so")
-                excludes += ("**/libmpv.so")
-                excludes += ("**/libplayer.so")
-                excludes += ("**/libpostproc.so")
-                excludes += ("**/libswresample.so")
-                excludes += ("**/libswscale.so")
+                for (mpvLib in mpvLibs) {
+                    excludes += ("**/$mpvLib")
+                }
 
                 //vlc
                 excludes += ("**/libvlc.so")
@@ -304,4 +312,95 @@ dependencies {
 compose.resources {
     publicResClass = true
     generateResClass = always
+}
+
+
+afterEvaluate {
+    val androidExt = extensions.getByType<com.android.build.gradle.BaseExtension>()
+    val ndkPath = androidExt.ndkDirectory
+
+    if (ndkPath == null || !ndkPath.exists()) {
+        throw GradleException(
+            """
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            ❌ ANDROID NDK $ndkRequired REQUIRED!
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            
+            Install via:
+              • Android Studio → SDK Manager → SDK Tools → 
+                NDK (Side by side) → Show Package Details → 
+                Check version $ndkRequired
+            
+            Or add to local.properties:
+              ndk.dir=/path/to/android/sdk/ndk/$ndkRequired
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            """.trimIndent()
+        )
+    }
+
+    // Verify it's the correct version
+    val actualVersion = ndkPath.name // e.g., "26.1.10909125"
+    if (actualVersion != ndkRequired) {
+        throw GradleException(
+            """
+            ❌ Wrong NDK version!
+            Required: $ndkRequired
+            Found: $actualVersion at ${ndkPath.absolutePath}
+            
+            Please install NDK $ndkRequired via SDK Manager.
+            """.trimIndent()
+        )
+    }
+
+    logger.lifecycle("✓ NDK $actualVersion found at: ${ndkPath.absolutePath}")
+}
+
+tasks.register<Exec>("runAndroidNativeBuildScripts") {
+    workingDir = File(rootProject.rootDir, "buildscripts")
+
+    if (System.getProperty("os.name").startsWith("Windows")) {
+        //commandLine("cmd", "/c", "your_script.bat")
+        //Windows doesn't support our buildscripts and therefore we can't build native libs.
+        //Final build should still work because the libs only affect an oprtional portion of the app.
+
+        doFirst {
+            logger.warn("Native library build is not supported on Windows. Skipping...")
+        }
+        isEnabled = false // Disable task on Windows
+    } else {
+        val androidExt = project.extensions.getByType<com.android.build.gradle.BaseExtension>()
+
+        doFirst {
+            val sdkPath = androidExt.sdkDirectory
+            val ndkPath = androidExt.ndkDirectory
+
+            // Force NDK to exist
+            if (ndkPath == null || !ndkPath.exists()) {
+                throw GradleException(
+                    "Android NDK is required but not found!\n" +
+                            "Please install NDK via Android Studio SDK Manager or set ndk.dir in local.properties"
+                )
+            }
+
+            environment("ANDROID_SDK_ROOT", sdkPath.absolutePath)
+            environment("ANDROID_NDK_HOME", ndkPath.absolutePath)
+
+            println("✓ NDK found at: ${ndkPath.absolutePath}")
+        }
+
+        commandLine(
+            "sh",
+            "your_script.sh",
+            androidExt.sdkDirectory.absolutePath,  // $1 in script
+            androidExt.ndkDirectory!!.absolutePath  // $2 in script
+        )
+    }
+
+    outputs.file(File(projectDir, "libs/exoffmpegaudio.aar"))
+
+    abiCodes.forEach { abiCode ->
+        mpvLibs.forEach { mpvLib ->
+            outputs.file(File(projectDir, "src/androidMain/libs/$abiCode/$mpvLib"))
+        }
+    }
 }
