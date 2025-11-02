@@ -1,5 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
+import java.nio.file.Files
 import java.util.Properties
 
 plugins {
@@ -386,14 +387,53 @@ tasks.register<Exec>("runAndroidNativeBuildScripts") {
             environment("ANDROID_NDK_HOME", ndkPath.absolutePath)
 
             println("✓ NDK found at: ${ndkPath.absolutePath}")
-        }
 
-        commandLine(
-            "sh",
-            "your_script.sh",
-            androidExt.sdkDirectory.absolutePath,  // $1 in script
-            androidExt.ndkDirectory!!.absolutePath  // $2 in script
-        )
+            val osName = System.getProperty("os.name").lowercase()
+            val myOS = when {
+                osName.contains("mac") || osName.contains("darwin") -> "mac"
+                osName.contains("linux") -> "linux"
+                osName.contains("windows") -> "windows"
+                else -> "unknown"
+            }
+
+
+            logger.lifecycle("Detected OS: $myOS")
+
+            val sdkSymlinkDir = File(workingDir, "sdk")
+            val symlink = File(sdkSymlinkDir, "android-sdk-$myOS")
+
+            // Create parent directory if it doesn't exist
+            if (!sdkSymlinkDir.exists()) {
+                sdkSymlinkDir.mkdirs()
+            }
+
+            // Remove old symlink if it exists
+            if (symlink.exists()) {
+                if (Files.isSymbolicLink(symlink.toPath())) {
+                    Files.delete(symlink.toPath())
+                    logger.lifecycle("Removed old symlink: ${symlink.absolutePath}")
+                } else {
+                    throw GradleException("${symlink.absolutePath} exists but is not a symlink!")
+                }
+            }
+
+            // Create symlink
+            try {
+                Files.createSymbolicLink(symlink.toPath(), sdkPath.toPath())
+                logger.lifecycle("✓ Created symlink: ${symlink.absolutePath} -> ${sdkPath.absolutePath}")
+            } catch (e: Exception) {
+                throw GradleException("Failed to create symlink: ${e.message}")
+            }
+
+            commandLine(
+                "sh",
+                "mpv_download_deps.sh",
+                androidExt.sdkDirectory.absolutePath,  // $1 in script
+                androidExt.ndkDirectory!!.absolutePath  // $2 in script
+            )
+
+            logger.lifecycle("Running: ${commandLine.joinToString(" ")}")
+        }
     }
 
     outputs.file(File(projectDir, "libs/exoffmpegaudio.aar"))

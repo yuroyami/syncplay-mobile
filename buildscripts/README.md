@@ -15,7 +15,7 @@ This ensures a **reproducible build** that doesn't depend on your system SDK.
 
 ```bash
 cd buildscripts
-./download.sh
+./mpv_download_deps.sh
 ```
 
 You can also run this inside Android Studio's terminal.
