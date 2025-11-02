@@ -1,0 +1,3 @@
+[submodule "buildscripts/media3"]
+	path = buildscripts/media3
+	url = https://github.com/androidx/media.git

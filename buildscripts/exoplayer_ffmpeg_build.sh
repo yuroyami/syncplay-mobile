@@ -17,65 +17,6 @@ echo "▶️  Starting FFmpeg build for ExoPlayer"
 # Paths
 FFMPEG_DIR="$(pwd)/ffmpeg"
 
-if [ ! -d "decoder_ffmpeg" ]; then
-  echo "📦 Fetching Media3 (ExoPlayer) and extracting FFmpeg extension..."
-
-  # Clean up any existing media3 directory from previous failed attempts
-  if [ -d "media3" ]; then
-    echo "🧹 Cleaning up existing media3 directory..."
-    rm -rf media3
-  fi
-
-  # Clone with the specific version tag directly
-  # Media3 uses simple version tags like "1.5.0", not "release/1.5.0"
-  echo "🔍 Attempting to clone Media3 version: $MEDIA3_VER"
-
-  if git clone --depth=1 --branch "$MEDIA3_VER" https://github.com/androidx/media.git media3 2>&1; then
-    echo "✅ Cloned tag $MEDIA3_VER successfully"
-  else
-    echo "⚠️  Tag $MEDIA3_VER not found, trying with '1.' prefix..."
-    rm -rf media3  # Clean up failed attempt
-    # Sometimes the version catalog might not include the '1.' prefix
-    if [[ ! "$MEDIA3_VER" =~ ^1\. ]]; then
-      MEDIA3_VER="1.$MEDIA3_VER"
-      echo "🔄 Trying version: $MEDIA3_VER"
-      if git clone --depth=1 --branch "$MEDIA3_VER" https://github.com/androidx/media.git media3 2>&1; then
-        echo "✅ Cloned tag $MEDIA3_VER successfully"
-      else
-        rm -rf media3  # Clean up failed attempt
-        echo "❌ Version $MEDIA3_VER not found"
-        echo "📋 Fetching available Media3 versions..."
-        git ls-remote --tags https://github.com/androidx/media.git | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | sort -V | tail -10
-        echo ""
-        echo "⚠️  Using latest stable version instead..."
-        git clone --depth=1 https://github.com/androidx/media.git media3
-      fi
-    else
-      rm -rf media3  # Clean up failed attempt
-      echo "❌ Version $MEDIA3_VER not found"
-      echo "📋 Fetching available Media3 versions..."
-      git ls-remote --tags https://github.com/androidx/media.git | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | sort -V | tail -10
-      echo ""
-      echo "⚠️  Using latest stable version instead..."
-      git clone --depth=1 https://github.com/androidx/media.git media3
-    fi
-  fi
-
-  if [ ! -d "media3/libraries/decoder_ffmpeg" ]; then
-    echo "❌ decoder_ffmpeg not found in media3 repository structure"
-    echo "📂 Listing media3 structure:"
-    ls -la media3/ || true
-    ls -la media3/libraries/ 2>/dev/null || echo "No libraries directory"
-    exit 1
-  fi
-
-  cp -R media3/libraries/decoder_ffmpeg ./decoder_ffmpeg
-  rm -rf media3
-  echo "✅ decoder_ffmpeg module added to project"
-else
-  echo "ℹ️  decoder_ffmpeg already exists, skipping clone."
-fi
-
 JNI_LIBS_DIR="$(pwd)/decoder_ffmpeg/src/main/jniLibs"
 mkdir -p "$JNI_LIBS_DIR"
 

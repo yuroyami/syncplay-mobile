@@ -167,8 +167,9 @@ kotlin {
             implementation(libs.conscrypt) //TLSv1.3 with backward compatibility
 
             /* Video player engine: Media3 (ExoPlayer and its extensions) */
-            implementation(libs.bundles.media3)
-            implementation(files(File(projectDir, "libs/ext.aar"))) /* ExoPlayer's FFmpeg extension  */
+            //implementation(libs.bundles.media3)
+            //implementation(files(File(rootDir, "buildscripts/decoder_ffmpeg"))) /* ExoPlayer's FFmpeg extension  */
+            implementation(project(":media3"))
 
             /* Video player engine: VLC (via libVLC) */
             implementation(libs.libvlc.android)

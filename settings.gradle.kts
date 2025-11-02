@@ -18,3 +18,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "SyncplayMobile"
 include(":shared")
+include(":media3")
+project(":media3").projectDir = File(rootDir, "buildscripts/media3")

@@ -10,5 +10,7 @@ decoder_ffmpeg/
 decoder_ffmpeg
 ffmpeg
 ffmpeg/
+media3
+media3/
 *.h
 *.tgz
