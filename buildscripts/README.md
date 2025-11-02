@@ -6,55 +6,10 @@ This folder contains the scripts required to build the **Android native librarie
 ⚠️ **Supported platforms:** Linux and macOS
 ❌ **Not supported:** Windows and WSL (even WSL2)
 
----
 
-## 1. Download Dependencies
+### How does this interest me?
 
-Run the script below to download the **Android SDK + NDK** locally inside `buildscripts`.
-This ensures a **reproducible build** that doesn't depend on your system SDK.
-
-```bash
-cd buildscripts
-./mpv_download_deps.sh
-```
-
-You can also run this inside Android Studio's terminal.
-
-> **Important:** The full path to `download.sh` **must not contain spaces**.
-> Example of what will **fail**:
->
-> ```
-> /usr/local/bin/PROJECTS/Syncplay  Mobile/buildscripts/download.sh
->                          ^ space here causes errors
-> ```
-
----
-
-## 2. Build Native Libraries
-
-First, build **libmpv** for all Android architectures:
-
-```bash
-./mpv_build.sh --arch armv7l mpv
-./mpv_build.sh --arch arm64 mpv
-./mpv_build.sh --arch x86 mpv
-./mpv_build.sh --arch x86_64 mpv
-```
-
-Then build everything together (this will actually create the so libs based on the JNI interface and put them inside androidMain/libs)
-
-```bash
-./mpv_build.sh
-```
-
-This final command is equivalent to:
-
-```bash
-./mpv_build.sh syncplay-withmpv
-```
-
----
-
+In general, if your only goal is to 
 ### Cleaning Builds
 
 To clean build artifacts before rebuilding:
@@ -67,30 +22,6 @@ For a full reset, also remove the `prefix` folder:
 
 ```bash
 rm -rf prefix
-```
-
----
-
-### Rebuilding Specific Components
-
-If a specific component (e.g. `dav1d`, `libass`, or `ffmpeg`) fails or needs to be rebuilt:
-
-```bash
-./mpv_build.sh dav1d
-```
-
-To rebuild **one component from scratch**:
-
-```bash
-./mpv_build.sh -n ffmpeg --clean
-```
-
-⚠️ If you rebuild a component, do it for **all 4 architectures**.
-
-Each component is basically a single script that can be found in:
-
-```
-buildscripts/scripts/
 ```
 
 ---

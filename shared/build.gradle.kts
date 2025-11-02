@@ -441,6 +441,7 @@ tasks.register<Exec>("runAndroidNativeBuildScripts") {
                 throw GradleException("Failed to create symlink: ${e.message}")
             }
 
+            //TODO: Add nasm dependency (which is required by dav1d on x86 and x64_86
             commandLine("sh", "-c", """
                 sh mpv_download_deps.sh "$sdkPath" "$ndkPath" &&
                 sh mpv_build.sh --arch armv7l mpv &&
@@ -458,4 +459,18 @@ tasks.register<Exec>("runAndroidNativeBuildScripts") {
     outputs.upToDateWhen {
         outputs.files.files.all { it.exists() }
     }
+}
+
+tasks.register<Exec>("cleanAndroidNativeLibs") {
+    workingDir = File(rootProject.rootDir, "buildscripts")
+
+    commandLine("sh", "-c", "sh mpv_build.sh --clean && rm -rf prefix")
+
+    doFirst {
+        logger.lifecycle("Cleaning native libraries...")
+    }
+}
+
+tasks.named("clean") {
+    finalizedBy("cleanNativeLibs")
 }
