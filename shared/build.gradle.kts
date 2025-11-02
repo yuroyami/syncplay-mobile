@@ -41,7 +41,7 @@ kotlin {
         compilations.all {
             compileTaskProvider.configure {
                 dependsOn("runAndroidExoFFmpegBuildScript")
-                //dependsOn("runAndroidMpvNativeBuildScripts")
+                dependsOn("runAndroidMpvNativeBuildScripts")
             }
         }
     }
@@ -383,7 +383,7 @@ afterEvaluate {
 tasks.register<Exec>("runAndroidExoFFmpegBuildScript") {
     workingDir = File(rootProject.rootDir, "buildscripts")
 
-    outputs.file(File(projectDir, "libs/exoffmpegaudio.aar"))
+    outputs.dir(File(workingDir, "media3/libraries/decoder_ffmpeg/src/main/jniLibs"))
 
     if (System.getProperty("os.name").startsWith("Windows")) {
         //Windows doesn't support our buildscripts and therefore we can't build native libs for exoplayer media3 ffmpeg audio renderer.
@@ -421,7 +421,8 @@ tasks.register<Exec>("runAndroidExoFFmpegBuildScript") {
 
     // Always run if output files are missing
     outputs.upToDateWhen {
-        outputs.files.files.all { it.exists() }
+        val exoFfmpegJniLibsDir = File(rootDir, "buildscripts/media3/libraries/decoder_ffmpeg/src/main/jniLibs")
+        exoFfmpegJniLibsDir.exists() && exoFfmpegJniLibsDir.isDirectory
     }
 }
 
