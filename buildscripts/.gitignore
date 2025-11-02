@@ -12,5 +12,7 @@ ffmpeg
 ffmpeg/
 media3
 media3/
+media3/*
 *.h
 *.tgz
+*.a

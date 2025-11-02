@@ -1,26 +1,27 @@
 #!/bin/bash
 set -eu
 
+
 # Args
 SDK_PATH="$1"           # Android SDK path
 NDK_PATH="$2"           # Android NDK path
 OS_NAME="$3"            # mac, linux, or windows
-MEDIA3_VER="$4"         # We get media3 via version catalog
 
-if [ $# -lt 4 ]; then
-  echo "❌ Usage: $0 <SDK_PATH> <NDK_PATH> <OS_NAME> <MEDIA3_VER>"
+if [ $# -lt 3 ]; then
+  echo "❌ Usage: $0 <SDK_PATH> <NDK_PATH> <OS_NAME>"
   exit 1
 fi
 
 echo "▶️  Starting FFmpeg build for ExoPlayer"
 
+ANDROID_ABI=23
+
 # Paths
+FFMPEG_MODULE_PATH="$(pwd)/media3/libraries/decoder_ffmpeg/src/main"
 FFMPEG_DIR="$(pwd)/ffmpeg"
 
-JNI_LIBS_DIR="$(pwd)/decoder_ffmpeg/src/main/jniLibs"
+JNI_LIBS_DIR="$(pwd)/media3/libraries/decoder_ffmpeg/src/main/jniLibs"
 mkdir -p "$JNI_LIBS_DIR"
-
-JNI_LIBS_DIR="$(pwd)/decoder_ffmpeg/src/main/jniLibs"
 
 # Host platform detection (case-insensitive)
 OS_NAME_LOWER=$(echo "$OS_NAME" | tr '[:upper:]' '[:lower:]')
@@ -46,7 +47,7 @@ case "$OS_NAME_LOWER" in
     ;;
 esac
 
-ANDROID_API=21
+ANDROID_API=23
 
 # ---- Clone FFmpeg locally if not present ----
 if [ ! -d "$FFMPEG_DIR" ]; then
@@ -56,6 +57,11 @@ if [ ! -d "$FFMPEG_DIR" ]; then
   git checkout release/6.0
   cd ..
 fi
+
+cd "${FFMPEG_MODULE_PATH}/jni" && \
+[ ! -L ffmpeg ] && ln -s "$FFMPEG_DIR" ffmpeg
+
+cd ../../../../../..
 
 echo "🛠️  Preparing FFmpeg audio libs build..."
 
@@ -98,33 +104,80 @@ mkdir -p "$JNI_LIBS_DIR"
 
 cd "$FFMPEG_DIR"
 
-build_ffmpeg() {
-  ARCH=$1
-  CPU=$2
-  ABI=$3
-  PREFIX=$4
+ANDROID_ABI_64BIT="$ANDROID_ABI"
+if [[ "$ANDROID_ABI_64BIT" -lt 21 ]]
+then
+    echo "Using ANDROID_ABI 21 for 64-bit architectures"
+    ANDROID_ABI_64BIT=21
+fi
 
-  echo "🔧 Building FFmpeg for $ABI..."
-  ./configure \
-    --libdir="${JNI_LIBS_DIR}/${ABI}" \
-    --arch="$ARCH" \
-    --cpu="$CPU" \
-    --cross-prefix="${TOOLCHAIN_PREFIX}/${PREFIX}" \
+echo "Building FFmpeg: armeabi-v7a"
+./configure \
+    --libdir=android-libs/armeabi-v7a \
+    --arch=arm \
+    --cpu=armv7-a \
+    --cross-prefix="${TOOLCHAIN_PREFIX}/armv7a-linux-androideabi${ANDROID_ABI}-" \
     --nm="${TOOLCHAIN_PREFIX}/llvm-nm" \
     --ar="${TOOLCHAIN_PREFIX}/llvm-ar" \
     --ranlib="${TOOLCHAIN_PREFIX}/llvm-ranlib" \
     --strip="${TOOLCHAIN_PREFIX}/llvm-strip" \
-    --extra-cflags="-O3" \
-    --extra-ldflags="" \
+    --extra-cflags="-march=armv7-a -mfloat-abi=softfp" \
+    --extra-ldflags="-Wl,--fix-cortex-a8" \
     ${COMMON_OPTIONS}
-  make -j"$JOBS"
-  make install-libs
-  make clean
-}
+echo "🔧 Compiling for armeabi-v7a..."
+make -j$JOBS
+make install-libs
+make clean
 
-build_ffmpeg "arm" "armv7-a" "armeabi-v7a" "armv7a-linux-androideabi${ANDROID_API}-"
-build_ffmpeg "aarch64" "armv8-a" "arm64-v8a" "aarch64-linux-android${ANDROID_API}-"
-build_ffmpeg "x86" "i686" "x86" "i686-linux-android${ANDROID_API}-"
-build_ffmpeg "x86_64" "x86-64" "x86_64" "x86_64-linux-android${ANDROID_API}-"
+./configure \
+    --libdir=android-libs/arm64-v8a \
+    --arch=aarch64 \
+    --cpu=armv8-a \
+    --cross-prefix="${TOOLCHAIN_PREFIX}/aarch64-linux-android${ANDROID_ABI_64BIT}-" \
+    --nm="${TOOLCHAIN_PREFIX}/llvm-nm" \
+    --ar="${TOOLCHAIN_PREFIX}/llvm-ar" \
+    --ranlib="${TOOLCHAIN_PREFIX}/llvm-ranlib" \
+    --strip="${TOOLCHAIN_PREFIX}/llvm-strip" \
+    ${COMMON_OPTIONS}
+echo "🔧 Compiling for arm64-v8a..."
+make -j$JOBS
+make install-libs
+make clean
+
+./configure \
+    --libdir=android-libs/x86 \
+    --arch=x86 \
+    --cpu=i686 \
+    --cross-prefix="${TOOLCHAIN_PREFIX}/i686-linux-android${ANDROID_ABI}-" \
+    --nm="${TOOLCHAIN_PREFIX}/llvm-nm" \
+    --ar="${TOOLCHAIN_PREFIX}/llvm-ar" \
+    --ranlib="${TOOLCHAIN_PREFIX}/llvm-ranlib" \
+    --strip="${TOOLCHAIN_PREFIX}/llvm-strip" \
+    --disable-asm \
+    ${COMMON_OPTIONS}
+echo "🔧 Compiling for x86..."
+make -j$JOBS
+make install-libs
+make clean
+
+echo "Building FFmpeg: x86_64"
+./configure \
+    --libdir=android-libs/x86_64 \
+    --arch=x86_64 \
+    --cpu=x86-64 \
+    --cross-prefix="${TOOLCHAIN_PREFIX}/x86_64-linux-android${ANDROID_ABI_64BIT}-" \
+    --nm="${TOOLCHAIN_PREFIX}/llvm-nm" \
+    --ar="${TOOLCHAIN_PREFIX}/llvm-ar" \
+    --ranlib="${TOOLCHAIN_PREFIX}/llvm-ranlib" \
+    --strip="${TOOLCHAIN_PREFIX}/llvm-strip" \
+    --disable-asm \
+    ${COMMON_OPTIONS}
+echo "🔧 Compiling for x86_64..."
+make -j$JOBS
+make install-libs
+make clean
+
+
+echo "✅ FFmpeg build complete. Output is under: $FFMPEG_MODULE_PATH/ffmpeg"
 
 echo "✅ FFmpeg build complete. Output at: $JNI_LIBS_DIR"

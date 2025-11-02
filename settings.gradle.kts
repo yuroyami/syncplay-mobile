@@ -1,4 +1,5 @@
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+//enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
 pluginManagement {
     repositories {
         mavenCentral()
@@ -18,5 +19,10 @@ dependencyResolutionManagement {
 
 rootProject.name = "SyncplayMobile"
 include(":shared")
-include(":media3")
-project(":media3").projectDir = File(rootDir, "buildscripts/media3")
+
+//val media3Root = File(rootDir, "buildscripts/media3")
+//includeBuild(media3Root)
+
+(gradle as ExtensionAware).extra["androidxMediaModulePrefix"] = "media3-"
+apply(from = File(rootDir, "buildscripts/media3/core_settings.gradle"))
+

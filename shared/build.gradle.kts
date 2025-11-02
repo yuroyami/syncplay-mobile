@@ -30,6 +30,7 @@ val mpvLibs = listOf(
     "libmpv.so", "libplayer.so",
     "libswresample.so", "libswscale.so"
 )
+
 val ndkRequired = "29.0.14206865"
 
 kotlin {
@@ -169,7 +170,19 @@ kotlin {
             /* Video player engine: Media3 (ExoPlayer and its extensions) */
             //implementation(libs.bundles.media3)
             //implementation(files(File(rootDir, "buildscripts/decoder_ffmpeg"))) /* ExoPlayer's FFmpeg extension  */
-            implementation(project(":media3"))
+            implementation(project(":media3-lib-exoplayer"))
+            implementation(project(":media3-lib-exoplayer-dash"))
+            implementation(project(":media3-lib-exoplayer-hls"))
+            implementation(project(":media3-lib-exoplayer-rtsp"))
+            implementation(project(":media3-lib-datasource-okhttp"))
+            implementation(project(":media3-lib-datasource"))
+            implementation(project(":media3-lib-ui"))
+            implementation(project(":media3-lib-session"))
+            implementation(project(":media3-lib-extractor"))
+            implementation(project(":media3-lib-muxer"))
+            implementation(project(":media3-lib-transformer"))
+            implementation(project(":media3-lib-decoder"))
+            implementation(project(":media3-lib-decoder-ffmpeg"))
 
             /* Video player engine: VLC (via libVLC) */
             implementation(libs.libvlc.android)
@@ -400,9 +413,7 @@ tasks.register<Exec>("runAndroidExoFFmpegBuildScript") {
 
             logger.lifecycle("Detected OS: $myOS")
 
-            val media3ver = libs.versions.media3.get()
-            commandLine("sh", "exoplayer_ffmpeg_build.sh", sdkPath, ndkPath, myOS, media3ver)
-
+            commandLine("sh", "exoplayer_ffmpeg_build.sh", sdkPath, ndkPath, myOS)
 
             logger.lifecycle("Running: ${commandLine.joinToString(" ")}")
         }
