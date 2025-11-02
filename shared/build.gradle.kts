@@ -1,5 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
+import org.gradle.internal.classpath.Instrumented.exec
 import java.nio.file.Files
 import java.util.Properties
 
@@ -18,7 +19,12 @@ plugins {
     alias(libs.plugins.touchlab.skie)
 }
 
-val abiCodes = listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+val abiCodes = mapOf(
+    "armeabi-v7a" to "armv7l",
+    "arm64-v8a" to "arm64",
+    "x86" to "x86",
+    "x86_64" to "x86_64"
+)
 val mpvLibs = listOf(
     "libavcodec.so",  "libavfilter.so", "libavformat.so",
     "libmpv.so", "libplayer.so", "libpostproc.so",
@@ -264,7 +270,7 @@ android {
                 for (abi in abiCodes) {
                     val exists = file("$projectDir/src/main/jniLibs/$abi").exists()
                     if (exists) {
-                        include(abi)
+                        include(abi.key)
                     }
                 }
                 isUniversalApk = true
@@ -273,6 +279,8 @@ android {
     } else {
         packaging {
             jniLibs {
+                pickFirsts += "**/libc++_shared.so" //Pick our local c++_shared only and not the one in VLC aar
+
                 //mpv libs
                 for (mpvLib in mpvLibs) {
                     excludes += ("**/$mpvLib")
@@ -359,6 +367,14 @@ afterEvaluate {
 tasks.register<Exec>("runAndroidNativeBuildScripts") {
     workingDir = File(rootProject.rootDir, "buildscripts")
 
+    outputs.file(File(projectDir, "libs/exoffmpegaudio.aar"))
+
+    abiCodes.forEach { abiCode ->
+        mpvLibs.forEach { mpvLib ->
+            outputs.file(File(projectDir, "src/androidMain/libs/${abiCode.key}/$mpvLib"))
+        }
+    }
+
     if (System.getProperty("os.name").startsWith("Windows")) {
         //commandLine("cmd", "/c", "your_script.bat")
         //Windows doesn't support our buildscripts and therefore we can't build native libs.
@@ -425,22 +441,21 @@ tasks.register<Exec>("runAndroidNativeBuildScripts") {
                 throw GradleException("Failed to create symlink: ${e.message}")
             }
 
-            commandLine(
-                "sh",
-                "mpv_download_deps.sh",
-                androidExt.sdkDirectory.absolutePath,  // $1 in script
-                androidExt.ndkDirectory!!.absolutePath  // $2 in script
-            )
+            commandLine("sh", "-c", """
+                sh mpv_download_deps.sh "$sdkPath" "$ndkPath" &&
+                sh mpv_build.sh --arch armv7l mpv &&
+                sh mpv_build.sh --arch arm64 mpv &&
+                sh mpv_build.sh --arch x86 mpv &&
+                sh mpv_build.sh --arch x86_64 mpv
+                sh mpv_build.sh syncplay-withmpv
+            """.trimIndent())
 
             logger.lifecycle("Running: ${commandLine.joinToString(" ")}")
         }
     }
 
-    outputs.file(File(projectDir, "libs/exoffmpegaudio.aar"))
-
-    abiCodes.forEach { abiCode ->
-        mpvLibs.forEach { mpvLib ->
-            outputs.file(File(projectDir, "src/androidMain/libs/$abiCode/$mpvLib"))
-        }
+    // Always run if output files are missing
+    outputs.upToDateWhen {
+        outputs.files.files.all { it.exists() }
     }
 }

@@ -35,22 +35,22 @@ You can also run this inside Android Studio's terminal.
 First, build **libmpv** for all Android architectures:
 
 ```bash
-./buildall.sh --arch armv7l mpv
-./buildall.sh --arch arm64 mpv
-./buildall.sh --arch x86 mpv
-./buildall.sh --arch x86_64 mpv
+./mpv_build.sh --arch armv7l mpv
+./mpv_build.sh --arch arm64 mpv
+./mpv_build.sh --arch x86 mpv
+./mpv_build.sh --arch x86_64 mpv
 ```
 
 Then build everything together (this will actually create the so libs based on the JNI interface and put them inside androidMain/libs)
 
 ```bash
-./buildall.sh
+./mpv_build.sh
 ```
 
 This final command is equivalent to:
 
 ```bash
-./buildall.sh syncplay-withmpv
+./mpv_build.sh syncplay-withmpv
 ```
 
 ---
@@ -60,7 +60,7 @@ This final command is equivalent to:
 To clean build artifacts before rebuilding:
 
 ```bash
-./buildall.sh --clean
+./mpv_build.sh --clean
 ```
 
 For a full reset, also remove the `prefix` folder:
@@ -76,13 +76,13 @@ rm -rf prefix
 If a specific component (e.g. `dav1d`, `libass`, or `ffmpeg`) fails or needs to be rebuilt:
 
 ```bash
-./buildall.sh dav1d
+./mpv_build.sh dav1d
 ```
 
 To rebuild **one component from scratch**:
 
 ```bash
-./buildall.sh -n ffmpeg --clean
+./mpv_build.sh -n ffmpeg --clean
 ```
 
 ⚠️ If you rebuild a component, do it for **all 4 architectures**.
