@@ -28,14 +28,14 @@ rm -rf prefix
 ## ✅ Typical Full Build Workflow
 
 ```
-./download.sh
+./mpv_download_deps.sh
 
-./buildall.sh --arch armv7l mpv
-./buildall.sh --arch arm64 mpv
-./buildall.sh --arch x86 mpv
-./buildall.sh --arch x86_64 mpv
+./mpv_build.sh --arch armv7l mpv
+./mpv_build.sh --arch arm64 mpv
+./mpv_build.sh --arch x86 mpv
+./mpv_build.sh --arch x86_64 mpv
 
-./buildall.sh
+./mpv_build.sh -n
 ```
 
 ---
