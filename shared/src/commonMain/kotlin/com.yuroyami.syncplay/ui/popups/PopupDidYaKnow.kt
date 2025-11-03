@@ -22,7 +22,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getStringArray
+import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.okay
 import syncplaymobile.shared.generated.resources.tips
 
 object PopupDidYaKnow {
@@ -49,10 +51,11 @@ object PopupDidYaKnow {
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            if (tipIndex == tips.size - 1) tipIndex = 0 else ++tipIndex
+                            //if (tipIndex == tips.size - 1) tipIndex = 0 else ++tipIndex
+                            state.value = false
                         }
                     ) {
-                        Text("Next tip") //TODO Localize
+                        Text(stringResource(Res.string.okay))
                     }
                 },
                 dismissButton = {
@@ -64,7 +67,7 @@ object PopupDidYaKnow {
                             state.value = false
                         }
                     ) {
-                        Text("Don't show me tips again") //TODO Localize
+                        Text("Don't show me tips") //TODO Localize
                     }
                 },
                 icon = {

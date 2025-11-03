@@ -20,9 +20,3 @@ dependencyResolutionManagement {
 rootProject.name = "SyncplayMobile"
 include(":shared")
 
-//val media3Root = File(rootDir, "buildscripts/media3")
-//includeBuild(media3Root)
-
-(gradle as ExtensionAware).extra["androidxMediaModulePrefix"] = "media3-"
-apply(from = File(rootDir, "buildscripts/media3/core_settings.gradle"))
-

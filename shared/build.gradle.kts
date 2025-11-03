@@ -41,7 +41,6 @@ kotlin {
     androidTarget {
         compilations.all {
             compileTaskProvider.configure {
-                dependsOn("runAndroidExoFFmpegBuildScript")
                 if (!exoOnly) dependsOn("runAndroidMpvNativeBuildScripts")
             }
         }
@@ -168,21 +167,9 @@ kotlin {
             implementation(libs.conscrypt) //TLSv1.3 with backward compatibility
 
             /* Video player engine: Media3 (ExoPlayer and its extensions) */
-            //implementation(libs.bundles.media3)
-            //implementation(files(File(rootDir, "buildscripts/decoder_ffmpeg"))) /* ExoPlayer's FFmpeg extension  */
-            implementation(project(":media3-lib-exoplayer"))
-            implementation(project(":media3-lib-exoplayer-dash"))
-            implementation(project(":media3-lib-exoplayer-hls"))
-            implementation(project(":media3-lib-exoplayer-rtsp"))
-            implementation(project(":media3-lib-datasource-okhttp"))
-            implementation(project(":media3-lib-datasource"))
-            implementation(project(":media3-lib-ui"))
-            implementation(project(":media3-lib-session"))
-            implementation(project(":media3-lib-extractor"))
-            implementation(project(":media3-lib-muxer"))
-            implementation(project(":media3-lib-transformer"))
-            implementation(project(":media3-lib-decoder"))
-            implementation(project(":media3-lib-decoder-ffmpeg"))
+            implementation(libs.bundles.media3)
+            /* ExoPlayer's FFmpeg-powered audio renderer extension (this does not need to be updated with every media3 release)  */
+            implementation(files(File(projectDir, "libs/libffmpeg_media3exo_1.8.0.aar")))
 
             /* Video player engine: VLC (via libVLC) */
             implementation(libs.libvlc.android)
@@ -378,66 +365,6 @@ afterEvaluate {
     logger.lifecycle("✓ NDK $actualVersion found at: ${ndkPath.absolutePath}")
 }
 
-
-tasks.register<Exec>("runAndroidExoFFmpegBuildScript") {
-    workingDir = File(rootProject.rootDir, "buildscripts")
-
-    inputs.files(
-        File(workingDir, "exoplayer_ffmpeg_build.sh"),
-    )
-
-    // Use inputs.property with normalization to prevent unnecessary reruns
-    inputs.property("ndkVersion", ndkRequired)
-        .optional(false)
-
-    val exoFfmpegJniLibsDir = File(rootDir, "buildscripts/media3/libraries/decoder_ffmpeg/src/main/jniLibs")
-    outputs.dir(exoFfmpegJniLibsDir)
-
-    outputs.cacheIf { true }
-
-    if (System.getProperty("os.name").startsWith("Windows")) {
-        doFirst {
-            logger.warn("Native library build is not supported on Windows. Skipping...")
-        }
-        isEnabled = false
-    } else {
-        val androidExt = project.extensions.getByType<com.android.build.gradle.BaseExtension>()
-
-        doFirst {
-            val sdkPath = androidExt.sdkDirectory.absolutePath
-            val ndkPath = androidExt.ndkDirectory.absolutePath
-
-            environment("ANDROID_SDK_ROOT", sdkPath)
-            environment("ANDROID_NDK_HOME", ndkPath)
-
-            val osName = System.getProperty("os.name").lowercase()
-            val myOS = when {
-                osName.contains("mac") || osName.contains("darwin") -> "darwin"
-                osName.contains("linux") -> "linux"
-                osName.contains("windows") -> "windows"
-                else -> "unknown"
-            }
-
-            logger.lifecycle("Detected OS: $myOS")
-            commandLine("sh", "exoplayer_ffmpeg_build.sh", sdkPath, ndkPath, myOS)
-            logger.lifecycle("Running: ${commandLine.joinToString(" ")}")
-        }
-    }
-
-    // Run task only if output files are missing (partially or fully)
-    onlyIf {
-        val outputExists = exoFfmpegJniLibsDir.exists() && (exoFfmpegJniLibsDir.listFiles()?.isNotEmpty() == true)
-
-        if (outputExists) {
-            logger.lifecycle("✓ ExoPlayer FFmpeg libs exist, skipping build")
-        } else {
-            logger.lifecycle("✗ ExoPlayer FFmpeg libs missing, will build")
-        }
-
-        !outputExists
-    }
-}
-
 tasks.register<Exec>("runAndroidMpvNativeBuildScripts") {
     workingDir = File(rootProject.rootDir, "buildscripts")
 
@@ -545,18 +472,4 @@ tasks.register<Exec>("runAndroidMpvNativeBuildScripts") {
 
         !allFilesExist
     }
-}
-
-tasks.register<Exec>("cleanAndroidMpvNativeLibs") {
-    workingDir = File(rootProject.rootDir, "buildscripts")
-
-    commandLine("sh", "-c", "sh mpv_build.sh --clean && rm -rf prefix")
-
-    doFirst {
-        logger.lifecycle("Cleaning native libraries...")
-    }
-}
-
-tasks.named("clean") {
-    finalizedBy("cleanAndroidMpvNativeLibs")
 }

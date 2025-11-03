@@ -67,7 +67,9 @@ fun HomeTextField(
         keyboardOptions = KeyboardOptions(keyboardType = type ?: KeyboardType.Text)
     ) {
         TextInput(
-            leading = if (icon != null) { { UnstyledIcon(imageVector = icon, contentDescription = null, modifier = Modifier.padding(end = 4.dp), tint = Color.White) } } else null,
+            leading = if (icon != null) {
+                { UnstyledIcon(imageVector = icon, contentDescription = null, modifier = Modifier.padding(end = 4.dp), tint = Color.White) }
+            } else null,
             trailing = {
                 //We either show a dropdown cursor or we fill the space with a transparent icon so
                 //that the input text remains exactly in the center
@@ -78,7 +80,7 @@ fun HomeTextField(
             shape = RoundedCornerShape(cornerRadiusAnimated),
             placeholder = if (label != null) { { UnstyledText(label, color = Color.Gray) } } else null,
             backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 21.dp)
+            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 21.dp)
         )
     }
 }

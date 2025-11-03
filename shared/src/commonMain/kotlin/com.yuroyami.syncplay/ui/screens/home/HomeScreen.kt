@@ -98,10 +98,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
         }
     }
 
-    //TODO Add tip/hint popup at every launch
-
     val scope = rememberCoroutineScope { Dispatchers.IO }
-    val focusManager = LocalFocusManager.current
 
     /* Using a Scaffold manages our top-level layout */
 
@@ -269,7 +266,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                     horizontalArrangement = Arrangement.SpaceEvenly
                                 ) {
                                     HomeTextField(
-                                        modifier = Modifier.weight(3f).padding(end = 4.dp),
+                                        modifier = Modifier.weight(2.25f).padding(end = 4.dp),
                                         value = serverAddress,
                                         onValueChange = { serverAddress = it.trim() },
                                         label = "IP Address", //TODO Localize
