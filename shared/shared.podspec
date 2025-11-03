@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
     spec.name                     = 'shared'
-    spec.version                  = '1.0.0'
+    spec.version                  = '1.0.1'
     spec.homepage                 = 'www.github.com/yuroyami/syncplay-mobile'
     spec.source                   = { :http=> ''}
     spec.authors                  = ''
@@ -9,7 +9,8 @@ Pod::Spec.new do |spec|
     spec.vendored_frameworks      = 'build/cocoapods/framework/shared.framework'
     spec.libraries                = 'c++'
     spec.ios.deployment_target    = '14.0'
-    spec.dependency 'MobileVLCKit', '3.6.1b1'
+    spec.dependency 'MobileVLCKit', '3.7.0b1'
+    spec.dependency 'SPLPing', '1.1.8'
                 
     if !Dir.exist?('build/cocoapods/framework/shared.framework') || Dir.empty?('build/cocoapods/framework/shared.framework')
         raise "

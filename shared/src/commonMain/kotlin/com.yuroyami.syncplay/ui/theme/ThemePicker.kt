@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.managers.ThemeManager
+import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.utils.SyncplayPopup
 import com.yuroyami.syncplay.ui.utils.solidOverlay
@@ -31,7 +32,7 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
         dialogOpen = visible,
         onDismiss = onDismiss,
     ) {
-        val viewmodel = LocalRoomViewmodel.current
+        val viewmodel = LocalGlobalViewmodel.current
         val currentTheme by viewmodel.themeManager.currentTheme.collectAsState()
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -48,7 +49,7 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
 
 @Composable
 fun ThemeEntry(theme: ThemeManager.Companion.Theme, isSelected: Boolean) {
-    val viewmodel = LocalRoomViewmodel.current
+    val viewmodel = LocalGlobalViewmodel.current
 
     Card(
         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp).solidOverlay(

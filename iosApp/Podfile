@@ -1,5 +1,11 @@
+source 'https://cdn.cocoapods.org'
+
+platform :ios, '14.1'
+
 target 'iosApp' do
   use_frameworks!
-  platform :ios, '14.1'
+
   pod 'shared', :path => '../shared'
+  pod 'MobileVLCKit'
+  pod 'SPLPing', '1.1.8'
 end

@@ -65,9 +65,6 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
     /** Displays status messages in the room */
     val osdManager: OSDManager by lazy { OSDManager(this) }
 
-    /** Manages themes */
-    val themeManager: ThemeManager by lazy { ThemeManager(this) }
-
     /** Not to be confused with the protocol's ping. This is the result of the periodic
      * ICMP pinging which will be shown on the top-center of the room.
      * There are devices that don't support this natively, like Android emulators.

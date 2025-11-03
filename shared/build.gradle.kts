@@ -1,6 +1,5 @@
 @file:Suppress("UnstableApiUsage")
 
-import org.gradle.internal.classpath.Instrumented.exec
 import java.nio.file.Files
 import java.util.Properties
 
@@ -57,7 +56,7 @@ kotlin {
     cocoapods {
         summary = "Syncplay Common Code (Platform-agnostic)"
         homepage = "www.github.com/yuroyami/syncplay-mobile"
-        version = "1.0.0"
+        version = "1.0.1"
         ios.deploymentTarget = "14.0"
         podfile = project.file("../iosApp/Podfile")
         framework {
@@ -65,9 +64,8 @@ kotlin {
             isStatic = true
         }
 
+        pod("SPLPing", "1.1.8") //Light-weight Objective-C library to add the ICMP ping functionality
         pod("MobileVLCKit", libs.versions.libvlc.ios.get()) //Adds the VLC player engine to iOS
-        //pod("SPLPing", "1.1.8") //Light-weight Objective-C library to add the ICMP ping functionality
-        //
     }
     
     sourceSets {
@@ -344,7 +342,7 @@ afterEvaluate {
     val androidExt = extensions.getByType<com.android.build.gradle.BaseExtension>()
     val ndkPath = androidExt.ndkDirectory
 
-    if (ndkPath == null || !ndkPath.exists()) {
+    if (!ndkPath.exists()) {
         throw GradleException(
             """
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -473,7 +471,7 @@ tasks.register<Exec>("runAndroidMpvNativeBuildScripts") {
             val sdkPath = androidExt.sdkDirectory
             val ndkPath = androidExt.ndkDirectory
 
-            if (ndkPath == null || !ndkPath.exists()) {
+            if (!ndkPath.exists()) {
                 throw GradleException(
                     "Android NDK is required but not found!\n" +
                             "Please install NDK via Android Studio SDK Manager or set ndk.dir in local.properties"

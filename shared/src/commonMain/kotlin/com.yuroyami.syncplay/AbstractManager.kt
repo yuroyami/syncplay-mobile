@@ -9,11 +9,7 @@ import kotlinx.coroutines.launch
 /**
  * Base class for all "manager" components in the Syncplay architecture.
  *
- * The goal is to avoid dumping every responsibility into [com.yuroyami.syncplay.viewmodels.SyncplayViewmodel],
- * which would turn it into a giant "god object." Instead, each manager:
- * - Handles one specific domain (e.g., lifecycle, OSD, snackbars)
- * - Has full access to [com.yuroyami.syncplay.viewmodels.SyncplayViewmodel] for coordination
- * - Remains lightweight, modular, and testable
+ * Handles one specific domain (e.g., lifecycle, OSD, snackbars)
  */
 abstract class AbstractManager(
     val vm: ViewModel

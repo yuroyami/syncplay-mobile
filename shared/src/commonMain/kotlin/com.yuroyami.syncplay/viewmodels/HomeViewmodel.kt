@@ -18,9 +18,6 @@ class HomeViewmodel(val backStack: SnapshotStateList<Screen>) : ViewModel() {
     /** Displays snack messages in home screen */
     val snackManager: SnackManager by lazy { SnackManager(this) }
 
-    /** Manages themes */
-    val themeManager: ThemeManager by lazy { ThemeManager(this) }
-
     fun joinRoom(joinConfig: JoinConfig?) {
         viewModelScope.launch(Dispatchers.IO) {
             joinConfig?.save() //Remembering info
@@ -35,6 +32,5 @@ class HomeViewmodel(val backStack: SnapshotStateList<Screen>) : ViewModel() {
     override fun onCleared() {
         super.onCleared()
         snackManager.invalidate()
-        themeManager.invalidate()
     }
 }
