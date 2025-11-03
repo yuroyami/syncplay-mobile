@@ -4,6 +4,8 @@ import org.gradle.internal.classpath.Instrumented.exec
 import java.nio.file.Files
 import java.util.Properties
 
+val exoOnly = false
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.cocoapods)
@@ -41,7 +43,7 @@ kotlin {
         compilations.all {
             compileTaskProvider.configure {
                 dependsOn("runAndroidExoFFmpegBuildScript")
-                dependsOn("runAndroidMpvNativeBuildScripts")
+                if (!exoOnly) dependsOn("runAndroidMpvNativeBuildScripts")
             }
         }
     }
@@ -199,7 +201,6 @@ kotlin {
 }
 
 android {
-    val exoOnly = false
     val forGPlay = false
 
     namespace = "com.yuroyami.syncplay"
@@ -232,7 +233,7 @@ android {
     defaultConfig {
         applicationId = if (forGPlay) "com.yuroyami.syncplay" else "com.reddnek.syncplay"
         minSdk = 23
-        targetSdk = 35 //TODO We only update to targetSdk 36 when we resolve the 16KB native libs alignment issue
+        targetSdk = 36
         versionCode = 1_000_016_00_0 //1 XXX XXX XX X (last X is for prerelease versions such as RC)
         versionName = "0.16.0"
 
@@ -383,16 +384,24 @@ afterEvaluate {
 tasks.register<Exec>("runAndroidExoFFmpegBuildScript") {
     workingDir = File(rootProject.rootDir, "buildscripts")
 
-    outputs.dir(File(workingDir, "media3/libraries/decoder_ffmpeg/src/main/jniLibs"))
+    inputs.files(
+        File(workingDir, "exoplayer_ffmpeg_build.sh"),
+    )
+
+    // Use inputs.property with normalization to prevent unnecessary reruns
+    inputs.property("ndkVersion", ndkRequired)
+        .optional(false)
+
+    val exoFfmpegJniLibsDir = File(rootDir, "buildscripts/media3/libraries/decoder_ffmpeg/src/main/jniLibs")
+    outputs.dir(exoFfmpegJniLibsDir)
+
+    outputs.cacheIf { true }
 
     if (System.getProperty("os.name").startsWith("Windows")) {
-        //Windows doesn't support our buildscripts and therefore we can't build native libs for exoplayer media3 ffmpeg audio renderer.
-        //Final build should still work because the libs only affect an optional portion of the app.
-
         doFirst {
             logger.warn("Native library build is not supported on Windows. Skipping...")
         }
-        isEnabled = false // Disable task on Windows
+        isEnabled = false
     } else {
         val androidExt = project.extensions.getByType<com.android.build.gradle.BaseExtension>()
 
@@ -412,38 +421,51 @@ tasks.register<Exec>("runAndroidExoFFmpegBuildScript") {
             }
 
             logger.lifecycle("Detected OS: $myOS")
-
             commandLine("sh", "exoplayer_ffmpeg_build.sh", sdkPath, ndkPath, myOS)
-
             logger.lifecycle("Running: ${commandLine.joinToString(" ")}")
         }
     }
 
-    // Always run if output files are missing
-    outputs.upToDateWhen {
-        val exoFfmpegJniLibsDir = File(rootDir, "buildscripts/media3/libraries/decoder_ffmpeg/src/main/jniLibs")
-        exoFfmpegJniLibsDir.exists() && exoFfmpegJniLibsDir.isDirectory
+    // Run task only if output files are missing (partially or fully)
+    onlyIf {
+        val outputExists = exoFfmpegJniLibsDir.exists() && (exoFfmpegJniLibsDir.listFiles()?.isNotEmpty() == true)
+
+        if (outputExists) {
+            logger.lifecycle("✓ ExoPlayer FFmpeg libs exist, skipping build")
+        } else {
+            logger.lifecycle("✗ ExoPlayer FFmpeg libs missing, will build")
+        }
+
+        !outputExists
     }
 }
 
 tasks.register<Exec>("runAndroidMpvNativeBuildScripts") {
     workingDir = File(rootProject.rootDir, "buildscripts")
 
+    inputs.files(
+        File(workingDir, "mpv_download_deps.sh"),
+        File(workingDir, "mpv_build.sh")
+    )
+
+    // Use inputs.property with normalization
+    inputs.property("ndkVersion", ndkRequired)
+        .optional(false)
+
+    // Register all output files explicitly
     abiCodes.forEach { abiCode ->
         mpvLibs.forEach { mpvLib ->
             outputs.file(File(projectDir, "src/androidMain/libs/${abiCode.key}/$mpvLib"))
         }
     }
 
-    if (System.getProperty("os.name").startsWith("Windows")) {
-        //commandLine("cmd", "/c", "your_script.bat")
-        //Windows doesn't support our buildscripts and therefore we can't build native libs.
-        //Final build should still work because the libs only affect an oprtional portion of the app.
+    outputs.cacheIf { true }
 
+    if (System.getProperty("os.name").startsWith("Windows")) {
         doFirst {
             logger.warn("Native library build is not supported on Windows. Skipping...")
         }
-        isEnabled = false // Disable task on Windows
+        isEnabled = false
     } else {
         val androidExt = project.extensions.getByType<com.android.build.gradle.BaseExtension>()
 
@@ -451,7 +473,6 @@ tasks.register<Exec>("runAndroidMpvNativeBuildScripts") {
             val sdkPath = androidExt.sdkDirectory
             val ndkPath = androidExt.ndkDirectory
 
-            // Force NDK to exist
             if (ndkPath == null || !ndkPath.exists()) {
                 throw GradleException(
                     "Android NDK is required but not found!\n" +
@@ -472,18 +493,15 @@ tasks.register<Exec>("runAndroidMpvNativeBuildScripts") {
                 else -> "unknown"
             }
 
-
             logger.lifecycle("Detected OS: $myOS")
 
             val sdkSymlinkDir = File(workingDir, "sdk")
             val symlink = File(sdkSymlinkDir, "android-sdk-$myOS")
 
-            // Create parent directory if it doesn't exist
             if (!sdkSymlinkDir.exists()) {
                 sdkSymlinkDir.mkdirs()
             }
 
-            // Remove old symlink if it exists
             if (symlink.exists()) {
                 if (Files.isSymbolicLink(symlink.toPath())) {
                     Files.delete(symlink.toPath())
@@ -493,7 +511,6 @@ tasks.register<Exec>("runAndroidMpvNativeBuildScripts") {
                 }
             }
 
-            // Create symlink
             try {
                 Files.createSymbolicLink(symlink.toPath(), sdkPath.toPath())
                 logger.lifecycle("✓ Created symlink: ${symlink.absolutePath} -> ${sdkPath.absolutePath}")
@@ -501,9 +518,8 @@ tasks.register<Exec>("runAndroidMpvNativeBuildScripts") {
                 throw GradleException("Failed to create symlink: ${e.message}")
             }
 
-            //TODO: Add nasm dependency (which is required by dav1d on x86 and x64_86
-            commandLine("sh", "-c", $$"""
-                sh mpv_download_deps.sh "$$sdkPath" "$$ndkPath" &&
+            commandLine("sh", "-c", """
+                sh mpv_download_deps.sh "$sdkPath" "$ndkPath" &&
                 sh mpv_build.sh --arch armv7l mpv &&
                 sh mpv_build.sh --arch arm64 mpv &&
                 sh mpv_build.sh --arch x86 mpv &&
@@ -515,9 +531,21 @@ tasks.register<Exec>("runAndroidMpvNativeBuildScripts") {
         }
     }
 
-    // Always run if output files are missing
-    outputs.upToDateWhen {
-        outputs.files.files.all { it.exists() }
+    // Run task only if output files are missing (partially or fully)
+    onlyIf {
+        val allFilesExist = abiCodes.all { abiCode ->
+            mpvLibs.all { mpvLib ->
+                File(projectDir, "src/androidMain/libs/${abiCode.key}/$mpvLib").exists()
+            }
+        }
+
+        if (allFilesExist) {
+            logger.lifecycle("✓ All MPV libs exist, skipping build")
+        } else {
+            logger.lifecycle("✗ Some MPV libs missing, will build")
+        }
+
+        !allFilesExist
     }
 }
 
