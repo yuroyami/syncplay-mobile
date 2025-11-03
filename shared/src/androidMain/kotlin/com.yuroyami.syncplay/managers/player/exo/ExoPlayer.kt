@@ -109,6 +109,8 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
             /** Building ExoPlayer to use FFmpeg Audio Renderer and also enable fast-seeking */
             val ffmpegAvailable = FfmpegLibrary.isAvailable()
 
+            loggy("FFMPEG IS AVAILABLE?: $ffmpegAvailable")
+
             exoplayer = ExoPlayer.Builder(context)
                 .setLoadControl(loadControl) /* We use the custom LoadControl we initialized before */
                 .setTrackSelector(trackSelector)

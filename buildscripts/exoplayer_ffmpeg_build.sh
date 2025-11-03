@@ -47,8 +47,6 @@ case "$OS_NAME_LOWER" in
     ;;
 esac
 
-ANDROID_API=23
-
 # ---- Clone FFmpeg locally if not present ----
 if [ ! -d "$FFMPEG_DIR" ]; then
   echo "🔁 Cloning FFmpeg..."
@@ -123,9 +121,9 @@ echo "Building FFmpeg: armeabi-v7a"
     --strip="${TOOLCHAIN_PREFIX}/llvm-strip" \
     --extra-cflags="-march=armv7-a -mfloat-abi=softfp" \
     --extra-ldflags="-Wl,--fix-cortex-a8" \
-    ${COMMON_OPTIONS}
+    ${COMMON_OPTIONS} || { echo "❌ Configure failed for armeabi-v7a"; exit 1; }
 echo "🔧 Compiling for armeabi-v7a..."
-make -j$JOBS
+make -j$JOBS || { echo "❌ Make failed for armeabi-v7a"; exit 1; }
 make install-libs
 make clean
 rm -f config.h config.mak
@@ -139,9 +137,9 @@ rm -f config.h config.mak
     --ar="${TOOLCHAIN_PREFIX}/llvm-ar" \
     --ranlib="${TOOLCHAIN_PREFIX}/llvm-ranlib" \
     --strip="${TOOLCHAIN_PREFIX}/llvm-strip" \
-    ${COMMON_OPTIONS}
+    ${COMMON_OPTIONS} || { echo "❌ Configure failed for arm64-v8a"; exit 1; }
 echo "🔧 Compiling for arm64-v8a..."
-make -j$JOBS
+make -j$JOBS || { echo "❌ Make failed for arm64-v8a"; exit 1; }
 make install-libs
 make clean
 rm -f config.h config.mak
@@ -156,9 +154,9 @@ rm -f config.h config.mak
     --ranlib="${TOOLCHAIN_PREFIX}/llvm-ranlib" \
     --strip="${TOOLCHAIN_PREFIX}/llvm-strip" \
     --disable-asm \
-    ${COMMON_OPTIONS}
+    ${COMMON_OPTIONS} || { echo "❌ Make failed for x86"; exit 1; }
 echo "🔧 Compiling for x86..."
-make -j$JOBS
+make -j$JOBS || { echo "❌ Make failed for x86"; exit 1; }
 make install-libs
 make clean
 rm -f config.h config.mak
@@ -174,10 +172,10 @@ echo "Building FFmpeg: x86_64"
     --ranlib="${TOOLCHAIN_PREFIX}/llvm-ranlib" \
     --strip="${TOOLCHAIN_PREFIX}/llvm-strip" \
     --disable-asm \
-    ${COMMON_OPTIONS}
+    ${COMMON_OPTIONS} || { echo "❌ Make failed for x64_86"; exit 1; }
 echo "🔧 Compiling for x86_64..."
-make -j$JOBS
-make install-libs
+make -j$JOBS || { echo "❌ Make failed for x64_86"; exit 1; }
+make install-libs { echo "❌ Make failed for x64_86"; exit 1; }
 make clean
 rm -f config.h config.mak
 

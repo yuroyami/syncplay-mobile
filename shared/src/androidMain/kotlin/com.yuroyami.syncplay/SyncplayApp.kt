@@ -2,6 +2,7 @@ package com.yuroyami.syncplay
 
 import android.app.Application
 import android.content.Context
+import android.os.Build
 import android.os.StrictMode
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
 import com.yuroyami.syncplay.managers.datastore.datastore
@@ -16,7 +17,11 @@ class SyncplayApp: Application() {
         super.onCreate()
 
         /* TLS (mainly TLSv1.3) support, via Conscrypt */
-        Security.insertProviderAt(Conscrypt.newProvider(), 1)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) { // API 24 (Nougat)
+            runCatching {
+                Security.insertProviderAt(Conscrypt.newProvider(), 1)
+            }
+        }
 
         //Initializing datastore
         datastore = dataStore(applicationContext, DataStoreKeys.SYNCPLAY_PREFS)
