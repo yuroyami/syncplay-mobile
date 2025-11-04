@@ -53,15 +53,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
+import com.yuroyami.syncplay.ui.components.FlexibleIcon
+import com.yuroyami.syncplay.ui.components.FlexibleText
+import com.yuroyami.syncplay.ui.components.SyncplayPopup
+import com.yuroyami.syncplay.ui.components.gradientOverlay
+import com.yuroyami.syncplay.ui.components.syncplayFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.theme.Theming.ROOM_ICON_SIZE
-import com.yuroyami.syncplay.ui.utils.FlexibleIcon
-import com.yuroyami.syncplay.ui.utils.FancyText2
-import com.yuroyami.syncplay.ui.utils.SyncplayPopup
-import com.yuroyami.syncplay.ui.utils.getRegularFont
-import com.yuroyami.syncplay.ui.utils.gradientOverlay
-import com.yuroyami.syncplay.ui.utils.syncplayFont
 import com.yuroyami.syncplay.utils.getText
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.vidExs
@@ -70,9 +69,7 @@ import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
-import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.done
 import syncplaymobile.shared.generated.resources.room_addmedia_offline
@@ -92,7 +89,7 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
         file?.path?.let {
             loggy(it)
             viewmodel.viewModelScope.launch {
-                viewmodel.player?.injectVideo(it, false)
+                viewmodel.player.injectVideo(it, false)
             }
         }
     }
@@ -130,11 +127,12 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
                 }
             }
         ) {
-            FancyText2(
+            FlexibleText(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
                     .padding(horizontal = 2.dp),
-                string = "Add media",
-                solid = Color.Black,
+                text = "Add media", //TODO Localize
+                strokeColors = listOf(Color.Black),
+                fillingColors = Theming.SP_GRADIENT,
                 size = 14f,
                 font = syncplayFont
             )
@@ -146,7 +144,7 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
                         FlexibleIcon(
                             icon = Icons.Filled.CreateNewFolder,
                             size = ROOM_ICON_SIZE,
-                            shadowColor = Color.Black
+                            shadowColors = listOf(Color.Black)
                         ) {}
                         Spacer(Modifier.width(8.dp))
                         Text(
@@ -168,7 +166,7 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
                         FlexibleIcon(
                             icon = Icons.Filled.AddLink,
                             size = ROOM_ICON_SIZE,
-                            shadowColor = Color.Black
+                            shadowColors = listOf(Color.Black)
                         ) {}
                         Spacer(Modifier.width(8.dp))
                         Text(
@@ -193,7 +191,7 @@ fun AddVideoButton(modifier: Modifier, expanded: Boolean, onClick: () -> Unit) {
     if (!expanded) {
         FlexibleIcon(
             modifier = modifier,
-            icon = Icons.Filled.AddToQueue, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black,
+            icon = Icons.Filled.AddToQueue, size = ROOM_ICON_SIZE + 6, shadowColors = listOf(Color.Black),
             onClick = onClick
         )
     } else {
@@ -222,7 +220,6 @@ fun AddVideoButton(modifier: Modifier, expanded: Boolean, onClick: () -> Unit) {
     }
 }
 
-
 @Composable
 fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
     return SyncplayPopup(
@@ -235,46 +232,47 @@ fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
         val clipboard = LocalClipboard.current
 
         Column(
-            modifier = Modifier.Companion.fillMaxSize().padding(6.dp),
+            modifier = Modifier.fillMaxSize().padding(6.dp),
             verticalArrangement = Arrangement.SpaceEvenly,
-            horizontalAlignment = Alignment.Companion.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
             /* The title */
-            FancyText2(
-                string = "Load media from URL",
-                solid = Color.Companion.Black,
+            FlexibleText(
+                text = "Load media from URL", //TODO Localize
+                strokeColors = listOf(Color.Black),
                 size = 18f,
-                font = Font(Res.font.Directive4_Regular)
+                font = syncplayFont
             )
 
             /* Title's subtext */
             Text(
+                //TODO Localize
                 text = "Make sure to provide direct links (for example: www.example.com/video.mp4). YouTube and other media streaming services are not supported yet.",
                 color = MaterialTheme.colorScheme.primary,
                 fontSize = 10.sp,
-                fontFamily = FontFamily(getRegularFont()),
-                textAlign = TextAlign.Companion.Center,
+                fontFamily = FontFamily(syncplayFont),
+                textAlign = TextAlign.Center,
                 lineHeight = 14.sp,
-                modifier = Modifier.Companion.fillMaxWidth(0.6f)
+                modifier = Modifier.fillMaxWidth(0.6f)
             )
 
-            Spacer(Modifier.Companion.height(2.dp))
+            Spacer(Modifier.height(2.dp))
 
             /* The URL input box */
             val url = remember { mutableStateOf("") }
             TextField(
-                modifier = Modifier.Companion.fillMaxWidth(0.9f),
+                modifier = Modifier.fillMaxWidth(0.9f),
                 shape = RoundedCornerShape(16.dp),
                 singleLine = true,
                 value = url.value,
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Companion.DarkGray,
-                    unfocusedContainerColor = Color.Companion.DarkGray,
-                    disabledContainerColor = Color.Companion.DarkGray,
-                    focusedIndicatorColor = Color.Companion.Transparent,
-                    unfocusedIndicatorColor = Color.Companion.Transparent,
-                    disabledIndicatorColor = Color.Companion.Transparent,
+                    focusedContainerColor = Color.DarkGray,
+                    unfocusedContainerColor = Color.DarkGray,
+                    disabledContainerColor = Color.DarkGray,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
                 ),
                 trailingIcon = {
                     IconButton(onClick = {
@@ -292,34 +290,34 @@ fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
                 },
                 onValueChange = { url.value = it },
                 textStyle = TextStyle(
-                    brush = Brush.Companion.linearGradient(
+                    brush = Brush.linearGradient(
                         colors = Theming.SP_GRADIENT
                     ),
-                    fontFamily = FontFamily(getRegularFont()),
+                    fontFamily = FontFamily(syncplayFont),
                     fontSize = 16.sp,
                 ),
                 label = {
-                    Text("URL Address", color = Color.Companion.Gray)
+                    Text("URL Address", color = Color.Gray) //TODO Localize
                 }
             )
 
             /* Ok button */
             Button(
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                border = BorderStroke(width = 1.dp, color = Color.Companion.Black),
+                border = BorderStroke(width = 1.dp, color = Color.Black),
                 onClick = {
                     visibilityState.value = false
 
                     if (url.value.trim().isNotBlank()) {
                         viewmodel.viewModelScope.launch {
-                            viewmodel.player?.injectVideo(url.value.trim(), isUrl = true)
+                            viewmodel.player.injectVideo(url.value.trim(), isUrl = true)
                         }
                     }
 
                 },
             ) {
                 Icon(imageVector = Icons.Filled.Done, "")
-                Spacer(modifier = Modifier.Companion.width(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(Res.string.done), fontSize = 14.sp)
             }
         }

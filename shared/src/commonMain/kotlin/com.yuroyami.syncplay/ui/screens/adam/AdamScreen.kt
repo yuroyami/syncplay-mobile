@@ -19,10 +19,10 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.yuroyami.syncplay.managers.settings.SettingStyling
 import com.yuroyami.syncplay.models.MessagePalette
+import com.yuroyami.syncplay.ui.components.messagePalette
 import com.yuroyami.syncplay.ui.screens.home.HomeScreenUI
 import com.yuroyami.syncplay.ui.screens.room.RoomScreenUI
 import com.yuroyami.syncplay.ui.screens.room.tabs.CardController
-import com.yuroyami.syncplay.ui.utils.messagePalette
 import com.yuroyami.syncplay.viewmodels.HomeViewmodel
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import com.yuroyami.syncplay.viewmodels.SyncplayViewmodel

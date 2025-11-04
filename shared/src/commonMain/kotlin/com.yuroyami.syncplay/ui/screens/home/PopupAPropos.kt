@@ -30,8 +30,8 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.ui.utils.SyncplayPopup
-import com.yuroyami.syncplay.ui.utils.SyncplayishText
+import com.yuroyami.syncplay.ui.components.SyncplayPopup
+import com.yuroyami.syncplay.ui.components.SyncplayishText
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
@@ -50,39 +50,39 @@ object PopupAPropos {
             onDismiss = { visibilityState.value = false }
         ) {
             Column(
-                modifier = Modifier.Companion.fillMaxWidth().padding(6.dp),
-                horizontalAlignment = Alignment.Companion.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth().padding(6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceAround
             ) {
 
                 Row(
                     horizontalArrangement = Arrangement.SpaceAround,
-                    verticalAlignment = Alignment.Companion.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Image(
                         imageVector = vectorResource(Res.drawable.syncplay_logo_gradient),
                         contentDescription = "",
-                        modifier = Modifier.Companion.requiredSize(96.dp)
+                        modifier = Modifier.requiredSize(96.dp)
                         //      .radiantOverlay(offset = Offset(x = 50f, y = 65f))
                     )
 
-                    Spacer(Modifier.Companion.width(10.dp))
+                    Spacer(Modifier.width(10.dp))
 
                     Column(
-                        horizontalAlignment = Alignment.Companion.CenterHorizontally,
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.SpaceAround
                     ) {
                         /** 1st title */
                         SyncplayishText(
                             string = "Syncplay",
-                            textAlign = TextAlign.Companion.Center,
+                            textAlign = TextAlign.Center,
                             size = 20f
                         )
 
                         /* The 2nd title TODO: Platform-specific text with colors */
                         SyncplayishText(
                             string = "for Android & iOS",
-                            textAlign = TextAlign.Companion.Center,
+                            textAlign = TextAlign.Center,
                             colorStops = listOf(Color(50, 222, 132), Color(4, 219, 107), Color(50, 222, 132)),
                             size = 20f
                         )
@@ -91,17 +91,17 @@ object PopupAPropos {
                 }
 
                 Text(
-                    modifier = Modifier.Companion.fillMaxWidth(), textAlign = TextAlign.Companion.Start,
+                    modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start,
                     color = MaterialTheme.colorScheme.primary, text = "• Version: 0.14.0", fontSize = 11.sp, maxLines = 1
                 )
 
                 Text(
-                    modifier = Modifier.Companion.fillMaxWidth(), textAlign = TextAlign.Companion.Start,
+                    modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start,
                     color = MaterialTheme.colorScheme.primary, text = "• Developed by: yuroyami", fontSize = 11.sp, maxLines = 1
                 )
 
                 Text(
-                    modifier = Modifier.Companion.fillMaxWidth(), textAlign = TextAlign.Companion.Start,
+                    modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start,
                     color = MaterialTheme.colorScheme.primary,
                     text = "• This client is not official. Thanks to official Syncplay team for their amazing software.",
                     fontSize = 11.sp,
@@ -109,7 +109,7 @@ object PopupAPropos {
                 )
 
                 Text(
-                    modifier = Modifier.Companion.fillMaxWidth(), textAlign = TextAlign.Companion.Start,
+                    modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start,
                     color = MaterialTheme.colorScheme.primary,
                     text = "• Syncplay is officially available for Windows, macOS, and Linux.",
                     fontSize = 11.sp,
@@ -117,17 +117,17 @@ object PopupAPropos {
                 )
 
                 Text(
-                    modifier = Modifier.Companion.fillMaxWidth(), textAlign = TextAlign.Companion.Start,
+                    modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start,
                     color = MaterialTheme.colorScheme.primary, text = "• Official Website: www.syncplay.pl", fontSize = 11.sp, maxLines = 1
                 )
 
                 Row(
                     horizontalArrangement = Arrangement.SpaceAround,
-                    verticalAlignment = Alignment.Companion.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     /* Solo mode */
                     Button(
-                        modifier = Modifier.Companion.wrapContentWidth(),
+                        modifier = Modifier.wrapContentWidth(),
                         onClick = {
                             visibilityState.value = false
 
@@ -135,15 +135,15 @@ object PopupAPropos {
                         },
                     ) {
                         Icon(imageVector = Icons.Filled.Tv, "")
-                        Spacer(modifier = Modifier.Companion.width(8.dp))
-                        Text(stringResource(Res.string.connect_solomode), textAlign = TextAlign.Companion.Center, fontSize = 14.sp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(Res.string.connect_solomode), textAlign = TextAlign.Center, fontSize = 14.sp)
                     }
 
                     val uriHandler = LocalUriHandler.current
                     Image(
                         painter = painterResource(Res.drawable.github),
                         contentDescription = "",
-                        modifier = Modifier.Companion.size(64.dp)
+                        modifier = Modifier.size(64.dp)
                             .clickable(
                                 enabled = true,
                                 interactionSource = remember { MutableInteractionSource() },

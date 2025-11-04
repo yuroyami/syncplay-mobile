@@ -62,10 +62,10 @@ import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
 import com.yuroyami.syncplay.managers.datastore.valueBlockingly
 import com.yuroyami.syncplay.managers.datastore.valueFlow
 import com.yuroyami.syncplay.managers.datastore.writeValue
+import com.yuroyami.syncplay.ui.components.FlexibleText
+import com.yuroyami.syncplay.ui.components.SyncplayPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.utils.FancyText2
-import com.yuroyami.syncplay.ui.utils.SyncplayPopup
 import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLauncher
 import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.Dispatchers
@@ -115,10 +115,11 @@ object PopupMediaDirs {
             ) {
 
                 /* The title */
-                FancyText2(
+                FlexibleText(
                     modifier = Modifier.fillMaxWidth(),
-                    string = stringResource(Res.string.media_directories),
-                    solid = Color.Black,
+                    text = stringResource(Res.string.media_directories),
+                    strokeColors = listOf(Color.Black),
+                    fillingColors = Theming.SP_GRADIENT,
                     size = 18f,
                     font = Font(Res.font.Directive4_Regular)
                 )

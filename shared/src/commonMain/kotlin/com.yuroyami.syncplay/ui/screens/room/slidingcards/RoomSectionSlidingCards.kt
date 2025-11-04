@@ -20,6 +20,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
+import com.yuroyami.syncplay.ui.components.FreeAnimatedVisibility
+import com.yuroyami.syncplay.ui.components.screenWidthPx
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.screens.room.bottombar.RoomControlPanelCard
@@ -27,8 +29,6 @@ import com.yuroyami.syncplay.ui.screens.room.slidingcards.CardRoomPrefs.InRoomSe
 import com.yuroyami.syncplay.ui.screens.room.slidingcards.CardSharedPlaylist.SharedPlaylistCard
 import com.yuroyami.syncplay.ui.screens.room.slidingcards.CardUserInfo.UserInfoCard
 import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.utils.FreeAnimatedVisibility
-import com.yuroyami.syncplay.ui.utils.screenWidthPx
 
 @Composable
 fun RoomSectionSlidingCards(modifier: Modifier) {

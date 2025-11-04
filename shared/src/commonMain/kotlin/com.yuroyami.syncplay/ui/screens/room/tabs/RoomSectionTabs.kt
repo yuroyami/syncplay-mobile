@@ -41,9 +41,9 @@ import androidx.compose.ui.window.PopupProperties
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.utils.FlexibleIcon
-import com.yuroyami.syncplay.ui.utils.FancyText2
-import com.yuroyami.syncplay.ui.utils.syncplayFont
+import com.yuroyami.syncplay.ui.components.FlexibleIcon
+import com.yuroyami.syncplay.ui.components.FlexibleText
+import com.yuroyami.syncplay.ui.components.syncplayFont
 import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -156,7 +156,7 @@ fun RoomTabSection(modifier: Modifier, onShowChatHistory: () -> Unit) {
             FlexibleIcon(
                 icon = Icons.Filled.MoreVert,
                 size = 48,
-                shadowColor = Color.Black
+                shadowColors = listOf(Color.Black)
             ) {
                 overflowMenuState.value = !overflowMenuState.value
             }
@@ -177,10 +177,11 @@ fun RoomTabSection(modifier: Modifier, onShowChatHistory: () -> Unit) {
                 }
             ) {
 
-                FancyText2(
+                FlexibleText(
                     modifier = Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 2.dp),
-                    string = stringResource(Res.string.room_overflow_title),
-                    solid = Color.Black,
+                    text = stringResource(Res.string.room_overflow_title),
+                    strokeColors = listOf(Color.Black),
+                    fillingColors = Theming.SP_GRADIENT,
                     size = 14f,
                     font = syncplayFont
                 )

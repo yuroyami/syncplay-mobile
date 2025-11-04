@@ -26,11 +26,11 @@ import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_PLAYER
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
 import com.yuroyami.syncplay.managers.datastore.valueAsState
 import com.yuroyami.syncplay.managers.datastore.valueFlow
+import com.yuroyami.syncplay.ui.components.FlexibleIcon
+import com.yuroyami.syncplay.ui.components.gradientOverlay
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.theme.Theming.ROOM_ICON_SIZE
-import com.yuroyami.syncplay.ui.utils.FlexibleIcon
-import com.yuroyami.syncplay.ui.utils.gradientOverlay
 import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -51,7 +51,7 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
             FlexibleIcon(
                 icon = Icons.Filled.FastRewind,
                 size = ROOM_ICON_SIZE + 6,
-                shadowColor = Color.Black
+                shadowColors = listOf(Color.Black)
             ) {
                 viewmodel.actionManager.seekBckwd()
             }
@@ -59,7 +59,7 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
             FlexibleIcon(
                 icon = Icons.Filled.FastForward,
                 size = ROOM_ICON_SIZE + 6,
-                shadowColor = Color.Black
+                shadowColors = listOf(Color.Black)
             ) {
                 viewmodel.actionManager.seekFrwrd()
             }
@@ -117,17 +117,17 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
                         it.copy(alpha = 0.1f)
                     }), shape = CircleShape
                 ), onClick = {
-                    viewmodel.player?.playerScopeIO?.launch {
+                    viewmodel.player.playerScopeIO.launch {
                         val currentMs =
-                            withContext(Dispatchers.Main) { viewmodel.player!!.currentPositionMs() }
+                            withContext(Dispatchers.Main) { viewmodel.player.currentPositionMs() }
                         val nextChapter =
                             viewmodel.media?.chapters?.filter { it.timestamp > currentMs }
                                 ?.minByOrNull { it.timestamp }
                         if (nextChapter != null) {
-                            viewmodel.player?.seekTo(nextChapter.timestamp)
+                            viewmodel.player.seekTo(nextChapter.timestamp)
                         } else {
                             // fallback if no chapter is ahead
-                            viewmodel.player?.seekTo(currentMs + (customSkipAmount * 1000L))
+                            viewmodel.player.seekTo(currentMs + (customSkipAmount * 1000L))
                         }
                     }
                 }) {

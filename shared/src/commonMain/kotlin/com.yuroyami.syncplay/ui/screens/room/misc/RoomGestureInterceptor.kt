@@ -51,8 +51,8 @@ import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_GESTURES
 import com.yuroyami.syncplay.managers.datastore.valueFlow
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
-import com.yuroyami.syncplay.ui.utils.screenHeightPx
-import com.yuroyami.syncplay.ui.utils.screenWidthPx
+import com.yuroyami.syncplay.ui.components.screenHeightPx
+import com.yuroyami.syncplay.ui.components.screenWidthPx
 import com.yuroyami.syncplay.utils.getSystemMaxVolume
 import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.Dispatchers

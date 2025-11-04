@@ -19,10 +19,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.managers.ThemeManager
+import com.yuroyami.syncplay.ui.components.SyncplayPopup
+import com.yuroyami.syncplay.ui.components.solidOverlay
 import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
-import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
-import com.yuroyami.syncplay.ui.utils.SyncplayPopup
-import com.yuroyami.syncplay.ui.utils.solidOverlay
 
 val availableThemes = listOf(ThemeManager.PYNCSLAY, ThemeManager.AMOLED, ThemeManager.GREEN_GOBLIN, ThemeManager.ALLEY_LAMPPOST)
 

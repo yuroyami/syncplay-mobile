@@ -41,24 +41,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
 import com.yuroyami.syncplay.managers.datastore.valueAsState
+import com.yuroyami.syncplay.ui.components.FlexibleText
+import com.yuroyami.syncplay.ui.components.SyncplayPopup
+import com.yuroyami.syncplay.ui.components.syncplayFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.utils.FancyText2
-import com.yuroyami.syncplay.ui.utils.SyncplayPopup
-import com.yuroyami.syncplay.ui.utils.getRegularFont
 import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
-import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.done
 import syncplaymobile.shared.generated.resources.room_custom_skip_button
 
 object PopupSeekToPosition {
-
 
     @Composable
     fun SeekToPositionPopup(visibilityState: MutableState<Boolean>) {
@@ -71,27 +68,27 @@ object PopupSeekToPosition {
             val focusManager = LocalFocusManager.current
 
             Column(
-                modifier = Modifier.Companion.fillMaxSize().padding(6.dp),
+                modifier = Modifier.fillMaxSize().padding(6.dp),
                 verticalArrangement = Arrangement.SpaceEvenly,
-                horizontalAlignment = Alignment.Companion.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-
                 /* The title */
-                FancyText2(
-                    string = "Seek to Precise Position",
-                    solid = Color.Companion.Black,
+                FlexibleText(
+                    text = "Seek to Precise Position", //TODO Localize
+                    strokeColors = listOf(Color.Black),
+                    fillingColors = Theming.SP_GRADIENT,
                     size = 18f,
-                    font = Font(Res.font.Directive4_Regular)
+                    font = syncplayFont
                 )
 
                 /* Title's subtext */
                 Text(
-                    text = "Hours:Minutes:Seconds",
+                    text = "Hours:Minutes:Seconds", //TODO Localize
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 10.sp,
-                    fontFamily = FontFamily(getRegularFont()),
-                    textAlign = TextAlign.Companion.Center,
+                    fontFamily = FontFamily(syncplayFont),
+                    textAlign = TextAlign.Center,
                     lineHeight = 14.sp
                 )
 
@@ -101,110 +98,109 @@ object PopupSeekToPosition {
                 val seconds = remember { mutableStateOf("") }
 
                 Row(
-                    verticalAlignment = Alignment.Companion.CenterVertically,
+                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
                     TextField(
-                        modifier = Modifier.Companion.width(64.dp),
+                        modifier = Modifier.width(64.dp),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
                         value = hours.value,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Companion.Number),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         keyboardActions = KeyboardActions(onDone = {
-                            focusManager.moveFocus(FocusDirection.Companion.Next)
+                            focusManager.moveFocus(FocusDirection.Next)
                         }),
                         colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Companion.DarkGray,
-                            unfocusedContainerColor = Color.Companion.DarkGray,
-                            disabledContainerColor = Color.Companion.DarkGray,
-                            focusedIndicatorColor = Color.Companion.Transparent,
-                            unfocusedIndicatorColor = Color.Companion.Transparent,
-                            disabledIndicatorColor = Color.Companion.Transparent,
+                            focusedContainerColor = Color.DarkGray,
+                            unfocusedContainerColor = Color.DarkGray,
+                            disabledContainerColor = Color.DarkGray,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            disabledIndicatorColor = Color.Transparent,
                         ),
                         onValueChange = { hours.value = it },
                         textStyle = TextStyle(
-                            brush = Brush.Companion.linearGradient(colors = Theming.SP_GRADIENT),
-                            fontFamily = FontFamily(getRegularFont()),
+                            brush = Brush.linearGradient(colors = Theming.SP_GRADIENT),
+                            fontFamily = FontFamily(syncplayFont),
                             fontSize = 16.sp,
                         ),
-                        label = { Text("HH", color = Color.Companion.Gray) }
+                        label = { Text("HH", color = Color.Gray) }
                     )
 
-                    Spacer(Modifier.Companion.width(12.dp))
+                    Spacer(Modifier.width(12.dp))
 
 
                     TextField(
-                        modifier = Modifier.Companion.width(64.dp),
+                        modifier = Modifier.width(64.dp),
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                         singleLine = true,
                         value = minutes.value,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Companion.Number),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         keyboardActions = KeyboardActions(onDone = {
-                            focusManager.moveFocus(FocusDirection.Companion.Next)
+                            focusManager.moveFocus(FocusDirection.Next)
                         }),
                         colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Companion.DarkGray,
-                            unfocusedContainerColor = Color.Companion.DarkGray,
-                            disabledContainerColor = Color.Companion.DarkGray,
-                            focusedIndicatorColor = Color.Companion.Transparent,
-                            unfocusedIndicatorColor = Color.Companion.Transparent,
-                            disabledIndicatorColor = Color.Companion.Transparent,
+                            focusedContainerColor = Color.DarkGray,
+                            unfocusedContainerColor = Color.DarkGray,
+                            disabledContainerColor = Color.DarkGray,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            disabledIndicatorColor = Color.Transparent,
                         ),
                         onValueChange = { minutes.value = it },
                         textStyle = TextStyle(
-                            brush = Brush.Companion.linearGradient(colors = Theming.SP_GRADIENT),
-                            fontFamily = FontFamily(getRegularFont()),
+                            brush = Brush.linearGradient(colors = Theming.SP_GRADIENT),
+                            fontFamily = FontFamily(syncplayFont),
                             fontSize = 16.sp,
                         ),
-                        label = { Text("MM", color = Color.Companion.Gray) }
+                        label = { Text("MM", color = Color.Gray) }
                     )
 
-                    Spacer(Modifier.Companion.width(12.dp))
+                    Spacer(Modifier.width(12.dp))
 
                     TextField(
-                        modifier = Modifier.Companion.width(64.dp),
+                        modifier = Modifier.width(64.dp),
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                         singleLine = true,
                         value = seconds.value,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Companion.Number),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         keyboardActions = KeyboardActions(onDone = {
-                            focusManager.moveFocus(FocusDirection.Companion.Next)
+                            focusManager.moveFocus(FocusDirection.Next)
                         }),
                         colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Companion.DarkGray,
-                            unfocusedContainerColor = Color.Companion.DarkGray,
-                            disabledContainerColor = Color.Companion.DarkGray,
-                            focusedIndicatorColor = Color.Companion.Transparent,
-                            unfocusedIndicatorColor = Color.Companion.Transparent,
-                            disabledIndicatorColor = Color.Companion.Transparent,
+                            focusedContainerColor = Color.DarkGray,
+                            unfocusedContainerColor = Color.DarkGray,
+                            disabledContainerColor = Color.DarkGray,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            disabledIndicatorColor = Color.Transparent,
                         ),
                         onValueChange = { seconds.value = it },
                         textStyle = TextStyle(
-                            brush = Brush.Companion.linearGradient(colors = Theming.SP_GRADIENT),
-                            fontFamily = FontFamily(getRegularFont()),
+                            brush = Brush.linearGradient(colors = Theming.SP_GRADIENT),
+                            fontFamily = FontFamily(syncplayFont),
                             fontSize = 16.sp,
                         ),
-                        label = { Text("ss", color = Color.Companion.Gray) }
+                        label = { Text("ss", color = Color.Gray) }
                     )
                 }
 
                 /* Custom Skip intro */
-                val customSkipToFront by DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT.valueAsState(true)
                 val customSkipAmount by DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT.valueAsState(90)
                 val customSkipAmountString by derivedStateOf { timeStamper(customSkipAmount) }
 
                 Button(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    border = BorderStroke(width = 1.dp, color = Color.Companion.Black),
+                    border = BorderStroke(width = 1.dp, color = Color.Black),
                     modifier = Modifier.Companion,
                     onClick = {
                         visibilityState.value = false
-                        viewmodel.player?.playerScopeIO?.launch {
-                            val currentMs = withContext(Dispatchers.Main) { viewmodel.player!!.currentPositionMs() }
+                        viewmodel.player.playerScopeIO?.launch {
+                            val currentMs = withContext(Dispatchers.Main) { viewmodel.player.currentPositionMs() }
                             val newPos = (currentMs) + (customSkipAmount * 1000L)
 
                             viewmodel.actionManager.sendSeek(newPos)
-                            viewmodel.player?.seekTo(newPos)
+                            viewmodel.player.seekTo(newPos)
 
                             if (viewmodel.isSoloMode) {
                                 viewmodel.seeks.add(Pair((currentMs), newPos * 1000))
@@ -216,7 +212,7 @@ object PopupSeekToPosition {
                     },
                 ) {
                     Icon(imageVector = Icons.Filled.AvTimer, "")
-                    Spacer(modifier = Modifier.Companion.width(8.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
 
                     Text(stringResource(Res.string.room_custom_skip_button, customSkipAmountString), fontSize = 14.sp)
                 }
@@ -224,7 +220,7 @@ object PopupSeekToPosition {
                 /* Ok button */
                 Button(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    border = BorderStroke(width = 1.dp, color = Color.Companion.Black),
+                    border = BorderStroke(width = 1.dp, color = Color.Black),
                     modifier = Modifier.Companion,
                     onClick = {
                         visibilityState.value = false
@@ -255,7 +251,7 @@ object PopupSeekToPosition {
                     },
                 ) {
                     Icon(imageVector = Icons.Filled.Done, "")
-                    Spacer(modifier = Modifier.Companion.width(8.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(stringResource(Res.string.done), fontSize = 14.sp)
                 }
             }

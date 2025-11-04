@@ -41,14 +41,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.yuroyami.syncplay.ui.components.FlexibleText
+import com.yuroyami.syncplay.ui.components.gradientOverlay
+import com.yuroyami.syncplay.ui.components.helveticaFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalSettingStyling
 import com.yuroyami.syncplay.ui.screens.home.SettingGridState
 import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.utils.FancyText2
-import com.yuroyami.syncplay.ui.utils.getRegularFont
-import com.yuroyami.syncplay.ui.utils.gradientOverlay
 import org.jetbrains.compose.resources.stringResource
 
 /** Object class that will wrap everything related to settings (including composables for UI) */
@@ -185,11 +184,11 @@ object SettingsUI {
                 }
             }
 
-            FancyText2(
-                string = stringResource(categ.title),
-                solid = Color.Transparent,
+            FlexibleText(
+                text = stringResource(categ.title),
+                fillingColors = Theming.SP_GRADIENT,
                 size = titleSize,
-                font = getRegularFont()
+                font = helveticaFont
             )
         }
     }
@@ -223,12 +222,12 @@ object SettingsUI {
 
             }
             Spacer(modifier = Modifier.width(8.dp))
-            FancyText2(
+            FlexibleText(
                 modifier = Modifier.basicMarquee(),
-                string = stringResource(categ.title),
-                solid = Color.Transparent,
+                text = stringResource(categ.title),
+                fillingColors = Theming.SP_GRADIENT,
                 size = 18f,
-                font = getRegularFont()
+                font = helveticaFont
             )
         }
 

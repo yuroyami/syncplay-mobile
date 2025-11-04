@@ -53,10 +53,10 @@ import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_MA
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_SHADOW
 import com.yuroyami.syncplay.managers.datastore.valueAsState
+import com.yuroyami.syncplay.ui.components.FlexibleAnnotatedText
 import com.yuroyami.syncplay.ui.screens.adam.LocalChatPalette
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.utils.ChatAnnotatedText
 import com.yuroyami.syncplay.utils.isEmoji
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import org.jetbrains.compose.resources.stringResource
@@ -204,12 +204,12 @@ fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel) {
                     chatMessage.seen = true
                 }
 
-                ChatAnnotatedText(
+                FlexibleAnnotatedText(
                     modifier = Modifier.fillMaxWidth().focusable(enabled = false).clickable(enabled = false) {},
                     text = chatMessage.factorize(LocalChatPalette.current),
                     size = /* TODO if (pipModeObserver) 6f else*/ (msgFontSize.value.toFloat()),
-                    hasShadow = msgShadow,
-                    hasStroke = msgOutline
+                    shadowColors = if (msgShadow) listOf(Color.Black) else listOf(),
+                    strokeColors = if (msgOutline)listOf(Color.Black) else listOf(),
                 )
             }
         }

@@ -81,9 +81,9 @@ import syncplaymobile.shared.generated.resources.Res
  * For example, if you pass a filling list of one color, then a solid filling will be used, otherwise, gradient.
  * */
 @Composable
-fun FlexibleText(
+fun FlexibleAnnotatedText(
     modifier: Modifier = Modifier,
-    text: String,
+    text: AnnotatedString,
     size: Float,
     font: Font? = null,
     textAlign: TextAlign = TextAlign.Start,
@@ -91,8 +91,10 @@ fun FlexibleText(
     strokeColors: List<Color> = listOf(),
     strokeWidth: Float = 2f,
     shadowColors: List<Color> = listOf(),
-    shadowOffset: Pair<Int, Int> = Pair(2, 2),
+    shadowOffset: Offset = Offset(4f, 4f),
     shadowSize: Float = 6f,
+    lineHeight: Float = size + 2,
+    overflow: TextOverflow = TextOverflow.Ellipsis
 ) {
     Box(modifier = modifier) {
         /** Shadow */
@@ -103,12 +105,14 @@ fun FlexibleText(
                 style = TextStyle(
                     color = Color.Transparent,
                     shadow = Shadow(
-                        color = if (shadowColors.size == 1) shadowColors.first() else Color.Black, Offset(4f, 4f), blurRadius = shadowSize
+                        color = if (shadowColors.size == 1) shadowColors.first() else Color.Black, shadowOffset, blurRadius = shadowSize
                     ),
                     textAlign = textAlign,
                     fontFamily = font?.let { FontFamily(it) } ?: FontFamily.Default,
                     fontSize = size.sp,
-                )
+                ),
+                lineHeight = lineHeight.sp,
+                overflow = overflow
             )
         }
 
@@ -141,7 +145,9 @@ fun FlexibleText(
                         fontFamily = font?.let { FontFamily(it) } ?: FontFamily.Default,
                         fontSize = size.sp,
                     )
-                }
+                },
+                lineHeight = lineHeight.sp,
+                overflow = overflow
             )
         }
 
@@ -163,12 +169,39 @@ fun FlexibleText(
                         fontFamily = font?.let { FontFamily(it) } ?: FontFamily.Default,
                         fontSize = size.sp,
                     )
-                }
+                },
+                lineHeight = lineHeight.sp,
+                overflow = overflow
             )
         }
     }
 }
 
+@Composable
+fun FlexibleText(
+    modifier: Modifier = Modifier,
+    text: String,
+    size: Float,
+    font: Font? = null,
+    textAlign: TextAlign = TextAlign.Start,
+    fillingColors: List<Color> = listOf(MaterialTheme.colorScheme.primary),
+    strokeColors: List<Color> = listOf(),
+    strokeWidth: Float = 2f,
+    shadowColors: List<Color> = listOf(),
+    shadowOffset: Offset = Offset(4f, 4f),
+    shadowSize: Float = 6f,
+    lineHeight: Float = size + 3,
+    overflow: TextOverflow = TextOverflow.Ellipsis
+) {
+    FlexibleAnnotatedText(
+        text = AnnotatedString(text),
+        modifier = modifier, size = size,
+        font = font, textAlign = textAlign, fillingColors = fillingColors,
+        strokeColors = strokeColors, strokeWidth = strokeWidth,
+        shadowColors = shadowColors, shadowOffset = shadowOffset, shadowSize = shadowSize,
+        lineHeight = lineHeight, overflow = overflow
+    )
+}
 
 /** Creates a text with syncplay style */
 @Composable

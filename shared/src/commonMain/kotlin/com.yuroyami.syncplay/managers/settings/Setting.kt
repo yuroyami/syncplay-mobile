@@ -50,12 +50,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.managers.datastore.valueAsState
 import com.yuroyami.syncplay.managers.datastore.writeValue
+import com.yuroyami.syncplay.ui.components.FlexibleIcon
+import com.yuroyami.syncplay.ui.components.FlexibleText
+import com.yuroyami.syncplay.ui.components.MultiChoiceDialog
 import com.yuroyami.syncplay.ui.popups.PopupColorPicker.ColorPickingPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalSettingStyling
 import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.utils.FlexibleText
-import com.yuroyami.syncplay.ui.utils.MultiChoiceDialog
-import com.yuroyami.syncplay.ui.utils.FlexibleIcon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO

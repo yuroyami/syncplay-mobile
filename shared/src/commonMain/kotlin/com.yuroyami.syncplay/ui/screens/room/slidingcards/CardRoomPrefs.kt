@@ -28,11 +28,11 @@ import com.yuroyami.syncplay.managers.settings.SETTINGS_ROOM
 import com.yuroyami.syncplay.managers.settings.SettingCollection
 import com.yuroyami.syncplay.managers.settings.SettingsUI
 import com.yuroyami.syncplay.managers.settings.SettingsUI.SettingsGrid
+import com.yuroyami.syncplay.ui.components.FlexibleIcon
+import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.screens.home.SettingGridState
 import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.utils.FlexibleIcon
-import com.yuroyami.syncplay.ui.utils.FancyText2
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
@@ -50,7 +50,7 @@ object CardRoomPrefs {
 
         LaunchedEffect(null) {
             val commonSettings = SETTINGS_ROOM.toMutableMap()
-            viewmodel.player?.configurableSettings()?.let { playerSpecificSettings ->
+            viewmodel.player.configurableSettings()?.let { playerSpecificSettings ->
                 commonSettings.put(playerSpecificSettings.first, playerSpecificSettings.second)
             }
             roomSettings = commonSettings as SettingCollection
@@ -63,10 +63,10 @@ object CardRoomPrefs {
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.5f)),
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    FancyText2(
+                    FlexibleText(
                         modifier = Modifier.align(TopCenter).padding(6.dp),
-                        string = stringResource(Res.string.room_card_title_in_room_prefs),
-                        solid = Color.Transparent,
+                        text = stringResource(Res.string.room_card_title_in_room_prefs),
+                        fillingColors = Theming.SP_GRADIENT,
                         size = 16f,
                         font = Font(Res.font.Directive4_Regular)
                     )
@@ -74,7 +74,7 @@ object CardRoomPrefs {
                     if (settingState.value == SettingGridState.INSIDE_CATEGORY) {
                         FlexibleIcon(
                             modifier = Modifier.align(TopEnd).padding(6.dp),
-                            icon = Icons.AutoMirrored.Filled.Redo, size = 32, shadowColor = Color.DarkGray,
+                            icon = Icons.AutoMirrored.Filled.Redo, size = 32, shadowColors = listOf(Color.DarkGray),
                             onClick = { settingState.value = SettingGridState.NAVIGATING_CATEGORIES }
                         )
                     }

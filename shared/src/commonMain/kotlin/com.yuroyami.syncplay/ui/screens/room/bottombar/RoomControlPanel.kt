@@ -46,12 +46,12 @@ import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_GESTURES
 import com.yuroyami.syncplay.managers.datastore.valueFlow
 import com.yuroyami.syncplay.managers.datastore.writeValue
 import com.yuroyami.syncplay.managers.player.BasePlayer
+import com.yuroyami.syncplay.ui.components.FlexibleIcon
+import com.yuroyami.syncplay.ui.components.FlexibleText
+import com.yuroyami.syncplay.ui.components.syncplayFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.utils.FlexibleIcon
-import com.yuroyami.syncplay.ui.utils.FancyText2
-import com.yuroyami.syncplay.ui.utils.syncplayFont
 import com.yuroyami.syncplay.utils.ccExs
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
@@ -72,7 +72,7 @@ fun RoomControlPanelButton(modifier: Modifier, popupStateAddMedia: MutableState<
             modifier = modifier,
             icon = Icons.Filled.VideoSettings,
             size = 47,
-            shadowColor = Color.Black,
+            shadowColors = listOf(Color.Black),
             onClick = {
                 popupStateAddMedia.value = false
                 cardController.controlPanel.value = !cardController.controlPanel.value
@@ -92,7 +92,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
     val subtitlePicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = ccExs)) { file ->
         file?.path?.let {
             scope.launch(Dispatchers.IO) {
-                viewmodel.player?.loadExternalSub(it)
+                viewmodel.player.loadExternalSub(it)
             }
         }
     }
@@ -106,13 +106,11 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
         FlexibleIcon(
             icon = Icons.Filled.AspectRatio,
             size = iconSize,
-            shadowColor = Color.Black
+            shadowColors = listOf(Color.Black)
         ) {
             composeScope.launch(Dispatchers.IO) {
-                val newAspectRatio = viewmodel.player?.switchAspectRatio()
-                if (newAspectRatio != null) {
-                    viewmodel.osdManager.dispatchOSD { newAspectRatio }
-                }
+                val newAspectRatio = viewmodel.player.switchAspectRatio()
+                viewmodel.osdManager.dispatchOSD { newAspectRatio }
             }
         }
 
@@ -123,7 +121,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
             icon = when (gesturesEnabled) {
                 true -> Icons.Filled.TouchApp
                 false -> Icons.Filled.DoNotTouch
-            }, size = iconSize, shadowColor = Color.Black
+            }, size = iconSize, shadowColors = listOf(Color.Black)
         ) {
             composeScope.launch(Dispatchers.IO) {
                 writeValue(MISC_GESTURES, !gesturesEnabled)
@@ -135,7 +133,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
         FlexibleIcon(
             icon = Icons.Filled.BrowseGallery,
             size = iconSize,
-            shadowColor = Color.Black
+            shadowColors = listOf(Color.Black)
         ) {
             cardController.controlPanel.value = false
             //TODO seektopopupstate.value = true
@@ -145,7 +143,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
         FlexibleIcon(
             icon = Icons.Filled.History,
             size = iconSize,
-            shadowColor = Color.Black
+            shadowColors = listOf(Color.Black)
         ) {
             if (viewmodel.seeks.isEmpty()) {
                 viewmodel.osdManager.dispatchOSD { "There is no recent seek in the room." }
@@ -156,7 +154,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
 
             val lastSeek = viewmodel.seeks.lastOrNull() ?: return@FlexibleIcon
             scope.launch(Dispatchers.Main.immediate) {
-                viewmodel.player?.seekTo(lastSeek.first)
+                viewmodel.player.seekTo(lastSeek.first)
             }
             viewmodel.actionManager.sendSeek(lastSeek.first)
             viewmodel.seeks.remove(lastSeek)
@@ -170,10 +168,10 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
             FlexibleIcon(
                 icon = Icons.Filled.Subtitles,
                 size = iconSize,
-                shadowColor = Color.Black
+                shadowColors = listOf(Color.Black)
             ) {
                 composeScope.launch {
-                    viewmodel.player?.analyzeTracks(viewmodel.media ?: return@launch)
+                    viewmodel.player.analyzeTracks(viewmodel.media ?: return@launch)
                     tracksPopup.value = true
                 }
             }
@@ -201,10 +199,10 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                     tracksPopup.value = !tracksPopup.value
                 }) {
 
-                FancyText2(
+                FlexibleText(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
-                    string = "Subtitle Track",
-                    solid = Color.Black,
+                    text = "Subtitle Track", //TODO Localize
+                    strokeColors = listOf(Color.Black),
                     size = 14f,
                     font = syncplayFont
                 )
@@ -252,7 +250,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                     },
                     onClick = {
                         scope.launch(Dispatchers.Main.immediate) {
-                            viewmodel.player?.selectTrack(null, BasePlayer.TRACKTYPE.SUBTITLE)
+                            viewmodel.player.selectTrack(null, BasePlayer.TRACKTYPE.SUBTITLE)
                             tracksPopup.value = false
                             cardController.controlPanel.value = false
                         }
@@ -268,7 +266,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                                     checked = track.selected.value,
                                     onCheckedChange = {
                                         scope.launch(Dispatchers.Main.immediate) {
-                                            viewmodel.player?.selectTrack(track, BasePlayer.TRACKTYPE.SUBTITLE)
+                                            viewmodel.player.selectTrack(track, BasePlayer.TRACKTYPE.SUBTITLE)
                                             tracksPopup.value = false
                                         }
                                     })
@@ -281,7 +279,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                         },
                         onClick = {
                             scope.launch(Dispatchers.Main.immediate) {
-                                viewmodel.player?.selectTrack(track, BasePlayer.TRACKTYPE.SUBTITLE)
+                                viewmodel.player.selectTrack(track, BasePlayer.TRACKTYPE.SUBTITLE)
                                 tracksPopup.value = false
                                 cardController.controlPanel.value = false
                             }
@@ -298,10 +296,10 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
             FlexibleIcon(
                 icon = Icons.Filled.SpeakerGroup,
                 size = iconSize,
-                shadowColor = Color.Black
+                shadowColors = listOf(Color.Black)
             ) {
                 viewmodel.viewModelScope.launch {
-                    viewmodel.player?.analyzeTracks(
+                    viewmodel.player.analyzeTracks(
                         viewmodel.media ?: return@launch
                     )
                     tracksPopup.value = true
@@ -331,10 +329,10 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                     tracksPopup.value = !tracksPopup.value
                 }) {
 
-                FancyText2(
+                FlexibleText(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
-                    string = "Audio Track",
-                    solid = Color.Black,
+                    text = "Audio Track", //TODO Localize
+                    strokeColors = listOf(Color.Black),
                     size = 14f,
                     font = syncplayFont
                 )
@@ -347,7 +345,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                                 checked = track.selected.value,
                                 onCheckedChange = {
                                     scope.launch(Dispatchers.Main.immediate) {
-                                        viewmodel.player?.selectTrack(track, BasePlayer.TRACKTYPE.AUDIO)
+                                        viewmodel.player.selectTrack(track, BasePlayer.TRACKTYPE.AUDIO)
                                         tracksPopup.value = false
                                     }
                                 })
@@ -359,7 +357,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                         }
                     }, onClick = {
                         scope.launch(Dispatchers.Main.immediate) {
-                            viewmodel.player?.selectTrack(track, BasePlayer.TRACKTYPE.AUDIO)
+                            viewmodel.player.selectTrack(track, BasePlayer.TRACKTYPE.AUDIO)
                             tracksPopup.value = false
                         }
                     })
@@ -369,17 +367,17 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
 
 
         /* Chapters */
-        if (viewmodel.player?.supportsChapters == true) {
+        if (viewmodel.player.supportsChapters) {
             Box {
                 var chaptersPopup by remember { mutableStateOf(false) }
 
                 FlexibleIcon(
                     icon = Icons.Filled.Theaters,
                     size = iconSize,
-                    shadowColor = Color.Black
+                    shadowColors = listOf(Color.Black)
                 ) {
                     viewmodel.viewModelScope.launch {
-                        viewmodel.player?.analyzeChapters(
+                        viewmodel.player.analyzeChapters(
                             viewmodel.media ?: return@launch
                         )
                         chaptersPopup = !chaptersPopup
@@ -407,10 +405,10 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                     ),
                     onDismissRequest = { chaptersPopup = false }) {
 
-                    FancyText2(
+                    FlexibleText(
                         modifier = Modifier.align(Alignment.CenterHorizontally),
-                        string = "Chapters",
-                        solid = Color.Black,
+                        text = "Chapters", //TODO Localize
+                        strokeColors = listOf(Color.Black),
                         size = 14f,
                         font = syncplayFont
                     )
@@ -426,7 +424,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                         },
                         onClick = {
                             scope.launch(Dispatchers.Main.immediate) {
-                                viewmodel.player?.skipChapter()
+                                viewmodel.player.skipChapter()
                                 chaptersPopup = false
                             }
                         }
@@ -444,7 +442,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                                 }
                             }, onClick = {
                                 scope.launch(Dispatchers.Main.immediate) {
-                                    viewmodel.player?.jumpToChapter(chapter)
+                                    viewmodel.player.jumpToChapter(chapter)
                                     chaptersPopup = false
                                 }
 

@@ -36,9 +36,9 @@ import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kborowy.colorpicker.KolorPicker
+import com.yuroyami.syncplay.ui.components.FlexibleText
+import com.yuroyami.syncplay.ui.components.SyncplayPopup
 import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.utils.FancyText2
-import com.yuroyami.syncplay.ui.utils.SyncplayPopup
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
@@ -71,10 +71,11 @@ object PopupColorPicker {
             ) {
 
                 /* The title */
-                FancyText2(
+                FlexibleText(
                     modifier = Modifier.weight(1f).padding(6.dp),
-                    string = "Pick a Color",
-                    solid = Color.Black,
+                    text = "Pick a Color",
+                    strokeColors = listOf(Color.Black),
+                    fillingColors = Theming.SP_GRADIENT,
                     size = 18f,
                     font = Font(Res.font.Directive4_Regular)
                 )

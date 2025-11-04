@@ -69,14 +69,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
+import com.yuroyami.syncplay.ui.components.FlexibleIcon
+import com.yuroyami.syncplay.ui.components.FlexibleText
+import com.yuroyami.syncplay.ui.components.SyncplayPopup
+import com.yuroyami.syncplay.ui.components.gradientOverlay
+import com.yuroyami.syncplay.ui.components.helveticaFont
 import com.yuroyami.syncplay.ui.popups.PopupMediaDirs.MediaDirsPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.utils.FlexibleIcon
-import com.yuroyami.syncplay.ui.utils.FancyText2
-import com.yuroyami.syncplay.ui.utils.SyncplayPopup
-import com.yuroyami.syncplay.ui.utils.getRegularFont
-import com.yuroyami.syncplay.ui.utils.gradientOverlay
 import com.yuroyami.syncplay.utils.addFolderToPlaylist
 import com.yuroyami.syncplay.utils.loadPlaylistLocally
 import com.yuroyami.syncplay.utils.playlistExs
@@ -168,9 +168,9 @@ object CardSharedPlaylist {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 /* Card title */
-                FancyText2(
-                    string = "Shared Playlist",
-                    solid = Color.Transparent,
+                FlexibleText(
+                    fillingColors = Theming.SP_GRADIENT,
+                    text = "Shared Playlist", //TODO Localize
                     size = 16f,
                     font = Font(Res.font.Directive4_Regular)
                 )
@@ -225,10 +225,11 @@ object CardSharedPlaylist {
                                 ),
                                 onDismissRequest = { itempopup.value = false }) {
 
-                                FancyText2(
+                                FlexibleText(
+                                    fillingColors = Theming.SP_GRADIENT,
+                                    strokeColors = listOf(Color.Black),
                                     modifier = Modifier.align(Alignment.CenterHorizontally),
-                                    string = "Item Actions",
-                                    solid = Color.Black,
+                                    text = "Item Actions", //TODO Localize
                                     size = 12f,
                                     font = Font(Res.font.Directive4_Regular)
                                 )
@@ -274,7 +275,7 @@ object CardSharedPlaylist {
 
                     /* Button to add file to Shared Playlist */
                     FlexibleIcon(
-                        icon = Icons.AutoMirrored.Filled.NoteAdd, size = Theming.ROOM_ICON_SIZE, shadowColor = Color.Black,
+                        icon = Icons.AutoMirrored.Filled.NoteAdd, size = Theming.ROOM_ICON_SIZE, shadowColors = listOf(Color.Black),
                         onClick = {
                             mediaFilePicker.launch()
                         }
@@ -282,7 +283,7 @@ object CardSharedPlaylist {
 
                     /* Button to add link to Shared Playlist */
                     FlexibleIcon(
-                        icon = Icons.Filled.AddLink, size = Theming.ROOM_ICON_SIZE, shadowColor = Color.Black,
+                        icon = Icons.Filled.AddLink, size = Theming.ROOM_ICON_SIZE, shadowColors = listOf(Color.Black),
                         onClick = {
                             addUrlsPopupState.value = true
                         }
@@ -290,7 +291,7 @@ object CardSharedPlaylist {
 
                     /* Button to add folder to Shared Playlist */
                     FlexibleIcon(
-                        icon = Icons.Filled.CreateNewFolder, size = Theming.ROOM_ICON_SIZE, shadowColor = Color.Black,
+                        icon = Icons.Filled.CreateNewFolder, size = Theming.ROOM_ICON_SIZE, shadowColors = listOf(Color.Black),
                         onClick = {
                             mediaDirectoryPicker.launch()
                         }
@@ -301,7 +302,7 @@ object CardSharedPlaylist {
                         val sharedplaylistOverflowState = remember { mutableStateOf(false) }
 
                         FlexibleIcon(
-                            icon = Icons.Filled.MoreVert, size = Theming.ROOM_ICON_SIZE, shadowColor = Color.Black,
+                            icon = Icons.Filled.MoreVert, size = Theming.ROOM_ICON_SIZE, shadowColors = listOf(Color.Black),
                             onClick = {
                                 sharedplaylistOverflowState.value = !sharedplaylistOverflowState.value
                             }
@@ -317,10 +318,11 @@ object CardSharedPlaylist {
                             ),
                             onDismissRequest = { sharedplaylistOverflowState.value = !sharedplaylistOverflowState.value }) {
 
-                            FancyText2(
+                            FlexibleText(
+                                fillingColors = Theming.SP_GRADIENT,
+                                strokeColors = listOf(Color.Black),
                                 modifier = Modifier.align(Alignment.CenterHorizontally),
-                                string = "Shared Playlist Actions",
-                                solid = Color.Black,
+                                text = "Shared Playlist Actions",
                                 size = 13f,
                                 font = Font(Res.font.Directive4_Regular)
                             )
@@ -528,9 +530,9 @@ object CardSharedPlaylist {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 /* The title */
-                FancyText2(
-                    string = "Add URLs to Shared Playlist",
-                    solid = Color.Black,
+                FlexibleText(
+                    text = "Add URLs to Shared Playlist",
+                    strokeColors = listOf(Color.Black),
                     size = 18f,
                     font = Font(Res.font.Directive4_Regular)
                 )
@@ -540,7 +542,7 @@ object CardSharedPlaylist {
                     text = "Each line wil be added as an entry to the shared playlist.\nSyncplay Android supports only direct links for now.",
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 10.sp,
-                    fontFamily = FontFamily(getRegularFont()),
+                    fontFamily = FontFamily(helveticaFont),
                     textAlign = TextAlign.Center,
                     lineHeight = 14.sp
                 )
@@ -574,7 +576,7 @@ object CardSharedPlaylist {
                         brush = Brush.linearGradient(
                             colors = Theming.SP_GRADIENT
                         ),
-                        fontFamily = FontFamily(getRegularFont()),
+                        fontFamily = FontFamily(helveticaFont),
                         fontSize = 16.sp,
                     ),
                     label = {

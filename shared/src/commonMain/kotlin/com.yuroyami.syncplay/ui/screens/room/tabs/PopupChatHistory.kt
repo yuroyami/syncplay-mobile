@@ -30,13 +30,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.yuroyami.syncplay.ui.components.FlexibleAnnotatedText
+import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.screens.adam.LocalChatPalette
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
-import com.yuroyami.syncplay.ui.utils.FancyText2
-import com.yuroyami.syncplay.ui.utils.FlexibleFancyAnnotatedText
-import com.yuroyami.syncplay.ui.utils.SyncplayPopup
+import com.yuroyami.syncplay.ui.components.SyncplayPopup
 import com.yuroyami.syncplay.ui.components.drawVerticalScrollbar
-import com.yuroyami.syncplay.ui.utils.getRegularFont
+import com.yuroyami.syncplay.ui.components.helveticaFont
+import com.yuroyami.syncplay.ui.components.syncplayFont
+import com.yuroyami.syncplay.ui.theme.Theming
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
@@ -68,12 +70,13 @@ object PopupChatHistory {
             ) {
 
                 /* The title */
-                FancyText2(
+                FlexibleText(
                     modifier = Modifier.padding(6.dp),
-                    string = "Chat History",
-                    solid = Color.Black,
+                    text = "Chat History", //TODO Localize
+                    shadowColors = listOf(Color.Black),
+                    fillingColors = Theming.SP_GRADIENT,
                     size = 18f,
-                    font = Font(Res.font.Directive4_Regular)
+                    font = syncplayFont
                 )
 
                 /* The actual messages */
@@ -123,13 +126,13 @@ object PopupChatHistory {
                     modifier = Modifier.weight(1f).background(Color(50, 50, 50, 50)).drawVerticalScrollbar(lazyListState).clipToBounds()
                 ) {
                     items(msgs) { msg ->
+                        //TODO DONT REPEAT 5 TIMES
                         repeat(5) {
-                            FlexibleFancyAnnotatedText(
+                            FlexibleAnnotatedText(
                                 modifier = Modifier.fillMaxWidth(),
                                 text = msg.factorize(palette),
                                 size = 10f,
-                                font = getRegularFont(),
-                                lineHeight = 14.sp,
+                                font = helveticaFont,
                                 overflow = TextOverflow.Ellipsis
                             )
                         }

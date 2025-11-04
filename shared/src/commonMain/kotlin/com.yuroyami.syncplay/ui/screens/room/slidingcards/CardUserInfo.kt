@@ -31,10 +31,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.yuroyami.syncplay.ui.components.FlexibleText
+import com.yuroyami.syncplay.ui.components.gradientOverlay
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.utils.FancyText2
-import com.yuroyami.syncplay.ui.utils.gradientOverlay
 import com.yuroyami.syncplay.utils.timeStamper
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
@@ -55,12 +55,12 @@ object CardUserInfo {
             border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.5f)),
         ) {
-            FancyText2(
+            FlexibleText(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .padding(vertical = 4.dp),
-                string = stringResource(Res.string.room_card_title_user_info),
-                solid = Color.Transparent,
+                text = stringResource(Res.string.room_card_title_user_info),
+                fillingColors = Theming.SP_GRADIENT,
                 size = 18f,
                 font = Font(Res.font.Directive4_Regular)
             )

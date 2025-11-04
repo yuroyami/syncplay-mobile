@@ -17,7 +17,7 @@ import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.theme.Theming.ROOM_ICON_SIZE
-import com.yuroyami.syncplay.ui.utils.FlexibleIcon
+import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -41,7 +41,7 @@ fun RoomPlayButton(modifier: Modifier) {
                 false -> Icons.Filled.PlayArrow
             },
             size = (ROOM_ICON_SIZE * 2.25).roundToInt(),
-            shadowColor = Color.Black,
+            shadowColors = listOf(Color.Black),
             modifier = modifier.background(
                 shape = CircleShape, color = animatedColor
             )

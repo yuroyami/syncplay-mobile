@@ -59,7 +59,7 @@ import com.yuroyami.syncplay.managers.datastore.writeValue
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.ui.popups.PopupDidYaKnow.DidYaKnowPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
-import com.yuroyami.syncplay.ui.utils.FlexibleText
+import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.utils.substringSafely
@@ -227,7 +227,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                 icon = Icons.Outlined.Lan,
                                 value = selectedServer.replace("151.80.32.178", "syncplay.pl"),
                                 dropdownState = expanded,
-                                onValueChange = { s -> }
+                                onValueChange = {}
                             )
 
                             ExposedDropdownMenu(
