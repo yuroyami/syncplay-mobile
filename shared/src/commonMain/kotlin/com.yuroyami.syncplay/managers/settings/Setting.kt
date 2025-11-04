@@ -53,9 +53,9 @@ import com.yuroyami.syncplay.managers.datastore.writeValue
 import com.yuroyami.syncplay.ui.popups.PopupColorPicker.ColorPickingPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalSettingStyling
 import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.utils.FlexibleFancyText
+import com.yuroyami.syncplay.ui.utils.FlexibleText
 import com.yuroyami.syncplay.ui.utils.MultiChoiceDialog
-import com.yuroyami.syncplay.ui.utils.SmartFancyIcon
+import com.yuroyami.syncplay.ui.utils.FlexibleIcon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -123,11 +123,11 @@ sealed class Setting<T>(
 
                 headlineContent = {
                     Row(verticalAlignment = CenterVertically) {
-                        SmartFancyIcon(
+                        FlexibleIcon(
                             tintColors = styling.iconTints,
                             icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
                         )
-                        FlexibleFancyText(
+                        FlexibleText(
                             text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
@@ -199,11 +199,11 @@ sealed class Setting<T>(
                     Row(
                         verticalAlignment = CenterVertically
                     ){
-                        SmartFancyIcon(
+                        FlexibleIcon(
                             tintColors = styling.iconTints,
                             icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
                         )
-                        FlexibleFancyText(
+                        FlexibleText(
                             text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
@@ -255,12 +255,12 @@ sealed class Setting<T>(
                     Row(
                         verticalAlignment = CenterVertically
                     ){
-                        SmartFancyIcon(
+                        FlexibleIcon(
                             tintColors = styling.iconTints,
                             shadowColors = styling.iconShadows,
                             icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
                         )
-                        FlexibleFancyText(
+                        FlexibleText(
                             text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
@@ -344,12 +344,12 @@ sealed class Setting<T>(
                 },
                 headlineContent = {
                     Row(verticalAlignment = CenterVertically) {
-                        SmartFancyIcon(
+                        FlexibleIcon(
                             tintColors = styling.iconTints,
                             shadowColors = styling.iconShadows,
                             icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
                         )
-                        FlexibleFancyText(
+                        FlexibleText(
                             text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
@@ -422,12 +422,12 @@ sealed class Setting<T>(
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 headlineContent = {
                     Row(verticalAlignment = CenterVertically) {
-                        SmartFancyIcon(
+                        FlexibleIcon(
                             tintColors = styling.iconTints,
                             shadowColors = styling.iconShadows,
                             icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
                         )
-                        FlexibleFancyText(
+                        FlexibleText(
                             text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
@@ -481,13 +481,13 @@ sealed class Setting<T>(
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 headlineContent = {
                     Row(verticalAlignment = CenterVertically) {
-                        SmartFancyIcon(
+                        FlexibleIcon(
                             tintColors = styling.iconTints,
                             shadowColors = styling.iconShadows,
                             icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
                         )
 
-                        FlexibleFancyText(
+                        FlexibleText(
                             text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
@@ -568,12 +568,12 @@ sealed class Setting<T>(
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 headlineContent = {
                     Row(verticalAlignment = CenterVertically) {
-                        SmartFancyIcon(
+                        FlexibleIcon(
                             tintColors = styling.iconTints,
                             shadowColors = styling.iconShadows,
                             icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
                         )
-                        FlexibleFancyText(
+                        FlexibleText(
                             text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),
@@ -641,12 +641,12 @@ sealed class Setting<T>(
 
                 headlineContent = {
                     Row(verticalAlignment = CenterVertically) {
-                        SmartFancyIcon(
+                        FlexibleIcon(
                             tintColors = styling.iconTints,
                             shadowColors = styling.iconShadows,
                             icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
                         )
-                        FlexibleFancyText(
+                        FlexibleText(
                             text = stringResource(title),
                             fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
                             strokeColors = styling.titleStroke ?: listOf(),

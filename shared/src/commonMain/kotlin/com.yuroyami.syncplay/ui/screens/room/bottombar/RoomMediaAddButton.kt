@@ -56,7 +56,7 @@ import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.theme.Theming.ROOM_ICON_SIZE
-import com.yuroyami.syncplay.ui.utils.FancyIcon2
+import com.yuroyami.syncplay.ui.utils.FlexibleIcon
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.SyncplayPopup
 import com.yuroyami.syncplay.ui.utils.getRegularFont
@@ -143,7 +143,7 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
             DropdownMenuItem(
                 text = {
                     Row(verticalAlignment = CenterVertically) {
-                        FancyIcon2(
+                        FlexibleIcon(
                             icon = Icons.Filled.CreateNewFolder,
                             size = ROOM_ICON_SIZE,
                             shadowColor = Color.Black
@@ -165,7 +165,7 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
             DropdownMenuItem(
                 text = {
                     Row(verticalAlignment = CenterVertically) {
-                        FancyIcon2(
+                        FlexibleIcon(
                             icon = Icons.Filled.AddLink,
                             size = ROOM_ICON_SIZE,
                             shadowColor = Color.Black
@@ -191,7 +191,7 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
 @Composable
 fun AddVideoButton(modifier: Modifier, expanded: Boolean, onClick: () -> Unit) {
     if (!expanded) {
-        FancyIcon2(
+        FlexibleIcon(
             modifier = modifier,
             icon = Icons.Filled.AddToQueue, size = ROOM_ICON_SIZE + 6, shadowColor = Color.Black,
             onClick = onClick

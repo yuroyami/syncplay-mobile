@@ -41,7 +41,7 @@ import androidx.compose.ui.window.PopupProperties
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.utils.FancyIcon2
+import com.yuroyami.syncplay.ui.utils.FlexibleIcon
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.syncplayFont
 import com.yuroyami.syncplay.utils.platformCallback
@@ -153,7 +153,7 @@ fun RoomTabSection(modifier: Modifier, onShowChatHistory: () -> Unit) {
 
         Box {
             val overflowMenuState = remember { mutableStateOf(false) }
-            FancyIcon2(
+            FlexibleIcon(
                 icon = Icons.Filled.MoreVert,
                 size = 48,
                 shadowColor = Color.Black

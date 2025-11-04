@@ -49,7 +49,7 @@ import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.utils.FancyIcon2
+import com.yuroyami.syncplay.ui.utils.FlexibleIcon
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.syncplayFont
 import com.yuroyami.syncplay.utils.ccExs
@@ -68,7 +68,7 @@ fun RoomControlPanelButton(modifier: Modifier, popupStateAddMedia: MutableState<
     val hasVideo by viewmodel.hasVideo.collectAsState()
 
     if (hasVideo) {
-        FancyIcon2(
+        FlexibleIcon(
             modifier = modifier,
             icon = Icons.Filled.VideoSettings,
             size = 47,
@@ -103,7 +103,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         /* Aspect Ratio */
-        FancyIcon2(
+        FlexibleIcon(
             icon = Icons.Filled.AspectRatio,
             size = iconSize,
             shadowColor = Color.Black
@@ -119,7 +119,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
         /* Seek Gesture (DoNotTouch for disabling it) */
         val gesturesEnabled by valueFlow(MISC_GESTURES, true).collectAsState(initial = true)
 
-        FancyIcon2(
+        FlexibleIcon(
             icon = when (gesturesEnabled) {
                 true -> Icons.Filled.TouchApp
                 false -> Icons.Filled.DoNotTouch
@@ -132,7 +132,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
         }
 
         /* Seek To */
-        FancyIcon2(
+        FlexibleIcon(
             icon = Icons.Filled.BrowseGallery,
             size = iconSize,
             shadowColor = Color.Black
@@ -142,19 +142,19 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
         }
 
         /* Undo Last Seek */
-        FancyIcon2(
+        FlexibleIcon(
             icon = Icons.Filled.History,
             size = iconSize,
             shadowColor = Color.Black
         ) {
             if (viewmodel.seeks.isEmpty()) {
                 viewmodel.osdManager.dispatchOSD { "There is no recent seek in the room." }
-                return@FancyIcon2
+                return@FlexibleIcon
             }
 
             cardController.controlPanel.value = false
 
-            val lastSeek = viewmodel.seeks.lastOrNull() ?: return@FancyIcon2
+            val lastSeek = viewmodel.seeks.lastOrNull() ?: return@FlexibleIcon
             scope.launch(Dispatchers.Main.immediate) {
                 viewmodel.player?.seekTo(lastSeek.first)
             }
@@ -167,7 +167,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
         Box {
             val tracksPopup = remember { mutableStateOf(false) }
 
-            FancyIcon2(
+            FlexibleIcon(
                 icon = Icons.Filled.Subtitles,
                 size = iconSize,
                 shadowColor = Color.Black
@@ -295,7 +295,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
         Box {
             val tracksPopup = remember { mutableStateOf(false) }
 
-            FancyIcon2(
+            FlexibleIcon(
                 icon = Icons.Filled.SpeakerGroup,
                 size = iconSize,
                 shadowColor = Color.Black
@@ -373,7 +373,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
             Box {
                 var chaptersPopup by remember { mutableStateOf(false) }
 
-                FancyIcon2(
+                FlexibleIcon(
                     icon = Icons.Filled.Theaters,
                     size = iconSize,
                     shadowColor = Color.Black

@@ -59,7 +59,7 @@ import com.yuroyami.syncplay.ui.screens.home.PopupAPropos.AProposPopup
 import com.yuroyami.syncplay.ui.theme.ThemeMenu
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.theme.Theming.SP_GRADIENT
-import com.yuroyami.syncplay.ui.utils.SmartFancyIcon
+import com.yuroyami.syncplay.ui.utils.FlexibleIcon
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.vectorResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
@@ -98,7 +98,7 @@ fun HomeTopBar() {
                 trailingContent = {
                     Row(verticalAlignment = CenterVertically) {
                         var themePopupState by remember { mutableStateOf(false) }
-                        SmartFancyIcon(
+                        FlexibleIcon(
                             icon = Icons.Outlined.Palette,
                             size = 38,
                             tintColors = SP_GRADIENT,
@@ -109,7 +109,7 @@ fun HomeTopBar() {
                         )
                         ThemeMenu(themePopupState, onDismiss = { themePopupState = false })
 
-                        SmartFancyIcon(
+                        FlexibleIcon(
                             icon = when (settingState.value) {
                                 SettingGridState.COLLAPSED -> Icons.Filled.Settings
                                 SettingGridState.NAVIGATING_CATEGORIES -> Icons.Filled.Close

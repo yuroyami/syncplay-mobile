@@ -1,4 +1,5 @@
 This folder contains the scripts required to build the **Android native libraries** for mpv (libmpv) used by `syncplay-mobile`.
+
 ⚠️ **Supported platforms:** Linux and macOS
 ❌ **Not supported:** Windows and WSL (even WSL2)
 

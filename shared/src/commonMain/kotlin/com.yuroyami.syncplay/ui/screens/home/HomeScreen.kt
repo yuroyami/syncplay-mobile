@@ -2,6 +2,7 @@ package com.yuroyami.syncplay.ui.screens.home
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -58,7 +59,7 @@ import com.yuroyami.syncplay.managers.datastore.writeValue
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.ui.popups.PopupDidYaKnow.DidYaKnowPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
-import com.yuroyami.syncplay.ui.utils.FlexibleFancyText
+import com.yuroyami.syncplay.ui.utils.FlexibleText
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.utils.substringSafely
@@ -122,11 +123,20 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
             HomeTopBar()
         },
         content = { paddingValues ->
+            val focusManager = LocalFocusManager.current
+
             savedConfig?.let { config ->
                 Column(
                     modifier = Modifier.fillMaxSize()
                         .windowInsetsPadding(BottomAppBarDefaults.windowInsets)
-                        .verticalScroll(rememberScrollState()),
+                        .verticalScroll(rememberScrollState())
+                        .clickable(
+                            interactionSource = null,
+                            indication = null
+                        ) {
+                            //Clicking outside a text field should dismiss the keyboard
+                            focusManager.clearFocus(force = true)
+                        },
                     horizontalAlignment = CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceAround
                 ) {
@@ -150,7 +160,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         modifier = Modifier.wrapContentHeight().fillMaxWidth(),
                         horizontalAlignment = CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        FlexibleFancyText(
+                        FlexibleText(
                             text = stringResource(Res.string.connect_username_a),
                             size = 20f,
                             textAlign = TextAlign.Center,
@@ -172,7 +182,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         modifier = Modifier.wrapContentHeight().fillMaxWidth(),
                         horizontalAlignment = CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        FlexibleFancyText(
+                        FlexibleText(
                             text = stringResource(Res.string.connect_roomname_a),
                             size = 20f,
                             textAlign = TextAlign.Center,
@@ -197,7 +207,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         horizontalAlignment = CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        FlexibleFancyText(
+                        FlexibleText(
                             text = stringResource(Res.string.connect_server_a),
                             size = 20f,
                             textAlign = TextAlign.Center,
@@ -302,7 +312,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         modifier = Modifier.wrapContentHeight().fillMaxWidth(),
                         horizontalAlignment = CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        FlexibleFancyText(
+                        FlexibleText(
                             text = "Choose your video engine", //TODO Localize
                             size = 18f,
                             textAlign = TextAlign.Center,

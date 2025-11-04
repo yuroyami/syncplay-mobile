@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
-import com.yuroyami.syncplay.ui.utils.FlexibleFancyText
+import com.yuroyami.syncplay.ui.utils.FlexibleText
 import com.yuroyami.syncplay.ui.utils.gradientOverlay
 import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.Dispatchers
@@ -179,7 +179,7 @@ fun RoomSeekbar(modifier: Modifier) {
 
                     if (!isSliderBeingDragged) {
                         //Current video position text
-                        FlexibleFancyText(
+                        FlexibleText(
                             modifier = Modifier.alpha(0.85f).padding(horizontal = 8.dp).align(CenterStart),
                             text = currentTimeText,
                             size = 11f,
@@ -188,7 +188,7 @@ fun RoomSeekbar(modifier: Modifier) {
                         )
 
                         //Full video time text
-                        FlexibleFancyText(
+                        FlexibleText(
                             modifier = Modifier.alpha(0.85f).padding(horizontal = 8.dp).align(Alignment.CenterEnd),
                             text = fullTimeText,
                             size = 11f,

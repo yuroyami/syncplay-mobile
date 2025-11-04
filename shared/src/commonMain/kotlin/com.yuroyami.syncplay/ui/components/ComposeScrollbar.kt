@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.ui.utils
+package com.yuroyami.syncplay.ui.components
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween

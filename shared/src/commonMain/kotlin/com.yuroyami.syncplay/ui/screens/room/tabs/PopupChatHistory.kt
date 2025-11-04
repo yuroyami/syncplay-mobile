@@ -35,7 +35,7 @@ import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.FlexibleFancyAnnotatedText
 import com.yuroyami.syncplay.ui.utils.SyncplayPopup
-import com.yuroyami.syncplay.ui.utils.drawVerticalScrollbar
+import com.yuroyami.syncplay.ui.components.drawVerticalScrollbar
 import com.yuroyami.syncplay.ui.utils.getRegularFont
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.Font

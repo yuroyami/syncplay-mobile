@@ -72,7 +72,7 @@ import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.ui.popups.PopupMediaDirs.MediaDirsPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.utils.FancyIcon2
+import com.yuroyami.syncplay.ui.utils.FlexibleIcon
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import com.yuroyami.syncplay.ui.utils.SyncplayPopup
 import com.yuroyami.syncplay.ui.utils.getRegularFont
@@ -273,7 +273,7 @@ object CardSharedPlaylist {
                 ) {
 
                     /* Button to add file to Shared Playlist */
-                    FancyIcon2(
+                    FlexibleIcon(
                         icon = Icons.AutoMirrored.Filled.NoteAdd, size = Theming.ROOM_ICON_SIZE, shadowColor = Color.Black,
                         onClick = {
                             mediaFilePicker.launch()
@@ -281,7 +281,7 @@ object CardSharedPlaylist {
                     )
 
                     /* Button to add link to Shared Playlist */
-                    FancyIcon2(
+                    FlexibleIcon(
                         icon = Icons.Filled.AddLink, size = Theming.ROOM_ICON_SIZE, shadowColor = Color.Black,
                         onClick = {
                             addUrlsPopupState.value = true
@@ -289,7 +289,7 @@ object CardSharedPlaylist {
                     )
 
                     /* Button to add folder to Shared Playlist */
-                    FancyIcon2(
+                    FlexibleIcon(
                         icon = Icons.Filled.CreateNewFolder, size = Theming.ROOM_ICON_SIZE, shadowColor = Color.Black,
                         onClick = {
                             mediaDirectoryPicker.launch()
@@ -300,7 +300,7 @@ object CardSharedPlaylist {
                     Box {
                         val sharedplaylistOverflowState = remember { mutableStateOf(false) }
 
-                        FancyIcon2(
+                        FlexibleIcon(
                             icon = Icons.Filled.MoreVert, size = Theming.ROOM_ICON_SIZE, shadowColor = Color.Black,
                             onClick = {
                                 sharedplaylistOverflowState.value = !sharedplaylistOverflowState.value

@@ -31,7 +31,7 @@ import com.yuroyami.syncplay.managers.settings.SettingsUI.SettingsGrid
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.screens.home.SettingGridState
 import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.utils.FancyIcon2
+import com.yuroyami.syncplay.ui.utils.FlexibleIcon
 import com.yuroyami.syncplay.ui.utils.FancyText2
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
@@ -72,7 +72,7 @@ object CardRoomPrefs {
                     )
 
                     if (settingState.value == SettingGridState.INSIDE_CATEGORY) {
-                        FancyIcon2(
+                        FlexibleIcon(
                             modifier = Modifier.align(TopEnd).padding(6.dp),
                             icon = Icons.AutoMirrored.Filled.Redo, size = 32, shadowColor = Color.DarkGray,
                             onClick = { settingState.value = SettingGridState.NAVIGATING_CATEGORIES }

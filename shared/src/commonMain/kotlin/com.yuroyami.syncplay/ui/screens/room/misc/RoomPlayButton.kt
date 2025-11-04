@@ -17,7 +17,7 @@ import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.theme.Theming.ROOM_ICON_SIZE
-import com.yuroyami.syncplay.ui.utils.FancyIcon2
+import com.yuroyami.syncplay.ui.utils.FlexibleIcon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -35,7 +35,7 @@ fun RoomPlayButton(modifier: Modifier) {
         else Theming.SP_GRADIENT.first().copy(alpha = 0.1f)
     )
     if (hasVideo) {
-        FancyIcon2(
+        FlexibleIcon(
             icon = when (playing.value) {
                 true -> Icons.Filled.Pause
                 false -> Icons.Filled.PlayArrow

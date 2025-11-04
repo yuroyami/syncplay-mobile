@@ -29,7 +29,7 @@ import com.yuroyami.syncplay.managers.datastore.valueFlow
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.theme.Theming.ROOM_ICON_SIZE
-import com.yuroyami.syncplay.ui.utils.FancyIcon2
+import com.yuroyami.syncplay.ui.utils.FlexibleIcon
 import com.yuroyami.syncplay.ui.utils.gradientOverlay
 import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.Dispatchers
@@ -48,7 +48,7 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
 
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         if (!gesturesEnabled) {
-            FancyIcon2(
+            FlexibleIcon(
                 icon = Icons.Filled.FastRewind,
                 size = ROOM_ICON_SIZE + 6,
                 shadowColor = Color.Black
@@ -56,7 +56,7 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
                 viewmodel.actionManager.seekBckwd()
             }
 
-            FancyIcon2(
+            FlexibleIcon(
                 icon = Icons.Filled.FastForward,
                 size = ROOM_ICON_SIZE + 6,
                 shadowColor = Color.Black
