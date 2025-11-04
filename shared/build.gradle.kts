@@ -86,6 +86,7 @@ kotlin {
                 enableLanguageFeature("ExplicitBackingFields")
                 enableLanguageFeature("NestedTypeAliases") //Equivalent to -Xnested-type-aliases compiler flag
                 enableLanguageFeature("ExpectActualClasses") //Equivalent to "-Xexpect-actual-classes compiler flag
+                enableLanguageFeature("ContextParameters")
             }
         }
 

@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.managers.protocol
+package com.yuroyami.syncplay.managers.protocol.creator
 
 import com.yuroyami.syncplay.managers.ProtocolManager
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys

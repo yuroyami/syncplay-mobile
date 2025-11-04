@@ -7,7 +7,7 @@ import com.yuroyami.syncplay.managers.SessionManager.Session
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
 import com.yuroyami.syncplay.managers.datastore.valueBlockingly
 import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
-import com.yuroyami.syncplay.managers.protocol.PacketCreator
+import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.utils.PLATFORM
 import com.yuroyami.syncplay.utils.ProtocolDsl
