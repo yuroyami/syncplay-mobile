@@ -1,5 +1,7 @@
 package com.yuroyami.syncplay.managers.protocol
 
+import com.yuroyami.syncplay.managers.protocol.handler.Set
+
 interface ProtocolCallback {
     fun onSomeonePaused(pauser: String)
 
@@ -34,4 +36,8 @@ interface ProtocolCallback {
     fun onTLSCheck()
 
     suspend fun onReceivedTLS(supported: Boolean)
+
+    fun onNewControlledRoom(data: Set.NewControlledRoom)
+
+    fun onHandleControllerAuth(success: Boolean)
 }

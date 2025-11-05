@@ -8,4 +8,5 @@ data class User(
     var name: String = "", //The name that the user announced to the group
     var readiness: Boolean, //Whether the user marked themself ready or not
     var file: MediaFile?, //The file info which the user is playing, null if none
+    var isController: Boolean //Whether the user controls the managed room or not
 )

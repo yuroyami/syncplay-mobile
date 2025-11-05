@@ -33,13 +33,13 @@ sealed class PacketCreator {
                     put("name", roomname)
                 })
 
-                put("version", "1.7.0")
+                put("version", "1.7.3")
                 put("features", buildJsonObject {
                     put("sharedPlaylists", true)
                     put("chat", true)
                     put("featureList", true)
                     put("readiness", true)
-                    put("managedRooms", false)
+                    put("managedRooms", true)
                 })
             }
 
@@ -257,6 +257,40 @@ sealed class PacketCreator {
 
             val set = buildJsonObject {
                 put("Set", playlistIndex)
+            }
+
+            return Json.encodeToString(set)
+        }
+    }
+
+    class ControllerAuth: PacketCreator() {
+        var room: String = ""
+        var password: String = ""
+
+        override fun build(): String {
+            val controllerAuth = buildJsonObject {
+                put("room", room)
+                put("password", password)
+            }
+
+            val set = buildJsonObject {
+                put("Set", controllerAuth)
+            }
+
+            return Json.encodeToString(set)
+        }
+    }
+
+    class RoomChange: PacketCreator() {
+        var room: String = ""
+
+        override fun build(): String {
+            val room = buildJsonObject {
+                put("name", room)
+            }
+
+            val set = buildJsonObject {
+                put("Set", room)
             }
 
             return Json.encodeToString(set)

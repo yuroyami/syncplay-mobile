@@ -25,6 +25,10 @@ class SessionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) 
 
     var session: Session = Session()
 
+    val supportsChat = MutableStateFlow(true)
+    val supportsManagedRooms = MutableStateFlow(false)
+    val isManagedRoom = MutableStateFlow(false)
+
     override fun invalidate() {
         session = Session() //invalidates the session and replaces it with a new empty one
     }
@@ -38,6 +42,11 @@ class SessionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) 
         var currentPassword: String = ""
 
         var roomFeatures: RoomFeatures = RoomFeatures()
+            set(value) {
+                supportsChat.value = value.supportsChat
+                supportsManagedRooms.value = value.supportsManagedRooms
+                field = value
+            }
 
         /** Variable that stores all users that exist within the room */
         val userList = MutableStateFlow(listOf<User>())

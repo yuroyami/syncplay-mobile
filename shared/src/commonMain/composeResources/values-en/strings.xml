@@ -101,6 +101,9 @@
     <string name="room_addmedia_online">From a network URL</string>
     <string name="room_addmedia_online_url">URL address</string>
     <string name="room_overflow_title">More Options...</string>
+    <string name="room_overflow_create_managed_room">Create managed room</string>
+    <string name="room_overflow_create_managed_room_tooltip">Create managed room</string>
+    <string name="room_overflow_identify_as_operator">Identify as room operator</string>
     <string name="room_overflow_pip">Picture-in-Picture</string>
     <string name="room_overflow_msghistory">Chat History</string>
     <string name="room_overflow_toggle_nightmode">Toggle night-mode</string>
@@ -108,6 +111,8 @@
     <string name="room_card_title_user_info">User info</string>
     <string name="room_card_title_in_room_prefs">In-room Preferences</string>
     <string name="room_audio_track_not_found">No audio found !</string>
+
+
 
     <!-- Media Directories -->
     <string name="media_directories">Media Directories for Shared Playlist</string>
@@ -281,4 +286,8 @@
     <string name="room_shared_playlist_changed">%1$s changed the playlist current selection</string>
     <string name="room_custom_skip_button">Skip %1$s</string>
     <string name="media_directories_setting_summary">Syncplay will search any media directories you specify here in order to find a name that a shared playlist is playing.</string>
+
+    <string name="room_on_newcontrolledroom">Created managed room '%1$s' with password '%2$s'. Please save this information for future reference!\nIn managed rooms everyone is kept in sync with the room operator(s) who are the only ones who can pause, unpause, seek, and change the playlist.\You should ask regular viewers to join the room '%1$s' but the room operators can join the room '%1$s:%2$s' to automatically authenticate themselves.</string>
+    <string name="room_on_controller_auth_success">%1$s authenticated as a room operator</string>
+    <string name="room_on_controller_auth_failed">%1$s failed to identify as a room operator</string>
 </resources>

@@ -39,7 +39,8 @@ data class List(
                                 fileSize = fileData.size?.toString() ?: ""
                             }
                         } else null
-                    }
+                    },
+                    isController = userData.controller
                 )
 
                 newList.add(user)
@@ -59,6 +60,7 @@ data class List(
     @Serializable
     data class UserData(
         val isReady: Boolean? = null,
-        val file: FileData? = null
+        val file: FileData? = null,
+        val controller: Boolean = false
     )
 }

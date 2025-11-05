@@ -4,8 +4,9 @@ import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
 import com.yuroyami.syncplay.managers.datastore.valueBlockingly
-import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator
 import com.yuroyami.syncplay.managers.protocol.ProtocolCallback
+import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator
+import com.yuroyami.syncplay.managers.protocol.handler.Set
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timeStamper
@@ -24,6 +25,9 @@ import syncplaymobile.shared.generated.resources.room_guy_left
 import syncplaymobile.shared.generated.resources.room_guy_paused
 import syncplaymobile.shared.generated.resources.room_guy_played
 import syncplaymobile.shared.generated.resources.room_isplayingfile
+import syncplaymobile.shared.generated.resources.room_on_controller_auth_failed
+import syncplaymobile.shared.generated.resources.room_on_controller_auth_success
+import syncplaymobile.shared.generated.resources.room_on_newcontrolledroom
 import syncplaymobile.shared.generated.resources.room_rewinded
 import syncplaymobile.shared.generated.resources.room_seeked
 import syncplaymobile.shared.generated.resources.room_shared_playlist_changed
@@ -34,14 +38,16 @@ import syncplaymobile.shared.generated.resources.room_you_joined_room
 
 class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel), ProtocolCallback {
 
+    val broadcaster = viewmodel.actionManager
+
     override fun onSomeonePaused(pauser: String) {
         loggy("SYNCPLAY Protocol: Someone ($pauser) paused.")
 
         if (pauser != viewmodel.session.currentUsername) {
-            viewmodel.actionManager.pausePlayback()
+            broadcaster.pausePlayback()
         }
 
-        viewmodel.actionManager.broadcastMessage(
+        broadcaster.broadcastMessage(
             message = { getString(Res.string.room_guy_paused, pauser, timeStamper(viewmodel.protocolManager.globalPositionMs)) },
             isChat = false
         )
@@ -51,35 +57,35 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         loggy("SYNCPLAY Protocol: Someone ($player) unpaused.")
 
         if (player != viewmodel.session.currentUsername) {
-            viewmodel.actionManager.playPlayback()
+            broadcaster.playPlayback()
         }
 
-        viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_guy_played, player) }, isChat = false)
+        broadcaster.broadcastMessage(message = { getString(Res.string.room_guy_played, player) }, isChat = false)
     }
 
     override fun onChatReceived(chatter: String, chatmessage: String) {
         loggy("SYNCPLAY Protocol: $chatter sent: $chatmessage")
 
-        viewmodel.actionManager.broadcastMessage(message = { chatmessage }, isChat = true, chatter = chatter)
+        broadcaster.broadcastMessage(message = { chatmessage }, isChat = true, chatter = chatter)
     }
 
     override fun onSomeoneJoined(joiner: String) {
         loggy("SYNCPLAY Protocol: $joiner joined the room.")
 
-        viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_guy_joined, joiner) }, isChat = false)
+        broadcaster.broadcastMessage(message = { getString(Res.string.room_guy_joined, joiner) }, isChat = false)
     }
 
     override fun onSomeoneLeft(leaver: String) {
         loggy("SYNCPLAY Protocol: $leaver left the room.")
 
-        viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_guy_left,leaver) }, isChat = false)
+        broadcaster.broadcastMessage(message = { getString(Res.string.room_guy_left,leaver) }, isChat = false)
 
         /* If the setting is enabled, pause playback **/
         viewmodel.viewModelScope.launch(Dispatchers.Main) {
             if (viewmodel.player.hasMedia()) {
                 val pauseOnLeft = valueBlockingly(PREF_PAUSE_ON_SOMEONE_LEAVE, true)
                 if (pauseOnLeft) {
-                    viewmodel.actionManager.pausePlayback()
+                    broadcaster.pausePlayback()
                 }
             }
         }
@@ -107,7 +113,7 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
                 viewmodel.player.seekTo(newPosMs)
             }
 
-            viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_seeked, seeker, timeStamper(oldPosMs), timeStamper(newPosMs)) }, isChat = false)
+            broadcaster.broadcastMessage(message = { getString(Res.string.room_seeked, seeker, timeStamper(oldPosMs), timeStamper(newPosMs)) }, isChat = false)
         }
     }
 
@@ -118,7 +124,7 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
             viewmodel.player.seekTo((toPosition * 1000L).toLong())
         }
 
-        viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_rewinded,behinder) }, isChat = false)
+        broadcaster.broadcastMessage(message = { getString(Res.string.room_rewinded,behinder) }, isChat = false)
     }
 
    override fun onReceivedList() {
@@ -128,7 +134,7 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     override fun onSomeoneLoadedFile(person: String, file: String?, fileduration: Double?) {
         loggy("SYNCPLAY Protocol: $person loaded: $file - Duration: $fileduration")
 
-        viewmodel.actionManager.broadcastMessage(
+        broadcaster.broadcastMessage(
             message = { getString(Res.string.room_isplayingfile,
                 person,
                 file ?: "",
@@ -150,7 +156,7 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
 
         /** Telling user that the playlist has been updated/changed **/
         if (user == "") return
-        viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_shared_playlist_updated,user) }, isChat = false)
+        broadcaster.broadcastMessage(message = { getString(Res.string.room_shared_playlist_updated,user) }, isChat = false)
     }
 
    override fun onPlaylistIndexChanged(user: String, index: Int) {
@@ -163,7 +169,7 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
 
         /** Telling user that the playlist selection/index has been changed **/
         if (user == "") return
-       viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_shared_playlist_changed,user) }, isChat = false)
+       broadcaster.broadcastMessage(message = { getString(Res.string.room_shared_playlist_changed,user) }, isChat = false)
     }
 
     override suspend fun onConnected() {
@@ -183,10 +189,10 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
 
 
         /** Telling user that they're connected **/
-        viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_connected_to_server) }, isChat = false)
+        broadcaster.broadcastMessage(message = { getString(Res.string.room_connected_to_server) }, isChat = false)
 
         /** Telling user which room they joined **/
-        viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_you_joined_room,viewmodel.session.currentRoom) }, isChat = false)
+        broadcaster.broadcastMessage(message = { getString(Res.string.room_you_joined_room,viewmodel.session.currentRoom) }, isChat = false)
 
         /** Resubmit any ongoing file being played **/
         if (viewmodel.media != null) {
@@ -207,7 +213,7 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         loggy("SYNCPLAY Protocol: Attempting connection...")
 
         /** Telling user that a connection attempt is on **/
-        viewmodel.actionManager.broadcastMessage(
+        broadcaster.broadcastMessage(
             message =
                 { getString(Res.string.room_attempting_connect,
                     if (viewmodel.session.serverHost == "151.80.32.178") "syncplay.pl" else viewmodel.session.serverHost,
@@ -224,7 +230,7 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         viewmodel.networkManager.state = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
 
         /** Telling user that connection has failed **/
-        viewmodel.actionManager.broadcastMessage(
+        broadcaster.broadcastMessage(
             message = { getString(Res.string.room_connection_failed) },
             isChat = false, isError = true
         )
@@ -240,7 +246,7 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         viewmodel.networkManager.state = Constants.CONNECTIONSTATE.STATE_DISCONNECTED
 
         /** Telling user that the connection has been lost **/
-       viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_attempting_reconnection) }, isChat = false, isError = true)
+       broadcaster.broadcastMessage(message = { getString(Res.string.room_attempting_reconnection) }, isChat = false, isError = true)
 
         /** Attempting reconnection **/
         viewmodel.networkManager.reconnect()
@@ -250,7 +256,7 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         loggy("SYNCPLAY Protocol: Checking TLS...")
 
         /** Telling user that the app is checking whether the chosen server supports TLS **/
-        viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_attempting_tls) }, isChat = false)
+        broadcaster.broadcastMessage(message = { getString(Res.string.room_attempting_tls) }, isChat = false)
     }
 
     override suspend fun onReceivedTLS(supported: Boolean) {
@@ -258,11 +264,11 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
 
         /** Deciding next step based on whether the server supports TLS or not **/
         if (supported) {
-            viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_tls_supported) }, isChat = false)
+            broadcaster.broadcastMessage(message = { getString(Res.string.room_tls_supported) }, isChat = false)
             viewmodel.networkManager.tls = Constants.TLS.TLS_YES
             viewmodel.networkManager.upgradeTls()
         } else {
-            viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_tls_not_supported) }, isChat = false, isError = true)
+            broadcaster.broadcastMessage(message = { getString(Res.string.room_tls_not_supported) }, isChat = false, isError = true)
             viewmodel.networkManager.tls = Constants.TLS.TLS_NO
         }
 
@@ -271,5 +277,29 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
             roomname = viewmodel.session.currentRoom
             serverPassword = viewmodel.session.currentPassword
         }
+    }
+
+    override fun onNewControlledRoom(data: Set.NewControlledRoom) {
+        broadcaster.broadcastMessage(
+            message = {
+                getString(Res.string.room_on_newcontrolledroom, data.roomName, data.password)
+            }, isChat = false
+        )
+    }
+
+    override fun onHandleControllerAuth(success: Boolean) {
+        broadcaster.broadcastMessage(
+            message = {
+                getString(
+                    when (success) {
+                        true -> Res.string.room_on_controller_auth_success
+                        false -> Res.string.room_on_controller_auth_failed
+                    },
+                    viewmodel.session.currentUsername
+                )
+            },
+            isChat = false,
+            isError = !success
+        )
     }
 }

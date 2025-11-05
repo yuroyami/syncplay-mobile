@@ -32,7 +32,9 @@ import com.yuroyami.syncplay.ui.screens.room.misc.RoomPlayButton
 import com.yuroyami.syncplay.ui.screens.room.slidingcards.RoomSectionSlidingCards
 import com.yuroyami.syncplay.ui.screens.room.statinfo.RoomStatusInfoSection
 import com.yuroyami.syncplay.ui.screens.room.tabs.CardController
-import com.yuroyami.syncplay.ui.screens.room.tabs.PopupChatHistory.ChatHistoryPopup
+import com.yuroyami.syncplay.ui.screens.room.tabs.ChatHistoryPopup
+import com.yuroyami.syncplay.ui.screens.room.tabs.ManagedRoomPopup
+import com.yuroyami.syncplay.ui.screens.room.tabs.ManagedRoomPopupPurpose
 import com.yuroyami.syncplay.ui.screens.room.tabs.RoomTabSection
 import com.yuroyami.syncplay.ui.screens.room.tabs.RoomUnlockableLayout
 import com.yuroyami.syncplay.utils.HideSystemBars
@@ -55,7 +57,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
     val cardController = remember { CardController() }
     val lockedMode by cardController.tabLock.collectAsState()
 
-    val popupStateChatHistory = remember { mutableStateOf(false) }
+    val popupStateChatHistory by viewmodel.uiManager.popupChatHistory.collectAsState()
     val popupStateSeekToPosition = remember { mutableStateOf(false) }
 
     CompositionLocalProvider(
@@ -105,10 +107,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
 
                         /* Tab section (top to the right): Has the row of tabs (but not the actual cards that slide in when tabs are clicked) */
                         RoomTabSection(
-                            modifier = Modifier.align(Alignment.TopEnd).fillMaxWidth(0.38f).padding(8.dp),
-                            onShowChatHistory = {
-                                popupStateChatHistory.value = true
-                            }
+                            modifier = Modifier.align(Alignment.TopEnd).fillMaxWidth(0.38f).padding(8.dp)
                         )
 
                         /* Card section (to the right middle) */
@@ -143,16 +142,20 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
         }
 
         /** Popups */
-        if (!soloMode) ChatHistoryPopup(visibilityState = popupStateChatHistory)
+        if (!soloMode) ChatHistoryPopup()
         SeekToPositionPopup(visibilityState = popupStateSeekToPosition)
+        ManagedRoomPopup(ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM)
+        ManagedRoomPopup(ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR)
 
         LaunchedEffect(Unit) {
             if (!soloMode) {
                 /* Starts ping updates when not in solo mode.
-         * Uses withContext(Dispatchers.IO) to tie the ping coroutine to the composition scope,
-         * ensuring that if composition is cancelled (room is exited), ping updating is cancelled as well. */
-                withContext(Dispatchers.IO) {
-                    viewmodel.beginPingUpdate()
+                * Uses withContext(Dispatchers.IO) to tie the ping coroutine to the composition scope,
+                * ensuring that if composition is cancelled (room is exited), ping updating is cancelled as well. */
+                runCatching {
+                    withContext(Dispatchers.IO) {
+                        viewmodel.beginPingUpdate()
+                    }
                 }
             }
         }

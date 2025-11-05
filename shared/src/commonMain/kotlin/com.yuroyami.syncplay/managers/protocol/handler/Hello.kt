@@ -15,6 +15,7 @@ data class Hello(@SerialName("Hello") val hello: HelloData): SyncplayMessage {
         }
 
         packetHandler.viewmodel.session.roomFeatures = hello.features
+
         packetHandler.sender.send<PacketCreator.Joined> {
             roomname = packetHandler.viewmodel.session.currentRoom
         }

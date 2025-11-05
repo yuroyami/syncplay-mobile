@@ -20,7 +20,8 @@ data class Set(
                 set.user != null -> handleUserSet(set.user)
                 set.playlistIndex != null -> handlePlaylistIndex(set.playlistIndex)
                 set.playlistChange != null -> handlePlaylistChange(set.playlistChange)
-                // Handle other set types as needed
+                set.newControlledRoom != null -> handleNewControlledRoom(set.newControlledRoom)
+                set.controllerAuth != null -> handleControllerAuth(set.controllerAuth)
             }
         }
 
@@ -32,8 +33,8 @@ data class Set(
     data class SetData(
         val user: JsonObject? = null,
         val room: JsonElement? = null,
-        val controllerAuth: JsonElement? = null,
-        val newControlledRoom: JsonElement? = null,
+        val controllerAuth: ControllerAuthResponse? = null,
+        val newControlledRoom: NewControlledRoom? = null,
         val ready: JsonElement? = null,
         val playlistIndex: PlaylistIndexData? = null,
         val playlistChange: PlaylistChangeData? = null,
@@ -51,19 +52,6 @@ data class Set(
         val user: String? = null,
         val files: kotlin.collections.List<String>? = null
     )
-
-    @Serializable
-    data class UserEventData(
-        val event: UserEvent? = null,
-        val file: FileData? = null
-    )
-
-    @Serializable
-    data class UserEvent(
-        val left: JsonElement? = null,
-        val joined: JsonElement? = null
-    )
-
 
     private fun PacketHandler.handleUserSet(userObject: JsonObject) {
         val userName = userObject.keys.firstOrNull() ?: return
@@ -92,6 +80,18 @@ data class Set(
         }
     }
 
+    @Serializable
+    data class UserEventData(
+        val event: UserEvent? = null,
+        val file: FileData? = null
+    )
+
+    @Serializable
+    data class UserEvent(
+        val left: JsonElement? = null,
+        val joined: JsonElement? = null
+    )
+
     private fun PacketHandler.handlePlaylistIndex(playlistIndex: PlaylistIndexData) {
         val user = playlistIndex.user ?: return
         val index = playlistIndex.index ?: return
@@ -107,5 +107,39 @@ data class Set(
         viewmodel.session.sharedPlaylist.clear()
         viewmodel.session.sharedPlaylist.addAll(files)
         callback.onPlaylistUpdated(user)
+    }
+
+    @Serializable
+    @SerialName("newControlledRoom")
+    data class NewControlledRoom(
+        val password: String,
+        val roomName: String
+    )
+
+    @Serializable
+    @SerialName("controllerAuth")
+    data class ControllerAuthResponse(
+        val room: String,
+        val password: String,
+        val success: Boolean
+    )
+
+    private suspend fun PacketHandler.handleNewControlledRoom(data: NewControlledRoom) {
+        callback.onNewControlledRoom(data)
+
+        viewmodel.networkManager.send<PacketCreator.RoomChange> {
+            room = data.roomName
+        }
+
+        viewmodel.networkManager.send<PacketCreator.ControllerAuth> {
+            room = data.roomName
+            password = data.password
+        }
+    }
+
+    private fun PacketHandler.handleControllerAuth(data: ControllerAuthResponse) {
+        if (data.success) {
+
+        }
     }
 }

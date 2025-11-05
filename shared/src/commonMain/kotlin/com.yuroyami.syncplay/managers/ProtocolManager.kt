@@ -1,8 +1,10 @@
 package com.yuroyami.syncplay.managers
 
 import com.yuroyami.syncplay.AbstractManager
+import com.yuroyami.syncplay.managers.protocol.PingService
 import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator
 import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator.Chat
+import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator.ControllerAuth
 import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator.EmptyList
 import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator.File
 import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator.Hello
@@ -13,7 +15,6 @@ import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator.Readiness
 import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator.State
 import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator.TLS
 import com.yuroyami.syncplay.managers.protocol.handler.PacketHandler
-import com.yuroyami.syncplay.managers.protocol.PingService
 import com.yuroyami.syncplay.utils.ProtocolDsl
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 
@@ -49,6 +50,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
                 State::class -> State(protocolManager) as T
                 PlaylistChange::class -> PlaylistChange() as T
                 PlaylistIndex::class -> PlaylistIndex() as T
+                ControllerAuth::class -> ControllerAuth() as T
                 TLS::class -> TLS() as T
                 else -> throw IllegalArgumentException("Unknown packet type: ${T::class.simpleName}")
             }

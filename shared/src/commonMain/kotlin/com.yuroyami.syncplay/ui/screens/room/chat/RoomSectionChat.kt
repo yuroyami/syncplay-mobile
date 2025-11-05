@@ -63,15 +63,17 @@ import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_type_message
 
-
 @Composable
 fun RoomChatSection(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
+    val isChatSupported by viewmodel.sessionManager.supportsChat.collectAsState()
 
-    Column(modifier = modifier) {
-        ChatTextField(viewmodel = viewmodel, modifier = Modifier.fillMaxWidth())
+    if (isChatSupported) {
+        Column(modifier = modifier) {
+            ChatTextField(viewmodel = viewmodel, modifier = Modifier.fillMaxWidth())
 
-        ChatBox(viewmodel = viewmodel, modifier = Modifier.fillMaxSize())
+            ChatBox(viewmodel = viewmodel, modifier = Modifier.fillMaxSize())
+        }
     }
 }
 
