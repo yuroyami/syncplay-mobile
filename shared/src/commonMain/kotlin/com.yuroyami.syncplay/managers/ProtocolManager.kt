@@ -12,6 +12,7 @@ import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator.Joined
 import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator.PlaylistChange
 import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator.PlaylistIndex
 import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator.Readiness
+import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator.RoomChange
 import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator.State
 import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator.TLS
 import com.yuroyami.syncplay.managers.protocol.handler.PacketHandler
@@ -51,6 +52,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
                 PlaylistChange::class -> PlaylistChange() as T
                 PlaylistIndex::class -> PlaylistIndex() as T
                 ControllerAuth::class -> ControllerAuth() as T
+                RoomChange::class -> RoomChange() as T
                 TLS::class -> TLS() as T
                 else -> throw IllegalArgumentException("Unknown packet type: ${T::class.simpleName}")
             }

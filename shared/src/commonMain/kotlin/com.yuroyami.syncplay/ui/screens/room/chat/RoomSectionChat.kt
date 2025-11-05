@@ -155,7 +155,7 @@ fun ChatTextField(
         onValueChange = { msg = it },
         visualTransformation = VisualTransformation { text ->
             val annotatedString = buildAnnotatedString {
-                text.text.forEachIndexed { index, char ->
+                text.text.forEach { char ->
                     if (!char.isEmoji()) {
                         withStyle(style = SpanStyle(brush = gradientBrush)) {
                             append(char)
@@ -211,7 +211,7 @@ fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel) {
                     text = chatMessage.factorize(LocalChatPalette.current),
                     size = /* TODO if (pipModeObserver) 6f else*/ (msgFontSize.value.toFloat()),
                     shadowColors = if (msgShadow) listOf(Color.Black) else listOf(),
-                    strokeColors = if (msgOutline)listOf(Color.Black) else listOf(),
+                    strokeColors = if (msgOutline) listOf(Color.Black, Color.Black) else listOf(),
                 )
             }
         }

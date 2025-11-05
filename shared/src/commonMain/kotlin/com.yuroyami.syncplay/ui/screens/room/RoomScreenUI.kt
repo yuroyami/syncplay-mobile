@@ -73,8 +73,8 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
             val playerIsReady by viewmodel.playerManager.isPlayerReady.collectAsState()
             if (playerIsReady) {
                 viewmodel.player.VideoPlayer(
-                    //The video composable has to be alive at all times, we just hide it when there's no video
-                    modifier = Modifier.fillMaxSize().alpha(if (hasVideo) 1f else 0f)
+                    modifier = Modifier.fillMaxSize().alpha(if (hasVideo) 1f else 0f) //The video composable has to be alive at all times, we just hide it when there's no video
+
                 )
             }
 

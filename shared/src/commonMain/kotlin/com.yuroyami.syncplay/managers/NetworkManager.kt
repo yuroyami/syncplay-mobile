@@ -23,6 +23,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.json.Json
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
 
@@ -138,7 +139,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     suspend inline fun <reified T : PacketCreator> send(noinline init: suspend T.() -> Unit = {}) {
         val packetInstance = createPacketInstance<T>(protocolManager = viewmodel.protocolManager)
         init(packetInstance)
-        val jsonPacket = packetInstance.build()
+        val jsonPacket = Json.encodeToString(packetInstance.build())
         transmitPacket(jsonPacket, packetClass = T::class)
     }
 

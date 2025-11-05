@@ -188,9 +188,9 @@ class SyncplayActivity : ComponentActivity() {
             }
         }
 
-//        Thread.setDefaultUncaughtExceptionHandler { t, t2 ->
-//            loggy(t2.stackTraceToString())
-//        }
+        Thread.setDefaultUncaughtExceptionHandler { t, t2 ->
+            loggy(t2.stackTraceToString())
+        }
     }
 
     override fun attachBaseContext(newBase: Context?) {

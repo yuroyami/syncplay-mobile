@@ -127,19 +127,17 @@ data class Set(
     private suspend fun PacketHandler.handleNewControlledRoom(data: NewControlledRoom) {
         callback.onNewControlledRoom(data)
 
-        viewmodel.networkManager.send<PacketCreator.RoomChange> {
-            room = data.roomName
-        }
+//        viewmodel.networkManager.send<PacketCreator.RoomChange> {
+//            room = data.roomName
+//        }
 
-        viewmodel.networkManager.send<PacketCreator.ControllerAuth> {
-            room = data.roomName
-            password = data.password
-        }
+//        viewmodel.networkManager.send<PacketCreator.ControllerAuth> {
+//            room = data.roomName
+//            password = data.password
+//        }
     }
 
     private fun PacketHandler.handleControllerAuth(data: ControllerAuthResponse) {
-        if (data.success) {
-
-        }
+        callback.onHandleControllerAuth(data.success)
     }
 }

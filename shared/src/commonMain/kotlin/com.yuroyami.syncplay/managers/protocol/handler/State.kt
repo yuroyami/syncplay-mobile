@@ -1,7 +1,6 @@
 package com.yuroyami.syncplay.managers.protocol.handler
 
 import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator
-import com.yuroyami.syncplay.utils.loggy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
@@ -92,8 +91,8 @@ data class State(
                 protocol.globalPositionMs = position * 1000L
                 if (!paused) protocol.globalPositionMs += messageAge //Account for network drift
 
-                loggy("GLOBAL_POSITION_MS: ${protocol.globalPositionMs}")
-                loggy("msgAge: $messageAge")
+                //loggy("GLOBAL_POSITION_MS: ${protocol.globalPositionMs}")
+                //loggy("msgAge: $messageAge")
 
                 if (lastGlobalUpdate == null) {
                     if (protocol.viewmodel.playerManager.media.value != null) {

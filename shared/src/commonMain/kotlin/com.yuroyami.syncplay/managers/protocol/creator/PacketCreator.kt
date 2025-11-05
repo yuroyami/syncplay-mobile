@@ -6,14 +6,15 @@ import com.yuroyami.syncplay.managers.datastore.valueBlockingly
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.utils.generateTimestampMillis
 import com.yuroyami.syncplay.utils.md5
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
+import kotlinx.serialization.json.putJsonObject
 
 sealed class PacketCreator {
-    abstract fun build(): String
+    abstract fun build(): JsonElement
 
     // Packet type definitions as sealed subclasses
     class Hello : PacketCreator() {
@@ -21,8 +22,8 @@ sealed class PacketCreator {
         var roomname: String = ""
         var serverPassword: String = ""
 
-        override fun build(): String {
-            val hello = buildJsonObject {
+        override fun build() = buildJsonObject {
+            putJsonObject("Hello") {
                 put("username", username)
 
                 if (serverPassword.isNotEmpty()) {
@@ -42,50 +43,29 @@ sealed class PacketCreator {
                     put("managedRooms", true)
                 })
             }
-
-            val wrapper = buildJsonObject {
-                put("Hello", hello)
-            }
-
-            return Json.encodeToString(wrapper)
         }
     }
 
     class Joined : PacketCreator() {
         var roomname: String = ""
 
-        override fun build(): String {
-            val event = buildJsonObject {
-                put("joined", true)
+        override fun build() = buildJsonObject {
+            putJsonObject("Set") {
+                putJsonObject(roomname) {
+                    putJsonObject("room") {
+                        put("name", roomname)
+                    }
+                    putJsonObject("event") {
+                        put("joined", true)
+                    }
+                }
             }
-
-            val room = buildJsonObject {
-                put("name", roomname)
-            }
-
-            val username = buildJsonObject {
-                put("room", room)
-                put("event", event)
-            }
-
-            val user = buildJsonObject {
-                put(roomname, username)
-            }
-
-            val wrapper = buildJsonObject {
-                put("Set", user)
-            }
-
-            return Json.encodeToString(wrapper)
         }
     }
 
     class EmptyList : PacketCreator() {
-        override fun build(): String {
-            val emptylist = buildJsonObject {
-                putJsonArray("List") {}
-            }
-            return Json.encodeToString(emptylist)
+        override fun build() = buildJsonObject {
+            putJsonArray("List") {}
         }
     }
 
@@ -93,73 +73,54 @@ sealed class PacketCreator {
         var isReady: Boolean = false
         var manuallyInitiated: Boolean = false
 
-        override fun build(): String {
-            val ready = buildJsonObject {
-                put("isReady", isReady)
-                put("manuallyInitiated", manuallyInitiated)
+        override fun build() = buildJsonObject {
+            putJsonObject("Set") {
+                putJsonObject("ready") {
+                    put("isReady", isReady)
+                    put("manuallyInitiated", manuallyInitiated)
+                }
             }
-
-            val setting = buildJsonObject {
-                put("ready", ready)
-            }
-
-            val wrapper = buildJsonObject {
-                put("Set", setting)
-            }
-
-            return Json.encodeToString(wrapper)
         }
     }
 
     class File : PacketCreator() {
         var media: MediaFile? = null
 
-        override fun build(): String {
+        override fun build() = buildJsonObject {
             requireNotNull(media) { "Media file must be provided" }
 
-            /** Checking whether file name or file size have to be hashed **/
-            val nameBehavior = valueBlockingly(DataStoreKeys.PREF_HASH_FILENAME, "1")
-            val sizeBehavior = valueBlockingly(DataStoreKeys.PREF_HASH_FILESIZE, "1")
+            putJsonObject("Set") {
+                putJsonObject("file") {
+                    /* First, Checking whether file name or file size have to be hashed **/
+                    val nameBehavior = valueBlockingly(DataStoreKeys.PREF_HASH_FILENAME, "1")
+                    val sizeBehavior = valueBlockingly(DataStoreKeys.PREF_HASH_FILESIZE, "1")
 
-            val fileproperties = buildJsonObject {
-                put("duration", media!!.fileDuration)
-                put(
-                    "name", when (nameBehavior) {
-                        "1" -> media!!.fileName
-                        "2" -> media!!.fileNameHashed.take(12)
-                        else -> ""
-                    }
-                )
-                put(
-                    "size", when (sizeBehavior) {
-                        "1" -> media!!.fileSize
-                        "2" -> media!!.fileSizeHashed.take(12)
-                        else -> ""
-                    }
-                )
+                    /* Now, we put the values in */
+                    put("duration", media!!.fileDuration)
+                    put(
+                        "name", when (nameBehavior) {
+                            "1" -> media!!.fileName
+                            "2" -> media!!.fileNameHashed.take(12)
+                            else -> ""
+                        }
+                    )
+                    put(
+                        "size", when (sizeBehavior) {
+                            "1" -> media!!.fileSize
+                            "2" -> media!!.fileSizeHashed.take(12)
+                            else -> ""
+                        }
+                    )
+                }
             }
-
-            val file = buildJsonObject {
-                put("file", fileproperties)
-            }
-
-            val wrapper = buildJsonObject {
-                put("Set", file)
-            }
-
-            return Json.encodeToString(wrapper)
         }
     }
 
     class Chat : PacketCreator() {
         var message: String = ""
 
-        override fun build(): String {
-            val wrapper = buildJsonObject {
-                put("Chat", message)
-            }
-
-            return Json.encodeToString(wrapper)
+        override fun build() = buildJsonObject {
+            put("Chat", message)
         }
     }
 
@@ -172,8 +133,8 @@ sealed class PacketCreator {
         var changeState: Int = 0
         var play: Boolean? = null
 
-        override fun build(): String {
-            val state = buildJsonObject state@{
+        override fun build() = buildJsonObject {
+            putJsonObject("State") {
                 val positionAndPausedIsSet = position != null && play != null
                 val clientIgnoreIsNotSet = p.clientIgnFly == 0 || p.serverIgnFly != 0
 
@@ -210,104 +171,68 @@ sealed class PacketCreator {
                     put("ignoringOnTheFly", ignoringOnTheFly)
                 }
             }
-
-            val statewrapper = buildJsonObject {
-                put("State", state)
-            }
-
-            return Json.encodeToString(statewrapper)
         }
     }
 
     class PlaylistChange : PacketCreator() {
         var files: List<String> = emptyList()
 
-        override fun build(): String {
-            val filesJson = buildJsonObject {
-                putJsonArray("files") {
-                    for (element in files) {
-                        add(element)
+        override fun build() = buildJsonObject {
+            putJsonObject("Set") {
+                putJsonObject("playlistChange") {
+                    putJsonArray("files") {
+                        for (element in files) {
+                            add(element)
+                        }
                     }
                 }
             }
-
-            val playlistChange = buildJsonObject {
-                put("playlistChange", filesJson)
-            }
-
-            val set = buildJsonObject {
-                put("Set", playlistChange)
-            }
-
-            return Json.encodeToString(set)
         }
     }
 
     class PlaylistIndex : PacketCreator() {
         var index: Int = 0
 
-        override fun build(): String {
-            val indexJson = buildJsonObject {
-                put("index", index)
+        override fun build() = buildJsonObject {
+            putJsonObject("Set") {
+                putJsonObject("playlistIndex") {
+                    put("index", index)
+                }
             }
-
-            val playlistIndex = buildJsonObject {
-                put("playlistIndex", indexJson)
-            }
-
-            val set = buildJsonObject {
-                put("Set", playlistIndex)
-            }
-
-            return Json.encodeToString(set)
         }
     }
 
-    class ControllerAuth: PacketCreator() {
+    class ControllerAuth : PacketCreator() {
         var room: String = ""
         var password: String = ""
 
-        override fun build(): String {
-            val controllerAuth = buildJsonObject {
-                put("room", room)
-                put("password", password)
+        override fun build() = buildJsonObject {
+            putJsonObject("Set") {
+                putJsonObject("controllerAuth") {
+                    put("room", room)
+                    put("password", password)
+                }
             }
-
-            val set = buildJsonObject {
-                put("Set", controllerAuth)
-            }
-
-            return Json.encodeToString(set)
         }
     }
 
-    class RoomChange: PacketCreator() {
+    class RoomChange : PacketCreator() {
         var room: String = ""
 
-        override fun build(): String {
-            val room = buildJsonObject {
-                put("name", room)
+        override fun build() = buildJsonObject {
+            putJsonObject("Set") {
+                putJsonObject("room") {
+                    put("name", room)
+                }
             }
-
-            val set = buildJsonObject {
-                put("Set", room)
-            }
-
-            return Json.encodeToString(set)
         }
     }
 
     class TLS : PacketCreator() {
-        override fun build(): String {
-            val tls = buildJsonObject {
+        override fun build() = buildJsonObject {
+            putJsonObject("TLS") {
                 put("startTLS", "send")
             }
-
-            val wrapper = buildJsonObject {
-                put("TLS", tls)
-            }
-
-            return Json.encodeToString(wrapper)
         }
     }
 }
