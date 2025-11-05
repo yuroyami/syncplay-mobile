@@ -225,11 +225,15 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
                 }
             })
 
+            isInitialized = true
+
             startTrackingProgress()
         }
     }
 
     override suspend fun destroy() {
+        if (!isInitialized) return
+
         withContext(Dispatchers.Main.immediate) {
             exoplayer?.stop()
             exoplayer?.release()
@@ -260,14 +264,20 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun hasMedia(): Boolean {
+        if (!isInitialized) return false
+
         return withContext(Dispatchers.Main.immediate) { exoplayer?.mediaItemCount != 0 && exoplayer != null }
     }
 
     override suspend fun isPlaying(): Boolean {
+        if (!isInitialized) return false
+
         return withContext(Dispatchers.Main.immediate) { exoplayer?.playbackState == Player.STATE_READY && exoplayer?.playWhenReady == true }
     }
 
     override suspend fun analyzeTracks(mediafile: MediaFile) {
+        if (!isInitialized) return
+
         viewmodel.media?.audioTracks?.clear()
         viewmodel.media?.subtitleTracks?.clear()
         playerScopeMain.launch {
@@ -304,6 +314,8 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun selectTrack(track: Track?, type: TRACKTYPE) {
+        if (!isInitialized) return
+
         val exoTrack = track as? ExoTrack
 
         val builder = exoplayer?.trackSelector?.parameters?.buildUpon() ?: return
@@ -340,6 +352,8 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     override suspend fun skipChapter() {}
 
     override suspend fun reapplyTrackChoices() {
+        if (!isInitialized) return
+
         /* We need to cast MediaController to ExoPlayer since they're roughly the same */
         withContext(Dispatchers.Main.immediate) {
             analyzeTracks(viewmodel.media ?: return@withContext)
@@ -387,6 +401,8 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         }
 
     override suspend fun injectVideoImpl(media: MediaFile, isUrl: Boolean) {
+        if (!isInitialized) return
+
         /* This is the builder responsible for building a MediaItem component for ExoPlayer **/
         val vid = MediaItem.Builder()
             .setUri(media.uri)
@@ -404,39 +420,48 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         exoplayer?.setMediaItem(vid) /* This loads the media into ExoPlayer **/
         exoplayer?.prepare() /* This prepares it and makes the first frame visible */
 
-        /* Updating play button */
         exoplayer?.duration?.let { playerManager.timeFullMillis.value = if (it < 0) 0 else it }
     }
 
     override suspend fun pause() {
+        if (!isInitialized) return
+
         withContext(Dispatchers.Main.immediate) {
             exoplayer?.pause()
         }
     }
 
     override suspend fun play() {
+        if (!isInitialized) return
+
         withContext(Dispatchers.Main.immediate) {
             exoplayer?.play()
         }
     }
 
     override suspend fun isSeekable(): Boolean {
+        if (!isInitialized) return false
+
         return withContext(Dispatchers.Main.immediate) { exoplayer?.isCurrentMediaItemSeekable == true }
     }
 
     @UiThread
     override fun seekTo(toPositionMs: Long) {
+        if (!isInitialized) return
         super.seekTo(toPositionMs)
         exoplayer?.seekTo((toPositionMs))
     }
 
     @UiThread
     override fun currentPositionMs(): Long {
+        if (!isInitialized) return 0L
+
         return exoplayer?.currentPosition ?: 0L
     }
 
     @SuppressLint("WrongConstant")
     override suspend fun switchAspectRatio(): String {
+        if (!isInitialized) return "NO PLAYER FOUND"
         val resolutions = mutableMapOf<Int, String>()
 
         resolutions[AspectRatioFrameLayout.RESIZE_MODE_FIT] = getString(Res.string.room_scaling_fit_screen)
@@ -457,6 +482,8 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun changeSubtitleSize(newSize: Int) {
+        if (!isInitialized) return
+
         withContext(Dispatchers.Main.immediate) {
             exoView.subtitleView?.setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, newSize.toFloat())
         }

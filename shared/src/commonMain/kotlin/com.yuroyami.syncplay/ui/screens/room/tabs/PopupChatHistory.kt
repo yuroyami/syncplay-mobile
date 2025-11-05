@@ -84,43 +84,41 @@ fun ChatHistoryPopup() {
             )
 
             /* The actual messages */
-                val lazyListState: LazyListState = rememberLazyListState()
-                val scrollAreaState = rememberScrollAreaState(lazyListState)
+            val lazyListState: LazyListState = rememberLazyListState()
+            val scrollAreaState = rememberScrollAreaState(lazyListState)
 
-                ScrollArea(
-                    state = scrollAreaState,
-                    modifier = Modifier.weight(1f)
+            ScrollArea(
+                state = scrollAreaState,
+                modifier = Modifier.weight(1f)
+            ) {
+
+                LazyColumn(
+                    state = lazyListState,
+                    contentPadding = PaddingValues(8.dp),
+                    modifier = Modifier.fillMaxSize().background(Color(50, 50, 50, 50))
                 ) {
-
-                    LazyColumn(
-                        state = lazyListState,
-                        contentPadding = PaddingValues(8.dp),
-                        modifier = Modifier.fillMaxSize().background(Color(50, 50, 50, 50))
-                    ) {
-                        items(msgs) { msg ->
-                            repeat(8) {
-                                FlexibleAnnotatedText(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    text = msg.factorize(palette),
-                                    size = 10f,
-                                    font = helveticaFont,
-                                    lineHeight = 14f,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-                        }
-                    }
-
-                    VerticalScrollbar(
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .fillMaxHeight().width(4.dp)
-                    ) {
-                        Thumb(
-                            modifier = Modifier.background(Color.Gray)
+                    items(msgs) { msg ->
+                        FlexibleAnnotatedText(
+                            modifier = Modifier.fillMaxWidth(),
+                            text = msg.factorize(palette),
+                            size = 10f,
+                            font = helveticaFont,
+                            lineHeight = 14f,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }
+
+                VerticalScrollbar(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .fillMaxHeight().width(4.dp)
+                ) {
+                    Thumb(
+                        modifier = Modifier.background(Color.Gray)
+                    )
+                }
+            }
 
 //            val lazyListState: LazyListState = rememberLazyListState()
 //            LazyColumn(

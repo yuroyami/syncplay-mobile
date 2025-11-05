@@ -62,10 +62,15 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         vlcPlayer?.attachViews(vlcView, null, true, false)
 
         vlcAttachObserver()
+
+        isInitialized = true
+
         startTrackingProgress()
     }
 
     override suspend fun destroy() {
+        if (!isInitialized) return
+
         withContext(Dispatchers.Main.immediate) {
             vlcPlayer?.stop()
             vlcMedia?.release()
@@ -105,18 +110,24 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     override suspend fun configurableSettings() = null
 
     override suspend fun hasMedia(): Boolean {
+        if (!isInitialized) return false
+
         return withContext(Dispatchers.Main.immediate) {
             vlcPlayer?.hasMedia() == true
         }
     }
 
     override suspend fun isPlaying(): Boolean {
+        if (!isInitialized) return false
+
         return withContext(Dispatchers.Main.immediate) {
             vlcPlayer?.isPlaying == true
         }
     }
 
     override suspend fun analyzeTracks(mediafile: MediaFile) {
+        if (!isInitialized) return
+
         withContext(Dispatchers.Main.immediate) {
             viewmodel.media?.subtitleTracks?.clear()
             viewmodel.media?.audioTracks?.clear()
@@ -149,6 +160,8 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun selectTrack(track: com.yuroyami.syncplay.models.Track?, type: TRACKTYPE) {
+        if (!isInitialized) return
+
         withContext(Dispatchers.Main.immediate) {
             val vlcTrack = track as? VlcTrack
 
@@ -177,6 +190,8 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun analyzeChapters(mediafile: MediaFile) {
+        if (!isInitialized) return
+
         withContext(Dispatchers.Main.immediate) {
             mediafile.chapters.clear()
             val chapters = vlcPlayer?.getChapters(-1)
@@ -193,18 +208,24 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun jumpToChapter(chapter: Chapter) {
+        if (!isInitialized) return
+
         withContext(Dispatchers.Main.immediate) {
             vlcPlayer?.chapter = chapter.index
         }
     }
 
     override suspend fun skipChapter() {
+        if (!isInitialized) return
+
         withContext(Dispatchers.Main.immediate) {
             vlcPlayer?.nextChapter()
         }
     }
 
     override suspend fun reapplyTrackChoices() {
+        if (!isInitialized) return
+
         val subId = viewmodel.playerManager.currentTrackChoices.subtitleSelectionIdVlc
         val audioId = viewmodel.playerManager.currentTrackChoices.audioSelectionIdVlc
 
@@ -255,18 +276,24 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun pause() {
+        if (!isInitialized) return
+
         withContext(Dispatchers.Main.immediate) {
             vlcPlayer?.pause()
         }
     }
 
     override suspend fun play() {
+        if (!isInitialized) return
+
         withContext(Dispatchers.Main.immediate) {
             vlcPlayer?.play()
         }
     }
 
     override suspend fun isSeekable(): Boolean {
+        if (!isInitialized) return false
+
         return withContext(Dispatchers.Main.immediate) {
             vlcPlayer?.isSeekable == true
         }
@@ -274,16 +301,22 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
 
     @UiThread
     override fun seekTo(toPositionMs: Long) {
+        if (!isInitialized) return
+
         super.seekTo(toPositionMs)
         vlcPlayer?.setTime(toPositionMs, true)
     }
 
     @MainThread
     override fun currentPositionMs(): Long {
+        if (!isInitialized) return 0L
+
         return vlcPlayer?.time ?: 0L
     }
 
     override suspend fun switchAspectRatio(): String {
+        if (!isInitialized) return "NO PLAYER FOUND"
+
         val scaleTypes = MediaPlayer.ScaleType.getMainScaleTypes()
 
         val currentScale = vlcPlayer?.videoScale

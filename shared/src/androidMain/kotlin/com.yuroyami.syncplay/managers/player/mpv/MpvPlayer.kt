@@ -48,7 +48,6 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
 
     var mpvPos = 0L
     private lateinit var observer: MPVLib.EventObserver
-    private var ismpvInit = false
     private lateinit var mpvView: MPVView
     private lateinit var ctx: Context
 
@@ -65,10 +64,13 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         audioManager = ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
         copyAssets(ctx)
+
+        isInitialized = true
     }
 
     override suspend fun destroy() {
-        if (!ismpvInit) return
+        if (!isInitialized) return
+
         withContext(Dispatchers.Main.immediate) {
             mpvView.destroy()
         }
@@ -89,6 +91,8 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     override suspend fun configurableSettings(): ExtraSettingBundle = getExtraSettings()
 
     override suspend fun hasMedia(): Boolean {
+        if (!isInitialized) return false
+
         return withContext(Dispatchers.Main.immediate) {
             val c = MPVLib.getPropertyInt("playlist-count")
             c != null && c > 0
@@ -97,11 +101,13 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
 
     override suspend fun isPlaying(): Boolean {
         return withContext(Dispatchers.Main.immediate) {
-            if (!ismpvInit) false else !mpvView.paused
+            if (!isInitialized) false else !mpvView.paused
         }
     }
 
     override suspend fun analyzeTracks(mediafile: MediaFile) {
+        if (!isInitialized) return
+
         withContext(Dispatchers.Main.immediate) {
             playerManager.media.value?.subtitleTracks?.clear()
             playerManager.media.value?.audioTracks?.clear()
@@ -154,6 +160,8 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun selectTrack(track: Track?, type: TRACKTYPE) {
+        if (!isInitialized) return
+
         withContext(Dispatchers.Main.immediate) {
             when (type) {
                 TRACKTYPE.SUBTITLE -> {
@@ -181,7 +189,7 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
 
     override suspend fun analyzeChapters(mediafile: MediaFile) {
         withContext(Dispatchers.Main.immediate) {
-            if (!ismpvInit) return@withContext
+            if (!isInitialized) return@withContext
             val chapters = mpvView.loadChapters()
             if (chapters.isEmpty()) return@withContext
             mediafile.chapters.clear()
@@ -197,14 +205,14 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun jumpToChapter(chapter: Chapter) {
-        if (!ismpvInit) return
+        if (!isInitialized) return
         withContext(Dispatchers.Main.immediate) {
             MPVLib.setPropertyInt("chapter", chapter.index)
         }
     }
 
     override suspend fun skipChapter() {
-        if (!ismpvInit) return
+        if (!isInitialized) return
 
         withContext(Dispatchers.Main.immediate) {
             MPVLib.command(arrayOf("add", "chapter", "1"))
@@ -212,6 +220,8 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun reapplyTrackChoices() {
+        if (!isInitialized) return
+
         withContext(Dispatchers.Main.immediate) {
             val subIndex = playerManager.currentTrackChoices.subtitleSelectionIndexMpv
             val audioIndex = playerManager.currentTrackChoices.audioSelectionIndexMpv
@@ -261,21 +271,21 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
                 if (!isUrl) {
                     ctx.resolveUri(uri.toUri())?.let { it2 ->
                         loggy("Final path $it2")
-                        if (ismpvInit) {
+                        if (isInitialized) {
                             MPVLib.destroy()
                         }
                         mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
-                        ismpvInit = true
+                        isInitialized = true
                         mpvObserverAttach()
                         mpvView.playFile(it2)
                         mpvView.surfaceCreated(mpvView.holder)
                     }
                 } else {
-                    if (ismpvInit) {
+                    if (isInitialized) {
                         MPVLib.destroy()
                     }
                     mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
-                    ismpvInit = true
+                    isInitialized = true
                     mpvObserverAttach()
                     mpvView.playFile(uri)
                     mpvView.surfaceCreated(mpvView.holder)
@@ -285,13 +295,13 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun pause() {
-        if (!ismpvInit) return
+        if (!isInitialized) return
 
         mpvView.paused = true
     }
 
     override suspend fun play() {
-        if (!ismpvInit) return
+        if (!isInitialized) return
 
         mpvView.paused = false
     }
@@ -302,7 +312,7 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
 
     @UiThread
     override fun seekTo(toPositionMs: Long) {
-        if (!ismpvInit) return
+        if (!isInitialized) return
         super.seekTo(toPositionMs)
 
         mpvView.timePos = toPositionMs.toInt() / 1000
@@ -313,6 +323,8 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun switchAspectRatio(): String {
+        if (!isInitialized) return "NO PLAYER FOUND"
+
         return withContext(Dispatchers.Main.immediate) {
             val currentAspect = MPVLib.getPropertyString("video-aspect-override")
             val currentPanscan = MPVLib.getPropertyDouble("panscan")
@@ -355,6 +367,8 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun changeSubtitleSize(newSize: Int) {
+        if (!isInitialized) return
+
         withContext(Dispatchers.Main.immediate) {
             val s: Double = when {
                 newSize == 16 -> 1.0
@@ -435,6 +449,9 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
                 }
             }
         }
+
+        if (!isInitialized) return
+
         mpvView.addObserver(observer)
 
         startTrackingProgress()
@@ -531,32 +548,32 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     fun toggleHardwareAcceleration(b: Boolean) {
-        if (!ismpvInit) return
+        if (!isInitialized) return
         MPVLib.setOptionString("hwdec", if (b) "auto" else "no")
     }
 
     fun toggleGpuNext(b: Boolean) {
-        if (!ismpvInit) return
+        if (!isInitialized) return
         MPVLib.setOptionString("vo", if (b) "gpu-next" else "gpu")
     }
 
     fun toggleInterpolation(b: Boolean) {
-        if (!ismpvInit) return
+        if (!isInitialized) return
         MPVLib.setOptionString("interpolation", if (b) "yes" else "no")
     }
 
     fun toggleDebugMode(i: Int) {
-        if (!ismpvInit) return
+        if (!isInitialized) return
         MPVLib.command(arrayOf("script-binding", "stats/display-page-$i"))
     }
 
     fun setProfileMode(p: String) {
-        if (!ismpvInit) return
+        if (!isInitialized) return
         MPVLib.setOptionString("profile", p)
     }
 
     fun setVidSyncMode(m: String) {
-        if (!ismpvInit) return
+        if (!isInitialized) return
         MPVLib.setOptionString("video-sync", m)
     }
 
