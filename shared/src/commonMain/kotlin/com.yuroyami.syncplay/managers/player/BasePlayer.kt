@@ -11,6 +11,7 @@ import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.utils.getFileName
+import com.yuroyami.syncplay.utils.getFileSize
 import com.yuroyami.syncplay.utils.sha256
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.CoroutineScope
@@ -170,8 +171,6 @@ abstract class BasePlayer(
 
     abstract suspend fun switchAspectRatio(): String
 
-    abstract suspend fun collectInfoLocal(mediafile: MediaFile)
-
     abstract suspend fun changeSubtitleSize(newSize: Int)
 
     @Composable
@@ -205,6 +204,20 @@ abstract class BasePlayer(
             /** Hashing name and size in case they're used **/
             fileNameHashed = sha256(fileName).toHexString(HexFormat.UpperCase)
             fileSizeHashed = sha256(fileSize).toHexString(HexFormat.UpperCase)
+        }
+    }
+
+    suspend fun collectInfoLocal(mediafile: MediaFile) {
+        withContext(Dispatchers.IO) {
+            with(mediafile) {
+                /** Using MiscUtils **/
+                fileName = getFileName(uri!!)!!
+                fileSize = getFileSize(uri!!).toString()
+
+                /** Hashing name and size in case they're used **/
+                fileNameHashed = sha256(fileName).toHexString(HexFormat.UpperCase)
+                fileSizeHashed = sha256(fileSize).toHexString(HexFormat.UpperCase)
+            }
         }
     }
 

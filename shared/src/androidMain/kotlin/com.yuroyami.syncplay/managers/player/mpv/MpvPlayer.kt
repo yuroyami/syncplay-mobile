@@ -24,7 +24,6 @@ import com.yuroyami.syncplay.managers.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
-import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timeStamper
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
@@ -360,10 +359,6 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
 
             return@withContext nextAspect.second
         }
-    }
-
-    override suspend fun collectInfoLocal(mediafile: MediaFile) {
-        collectInfoLocalAndroid(mediafile)
     }
 
     override suspend fun changeSubtitleSize(newSize: Int) {

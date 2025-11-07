@@ -11,17 +11,12 @@ import com.yuroyami.syncplay.managers.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
-import com.yuroyami.syncplay.protocol.sending.Packet
-import com.yuroyami.syncplay.screens.room.dispatchOSD
-import com.yuroyami.syncplay.utils.collectInfoLocaliOS
-import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.loggy
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import org.jetbrains.compose.resources.getString
 import platform.AVFoundation.AVLayerVideoGravityResize
 import platform.AVFoundation.AVLayerVideoGravityResizeAspect
 import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
@@ -61,16 +56,13 @@ import platform.QuartzCore.CATransaction
 import platform.QuartzCore.kCATransactionDisableActions
 import platform.UIKit.UIView
 import platform.darwin.NSObject
-import syncplaymobile.shared.generated.resources.Res
-import syncplaymobile.shared.generated.resources.room_selected_sub
-import syncplaymobile.shared.generated.resources.room_selected_sub_error
-import syncplaymobile.shared.generated.resources.room_selected_vid
-import syncplaymobile.shared.generated.resources.room_sub_error_load_vid_first
-import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
-class AvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, ApplePlayerEngine.AVPlayer) {
+class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngine.AVPlayer) {
 
     /*-- Exoplayer-related properties --*/
     var avPlayer: AVPlayer? = null
@@ -80,6 +72,9 @@ class AvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, ApplePlayer
 
     private var avMedia: AVPlayerItem? = null
 
+    override val trackerJobInterval: Duration
+        get() = 250.milliseconds
+
     override val canChangeAspectRatio: Boolean
         get() = true
 
@@ -87,10 +82,11 @@ class AvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, ApplePlayer
         //avView.view.setBackgroundColor(UIColor.clearColor())
         //avPlayerLayer!!.setBackgroundColor(UIColor.clearColor().CGColor)
         avView.showsPlaybackControls = false
-        viewmodel.trackProgress(intervalMillis = 250L)
+
+        startTrackingProgress()
     }
 
-    private fun reassign() {
+    private fun hookPlayerAgain() {
         avView.player = avPlayer!!
         avPlayerLayer?.player = avPlayer
 
@@ -106,16 +102,16 @@ class AvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, ApplePlayer
         val status = avPlayer?.timeControlStatus()
     }
 
-    override fun destroy() {
+    override suspend fun destroy() {
+        if (!isInitialized) return
+
         avPlayer?.pause()
         avPlayer?.finalize()
         avPlayer = null
         avContainer = null
     }
 
-    override fun configurableSettings(): ExtraSettingBundle? {
-        TODO("Not yet implemented")
-    }
+    override suspend fun configurableSettings(): ExtraSettingBundle? = null
 
     @OptIn(ExperimentalForeignApi::class)
     @Composable
@@ -144,11 +140,13 @@ class AvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, ApplePlayer
         )
     }
 
-    override fun hasMedia(): Boolean {
+    override suspend fun hasMedia(): Boolean {
+        if (!isInitialized) return false
         return avPlayer?.currentItem != null
     }
 
-    override fun isPlaying(): Boolean {
+    override suspend fun isPlaying(): Boolean {
+        if (!isInitialized) return false
         return (avPlayer?.rate() ?: 0f) > 0f && avPlayer?.error == null
     }
 
@@ -213,7 +211,9 @@ class AvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, ApplePlayer
 //        }
     }
 
-    override fun selectTrack(track: Track?, type: TRACKTYPE) {
+    override suspend fun selectTrack(track: Track?, type: TRACKTYPE) {
+        if (!isInitialized) return
+
         val avtrack = track as? AvTrack
 
         if (avtrack != null) {
@@ -247,136 +247,84 @@ class AvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, ApplePlayer
         }
     }
 
-    override fun reapplyTrackChoices() {
+    override suspend fun reapplyTrackChoices() {
+        if (!isInitialized) return
         //TODO("Not yet implemented")
     }
 
-    override fun loadExternalSub(uri: String) {
-        if (hasMedia()) {
-            val filename = getFileName(uri = uri).toString()
-            val extension = filename.substring(filename.lastIndexOf('.') + 1).lowercase()
+    override suspend fun loadExternalSubImpl(uri: String, extension: String) {
+        if (!isInitialized) return
 
-            val mimeTypeValid = listOf("srt", "ass", "ssa", "ttml", "vtt").contains(extension)
-
-            if (mimeTypeValid) {
-                val subUri = URLWithString(uri)!!
-
-                //TODO: Doesn't support loading external subs
-                playerScopeMain.dispatchOSD {
-                    getString(Res.string.room_selected_sub, filename)
-                }
-            } else {
-                playerScopeMain.dispatchOSD {
-                    getString(Res.string.room_selected_sub_error)
-                }            }
-        } else {
-            playerScopeMain.dispatchOSD {
-                getString(Res.string.room_sub_error_load_vid_first)
-            }
+        viewmodel.osdManager.dispatchOSD {
+            "Player does not support external subtitles."
+            //TODO LOCALIZE
         }
     }
 
-    override fun injectVideo(uri: String?, isUrl: Boolean) {
-        viewmodel.hasVideoG.value = true
+    override suspend fun injectVideoImpl(media: MediaFile, isUrl: Boolean) {
+        if (!isInitialized) return
 
-        playerScopeMain.launch {
-            /* Creating a media file from the selected file */
-            if (uri != null || viewmodel.media == null) {
-                viewmodel.media = MediaFile()
-                viewmodel.media?.uri = uri
+        delay(500)
 
-                /* Obtaining info from it (size and name) */
-                if (isUrl) {
-                    viewmodel.media?.url = uri.toString()
-                    viewmodel.media?.let { collectInfoURL(it) }
-                } else {
-                    viewmodel.media?.let { collectInfoLocal(it) }
-                }
-            }
-            /* Injecting the media into avplayer */
-            try {
-                delay(500)
-                uri?.let {
-                    avMedia = if (isUrl) {
-                        val nsurl = URLWithString(it) ?: throw Exception()
-                        val avmedia = AVPlayerItem(uRL = nsurl)
-                        avPlayer = AVPlayer.playerWithPlayerItem(avmedia)
-                        avMedia
-                    } else {
-                        val nsurl = fileURLWithPath(it)
-                        val avmedia = AVPlayerItem(nsurl)
-                        avPlayer = AVPlayer.playerWithPlayerItem(avmedia)
-                        avmedia
-                    }
+        media.uri?.let { it ->
+            val nsUrl = when (isUrl) {
+                true -> URLWithString(it)
+                false -> fileURLWithPath(it)
+            } ?: throw Exception()
 
+            avMedia = AVPlayerItem(uRL = nsUrl)
+            avPlayer = AVPlayer.playerWithPlayerItem(avMedia)
 
-                    reassign()
+            hookPlayerAgain()
 
-                    val isTimeout = withTimeoutOrNull(5000) {
-                        while (avMedia?.status != AVPlayerItemStatusReadyToPlay) {
-                            delay(250)
-                        }
-
-                        val duration = avMedia!!.asset.duration.toMillis().div(1000.0)
-
-                        viewmodel.timeFull.longValue = abs(duration.toLong())
-
-                        if (!viewmodel.isSoloMode) {
-                            if (duration != viewmodel.media?.fileDuration) {
-                                playerScopeIO.launch launch2@{
-                                    viewmodel.media?.fileDuration = duration
-                                    viewmodel.p.send<Packet.File> {
-                                        media = viewmodel.media
-                                    }.await()
-                                }
-                            }
-                        }
-                    }
-
-                    if (isTimeout == null) throw Exception("Media not loaded by AVPlayer")
+            val isTimeout = withTimeoutOrNull(10.seconds) {
+                while (avMedia?.status != AVPlayerItemStatusReadyToPlay) {
+                    delay(250)
                 }
 
-                /* Goes back to the beginning for everyone */
-                if (!viewmodel.isSoloMode) {
-                    viewmodel.p.currentVideoPosition = 0L
+                //File is loaded, get duration
+                avMedia!!.asset.duration.toMillis().let { dur ->
+                    playerManager.timeFullMillis.value = if (dur < 0) 0 else dur
                 }
-            } catch (e: Exception) {
-                /* If, for some reason, the video didn't wanna load */
-                e.printStackTrace()
-                playerScopeMain.dispatchOSD("There was a problem loading this file.")
             }
 
-            /* Finally, show a a toast to the user that the media file has been added */
-            playerScopeMain.dispatchOSD {
-                getString(Res.string.room_selected_vid,"${viewmodel.media?.fileName}")
-            }
+            if (isTimeout == null) throw Exception("Media not loaded by AVPlayer")
         }
     }
 
-    override fun pause() {
+    override suspend fun pause() {
+        if (!isInitialized) return
         avPlayer?.pause()
     }
 
-    override fun play() {
+    override suspend fun play() {
+        if (!isInitialized) return
         avPlayer?.play()
     }
 
-    override fun isSeekable(): Boolean {
+    override suspend fun isSeekable(): Boolean {
+        if (!isInitialized) return false
         return avPlayer?.currentItem?.seekableTimeRanges?.isNotEmpty() == true
     }
 
     @OptIn(ExperimentalForeignApi::class)
     override fun seekTo(toPositionMs: Long) {
+        if (!isInitialized) return
+
         super.seekTo(toPositionMs)
         avPlayer?.seekToTime(CMTimeMake(toPositionMs, 1000))
     }
 
     @OptIn(ExperimentalForeignApi::class)
     override fun currentPositionMs(): Long {
+        if (!isInitialized) return 0L
+
         return avPlayer?.currentTime()?.toMillis() ?: 0L
     }
 
     override suspend fun switchAspectRatio(): String {
+        if (!isInitialized) return "NO PLAYER FOUND"
+
         val scales = listOf(
             AVLayerVideoGravityResize,
             AVLayerVideoGravityResizeAspect,
@@ -390,18 +338,15 @@ class AvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, ApplePlayer
         return nextScale!!
     }
 
-    override fun collectInfoLocal(mediafile: MediaFile) {
-        collectInfoLocaliOS(mediafile)
+    override suspend fun changeSubtitleSize(newSize: Int) {
+        //TODO
     }
 
-    override fun changeSubtitleSize(newSize: Int) {
-
-    }
-
+    //TODO
     override val supportsChapters = false
     override suspend fun analyzeChapters(mediafile: MediaFile) = Unit
-    override fun jumpToChapter(chapter: Chapter) = Unit
-    override fun skipChapter() = Unit
+    override suspend fun jumpToChapter(chapter: Chapter) = Unit
+    override suspend fun skipChapter() = Unit
 
 
     private fun CValue<CMTime>.toMillis(): Long {
@@ -413,7 +358,7 @@ class AvPlayer(viewmodel: SyncplayViewmodel) : BasePlayer(viewmodel, ApplePlayer
         val sGroup: AVMediaSelectionGroup
     }
 
-    val MAX_VOLUME = 100
+    private val MAX_VOLUME = 100
     override fun getMaxVolume() = MAX_VOLUME
     override fun getCurrentVolume(): Int = (avPlayer?.volume?.times(MAX_VOLUME))?.roundToInt() ?: 0
     override fun changeCurrentVolume(v: Int) {

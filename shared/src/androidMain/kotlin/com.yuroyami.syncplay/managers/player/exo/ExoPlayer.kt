@@ -43,7 +43,6 @@ import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
-import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.contextObtainer
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
@@ -475,10 +474,6 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         exoView.resizeMode = nextRes
 
         return resolutions[nextRes]!!
-    }
-
-    override suspend fun collectInfoLocal(mediafile: MediaFile) {
-        collectInfoLocalAndroid(mediafile)
     }
 
     override suspend fun changeSubtitleSize(newSize: Int) {

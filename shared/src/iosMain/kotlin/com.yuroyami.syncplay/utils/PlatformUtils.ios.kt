@@ -2,17 +2,31 @@ package com.yuroyami.syncplay.utils
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ClipEntry
+import cocoapods.SPLPing.SPLPing
+import cocoapods.SPLPing.SPLPingConfiguration
 import com.yuroyami.syncplay.managers.NetworkManager
 import com.yuroyami.syncplay.managers.network.KtorNetworkManager
+import com.yuroyami.syncplay.managers.network.instantiateSwiftNioNetworkManager
 import com.yuroyami.syncplay.managers.player.ApplePlayerEngine
 import com.yuroyami.syncplay.managers.player.PlayerEngine
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.withTimeoutOrNull
 import platform.Foundation.NSDate
+import platform.Foundation.NSFileManager
+import platform.Foundation.NSFileSize
+import platform.Foundation.NSNumber
 import platform.Foundation.NSURL
 import platform.Foundation.timeIntervalSince1970
+import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
-actual fun SyncplayViewmodel.instantiateNetworkManager(engine: NetworkManager.NetworkEngine) = when (engine) {
-    NetworkManager.NetworkEngine.SWIFTNIO -> instantiateSwiftNioNetworkManager!!.invoke()
+actual val platform: PLATFORM = PLATFORM.IOS
+
+actual val availablePlatformPlayerEngines: List<PlayerEngine> = listOf(ApplePlayerEngine.AVPlayer, ApplePlayerEngine.VLC)
+
+actual fun RoomViewmodel.instantiateNetworkManager(engine: NetworkManager.NetworkEngine) = when (engine) {
+    NetworkManager.NetworkEngine.SWIFTNIO -> instantiateSwiftNioNetworkManager!!(this)
     else -> KtorNetworkManager(this)
 }
 
@@ -22,7 +36,6 @@ actual fun getSystemMaxVolume(): Int {
     return 16
 }
 
-actual val platform: PLATFORM = PLATFORM.IOS
 
 actual fun generateTimestampMillis(): Long {
     return (NSDate().timeIntervalSince1970 * 1000.0).roundToLong()
@@ -36,9 +49,13 @@ actual fun getFolderName(uri: String): String? {
     return NSURL.fileURLWithPath(uri).lastPathComponent
 }
 
+actual fun getFileSize(uri: String): Long? {
+    val fileAttributes = NSFileManager.defaultManager.attributesOfItemAtPath(uri, null)
+    val fileSize = fileAttributes?.get(NSFileSize) as? NSNumber ?: return null
+    return fileSize.longValue
+}
+
 actual suspend fun pingIcmp(host: String, packet: Int): Int? {
-    return 69
-    /* TODO
     val future = CompletableDeferred<Int>()
     SPLPing.pingOnce(
         host = host,
@@ -53,12 +70,14 @@ actual suspend fun pingIcmp(host: String, packet: Int): Int? {
         }
     }
     return withTimeoutOrNull(1000) { future.await() }
-
-     */
 }
 
 actual fun ClipEntry.getText(): String? {
     return this.getPlainText()
 }
 
-actual val availablePlatformPlayerEngines: List<PlayerEngine> = listOf(ApplePlayerEngine.AVPlayer, ApplePlayerEngine.VLC)
+@Composable
+actual fun HideSystemBars() {
+    //NoOp
+}
+

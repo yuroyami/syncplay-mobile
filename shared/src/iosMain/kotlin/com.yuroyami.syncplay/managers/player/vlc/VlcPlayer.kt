@@ -18,7 +18,6 @@ import com.yuroyami.syncplay.managers.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
-import com.yuroyami.syncplay.utils.collectInfoLocaliOS
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.memScoped
@@ -98,6 +97,8 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
 
     override fun initialize() {
         vlcPlayer!!.setDelegate(vlcDelegate)
+
+        isInitialized = true
 
         startTrackingProgress()
     }
@@ -204,7 +205,7 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
     override suspend fun reapplyTrackChoices() {
         if (!isInitialized) return
 
-        // Not implemented for iOS VLC player
+        //TODO Not implemented for iOS VLC player
     }
 
     override suspend fun loadExternalSubImpl(uri: String, extension: String) {
@@ -309,10 +310,6 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         return newAspectRatio
     }
 
-    override suspend fun collectInfoLocal(mediafile: MediaFile) {
-        collectInfoLocaliOS(mediafile)
-    }
-
     override suspend fun changeSubtitleSize(newSize: Int) {
         if (!isInitialized) return
 
@@ -356,7 +353,7 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         }
     }
 
-    val MAX_VOLUME = 100
+    private val MAX_VOLUME = 100
     override fun getMaxVolume() = MAX_VOLUME
     override fun getCurrentVolume(): Int = (vlcPlayer?.pitch?.times(MAX_VOLUME))?.roundToInt() ?: 0
     override fun changeCurrentVolume(v: Int) {

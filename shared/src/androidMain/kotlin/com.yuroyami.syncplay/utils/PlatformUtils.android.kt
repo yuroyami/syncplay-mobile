@@ -25,13 +25,6 @@ import java.io.File
 import java.io.InputStreamReader
 import kotlin.math.roundToInt
 
-//TODO: Don't do this EVERY RECOMPOSITION
-@Composable
-actual fun getSystemMaxVolume(): Int {
-    val audioManager = LocalContext.current.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-    return audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-}
-
 actual val platform: PLATFORM = PLATFORM.Android
 
 actual val availablePlatformPlayerEngines: List<PlayerEngine> = listOf(AndroidPlayerEngine.Exoplayer, AndroidPlayerEngine.Mpv, AndroidPlayerEngine.VLC)
@@ -39,6 +32,13 @@ actual val availablePlatformPlayerEngines: List<PlayerEngine> = listOf(AndroidPl
 actual fun RoomViewmodel.instantiateNetworkManager(engine: NetworkManager.NetworkEngine) = when (engine) {
     NetworkManager.NetworkEngine.NETTY -> NettyNetworkManager(this)
     else -> KtorNetworkManager(this)
+}
+
+//TODO: Don't do this EVERY RECOMPOSITION
+@Composable
+actual fun getSystemMaxVolume(): Int {
+    val audioManager = LocalContext.current.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    return audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
 }
 
 actual fun generateTimestampMillis() = System.currentTimeMillis()
@@ -61,6 +61,12 @@ actual fun getFileName(uri: String): String? {
         ContentResolver.SCHEME_CONTENT -> context.getContentFileName(actualuri)
         else -> actualuri.path?.let(::File)?.name
     }
+}
+
+actual fun getFileSize(uri: String): Long? {
+    val context = contextObtainer()
+    val df = DocumentFile.fromSingleUri(context, uri.toUri()) ?: return null
+    return df.length()
 }
 
 private fun Context.getContentFileName(uri: Uri): String? = runCatching {

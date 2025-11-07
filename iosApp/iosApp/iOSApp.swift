@@ -7,10 +7,10 @@ struct iOSApp: App {
 	init() {
 		UIApplication.shared.isIdleTimerDisabled = true //Keep screen on
         
-        DatastoreUtilsKt.initializeDatastoreIOS()
+        DatastoreInitKt.initializeDS()
         
-        SomeMoreUtilsKt.instantiateSyncplayProtocolSwiftNIO = {
-            return SpProtocolApple()
+        SwiftNioNetworkManagerKt.instantiateSwiftNioNetworkManager = { (roomViewmodel: RoomViewmodel) -> NetworkManager in
+            return SwiftNioNetworkManager(viewmodel: roomViewmodel) as NetworkManager
         }
 	}
 	

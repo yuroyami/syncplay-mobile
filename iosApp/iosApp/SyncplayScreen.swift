@@ -13,7 +13,7 @@ struct SyncplayScreen: View {
 struct SyncplayCompose: UIViewControllerRepresentable {
 
     func makeUIViewController(context: Context) -> UIViewController {
-        ScreensUtilsKt.SyncplayController()
+        IOSAppKt.SyncplayController()
     }
     
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}

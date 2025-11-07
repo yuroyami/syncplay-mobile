@@ -37,6 +37,7 @@ import com.yuroyami.syncplay.utils.hideSystemUI
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.utils.showSystemUI
+import com.yuroyami.syncplay.viewmodels.HomeViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -70,7 +71,7 @@ class SyncplayActivity : ComponentActivity() {
                 }
             }
 
-            override fun onSaveConfigShortcut(joinInfo: JoinConfig) {
+            override fun HomeViewmodel.onSaveConfigShortcut(joinInfo: JoinConfig) {
                 val shortcutIntent = Intent(this@SyncplayActivity, SyncplayActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                     action = Intent.ACTION_MAIN
@@ -100,8 +101,6 @@ class SyncplayActivity : ComponentActivity() {
             override fun onEraseConfigShortcuts() {
                 ShortcutManagerCompat.removeAllDynamicShortcuts(this@SyncplayActivity)
             }
-
-            //TODO override fun getMoreRoomSettings() = if (viewmodel?.player?.engine == PlayerEngine.ANDROID_MPV) mpvRoomSettings else listOf()
 
             override fun getMaxBrightness() = 1f
             override fun getCurrentBrightness(): Float {
@@ -145,6 +144,7 @@ class SyncplayActivity : ComponentActivity() {
                         cutoutMode(false)
                         showSystemUI()
                         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_USER
+
                         //Workaround to force Compose to retain its window insets
                         WindowCompat.setDecorFitsSystemWindows(window, true)
                         WindowCompat.setDecorFitsSystemWindows(window, false)

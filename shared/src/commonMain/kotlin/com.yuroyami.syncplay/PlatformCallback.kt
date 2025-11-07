@@ -1,11 +1,12 @@
 package com.yuroyami.syncplay
 
 import com.yuroyami.syncplay.models.JoinConfig
+import com.yuroyami.syncplay.viewmodels.HomeViewmodel
 
 interface PlatformCallback {
     fun onLanguageChanged(newLang: String)
 
-    fun onSaveConfigShortcut(joinInfo: JoinConfig)
+    fun HomeViewmodel.onSaveConfigShortcut(joinInfo: JoinConfig)
     fun onEraseConfigShortcuts()
 
     fun getCurrentBrightness(): Float

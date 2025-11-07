@@ -18,7 +18,7 @@
 		0404ED302BB9375000FCDAB5 /* _NIOConcurrency in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED2F2BB9375000FCDAB5 /* _NIOConcurrency */; };
 		0404ED322BB9375000FCDAB5 /* _NIOFileSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED312BB9375000FCDAB5 /* _NIOFileSystem */; };
 		0404ED342BB9375000FCDAB5 /* _NIOFileSystemFoundationCompat in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED332BB9375000FCDAB5 /* _NIOFileSystemFoundationCompat */; };
-		0404ED362BB9379800FCDAB5 /* SpProtocolIApple.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0404ED352BB9379800FCDAB5 /* SpProtocolIApple.swift */; };
+		0404ED362BB9379800FCDAB5 /* SwiftNioNetworkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0404ED352BB9379800FCDAB5 /* SwiftNioNetworkManager.swift */; };
 		0404ED392BB96D4C00FCDAB5 /* NIOSSL in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED382BB96D4C00FCDAB5 /* NIOSSL */; };
 		0424B733C25F1A6509DE1F07 /* Pods_iosApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E94BC4DE8C9E41F2FD82ABC4 /* Pods_iosApp.framework */; };
 		045FEB1D2B91A34200F9C842 /* SyncplayScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 045FEB1C2B91A34200F9C842 /* SyncplayScreen.swift */; };
@@ -35,7 +35,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0404ED352BB9379800FCDAB5 /* SpProtocolIApple.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpProtocolIApple.swift; sourceTree = "<group>"; };
+		0404ED352BB9379800FCDAB5 /* SwiftNioNetworkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftNioNetworkManager.swift; sourceTree = "<group>"; };
 		045FEB1C2B91A34200F9C842 /* SyncplayScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncplayScreen.swift; sourceTree = "<group>"; };
 		04BF80012B9704B9002E2EDE /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		04BF80032B9704C1002E2EDE /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
@@ -156,7 +156,7 @@
 				7555FF8C242A565B00829871 /* Info.plist */,
 				2152FB032600AC8F00CF470E /* iOSApp.swift */,
 				045FEB1C2B91A34200F9C842 /* SyncplayScreen.swift */,
-				0404ED352BB9379800FCDAB5 /* SpProtocolIApple.swift */,
+				0404ED352BB9379800FCDAB5 /* SwiftNioNetworkManager.swift */,
 				058557D7273AAEEB004C7B11 /* Preview Content */,
 			);
 			path = iosApp;
@@ -328,7 +328,7 @@
 			files = (
 				2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */,
 				045FEB1D2B91A34200F9C842 /* SyncplayScreen.swift in Sources */,
-				0404ED362BB9379800FCDAB5 /* SpProtocolIApple.swift in Sources */,
+				0404ED362BB9379800FCDAB5 /* SwiftNioNetworkManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -460,7 +460,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 0.14.0;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = "${TEAM_ID}";
+				DEVELOPMENT_TEAM = B5573QN48P;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Syncplay;

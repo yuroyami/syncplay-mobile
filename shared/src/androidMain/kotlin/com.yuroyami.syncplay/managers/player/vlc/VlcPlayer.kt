@@ -17,7 +17,6 @@ import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
-import com.yuroyami.syncplay.utils.collectInfoLocalAndroid
 import com.yuroyami.syncplay.utils.contextObtainer
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.Dispatchers
@@ -328,10 +327,6 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         }
 
         return vlcPlayer?.videoScale?.name ?: "ORIGINAL"
-    }
-
-    override suspend fun collectInfoLocal(mediafile: MediaFile) {
-        collectInfoLocalAndroid(mediafile)
     }
 
     override suspend fun changeSubtitleSize(newSize: Int) {

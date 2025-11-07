@@ -1,9 +1,8 @@
 package com.yuroyami.syncplay.utils
 
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.protocol.sending.Packet
-import com.yuroyami.syncplay.utils.CommonUtils.vidExs
 import com.yuroyami.syncplay.managers.SharedPlaylistManager
+import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCObjectVar
@@ -12,6 +11,10 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.nativeHeap
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.value
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import platform.Foundation.NSDirectoryEnumerationSkipsHiddenFiles
 import platform.Foundation.NSFileCoordinator
@@ -29,7 +32,6 @@ import platform.Foundation.dataUsingEncoding
 import platform.Foundation.stringWithContentsOfURL
 import platform.Foundation.stringWithString
 import platform.Foundation.writeToURL
-import platform.posix.index
 
 @OptIn(BetaInteropApi::class)
 actual suspend fun SharedPlaylistManager.addFolderToPlaylist(uri: String) {
@@ -65,7 +67,7 @@ actual suspend fun SharedPlaylistManager.addFolderToPlaylist(uri: String) {
 
             if (isDirectory == false && isValidMediaFileExtension(obj.path?.substringAfterLast("."))) {
                 val filename = obj.lastPathComponent
-                if (!p.session.sharedPlaylist.contains(filename)) newList.add(filename!!)
+                if (!viewmodel.session.sharedPlaylist.contains(filename)) newList.add(filename!!)
             }
 
             obj = enumerator?.nextObject() as? NSURL //Next object now
@@ -77,16 +79,18 @@ actual suspend fun SharedPlaylistManager.addFolderToPlaylist(uri: String) {
 
     newList.sort()
 
-    if (p.session.spIndex.intValue == -1) {
+    if (viewmodel.session.spIndex.intValue == -1) {
         retrieveFile(newList.first())
-        p.send<Packet.PlaylistIndex> {
+        viewmodel.networkManager.send<PacketCreator.PlaylistIndex> {
             index = 0
-        }.await()
+        }
     }
-    p.send<Packet.PlaylistChange> {
-        files = p.session.sharedPlaylist + newList
-    }.await()
+    viewmodel.networkManager.send<PacketCreator.PlaylistChange> {
+        files = viewmodel.session.sharedPlaylist + newList
+    }
 }
+
+val spExtScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
 @OptIn(BetaInteropApi::class)
 actual suspend fun iterateDirectory(uri: String, target: String, onFileFound: suspend (String) -> Unit) {
@@ -127,7 +131,7 @@ actual suspend fun iterateDirectory(uri: String, target: String, onFileFound: su
             val isDirectory = memScoped {
                 val isDirectoryPointer = nativeHeap.alloc<ObjCObjectVar<Any?>>()
 
-                obj?.getResourceValue(isDirectoryPointer.ptr, forKey = NSURLIsDirectoryKey, null)
+                obj.getResourceValue(isDirectoryPointer.ptr, forKey = NSURLIsDirectoryKey, null)
 
                 return@memScoped isDirectoryPointer.value as? Boolean
             }
@@ -137,7 +141,11 @@ actual suspend fun iterateDirectory(uri: String, target: String, onFileFound: su
 
                 if (filename == target) {
 
-                    obj.path?.let { onFileFound(it) }
+                    obj.path?.let {
+                        spExtScope.launch {
+                            onFileFound(it)
+                        }
+                    }
                     break
                 }
             }
@@ -162,7 +170,7 @@ actual fun SharedPlaylistManager.savePlaylistLocally(toFolderUri: String) {
 
     /** Converting the shared playlist to a text string, line by line */
     val stringBuilder = StringBuilder()
-    for (f in p.session.sharedPlaylist) {
+    for (f in viewmodel.session.sharedPlaylist) {
         stringBuilder.appendLine(f)
     }
     val string = stringBuilder.appendLine().trim().toString()
@@ -170,7 +178,7 @@ actual fun SharedPlaylistManager.savePlaylistLocally(toFolderUri: String) {
 
     val destFileAccess = destFile.startAccessingSecurityScopedResource()
 
-    viewModelScope?.launch {
+    viewmodel.viewModelScope.launch(Dispatchers.IO) {
         try {
             val data = (NSString.stringWithString(string) as NSString).dataUsingEncoding(NSUTF8StringEncoding)
             data?.writeToURL(destFile, true)
@@ -190,17 +198,15 @@ actual fun SharedPlaylistManager.loadPlaylistLocally(fromUri: String, alsoShuffl
     val content = NSString.stringWithContentsOfURL(url, NSUTF8StringEncoding, null) ?: return
     if (access) url.stopAccessingSecurityScopedResource()
 
-        /** Reading content */
+    /** Reading content */
     val lines = content.split("\n").toMutableList()
 
     /** If the user chose the shuffling option along with it, then we shuffle it */
     if (alsoShuffle) lines.shuffle()
 
     /** Updating the shared playlist */
-    viewModelScope.launch {
-        p.send<Packet.PlaylistChange> {
-            files = lines
-        }.await()
+    viewmodel.networkManager.sendAsync<PacketCreator.PlaylistChange> {
+        files = lines
     }
 }
 

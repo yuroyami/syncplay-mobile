@@ -32,7 +32,6 @@ fun loggy(s: Any?) {
             s.toString()
         }
     )
-
 }
 
 expect fun RoomViewmodel.instantiateNetworkManager(engine: NetworkManager.NetworkEngine): NetworkManager
@@ -52,6 +51,9 @@ expect fun getFileName(uri: String): String?
 
 /** Gets the folder name based on its URI, needs context on Android */
 expect fun getFolderName(uri: String): String?
+
+/** Gets the file size based on its URI, needs context on Android */
+expect fun getFileSize(uri: String): Long?
 
 /** Pings a host once and retrieves the round trip time (RTT) */
 expect suspend fun pingIcmp(host: String, packet: Int): Int?

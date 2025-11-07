@@ -17,7 +17,7 @@ plugins {
     alias(libs.plugins.kSerialization)
     //id("com.google.devtools.ksp")
 
-    alias(libs.plugins.touchlab.skie)
+    //alias(libs.plugins.touchlab.skie)
 }
 
 val abiCodes = mapOf(
@@ -60,7 +60,7 @@ kotlin {
         podfile = project.file("../iosApp/Podfile")
         framework {
             baseName = "shared"
-            isStatic = true
+            isStatic = false
         }
 
         pod("SPLPing", "1.1.8") //Light-weight Objective-C library to add the ICMP ping functionality

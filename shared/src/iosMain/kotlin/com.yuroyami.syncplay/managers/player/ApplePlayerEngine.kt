@@ -2,6 +2,7 @@ package com.yuroyami.syncplay.managers.player
 
 import com.yuroyami.syncplay.managers.player.avplayer.AvPlayer
 import com.yuroyami.syncplay.managers.player.vlc.VlcPlayer
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import org.jetbrains.compose.resources.DrawableResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.swift
@@ -15,7 +16,7 @@ sealed interface ApplePlayerEngine: PlayerEngine {
         override val name: String = "AVPlayer"
         override val img: DrawableResource = Res.drawable.swift
 
-        override fun instantiate(viewmodel: SyncplayViewmodel): BasePlayer = AvPlayer(viewmodel)
+        override fun instantiate(viewmodel: RoomViewmodel): BasePlayer = AvPlayer(viewmodel)
     }
 
     object VLC: ApplePlayerEngine {
@@ -24,7 +25,7 @@ sealed interface ApplePlayerEngine: PlayerEngine {
         override val name: String = "VLCKit" //We name this one VLCKit to differentiate it from Android's VLC when saving to datastore
         override val img: DrawableResource = Res.drawable.vlc
 
-        override fun instantiate(viewmodel: SyncplayViewmodel): BasePlayer = VlcPlayer(viewmodel)
+        override fun instantiate(viewmodel: RoomViewmodel): BasePlayer = VlcPlayer(viewmodel)
     }
 
 }

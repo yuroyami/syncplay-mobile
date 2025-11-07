@@ -4,9 +4,11 @@ import NIOFoundationCompat
 import NIOTransportServices
 import NIOExtras
 import NIOSSL
+import Pods_iosApp
 import shared
 
-class SwiftNioNetworkManager: SyncplayProtocol, ChannelInboundHandler {
+@preconcurrency
+class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked Sendable {
     typealias InboundIn = ByteBuffer
     
     private var channel: Channel?
@@ -14,12 +16,16 @@ class SwiftNioNetworkManager: SyncplayProtocol, ChannelInboundHandler {
     
     //override let engine = SyncplayProtocol.NetworkEngine.swiftnio
     
-    override func connectSocket() {
+    override init(viewmodel: RoomViewmodel) {
+        super.init(viewmodel: viewmodel)
+    }
+    
+    override func connectSocket() async throws {
         let group = NIOTSEventLoopGroup()
         eventLoopGroup = group
         
-        let host = session.serverHost
-        let port = Int(session.serverPort)
+        let host = self.viewmodel.session.serverHost
+        let port = Int(self.viewmodel.session.serverPort)
         
         let result: EventLoopFuture<Channel> = NIOTSConnectionBootstrap(group: group)
             .connectTimeout(TimeAmount.seconds(10))
@@ -35,38 +41,31 @@ class SwiftNioNetworkManager: SyncplayProtocol, ChannelInboundHandler {
         }
         result.whenFailure { error in
             print(error)
-            self.syncplayCallback?.onConnectionFailed()
+            self.viewmodel.callbackManager.onConnectionFailed()
         }
         
         do {
-            _ = try result.wait()
+            _ = try await result.get()
         } catch {
             print("Connection error: \(error)")
-            self.syncplayCallback?.onConnectionFailed()
+            self.viewmodel.callbackManager.onConnectionFailed()
         }
         
-    }
-    
-    override func isSocketValid() -> Bool {
-        return channel?.isActive ?? false
     }
     
     override func supportsTLS() -> Bool {
         return true
     }
     
-    override func endConnection(terminating: Bool) {
+    override func terminateExistingConnection() {
         try? channel?.close().wait()
         try? eventLoopGroup?.syncShutdownGracefully()
-        
-        if terminating {
-            terminateScope()
-        }
+    
     }
     
-    override func writeActualString(s: String) {
+    override func writeActualString(s: String) async throws {
         guard let channel = channel else {
-            syncplayCallback?.onDisconnected()
+            viewmodel.callbackManager.onDisconnected()
             return
         }
         
@@ -77,7 +76,7 @@ class SwiftNioNetworkManager: SyncplayProtocol, ChannelInboundHandler {
             do {
                 try result.get()
             } catch {
-                self.syncplayCallback?.onDisconnected()
+                self.viewmodel.callbackManager.onDisconnected()
                 print("Error writing to channel: \(error)")
             }
         }
@@ -93,7 +92,7 @@ class SwiftNioNetworkManager: SyncplayProtocol, ChannelInboundHandler {
             } catch {
                 print("Error initializing TLS: \(error)")
                 // Handle error appropriately (e.g., call onConnectionFailed())
-                self.syncplayCallback?.onConnectionFailed()
+                self.viewmodel.callbackManager.onConnectionFailed()
             }
         }
     }

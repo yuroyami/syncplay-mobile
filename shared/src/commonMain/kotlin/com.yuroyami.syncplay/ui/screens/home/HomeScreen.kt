@@ -57,9 +57,9 @@ import com.yuroyami.syncplay.managers.datastore.valueFlow
 import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
 import com.yuroyami.syncplay.managers.datastore.writeValue
 import com.yuroyami.syncplay.models.JoinConfig
+import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.popups.PopupDidYaKnow.DidYaKnowPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
-import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.utils.substringSafely
@@ -349,7 +349,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                 contentPadding = PaddingValues(vertical = 21.dp),
                                 modifier = Modifier.fillMaxWidth(0.85f),
                                 onClick = {
-                                    scope.launch {
+                                    scope.launch(Dispatchers.Default) {
                                         val errorMessage: StringResource? = when {
                                             textUsername.isBlank() -> Res.string.connect_username_empty_error
                                             textRoomname.isBlank() -> Res.string.connect_roomname_empty_error
@@ -389,15 +389,17 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                 checked = checked,
                                 onCheckedChange = { b ->
                                     checked = b
-                                    platformCallback.onSaveConfigShortcut(
-                                        JoinConfig(
-                                            textUsername.replace("\\", "").trim(),
-                                            textRoomname.replace("\\", "").trim(),
-                                            serverAddress,
-                                            serverPort.toInt(),
-                                            serverPassword
+                                    with (platformCallback) {
+                                        viewmodel.onSaveConfigShortcut(
+                                            JoinConfig(
+                                                textUsername.replace("\\", "").trim(),
+                                                textRoomname.replace("\\", "").trim(),
+                                                serverAddress,
+                                                serverPort.toInt(),
+                                                serverPassword
+                                            )
                                         )
-                                    )
+                                    }
                                 },
                                 content = {
                                     Icon(imageVector = Icons.Filled.Widgets, null)

@@ -2,16 +2,10 @@ package com.yuroyami.syncplay.utils
 
 import android.content.Context
 import android.content.res.Configuration
-import android.net.Uri
 import androidx.activity.ComponentActivity
-import androidx.core.net.toUri
-import androidx.documentfile.provider.DocumentFile
-import com.yuroyami.syncplay.models.MediaFile
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.util.Locale
 
-/** This is used specifically in the case where common code needs access to some context.
+/**
  * This is currently used to get file names for shared playlists without leaking the context globally.
  */
 lateinit var contextObtainer: () -> Context
@@ -23,26 +17,6 @@ fun Context.changeLanguage(lang: String): Context {
     val config = Configuration()
     config.setLocale(locale)
     return createConfigurationContext(config)
-}
-
-suspend fun collectInfoLocalAndroid(media: MediaFile) {
-    withContext(Dispatchers.IO) {
-        with(media) {
-            /** Using MiscUtils **/
-            fileName = getFileName(uri!!)!!
-            fileSize = getRealSizeFromUri(contextObtainer.invoke(), uri!!.toUri())?.toDouble()?.toLong().toString()
-
-            /** Hashing name and size in case they're used **/
-            fileNameHashed = sha256(fileName).toHexString(HexFormat.UpperCase)
-            fileSizeHashed = sha256(fileSize).toHexString(HexFormat.UpperCase)
-        }
-    }
-}
-
-/** Helps determine the size of a file in bytes, needing only its Uri and a context */
-fun getRealSizeFromUri(context: Context, uri: Uri): Long? {
-    val df = DocumentFile.fromSingleUri(context, uri) ?: return null
-    return df.length()
 }
 
 fun ComponentActivity.bindWatchdog() {

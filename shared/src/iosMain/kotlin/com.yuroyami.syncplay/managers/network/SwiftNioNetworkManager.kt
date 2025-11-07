@@ -1,5 +1,8 @@
 package com.yuroyami.syncplay.managers.network
 
+import com.yuroyami.syncplay.managers.NetworkManager
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
+
 /**
  * The iOS implementation of the network engine uses SwiftNIO,
  * a native iOS network client implemented entirely in pure Swift.
@@ -16,4 +19,4 @@ package com.yuroyami.syncplay.managers.network
  *
  * See: ```iosApp/iosApp/SwiftNioNetworkManager.swift```
  */
-class SwiftNioNetworkManager
+var instantiateSwiftNioNetworkManager: ((roomViewmodel: RoomViewmodel) -> NetworkManager)? = null

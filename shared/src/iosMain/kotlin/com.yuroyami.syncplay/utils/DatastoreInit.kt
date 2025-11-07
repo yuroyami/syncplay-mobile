@@ -1,10 +1,10 @@
-package com.yuroyami.syncplay
+package com.yuroyami.syncplay.utils
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import com.yuroyami.syncplay.managers.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.managers.managers.datastore.createDataStore
-import com.yuroyami.syncplay.managers.managers.datastore.datastore
+import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
+import com.yuroyami.syncplay.managers.datastore.createDataStore
+import com.yuroyami.syncplay.managers.datastore.datastore
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
@@ -25,13 +25,8 @@ fun dataStore(fileName: String): DataStore<Preferences> = createDataStore(
     }
 )
 
-
-fun initializeDatastoreIOS() {
-    /** The keys we created in the above list are gonna be used to create datastore filenames */
-    try {
+fun initializeDS() {
+    runCatching {
         datastore = dataStore(DataStoreKeys.SYNCPLAY_PREFS)
-    } catch (e: Exception) {
-        e.printStackTrace()
     }
-
 }
