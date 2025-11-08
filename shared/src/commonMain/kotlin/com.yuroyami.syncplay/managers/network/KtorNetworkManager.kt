@@ -1,7 +1,7 @@
 package com.yuroyami.syncplay.managers.network
 
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.managers.NetworkManager
+import com.yuroyami.syncplay.managers.network.NetworkManager
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.Connection

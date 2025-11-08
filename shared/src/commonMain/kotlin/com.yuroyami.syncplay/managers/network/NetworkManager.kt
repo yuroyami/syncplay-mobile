@@ -1,12 +1,11 @@
-package com.yuroyami.syncplay.managers
+package com.yuroyami.syncplay.managers.network
 
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
-import com.yuroyami.syncplay.managers.ProtocolManager.Companion.createPacketInstance
-import com.yuroyami.syncplay.managers.SessionManager.Session
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
 import com.yuroyami.syncplay.managers.datastore.valueBlockingly
 import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
+import com.yuroyami.syncplay.managers.protocol.ProtocolManager.Companion.createPacketInstance
 import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.utils.PLATFORM
@@ -81,7 +80,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
         }
     }
 
-    /** Attempts a connection to the host and port specified under [Session] */
+    /** Attempts a connection to the host and port specified under [com.yuroyami.syncplay.managers.SessionManager.Session] */
     abstract suspend fun connectSocket()
 
     /** Whether the currently selected network engine supports TLS */
@@ -139,7 +138,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     suspend inline fun <reified T : PacketCreator> send(noinline init: suspend T.() -> Unit = {}) {
         val packetInstance = createPacketInstance<T>(protocolManager = viewmodel.protocolManager)
         init(packetInstance)
-        val jsonPacket = Json.encodeToString(packetInstance.build())
+        val jsonPacket = Json.Default.encodeToString(packetInstance.build())
         transmitPacket(jsonPacket, packetClass = T::class)
     }
 

@@ -1,6 +1,6 @@
 package com.yuroyami.syncplay.managers.protocol.handler
 
-import com.yuroyami.syncplay.managers.ProtocolManager
+import com.yuroyami.syncplay.managers.protocol.ProtocolManager
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.serialization.DeserializationStrategy

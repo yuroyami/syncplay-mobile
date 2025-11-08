@@ -58,13 +58,12 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
 
     override val trackerJobInterval: Duration = 500.milliseconds
 
+    //TODO Initialize mpv once to quicken up video loading
     override fun initialize() {
         ctx = mpvView.context.applicationContext
         audioManager = ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
         copyAssets(ctx)
-
-        isInitialized = true
     }
 
     override suspend fun destroy() {
@@ -99,8 +98,10 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun isPlaying(): Boolean {
+        if (!isInitialized) return false
+
         return withContext(Dispatchers.Main.immediate) {
-            if (!isInitialized) false else !mpvView.paused
+             !mpvView.paused
         }
     }
 
@@ -187,8 +188,9 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun analyzeChapters(mediafile: MediaFile) {
+        if (!isInitialized) return
+
         withContext(Dispatchers.Main.immediate) {
-            if (!isInitialized) return@withContext
             val chapters = mpvView.loadChapters()
             if (chapters.isEmpty()) return@withContext
             mediafile.chapters.clear()
@@ -205,6 +207,7 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
 
     override suspend fun jumpToChapter(chapter: Chapter) {
         if (!isInitialized) return
+
         withContext(Dispatchers.Main.immediate) {
             MPVLib.setPropertyInt("chapter", chapter.index)
         }
@@ -248,6 +251,8 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun loadExternalSubImpl(uri: String, extension: String) {
+        if (!isInitialized) return
+
         withContext(Dispatchers.IO) {
             ctx.resolveUri(uri.toUri())?.let { subUri ->
                 withContext(Dispatchers.Main) {
@@ -306,18 +311,21 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun isSeekable(): Boolean {
-        return true
+        return isInitialized
     }
 
     @UiThread
     override fun seekTo(toPositionMs: Long) {
         if (!isInitialized) return
+
         super.seekTo(toPositionMs)
 
         mpvView.timePos = toPositionMs.toInt() / 1000
     }
 
     override fun currentPositionMs(): Long {
+        if (!isInitialized) return 0L
+
         return mpvPos
     }
 

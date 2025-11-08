@@ -1,6 +1,6 @@
 package com.yuroyami.syncplay.managers.network
 
-import com.yuroyami.syncplay.managers.NetworkManager
+import com.yuroyami.syncplay.managers.network.NetworkManager
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 
 /**

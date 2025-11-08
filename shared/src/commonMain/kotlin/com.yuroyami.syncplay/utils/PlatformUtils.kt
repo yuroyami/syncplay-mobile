@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ClipEntry
 import co.touchlab.kermit.Logger
 import com.yuroyami.syncplay.PlatformCallback
-import com.yuroyami.syncplay.managers.NetworkManager
+import com.yuroyami.syncplay.managers.network.NetworkManager
 import com.yuroyami.syncplay.managers.player.PlayerEngine
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 

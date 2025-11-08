@@ -5,11 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.PlatformCallback
 import com.yuroyami.syncplay.managers.LifecycleManager
-import com.yuroyami.syncplay.managers.NetworkManager
+import com.yuroyami.syncplay.managers.network.NetworkManager
 import com.yuroyami.syncplay.managers.OSDManager
 import com.yuroyami.syncplay.managers.OnRoomEventManager
-import com.yuroyami.syncplay.managers.PlayerManager
-import com.yuroyami.syncplay.managers.ProtocolManager
+import com.yuroyami.syncplay.managers.player.PlayerManager
+import com.yuroyami.syncplay.managers.protocol.ProtocolManager
 import com.yuroyami.syncplay.managers.RoomActionManager
 import com.yuroyami.syncplay.managers.SessionManager
 import com.yuroyami.syncplay.managers.SharedPlaylistManager

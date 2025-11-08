@@ -1,9 +1,8 @@
-package com.yuroyami.syncplay.managers
+package com.yuroyami.syncplay.managers.player
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
-import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.TrackChoices
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
@@ -27,7 +26,7 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
             initialValue = false
     )
 
-    var isNowPlaying =  mutableStateOf(false)
+    var isNowPlaying = mutableStateOf(false)
 
     val timeFullMillis = MutableStateFlow<Long>(0L)
 

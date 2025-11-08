@@ -1,6 +1,7 @@
 package com.yuroyami.syncplay.managers.protocol.handler
 
 import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator
+import com.yuroyami.syncplay.utils.loggy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
@@ -86,6 +87,8 @@ data class State(
                 val pausedChanged = viewmodel.protocolManager.globalPaused != paused || paused == viewmodel.player.isPlaying()
                 val diff = withContext(Dispatchers.Main.immediate) { (viewmodel.player.currentPositionMs() / 1000.0) - position }
 
+                loggy("1")
+
                 /* Updating Global State */
                 viewmodel.protocolManager.globalPaused = paused
                 protocol.globalPositionMs = position * 1000L
@@ -126,7 +129,6 @@ data class State(
                 //if self._player.speedSupported and not doSeek and not paused and  not self._config['slowOnDesync'] == False:
                 //madeChangeOnPlayer = self._slowDownToCoverTimeDifference(diff, setBy)
 
-
                 if (pausedChanged) {
                     if (!paused) callback.onSomeonePlayed(setBy ?: "")
                     if (paused) callback.onSomeonePaused(setBy ?: "")
@@ -155,6 +157,8 @@ data class State(
                     play = null
                 }
             }
+
+            loggy("6")
         }
     }
 }

@@ -5,7 +5,6 @@ import androidx.annotation.UiThread
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.eygraber.uri.Uri
-import com.yuroyami.syncplay.managers.PlayerManager
 import com.yuroyami.syncplay.managers.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
@@ -91,6 +90,8 @@ abstract class BasePlayer(
 
     /** Loads an external sub given the [uri] */
     suspend fun loadExternalSub(uri: String) {
+        if (!isInitialized) return
+
         if (hasMedia()) {
             val filename = getFileName(uri = uri).toString()
             val extension = filename.substring(filename.length - 4).lowercase()
@@ -121,6 +122,8 @@ abstract class BasePlayer(
 
     /** Loads a media located at [uri] */
     suspend fun injectVideo(uri: String? = null, isUrl: Boolean = false) {
+        if (!isInitialized) return
+
         withContext(Dispatchers.Main) {
             /* Creating a media file from the selected file */
             val newMediaFile = MediaFile()
@@ -181,6 +184,8 @@ abstract class BasePlayer(
     abstract fun changeCurrentVolume(v: Int)
 
     fun onPlaybackEnded() {
+        if (!isInitialized) return
+
         if (!viewmodel.isSoloMode) {
             if (viewmodel.sessionManager.session.sharedPlaylist.isEmpty()) return
             val currentIndex = viewmodel.sessionManager.session.spIndex.intValue

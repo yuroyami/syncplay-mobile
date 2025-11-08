@@ -1,7 +1,7 @@
 package com.yuroyami.syncplay.managers.network
 
 import android.net.TrafficStats
-import com.yuroyami.syncplay.managers.NetworkManager
+import com.yuroyami.syncplay.managers.network.NetworkManager
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import io.netty.bootstrap.Bootstrap

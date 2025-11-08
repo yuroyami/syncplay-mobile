@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ClipEntry
 import cocoapods.SPLPing.SPLPing
 import cocoapods.SPLPing.SPLPingConfiguration
-import com.yuroyami.syncplay.managers.NetworkManager
+import com.yuroyami.syncplay.managers.network.NetworkManager
 import com.yuroyami.syncplay.managers.network.KtorNetworkManager
 import com.yuroyami.syncplay.managers.network.instantiateSwiftNioNetworkManager
 import com.yuroyami.syncplay.managers.player.ApplePlayerEngine
