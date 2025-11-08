@@ -1,7 +1,10 @@
 package com.yuroyami.syncplay.managers.protocol.handler
 
+import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator
 import com.yuroyami.syncplay.utils.loggy
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -125,18 +128,25 @@ data class Set(
     )
 
     private suspend fun PacketHandler.handleNewControlledRoom(data: NewControlledRoom) {
-        callback.onNewControlledRoom(data)
+        try {
+            callback.onNewControlledRoom(data)
 
-        viewmodel.networkManager.send<PacketCreator.RoomChange> {
-            room = data.roomName
+            viewmodel.networkManager.send<PacketCreator.RoomChange> {
+                room = data.roomName
+            }
+
+            viewmodel.networkManager.sendAsync<PacketCreator.EmptyList>()
+
+            viewmodel.networkManager.send<PacketCreator.ControllerAuth> {
+                room = data.roomName
+                password = data.password
+            }
+        } finally {
+            viewmodel.viewModelScope.launch {
+                delay(1000)
+                viewmodel.protocolManager.isRoomChanging = false
+            }
         }
-
-        /* viewmodel.networkManager.sendAsync<PacketCreator.EmptyList>()
-
-        viewmodel.networkManager.sendAsync<PacketCreator.ControllerAuth> {
-            room = data.roomName
-            password = data.password
-        } */
     }
 
     private fun PacketHandler.handleControllerAuth(data: ControllerAuthResponse) {

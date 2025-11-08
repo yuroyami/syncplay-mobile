@@ -133,6 +133,8 @@ fun ManagedRoomPopup(purpose: ManagedRoomPopupPurpose) {
                     onClick = {
                         state.value = false
 
+                        viewmodel.protocolManager.isRoomChanging = true
+
                         viewmodel.networkManager.sendAsync<PacketCreator.ControllerAuth> {
                             when (purpose) {
                                 ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM -> {
@@ -145,10 +147,6 @@ fun ManagedRoomPopup(purpose: ManagedRoomPopupPurpose) {
                                 }
                             }
 
-                        }
-                        when (purpose) {
-                            ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM -> viewmodel.uiManager.popupCreateManagedRoom
-                            ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR -> viewmodel.uiManager.popupIdentifyAsRoomOperator
                         }
                     },
                 ) {

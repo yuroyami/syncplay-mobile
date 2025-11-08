@@ -76,6 +76,13 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     }
 
     override fun onSomeoneLeft(leaver: String) {
+        if (viewmodel.protocolManager.isRoomChanging) {
+            //This occurs when we are switching to a managed room
+            //and the server would still be sending messages about the old room
+            viewmodel.protocolManager.isRoomChanging = false
+            return
+        }
+
         loggy("SYNCPLAY Protocol: $leaver left the room.")
 
         broadcaster.broadcastMessage(message = { getString(Res.string.room_guy_left,leaver) }, isChat = false)

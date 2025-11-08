@@ -18,6 +18,8 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
 
     val packetHandler = PacketHandler(viewmodel, this)
 
+    var isRoomChanging = false
+
     override fun invalidate() {
         globalPaused = true
         globalPositionMs = 0.0

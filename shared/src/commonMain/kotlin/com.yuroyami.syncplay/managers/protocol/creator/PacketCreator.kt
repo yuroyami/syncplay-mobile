@@ -5,7 +5,6 @@ import com.yuroyami.syncplay.managers.datastore.valueBlockingly
 import com.yuroyami.syncplay.managers.protocol.ProtocolManager
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.utils.generateTimestampMillis
-import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.md5
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.add
@@ -223,7 +222,6 @@ sealed class PacketCreator {
         override fun build() = buildJsonObject {
             putJsonObject("Set") {
                 putJsonObject("room") {
-                    loggy("CREATING JSON: " + room)
                     put("name", room)
                 }
             }
