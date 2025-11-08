@@ -5,6 +5,7 @@ import androidx.annotation.UiThread
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.eygraber.uri.Uri
+import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator
 import com.yuroyami.syncplay.managers.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
@@ -182,6 +183,13 @@ abstract class BasePlayer(
     abstract fun getMaxVolume(): Int
     abstract fun getCurrentVolume(): Int
     abstract fun changeCurrentVolume(v: Int)
+
+    fun declareFile() {
+        viewmodel.networkManager.sendAsync<PacketCreator.File> {
+            media = viewmodel.media
+        }
+        viewmodel.networkManager.sendAsync<PacketCreator.EmptyList>()
+    }
 
     fun onPlaybackEnded() {
         if (!isInitialized) return

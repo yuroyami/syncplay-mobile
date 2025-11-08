@@ -138,7 +138,7 @@ data class State(
                 val surelyPausedChanged = protocol.globalPaused != paused && paused == viewmodel.player.isPlaying()
                 val seeked = playerDiff > SEEK_THRESHOLD && globalDiff > SEEK_THRESHOLD
 
-                sender.send<PacketCreator.State> {
+                sender.sendAsync<PacketCreator.State> {
                     serverTime = latencyCalculation
                     this.doSeek = seeked
                     this.position = withContext(Dispatchers.Main.immediate) { viewmodel.player.currentPositionMs().div(1000L) } // if dontSlowDownWithMe useGlobalPosition or else usePlayerPosition
@@ -146,7 +146,7 @@ data class State(
                     play = viewmodel.player.isPlaying()
                 }
             } else {
-                sender.send<PacketCreator.State> {
+                sender.sendAsync<PacketCreator.State> {
                     serverTime = latencyCalculation
                     this.doSeek = null
                     this.position = null

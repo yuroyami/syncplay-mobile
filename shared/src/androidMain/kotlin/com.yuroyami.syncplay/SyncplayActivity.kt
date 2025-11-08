@@ -190,6 +190,7 @@ class SyncplayActivity : ComponentActivity() {
 
         Thread.setDefaultUncaughtExceptionHandler { t, t2 ->
             loggy(t2.stackTraceToString())
+            throw t2
         }
     }
 

@@ -19,7 +19,6 @@ import androidx.media3.common.C.STREAM_TYPE_MUSIC
 import com.yuroyami.syncplay.databinding.MpvviewBinding
 import com.yuroyami.syncplay.managers.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.managers.player.BasePlayer
-import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator
 import com.yuroyami.syncplay.managers.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
@@ -433,9 +432,7 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
                                 if (playerManager.timeFullMillis.value.toDouble() > 0) {
                                     playerManager.media.value?.fileDuration = playerManager.timeFullMillis.value / 1000.0
 
-                                    viewmodel.networkManager.sendAsync<PacketCreator.File> {
-                                        media = playerManager.media.value
-                                    }
+                                    declareFile()
                                     break
                                 }
                                 delay(10)

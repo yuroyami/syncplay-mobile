@@ -11,7 +11,7 @@ import kotlinx.serialization.json.JsonObject
 @Serializable
 data class Set(
     @SerialName("Set") val set: SetData
-): SyncplayMessage {
+) : SyncplayMessage {
 
     context(packetHandler: PacketHandler)
     override suspend fun handle() {
@@ -26,7 +26,7 @@ data class Set(
         }
 
         // Fetch a list of users anyway
-        packetHandler.sender.send<PacketCreator.EmptyList>()
+        //packetHandler.sender.send<PacketCreator.EmptyList>()
     }
 
     @Serializable
@@ -131,12 +131,12 @@ data class Set(
             room = data.roomName
         }
 
-        viewmodel.networkManager.sendAsync<PacketCreator.EmptyList>()
+        /* viewmodel.networkManager.sendAsync<PacketCreator.EmptyList>()
 
         viewmodel.networkManager.sendAsync<PacketCreator.ControllerAuth> {
             room = data.roomName
             password = data.password
-        }
+        } */
     }
 
     private fun PacketHandler.handleControllerAuth(data: ControllerAuthResponse) {

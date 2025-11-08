@@ -236,10 +236,11 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
 
         seekTo(0) //VLC retains video position for some reason
 
-        /* Updating play button */
-
         vlcMedia?.length?.numberValue?.doubleValue?.toLong()?.let {
             playerManager.timeFullMillis.value = if (it < 0) 0 else it
+
+            playerManager.media.value?.fileDuration = playerManager.timeFullMillis.value / 1000.0
+            declareFile()
         }
     }
 

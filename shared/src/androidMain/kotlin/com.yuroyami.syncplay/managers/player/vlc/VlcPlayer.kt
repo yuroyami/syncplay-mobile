@@ -14,7 +14,6 @@ import androidx.media3.common.C.STREAM_TYPE_MUSIC
 import com.yuroyami.syncplay.databinding.VlcviewBinding
 import com.yuroyami.syncplay.managers.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.managers.player.BasePlayer
-import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.utils.contextObtainer
@@ -377,9 +376,8 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
 
                         if (durationMs / 1000.0 != viewmodel.media?.fileDuration) {
                             viewmodel.media?.fileDuration = durationMs / 1000.0
-                            viewmodel.networkManager.sendAsync<PacketCreator.File> {
-                                media = viewmodel.media
-                            }
+
+                            declareFile()
                         }
                     }
                 }

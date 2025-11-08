@@ -1,7 +1,6 @@
 package com.yuroyami.syncplay.managers.network
 
 import android.net.TrafficStats
-import com.yuroyami.syncplay.managers.network.NetworkManager
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import io.netty.bootstrap.Bootstrap
@@ -88,12 +87,6 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
     }
 
     override suspend fun writeActualString(s: String) {
-//        loggy("CHANNEL ${channel}")
-//        loggy("WRITABLE ${channel?.isWritable}")
-//        loggy("ACTIVE ${channel?.isActive}")
-//        loggy("OPEN ${channel?.isOpen}")
-//        loggy("REGISTERED ${channel?.isRegistered}")
-
         val f = channel?.writeAndFlush(s)
         f?.addListener(ChannelFutureListener { future ->
             if (!future.isSuccess) {
