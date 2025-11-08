@@ -3,6 +3,7 @@ package com.yuroyami.syncplay.ui.screens.home
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -10,9 +11,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -41,7 +40,7 @@ fun HomeTextField(
     dropdownState: MutableState<Boolean>? = null,
     onValueChange: (String) -> Unit,
     type: KeyboardType? = null,
-    cornerRadius: Dp = 40.dp
+    cornerRadius: Dp = 35.dp
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -67,6 +66,10 @@ fun HomeTextField(
         keyboardOptions = KeyboardOptions(keyboardType = type ?: KeyboardType.Text)
     ) {
         TextInput(
+            modifier = Modifier.height(56.dp),
+            shape = RoundedCornerShape(cornerRadiusAnimated),
+            backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
+            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 12.dp),
             leading = if (icon != null) {
                 { UnstyledIcon(imageVector = icon, contentDescription = null, modifier = Modifier.padding(end = 4.dp), tint = Color.White) }
             } else null,
@@ -77,10 +80,10 @@ fun HomeTextField(
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedDropdown.value)
                 } ?: UnstyledIcon(imageVector = Icons.Default.Done, contentDescription = null, modifier = Modifier.padding(start = 4.dp), tint = Color.Transparent)
             },
-            shape = RoundedCornerShape(cornerRadiusAnimated),
-            placeholder = if (label != null) { { UnstyledText(label, color = Color.Gray) } } else null,
-            backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
-            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 21.dp)
+            placeholder = if (label != null) {
+                { UnstyledText(label, color = Color.Gray) }
+            } else null
         )
     }
+
 }

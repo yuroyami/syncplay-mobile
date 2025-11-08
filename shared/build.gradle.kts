@@ -143,6 +143,8 @@ kotlin {
 
             /* File opener/saver multiplatform */
             implementation(libs.filekit)
+
+            implementation("dev.chrisbanes.haze:haze:1.6.10")
         }
 
         androidMain.dependencies {
@@ -217,7 +219,7 @@ android {
 
     defaultConfig {
         applicationId = if (forGPlay) "com.yuroyami.syncplay" else "com.reddnek.syncplay"
-        minSdk = 23
+        minSdk = 26
         targetSdk = 36
         versionCode = 1_000_016_00_0 //1 XXX XXX XX X (last X is for prerelease versions such as RC)
         versionName = "0.16.0"

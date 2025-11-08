@@ -120,21 +120,23 @@ data class Set(
     @SerialName("controllerAuth")
     data class ControllerAuthResponse(
         val room: String,
-        val password: String,
+        val password: String = "",
         val success: Boolean
     )
 
     private suspend fun PacketHandler.handleNewControlledRoom(data: NewControlledRoom) {
         callback.onNewControlledRoom(data)
 
-//        viewmodel.networkManager.send<PacketCreator.RoomChange> {
-//            room = data.roomName
-//        }
+        viewmodel.networkManager.send<PacketCreator.RoomChange> {
+            room = data.roomName
+        }
 
-//        viewmodel.networkManager.send<PacketCreator.ControllerAuth> {
-//            room = data.roomName
-//            password = data.password
-//        }
+        viewmodel.networkManager.sendAsync<PacketCreator.EmptyList>()
+
+        viewmodel.networkManager.sendAsync<PacketCreator.ControllerAuth> {
+            room = data.roomName
+            password = data.password
+        }
     }
 
     private fun PacketHandler.handleControllerAuth(data: ControllerAuthResponse) {

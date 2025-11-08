@@ -138,7 +138,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     suspend inline fun <reified T : PacketCreator> send(noinline init: suspend T.() -> Unit = {}) {
         val packetInstance = createPacketInstance<T>(protocolManager = viewmodel.protocolManager)
         init(packetInstance)
-        val jsonPacket = Json.Default.encodeToString(packetInstance.build())
+        val jsonPacket = Json.encodeToString(packetInstance.build())
         transmitPacket(jsonPacket, packetClass = T::class)
     }
 

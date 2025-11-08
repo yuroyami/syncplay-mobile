@@ -42,22 +42,22 @@ class PacketHandler(
     val SEEK_THRESHOLD = 1L
 
     suspend fun parse(jsonString: String) {
-            loggy("**SERVER** $jsonString")
+        loggy("**SERVER** $jsonString")
 
-            try {
-                // Parse the JSON to determine message type
-                val elementDecoded = handlerJson.decodeFromString<SyncplayMessage>(
-                    deserializer = SyncplayMessageSerializer,
-                    string = jsonString
-                )
-                elementDecoded.handle()
+        try {
+            // Parse the JSON to determine message type
+            val elementDecoded = handlerJson.decodeFromString<SyncplayMessage>(
+                deserializer = SyncplayMessageSerializer,
+                string = jsonString
+            )
+            elementDecoded.handle()
 
-            } catch (e: SerializationException) {
-                loggy("Serialization error: ${e.message}")
-                throw e
-            }
+        } catch (e: SerializationException) {
+            loggy("Problematic Json: $jsonString")
+            loggy("Serialization error: ${e.message}")
+            throw e
+        }
     }
-
 
     object SyncplayMessageSerializer : JsonContentPolymorphicSerializer<SyncplayMessage>(SyncplayMessage::class) {
         override fun selectDeserializer(element: JsonElement): DeserializationStrategy<SyncplayMessage> {

@@ -281,6 +281,9 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
 
     override fun onNewControlledRoom(data: Set.NewControlledRoom) {
         //TODO: Copy +room:password to clipboard!
+        viewmodel.session.currentRoom = data.roomName
+        viewmodel.session.currentOperatorPassword = data.password
+
         broadcaster.broadcastMessage(
             message = {
                 getString(Res.string.room_on_newcontrolledroom, data.roomName, data.password)

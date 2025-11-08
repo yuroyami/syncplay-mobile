@@ -40,6 +40,7 @@ class SessionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) 
         var currentUsername: String = "Anonymous${(1000..9999).random()}"
         var currentRoom: String = "roomname"
         var currentPassword: String = ""
+        var currentOperatorPassword: String = ""
 
         var roomFeatures: RoomFeatures = RoomFeatures()
             set(value) {
