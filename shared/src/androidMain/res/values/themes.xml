@@ -1,7 +1,8 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <style name="SplashTheme" parent="Theme.SplashScreen.IconBackground">
         <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
         <item name="windowSplashScreenBackground">#444444</item>
         <item name="postSplashScreenTheme">@style/Theme.AppCompat.DayNight.NoActionBar</item>
+        <item name="android:enforceNavigationBarContrast" tools:ignore="NewApi">false</item>
     </style>
 </resources>

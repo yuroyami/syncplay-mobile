@@ -143,8 +143,6 @@ kotlin {
 
             /* File opener/saver multiplatform */
             implementation(libs.filekit)
-
-            implementation("dev.chrisbanes.haze:haze:1.6.10")
         }
 
         androidMain.dependencies {
@@ -156,7 +154,7 @@ kotlin {
             implementation(libs.jetpack.documentfile)
 
             /* Splash Screen with backward compatibility */
-            implementation(libs.jetpack.splashscreen) //1.2.0 bugs our navbar opacity
+            implementation(libs.jetpack.splashscreen)
 
             /* Extended coroutine support for Android threading */
             implementation(libs.kotlin.coroutines.android)
@@ -195,10 +193,6 @@ android {
 
     ndkVersion = ndkRequired
 
-    /*sourceSets["main"].java.apply {
-        srcDirs(srcDirs , "src/androidMain/java")
-    }*/
-
     signingConfigs {
         val localProperties = Properties()
         val localPropertiesFile = rootProject.file("local.properties")
@@ -206,7 +200,7 @@ android {
             localProperties.load(localPropertiesFile.inputStream())
         }
 
-        val keystore = file("${rootDir}/keystore/syncplaykeystore.jks")
+        val keystore = file("${rootDir}/keystore/syncplaykey.jks")
         if (keystore.exists()) {
             create("syncplay_keystore") {
                 storeFile = keystore

@@ -53,7 +53,7 @@ fun HomeTextField(
         modifier = modifier,
         value = value,
         onValueChange = onValueChange,
-        textColor = Color.White,
+        //textColor = Color.White,
         singleLine = true,
         textAlign = TextAlign.Center,
         editable = dropdownState == null,
