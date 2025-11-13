@@ -45,9 +45,14 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
+/**
+ * Composable that represents the entire room screen UI.
+ *
+ * @param viewmodel The [RoomViewmodel] providing all room-related state and event handling.
+ */
 @Composable
 fun RoomScreenUI(viewmodel: RoomViewmodel) {
-    HideSystemBars() //This little trick will prevent the navigation bar from appearing when we show popup dialogs/dropdown menus.
+    HideSystemBars() // Prevents the navigation bar from reappearing when popups/menus are shown.
 
     val soloMode = remember { viewmodel.isSoloMode }
     val hasVideo by viewmodel.playerManager.hasVideo.collectAsState(initial = false)
@@ -60,9 +65,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
     val popupStateChatHistory by viewmodel.uiManager.popupChatHistory.collectAsState()
     val popupStateSeekToPosition = remember { mutableStateOf(false) }
 
-    CompositionLocalProvider(
-        LocalCardController provides cardController
-    ) {
+    CompositionLocalProvider(LocalCardController provides cardController) {
         Box(modifier = Modifier.fillMaxSize()) {
             /* Room Background Artwork */
             if (!hasVideo) {
@@ -73,46 +76,57 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
             val playerIsReady by viewmodel.playerManager.isPlayerReady.collectAsState()
             if (playerIsReady) {
                 viewmodel.player.VideoPlayer(
-                    modifier = Modifier.fillMaxSize().alpha(if (hasVideo) 1f else 0f) //The video composable has to be alive at all times, we just hide it when there's no video
-
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .alpha(if (hasVideo) 1f else 0f) // Keeps composable alive even if hidden
                 )
             }
 
             if (lockedMode) {
-                /* A simple layout that has a hideable button that unlocks the screen after locking it */
+                /* Simple unlock layout shown when screen is locked */
                 RoomUnlockableLayout()
             } else {
-                /* Playback Gesture Interceptor */
+                /* Gesture Interceptor for playback control */
                 RoomGestureInterceptor(modifier = Modifier.fillMaxSize())
 
                 AnimatedVisibility(
                     modifier = Modifier.fillMaxSize(),
                     visible = isHUDVisible,
-                    enter = fadeIn(animationSpec = keyframes { durationMillis = 75 }), exit = fadeOut(animationSpec = keyframes { durationMillis = 75 })
+                    enter = fadeIn(animationSpec = keyframes { durationMillis = 75 }),
+                    exit = fadeOut(animationSpec = keyframes { durationMillis = 75 })
                 ) {
-                    // We need to wrap all HUD elements in this Box because AnimatedVisibility breaks the original Box scope,
-                    // which breaks our ability to position elements freely on the screen (e.g., topStart, bottomEnd, etc.).
+                    // Wrap all HUD elements in a Box since AnimatedVisibility resets Box scope
                     Box(modifier = Modifier.fillMaxSize()) {
                         if (!isInPipMode && !soloMode) {
-                            /* Chat Section (Top to the left): has the text input field and the chat messages */
+                            /* Chat Section (Top-Left): Input and messages */
                             RoomChatSection(
-                                modifier = Modifier.align(Alignment.TopStart).fillMaxWidth(0.35f).padding(8.dp)
+                                modifier = Modifier
+                                    .align(Alignment.TopStart)
+                                    .fillMaxWidth(0.35f)
+                                    .padding(8.dp)
                             )
 
-                            /* Status section (top center): Has connection status, ping, room name, episode and also occasional room OSD messages */
+                            /* Status Section (Top-Center): Connection info, room name, etc. */
                             RoomStatusInfoSection(
-                                modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth(0.28f).padding(8.dp)
+                                modifier = Modifier
+                                    .align(Alignment.TopCenter)
+                                    .fillMaxWidth(0.28f)
+                                    .padding(8.dp)
                             )
                         }
 
-                        /* Tab section (top to the right): Has the row of tabs (but not the actual cards that slide in when tabs are clicked) */
+                        /* Tab Section (Top-Right): Tab buttons row */
                         RoomTabSection(
-                            modifier = Modifier.align(Alignment.TopEnd).fillMaxWidth(0.38f).padding(8.dp)
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .fillMaxWidth(0.38f)
+                                .padding(8.dp)
                         )
 
-                        /* Card section (to the right middle) */
+                        /* Sliding Cards (Right side) */
                         RoomSectionSlidingCards(
-                            modifier = Modifier.align(Alignment.CenterEnd)
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
                                 .fillMaxSize()
                                 .zIndex(10f)
                                 .padding(
@@ -122,13 +136,14 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                                 )
                         )
 
-                        /* BottomBar: Ready Button - Seekbar (and the buttons above it) - Advanced Controls (like selecting tracks) - Media Add Button */
+                        /* Bottom Bar: Playback and advanced controls */
                         RoomBottomBarSection(
-                            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
                         )
 
-
-                        /* In the dead center, we put the play button */
+                        /* Central Play Button */
                         RoomPlayButton(
                             modifier = Modifier.align(Alignment.Center)
                         )
@@ -149,9 +164,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
 
         LaunchedEffect(Unit) {
             if (!soloMode) {
-                /* Starts ping updates when not in solo mode.
-                * Uses withContext(Dispatchers.IO) to tie the ping coroutine to the composition scope,
-                * ensuring that if composition is cancelled (room is exited), ping updating is cancelled as well. */
+                // Starts ping updates for multiplayer mode and cancels when room is exited
                 runCatching {
                     withContext(Dispatchers.IO) {
                         viewmodel.beginPingUpdate()

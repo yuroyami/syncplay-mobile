@@ -68,28 +68,59 @@ import syncplaymobile.shared.generated.resources.okay
 import syncplaymobile.shared.generated.resources.yes
 import kotlin.math.roundToInt
 
-/** Main class that does the required logic and UI for a single Setting.
- * @param type The type of the setting, must be a [SettingType]
- * @param key Key string that identifies the setting, to save it and read it.
- * @param title Title of the setting, visible to the user, which appears in a bigger text size.
- * @param summary Summary of the setting, preferably explaining how the setting works.
- * @param icon Icon for the setting, it's null by default so no icon will be shown unless you pass an [ImageVector] for it
- * @param defaultValue The default value of the setting, can be of any type but will throw an exception when incompatible
- * @param enabled Whether the setting is enabled, this is true by default if you don't pass any value so it's optional.
- * */
+/**
+ * Base class for creating configurable settings with UI representations.
+ *
+ * Provides a type-safe framework for building settings screens with various input types
+ * including toggles, sliders, text fields, color pickers, and multi-choice dialogs.
+ * All settings automatically persist to DataStore and reactively update the UI.
+ *
+ * ## Setting Types
+ * - [HeadlessSetting] - No UI, just stores a value
+ * - [OneClickSetting] - Simple clickable setting that triggers an action
+ * - [YesNoDialogSetting] - Shows a confirmation dialog before executing an action
+ * - [PopupSetting] - Opens a custom popup when clicked
+ * - [BooleanSetting] - Checkbox or toggle switch for boolean values
+ * - [MultiChoiceSetting] - Dropdown/dialog for selecting from multiple options
+ * - [SliderSetting] - Slider for numeric values within a range
+ * - [ColorSetting] - Color picker for choosing colors
+ * - [TextFieldSetting] - Text input field for string values
+ *
+ * @param T The type of value this setting stores
+ * @property type The specific setting type (determines UI representation)
+ * @property key Unique identifier for persisting this setting to storage
+ * @property title Display title shown to the user (localized string resource)
+ * @property summary Description explaining what the setting does (localized string resource)
+ * @property defaultValue The default value if no stored value exists
+ * @property icon Optional icon displayed next to the setting title
+ * @property enabled Whether the setting is interactive (default: true)
+ */
 sealed class Setting<T>(
     val type: SettingType = SettingType.OneClickSettingType, val key: String = "",
     val title: StringResource, val summary: StringResource,
     val defaultValue: T,
     val icon: ImageVector? = null, val enabled: Boolean = true,
 ) {
-    /** This is the abstract function that will be called by Compose UI in order to draw the setting.
-     * Each setting type has its own UI, so within this sealed class, we override it and draw it respectively;
+    /**
+     * Renders the Compose UI for this setting.
+     *
+     * Each setting type implements this to provide its specific UI representation.
+     * The composable reads from and writes to DataStore automatically.
+     *
+     * @param modifier Compose modifier for styling and layout
      */
     @Composable
     abstract fun SettingComposable(modifier: Modifier)
 
-    /** ======= Now to specific types of SETTINGs and their respective child classes ======= */
+    /**
+     * Hidden setting with no UI representation.
+     *
+     * Useful for storing configuration values that are not directly user-editable
+     * but need to persist across app sessions.
+     *
+     * @property key DataStore key for this setting
+     * @property defaultValue The default value to use
+     */
     class HeadlessSetting(key: String, defaultValue: Any): Setting<Any>(
         type = SettingType.HeadlessSettingType, key = key, summary = Res.string.okay, title = Res.string.okay, defaultValue = defaultValue,
         icon = null, enabled = true
@@ -98,6 +129,14 @@ sealed class Setting<T>(
         override fun SettingComposable(modifier: Modifier) {}
     }
 
+    /**
+     * Simple clickable setting that triggers a callback when tapped.
+     *
+     * Displays as a list item with title, summary, and optional icon. Does not
+     * store any value - purely for triggering actions like navigation or dialogs.
+     *
+     * @property onClick Callback invoked when the setting is tapped
+     */
     class OneClickSetting(
         type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Any = Any(),
         icon: ImageVector?, enabled: Boolean = true,
@@ -150,6 +189,16 @@ sealed class Setting<T>(
         }
     }
 
+    /**
+     * Setting that shows a Yes/No confirmation dialog before executing an action.
+     *
+     * Useful for destructive or important actions that require user confirmation.
+     * Displays a rationale message explaining what will happen.
+     *
+     * @property rationale Message explaining the action (shown in the dialog)
+     * @property onYes Callback invoked when user confirms with "Yes"
+     * @property onNo Callback invoked when user cancels with "No"
+     */
     class YesNoDialogSetting(
         type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Any = Any(),
         icon: ImageVector?, enabled: Boolean = true,
@@ -167,7 +216,7 @@ sealed class Setting<T>(
             val styling = LocalSettingStyling.current
 
             var dialog by remember { mutableStateOf(false) }
-            if (dialog ) {
+            if (dialog) {
                 AlertDialog(
                     onDismissRequest = { dialog = false },
                     confirmButton = {
@@ -226,10 +275,18 @@ sealed class Setting<T>(
         }
     }
 
+    /**
+     * Setting that displays a custom popup when clicked.
+     *
+     * Provides maximum flexibility by allowing you to define any composable
+     * as the popup content. Useful for complex configuration UIs.
+     *
+     * @property popupComposable The composable to show as a popup, receives visibility state
+     */
     class PopupSetting(
         type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Any = Any(),
         icon: ImageVector?, enabled: Boolean = true,
-        val popupComposable: @Composable() ((MutableState<Boolean>) -> Unit)? = null
+        val popupComposable: @Composable ((MutableState<Boolean>) -> Unit)? = null
     ) : Setting<Any>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
         icon = icon, enabled = enabled
@@ -286,6 +343,14 @@ sealed class Setting<T>(
         }
     }
 
+    /**
+     * Boolean setting rendered as either a checkbox or toggle switch.
+     *
+     * Automatically persists the boolean value to DataStore and updates reactively.
+     * The UI type (checkbox vs switch) is determined by the [type] parameter.
+     *
+     * @property onBooleanChanged Callback invoked when the value changes
+     */
     class BooleanSetting(
         type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Boolean,
         icon: ImageVector?, enabled: Boolean = true,
@@ -294,8 +359,6 @@ sealed class Setting<T>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
         icon = icon, enabled = enabled
     ) {
-        /** A boolean setting UI composable function. This either creates a CheckboxSetting or a ToggleSetting
-         * based on the parameter [type] that is passed, whether it is a checkbox setting, or a toggle button. */
         @Composable
         override fun SettingComposable(modifier: Modifier) {
             val boolean by key.valueAsState(defaultValue)
@@ -372,6 +435,16 @@ sealed class Setting<T>(
         }
     }
 
+    /**
+     * Setting that displays a dialog for selecting from multiple options.
+     *
+     * Shows a list of choices in a dialog, allowing the user to pick one option.
+     * The selected value is persisted automatically. Entries are provided dynamically
+     * via a composable lambda to support runtime-generated options.
+     *
+     * @property entries Composable lambda returning a map of key-value pairs (key = internal value, value = display text)
+     * @property onItemChosen Callback invoked when a new option is selected
+     */
     class MultiChoiceSetting(
         type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: String,
         icon: ImageVector?, enabled: Boolean = true,
@@ -381,7 +454,6 @@ sealed class Setting<T>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
         icon = icon, enabled = enabled
     ) {
-        /** A multi-choice setting which shows a popup dialog when clicked.*/
         @Composable
         override fun SettingComposable(modifier: Modifier) {
             val actualEntries = entries.invoke()
@@ -453,6 +525,16 @@ sealed class Setting<T>(
         }
     }
 
+    /**
+     * Setting with a slider for selecting numeric values within a range.
+     *
+     * Displays a slider with minimum and maximum bounds. The current value is
+     * shown next to the title and updates in real-time as the slider moves.
+     *
+     * @property maxValue Maximum slider value (inclusive)
+     * @property minValue Minimum slider value (inclusive)
+     * @property onValueChanged Callback invoked when the value changes
+     */
     class SliderSetting(
         type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Int,
         icon: ImageVector?, enabled: Boolean = true,
@@ -535,10 +617,17 @@ sealed class Setting<T>(
                     }
                 },
 
-            )
+                )
         }
     }
 
+    /**
+     * Setting with a color picker for selecting colors.
+     *
+     * Displays a colored button showing the current color. Clicking opens a
+     * color picker popup where the user can choose a new color. The color
+     * is stored as an ARGB integer.
+     */
     class ColorSetting(
         type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Int,
         icon: ImageVector?, enabled: Boolean = true
@@ -546,7 +635,6 @@ sealed class Setting<T>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
         icon = icon, enabled = enabled
     ) {
-        /** A color setting UI composable function. Clicking this would displays a popup to the user. */
         @Composable
         override fun SettingComposable(modifier: Modifier) {
             val color by key.valueAsState(defaultValue)
@@ -609,6 +697,12 @@ sealed class Setting<T>(
         }
     }
 
+    /**
+     * Setting with a text input field for entering string values.
+     *
+     * Displays a text field below the setting where users can type values.
+     * Configured for numeric input by default but can be customized for other types.
+     */
     class TextFieldSetting(
         type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: String,
         icon: ImageVector?, enabled: Boolean = true
@@ -616,7 +710,6 @@ sealed class Setting<T>(
         type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
         icon = icon, enabled = enabled
     ) {
-        /** A string setting UI composable function. It has a textfield next to it */
         @Composable
         override fun SettingComposable(modifier: Modifier) {
             val string by key.valueAsState(defaultValue)
@@ -695,7 +788,6 @@ sealed class Setting<T>(
                             ),
                             label = {}
                         )
-
                     }
                 }
             )

@@ -2,7 +2,7 @@ package com.yuroyami.syncplay.utils
 
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.managers.SharedPlaylistManager
-import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator
+import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCObjectVar
@@ -81,11 +81,11 @@ actual suspend fun SharedPlaylistManager.addFolderToPlaylist(uri: String) {
 
     if (viewmodel.session.spIndex.intValue == -1) {
         retrieveFile(newList.first())
-        viewmodel.networkManager.send<PacketCreator.PlaylistIndex> {
+        viewmodel.networkManager.send<PacketOut.PlaylistIndex> {
             index = 0
         }
     }
-    viewmodel.networkManager.send<PacketCreator.PlaylistChange> {
+    viewmodel.networkManager.send<PacketOut.PlaylistChange> {
         files = viewmodel.session.sharedPlaylist + newList
     }
 }
@@ -205,7 +205,7 @@ actual fun SharedPlaylistManager.loadPlaylistLocally(fromUri: String, alsoShuffl
     if (alsoShuffle) lines.shuffle()
 
     /** Updating the shared playlist */
-    viewmodel.networkManager.sendAsync<PacketCreator.PlaylistChange> {
+    viewmodel.networkManager.sendAsync<PacketOut.PlaylistChange> {
         files = lines
     }
 }

@@ -37,13 +37,48 @@ import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
+/**
+ * VLC media player implementation for iOS using MobileVLCKit.
+ *
+ * Provides comprehensive media playback functionality using VLC's powerful codec library.
+ * This iOS version is more stable than its Android counterpart while maintaining extensive
+ * format support.
+ *
+ * ## Architecture
+ * Uses UIKitView to embed VLC's UIView into Compose UI
+ *
+ * @property viewmodel The parent RoomViewModel managing this player
+ */
 class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngine.VLC) {
+    /**
+     * VLC library instance providing codec and media parsing capabilities.
+     */
     private var libvlc: VLCLibrary? = null
+
+    /**
+     * Main VLC media player instance handling playback.
+     */
     var vlcPlayer: VLCMediaPlayer? = null
+
+    /**
+     * UIView that renders the video content.
+     */
     private var vlcView: UIView? = null
+
+    /**
+     * Delegate for receiving VLC player state change notifications.
+     */
     private var vlcDelegate = VlcDelegate()
+
+    /**
+     * Currently loaded VLC media object.
+     */
     private var vlcMedia: VLCMedia? = null
 
+    /**
+     * AVPlayerLayer wrapper for Picture-in-Picture support.
+     * VLC's UIView is added as a sublayer to enable PiP functionality.
+     */
     var pipLayer: AVPlayerLayer? = null
 
     override val canChangeAspectRatio: Boolean
@@ -55,6 +90,11 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
     override val trackerJobInterval: Duration
         get() = 1.seconds
 
+    /**
+     * Cleans up VLC resources and stops playback.
+     *
+     * Properly disposes of the media player, media object, and VLC library.
+     */
     override suspend fun destroy() {
         if (!isInitialized) return
 
@@ -66,9 +106,23 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         libvlc = null
     }
 
-    //TODO
+    /**
+     * Returns player-specific configuration settings.
+     *
+     * TODO: Implement VLC-specific settings (deinterlacing, hardware acceleration, etc.)
+     *
+     * @return null (no custom settings currently implemented)
+     */
     override suspend fun configurableSettings(): ExtraSettingBundle? = null
 
+    /**
+     * Renders the VLC video player view within Compose.
+     *
+     * Creates a UIView for video rendering, initializes the VLC library and player,
+     * and sets up the Picture-in-Picture layer wrapper.
+     *
+     * @param modifier Compose modifier for layout and styling
+     */
     @Composable
     override fun VideoPlayer(modifier: Modifier) {
         UIKitView(
@@ -95,6 +149,9 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         )
     }
 
+    /**
+     * Initializes the VLC player by setting up the delegate and starting progress tracking.
+     */
     override fun initialize() {
         vlcPlayer!!.setDelegate(vlcDelegate)
 
@@ -103,18 +160,36 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         startTrackingProgress()
     }
 
+    /**
+     * Checks if any media is currently loaded.
+     *
+     * @return true if media is loaded, false otherwise
+     */
     override suspend fun hasMedia(): Boolean {
         if (!isInitialized) return false
 
         return vlcPlayer?.media != null
     }
 
+    /**
+     * Checks if playback is currently active.
+     *
+     * @return true if playing, false if paused or stopped
+     */
     override suspend fun isPlaying(): Boolean {
         if (!isInitialized) return false
 
         return vlcPlayer?.isPlaying() == true
     }
 
+    /**
+     * Analyzes and extracts available audio and subtitle tracks from the loaded media.
+     *
+     * Populates the media file's track lists with VLC's detected tracks,
+     * including track names and indices for selection.
+     *
+     * @param mediafile The media file to populate with track information
+     */
     override suspend fun analyzeTracks(mediafile: MediaFile) {
         if (!isInitialized) return
         if (vlcPlayer == null) return
@@ -147,6 +222,14 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         }
     }
 
+    /**
+     * Selects a specific audio or subtitle track for playback.
+     *
+     * Pass null or negative index to disable that track type.
+     *
+     * @param track The track to select, or null to disable
+     * @param type Whether this is an audio or subtitle track
+     */
     override suspend fun selectTrack(track: Track?, type: TRACKTYPE) {
         if (!isInitialized) return
 
@@ -171,6 +254,13 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         }
     }
 
+    /**
+     * Analyzes and extracts chapter information from the loaded media.
+     *
+     * TODO: Implement chapter timestamp extraction (currently set to 0).
+     *
+     * @param mediafile The media file to populate with chapter information
+     */
     override suspend fun analyzeChapters(mediafile: MediaFile) {
         if (!isInitialized) return
 
@@ -190,24 +280,45 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         }
     }
 
+    /**
+     * Jumps to a specific chapter in the media.
+     *
+     * @param chapter The chapter to jump to
+     */
     override suspend fun jumpToChapter(chapter: Chapter) {
         if (!isInitialized) return
 
         vlcPlayer?.setCurrentChapterIndex(chapter.index)
     }
 
+    /**
+     * Skips to the next chapter in the media.
+     */
     override suspend fun skipChapter() {
         if (!isInitialized) return
 
         vlcPlayer?.nextChapter()
     }
 
+    /**
+     * Reapplies previously selected track choices.
+     *
+     * TODO: Implement track choice persistence for iOS VLC player.
+     */
     override suspend fun reapplyTrackChoices() {
         if (!isInitialized) return
 
         //TODO Not implemented for iOS VLC player
     }
 
+    /**
+     * Loads an external subtitle file from a URI.
+     *
+     * Adds the subtitle as a playback slave with automatic selection.
+     *
+     * @param uri The file URI or URL of the subtitle
+     * @param extension The subtitle file extension (unused by VLC)
+     */
     override suspend fun loadExternalSubImpl(uri: String, extension: String) {
         if (!isInitialized) return
 
@@ -218,6 +329,15 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         )
     }
 
+    /**
+     * Loads and prepares a media file for playback.
+     *
+     * Creates a VLCMedia object from either a URL or local file path,
+     * parses the media to extract duration, and declares it to the server.
+     *
+     * @param media The media file to load
+     * @param isUrl Whether the URI is a remote URL or local file path
+     */
     override suspend fun injectVideoImpl(media: MediaFile, isUrl: Boolean) {
         if (!isInitialized) return
 
@@ -244,6 +364,9 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         }
     }
 
+    /**
+     * Pauses playback on the main thread.
+     */
     override suspend fun pause() {
         if (!isInitialized) return
         println("VLC PLAYER DELEGATE: ${vlcPlayer!!.delegate}")
@@ -253,6 +376,9 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         }
     }
 
+    /**
+     * Starts or resumes playback on the main thread.
+     */
     override suspend fun play() {
         if (!isInitialized) return
 
@@ -263,21 +389,44 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         }
     }
 
+    /**
+     * Checks if the current media supports seeking.
+     *
+     * @return true if seekable, false otherwise (e.g., live streams)
+     */
     override suspend fun isSeekable(): Boolean {
         if (!isInitialized) return false
 
         return vlcPlayer?.isSeekable() == true
     }
 
+    /**
+     * Seeks to a specific position in the media.
+     *
+     * @param toPositionMs The target position in milliseconds
+     */
     override fun seekTo(toPositionMs: Long) {
         super.seekTo(toPositionMs)
         vlcPlayer?.setTime(toPositionMs.toVLCTime())
     }
 
+    /**
+     * Gets the current playback position.
+     *
+     * @return Current position in milliseconds
+     */
     override fun currentPositionMs(): Long {
         return vlcPlayer?.time?.value()?.longValue ?: 0L
     }
 
+    /**
+     * Cycles through available aspect ratios.
+     *
+     * Supports multiple aspect ratios: 1:1, 4:3, 16:9, 16:10, 2.21:1, 2.35:1.
+     * Cycles to the next ratio on each call.
+     *
+     * @return The name of the newly applied aspect ratio
+     */
     override suspend fun switchAspectRatio(): String {
         if (!isInitialized) return "NO PLAYER FOUND"
 
@@ -311,20 +460,38 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         return newAspectRatio
     }
 
+    /**
+     * Changes the subtitle font size.
+     *
+     * TODO: Implement subtitle size control for iOS VLC player.
+     *
+     * @param newSize The new subtitle size
+     */
     override suspend fun changeSubtitleSize(newSize: Int) {
         if (!isInitialized) return
 
         // TODO: Implement subtitle size changing for iOS VLC player
     }
 
-    /** VLC EXCLUSIVE */
-    /* Some ObjC-interop/VLC-interop helper methods */
-    /** Converts a long to a VLCTime, to use with VLCMediaPlayer */
+    /********** VLC-Specific Helper Methods **********/
+
+    /**
+     * Converts a Long timestamp to VLCTime for use with VLCMediaPlayer.
+     *
+     * @receiver Timestamp in milliseconds
+     * @return VLCTime object representing the timestamp
+     */
     private fun Long.toVLCTime(): VLCTime {
         return VLCTime(number = NSNumber(long = this))
     }
 
-    /** Converts an NSArray to a valid Kotlin list, to use with VLC tracks */
+    /**
+     * Converts an NSArray to a Kotlin List for working with VLC track data.
+     *
+     * @param T The element type
+     * @receiver NSArray to convert
+     * @return List of elements from the array
+     */
     @Suppress("UNCHECKED_CAST")
     private fun <T> NSArray.toKList(): List<T?> {
         return List(count.toInt()) { index ->
@@ -333,8 +500,21 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
     }
 
 
-    /* Delegate */
+    /**
+     * Delegate for receiving VLC media player state change notifications.
+     *
+     * Monitors playback state changes and notifies the server about play/pause events.
+     * Also detects when playback ends to trigger playlist advancement.
+     */
     inner class VlcDelegate : NSObject(), VLCMediaPlayerDelegateProtocol {
+        /**
+         * Called when the media player's state changes.
+         *
+         * Updates local playback state and sends state changes to the server
+         * for synchronization. Handles end-of-playback for playlist advancement.
+         *
+         * @param aNotification Notification containing state change information
+         */
         override fun mediaPlayerStateChanged(aNotification: NSNotification) {
             playerScopeMain.launch {
                 if (hasMedia()) {
@@ -354,9 +534,17 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         }
     }
 
+    /********** Volume Control **********/
+
+    /**
+     * Maximum volume level (0-100 scale).
+     */
     private val MAX_VOLUME = 100
+
     override fun getMaxVolume() = MAX_VOLUME
+
     override fun getCurrentVolume(): Int = (vlcPlayer?.pitch?.times(MAX_VOLUME))?.roundToInt() ?: 0
+
     override fun changeCurrentVolume(v: Int) {
         val clampedVolume = v.toFloat().coerceIn(0.0f, MAX_VOLUME.toFloat()) / MAX_VOLUME
         vlcPlayer?.setPitch(clampedVolume)

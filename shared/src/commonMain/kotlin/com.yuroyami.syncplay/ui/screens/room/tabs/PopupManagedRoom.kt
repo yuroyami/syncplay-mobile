@@ -30,7 +30,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator
+import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.SyncplayPopup
 import com.yuroyami.syncplay.ui.components.syncplayFont
@@ -135,7 +135,7 @@ fun ManagedRoomPopup(purpose: ManagedRoomPopupPurpose) {
 
                         viewmodel.protocolManager.isRoomChanging = true
 
-                        viewmodel.networkManager.sendAsync<PacketCreator.ControllerAuth> {
+                        viewmodel.networkManager.sendAsync<PacketOut.ControllerAuth> {
                             when (purpose) {
                                 ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM -> {
                                     room = inputValue

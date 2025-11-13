@@ -1,7 +1,7 @@
 package com.yuroyami.syncplay.managers.protocol.handler
 
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator
+import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import com.yuroyami.syncplay.utils.loggy
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -11,11 +11,21 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 
+/**
+ * Incoming server "Set" packet.
+ *
+ * Used to update user states, playlists, and controller/room info.
+ */
 @Serializable
 data class Set(
-    @SerialName("Set") val set: SetData
+    @SerialName("Set")
+    val set: SetData
 ) : SyncplayMessage {
 
+    /**
+     * Routes the received "Set" packet to the appropriate handler
+     * based on which field is present.
+     */
     context(packetHandler: PacketHandler)
     override suspend fun handle() {
         with(packetHandler) {
@@ -27,11 +37,11 @@ data class Set(
                 set.controllerAuth != null -> handleControllerAuth(set.controllerAuth)
             }
         }
-
-        // Fetch a list of users anyway
-        //packetHandler.sender.send<PacketCreator.EmptyList>()
     }
 
+    /**
+     * Root payload for "Set" packet.
+     */
     @Serializable
     data class SetData(
         val user: JsonObject? = null,
@@ -44,18 +54,33 @@ data class Set(
         val features: JsonElement? = null
     )
 
+    /**
+     * Playlist index update.
+     *
+     * @property user User who changed the index.
+     * @property index New selected index.
+     */
     @Serializable
     data class PlaylistIndexData(
         val user: String? = null,
         val index: Int? = null
     )
 
+    /**
+     * Playlist content update.
+     *
+     * @property user User who made the change.
+     * @property files New playlist file list.
+     */
     @Serializable
     data class PlaylistChangeData(
         val user: String? = null,
         val files: kotlin.collections.List<String>? = null
     )
 
+    /**
+     * Handles a user join/leave/file event.
+     */
     private fun PacketHandler.handleUserSet(userObject: JsonObject) {
         val userName = userObject.keys.firstOrNull() ?: return
 
@@ -66,7 +91,6 @@ data class Set(
                 when {
                     event.left != null -> callback.onSomeoneLeft(userName)
                     event.joined != null -> callback.onSomeoneJoined(userName)
-                    else -> {}
                 }
             }
 
@@ -83,18 +107,27 @@ data class Set(
         }
     }
 
+    /**
+     * User event payload.
+     */
     @Serializable
     data class UserEventData(
         val event: UserEvent? = null,
         val file: FileData? = null
     )
 
+    /**
+     * User join/leave markers.
+     */
     @Serializable
     data class UserEvent(
         val left: JsonElement? = null,
         val joined: JsonElement? = null
     )
 
+    /**
+     * Handles a playlist index change.
+     */
     private fun PacketHandler.handlePlaylistIndex(playlistIndex: PlaylistIndexData) {
         val user = playlistIndex.user ?: return
         val index = playlistIndex.index ?: return
@@ -103,6 +136,9 @@ data class Set(
         viewmodel.session.spIndex.intValue = index
     }
 
+    /**
+     * Handles a playlist content change.
+     */
     private fun PacketHandler.handlePlaylistChange(playlistChange: PlaylistChangeData) {
         val user = playlistChange.user ?: ""
         val files = playlistChange.files ?: return
@@ -112,6 +148,9 @@ data class Set(
         callback.onPlaylistUpdated(user)
     }
 
+    /**
+     * Response for newly created controlled room.
+     */
     @Serializable
     @SerialName("newControlledRoom")
     data class NewControlledRoom(
@@ -119,6 +158,9 @@ data class Set(
         val roomName: String
     )
 
+    /**
+     * Controller authentication response.
+     */
     @Serializable
     @SerialName("controllerAuth")
     data class ControllerAuthResponse(
@@ -127,17 +169,21 @@ data class Set(
         val success: Boolean
     )
 
+    /**
+     * Handles creation of a new controlled room and follows up
+     * with room change, list fetch, and authentication sequence.
+     */
     private suspend fun PacketHandler.handleNewControlledRoom(data: NewControlledRoom) {
         try {
             callback.onNewControlledRoom(data)
 
-            viewmodel.networkManager.send<PacketCreator.RoomChange> {
+            viewmodel.networkManager.send<PacketOut.RoomChange> {
                 room = data.roomName
             }
 
-            viewmodel.networkManager.sendAsync<PacketCreator.EmptyList>()
+            viewmodel.networkManager.sendAsync<PacketOut.EmptyList>()
 
-            viewmodel.networkManager.send<PacketCreator.ControllerAuth> {
+            viewmodel.networkManager.send<PacketOut.ControllerAuth> {
                 room = data.roomName
                 password = data.password
             }
@@ -149,6 +195,9 @@ data class Set(
         }
     }
 
+    /**
+     * Handles controller authentication response.
+     */
     private fun PacketHandler.handleControllerAuth(data: ControllerAuthResponse) {
         callback.onHandleControllerAuth(data.success)
     }

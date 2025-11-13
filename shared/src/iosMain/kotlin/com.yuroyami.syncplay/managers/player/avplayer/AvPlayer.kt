@@ -62,14 +62,49 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
+/**
+ * AVPlayer implementation for iOS using Apple's native AVFoundation framework.
+ *
+ * Provides stable, efficient media playback deeply integrated with iOS system features.
+ * While more limited in codec support than VLC, AVPlayer excels in stability, battery
+ * efficiency, and native iOS integration.
+ *
+ * ## Limitations
+ * - **Extremely** Limited codec support (primarily MP4, HLS, m3u8)
+ * - No external subtitle loading
+ * - Chapter navigation not available
+ *
+ * ## Architecture
+ * Uses AVPlayerViewController embedded in UIKitView for Compose integration.
+ * The player layer is exposed for Picture-in-Picture functionality.
+ *
+ * @property viewmodel The parent RoomViewModel managing this player
+ */
 class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngine.AVPlayer) {
 
-    /*-- Exoplayer-related properties --*/
+    /**
+     * Core AVPlayer instance handling media playback.
+     */
     var avPlayer: AVPlayer? = null
+
+    /**
+     * View controller providing the player interface.
+     */
     private lateinit var avView: AVPlayerViewController
+
+    /**
+     * Player layer for rendering video and enabling Picture-in-Picture.
+     */
     var avPlayerLayer: AVPlayerLayer? = null
+
+    /**
+     * Container UIView hosting the player view controller.
+     */
     private var avContainer: UIView? = null
 
+    /**
+     * Currently loaded media item.
+     */
     private var avMedia: AVPlayerItem? = null
 
     override val trackerJobInterval: Duration
@@ -78,6 +113,10 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
     override val canChangeAspectRatio: Boolean
         get() = true
 
+    /**
+     * Initializes the AVPlayer view controller by disabling default playback controls
+     * and starting progress tracking.
+     */
     override fun initialize() {
         //avView.view.setBackgroundColor(UIColor.clearColor())
         //avPlayerLayer!!.setBackgroundColor(UIColor.clearColor().CGColor)
@@ -86,6 +125,12 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
         startTrackingProgress()
     }
 
+    /**
+     * Hooks the AVPlayer instance to the view controller and layer.
+     *
+     * Sets up Key-Value Observing (KVO) for monitoring playback state changes.
+     * Called after creating a new AVPlayer instance.
+     */
     private fun hookPlayerAgain() {
         avView.player = avPlayer!!
         avPlayerLayer?.player = avPlayer
@@ -102,6 +147,9 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
         val status = avPlayer?.timeControlStatus()
     }
 
+    /**
+     * Cleans up AVPlayer resources and stops playback.
+     */
     override suspend fun destroy() {
         if (!isInitialized) return
 
@@ -111,8 +159,23 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
         avContainer = null
     }
 
+    /**
+     * Returns player-specific configuration settings.
+     *
+     * AVPlayer has no user-configurable settings currently.
+     *
+     * @return null (no custom settings)
+     */
     override suspend fun configurableSettings(): ExtraSettingBundle? = null
 
+    /**
+     * Renders the AVPlayer video view within Compose.
+     *
+     * Creates the player layer and view controller, then wraps it in a UIKitView
+     * for Compose integration. Handles view resizing with Core Animation transactions.
+     *
+     * @param modifier Compose modifier for layout and styling
+     */
     @OptIn(ExperimentalForeignApi::class)
     @Composable
     override fun VideoPlayer(modifier: Modifier) {
@@ -140,16 +203,35 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
         )
     }
 
+    /**
+     * Checks if any media is currently loaded.
+     *
+     * @return true if media is loaded, false otherwise
+     */
     override suspend fun hasMedia(): Boolean {
         if (!isInitialized) return false
         return avPlayer?.currentItem != null
     }
 
+    /**
+     * Checks if playback is currently active.
+     *
+     * @return true if playing (rate > 0 and no error), false otherwise
+     */
     override suspend fun isPlaying(): Boolean {
         if (!isInitialized) return false
         return (avPlayer?.rate() ?: 0f) > 0f && avPlayer?.error == null
     }
 
+    /**
+     * Analyzes and extracts available audio and subtitle tracks using media selection groups.
+     *
+     * AVFoundation uses media selection groups for track management. This method
+     * extracts tracks from available characteristics and populates the media file's
+     * track lists with displayable names and language tags.
+     *
+     * @param mediafile The media file to populate with track information
+     */
     override suspend fun analyzeTracks(mediafile: MediaFile) {
         // Check if the AVPlayer is initialized
         if (avPlayer == null || avMedia == null) return
@@ -183,34 +265,17 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
                 }
             }
         }
-//
-//
-//        // Extract audio tracks information
-//        val audioTracks = avMedia!!.tracks.map { it as AVAssetTrack }.filter { it.mediaType == AVMediaTypeAudio }
-//        audioTracks.forEachIndexed { i, track ->
-//            mediafile.audioTracks.add(
-//                object : Track {
-//                    override val name = track.languageCode ?: "Track ${i + 1}"
-//                    override val index = i
-//                    override val type = TRACKTYPE.AUDIO
-//                    override val selected = mutableStateOf(track.selected)
-//                }
-//            )
-//        }
-//
-//        val subtitleTracks = avMedia!!.tracks.map { it as AVAssetTrack }.filter { it.mediaType == AVMediaTypeText }
-//        subtitleTracks.forEachIndexed { i, track ->
-//            mediafile.subtitleTracks.add(
-//                object : Track {
-//                    override val name = track.languageCode ?: "Subtitle ${i + 1}"
-//                    override val index = i
-//                    override val type = TRACKTYPE.SUBTITLE
-//                    override val selected = mutableStateOf(track.selected)
-//                }
-//            )
-//        }
     }
 
+    /**
+     * Selects a specific audio or subtitle track for playback.
+     *
+     * Uses AVFoundation's media selection API to change tracks. Pass null to disable
+     * a track type (if the selection group allows empty selection).
+     *
+     * @param track The track to select (must be AvTrack), or null to disable
+     * @param type Whether this is an audio or subtitle track
+     */
     override suspend fun selectTrack(track: Track?, type: TRACKTYPE) {
         if (!isInitialized) return
 
@@ -247,11 +312,25 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
         }
     }
 
+    /**
+     * Reapplies previously selected track choices.
+     *
+     * TODO: Implement track choice persistence for AVPlayer.
+     */
     override suspend fun reapplyTrackChoices() {
         if (!isInitialized) return
         //TODO("Not yet implemented")
     }
 
+    /**
+     * Attempts to load an external subtitle file.
+     *
+     * AVPlayer does not support external subtitle loading, so this displays
+     * an error message to the user.
+     *
+     * @param uri The subtitle file URI (unused)
+     * @param extension The subtitle file extension (unused)
+     */
     override suspend fun loadExternalSubImpl(uri: String, extension: String) {
         if (!isInitialized) return
 
@@ -261,6 +340,17 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
         }
     }
 
+    /**
+     * Loads and prepares a media file for playback.
+     *
+     * Creates an AVPlayerItem from either a URL or local file path, waits for the
+     * media to become ready (with 10-second timeout), extracts duration, and declares
+     * it to the server.
+     *
+     * @param media The media file to load
+     * @param isUrl Whether the URI is a remote URL or local file path
+     * @throws Exception if media fails to load within the timeout period
+     */
     override suspend fun injectVideoImpl(media: MediaFile, isUrl: Boolean) {
         if (!isInitialized) return
 
@@ -295,21 +385,37 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
         }
     }
 
+    /**
+     * Pauses playback.
+     */
     override suspend fun pause() {
         if (!isInitialized) return
         avPlayer?.pause()
     }
 
+    /**
+     * Starts or resumes playback.
+     */
     override suspend fun play() {
         if (!isInitialized) return
         avPlayer?.play()
     }
 
+    /**
+     * Checks if the current media supports seeking.
+     *
+     * @return true if seekable time ranges exist, false for live streams
+     */
     override suspend fun isSeekable(): Boolean {
         if (!isInitialized) return false
         return avPlayer?.currentItem?.seekableTimeRanges?.isNotEmpty() == true
     }
 
+    /**
+     * Seeks to a specific position in the media.
+     *
+     * @param toPositionMs The target position in milliseconds
+     */
     @OptIn(ExperimentalForeignApi::class)
     override fun seekTo(toPositionMs: Long) {
         if (!isInitialized) return
@@ -318,6 +424,11 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
         avPlayer?.seekToTime(CMTimeMake(toPositionMs, 1000))
     }
 
+    /**
+     * Gets the current playback position.
+     *
+     * @return Current position in milliseconds
+     */
     @OptIn(ExperimentalForeignApi::class)
     override fun currentPositionMs(): Long {
         if (!isInitialized) return 0L
@@ -325,6 +436,16 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
         return avPlayer?.currentTime()?.toMillis() ?: 0L
     }
 
+    /**
+     * Cycles through available video scaling modes.
+     *
+     * Supports three modes:
+     * - **Resize**: Stretches to fill (may distort)
+     * - **ResizeAspect**: Fits while preserving aspect ratio (letterboxing)
+     * - **ResizeAspectFill**: Fills while preserving aspect ratio (cropping)
+     *
+     * @return The name of the newly applied scaling mode
+     */
     override suspend fun switchAspectRatio(): String {
         if (!isInitialized) return "NO PLAYER FOUND"
 
@@ -341,29 +462,63 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
         return nextScale!!
     }
 
+    /**
+     * Changes the subtitle font size.
+     *
+     * TODO: Implement subtitle size control for AVPlayer.
+     *
+     * @param newSize The new subtitle size
+     */
     override suspend fun changeSubtitleSize(newSize: Int) {
         //TODO
     }
 
-    //TODO
+    /********** Chapter Navigation (Not Supported) **********/
+
+    /**
+     * AVPlayer does not support chapter navigation currently.
+     */
     override val supportsChapters = false
+
     override suspend fun analyzeChapters(mediafile: MediaFile) = Unit
     override suspend fun jumpToChapter(chapter: Chapter) = Unit
     override suspend fun skipChapter() = Unit
 
 
+    /**
+     * Converts CMTime to milliseconds.
+     *
+     * @receiver CMTime value from AVFoundation
+     * @return Time in milliseconds
+     */
     private fun CValue<CMTime>.toMillis(): Long {
         return CMTimeGetSeconds(this).times(1000.0).roundToLong()
     }
 
+    /**
+     * Extended Track interface for AVPlayer tracks.
+     *
+     * Includes references to AVFoundation's media selection option and group
+     * required for track switching operations.
+     */
     interface AvTrack : Track {
+        /** The AVFoundation media selection option representing this track */
         val sOption: AVMediaSelectionOption
+        /** The media selection group this track belongs to */
         val sGroup: AVMediaSelectionGroup
     }
 
+    /********** Volume Control **********/
+
+    /**
+     * Maximum volume level (0-100 scale).
+     */
     private val MAX_VOLUME = 100
+
     override fun getMaxVolume() = MAX_VOLUME
+
     override fun getCurrentVolume(): Int = (avPlayer?.volume?.times(MAX_VOLUME))?.roundToInt() ?: 0
+
     override fun changeCurrentVolume(v: Int) {
         val clampedVolume = v.toFloat().coerceIn(0.0f, MAX_VOLUME.toFloat()) / MAX_VOLUME
         avPlayer?.setVolume(clampedVolume)

@@ -1,85 +1,51 @@
 package com.yuroyami.syncplay.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.expandIn
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkOut
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.managers.datastore.valueAsState
-import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.theme.Theming.backgroundGradient
 import org.jetbrains.compose.resources.Font
 import syncplaymobile.shared.generated.resources.Directive4_Regular
-import syncplaymobile.shared.generated.resources.Helvetica_Regular
 import syncplaymobile.shared.generated.resources.Res
 
-/** Creates a flexible fancy text. It's basically a text that takes a list of colors to apply gradient or solid overlays,
- * For example, if you pass a filling list of one color, then a solid filling will be used, otherwise, gradient.
- * */
+/**
+ * Draws a highly customizable text element supporting gradient fills, strokes, and shadows.
+ *
+ * This composable renders a text string with layered visual effects, allowing flexible combinations
+ * of fill colors, stroke outlines, and shadows. It automatically determines whether to use a solid
+ * or gradient fill/stroke depending on the number of colors provided.
+ *
+ * @param modifier Modifier to apply to this composable.
+ * @param text The [AnnotatedString] to display.
+ * @param size Font size in sp units.
+ * @param font The custom [Font] to use, or `null` for default.
+ * @param textAlign The horizontal alignment of the text.
+ * @param fillingColors List of colors used to fill the text. If multiple, a gradient is applied.
+ * @param strokeColors List of colors used for outlining the text. If empty, no stroke is drawn.
+ * @param strokeWidth The width of the stroke outline, in dp.
+ * @param shadowColors List of colors used for shadow rendering. If multiple, a gradient shadow is used.
+ * @param shadowOffset Offset of the shadow in dp.
+ * @param shadowSize Blur radius of the shadow.
+ * @param lineHeight Spacing between lines, in sp.
+ * @param overflow Text overflow behavior when content exceeds available width.
+ */
 @Composable
 fun FlexibleAnnotatedText(
     modifier: Modifier = Modifier,
@@ -97,7 +63,8 @@ fun FlexibleAnnotatedText(
     overflow: TextOverflow = TextOverflow.Ellipsis
 ) {
     Box(modifier = modifier) {
-        /** Shadow */
+
+        /** Shadow layer */
         if (shadowColors.isNotEmpty()) {
             Text(
                 text = text,
@@ -105,7 +72,9 @@ fun FlexibleAnnotatedText(
                 style = TextStyle(
                     color = Color.Transparent,
                     shadow = Shadow(
-                        color = if (shadowColors.size == 1) shadowColors.first() else Color.Black, shadowOffset, blurRadius = shadowSize
+                        color = if (shadowColors.size == 1) shadowColors.first() else Color.Black,
+                        offset = shadowOffset,
+                        blurRadius = shadowSize
                     ),
                     textAlign = textAlign,
                     fontFamily = font?.let { FontFamily(it) } ?: FontFamily.Default,
@@ -116,8 +85,7 @@ fun FlexibleAnnotatedText(
             )
         }
 
-
-        /** Stroke */
+        /** Stroke layer */
         if (strokeColors.isNotEmpty()) {
             Text(
                 text = text,
@@ -151,7 +119,7 @@ fun FlexibleAnnotatedText(
             )
         }
 
-        /** Filling */
+        /** Fill layer */
         if (fillingColors.isNotEmpty()) {
             Text(
                 text = text,
@@ -177,6 +145,25 @@ fun FlexibleAnnotatedText(
     }
 }
 
+/**
+ * Convenience wrapper around [FlexibleAnnotatedText] that accepts a plain string.
+ *
+ * This is a simpler version of [FlexibleAnnotatedText] for use when annotation
+ * support isn’t needed.
+ *
+ * @param text The string to display.
+ * @param size Font size in sp.
+ * @param font Optional [Font] to apply.
+ * @param textAlign The horizontal text alignment.
+ * @param fillingColors List of fill colors. Gradient applied if more than one.
+ * @param strokeColors List of stroke colors. Gradient applied if more than one.
+ * @param strokeWidth Stroke width, in dp.
+ * @param shadowColors Colors for shadow rendering.
+ * @param shadowOffset Offset of the shadow, in dp.
+ * @param shadowSize Blur radius of the shadow.
+ * @param lineHeight Line height in sp.
+ * @param overflow Behavior when text overflows its container.
+ */
 @Composable
 fun FlexibleText(
     modifier: Modifier = Modifier,
@@ -195,15 +182,43 @@ fun FlexibleText(
 ) {
     FlexibleAnnotatedText(
         text = AnnotatedString(text),
-        modifier = modifier, size = size,
-        font = font, textAlign = textAlign, fillingColors = fillingColors,
-        strokeColors = strokeColors, strokeWidth = strokeWidth,
-        shadowColors = shadowColors, shadowOffset = shadowOffset, shadowSize = shadowSize,
-        lineHeight = lineHeight, overflow = overflow
+        modifier = modifier,
+        size = size,
+        font = font,
+        textAlign = textAlign,
+        fillingColors = fillingColors,
+        strokeColors = strokeColors,
+        strokeWidth = strokeWidth,
+        shadowColors = shadowColors,
+        shadowOffset = shadowOffset,
+        shadowSize = shadowSize,
+        lineHeight = lineHeight,
+        overflow = overflow
     )
 }
 
-/** Creates a text with syncplay style */
+/**
+ * Renders a stylized Syncplay-branded text with gradient fill, stroke, and shadow.
+ *
+ * This composable produces the signature “Syncplay” text look using pre-defined
+ * theme gradients and stroke/shadow colors. It’s primarily used for headers and
+ * branding elements in the Syncplay UI.
+ *
+ * Example:
+ * ```
+ * SyncplayishText(
+ *     string = "SYNCPLAY",
+ *     size = 32f
+ * )
+ * ```
+ *
+ * @param string The text content to display.
+ * @param size Font size in sp.
+ * @param colorStops List of gradient colors for text fill.
+ * @param stroke Color of the stroke outline.
+ * @param shadow Color of the drop shadow.
+ * @param textAlign Text alignment within its bounds.
+ */
 @Composable
 fun SyncplayishText(
     modifier: Modifier = Modifier,
@@ -215,6 +230,7 @@ fun SyncplayishText(
     textAlign: TextAlign = TextAlign.Start,
 ) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        // Stroke + shadow layer
         Text(
             modifier = Modifier.wrapContentWidth(),
             text = string,
@@ -236,15 +252,14 @@ fun SyncplayishText(
                 fontSize = size.sp,
             )
         )
+        // Foreground gradient layer
         Text(
             modifier = Modifier.wrapContentWidth(),
             text = string,
             textAlign = textAlign,
             maxLines = 1,
             style = TextStyle(
-                brush = Brush.linearGradient(
-                    colors = colorStops
-                ),
+                brush = Brush.linearGradient(colors = colorStops),
                 fontFamily = FontFamily(Font(Res.font.Directive4_Regular)),
                 fontSize = size.sp,
             )

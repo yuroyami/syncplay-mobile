@@ -5,19 +5,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.PlatformCallback
 import com.yuroyami.syncplay.managers.LifecycleManager
-import com.yuroyami.syncplay.managers.network.NetworkManager
 import com.yuroyami.syncplay.managers.OSDManager
 import com.yuroyami.syncplay.managers.OnRoomEventManager
-import com.yuroyami.syncplay.managers.player.PlayerManager
-import com.yuroyami.syncplay.managers.protocol.ProtocolManager
 import com.yuroyami.syncplay.managers.RoomActionManager
 import com.yuroyami.syncplay.managers.SessionManager
 import com.yuroyami.syncplay.managers.SharedPlaylistManager
-import com.yuroyami.syncplay.managers.ThemeManager
 import com.yuroyami.syncplay.managers.UIManager
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
 import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
+import com.yuroyami.syncplay.managers.network.NetworkManager
 import com.yuroyami.syncplay.managers.player.BasePlayer
+import com.yuroyami.syncplay.managers.player.PlayerManager
+import com.yuroyami.syncplay.managers.protocol.ProtocolManager
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.models.MediaFile
@@ -32,47 +31,68 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
+/**
+ * ViewModel for the Syncplay room screen where synchronized playback occurs.
+ *
+ * Coordinates all room-level managers including networking, media playback, protocol handling,
+ * session state, and user interactions. Supports both online synchronized rooms and solo mode.
+ *
+ * @property joinConfig The room connection configuration, or null for solo mode
+ * @property backStack The navigation stack for leaving the room
+ */
 class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateList<Screen>) : ViewModel() {
 
     /************ Managers ***************/
-    /** Manages and holds UI state */
+
+    /** Manages and holds UI state for the room screen */
     val uiManager: UIManager by lazy { UIManager(this) }
 
-    /** Manages anything related to the player */
+    /** Manages media player lifecycle, controls, and state */
     val playerManager: PlayerManager by lazy { PlayerManager(this) }
 
-    /** Manages the network engine and events */
+    /** Manages the network connection and communication with the Syncplay server */
     lateinit var networkManager: NetworkManager
 
-    /** Manages the protocol and its  events */
+    /** Manages the Syncplay protocol and its events */
     val protocolManager: ProtocolManager by lazy { ProtocolManager(this) }
 
-    /** Manages the current session instance (which is the room session */
+    /** Manages the current room session state and user list */
     val sessionManager: SessionManager by lazy { SessionManager(this) }
 
-    /** Manages callback from the protocol (e.g: When someone pauses), in other words: Receiving actions */
+    /** Manages callbacks from protocol events (e.g., when someone pauses) - receiving actions */
     val callbackManager: OnRoomEventManager by lazy { OnRoomEventManager(this) }
 
-    /** Manages actions performed by the user to send them to the server (Sending actions) */
+    /** Manages actions performed by the user to send to the server - sending actions */
     val actionManager: RoomActionManager by lazy { RoomActionManager(this) }
 
-    /** Manages events of the lifecycle of the Android Activity or the iOS ViewController (tracking when it goes to background) */
+    /** Manages lifecycle events of the Activity/ViewController (tracking background state) */
     val lifecycleManager: LifecycleManager by lazy { LifecycleManager(this) }
 
-    /** Manages the Shared playlist and anything related to it */
+    /** Manages the shared playlist and all playlist-related functionality */
     val playlistManager: SharedPlaylistManager by lazy { SharedPlaylistManager(this) }
 
-    /** Displays status messages in the room */
+    /** Displays temporary status messages (OSD) in the room */
     val osdManager: OSDManager by lazy { OSDManager(this) }
 
-    /** Not to be confused with the protocol's ping. This is the result of the periodic
-     * ICMP pinging which will be shown on the top-center of the room.
-     * There are devices that don't support this natively, like Android emulators.
+    /**
+     * Network ping latency in milliseconds with the server.
+     *
+     * Not to be confused with the protocol's ping. This is the result of periodic
+     * ICMP pinging displayed at the top-center of the room screen.
+     * Note: Some devices don't support this natively (e.g., Android emulators).
      */
     val ping = MutableStateFlow<Int?>(null)
 
+    /**
+     * Whether to immediately set the user as ready when joining the room.
+     * Loaded from user preferences.
+     */
     var setReadyDirectly = false
 
+    /**
+     * List of seek operations as pairs of (fromPosition, toPosition) in milliseconds.
+     * Used for tracking and potentially reverting seek operations.
+     */
     val seeks = mutableListOf<Pair<Long, Long>>()
 
     init {
@@ -108,14 +128,26 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
         }
     }
 
+    /**
+     * Exits the current room and returns to the home screen.
+     * Notifies the platform of the room exit event.
+     */
     fun leaveRoom() {
         backStack.removeLast()
         platformCallback.onRoomEnterOrLeave(PlatformCallback.RoomEvent.LEAVE)
     }
 
-    /** Mismatches are: Name, Size, Duration. If 3 mismatches are detected, no error is thrown
-     * since that would mean that the two files are completely and obviously different.*/
-    //TODO/ This needs full refactoring
+    /**
+     * Checks for file mismatches between the local media and other users' files.
+     *
+     * Compares file name, size, and duration. If all three differ, the files are considered
+     * completely different and no warning is shown. Otherwise, broadcasts a mismatch warning.
+     *
+     * Mismatches checked: Name, Size, Duration. If 3 mismatches are detected, no error is thrown
+     * since that would mean the two files are completely and obviously different.
+     *
+     * TODO: This needs full refactoring
+     */
     fun checkFileMismatches() {
         if (isSoloMode) return
 
@@ -146,24 +178,35 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
 //        }
     }
 
-    /** Tells us whether we're in solo mode to deactivate some online components */
+    /**
+     * Indicates whether the room is in solo mode (offline playback).
+     * When true, online-only components like networking and session sync are disabled.
+     */
     val isSoloMode: Boolean
         get() = joinConfig == null
 
-    /** Extension property to quickly access some managers' properties */
+    /************ Extension Properties for Quick Access ***************/
+
+    /** Quick access to the current media player instance */
     val player: BasePlayer
         get() = playerManager.player
 
+    /** Quick access to the current room session state */
     val session: SessionManager.Session
         get() = sessionManager.session
 
+    /** Quick access to the currently loaded media file, if any */
     val media: MediaFile?
         get() = playerManager.media.value
 
+    /** Quick access to whether the current media contains video */
     val hasVideo: StateFlow<Boolean>
         get() = playerManager.hasVideo
 
-    /** End of viewmodel */
+    /**
+     * Cleans up all managers and resources when the ViewModel is destroyed.
+     * Ensures proper shutdown of network connections, player, and other subsystems.
+     */
     override fun onCleared() {
         loggy("²²²²²²²²²²²² Clearing viewmodel")
         networkManager.invalidate()

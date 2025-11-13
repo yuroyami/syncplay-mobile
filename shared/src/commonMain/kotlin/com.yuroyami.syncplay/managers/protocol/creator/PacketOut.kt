@@ -13,13 +13,43 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
 
-sealed class PacketCreator {
+/**
+ * Base class for creating Syncplay protocol packets to send to the server.
+ *
+ * Each packet type is represented as a sealed subclass that builds a JSON structure
+ * conforming to the Syncplay protocol specification. Packets are created using a
+ * builder pattern where properties are set, then [build] is called to generate the
+ * final JSON.
+ *
+ * ## Usage Example
+ * ```kotlin
+ * networkManager.send<PacketOut.Chat> {
+ *     message = "Hello, room!"
+ * }
+ * ```
+ */
+sealed class PacketOut {
+    /**
+     * Builds the JSON representation of this packet.
+     *
+     * @return JsonElement ready for serialization and transmission
+     */
     abstract fun build(): JsonElement
 
-    // Packet type definitions as sealed subclasses
-    class Hello : PacketCreator() {
+    /**
+     * Initial handshake packet sent when connecting to a Syncplay server.
+     *
+     * Identifies the client with username, room name, password (if required),
+     * version, and supported features.
+     */
+    class Hello : PacketOut() {
+        /** Username to connect with */
         var username: String = ""
+
+        /** Room name to join */
         var roomname: String = ""
+
+        /** Server password (if required), will be MD5 hashed */
         var serverPassword: String = ""
 
         override fun build() = buildJsonObject {
@@ -46,7 +76,13 @@ sealed class PacketCreator {
         }
     }
 
-    class Joined : PacketCreator() {
+    /**
+     * Packet confirming successful room join.
+     *
+     * Sent as acknowledgment after the server grants room access.
+     */
+    class Joined : PacketOut() {
+        /** Name of the room that was joined */
         var roomname: String = ""
 
         override fun build() = buildJsonObject {
@@ -63,14 +99,25 @@ sealed class PacketCreator {
         }
     }
 
-    class EmptyList : PacketCreator() {
+    /**
+     * Empty list packet to clear or acknowledge playlist state.
+     */
+    class EmptyList : PacketOut() {
         override fun build() = buildJsonObject {
             putJsonArray("List") {}
         }
     }
 
-    class Readiness : PacketCreator() {
+    /**
+     * Packet to set the user's ready state for playback synchronization.
+     *
+     * Users marked as "ready" will sync playback; unready users are excluded.
+     */
+    class Readiness : PacketOut() {
+        /** Whether the user is ready for synchronized playback */
         var isReady: Boolean = false
+
+        /** Whether this ready state change was user-initiated (true) or automatic (false) */
         var manuallyInitiated: Boolean = false
 
         override fun build() = buildJsonObject {
@@ -83,7 +130,15 @@ sealed class PacketCreator {
         }
     }
 
-    class File : PacketCreator() {
+    /**
+     * Packet declaring the currently loaded media file.
+     *
+     * Notifies other users in the room about the file being played, including
+     * its name, size, and duration. File name/size can be hashed based on
+     * privacy preferences.
+     */
+    class File : PacketOut() {
+        /** The media file to declare, must not be null */
         var media: MediaFile? = null
 
         override fun build() = buildJsonObject {
@@ -116,7 +171,13 @@ sealed class PacketCreator {
         }
     }
 
-    class Chat : PacketCreator() {
+    /**
+     * Chat message packet.
+     *
+     * Sends a text message to all users in the room.
+     */
+    class Chat : PacketOut() {
+        /** The chat message content */
         var message: String = ""
 
         override fun build() = buildJsonObject {
@@ -124,13 +185,32 @@ sealed class PacketCreator {
         }
     }
 
-    class State(private var p: ProtocolManager) : PacketCreator() {
+    /**
+     * Playback state packet containing position, paused state, and ping information.
+     *
+     * This is the core synchronization packet sent regularly to keep all users in sync.
+     * Includes latency measurements for accurate timing calculations.
+     *
+     * @property p Protocol manager for accessing server state and ping service
+     */
+    class State(private var p: ProtocolManager) : PacketOut() {
+        /** Server timestamp from last received State packet (for latency calculation) */
         var serverTime: Double? = null
+
+        /** Current client timestamp in seconds since epoch */
         val clientTime: Double
             get() = generateTimestampMillis() / 1000.0
+
+        /** Whether this state change includes a seek operation */
         var doSeek: Boolean? = null
+
+        /** Playback position in seconds */
         var position: Long? = null
+
+        /** Whether this is a state-changing packet (1) or just a ping (0) */
         var changeState: Int = 0
+
+        /** Whether playback is active (true = playing, false = paused) */
         var play: Boolean? = null
 
         override fun build() = buildJsonObject {
@@ -174,7 +254,13 @@ sealed class PacketCreator {
         }
     }
 
-    class PlaylistChange : PacketCreator() {
+    /**
+     * Packet to update the shared playlist contents.
+     *
+     * Replaces the entire playlist with the provided list of files.
+     */
+    class PlaylistChange : PacketOut() {
+        /** List of file paths/URLs to set as the new playlist */
         var files: List<String> = emptyList()
 
         override fun build() = buildJsonObject {
@@ -190,7 +276,13 @@ sealed class PacketCreator {
         }
     }
 
-    class PlaylistIndex : PacketCreator() {
+    /**
+     * Packet to change the currently selected item in the shared playlist.
+     *
+     * Causes all users to switch to the specified playlist item.
+     */
+    class PlaylistIndex : PacketOut() {
+        /** The playlist index to select (0-based) */
         var index: Int = 0
 
         override fun build() = buildJsonObject {
@@ -202,8 +294,16 @@ sealed class PacketCreator {
         }
     }
 
-    class ControllerAuth : PacketCreator() {
+    /**
+     * Packet to authenticate as a room operator (controller) in a managed room.
+     *
+     * Provides the room name and operator password to gain elevated privileges.
+     */
+    class ControllerAuth : PacketOut() {
+        /** Name of the managed room */
         var room: String = ""
+
+        /** Operator password for authentication */
         var password: String = ""
 
         override fun build() = buildJsonObject {
@@ -216,7 +316,13 @@ sealed class PacketCreator {
         }
     }
 
-    class RoomChange : PacketCreator() {
+    /**
+     * Packet to request a room change.
+     *
+     * Moves the client to a different room on the same server.
+     */
+    class RoomChange : PacketOut() {
+        /** Name of the room to switch to */
         var room: String = ""
 
         override fun build() = buildJsonObject {
@@ -228,7 +334,13 @@ sealed class PacketCreator {
         }
     }
 
-    class TLS : PacketCreator() {
+    /**
+     * TLS negotiation packet.
+     *
+     * Requests the server to upgrade the connection to TLS encryption.
+     * Sent during the initial handshake if TLS support is being checked.
+     */
+    class TLS : PacketOut() {
         override fun build() = buildJsonObject {
             putJsonObject("TLS") {
                 put("startTLS", "send")

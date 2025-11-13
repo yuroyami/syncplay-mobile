@@ -11,11 +11,27 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 
+/**
+ * ViewModel for the home screen where users configure and initiate room connections.
+ *
+ * @property backStack The navigation stack managing screen transitions
+ */
 class HomeViewmodel(val backStack: SnapshotStateList<Screen>) : ViewModel() {
 
-    /** Displays snack messages in home screen */
+    /**
+     * Manages snackbar messages displayed on the home screen.
+     * Lazily initialized when first accessed.
+     */
     val snackManager: SnackManager by lazy { SnackManager(this) }
 
+    /**
+     * Joins a Syncplay room with the provided configuration.
+     *
+     * Saves the configuration for future use, navigates to the room screen,
+     * and notifies the platform of the room entry event.
+     *
+     * @param joinConfig The room connection configuration, or null for solo mode (offline video-player-only mode)
+     */
     suspend fun joinRoom(joinConfig: JoinConfig?) {
         withContext(Dispatchers.IO) {
             joinConfig?.save() //Remembering info
@@ -25,10 +41,11 @@ class HomeViewmodel(val backStack: SnapshotStateList<Screen>) : ViewModel() {
             backStack.add(Screen.Room(joinConfig))
             platformCallback.onRoomEnterOrLeave(PlatformCallback.RoomEvent.ENTER)
         }
-
     }
 
-    /** End of viewmodel */
+    /**
+     * Invalidates relevant managers (only snackbarManager in this case)
+     */
     override fun onCleared() {
         super.onCleared()
         snackManager.invalidate()

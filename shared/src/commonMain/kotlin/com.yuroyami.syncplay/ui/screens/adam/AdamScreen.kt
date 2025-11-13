@@ -27,19 +27,37 @@ import com.yuroyami.syncplay.viewmodels.HomeViewmodel
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import com.yuroyami.syncplay.viewmodels.SyncplayViewmodel
 
-/******
- * This is called the AdamScreen mainly because it is the root/parent composable.
- * It takes care of hosting the upper and initial states, and also takes care of navigating from
- * screen to another.
- */
-
+/** Provides access to the global [SyncplayViewmodel] instance shared across the app. */
 val LocalGlobalViewmodel = compositionLocalOf<SyncplayViewmodel> { error("No Viewmodel provided yet") }
+
+/** Provides access to the current [RoomViewmodel] within the room screen scope. */
 val LocalRoomViewmodel = compositionLocalOf<RoomViewmodel> { error("No Viewmodel provided yet") }
+
+/** Provides access to the currently active [Screen] in the navigation back stack. */
 val LocalScreen = compositionLocalOf<Screen?> { error("No Screen provided") }
+
+/** Provides access to the current [SettingStyling] configuration for the app. */
 val LocalSettingStyling = staticCompositionLocalOf<SettingStyling> { error("No Setting Styling provided") }
+
+/** Provides access to the current [MessagePalette] for chat message color theming. */
 val LocalChatPalette = compositionLocalOf<MessagePalette> { error("No Chat Palette provided") }
+
+/** Provides access to the current [CardController] instance for managing UI card behavior. */
 val LocalCardController = compositionLocalOf<CardController> { error("No CardController provided yet") }
 
+/**
+ * The root composable for the app.
+ *
+ * This composable initializes the global [SyncplayViewmodel], sets up the main
+ * navigation back stack, and provides key CompositionLocals such as theme,
+ * view models, and chat palette.
+ *
+ * It acts as the parent container for all screens and handles navigation
+ * between them, using [NavDisplay] for composable screen transitions.
+ *
+ * @see HomeScreenUI
+ * @see RoomScreenUI
+ */
 @Composable
 fun AdamScreen() {
     val viewmodel = viewModel(
@@ -48,7 +66,7 @@ fun AdamScreen() {
         factory = viewModelFactory { initializer { SyncplayViewmodel() } }
     )
 
-    //TODO: Use built-in for state-restorable rememberNavBackStack()
+    // Navigation back stack (temporary until built-in support is integrated)
     val backstack = remember { mutableStateListOf<Screen>(Screen.Home) }
 
     val currentScreen by remember { derivedStateOf { backstack.lastOrNull() } }
@@ -66,8 +84,6 @@ fun AdamScreen() {
                 backStack = backstack,
                 onBack = {},
                 entryDecorators = listOf(
-                    //This allows the view-models created within entry scope to be scoped only for that entry
-                    //Meaning that they will be cleared once the entry (screen) leaves composition
                     rememberSaveableStateHolderNavEntryDecorator(),
                     rememberViewModelStoreNavEntryDecorator()
                 ),
@@ -82,12 +98,13 @@ fun AdamScreen() {
                         HomeScreenUI(viewmodel)
                     }
 
-
                     entry<Screen.Room> { room ->
                         val viewmodel = viewModel(
                             key = "room_viewmodel",
                             modelClass = RoomViewmodel::class,
-                            factory = viewModelFactory { initializer { RoomViewmodel(joinConfig = room.joinConfig, backStack = backstack) } }
+                            factory = viewModelFactory {
+                                initializer { RoomViewmodel(joinConfig = room.joinConfig, backStack = backstack) }
+                            }
                         )
 
                         CompositionLocalProvider(

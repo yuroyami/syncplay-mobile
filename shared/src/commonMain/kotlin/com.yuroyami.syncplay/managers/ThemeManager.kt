@@ -12,17 +12,41 @@ import com.yuroyami.syncplay.AbstractManager
 import com.yuroyami.syncplay.ui.theme.Theming
 import kotlinx.coroutines.flow.MutableStateFlow
 
+/**
+ * Manages application theming and color schemes.
+ *
+ * Provides a collection of predefined themes using Material Design 3 color schemes
+ * with dynamic color generation. Tracks the currently active theme.
+ *
+ * @param viewmodel The parent ViewModel that owns this manager
+ */
 class ThemeManager(viewmodel: ViewModel) : AbstractManager(viewmodel) {
 
+    /**
+     * The currently active theme.
+     */
     val currentTheme = MutableStateFlow<Theme>(GREEN_GOBLIN)
 
     companion object {
+        /**
+         * Represents a complete theme configuration.
+         *
+         * @property name The display name of the theme
+         * @property scheme The Material Design 3 color scheme
+         * @property usesSyncplayGradients Whether this theme uses Syncplay's custom gradient backgrounds
+         */
         data class Theme(
             val name: String,
             val scheme: ColorScheme,
             val usesSyncplayGradients: Boolean
         )
 
+        /**
+         * "PyncSlay" theme - Syncplay's signature pink theme.
+         *
+         * Features cute pink primary colors with tonal spot palette style
+         * and custom Syncplay gradients.
+         */
         val PYNCSLAY = Theme(
             name = "PyncSlay",
             scheme = dynamicColorScheme(
@@ -36,6 +60,12 @@ class ThemeManager(viewmodel: ViewModel) : AbstractManager(viewmodel) {
             usesSyncplayGradients = true
         )
 
+        /**
+         * "BlackOLED" theme - Pure black theme optimized for OLED displays.
+         *
+         * Uses true black backgrounds to take advantage of OLED pixel-off technology
+         * for better battery life and contrast. Features monochrome palette style.
+         */
         val AMOLED = Theme(
             name = "BlackOLED",
             usesSyncplayGradients = true,
@@ -54,6 +84,12 @@ class ThemeManager(viewmodel: ViewModel) : AbstractManager(viewmodel) {
             )
         )
 
+        /**
+         * "Alley Lamppost" theme - Warm amber theme with dark gray backgrounds.
+         *
+         * Inspired by vintage street lighting with warm yellow-gray primary colors
+         * against dark, muted backgrounds. Uses neutral palette style.
+         */
         val ALLEY_LAMPPOST = Theme(
             name = "Alley Lamppost",
             usesSyncplayGradients = true,
@@ -72,6 +108,11 @@ class ThemeManager(viewmodel: ViewModel) : AbstractManager(viewmodel) {
             )
         )
 
+        /**
+         * "Green Goblin" theme (default) - Vibrant green theme.
+         *
+         * Features bright green primary colors with tonal spot palette style.
+         */
         val GREEN_GOBLIN =
             Theme(
                 name = "Green Goblin", usesSyncplayGradients = true, scheme = dynamicColorScheme(

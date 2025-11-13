@@ -8,18 +8,43 @@ import platform.UIKit.UIViewController
 import platform.UIKit.addChildViewController
 import platform.UIKit.didMoveToParentViewController
 
-
-/** This view controller is a parent to the actual ComposeUIViewController,
- * which means it hosts the actual UIViewController that holds our compose views.
- * We do that because ComposeUIViewControllerDelegate is buggy, lifecycle events
- * do not get emitted properly. So we do this so we override lifecycle events
- * directly in the parent view controller. */
-
+/**
+ * Creates the root UIViewController for the Syncplay iOS application.
+ *
+ * This function creates a custom parent view controller that hosts the Compose UI as a child.
+ * The parent-child pattern is used because ComposeUIViewControllerDelegate has buggy lifecycle
+ * event handling - events don't get emitted properly. By using a parent view controller, we can
+ * override lifecycle methods directly and ensure proper lifecycle management.
+ *
+ * ## Architecture
+ * ```
+ * ParentViewController (this function)
+ *   └─ ComposeUIViewController (Compose content)
+ *        └─ AdamScreen (main app UI)
+ * ```
+ *
+ * ## Lifecycle Events
+ * The parent controller intercepts iOS lifecycle events and forwards them to the watchdog:
+ * - `viewDidLoad` → onCreate
+ * - `viewWillAppear` → onStart
+ * - `viewDidAppear` → onResume
+ * - `viewWillDisappear` → onPause
+ * - `viewDidDisappear` → onStop
+ *
+ * @return UIViewController configured to host the Syncplay Compose UI with proper lifecycle handling
+ */
 fun SyncplayController(): UIViewController {
+    // Initialize platform-specific callback handler
     platformCallback = ApplePlatformCallback
-    
+
     // Create a custom parent view controller
     val parentController = object : UIViewController(nibName = null, bundle = null) {
+        /**
+         * Called after the controller's view is loaded into memory.
+         *
+         * Sets up the Compose UI as a child view controller with Auto Layout constraints
+         * to fill the entire parent view.
+         */
         override fun viewDidLoad() {
             super.viewDidLoad()
 
@@ -45,24 +70,42 @@ fun SyncplayController(): UIViewController {
             //TODO watchdog?.onCreate()
         }
 
+        /**
+         * Called after the view has fully appeared on screen.
+         * @param animated Whether the appearance was animated
+         */
         override fun viewDidAppear(animated: Boolean) {
             super.viewDidAppear(animated)
 
             //watchdog?.onResume()
         }
 
+        /**
+         * Called after the view has been fully removed from the screen.
+         * @param animated Whether the disappearance was animated
+         */
         override fun viewDidDisappear(animated: Boolean) {
             super.viewDidDisappear(animated)
 
             //todo watchdog?.onStop()
         }
 
+        /**
+         * Called just before the view appears on screen.
+         *
+         * @param animated Whether the appearance will be animated
+         */
         override fun viewWillAppear(animated: Boolean) {
             super.viewWillAppear(animated)
 
             //watchdog?.onStart()
         }
 
+        /**
+         * Called just before the view is removed from the screen.
+         *
+         * @param animated Whether the disappearance will be animated
+         */
         override fun viewWillDisappear(animated: Boolean) {
             super.viewWillDisappear(animated)
             //watchdog?.onPause()

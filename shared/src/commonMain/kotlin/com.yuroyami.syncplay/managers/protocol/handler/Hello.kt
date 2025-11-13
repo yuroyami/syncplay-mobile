@@ -1,13 +1,29 @@
 package com.yuroyami.syncplay.managers.protocol.handler
 
-import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator
+import com.yuroyami.syncplay.managers.OnRoomEventManager
+import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import com.yuroyami.syncplay.models.RoomFeatures
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+/**
+ * Incoming server "Hello" packet.
+ *
+ * Sent by the server upon connection to confirm identity,
+ * room assignment, and supported feature set.
+ * only after this do we consider the connection established ("connected")
+ */
 @Serializable
-data class Hello(@SerialName("Hello") val hello: HelloData): SyncplayMessage {
+data class Hello(
+    @SerialName("Hello")
+    val hello: HelloData
+) : SyncplayMessage {
 
+    /**
+     * Handles server handshake and session initialization.
+     *
+     * Updates session info, sends join/list requests, and triggers [OnRoomEventManager.onConnected].
+     */
     context(packetHandler: PacketHandler)
     override suspend fun handle() {
         hello.username?.let { username ->
@@ -16,14 +32,24 @@ data class Hello(@SerialName("Hello") val hello: HelloData): SyncplayMessage {
 
         packetHandler.viewmodel.session.roomFeatures = hello.features
 
-        packetHandler.sender.send<PacketCreator.Joined> {
+        packetHandler.sender.send<PacketOut.Joined> {
             roomname = packetHandler.viewmodel.session.currentRoom
         }
 
-        packetHandler.sender.send<PacketCreator.EmptyList>()
+        packetHandler.sender.send<PacketOut.EmptyList>()
         packetHandler.callback.onConnected()
     }
 
+    /**
+     * Server handshake payload.
+     *
+     * @property username Assigned username after connection.
+     * @property room Current joined room info.
+     * @property version Declared Syncplay protocol version.
+     * @property realversion Server's actual version string.
+     * @property features Supported feature set for the current room.
+     * @property motd Message of the day (if provided by the server).
+     */
     @Serializable
     data class HelloData(
         val username: String? = null,
@@ -34,6 +60,11 @@ data class Hello(@SerialName("Hello") val hello: HelloData): SyncplayMessage {
         val motd: String = ""
     )
 
+    /**
+     * Room information.
+     *
+     * @property name Room name.
+     */
     @Serializable
     data class Room(
         val name: String

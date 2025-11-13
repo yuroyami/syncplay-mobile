@@ -10,12 +10,23 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonObject
 
+/**
+ * Incoming server "List" packet.
+ * To ask the server for this, we simply send an empty list and it returns with the full list of users and their details.
+ */
 @Serializable
-data class List(
-    // Keep as JsonObject since structure is dynamic
-    @SerialName("List") val list: JsonObject
-): SyncplayMessage {
+data class ListResponse(
+    /** Dynamic JSON map of users per room. */
+    @SerialName("List")
+    val list: JsonObject
+) : SyncplayMessage {
 
+    /**
+     * Parses the user list and updates [session.userList].
+     *
+     * For each user, builds a [User] object with readiness, controller state,
+     * and file info if available.
+     */
     context(packetHandler: PacketHandler)
     override suspend fun handle() {
         val userlist = list[packetHandler.viewmodel.session.currentRoom] as? JsonObject ?: return
@@ -56,7 +67,13 @@ data class List(
         }
     }
 
-
+    /**
+     * User data payload from the list packet.
+     *
+     * @property isReady Whether the user is marked as ready.
+     * @property file File metadata if the user has a media loaded.
+     * @property controller Whether the user has controller privileges.
+     */
     @Serializable
     data class UserData(
         val isReady: Boolean? = null,

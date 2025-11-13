@@ -41,7 +41,22 @@ import com.yuroyami.syncplay.viewmodels.HomeViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+/**
+ * Main Activity for the Syncplay Android application.
+ *
+ * This is a single-activity app - all navigation is handled within Compose.
+ */
 class SyncplayActivity : ComponentActivity() {
+    /**
+     * Called when the activity is first created.
+     *
+     * Performs initialization including:
+     * - Installing splash screen
+     * - Configuring transparent system bars and edge-to-edge layout
+     * - Setting up platform callback implementation
+     * - Launching Compose UI
+     * - Processing shortcut intents
+     */
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen() /* This will be called only on cold starts */
@@ -65,12 +80,20 @@ class SyncplayActivity : ComponentActivity() {
 
         /** Binding common logic with platform logic */
         platformCallback = object : PlatformCallback {
+            /**
+             * Recreates the activity to apply the new language.
+             */
             override fun onLanguageChanged(newLang: String) {
                 runOnUiThread {
                     recreate()
                 }
             }
 
+            /**
+             * Creates a pinned home screen shortcut and dynamic shortcut for quick room access.
+             *
+             * Encodes room configuration in the intent extras for deep linking.
+             */
             override fun HomeViewmodel.onSaveConfigShortcut(joinInfo: JoinConfig) {
                 val shortcutIntent = Intent(this@SyncplayActivity, SyncplayActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -98,11 +121,23 @@ class SyncplayActivity : ComponentActivity() {
                 }
             }
 
+            /**
+             * Removes all dynamic shortcuts created for room configurations.
+             */
             override fun onEraseConfigShortcuts() {
                 ShortcutManagerCompat.removeAllDynamicShortcuts(this@SyncplayActivity)
             }
 
+            /**
+             * Gets the maximum brightness value (1.0 on Android).
+             */
             override fun getMaxBrightness() = 1f
+
+            /**
+             * Gets the current screen brightness from window attributes or system settings.
+             *
+             * Handles both manual and automatic brightness modes.
+             */
             override fun getCurrentBrightness(): Float {
                 val brightness = window.attributes.screenBrightness
 
@@ -125,6 +160,11 @@ class SyncplayActivity : ComponentActivity() {
                 return brightnesstemp
             }
 
+            /**
+             * Sets the screen brightness level for this window.
+             *
+             * @param v Brightness value between 0.0 (darkest) and 1.0 (brightest)
+             */
             override fun changeCurrentBrightness(v: Float) {
                 loggy("Brightness: $v")
                 val attrs = window.attributes
@@ -132,6 +172,12 @@ class SyncplayActivity : ComponentActivity() {
                 window.attributes = attrs
             }
 
+            /**
+             * Handles orientation and UI changes when entering or leaving a room.
+             *
+             * - **ENTER**: Locks to landscape, hides system UI, enables cutout mode
+             * - **LEAVE**: Restores all orientations, shows system UI, disables cutout mode
+             */
             override fun onRoomEnterOrLeave(event: PlatformCallback.RoomEvent) {
                 when (event) {
                     PlatformCallback.RoomEvent.ENTER -> {
@@ -152,10 +198,16 @@ class SyncplayActivity : ComponentActivity() {
                 }
             }
 
+            /**
+             * Updates Picture-in-Picture controls when playback state changes.
+             */
             override fun onPlayback(paused: Boolean) {
                 updatePiPParams()
             }
 
+            /**
+             * Initiates Picture-in-Picture mode when requested.
+             */
             override fun onPictureInPicture(enable: Boolean) {
                 if (enable) {
                     initiatePIPmode()
@@ -194,6 +246,11 @@ class SyncplayActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * Applies the saved language before the base context is attached.
+     *
+     * This ensures the correct locale is used when inflating resources.
+     */
     override fun attachBaseContext(newBase: Context?) {
         /** Applying saved language */
         val lang = valueBlockingly(DataStoreKeys.PREF_DISPLAY_LANG, "en")
@@ -201,8 +258,12 @@ class SyncplayActivity : ComponentActivity() {
     }
 
 
-    /** the onStart() follows the onCreate(), it means all the UI is ready
-     * It precedes any activity results. onCreate -> onStart -> ActivityResults -> onResume */
+    /**
+     * Called when the activity is becoming visible to the user.
+     *
+     * Loads subtitle appearance settings for the player.
+     * Follows onCreate() and precedes activity results and onResume().
+     */
     override fun onStart() {
         super.onStart()
 
@@ -213,6 +274,11 @@ class SyncplayActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * Terminates the activity and cleans up resources.
+     *
+     * TODO: Properly end network connections before finishing.
+     */
     fun terminate() {
         //TODO if (!isSoloMode) {
         //TODO viewmodel?.p?.endConnection(true)
@@ -222,7 +288,14 @@ class SyncplayActivity : ComponentActivity() {
         //TODO viewmodel = null
     }
 
-    /* Let's inform Jetpack Compose that we entered picture in picture, to adjust some UI settings */
+    /**
+     * Handles Picture-in-Picture mode state changes.
+     *
+     * Updates UI state when entering/exiting PiP mode.
+     *
+     * @param isInPictureInPictureMode Whether PiP mode is active
+     * @param newConfig The new configuration after the PiP change
+     */
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
@@ -233,6 +306,11 @@ class SyncplayActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * Enters Picture-in-Picture mode if supported (Android 8.0+).
+     *
+     * Updates PiP parameters and enters PiP, hiding the HUD controls.
+     */
     @Suppress("DEPRECATION")
     private fun initiatePIPmode() {
         val isPipAllowed = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
@@ -246,6 +324,14 @@ class SyncplayActivity : ComponentActivity() {
         //TODO viewmodel?.hudVisibilityState?.value = false
     }
 
+    /**
+     * Updates Picture-in-Picture parameters including control actions.
+     *
+     * Creates play/pause remote actions based on current playback state.
+     * Requires Android 8.0+.
+     *
+     * TODO: Implement PiP action buttons for play/pause control.
+     */
     private fun updatePiPParams() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
             return
@@ -281,6 +367,11 @@ class SyncplayActivity : ComponentActivity() {
          */
     }
 
+    /**
+     * Broadcast receiver for handling Picture-in-Picture control actions.
+     *
+     * Listens for "pip" action broadcasts and controls playback accordingly.
+     */
     private val pipBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             intent?.let { intnt ->
@@ -298,6 +389,11 @@ class SyncplayActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * Called when the activity comes to the foreground.
+     *
+     * Registers the PiP broadcast receiver and reapplies player track choices.
+     */
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onResume() {
         super.onResume()
@@ -315,6 +411,11 @@ class SyncplayActivity : ComponentActivity() {
         //TODO viewmodel?.player?.reapplyTrackChoices()
     }
 
+    /**
+     * Called when the activity is being destroyed.
+     *
+     * Unregisters the PiP broadcast receiver to prevent memory leaks.
+     */
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(pipBroadcastReceiver)

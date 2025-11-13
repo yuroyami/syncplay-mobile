@@ -22,7 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.managers.protocol.creator.PacketCreator
+import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 
@@ -47,7 +47,7 @@ fun RoomReadyButton() {
             onCheckedChange = { b ->
                 ready = b
                 viewmodel.sessionManager.session.ready.value = b
-                viewmodel.networkManager.sendAsync<PacketCreator.Readiness> {
+                viewmodel.networkManager.sendAsync<PacketOut.Readiness> {
                     isReady = b
                     manuallyInitiated = true
                 }
