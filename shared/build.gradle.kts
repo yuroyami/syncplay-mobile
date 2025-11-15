@@ -1,25 +1,20 @@
 @file:Suppress("UnstableApiUsage")
-
 import java.nio.file.Files
 import java.util.Properties
-
-val exoOnly = false
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.cocoapods)
-
     alias(libs.plugins.android.application)
-
-    alias(libs.plugins.compose)
+    alias(libs.plugins.compose.plugin)
     alias(libs.plugins.compose.compiler)
-
     alias(libs.plugins.kSerialization)
     //id("com.google.devtools.ksp")
-
-    //alias(libs.plugins.touchlab.skie)
+    alias(libs.plugins.touchlab.skie)
+    alias(libs.plugins.buildConfig)
 }
 
+val exoOnly = false
 val abiCodes = mapOf(
     "armeabi-v7a" to "armv7l",
     "arm64-v8a" to "arm64",
@@ -31,8 +26,9 @@ val mpvLibs = listOf(
     "libmpv.so", "libplayer.so",
     "libswresample.so", "libswscale.so"
 )
-
 val ndkRequired = "29.0.14206865"
+val verString = "0.16.0"
+val verCode = ("1" + verString.split(".").joinToString("") { it.padStart(3, '0') }).toIntOrNull() ?: 0
 
 kotlin {
     jvmToolchain(21)
@@ -83,10 +79,10 @@ kotlin {
                 optIn("kotlinx.cinterop.ExperimentalForeignApi") //for iOS
                 optIn("kotlinx.cinterop.BetaInteropApi") //for iOS
                 optIn("kotlin.time.ExperimentalTime")
-                enableLanguageFeature("ExplicitBackingFields")
-                enableLanguageFeature("NestedTypeAliases") //Equivalent to -Xnested-type-aliases compiler flag
-                enableLanguageFeature("ExpectActualClasses") //Equivalent to "-Xexpect-actual-classes compiler flag
-                enableLanguageFeature("ContextParameters")
+                enableLanguageFeature("ExplicitBackingFields") //same as -Xexplicit-baxcking-fields compiler flag
+                enableLanguageFeature("NestedTypeAliases") //-Xnested-type-aliases
+                enableLanguageFeature("ExpectActualClasses") //-Xexpect-actual-classes
+                enableLanguageFeature("ContextParameters") //Xcontext-parameters
             }
         }
 
@@ -103,7 +99,7 @@ kotlin {
             /* JSON serializer/deserializer to communicate with Syncplay servers */
             implementation(libs.kotlinx.serialization.json)
 
-            /* Network client *//**/
+            /* Network client */
             implementation(libs.bundles.ktor)
 
             /* Android's "Uri" class but rewritten for Kotlin multiplatform */
@@ -113,12 +109,7 @@ kotlin {
             implementation(libs.datastore)
 
             /* Compose core dependencies */
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            //implementation(compose.material3)
-            implementation(libs.compose.material3) //Temporary to get android's m3 1.5.0 expressive functionality until material3 is updated to 1.5.0 stable
-            implementation(compose.materialIconsExtended)
-            implementation(compose.components.resources)
+            implementation(libs.bundles.compose.multiplatform)
 
             /* ViewModel support */
             implementation(libs.compose.viewmodel)
@@ -215,8 +206,8 @@ android {
         applicationId = if (forGPlay) "com.yuroyami.syncplay" else "com.reddnek.syncplay"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1_000_016_00_0 //1 XXX XXX XX X (last X is for prerelease versions such as RC)
-        versionName = "0.16.0"
+        versionCode = verCode
+        versionName = verString
 
         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
 
@@ -249,8 +240,17 @@ android {
         }
     }
 
+//    applicationVariants.all {
+//        outputs.all {
+//            val output = this as? com.android.build.gradle.internal.api.BaseVariantOutputImpl
+//            val abiFilter = output?.getFilter(com.android.build.OutputFile.ABI)
+//            val abiName = abiFilter ?: "universal"
+//            output?.outputFileName = "syncplay-${verString}-${abiName}.apk"
+//        }
+//    }
+
     packaging {
-        //jniLibs.useLegacyPackaging = true
+        jniLibs.useLegacyPackaging = true
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             pickFirsts += "META-INF/INDEX.LIST"
@@ -259,7 +259,25 @@ android {
         }
     }
 
-    if (!exoOnly) {
+    packaging {
+        jniLibs {
+            pickFirsts += "**/libsc++_shared.so" //Pick our local c++_shared only and not the one in VLC aar
+        }
+    }
+
+    if (exoOnly) {
+        packaging {
+            jniLibs {
+                //mpv libs
+                for (mpvLib in mpvLibs) {
+                    excludes += ("**/$mpvLib")
+                }
+
+                //vlc
+                excludes += ("**/libvlc.so")
+            }
+        }
+    } else {
         splits {
             abi {
                 isEnable = true
@@ -273,25 +291,11 @@ android {
                 isUniversalApk = true
             }
         }
-    } else {
-        packaging {
-            jniLibs {
-                pickFirsts += "**/libc++_shared.so" //Pick our local c++_shared only and not the one in VLC aar
-
-                //mpv libs
-                for (mpvLib in mpvLibs) {
-                    excludes += ("**/$mpvLib")
-                }
-
-                //vlc
-                excludes += ("**/libvlc.so")
-            }
-        }
     }
 
     flavorDimensions.add("flavor")
     productFlavors {
-        create(if (exoOnly) "noLibs" else "withLibs") {
+        create(if (exoOnly) "exoOnly" else "allEngines") {
             dimension = "flavor"
         }
     }
@@ -468,4 +472,10 @@ tasks.register<Exec>("runAndroidMpvNativeBuildScripts") {
 
         !allFilesExist
     }
+}
+
+buildConfig {
+    buildConfigField("APP_VERSION", verString)
+    buildConfigField("DEBUG", false)
+    buildConfigField("EXOPLAYER_ONLY", exoOnly)
 }

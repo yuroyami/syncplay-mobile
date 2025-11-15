@@ -2,22 +2,24 @@
 #KMM-Plugins
 kotlin = "2.2.21"
 agp = "8.13.1" #"9.0.0-alpha05"
-compose = "1.10.0-beta01"
+compose-multiplatform = "1.10.0-beta01"
 kSerialization = "1.9.0"
 ksp = "2.3.1"
-skie = "0.10.6"
+skie = "0.10.8"
+buildConfig = "5.7.1"
 
 #KMM-Libs
+compose-multiplatform-icons = "1.7.3"
+compose-material3 = "1.10.0-alpha04"
 kermit = "2.0.8"
 krypto = "0.8.0"
 datastore = "1.2.0-rc01"
 filekit = "0.12.0"
 kolorpicker = "1.0.0"
 uriKmp = "0.0.21"
-compose-material3 = "1.10.0-alpha04"
 compose-unstyled = "1.48.2"
 materialkolor = "5.0.0-alpha02"
-ktor  = "3.3.2"
+ktor = "3.3.2"
 lifecycleViewmodelCompose = "2.10.0-alpha04"
 navigation3Runtime = "1.0.0-rc01"
 navigation3Ui = "1.0.0-alpha04"
@@ -42,12 +44,16 @@ libvlc-ios = "3.7.0b1"
 
 [libraries] #######################################################################################
 #KMM
+compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose-multiplatform" }
+compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose-multiplatform" }
+compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "compose-material3" }
+compose-material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "compose-multiplatform-icons" }
+compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose-multiplatform" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 kotlin-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "koroutines" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "datetime" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kSerialization" }
 logging-kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
-compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "compose-material3" }
 compose-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycleViewmodelCompose" }
 navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "navigation3Runtime" }
 navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "navigation3Ui" }
@@ -60,7 +66,7 @@ datastore = { module = "androidx.datastore:datastore-preferences-core", version.
 filekit = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekit" }
 kolorpicker = { module = "com.kborowy:kolor-picker", version.ref = "kolorpicker" }
 uriKmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
-compose-unstyled = { module = "com.composables:core", version.ref = "compose-unstyled"}
+compose-unstyled = { module = "com.composables:core", version.ref = "compose-unstyled" }
 materialKolor = { module = "com.materialkolor:material-kolor", version.ref = "materialkolor" }
 
 #Android
@@ -88,6 +94,10 @@ libvlc-android = { module = "org.videolan.android:libvlc-all", version.ref = "li
 google-shortcuts = { module = "androidx.core:core-google-shortcuts", version.ref = "shortcuts" }
 
 [bundles] ########################################################################################
+compose-multiplatform = [
+    "compose-foundation", "compose-ui", "compose-material3",
+    "compose-components-resources", "compose-material-icons-extended"
+]
 ktor = ["ktor-network", "ktor-network-tls"]
 media3 = [
     "m3-exo", "m3-exo-dash", "m3-exo-hls", "m3-exo-rtsp", "m3-datasource-okhttp",
@@ -102,13 +112,15 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-cocoapods = { id = "org.jetbrains.kotlin.native.cocoapods", version.ref = "kotlin" }
 
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-compose = { id = "org.jetbrains.compose", version.ref = "compose" }
+compose-plugin = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
 
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 
 kSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+
+buildConfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildConfig" }
 
 touchlab-skie = { id = "co.touchlab.skie", version.ref = "skie" }
 
