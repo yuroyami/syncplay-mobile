@@ -454,6 +454,8 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     override fun onHandleControllerAuth(data: ControllerAuthResponse) {
         val user = data.user ?: viewmodel.session.currentUsername
 
+        viewmodel.networkManager.sendAsync<PacketOut.EmptyList>()
+
         broadcaster.broadcastMessage(
             message = {
                 getString(

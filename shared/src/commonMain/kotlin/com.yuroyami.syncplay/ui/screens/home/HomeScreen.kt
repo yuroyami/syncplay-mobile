@@ -58,8 +58,10 @@ import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
 import com.yuroyami.syncplay.managers.datastore.writeValue
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.ui.components.FlexibleText
+import com.yuroyami.syncplay.ui.components.lexendFont
 import com.yuroyami.syncplay.ui.popups.PopupDidYaKnow.DidYaKnowPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
+import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.utils.substringSafely
@@ -69,20 +71,19 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
-import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.connect_address_empty_error
 import syncplaymobile.shared.generated.resources.connect_button_join
+import syncplaymobile.shared.generated.resources.connect_choose_video_engine
 import syncplaymobile.shared.generated.resources.connect_enter_custom_server
 import syncplaymobile.shared.generated.resources.connect_port_empty_error
-import syncplaymobile.shared.generated.resources.connect_roomname_a
+import syncplaymobile.shared.generated.resources.connect_roomname
 import syncplaymobile.shared.generated.resources.connect_roomname_empty_error
-import syncplaymobile.shared.generated.resources.connect_server_a
-import syncplaymobile.shared.generated.resources.connect_username_a
+import syncplaymobile.shared.generated.resources.connect_server
+import syncplaymobile.shared.generated.resources.connect_username
 import syncplaymobile.shared.generated.resources.connect_username_empty_error
 
 val officialServers = listOf("syncplay.pl:8995", "syncplay.pl:8996", "syncplay.pl:8997", "syncplay.pl:8998", "syncplay.pl:8999")
@@ -160,13 +161,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         modifier = Modifier.wrapContentHeight().fillMaxWidth(),
                         horizontalAlignment = CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        FlexibleText(
-                            text = stringResource(Res.string.connect_username_a),
-                            size = 20f,
-                            textAlign = TextAlign.Center,
-                            fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = Font(Res.font.Directive4_Regular),
-                            shadowColors = listOf(Color.Gray)
+                        HomeLeadingTitle(
+                            string = stringResource(Res.string.connect_username)
                         )
 
                         HomeTextField(
@@ -182,13 +178,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         modifier = Modifier.wrapContentHeight().fillMaxWidth(),
                         horizontalAlignment = CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        FlexibleText(
-                            text = stringResource(Res.string.connect_roomname_a),
-                            size = 20f,
-                            textAlign = TextAlign.Center,
-                            fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = Font(Res.font.Directive4_Regular),
-                            shadowColors = listOf(Color.Gray)
+                        HomeLeadingTitle(
+                            string = stringResource(Res.string.connect_roomname)
                         )
 
                         HomeTextField(
@@ -207,13 +198,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         horizontalAlignment = CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        FlexibleText(
-                            text = stringResource(Res.string.connect_server_a),
-                            size = 20f,
-                            textAlign = TextAlign.Center,
-                            fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = Font(Res.font.Directive4_Regular),
-                            shadowColors = listOf(Color.Gray)
+                        HomeLeadingTitle(
+                            string = stringResource(Res.string.connect_server)
                         )
 
                         ExposedDropdownMenuBox(
@@ -312,13 +298,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         modifier = Modifier.wrapContentHeight().fillMaxWidth(),
                         horizontalAlignment = CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        FlexibleText(
-                            text = "Choose your video engine", //TODO Localize
-                            size = 18f,
-                            textAlign = TextAlign.Center,
-                            fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = Font(Res.font.Directive4_Regular),
-                            shadowColors = listOf(Color.Gray)
+                        HomeLeadingTitle(
+                            string = stringResource(Res.string.connect_choose_video_engine)
                         )
 
                         //TODO Move to an extension function that retrieves current engine
@@ -346,7 +327,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         modifier = Modifier.fillMaxWidth(0.75f),
                         leadingButton = {
                             SplitButtonDefaults.LeadingButton(
-                                contentPadding = PaddingValues(vertical = 21.dp),
+                                contentPadding = PaddingValues(vertical = 16.dp),
                                 modifier = Modifier.fillMaxWidth(0.85f),
                                 onClick = {
                                     scope.launch(Dispatchers.Default) {
@@ -385,7 +366,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             var checked by remember { mutableStateOf(false) }
 
                             SplitButtonDefaults.TrailingButton(
-                                contentPadding = PaddingValues(vertical = 21.dp),
+                                contentPadding = PaddingValues(vertical = 16.dp),
                                 checked = checked,
                                 onCheckedChange = { b ->
                                     checked = b
@@ -415,3 +396,16 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
     )
 }
 
+@Composable
+fun HomeLeadingTitle(string: String) {
+    FlexibleText(
+        text = string,
+        size = 17f,
+        textAlign = TextAlign.Center,
+        fillingColors = listOf(MaterialTheme.colorScheme.primary),
+        font = lexendFont,
+        strokeColors = listOf(MaterialTheme.colorScheme.scrim),
+        shadowColors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) },
+        shadowSize = 3f
+    )
+}

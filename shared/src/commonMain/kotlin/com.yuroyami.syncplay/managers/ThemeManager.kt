@@ -25,7 +25,7 @@ class ThemeManager(viewmodel: ViewModel) : AbstractManager(viewmodel) {
     /**
      * The currently active theme.
      */
-    val currentTheme = MutableStateFlow<Theme>(GREEN_GOBLIN)
+    val currentTheme = MutableStateFlow<Theme>(ALLEY_LAMPPOST)
 
     companion object {
         /**

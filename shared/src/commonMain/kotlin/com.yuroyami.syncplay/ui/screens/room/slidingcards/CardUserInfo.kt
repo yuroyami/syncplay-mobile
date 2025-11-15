@@ -1,6 +1,7 @@
 package com.yuroyami.syncplay.ui.screens.room.slidingcards
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -86,27 +87,27 @@ object CardUserInfo {
                             }
                         )
 
-                        /* User's 'person' icon, it doesn't change. */
-                        Icon(
-                            modifier = Modifier
-                                .size(Theming.USER_INFO_IC_SIZE.dp)
-                                .gradientOverlay(),
-                            imageVector = Icons.Filled.Person,
-                            contentDescription = "",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+
 
                         if (user.isController) {
                             /* If user is a controller (room operator), add corresponding icon */
+                            Image(
+                                modifier = Modifier.size((Theming.USER_INFO_IC_SIZE-1).dp).padding(2.dp),
+                                painter = painterResource(Res.drawable.user_key),
+                                contentDescription = null
+                            )
+                        } else {
+                            /* User's 'person' icon if he's not a room operatir */
                             Icon(
                                 modifier = Modifier
                                     .size(Theming.USER_INFO_IC_SIZE.dp)
                                     .gradientOverlay(),
-                                painter = painterResource(Res.drawable.user_key),
+                                imageVector = Icons.Filled.Person,
                                 contentDescription = "",
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
+
                         /* User's name */
                         Text(
                             modifier = Modifier

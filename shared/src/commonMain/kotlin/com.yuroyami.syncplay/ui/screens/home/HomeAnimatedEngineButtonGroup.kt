@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,8 +25,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.managers.player.PlayerEngine
+import com.yuroyami.syncplay.ui.theme.Theming
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
@@ -36,7 +39,7 @@ fun HomeAnimatedEngineButtonGroup(
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier,
+        modifier = modifier.border(width = 1.dp, brush = Brush.linearGradient(colors = Theming.SP_GRADIENT), shape = RoundedCornerShape(24.dp)),
         horizontalArrangement = Arrangement.spacedBy(0.dp)
     ) {
         engines.forEach { engine ->
