@@ -18,7 +18,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -30,8 +29,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.composeunstyled.TextInput
+import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.components.gradientOverlay
-import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.theme.Theming.SP_GRADIENT
 import com.composeunstyled.Icon as UnstyledIcon
 import com.composeunstyled.Text as UnstyledText
@@ -79,7 +78,7 @@ fun HomeTextField(
             modifier = Modifier.height(56.dp)
                 .border(
                     width = onePx,
-                    brush = Brush.linearGradient(colors = Theming.SP_GRADIENT),
+                    brush = Brush.linearGradient(colors = SP_GRADIENT),
                     shape = RoundedCornerShape(cornerRadiusAnimated)
                 ),
             shape = RoundedCornerShape(cornerRadiusAnimated),
@@ -87,10 +86,12 @@ fun HomeTextField(
             contentPadding = PaddingValues(horizontal = 4.dp, vertical = 12.dp),
             leading = if (icon != null) {
                 {
-                    UnstyledIcon(
-                        imageVector = icon, contentDescription = null,
-                        modifier = Modifier.padding(end = 4.dp).gradientOverlay().alpha(0.8f),
-                        tint = Color.White
+                    FlexibleIcon(
+                        modifier = Modifier.padding(2.dp),
+                        icon = icon,
+                        shadowColors = listOf(MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.5f)),
+                        tintColors = listOf(MaterialTheme.colorScheme.onTertiaryContainer),
+                        size = 36
                     )
                 }
             } else null,
