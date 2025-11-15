@@ -34,7 +34,7 @@ data class Set(
                 set.playlistIndex != null -> handlePlaylistIndex(set.playlistIndex)
                 set.playlistChange != null -> handlePlaylistChange(set.playlistChange)
                 set.newControlledRoom != null -> handleNewControlledRoom(set.newControlledRoom)
-                set.controllerAuth != null -> handleControllerAuth(set.controllerAuth)
+                set.controllerAuth != null -> callback.onHandleControllerAuth(set.controllerAuth)
             }
         }
     }
@@ -164,6 +164,7 @@ data class Set(
     @Serializable
     @SerialName("controllerAuth")
     data class ControllerAuthResponse(
+        val user: String? = null,
         val room: String,
         val password: String = "",
         val success: Boolean
@@ -193,12 +194,5 @@ data class Set(
                 viewmodel.protocolManager.isRoomChanging = false
             }
         }
-    }
-
-    /**
-     * Handles controller authentication response.
-     */
-    private fun PacketHandler.handleControllerAuth(data: ControllerAuthResponse) {
-        callback.onHandleControllerAuth(data.success)
     }
 }

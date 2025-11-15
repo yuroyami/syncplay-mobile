@@ -1,6 +1,6 @@
 package com.yuroyami.syncplay.managers.player
 
-import com.yuroyami.syncplay.BuildConfig
+import SyncplayMobile.shared.BuildConfig
 import com.yuroyami.syncplay.managers.player.exo.ExoPlayer
 import com.yuroyami.syncplay.managers.player.mpv.MpvPlayer
 import com.yuroyami.syncplay.managers.player.vlc.VlcPlayer
@@ -41,7 +41,7 @@ sealed interface AndroidPlayerEngine: PlayerEngine {
      */
     object Exoplayer: AndroidPlayerEngine {
         override val isAvailable: Boolean = true
-        override val isDefault: Boolean = BuildConfig.FLAVOR == "noLibs"
+        override val isDefault: Boolean = BuildConfig.EXOPLAYER_ONLY
         override val name: String = "Exoplayer"
         override val img: DrawableResource = Res.drawable.exoplayer
 
@@ -63,8 +63,8 @@ sealed interface AndroidPlayerEngine: PlayerEngine {
      * **Availability:** Only in withLibs build flavor
      */
     object Mpv: AndroidPlayerEngine {
-        override val isAvailable: Boolean = BuildConfig.FLAVOR == "withLibs"
-        override val isDefault: Boolean = BuildConfig.FLAVOR == "withLibs"
+        override val isAvailable: Boolean = !BuildConfig.EXOPLAYER_ONLY
+        override val isDefault: Boolean = !BuildConfig.EXOPLAYER_ONLY
         override val name: String = "mpv"
         override val img: DrawableResource = Res.drawable.mpv
 
@@ -85,7 +85,7 @@ sealed interface AndroidPlayerEngine: PlayerEngine {
      * **Availability:** Only in withLibs build flavor
      */
     object VLC: AndroidPlayerEngine {
-        override val isAvailable: Boolean = BuildConfig.FLAVOR == "withLibs"
+        override val isAvailable: Boolean = !BuildConfig.EXOPLAYER_ONLY
         override val isDefault: Boolean = false
         override val name: String=  "VLC"
         override val img: DrawableResource = Res.drawable.vlc

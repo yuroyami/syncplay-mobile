@@ -1,5 +1,6 @@
 package com.yuroyami.syncplay.ui.screens.home
 
+import SyncplayMobile.shared.BuildConfig
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -92,7 +93,7 @@ object PopupAPropos {
 
                 Text(
                     modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start,
-                    color = MaterialTheme.colorScheme.primary, text = "• Version: 0.14.0", fontSize = 11.sp, maxLines = 1
+                    color = MaterialTheme.colorScheme.primary, text = "• Version: ${BuildConfig.APP_VERSION}", fontSize = 11.sp, maxLines = 1
                 )
 
                 Text(

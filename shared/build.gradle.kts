@@ -1,4 +1,3 @@
-@file:Suppress("UnstableApiUsage")
 import java.nio.file.Files
 import java.util.Properties
 
@@ -9,7 +8,7 @@ plugins {
     alias(libs.plugins.compose.plugin)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kSerialization)
-    //id("com.google.devtools.ksp")
+    alias(libs.plugins.ksp)
     alias(libs.plugins.touchlab.skie)
     alias(libs.plugins.buildConfig)
 }
@@ -226,8 +225,8 @@ android {
     }
 
     buildFeatures {
-        buildConfig = true
-        viewBinding = true //I prefer using viewbinding to quickly inflate player XML views.
+        buildConfig = false //We're using a custom buildconfig plugin for KMM, we don't need the Android one
+        viewBinding = true //I prefer using viewbinding to inflate player XML views.
     }
 
     buildTypes {

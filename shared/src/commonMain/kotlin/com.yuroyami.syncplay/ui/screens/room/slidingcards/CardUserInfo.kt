@@ -27,7 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,12 +36,14 @@ import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.utils.timeStamper
 import org.jetbrains.compose.resources.Font
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_card_title_user_info
 import syncplaymobile.shared.generated.resources.room_details_file_properties
 import syncplaymobile.shared.generated.resources.room_details_nofileplayed
+import syncplaymobile.shared.generated.resources.user_key
 
 object CardUserInfo {
 
@@ -95,6 +96,17 @@ object CardUserInfo {
                             tint = MaterialTheme.colorScheme.primary
                         )
 
+                        if (user.isController) {
+                            /* If user is a controller (room operator), add corresponding icon */
+                            Icon(
+                                modifier = Modifier
+                                    .size(Theming.USER_INFO_IC_SIZE.dp)
+                                    .gradientOverlay(),
+                                painter = painterResource(Res.drawable.user_key),
+                                contentDescription = "",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                         /* User's name */
                         Text(
                             modifier = Modifier

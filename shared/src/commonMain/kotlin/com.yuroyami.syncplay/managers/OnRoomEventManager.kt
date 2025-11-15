@@ -7,6 +7,7 @@ import com.yuroyami.syncplay.managers.datastore.valueBlockingly
 import com.yuroyami.syncplay.managers.protocol.ProtocolCallback
 import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import com.yuroyami.syncplay.managers.protocol.handler.Set
+import com.yuroyami.syncplay.managers.protocol.handler.Set.ControllerAuthResponse
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timeStamper
@@ -446,25 +447,25 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     }
 
     /**
-     * Called when attempting to authenticate as a room operator (controller).
+     * Called when a user attempts to authenticate as a room operator (controller).
      *
-     * Broadcasts whether authentication succeeded or failed.
-     *
-     * @param success True if authentication succeeded, false if it failed
+     * Broadcasts whether authentication succeeded or failed
      */
-    override fun onHandleControllerAuth(success: Boolean) {
+    override fun onHandleControllerAuth(data: ControllerAuthResponse) {
+        val user = data.user ?: viewmodel.session.currentUsername
+
         broadcaster.broadcastMessage(
             message = {
                 getString(
-                    when (success) {
+                    when (data.success) {
                         true -> Res.string.room_on_controller_auth_success
                         false -> Res.string.room_on_controller_auth_failed
                     },
-                    viewmodel.session.currentUsername
+                    user
                 )
             },
             isChat = false,
-            isError = !success
+            isError = !data.success
         )
     }
 }

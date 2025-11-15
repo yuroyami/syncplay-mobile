@@ -1,6 +1,7 @@
 package com.yuroyami.syncplay.managers.protocol
 
 import com.yuroyami.syncplay.managers.protocol.handler.Set
+import com.yuroyami.syncplay.managers.protocol.handler.Set.ControllerAuthResponse
 
 /**
  * Callback interface for handling Syncplay protocol events.
@@ -135,9 +136,9 @@ interface ProtocolCallback {
     fun onNewControlledRoom(data: Set.NewControlledRoom)
 
     /**
-     * Called after attempting to authenticate as a room operator (controller).
+     * Called after a user attempts to authenticate as a room operator (controller).
      *
-     * @param success True if authentication succeeded, false if it failed
+     * @param data object containing information all info about the attempt
      */
-    fun onHandleControllerAuth(success: Boolean)
+    fun onHandleControllerAuth(data: ControllerAuthResponse)
 }
