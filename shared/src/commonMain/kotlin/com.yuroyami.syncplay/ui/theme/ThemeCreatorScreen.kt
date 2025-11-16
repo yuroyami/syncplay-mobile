@@ -1,17 +1,21 @@
 package com.yuroyami.syncplay.ui.theme
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MotionPhotosOff
 import androidx.compose.material.icons.filled.WebStories
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -153,7 +157,8 @@ fun ThemeCreatorScreenUI() {
                 HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
 
                 Surface(
-                    color = Color.Black,
+                    color = Color(currentTheme.primaryColor),
+                    modifier = Modifier.height(64.dp).width(128.dp),
                     onClick = {
 
                     }
@@ -179,11 +184,18 @@ fun ThemeCreatorScreenUI() {
                 HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
 
                 Surface(
-                    color = Color.Black,
+                    color = currentTheme.secondaryColor?.let { Color(it) } ?: Color.Transparent,
+                    modifier = Modifier.height(64.dp).width(128.dp),
                     onClick = {
 
                     }
-                ) {}
+                ) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        if (currentTheme.secondaryColor == null) {
+                            Icon(Icons.Filled.MotionPhotosOff, null, tint = Color.White)
+                        }
+                    }
+                }
             }
 
             Row(
@@ -205,11 +217,18 @@ fun ThemeCreatorScreenUI() {
                 HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
 
                 Surface(
-                    color = Color.Black,
+                    color = currentTheme.tertiaryColor?.let { Color(it) } ?: Color.Transparent,
+                    modifier = Modifier.height(64.dp).width(128.dp),
                     onClick = {
 
                     }
-                ) {}
+                ) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        if (currentTheme.tertiaryColor == null) {
+                            Icon(Icons.Filled.MotionPhotosOff, null, tint = Color.White)
+                        }
+                    }
+                }
             }
 
             Row(

@@ -52,6 +52,7 @@ import com.yuroyami.syncplay.ui.components.lexendFont
 import com.yuroyami.syncplay.ui.components.solidOverlay
 import com.yuroyami.syncplay.ui.screens.Screen
 import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
+import com.yuroyami.syncplay.ui.screens.adam.LocalTheme
 
 val availableThemes = listOf(ThemeManager.PYNCSLAY, ThemeManager.BLACKOLED, ThemeManager.GREEN_GOBLIN, ThemeManager.ALLEY_LAMP)
 
@@ -68,7 +69,7 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
             properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
             val viewmodel = LocalGlobalViewmodel.current
-            val currentTheme by viewmodel.themeManager.currentTheme.collectAsState()
+            val currentTheme = LocalTheme.current
 
             val primary = MaterialTheme.colorScheme.primary
             val srfc = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
@@ -185,7 +186,7 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
 
 
 @Composable
-fun ThemeEntry(theme: ThemeManager.Companion.SaveableTheme, isSelected: Boolean) {
+fun ThemeEntry(theme: SaveableTheme, isSelected: Boolean) {
     val viewmodel = LocalGlobalViewmodel.current
 
     val dynamicScheme = remember { theme.dynamicScheme }
@@ -203,7 +204,7 @@ fun ThemeEntry(theme: ThemeManager.Companion.SaveableTheme, isSelected: Boolean)
             shape = RoundedCornerShape(8.dp),
             border = BorderStroke((0.5).dp, color = MaterialTheme.colorScheme.primary),
             onClick = {
-                viewmodel.themeManager.currentTheme.value = theme
+                viewmodel.themeManager.changeTheme(theme)
             }
         ) {
             Box(

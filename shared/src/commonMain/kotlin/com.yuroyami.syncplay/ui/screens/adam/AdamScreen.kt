@@ -23,7 +23,8 @@ import com.yuroyami.syncplay.ui.screens.Screen
 import com.yuroyami.syncplay.ui.screens.home.HomeScreenUI
 import com.yuroyami.syncplay.ui.screens.room.RoomScreenUI
 import com.yuroyami.syncplay.ui.screens.room.tabs.CardController
-import com.yuroyami.syncplay.ui.theme.SaveableTheme.Companion.fromString
+import com.yuroyami.syncplay.ui.theme.SaveableTheme
+import com.yuroyami.syncplay.ui.theme.SaveableTheme.Companion.toTheme
 import com.yuroyami.syncplay.ui.theme.ThemeCreatorScreenUI
 import com.yuroyami.syncplay.viewmodels.HomeViewmodel
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
@@ -34,6 +35,9 @@ val LocalGlobalViewmodel = compositionLocalOf<SyncplayViewmodel> { error("No Vie
 
 /** Provides access to the current [RoomViewmodel] within the room screen scope. */
 val LocalRoomViewmodel = compositionLocalOf<RoomViewmodel> { error("No Viewmodel provided yet") }
+
+/** Provides access to the current [SaveableTheme] across the app composable scope. */
+val LocalTheme = compositionLocalOf<SaveableTheme> { error("No theme provided yet") }
 
 /** Provides access to the currently active [com.yuroyami.syncplay.ui.screens.Screen] in the navigation back stack. */
 val LocalScreen = compositionLocalOf<Screen?> { error("No Screen provided") }
@@ -72,15 +76,16 @@ fun AdamScreen() {
 
     val currentScreen by remember { derivedStateOf { backstack.lastOrNull() } }
     val currentTheme by viewmodel.themeManager.currentTheme.collectAsState()
-    val currentThemeCalculated by derivedStateOf { currentTheme.fromString() }
+    val currentThemeCalculated by derivedStateOf { currentTheme.toTheme() }
 
-    MaterialTheme(
-        colorScheme = currentThemeCalculated.dynamicScheme
+    CompositionLocalProvider(
+        LocalGlobalViewmodel provides viewmodel,
+        LocalScreen provides currentScreen,
+        LocalChatPalette provides messagePalette.value,
+        LocalTheme provides currentThemeCalculated
     ) {
-        CompositionLocalProvider(
-            LocalGlobalViewmodel provides viewmodel,
-            LocalScreen provides currentScreen,
-            LocalChatPalette provides messagePalette.value
+        MaterialTheme(
+            colorScheme = currentThemeCalculated.dynamicScheme
         ) {
             NavDisplay(
                 backStack = backstack,
@@ -116,7 +121,7 @@ fun AdamScreen() {
                         }
                     }
 
-                    entry<Screen.ThemeCreator> { themeCreator ->
+                    entry<Screen.ThemeCreator> {
                         ThemeCreatorScreenUI()
                     }
                 }
