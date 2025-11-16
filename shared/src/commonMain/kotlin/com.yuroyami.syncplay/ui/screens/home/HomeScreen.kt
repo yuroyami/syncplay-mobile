@@ -58,7 +58,7 @@ import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
 import com.yuroyami.syncplay.managers.datastore.writeValue
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.ui.components.FlexibleText
-import com.yuroyami.syncplay.ui.components.lexendFont
+import com.yuroyami.syncplay.ui.components.sairaFont
 import com.yuroyami.syncplay.ui.popups.PopupDidYaKnow.DidYaKnowPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
@@ -403,9 +403,9 @@ fun HomeLeadingTitle(string: String) {
         size = 17f,
         textAlign = TextAlign.Center,
         fillingColors = listOf(MaterialTheme.colorScheme.primary),
-        font = lexendFont,
+        font = sairaFont,
         strokeColors = listOf(MaterialTheme.colorScheme.scrim),
         shadowColors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) },
-        shadowSize = 3f
+        shadowSize = 12f
     )
 }
