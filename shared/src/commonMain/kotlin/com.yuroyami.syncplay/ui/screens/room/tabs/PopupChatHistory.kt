@@ -91,7 +91,6 @@ fun ChatHistoryPopup() {
                 state = scrollAreaState,
                 modifier = Modifier.weight(1f)
             ) {
-
                 LazyColumn(
                     state = lazyListState,
                     contentPadding = PaddingValues(8.dp),

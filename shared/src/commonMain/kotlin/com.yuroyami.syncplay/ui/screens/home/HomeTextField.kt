@@ -45,7 +45,8 @@ fun HomeTextField(
     onValueChange: (String) -> Unit,
     type: KeyboardType? = null,
     cornerRadius: Dp = 35.dp,
-    height: Dp = 56.dp
+    height: Dp = 56.dp,
+    clearFocusWhenDone: Boolean = false
 ) {
     val theme = LocalTheme.current
 
@@ -66,7 +67,11 @@ fun HomeTextField(
         editable = dropdownState == null,
         keyboardActions = KeyboardActions(
             onDone = {
-                focusManager.moveFocus(focusDirection = FocusDirection.Next)
+                if (clearFocusWhenDone) {
+                    focusManager.clearFocus(true)
+                } else {
+                    focusManager.moveFocus(focusDirection = FocusDirection.Next)
+                }
             }
         ),
         cursorBrush = Brush.verticalGradient(colors = flexibleGradient),
@@ -96,11 +101,14 @@ fun HomeTextField(
             trailing = {
                 //We either show a dropdown cursor or we fill the space with a transparent icon so
                 //that the input text remains exactly in the center
-                dropdownState?.let { expandedDropdown ->
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedDropdown.value, modifier = Modifier.gradientOverlay())
-                } ?: UnstyledIcon(
-                    imageVector = Icons.Default.Done, contentDescription = null,
-                    modifier = Modifier.padding(start = 4.dp), tint = Color.Transparent)
+                if (dropdownState != null) {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownState.value, modifier = Modifier.gradientOverlay())
+                } else if (icon != null) {
+                    UnstyledIcon(
+                        imageVector = Icons.Default.Done, contentDescription = null,
+                        modifier = Modifier.padding(start = 4.dp), tint = Color.Transparent
+                    )
+                }
             },
             placeholder = if (label != null) {
                 { UnstyledText(label, color = Color.Gray) }

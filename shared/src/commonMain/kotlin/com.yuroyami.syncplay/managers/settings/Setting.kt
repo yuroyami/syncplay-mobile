@@ -1,28 +1,32 @@
 package com.yuroyami.syncplay.managers.settings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,25 +34,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.composeunstyled.Slider
+import com.composeunstyled.Thumb
+import com.composeunstyled.rememberSliderState
 import com.yuroyami.syncplay.managers.datastore.valueAsState
 import com.yuroyami.syncplay.managers.datastore.writeValue
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.MultiChoiceDialog
-import com.yuroyami.syncplay.ui.components.lexendFont
 import com.yuroyami.syncplay.ui.components.sairaFont
 import com.yuroyami.syncplay.ui.popups.PopupColorPicker.ColorPickingPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalSettingStyling
+import com.yuroyami.syncplay.ui.screens.home.HomeTextField
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
 import kotlinx.coroutines.CoroutineScope
@@ -113,7 +119,7 @@ sealed class Setting<T>(
         title: String,
         summary: String,
         trailingElement: @Composable (() -> Unit)? = null,
-        supportingElement: @Composable (() -> Unit)? = null,
+        supportingElement: @Composable (ColumnScope.() -> Unit)? = null,
         onClick: (() -> Unit)? = null
     ) {
         val styling = LocalSettingStyling.current
@@ -152,14 +158,14 @@ sealed class Setting<T>(
                         text = summary,
                         color = MaterialTheme.colorScheme.outline,
                         fontSize = styling.summarySize.sp,
-                        lineHeight = (styling.summarySize+2).sp
+                        lineHeight = (styling.summarySize + 2).sp
                     )
                 }
 
                 trailingElement?.invoke()
             }
 
-            supportingElement?.invoke()
+            supportingElement?.invoke(this)
         }
     }
 
@@ -218,6 +224,7 @@ sealed class Setting<T>(
      * @property onYes Callback invoked when user confirms with "Yes"
      * @property onNo Callback invoked when user cancels with "No"
      */
+    @Suppress("AssignedValueIsNeverRead")
     class YesNoDialogSetting(
         type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Any = Any(),
         icon: ImageVector?, enabled: Boolean = true,
@@ -341,6 +348,7 @@ sealed class Setting<T>(
                         )
                     } else {
                         Switch(
+                            modifier = Modifier.height(22.dp),
                             checked = boolean,
                             enabled = enabled,
                             onCheckedChange = { b ->
@@ -378,10 +386,7 @@ sealed class Setting<T>(
         @Composable
         override fun SettingComposable(modifier: Modifier) {
             val actualEntries = entries.invoke()
-
             val selectedItem by key.valueAsState(defaultValue)
-
-            val styling = LocalSettingStyling.current
             val dialogOpen = remember { mutableStateOf(false) }
 
             val scope = rememberCoroutineScope { Dispatchers.IO }
@@ -410,7 +415,7 @@ sealed class Setting<T>(
                     dialogOpen.value = true
                 },
                 trailingElement = {
-                    Icon(imageVector = Icons.AutoMirrored.Filled.List, "")
+                    Icon(imageVector = Icons.AutoMirrored.Filled.List, "", tint = MaterialTheme.colorScheme.outline)
                 }
             )
         }
@@ -447,34 +452,41 @@ sealed class Setting<T>(
                 summary = stringResource(summary),
                 icon = icon,
                 trailingElement = {
-                    Icon(imageVector = Icons.AutoMirrored.Filled.List, "")
+                    Text(
+                        modifier = Modifier,
+                        text = value.toString(),
+                        color = MaterialTheme.colorScheme.outline,
+                        fontSize = styling.summarySize.sp,
+                        lineHeight = (styling.summarySize + 2).sp
+                    )
                 },
                 supportingElement = {
-                    Column {
-                        Text(
-                            text = stringResource(summary),
-                            color = MaterialTheme.colorScheme.outline,
-                            fontFamily = FontFamily(lexendFont),
-                            fontSize = styling.summarySize.sp
-                        )
+                    val sliderState = rememberSliderState(
+                        initialValue = value.toFloat(),
+                        valueRange = (minValue.toFloat())..(maxValue.toFloat())
+                    )
 
-                        Slider(
-                            value = value.toFloat(),
-                            enabled = enabled,
-                            valueRange = (minValue.toFloat())..(maxValue.toFloat()),
-                            onValueChange = { f ->
-                                if (f != value.toFloat()) {
-                                    onValueChanged?.invoke(f.roundToInt())
-                                }
+                    LaunchedEffect(sliderState.value) {
+                        if (sliderState.value == value.toFloat()) return@LaunchedEffect
 
-                                scope.launch {
-                                    writeValue(key, f.roundToInt())
-                                }
-                            }, modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 12.dp)
-                        )
+                        onValueChanged?.invoke(sliderState.value.roundToInt())
+                        scope.launch {
+                            writeValue(key, sliderState.value.roundToInt())
+                        }
                     }
+                    Slider(
+                        state = sliderState,
+                        track = {
+                            Box(
+                                modifier = Modifier.fillMaxWidth().padding(12.dp)
+                                    .height(4.dp)
+                                    .background(Color.Gray, shape = RoundedCornerShape(50))
+                            )
+                        },
+                        thumb = {
+                            Thumb(color = MaterialTheme.colorScheme.primary, shape = CircleShape)
+                        }
+                    )
                 }
             )
         }
@@ -497,8 +509,6 @@ sealed class Setting<T>(
         @Composable
         override fun SettingComposable(modifier: Modifier) {
             val color by key.valueAsState(defaultValue)
-
-            val styling = LocalSettingStyling.current
             val colorDialogState = remember { mutableStateOf(false) }
             val scope = rememberCoroutineScope { Dispatchers.IO }
 
@@ -510,7 +520,11 @@ sealed class Setting<T>(
                     colorDialogState.value = true
                 },
                 trailingElement = {
-
+                    Button(
+                        onClick = { colorDialogState.value = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(color)),
+                        modifier = Modifier.size(24.dp),
+                    ) {}
                 },
             )
 
@@ -538,10 +552,7 @@ sealed class Setting<T>(
         @Composable
         override fun SettingComposable(modifier: Modifier) {
             val string by key.valueAsState(defaultValue)
-
-            val styling = LocalSettingStyling.current
             val scope = rememberCoroutineScope()
-            val focusManager = LocalFocusManager.current
 
             BaseSettingComposable(
                 title = stringResource(title),
@@ -552,49 +563,19 @@ sealed class Setting<T>(
                         writeValue(key, string)
                     }
                 },
-                trailingElement = {
-                    Icon(imageVector = Icons.AutoMirrored.Filled.List, "")
-                },
                 supportingElement = {
-                    Column {
-                        Text(
-                            text = stringResource(summary),
-                            color = MaterialTheme.colorScheme.outline,
-                            fontFamily = FontFamily(lexendFont),
-                            fontSize = styling.summarySize.sp
-                        )
-
-                        TextField(
-
-                            shape = RoundedCornerShape(16.dp),
-                            singleLine = true,
-                            value = string,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            keyboardActions = KeyboardActions(onDone = {
-                                focusManager.clearFocus()
-                            }),
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = MaterialTheme.colorScheme.primary,
-                                unfocusedContainerColor = MaterialTheme.colorScheme.primary,
-                                disabledContainerColor = MaterialTheme.colorScheme.primary,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
-                                disabledIndicatorColor = Color.Transparent,
-                            ),
-                            onValueChange = {
-                                scope.launch {
-                                    writeValue(key, it)
-                                }
-                            },
-                            /*textStyle = TextStyle(
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default,
-                                fontSize = 12.sp,
-                                textAlign = TextAlign.Center
-                            ),*/
-                            label = {}
-                        )
-                    }
+                    HomeTextField(
+                        modifier = Modifier.fillMaxWidth(0.5f).align(CenterHorizontally).padding(6.dp),
+                        value = string,
+                        onValueChange = {
+                            scope.launch {
+                                writeValue(key, it)
+                            }
+                        },
+                        type = KeyboardType.Number,
+                        height = 48.dp,
+                        clearFocusWhenDone = true
+                    )
                 }
             )
         }

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -42,17 +43,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.composables.core.ScrollArea
+import com.composables.core.Thumb
+import com.composables.core.ThumbVisibility
+import com.composables.core.VerticalScrollbar
+import com.composables.core.rememberScrollAreaState
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.gradientOverlay
-import com.yuroyami.syncplay.ui.components.helveticaFont
 import com.yuroyami.syncplay.ui.components.sairaFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalSettingStyling
 import com.yuroyami.syncplay.ui.screens.home.SettingGridState
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
 import org.jetbrains.compose.resources.stringResource
+import kotlin.time.Duration.Companion.milliseconds
 
 /** Object class that will wrap everything related to settings (including composables for UI) */
 object SettingsUI {
@@ -139,11 +146,8 @@ object SettingsUI {
             AnimatedVisibility(
                 modifier = modifier, visible = state.value == SettingGridState.INSIDE_CATEGORY, exit = fadeOut(), enter = fadeIn()
             ) {
-                val vss = rememberScrollState()
-
                 enteredCategory?.let { accessedCategory ->
                     SettingScreen(
-                        modifier = Modifier.verticalScroll(vss),
                         settingList = settings[accessedCategory]!!
                     )
                 }
@@ -181,7 +185,7 @@ object SettingsUI {
                         imageVector = categ.icon,
                         contentDescription = "",
                         modifier = modifier.size((cardSize * 0.81f).dp).align(Alignment.Center)
-                            .gradientOverlay()
+                            .gradientOverlay(flexibleGradient)
                     )
 
 
@@ -190,9 +194,10 @@ object SettingsUI {
 
             FlexibleText(
                 text = stringResource(categ.title),
-                fillingColors = Theming.SP_GRADIENT,
+                fillingColors = flexibleGradient,
+                strokeColors = listOf(MaterialTheme.colorScheme.outline),
                 size = titleSize,
-                font = helveticaFont
+                font = sairaFont
             )
         }
     }
@@ -244,13 +249,19 @@ object SettingsUI {
 
     @Composable
     fun SettingScreen(modifier: Modifier = Modifier, settingList: SettingSet) {
-        Column(modifier = modifier.fillMaxWidth()) {
-            settingList.forEachIndexed { index, setting ->
-                /** Creating the setting composable */
-                setting.SettingComposable(Modifier)
+        val vss = rememberScrollState()
+        val scrollAreaState = rememberScrollAreaState(vss)
 
-                /** Creating dividers between (and only between) each setting and another */
-                if (index != settingList.lastIndex) {
+        ScrollArea(
+            state = scrollAreaState,
+            modifier = modifier.fillMaxWidth()
+        ) {
+            Column(modifier = modifier.fillMaxWidth().verticalScroll(vss)) {
+                settingList.forEach { setting ->
+                    /** Creating the setting composable */
+                    setting.SettingComposable(Modifier)
+
+                    /** Creating dividers between (and only between) each setting and another */
                     HorizontalDivider(
                         thickness = Dp.Hairline,
                         modifier = Modifier.padding(horizontal = 8.dp),
@@ -258,6 +269,18 @@ object SettingsUI {
                     )
                 }
             }
+
+            VerticalScrollbar(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .fillMaxHeight().width(4.dp)
+            ) {
+                Thumb(
+                    modifier = Modifier.background(Color.Gray),
+                    thumbVisibility = ThumbVisibility.HideWhileIdle(enter = fadeIn(), exit = fadeOut(), hideDelay = 150.milliseconds)
+                )
+            }
         }
+
     }
 }
