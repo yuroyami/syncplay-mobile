@@ -45,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.yuroyami.syncplay.managers.ThemeManager
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.gradientOverlay
 import com.yuroyami.syncplay.ui.components.lexendFont
@@ -54,7 +53,7 @@ import com.yuroyami.syncplay.ui.screens.Screen
 import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
 import com.yuroyami.syncplay.ui.screens.adam.LocalTheme
 
-val availableThemes = listOf(ThemeManager.PYNCSLAY, ThemeManager.BLACKOLED, ThemeManager.GREEN_GOBLIN, ThemeManager.ALLEY_LAMP)
+val availableThemes = listOf(PYNCSLAY, GrayOLED, GREEN_GOBLIN, ALLEY_LAMP)
 
 val themeCardSize = 64.dp
 
@@ -156,7 +155,10 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
 
                         LazyVerticalGrid(
                             columns = GridCells.Adaptive(minSize = themeCardSize + 8.dp),
-                            modifier = Modifier.fillMaxWidth().height(themeCardSize.times(3.5f)).padding(4.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(themeCardSize.times(if (allCustomThemes.size < 4) 1.5f else 3.5f))
+                                .padding(4.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalArrangement = Arrangement.SpaceEvenly
                         ) {
@@ -201,10 +203,10 @@ fun ThemeEntry(theme: SaveableTheme, isSelected: Boolean) {
             modifier = Modifier
                 .size(themeCardSize)
                 .solidOverlay(
-                    if (isSelected) Color.Transparent else Color.Black.copy(alpha = 0.45f)
+                    if (isSelected) Color.Transparent else Color.Black.copy(alpha = 0.2f)
                 ),
             shape = RoundedCornerShape(8.dp),
-            border = BorderStroke((0.5).dp, color = MaterialTheme.colorScheme.primary),
+            border = BorderStroke(Dp.Hairline, color = Color.Black),
             onClick = {
                 viewmodel.themeManager.changeTheme(theme)
             }

@@ -59,7 +59,6 @@ import com.yuroyami.syncplay.ui.screens.home.HomeTextField
 import com.yuroyami.syncplay.ui.screens.room.tabs.RoomTab
 import com.yuroyami.syncplay.ui.theme.SaveableTheme.Companion.toTheme
 
-
 @Composable
 fun ThemeCreatorScreenUI() {
     val globalViewmodel = LocalGlobalViewmodel.current
@@ -102,7 +101,13 @@ fun ThemeCreatorScreenUI() {
 
                         Button(
                             onClick = {
+                                globalViewmodel.themeManager.saveNewTheme(newTheme)
 
+                                globalViewmodel.backstack.let { stack ->
+                                    if (stack.contains(Screen.ThemeCreator)) {
+                                        stack.remove(Screen.ThemeCreator)
+                                    }
+                                }
                             },
                             modifier = Modifier.padding(horizontal = 4.dp)
                         ) {
