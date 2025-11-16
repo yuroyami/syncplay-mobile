@@ -2,9 +2,26 @@ package com.yuroyami.syncplay.ui.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import com.yuroyami.syncplay.ui.screens.adam.LocalTheme
 
 object Theming {
+
+    val useSyncplayGradient: Boolean
+        @Composable get() {
+            val theme = LocalTheme.current
+            val use by remember(theme) { derivedStateOf { theme.syncplayGradients } }
+            return use
+        }
+
+    val flexibleGradient: List<Color>
+        @Composable get() {
+            val fallback = MaterialTheme.colorScheme.onPrimaryContainer
+            return if (useSyncplayGradient) SP_GRADIENT else listOf(fallback, fallback)
+        }
 
     /** Main Syncplay Colors, found in logo */
     val SP_YELLOW = Color(255, 198, 4)
@@ -63,7 +80,7 @@ object Theming {
     const val USER_INFO_TXT_SIZE = 10
 
     val backgroundGradient: List<Color>
-    @Composable get() = listOf(
+        @Composable get() = listOf(
             MaterialTheme.colorScheme.background,
             MaterialTheme.colorScheme.surface,
             MaterialTheme.colorScheme.background

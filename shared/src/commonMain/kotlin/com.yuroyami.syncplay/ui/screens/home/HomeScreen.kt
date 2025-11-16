@@ -64,6 +64,7 @@ import com.yuroyami.syncplay.ui.components.sairaFont
 import com.yuroyami.syncplay.ui.popups.PopupDidYaKnow.DidYaKnowPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
+import com.yuroyami.syncplay.ui.theme.Theming.useSyncplayGradient
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.utils.substringSafely
@@ -406,7 +407,7 @@ fun HomeLeadingTitle(string: String) {
         fillingColors = listOf(MaterialTheme.colorScheme.primary),
         font = sairaFont,
         strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-        shadowColors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.5f) },
+        shadowColors = if (useSyncplayGradient) Theming.SP_GRADIENT.map { it.copy(alpha = 0.5f) } else listOf(),
         shadowSize = 6f,
         fontWeight = FontWeight.W700
     )

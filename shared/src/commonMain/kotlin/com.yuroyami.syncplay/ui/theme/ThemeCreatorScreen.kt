@@ -26,6 +26,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SplitButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -48,6 +50,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
+import androidx.lifecycle.viewModelScope
 import com.kborowy.colorpicker.KolorPicker
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.jostFont
@@ -58,6 +61,7 @@ import com.yuroyami.syncplay.ui.screens.home.HomeLeadingTitle
 import com.yuroyami.syncplay.ui.screens.home.HomeTextField
 import com.yuroyami.syncplay.ui.screens.room.tabs.RoomTab
 import com.yuroyami.syncplay.ui.theme.SaveableTheme.Companion.toTheme
+import kotlinx.coroutines.launch
 
 @Composable
 fun ThemeCreatorScreenUI() {
@@ -65,11 +69,15 @@ fun ThemeCreatorScreenUI() {
 
     var newTheme by remember { mutableStateOf<SaveableTheme>(globalViewmodel.themeManager.currentTheme.value.toTheme()) }
     val dynamicScheme by derivedStateOf { newTheme.dynamicScheme }
+    val useSPGrad by derivedStateOf { newTheme.syncplayGradients }
+
+    val snackState = remember { SnackbarHostState() }
 
     MaterialTheme(
         colorScheme = dynamicScheme
     ) {
         Scaffold(
+            snackbarHost = { SnackbarHost(hostState = snackState) },
             topBar = {
                 TopAppBar(
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -101,11 +109,19 @@ fun ThemeCreatorScreenUI() {
 
                         Button(
                             onClick = {
-                                globalViewmodel.themeManager.saveNewTheme(newTheme)
+                                globalViewmodel.viewModelScope.launch {
+                                    val isSaved = globalViewmodel.themeManager.saveNewTheme(newTheme)
 
-                                globalViewmodel.backstack.let { stack ->
-                                    if (stack.contains(Screen.ThemeCreator)) {
-                                        stack.remove(Screen.ThemeCreator)
+                                    if (isSaved) {
+                                        globalViewmodel.backstack.let { stack ->
+                                            if (stack.contains(Screen.ThemeCreator)) {
+                                                stack.remove(Screen.ThemeCreator)
+                                            }
+                                        }
+                                    } else {
+                                        snackState.showSnackbar(
+                                            "Theme already exists!" //TODO
+                                        )
                                     }
                                 }
                             },
@@ -134,7 +150,7 @@ fun ThemeCreatorScreenUI() {
                         fillingColors = listOf(MaterialTheme.colorScheme.primary),
                         font = lexendFont,
                         strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-                        shadowColors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) },
+                        shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
                         shadowSize = 3f
                     )
 
@@ -164,7 +180,7 @@ fun ThemeCreatorScreenUI() {
                         fillingColors = listOf(MaterialTheme.colorScheme.primary),
                         font = lexendFont,
                         strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-                        shadowColors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) },
+                        shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
                         shadowSize = 3f
                     )
 
@@ -192,7 +208,7 @@ fun ThemeCreatorScreenUI() {
                         fillingColors = listOf(MaterialTheme.colorScheme.primary),
                         font = lexendFont,
                         strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-                        shadowColors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) },
+                        shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
                         shadowSize = 3f
                     )
 
@@ -220,7 +236,7 @@ fun ThemeCreatorScreenUI() {
                         fillingColors = listOf(MaterialTheme.colorScheme.primary),
                         font = lexendFont,
                         strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-                        shadowColors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) },
+                        shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
                         shadowSize = 3f
                     )
 
@@ -248,7 +264,7 @@ fun ThemeCreatorScreenUI() {
                         fillingColors = listOf(MaterialTheme.colorScheme.primary),
                         font = lexendFont,
                         strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-                        shadowColors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) },
+                        shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
                         shadowSize = 3f
                     )
 
@@ -276,7 +292,7 @@ fun ThemeCreatorScreenUI() {
                         fillingColors = listOf(MaterialTheme.colorScheme.primary),
                         font = lexendFont,
                         strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-                        shadowColors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) },
+                        shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
                         shadowSize = 3f
                     )
 
@@ -304,7 +320,7 @@ fun ThemeCreatorScreenUI() {
                         fillingColors = listOf(MaterialTheme.colorScheme.primary),
                         font = lexendFont,
                         strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-                        shadowColors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) },
+                        shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
                         shadowSize = 3f
                     )
 
@@ -328,7 +344,7 @@ fun ThemeCreatorScreenUI() {
                         fillingColors = listOf(MaterialTheme.colorScheme.primary),
                         font = lexendFont,
                         strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-                        shadowColors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) },
+                        shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
                         shadowSize = 3f
                     )
 
@@ -352,7 +368,7 @@ fun ThemeCreatorScreenUI() {
                         fillingColors = listOf(MaterialTheme.colorScheme.primary),
                         font = lexendFont,
                         strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-                        shadowColors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) },
+                        shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
                         shadowSize = 3f
                     )
 
@@ -377,7 +393,7 @@ fun ThemeCreatorScreenUI() {
                         fillingColors = listOf(MaterialTheme.colorScheme.primary),
                         font = lexendFont,
                         strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-                        shadowColors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) },
+                        shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
                         shadowSize = 3f
                     )
 

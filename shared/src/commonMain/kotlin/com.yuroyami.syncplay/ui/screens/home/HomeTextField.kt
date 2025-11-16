@@ -15,6 +15,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
@@ -29,7 +30,9 @@ import androidx.compose.ui.unit.dp
 import com.composeunstyled.TextInput
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.components.gradientOverlay
+import com.yuroyami.syncplay.ui.screens.adam.LocalTheme
 import com.yuroyami.syncplay.ui.theme.Theming.SP_GRADIENT
+import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
 import com.composeunstyled.Icon as UnstyledIcon
 import com.composeunstyled.Text as UnstyledText
 import com.composeunstyled.TextField as UnstyledTextField
@@ -45,6 +48,9 @@ fun HomeTextField(
     type: KeyboardType? = null,
     cornerRadius: Dp = 35.dp
 ) {
+    val theme = LocalTheme.current
+    val useSPGrad by derivedStateOf { theme.syncplayGradients }
+
     val focusManager = LocalFocusManager.current
 
     val cornerRadiusAnimated by animateDpAsState(
@@ -72,7 +78,7 @@ fun HomeTextField(
             modifier = Modifier.height(56.dp)
                 .border(
                     width = Dp.Hairline,
-                    brush = Brush.linearGradient(colors = SP_GRADIENT),
+                    brush = Brush.linearGradient(colors = flexibleGradient),
                     shape = RoundedCornerShape(cornerRadiusAnimated)
                 ),
             shape = RoundedCornerShape(cornerRadiusAnimated),

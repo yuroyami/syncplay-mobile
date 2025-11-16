@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
 /**
@@ -47,15 +48,38 @@ class ThemeManager(val viewmodel: ViewModel) : AbstractManager(viewmodel) {
         }
     }
 
-    fun saveNewTheme(theme: SaveableTheme) {
-        viewmodel.viewModelScope.launch(Dispatchers.IO) {
+    /**
+     * @return true if theme is saved, false if it already exists
+     */
+    suspend fun saveNewTheme(theme: SaveableTheme): Boolean {
+        return withContext(Dispatchers.IO) {
             val customThemeListJson = valueSuspendingly(MISC_ALL_THEMES, "[]")
             val list = Json.decodeFromString<List<SaveableTheme>>(customThemeListJson).toMutableList()
+
+            if (list.contains(theme)) return@withContext false
+
             list.add(theme)
             val listEncodedAgain = Json.encodeToString(list)
             writeValue(MISC_ALL_THEMES, listEncodedAgain)
 
             changeTheme(theme)
+
+            return@withContext true
+        }
+    }
+
+    fun deleteTheme(theme: SaveableTheme, thisThemeWasSelected: Boolean) {
+        viewmodel.viewModelScope.launch(Dispatchers.IO) {
+            val customThemeListJson = valueSuspendingly(MISC_ALL_THEMES, "[]")
+            val list = Json.decodeFromString<List<SaveableTheme>>(customThemeListJson).toMutableList()
+
+            list.remove(theme)
+            val listEncodedAgain = Json.encodeToString(list)
+            writeValue(MISC_ALL_THEMES, listEncodedAgain)
+
+            if (thisThemeWasSelected) {
+                changeTheme(list.firstOrNull() ?: ALLEY_LAMP)
+            }
         }
     }
 }

@@ -1,11 +1,18 @@
 package com.yuroyami.syncplay.ui.theme
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,11 +20,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.DoneOutline
 import androidx.compose.material3.BasicAlertDialog
@@ -27,10 +36,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.ripple
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -63,7 +76,6 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
 
     if (visible) {
         BasicAlertDialog(
-            modifier = Modifier,//.background(Color.Black),
             onDismissRequest = onDismiss,
             properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
@@ -73,6 +85,8 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
 
             val primary = MaterialTheme.colorScheme.primary
             val srfc = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+
+            var themeToEditOrDelete by remember { mutableStateOf<SaveableTheme?>(null) }
 
             Column(
                 modifier = Modifier.background(color = Color.Black.copy(alpha = 0.85f)),
@@ -116,14 +130,23 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
                                 .gradientOverlay(colors = listOf(primary, primary, primary, srfc, srfc))
                         )
 
-                        LazyVerticalGrid(
-                            columns = GridCells.Adaptive(minSize = themeCardSize + 8.dp),
+                        Row(
                             modifier = Modifier.fillMaxWidth().padding(4.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            items(availableThemes.size) { index ->
-                                val theme = availableThemes[index]
-                                ThemeEntry(theme, isSelected = currentTheme == theme)
+                            availableThemes.forEach { theme ->
+                                ThemeEntry(
+                                    modifier = Modifier.clickable(
+                                        interactionSource = null,
+                                        indication = ripple(),
+                                        onClick = {
+                                            themeToEditOrDelete = null
+                                            viewmodel.themeManager.changeTheme(theme)
+                                        }
+                                    ),
+                                    theme = theme,
+                                    isSelected = currentTheme == theme,
+                                )
                             }
                         }
                     }
@@ -153,18 +176,18 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
                                 .gradientOverlay(colors = listOf(primary, primary, primary, srfc, srfc))
                         )
 
-                        LazyVerticalGrid(
-                            columns = GridCells.Adaptive(minSize = themeCardSize + 8.dp),
+                        LazyRow(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(themeCardSize.times(if (allCustomThemes.size < 4) 1.5f else 3.5f))
+                                .height(themeCardSize.times(2f))
                                 .padding(4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalArrangement = Arrangement.SpaceEvenly
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
                         ) {
                             item {
                                 AddCustomizedThemeButton(
                                     onClick = {
+                                        themeToEditOrDelete = null
                                         onDismiss()
                                         globalViewmodel.backstack.add(Screen.ThemeCreator)
                                     }
@@ -172,8 +195,77 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
                             }
 
                             items(allCustomThemes.size) { index ->
-                                val theme = allCustomThemes[index]
-                                ThemeEntry(theme, isSelected = currentTheme == theme)
+                                val theme = allCustomThemes[allCustomThemes.size - 1 - index]
+
+                                ThemeEntry(
+                                    modifier = Modifier
+                                        .combinedClickable(
+                                            interactionSource = null,
+                                            indication = ripple(),
+                                            onClick = {
+                                                themeToEditOrDelete = null
+                                                viewmodel.themeManager.changeTheme(theme)
+                                            },
+                                            onLongClick = {
+                                                themeToEditOrDelete = theme
+                                            }
+                                        ).run {
+                                            if (themeToEditOrDelete == theme) {
+                                                this.border(
+                                                    width = 1.dp,
+                                                    brush = Brush.linearGradient(colors = Theming.SP_GRADIENT),
+                                                    shape = RoundedCornerShape(8.dp)
+                                                )
+                                            } else this
+                                        },
+                                    theme = theme,
+                                    isSelected = currentTheme == theme
+                                )
+                            }
+                        }
+
+                        AnimatedVisibility(
+                            visible = themeToEditOrDelete != null,
+                            enter = expandVertically(animationSpec = keyframes { durationMillis = 100 }),
+                            exit = shrinkVertically(animationSpec = keyframes { durationMillis = 100 })
+                        ) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                                TextButton(
+                                    modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
+                                    onClick = {
+                                        themeToEditOrDelete = null
+                                    }
+                                ) {
+                                    Icon(Icons.Filled.Close, null)
+                                    Text("Cancel")
+                                }
+
+                                TextButton(
+                                    modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
+                                    onClick = {
+                                        viewmodel.themeManager.deleteTheme(
+                                            themeToEditOrDelete!!,
+                                            thisThemeWasSelected = themeToEditOrDelete == currentTheme
+                                        )
+
+                                        themeToEditOrDelete = null
+                                    }
+                                ) {
+                                    Icon(Icons.Filled.Delete, null)
+                                    Text("Delete")
+                                }
+
+                                TextButton(
+                                    modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
+                                    onClick = {
+                                        themeToEditOrDelete = null
+
+                                        //TODO
+                                    }
+                                ) {
+                                    Icon(Icons.Filled.Edit, null)
+                                    Text("Edit")
+                                }
                             }
                         }
                     }
@@ -190,9 +282,7 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
 
 
 @Composable
-fun ThemeEntry(theme: SaveableTheme, isSelected: Boolean) {
-    val viewmodel = LocalGlobalViewmodel.current
-
+fun ThemeEntry(modifier: Modifier, theme: SaveableTheme, isSelected: Boolean) {
     val dynamicScheme = remember { theme.dynamicScheme }
 
     Column(
@@ -200,23 +290,22 @@ fun ThemeEntry(theme: SaveableTheme, isSelected: Boolean) {
         modifier = Modifier.width(themeCardSize).padding(vertical = 8.dp)
     ) {
         Card(
-            modifier = Modifier
+            modifier = modifier
                 .size(themeCardSize)
                 .solidOverlay(
                     if (isSelected) Color.Transparent else Color.Black.copy(alpha = 0.2f)
                 ),
             shape = RoundedCornerShape(8.dp),
-            border = BorderStroke(Dp.Hairline, color = Color.Black),
-            onClick = {
-                viewmodel.themeManager.changeTheme(theme)
-            }
+            border = BorderStroke(Dp.Hairline, color = Color.Black)
         ) {
             Box(
                 modifier = Modifier.fillMaxWidth().size(themeCardSize)
-                    .background(brush = Brush.linearGradient(
-                        colors = listOf(
-                            dynamicScheme.primary, dynamicScheme.tertiaryContainer, dynamicScheme.background
-                        ))
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                dynamicScheme.primary, dynamicScheme.tertiaryContainer, dynamicScheme.background
+                            )
+                        )
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -226,7 +315,7 @@ fun ThemeEntry(theme: SaveableTheme, isSelected: Boolean) {
             }
         }
         Text(
-            modifier = Modifier.width(themeCardSize-4.dp).safeContentPadding().padding(2.dp),
+            modifier = Modifier.width(themeCardSize - 4.dp).safeContentPadding().padding(2.dp),
             text = theme.name,
             autoSize = TextAutoSize.StepBased(minFontSize = 1.sp, maxFontSize = 25.sp),
             color = MaterialTheme.colorScheme.onSurface,
@@ -248,7 +337,7 @@ fun AddCustomizedThemeButton(onClick: () -> Unit) {
                     width = Dp.Hairline,
                     color = MaterialTheme.colorScheme.primary,
                     shape = RoundedCornerShape(8.dp)
-            )
+                )
                 .drawWithContent {
                     drawContent()
                     drawRoundRect(
@@ -275,7 +364,7 @@ fun AddCustomizedThemeButton(onClick: () -> Unit) {
             }
         }
         Text(
-            modifier = Modifier.width(themeCardSize-4.dp).safeContentPadding().padding(2.dp),
+            modifier = Modifier.width(themeCardSize - 4.dp).safeContentPadding().padding(2.dp),
             text = "Customize...", //TODO Localize
             autoSize = TextAutoSize.StepBased(minFontSize = 1.sp, maxFontSize = 25.sp),
             color = MaterialTheme.colorScheme.onSurface,
