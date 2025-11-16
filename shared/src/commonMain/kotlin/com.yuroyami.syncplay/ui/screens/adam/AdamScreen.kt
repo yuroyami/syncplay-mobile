@@ -7,7 +7,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -24,6 +23,7 @@ import com.yuroyami.syncplay.ui.screens.Screen
 import com.yuroyami.syncplay.ui.screens.home.HomeScreenUI
 import com.yuroyami.syncplay.ui.screens.room.RoomScreenUI
 import com.yuroyami.syncplay.ui.screens.room.tabs.CardController
+import com.yuroyami.syncplay.ui.theme.SaveableTheme.Companion.fromString
 import com.yuroyami.syncplay.ui.theme.ThemeCreatorScreenUI
 import com.yuroyami.syncplay.viewmodels.HomeViewmodel
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
@@ -72,9 +72,10 @@ fun AdamScreen() {
 
     val currentScreen by remember { derivedStateOf { backstack.lastOrNull() } }
     val currentTheme by viewmodel.themeManager.currentTheme.collectAsState()
+    val currentThemeCalculated by derivedStateOf { currentTheme.fromString() }
 
     MaterialTheme(
-        colorScheme = currentTheme.scheme
+        colorScheme = currentThemeCalculated.dynamicScheme
     ) {
         CompositionLocalProvider(
             LocalGlobalViewmodel provides viewmodel,

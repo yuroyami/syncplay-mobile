@@ -2,16 +2,26 @@
 
 package com.yuroyami.syncplay.managers
 
-import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.materialkolor.Contrast
 import com.materialkolor.PaletteStyle
-import com.materialkolor.dynamicColorScheme
-import com.materialkolor.dynamiccolor.ColorSpec
 import com.yuroyami.syncplay.AbstractManager
+import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_ALL_THEMES
+import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_CURRENT_THEME
+import com.yuroyami.syncplay.managers.datastore.valueFlow
+import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
+import com.yuroyami.syncplay.managers.datastore.writeValue
+import com.yuroyami.syncplay.ui.theme.SaveableTheme
 import com.yuroyami.syncplay.ui.theme.Theming
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.flow.SharingStarted.Companion.Eagerly
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 
 /**
  * Manages application theming and color schemes.
@@ -21,42 +31,43 @@ import kotlinx.coroutines.flow.MutableStateFlow
  *
  * @param viewmodel The parent ViewModel that owns this manager
  */
-class ThemeManager(viewmodel: ViewModel) : AbstractManager(viewmodel) {
+class ThemeManager(val viewmodel: ViewModel) : AbstractManager(viewmodel) {
 
     /**
      * The currently active theme.
      */
-    val currentTheme = MutableStateFlow<Theme>(ALLEY_LAMPPOST)
+    val currentTheme = valueFlow(MISC_CURRENT_THEME, ALLEY_LAMP.asString())
+        .stateIn(scope = viewmodel.viewModelScope, started = Eagerly, ALLEY_LAMP.asString())
+
+    fun changeTheme(theme: SaveableTheme) {
+        viewmodel.viewModelScope.launch(Dispatchers.IO) {
+            writeValue(MISC_CURRENT_THEME, theme.asString())
+        }
+    }
+
+    fun saveNewTheme(theme: SaveableTheme) {
+        viewmodel.viewModelScope.launch(Dispatchers.IO) {
+            val customThemeListJson = valueSuspendingly(MISC_ALL_THEMES, "[]")
+            val list = Json.decodeFromString<List<SaveableTheme>>(customThemeListJson).toMutableList()
+            list.add(theme)
+            val listEncodedAgain = Json.encodeToString(list)
+            writeValue(MISC_ALL_THEMES, listEncodedAgain)
+
+            changeTheme(theme)
+        }
+    }
 
     companion object {
-        /**
-         * Represents a complete theme configuration.
-         *
-         * @property name The display name of the theme
-         * @property scheme The Material Design 3 color scheme
-         * @property usesSyncplayGradients Whether this theme uses Syncplay's custom gradient backgrounds
-         */
-        data class Theme(
-            val name: String,
-            val scheme: ColorScheme,
-            val usesSyncplayGradients: Boolean
-        ) {
-            companion object {
-                val BLANK_THEME = Theme(
-                    name = "Untitled theme",
-                    scheme = dynamicColorScheme(
-                        primary = Color.Blue,
-                        isDark = false,
-                        isAmoled = false,
-                        secondary = null,
-                        tertiary = Color.Cyan,
-                        style = PaletteStyle.TonalSpot,
-                        specVersion = ColorSpec.SpecVersion.SPEC_2021,
-                    ),
-                    usesSyncplayGradients = true
-                )
-            }
-        }
+        val BLANK_THEME = SaveableTheme(
+            name = "Untitled theme",
+            primaryColor = Color.Blue.toArgb(),
+            isDark = false,
+            isAMOLED = false,
+            secondaryColor = null,
+            tertiaryColor = Color.Cyan.toArgb(),
+            style = PaletteStyle.TonalSpot,
+            syncplayGradients = true
+        )
 
         /**
          * "PyncSlay" theme - Syncplay's signature pink theme.
@@ -64,17 +75,11 @@ class ThemeManager(viewmodel: ViewModel) : AbstractManager(viewmodel) {
          * Features cute pink primary colors with tonal spot palette style
          * and custom Syncplay gradients.
          */
-        val PYNCSLAY = Theme(
+        val PYNCSLAY = SaveableTheme(
             name = "PyncSlay",
-            scheme = dynamicColorScheme(
-                primary = Theming.SP_CUTE_PINK,
-                isDark = true,
-                isAmoled = false,
-                //tertiary = Theming.SP_YELLOW,
-                style = PaletteStyle.TonalSpot,
-                specVersion = ColorSpec.SpecVersion.SPEC_2021,
-            ),
-            usesSyncplayGradients = true
+            primaryColor = Theming.SP_CUTE_PINK.toArgb(),
+            isDark = true,
+            style = PaletteStyle.TonalSpot
         )
 
         /**
@@ -83,22 +88,13 @@ class ThemeManager(viewmodel: ViewModel) : AbstractManager(viewmodel) {
          * Uses true black backgrounds to take advantage of OLED pixel-off technology
          * for better battery life and contrast. Features monochrome palette style.
          */
-        val AMOLED = Theme(
+        val BLACKOLED = SaveableTheme(
             name = "BlackOLED",
-            usesSyncplayGradients = true,
-            scheme = dynamicColorScheme(
-                primary = Color.Magenta,
-                isDark = true,
-                isAmoled = true,
-                secondary = null,
-                tertiary = null,
-                neutral = null,
-                neutralVariant = null,
-                error = Color.Red,
-                style = PaletteStyle.Monochrome,
-                contrastLevel = Contrast.Medium.value,
-                specVersion = ColorSpec.SpecVersion.SPEC_2021,
-            )
+            primaryColor = Color.Magenta.toArgb(),
+            contrast = Contrast.Medium,
+            isDark = true,
+            isAMOLED = true,
+            style = PaletteStyle.Monochrome
         )
 
         /**
@@ -107,22 +103,15 @@ class ThemeManager(viewmodel: ViewModel) : AbstractManager(viewmodel) {
          * Inspired by vintage street lighting with warm yellow-gray primary colors
          * against dark, muted backgrounds. Uses neutral palette style.
          */
-        val ALLEY_LAMPPOST = Theme(
-            name = "Alley Lamppost",
-            usesSyncplayGradients = true,
-            scheme = dynamicColorScheme(
-                primary = Color(255, 214, 111),
-                isDark = true,
-                isAmoled = false,
-                secondary = Color(35, 35, 35),
-                tertiary = Color(35, 35, 35),
-                neutral = Color(35, 35, 35),
-                neutralVariant = Color.Gray,
-                error = Color.Red,
-                style = PaletteStyle.Neutral,
-                contrastLevel = Contrast.Default.value,
-                specVersion = ColorSpec.SpecVersion.SPEC_2021,
-            )
+        val ALLEY_LAMP = SaveableTheme(
+            name = "Alley Lamp",
+            primaryColor = Color(255, 214, 111).toArgb(),
+            secondaryColor = Color(35, 35, 35).toArgb(),
+            tertiaryColor = Color(35, 35, 35).toArgb(),
+            neutralColor = Color(35, 35, 35).toArgb(),
+            neutralVariantColor = Color.Gray.toArgb(),
+            isDark = true,
+            style = PaletteStyle.Neutral
         )
 
         /**
@@ -130,21 +119,11 @@ class ThemeManager(viewmodel: ViewModel) : AbstractManager(viewmodel) {
          *
          * Features bright green primary colors with tonal spot palette style.
          */
-        val GREEN_GOBLIN =
-            Theme(
-                name = "Green Goblin", usesSyncplayGradients = true, scheme = dynamicColorScheme(
-                    primary = Color.Green,
-                    isDark = true,
-                    isAmoled = false,
-                    secondary = null,
-                    tertiary = null,
-                    neutral = null,
-                    neutralVariant = null,
-                    error = Color.Red,
-                    style = PaletteStyle.TonalSpot,
-                    contrastLevel = Contrast.Default.value,
-                    specVersion = ColorSpec.SpecVersion.SPEC_2021,
-                )
-            )
+        val GREEN_GOBLIN = SaveableTheme(
+            name = "Green Goblin",
+            primaryColor = Color.Green.toArgb(),
+            isDark = true,
+            style = PaletteStyle.TonalSpot,
+        )
     }
 }

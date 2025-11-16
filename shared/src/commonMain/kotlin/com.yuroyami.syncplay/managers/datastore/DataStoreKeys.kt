@@ -9,6 +9,8 @@ object DataStoreKeys {
     const val MISC_JOIN_CONFIG = "misc_join_config"
     const val MISC_PLAYER_ENGINE = "misc_player_engine"
     const val MISC_GESTURES = "misc_gestures"
+    const val MISC_CURRENT_THEME = "misc_current_theme"
+    const val MISC_ALL_THEMES = "misc_all_themes"
 
     /* General */
     const val CATEG_GLOBAL_GENERAL = "categ_global_general"

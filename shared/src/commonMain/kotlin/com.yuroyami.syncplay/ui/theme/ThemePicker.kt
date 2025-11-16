@@ -31,6 +31,7 @@ import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
@@ -52,7 +53,7 @@ import com.yuroyami.syncplay.ui.components.solidOverlay
 import com.yuroyami.syncplay.ui.screens.Screen
 import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
 
-val availableThemes = listOf(ThemeManager.PYNCSLAY, ThemeManager.AMOLED, ThemeManager.GREEN_GOBLIN, ThemeManager.ALLEY_LAMPPOST)
+val availableThemes = listOf(ThemeManager.PYNCSLAY, ThemeManager.BLACKOLED, ThemeManager.GREEN_GOBLIN, ThemeManager.ALLEY_LAMP)
 
 val themeCardSize = 64.dp
 
@@ -184,9 +185,10 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
 
 
 @Composable
-fun ThemeEntry(theme: ThemeManager.Companion.Theme, isSelected: Boolean) {
+fun ThemeEntry(theme: ThemeManager.Companion.SaveableTheme, isSelected: Boolean) {
     val viewmodel = LocalGlobalViewmodel.current
 
+    val dynamicScheme = remember { theme.dynamicScheme }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -208,7 +210,7 @@ fun ThemeEntry(theme: ThemeManager.Companion.Theme, isSelected: Boolean) {
                 modifier = Modifier.fillMaxWidth().size(themeCardSize)
                     .background(brush = Brush.linearGradient(
                         colors = listOf(
-                            theme.scheme.primary, theme.scheme.tertiaryContainer, theme.scheme.background
+                            dynamicScheme.primary, dynamicScheme.tertiaryContainer, dynamicScheme.background
                         ))
                     ),
                 contentAlignment = Alignment.Center

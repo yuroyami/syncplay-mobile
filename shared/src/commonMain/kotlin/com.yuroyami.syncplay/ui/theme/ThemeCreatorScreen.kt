@@ -38,7 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.managers.ThemeManager.Companion.Theme.Companion.BLANK_THEME
+import com.yuroyami.syncplay.managers.ThemeManager.Companion.BLANK_THEME
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.jostFont
 import com.yuroyami.syncplay.ui.components.lexendFont
@@ -54,6 +54,8 @@ fun ThemeCreatorScreenUI() {
     val globalViewmodel = LocalGlobalViewmodel.current
 
     var currentTheme by remember { mutableStateOf(BLANK_THEME) }
+
+    var themeName by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -124,8 +126,9 @@ fun ThemeCreatorScreenUI() {
 
                 HomeTextField(
                     modifier = Modifier.width(200.dp),
-                    value = "ThemeName",
-                    onValueChange = {}
+                    label = "ThemeName",
+                    value = themeName,
+                    onValueChange = { themeName = it }
                 )
             }
 
