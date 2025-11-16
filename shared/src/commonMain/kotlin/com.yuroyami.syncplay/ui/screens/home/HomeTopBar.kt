@@ -59,6 +59,7 @@ import com.yuroyami.syncplay.ui.screens.home.PopupAPropos.AProposPopup
 import com.yuroyami.syncplay.ui.theme.ThemeMenu
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.theme.Theming.SP_GRADIENT
+import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.vectorResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
@@ -101,8 +102,8 @@ fun HomeTopBar() {
                         FlexibleIcon(
                             icon = Icons.Outlined.Palette,
                             size = 38,
-                            tintColors = SP_GRADIENT,
-                            shadowColors = listOf(MaterialTheme.colorScheme.primary),
+                            tintColors = flexibleGradient,
+                            shadowColors = listOf(MaterialTheme.colorScheme.outline),
                             onClick = {
                                 themePopupState = true
                             }
@@ -116,8 +117,8 @@ fun HomeTopBar() {
                                 SettingGridState.INSIDE_CATEGORY -> Icons.AutoMirrored.Filled.Redo
                             },
                             size = 38,
-                            tintColors = SP_GRADIENT,
-                            shadowColors = listOf(MaterialTheme.colorScheme.primary),
+                            tintColors = flexibleGradient,
+                            shadowColors = listOf(MaterialTheme.colorScheme.outline),
                             onClick = {
                                 settingState.value = when (settingState.value) {
                                     SettingGridState.COLLAPSED -> SettingGridState.NAVIGATING_CATEGORIES

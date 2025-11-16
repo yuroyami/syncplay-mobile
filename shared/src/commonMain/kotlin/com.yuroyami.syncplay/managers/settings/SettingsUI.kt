@@ -4,7 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -30,6 +30,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -41,13 +42,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.gradientOverlay
 import com.yuroyami.syncplay.ui.components.helveticaFont
+import com.yuroyami.syncplay.ui.components.sairaFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalSettingStyling
 import com.yuroyami.syncplay.ui.screens.home.SettingGridState
 import com.yuroyami.syncplay.ui.theme.Theming
+import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
 import org.jetbrains.compose.resources.stringResource
 
 /** Object class that will wrap everything related to settings (including composables for UI) */
@@ -200,34 +204,38 @@ object SettingsUI {
         categ: SettingCategory,
         onClick: () -> Unit,
     ) {
-
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth().clip(shape = RoundedCornerShape(8.dp))
-                .background(Theming.SP_GRADIENT[index % 3].copy(0.1f)).clickable(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(shape = RoundedCornerShape(8.dp))
+                .background(Theming.SP_GRADIENT[index % 3].copy(0.1f))
+                .border(width = Dp.Hairline, color = MaterialTheme.colorScheme.outline, shape = RoundedCornerShape(8.dp))
+                .clickable(
                     interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(color = Theming.SP_ORANGE)
-
-                ) {
-                    onClick()
-                }.padding(8.dp),
+                    indication = ripple(color = Theming.SP_ORANGE),
+                    onClick = onClick
+                )
+                .padding(8.dp),
         ) {
             Box(modifier = Modifier) {
                 Icon(
                     imageVector = categ.icon,
                     contentDescription = "",
-                    modifier = modifier.size(32.dp).align(Alignment.Center).gradientOverlay()
+                    modifier = modifier.size(32.dp)
+                        .align(Alignment.Center)
+                        .gradientOverlay(flexibleGradient)
                 )
-
-
             }
+
             Spacer(modifier = Modifier.width(8.dp))
+
             FlexibleText(
-                modifier = Modifier.basicMarquee(),
                 text = stringResource(categ.title),
-                fillingColors = Theming.SP_GRADIENT,
-                size = 18f,
-                font = helveticaFont
+                fillingColors = flexibleGradient,
+                strokeColors = listOf(MaterialTheme.colorScheme.outline),
+                size = 17f,
+                font = sairaFont
             )
         }
 

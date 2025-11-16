@@ -218,6 +218,7 @@ fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
     return SyncplayPopup(
         dialogOpen = visibilityState.value,
         strokeWidth = 0.5f,
+        widthPercent = 0.8f,
         onDismiss = { visibilityState.value = false }
     ) {
         val scope = rememberCoroutineScope()

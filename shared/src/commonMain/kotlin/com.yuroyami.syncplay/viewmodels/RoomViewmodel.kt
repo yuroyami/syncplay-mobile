@@ -133,8 +133,9 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
      * Notifies the platform of the room exit event.
      */
     fun leaveRoom() {
-        backStack.removeLast()
         platformCallback.onRoomEnterOrLeave(PlatformCallback.RoomEvent.LEAVE)
+
+        backStack.removeLast()
     }
 
     /**
