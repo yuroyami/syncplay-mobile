@@ -11,6 +11,7 @@ object DataStoreKeys {
     const val MISC_GESTURES = "misc_gestures"
     const val MISC_CURRENT_THEME = "misc_current_theme"
     const val MISC_ALL_THEMES = "misc_all_themes"
+    const val MISC_ROOM_ORIENTATION = "misc_room_orientation"
 
     /* General */
     const val CATEG_GLOBAL_GENERAL = "categ_global_general"

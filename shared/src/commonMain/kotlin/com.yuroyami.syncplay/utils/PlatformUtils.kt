@@ -21,6 +21,10 @@ expect fun generateTimestampMillis(): Long
  * Must be initialized before use. */
 lateinit var platformCallback: PlatformCallback
 
+
+expect class WeakRef<T: Any>
+expect fun <T : Any> createWeakRef(obj: T): WeakRef<T>
+
 /**
  * Gets the maximum volume level supported by the system.
  *

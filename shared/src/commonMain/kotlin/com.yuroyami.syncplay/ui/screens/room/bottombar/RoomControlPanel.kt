@@ -158,7 +158,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
             }
             viewmodel.actionManager.sendSeek(lastSeek.first)
             viewmodel.seeks.remove(lastSeek)
-            viewmodel.osdManager.dispatchOSD { "Seek undone." }
+            viewmodel.osdManager.dispatchOSD { "Seek undone." } //TODO
         }
 
         /* Subtitle Tracks */
@@ -177,13 +177,11 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
             }
 
             DropdownMenu(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(
-                    0.5f
-                ),
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.8f),
                 tonalElevation = 0.dp,
                 shadowElevation = 0.dp,
                 border = BorderStroke(
-                    width = 1.dp,
+                    width = Dp.Hairline,
                     brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map {
                         it.copy(alpha = 0.5f)
                     })
@@ -218,7 +216,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                         Spacer(Modifier.width(2.dp))
 
                         Text(
-                            "Import from file",
+                            "Import from file", //TODO
                             color = Color.LightGray
                         )
                     }
@@ -242,7 +240,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                             Spacer(Modifier.width(2.dp))
 
                             Text(
-                                "Disable subtitles.",
+                                "Disable subtitles.", //TODO
                                 color = Color.LightGray
                             )
 
@@ -307,9 +305,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
             }
 
             DropdownMenu(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(
-                    0.5f
-                ),
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.8f),
                 tonalElevation = 0.dp,
                 shadowElevation = 0.dp,
                 border = BorderStroke(
@@ -385,9 +381,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                 }
 
                 DropdownMenu(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(
-                        0.5f
-                    ),
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.8f),
                     tonalElevation = 0.dp,
                     shadowElevation = 0.dp,
                     border = BorderStroke(
@@ -418,7 +412,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
                             Row(verticalAlignment = CenterVertically) {
                                 Text(
                                     color = Color.LightGray,
-                                    text = "Skip chapter"
+                                    text = "Skip chapter" //TODO
                                 )
                             }
                         },

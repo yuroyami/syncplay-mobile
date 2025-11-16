@@ -1,11 +1,16 @@
 package com.yuroyami.syncplay
 
 import android.annotation.SuppressLint
+import android.app.PendingIntent
+import android.app.PendingIntent.FLAG_IMMUTABLE
+import android.app.PictureInPictureParams
+import android.app.RemoteAction
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
+import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -23,14 +28,18 @@ import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_PLAYER_SUBTITLE_SIZE
 import com.yuroyami.syncplay.managers.datastore.valueBlockingly
 import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
+import com.yuroyami.syncplay.managers.player.exo.ExoPlayer
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.ui.screens.adam.AdamScreen
 import com.yuroyami.syncplay.utils.applyActivityUiProperties
 import com.yuroyami.syncplay.utils.bindWatchdog
 import com.yuroyami.syncplay.utils.changeLanguage
+import com.yuroyami.syncplay.utils.hideSystemUI
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.viewmodels.HomeViewmodel
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
+import com.yuroyami.syncplay.viewmodels.SyncplayViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -40,6 +49,16 @@ import kotlinx.coroutines.launch
  * This is a single-activity app - all navigation is handled within Compose.
  */
 class SyncplayActivity : ComponentActivity() {
+
+
+    lateinit var globalViewmodel: SyncplayViewmodel
+
+    val homeViewmodel: HomeViewmodel?
+        get() = globalViewmodel.homeWeakRef?.get()
+
+    val roomViewmodel: RoomViewmodel?
+        get() = globalViewmodel.roomWeakRef?.get()
+
     /**
      * Called when the activity is first created.
      *
@@ -181,7 +200,11 @@ class SyncplayActivity : ComponentActivity() {
             }
 
             //MainUI
-            AdamScreen()
+            AdamScreen(
+                onGlobalViewmodel = {
+                    globalViewmodel = it
+                }
+            )
         }
 
         /** Maybe there is a shortcut intent */
@@ -195,11 +218,13 @@ class SyncplayActivity : ComponentActivity() {
                     pw = getStringExtra("serverpw") ?: ""
                 )
 
-                //todo homeViewmodel?.joinRoom(config)
+                lifecycleScope.launch {
+                    homeViewmodel?.joinRoom(config)
+                }
             }
         }
 
-        Thread.setDefaultUncaughtExceptionHandler { t, t2 ->
+        Thread.setDefaultUncaughtExceptionHandler { _, t2 ->
             loggy(t2.stackTraceToString())
             throw t2
         }
@@ -229,22 +254,8 @@ class SyncplayActivity : ComponentActivity() {
         /* Loading subtitle appearance */
         lifecycleScope.launch(Dispatchers.Main) {
             val ccsize = valueSuspendingly(PREF_INROOM_PLAYER_SUBTITLE_SIZE, 16)
-            //TODO  (viewmodel?.player as? ExoPlayer)?.retweakSubtitleAppearance(ccsize.toFloat())
+            (roomViewmodel?.player as? ExoPlayer)?.retweakSubtitleAppearance(ccsize.toFloat())
         }
-    }
-
-    /**
-     * Terminates the activity and cleans up resources.
-     *
-     * TODO: Properly end network connections before finishing.
-     */
-    fun terminate() {
-        //TODO if (!isSoloMode) {
-        //TODO viewmodel?.p?.endConnection(true)
-        //TODO }
-
-        finish()
-        //TODO viewmodel = null
     }
 
     /**
@@ -258,10 +269,12 @@ class SyncplayActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
-        //TODO viewmodel?.pipMode?.value = isInPictureInPictureMode
+        roomViewmodel?.uiManager?.hasEnteredPipMode?.value = isInPictureInPictureMode
 
         if (!isInPictureInPictureMode) {
-            //TODO viewmodel?.player?.pause()
+            lifecycleScope.launch {
+                roomViewmodel?.player?.pause()
+            }
         }
     }
 
@@ -273,14 +286,14 @@ class SyncplayActivity : ComponentActivity() {
     @Suppress("DEPRECATION")
     private fun initiatePIPmode() {
         val isPipAllowed = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-
         if (!isPipAllowed) return
 
-        //TODO viewmodel?.pipMode?.value = true
+        roomViewmodel?.uiManager?.hasEnteredPipMode?.value = true
+
         //moveTaskToBack(true)
         updatePiPParams()
         enterPictureInPictureMode()
-        //TODO viewmodel?.hudVisibilityState?.value = false
+        roomViewmodel?.uiManager?.visibleHUD?.value = false
     }
 
     /**
@@ -292,38 +305,35 @@ class SyncplayActivity : ComponentActivity() {
      * TODO: Implement PiP action buttons for play/pause control.
      */
     private fun updatePiPParams() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
-            return
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
 
-        /*
-        val intent = Intent("pip")
-        val pendingIntent = PendingIntent.getBroadcast(
-            this, 6969, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE
-        )
-
-        val action = if (viewmodel?.player?.isPlaying() == true) {
-            RemoteAction(
-                Icon.createWithResource(this, R.drawable.ic_pause),
-                "Play", "", pendingIntent
+        lifecycleScope.launch {
+            val intent = Intent("pip")
+            val pendingIntent = PendingIntent.getBroadcast(
+                this@SyncplayActivity, 6969, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE
             )
-        } else {
-            RemoteAction(
-                Icon.createWithResource(this, R.drawable.ic_play),
-                "Pause", "", pendingIntent
-            )
-        }
 
-        val params = with(PictureInPictureParams.Builder()) {
-            //TODO setActions(if (viewmodel?.hasVideoG?.value == true) listOf(action) else listOf())
-        }
+            val action = if (roomViewmodel?.player?.isPlaying() == true) {
+                RemoteAction(
+                    Icon.createWithResource(this@SyncplayActivity, R.drawable.ic_pause),
+                    "Play", "", pendingIntent
+                )
+            } else {
+                RemoteAction(
+                    Icon.createWithResource(this@SyncplayActivity, R.drawable.ic_play),
+                    "Pause", "", pendingIntent
+                )
+            }
 
-        try {
-            //TODO setPictureInPictureParams(params.build())
-        } catch (_: IllegalArgumentException) {
-        }
+            val params = with(PictureInPictureParams.Builder()) {
+                setActions(if (roomViewmodel?.hasVideo?.value == true) listOf(action) else listOf())
+            }
 
-         */
+            runCatching {
+                setPictureInPictureParams(params.build())
+            }
+        }
     }
 
     /**
@@ -339,9 +349,9 @@ class SyncplayActivity : ComponentActivity() {
 
                     //TODO CHECK IF IN ROOM IN THE FIRST PLACE
                     if (pausePlayValue == 1) {
-                        //todo roomViewmodel?.actionManager?.playPlayback()
+                        roomViewmodel?.actionManager?.playPlayback()
                     } else {
-                        //todo roomViewmodel?.actionManager?.pausePlayback()
+                        roomViewmodel?.actionManager?.pausePlayback()
                     }
                 }
             }
@@ -363,11 +373,12 @@ class SyncplayActivity : ComponentActivity() {
             registerReceiver(pipBroadcastReceiver, filter)
         }
 
-
-        //TODO hideSystemUI(false)
+        hideSystemUI(false)
 
         /** Applying track choices again so the player doesn't forget about track choices **/
-        //TODO viewmodel?.player?.reapplyTrackChoices()
+        lifecycleScope.launch {
+            roomViewmodel?.player?.reapplyTrackChoices()
+        }
     }
 
     /**

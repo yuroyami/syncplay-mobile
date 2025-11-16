@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.yuroyami.syncplay.managers.ThemeManager
 import com.yuroyami.syncplay.ui.screens.Screen
+import com.yuroyami.syncplay.utils.WeakRef
 
 /**
  * Application-level ViewModel for managing global Syncplay state.
@@ -39,4 +40,10 @@ class SyncplayViewmodel : ViewModel() {
      * Used for UI/UX decisions like adjusting first-time behavior.
      */
     var hasEnteredRoomOnce = false
+
+    /** Weak References for our child viewmodels so we can access them from SyncplayActivity
+     * but also not prevent them from getting garbage-collected when they're finalized (invalidated and cleared)
+     */
+    var homeWeakRef: WeakRef<HomeViewmodel>? = null
+    var roomWeakRef: WeakRef<RoomViewmodel>? = null
 }

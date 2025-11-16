@@ -3,6 +3,7 @@ package com.yuroyami.syncplay.ui.screens.adam
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
@@ -26,6 +27,7 @@ import com.yuroyami.syncplay.ui.screens.room.tabs.CardController
 import com.yuroyami.syncplay.ui.theme.SaveableTheme
 import com.yuroyami.syncplay.ui.theme.SaveableTheme.Companion.toTheme
 import com.yuroyami.syncplay.ui.theme.ThemeCreatorScreenUI
+import com.yuroyami.syncplay.utils.createWeakRef
 import com.yuroyami.syncplay.viewmodels.HomeViewmodel
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import com.yuroyami.syncplay.viewmodels.SyncplayViewmodel
@@ -65,21 +67,25 @@ val LocalCardController = compositionLocalOf<CardController> { error("No CardCon
  * @see RoomScreenUI
  */
 @Composable
-fun AdamScreen() {
-    val viewmodel = viewModel(
+fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
+    val globalviewmodel = viewModel(
         key = "global_viewmodel",
         modelClass = SyncplayViewmodel::class,
         factory = viewModelFactory { initializer { SyncplayViewmodel() } }
     )
 
-    val backstack = remember { viewmodel.backstack }
+    LaunchedEffect(null) {
+        onGlobalViewmodel(globalviewmodel)
+    }
+
+    val backstack = remember { globalviewmodel.backstack }
 
     val currentScreen by remember { derivedStateOf { backstack.lastOrNull() } }
-    val currentTheme by viewmodel.themeManager.currentTheme.collectAsState()
+    val currentTheme by globalviewmodel.themeManager.currentTheme.collectAsState()
     val currentThemeCalculated by derivedStateOf { currentTheme.toTheme() }
 
     CompositionLocalProvider(
-        LocalGlobalViewmodel provides viewmodel,
+        LocalGlobalViewmodel provides globalviewmodel,
         LocalScreen provides currentScreen,
         LocalChatPalette provides messagePalette.value,
         LocalTheme provides currentThemeCalculated
@@ -99,7 +105,7 @@ fun AdamScreen() {
                         val viewmodel = viewModel(
                             key = "home_viewmodel",
                             modelClass = HomeViewmodel::class,
-                            factory = viewModelFactory { initializer { HomeViewmodel(backStack = viewmodel.backstack) } }
+                            factory = viewModelFactory { initializer { HomeViewmodel(backStack = globalviewmodel.backstack) } }
                         )
 
                         HomeScreenUI(viewmodel)
@@ -110,9 +116,13 @@ fun AdamScreen() {
                             key = "room_viewmodel",
                             modelClass = RoomViewmodel::class,
                             factory = viewModelFactory {
-                                initializer { RoomViewmodel(joinConfig = room.joinConfig, backStack = viewmodel.backstack) }
+                                initializer { RoomViewmodel(joinConfig = room.joinConfig, backStack = globalviewmodel.backstack) }
                             }
                         )
+
+                        LaunchedEffect(null) {
+                            globalviewmodel.roomWeakRef = createWeakRef(viewmodel)
+                        }
 
                         CompositionLocalProvider(
                             LocalRoomViewmodel provides viewmodel

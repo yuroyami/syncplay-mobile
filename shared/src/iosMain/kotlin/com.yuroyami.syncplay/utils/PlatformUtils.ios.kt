@@ -27,6 +27,7 @@ import platform.UIKit.UIWindowScene
 import platform.UIKit.UIWindowSceneGeometryPreferencesIOS
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
+import kotlin.native.ref.WeakReference
 
 actual val platform: PLATFORM = PLATFORM.IOS
 
@@ -113,3 +114,7 @@ actual fun ShowSystemBars() {
     }
 }
 
+actual typealias WeakRef<T> = WeakReference<T>
+actual fun <T : Any> createWeakRef(obj: T): WeakRef<T> {
+    return WeakReference(obj)
+}

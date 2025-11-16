@@ -13,6 +13,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * @property viewmodel The parent RoomViewModel that owns this manager
  */
 class UIManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
+    
+    companion object {
+        enum class RoomOrientation { LANDSCAPE, PORTRAIT }
+    }
+    val roomOrientation = MutableStateFlow<RoomOrientation>(RoomOrientation.LANDSCAPE)
 
     /**
      * Whether the app has entered Picture-in-Picture mode.

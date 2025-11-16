@@ -27,6 +27,7 @@ import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
+import java.lang.ref.WeakReference
 import kotlin.math.roundToInt
 
 /**
@@ -233,4 +234,10 @@ actual fun ShowSystemBars() {
         activity?.applyActivityUiProperties()
 
     }
+}
+
+actual typealias WeakRef<T> = java.lang.ref.WeakReference<T>
+
+actual fun <T : Any> createWeakRef(obj: T): WeakRef<T> {
+    return WeakReference(obj)
 }
