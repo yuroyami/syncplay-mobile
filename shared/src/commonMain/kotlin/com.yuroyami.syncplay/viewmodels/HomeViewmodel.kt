@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import com.yuroyami.syncplay.PlatformCallback
 import com.yuroyami.syncplay.managers.SnackManager
 import com.yuroyami.syncplay.models.JoinConfig
-import com.yuroyami.syncplay.ui.screens.adam.Screen
+import com.yuroyami.syncplay.ui.screens.Screen
 import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO

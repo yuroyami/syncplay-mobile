@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.ui.screens.adam
+package com.yuroyami.syncplay.ui.screens
 
 import androidx.navigation3.runtime.NavKey
 import com.yuroyami.syncplay.models.JoinConfig
@@ -22,4 +22,11 @@ sealed interface Screen : NavKey {
      */
     @Serializable
     data class Room(val joinConfig: JoinConfig?) : Screen
+
+    /**
+     * The screen where user can customize screens
+     *
+     */
+    @Serializable
+    data object ThemeCreator: Screen
 }

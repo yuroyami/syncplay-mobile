@@ -20,7 +20,7 @@ import com.yuroyami.syncplay.managers.protocol.ProtocolManager
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.models.MediaFile
-import com.yuroyami.syncplay.ui.screens.adam.Screen
+import com.yuroyami.syncplay.ui.screens.Screen
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.instantiateNetworkManager
 import com.yuroyami.syncplay.utils.loggy

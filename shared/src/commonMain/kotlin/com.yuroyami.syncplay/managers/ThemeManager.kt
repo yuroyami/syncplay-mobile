@@ -1,4 +1,5 @@
 @file:Suppress("SpellCheckingInspection")
+
 package com.yuroyami.syncplay.managers
 
 import androidx.compose.material3.ColorScheme
@@ -39,7 +40,23 @@ class ThemeManager(viewmodel: ViewModel) : AbstractManager(viewmodel) {
             val name: String,
             val scheme: ColorScheme,
             val usesSyncplayGradients: Boolean
-        )
+        ) {
+            companion object {
+                val BLANK_THEME = Theme(
+                    name = "Untitled theme",
+                    scheme = dynamicColorScheme(
+                        primary = Color.Blue,
+                        isDark = false,
+                        isAmoled = false,
+                        secondary = null,
+                        tertiary = Color.Cyan,
+                        style = PaletteStyle.TonalSpot,
+                        specVersion = ColorSpec.SpecVersion.SPEC_2021,
+                    ),
+                    usesSyncplayGradients = true
+                )
+            }
+        }
 
         /**
          * "PyncSlay" theme - Syncplay's signature pink theme.

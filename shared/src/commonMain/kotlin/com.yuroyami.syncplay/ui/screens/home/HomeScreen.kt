@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -47,6 +48,7 @@ import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -102,8 +104,6 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
 
     val scope = rememberCoroutineScope { Dispatchers.IO }
 
-    /* Using a Scaffold manages our top-level layout */
-
     val didYaKnowPopup = remember { mutableStateOf(false) }
     DidYaKnowPopup(didYaKnowPopup)
 
@@ -130,6 +130,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                 Column(
                     modifier = Modifier.fillMaxSize()
                         .windowInsetsPadding(BottomAppBarDefaults.windowInsets)
+                        .imePadding() //Prevents textfields from getting hidden by software keyboard
                         .verticalScroll(rememberScrollState())
                         .clickable(
                             interactionSource = null,
@@ -400,12 +401,13 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
 fun HomeLeadingTitle(string: String) {
     FlexibleText(
         text = string,
-        size = 17f,
+        size = 18f,
         textAlign = TextAlign.Center,
         fillingColors = listOf(MaterialTheme.colorScheme.primary),
         font = sairaFont,
         strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-        shadowColors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) },
-        shadowSize = 12f
+        shadowColors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.5f) },
+        shadowSize = 6f,
+        fontWeight = FontWeight.W700
     )
 }

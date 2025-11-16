@@ -257,23 +257,8 @@ fun RoomOverflowItem(
     onClick: () -> Unit
 ) {
     DropdownMenuItem(
-        text = {
-            Row(verticalAlignment = CenterVertically) {
-                Icon(
-                    modifier = Modifier.padding(2.dp),
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = Color.LightGray
-                )
-
-                Spacer(Modifier.width(8.dp))
-
-                Text(
-                    color = Color.LightGray,
-                    text = text,
-                )
-            }
-        },
+        leadingIcon = { Icon(imageVector = icon, contentDescription = null) },
+        text = { Text(text = text) },
         onClick = onClick
     )
 }

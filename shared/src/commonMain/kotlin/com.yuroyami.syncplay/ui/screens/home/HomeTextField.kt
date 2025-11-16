@@ -16,13 +16,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -70,14 +68,10 @@ fun HomeTextField(
         cursorBrush = Brush.verticalGradient(colors = SP_GRADIENT),
         keyboardOptions = KeyboardOptions(keyboardType = type ?: KeyboardType.Text)
     ) {
-        val density = LocalDensity.current
-        val onePx = remember(density) {
-            with(density) { 1.toDp() }
-        }
         TextInput(
             modifier = Modifier.height(56.dp)
                 .border(
-                    width = onePx,
+                    width = Dp.Hairline,
                     brush = Brush.linearGradient(colors = SP_GRADIENT),
                     shape = RoundedCornerShape(cornerRadiusAnimated)
                 ),

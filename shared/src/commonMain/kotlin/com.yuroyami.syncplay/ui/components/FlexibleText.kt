@@ -17,6 +17,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
@@ -52,6 +53,7 @@ fun FlexibleAnnotatedText(
     text: AnnotatedString,
     size: Float,
     font: Font? = null,
+    fontWeight: FontWeight = FontWeight.W400,
     textAlign: TextAlign = TextAlign.Start,
     fillingColors: List<Color> = listOf(MaterialTheme.colorScheme.primary),
     strokeColors: List<Color> = listOf(),
@@ -81,7 +83,8 @@ fun FlexibleAnnotatedText(
                     fontSize = size.sp,
                 ),
                 lineHeight = lineHeight.sp,
-                overflow = overflow
+                overflow = overflow,
+                fontWeight = fontWeight
             )
         }
 
@@ -111,11 +114,12 @@ fun FlexibleAnnotatedText(
                         ),
                         textAlign = textAlign,
                         fontFamily = font?.let { FontFamily(it) } ?: FontFamily.Default,
-                        fontSize = size.sp,
+                        fontSize = size.sp
                     )
                 },
                 lineHeight = lineHeight.sp,
-                overflow = overflow
+                overflow = overflow,
+                fontWeight = fontWeight
             )
         }
 
@@ -139,7 +143,8 @@ fun FlexibleAnnotatedText(
                     )
                 },
                 lineHeight = lineHeight.sp,
-                overflow = overflow
+                overflow = overflow,
+                fontWeight = fontWeight
             )
         }
     }
@@ -171,6 +176,7 @@ fun FlexibleText(
     size: Float,
     font: Font? = null,
     textAlign: TextAlign = TextAlign.Start,
+    fontWeight: FontWeight = FontWeight.W400,
     fillingColors: List<Color> = listOf(MaterialTheme.colorScheme.primary),
     strokeColors: List<Color> = listOf(),
     strokeWidth: Float = 2f,
@@ -186,6 +192,7 @@ fun FlexibleText(
         size = size,
         font = font,
         textAlign = textAlign,
+        fontWeight = fontWeight,
         fillingColors = fillingColors,
         strokeColors = strokeColors,
         strokeWidth = strokeWidth,

@@ -20,9 +20,11 @@ import androidx.navigation3.ui.NavDisplay
 import com.yuroyami.syncplay.managers.settings.SettingStyling
 import com.yuroyami.syncplay.models.MessagePalette
 import com.yuroyami.syncplay.ui.components.messagePalette
+import com.yuroyami.syncplay.ui.screens.Screen
 import com.yuroyami.syncplay.ui.screens.home.HomeScreenUI
 import com.yuroyami.syncplay.ui.screens.room.RoomScreenUI
 import com.yuroyami.syncplay.ui.screens.room.tabs.CardController
+import com.yuroyami.syncplay.ui.theme.ThemeCreatorScreenUI
 import com.yuroyami.syncplay.viewmodels.HomeViewmodel
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import com.yuroyami.syncplay.viewmodels.SyncplayViewmodel
@@ -33,7 +35,7 @@ val LocalGlobalViewmodel = compositionLocalOf<SyncplayViewmodel> { error("No Vie
 /** Provides access to the current [RoomViewmodel] within the room screen scope. */
 val LocalRoomViewmodel = compositionLocalOf<RoomViewmodel> { error("No Viewmodel provided yet") }
 
-/** Provides access to the currently active [Screen] in the navigation back stack. */
+/** Provides access to the currently active [com.yuroyami.syncplay.ui.screens.Screen] in the navigation back stack. */
 val LocalScreen = compositionLocalOf<Screen?> { error("No Screen provided") }
 
 /** Provides access to the current [SettingStyling] configuration for the app. */
@@ -66,8 +68,7 @@ fun AdamScreen() {
         factory = viewModelFactory { initializer { SyncplayViewmodel() } }
     )
 
-    // Navigation back stack (temporary until built-in support is integrated)
-    val backstack = remember { mutableStateListOf<Screen>(Screen.Home) }
+    val backstack = remember { viewmodel.backstack }
 
     val currentScreen by remember { derivedStateOf { backstack.lastOrNull() } }
     val currentTheme by viewmodel.themeManager.currentTheme.collectAsState()
@@ -92,7 +93,7 @@ fun AdamScreen() {
                         val viewmodel = viewModel(
                             key = "home_viewmodel",
                             modelClass = HomeViewmodel::class,
-                            factory = viewModelFactory { initializer { HomeViewmodel(backStack = backstack) } }
+                            factory = viewModelFactory { initializer { HomeViewmodel(backStack = viewmodel.backstack) } }
                         )
 
                         HomeScreenUI(viewmodel)
@@ -103,7 +104,7 @@ fun AdamScreen() {
                             key = "room_viewmodel",
                             modelClass = RoomViewmodel::class,
                             factory = viewModelFactory {
-                                initializer { RoomViewmodel(joinConfig = room.joinConfig, backStack = backstack) }
+                                initializer { RoomViewmodel(joinConfig = room.joinConfig, backStack = viewmodel.backstack) }
                             }
                         )
 
@@ -112,6 +113,10 @@ fun AdamScreen() {
                         ) {
                             RoomScreenUI(viewmodel)
                         }
+                    }
+
+                    entry<Screen.ThemeCreator> { themeCreator ->
+                        ThemeCreatorScreenUI()
                     }
                 }
             )
