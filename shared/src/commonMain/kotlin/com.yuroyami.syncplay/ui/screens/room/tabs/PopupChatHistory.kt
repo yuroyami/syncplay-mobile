@@ -87,6 +87,8 @@ fun ChatHistoryPopup() {
             val lazyListState: LazyListState = rememberLazyListState()
             val scrollAreaState = rememberScrollAreaState(lazyListState)
 
+            //TODO Fix inaccurate scrollbar by giving ScrollArea an absolute height based on screenheight
+
             ScrollArea(
                 state = scrollAreaState,
                 modifier = Modifier.weight(1f)
@@ -118,26 +120,6 @@ fun ChatHistoryPopup() {
                     )
                 }
             }
-
-//            val lazyListState: LazyListState = rememberLazyListState()
-//            LazyColumn(
-//                state = lazyListState,
-//                contentPadding = PaddingValues(8.dp),
-//                modifier = Modifier.weight(1f).background(Color(50, 50, 50, 50)).drawVerticalScrollbar(lazyListState).clipToBounds()
-//            ) {
-//                items(msgs) { msg ->
-//                    //TODO DONT REPEAT 5 TIMES
-//                    repeat(5) {
-//                        FlexibleAnnotatedText(
-//                            modifier = Modifier.fillMaxWidth(),
-//                            text = msg.factorize(palette),
-//                            size = 10f,
-//                            font = helveticaFont,
-//                            overflow = TextOverflow.Ellipsis
-//                        )
-//                    }
-//                }
-//            }
 
             LaunchedEffect(null) {
                 scope.launch {

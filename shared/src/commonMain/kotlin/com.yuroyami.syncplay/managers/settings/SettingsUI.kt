@@ -281,6 +281,5 @@ object SettingsUI {
                 )
             }
         }
-
     }
 }

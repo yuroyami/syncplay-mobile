@@ -1,8 +1,7 @@
 package com.yuroyami.syncplay.managers.settings
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -10,8 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Settings
@@ -21,12 +18,14 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.SliderDefaults.colors
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,11 +40,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.composeunstyled.Slider
-import com.composeunstyled.Thumb
-import com.composeunstyled.rememberSliderState
 import com.yuroyami.syncplay.managers.datastore.valueAsState
 import com.yuroyami.syncplay.managers.datastore.writeValue
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
@@ -461,30 +458,34 @@ sealed class Setting<T>(
                     )
                 },
                 supportingElement = {
-                    val sliderState = rememberSliderState(
-                        initialValue = value.toFloat(),
-                        valueRange = (minValue.toFloat())..(maxValue.toFloat())
-                    )
-
-                    LaunchedEffect(sliderState.value) {
-                        if (sliderState.value == value.toFloat()) return@LaunchedEffect
-
-                        onValueChanged?.invoke(sliderState.value.roundToInt())
-                        scope.launch {
-                            writeValue(key, sliderState.value.roundToInt())
-                        }
-                    }
                     Slider(
-                        state = sliderState,
-                        track = {
-                            Box(
-                                modifier = Modifier.fillMaxWidth().padding(12.dp)
-                                    .height(4.dp)
-                                    .background(Color.Gray, shape = RoundedCornerShape(50))
+                        value = value.toFloat(),
+                        enabled = enabled,
+                        valueRange = (minValue.toFloat())..(maxValue.toFloat()),
+                        onValueChange = { f ->
+                            if (f != value.toFloat()) {
+                                onValueChanged?.invoke(f.roundToInt())
+                            }
+
+                            scope.launch {
+                                writeValue(key, f.roundToInt())
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                        thumb = { state ->
+                            SliderDefaults.Thumb(
+                                interactionSource = remember { MutableInteractionSource() },
+                                sliderState = state,
+                                modifier = Modifier,
+                                colors = colors(),
+                                thumbSize = DpSize(width = 8.dp, height = 24.dp)
                             )
                         },
-                        thumb = {
-                            Thumb(color = MaterialTheme.colorScheme.primary, shape = CircleShape)
+                        track = { state ->
+                            SliderDefaults.Track(
+                                sliderState = state,
+                                thumbTrackGapSize = 1.dp
+                            )
                         }
                     )
                 }
