@@ -99,11 +99,10 @@ fun RoomStatusInfoSection(modifier: Modifier) {
 
 
                 AnimatedVisibility(pingo == null && viewmodel.session.userList.value.isNotEmpty()) {
-
                     Text(
                         text = "Try changing network engine in Settings > Network to Ktor if you're experiencing connection issues.",
                         color = Color.White,
-                        modifier = Modifier.fillMaxWidth(0.7f),
+                        modifier = Modifier.fillMaxWidth(0.95f),
                         textAlign = TextAlign.Center,
                         fontSize = 12.sp
                     )

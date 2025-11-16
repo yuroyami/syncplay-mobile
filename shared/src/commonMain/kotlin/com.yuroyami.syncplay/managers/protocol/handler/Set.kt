@@ -36,6 +36,9 @@ data class Set(
                 set.newControlledRoom != null -> handleNewControlledRoom(set.newControlledRoom)
                 set.controllerAuth != null -> callback.onHandleControllerAuth(set.controllerAuth)
             }
+
+            //Make sure our local data stays up-to-date no matter what
+            sender.sendAsync<PacketOut.EmptyList>()
         }
     }
 
