@@ -2,20 +2,13 @@ package com.yuroyami.syncplay.ui.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import com.yuroyami.syncplay.ui.screens.adam.LocalTheme
 
 object Theming {
 
     val useSyncplayGradient: Boolean
-        @Composable get() {
-            val theme = LocalTheme.current
-            val use by remember(theme) { derivedStateOf { theme.syncplayGradients } }
-            return use
-        }
+        @Composable get() = LocalTheme.current.syncplayGradients
 
     val flexibleGradient: List<Color>
         @Composable get() {

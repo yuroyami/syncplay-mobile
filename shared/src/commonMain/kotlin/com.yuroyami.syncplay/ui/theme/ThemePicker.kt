@@ -84,12 +84,13 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
             val allCustomThemes by viewmodel.themeManager.customThemes.collectAsStateWithLifecycle()
 
             val primary = MaterialTheme.colorScheme.primary
+            val srfc0 = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)
             val srfc = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
 
             var themeToEditOrDelete by remember { mutableStateOf<SaveableTheme?>(null) }
 
             Column(
-                modifier = Modifier.background(color = Color.Black.copy(alpha = 0.85f)),
+                modifier = Modifier.background(color = srfc0),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {

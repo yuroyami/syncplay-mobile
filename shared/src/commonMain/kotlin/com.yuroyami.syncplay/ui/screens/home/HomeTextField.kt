@@ -15,7 +15,6 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
@@ -31,7 +30,6 @@ import com.composeunstyled.TextInput
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.components.gradientOverlay
 import com.yuroyami.syncplay.ui.screens.adam.LocalTheme
-import com.yuroyami.syncplay.ui.theme.Theming.SP_GRADIENT
 import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
 import com.composeunstyled.Icon as UnstyledIcon
 import com.composeunstyled.Text as UnstyledText
@@ -50,7 +48,6 @@ fun HomeTextField(
     height: Dp = 56.dp
 ) {
     val theme = LocalTheme.current
-    val useSPGrad by derivedStateOf { theme.syncplayGradients }
 
     val focusManager = LocalFocusManager.current
 
@@ -72,7 +69,7 @@ fun HomeTextField(
                 focusManager.moveFocus(focusDirection = FocusDirection.Next)
             }
         ),
-        cursorBrush = Brush.verticalGradient(colors = SP_GRADIENT),
+        cursorBrush = Brush.verticalGradient(colors = flexibleGradient),
         keyboardOptions = KeyboardOptions(keyboardType = type ?: KeyboardType.Text)
     ) {
         TextInput(
