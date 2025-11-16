@@ -42,6 +42,6 @@ data class SaveableTheme(
     }
 
     companion object {
-        fun String.fromString(): SaveableTheme = Json.decodeFromString(this)
+        fun String.toTheme(): SaveableTheme = Json.decodeFromString(this)
     }
 }

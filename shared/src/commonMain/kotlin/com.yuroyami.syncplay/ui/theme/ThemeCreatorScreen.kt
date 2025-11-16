@@ -38,7 +38,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.managers.ThemeManager.Companion.BLANK_THEME
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.jostFont
 import com.yuroyami.syncplay.ui.components.lexendFont
@@ -47,15 +46,14 @@ import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
 import com.yuroyami.syncplay.ui.screens.home.HomeLeadingTitle
 import com.yuroyami.syncplay.ui.screens.home.HomeTextField
 import com.yuroyami.syncplay.ui.screens.room.tabs.RoomTab
+import com.yuroyami.syncplay.ui.theme.SaveableTheme.Companion.toTheme
 
 
 @Composable
 fun ThemeCreatorScreenUI() {
     val globalViewmodel = LocalGlobalViewmodel.current
 
-    var currentTheme by remember { mutableStateOf(BLANK_THEME) }
-
-    var themeName by remember { mutableStateOf("") }
+    var currentTheme by remember { mutableStateOf<SaveableTheme>(globalViewmodel.themeManager.currentTheme.value.toTheme()) }
 
     Scaffold(
         topBar = {
@@ -126,9 +124,13 @@ fun ThemeCreatorScreenUI() {
 
                 HomeTextField(
                     modifier = Modifier.width(200.dp),
-                    label = "ThemeName",
-                    value = themeName,
-                    onValueChange = { themeName = it }
+                    label = "Theme Name",
+                    value = currentTheme.name,
+                    onValueChange = {
+                        currentTheme = currentTheme.copy(
+                            name = it
+                        )
+                    }
                 )
             }
 
