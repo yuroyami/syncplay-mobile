@@ -29,7 +29,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -45,6 +44,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yuroyami.syncplay.managers.ThemeManager
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.gradientOverlay
@@ -70,9 +70,11 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
         ) {
             val viewmodel = LocalGlobalViewmodel.current
             val currentTheme = LocalTheme.current
+            val allCustomThemes by viewmodel.themeManager.customThemes.collectAsStateWithLifecycle()
 
             val primary = MaterialTheme.colorScheme.primary
             val srfc = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+
             Column(
                 modifier = Modifier.background(color = Color.Black.copy(alpha = 0.85f)),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -167,8 +169,8 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
                                 )
                             }
 
-                            items(availableThemes.size) { index ->
-                                val theme = availableThemes[index]
+                            items(allCustomThemes.size) { index ->
+                                val theme = allCustomThemes[index]
                                 ThemeEntry(theme, isSelected = currentTheme == theme)
                             }
                         }

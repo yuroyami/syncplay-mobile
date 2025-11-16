@@ -19,6 +19,8 @@ import com.yuroyami.syncplay.ui.theme.Theming
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.SharingStarted.Companion.Eagerly
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -38,6 +40,10 @@ class ThemeManager(val viewmodel: ViewModel) : AbstractManager(viewmodel) {
      */
     val currentTheme = valueFlow(MISC_CURRENT_THEME, ALLEY_LAMP.asString())
         .stateIn(scope = viewmodel.viewModelScope, started = Eagerly, ALLEY_LAMP.asString())
+
+    val customThemes: StateFlow<List<SaveableTheme>> = valueFlow(MISC_ALL_THEMES, "[]")
+        .map { Json.decodeFromString<List<SaveableTheme>>(it) }
+        .stateIn(scope = viewmodel.viewModelScope, started = Eagerly, listOf())
 
     fun changeTheme(theme: SaveableTheme) {
         viewmodel.viewModelScope.launch(Dispatchers.IO) {
