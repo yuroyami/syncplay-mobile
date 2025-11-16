@@ -54,10 +54,10 @@ class SyncplayActivity : ComponentActivity() {
     lateinit var globalViewmodel: SyncplayViewmodel
 
     val homeViewmodel: HomeViewmodel?
-        get() = globalViewmodel.homeWeakRef?.get()
+        get() = if (::globalViewmodel.isInitialized) globalViewmodel.homeWeakRef?.get() else null
 
     val roomViewmodel: RoomViewmodel?
-        get() = globalViewmodel.roomWeakRef?.get()
+        get() = if (::globalViewmodel.isInitialized) globalViewmodel.roomWeakRef?.get() else null
 
     /**
      * Called when the activity is first created.

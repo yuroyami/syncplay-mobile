@@ -31,6 +31,8 @@
             android:configChanges="orientation|keyboardHidden|screenLayout|screenSize|smallestScreenSize"
             android:exported="true"
             android:imeOptions="flagNoExtractUi"
+            android:supportsPictureInPicture="true"
+            android:resizeableActivity="true"
             android:launchMode="singleTask"
             android:windowSoftInputMode="adjustNothing">
             <intent-filter>
