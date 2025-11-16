@@ -2,7 +2,6 @@ package com.yuroyami.syncplay.ui.theme
 
 import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
-import com.materialkolor.Contrast
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamicColorScheme
 import com.materialkolor.dynamiccolor.ColorSpec
@@ -17,7 +16,7 @@ data class SaveableTheme(
     val tertiaryColor: Int? = null,
     val neutralColor: Int? = null,
     val neutralVariantColor: Int? = null,
-    val contrast: Contrast = Contrast.Default,
+    val contrast: Double = 0.0,
     val isDark: Boolean = false,
     val isAMOLED: Boolean = false,
     val style: PaletteStyle = PaletteStyle.TonalSpot,
@@ -30,7 +29,7 @@ data class SaveableTheme(
             primary = Color(primaryColor),
             secondary = secondaryColor?.let { Color(it) },
             tertiary = tertiaryColor?.let { Color(it) },
-            contrastLevel = contrast.value,
+            contrastLevel = contrast,
             specVersion = ColorSpec.SpecVersion.SPEC_2021,
             error = Color.Red,
             neutral = neutralColor?.let { Color(it) },

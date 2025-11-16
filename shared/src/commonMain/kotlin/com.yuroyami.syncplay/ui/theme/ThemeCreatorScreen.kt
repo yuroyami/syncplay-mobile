@@ -1,6 +1,7 @@
 package com.yuroyami.syncplay.ui.theme
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,14 +15,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MotionPhotosOff
 import androidx.compose.material.icons.filled.WebStories
+import androidx.compose.material.icons.outlined.Lan
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,7 +58,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
+import com.composeunstyled.Slider
+import com.composeunstyled.rememberSliderState
 import com.kborowy.colorpicker.KolorPicker
+import com.materialkolor.PaletteStyle
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.jostFont
 import com.yuroyami.syncplay.ui.components.lexendFont
@@ -135,7 +145,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
                 ) {
                     FlexibleText(
                         text = "Theme name", //TODO Localize
@@ -158,7 +168,8 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                             newTheme = newTheme.copy(
                                 name = it
                             )
-                        }
+                        },
+                        height = 48.dp
                     )
                 }
 
@@ -374,12 +385,59 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                     )
                 }
 
-
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
+                    FlexibleText(
+                        text = "Contrast", //TODO Localize
+                        size = 14f,
+                        textAlign = TextAlign.Center,
+                        fillingColors = listOf(MaterialTheme.colorScheme.primary),
+                        font = lexendFont,
+                        strokeColors = listOf(MaterialTheme.colorScheme.scrim),
+                        shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
+                        shadowSize = 3f
+                    )
+
+                    HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
+
+                    val sliderState = rememberSliderState(initialValue = 0.0f, valueRange = (-1.0f..1.0f))
+
+                    LaunchedEffect(sliderState.value) {
+                        newTheme = newTheme.copy(
+                            contrast = sliderState.value.toDouble()
+                        )
+                    }
+
+                    Slider(
+                        state = sliderState,
+                        track = {
+                            Box(
+                                modifier = Modifier
+                                    .width(150.dp)
+                                    .height(4.dp)
+                                    .background(Color.Gray)
+                            )
+                        },
+                        thumb = {
+                            Box(
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .background(MaterialTheme.colorScheme.primary, CircleShape)
+                            )
+                        }
+                    )
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
+                ) {
+                    val paletteSelector = remember { mutableStateOf(false) }
+
                     FlexibleText(
                         text = "Palette Style", //TODO Localize
                         size = 14f,
@@ -393,10 +451,43 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
 
                     HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
 
-                    Checkbox(
-                        checked = true,
-                        onCheckedChange = {}
-                    )
+                    ExposedDropdownMenuBox(
+                        expanded = paletteSelector.value,
+                        onExpandedChange = {
+                            paletteSelector.value = !paletteSelector.value
+                        }
+                    ) {
+                        HomeTextField(
+                            modifier = Modifier.fillMaxWidth(0.75f)
+                                .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                            icon = Icons.Outlined.Lan,
+                            value = newTheme.style.name,
+                            dropdownState = paletteSelector,
+                            onValueChange = {},
+                            height = 48.dp
+                        )
+
+                        ExposedDropdownMenu(
+                            modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
+                            expanded = paletteSelector.value,
+                            onDismissRequest = {
+                                paletteSelector.value = false
+                            }
+                        ) {
+                            PaletteStyle.entries.forEach { paletteStyle ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(paletteStyle.name, color = Color.White)
+                                    },
+                                    onClick = {
+                                        paletteSelector.value = false
+
+                                        newTheme = newTheme.copy(style = paletteStyle)
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
 
 
@@ -407,7 +498,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceEvenly,
-                    modifier = Modifier.fillMaxWidth().padding(8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(8.dp).background(MaterialTheme.colorScheme.inverseSurface),
                 ) {
                     HomeLeadingTitle(
                         string = "Preview"
@@ -461,7 +552,7 @@ fun ThemeSingleColorPicker(initialColor: Color? = null, onColorChange: (Color) -
             color = initialColor ?: Color.Transparent,
             modifier = Modifier.height(42.dp).width(96.dp).padding(2.dp),
             shape = RoundedCornerShape(6.dp),
-            border = if (initialColor == null) BorderStroke(width = Dp.Hairline, Color.Gray) else null,
+            border = BorderStroke(width = Dp.Hairline, Color.Gray),
             onClick = {
                 pickerVisible = !pickerVisible
             }
@@ -486,8 +577,12 @@ fun ThemeSingleColorPicker(initialColor: Color? = null, onColorChange: (Color) -
             /* The card that holds the color picker */
             KolorPicker(
                 modifier = Modifier.width(200.dp).height(165.dp).padding(6.dp),
-                initialColor = initialColor ?: Color.Black,
-                onColorSelected = onColorChange
+                initialColor = initialColor ?: Color(22, 22, 22),
+                onColorSelected = { color ->
+                    if (color != Color(22, 22, 22)) {
+                        onColorChange(color)
+                    }
+                }
             )
         }
     }

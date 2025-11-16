@@ -2,7 +2,6 @@ package com.yuroyami.syncplay.ui.theme
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import com.materialkolor.Contrast
 import com.materialkolor.PaletteStyle
 
 val BLANK_THEME = SaveableTheme(
@@ -42,7 +41,7 @@ val GrayOLED = SaveableTheme(
     tertiaryColor = Color.Black.toArgb(),
     neutralColor = Color.Black.toArgb(),
     neutralVariantColor = Color.Black.toArgb(),
-    contrast = Contrast.Default,
+    contrast = 0.0,
     isDark = true,
     isAMOLED = true,
     style = PaletteStyle.Neutral

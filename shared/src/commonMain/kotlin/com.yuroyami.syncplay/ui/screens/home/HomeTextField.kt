@@ -46,7 +46,8 @@ fun HomeTextField(
     dropdownState: MutableState<Boolean>? = null,
     onValueChange: (String) -> Unit,
     type: KeyboardType? = null,
-    cornerRadius: Dp = 35.dp
+    cornerRadius: Dp = 35.dp,
+    height: Dp = 56.dp
 ) {
     val theme = LocalTheme.current
     val useSPGrad by derivedStateOf { theme.syncplayGradients }
@@ -75,7 +76,7 @@ fun HomeTextField(
         keyboardOptions = KeyboardOptions(keyboardType = type ?: KeyboardType.Text)
     ) {
         TextInput(
-            modifier = Modifier.height(56.dp)
+            modifier = Modifier.height(height)
                 .border(
                     width = Dp.Hairline,
                     brush = Brush.linearGradient(colors = flexibleGradient),
