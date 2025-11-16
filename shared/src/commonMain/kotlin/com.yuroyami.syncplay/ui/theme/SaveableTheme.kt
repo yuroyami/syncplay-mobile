@@ -17,7 +17,7 @@ data class SaveableTheme(
     val neutralColor: Int? = null,
     val neutralVariantColor: Int? = null,
     val contrast: Double = 0.0,
-    val isDark: Boolean = false,
+    val isDark: Boolean = true,
     val isAMOLED: Boolean = false,
     val style: PaletteStyle = PaletteStyle.TonalSpot,
     val syncplayGradients: Boolean = true

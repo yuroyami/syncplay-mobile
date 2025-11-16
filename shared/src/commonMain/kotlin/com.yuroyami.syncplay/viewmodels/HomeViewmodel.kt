@@ -39,6 +39,7 @@ class HomeViewmodel(val backStack: SnapshotStateList<Screen>) : ViewModel() {
 
         withContext(Dispatchers.Main) {
             backStack.add(Screen.Room(joinConfig))
+
             platformCallback.onRoomEnterOrLeave(PlatformCallback.RoomEvent.ENTER)
         }
     }

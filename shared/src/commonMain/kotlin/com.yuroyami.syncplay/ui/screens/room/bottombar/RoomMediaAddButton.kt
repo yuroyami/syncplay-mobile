@@ -52,12 +52,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.SyncplayPopup
 import com.yuroyami.syncplay.ui.components.gradientOverlay
+import com.yuroyami.syncplay.ui.components.jostFont
 import com.yuroyami.syncplay.ui.components.syncplayFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
@@ -108,20 +108,10 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
         val scope = rememberCoroutineScope()
         DropdownMenu(
             containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-            tonalElevation = 0.dp,
-            shadowElevation = 0.dp,
-            border = BorderStroke(
-                width = 1.dp,
-                brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map {
-                    it.copy(alpha = 0.5f)
-                })
-            ),
+            tonalElevation = 0.dp, shadowElevation = 0.dp,
+            border = BorderStroke(width = Dp.Hairline, brush = Brush.linearGradient(colors = flexibleGradient)),
             shape = RoundedCornerShape(8.dp),
             expanded = showPopup,
-            properties = PopupProperties(
-                dismissOnBackPress = true,
-                dismissOnClickOutside = true
-            ),
             onDismissRequest = {
                 scope.launch {
                     delay(50)
@@ -134,9 +124,9 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
                     .padding(horizontal = 2.dp),
                 text = "Add media", //TODO Localize
                 strokeColors = listOf(Color.Black),
-                fillingColors = Theming.SP_GRADIENT,
+                fillingColors = flexibleGradient,
                 size = 14f,
-                font = syncplayFont
+                font = jostFont
             )
 
             //From storage

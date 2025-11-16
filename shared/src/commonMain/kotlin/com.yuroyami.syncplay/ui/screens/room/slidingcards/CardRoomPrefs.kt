@@ -30,12 +30,12 @@ import com.yuroyami.syncplay.managers.settings.SettingsUI
 import com.yuroyami.syncplay.managers.settings.SettingsUI.SettingsGrid
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.components.FlexibleText
+import com.yuroyami.syncplay.ui.components.jostFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.screens.home.SettingGridState
 import com.yuroyami.syncplay.ui.theme.Theming
-import org.jetbrains.compose.resources.Font
+import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
 import org.jetbrains.compose.resources.stringResource
-import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_card_title_in_room_prefs
 
@@ -66,9 +66,9 @@ object CardRoomPrefs {
                     FlexibleText(
                         modifier = Modifier.align(TopCenter).padding(6.dp),
                         text = stringResource(Res.string.room_card_title_in_room_prefs),
-                        fillingColors = Theming.SP_GRADIENT,
-                        size = 16f,
-                        font = Font(Res.font.Directive4_Regular)
+                        fillingColors = flexibleGradient,
+                        size = 17f,
+                        font = jostFont
                     )
 
                     if (settingState.value == SettingGridState.INSIDE_CATEGORY) {

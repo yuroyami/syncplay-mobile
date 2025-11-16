@@ -26,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.managers.player.PlayerEngine
 import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
@@ -41,7 +42,7 @@ fun HomeAnimatedEngineButtonGroup(
     Row(
         modifier = modifier
             .border(
-                width = 1.dp,
+                width = Dp.Hairline,
                 brush = Brush.linearGradient(colors = flexibleGradient),
                 shape = RoundedCornerShape(24.dp)
             ),

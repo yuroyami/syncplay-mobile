@@ -65,6 +65,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
@@ -74,9 +75,11 @@ import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.SyncplayPopup
 import com.yuroyami.syncplay.ui.components.gradientOverlay
 import com.yuroyami.syncplay.ui.components.helveticaFont
+import com.yuroyami.syncplay.ui.components.jostFont
 import com.yuroyami.syncplay.ui.popups.PopupMediaDirs.MediaDirsPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
+import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
 import com.yuroyami.syncplay.utils.addFolderToPlaylist
 import com.yuroyami.syncplay.utils.loadPlaylistLocally
 import com.yuroyami.syncplay.utils.playlistExs
@@ -160,7 +163,7 @@ object CardSharedPlaylist {
         /* Now to the actual content in the card */
         Card(
             shape = RoundedCornerShape(8.dp),
-            border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+            border = BorderStroke(width = Dp.Hairline, brush = Brush.linearGradient(colors = flexibleGradient)),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.5f)),
         ) {
             Column(modifier = Modifier.fillMaxSize(),
@@ -169,18 +172,15 @@ object CardSharedPlaylist {
             ) {
                 /* Card title */
                 FlexibleText(
-                    fillingColors = Theming.SP_GRADIENT,
                     text = "Shared Playlist", //TODO Localize
-                    size = 16f,
-                    font = Font(Res.font.Directive4_Regular)
+                    fillingColors = flexibleGradient,
+                    size = 17f,
+                    font = jostFont
                 )
 
                 /* The actual shared playlist */
                 LazyColumn(
-                    modifier = Modifier
-                        .fillMaxHeight(0.75f)
-                        .fillMaxWidth()
-                        .padding(8.dp)
+                    modifier = Modifier.fillMaxHeight(0.75f).fillMaxWidth().padding(8.dp)
                 ) {
                     itemsIndexed(viewmodel.session.sharedPlaylist) { index, item ->
 

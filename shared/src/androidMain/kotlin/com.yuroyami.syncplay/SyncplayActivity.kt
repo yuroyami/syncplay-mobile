@@ -187,9 +187,9 @@ class SyncplayActivity : ComponentActivity() {
                     }
 
                     PlatformCallback.RoomEvent.LEAVE -> {
-                        cutoutMode(false)
-                        showSystemUI()
                         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_USER
+                        showSystemUI()
+                        cutoutMode(false)
 
                         //Workaround to force Compose to retain its window insets
                         WindowCompat.setDecorFitsSystemWindows(window, true)

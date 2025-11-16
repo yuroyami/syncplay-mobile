@@ -42,7 +42,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
@@ -53,6 +52,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_PLAYER_ENGINE
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_NEVER_SHOW_TIPS
 import com.yuroyami.syncplay.managers.datastore.valueFlow
@@ -102,8 +102,6 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
             savedConfig = JoinConfig.savedConfig()
         }
     }
-
-    val scope = rememberCoroutineScope { Dispatchers.IO }
 
     val didYaKnowPopup = remember { mutableStateOf(false) }
     DidYaKnowPopup(didYaKnowPopup)
@@ -313,7 +311,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             engines = availablePlatformPlayerEngines,
                             selectedEngine = selectedEngine,
                             onSelectEngine = { engine ->
-                                scope.launch(Dispatchers.IO) {
+                                viewmodel.viewModelScope.launch(Dispatchers.IO) {
                                     if (engine.isAvailable) {
                                         writeValue(MISC_PLAYER_ENGINE, engine.name)
                                     } else {
@@ -332,7 +330,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                 contentPadding = PaddingValues(vertical = 16.dp),
                                 modifier = Modifier.fillMaxWidth(0.85f),
                                 onClick = {
-                                    scope.launch(Dispatchers.Default) {
+                                    viewmodel.viewModelScope.launch(Dispatchers.Default) {
                                         val errorMessage: StringResource? = when {
                                             textUsername.isBlank() -> Res.string.connect_username_empty_error
                                             textRoomname.isBlank() -> Res.string.connect_roomname_empty_error

@@ -7,7 +7,7 @@ import com.materialkolor.PaletteStyle
 val BLANK_THEME = SaveableTheme(
     name = "Untitled theme",
     primaryColor = Color.Blue.toArgb(),
-    isDark = false,
+    isDark = true,
     isAMOLED = false,
     secondaryColor = null,
     tertiaryColor = Color.Cyan.toArgb(),
@@ -44,7 +44,8 @@ val GrayOLED = SaveableTheme(
     contrast = 0.0,
     isDark = true,
     isAMOLED = true,
-    style = PaletteStyle.Neutral
+    style = PaletteStyle.Neutral,
+    syncplayGradients = false
 )
 
 /**
@@ -61,7 +62,8 @@ val ALLEY_LAMP = SaveableTheme(
     neutralColor = Color(35, 35, 35).toArgb(),
     neutralVariantColor = Color.Gray.toArgb(),
     isDark = true,
-    style = PaletteStyle.Neutral
+    style = PaletteStyle.Neutral,
+    syncplayGradients = false
 )
 
 /**

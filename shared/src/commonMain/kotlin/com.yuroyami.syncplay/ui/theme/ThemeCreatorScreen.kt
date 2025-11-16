@@ -318,29 +318,29 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                         )
                     }
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        FlexibleText(
-                            text = "is a Dark Theme", //TODO Localize
-                            size = 14f,
-                            textAlign = TextAlign.Center,
-                            fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                            font = lexendFont,
-                            strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-                            shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
-                            shadowSize = 3f
-                        )
-
-                        HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
-
-                        Checkbox(
-                            checked = newTheme.isDark,
-                            onCheckedChange = { newTheme = newTheme.copy(isDark = it) }
-                        )
-                    }
+//                    Row(
+//                        verticalAlignment = Alignment.CenterVertically,
+//                        horizontalArrangement = Arrangement.SpaceBetween,
+//                        modifier = Modifier.fillMaxWidth(),
+//                    ) {
+//                        FlexibleText(
+//                            text = "is a Dark Theme", //TODO Localize
+//                            size = 14f,
+//                            textAlign = TextAlign.Center,
+//                            fillingColors = listOf(MaterialTheme.colorScheme.primary),
+//                            font = lexendFont,
+//                            strokeColors = listOf(MaterialTheme.colorScheme.scrim),
+//                            shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
+//                            shadowSize = 3f
+//                        )
+//
+//                        HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
+//
+//                        Checkbox(
+//                            checked = newTheme.isDark,
+//                            onCheckedChange = { newTheme = newTheme.copy(isDark = it) }
+//                        )
+//                    }
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,

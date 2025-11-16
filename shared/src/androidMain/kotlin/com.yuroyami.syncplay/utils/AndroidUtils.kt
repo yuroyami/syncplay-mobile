@@ -112,11 +112,12 @@ fun ComponentActivity.bindWatchdog() {
  */
 fun Activity.cutoutMode(enable: Boolean) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-        if (enable) {
-            window.attributes?.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-
-        } else {
-            window.attributes?.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER
+        window.attributes = window.attributes.apply {
+            layoutInDisplayCutoutMode = if (enable) {
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            } else {
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER
+            }
         }
     }
 }

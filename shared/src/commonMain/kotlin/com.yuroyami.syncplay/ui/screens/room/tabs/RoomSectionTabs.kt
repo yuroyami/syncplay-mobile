@@ -38,14 +38,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.components.FlexibleText
-import com.yuroyami.syncplay.ui.components.syncplayFont
+import com.yuroyami.syncplay.ui.components.jostFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
-import com.yuroyami.syncplay.ui.theme.Theming
+import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
 import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -167,7 +168,7 @@ fun RoomTabSection(modifier: Modifier) {
 
             DropdownMenu(
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+                border = BorderStroke(width = Dp.Hairline, brush = Brush.linearGradient(colors = flexibleGradient)),
                 shape = RoundedCornerShape(8.dp),
                 expanded = overflowMenuState.value,
                 properties = PopupProperties(dismissOnBackPress = true, dismissOnClickOutside = true),
@@ -183,9 +184,9 @@ fun RoomTabSection(modifier: Modifier) {
                     modifier = Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 2.dp),
                     text = stringResource(Res.string.room_overflow_title),
                     strokeColors = listOf(Color.Black),
-                    fillingColors = Theming.SP_GRADIENT,
+                    fillingColors = flexibleGradient,
                     size = 14f,
-                    font = syncplayFont
+                    font = jostFont
                 )
 
                 /* Picture-in-Picture mode */
