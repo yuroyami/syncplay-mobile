@@ -24,6 +24,7 @@ import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
 import com.yuroyami.syncplay.ui.screens.room.bottombar.PopupSeekToPosition.SeekToPositionPopup
 import com.yuroyami.syncplay.ui.screens.room.bottombar.RoomBottomBarSection
+import com.yuroyami.syncplay.ui.screens.room.chat.FadingMessageLayout
 import com.yuroyami.syncplay.ui.screens.room.chat.RoomChatSection
 import com.yuroyami.syncplay.ui.screens.room.misc.RoomBackgroundArtwork
 import com.yuroyami.syncplay.ui.screens.room.misc.RoomGestureInterceptor
@@ -84,6 +85,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
             if (lockedMode) {
                 /* Simple unlock layout shown when screen is locked */
                 RoomUnlockableLayout()
+
             } else {
                 /* Gesture Interceptor for playback control */
                 RoomGestureInterceptor(modifier = Modifier.fillMaxSize())
@@ -150,7 +152,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
             }
 
             if (!soloMode) {
-                //FadingMessageLayout()
+                FadingMessageLayout()
             }
         }
 

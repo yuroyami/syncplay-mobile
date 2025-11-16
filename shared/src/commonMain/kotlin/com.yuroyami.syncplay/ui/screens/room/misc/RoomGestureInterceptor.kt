@@ -50,13 +50,11 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_GESTURES
 import com.yuroyami.syncplay.managers.datastore.valueFlow
-import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.components.screenHeightPx
 import com.yuroyami.syncplay.ui.components.screenWidthPx
+import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.utils.getSystemMaxVolume
 import com.yuroyami.syncplay.utils.platformCallback
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -69,7 +67,7 @@ var initialBrightness = 0f
 @Composable
 fun RoomGestureInterceptor(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
-    val scope = rememberCoroutineScope { Dispatchers.IO }
+    val scope = rememberCoroutineScope()
     val gesturesEnabled by valueFlow(MISC_GESTURES, true).collectAsState(initial = true)
     val hasVideo by viewmodel.hasVideo.collectAsState()
     val visibleHUD by viewmodel.uiManager.visibleHUD.collectAsState()
@@ -93,6 +91,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
         var fastForward by remember { mutableStateOf(false) }
         var fastRewind by remember { mutableStateOf(false) }
         if (gesturesEnabled) {
+            /** Seek back - visual-feedback left section */
             Box(
                 modifier = Modifier.align(Alignment.CenterStart).fillMaxHeight().fillMaxWidth(0.1f)
                     .clickable(
@@ -100,16 +99,16 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                         interactionSource = seekLeftInteraction,
                         indication = ripple(
                             bounded = false, color = Color(100, 100, 100, 190)
-                        )
-                    ) {})
-            {
+                        ),
+                        onClick = {}
+                    )
+            ) {
                 AnimatedVisibility(
                     visible = fastRewind,
                     enter = scaleIn() + fadeIn(),
                     exit = scaleOut() + fadeOut(),
                     modifier = Modifier.align(Alignment.Center)
                 ) {
-
                     Icon(
                         imageVector = Icons.Default.FastRewind,
                         contentDescription = "",
@@ -117,9 +116,9 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                         modifier = Modifier.align(Alignment.Center).size(64.dp)
                     )
                 }
-
             }
 
+            /** Seek forward - visual-feedback right section */
             Box(
                 modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(0.1f)
                     .clickable(
@@ -127,17 +126,16 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                         interactionSource = seekRightInteraction,
                         indication = ripple(
                             bounded = false, color = Color(100, 100, 100, 190)
-                        )
-                    ) {
-
-                    }) {
+                        ),
+                        onClick = {}
+                    )
+            ) {
                 AnimatedVisibility(
                     visible = fastForward,
                     enter = scaleIn() + fadeIn(),
                     exit = scaleOut() + fadeOut(),
                     modifier = Modifier.align(Alignment.Center)
                 ) {
-
                     Icon(
                         imageVector = Icons.Default.FastForward,
                         contentDescription = "",
@@ -146,13 +144,15 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                     )
                 }
             }
+        }
+        /** Actual gesture-detection logic box */
+        val haptic = LocalHapticFeedback.current
+        val softwareKB = LocalSoftwareKeyboardController.current
 
-            val haptic = LocalHapticFeedback.current
-            val softwareKB = LocalSoftwareKeyboardController.current
-
-            Box(modifier = Modifier.fillMaxSize().pointerInput(gesturesEnabled, hasVideo) {
+        Box(
+            content = {},
+            modifier = Modifier.fillMaxSize().pointerInput(gesturesEnabled, hasVideo) {
                 detectTapGestures(
-
                     onPress = { offset ->
                         if (gesturesEnabled && hasVideo && offset.x > w.times(0.65f)) {
                             val press = PressInteraction.Press(offset)
@@ -286,35 +286,34 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                     )
                 }
             }
+        )
 
-            ) {}
-            with(LocalDensity.current) {
-                if (currentBrightness != -1f) {
-                    Row(
-                        modifier = Modifier.offset(
-                            (vertdragOffset.x + 100).toDp(), vertdragOffset.y.toDp()
-                        ).clip(RoundedCornerShape(25)).background(Color.LightGray),
-                        verticalAlignment = CenterVertically
-                    ) {
-                        Icon(imageVector = Icons.Filled.Brightness6, "")
-                        //TODO: Delegate 'times(100).toInt()' to platform
-                        Text(
-                            "Brightness: ${currentBrightness.times(100).toInt()}%",
-                            color = Color.Black
-                        )
-                    }
+        with(LocalDensity.current) {
+            if (currentBrightness != -1f) {
+                Row(
+                    modifier = Modifier.offset(
+                        (vertdragOffset.x + 100).toDp(), vertdragOffset.y.toDp()
+                    ).clip(RoundedCornerShape(25)).background(Color.LightGray),
+                    verticalAlignment = CenterVertically
+                ) {
+                    Icon(imageVector = Icons.Filled.Brightness6, "")
+                    //TODO: Delegate 'times(100).toInt()' to platform
+                    Text(
+                        "Brightness: ${currentBrightness.times(100).toInt()}%",
+                        color = Color.Black
+                    )
                 }
+            }
 
-                if (currentVolume != -1) {
-                    Row(
-                        modifier = Modifier.offset(
-                            (vertdragOffset.x - 500).toDp(), vertdragOffset.y.toDp()
-                        ).clip(RoundedCornerShape(25)).background(Color.LightGray),
-                        verticalAlignment = CenterVertically
-                    ) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.VolumeUp, "")
-                        Text("Volume: $currentVolume/$volumeSteps", color = Color.Black)
-                    }
+            if (currentVolume != -1) {
+                Row(
+                    modifier = Modifier.offset(
+                        (vertdragOffset.x - 500).toDp(), vertdragOffset.y.toDp()
+                    ).clip(RoundedCornerShape(25)).background(Color.LightGray),
+                    verticalAlignment = CenterVertically
+                ) {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.VolumeUp, "")
+                    Text("Volume: $currentVolume/$volumeSteps", color = Color.Black)
                 }
             }
         }
