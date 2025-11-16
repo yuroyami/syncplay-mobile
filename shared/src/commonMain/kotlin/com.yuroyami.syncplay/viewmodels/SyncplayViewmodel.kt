@@ -1,8 +1,10 @@
 package com.yuroyami.syncplay.viewmodels
 
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.yuroyami.syncplay.managers.ThemeManager
+import com.yuroyami.syncplay.ui.screens.Screen
 
 /**
  * Application-level ViewModel for managing global Syncplay state.
@@ -11,6 +13,9 @@ import com.yuroyami.syncplay.managers.ThemeManager
  * user interaction state that persists across screen navigation.
  */
 class SyncplayViewmodel : ViewModel() {
+
+    /** The navigation backstack */
+    val backstack = mutableStateListOf<Screen>(Screen.Home)
 
     /**
      * Whether the shared playlist feature is enabled.

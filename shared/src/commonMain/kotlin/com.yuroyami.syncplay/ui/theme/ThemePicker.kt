@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
@@ -57,7 +58,7 @@ val themeCardSize = 64.dp
 
 @Composable
 fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
-    val globalViemwodel = LocalGlobalViewmodel.current
+    val globalViewmodel = LocalGlobalViewmodel.current
 
     if (visible) {
         BasicAlertDialog(
@@ -151,13 +152,14 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
 
                         LazyVerticalGrid(
                             columns = GridCells.Adaptive(minSize = themeCardSize + 8.dp),
-                            modifier = Modifier.fillMaxWidth().height(themeCardSize * 3).padding(4.dp),
+                            modifier = Modifier.fillMaxWidth().height(themeCardSize.times(3.5f)).padding(4.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalArrangement = Arrangement.SpaceBetween
+                            verticalArrangement = Arrangement.SpaceEvenly
                         ) {
                             item {
                                 AddCustomizedThemeButton(
                                     onClick = {
+                                        onDismiss()
                                         globalViewmodel.backstack.add(Screen.ThemeCreator)
                                     }
                                 )
@@ -206,7 +208,7 @@ fun ThemeEntry(theme: ThemeManager.Companion.Theme, isSelected: Boolean) {
                 modifier = Modifier.fillMaxWidth().size(themeCardSize)
                     .background(brush = Brush.linearGradient(
                         colors = listOf(
-                            theme.scheme.background, theme.scheme.primary,theme.scheme.primaryContainer
+                            theme.scheme.primary, theme.scheme.tertiaryContainer, theme.scheme.background
                         ))
                     ),
                 contentAlignment = Alignment.Center
@@ -236,7 +238,7 @@ fun AddCustomizedThemeButton(onClick: () -> Unit) {
         Card(
             modifier = Modifier.size(themeCardSize)
                 .border(
-                    width = 2.dp,
+                    width = Dp.Hairline,
                     color = MaterialTheme.colorScheme.primary,
                     shape = RoundedCornerShape(8.dp)
             )
