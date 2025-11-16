@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.ui.theme.Theming
+import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
 
 /**
  * Draws an adaptive gradient-tinted icon with optional shadow and click behavior.
@@ -56,7 +57,7 @@ fun FlexibleIcon(
     icon: ImageVector,
     size: Int = Theming.ROOM_ICON_SIZE,
     tintColors: List<Color> = listOf(MaterialTheme.colorScheme.primary),
-    shadowColors: List<Color> = Theming.SP_GRADIENT,
+    shadowColors: List<Color> = flexibleGradient,
     shadowOffset: Pair<Int, Int> = Pair(1, 1),
     alpha: Float = 0.95f,
     onClick: () -> Unit = {},

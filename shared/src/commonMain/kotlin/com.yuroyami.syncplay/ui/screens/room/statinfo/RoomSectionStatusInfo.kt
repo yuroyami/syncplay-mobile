@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,11 +55,11 @@ fun RoomStatusInfoSection(modifier: Modifier) {
 
                 Row(verticalAlignment = CenterVertically) {
                     Text(
-
                         text = if (pingo == null) stringResource(Res.string.room_ping_disconnected) else stringResource(
                             Res.string.room_ping_connected,
                             pingo.toString()
-                        ), color = Theming.OLD_SP_PINK
+                        ),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Spacer(Modifier.width(4.dp))
 
@@ -68,7 +69,7 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                 Text(
                     text = stringResource(Res.string.room_details_current_room, viewmodel.session.currentRoom),
                     fontSize = 11.sp,
-                    color = Theming.OLD_SP_PINK
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
                 )
 
                 var showReconnectButton by remember { mutableStateOf(false) }
@@ -102,7 +103,7 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                     Text(
                         text = "Try changing network engine in Settings > Network to Ktor if you're experiencing connection issues.",
                         color = Color.White,
-                        modifier = Modifier.fillMaxWidth(0.3f),
+                        modifier = Modifier.fillMaxWidth(0.7f),
                         textAlign = TextAlign.Center,
                         fontSize = 12.sp
                     )

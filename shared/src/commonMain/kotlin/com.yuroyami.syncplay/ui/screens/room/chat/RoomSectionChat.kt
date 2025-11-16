@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.outlined.GifBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -56,7 +57,7 @@ import com.yuroyami.syncplay.managers.datastore.valueAsState
 import com.yuroyami.syncplay.ui.components.FlexibleAnnotatedText
 import com.yuroyami.syncplay.ui.screens.adam.LocalChatPalette
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
-import com.yuroyami.syncplay.ui.theme.Theming
+import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
 import com.yuroyami.syncplay.utils.isEmoji
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import org.jetbrains.compose.resources.stringResource
@@ -87,7 +88,7 @@ fun ChatTextField(
     var msg by remember { mutableStateOf("") }
     val canSendWithKeyboardOK by PREF_INROOM_MSG_BOX_ACTION.valueAsState(true)
 
-    val gradientBrush = Brush.linearGradient(colors = Theming.SP_GRADIENT)
+    val gradientBrush = Brush.linearGradient(colors = flexibleGradient)
 
     fun send() {
         val msgToSend = msg.replace("\\", "").take(149)
@@ -102,9 +103,9 @@ fun ChatTextField(
         singleLine = true,
         keyboardActions = KeyboardActions(onDone = { if (canSendWithKeyboardOK) send() }),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Theming.SP_GRADIENT.first(),
-            unfocusedBorderColor = Theming.SP_GRADIENT[1],
-            cursorColor = Theming.SP_GRADIENT.last()
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.primary,
+            cursorColor = MaterialTheme.colorScheme.primary
         ),
         label = {
             Text(

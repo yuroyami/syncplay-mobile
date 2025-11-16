@@ -29,17 +29,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.gradientOverlay
+import com.yuroyami.syncplay.ui.components.jostFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
+import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
 import com.yuroyami.syncplay.utils.timeStamper
-import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_card_title_user_info
 import syncplaymobile.shared.generated.resources.room_details_file_properties
@@ -54,7 +55,7 @@ object CardUserInfo {
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(8.dp),
-            border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+            border = BorderStroke(width = Dp.Hairline, brush = Brush.linearGradient(colors = flexibleGradient)),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.5f)),
         ) {
             FlexibleText(
@@ -62,9 +63,9 @@ object CardUserInfo {
                     .align(Alignment.CenterHorizontally)
                     .padding(vertical = 4.dp),
                 text = stringResource(Res.string.room_card_title_user_info),
-                fillingColors = Theming.SP_GRADIENT,
-                size = 18f,
-                font = Font(Res.font.Directive4_Regular)
+                fillingColors = flexibleGradient,
+                size = 17f,
+                font = jostFont
             )
 
             val userlist by viewmodel.session.userList.collectAsState()
@@ -101,7 +102,7 @@ object CardUserInfo {
                             Icon(
                                 modifier = Modifier
                                     .size(Theming.USER_INFO_IC_SIZE.dp)
-                                    .gradientOverlay(),
+                                    .gradientOverlay(flexibleGradient),
                                 imageVector = Icons.Filled.Person,
                                 contentDescription = "",
                                 tint = MaterialTheme.colorScheme.primary
@@ -131,7 +132,7 @@ object CardUserInfo {
                         Icon(
                             modifier = Modifier
                                 .size(Theming.USER_INFO_IC_SIZE.dp)
-                                .gradientOverlay(),
+                                .gradientOverlay(flexibleGradient),
                             imageVector = Icons.Filled.SubdirectoryArrowRight,
                             contentDescription = "",
                             tint = Theming.OLD_SP_YELLOW
@@ -142,7 +143,7 @@ object CardUserInfo {
                             modifier = Modifier.fillMaxWidth(),
                             fontSize = Theming.USER_INFO_TXT_SIZE.sp,
                             lineHeight = (Theming.USER_INFO_TXT_SIZE + 4).sp,
-                            color = Theming.SP_CUTE_PINK,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
                             text = user.file?.fileName ?: stringResource(Res.string.room_details_nofileplayed),
                             fontWeight = FontWeight.W300
                         )

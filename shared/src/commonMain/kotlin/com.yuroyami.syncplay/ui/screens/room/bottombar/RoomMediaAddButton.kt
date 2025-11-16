@@ -49,6 +49,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
@@ -61,6 +62,7 @@ import com.yuroyami.syncplay.ui.components.syncplayFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.theme.Theming.ROOM_ICON_SIZE
+import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
 import com.yuroyami.syncplay.utils.getText
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.vidExs
@@ -198,7 +200,7 @@ fun AddVideoButton(modifier: Modifier, expanded: Boolean, onClick: () -> Unit) {
         Surface(
             modifier = modifier.width(150.dp).height(48.dp),
             shape = RoundedCornerShape(24.dp),
-            border = BorderStroke(1.dp, brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+            border = BorderStroke(Dp.Hairline, brush = Brush.linearGradient(colors = flexibleGradient)),
             onClick = onClick,
             contentColor = Color.DarkGray.copy(0.5f)
         ) {
@@ -206,11 +208,11 @@ fun AddVideoButton(modifier: Modifier, expanded: Boolean, onClick: () -> Unit) {
                 Row(modifier = Modifier.fillMaxSize(), verticalAlignment = CenterVertically, horizontalArrangement = Arrangement.SpaceAround) {
                     Icon(
                         tint = Color.DarkGray, imageVector = Icons.Filled.AddToQueue, contentDescription = "",
-                        modifier = Modifier.size(32.dp).gradientOverlay() //.align(Alignment.Center)
+                        modifier = Modifier.size(32.dp).gradientOverlay(flexibleGradient) //.align(Alignment.Center)
                     )
 
                     Text(
-                        modifier = Modifier.gradientOverlay(),
+                        modifier = Modifier.gradientOverlay(flexibleGradient),
                         text = stringResource(Res.string.room_button_desc_add), textAlign = TextAlign.Center, maxLines = 1,
                         fontSize = 14.sp, color = Color.DarkGray, fontWeight = FontWeight.Bold
                     )
