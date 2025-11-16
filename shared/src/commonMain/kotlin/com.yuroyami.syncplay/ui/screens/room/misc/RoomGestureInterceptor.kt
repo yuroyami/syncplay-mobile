@@ -70,7 +70,6 @@ fun RoomGestureInterceptor(modifier: Modifier) {
     val scope = rememberCoroutineScope()
     val gesturesEnabled by valueFlow(MISC_GESTURES, true).collectAsState(initial = true)
     val hasVideo by viewmodel.hasVideo.collectAsState()
-    val visibleHUD by viewmodel.uiManager.visibleHUD.collectAsState()
 
     val volumeSteps = getSystemMaxVolume()
 
@@ -166,7 +165,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                 seekRightInteraction.emit(press)
                                 while (isActive) {
                                     haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                    //TODO PlayerUtils.seekFrwrd()
+                                    viewmodel.actionManager.seekFrwrd()
                                     seekRightInteraction.emit(press)
                                     delay(200)
                                     seekRightInteraction.emit(PressInteraction.Release(press))
@@ -188,7 +187,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                 seekLeftInteraction.emit(press)
                                 while (isActive) {
                                     haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                    //TODO PlayerUtils.seekBckwd()
+                                    viewmodel.actionManager.seekBckwd()
                                     seekLeftInteraction.emit(press)
                                     delay(200)
                                     seekLeftInteraction.emit(PressInteraction.Release(press))
@@ -204,7 +203,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                     onDoubleTap = if (gesturesEnabled && hasVideo) { offset ->
                         scope.launch {
                             if (offset.x < w.times(0.35f)) {
-                                //TODO PlayerUtils.seekBckwd()
+                                viewmodel.actionManager.seekBckwd()
                                 haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
 
                                 val press = PressInteraction.Press(Offset.Zero)
@@ -213,7 +212,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                 seekLeftInteraction.emit(PressInteraction.Release(press))
                             }
                             if (offset.x > w.times(0.65f)) {
-                                //TODO PlayerUtils.seekFrwrd()
+                                viewmodel.actionManager.seekFrwrd()
                                 haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
 
                                 val press = PressInteraction.Press(Offset.Zero)
@@ -228,9 +227,6 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                         haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
 
                         if (!viewmodel.uiManager.visibleHUD.value) softwareKB?.hide()
-
-                        //TODO controlcardvisible = false
-                        //     addmediacardvisible = false
                     },
                 )
             }.pointerInput(gesturesEnabled, hasVideo) {
@@ -241,7 +237,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                     detectVerticalDragGestures(
                         onDragStart = {
                             initialBrightness = platformCallback.getCurrentBrightness()
-                            initialVolume = viewmodel.player?.getCurrentVolume() ?: return@detectVerticalDragGestures
+                            initialVolume = viewmodel.player.getCurrentVolume() ?: return@detectVerticalDragGestures
                             lastBrightness = initialBrightness
                             lastVolume = initialVolume
                         },
@@ -257,7 +253,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                             if (pntr.position.x >= w * 0.5f) {
                                 // Volume adjusting
                                 val height = h / 1.5f
-                                val maxVolume = viewmodel.player?.getMaxVolume() ?: return@detectVerticalDragGestures
+                                val maxVolume = viewmodel.player.getMaxVolume()
                                 var newVolume = (initialVolume + (-dragdistance * maxVolume / height)).roundToInt()
                                 if (newVolume > maxVolume) newVolume = maxVolume
                                 if (newVolume < 0) newVolume = 0
@@ -267,7 +263,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                     haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
                                     lastVolume = newVolume
                                 }
-                                viewmodel.player?.changeCurrentVolume(newVolume)
+                                viewmodel.player.changeCurrentVolume(newVolume)
                             } else {
                                 // Brightness adjusting in 5% increments
                                 val height = h / 1.5f
@@ -297,7 +293,9 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                     verticalAlignment = CenterVertically
                 ) {
                     Icon(imageVector = Icons.Filled.Brightness6, "")
+
                     //TODO: Delegate 'times(100).toInt()' to platform
+                    //TODO: Localize
                     Text(
                         "Brightness: ${currentBrightness.times(100).toInt()}%",
                         color = Color.Black
