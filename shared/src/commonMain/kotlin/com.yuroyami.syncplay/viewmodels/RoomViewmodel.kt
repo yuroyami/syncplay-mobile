@@ -205,9 +205,9 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
      */
     override fun onCleared() {
         loggy("²²²²²²²²²²²² Clearing viewmodel")
+        playerManager.invalidate()
         networkManager.invalidate()
         uiManager.invalidate()
-        playerManager.invalidate()
         protocolManager.invalidate()
         sessionManager.invalidate()
         osdManager.invalidate()

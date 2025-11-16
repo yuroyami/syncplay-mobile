@@ -79,7 +79,7 @@ fun RoomSectionSlidingCards(modifier: Modifier) {
             }
         }
 
-        val h = 50.dp
+        val h = 46.dp
 
         FreeAnimatedVisibility(
             enter = expandIn(),

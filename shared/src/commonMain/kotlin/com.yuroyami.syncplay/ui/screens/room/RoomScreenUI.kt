@@ -24,7 +24,6 @@ import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
 import com.yuroyami.syncplay.ui.screens.room.bottombar.PopupSeekToPosition.SeekToPositionPopup
 import com.yuroyami.syncplay.ui.screens.room.bottombar.RoomBottomBarSection
-import com.yuroyami.syncplay.ui.screens.room.chat.FadingMessageLayout
 import com.yuroyami.syncplay.ui.screens.room.chat.RoomChatSection
 import com.yuroyami.syncplay.ui.screens.room.misc.RoomBackgroundArtwork
 import com.yuroyami.syncplay.ui.screens.room.misc.RoomGestureInterceptor
@@ -95,7 +94,6 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                     enter = fadeIn(animationSpec = keyframes { durationMillis = 75 }),
                     exit = fadeOut(animationSpec = keyframes { durationMillis = 75 })
                 ) {
-                    // Wrap all HUD elements in a Box since AnimatedVisibility resets Box scope
                     Box(modifier = Modifier.fillMaxSize()) {
                         if (!isInPipMode && !soloMode) {
                             /* Chat Section (Top-Left): Input and messages */
@@ -152,7 +150,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
             }
 
             if (!soloMode) {
-                FadingMessageLayout()
+                //FadingMessageLayout()
             }
         }
 

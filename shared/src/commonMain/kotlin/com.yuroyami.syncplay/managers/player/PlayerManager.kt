@@ -6,11 +6,14 @@ import com.yuroyami.syncplay.AbstractManager
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.TrackChoices
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 /**
  * Manages the media player instance and playback state for the Syncplay room.
@@ -85,8 +88,12 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
      * Called when leaving the room or clearing the player.
      * Does not destroy the player instance itself.
      */
-    @OptIn(ExperimentalCoroutinesApi::class)
+    @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
     override fun invalidate() {
+        GlobalScope.launch {
+            //Has to run in GlobalScope because room viewmodelscope is cancelled at this point of invalidation
+            player.destroy()
+        }
         media.value = null
         isNowPlaying.value = false
         timeFullMillis.value = 0L

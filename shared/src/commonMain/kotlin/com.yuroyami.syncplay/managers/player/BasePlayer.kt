@@ -245,8 +245,6 @@ abstract class BasePlayer(
      * @param isUrl Whether the URI is a remote URL (true) or local file (false)
      */
     suspend fun injectVideo(uri: String? = null, isUrl: Boolean = false) {
-        if (!isInitialized) return
-
         withContext(Dispatchers.Main) {
             /* Creating a media file from the selected file */
             val newMediaFile = MediaFile()

@@ -68,7 +68,7 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     override suspend fun destroy() {
         if (!isInitialized) return
 
-        withContext(Dispatchers.Main.immediate) {
+        withContext(Dispatchers.Main) {
             mpvView.destroy()
         }
     }
