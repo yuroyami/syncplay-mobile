@@ -197,7 +197,7 @@ fun ThemeCreatorScreenUI() {
                         initialColor = newTheme.secondaryColor?.let { Color(it) },
                         onColorChange = { color ->
                             newTheme = newTheme.copy(
-                                primaryColor = color.toArgb()
+                                secondaryColor = color.toArgb()
                             )
                         }
                     )
@@ -237,6 +237,62 @@ fun ThemeCreatorScreenUI() {
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     FlexibleText(
+                        text = "Neutral color", //TODO Localize
+                        size = 14f,
+                        textAlign = TextAlign.Center,
+                        fillingColors = listOf(MaterialTheme.colorScheme.primary),
+                        font = lexendFont,
+                        strokeColors = listOf(MaterialTheme.colorScheme.scrim),
+                        shadowColors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) },
+                        shadowSize = 3f
+                    )
+
+                    HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
+
+                    ThemeSingleColorPicker(
+                        initialColor = newTheme.neutralColor?.let { Color(it) },
+                        onColorChange = { color ->
+                            newTheme = newTheme.copy(
+                                neutralColor = color.toArgb()
+                            )
+                        }
+                    )
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    FlexibleText(
+                        text = "Neutral Variant color", //TODO Localize
+                        size = 14f,
+                        textAlign = TextAlign.Center,
+                        fillingColors = listOf(MaterialTheme.colorScheme.primary),
+                        font = lexendFont,
+                        strokeColors = listOf(MaterialTheme.colorScheme.scrim),
+                        shadowColors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) },
+                        shadowSize = 3f
+                    )
+
+                    HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
+
+                    ThemeSingleColorPicker(
+                        initialColor = newTheme.neutralVariantColor?.let { Color(it) },
+                        onColorChange = { color ->
+                            newTheme = newTheme.copy(
+                                neutralVariantColor = color.toArgb()
+                            )
+                        }
+                    )
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    FlexibleText(
                         text = "is a Dark Theme", //TODO Localize
                         size = 14f,
                         textAlign = TextAlign.Center,
@@ -250,8 +306,8 @@ fun ThemeCreatorScreenUI() {
                     HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
 
                     Checkbox(
-                        checked = true,
-                        onCheckedChange = {}
+                        checked = newTheme.isDark,
+                        onCheckedChange = { newTheme = newTheme.copy(isDark = it) }
                     )
                 }
 
@@ -274,8 +330,8 @@ fun ThemeCreatorScreenUI() {
                     HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
 
                     Checkbox(
-                        checked = true,
-                        onCheckedChange = {}
+                        checked = newTheme.isAMOLED,
+                        onCheckedChange = {  newTheme = newTheme.copy(isAMOLED = it)  }
                     )
                 }
 
@@ -298,8 +354,8 @@ fun ThemeCreatorScreenUI() {
                     HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
 
                     Checkbox(
-                        checked = true,
-                        onCheckedChange = {}
+                        checked = newTheme.syncplayGradients,
+                        onCheckedChange = {  newTheme = newTheme.copy(syncplayGradients = it)  }
                     )
                 }
 
@@ -385,37 +441,39 @@ fun ThemeCreatorScreenUI() {
 fun ThemeSingleColorPicker(initialColor: Color? = null, onColorChange: (Color) -> Unit)  {
     var pickerVisible by remember { mutableStateOf(false) }
 
-    Surface(
-        color = initialColor ?: Color.Transparent,
-        modifier = Modifier.height(42.dp).width(96.dp).padding(2.dp),
-        shape = RoundedCornerShape(6.dp),
-        border = if (initialColor == null) BorderStroke(width = Dp.Hairline, Color.Gray) else null,
-        onClick = {
-            pickerVisible = !pickerVisible
-        }
-    ) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            if (initialColor == null) {
-                Icon(Icons.Filled.MotionPhotosOff, null, tint = Color.Gray)
+    Box {
+        Surface(
+            color = initialColor ?: Color.Transparent,
+            modifier = Modifier.height(42.dp).width(96.dp).padding(2.dp),
+            shape = RoundedCornerShape(6.dp),
+            border = if (initialColor == null) BorderStroke(width = Dp.Hairline, Color.Gray) else null,
+            onClick = {
+                pickerVisible = !pickerVisible
+            }
+        ) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                if (initialColor == null) {
+                    Icon(Icons.Filled.MotionPhotosOff, null, tint = Color.Gray)
+                }
             }
         }
-    }
 
-    DropdownMenu(
-        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-        border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
-        shape = RoundedCornerShape(8.dp),
-        expanded = pickerVisible,
-        properties = PopupProperties(dismissOnBackPress = true, dismissOnClickOutside = true),
-        onDismissRequest = {
-            pickerVisible = false
+        DropdownMenu(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+            shape = RoundedCornerShape(8.dp),
+            expanded = pickerVisible,
+            properties = PopupProperties(dismissOnBackPress = true, dismissOnClickOutside = true),
+            onDismissRequest = {
+                pickerVisible = false
+            }
+        ) {
+            /* The card that holds the color picker */
+            KolorPicker(
+                modifier = Modifier.width(200.dp).height(165.dp).padding(6.dp),
+                initialColor = initialColor ?: Color.Black,
+                onColorSelected = onColorChange
+            )
         }
-    ) {
-        /* The card that holds the color picker */
-        KolorPicker(
-            modifier = Modifier.fillMaxWidth(0.8f).weight(3f).padding(6.dp),
-            initialColor = initialColor ?: Color.Black,
-            onColorSelected = onColorChange
-        )
     }
 }
