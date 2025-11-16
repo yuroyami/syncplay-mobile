@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import com.eygraber.uri.Uri
+import com.yuroyami.syncplay.managers.SharedPlaylistManager
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
 import com.yuroyami.syncplay.managers.datastore.valueBlockingly
 import com.yuroyami.syncplay.managers.datastore.valueFlow
@@ -66,7 +67,6 @@ import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.SyncplayPopup
 import com.yuroyami.syncplay.ui.components.jostFont
 import com.yuroyami.syncplay.ui.components.sairaFont
-import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
 import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLauncher
@@ -92,7 +92,6 @@ object PopupMediaDirs {
     @Composable
     fun MediaDirsPopup(visibilityState: MutableState<Boolean>) {
         val scope = rememberCoroutineScope { Dispatchers.IO }
-        val viewmodel = LocalRoomViewmodel.current
         var cleardialog by remember { mutableStateOf(false) }
 
         SyncplayPopup(
@@ -108,7 +107,7 @@ object PopupMediaDirs {
                 if (directoryUri == null) return@rememberDirectoryPickerLauncher
 
                 scope.launch {
-                    viewmodel.playlistManager.saveFolderPathAsMediaDirectory(directoryUri.path)
+                    SharedPlaylistManager.saveFolderPathAsMediaDirectory(directoryUri.path)
                 }
             }
             Column(

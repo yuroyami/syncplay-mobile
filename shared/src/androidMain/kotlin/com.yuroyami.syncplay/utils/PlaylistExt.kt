@@ -4,6 +4,7 @@ import android.provider.DocumentsContract
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.yuroyami.syncplay.managers.SharedPlaylistManager
+import com.yuroyami.syncplay.managers.SharedPlaylistManager.Companion.saveFolderPathAsMediaDirectory
 import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 
 actual suspend fun SharedPlaylistManager.addFolderToPlaylist(uri: String) {

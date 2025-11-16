@@ -251,7 +251,11 @@ object SettingsUI {
 
                 /** Creating dividers between (and only between) each setting and another */
                 if (index != settingList.lastIndex) {
-                    HorizontalDivider(Modifier.padding(horizontal = 32.dp))
+                    HorizontalDivider(
+                        thickness = Dp.Hairline,
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                        color = MaterialTheme.colorScheme.inverseSurface
+                    )
                 }
             }
         }

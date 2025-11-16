@@ -1,26 +1,19 @@
 package com.yuroyami.syncplay.managers.settings
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.QuestionMark
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -36,16 +29,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.managers.datastore.valueAsState
@@ -53,9 +45,12 @@ import com.yuroyami.syncplay.managers.datastore.writeValue
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.MultiChoiceDialog
+import com.yuroyami.syncplay.ui.components.lexendFont
+import com.yuroyami.syncplay.ui.components.sairaFont
 import com.yuroyami.syncplay.ui.popups.PopupColorPicker.ColorPickingPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalSettingStyling
 import com.yuroyami.syncplay.ui.theme.Theming
+import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -112,6 +107,62 @@ sealed class Setting<T>(
     @Composable
     abstract fun SettingComposable(modifier: Modifier)
 
+    @Composable
+    fun BaseSettingComposable(
+        icon: ImageVector?,
+        title: String,
+        summary: String,
+        trailingElement: @Composable (() -> Unit)? = null,
+        supportingElement: @Composable (() -> Unit)? = null,
+        onClick: (() -> Unit)? = null
+    ) {
+        val styling = LocalSettingStyling.current
+
+        Column(
+            modifier = Modifier.fillMaxWidth().clickable(
+                interactionSource = null,
+                indication = ripple(bounded = true, color = Theming.SP_ORANGE),
+                onClick = { onClick?.let { it() } }
+            ).padding(styling.paddingUsed.dp),
+            horizontalAlignment = Alignment.Start
+        ) {
+            Row(
+                verticalAlignment = CenterVertically
+            ) {
+                FlexibleIcon(
+                    modifier = Modifier.align(Alignment.Top),
+                    tintColors = listOf(MaterialTheme.colorScheme.primary),
+                    shadowColors = flexibleGradient.map { it.copy(alpha = 0.25f) },
+                    icon = icon ?: Icons.Filled.Settings, size = styling.iconSize
+                )
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                ) {
+                    FlexibleText(
+                        text = title,
+                        fillingColors = listOf(MaterialTheme.colorScheme.primary),
+                        strokeColors = listOf(MaterialTheme.colorScheme.outline),
+                        size = styling.titleSize,
+                        font = sairaFont
+                    )
+
+                    Text(
+                        modifier = Modifier,
+                        text = summary,
+                        color = MaterialTheme.colorScheme.outline,
+                        fontSize = styling.summarySize.sp,
+                        lineHeight = (styling.summarySize+2).sp
+                    )
+                }
+
+                trailingElement?.invoke()
+            }
+
+            supportingElement?.invoke()
+        }
+    }
+
     /**
      * Hidden setting with no UI representation.
      *
@@ -121,12 +172,13 @@ sealed class Setting<T>(
      * @property key DataStore key for this setting
      * @property defaultValue The default value to use
      */
-    class HeadlessSetting(key: String, defaultValue: Any): Setting<Any>(
+    class HeadlessSetting(key: String, defaultValue: Any) : Setting<Any>(
         type = SettingType.HeadlessSettingType, key = key, summary = Res.string.okay, title = Res.string.okay, defaultValue = defaultValue,
         icon = null, enabled = true
     ) {
         @Composable
-        override fun SettingComposable(modifier: Modifier) {}
+        override fun SettingComposable(modifier: Modifier) {
+        }
     }
 
     /**
@@ -147,44 +199,11 @@ sealed class Setting<T>(
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val styling = LocalSettingStyling.current
-
-            ListItem(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = true, color = Theming.SP_ORANGE)
-                    ) {
-                        onClick?.let { it() }
-                    },
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-
-                headlineContent = {
-                    Row(verticalAlignment = CenterVertically) {
-                        FlexibleIcon(
-                            tintColors = styling.iconTints,
-                            icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
-                        )
-                        FlexibleText(
-                            text = stringResource(title),
-                            fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                            strokeColors = styling.titleStroke ?: listOf(),
-                            shadowColors = styling.titleShadow ?: Theming.SP_GRADIENT,
-                            size = styling.titleSize,
-                            font = styling.titleFont
-                        )
-                    }
-                },
-                supportingContent = {
-                    Text(
-                        text = stringResource(summary),
-                        style = TextStyle(
-                            color = styling.summaryColor,
-                            fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
-                        )
-                    )
-                }
+            BaseSettingComposable(
+                title = stringResource(title),
+                summary = stringResource(summary),
+                icon = icon,
+                onClick = onClick
             )
         }
     }
@@ -213,7 +232,6 @@ sealed class Setting<T>(
         @Composable
         override fun SettingComposable(modifier: Modifier) {
             val scope = rememberCoroutineScope { Dispatchers.IO }
-            val styling = LocalSettingStyling.current
 
             var dialog by remember { mutableStateOf(false) }
             if (dialog) {
@@ -234,42 +252,13 @@ sealed class Setting<T>(
                     text = { Text(stringResource(rationale)) }
                 )
             }
-            ListItem(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = true, color = Theming.SP_ORANGE)
-                    ) {
-                        dialog = true
-                    },
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                headlineContent = {
-                    Row(
-                        verticalAlignment = CenterVertically
-                    ){
-                        FlexibleIcon(
-                            tintColors = styling.iconTints,
-                            icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
-                        )
-                        FlexibleText(
-                            text = stringResource(title),
-                            fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                            strokeColors = styling.titleStroke ?: listOf(),
-                            shadowColors = styling.titleShadow ?: Theming.SP_GRADIENT,
-                            size = styling.titleSize,
-                            font = styling.titleFont
-                        )
-                    }
-                },
-                supportingContent = {
-                    Text(
-                        text = stringResource(summary),
-                        style = TextStyle(
-                            color = styling.summaryColor,
-                            fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
-                        )
-                    )
+
+            BaseSettingComposable(
+                title = stringResource(title),
+                summary = stringResource(summary),
+                icon = icon,
+                onClick = {
+                    dialog = true
                 }
             )
         }
@@ -293,51 +282,16 @@ sealed class Setting<T>(
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val styling = LocalSettingStyling.current
             val popupVisibility = remember { mutableStateOf(false) }
 
-            ListItem(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = true, color = Theming.SP_ORANGE)
-
-                    ) {
-                        popupVisibility.value = true
-                    },
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-
-                headlineContent = {
-                    Row(
-                        verticalAlignment = CenterVertically
-                    ){
-                        FlexibleIcon(
-                            tintColors = styling.iconTints,
-                            shadowColors = styling.iconShadows,
-                            icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
-                        )
-                        FlexibleText(
-                            text = stringResource(title),
-                            fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                            strokeColors = styling.titleStroke ?: listOf(),
-                            shadowColors = styling.titleShadow ?: Theming.SP_GRADIENT,
-                            size = styling.titleSize,
-                            font = styling.titleFont
-                        )
-                    }
-                },
-                supportingContent = {
-                    Text(
-                        text = stringResource(summary),
-                        style = TextStyle(
-                            color = styling.summaryColor,
-                            fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
-                        )
-                    )
+            BaseSettingComposable(
+                title = stringResource(title),
+                summary = stringResource(summary),
+                icon = icon,
+                onClick = {
+                    popupVisibility.value = true
                 }
             )
-
 
             popupComposable?.invoke(popupVisibility)
         }
@@ -362,25 +316,18 @@ sealed class Setting<T>(
         @Composable
         override fun SettingComposable(modifier: Modifier) {
             val boolean by key.valueAsState(defaultValue)
-
-            val styling = LocalSettingStyling.current
             val scope = rememberCoroutineScope { Dispatchers.IO }
 
-            ListItem(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = true, color = Theming.SP_ORANGE)
-
-                    ) {
-                        scope.launch {
-                            writeValue(key, !boolean)
-                        }
-                    },
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-
-                trailingContent = {
+            BaseSettingComposable(
+                title = stringResource(title),
+                summary = stringResource(summary),
+                icon = icon,
+                onClick = {
+                    scope.launch {
+                        writeValue(key, !boolean)
+                    }
+                },
+                trailingElement = {
                     if (type == SettingType.CheckboxSettingType) {
                         Checkbox(
                             checked = boolean,
@@ -404,32 +351,6 @@ sealed class Setting<T>(
                             }
                         )
                     }
-                },
-                headlineContent = {
-                    Row(verticalAlignment = CenterVertically) {
-                        FlexibleIcon(
-                            tintColors = styling.iconTints,
-                            shadowColors = styling.iconShadows,
-                            icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
-                        )
-                        FlexibleText(
-                            text = stringResource(title),
-                            fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                            strokeColors = styling.titleStroke ?: listOf(),
-                            shadowColors = styling.titleShadow ?: Theming.SP_GRADIENT,
-                            size = styling.titleSize,
-                            font = styling.titleFont
-                        )
-                    }
-                },
-                supportingContent = {
-                    Text(
-                        text = stringResource(summary),
-                        style = TextStyle(
-                            color = styling.summaryColor,
-                            fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
-                        )
-                    )
                 }
             )
         }
@@ -481,45 +402,15 @@ sealed class Setting<T>(
                     })
             }
 
-            ListItem(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = true, color = Theming.SP_ORANGE)
-
-                    ) {
-                        dialogOpen.value = true
-                    },
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                headlineContent = {
-                    Row(verticalAlignment = CenterVertically) {
-                        FlexibleIcon(
-                            tintColors = styling.iconTints,
-                            shadowColors = styling.iconShadows,
-                            icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
-                        )
-                        FlexibleText(
-                            text = stringResource(title),
-                            fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                            strokeColors = styling.titleStroke ?: listOf(),
-                            shadowColors = styling.titleShadow ?: Theming.SP_GRADIENT,
-                            size = styling.titleSize,
-                            font = styling.titleFont
-                        )
-                    }
+            BaseSettingComposable(
+                title = stringResource(title),
+                summary = stringResource(summary),
+                icon = icon,
+                onClick = {
+                    dialogOpen.value = true
                 },
-                trailingContent = {
+                trailingElement = {
                     Icon(imageVector = Icons.AutoMirrored.Filled.List, "")
-                },
-                supportingContent = {
-                    Text(
-                        text = stringResource(summary),
-                        style = TextStyle(
-                            color = styling.summaryColor,
-                            fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
-                        )
-                    )
                 }
             )
         }
@@ -548,54 +439,23 @@ sealed class Setting<T>(
         @Composable
         override fun SettingComposable(modifier: Modifier) {
             val value by key.valueAsState(defaultValue)
-
             val styling = LocalSettingStyling.current
             val scope = rememberCoroutineScope { Dispatchers.IO }
 
-            ListItem(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = true, color = Theming.SP_ORANGE)
-
-                    ) {},
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                headlineContent = {
-                    Row(verticalAlignment = CenterVertically) {
-                        FlexibleIcon(
-                            tintColors = styling.iconTints,
-                            shadowColors = styling.iconShadows,
-                            icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
-                        )
-
-                        FlexibleText(
-                            text = stringResource(title),
-                            fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                            strokeColors = styling.titleStroke ?: listOf(),
-                            shadowColors = styling.titleShadow ?: Theming.SP_GRADIENT,
-                            size = styling.titleSize,
-                            font = styling.titleFont
-                        )
-                        Spacer(Modifier.weight(1f))
-                        Text(
-                            text = (value).toString(),
-                            style = TextStyle(
-                                color = MaterialTheme.colorScheme.primary,
-                                fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default,
-                                fontSize = (13).sp
-                            )
-                        )
-                    }
+            BaseSettingComposable(
+                title = stringResource(title),
+                summary = stringResource(summary),
+                icon = icon,
+                trailingElement = {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.List, "")
                 },
-                supportingContent = {
+                supportingElement = {
                     Column {
                         Text(
                             text = stringResource(summary),
-                            style = TextStyle(
-                                color = styling.summaryColor,
-                                fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
-                            )
+                            color = MaterialTheme.colorScheme.outline,
+                            fontFamily = FontFamily(lexendFont),
+                            fontSize = styling.summarySize.sp
                         )
 
                         Slider(
@@ -615,9 +475,8 @@ sealed class Setting<T>(
                                 .padding(horizontal = 12.dp)
                         )
                     }
-                },
-
-                )
+                }
+            )
         }
     }
 
@@ -643,50 +502,16 @@ sealed class Setting<T>(
             val colorDialogState = remember { mutableStateOf(false) }
             val scope = rememberCoroutineScope { Dispatchers.IO }
 
-            ListItem(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = true, color = Theming.SP_ORANGE)
-
-                    ) {
-                        colorDialogState.value = true
-                    },
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                headlineContent = {
-                    Row(verticalAlignment = CenterVertically) {
-                        FlexibleIcon(
-                            tintColors = styling.iconTints,
-                            shadowColors = styling.iconShadows,
-                            icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt()
-                        )
-                        FlexibleText(
-                            text = stringResource(title),
-                            fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                            strokeColors = styling.titleStroke ?: listOf(),
-                            shadowColors = styling.titleShadow ?: Theming.SP_GRADIENT,
-                            size = styling.titleSize,
-                            font = styling.titleFont
-                        )
-                        Spacer(Modifier.weight(1f))
-                        Button(
-                            onClick = { colorDialogState.value = true },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(color)),
-                            modifier = Modifier.size(24.dp)
-                        ) {}
-                    }
+            BaseSettingComposable(
+                title = stringResource(title),
+                summary = stringResource(summary),
+                icon = icon,
+                onClick = {
+                    colorDialogState.value = true
                 },
+                trailingElement = {
 
-                supportingContent = {
-                    Text(
-                        text = stringResource(summary),
-                        style = TextStyle(
-                            color = styling.summaryColor,
-                            fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
-                        )
-                    )
-                }
+                },
             )
 
             ColorPickingPopup(colorDialogState, initialColor = Color(color), onColorChanged = { color ->
@@ -718,46 +543,27 @@ sealed class Setting<T>(
             val scope = rememberCoroutineScope()
             val focusManager = LocalFocusManager.current
 
-            ListItem(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = true, color = Theming.SP_ORANGE)
-
-                    ) {
-                        scope.launch {
-                            writeValue(key, string)
-                        }
-                    },
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-
-                headlineContent = {
-                    Row(verticalAlignment = CenterVertically) {
-                        FlexibleIcon(
-                            tintColors = styling.iconTints,
-                            shadowColors = styling.iconShadows,
-                            icon = icon ?: Icons.Filled.QuestionMark, size = styling.iconSize.toInt(),
-                        )
-                        FlexibleText(
-                            text = stringResource(title),
-                            fillingColors = styling.titleFilling ?: listOf(MaterialTheme.colorScheme.primary),
-                            strokeColors = styling.titleStroke ?: listOf(),
-                            shadowColors = styling.titleShadow ?: Theming.SP_GRADIENT,
-                            size = styling.titleSize,
-                            font = styling.titleFont
-                        )
+            BaseSettingComposable(
+                title = stringResource(title),
+                summary = stringResource(summary),
+                icon = icon,
+                onClick = {
+                    scope.launch {
+                        writeValue(key, string)
                     }
                 },
-                supportingContent = {
+                trailingElement = {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.List, "")
+                },
+                supportingElement = {
                     Column {
                         Text(
                             text = stringResource(summary),
-                            style = TextStyle(
-                                color = styling.summaryColor,
-                                fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default, fontSize = styling.summarySize.sp,
-                            )
+                            color = MaterialTheme.colorScheme.outline,
+                            fontFamily = FontFamily(lexendFont),
+                            fontSize = styling.summarySize.sp
                         )
+
                         TextField(
 
                             shape = RoundedCornerShape(16.dp),
@@ -780,12 +586,12 @@ sealed class Setting<T>(
                                     writeValue(key, it)
                                 }
                             },
-                            textStyle = TextStyle(
+                            /*textStyle = TextStyle(
                                 color = MaterialTheme.colorScheme.onPrimary,
                                 fontFamily = styling.summaryFont?.let { FontFamily(it) } ?: FontFamily.Default,
                                 fontSize = 12.sp,
                                 textAlign = TextAlign.Center
-                            ),
+                            ),*/
                             label = {}
                         )
                     }

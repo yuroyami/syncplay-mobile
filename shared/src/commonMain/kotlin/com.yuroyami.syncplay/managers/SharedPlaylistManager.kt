@@ -128,13 +128,16 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
 
     /****************************************************************************/
 
-    /** Convenient method to add a folder path to the current set of media directories */
-    suspend fun saveFolderPathAsMediaDirectory(uri: String) {
-        val paths = valueBlockingly(DataStoreKeys.PREF_SP_MEDIA_DIRS, emptySet<String>()).toMutableSet()
+    companion object {
 
-        if (!paths.contains(uri)) paths.add(uri)
+        /** Convenient method to add a folder path to the current set of media directories */
+        suspend fun saveFolderPathAsMediaDirectory(uri: String) {
+            val paths = valueBlockingly(DataStoreKeys.PREF_SP_MEDIA_DIRS, emptySet<String>()).toMutableSet()
 
-        writeValue(DataStoreKeys.PREF_SP_MEDIA_DIRS, paths.toSet())
+            if (!paths.contains(uri)) paths.add(uri)
+
+            writeValue(DataStoreKeys.PREF_SP_MEDIA_DIRS, paths.toSet())
+        }
     }
 
     /**

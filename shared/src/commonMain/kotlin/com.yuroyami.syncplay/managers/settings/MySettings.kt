@@ -184,20 +184,12 @@ typealias ExtraSettingBundle = Pair<SettingCategory, SettingSet>
 
 /* Styles */
 val settingGLOBALstyle = SettingStyling(
-    titleFilling = listOf(Theming.OLD_SP_YELLOW),
-    titleShadow = Theming.SP_GRADIENT,
-    iconSize = 32f,
-    iconTints = listOf(Theming.OLD_SP_YELLOW),
-    iconShadows = Theming.SP_GRADIENT
+    iconSize = 30
 )
 
 val settingROOMstyle = SettingStyling(
-    titleFilling = listOf(Theming.OLD_SP_YELLOW),
-    titleShadow = Theming.SP_GRADIENT,
     titleSize = 11f,
-    summarySize = 8f,
-    iconTints = listOf(Theming.OLD_SP_YELLOW),
-    iconShadows = Theming.SP_GRADIENT
+    summarySize = 8f
 )
 
 val SETTINGS_GLOBAL: SettingCollection by lazy {
