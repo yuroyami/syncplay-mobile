@@ -33,9 +33,9 @@ import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.SyncplayPopup
-import com.yuroyami.syncplay.ui.components.syncplayFont
+import com.yuroyami.syncplay.ui.components.jostFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
-import com.yuroyami.syncplay.ui.theme.Theming
+import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
 import com.yuroyami.syncplay.utils.RandomStringGenerator
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
@@ -90,7 +90,14 @@ fun ManagedRoomPopup(purpose: ManagedRoomPopupPurpose) {
                 modifier = Modifier.padding(6.dp), text = when (purpose) {
                     ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM -> stringResource(Res.string.room_overflow_create_managed_room)
                     ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR -> stringResource(Res.string.room_overflow_identify_as_operator)
-                }, shadowColors = listOf(Color.Black), fillingColors = Theming.SP_GRADIENT, size = 18f, font = syncplayFont
+                }, shadowColors = listOf(Color.Black), fillingColors = flexibleGradient, size = 17f, font = jostFont
+            )
+
+            Text(
+                when (purpose) {
+                    ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM -> "Enter name of managed room\nsee https://syncplay.pl/guide/ for usage instructions):"
+                    ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR -> "Enter operator password for this room\nsee https://syncplay.pl/guide/ for usage instructions):"
+                }
             )
 
             TextField(
@@ -104,7 +111,7 @@ fun ManagedRoomPopup(purpose: ManagedRoomPopupPurpose) {
                     unfocusedIndicatorColor = Color.Transparent,
                     disabledIndicatorColor = Color.Transparent,
                 ), onValueChange = { inputValue = it }, textStyle = TextStyle(
-                    brush = Brush.linearGradient(colors = Theming.SP_GRADIENT),
+                    brush = Brush.linearGradient(colors = flexibleGradient),
                     fontSize = 16.sp,
                 )
             )

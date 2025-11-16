@@ -319,12 +319,12 @@ object CardSharedPlaylist {
                             onDismissRequest = { sharedplaylistOverflowState.value = !sharedplaylistOverflowState.value }) {
 
                             FlexibleText(
-                                fillingColors = Theming.SP_GRADIENT,
+                                fillingColors = flexibleGradient,
                                 strokeColors = listOf(Color.Black),
                                 modifier = Modifier.align(Alignment.CenterHorizontally),
-                                text = "Shared Playlist Actions",
+                                text = "Shared Playlist Actions", //TODO
                                 size = 13f,
-                                font = Font(Res.font.Directive4_Regular)
+                                font = jostFont
                             )
 
                             val txtsize = 10f
@@ -503,10 +503,7 @@ object CardSharedPlaylist {
                             )
                         }
                     }
-
-
                 }
-
             }
         }
 
@@ -519,6 +516,7 @@ object CardSharedPlaylist {
         return SyncplayPopup(
             dialogOpen = visibilityState.value,
             strokeWidth = 0.5f,
+            widthPercent = 0.8f,
             onDismiss = { visibilityState.value = false }
         ) {
             val playlist = LocalRoomViewmodel.current.playlistManager
@@ -533,8 +531,8 @@ object CardSharedPlaylist {
                 FlexibleText(
                     text = "Add URLs to Shared Playlist",
                     strokeColors = listOf(Color.Black),
-                    size = 18f,
-                    font = Font(Res.font.Directive4_Regular)
+                    size = 17f,
+                    font = jostFont
                 )
 
                 /* Title's subtext */
