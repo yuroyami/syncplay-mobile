@@ -148,3 +148,11 @@ expect fun ClipEntry.getText(): String?
  */
 @Composable
 expect fun HideSystemBars()
+
+/**
+ * Hides system UI bars (status bar and navigation bar) for immersive mode.
+ *
+ * Called from a Composable context. Platform behavior may vary.
+ */
+@Composable
+expect fun ShowSystemBars()

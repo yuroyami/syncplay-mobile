@@ -16,9 +16,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -44,6 +44,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.composables.core.ScrollArea
@@ -251,12 +253,19 @@ object SettingsUI {
     fun SettingScreen(modifier: Modifier = Modifier, settingList: SettingSet) {
         val vss = rememberScrollState()
         val scrollAreaState = rememberScrollAreaState(vss)
+        var columnHeight by remember { mutableStateOf(0.dp) }
+        val density = LocalDensity.current
 
         ScrollArea(
             state = scrollAreaState,
             modifier = modifier.fillMaxWidth()
         ) {
-            Column(modifier = modifier.fillMaxWidth().verticalScroll(vss)) {
+            Column(modifier = modifier.fillMaxWidth().verticalScroll(vss)
+                .onGloballyPositioned { coordinates ->
+                    with(density) {
+                        columnHeight = coordinates.size.height.toDp()
+                    }
+            }) {
                 settingList.forEach { setting ->
                     /** Creating the setting composable */
                     setting.SettingComposable(Modifier)
@@ -271,9 +280,7 @@ object SettingsUI {
             }
 
             VerticalScrollbar(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .fillMaxHeight().width(4.dp)
+                modifier = Modifier.align(Alignment.CenterEnd).width(4.dp).height(columnHeight)
             ) {
                 Thumb(
                     modifier = Modifier.background(Color.Gray),

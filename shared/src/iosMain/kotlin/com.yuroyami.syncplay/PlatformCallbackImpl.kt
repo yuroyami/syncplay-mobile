@@ -9,11 +9,7 @@ import platform.UIKit.UIApplicationOpenSettingsURLString
 import platform.UIKit.UIApplicationShortcutIcon.Companion.iconWithType
 import platform.UIKit.UIApplicationShortcutIconType
 import platform.UIKit.UIApplicationShortcutItem
-import platform.UIKit.UIInterfaceOrientationMaskAll
-import platform.UIKit.UIInterfaceOrientationMaskLandscape
 import platform.UIKit.UIScreen
-import platform.UIKit.UIWindowScene
-import platform.UIKit.UIWindowSceneGeometryPreferencesIOS
 import platform.UIKit.shortcutItems
 
 /**
@@ -106,36 +102,6 @@ object ApplePlatformCallback : PlatformCallback {
      */
     override fun changeCurrentBrightness(v: Float) {
         UIScreen.mainScreen.brightness = v.coerceIn(0.0f, MAX_BRIGHTNESS).toDouble()
-    }
-
-    /**
-     * Handles device orientation changes when entering or leaving a room.
-     *
-     * - **ENTER**: Locks orientation to landscape for optimal video viewing
-     * - **LEAVE**: Allows all orientations for normal app navigation
-     *
-     * Updates both the app's supported orientations mask and requests a geometry
-     * update from the window scene to apply the change immediately.
-     *
-     * @param event The room transition event (ENTER or LEAVE)
-     */
-    override fun onRoomEnterOrLeave(event: PlatformCallback.RoomEvent) {
-        //We change app orientation based on whether we're inside the room or not
-        val correspondingOrientation = when (event) {
-            PlatformCallback.RoomEvent.ENTER -> UIInterfaceOrientationMaskLandscape
-            PlatformCallback.RoomEvent.LEAVE -> UIInterfaceOrientationMaskAll
-        }
-
-        delegato.myOrientationMask = correspondingOrientation
-
-        UIApplication.sharedApplication.connectedScenes.firstOrNull()?.let {
-            (it as? UIWindowScene)?.apply {
-                requestGeometryUpdateWithPreferences(
-                    geometryPreferences = UIWindowSceneGeometryPreferencesIOS(interfaceOrientations = correspondingOrientation),
-                    errorHandler = null
-                )
-            }
-        }
     }
 
     /**

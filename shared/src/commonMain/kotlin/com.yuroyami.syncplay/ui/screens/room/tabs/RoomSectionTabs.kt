@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
+import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.jostFont
@@ -48,6 +49,7 @@ import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
 import com.yuroyami.syncplay.utils.platformCallback
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -243,7 +245,9 @@ fun RoomTabSection(modifier: Modifier) {
                     icon = Icons.AutoMirrored.Filled.Logout,
                     onClick = {
                         overflowMenuState.value = false
-                        viewmodel.leaveRoom()
+                        viewmodel.viewModelScope.launch(Dispatchers.Main) {
+                            viewmodel.leaveRoom()
+                        }
                     }
                 )
             }

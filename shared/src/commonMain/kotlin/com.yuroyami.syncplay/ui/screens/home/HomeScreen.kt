@@ -65,6 +65,7 @@ import com.yuroyami.syncplay.ui.popups.PopupDidYaKnow.DidYaKnowPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.ui.theme.Theming.useSyncplayGradient
+import com.yuroyami.syncplay.utils.ShowSystemBars
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.utils.substringSafely
@@ -94,6 +95,8 @@ val officialServers = listOf("syncplay.pl:8995", "syncplay.pl:8996", "syncplay.p
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreenUI(viewmodel: HomeViewmodel) {
+    ShowSystemBars()
+
     val servers = officialServers + stringResource(Res.string.connect_enter_custom_server)
     var savedConfig by remember { mutableStateOf<JoinConfig?>(null) }
 

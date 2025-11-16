@@ -9,7 +9,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kSerialization)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.touchlab.skie)
+    //alias(libs.plugins.touchlab.skie)
     alias(libs.plugins.buildConfig)
 }
 

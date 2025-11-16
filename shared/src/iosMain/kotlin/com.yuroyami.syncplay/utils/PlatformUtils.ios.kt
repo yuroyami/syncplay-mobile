@@ -1,11 +1,13 @@
 package com.yuroyami.syncplay.utils
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.ClipEntry
 import cocoapods.SPLPing.SPLPing
 import cocoapods.SPLPing.SPLPingConfiguration
-import com.yuroyami.syncplay.managers.network.NetworkManager
+import com.yuroyami.syncplay.delegato
 import com.yuroyami.syncplay.managers.network.KtorNetworkManager
+import com.yuroyami.syncplay.managers.network.NetworkManager
 import com.yuroyami.syncplay.managers.network.instantiateSwiftNioNetworkManager
 import com.yuroyami.syncplay.managers.player.ApplePlayerEngine
 import com.yuroyami.syncplay.managers.player.PlayerEngine
@@ -18,6 +20,11 @@ import platform.Foundation.NSFileSize
 import platform.Foundation.NSNumber
 import platform.Foundation.NSURL
 import platform.Foundation.timeIntervalSince1970
+import platform.UIKit.UIApplication
+import platform.UIKit.UIInterfaceOrientationMaskAll
+import platform.UIKit.UIInterfaceOrientationMaskLandscape
+import platform.UIKit.UIWindowScene
+import platform.UIKit.UIWindowSceneGeometryPreferencesIOS
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
@@ -78,6 +85,31 @@ actual fun ClipEntry.getText(): String? {
 
 @Composable
 actual fun HideSystemBars() {
-    //NoOp
+    LaunchedEffect(null) {
+        delegato.myOrientationMask = UIInterfaceOrientationMaskLandscape
+        UIApplication.sharedApplication.connectedScenes.firstOrNull()?.let {
+            (it as? UIWindowScene)?.apply {
+                requestGeometryUpdateWithPreferences(
+                    geometryPreferences = UIWindowSceneGeometryPreferencesIOS(interfaceOrientations = UIInterfaceOrientationMaskLandscape),
+                    errorHandler = null
+                )
+            }
+        }
+    }
+}
+
+@Composable
+actual fun ShowSystemBars() {
+    LaunchedEffect(null) {
+        delegato.myOrientationMask = UIInterfaceOrientationMaskAll
+        UIApplication.sharedApplication.connectedScenes.firstOrNull()?.let {
+            (it as? UIWindowScene)?.apply {
+                requestGeometryUpdateWithPreferences(
+                    geometryPreferences = UIWindowSceneGeometryPreferencesIOS(interfaceOrientations = UIInterfaceOrientationMaskAll),
+                    errorHandler = null
+                )
+            }
+        }
+    }
 }
 

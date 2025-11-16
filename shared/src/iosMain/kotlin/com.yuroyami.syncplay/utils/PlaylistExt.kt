@@ -2,6 +2,7 @@ package com.yuroyami.syncplay.utils
 
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.managers.SharedPlaylistManager
+import com.yuroyami.syncplay.managers.SharedPlaylistManager.Companion.saveFolderPathAsMediaDirectory
 import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi

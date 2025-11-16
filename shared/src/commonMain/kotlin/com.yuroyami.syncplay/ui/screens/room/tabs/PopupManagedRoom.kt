@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -95,9 +96,11 @@ fun ManagedRoomPopup(purpose: ManagedRoomPopupPurpose) {
 
             Text(
                 when (purpose) {
-                    ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM -> "Enter name of managed room\nsee https://syncplay.pl/guide/ for usage instructions):"
-                    ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR -> "Enter operator password for this room\nsee https://syncplay.pl/guide/ for usage instructions):"
-                }
+                    ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM -> "Enter name of managed room\nsee https://syncplay.pl/guide/ for usage instructions)"
+                    ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR -> "Enter operator password for this room\nsee https://syncplay.pl/guide/ for usage instructions)"
+                },
+                color = MaterialTheme.colorScheme.onSurface,
+                fontSize = 11.sp
             )
 
             TextField(

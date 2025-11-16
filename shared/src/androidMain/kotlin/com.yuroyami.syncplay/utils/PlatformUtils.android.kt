@@ -2,12 +2,16 @@ package com.yuroyami.syncplay.utils
 
 import android.content.ContentResolver
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.media.AudioManager
 import android.net.Uri
 import android.os.Build
 import android.provider.DocumentsContract
 import android.provider.OpenableColumns
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalContext
@@ -191,12 +195,42 @@ actual fun ClipEntry.getText(): String? {
 actual fun HideSystemBars() {
     val view = LocalView.current
 
-    //We use a side effect here because it is guaranteed to be executed after all the composition is concluded, which means right after a popup finishes appearing.
+    //We use a side effect here because it is guaranteed to be executed after every composition is concluded, which means right after a popup finishes appearing.
     SideEffect {
         if (Build.VERSION.SDK_INT >= 30) {
             view.windowInsetsController?.hide(
                 android.view.WindowInsets.Type.systemBars()
             )
         }
+    }
+
+    val activity = LocalActivity.current as? ComponentActivity
+
+    LaunchedEffect(null) {
+        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        activity?.hideSystemUI()
+    }
+}
+
+@Composable
+actual fun ShowSystemBars() {
+    val view = LocalView.current
+
+//    //We use a side effect here because it is guaranteed to be executed after every composition is concluded, which means right after a popup finishes appearing.
+    SideEffect {
+        if (Build.VERSION.SDK_INT >= 30) {
+            view.windowInsetsController?.show(
+                android.view.WindowInsets.Type.systemBars()
+            )
+        }
+    }
+
+    val activity = LocalActivity.current as? ComponentActivity
+
+    LaunchedEffect(null) {
+        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_USER
+        activity?.showSystemUI()
+        activity?.applyActivityUiProperties()
+
     }
 }

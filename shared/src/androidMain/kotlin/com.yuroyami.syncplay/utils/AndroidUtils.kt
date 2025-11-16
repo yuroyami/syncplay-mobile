@@ -1,12 +1,14 @@
 package com.yuroyami.syncplay.utils
 
-import android.app.Activity
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
 import android.view.View
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.datastore.core.DataStore
@@ -103,26 +105,6 @@ fun ComponentActivity.bindWatchdog() {
 }
 
 /**
- * Controls display cutout mode for devices with notches or camera cutouts.
- *
- * On Android P (API 28) and above, allows content to extend into the cutout area
- * (useful for fullscreen video) or restricts content to avoid the cutout.
- *
- * @param enable true to extend content into cutout (short edges), false to avoid cutout
- */
-fun Activity.cutoutMode(enable: Boolean) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-        window.attributes = window.attributes.apply {
-            layoutInDisplayCutoutMode = if (enable) {
-                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-            } else {
-                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER
-            }
-        }
-    }
-}
-
-/**
  * Hides system UI bars (status bar and navigation bar) for immersive fullscreen mode.
  *
  * Provides two implementation strategies:
@@ -135,7 +117,7 @@ fun Activity.cutoutMode(enable: Boolean) {
  * @param useDeprecated If true, uses deprecated systemUiVisibility API (for compatibility)
  */
 @Suppress("DEPRECATION")
-fun Activity.hideSystemUI(useDeprecated: Boolean = false) {
+fun ComponentActivity.hideSystemUI(useDeprecated: Boolean = false) {
     runOnUiThread {
         if (!useDeprecated) {
             WindowInsetsControllerCompat(window, window.decorView).let { controller ->
@@ -173,7 +155,7 @@ fun Activity.hideSystemUI(useDeprecated: Boolean = false) {
  * @param useDeprecated If true, uses deprecated systemUiVisibility API (for compatibility)
  */
 @Suppress("DEPRECATION")
-fun Activity.showSystemUI(useDeprecated: Boolean = false) {
+fun ComponentActivity.showSystemUI(useDeprecated: Boolean = false) {
     runOnUiThread {
         if (!useDeprecated) {
             WindowInsetsControllerCompat(window, window.decorView).let { controller ->
@@ -186,4 +168,20 @@ fun Activity.showSystemUI(useDeprecated: Boolean = false) {
 
         }
     }
+}
+
+fun ComponentActivity.applyActivityUiProperties() {
+    window.attributes = window.attributes.apply {
+        flags = flags and WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS.inv()
+    }
+    window.statusBarColor = Color.Transparent.toArgb()
+    window.navigationBarColor = Color.Transparent.toArgb()
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+    }
+
+    /** Telling Android that it should keep the screen on */
+    window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    WindowCompat.setDecorFitsSystemWindows(window, false)
 }

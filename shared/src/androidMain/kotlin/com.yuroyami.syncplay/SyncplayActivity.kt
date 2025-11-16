@@ -5,23 +5,18 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
@@ -30,13 +25,11 @@ import com.yuroyami.syncplay.managers.datastore.valueBlockingly
 import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.ui.screens.adam.AdamScreen
+import com.yuroyami.syncplay.utils.applyActivityUiProperties
 import com.yuroyami.syncplay.utils.bindWatchdog
 import com.yuroyami.syncplay.utils.changeLanguage
-import com.yuroyami.syncplay.utils.cutoutMode
-import com.yuroyami.syncplay.utils.hideSystemUI
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.platformCallback
-import com.yuroyami.syncplay.utils.showSystemUI
 import com.yuroyami.syncplay.viewmodels.HomeViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -68,15 +61,7 @@ class SyncplayActivity : ComponentActivity() {
 
         /** Adjusting the appearance of system window decor */
         /* Tweaking some window UI elements */
-        window.attributes = window.attributes.apply {
-            flags = flags and WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS.inv()
-        }
-        window.statusBarColor = Color.Transparent.toArgb()
-        window.navigationBarColor = Color.Transparent.toArgb()
-
-        /** Telling Android that it should keep the screen on */
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        applyActivityUiProperties()
 
         /** Binding common logic with platform logic */
         platformCallback = object : PlatformCallback {
@@ -170,32 +155,6 @@ class SyncplayActivity : ComponentActivity() {
                 val attrs = window.attributes
                 attrs.screenBrightness = v.coerceIn(0f, 1f)
                 window.attributes = attrs
-            }
-
-            /**
-             * Handles orientation and UI changes when entering or leaving a room.
-             *
-             * - **ENTER**: Locks to landscape, hides system UI, enables cutout mode
-             * - **LEAVE**: Restores all orientations, shows system UI, disables cutout mode
-             */
-            override fun onRoomEnterOrLeave(event: PlatformCallback.RoomEvent) {
-                when (event) {
-                    PlatformCallback.RoomEvent.ENTER -> {
-                        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
-                        hideSystemUI()
-                        cutoutMode(true)
-                    }
-
-                    PlatformCallback.RoomEvent.LEAVE -> {
-                        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_USER
-                        cutoutMode(false)
-                        showSystemUI()
-
-                        //Workaround to force Compose to retain its window insets
-//                        WindowCompat.setDecorFitsSystemWindows(window, true)
-//                        WindowCompat.setDecorFitsSystemWindows(window, false)
-                    }
-                }
             }
 
             /**

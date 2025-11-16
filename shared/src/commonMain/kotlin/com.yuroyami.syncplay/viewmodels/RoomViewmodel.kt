@@ -3,7 +3,6 @@ package com.yuroyami.syncplay.viewmodels
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.PlatformCallback
 import com.yuroyami.syncplay.managers.LifecycleManager
 import com.yuroyami.syncplay.managers.OSDManager
 import com.yuroyami.syncplay.managers.OnRoomEventManager
@@ -24,7 +23,6 @@ import com.yuroyami.syncplay.ui.screens.Screen
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.instantiateNetworkManager
 import com.yuroyami.syncplay.utils.loggy
-import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -130,11 +128,8 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
 
     /**
      * Exits the current room and returns to the home screen.
-     * Notifies the platform of the room exit event.
      */
     fun leaveRoom() {
-        platformCallback.onRoomEnterOrLeave(PlatformCallback.RoomEvent.LEAVE)
-
         backStack.removeLast()
     }
 

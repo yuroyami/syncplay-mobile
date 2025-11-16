@@ -66,16 +66,6 @@ interface PlatformCallback {
     }
 
     /**
-     * Called when the user enters or leaves a Syncplay room.
-     *
-     * Used to manage system-level state like wake locks, keep-screen-on flags,
-     * or other room-specific platform behaviors.
-     *
-     * @param event The type of room transition occurring
-     */
-    fun onRoomEnterOrLeave(event: RoomEvent)
-
-    /**
      * Called when playback state changes.
      *
      * Used to update system UI elements, particularly during PiP mode.
