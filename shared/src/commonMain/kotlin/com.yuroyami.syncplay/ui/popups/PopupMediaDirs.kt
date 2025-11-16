@@ -64,16 +64,17 @@ import com.yuroyami.syncplay.managers.datastore.valueFlow
 import com.yuroyami.syncplay.managers.datastore.writeValue
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.SyncplayPopup
+import com.yuroyami.syncplay.ui.components.jostFont
+import com.yuroyami.syncplay.ui.components.sairaFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
+import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
 import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLauncher
 import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.stringResource
-import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.media_directories
 import syncplaymobile.shared.generated.resources.media_directories_add_folder
@@ -102,7 +103,7 @@ object PopupMediaDirs {
             onDismiss = { visibilityState.value = false }) {
 
             val directoryPicker = rememberDirectoryPickerLauncher(
-                title = "Select directory to save playlist to as a file"
+                title = "Select directory to save playlist to as a file" //TODO
             ) { directoryUri ->
                 if (directoryUri == null) return@rememberDirectoryPickerLauncher
 
@@ -111,26 +112,26 @@ object PopupMediaDirs {
                 }
             }
             Column(
-                modifier = Modifier.fillMaxSize().padding(6.dp)
+                modifier = Modifier.fillMaxSize().padding(6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
                 /* The title */
                 FlexibleText(
-                    modifier = Modifier.fillMaxWidth(),
                     text = stringResource(Res.string.media_directories),
                     strokeColors = listOf(Color.Black),
-                    fillingColors = Theming.SP_GRADIENT,
-                    size = 18f,
-                    font = Font(Res.font.Directive4_Regular)
+                    fillingColors = flexibleGradient,
+                    size = 16f,
+                    font = jostFont
                 )
 
                 /* Title's subtext */
                 Text(
                     text = stringResource(Res.string.media_directories_brief),
                     color = MaterialTheme.colorScheme.primary,
-                    lineHeight = 14.sp,
+                    lineHeight = 13.sp,
                     fontSize = 10.sp,
-                    fontFamily = FontFamily(Font(Res.font.Directive4_Regular)),
+                    fontFamily = FontFamily(sairaFont),
                     textAlign = TextAlign.Center,
                 )
 

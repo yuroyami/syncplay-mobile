@@ -38,10 +38,10 @@ import androidx.compose.ui.unit.sp
 import com.kborowy.colorpicker.KolorPicker
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.SyncplayPopup
+import com.yuroyami.syncplay.ui.components.jostFont
 import com.yuroyami.syncplay.ui.theme.Theming
-import org.jetbrains.compose.resources.Font
+import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
 import org.jetbrains.compose.resources.stringResource
-import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.done
 import kotlin.math.ceil
@@ -73,11 +73,11 @@ object PopupColorPicker {
                 /* The title */
                 FlexibleText(
                     modifier = Modifier.weight(1f).padding(6.dp),
-                    text = "Pick a Color",
+                    text = "Pick a Color", //TODO
                     strokeColors = listOf(Color.Black),
-                    fillingColors = Theming.SP_GRADIENT,
-                    size = 18f,
-                    font = Font(Res.font.Directive4_Regular)
+                    fillingColors = flexibleGradient,
+                    size = 17f,
+                    font = jostFont
                 )
 
                 /* The card that holds the color picker */

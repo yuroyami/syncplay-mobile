@@ -58,6 +58,7 @@ import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.SyncplayPopup
 import com.yuroyami.syncplay.ui.components.gradientOverlay
 import com.yuroyami.syncplay.ui.components.jostFont
+import com.yuroyami.syncplay.ui.components.sairaFont
 import com.yuroyami.syncplay.ui.components.syncplayFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.theme.Theming
@@ -233,8 +234,8 @@ fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
             FlexibleText(
                 text = "Load media from URL", //TODO Localize
                 strokeColors = listOf(Color.Black),
-                size = 18f,
-                font = syncplayFont
+                size = 17f,
+                font = jostFont
             )
 
             /* Title's subtext */
@@ -243,9 +244,9 @@ fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
                 text = "Make sure to provide direct links (for example: www.example.com/video.mp4). YouTube and other media streaming services are not supported yet.",
                 color = MaterialTheme.colorScheme.primary,
                 fontSize = 10.sp,
-                fontFamily = FontFamily(syncplayFont),
+                fontFamily = FontFamily(sairaFont),
                 textAlign = TextAlign.Center,
-                lineHeight = 14.sp,
+                lineHeight = 13.sp,
                 modifier = Modifier.fillMaxWidth(0.6f)
             )
 
