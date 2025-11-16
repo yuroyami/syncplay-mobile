@@ -2,6 +2,7 @@ package com.yuroyami.syncplay.ui.screens
 
 import androidx.navigation3.runtime.NavKey
 import com.yuroyami.syncplay.models.JoinConfig
+import com.yuroyami.syncplay.ui.theme.SaveableTheme
 import kotlinx.serialization.Serializable
 
 /**
@@ -28,5 +29,5 @@ sealed interface Screen : NavKey {
      *
      */
     @Serializable
-    data object ThemeCreator: Screen
+    data class ThemeCreator(val themeToEdit: SaveableTheme? = null) : Screen
 }

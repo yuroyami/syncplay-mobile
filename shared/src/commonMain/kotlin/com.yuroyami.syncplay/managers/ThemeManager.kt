@@ -68,7 +68,7 @@ class ThemeManager(val viewmodel: ViewModel) : AbstractManager(viewmodel) {
         }
     }
 
-    fun deleteTheme(theme: SaveableTheme, thisThemeWasSelected: Boolean) {
+    fun deleteTheme(theme: SaveableTheme) {
         viewmodel.viewModelScope.launch(Dispatchers.IO) {
             val customThemeListJson = valueSuspendingly(MISC_ALL_THEMES, "[]")
             val list = Json.decodeFromString<List<SaveableTheme>>(customThemeListJson).toMutableList()
@@ -77,7 +77,9 @@ class ThemeManager(val viewmodel: ViewModel) : AbstractManager(viewmodel) {
             val listEncodedAgain = Json.encodeToString(list)
             writeValue(MISC_ALL_THEMES, listEncodedAgain)
 
-            if (thisThemeWasSelected) {
+            val selectedTheme = Json.decodeFromString<SaveableTheme>(valueSuspendingly(MISC_CURRENT_THEME, ALLEY_LAMP.asString()))
+
+            if (selectedTheme == theme) {
                 changeTheme(list.firstOrNull() ?: ALLEY_LAMP)
             }
         }

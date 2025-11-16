@@ -97,6 +97,7 @@ fun HomeTopBar() {
                 trailingContent = {
                     Row(verticalAlignment = CenterVertically) {
                         var themePopupState by remember { mutableStateOf(false) }
+
                         FlexibleIcon(
                             icon = Icons.Outlined.Palette,
                             size = 38,

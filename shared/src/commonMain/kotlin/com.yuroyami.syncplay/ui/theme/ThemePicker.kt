@@ -182,14 +182,13 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
                                 .height(themeCardSize.times(2f))
                                 .padding(4.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             item {
                                 AddCustomizedThemeButton(
                                     onClick = {
                                         themeToEditOrDelete = null
-                                        onDismiss()
-                                        globalViewmodel.backstack.add(Screen.ThemeCreator)
+                                        globalViewmodel.backstack.add(Screen.ThemeCreator())
                                     }
                                 )
                             }
@@ -243,11 +242,7 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
                                 TextButton(
                                     modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
                                     onClick = {
-                                        viewmodel.themeManager.deleteTheme(
-                                            themeToEditOrDelete!!,
-                                            thisThemeWasSelected = themeToEditOrDelete == currentTheme
-                                        )
-
+                                        viewmodel.themeManager.deleteTheme(themeToEditOrDelete!!)
                                         themeToEditOrDelete = null
                                     }
                                 ) {
@@ -258,9 +253,8 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
                                 TextButton(
                                     modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
                                     onClick = {
+                                        globalViewmodel.backstack.add(Screen.ThemeCreator(themeToEditOrDelete))
                                         themeToEditOrDelete = null
-
-                                        //TODO
                                     }
                                 ) {
                                     Icon(Icons.Filled.Edit, null)
@@ -365,7 +359,7 @@ fun AddCustomizedThemeButton(onClick: () -> Unit) {
         }
         Text(
             modifier = Modifier.width(themeCardSize - 4.dp).safeContentPadding().padding(2.dp),
-            text = "Customize...", //TODO Localize
+            text = "Customize", //TODO Localize
             autoSize = TextAutoSize.StepBased(minFontSize = 1.sp, maxFontSize = 25.sp),
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1

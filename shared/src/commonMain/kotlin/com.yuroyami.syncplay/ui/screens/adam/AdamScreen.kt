@@ -121,8 +121,10 @@ fun AdamScreen() {
                         }
                     }
 
-                    entry<Screen.ThemeCreator> {
-                        ThemeCreatorScreenUI()
+                    entry<Screen.ThemeCreator> { themeCreator ->
+                        ThemeCreatorScreenUI(
+                            themeToEdit = themeCreator.themeToEdit
+                        )
                     }
                 }
             )

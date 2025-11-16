@@ -55,7 +55,6 @@ import com.kborowy.colorpicker.KolorPicker
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.jostFont
 import com.yuroyami.syncplay.ui.components.lexendFont
-import com.yuroyami.syncplay.ui.screens.Screen
 import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
 import com.yuroyami.syncplay.ui.screens.home.HomeLeadingTitle
 import com.yuroyami.syncplay.ui.screens.home.HomeTextField
@@ -64,10 +63,10 @@ import com.yuroyami.syncplay.ui.theme.SaveableTheme.Companion.toTheme
 import kotlinx.coroutines.launch
 
 @Composable
-fun ThemeCreatorScreenUI() {
+fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
     val globalViewmodel = LocalGlobalViewmodel.current
 
-    var newTheme by remember { mutableStateOf<SaveableTheme>(globalViewmodel.themeManager.currentTheme.value.toTheme()) }
+    var newTheme by remember { mutableStateOf<SaveableTheme>(themeToEdit ?: globalViewmodel.themeManager.currentTheme.value.toTheme()) }
     val dynamicScheme by derivedStateOf { newTheme.dynamicScheme }
     val useSPGrad by derivedStateOf { newTheme.syncplayGradients }
 
@@ -96,11 +95,7 @@ fun ThemeCreatorScreenUI() {
                     actions = {
                         Button(
                             onClick = {
-                                globalViewmodel.backstack.let { stack ->
-                                    if (stack.contains(Screen.ThemeCreator)) {
-                                        stack.remove(Screen.ThemeCreator)
-                                    }
-                                }
+                                globalViewmodel.backstack.removeLast()
                             },
                             modifier = Modifier.padding(horizontal = 4.dp)
                         ) {
@@ -110,14 +105,13 @@ fun ThemeCreatorScreenUI() {
                         Button(
                             onClick = {
                                 globalViewmodel.viewModelScope.launch {
+                                    if (themeToEdit != null) {
+                                        globalViewmodel.themeManager.deleteTheme(themeToEdit)
+                                    }
                                     val isSaved = globalViewmodel.themeManager.saveNewTheme(newTheme)
 
                                     if (isSaved) {
-                                        globalViewmodel.backstack.let { stack ->
-                                            if (stack.contains(Screen.ThemeCreator)) {
-                                                stack.remove(Screen.ThemeCreator)
-                                            }
-                                        }
+                                        globalViewmodel.backstack.removeLast()
                                     } else {
                                         snackState.showSnackbar(
                                             "Theme already exists!" //TODO
@@ -352,7 +346,7 @@ fun ThemeCreatorScreenUI() {
 
                     Checkbox(
                         checked = newTheme.isAMOLED,
-                        onCheckedChange = {  newTheme = newTheme.copy(isAMOLED = it)  }
+                        onCheckedChange = { newTheme = newTheme.copy(isAMOLED = it) }
                     )
                 }
 
@@ -376,7 +370,7 @@ fun ThemeCreatorScreenUI() {
 
                     Checkbox(
                         checked = newTheme.syncplayGradients,
-                        onCheckedChange = {  newTheme = newTheme.copy(syncplayGradients = it)  }
+                        onCheckedChange = { newTheme = newTheme.copy(syncplayGradients = it) }
                     )
                 }
 
@@ -459,7 +453,7 @@ fun ThemeCreatorScreenUI() {
 }
 
 @Composable
-fun ThemeSingleColorPicker(initialColor: Color? = null, onColorChange: (Color) -> Unit)  {
+fun ThemeSingleColorPicker(initialColor: Color? = null, onColorChange: (Color) -> Unit) {
     var pickerVisible by remember { mutableStateOf(false) }
 
     Box {
