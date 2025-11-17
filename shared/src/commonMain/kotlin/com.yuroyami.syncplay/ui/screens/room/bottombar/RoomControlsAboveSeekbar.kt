@@ -20,10 +20,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_GESTURES
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.watchPref
+import com.yuroyami.syncplay.managers.preferences.Preferences.CUSTOM_SEEK_AMOUNT
+import com.yuroyami.syncplay.managers.preferences.Preferences.CUSTOM_SEEK_FRONT
+import com.yuroyami.syncplay.managers.preferences.Preferences.GESTURES
+import com.yuroyami.syncplay.managers.preferences.watchPref
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.components.gradientOverlay
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
@@ -42,7 +42,7 @@ import syncplaymobile.shared.generated.resources.room_custom_skip_button
 fun RoomBottomBarVideoControlRow(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
 
-    val gesturesEnabled by MISC_GESTURES.watchPref(true)
+    val gesturesEnabled by GESTURES.watchPref()
 
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         if (!gesturesEnabled) {
@@ -62,8 +62,8 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
                 viewmodel.actionManager.seekFrwrd()
             }
         }
-        val customSkipToFront by PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT.watchPref(true)
-        val customSkipAmount by PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT.watchPref(90)
+        val customSkipToFront by CUSTOM_SEEK_FRONT.watchPref()
+        val customSkipAmount by CUSTOM_SEEK_AMOUNT.watchPref()
         if (customSkipToFront) {
             val customSkipAmountString by derivedStateOf {
                 timeStamper(

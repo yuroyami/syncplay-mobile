@@ -1,7 +1,5 @@
 package com.yuroyami.syncplay.managers.protocol.creator
 
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.pref
 import com.yuroyami.syncplay.managers.protocol.ProtocolManager
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.utils.generateTimestampMillis

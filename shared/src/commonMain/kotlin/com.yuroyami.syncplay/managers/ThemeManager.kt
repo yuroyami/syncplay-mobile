@@ -5,11 +5,6 @@ package com.yuroyami.syncplay.managers
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_ALL_THEMES
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_CURRENT_THEME
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.pref
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.prefFlow
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.writePref
 import com.yuroyami.syncplay.ui.theme.SaveableTheme
 import com.yuroyami.syncplay.ui.theme.defaultTheme
 import kotlinx.coroutines.Dispatchers

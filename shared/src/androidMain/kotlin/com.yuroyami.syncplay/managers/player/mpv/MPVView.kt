@@ -8,10 +8,6 @@ import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.WindowManager
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_MPV_GPU_NEXT
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_MPV_HARDWARE_ACCELERATION
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_MPV_INTERPOLATION
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.pref
 import com.yuroyami.syncplay.managers.player.PlayerOptions
 import com.yuroyami.syncplay.utils.contextObtainer
 import `is`.xyz.mpv.MPVLib

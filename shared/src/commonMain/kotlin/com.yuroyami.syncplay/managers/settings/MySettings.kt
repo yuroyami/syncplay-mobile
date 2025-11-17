@@ -37,47 +37,40 @@ import androidx.compose.material.icons.filled.Web
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.preferences.core.edit
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.CATEG_GLOBAL_ADVANCED
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.CATEG_GLOBAL_GENERAL
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.CATEG_GLOBAL_LANG
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.CATEG_GLOBAL_NETWORK
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.CATEG_GLOBAL_SYNCING
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.CATEG_INROOM_ADVANCED
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.CATEG_INROOM_CHATCOLORS
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.CATEG_INROOM_CHATPROPS
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.CATEG_INROOM_PLAYERSETTINGS
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_CC_LANG
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_DISPLAY_LANG
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_ERASE_SHORTCUTS
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_FILE_MISMATCH_WARNING
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_GLOBAL_CLEAR_ALL
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_HASH_FILENAME
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_HASH_FILESIZE
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_COLOR_ERRORMSG
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_COLOR_FRIENDTAG
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_COLOR_SELFTAG
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_COLOR_SYSTEMMSG
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_COLOR_TIMESTAMP
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_COLOR_USERMSG
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_ACTIVATE_STAMP
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_BG_OPACITY
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_BOX_ACTION
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_FADING_DURATION
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_FONTSIZE
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_MAXCOUNT
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_SHADOW
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_RESET_DEFAULT
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_NETWORK_ENGINE
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_NEVER_SHOW_TIPS
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_READY_FIRST_HAND
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_REMEMBER_INFO
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_TLS_ENABLE
-import com.yuroyami.syncplay.managers.datastore.datastore
+import com.yuroyami.syncplay.managers.preferences.Preferences.CC_LANG
+import com.yuroyami.syncplay.managers.preferences.Preferences.COLOR_ERRORMSG
+import com.yuroyami.syncplay.managers.preferences.Preferences.COLOR_FRIENDTAG
+import com.yuroyami.syncplay.managers.preferences.Preferences.COLOR_SELFTAG
+import com.yuroyami.syncplay.managers.preferences.Preferences.COLOR_SYSTEMMSG
+import com.yuroyami.syncplay.managers.preferences.Preferences.COLOR_TIMESTAMP
+import com.yuroyami.syncplay.managers.preferences.Preferences.COLOR_USERMSG
+import com.yuroyami.syncplay.managers.preferences.Preferences.CUSTOM_SEEK_AMOUNT
+import com.yuroyami.syncplay.managers.preferences.Preferences.CUSTOM_SEEK_FRONT
+import com.yuroyami.syncplay.managers.preferences.Preferences.DISPLAY_LANG
+import com.yuroyami.syncplay.managers.preferences.Preferences.ERASE_SHORTCUTS
+import com.yuroyami.syncplay.managers.preferences.Preferences.FILE_MISMATCH_WARNING
+import com.yuroyami.syncplay.managers.preferences.Preferences.HASH_FILENAME
+import com.yuroyami.syncplay.managers.preferences.Preferences.HASH_FILESIZE
+import com.yuroyami.syncplay.managers.preferences.Preferences.MEDIA_DIRECTORIES
+import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_ACTIVATE_STAMP
+import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_BG_OPACITY
+import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_BOX_ACTION
+import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_FADING_DURATION
+import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_FONTSIZE
+import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_MAXCOUNT
+import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_OUTLINE
+import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_SHADOW
+import com.yuroyami.syncplay.managers.preferences.Preferences.NETWORK_ENGINE
+import com.yuroyami.syncplay.managers.preferences.Preferences.NEVER_SHOW_TIPS
+import com.yuroyami.syncplay.managers.preferences.Preferences.PAUSE_ON_SOMEONE_LEAVE
+import com.yuroyami.syncplay.managers.preferences.Preferences.READY_FIRST_HAND
+import com.yuroyami.syncplay.managers.preferences.Preferences.RECONNECTION_INTERVAL
+import com.yuroyami.syncplay.managers.preferences.Preferences.REMEMBER_INFO
+import com.yuroyami.syncplay.managers.preferences.Preferences.SEEK_BACKWARD_JUMP
+import com.yuroyami.syncplay.managers.preferences.Preferences.SEEK_FORWARD_JUMP
+import com.yuroyami.syncplay.managers.preferences.Preferences.SUBTITLE_SIZE
+import com.yuroyami.syncplay.managers.preferences.Preferences.TLS_ENABLE
+import com.yuroyami.syncplay.managers.preferences.datastore
 import com.yuroyami.syncplay.ui.popups.PopupMediaDirs.MediaDirsPopup
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.utils.PLATFORM
@@ -198,33 +191,30 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
     buildMap {
         put(
             SettingCategory(
-                keyID = CATEG_GLOBAL_GENERAL,
+                keyID = "global_general",
                 title = Res.string.settings_categ_general,
                 icon = Icons.Filled.SettingsSuggest
             ),
             listOf(
                 Setting.BooleanSetting(
                     type = SettingType.CheckboxSettingType,
-                    key = PREF_REMEMBER_INFO,
+                    key = REMEMBER_INFO,
                     title = Res.string.setting_remember_join_info_title,
                     summary = Res.string.setting_remember_join_info_summary,
-                    defaultValue = true,
                     icon = Icons.Filled.Face
                 ),
                 Setting.BooleanSetting(
                     type = SettingType.CheckboxSettingType,
-                    key = PREF_NEVER_SHOW_TIPS,
+                    key = NEVER_SHOW_TIPS,
                     title = Res.string.setting_never_show_tips_title,
                     summary = Res.string.setting_never_show_tips_summary,
-                    defaultValue = false,
                     icon = Icons.Filled.Lightbulb
                 ),
                 Setting.YesNoDialogSetting(
                     type = SettingType.YesNoDialogSettingType,
-                    key = PREF_ERASE_SHORTCUTS,
+                    key = ERASE_SHORTCUTS,
                     title = Res.string.setting_erase_shortcuts_title,
                     summary = Res.string.setting_erase_shortcuts_summary,
-                    defaultValue = true,
                     icon = Icons.Filled.BookmarkRemove,
                     rationale = Res.string.setting_erase_shortcuts_dialog,
                     onYes = {
@@ -233,7 +223,7 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
                 ),
                 Setting.PopupSetting(
                     type = SettingType.PopupSettingType,
-                    key = PREF_SP_MEDIA_DIRS,
+                    key = MEDIA_DIRECTORIES,
                     title = Res.string.media_directories,
                     summary = Res.string.media_directories_setting_summary,
                     icon = Icons.AutoMirrored.Filled.QueueMusic,
@@ -246,7 +236,7 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
 
         put(
             SettingCategory(
-                keyID = CATEG_GLOBAL_LANG,
+                keyID = "global_language",
                 title = Res.string.settings_categ_language,
                 icon = Icons.Filled.Translate,
             ),
@@ -254,10 +244,9 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
                 if (platform == PLATFORM.Android) {
                     Setting.MultiChoiceSetting(
                         type = SettingType.MultiChoicePopupSettingType,
-                        key = PREF_DISPLAY_LANG,
+                        key = DISPLAY_LANG,
                         title = Res.string.setting_display_language_title,
                         summary = Res.string.setting_display_language_summry,
-                        defaultValue = "en",
                         icon = Icons.Filled.Translate,
                         entries = {
                             val langNames = stringArrayResource(Res.array.language_names)
@@ -271,7 +260,7 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
                 } else {
                     Setting.OneClickSetting(
                         type = SettingType.OneClickSettingType,
-                        key = PREF_DISPLAY_LANG,
+                        key = DISPLAY_LANG,
                         title = Res.string.setting_display_language_title,
                         summary = Res.string.setting_display_language_summry,
                         icon = Icons.Filled.Translate,
@@ -282,10 +271,9 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
                 },
                 Setting.TextFieldSetting(
                     type = SettingType.TextFieldSettingType,
-                    key = PREF_CC_LANG,
+                    key = CC_LANG,
                     title = Res.string.setting_cc_default_language_title,
                     summary = Res.string.setting_cc_default_language_summry,
-                    defaultValue = "eng",
                     icon = Icons.Filled.ClosedCaptionOff,
                 )
             )
@@ -293,41 +281,37 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
 
         put(
             SettingCategory(
-                keyID = CATEG_GLOBAL_SYNCING,
+                keyID = "global_syncing",
                 title = Res.string.settings_categ_syncing,
                 icon = Icons.Filled.ConnectWithoutContact
             ),
             listOf(
                 Setting.BooleanSetting(
                     type = SettingType.CheckboxSettingType,
-                    key = PREF_READY_FIRST_HAND,
+                    key = READY_FIRST_HAND,
                     title = Res.string.setting_ready_firsthand_title,
                     summary = Res.string.setting_ready_firsthand_summary,
-                    defaultValue = true,
                     icon = Icons.Filled.TaskAlt,
                 ),
                 Setting.BooleanSetting(
                     type = SettingType.CheckboxSettingType,
-                    key = PREF_PAUSE_ON_SOMEONE_LEAVE,
+                    key = PAUSE_ON_SOMEONE_LEAVE,
                     title = Res.string.setting_pause_if_someone_left_title,
                     summary = Res.string.setting_pause_if_someone_left_summary,
-                    defaultValue = true,
                     icon = Icons.Filled.FrontHand,
                 ),
                 Setting.BooleanSetting(
                     type = SettingType.CheckboxSettingType,
-                    key = PREF_FILE_MISMATCH_WARNING,
+                    key = FILE_MISMATCH_WARNING,
                     title = Res.string.setting_warn_file_mismatch_title,
                     summary = Res.string.setting_warn_file_mismatch_summary,
-                    defaultValue = true,
                     icon = Icons.Filled.ErrorOutline,
                 ),
                 Setting.MultiChoiceSetting(
                     type = SettingType.MultiChoicePopupSettingType,
-                    key = PREF_HASH_FILENAME,
+                    key = HASH_FILENAME,
                     title = Res.string.setting_fileinfo_behaviour_name_title,
                     summary = Res.string.setting_fileinfo_behaviour_name_summary,
-                    defaultValue = "1",
                     icon = Icons.Filled.DesignServices,
                     entries = {
                         mapOf(
@@ -339,10 +323,9 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
                 ),
                 Setting.MultiChoiceSetting(
                     type = SettingType.MultiChoicePopupSettingType,
-                    key = PREF_HASH_FILESIZE,
+                    key = HASH_FILESIZE,
                     title = Res.string.setting_fileinfo_behaviour_size_title,
                     summary = Res.string.setting_fileinfo_behaviour_size_summary,
-                    defaultValue = "1",
                     icon = Icons.Filled.DesignServices,
                     entries = {
                         mapOf(
@@ -357,26 +340,24 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
 
         put(
             SettingCategory(
-                keyID = CATEG_GLOBAL_NETWORK,
+                keyID = "global_network",
                 title = Res.string.settings_categ_network,
                 icon = Icons.Filled.Hub
             ),
             listOf(
                 Setting.BooleanSetting(
                     type = SettingType.ToggleSettingType,
-                    key = PREF_TLS_ENABLE,
+                    key = TLS_ENABLE,
                     title = Res.string.setting_tls_title,
                     summary = Res.string.setting_tls_summary,
-                    defaultValue = true,
                     icon = Icons.Filled.Key,
                 ),
 
                 Setting.MultiChoiceSetting(
                     type = SettingType.MultiChoicePopupSettingType,
-                    key = PREF_NETWORK_ENGINE,
+                    key = NETWORK_ENGINE,
                     title = Res.string.setting_network_engine_title,
                     summary = Res.string.setting_network_engine_summary,
-                    defaultValue = if (platform == PLATFORM.Android) "netty" else "swiftnio",
                     icon = Icons.Filled.Lan,
                     entries = @Composable {
                         buildMap {
@@ -404,14 +385,14 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
 
         put(
             SettingCategory(
-                keyID = CATEG_GLOBAL_ADVANCED,
+                keyID = "global_advanced",
                 title = Res.string.settings_categ_advanced,
                 icon = Icons.Filled.Stream
             ),
             listOf(
                 Setting.YesNoDialogSetting(
                     type = SettingType.OneClickSettingType,
-                    key = PREF_GLOBAL_CLEAR_ALL,
+                    key = "PREF_CLEAR_ALL", //TODO should offload to a string?
                     title = Res.string.setting_resetdefault_title,
                     summary = Res.string.setting_resetdefault_summary,
                     icon = Icons.Filled.ClearAll,
@@ -432,54 +413,48 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
 val SETTINGS_ROOM: SettingCollection = buildMap {
     put(
         SettingCategory(
-            keyID = CATEG_INROOM_CHATCOLORS,
+            keyID = "inroom_chatcolors",
             title = Res.string.uisetting_categ_chat_colors,
             icon = Icons.Filled.Palette,
         ),
         listOf(
             Setting.ColorSetting(
                 type = SettingType.ColorSettingType,
-                key = PREF_INROOM_COLOR_TIMESTAMP,
+                key = COLOR_TIMESTAMP,
                 title = Res.string.uisetting_timestamp_color_title,
                 summary = Res.string.uisetting_timestamp_summary,
-                defaultValue = Theming.MSG_TIMESTAMP.toArgb(),
                 icon = Icons.Filled.Brush,
             ),
             Setting.ColorSetting(
                 type = SettingType.ColorSettingType,
-                key = PREF_INROOM_COLOR_SELFTAG,
+                key = COLOR_SELFTAG,
                 title = Res.string.uisetting_self_color_title,
                 summary = Res.string.uisetting_self_color_summary,
-                defaultValue = Theming.MSG_SELF_TAG.toArgb(),
                 icon = Icons.Filled.Brush,
             ), Setting.ColorSetting(
                 type = SettingType.ColorSettingType,
-                key = PREF_INROOM_COLOR_FRIENDTAG,
+                key = COLOR_FRIENDTAG,
                 title = Res.string.uisetting_friend_color_title,
                 summary = Res.string.uisetting_friend_color_summary,
-                defaultValue = Theming.MSG_FRIEND_TAG.toArgb(),
                 icon = Icons.Filled.Brush,
             ), Setting.ColorSetting(
                 type = SettingType.ColorSettingType,
-                key = PREF_INROOM_COLOR_SYSTEMMSG,
+                key = COLOR_SYSTEMMSG,
                 title = Res.string.uisetting_system_color_title,
                 summary = Res.string.uisetting_system_color_summary,
-                defaultValue = Theming.MSG_SYSTEM.toArgb(),
                 icon = Icons.Filled.Brush,
             ),
             Setting.ColorSetting(
                 type = SettingType.ColorSettingType,
-                key = PREF_INROOM_COLOR_USERMSG,
+                key = COLOR_USERMSG,
                 title = Res.string.uisetting_human_color_title,
                 summary = Res.string.uisetting_human_color_summary,
-                defaultValue = Theming.MSG_CHAT.toArgb(),
                 icon = Icons.Filled.Brush,
             ), Setting.ColorSetting(
                 type = SettingType.ColorSettingType,
-                key = PREF_INROOM_COLOR_ERRORMSG,
+                key = COLOR_ERRORMSG,
                 title = Res.string.uisetting_error_color_title,
                 summary = Res.string.uisetting_error_color_summary,
-                defaultValue = Theming.MSG_ERROR.toArgb(),
                 icon = Icons.Filled.Brush,
             )
         )
@@ -487,92 +462,83 @@ val SETTINGS_ROOM: SettingCollection = buildMap {
 
     put(
         SettingCategory(
-            keyID = CATEG_INROOM_CHATPROPS,
+            keyID = "inroom_chat_properties",
             title = Res.string.uisetting_categ_chat_properties,
             icon = Icons.AutoMirrored.Filled.Chat
         ),
         listOf(
             Setting.BooleanSetting(
                 type = SettingType.ToggleSettingType,
-                key = PREF_INROOM_MSG_ACTIVATE_STAMP,
+                key = MSG_ACTIVATE_STAMP,
                 title = Res.string.uisetting_timestamp_title,
                 summary = Res.string.uisetting_timestamp_summary,
-                defaultValue = true,
                 icon = Icons.Filled.Pin,
             ),
             Setting.BooleanSetting(
                 type = SettingType.ToggleSettingType,
-                key = PREF_INROOM_MSG_OUTLINE,
+                key = MSG_OUTLINE,
                 title = Res.string.uisetting_msgoutline_title,
                 summary = Res.string.uisetting_msgoutline_summary,
-                defaultValue = true,
                 icon = Icons.Filled.BorderColor,
             ), Setting.BooleanSetting(
                 type = SettingType.ToggleSettingType,
-                key = PREF_INROOM_MSG_SHADOW,
+                key = MSG_SHADOW,
                 title = Res.string.uisetting_msgshadow_title,
                 summary = Res.string.uisetting_msgshadow_summary,
-                defaultValue = false,
                 icon = Icons.Filled.BorderColor,
             ), Setting.SliderSetting(
                 type = SettingType.SliderSettingType,
-                key = PREF_INROOM_MSG_BG_OPACITY,
+                key = MSG_BG_OPACITY,
                 title = Res.string.uisetting_messagery_alpha_title,
                 summary = Res.string.uisetting_messagery_alpha_summary,
-                defaultValue = 0,
                 icon = Icons.Filled.Opacity,
                 maxValue = 255,
                 minValue = 0,
             ), Setting.SliderSetting(
                 type = SettingType.SliderSettingType,
-                key = PREF_INROOM_MSG_FONTSIZE,
+                key = MSG_FONTSIZE,
                 title = Res.string.uisetting_msgsize_title,
                 summary = Res.string.uisetting_msgsize_summary,
-                defaultValue = 9,
                 icon = Icons.Filled.FormatSize,
                 maxValue = 28,
                 minValue = 6,
             ), Setting.SliderSetting(
                 type = SettingType.SliderSettingType,
-                key = PREF_INROOM_MSG_MAXCOUNT,
+                key = MSG_MAXCOUNT,
                 title = Res.string.uisetting_msgcount_title,
                 summary = Res.string.uisetting_msgcount_summary,
-                defaultValue = 10,
                 icon = Icons.Filled.FormatListNumbered,
                 maxValue = 30,
                 minValue = 1,
             ), Setting.SliderSetting(
                 type = SettingType.SliderSettingType,
-                key = PREF_INROOM_MSG_FADING_DURATION,
+                key = MSG_FADING_DURATION,
                 title = Res.string.uisetting_msglife_title,
                 summary = Res.string.uisetting_msglife_summary,
-                defaultValue = 3,
                 icon = Icons.Filled.Timer,
                 maxValue = 10,
                 minValue = 1,
             ), Setting.BooleanSetting(
                 type = SettingType.ToggleSettingType,
-                key = PREF_INROOM_MSG_BOX_ACTION,
+                key = MSG_BOX_ACTION,
                 title = Res.string.uisetting_msgboxaction_title,
                 summary = Res.string.uisetting_msgboxaction_summary,
-                defaultValue = true,
                 icon = Icons.Filled.Keyboard,
             )
         )
     )
     put(
         SettingCategory(
-            keyID = CATEG_INROOM_PLAYERSETTINGS,
+            keyID = "inroom_player_settings",
             title = Res.string.uisetting_categ_player_settings,
             icon = Icons.Filled.VideoLabel,
         ),
         listOf(
             Setting.SliderSetting(
                 type = SettingType.SliderSettingType,
-                key = DataStoreKeys.PREF_INROOM_PLAYER_SUBTITLE_SIZE,
+                key = SUBTITLE_SIZE,
                 title = Res.string.uisetting_subtitle_size_title,
                 summary = Res.string.uisetting_subtitle_size_summary,
-                defaultValue = 16,
                 icon = Icons.Filled.SortByAlpha,
                 maxValue = 200,
                 minValue = 2,
@@ -604,36 +570,32 @@ val SETTINGS_ROOM: SettingCollection = buildMap {
 //                    ),
             Setting.BooleanSetting(
                 type = SettingType.CheckboxSettingType,
-                key = PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT,
+                key = CUSTOM_SEEK_FRONT,
                 title = Res.string.uisetting_custom_seek_front_title,
                 summary = Res.string.uisetting_custom_seek_front_summary,
-                defaultValue = true,
                 icon = Icons.Filled.Update,
             ),
             Setting.SliderSetting(
                 type = SettingType.SliderSettingType,
-                key = DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT,
+                key = CUSTOM_SEEK_AMOUNT,
                 title = Res.string.uisetting_custom_seek_amount_title,
                 summary = Res.string.uisetting_custom_seek_amount_summary,
-                defaultValue = 90,
                 icon = Icons.Filled.Update,
                 maxValue = 300,
                 minValue = 30,
             ), Setting.SliderSetting(
                 type = SettingType.SliderSettingType,
-                key = DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP,
+                key = SEEK_FORWARD_JUMP,
                 title = Res.string.uisetting_seek_forward_jump_title,
                 summary = Res.string.uisetting_seek_forward_jump_summary,
-                defaultValue = 10,
                 icon = Icons.Filled.FastForward,
                 maxValue = 120,
                 minValue = 1,
             ), Setting.SliderSetting(
                 type = SettingType.SliderSettingType,
-                key = DataStoreKeys.PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP,
+                key = SEEK_BACKWARD_JUMP,
                 title = Res.string.uisetting_seek_backward_jump_title,
                 summary = Res.string.uisetting_seek_backward_jump_summary,
-                defaultValue = 10,
                 icon = Icons.Filled.FastRewind,
                 maxValue = 120,
                 minValue = 1,
@@ -642,7 +604,7 @@ val SETTINGS_ROOM: SettingCollection = buildMap {
     )
     put(
         SettingCategory(
-            keyID = CATEG_INROOM_ADVANCED,
+            keyID = "inroom_advanced",
             title = Res.string.settings_categ_advanced,
             icon = Icons.Filled.Stream
         ),
@@ -660,17 +622,16 @@ val SETTINGS_ROOM: SettingCollection = buildMap {
 //                ),
             Setting.SliderSetting(
                 type = SettingType.SliderSettingType,
-                key = DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL,
+                key = RECONNECTION_INTERVAL,
                 title = Res.string.uisetting_reconnect_interval_title,
                 summary = Res.string.uisetting_reconnect_interval_summary,
-                defaultValue = 2,
                 icon = Icons.Filled.Web,
                 maxValue = 15,
                 minValue = 0,
             ),
             Setting.YesNoDialogSetting(
                 type = SettingType.OneClickSettingType,
-                key = PREF_INROOM_RESET_DEFAULT,
+                key = "RESET_DEFAULT", //TODO should offload to a string?
                 title = Res.string.uisetting_resetdefault_title,
                 summary = Res.string.uisetting_resetdefault_summary,
                 icon = Icons.Filled.ClearAll,

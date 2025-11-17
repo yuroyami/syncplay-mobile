@@ -47,13 +47,13 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_BG_OPACITY
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_BOX_ACTION
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_FONTSIZE
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_MAXCOUNT
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_OUTLINE
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_MSG_SHADOW
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.watchPref
+import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_BG_OPACITY
+import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_BOX_ACTION
+import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_FONTSIZE
+import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_MAXCOUNT
+import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_OUTLINE
+import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_SHADOW
+import com.yuroyami.syncplay.managers.preferences.watchPref
 import com.yuroyami.syncplay.ui.components.FlexibleAnnotatedText
 import com.yuroyami.syncplay.ui.screens.adam.LocalChatPalette
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
@@ -86,7 +86,7 @@ fun ChatTextField(
     val focusManager = LocalFocusManager.current
 
     var msg by remember { mutableStateOf("") }
-    val canSendWithKeyboardOK by PREF_INROOM_MSG_BOX_ACTION.watchPref(true)
+    val canSendWithKeyboardOK by MSG_BOX_ACTION.watchPref()
 
     val gradientBrush = Brush.linearGradient(colors = flexibleGradient)
 
@@ -177,11 +177,11 @@ fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel) {
 
     val chatMessages = remember { if (!viewmodel.isSoloMode) viewmodel.session.messageSequence else mutableStateListOf() }
 
-    val msgBoxOpacity = PREF_INROOM_MSG_BG_OPACITY.watchPref(0)
-    val msgOutline by PREF_INROOM_MSG_OUTLINE.watchPref(true)
-    val msgShadow by PREF_INROOM_MSG_SHADOW.watchPref(false)
-    val msgFontSize = PREF_INROOM_MSG_FONTSIZE.watchPref(9)
-    val msgMaxCount by PREF_INROOM_MSG_MAXCOUNT.watchPref(10)
+    val msgBoxOpacity = MSG_BG_OPACITY.watchPref()
+    val msgOutline by MSG_OUTLINE.watchPref()
+    val msgShadow by MSG_SHADOW.watchPref()
+    val msgFontSize = MSG_FONTSIZE.watchPref()
+    val msgMaxCount by MSG_MAXCOUNT.watchPref()
 
     Box(
         modifier = modifier

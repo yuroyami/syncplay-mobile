@@ -15,8 +15,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_NEVER_SHOW_TIPS
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.writePref
+import com.yuroyami.syncplay.managers.preferences.Preferences.NEVER_SHOW_TIPS
+import com.yuroyami.syncplay.managers.preferences.set
 import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -62,7 +62,7 @@ object PopupDidYaKnow {
                     TextButton(
                         onClick = {
                             viewmodel.viewModelScope.launch(Dispatchers.IO) {
-                                writePref(PREF_NEVER_SHOW_TIPS, true)
+                                NEVER_SHOW_TIPS.set(true)
                             }
                             state.value = false
                         }

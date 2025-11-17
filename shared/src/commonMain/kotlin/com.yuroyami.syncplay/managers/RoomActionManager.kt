@@ -2,8 +2,6 @@ package com.yuroyami.syncplay.managers
 
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.pref
 import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import com.yuroyami.syncplay.models.Message
 import com.yuroyami.syncplay.utils.platformCallback

@@ -2,9 +2,8 @@ package com.yuroyami.syncplay.utils
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.managers.datastore.createDataStore
-import com.yuroyami.syncplay.managers.datastore.datastore
+import com.yuroyami.syncplay.managers.preferences.createDataStore
+import com.yuroyami.syncplay.managers.preferences.datastore
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager

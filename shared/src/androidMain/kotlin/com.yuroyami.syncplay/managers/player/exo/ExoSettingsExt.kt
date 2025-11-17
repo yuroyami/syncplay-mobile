@@ -5,10 +5,6 @@ import androidx.compose.material.icons.filled.HourglassBottom
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.SettingsInputComponent
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.CATEG_INROOM_EXOPLAYER
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_EXO_MAX_BUFFER
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_EXO_MIN_BUFFER
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_EXO_SEEK_BUFFER
 import com.yuroyami.syncplay.managers.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.managers.settings.Setting
 import com.yuroyami.syncplay.managers.settings.SettingCategory

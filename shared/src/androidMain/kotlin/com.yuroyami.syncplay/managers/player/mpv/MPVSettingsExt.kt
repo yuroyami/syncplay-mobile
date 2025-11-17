@@ -8,8 +8,6 @@ import androidx.compose.material.icons.filled.SettingsInputComponent
 import androidx.compose.material.icons.filled.SlowMotionVideo
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.SupervisedUserCircle
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.CATEG_INROOM_MPV
 import com.yuroyami.syncplay.managers.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.managers.settings.Setting
 import com.yuroyami.syncplay.managers.settings.SettingCategory

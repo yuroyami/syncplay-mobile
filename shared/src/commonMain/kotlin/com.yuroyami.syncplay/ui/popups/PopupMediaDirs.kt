@@ -58,10 +58,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import com.eygraber.uri.Uri
 import com.yuroyami.syncplay.managers.SharedPlaylistManager
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.pref
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.watchPref
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.writePref
+import com.yuroyami.syncplay.managers.preferences.Preferences.MEDIA_DIRECTORIES
+import com.yuroyami.syncplay.managers.preferences.get
+import com.yuroyami.syncplay.managers.preferences.set
+import com.yuroyami.syncplay.managers.preferences.watchPref
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.SyncplayPopup
 import com.yuroyami.syncplay.ui.components.jostFont
@@ -140,7 +140,7 @@ object PopupMediaDirs {
                     shape = RoundedCornerShape(size = 6.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.LightGray)
                 ) {
-                    val dirs = PREF_SP_MEDIA_DIRS.watchPref(emptySet<String>())
+                    val dirs = MEDIA_DIRECTORIES.watchPref()
 
                     LazyColumn(
                         modifier = Modifier.fillMaxSize()
@@ -208,11 +208,11 @@ object PopupMediaDirs {
                                             itemMenuState.value = false
 
                                             scope.launch {
-                                                val paths = pref(PREF_SP_MEDIA_DIRS, emptySet<String>()).toMutableSet()
+                                                val paths = MEDIA_DIRECTORIES.get().toMutableSet()
 
                                                 if (paths.contains(item)) {
                                                     paths.remove(item)
-                                                    writePref(PREF_SP_MEDIA_DIRS, paths)
+                                                    MEDIA_DIRECTORIES.set(paths)
                                                 }
                                             }
                                         })
@@ -290,7 +290,7 @@ object PopupMediaDirs {
                 TextButton(onClick = {
                     cleardialog = false
                     scope.launch {
-                        writePref(PREF_SP_MEDIA_DIRS, emptySet<String>())
+                        MEDIA_DIRECTORIES.set(emptySet())
                     }
                 }) { Text(stringResource(Res.string.yes)) }
             }, dismissButton = {

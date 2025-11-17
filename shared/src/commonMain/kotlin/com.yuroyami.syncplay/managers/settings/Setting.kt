@@ -43,8 +43,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.watchPref
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.writePref
+import com.yuroyami.syncplay.managers.preferences.StaticPref
+import com.yuroyami.syncplay.managers.preferences.set
+import com.yuroyami.syncplay.managers.preferences.watchPref
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.MultiChoiceDialog
@@ -89,14 +90,12 @@ import kotlin.math.roundToInt
  * @property key Unique identifier for persisting this setting to storage
  * @property title Display title shown to the user (localized string resource)
  * @property summary Description explaining what the setting does (localized string resource)
- * @property defaultValue The default value if no stored value exists
  * @property icon Optional icon displayed next to the setting title
  * @property enabled Whether the setting is interactive (default: true)
  */
 sealed class Setting<T>(
-    val type: SettingType = SettingType.OneClickSettingType, val key: String = "",
+    val type: SettingType = SettingType.OneClickSettingType, val key: StaticPref<T>,
     val title: StringResource, val summary: StringResource,
-    val defaultValue: T,
     val icon: ImageVector? = null, val enabled: Boolean = true,
 ) {
     /**
@@ -173,10 +172,9 @@ sealed class Setting<T>(
      * but need to persist across app sessions.
      *
      * @property key DataStore key for this setting
-     * @property defaultValue The default value to use
      */
-    class HeadlessSetting(key: String, defaultValue: Any) : Setting<Any>(
-        type = SettingType.HeadlessSettingType, key = key, summary = Res.string.okay, title = Res.string.okay, defaultValue = defaultValue,
+    class HeadlessSetting(key: StaticPref<Any>) : Setting<Any>(
+        type = SettingType.HeadlessSettingType, key = key, summary = Res.string.okay, title = Res.string.okay,
         icon = null, enabled = true
     ) {
         @Composable
@@ -193,11 +191,11 @@ sealed class Setting<T>(
      * @property onClick Callback invoked when the setting is tapped
      */
     class OneClickSetting(
-        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Any = Any(),
+        type: SettingType, key: StaticPref<Any>, summary: StringResource, title: StringResource,
         icon: ImageVector?, enabled: Boolean = true,
         val onClick: (() -> Unit)? = null,
     ) : Setting<Any>(
-        type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
+        type = type, key = key, summary = summary, title = title,
         icon = icon, enabled = enabled
     ) {
         @Composable
@@ -223,14 +221,14 @@ sealed class Setting<T>(
      */
     @Suppress("AssignedValueIsNeverRead")
     class YesNoDialogSetting(
-        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Any = Any(),
+        type: SettingType, key: StaticPref<Boolean>, summary: StringResource, title: StringResource,
         icon: ImageVector?, enabled: Boolean = true,
         val rationale: StringResource,
         val onYes: (CoroutineScope.() -> Unit)? = null,
         val onNo: (CoroutineScope.() -> Unit)? = null
         //TODO: Show "done" message (i.e: Operation successfully carried out) in a snackbar message
-    ) : Setting<Any>(
-        type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
+    ) : Setting<Boolean>(
+        type = type, key = key, summary = summary, title = title,
         icon = icon, enabled = enabled
     ) {
         @Composable
@@ -277,11 +275,11 @@ sealed class Setting<T>(
      * @property popupComposable The composable to show as a popup, receives visibility state
      */
     class PopupSetting(
-        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Any = Any(),
+        type: SettingType, key: StaticPref<out Any>, summary: StringResource, title: StringResource,
         icon: ImageVector?, enabled: Boolean = true,
         val popupComposable: @Composable ((MutableState<Boolean>) -> Unit)? = null
     ) : Setting<Any>(
-        type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
+        type = type, key = key, summary = summary, title = title,
         icon = icon, enabled = enabled
     ) {
         @Composable
@@ -310,16 +308,16 @@ sealed class Setting<T>(
      * @property onBooleanChanged Callback invoked when the value changes
      */
     class BooleanSetting(
-        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Boolean,
+        type: SettingType, key: StaticPref<Boolean>, summary: StringResource, title: StringResource,
         icon: ImageVector?, enabled: Boolean = true,
         val onBooleanChanged: (Boolean) -> Unit = {},
     ) : Setting<Boolean>(
-        type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
+        type = type, key = key, summary = summary, title = title,
         icon = icon, enabled = enabled
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val boolean by key.watchPref(defaultValue)
+            val boolean by key.watchPref()
             val scope = rememberCoroutineScope { Dispatchers.IO }
 
             BaseSettingComposable(
@@ -328,7 +326,7 @@ sealed class Setting<T>(
                 icon = icon,
                 onClick = {
                     scope.launch {
-                        writePref(key, !boolean)
+                        key.set(!boolean)
                     }
                 },
                 trailingElement = {
@@ -338,7 +336,7 @@ sealed class Setting<T>(
                             enabled = enabled,
                             onCheckedChange = { b ->
                                 scope.launch {
-                                    writePref(key, b)
+                                    key.set(b)
                                 }
                                 onBooleanChanged.invoke(b)
                             }
@@ -350,7 +348,7 @@ sealed class Setting<T>(
                             enabled = enabled,
                             onCheckedChange = { b ->
                                 scope.launch {
-                                    writePref(key, b)
+                                    key.set(b)
                                 }
                                 onBooleanChanged.invoke(b)
                             }
@@ -372,18 +370,18 @@ sealed class Setting<T>(
      * @property onItemChosen Callback invoked when a new option is selected
      */
     class MultiChoiceSetting(
-        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: String,
+        type: SettingType, key: StaticPref<String>, summary: StringResource, title: StringResource,
         icon: ImageVector?, enabled: Boolean = true,
         val entries: @Composable () -> Map<String, String>,
         val onItemChosen: ((value: String) -> Unit)? = null
     ) : Setting<String>(
-        type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
+        type = type, key = key, summary = summary, title = title,
         icon = icon, enabled = enabled
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
             val actualEntries = entries.invoke()
-            val selectedItem by key.watchPref(defaultValue)
+            val selectedItem by key.watchPref()
             val dialogOpen = remember { mutableStateOf(false) }
 
             val scope = rememberCoroutineScope { Dispatchers.IO }
@@ -398,7 +396,7 @@ sealed class Setting<T>(
                         dialogOpen.value = false
 
                         scope.launch {
-                            writePref(key, item.value)
+                            key.set(item.value)
                             onItemChosen?.let { it(item.value) }
                         }
                     })
@@ -429,18 +427,18 @@ sealed class Setting<T>(
      * @property onValueChanged Callback invoked when the value changes
      */
     class SliderSetting(
-        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Int,
+        type: SettingType, key: StaticPref<Int>, summary: StringResource, title: StringResource,
         icon: ImageVector?, enabled: Boolean = true,
         val maxValue: Int = 100,
         val minValue: Int = 0,
         val onValueChanged: ((newValue: Int) -> Unit)? = null,
     ) : Setting<Int>(
-        type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
+        type = type, key = key, summary = summary, title = title,
         icon = icon, enabled = enabled
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val value by key.watchPref(defaultValue)
+            val value by key.watchPref()
             val styling = LocalSettingStyling.current
             val scope = rememberCoroutineScope { Dispatchers.IO }
 
@@ -468,7 +466,7 @@ sealed class Setting<T>(
                             }
 
                             scope.launch {
-                                writePref(key, f.roundToInt())
+                                key.set(f.roundToInt())
                             }
                         },
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
@@ -501,15 +499,15 @@ sealed class Setting<T>(
      * is stored as an ARGB integer.
      */
     class ColorSetting(
-        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: Int,
+        type: SettingType, key: StaticPref<Int>, summary: StringResource, title: StringResource,
         icon: ImageVector?, enabled: Boolean = true
     ) : Setting<Int>(
-        type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
+        type = type, key = key, summary = summary, title = title,
         icon = icon, enabled = enabled
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val color by key.watchPref(defaultValue)
+            val color by key.watchPref()
             val colorDialogState = remember { mutableStateOf(false) }
             val scope = rememberCoroutineScope { Dispatchers.IO }
 
@@ -529,11 +527,16 @@ sealed class Setting<T>(
                 },
             )
 
-            ColorPickingPopup(colorDialogState, initialColor = Color(color), onColorChanged = { color ->
-                scope.launch {
-                    writePref(key, color.toArgb())
+            ColorPickingPopup(
+                visibilityState = colorDialogState, initialColor = Color(color), onColorChanged = { color ->
+                    scope.launch {
+                        key.set(color.toArgb())
+                    }
+                },
+                onDefaultReset = {
+                    scope.launch { key.set(key.default) }
                 }
-            }, onDefaultReset = { scope.launch { writePref(key, defaultValue) } })
+            )
         }
     }
 
@@ -544,15 +547,15 @@ sealed class Setting<T>(
      * Configured for numeric input by default but can be customized for other types.
      */
     class TextFieldSetting(
-        type: SettingType, key: String, summary: StringResource, title: StringResource, defaultValue: String,
+        type: SettingType, key: StaticPref<String>, summary: StringResource, title: StringResource,
         icon: ImageVector?, enabled: Boolean = true
     ) : Setting<String>(
-        type = type, key = key, summary = summary, title = title, defaultValue = defaultValue,
+        type = type, key = key, summary = summary, title = title,
         icon = icon, enabled = enabled
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val string by key.watchPref(defaultValue)
+            val string by key.watchPref()
             val scope = rememberCoroutineScope()
 
             BaseSettingComposable(
@@ -561,7 +564,7 @@ sealed class Setting<T>(
                 icon = icon,
                 onClick = {
                     scope.launch {
-                        writePref(key, string)
+                        key.set(string)
                     }
                 },
                 supportingElement = {
@@ -570,7 +573,7 @@ sealed class Setting<T>(
                         value = string,
                         onValueChange = {
                             scope.launch {
-                                writePref(key, it)
+                                key.set(it)
                             }
                         },
                         type = KeyboardType.Number,

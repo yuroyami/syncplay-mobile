@@ -16,7 +16,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.yuroyami.syncplay.SyncplayActivity
-import com.yuroyami.syncplay.managers.datastore.createDataStore
+import com.yuroyami.syncplay.managers.preferences.createDataStore
 import java.util.Locale
 
 /**

@@ -1,7 +1,5 @@
 package com.yuroyami.syncplay.managers.player
 
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.pref
 import com.yuroyami.syncplay.managers.player.PlayerOptions.Companion.get
 
 /**

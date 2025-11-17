@@ -39,8 +39,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.watchPref
+import com.yuroyami.syncplay.managers.preferences.Preferences.CUSTOM_SEEK_AMOUNT
+import com.yuroyami.syncplay.managers.preferences.watchPref
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.SyncplayPopup
 import com.yuroyami.syncplay.ui.components.syncplayFont
@@ -186,7 +186,7 @@ object PopupSeekToPosition {
                 }
 
                 /* Custom Skip intro */
-                val customSkipAmount by DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT.watchPref(90)
+                val customSkipAmount by CUSTOM_SEEK_AMOUNT.watchPref()
                 val customSkipAmountString by derivedStateOf { timeStamper(customSkipAmount) }
 
                 Button(

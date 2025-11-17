@@ -4,21 +4,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.watchPref
+import com.yuroyami.syncplay.managers.preferences.Preferences.COLOR_ERRORMSG
+import com.yuroyami.syncplay.managers.preferences.Preferences.COLOR_FRIENDTAG
+import com.yuroyami.syncplay.managers.preferences.Preferences.COLOR_SELFTAG
+import com.yuroyami.syncplay.managers.preferences.Preferences.COLOR_SYSTEMMSG
+import com.yuroyami.syncplay.managers.preferences.Preferences.COLOR_TIMESTAMP
+import com.yuroyami.syncplay.managers.preferences.Preferences.COLOR_USERMSG
+import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_ACTIVATE_STAMP
+import com.yuroyami.syncplay.managers.preferences.watchPref
 import com.yuroyami.syncplay.models.MessagePalette
-import com.yuroyami.syncplay.ui.theme.Theming
 
 val messagePalette: State<MessagePalette>
     @Composable get() {
-        val colorTimestamp = DataStoreKeys.PREF_INROOM_COLOR_TIMESTAMP.watchPref(Theming.MSG_TIMESTAMP.toArgb())
-        val colorSelftag = DataStoreKeys.PREF_INROOM_COLOR_SELFTAG.watchPref(Theming.MSG_SELF_TAG.toArgb())
-        val colorFriendtag = DataStoreKeys.PREF_INROOM_COLOR_FRIENDTAG.watchPref(Theming.MSG_FRIEND_TAG.toArgb())
-        val colorSystem = DataStoreKeys.PREF_INROOM_COLOR_SYSTEMMSG.watchPref(Theming.MSG_SYSTEM.toArgb())
-        val colorUserchat = DataStoreKeys.PREF_INROOM_COLOR_USERMSG.watchPref(Theming.MSG_CHAT.toArgb())
-        val colorError = DataStoreKeys.PREF_INROOM_COLOR_ERRORMSG.watchPref(Theming.MSG_ERROR.toArgb())
-        val msgIncludeTimestamp = DataStoreKeys.PREF_INROOM_MSG_ACTIVATE_STAMP.watchPref(true)
+        val colorTimestamp = COLOR_TIMESTAMP.watchPref()
+        val colorSelftag = COLOR_SELFTAG.watchPref()
+        val colorFriendtag = COLOR_FRIENDTAG.watchPref()
+        val colorSystem = COLOR_SYSTEMMSG.watchPref()
+        val colorUserchat = COLOR_USERMSG.watchPref()
+        val colorError = COLOR_ERRORMSG.watchPref()
+        val msgIncludeTimestamp = MSG_ACTIVATE_STAMP.watchPref()
 
         return derivedStateOf {
             MessagePalette(

@@ -2,8 +2,6 @@ package com.yuroyami.syncplay.managers
 
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_PAUSE_ON_SOMEONE_LEAVE
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.pref
 import com.yuroyami.syncplay.managers.protocol.ProtocolCallback
 import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import com.yuroyami.syncplay.managers.protocol.handler.Set

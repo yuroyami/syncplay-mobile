@@ -48,8 +48,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_GESTURES
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.watchPref
+import com.yuroyami.syncplay.managers.preferences.Preferences.GESTURES
+import com.yuroyami.syncplay.managers.preferences.watchPref
 import com.yuroyami.syncplay.ui.components.screenHeightPx
 import com.yuroyami.syncplay.ui.components.screenWidthPx
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
@@ -68,7 +68,7 @@ var initialBrightness = 0f
 fun RoomGestureInterceptor(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
     val scope = rememberCoroutineScope()
-    val gesturesEnabled by MISC_GESTURES.watchPref(true)
+    val gesturesEnabled by GESTURES.watchPref()
     val hasVideo by viewmodel.hasVideo.collectAsState()
 
     val volumeSteps = getSystemMaxVolume()

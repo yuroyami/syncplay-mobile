@@ -52,11 +52,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_PLAYER_ENGINE
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_NEVER_SHOW_TIPS
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.pref
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.watchPref
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.writePref
+import com.yuroyami.syncplay.managers.preferences.Preferences.NEVER_SHOW_TIPS
+import com.yuroyami.syncplay.managers.preferences.Preferences.PLAYER_ENGINE
+import com.yuroyami.syncplay.managers.preferences.get
+import com.yuroyami.syncplay.managers.preferences.set
+import com.yuroyami.syncplay.managers.preferences.watchPref
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.sairaFont
@@ -112,7 +112,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
     LaunchedEffect(null) {
         withContext(Dispatchers.IO) {
             delay(1000)
-            val neverShowTips = pref(PREF_NEVER_SHOW_TIPS, false)
+            val neverShowTips = NEVER_SHOW_TIPS.get()
             if (!globalViewmodel.hasEnteredRoomOnce && !neverShowTips) {
                 didYaKnowPopup.value = true
             }
@@ -306,7 +306,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
 
                         //TODO Move to an extension function that retrieves current engine
                         val defaultEngine = availablePlatformPlayerEngines.first { it.isDefault }.name
-                        val selectedEngine by MISC_PLAYER_ENGINE.watchPref(defaultEngine)
+                        val selectedEngine by PLAYER_ENGINE.watchPref(defaultEngine)
 
                         HomeAnimatedEngineButtonGroup(
                             modifier = Modifier.fillMaxWidth(0.75f),
@@ -315,7 +315,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             onSelectEngine = { engine ->
                                 viewmodel.viewModelScope.launch(Dispatchers.IO) {
                                     if (engine.isAvailable) {
-                                        writePref(MISC_PLAYER_ENGINE, engine.name)
+                                        PLAYER_ENGINE.set(engine.name)
                                     } else {
                                         viewmodel.snackManager.snackIt("This engine is unavailable. Did you download the right APK?") //TODO Localize
                                     }

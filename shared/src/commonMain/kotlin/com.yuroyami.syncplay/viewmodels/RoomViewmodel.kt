@@ -10,11 +10,13 @@ import com.yuroyami.syncplay.managers.RoomActionManager
 import com.yuroyami.syncplay.managers.SessionManager
 import com.yuroyami.syncplay.managers.SharedPlaylistManager
 import com.yuroyami.syncplay.managers.UIManager
-import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.pref
 import com.yuroyami.syncplay.managers.network.NetworkManager
 import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.managers.player.PlayerManager
+import com.yuroyami.syncplay.managers.preferences.Preferences.PLAYER_ENGINE
+import com.yuroyami.syncplay.managers.preferences.Preferences.READY_FIRST_HAND
+import com.yuroyami.syncplay.managers.preferences.Preferences.TLS_ENABLE
+import com.yuroyami.syncplay.managers.preferences.get
 import com.yuroyami.syncplay.managers.protocol.ProtocolManager
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.JoinConfig
@@ -95,14 +97,14 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            setReadyDirectly = pref(DataStoreKeys.PREF_READY_FIRST_HAND, true)
+            setReadyDirectly = READY_FIRST_HAND.get()
 
             networkManager = instantiateNetworkManager(engine = NetworkManager.getPreferredEngine())
 
             joinConfig?.let {
                 launch {
                     val defaultEngine = availablePlatformPlayerEngines.first { it.isDefault }.name //TODO
-                    val engine = availablePlatformPlayerEngines.first { it.name == pref(DataStoreKeys.MISC_PLAYER_ENGINE, defaultEngine) }
+                    val engine = availablePlatformPlayerEngines.first { it.name == PLAYER_ENGINE.get(defaultEngine) }
                     playerManager.player = engine.instantiate(this@RoomViewmodel)
                     playerManager.isPlayerReady.value = true
                 }
@@ -114,7 +116,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
                     sessionManager.session.currentPassword = joinConfig.pw
 
                     /** Connecting (via TLS or noTLS) */
-                    val tls = pref(DataStoreKeys.PREF_TLS_ENABLE, default = true)
+                    val tls = TLS_ENABLE.get()
                     if (tls && networkManager.supportsTLS()) {
                         callbackManager.onTLSCheck()
                         networkManager.tls = Constants.TLS.TLS_ASK
