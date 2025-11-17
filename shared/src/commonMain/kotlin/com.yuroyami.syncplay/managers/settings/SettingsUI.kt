@@ -74,7 +74,7 @@ object SettingsUI {
     @Composable
     fun SettingsGrid(
         modifier: Modifier = Modifier,
-        settings: SettingCollection,
+        settings: List<SettingCategory>,
         state: MutableState<SettingGridState>,
         layout: Layout,
         titleSize: Float = 12f,
@@ -99,7 +99,7 @@ object SettingsUI {
                         maxItemsInEachRow = gridColumns
                     ) {
 
-                        settings.keys.forEach { category ->
+                        settings.forEach { category ->
                             SettingCategoryCard1(
                                 0,
                                 categ = category,
@@ -122,7 +122,7 @@ object SettingsUI {
                         contentPadding = PaddingValues(8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        settings.keys.forEachIndexed { i, category ->
+                        settings.forEachIndexed { i, category ->
                             item {
                                 SettingCategoryCard2(
                                     i,
@@ -150,7 +150,7 @@ object SettingsUI {
             ) {
                 enteredCategory?.let { accessedCategory ->
                     SettingScreen(
-                        settingList = settings[accessedCategory]!!
+                        settingCategory = accessedCategory
                     )
                 }
             }
@@ -250,7 +250,7 @@ object SettingsUI {
     }
 
     @Composable
-    fun SettingScreen(modifier: Modifier = Modifier, settingList: SettingSet) {
+    fun SettingScreen(modifier: Modifier = Modifier, settingCategory: SettingCategory) {
         val vss = rememberScrollState()
         val scrollAreaState = rememberScrollAreaState(vss)
         var columnHeight by remember { mutableStateOf(0.dp) }
@@ -266,18 +266,26 @@ object SettingsUI {
                         columnHeight = coordinates.size.height.toDp()
                     }
             }) {
-                settingList.forEach { setting ->
-                    /** Creating the setting composable */
-                    setting.SettingComposable(Modifier)
-
-                    /** Creating dividers between (and only between) each setting and another */
-                    HorizontalDivider(
-                        thickness = Dp.Hairline,
-                        modifier = Modifier.padding(horizontal = 8.dp),
-                        color = MaterialTheme.colorScheme.inverseSurface
-                    )
+                settingCategory.actionSettings.forEach {
+                    it.SettingComposable()
+                    SettingDivider()
                 }
-            }
+                settingCategory.booleanSettings.forEach {
+                    it.SettingComposable()
+                    SettingDivider()
+                }
+                settingCategory.intSettings.forEach {
+                    it.SettingComposable()
+                    SettingDivider()
+                }
+                settingCategory.stringSettings.forEach {
+                    it.SettingComposable()
+                    SettingDivider()
+                }
+                settingCategory.stringSetSettings.forEach {
+                    it.SettingComposable()
+                    SettingDivider()
+                }
 
             VerticalScrollbar(
                 modifier = Modifier.align(Alignment.CenterEnd).width(4.dp).height(columnHeight)
@@ -289,4 +297,14 @@ object SettingsUI {
             }
         }
     }
+}
+
+@Composable
+fun SettingDivider() {
+    /** Creating dividers between (and only between) each setting and another */
+    HorizontalDivider(
+        thickness = Dp.Hairline,
+        modifier = Modifier.padding(horizontal = 8.dp),
+        color = MaterialTheme.colorScheme.inverseSurface
+    )}
 }

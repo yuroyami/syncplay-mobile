@@ -62,8 +62,8 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
                 viewmodel.actionManager.seekFrwrd()
             }
         }
-        val customSkipToFront by CUSTOM_SEEK_FRONT.watchPref()
         val customSkipAmount by CUSTOM_SEEK_AMOUNT.watchPref()
+        val customSkipToFront by CUSTOM_SEEK_FRONT.watchPref()
         if (customSkipToFront) {
             val customSkipAmountString by derivedStateOf {
                 timeStamper(

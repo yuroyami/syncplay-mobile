@@ -9,7 +9,6 @@ import androidx.compose.material.icons.filled.SettingsSuggest
 import androidx.compose.material.icons.filled.Stream
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.VideoLabel
-import com.yuroyami.syncplay.managers.preferences.Pref
 import com.yuroyami.syncplay.managers.preferences.Preferences.AUDIO_LANG
 import com.yuroyami.syncplay.managers.preferences.Preferences.CC_LANG
 import com.yuroyami.syncplay.managers.preferences.Preferences.COLOR_ERRORMSG
@@ -56,13 +55,6 @@ import syncplaymobile.shared.generated.resources.uisetting_categ_chat_colors
 import syncplaymobile.shared.generated.resources.uisetting_categ_chat_properties
 import syncplaymobile.shared.generated.resources.uisetting_categ_player_settings
 
-
-typealias SettingSet = List<Pref<out Any>>
-typealias SettingCollection = Map<SettingCategory, SettingSet>
-
-typealias ExtraSettingBundle = Pair<SettingCategory, SettingSet>
-
-
 /* Styles */
 val settingGLOBALstyle = SettingStyling(
     iconSize = 30
@@ -73,85 +65,92 @@ val settingROOMstyle = SettingStyling(
     summarySize = 8f
 )
 
-val SETTINGS_GLOBAL: SettingCollection by lazy {
-    buildMap {
-        put(
-            SettingCategory(
-                keyID = "global_general",
-                title = Res.string.settings_categ_general,
-                icon = Icons.Filled.SettingsSuggest
-            ), listOf(REMEMBER_INFO, NEVER_SHOW_TIPS, ERASE_SHORTCUTS, MEDIA_DIRECTORIES)
-        )
-
-        put(
-            SettingCategory(
-                keyID = "global_language",
-                title = Res.string.settings_categ_language,
-                icon = Icons.Filled.Translate
-            ),
-            listOf(DISPLAY_LANG, AUDIO_LANG, CC_LANG)
-        )
-
-        put(
-            SettingCategory(
-                keyID = "global_syncing",
-                title = Res.string.settings_categ_syncing,
-                icon = Icons.Filled.ConnectWithoutContact
-            ),
-            listOf(READY_FIRST_HAND, PAUSE_ON_SOMEONE_LEAVE, FILE_MISMATCH_WARNING, HASH_FILENAME, HASH_FILESIZE)
-        )
-
-        put(
-            SettingCategory(
-                keyID = "global_network",
-                title = Res.string.settings_categ_network,
-                icon = Icons.Filled.Hub
-            ),
-            listOf(NETWORK_ENGINE, TLS_ENABLE)
-        )
-
-        put(
-            SettingCategory(
-                keyID = "global_advanced",
-                title = Res.string.settings_categ_advanced,
-                icon = Icons.Filled.Stream
-            ),
-            listOf(GLOBAL_RESET_DEFAULTS)
-        )
-    }
+val GLOBAL_GENERAL = SettingCategory(
+    keyID = "global_general",
+    title = Res.string.settings_categ_general,
+    icon = Icons.Filled.SettingsSuggest
+).apply {
+    booleanSettings.addAll(listOf(REMEMBER_INFO, NEVER_SHOW_TIPS))
+    actionSettings.add(ERASE_SHORTCUTS)
+    stringSetSettings.add(MEDIA_DIRECTORIES)
 }
 
-val SETTINGS_ROOM: SettingCollection = buildMap {
-    put(
-        SettingCategory(
-            keyID = "inroom_chatcolors",
-            title = Res.string.uisetting_categ_chat_colors,
-            icon = Icons.Filled.Palette,
-        ), listOf(COLOR_TIMESTAMP, COLOR_SELFTAG, COLOR_FRIENDTAG, COLOR_SYSTEMMSG, COLOR_USERMSG, COLOR_ERRORMSG)
-    )
-    put(
-        SettingCategory(
-            keyID = "inroom_chat_properties",
-            title = Res.string.uisetting_categ_chat_properties,
-            icon = Icons.AutoMirrored.Filled.Chat
-        ), listOf(MSG_ACTIVATE_STAMP,MSG_OUTLINE, MSG_SHADOW, MSG_BG_OPACITY, MSG_FONTSIZE, MSG_MAXCOUNT, MSG_FADING_DURATION, MSG_BOX_ACTION )
-    )
-    put(
-        SettingCategory(
-            keyID = "inroom_player_settings",
-            title = Res.string.uisetting_categ_player_settings,
-            icon = Icons.Filled.VideoLabel,
-        ), listOf(
-            SUBTITLE_SIZE,
+val GLOBAL_LANGUAGE = SettingCategory(
+    keyID = "global_language",
+    title = Res.string.settings_categ_language,
+    icon = Icons.Filled.Translate
+).apply {
+    stringSettings.addAll(listOf(DISPLAY_LANG, AUDIO_LANG, CC_LANG))
+}
+
+val GLOBAL_SYNCING = SettingCategory(
+    keyID = "global_syncing",
+    title = Res.string.settings_categ_syncing,
+    icon = Icons.Filled.ConnectWithoutContact
+).apply {
+    booleanSettings.addAll(listOf(READY_FIRST_HAND, PAUSE_ON_SOMEONE_LEAVE, FILE_MISMATCH_WARNING))
+    stringSettings.addAll(listOf(HASH_FILENAME, HASH_FILESIZE))
+}
+
+val GLOBAL_NETWORK = SettingCategory(
+    keyID = "global_network",
+    title = Res.string.settings_categ_network,
+    icon = Icons.Filled.Hub
+).apply {
+    booleanSettings.add(TLS_ENABLE)
+    stringSettings.add(NETWORK_ENGINE)
+}
+
+val GLOBAL_ADVANCED = SettingCategory(
+    keyID = "global_advanced",
+    title = Res.string.settings_categ_advanced,
+    icon = Icons.Filled.Stream
+).apply {
+    actionSettings.add(GLOBAL_RESET_DEFAULTS)
+}
+
+val INROOM_CHATCOLORS = SettingCategory(
+    keyID = "inroom_chatcolors",
+    title = Res.string.uisetting_categ_chat_colors,
+    icon = Icons.Filled.Palette,
+).apply {
+    intSettings.addAll(listOf(COLOR_TIMESTAMP, COLOR_SELFTAG, COLOR_FRIENDTAG, COLOR_SYSTEMMSG, COLOR_USERMSG, COLOR_ERRORMSG))
+}
+
+val INROOM_CHAT_PROPERTIES = SettingCategory(
+    keyID = "inroom_chat_properties",
+    title = Res.string.uisetting_categ_chat_properties,
+    icon = Icons.AutoMirrored.Filled.Chat
+).apply {
+    booleanSettings.addAll(listOf(MSG_ACTIVATE_STAMP, MSG_OUTLINE, MSG_SHADOW, MSG_BOX_ACTION))
+    intSettings.addAll(listOf(MSG_BG_OPACITY, MSG_FONTSIZE, MSG_MAXCOUNT, MSG_FADING_DURATION))
+}
+
+val INROOM_PLAYER_SETTINGS = SettingCategory(
+    keyID = "inroom_player_settings",
+    title = Res.string.uisetting_categ_player_settings,
+    icon = Icons.Filled.VideoLabel,
+).apply {
+    booleanSettings.add(CUSTOM_SEEK_FRONT)
+
+    intSettings.addAll(
+        listOf(
+            CUSTOM_SEEK_AMOUNT, SUBTITLE_SIZE, SEEK_FORWARD_JUMP, SEEK_BACKWARD_JUMP
             //AUDIO_DELAY,
-            //SUBTITLE_DELAY,
-            CUSTOM_SEEK_AMOUNT, CUSTOM_SEEK_FRONT, SEEK_FORWARD_JUMP, SEEK_BACKWARD_JUMP)
-    )
-    put(
-        SettingCategory(
-            keyID = "inroom_advanced",
-            title = Res.string.settings_categ_advanced,
-            icon = Icons.Filled.Stream
-        ), listOf(RECONNECTION_INTERVAL, INROOM_RESET_DEFAULTS)
+            //SUBTITLE_DELAY,)
+        )
     )
 }
+
+val INROOM_ADVANCED = SettingCategory(
+    keyID = "inroom_advanced",
+    title = Res.string.settings_categ_advanced,
+    icon = Icons.Filled.Stream
+).apply {
+    intSettings.add(RECONNECTION_INTERVAL)
+    actionSettings.add(INROOM_RESET_DEFAULTS)
+}
+
+
+val SETTINGS_GLOBAL = listOf(GLOBAL_GENERAL, GLOBAL_LANGUAGE, GLOBAL_SYNCING, GLOBAL_NETWORK, GLOBAL_ADVANCED)
+val SETTINGS_ROOM = listOf(INROOM_CHATCOLORS, INROOM_CHAT_PROPERTIES, INROOM_PLAYER_SETTINGS, INROOM_ADVANCED)

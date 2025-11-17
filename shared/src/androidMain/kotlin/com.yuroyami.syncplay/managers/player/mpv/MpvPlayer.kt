@@ -10,6 +10,8 @@ import android.os.ParcelFileDescriptor
 import android.util.Log
 import android.view.LayoutInflater
 import androidx.annotation.UiThread
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SettingsInputComponent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
@@ -19,7 +21,13 @@ import androidx.media3.common.C.STREAM_TYPE_MUSIC
 import com.yuroyami.syncplay.databinding.MpvviewBinding
 import com.yuroyami.syncplay.managers.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.managers.player.BasePlayer
-import com.yuroyami.syncplay.managers.settings.ExtraSettingBundle
+import com.yuroyami.syncplay.managers.preferences.Preferences.MPV_DEBUG_MODE
+import com.yuroyami.syncplay.managers.preferences.Preferences.MPV_GPU_NEXT
+import com.yuroyami.syncplay.managers.preferences.Preferences.MPV_HARDWARE_ACCELERATION
+import com.yuroyami.syncplay.managers.preferences.Preferences.MPV_INTERPOLATION
+import com.yuroyami.syncplay.managers.preferences.Preferences.MPV_PROFILE
+import com.yuroyami.syncplay.managers.preferences.Preferences.MPV_VIDSYNC
+import com.yuroyami.syncplay.managers.settings.SettingCategory
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
@@ -31,6 +39,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.uisetting_categ_mpv
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -85,7 +95,15 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
             update = {})
     }
 
-    override suspend fun configurableSettings(): ExtraSettingBundle = getExtraSettings()
+    override suspend fun configurableSettings() = SettingCategory(
+        keyID = "inroom_mpv",
+        title = Res.string.uisetting_categ_mpv,
+        icon = Icons.Filled.SettingsInputComponent
+    ).apply {
+        booleanSettings.addAll(listOf(MPV_HARDWARE_ACCELERATION, MPV_GPU_NEXT, MPV_INTERPOLATION))
+        stringSettings.addAll(listOf(MPV_VIDSYNC, MPV_PROFILE))
+        intSettings.add(MPV_DEBUG_MODE)
+    }
 
     override suspend fun hasMedia(): Boolean {
         if (!isInitialized) return false

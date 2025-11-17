@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.eygraber.uri.Uri
 import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
-import com.yuroyami.syncplay.managers.settings.ExtraSettingBundle
+import com.yuroyami.syncplay.managers.settings.SettingCategory
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
@@ -126,7 +126,7 @@ abstract class BasePlayer(
      *
      * @return Bundle of extra settings, or null if no custom settings available
      */
-    abstract suspend fun configurableSettings(): ExtraSettingBundle?
+    abstract suspend fun configurableSettings(): SettingCategory?
 
     /**
      * Checks whether any media is currently loaded in the player.

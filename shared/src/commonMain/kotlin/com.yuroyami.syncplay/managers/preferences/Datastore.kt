@@ -14,8 +14,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.runBlocking
 import okio.Path.Companion.toPath
 
-
-
 /**
  * Global DataStore instance for application preferences.
  *

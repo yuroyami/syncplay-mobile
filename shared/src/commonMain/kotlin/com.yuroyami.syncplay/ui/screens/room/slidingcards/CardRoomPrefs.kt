@@ -26,7 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.managers.settings.SETTINGS_ROOM
-import com.yuroyami.syncplay.managers.settings.SettingCollection
+import com.yuroyami.syncplay.managers.settings.SettingCategory
 import com.yuroyami.syncplay.managers.settings.SettingsUI
 import com.yuroyami.syncplay.managers.settings.SettingsUI.SettingsGrid
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
@@ -46,14 +46,14 @@ object CardRoomPrefs {
         val settingState = remember { mutableStateOf(SettingGridState.NAVIGATING_CATEGORIES) }
         val viewmodel = LocalRoomViewmodel.current
 
-        var roomSettings: SettingCollection? by remember { mutableStateOf(null) }
+        var roomSettings: List<SettingCategory>? by remember { mutableStateOf(null) }
 
         LaunchedEffect(null) {
-            val commonSettings = SETTINGS_ROOM.toMutableMap()
+            val commonSettings = SETTINGS_ROOM.toMutableList()
             viewmodel.player.configurableSettings()?.let { playerSpecificSettings ->
-                commonSettings.put(playerSpecificSettings.first, playerSpecificSettings.second)
+                commonSettings.add(commonSettings.size - 2, playerSpecificSettings)
             }
-            roomSettings = commonSettings as SettingCollection
+            roomSettings = commonSettings
         }
 
         roomSettings?.let { settings ->

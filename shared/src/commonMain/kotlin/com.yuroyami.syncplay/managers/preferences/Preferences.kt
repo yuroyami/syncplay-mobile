@@ -42,16 +42,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.preferences.core.edit
+import com.yuroyami.syncplay.managers.settings.ExtraConfig
 import com.yuroyami.syncplay.ui.popups.PopupMediaDirs.MediaDirsPopup
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.utils.PLATFORM
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.platform
 import com.yuroyami.syncplay.utils.platformCallback
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
@@ -180,7 +177,7 @@ object Preferences {
     /** ------------ Miscellaneous -------------*/
     val JOIN_CONFIG = Pref<String?>("misc_join_config", null)
 
-    val PLAYER_ENGINE = Pref<String>("misc_player_engine", availablePlatformPlayerEngines.first { it.isDefault }.name) {
+    val PLAYER_ENGINE = Pref("misc_player_engine", availablePlatformPlayerEngines.first { it.isDefault }.name) {
 
     }
     val GESTURES = Pref("misc_gestures", true)
@@ -205,10 +202,9 @@ object Preferences {
         summary = Res.string.setting_erase_shortcuts_summary
         icon = Icons.Filled.BookmarkRemove
 
-        rationale = Res.string.setting_erase_shortcuts_dialog
-
-        extraConfig = ExtraConfig.ActionSettingConfig(
-            onClick = {
+        extraConfig = ExtraConfig.ShowYesNoPickerSettingConfig(
+            rationale = Res.string.setting_erase_shortcuts_dialog,
+            onYes = {
                 platformCallback.onEraseConfigShortcuts()
             }
         )
@@ -314,11 +310,6 @@ object Preferences {
         title = Res.string.setting_network_engine_title
         summary = Res.string.setting_network_engine_summary
         icon = Icons.Filled.Lan
-    }
-    val TLS_ENABLE = Pref("pref_tls", true) {
-        title = Res.string.setting_tls_title
-        summary = Res.string.setting_tls_summary
-        icon = Icons.Filled.Key
 
         extraConfig = ExtraConfig.MultiChoiceSettingConfig(
             entries = {
@@ -333,6 +324,11 @@ object Preferences {
                 }
             }
         )
+    }
+    val TLS_ENABLE = Pref("pref_tls", true) {
+        title = Res.string.setting_tls_title
+        summary = Res.string.setting_tls_summary
+        icon = Icons.Filled.Key
     }
 
     /** ------------ Chat Colors -------------*/
@@ -440,14 +436,12 @@ object Preferences {
         summary = Res.string.uisetting_custom_seek_front_summary
         icon = Icons.Filled.Update
 
-        extraConfig = ExtraConfig.SliderSettingConfig(maxValue = 15, minValue = 0)
-    }
+        extraConfig = ExtraConfig.SliderSettingConfig(maxValue = 300, minValue = 30) }
     val CUSTOM_SEEK_FRONT = Pref("pref_inroom_custom_seek_front", true) {
         title = Res.string.uisetting_custom_seek_amount_title
         summary = Res.string.uisetting_custom_seek_amount_summary
         icon = Icons.Filled.Update
 
-        extraConfig = ExtraConfig.SliderSettingConfig(maxValue = 300, minValue = 30)
     }
     val SEEK_FORWARD_JUMP = Pref("pref_inroom_seek_forward_jump", 10) {
         title = Res.string.uisetting_seek_forward_jump_title
@@ -531,37 +525,31 @@ object Preferences {
         extraConfig = ExtraConfig.SliderSettingConfig(maxValue = 15, minValue = 0)
     }
 
-    val GLOBAL_RESET_DEFAULTS = Pref("global_reset_defaults", "") {
+    val GLOBAL_RESET_DEFAULTS = Pref("global_reset_defaults", Any()) {
         title = Res.string.setting_resetdefault_title
         summary = Res.string.setting_resetdefault_summary
         icon = Icons.Filled.ClearAll
 
-        rationale = Res.string.setting_resetdefault_dialog
-
-        extraConfig = ExtraConfig.ActionSettingConfig(
-            onClick = {
-                MainScope().launch(Dispatchers.IO) {
-                    datastore.edit { preferences ->
-                        preferences.clear()
-                    }
+        extraConfig = ExtraConfig.ShowYesNoPickerSettingConfig(
+            rationale = Res.string.setting_resetdefault_dialog,
+            onYes = {
+                datastore.edit { preferences ->
+                    preferences.clear()
                 }
             }
         )
     }
 
-    val INROOM_RESET_DEFAULTS = Pref("inroom_reset_defaults", "") {
+    val INROOM_RESET_DEFAULTS = Pref("inroom_reset_defaults", Any()) {
         title = Res.string.uisetting_resetdefault_title
         summary = Res.string.uisetting_resetdefault_summary
         icon = Icons.Filled.ClearAll
 
-        rationale = Res.string.setting_resetdefault_dialog
-
-        extraConfig = ExtraConfig.ActionSettingConfig(
-            onClick = {
-                MainScope().launch(Dispatchers.IO) {
-                    datastore.edit { preferences ->
-                        preferences.clear()
-                    }
+        extraConfig = ExtraConfig.ShowYesNoPickerSettingConfig(
+            rationale = Res.string.setting_resetdefault_dialog,
+            onYes = {
+                datastore.edit { preferences ->
+                    preferences.clear()
                 }
             }
         )
