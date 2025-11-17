@@ -10,8 +10,8 @@ import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_CURRENT_THEME
 import com.yuroyami.syncplay.managers.datastore.valueFlow
 import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
 import com.yuroyami.syncplay.managers.datastore.writeValue
-import com.yuroyami.syncplay.ui.theme.ALLEY_LAMP
 import com.yuroyami.syncplay.ui.theme.SaveableTheme
+import com.yuroyami.syncplay.ui.theme.defaultTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.SharingStarted.Companion.Eagerly
@@ -35,8 +35,8 @@ class ThemeManager(val viewmodel: ViewModel) : AbstractManager(viewmodel) {
     /**
      * The currently active theme.
      */
-    val currentTheme = valueFlow(MISC_CURRENT_THEME, ALLEY_LAMP.asString())
-        .stateIn(scope = viewmodel.viewModelScope, started = Eagerly, ALLEY_LAMP.asString())
+    val currentTheme = valueFlow(MISC_CURRENT_THEME, defaultTheme.asString())
+        .stateIn(scope = viewmodel.viewModelScope, started = Eagerly, defaultTheme.asString())
 
     val customThemes: StateFlow<List<SaveableTheme>> = valueFlow(MISC_ALL_THEMES, "[]")
         .map { Json.decodeFromString<List<SaveableTheme>>(it) }
@@ -77,10 +77,10 @@ class ThemeManager(val viewmodel: ViewModel) : AbstractManager(viewmodel) {
             val listEncodedAgain = Json.encodeToString(list)
             writeValue(MISC_ALL_THEMES, listEncodedAgain)
 
-            val selectedTheme = Json.decodeFromString<SaveableTheme>(valueSuspendingly(MISC_CURRENT_THEME, ALLEY_LAMP.asString()))
+            val selectedTheme = Json.decodeFromString<SaveableTheme>(valueSuspendingly(MISC_CURRENT_THEME, defaultTheme.asString()))
 
             if (selectedTheme == theme) {
-                changeTheme(list.firstOrNull() ?: ALLEY_LAMP)
+                changeTheme(list.firstOrNull() ?: defaultTheme)
             }
         }
     }

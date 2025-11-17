@@ -1,0 +1,21 @@
+<resources>
+    <!-- Common -->
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="okay">OK</string>
+
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="done">Done</string>
+    <string name="close">Close</string>
+
+    <string name="dont_show_again">Don't show this again</string>
+
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
+
+    <string name="delete">Delete</string>
+
+    <string name="off">Off</string>
+    <string name="on">On</string>
+</resources>

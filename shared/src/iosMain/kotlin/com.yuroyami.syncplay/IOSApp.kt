@@ -1,8 +1,12 @@
+@file:Suppress("unused", "FunctionName")
 package com.yuroyami.syncplay
 
 import androidx.compose.ui.window.ComposeUIViewController
 import com.yuroyami.syncplay.ui.screens.adam.AdamScreen
 import com.yuroyami.syncplay.utils.platformCallback
+import com.yuroyami.syncplay.viewmodels.HomeViewmodel
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
+import com.yuroyami.syncplay.viewmodels.SyncplayViewmodel
 import platform.UIKit.NSLayoutConstraint
 import platform.UIKit.UIViewController
 import platform.UIKit.addChildViewController
@@ -33,6 +37,14 @@ import platform.UIKit.didMoveToParentViewController
  *
  * @return UIViewController configured to host the Syncplay Compose UI with proper lifecycle handling
  */
+lateinit var globalViewmodel: SyncplayViewmodel
+
+val homeViewmodel: HomeViewmodel?
+    get() = if (::globalViewmodel.isInitialized) globalViewmodel.homeWeakRef?.get() else null
+
+val roomViewmodel: RoomViewmodel?
+    get() = if (::globalViewmodel.isInitialized) globalViewmodel.roomWeakRef?.get() else null
+
 fun SyncplayController(): UIViewController {
     // Initialize platform-specific callback handler
     platformCallback = ApplePlatformCallback
@@ -50,7 +62,11 @@ fun SyncplayController(): UIViewController {
 
             // Create the Compose UI controller as a child
             val composeController = ComposeUIViewController {
-                AdamScreen()
+                AdamScreen(
+                    onGlobalViewmodel = {
+                        globalViewmodel = it
+                    }
+                )
             }
 
             // Add as child view controller
@@ -67,7 +83,7 @@ fun SyncplayController(): UIViewController {
                 composeController.view.bottomAnchor.constraintEqualToAnchor(view.bottomAnchor)
             ))
 
-            //TODO watchdog?.onCreate()
+            roomViewmodel?.lifecycleManager?.onCreate()
         }
 
         /**
@@ -77,7 +93,7 @@ fun SyncplayController(): UIViewController {
         override fun viewDidAppear(animated: Boolean) {
             super.viewDidAppear(animated)
 
-            //watchdog?.onResume()
+            roomViewmodel?.lifecycleManager?.onResume()
         }
 
         /**
@@ -87,7 +103,7 @@ fun SyncplayController(): UIViewController {
         override fun viewDidDisappear(animated: Boolean) {
             super.viewDidDisappear(animated)
 
-            //todo watchdog?.onStop()
+            roomViewmodel?.lifecycleManager?.onStop()
         }
 
         /**
@@ -98,7 +114,7 @@ fun SyncplayController(): UIViewController {
         override fun viewWillAppear(animated: Boolean) {
             super.viewWillAppear(animated)
 
-            //watchdog?.onStart()
+            roomViewmodel?.lifecycleManager?.onStart()
         }
 
         /**
@@ -108,7 +124,7 @@ fun SyncplayController(): UIViewController {
          */
         override fun viewWillDisappear(animated: Boolean) {
             super.viewWillDisappear(animated)
-            //watchdog?.onPause()
+            roomViewmodel?.lifecycleManager?.onPause()
         }
     }
 

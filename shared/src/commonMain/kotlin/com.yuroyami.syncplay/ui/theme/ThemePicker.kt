@@ -66,7 +66,7 @@ import com.yuroyami.syncplay.ui.screens.Screen
 import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
 import com.yuroyami.syncplay.ui.screens.adam.LocalTheme
 
-val availableThemes = listOf(PYNCSLAY, GrayOLED, GREEN_GOBLIN, ALLEY_LAMP)
+val availableThemes = listOf(PYNCSLAY, GrayOLED, SILVER_LAKE, ALLEY_LAMP)
 
 val themeCardSize = 64.dp
 

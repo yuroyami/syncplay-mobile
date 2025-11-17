@@ -347,7 +347,6 @@ class SyncplayActivity : ComponentActivity() {
                 if (intnt.action == "pip") {
                     val pausePlayValue = intnt.getIntExtra("pause_zero_play_one", -1)
 
-                    //TODO CHECK IF IN ROOM IN THE FIRST PLACE
                     if (pausePlayValue == 1) {
                         roomViewmodel?.actionManager?.playPlayback()
                     } else {

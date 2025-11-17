@@ -4,6 +4,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.materialkolor.PaletteStyle
 
+
+val defaultTheme: SaveableTheme
+    get() = PYNCSLAY
+
 val BLANK_THEME = SaveableTheme(
     name = "Untitled theme",
     primaryColor = Color.Blue.toArgb(),
@@ -23,9 +27,14 @@ val BLANK_THEME = SaveableTheme(
  */
 val PYNCSLAY = SaveableTheme(
     name = "PyncSlay",
-    primaryColor = Theming.SP_CUTE_PINK.toArgb(),
-    isDark = true,
-    style = PaletteStyle.TonalSpot
+    primaryColor = -44800,
+    secondaryColor = -13794424,
+    tertiaryColor = -2654317,
+    neutralColor = -29276,
+    neutralVariantColor = -16777216,
+    contrast = 0.0,
+    isAMOLED = true,
+    style = PaletteStyle.Rainbow
 )
 
 /**
@@ -66,14 +75,13 @@ val ALLEY_LAMP = SaveableTheme(
     syncplayGradients = false
 )
 
-/**
- * "Green Goblin" theme (default) - Vibrant green theme.
- *
- * Features bright green primary colors with tonal spot palette style.
- */
-val GREEN_GOBLIN = SaveableTheme(
-    name = "Green Goblin",
-    primaryColor = Color.Green.toArgb(),
+val SILVER_LAKE = SaveableTheme(
+    name = "Silver Lake",
+    primaryColor = Color(68, 112, 173).toArgb(),
+    secondaryColor = Color(104, 136, 190).toArgb(),
+    tertiaryColor = Color(35, 60, 103).toArgb(),
+    neutralColor = Color(204, 219, 238).toArgb(),
     isDark = true,
     style = PaletteStyle.TonalSpot,
+    syncplayGradients = false
 )

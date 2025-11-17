@@ -217,15 +217,6 @@ actual fun HideSystemBars() {
 actual fun ShowSystemBars() {
     val view = LocalView.current
 
-//    //We use a side effect here because it is guaranteed to be executed after every composition is concluded, which means right after a popup finishes appearing.
-    SideEffect {
-        if (Build.VERSION.SDK_INT >= 30) {
-            view.windowInsetsController?.show(
-                android.view.WindowInsets.Type.systemBars()
-            )
-        }
-    }
-
     val activity = LocalActivity.current as? ComponentActivity
 
     LaunchedEffect(null) {

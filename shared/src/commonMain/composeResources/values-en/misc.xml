@@ -1,0 +1,23 @@
+<resources>
+    <!-- Media Directories -->
+    <string name="media_directories">Media Directories for Shared Playlist</string>
+    <string name="media_directories_brief">Syncplay will search any media directories you specify here in order to find a name that a shared playlist is playing. It is much better if you specify small directories as the searching operation can throttle and be very slow.</string>
+    <string name="media_directories_save">Save &amp; Exit</string>
+    <string name="media_directories_clear_all">Clear all</string>
+    <string name="media_directories_clear_all_confirm">Are you sure you want to clear the list ?</string>
+    <string name="media_directories_add_folder">Add folder</string>
+    <string name="media_directories_delete">Remove from list</string>
+    <string name="media_directories_show_full_path">Show full path</string>
+
+    <string-array name="tips">
+        <item>For shared playlists to work, Syncplay needs to know where your media files are stored. Add your media folders in 'Settings > General > Media Directories for Shared Playlist'.</item>
+        <item>Want to use the video player solo? Select a player, tap the Syncplay logo above, then choose 'Offline Mode'.</item>
+        <item>You can always reset settings to their default states by going to 'Settings -> Advanced -> Reset to Default'</item>
+        <item>Joining the same room repeatedly? Save it as a shortcut on your device for one-tap access by clicking the small button next to 'Join Room'.</item>
+        <item>Each player has different strengths. If one doesn't work well with your video format, try another.</item>
+        <item>Syncplay Mobile allows you to play media from direct links. However, YouTube is NOT supported, yet.</item>
+        <item>If you want to minimize the room temporarily without leaving, you can go into "Picture-in-Picture" mode where the screen is a small floating screen above other apps.</item>
+
+    </string-array>
+
+</resources>

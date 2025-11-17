@@ -1,6 +1,12 @@
 package com.yuroyami.syncplay
 
+import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.utils.platformCallback
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.json.Json
 import platform.AVKit.AVPictureInPictureController
 import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationDelegateProtocol
@@ -10,6 +16,7 @@ import platform.UIKit.UIInterfaceOrientationMask
 import platform.UIKit.UIInterfaceOrientationMaskPortrait
 import platform.UIKit.UIWindow
 import platform.darwin.NSObject
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Singleton instance of the UIApplicationDelegate for the Syncplay iOS app.
@@ -41,7 +48,6 @@ class AppleDelegate : NSObject(), UIApplicationDelegateProtocol {
     /**
      * Current allowed orientation mask for the application.
      *
-     * Dynamically changed by [ApplePlatformCallback.onRoomEnterOrLeave]:
      * - Portrait when outside rooms (default navigation)
      * - Landscape when inside rooms (video playback)
      */
@@ -119,12 +125,22 @@ var sc: UIApplicationShortcutItem? = null
  * Parses the shortcut's type string (which encodes user, room, server info) and
  * triggers the room join flow.
  *
- * TODO: Implement actual room joining via homeCallback.
- *
  * @param shortcut The UIApplicationShortcutItem containing room configuration
  */
 fun handleShortcut(shortcut: UIApplicationShortcutItem) {
     println("HANDLE AMIGO SHORTCUT $shortcut")
     sc = shortcut
-    //TODO homeCallback?.onJoin(shortcut.type.toJoinInfo().get())
+
+    //Our HomeViewmodel may not be ready on-the-go when opening the app
+    MainScope().launch {
+        runCatching {
+            withTimeout(10.seconds) {
+                while (homeViewmodel == null) {
+                    delay(500)
+                }
+            }
+            val joinConfig = Json.decodeFromString<JoinConfig>(shortcut.type)
+            homeViewmodel?.joinRoom(joinConfig)
+        }
+    }
 }

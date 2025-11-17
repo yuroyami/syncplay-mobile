@@ -1,5 +1,7 @@
 package com.yuroyami.syncplay
 
+import com.yuroyami.syncplay.managers.player.avplayer.AvPlayer
+import com.yuroyami.syncplay.managers.player.vlc.VlcPlayer
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.viewmodels.HomeViewmodel
 import platform.AVKit.AVPictureInPictureController
@@ -44,27 +46,22 @@ object ApplePlatformCallback : PlatformCallback {
      * - PiP is possible for the current player
      * - User is in a room
      * - Media is loaded
-     *
-     * TODO: Complete implementation with proper player layer extraction and state checks.
-     *
+     **
      * @param enable True to enter PiP mode (currently only true is handled)
      */
     override fun onPictureInPicture(enable: Boolean) {
         if (AVPictureInPictureController.isPictureInPictureSupported()) {
-            /* TODO val layer = when (viewmodel?.player) {
-                is AvPlayer -> (viewmodel?.player as? AvPlayer)?.avPlayerLayer
-                is VlcPlayer -> (viewmodel?.player as? VlcPlayer)?.pipLayer
+             val layer = when (roomViewmodel?.player) {
+                is AvPlayer -> (roomViewmodel?.player as? AvPlayer)?.avPlayerLayer
+                is VlcPlayer -> (roomViewmodel?.player as? VlcPlayer)?.pipLayer
                 else -> null
             }
             layer?.let {
                 pipcontroller = AVPictureInPictureController(layer)
-            } */
+            }
         }
 
-        if (pipcontroller?.pictureInPicturePossible == true
-        //TODO && isRoom.value
-        //TODO && viewmodel?.media != null
-        ) {
+        if (pipcontroller?.pictureInPicturePossible == true && roomViewmodel?.media != null) {
             pipcontroller?.startPictureInPicture()
         }
     }
@@ -124,8 +121,6 @@ object ApplePlatformCallback : PlatformCallback {
      * Encodes the room configuration into the shortcut type string, allowing the app
      * to parse it later when the shortcut is tapped. Uses a favorite icon to represent
      * saved room configurations.
-     *
-     * TODO: Localize the success message
      *
      * @receiver HomeViewmodel for accessing the snack manager
      * @param joinInfo The room configuration to save as a shortcut

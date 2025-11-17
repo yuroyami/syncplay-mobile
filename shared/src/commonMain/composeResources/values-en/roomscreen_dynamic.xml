@@ -1,0 +1,29 @@
+<resources>
+    <!-- String templates (with placeholders... that's why I named them dynamic) -->
+    <string name="connect_button_current_engine">Current engine: %1$s</string>
+    <string name="room_selected_vid">Selected video file: %1$s</string>
+    <string name="room_selected_sub">Loaded subtitle file: %1$s</string>
+    <string name="room_ping_connected">Connected - %1$s ms</string>
+    <string name="room_attempting_connect">Attempting to connect to %1$s:%2$s</string>
+    <string name="room_guy_played">%1$s unpaused</string>
+    <string name="room_guy_paused">%1$s paused at %2$s</string>
+    <string name="room_seeked">%1$s jumped from %2$s to %3$s</string>
+    <string name="room_rewinded">Rewinded due to time difference with %1$s</string>
+    <string name="room_guy_left">%1$s left the room.</string>
+    <string name="room_guy_joined">%1$s joined the room.</string>
+    <string name="room_isplayingfile">%1$s is playing '%2$s' (%3$s)</string>
+    <string name="room_you_joined_room">You have joined the room: %1$s</string>
+    <string name="room_sub_track_changed">Subtitle Track changed to: %1$s</string>
+    <string name="room_audio_track_changed">Audio Track changed to: %1$s</string>
+    <string name="room_details_current_room">Room: %1$s</string>
+    <string name="room_details_file_properties">Duration: %1$s - Size: %2$s MBs</string>
+    <string name="room_file_mismatch_warning_core">Your file is different from %1$s's file in the following ways:</string>
+    <string name="room_shared_playlist_updated">%1$s updated the playlist</string>
+    <string name="room_shared_playlist_changed">%1$s changed the playlist current selection</string>
+    <string name="room_custom_skip_button">Skip %1$s</string>
+    <string name="media_directories_setting_summary">Syncplay will search any media directories you specify here in order to find a name that a shared playlist is playing.</string>
+
+    <string name="room_on_newcontrolledroom">Created managed room '%1$s' with password '%2$s'. Please save this information for future reference! It is copied to your clipboard so you can paste it elsewhere.\n\nIn managed rooms everyone is kept in sync with the room operator(s) who are the only ones who can pause, unpause, seek, and change the playlist.\n\nYou should ask regular viewers to join the room '%1$s' but the room operators can join the room '%1$s:%2$s' to automatically authenticate themselves.</string>
+    <string name="room_on_controller_auth_success">%1$s authenticated as a room operator</string>
+    <string name="room_on_controller_auth_failed">%1$s failed to identify as a room operator</string>
+</resources>

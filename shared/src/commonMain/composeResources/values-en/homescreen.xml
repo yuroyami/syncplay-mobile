@@ -1,0 +1,18 @@
+<resources>
+
+    <!-- Home Screen -->
+    <string name="connect_username">Type your username</string>
+    <string name="connect_roomname">Insert room name</string>
+    <string name="connect_server">Select Syncplay server</string>
+    <string name="connect_choose_video_engine">Choose your video engine</string>
+    <string name="connect_button_join">Join Room</string>
+    <string name="connect_button_saveshortcut">Save current config as home shortcut</string>
+    <string name="connect_username_empty_error">Username shouldn't be empty</string>
+    <string name="connect_roomname_empty_error">Roomname shouldn't be empty</string>
+    <string name="connect_address_empty_error">Server Address shouldn't be empty</string>
+    <string name="connect_port_empty_error">Enter port!</string>
+    <string name="connect_enter_custom_server">Enter Custom Server</string>
+    <string name="connect_custom_server_password">Password (Empty if not required)</string>
+    <string name="connect_port">Port</string>
+    <string name="connect_solomode">Offline mode</string>
+</resources>

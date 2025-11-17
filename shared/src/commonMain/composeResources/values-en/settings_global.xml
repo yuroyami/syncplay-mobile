@@ -1,0 +1,59 @@
+<resources>
+    <!-- Settings Categories -->
+    <string name="settings_categ_general">General</string>
+    <string name="settings_categ_language">Language</string>
+    <string name="settings_categ_syncing">Syncing</string>
+    <string name="settings_categ_network">Network</string>
+    <string name="settings_categ_advanced">Advanced</string>
+
+    <!-- Settings -->
+    <string name="setting_night_mode_title">Night Mode</string>
+    <string name="setting_night_mode_summary">Select the night mode behavior.</string>
+    <string name="setting_remember_join_info_title">Remember joining info</string>
+    <string name="setting_remember_join_info_summary">Enabled by default. This will allow SyncPlay to save your last username, roomname, and which official server you last used.</string>
+    <string name="setting_never_show_tips_title">Never show tips</string>
+    <string name="setting_never_show_tips_summary">This will prevent tips from showing up at app launch.</string>
+    <string name="setting_erase_shortcuts_title">Erase all home shortcuts</string>
+    <string name="setting_erase_shortcuts_summary">This will erase all the 'quick run' home shortcuts that you created via the main screen to save your room configs.</string>
+    <string name="setting_erase_shortcuts_dialog">Do you really wish to erase all existing shortcuts ?</string>
+    <string name="setting_display_language_title">Display Language</string>
+    <string name="setting_display_language_summry">Select your language of choice with which Syncplay is displayed.</string>
+    <string name="setting_display_language_toast">Changed language. Restart app for the setting to take full effect.</string>
+    <string name="setting_audio_default_language_title">Preferred Audio Track Language</string>
+    <string name="setting_audio_default_language_summry">Automatically load a audio track with the language code you set here. For example, English code is 'en-US', Japanese is 'ja-JP'. Google 'IETF BCP 47 codes' for more information.</string>
+    <string name="setting_cc_default_language_title">Preferred Subtitle Language</string>
+    <string name="setting_cc_default_language_summry">Automatically load a subtitle track with the language code you set here. For example, English code is 'en-US', Japanese is 'ja-JP'. Google 'IETF BCP 47 codes' for more information.</string>
+    <string name="setting_use_buffer_title">Use Custom Buffer Sizes</string>
+    <string name="setting_use_buffer_summary">If you are not satisfied with the player's video load times before and during playback, you can use custom buffer sizes (Use at your own risk).</string>
+    <string name="setting_max_buffer_title">Custom max buffer size</string>
+    <string name="setting_max_buffer_summary">Default is 30 (30000 milliseconds). This determines the maximum buffer size before starting to play the video. If you don't know what this is, don't change it.</string>
+    <string name="setting_min_buffer_title">Custom min buffer size</string>
+    <string name="setting_min_buffer_summary">Default is 15 (15000 milliseconds). Decrease this value to play video faster but there is a possibility that the player may fail or even crash. Change at your own risk.</string>
+    <string name="setting_playback_buffer_title">Custom playback buffer size (ms)</string>
+    <string name="setting_playback_buffer_summary">Default is 2500 milliseconds. This represents the buffer size when SEEKING or UNPAUSING the video. Change this if you're not satisfied with the small delay when seeking video.</string>
+    <string name="setting_ready_firsthand_title">Set as ready first-hand</string>
+    <string name="setting_ready_firsthand_summary">Enable this if you want to be set automatically as ready once you enter the room.</string>
+    <string name="setting_rewind_threshold_title">Rewind thresold</string>
+    <string name="setting_rewind_threshold_summary">If someone is behind with the value you select here, your video will be rewinded to match with the one behind.</string>
+    <string name="setting_tls_title">Use Secure Connection (TLS)</string>
+    <string name="setting_tls_summary">Syncplay will attempt to establish a secure encrypted connection (mainly TLSv1.3 but fallbacks to older versions) with the server if the latter supports it. This setting will be ignored if the network engine does not support TLS.</string>
+    <string name="setting_resetdefault_title">Reset Default Settings</string>
+    <string name="setting_resetdefault_summary">Reset everything to its default value (Recommended)</string>
+    <string name="setting_resetdefault_dialog">Are you sure to clear settings for this screen ?</string>
+    <string name="setting_pause_if_someone_left_title">Pause if someone leaves</string>
+    <string name="setting_pause_if_someone_left_summary">Enable this if you want playback to pause/stop if someone leaves the room while you're watching.</string>
+    <string name="setting_warn_file_mismatch_title">File mismatch warning</string>
+    <string name="setting_warn_file_mismatch_summary">Enabled by default. This will warn you in case you load a file that is different from users in the group (in terms of name, duration or size, not all of them).</string>
+    <string name="setting_fileinfo_behaviour_name_title">File name information sending</string>
+    <string name="setting_fileinfo_behaviour_name_summary">Choose the method with which you show your added media file name to other users.</string>
+    <string name="setting_fileinfo_behaviour_size_title">File size information sending</string>
+    <string name="setting_fileinfo_behaviour_size_summary">Choose the method with which you show your added media file size to other users.</string>
+    <string name="setting_fileinfo_behavior_a">Send raw</string>
+    <string name="setting_fileinfo_behavior_b">Send hashed</string>
+    <string name="setting_fileinfo_behavior_c">Don't send</string>
+    <string name="setting_network_engine_title">Network Engine</string>
+    <string name="setting_network_engine_summary">The network engine serves as the backbone of connectivity. Experiment with each option and choose the one that offers the most stability for your needs.</string>
+    <string name="setting_network_engine_netty">Netty (Recommended + TLS)</string>
+    <string name="setting_network_engine_swift_nio">SwiftNIO (Recommended + TLS)</string>
+    <string name="setting_network_engine_ktor">Ktor (Experimental)</string>
+</resources>

@@ -13,6 +13,9 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import com.yuroyami.syncplay.SyncplayActivity
 import com.yuroyami.syncplay.managers.datastore.createDataStore
 import java.util.Locale
 
@@ -73,7 +76,7 @@ fun Context.changeLanguage(lang: String): Context {
 /**
  * Binds a lifecycle watchdog observer to the Activity.
  *
- * Currently disabled (TODO) - was used to track Activity lifecycle events
+ * Used to track Activity lifecycle events
  * and notify the LifecycleManager when the Activity transitions between states.
  *
  * When implemented, this would:
@@ -81,27 +84,22 @@ fun Context.changeLanguage(lang: String): Context {
  * - Forward events to the lifecycle watchdog for handling background state
  * - Enable features like pausing playback when app goes to background
  *
- * TODO: Re-implement lifecycle observation for background state management
  */
-fun ComponentActivity.bindWatchdog() {
-    /* TODO
-    val watchdog = viewmodel!!.lifecycleWatchdog
-    val lifecycleObserver = object: LifecycleEventObserver {
-        override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
-            when (event) {
-                Lifecycle.Event.ON_CREATE -> watchdog.onCreate()
-                Lifecycle.Event.ON_START -> watchdog.onStart()
-                Lifecycle.Event.ON_RESUME -> watchdog.onResume()
-                Lifecycle.Event.ON_PAUSE -> watchdog.onPause()
-                Lifecycle.Event.ON_STOP -> watchdog.onStop()
-                else -> {}
+fun SyncplayActivity.bindWatchdog() {
+    roomViewmodel?.lifecycleManager?.let { watchdog ->
+        lifecycle.addObserver(
+            observer = LifecycleEventObserver { _, event ->
+                when (event) {
+                    Lifecycle.Event.ON_CREATE -> watchdog.onCreate()
+                    Lifecycle.Event.ON_START -> watchdog.onStart()
+                    Lifecycle.Event.ON_RESUME -> watchdog.onResume()
+                    Lifecycle.Event.ON_PAUSE -> watchdog.onPause()
+                    Lifecycle.Event.ON_STOP -> watchdog.onStop()
+                    else -> {}
+                }
             }
-        }
+        )
     }
-
-    lifecycle.addObserver(lifecycleObserver)
-
-     */
 }
 
 /**
@@ -170,6 +168,7 @@ fun ComponentActivity.showSystemUI(useDeprecated: Boolean = false) {
     }
 }
 
+@Suppress("DEPRECATION")
 fun ComponentActivity.applyActivityUiProperties() {
     window.attributes = window.attributes.apply {
         flags = flags and WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS.inv()

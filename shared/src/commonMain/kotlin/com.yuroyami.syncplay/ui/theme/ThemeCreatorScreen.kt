@@ -21,7 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MotionPhotosOff
 import androidx.compose.material.icons.filled.WebStories
-import androidx.compose.material.icons.outlined.Lan
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
@@ -72,6 +72,7 @@ import com.yuroyami.syncplay.ui.screens.home.HomeLeadingTitle
 import com.yuroyami.syncplay.ui.screens.home.HomeTextField
 import com.yuroyami.syncplay.ui.screens.room.tabs.RoomTab
 import com.yuroyami.syncplay.ui.theme.SaveableTheme.Companion.toTheme
+import com.yuroyami.syncplay.utils.loggy
 import kotlinx.coroutines.launch
 
 @Composable
@@ -79,6 +80,11 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
     val globalViewmodel = LocalGlobalViewmodel.current
 
     var newTheme by remember { mutableStateOf<SaveableTheme>(themeToEdit ?: globalViewmodel.themeManager.currentTheme.value.toTheme()) }
+
+    LaunchedEffect(newTheme) {
+        loggy(newTheme.toString())
+    }
+
     val dynamicScheme by derivedStateOf { newTheme.dynamicScheme }
     val useSPGrad by derivedStateOf { newTheme.syncplayGradients }
 
@@ -465,7 +471,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                             HomeTextField(
                                 modifier = Modifier.fillMaxWidth(0.75f)
                                     .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-                                icon = Icons.Outlined.Lan,
+                                icon = Icons.Outlined.Palette,
                                 value = newTheme.style.name,
                                 dropdownState = paletteSelector,
                                 onValueChange = {},
