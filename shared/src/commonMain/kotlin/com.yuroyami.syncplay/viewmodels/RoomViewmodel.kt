@@ -103,8 +103,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
 
             joinConfig?.let {
                 launch {
-                    val defaultEngine = availablePlatformPlayerEngines.first { it.isDefault }.name //TODO
-                    val engine = availablePlatformPlayerEngines.first { it.name == PLAYER_ENGINE.get(defaultEngine) }
+                    val engine = availablePlatformPlayerEngines.first { it.name == PLAYER_ENGINE.get() }
                     playerManager.player = engine.instantiate(this@RoomViewmodel)
                     playerManager.isPlayerReady.value = true
                 }

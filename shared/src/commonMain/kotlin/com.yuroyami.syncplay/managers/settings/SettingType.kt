@@ -20,7 +20,7 @@ import com.yuroyami.syncplay.managers.settings.SettingType.ToggleSettingType
  * @property [TextFieldSettingType]
  */
 enum class SettingType {
-    HeadlessSettingType,
+    ActionSettingType,
 
     /** OneClickSetting is a [SettingType] for a setting whose function is based upon one click only.
      * That means, that the setting will not read/write any value,

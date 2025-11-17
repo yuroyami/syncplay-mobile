@@ -304,9 +304,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             string = stringResource(Res.string.connect_choose_video_engine)
                         )
 
-                        //TODO Move to an extension function that retrieves current engine
-                        val defaultEngine = availablePlatformPlayerEngines.first { it.isDefault }.name
-                        val selectedEngine by PLAYER_ENGINE.watchPref(defaultEngine)
+                        val selectedEngine by PLAYER_ENGINE.watchPref()
 
                         HomeAnimatedEngineButtonGroup(
                             modifier = Modifier.fillMaxWidth(0.75f),
