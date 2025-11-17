@@ -25,7 +25,6 @@ import com.yuroyami.syncplay.ui.screens.home.HomeScreenUI
 import com.yuroyami.syncplay.ui.screens.room.RoomScreenUI
 import com.yuroyami.syncplay.ui.screens.room.tabs.CardController
 import com.yuroyami.syncplay.ui.theme.SaveableTheme
-import com.yuroyami.syncplay.ui.theme.SaveableTheme.Companion.toTheme
 import com.yuroyami.syncplay.ui.theme.ThemeCreatorScreenUI
 import com.yuroyami.syncplay.utils.createWeakRef
 import com.yuroyami.syncplay.viewmodels.HomeViewmodel
@@ -82,16 +81,15 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
 
     val currentScreen by remember { derivedStateOf { backstack.lastOrNull() } }
     val currentTheme by globalviewmodel.themeManager.currentTheme.collectAsState()
-    val currentThemeCalculated by derivedStateOf { currentTheme.toTheme() }
 
     CompositionLocalProvider(
         LocalGlobalViewmodel provides globalviewmodel,
         LocalScreen provides currentScreen,
         LocalChatPalette provides messagePalette.value,
-        LocalTheme provides currentThemeCalculated
+        LocalTheme provides currentTheme
     ) {
         MaterialTheme(
-            colorScheme = currentThemeCalculated.dynamicScheme
+            colorScheme = currentTheme.dynamicScheme
         ) {
             NavDisplay(
                 backStack = backstack,

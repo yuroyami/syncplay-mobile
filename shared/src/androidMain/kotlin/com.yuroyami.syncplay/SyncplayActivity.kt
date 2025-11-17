@@ -25,6 +25,9 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import com.yuroyami.syncplay.managers.player.exo.ExoPlayer
+import com.yuroyami.syncplay.managers.preferences.Preferences.DISPLAY_LANG
+import com.yuroyami.syncplay.managers.preferences.Preferences.SUBTITLE_SIZE
+import com.yuroyami.syncplay.managers.preferences.get
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.ui.screens.adam.AdamScreen
 import com.yuroyami.syncplay.utils.applyActivityUiProperties
@@ -233,7 +236,7 @@ class SyncplayActivity : ComponentActivity() {
      */
     override fun attachBaseContext(newBase: Context?) {
         /** Applying saved language */
-        val lang = pref(DataStoreKeys.PREF_DISPLAY_LANG, "en")
+        val lang = DISPLAY_LANG.get()
         super.attachBaseContext(newBase!!.changeLanguage(lang))
     }
 
@@ -249,7 +252,7 @@ class SyncplayActivity : ComponentActivity() {
 
         /* Loading subtitle appearance */
         lifecycleScope.launch(Dispatchers.Main) {
-            val ccsize = pref(PREF_INROOM_PLAYER_SUBTITLE_SIZE, 16)
+            val ccsize = SUBTITLE_SIZE.get()
             (roomViewmodel?.player as? ExoPlayer)?.retweakSubtitleAppearance(ccsize.toFloat())
         }
     }

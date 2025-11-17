@@ -1,5 +1,8 @@
 package com.yuroyami.syncplay.managers.protocol.creator
 
+import com.yuroyami.syncplay.managers.preferences.Preferences.HASH_FILENAME
+import com.yuroyami.syncplay.managers.preferences.Preferences.HASH_FILESIZE
+import com.yuroyami.syncplay.managers.preferences.get
 import com.yuroyami.syncplay.managers.protocol.ProtocolManager
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.utils.generateTimestampMillis
@@ -145,8 +148,8 @@ sealed class PacketOut {
             putJsonObject("Set") {
                 putJsonObject("file") {
                     /* First, Checking whether file name or file size have to be hashed **/
-                    val nameBehavior = pref(DataStoreKeys.PREF_HASH_FILENAME, "1")
-                    val sizeBehavior = pref(DataStoreKeys.PREF_HASH_FILESIZE, "1")
+                    val nameBehavior = HASH_FILENAME.get()
+                    val sizeBehavior = HASH_FILESIZE.get()
 
                     /* Now, we put the values in */
                     put("duration", media!!.fileDuration)

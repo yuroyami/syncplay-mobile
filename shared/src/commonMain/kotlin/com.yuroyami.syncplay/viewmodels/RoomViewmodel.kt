@@ -99,7 +99,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
         viewModelScope.launch(Dispatchers.IO) {
             setReadyDirectly = READY_FIRST_HAND.get()
 
-            networkManager = instantiateNetworkManager(engine = NetworkManager.getPreferredEngine())
+            networkManager = instantiateNetworkManager()
 
             joinConfig?.let {
                 launch {

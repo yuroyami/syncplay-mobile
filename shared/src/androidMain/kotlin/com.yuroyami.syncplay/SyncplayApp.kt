@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.os.Build
 import android.os.StrictMode
+import com.yuroyami.syncplay.managers.preferences.Preferences
 import com.yuroyami.syncplay.managers.preferences.datastore
 import com.yuroyami.syncplay.utils.contextObtainer
 import com.yuroyami.syncplay.utils.dataStore
@@ -42,7 +43,7 @@ class SyncplayApp: Application() {
         }
 
         //Initializing datastore
-        datastore = dataStore(applicationContext, DataStoreKeys.SYNCPLAY_PREFS)
+        datastore = dataStore(applicationContext, Preferences.SYNCPLAY_PREFS)
 
         // Register application context provider for global access
         contextObtainer = ::returnAppContext

@@ -5,6 +5,9 @@ import androidx.compose.material.icons.filled.HourglassBottom
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.SettingsInputComponent
+import com.yuroyami.syncplay.managers.preferences.Preferences.EXO_MAX_BUFFER
+import com.yuroyami.syncplay.managers.preferences.Preferences.EXO_MIN_BUFFER
+import com.yuroyami.syncplay.managers.preferences.Preferences.EXO_SEEK_BUFFER
 import com.yuroyami.syncplay.managers.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.managers.settings.Setting
 import com.yuroyami.syncplay.managers.settings.SettingCategory
@@ -23,7 +26,7 @@ fun ExoPlayer.getExtraSettings(): ExtraSettingBundle {
 
     return Pair(
         first = SettingCategory(
-            keyID = CATEG_INROOM_EXOPLAYER,
+            keyID = "inroom_exoplayer",
             title = Res.string.settings_categ_exoplayer,
             icon = Icons.Filled.SettingsInputComponent
         ),
@@ -31,10 +34,9 @@ fun ExoPlayer.getExtraSettings(): ExtraSettingBundle {
             add(
                 Setting.SliderSetting(
                     type = SettingType.SliderSettingType,
-                    key = PREF_EXO_MAX_BUFFER,
+                    staticKey = EXO_MAX_BUFFER,
                     title = Res.string.setting_max_buffer_title,
                     summary = Res.string.setting_max_buffer_summary,
-                    defaultValue = 30,
                     icon = Icons.Filled.HourglassTop,
                     maxValue = 60,
                     minValue = 1,
@@ -43,10 +45,9 @@ fun ExoPlayer.getExtraSettings(): ExtraSettingBundle {
             add(
                 Setting.SliderSetting(
                     type = SettingType.SliderSettingType,
-                    key = PREF_EXO_MIN_BUFFER,
+                    staticKey = EXO_MIN_BUFFER,
                     title = Res.string.setting_min_buffer_title,
                     summary = Res.string.setting_min_buffer_summary,
-                    defaultValue = 15,
                     icon = Icons.Filled.HourglassBottom,
                     maxValue = 30,
                     minValue = 1,
@@ -55,10 +56,9 @@ fun ExoPlayer.getExtraSettings(): ExtraSettingBundle {
             add(
                 Setting.SliderSetting(
                     type = SettingType.SliderSettingType,
-                    key = PREF_EXO_SEEK_BUFFER,
+                    staticKey = EXO_SEEK_BUFFER,
                     title = Res.string.setting_playback_buffer_title,
                     summary = Res.string.setting_playback_buffer_summary,
-                    defaultValue = 2500,
                     icon = Icons.Filled.HourglassEmpty,
                     maxValue = 15000,
                     minValue = 100,

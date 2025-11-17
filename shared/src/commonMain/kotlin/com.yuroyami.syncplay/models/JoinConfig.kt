@@ -1,5 +1,9 @@
 package com.yuroyami.syncplay.models
 
+import com.yuroyami.syncplay.managers.preferences.Preferences.JOIN_CONFIG
+import com.yuroyami.syncplay.managers.preferences.Preferences.REMEMBER_INFO
+import com.yuroyami.syncplay.managers.preferences.get
+import com.yuroyami.syncplay.managers.preferences.set
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -37,10 +41,7 @@ data class JoinConfig(
          * @return The saved JoinConfig if available, otherwise a new default instance
          */
         suspend fun savedConfig(): JoinConfig = withTimeoutOrNull(250.milliseconds) {
-            Json.decodeFromString<JoinConfig>(
-                pref<String?>(DataStoreKeys.MISC_JOIN_CONFIG, null)
-                    ?: return@withTimeoutOrNull JoinConfig()
-            )
+            JOIN_CONFIG.get()?.let { Json.decodeFromString<JoinConfig>(it) }
         } ?: JoinConfig()
     }
 
@@ -53,10 +54,10 @@ data class JoinConfig(
      * This allows quick reconnection to the same room with the same credentials.
      */
     suspend fun save() {
-        val saveInfo = pref(DataStoreKeys.PREF_REMEMBER_INFO, true)
+        val saveInfo = REMEMBER_INFO.get()
 
         if (saveInfo) {
-            writePref(DataStoreKeys.MISC_JOIN_CONFIG, Json.encodeToString(this))
+            JOIN_CONFIG.set(Json.encodeToString(this))
         }
     }
 }

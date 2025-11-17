@@ -1,6 +1,12 @@
 package com.yuroyami.syncplay.managers.player
 
 import com.yuroyami.syncplay.managers.player.PlayerOptions.Companion.get
+import com.yuroyami.syncplay.managers.preferences.Preferences.AUDIO_LANG
+import com.yuroyami.syncplay.managers.preferences.Preferences.CC_LANG
+import com.yuroyami.syncplay.managers.preferences.Preferences.EXO_MAX_BUFFER
+import com.yuroyami.syncplay.managers.preferences.Preferences.EXO_MIN_BUFFER
+import com.yuroyami.syncplay.managers.preferences.Preferences.EXO_SEEK_BUFFER
+import com.yuroyami.syncplay.managers.preferences.get
 
 /**
  * Configuration options for media player behavior and preferences.
@@ -62,12 +68,12 @@ class PlayerOptions private constructor() {
          */
         fun get(): PlayerOptions {
             val options = PlayerOptions()
-            options.maxBuffer = pref(DataStoreKeys.PREF_EXO_MAX_BUFFER, 30) * 1000
-            options.minBuffer = pref(DataStoreKeys.PREF_EXO_MIN_BUFFER, 15) * 1000
-            options.playbackBuffer = pref(DataStoreKeys.PREF_EXO_SEEK_BUFFER, 2000)
+            options.maxBuffer = EXO_MAX_BUFFER.get() * 1000
+            options.minBuffer = EXO_MIN_BUFFER.get() * 1000
+            options.playbackBuffer = EXO_SEEK_BUFFER.get()
 
-            options.ccPreference = pref(DataStoreKeys.PREF_CC_LANG, "eng")
-            options.audioPreference = pref(DataStoreKeys.PREF_AUDIO_LANG, "und")
+            options.ccPreference = CC_LANG.get()
+            options.audioPreference = AUDIO_LANG.get()
             return options
         }
     }

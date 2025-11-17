@@ -5,7 +5,13 @@ package com.yuroyami.syncplay.managers
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
+import com.yuroyami.syncplay.managers.preferences.Preferences.ALL_THEMES
+import com.yuroyami.syncplay.managers.preferences.Preferences.CURRENT_THEME
+import com.yuroyami.syncplay.managers.preferences.flow
+import com.yuroyami.syncplay.managers.preferences.get
+import com.yuroyami.syncplay.managers.preferences.set
 import com.yuroyami.syncplay.ui.theme.SaveableTheme
+import com.yuroyami.syncplay.ui.theme.SaveableTheme.Companion.toTheme
 import com.yuroyami.syncplay.ui.theme.defaultTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -15,7 +21,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
 
 /**
  * Manages application theming and color schemes.
@@ -30,16 +35,24 @@ class ThemeManager(val viewmodel: ViewModel) : AbstractManager(viewmodel) {
     /**
      * The currently active theme.
      */
-    val currentTheme = prefFlow(MISC_CURRENT_THEME, defaultTheme.asString())
-        .stateIn(scope = viewmodel.viewModelScope, started = Eagerly, defaultTheme.asString())
+    val currentTheme: StateFlow<SaveableTheme> = CURRENT_THEME.flow()
+        .map { it.toTheme() }
+        .stateIn(scope = viewmodel.viewModelScope, started = Eagerly, defaultTheme)
 
-    val customThemes: StateFlow<List<SaveableTheme>> = prefFlow(MISC_ALL_THEMES, "[]")
-        .map { Json.decodeFromString<List<SaveableTheme>>(it) }
-        .stateIn(scope = viewmodel.viewModelScope, started = Eagerly, listOf())
+    val flow = ALL_THEMES.flow()
+
+    val customThemes: StateFlow<List<SaveableTheme>> = ALL_THEMES.flow()
+        .map { themeSet ->
+            themeSet.map map2@ { themeJson ->
+                themeJson.toTheme()
+            }.toList()
+        }
+        .stateIn(scope = viewmodel.viewModelScope, started = Eagerly, emptyList())
+
 
     fun changeTheme(theme: SaveableTheme) {
         viewmodel.viewModelScope.launch(Dispatchers.IO) {
-            writePref(MISC_CURRENT_THEME, theme.asString())
+            CURRENT_THEME.set(theme.asString())
         }
     }
 
@@ -48,34 +61,28 @@ class ThemeManager(val viewmodel: ViewModel) : AbstractManager(viewmodel) {
      */
     suspend fun saveNewTheme(theme: SaveableTheme): Boolean {
         return withContext(Dispatchers.IO) {
-            val customThemeListJson = pref(MISC_ALL_THEMES, "[]")
-            val list = Json.decodeFromString<List<SaveableTheme>>(customThemeListJson).toMutableList()
+            val themeJson = theme.asString()
 
-            if (list.contains(theme)) return@withContext false
+            val customThemes = ALL_THEMES.get().toMutableSet()
+            if (customThemes.contains(themeJson)) return@withContext false
 
-            list.add(theme)
-            val listEncodedAgain = Json.encodeToString(list)
-            writePref(MISC_ALL_THEMES, listEncodedAgain)
+            customThemes.add(themeJson)
+            ALL_THEMES.set(customThemes)
 
             changeTheme(theme)
-
             return@withContext true
         }
     }
 
     fun deleteTheme(theme: SaveableTheme) {
         viewmodel.viewModelScope.launch(Dispatchers.IO) {
-            val customThemeListJson = pref(MISC_ALL_THEMES, "[]")
-            val list = Json.decodeFromString<List<SaveableTheme>>(customThemeListJson).toMutableList()
+            val themeJson = theme.asString()
+            val customThemes = ALL_THEMES.get().toMutableSet()
+            customThemes.remove(themeJson)
+            ALL_THEMES.set(customThemes)
 
-            list.remove(theme)
-            val listEncodedAgain = Json.encodeToString(list)
-            writePref(MISC_ALL_THEMES, listEncodedAgain)
-
-            val selectedTheme = Json.decodeFromString<SaveableTheme>(pref(MISC_CURRENT_THEME, defaultTheme.asString()))
-
-            if (selectedTheme == theme) {
-                changeTheme(list.firstOrNull() ?: defaultTheme)
+            if (currentTheme == theme) {
+                changeTheme(customThemes.firstOrNull()?.toTheme() ?: defaultTheme)
             }
         }
     }

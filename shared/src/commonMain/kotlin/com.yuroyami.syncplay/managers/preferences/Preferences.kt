@@ -24,17 +24,18 @@ object Preferences {
     const val SYNCPLAY_PREFS = "syncplayprefs.preferences_pb"
 
     /** ------------ Miscellaneous -------------*/
-    val JOIN_CONFIG = StaticPref("misc_join_config", "")
+    val JOIN_CONFIG = StaticPref<String?>("misc_join_config", null)
     val PLAYER_ENGINE = DynamicPref<String>("misc_player_engine")
     val GESTURES = StaticPref("misc_gestures", true)
     val CURRENT_THEME = StaticPref("misc_current_theme", "dark")
     val ALL_THEMES = StaticPref<Set<String>>("misc_all_themes", emptySet())
-    val ROOM_ORIENTATION = StaticPref("misc_room_orientation", "auto")
+
+    //val ROOM_ORIENTATION = StaticPref("misc_room_orientation", "auto")
 
     /** ------------ General -------------*/
     val REMEMBER_INFO = StaticPref("pref_remember_info", true)
     val NEVER_SHOW_TIPS = StaticPref("pref_never_show_tips", false)
-    val ERASE_SHORTCUTS = StaticPref("pref_erase_shortcuts", true)
+    val ERASE_SHORTCUTS = DynamicPref<Any>("pref_erase_shortcuts")
     val MEDIA_DIRECTORIES = StaticPref<Set<String>>("pref_syncplay_media_directories", emptySet())
 
     /** ------------ Language -------------*/
@@ -81,16 +82,16 @@ object Preferences {
     val SEEK_BACKWARD_JUMP = StaticPref("pref_inroom_seek_backward_jump", 10)
 
     /** ------------ MPV Settings -------------*/
-    val MPV_HARDWARE_ACCELERATION = StaticPref("pref_mpv_hw", "auto")
-    val MPV_GPU_NEXT = StaticPref("pref_mpv_gpunext", false)
-    val MPV_DEBUG_MODE = StaticPref("pref_mpv_debug_mode", false)
+    val MPV_HARDWARE_ACCELERATION = StaticPref("pref_mpv_hw", true)
+    val MPV_GPU_NEXT = StaticPref("pref_mpv_gpunext", true)
+    val MPV_DEBUG_MODE = StaticPref("pref_mpv_debug_mode", 0)
     val MPV_VIDSYNC = StaticPref("pref_mpv_video_sync", "audio")
-    val MPV_PROFILE = StaticPref("pref_mpv_profile", "default")
+    val MPV_PROFILE = StaticPref("pref_mpv_profile", "fast")
     val MPV_INTERPOLATION = StaticPref("pref_mpv_interpolation", false)
 
     /** ------------ ExoPlayer Settings -------------*/
-    val EXO_MAX_BUFFER = StaticPref("pref_max_buffer_size", 50000)
-    val EXO_MIN_BUFFER = StaticPref("pref_min_buffer_size", 15000)
+    val EXO_MAX_BUFFER = StaticPref("pref_max_buffer_size", 30)
+    val EXO_MIN_BUFFER = StaticPref("pref_min_buffer_size", 15)
     val EXO_SEEK_BUFFER = StaticPref("pref_seek_buffer_size", 5000)
 
     /** ------------ Advanced -------------*/

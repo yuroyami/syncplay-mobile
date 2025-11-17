@@ -43,6 +43,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.yuroyami.syncplay.managers.preferences.DynamicPref
+import com.yuroyami.syncplay.managers.preferences.PreferenceDef
 import com.yuroyami.syncplay.managers.preferences.StaticPref
 import com.yuroyami.syncplay.managers.preferences.set
 import com.yuroyami.syncplay.managers.preferences.watchPref
@@ -94,7 +96,8 @@ import kotlin.math.roundToInt
  * @property enabled Whether the setting is interactive (default: true)
  */
 sealed class Setting<T>(
-    val type: SettingType = SettingType.OneClickSettingType, val key: StaticPref<T>,
+    val type: SettingType = SettingType.OneClickSettingType,
+    val key: PreferenceDef<T>, val default: T? = null,
     val title: StringResource, val summary: StringResource,
     val icon: ImageVector? = null, val enabled: Boolean = true,
 ) {
@@ -174,8 +177,10 @@ sealed class Setting<T>(
      * @property key DataStore key for this setting
      */
     class HeadlessSetting(key: StaticPref<Any>) : Setting<Any>(
-        type = SettingType.HeadlessSettingType, key = key, summary = Res.string.okay, title = Res.string.okay,
-        icon = null, enabled = true
+        type = SettingType.HeadlessSettingType,
+        key = key,
+        summary = Res.string.okay, title = Res.string.okay,
+        icon = null, enabled = true,
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
@@ -191,7 +196,7 @@ sealed class Setting<T>(
      * @property onClick Callback invoked when the setting is tapped
      */
     class OneClickSetting(
-        type: SettingType, key: StaticPref<Any>, summary: StringResource, title: StringResource,
+        type: SettingType, key: PreferenceDef<Any>, summary: StringResource, title: StringResource,
         icon: ImageVector?, enabled: Boolean = true,
         val onClick: (() -> Unit)? = null,
     ) : Setting<Any>(
@@ -221,13 +226,13 @@ sealed class Setting<T>(
      */
     @Suppress("AssignedValueIsNeverRead")
     class YesNoDialogSetting(
-        type: SettingType, key: StaticPref<Boolean>, summary: StringResource, title: StringResource,
+        type: SettingType, key: DynamicPref<Any>, summary: StringResource, title: StringResource,
         icon: ImageVector?, enabled: Boolean = true,
         val rationale: StringResource,
         val onYes: (CoroutineScope.() -> Unit)? = null,
         val onNo: (CoroutineScope.() -> Unit)? = null
         //TODO: Show "done" message (i.e: Operation successfully carried out) in a snackbar message
-    ) : Setting<Boolean>(
+    ) : Setting<Any>(
         type = type, key = key, summary = summary, title = title,
         icon = icon, enabled = enabled
     ) {
@@ -275,12 +280,12 @@ sealed class Setting<T>(
      * @property popupComposable The composable to show as a popup, receives visibility state
      */
     class PopupSetting(
-        type: SettingType, key: StaticPref<out Any>, summary: StringResource, title: StringResource,
+        type: SettingType, key: PreferenceDef<Any>, summary: StringResource, title: StringResource,
         icon: ImageVector?, enabled: Boolean = true,
         val popupComposable: @Composable ((MutableState<Boolean>) -> Unit)? = null
     ) : Setting<Any>(
         type = type, key = key, summary = summary, title = title,
-        icon = icon, enabled = enabled
+        icon = icon, enabled = enabled,
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
@@ -308,16 +313,16 @@ sealed class Setting<T>(
      * @property onBooleanChanged Callback invoked when the value changes
      */
     class BooleanSetting(
-        type: SettingType, key: StaticPref<Boolean>, summary: StringResource, title: StringResource,
+        type: SettingType, val staticKey: StaticPref<Boolean>, summary: StringResource, title: StringResource,
         icon: ImageVector?, enabled: Boolean = true,
         val onBooleanChanged: (Boolean) -> Unit = {},
     ) : Setting<Boolean>(
-        type = type, key = key, summary = summary, title = title,
-        icon = icon, enabled = enabled
+        type = type, key = staticKey, summary = summary, title = title,
+        icon = icon, enabled = enabled, default = staticKey.default
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val boolean by key.watchPref()
+            val boolean by staticKey.watchPref()
             val scope = rememberCoroutineScope { Dispatchers.IO }
 
             BaseSettingComposable(
@@ -370,18 +375,18 @@ sealed class Setting<T>(
      * @property onItemChosen Callback invoked when a new option is selected
      */
     class MultiChoiceSetting(
-        type: SettingType, key: StaticPref<String>, summary: StringResource, title: StringResource,
+        type: SettingType, val staticKey: StaticPref<String>, summary: StringResource, title: StringResource,
         icon: ImageVector?, enabled: Boolean = true,
         val entries: @Composable () -> Map<String, String>,
         val onItemChosen: ((value: String) -> Unit)? = null
     ) : Setting<String>(
-        type = type, key = key, summary = summary, title = title,
-        icon = icon, enabled = enabled
+        type = type, key = staticKey, summary = summary, title = title,
+        icon = icon, enabled = enabled, default = staticKey.default
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
             val actualEntries = entries.invoke()
-            val selectedItem by key.watchPref()
+            val selectedItem by staticKey.watchPref()
             val dialogOpen = remember { mutableStateOf(false) }
 
             val scope = rememberCoroutineScope { Dispatchers.IO }
@@ -427,18 +432,18 @@ sealed class Setting<T>(
      * @property onValueChanged Callback invoked when the value changes
      */
     class SliderSetting(
-        type: SettingType, key: StaticPref<Int>, summary: StringResource, title: StringResource,
+        type: SettingType, val staticKey: StaticPref<Int>, summary: StringResource, title: StringResource,
         icon: ImageVector?, enabled: Boolean = true,
         val maxValue: Int = 100,
         val minValue: Int = 0,
         val onValueChanged: ((newValue: Int) -> Unit)? = null,
     ) : Setting<Int>(
-        type = type, key = key, summary = summary, title = title,
-        icon = icon, enabled = enabled
+        type = type, key = staticKey, summary = summary, title = title,
+        icon = icon, enabled = enabled, default = staticKey.default
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val value by key.watchPref()
+            val value by staticKey.watchPref()
             val styling = LocalSettingStyling.current
             val scope = rememberCoroutineScope { Dispatchers.IO }
 
@@ -499,15 +504,15 @@ sealed class Setting<T>(
      * is stored as an ARGB integer.
      */
     class ColorSetting(
-        type: SettingType, key: StaticPref<Int>, summary: StringResource, title: StringResource,
+        type: SettingType, val staticKey: StaticPref<Int>, summary: StringResource, title: StringResource,
         icon: ImageVector?, enabled: Boolean = true
     ) : Setting<Int>(
-        type = type, key = key, summary = summary, title = title,
-        icon = icon, enabled = enabled
+        type = type, key = staticKey, summary = summary, title = title,
+        icon = icon, enabled = enabled, default = staticKey.default
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val color by key.watchPref()
+            val color by staticKey.watchPref()
             val colorDialogState = remember { mutableStateOf(false) }
             val scope = rememberCoroutineScope { Dispatchers.IO }
 
@@ -534,7 +539,7 @@ sealed class Setting<T>(
                     }
                 },
                 onDefaultReset = {
-                    scope.launch { key.set(key.default) }
+                    scope.launch { key.set(staticKey.default) }
                 }
             )
         }
@@ -547,15 +552,15 @@ sealed class Setting<T>(
      * Configured for numeric input by default but can be customized for other types.
      */
     class TextFieldSetting(
-        type: SettingType, key: StaticPref<String>, summary: StringResource, title: StringResource,
+        type: SettingType, val staticKey: StaticPref<String>, summary: StringResource, title: StringResource,
         icon: ImageVector?, enabled: Boolean = true
     ) : Setting<String>(
-        type = type, key = key, summary = summary, title = title,
-        icon = icon, enabled = enabled
+        type = type, key = staticKey, summary = summary, title = title,
+        icon = icon, enabled = enabled, default = staticKey.default
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val string by key.watchPref()
+            val string by staticKey.watchPref()
             val scope = rememberCoroutineScope()
 
             BaseSettingComposable(

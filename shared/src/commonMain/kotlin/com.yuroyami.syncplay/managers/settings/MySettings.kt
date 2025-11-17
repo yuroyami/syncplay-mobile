@@ -35,8 +35,9 @@ import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled.VideoLabel
 import androidx.compose.material.icons.filled.Web
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.preferences.core.edit
+import com.yuroyami.syncplay.managers.preferences.DynamicPref
+import com.yuroyami.syncplay.managers.preferences.PreferenceDef
 import com.yuroyami.syncplay.managers.preferences.Preferences.CC_LANG
 import com.yuroyami.syncplay.managers.preferences.Preferences.COLOR_ERRORMSG
 import com.yuroyami.syncplay.managers.preferences.Preferences.COLOR_FRIENDTAG
@@ -72,7 +73,6 @@ import com.yuroyami.syncplay.managers.preferences.Preferences.SUBTITLE_SIZE
 import com.yuroyami.syncplay.managers.preferences.Preferences.TLS_ENABLE
 import com.yuroyami.syncplay.managers.preferences.datastore
 import com.yuroyami.syncplay.ui.popups.PopupMediaDirs.MediaDirsPopup
-import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.utils.PLATFORM
 import com.yuroyami.syncplay.utils.platform
 import com.yuroyami.syncplay.utils.platformCallback
@@ -198,14 +198,14 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
             listOf(
                 Setting.BooleanSetting(
                     type = SettingType.CheckboxSettingType,
-                    key = REMEMBER_INFO,
+                    staticKey = REMEMBER_INFO,
                     title = Res.string.setting_remember_join_info_title,
                     summary = Res.string.setting_remember_join_info_summary,
                     icon = Icons.Filled.Face
                 ),
                 Setting.BooleanSetting(
                     type = SettingType.CheckboxSettingType,
-                    key = NEVER_SHOW_TIPS,
+                    staticKey = NEVER_SHOW_TIPS,
                     title = Res.string.setting_never_show_tips_title,
                     summary = Res.string.setting_never_show_tips_summary,
                     icon = Icons.Filled.Lightbulb
@@ -223,7 +223,7 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
                 ),
                 Setting.PopupSetting(
                     type = SettingType.PopupSettingType,
-                    key = MEDIA_DIRECTORIES,
+                    key = MEDIA_DIRECTORIES as PreferenceDef<Any>,
                     title = Res.string.media_directories,
                     summary = Res.string.media_directories_setting_summary,
                     icon = Icons.AutoMirrored.Filled.QueueMusic,
@@ -244,7 +244,7 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
                 if (platform == PLATFORM.Android) {
                     Setting.MultiChoiceSetting(
                         type = SettingType.MultiChoicePopupSettingType,
-                        key = DISPLAY_LANG,
+                        staticKey = DISPLAY_LANG,
                         title = Res.string.setting_display_language_title,
                         summary = Res.string.setting_display_language_summry,
                         icon = Icons.Filled.Translate,
@@ -260,7 +260,7 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
                 } else {
                     Setting.OneClickSetting(
                         type = SettingType.OneClickSettingType,
-                        key = DISPLAY_LANG,
+                        key = DISPLAY_LANG as PreferenceDef<Any>,
                         title = Res.string.setting_display_language_title,
                         summary = Res.string.setting_display_language_summry,
                         icon = Icons.Filled.Translate,
@@ -271,7 +271,7 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
                 },
                 Setting.TextFieldSetting(
                     type = SettingType.TextFieldSettingType,
-                    key = CC_LANG,
+                    staticKey = CC_LANG,
                     title = Res.string.setting_cc_default_language_title,
                     summary = Res.string.setting_cc_default_language_summry,
                     icon = Icons.Filled.ClosedCaptionOff,
@@ -288,28 +288,28 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
             listOf(
                 Setting.BooleanSetting(
                     type = SettingType.CheckboxSettingType,
-                    key = READY_FIRST_HAND,
+                    staticKey = READY_FIRST_HAND,
                     title = Res.string.setting_ready_firsthand_title,
                     summary = Res.string.setting_ready_firsthand_summary,
                     icon = Icons.Filled.TaskAlt,
                 ),
                 Setting.BooleanSetting(
                     type = SettingType.CheckboxSettingType,
-                    key = PAUSE_ON_SOMEONE_LEAVE,
+                    staticKey = PAUSE_ON_SOMEONE_LEAVE,
                     title = Res.string.setting_pause_if_someone_left_title,
                     summary = Res.string.setting_pause_if_someone_left_summary,
                     icon = Icons.Filled.FrontHand,
                 ),
                 Setting.BooleanSetting(
                     type = SettingType.CheckboxSettingType,
-                    key = FILE_MISMATCH_WARNING,
+                    staticKey = FILE_MISMATCH_WARNING,
                     title = Res.string.setting_warn_file_mismatch_title,
                     summary = Res.string.setting_warn_file_mismatch_summary,
                     icon = Icons.Filled.ErrorOutline,
                 ),
                 Setting.MultiChoiceSetting(
                     type = SettingType.MultiChoicePopupSettingType,
-                    key = HASH_FILENAME,
+                    staticKey = HASH_FILENAME,
                     title = Res.string.setting_fileinfo_behaviour_name_title,
                     summary = Res.string.setting_fileinfo_behaviour_name_summary,
                     icon = Icons.Filled.DesignServices,
@@ -323,7 +323,7 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
                 ),
                 Setting.MultiChoiceSetting(
                     type = SettingType.MultiChoicePopupSettingType,
-                    key = HASH_FILESIZE,
+                    staticKey = HASH_FILESIZE,
                     title = Res.string.setting_fileinfo_behaviour_size_title,
                     summary = Res.string.setting_fileinfo_behaviour_size_summary,
                     icon = Icons.Filled.DesignServices,
@@ -347,7 +347,7 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
             listOf(
                 Setting.BooleanSetting(
                     type = SettingType.ToggleSettingType,
-                    key = TLS_ENABLE,
+                    staticKey = TLS_ENABLE,
                     title = Res.string.setting_tls_title,
                     summary = Res.string.setting_tls_summary,
                     icon = Icons.Filled.Key,
@@ -355,7 +355,7 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
 
                 Setting.MultiChoiceSetting(
                     type = SettingType.MultiChoicePopupSettingType,
-                    key = NETWORK_ENGINE,
+                    staticKey = NETWORK_ENGINE,
                     title = Res.string.setting_network_engine_title,
                     summary = Res.string.setting_network_engine_summary,
                     icon = Icons.Filled.Lan,
@@ -392,7 +392,7 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
             listOf(
                 Setting.YesNoDialogSetting(
                     type = SettingType.OneClickSettingType,
-                    key = "PREF_CLEAR_ALL", //TODO should offload to a string?
+                    key = DynamicPref("PREF_CLEAR_ALL"), //TODO should offload to a string?
                     title = Res.string.setting_resetdefault_title,
                     summary = Res.string.setting_resetdefault_summary,
                     icon = Icons.Filled.ClearAll,
@@ -420,39 +420,39 @@ val SETTINGS_ROOM: SettingCollection = buildMap {
         listOf(
             Setting.ColorSetting(
                 type = SettingType.ColorSettingType,
-                key = COLOR_TIMESTAMP,
+                staticKey = COLOR_TIMESTAMP,
                 title = Res.string.uisetting_timestamp_color_title,
                 summary = Res.string.uisetting_timestamp_summary,
                 icon = Icons.Filled.Brush,
             ),
             Setting.ColorSetting(
                 type = SettingType.ColorSettingType,
-                key = COLOR_SELFTAG,
+                staticKey = COLOR_SELFTAG,
                 title = Res.string.uisetting_self_color_title,
                 summary = Res.string.uisetting_self_color_summary,
                 icon = Icons.Filled.Brush,
             ), Setting.ColorSetting(
                 type = SettingType.ColorSettingType,
-                key = COLOR_FRIENDTAG,
+                staticKey = COLOR_FRIENDTAG,
                 title = Res.string.uisetting_friend_color_title,
                 summary = Res.string.uisetting_friend_color_summary,
                 icon = Icons.Filled.Brush,
             ), Setting.ColorSetting(
                 type = SettingType.ColorSettingType,
-                key = COLOR_SYSTEMMSG,
+                staticKey = COLOR_SYSTEMMSG,
                 title = Res.string.uisetting_system_color_title,
                 summary = Res.string.uisetting_system_color_summary,
                 icon = Icons.Filled.Brush,
             ),
             Setting.ColorSetting(
                 type = SettingType.ColorSettingType,
-                key = COLOR_USERMSG,
+                staticKey = COLOR_USERMSG,
                 title = Res.string.uisetting_human_color_title,
                 summary = Res.string.uisetting_human_color_summary,
                 icon = Icons.Filled.Brush,
             ), Setting.ColorSetting(
                 type = SettingType.ColorSettingType,
-                key = COLOR_ERRORMSG,
+                staticKey = COLOR_ERRORMSG,
                 title = Res.string.uisetting_error_color_title,
                 summary = Res.string.uisetting_error_color_summary,
                 icon = Icons.Filled.Brush,
@@ -469,26 +469,26 @@ val SETTINGS_ROOM: SettingCollection = buildMap {
         listOf(
             Setting.BooleanSetting(
                 type = SettingType.ToggleSettingType,
-                key = MSG_ACTIVATE_STAMP,
+                staticKey = MSG_ACTIVATE_STAMP,
                 title = Res.string.uisetting_timestamp_title,
                 summary = Res.string.uisetting_timestamp_summary,
                 icon = Icons.Filled.Pin,
             ),
             Setting.BooleanSetting(
                 type = SettingType.ToggleSettingType,
-                key = MSG_OUTLINE,
+                staticKey = MSG_OUTLINE,
                 title = Res.string.uisetting_msgoutline_title,
                 summary = Res.string.uisetting_msgoutline_summary,
                 icon = Icons.Filled.BorderColor,
             ), Setting.BooleanSetting(
                 type = SettingType.ToggleSettingType,
-                key = MSG_SHADOW,
+                staticKey = MSG_SHADOW,
                 title = Res.string.uisetting_msgshadow_title,
                 summary = Res.string.uisetting_msgshadow_summary,
                 icon = Icons.Filled.BorderColor,
             ), Setting.SliderSetting(
                 type = SettingType.SliderSettingType,
-                key = MSG_BG_OPACITY,
+                staticKey = MSG_BG_OPACITY,
                 title = Res.string.uisetting_messagery_alpha_title,
                 summary = Res.string.uisetting_messagery_alpha_summary,
                 icon = Icons.Filled.Opacity,
@@ -496,7 +496,7 @@ val SETTINGS_ROOM: SettingCollection = buildMap {
                 minValue = 0,
             ), Setting.SliderSetting(
                 type = SettingType.SliderSettingType,
-                key = MSG_FONTSIZE,
+                staticKey = MSG_FONTSIZE,
                 title = Res.string.uisetting_msgsize_title,
                 summary = Res.string.uisetting_msgsize_summary,
                 icon = Icons.Filled.FormatSize,
@@ -504,7 +504,7 @@ val SETTINGS_ROOM: SettingCollection = buildMap {
                 minValue = 6,
             ), Setting.SliderSetting(
                 type = SettingType.SliderSettingType,
-                key = MSG_MAXCOUNT,
+                staticKey = MSG_MAXCOUNT,
                 title = Res.string.uisetting_msgcount_title,
                 summary = Res.string.uisetting_msgcount_summary,
                 icon = Icons.Filled.FormatListNumbered,
@@ -512,7 +512,7 @@ val SETTINGS_ROOM: SettingCollection = buildMap {
                 minValue = 1,
             ), Setting.SliderSetting(
                 type = SettingType.SliderSettingType,
-                key = MSG_FADING_DURATION,
+                staticKey = MSG_FADING_DURATION,
                 title = Res.string.uisetting_msglife_title,
                 summary = Res.string.uisetting_msglife_summary,
                 icon = Icons.Filled.Timer,
@@ -520,7 +520,7 @@ val SETTINGS_ROOM: SettingCollection = buildMap {
                 minValue = 1,
             ), Setting.BooleanSetting(
                 type = SettingType.ToggleSettingType,
-                key = MSG_BOX_ACTION,
+                staticKey = MSG_BOX_ACTION,
                 title = Res.string.uisetting_msgboxaction_title,
                 summary = Res.string.uisetting_msgboxaction_summary,
                 icon = Icons.Filled.Keyboard,
@@ -536,7 +536,7 @@ val SETTINGS_ROOM: SettingCollection = buildMap {
         listOf(
             Setting.SliderSetting(
                 type = SettingType.SliderSettingType,
-                key = SUBTITLE_SIZE,
+                staticKey = SUBTITLE_SIZE,
                 title = Res.string.uisetting_subtitle_size_title,
                 summary = Res.string.uisetting_subtitle_size_summary,
                 icon = Icons.Filled.SortByAlpha,
@@ -570,14 +570,14 @@ val SETTINGS_ROOM: SettingCollection = buildMap {
 //                    ),
             Setting.BooleanSetting(
                 type = SettingType.CheckboxSettingType,
-                key = CUSTOM_SEEK_FRONT,
+                staticKey = CUSTOM_SEEK_FRONT,
                 title = Res.string.uisetting_custom_seek_front_title,
                 summary = Res.string.uisetting_custom_seek_front_summary,
                 icon = Icons.Filled.Update,
             ),
             Setting.SliderSetting(
                 type = SettingType.SliderSettingType,
-                key = CUSTOM_SEEK_AMOUNT,
+                staticKey = CUSTOM_SEEK_AMOUNT,
                 title = Res.string.uisetting_custom_seek_amount_title,
                 summary = Res.string.uisetting_custom_seek_amount_summary,
                 icon = Icons.Filled.Update,
@@ -585,7 +585,7 @@ val SETTINGS_ROOM: SettingCollection = buildMap {
                 minValue = 30,
             ), Setting.SliderSetting(
                 type = SettingType.SliderSettingType,
-                key = SEEK_FORWARD_JUMP,
+                staticKey = SEEK_FORWARD_JUMP,
                 title = Res.string.uisetting_seek_forward_jump_title,
                 summary = Res.string.uisetting_seek_forward_jump_summary,
                 icon = Icons.Filled.FastForward,
@@ -593,7 +593,7 @@ val SETTINGS_ROOM: SettingCollection = buildMap {
                 minValue = 1,
             ), Setting.SliderSetting(
                 type = SettingType.SliderSettingType,
-                key = SEEK_BACKWARD_JUMP,
+                staticKey = SEEK_BACKWARD_JUMP,
                 title = Res.string.uisetting_seek_backward_jump_title,
                 summary = Res.string.uisetting_seek_backward_jump_summary,
                 icon = Icons.Filled.FastRewind,
@@ -622,7 +622,7 @@ val SETTINGS_ROOM: SettingCollection = buildMap {
 //                ),
             Setting.SliderSetting(
                 type = SettingType.SliderSettingType,
-                key = RECONNECTION_INTERVAL,
+                staticKey = RECONNECTION_INTERVAL,
                 title = Res.string.uisetting_reconnect_interval_title,
                 summary = Res.string.uisetting_reconnect_interval_summary,
                 icon = Icons.Filled.Web,
@@ -631,7 +631,7 @@ val SETTINGS_ROOM: SettingCollection = buildMap {
             ),
             Setting.YesNoDialogSetting(
                 type = SettingType.OneClickSettingType,
-                key = "RESET_DEFAULT", //TODO should offload to a string?
+                key = DynamicPref("RESET_DEFAULT"), //TODO should offload to a string?
                 title = Res.string.uisetting_resetdefault_title,
                 summary = Res.string.uisetting_resetdefault_summary,
                 icon = Icons.Filled.ClearAll,

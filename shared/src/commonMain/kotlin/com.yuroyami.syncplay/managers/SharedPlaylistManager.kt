@@ -1,6 +1,9 @@
 package com.yuroyami.syncplay.managers
 
 import com.yuroyami.syncplay.AbstractManager
+import com.yuroyami.syncplay.managers.preferences.Preferences.MEDIA_DIRECTORIES
+import com.yuroyami.syncplay.managers.preferences.get
+import com.yuroyami.syncplay.managers.preferences.set
 import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.iterateDirectory
@@ -129,11 +132,9 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
 
         /** Convenient method to add a folder path to the current set of media directories */
         suspend fun saveFolderPathAsMediaDirectory(uri: String) {
-            val paths = pref(DataStoreKeys.PREF_SP_MEDIA_DIRS, emptySet<String>()).toMutableSet()
-
+            val paths = MEDIA_DIRECTORIES.get().toMutableSet()
             if (!paths.contains(uri)) paths.add(uri)
-
-            writePref(DataStoreKeys.PREF_SP_MEDIA_DIRS, paths.toSet())
+            MEDIA_DIRECTORIES.set(paths)
         }
     }
 
@@ -150,7 +151,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             viewmodel.player.injectVideo(fileName, isUrl = true)
         } else {
             /* We search our media directories which were added by the user in settings */
-            val paths = pref(DataStoreKeys.PREF_SP_MEDIA_DIRS, emptySet<String>())
+            val paths = MEDIA_DIRECTORIES.get()
 
             if (paths.isEmpty()) {
                 viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_shared_playlist_no_directories) }, isChat = false)

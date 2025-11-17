@@ -71,7 +71,6 @@ import com.yuroyami.syncplay.ui.screens.adam.LocalTheme
 import com.yuroyami.syncplay.ui.screens.home.HomeLeadingTitle
 import com.yuroyami.syncplay.ui.screens.home.HomeTextField
 import com.yuroyami.syncplay.ui.screens.room.tabs.RoomTab
-import com.yuroyami.syncplay.ui.theme.SaveableTheme.Companion.toTheme
 import com.yuroyami.syncplay.utils.loggy
 import kotlinx.coroutines.launch
 
@@ -79,7 +78,7 @@ import kotlinx.coroutines.launch
 fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
     val globalViewmodel = LocalGlobalViewmodel.current
 
-    var newTheme by remember { mutableStateOf<SaveableTheme>(themeToEdit ?: globalViewmodel.themeManager.currentTheme.value.toTheme()) }
+    var newTheme by remember { mutableStateOf(themeToEdit ?: globalViewmodel.themeManager.currentTheme.value) }
 
     LaunchedEffect(newTheme) {
         loggy(newTheme.toString())

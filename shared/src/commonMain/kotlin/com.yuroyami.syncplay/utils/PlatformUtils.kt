@@ -78,7 +78,7 @@ fun loggy(s: Any?) {
  * @param engine The network engine type to use (e.g., Ktor, Netty, SwiftNIO)
  * @return Platform-specific NetworkManager implementation
  */
-expect fun RoomViewmodel.instantiateNetworkManager(engine: NetworkManager.NetworkEngine): NetworkManager
+expect fun RoomViewmodel.instantiateNetworkManager(): NetworkManager
 
 /**
  * Converts milliseconds to a human-readable timestamp in mm:ss or hh:mm:ss format.

@@ -8,6 +8,12 @@ import androidx.compose.material.icons.filled.SettingsInputComponent
 import androidx.compose.material.icons.filled.SlowMotionVideo
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.SupervisedUserCircle
+import com.yuroyami.syncplay.managers.preferences.Preferences.MPV_DEBUG_MODE
+import com.yuroyami.syncplay.managers.preferences.Preferences.MPV_GPU_NEXT
+import com.yuroyami.syncplay.managers.preferences.Preferences.MPV_HARDWARE_ACCELERATION
+import com.yuroyami.syncplay.managers.preferences.Preferences.MPV_INTERPOLATION
+import com.yuroyami.syncplay.managers.preferences.Preferences.MPV_PROFILE
+import com.yuroyami.syncplay.managers.preferences.Preferences.MPV_VIDSYNC
 import com.yuroyami.syncplay.managers.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.managers.settings.Setting
 import com.yuroyami.syncplay.managers.settings.SettingCategory
@@ -40,7 +46,7 @@ fun MpvPlayer.getExtraSettings(): ExtraSettingBundle {
 
     return Pair(
         first = SettingCategory(
-            keyID = CATEG_INROOM_MPV,
+            keyID = "inroom_mpv",
             title = Res.string.uisetting_categ_mpv,
             icon = Icons.Filled.SettingsInputComponent
         ),
@@ -48,10 +54,9 @@ fun MpvPlayer.getExtraSettings(): ExtraSettingBundle {
             add(
                 Setting.BooleanSetting(
                 type = SettingType.ToggleSettingType,
-                key = DataStoreKeys.PREF_MPV_HARDWARE_ACCELERATION,
+                staticKey = MPV_HARDWARE_ACCELERATION,
                 title = Res.string.uisetting_mpv_hardware_acceleration_title,
                 summary = Res.string.uisetting_mpv_hardware_acceleration_summary,
-                defaultValue = true,
                 icon = Icons.Filled.Speed,
                 onBooleanChanged = { b ->
                     toggleHardwareAcceleration(b)
@@ -61,10 +66,9 @@ fun MpvPlayer.getExtraSettings(): ExtraSettingBundle {
             add(
                 Setting.BooleanSetting(
                 type = SettingType.ToggleSettingType,
-                key = DataStoreKeys.PREF_MPV_GPU_NEXT,
+                staticKey = MPV_GPU_NEXT,
                 title = Res.string.uisetting_mpv_gpunext_title,
                 summary = Res.string.uisetting_mpv_gpunext_summary,
-                defaultValue = true,
                 icon = Icons.Filled.Memory,
                 onBooleanChanged = { b ->
                     toggleGpuNext(b)
@@ -74,10 +78,9 @@ fun MpvPlayer.getExtraSettings(): ExtraSettingBundle {
             add(
                 Setting.MultiChoiceSetting(
                 type = SettingType.MultiChoicePopupSettingType,
-                key = DataStoreKeys.PREF_MPV_VIDSYNC,
+                staticKey = MPV_VIDSYNC,
                 title = Res.string.ui_setting_mpv_vidsync_title,
                 summary = Res.string.ui_setting_mpv_vidsync_summary,
-                defaultValue = vidsyncEntries.first(),
                 icon = Icons.Filled.SlowMotionVideo,
                 entries =  { vidsyncEntries.associateBy { it } },
                 onItemChosen = { s ->
@@ -88,10 +91,9 @@ fun MpvPlayer.getExtraSettings(): ExtraSettingBundle {
             add(
                 Setting.BooleanSetting(
                 type = SettingType.CheckboxSettingType,
-                key = DataStoreKeys.PREF_MPV_INTERPOLATION,
+                staticKey = MPV_INTERPOLATION,
                 title = Res.string.ui_setting_mpv_interpolation_title,
                 summary = Res.string.ui_setting_mpv_interpolation_summary,
-                defaultValue = false,
                 icon = Icons.Filled.Animation,
                 onBooleanChanged = { b ->
                     toggleInterpolation(b)
@@ -101,10 +103,9 @@ fun MpvPlayer.getExtraSettings(): ExtraSettingBundle {
             add(
                 Setting.MultiChoiceSetting(
                 type = SettingType.MultiChoicePopupSettingType,
-                key = DataStoreKeys.PREF_MPV_PROFILE,
+                staticKey = MPV_PROFILE,
                 title = Res.string.ui_setting_mpv_profile_title,
                 summary = Res.string.ui_setting_mpv_profile_summary,
-                defaultValue = profileEntries.first(),
                 icon = Icons.Filled.SupervisedUserCircle,
                 entries = { profileEntries.associateBy { it } },
                 onItemChosen = { s ->
@@ -115,10 +116,9 @@ fun MpvPlayer.getExtraSettings(): ExtraSettingBundle {
             add(
                 Setting.SliderSetting(
                 type = SettingType.CheckboxSettingType,
-                key = DataStoreKeys.PREF_MPV_DEBUG_MODE,
+                staticKey = MPV_DEBUG_MODE,
                 title = Res.string.ui_setting_mpv_debug_title,
                 summary = Res.string.ui_setting_mpv_debug_summary,
-                defaultValue = 0,
                 maxValue = 3,
                 icon = Icons.Filled.Adb,
                 onValueChanged = { i ->

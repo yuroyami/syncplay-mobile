@@ -2,13 +2,13 @@ package com.yuroyami.syncplay.managers.network
 
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
+import com.yuroyami.syncplay.managers.preferences.Preferences.RECONNECTION_INTERVAL
+import com.yuroyami.syncplay.managers.preferences.get
 import com.yuroyami.syncplay.managers.protocol.ProtocolManager.Companion.createPacketInstance
 import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import com.yuroyami.syncplay.models.Constants
-import com.yuroyami.syncplay.utils.PLATFORM
 import com.yuroyami.syncplay.utils.ProtocolDsl
 import com.yuroyami.syncplay.utils.loggy
-import com.yuroyami.syncplay.utils.platform
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -60,21 +60,6 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
         NETTY,
         /** SwiftNIO TCP client (iOS), supports TLS */
         SWIFTNIO
-    }
-
-    companion object {
-        /**
-         * Gets the user's preferred network engine from settings.
-         *
-         * Falls back to platform defaults: Netty on Android, SwiftNIO on iOS.
-         *
-         * @return The preferred NetworkEngine enum value
-         */
-        fun getPreferredEngine(): NetworkEngine {
-            val defaultEngine = if (platform == PLATFORM.Android) NetworkEngine.NETTY else NetworkEngine.SWIFTNIO
-            val engineName = pref(DataStoreKeys.PREF_NETWORK_ENGINE, defaultEngine.name.lowercase())
-            return NetworkEngine.valueOf(engineName.uppercase())
-        }
     }
 
     /**
@@ -173,7 +158,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
             if (reconnectionJob == null || reconnectionJob?.isCompleted == true) {
                 reconnectionJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
                     state = Constants.CONNECTIONSTATE.STATE_SCHEDULING_RECONNECT
-                    val reconnectionInterval = pref(DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL, 2) * 1000L
+                    val reconnectionInterval = RECONNECTION_INTERVAL.get() * 1000L
 
                     delay(reconnectionInterval)
 

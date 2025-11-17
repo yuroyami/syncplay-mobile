@@ -11,6 +11,8 @@ import com.yuroyami.syncplay.managers.network.NetworkManager
 import com.yuroyami.syncplay.managers.network.instantiateSwiftNioNetworkManager
 import com.yuroyami.syncplay.managers.player.ApplePlayerEngine
 import com.yuroyami.syncplay.managers.player.PlayerEngine
+import com.yuroyami.syncplay.managers.preferences.Preferences.NETWORK_ENGINE
+import com.yuroyami.syncplay.managers.preferences.get
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeoutOrNull
@@ -33,9 +35,12 @@ actual val platform: PLATFORM = PLATFORM.IOS
 
 actual val availablePlatformPlayerEngines: List<PlayerEngine> = listOf(ApplePlayerEngine.AVPlayer, ApplePlayerEngine.VLC)
 
-actual fun RoomViewmodel.instantiateNetworkManager(engine: NetworkManager.NetworkEngine) = when (engine) {
-    NetworkManager.NetworkEngine.SWIFTNIO -> instantiateSwiftNioNetworkManager!!(this)
-    else -> KtorNetworkManager(this)
+actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {
+    val preferredEngine = NETWORK_ENGINE.get()
+    return when (preferredEngine) {
+        "swiftnio" -> instantiateSwiftNioNetworkManager!!(this)
+        else -> KtorNetworkManager(this)
+    }
 }
 
 @Composable
