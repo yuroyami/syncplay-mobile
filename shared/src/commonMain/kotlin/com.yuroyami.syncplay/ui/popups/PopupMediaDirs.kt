@@ -39,7 +39,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,9 +59,9 @@ import androidx.compose.ui.window.PopupProperties
 import com.eygraber.uri.Uri
 import com.yuroyami.syncplay.managers.SharedPlaylistManager
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_SP_MEDIA_DIRS
-import com.yuroyami.syncplay.managers.datastore.valueBlockingly
-import com.yuroyami.syncplay.managers.datastore.valueFlow
-import com.yuroyami.syncplay.managers.datastore.writeValue
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.value
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.watch
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.writeValue
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.SyncplayPopup
 import com.yuroyami.syncplay.ui.components.jostFont
@@ -141,10 +140,7 @@ object PopupMediaDirs {
                     shape = RoundedCornerShape(size = 6.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.LightGray)
                 ) {
-                    val dirs = valueFlow(
-                        PREF_SP_MEDIA_DIRS,
-                        emptySet<String>()
-                    ).collectAsState(initial = emptySet())
+                    val dirs = PREF_SP_MEDIA_DIRS.watch(emptySet<String>())
 
                     LazyColumn(
                         modifier = Modifier.fillMaxSize()
@@ -212,10 +208,7 @@ object PopupMediaDirs {
                                             itemMenuState.value = false
 
                                             scope.launch {
-                                                val paths = valueBlockingly(
-                                                    PREF_SP_MEDIA_DIRS,
-                                                    emptySet<String>()
-                                                ).toMutableSet()
+                                                val paths = value(PREF_SP_MEDIA_DIRS, emptySet<String>()).toMutableSet()
 
                                                 if (paths.contains(item)) {
                                                     paths.remove(item)

@@ -3,8 +3,7 @@ package com.yuroyami.syncplay.managers.network
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.managers.datastore.valueBlockingly
-import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.value
 import com.yuroyami.syncplay.managers.protocol.ProtocolManager.Companion.createPacketInstance
 import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import com.yuroyami.syncplay.models.Constants
@@ -75,7 +74,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
          */
         fun getPreferredEngine(): NetworkEngine {
             val defaultEngine = if (platform == PLATFORM.Android) NetworkEngine.NETTY else NetworkEngine.SWIFTNIO
-            val engineName = valueBlockingly(DataStoreKeys.PREF_NETWORK_ENGINE, defaultEngine.name.lowercase())
+            val engineName = value(DataStoreKeys.PREF_NETWORK_ENGINE, defaultEngine.name.lowercase())
             return NetworkEngine.valueOf(engineName.uppercase())
         }
     }
@@ -176,7 +175,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
             if (reconnectionJob == null || reconnectionJob?.isCompleted == true) {
                 reconnectionJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
                     state = Constants.CONNECTIONSTATE.STATE_SCHEDULING_RECONNECT
-                    val reconnectionInterval = valueSuspendingly(DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL, 2) * 1000L
+                    val reconnectionInterval = value(DataStoreKeys.PREF_INROOM_RECONNECTION_INTERVAL, 2) * 1000L
 
                     delay(reconnectionInterval)
 

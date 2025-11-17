@@ -19,6 +19,12 @@ class SyncplayViewmodel : ViewModel() {
     val backstack = mutableStateListOf<Screen>(Screen.Home)
 
     /**
+     * Manages application theme and appearance settings.
+     * Lazily initialized when first accessed.
+     */
+    val themeManager: ThemeManager by lazy { ThemeManager(this) }
+
+    /**
      * Whether the shared playlist feature is enabled.
      *
      * When disabled, all shared playlist functionality should be hidden/disabled
@@ -27,12 +33,6 @@ class SyncplayViewmodel : ViewModel() {
      * TODO: Advertise this to server, disable shared-playlist-related functionality everywhere when this is off
      */
     val isSharedPlaylistEnabled = mutableStateOf(true)
-
-    /**
-     * Manages application theme and appearance settings.
-     * Lazily initialized when first accessed.
-     */
-    val themeManager: ThemeManager by lazy { ThemeManager(this) }
 
     /**
      * Tracks whether the user has entered a room at least once during this app session.

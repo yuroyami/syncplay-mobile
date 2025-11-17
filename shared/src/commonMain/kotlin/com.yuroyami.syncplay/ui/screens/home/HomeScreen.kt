@@ -38,7 +38,6 @@ import androidx.compose.material3.SplitButtonLayout
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,9 +54,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_PLAYER_ENGINE
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_NEVER_SHOW_TIPS
-import com.yuroyami.syncplay.managers.datastore.valueFlow
-import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
-import com.yuroyami.syncplay.managers.datastore.writeValue
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.value
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.watch
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.writeValue
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.sairaFont
@@ -113,7 +112,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
     LaunchedEffect(null) {
         withContext(Dispatchers.IO) {
             delay(1000)
-            val neverShowTips = valueSuspendingly(PREF_NEVER_SHOW_TIPS, false)
+            val neverShowTips = value(PREF_NEVER_SHOW_TIPS, false)
             if (!globalViewmodel.hasEnteredRoomOnce && !neverShowTips) {
                 didYaKnowPopup.value = true
             }
@@ -307,7 +306,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
 
                         //TODO Move to an extension function that retrieves current engine
                         val defaultEngine = availablePlatformPlayerEngines.first { it.isDefault }.name
-                        val selectedEngine by valueFlow(MISC_PLAYER_ENGINE, defaultEngine).collectAsState(initial = defaultEngine)
+                        val selectedEngine by MISC_PLAYER_ENGINE.watch(defaultEngine)
 
                         HomeAnimatedEngineButtonGroup(
                             modifier = Modifier.fillMaxWidth(0.75f),

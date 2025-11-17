@@ -2,8 +2,8 @@ package com.yuroyami.syncplay.managers
 
 import com.yuroyami.syncplay.AbstractManager
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.managers.datastore.valueBlockingly
-import com.yuroyami.syncplay.managers.datastore.writeValue
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.value
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.writeValue
 import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.iterateDirectory
@@ -72,7 +72,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
 
             /* If there is no duplicate, then we proceed, we check if the list is empty */
             if (viewmodel.session.sharedPlaylist.isEmpty() && viewmodel.session.spIndex.intValue == -1) {
-                viewmodel.player?.injectVideo(uri, true)
+                viewmodel.player.injectVideo(uri, true)
 
                 viewmodel.networkManager.send<PacketOut.PlaylistIndex> {
                     index = 0
@@ -132,7 +132,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
 
         /** Convenient method to add a folder path to the current set of media directories */
         suspend fun saveFolderPathAsMediaDirectory(uri: String) {
-            val paths = valueBlockingly(DataStoreKeys.PREF_SP_MEDIA_DIRS, emptySet<String>()).toMutableSet()
+            val paths = value(DataStoreKeys.PREF_SP_MEDIA_DIRS, emptySet<String>()).toMutableSet()
 
             if (!paths.contains(uri)) paths.add(uri)
 
@@ -150,10 +150,10 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             fileName.contains("https://", true) ||
             fileName.contains("ftp://", true)
         ) {
-            viewmodel.player?.injectVideo(fileName, isUrl = true)
+            viewmodel.player.injectVideo(fileName, isUrl = true)
         } else {
             /* We search our media directories which were added by the user in settings */
-            val paths = valueBlockingly(DataStoreKeys.PREF_SP_MEDIA_DIRS, emptySet<String>())
+            val paths = value(DataStoreKeys.PREF_SP_MEDIA_DIRS, emptySet<String>())
 
             if (paths.isEmpty()) {
                 viewmodel.actionManager.broadcastMessage(message = { getString(Res.string.room_shared_playlist_no_directories) }, isChat = false)
@@ -167,7 +167,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
                     fileUri2Play  = it
 
                     /* Loading the file into our player **/
-                    viewmodel.player?.injectVideo(fileUri2Play)
+                    viewmodel.player.injectVideo(fileUri2Play)
                 }
             }
             if (fileUri2Play == null) {

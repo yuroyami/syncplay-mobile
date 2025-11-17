@@ -13,7 +13,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -24,8 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_GESTURES
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT
-import com.yuroyami.syncplay.managers.datastore.valueAsState
-import com.yuroyami.syncplay.managers.datastore.valueFlow
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.watch
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.components.gradientOverlay
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
@@ -44,7 +42,7 @@ import syncplaymobile.shared.generated.resources.room_custom_skip_button
 fun RoomBottomBarVideoControlRow(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
 
-    val gesturesEnabled by valueFlow(MISC_GESTURES, true).collectAsState(initial = true)
+    val gesturesEnabled by MISC_GESTURES.watch(true)
 
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         if (!gesturesEnabled) {
@@ -64,8 +62,8 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
                 viewmodel.actionManager.seekFrwrd()
             }
         }
-        val customSkipToFront by PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT.valueAsState(true)
-        val customSkipAmount by PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT.valueAsState(90)
+        val customSkipToFront by PREF_INROOM_PLAYER_CUSTOM_SEEK_FRONT.watch(true)
+        val customSkipAmount by PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT.watch(90)
         if (customSkipToFront) {
             val customSkipAmountString by derivedStateOf {
                 timeStamper(

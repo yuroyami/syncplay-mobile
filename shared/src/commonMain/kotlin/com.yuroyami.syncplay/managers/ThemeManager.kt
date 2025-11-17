@@ -7,9 +7,9 @@ import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_ALL_THEMES
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_CURRENT_THEME
-import com.yuroyami.syncplay.managers.datastore.valueFlow
-import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
-import com.yuroyami.syncplay.managers.datastore.writeValue
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.value
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.valueFlow
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.writeValue
 import com.yuroyami.syncplay.ui.theme.SaveableTheme
 import com.yuroyami.syncplay.ui.theme.defaultTheme
 import kotlinx.coroutines.Dispatchers
@@ -53,7 +53,7 @@ class ThemeManager(val viewmodel: ViewModel) : AbstractManager(viewmodel) {
      */
     suspend fun saveNewTheme(theme: SaveableTheme): Boolean {
         return withContext(Dispatchers.IO) {
-            val customThemeListJson = valueSuspendingly(MISC_ALL_THEMES, "[]")
+            val customThemeListJson = value(MISC_ALL_THEMES, "[]")
             val list = Json.decodeFromString<List<SaveableTheme>>(customThemeListJson).toMutableList()
 
             if (list.contains(theme)) return@withContext false
@@ -70,14 +70,14 @@ class ThemeManager(val viewmodel: ViewModel) : AbstractManager(viewmodel) {
 
     fun deleteTheme(theme: SaveableTheme) {
         viewmodel.viewModelScope.launch(Dispatchers.IO) {
-            val customThemeListJson = valueSuspendingly(MISC_ALL_THEMES, "[]")
+            val customThemeListJson = value(MISC_ALL_THEMES, "[]")
             val list = Json.decodeFromString<List<SaveableTheme>>(customThemeListJson).toMutableList()
 
             list.remove(theme)
             val listEncodedAgain = Json.encodeToString(list)
             writeValue(MISC_ALL_THEMES, listEncodedAgain)
 
-            val selectedTheme = Json.decodeFromString<SaveableTheme>(valueSuspendingly(MISC_CURRENT_THEME, defaultTheme.asString()))
+            val selectedTheme = Json.decodeFromString<SaveableTheme>(value(MISC_CURRENT_THEME, defaultTheme.asString()))
 
             if (selectedTheme == theme) {
                 changeTheme(list.firstOrNull() ?: defaultTheme)

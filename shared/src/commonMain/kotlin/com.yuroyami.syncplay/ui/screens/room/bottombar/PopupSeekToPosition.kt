@@ -40,7 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.managers.datastore.valueAsState
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.watch
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.SyncplayPopup
 import com.yuroyami.syncplay.ui.components.syncplayFont
@@ -186,7 +186,7 @@ object PopupSeekToPosition {
                 }
 
                 /* Custom Skip intro */
-                val customSkipAmount by DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT.valueAsState(90)
+                val customSkipAmount by DataStoreKeys.PREF_INROOM_PLAYER_CUSTOM_SEEK_AMOUNT.watch(90)
                 val customSkipAmountString by derivedStateOf { timeStamper(customSkipAmount) }
 
                 Button(

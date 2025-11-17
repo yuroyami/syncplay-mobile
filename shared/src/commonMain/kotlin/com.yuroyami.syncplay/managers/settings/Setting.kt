@@ -43,8 +43,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.managers.datastore.valueAsState
-import com.yuroyami.syncplay.managers.datastore.writeValue
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.watch
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.writeValue
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.MultiChoiceDialog
@@ -319,7 +319,7 @@ sealed class Setting<T>(
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val boolean by key.valueAsState(defaultValue)
+            val boolean by key.watch(defaultValue)
             val scope = rememberCoroutineScope { Dispatchers.IO }
 
             BaseSettingComposable(
@@ -383,7 +383,7 @@ sealed class Setting<T>(
         @Composable
         override fun SettingComposable(modifier: Modifier) {
             val actualEntries = entries.invoke()
-            val selectedItem by key.valueAsState(defaultValue)
+            val selectedItem by key.watch(defaultValue)
             val dialogOpen = remember { mutableStateOf(false) }
 
             val scope = rememberCoroutineScope { Dispatchers.IO }
@@ -440,7 +440,7 @@ sealed class Setting<T>(
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val value by key.valueAsState(defaultValue)
+            val value by key.watch(defaultValue)
             val styling = LocalSettingStyling.current
             val scope = rememberCoroutineScope { Dispatchers.IO }
 
@@ -509,7 +509,7 @@ sealed class Setting<T>(
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val color by key.valueAsState(defaultValue)
+            val color by key.watch(defaultValue)
             val colorDialogState = remember { mutableStateOf(false) }
             val scope = rememberCoroutineScope { Dispatchers.IO }
 
@@ -552,7 +552,7 @@ sealed class Setting<T>(
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val string by key.valueAsState(defaultValue)
+            val string by key.watch(defaultValue)
             val scope = rememberCoroutineScope()
 
             BaseSettingComposable(

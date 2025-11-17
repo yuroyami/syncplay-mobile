@@ -1,10 +1,8 @@
 package com.yuroyami.syncplay.managers.player
 
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.managers.datastore.valueBlockingly
-import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.value
 import com.yuroyami.syncplay.managers.player.PlayerOptions.Companion.get
-import com.yuroyami.syncplay.managers.player.PlayerOptions.Companion.getSuspendingly
 
 /**
  * Configuration options for media player behavior and preferences.
@@ -62,38 +60,16 @@ class PlayerOptions private constructor() {
         /**
          * Retrieves player options synchronously from persistent storage.
          *
-         * **Warning:** Blocks the current thread while reading from storage.
-         * Use [getSuspendingly] in coroutine contexts for better performance.
-         *
          * @return PlayerOptions instance populated with user preferences
          */
         fun get(): PlayerOptions {
             val options = PlayerOptions()
-            options.maxBuffer = valueBlockingly(DataStoreKeys.PREF_EXO_MAX_BUFFER, 30) * 1000
-            options.minBuffer = valueBlockingly(DataStoreKeys.PREF_EXO_MIN_BUFFER, 15) * 1000
-            options.playbackBuffer = valueBlockingly(DataStoreKeys.PREF_EXO_SEEK_BUFFER, 2000)
+            options.maxBuffer = value(DataStoreKeys.PREF_EXO_MAX_BUFFER, 30) * 1000
+            options.minBuffer = value(DataStoreKeys.PREF_EXO_MIN_BUFFER, 15) * 1000
+            options.playbackBuffer = value(DataStoreKeys.PREF_EXO_SEEK_BUFFER, 2000)
 
-            options.ccPreference = valueBlockingly(DataStoreKeys.PREF_CC_LANG, "eng")
-            options.audioPreference = valueBlockingly(DataStoreKeys.PREF_AUDIO_LANG, "und")
-            return options
-        }
-
-        /**
-         * Retrieves player options asynchronously from persistent storage.
-         *
-         * Suspends instead of blocking, making it suitable for use in coroutines.
-         * Prefer this method over [get] when in a suspend context.
-         *
-         * @return PlayerOptions instance populated with user preferences
-         */
-        suspend fun getSuspendingly(): PlayerOptions {
-            val options = PlayerOptions()
-            options.maxBuffer = valueSuspendingly(DataStoreKeys.PREF_EXO_MAX_BUFFER, 30) * 1000
-            options.minBuffer = valueSuspendingly(DataStoreKeys.PREF_EXO_MIN_BUFFER, 15) * 1000
-            options.playbackBuffer = valueSuspendingly(DataStoreKeys.PREF_EXO_SEEK_BUFFER, 2000)
-
-            options.ccPreference =  valueSuspendingly(DataStoreKeys.PREF_CC_LANG, "eng")
-            options.audioPreference = valueSuspendingly(DataStoreKeys.PREF_AUDIO_LANG, "und")
+            options.ccPreference = value(DataStoreKeys.PREF_CC_LANG, "eng")
+            options.audioPreference = value(DataStoreKeys.PREF_AUDIO_LANG, "und")
             return options
         }
     }

@@ -22,7 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.managers.datastore.valueAsState
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.watch
 import com.yuroyami.syncplay.ui.screens.adam.LocalChatPalette
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import kotlinx.coroutines.delay
@@ -36,7 +36,7 @@ fun FadingMessageLayout() {
     val isHUDVisible by viewmodel.uiManager.visibleHUD.collectAsState()
 
     /** The layout for the fading messages & OSD messages (when HUD is hidden, or when screen is locked) */
-    val fadingTimeout = DataStoreKeys.PREF_INROOM_MSG_FADING_DURATION.valueAsState(3)
+    val fadingTimeout = DataStoreKeys.PREF_INROOM_MSG_FADING_DURATION.watch(3)
     val palette = LocalChatPalette.current
 
     if (!isHUDVisible) {

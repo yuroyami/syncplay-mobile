@@ -43,8 +43,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_GESTURES
-import com.yuroyami.syncplay.managers.datastore.valueFlow
-import com.yuroyami.syncplay.managers.datastore.writeValue
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.watch
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.writeValue
 import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.components.FlexibleText
@@ -115,7 +115,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
         }
 
         /* Seek Gesture (DoNotTouch for disabling it) */
-        val gesturesEnabled by valueFlow(MISC_GESTURES, true).collectAsState(initial = true)
+        val gesturesEnabled by MISC_GESTURES.watch(true)
 
         FlexibleIcon(
             icon = when (gesturesEnabled) {

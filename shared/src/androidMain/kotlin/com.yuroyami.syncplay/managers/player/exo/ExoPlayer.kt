@@ -88,7 +88,7 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
             audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
             /** LoadControl (Buffering manager) and track selector (for track language preference) **/
-            val options = PlayerOptions.getSuspendingly()
+            val options = PlayerOptions.get()
             val loadControl = DefaultLoadControl.Builder()
                 .setBufferDurationsMs(
                     options.minBuffer,

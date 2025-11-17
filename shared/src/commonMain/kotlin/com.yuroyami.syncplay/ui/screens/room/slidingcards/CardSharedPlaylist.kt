@@ -577,6 +577,7 @@ object CardSharedPlaylist {
                         fontFamily = FontFamily(helveticaFont),
                         fontSize = 16.sp,
                     ),
+                    singleLine = true,
                     label = {
                         Text("URLs", color = Color.Gray)
                     }

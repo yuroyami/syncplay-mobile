@@ -11,7 +11,7 @@ import com.yuroyami.syncplay.managers.SessionManager
 import com.yuroyami.syncplay.managers.SharedPlaylistManager
 import com.yuroyami.syncplay.managers.UIManager
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.managers.datastore.valueSuspendingly
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.value
 import com.yuroyami.syncplay.managers.network.NetworkManager
 import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.managers.player.PlayerManager
@@ -95,14 +95,14 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            setReadyDirectly = valueSuspendingly(DataStoreKeys.PREF_READY_FIRST_HAND, true)
+            setReadyDirectly = value(DataStoreKeys.PREF_READY_FIRST_HAND, true)
 
             networkManager = instantiateNetworkManager(engine = NetworkManager.getPreferredEngine())
 
             joinConfig?.let {
                 launch {
                     val defaultEngine = availablePlatformPlayerEngines.first { it.isDefault }.name //TODO
-                    val engine = availablePlatformPlayerEngines.first { it.name == valueSuspendingly(DataStoreKeys.MISC_PLAYER_ENGINE, defaultEngine) }
+                    val engine = availablePlatformPlayerEngines.first { it.name == value(DataStoreKeys.MISC_PLAYER_ENGINE, defaultEngine) }
                     playerManager.player = engine.instantiate(this@RoomViewmodel)
                     playerManager.isPlayerReady.value = true
                 }
@@ -114,7 +114,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
                     sessionManager.session.currentPassword = joinConfig.pw
 
                     /** Connecting (via TLS or noTLS) */
-                    val tls = valueSuspendingly(DataStoreKeys.PREF_TLS_ENABLE, default = true)
+                    val tls = value(DataStoreKeys.PREF_TLS_ENABLE, default = true)
                     if (tls && networkManager.supportsTLS()) {
                         callbackManager.onTLSCheck()
                         networkManager.tls = Constants.TLS.TLS_ASK
