@@ -1,7 +1,7 @@
 package com.yuroyami.syncplay.managers.player
 
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.value
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.pref
 import com.yuroyami.syncplay.managers.player.PlayerOptions.Companion.get
 
 /**
@@ -64,12 +64,12 @@ class PlayerOptions private constructor() {
          */
         fun get(): PlayerOptions {
             val options = PlayerOptions()
-            options.maxBuffer = value(DataStoreKeys.PREF_EXO_MAX_BUFFER, 30) * 1000
-            options.minBuffer = value(DataStoreKeys.PREF_EXO_MIN_BUFFER, 15) * 1000
-            options.playbackBuffer = value(DataStoreKeys.PREF_EXO_SEEK_BUFFER, 2000)
+            options.maxBuffer = pref(DataStoreKeys.PREF_EXO_MAX_BUFFER, 30) * 1000
+            options.minBuffer = pref(DataStoreKeys.PREF_EXO_MIN_BUFFER, 15) * 1000
+            options.playbackBuffer = pref(DataStoreKeys.PREF_EXO_SEEK_BUFFER, 2000)
 
-            options.ccPreference = value(DataStoreKeys.PREF_CC_LANG, "eng")
-            options.audioPreference = value(DataStoreKeys.PREF_AUDIO_LANG, "und")
+            options.ccPreference = pref(DataStoreKeys.PREF_CC_LANG, "eng")
+            options.audioPreference = pref(DataStoreKeys.PREF_AUDIO_LANG, "und")
             return options
         }
     }

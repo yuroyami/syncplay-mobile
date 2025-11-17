@@ -1,8 +1,8 @@
 package com.yuroyami.syncplay.models
 
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.value
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.writeValue
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.pref
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.writePref
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -41,7 +41,7 @@ data class JoinConfig(
          */
         suspend fun savedConfig(): JoinConfig = withTimeoutOrNull(250.milliseconds) {
             Json.decodeFromString<JoinConfig>(
-                value<String?>(DataStoreKeys.MISC_JOIN_CONFIG, null)
+                pref<String?>(DataStoreKeys.MISC_JOIN_CONFIG, null)
                     ?: return@withTimeoutOrNull JoinConfig()
             )
         } ?: JoinConfig()
@@ -56,10 +56,10 @@ data class JoinConfig(
      * This allows quick reconnection to the same room with the same credentials.
      */
     suspend fun save() {
-        val saveInfo = value(DataStoreKeys.PREF_REMEMBER_INFO, true)
+        val saveInfo = pref(DataStoreKeys.PREF_REMEMBER_INFO, true)
 
         if (saveInfo) {
-            writeValue(DataStoreKeys.MISC_JOIN_CONFIG, Json.encodeToString(this))
+            writePref(DataStoreKeys.MISC_JOIN_CONFIG, Json.encodeToString(this))
         }
     }
 }

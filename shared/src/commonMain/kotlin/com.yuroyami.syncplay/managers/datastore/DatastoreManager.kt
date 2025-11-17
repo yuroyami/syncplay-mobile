@@ -69,7 +69,7 @@ class DatastoreManager(val viewmodel: SyncplayViewmodel) : AbstractManager(viewm
          *
          * Uses distinctUntilChanged implicitly through map operator behavior.
          */
-        inline fun <reified T> valueFlow(key: String, default: T): Flow<T> {
+        inline fun <reified T> prefFlow(key: String, default: T): Flow<T> {
             val preferencesKey: Preferences.Key<T> = prefKeyMapper(key)
             return datastoreStateFlow.map { preferences ->
                 preferences[preferencesKey] ?: default
@@ -78,7 +78,7 @@ class DatastoreManager(val viewmodel: SyncplayViewmodel) : AbstractManager(viewm
 
         /** ==================== WRITE Operation ==================== */
 
-        suspend inline fun <reified T> writeValue(key: String, value: T) {
+        suspend inline fun <reified T> writePref(key: String, value: T) {
             datastore.edit { preferences ->
                 val preferencesKey: Preferences.Key<T> = prefKeyMapper(key)
                 preferences[preferencesKey] = value
@@ -87,15 +87,15 @@ class DatastoreManager(val viewmodel: SyncplayViewmodel) : AbstractManager(viewm
 
         /** ==================== READ Operation ==================== */
 
-        inline fun <reified T> value(key: String, default: T): T {
+        inline fun <reified T> pref(key: String, default: T): T {
             val preferencesKey: Preferences.Key<T> = prefKeyMapper(key)
             return datastoreStateFlow.value[preferencesKey] ?: default
         }
 
         /** ==================== COMPOSE INTEGRATION ==================== */
         @Composable
-        inline fun <reified T> String.watch(default: T): State<T> {
-            return valueFlow(this, default).collectAsState(initial = default)
+        inline fun <reified T> String.watchPref(default: T): State<T> {
+            return prefFlow(this, default).collectAsState(initial = default)
         }
     }
 }

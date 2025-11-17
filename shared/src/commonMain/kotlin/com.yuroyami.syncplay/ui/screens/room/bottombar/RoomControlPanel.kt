@@ -43,8 +43,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_GESTURES
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.watch
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.writeValue
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.watchPref
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.writePref
 import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.components.FlexibleText
@@ -115,7 +115,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
         }
 
         /* Seek Gesture (DoNotTouch for disabling it) */
-        val gesturesEnabled by MISC_GESTURES.watch(true)
+        val gesturesEnabled by MISC_GESTURES.watchPref(true)
 
         FlexibleIcon(
             icon = when (gesturesEnabled) {
@@ -124,7 +124,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
             }, size = iconSize, shadowColors = listOf(Color.Black)
         ) {
             composeScope.launch(Dispatchers.IO) {
-                writeValue(MISC_GESTURES, !gesturesEnabled)
+                writePref(MISC_GESTURES, !gesturesEnabled)
                 viewmodel.osdManager.dispatchOSD { if (gesturesEnabled) "Gestures enabled" else "Gestures disabled" } //TODO Localize
             }
         }

@@ -7,9 +7,9 @@ import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_ALL_THEMES
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys.MISC_CURRENT_THEME
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.value
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.valueFlow
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.writeValue
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.pref
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.prefFlow
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.writePref
 import com.yuroyami.syncplay.ui.theme.SaveableTheme
 import com.yuroyami.syncplay.ui.theme.defaultTheme
 import kotlinx.coroutines.Dispatchers
@@ -35,16 +35,16 @@ class ThemeManager(val viewmodel: ViewModel) : AbstractManager(viewmodel) {
     /**
      * The currently active theme.
      */
-    val currentTheme = valueFlow(MISC_CURRENT_THEME, defaultTheme.asString())
+    val currentTheme = prefFlow(MISC_CURRENT_THEME, defaultTheme.asString())
         .stateIn(scope = viewmodel.viewModelScope, started = Eagerly, defaultTheme.asString())
 
-    val customThemes: StateFlow<List<SaveableTheme>> = valueFlow(MISC_ALL_THEMES, "[]")
+    val customThemes: StateFlow<List<SaveableTheme>> = prefFlow(MISC_ALL_THEMES, "[]")
         .map { Json.decodeFromString<List<SaveableTheme>>(it) }
         .stateIn(scope = viewmodel.viewModelScope, started = Eagerly, listOf())
 
     fun changeTheme(theme: SaveableTheme) {
         viewmodel.viewModelScope.launch(Dispatchers.IO) {
-            writeValue(MISC_CURRENT_THEME, theme.asString())
+            writePref(MISC_CURRENT_THEME, theme.asString())
         }
     }
 
@@ -53,14 +53,14 @@ class ThemeManager(val viewmodel: ViewModel) : AbstractManager(viewmodel) {
      */
     suspend fun saveNewTheme(theme: SaveableTheme): Boolean {
         return withContext(Dispatchers.IO) {
-            val customThemeListJson = value(MISC_ALL_THEMES, "[]")
+            val customThemeListJson = pref(MISC_ALL_THEMES, "[]")
             val list = Json.decodeFromString<List<SaveableTheme>>(customThemeListJson).toMutableList()
 
             if (list.contains(theme)) return@withContext false
 
             list.add(theme)
             val listEncodedAgain = Json.encodeToString(list)
-            writeValue(MISC_ALL_THEMES, listEncodedAgain)
+            writePref(MISC_ALL_THEMES, listEncodedAgain)
 
             changeTheme(theme)
 
@@ -70,14 +70,14 @@ class ThemeManager(val viewmodel: ViewModel) : AbstractManager(viewmodel) {
 
     fun deleteTheme(theme: SaveableTheme) {
         viewmodel.viewModelScope.launch(Dispatchers.IO) {
-            val customThemeListJson = value(MISC_ALL_THEMES, "[]")
+            val customThemeListJson = pref(MISC_ALL_THEMES, "[]")
             val list = Json.decodeFromString<List<SaveableTheme>>(customThemeListJson).toMutableList()
 
             list.remove(theme)
             val listEncodedAgain = Json.encodeToString(list)
-            writeValue(MISC_ALL_THEMES, listEncodedAgain)
+            writePref(MISC_ALL_THEMES, listEncodedAgain)
 
-            val selectedTheme = Json.decodeFromString<SaveableTheme>(value(MISC_CURRENT_THEME, defaultTheme.asString()))
+            val selectedTheme = Json.decodeFromString<SaveableTheme>(pref(MISC_CURRENT_THEME, defaultTheme.asString()))
 
             if (selectedTheme == theme) {
                 changeTheme(list.firstOrNull() ?: defaultTheme)

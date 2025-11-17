@@ -43,8 +43,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.watch
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.writeValue
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.watchPref
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.writePref
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.MultiChoiceDialog
@@ -319,7 +319,7 @@ sealed class Setting<T>(
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val boolean by key.watch(defaultValue)
+            val boolean by key.watchPref(defaultValue)
             val scope = rememberCoroutineScope { Dispatchers.IO }
 
             BaseSettingComposable(
@@ -328,7 +328,7 @@ sealed class Setting<T>(
                 icon = icon,
                 onClick = {
                     scope.launch {
-                        writeValue(key, !boolean)
+                        writePref(key, !boolean)
                     }
                 },
                 trailingElement = {
@@ -338,7 +338,7 @@ sealed class Setting<T>(
                             enabled = enabled,
                             onCheckedChange = { b ->
                                 scope.launch {
-                                    writeValue(key, b)
+                                    writePref(key, b)
                                 }
                                 onBooleanChanged.invoke(b)
                             }
@@ -350,7 +350,7 @@ sealed class Setting<T>(
                             enabled = enabled,
                             onCheckedChange = { b ->
                                 scope.launch {
-                                    writeValue(key, b)
+                                    writePref(key, b)
                                 }
                                 onBooleanChanged.invoke(b)
                             }
@@ -383,7 +383,7 @@ sealed class Setting<T>(
         @Composable
         override fun SettingComposable(modifier: Modifier) {
             val actualEntries = entries.invoke()
-            val selectedItem by key.watch(defaultValue)
+            val selectedItem by key.watchPref(defaultValue)
             val dialogOpen = remember { mutableStateOf(false) }
 
             val scope = rememberCoroutineScope { Dispatchers.IO }
@@ -398,7 +398,7 @@ sealed class Setting<T>(
                         dialogOpen.value = false
 
                         scope.launch {
-                            writeValue(key, item.value)
+                            writePref(key, item.value)
                             onItemChosen?.let { it(item.value) }
                         }
                     })
@@ -440,7 +440,7 @@ sealed class Setting<T>(
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val value by key.watch(defaultValue)
+            val value by key.watchPref(defaultValue)
             val styling = LocalSettingStyling.current
             val scope = rememberCoroutineScope { Dispatchers.IO }
 
@@ -468,7 +468,7 @@ sealed class Setting<T>(
                             }
 
                             scope.launch {
-                                writeValue(key, f.roundToInt())
+                                writePref(key, f.roundToInt())
                             }
                         },
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
@@ -509,7 +509,7 @@ sealed class Setting<T>(
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val color by key.watch(defaultValue)
+            val color by key.watchPref(defaultValue)
             val colorDialogState = remember { mutableStateOf(false) }
             val scope = rememberCoroutineScope { Dispatchers.IO }
 
@@ -531,9 +531,9 @@ sealed class Setting<T>(
 
             ColorPickingPopup(colorDialogState, initialColor = Color(color), onColorChanged = { color ->
                 scope.launch {
-                    writeValue(key, color.toArgb())
+                    writePref(key, color.toArgb())
                 }
-            }, onDefaultReset = { scope.launch { writeValue(key, defaultValue) } })
+            }, onDefaultReset = { scope.launch { writePref(key, defaultValue) } })
         }
     }
 
@@ -552,7 +552,7 @@ sealed class Setting<T>(
     ) {
         @Composable
         override fun SettingComposable(modifier: Modifier) {
-            val string by key.watch(defaultValue)
+            val string by key.watchPref(defaultValue)
             val scope = rememberCoroutineScope()
 
             BaseSettingComposable(
@@ -561,7 +561,7 @@ sealed class Setting<T>(
                 icon = icon,
                 onClick = {
                     scope.launch {
-                        writeValue(key, string)
+                        writePref(key, string)
                     }
                 },
                 supportingElement = {
@@ -570,7 +570,7 @@ sealed class Setting<T>(
                         value = string,
                         onValueChange = {
                             scope.launch {
-                                writeValue(key, it)
+                                writePref(key, it)
                             }
                         },
                         type = KeyboardType.Number,

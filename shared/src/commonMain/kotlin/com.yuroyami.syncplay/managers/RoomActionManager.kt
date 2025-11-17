@@ -3,7 +3,7 @@ package com.yuroyami.syncplay.managers
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
 import com.yuroyami.syncplay.managers.datastore.DataStoreKeys
-import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.value
+import com.yuroyami.syncplay.managers.datastore.DatastoreManager.Companion.pref
 import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import com.yuroyami.syncplay.models.Message
 import com.yuroyami.syncplay.utils.platformCallback
@@ -121,7 +121,7 @@ class RoomActionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmode
      */
     fun seekBckwd() {
         viewmodel.player.playerScopeIO.launch {
-            val dec = value(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP, 10)
+            val dec = pref(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_BACKWARD_JUMP, 10)
 
             val currentMs = withContext(Dispatchers.Main) { viewmodel.player.currentPositionMs() }
             var newPos = ((currentMs) - (dec * 1000L)).coerceIn(0, viewmodel.playerManager.media.value?.fileDuration?.toLong()?.times(1000L) ?: 0)
@@ -148,7 +148,7 @@ class RoomActionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmode
      */
     fun seekFrwrd() {
         viewmodel.player.playerScopeIO.launch {
-            val inc = value(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP, 10)
+            val inc = pref(DataStoreKeys.PREF_INROOM_PLAYER_SEEK_FORWARD_JUMP, 10)
 
             val currentMs = withContext(Dispatchers.Main) { viewmodel.player.currentPositionMs() }
             val newPos = ((currentMs) + (inc * 1000L)).coerceIn(0, viewmodel.playerManager.media.value?.fileDuration?.toLong()?.times(1000L) ?: 0)
