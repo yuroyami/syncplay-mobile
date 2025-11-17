@@ -80,26 +80,6 @@ val ccExs = listOf("srt", "sub", "sbv", "ass", "ssa", "usf", "idx", "vtt", "smi"
 val playlistExs = listOf("txt", "m3u")
 
 /**
- * Map of display language names to their ISO 639-1 language codes.
- * Keys are localized language names, values are two-letter language codes.
- */
-val langMap = mapOf(
-    "العربية" to "ar", //Arabic
-    //"Deutsch (ChatGPT)" to "de", //German
-    "English" to "en", //English
-    "español" to "es", //Spanish
-    "Français" to "fr", //French
-    //"हिन्दी (ChatGPT)" to "hi", //Hindi
-    //"Italiano (ChatGPT)" to "it", //Italian
-    //"日本語 (ChatGPT)" to "ja", //Japanese
-    //"한국말 (ChatGPT)" to "ko", //Korean
-    //"português (ChatGPT)" to "pt", //Portuguese
-    "Pусский" to "ru", //Russian
-    //"Türkçe (ChatGPT)" to "tr", //Turkish
-    "中文" to "zh", //Chinese (Simplified)
-)
-
-/**
  * Computes the MD5 hash of a string.
  *
  * Syncplay servers accept passwords as MD5 hashes digested in hexadecimal format.

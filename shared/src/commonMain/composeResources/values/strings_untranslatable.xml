@@ -1,0 +1,34 @@
+<resources>
+    <!-- NOTE: Make sure each language name corresponds to a language code at that same index -->
+
+    <!-- Language names in their native script -->
+    <string-array name="language_names">
+        <item>العربية</item>
+
+        <item>English</item>
+
+        <item>español</item>
+
+        <item>Français</item>
+
+        <item>Pусский</item>
+
+        <item>中文</item>
+    </string-array>
+
+    <!-- Language codes (ISO 639-1) -->
+    <string-array name="language_codes">
+        <item>ar</item>
+
+        <item>en</item>
+
+        <item>es</item>
+
+        <item>fr</item>
+
+        <item>ru</item>
+
+        <item>zh</item>
+
+    </string-array>
+</resources>

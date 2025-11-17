@@ -81,14 +81,16 @@ import com.yuroyami.syncplay.managers.datastore.datastore
 import com.yuroyami.syncplay.ui.popups.PopupMediaDirs.MediaDirsPopup
 import com.yuroyami.syncplay.ui.theme.Theming
 import com.yuroyami.syncplay.utils.PLATFORM
-import com.yuroyami.syncplay.utils.langMap
 import com.yuroyami.syncplay.utils.platform
 import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.language_codes
+import syncplaymobile.shared.generated.resources.language_names
 import syncplaymobile.shared.generated.resources.media_directories
 import syncplaymobile.shared.generated.resources.media_directories_setting_summary
 import syncplaymobile.shared.generated.resources.setting_cc_default_language_summry
@@ -257,7 +259,11 @@ val SETTINGS_GLOBAL: SettingCollection by lazy {
                         summary = Res.string.setting_display_language_summry,
                         defaultValue = "en",
                         icon = Icons.Filled.Translate,
-                        entries = { langMap },
+                        entries = {
+                            val langNames = stringArrayResource(Res.array.language_names)
+                            val langCodes = stringArrayResource(Res.array.language_codes)
+                            return@MultiChoiceSetting langNames.zip(langCodes).toMap()
+                        },
                         onItemChosen = { v ->
                             platformCallback.onLanguageChanged(v)
                         }
