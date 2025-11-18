@@ -49,7 +49,7 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     override val supportsChapters: Boolean
         get() = true
 
-    override val trackerJobInterval: Duration = 250.milliseconds
+    override val trackerJobInterval: Duration = 50.milliseconds
 
     @UiThread
     override fun initialize() {
@@ -57,11 +57,11 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
 
         libvlc = LibVLC(ctx, listOf("-vv"))
         vlcPlayer = MediaPlayer(libvlc)
-        vlcPlayer?.attachViews(vlcView, null, true, false)
-
-        vlcAttachObserver()
+        vlcPlayer?.attachViews(vlcView, null, true, true)
 
         isInitialized = true
+
+        vlcAttachObserver()
 
         startTrackingProgress()
     }
@@ -86,20 +86,8 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
                 initialize()
                 return@AndroidView vlcView
             },
-            onReset = {
-                try {
-                    vlcPlayer?.attachViews(vlcView, null, true, false)
-                } catch (_: Exception) {
-                }
-            },
             onRelease = {
-                vlcPlayer?.detachViews()
-            },
-            update = {
-                try {
-                    vlcPlayer?.attachViews(vlcView, null, true, false)
-                } catch (_: Exception) {
-                }
+                //vlcPlayer?.detachViews()
             }
         )
     }
@@ -266,8 +254,10 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
                 } else {
                     val desc = contextObtainer().contentResolver.openFileDescriptor(uri, "r")
                     val media = Media(libvlc, desc?.fileDescriptor)
+                    media.parse()
                     //todo: global property to switch hw/sw
                     vlcPlayer?.play(media)
+                    vlcMedia = media
                 }
             }
         }
@@ -392,10 +382,6 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         if (!audioManager.isVolumeFixed) {
             audioManager.setStreamVolume(STREAM_TYPE_MUSIC, v, 0)
         }
-    }
-
-    fun toggleHW(enable: Boolean) {
-        vlcMedia?.setHWDecoderEnabled(enable, true)
     }
 
     interface VlcTrack : com.yuroyami.syncplay.models.Track {
