@@ -24,8 +24,8 @@ import com.yuroyami.syncplay.ui.screens.Screen
 import com.yuroyami.syncplay.ui.screens.home.HomeScreenUI
 import com.yuroyami.syncplay.ui.screens.room.RoomScreenUI
 import com.yuroyami.syncplay.ui.screens.room.tabs.CardController
-import com.yuroyami.syncplay.ui.theme.SaveableTheme
-import com.yuroyami.syncplay.ui.theme.ThemeCreatorScreenUI
+import com.yuroyami.syncplay.ui.screens.theme.SaveableTheme
+import com.yuroyami.syncplay.ui.screens.theme.ThemeCreatorScreenUI
 import com.yuroyami.syncplay.utils.createWeakRef
 import com.yuroyami.syncplay.viewmodels.HomeViewmodel
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel

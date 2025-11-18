@@ -51,7 +51,7 @@ import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.syncplayFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
-import com.yuroyami.syncplay.ui.theme.Theming
+import com.yuroyami.syncplay.ui.screens.theme.Theming
 import com.yuroyami.syncplay.utils.ccExs
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher

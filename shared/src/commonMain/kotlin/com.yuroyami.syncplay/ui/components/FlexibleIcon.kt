@@ -14,8 +14,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
+import com.yuroyami.syncplay.ui.screens.theme.Theming
+import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 
 /**
  * Draws an adaptive gradient-tinted icon with optional shadow and click behavior.

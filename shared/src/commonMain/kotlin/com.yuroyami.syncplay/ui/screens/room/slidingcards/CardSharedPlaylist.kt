@@ -78,8 +78,8 @@ import com.yuroyami.syncplay.ui.components.helveticaFont
 import com.yuroyami.syncplay.ui.components.jostFont
 import com.yuroyami.syncplay.ui.popups.PopupMediaDirs.MediaDirsPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
-import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
+import com.yuroyami.syncplay.ui.screens.theme.Theming
+import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 import com.yuroyami.syncplay.utils.addFolderToPlaylist
 import com.yuroyami.syncplay.utils.loadPlaylistLocally
 import com.yuroyami.syncplay.utils.playlistExs

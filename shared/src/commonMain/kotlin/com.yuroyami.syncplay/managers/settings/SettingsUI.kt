@@ -58,8 +58,8 @@ import com.yuroyami.syncplay.ui.components.gradientOverlay
 import com.yuroyami.syncplay.ui.components.sairaFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalSettingStyling
 import com.yuroyami.syncplay.ui.screens.home.SettingGridState
-import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
+import com.yuroyami.syncplay.ui.screens.theme.Theming
+import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -266,26 +266,15 @@ object SettingsUI {
                         columnHeight = coordinates.size.height.toDp()
                     }
             }) {
-                settingCategory.actionSettings.forEach {
-                    it.SettingComposable()
-                    SettingDivider()
-                }
-                settingCategory.booleanSettings.forEach {
-                    it.SettingComposable()
-                    SettingDivider()
-                }
-                settingCategory.intSettings.forEach {
-                    it.SettingComposable()
-                    SettingDivider()
-                }
-                settingCategory.stringSettings.forEach {
-                    it.SettingComposable()
-                    SettingDivider()
-                }
-                settingCategory.stringSetSettings.forEach {
-                    it.SettingComposable()
-                    SettingDivider()
-                }
+                settingCategory.settings.forEach {
+                    it.Render()
+
+                    HorizontalDivider(
+                        thickness = Dp.Hairline,
+                        modifier = Modifier.padding(horizontal = 8.dp),
+                        color = MaterialTheme.colorScheme.inverseSurface
+                    )                }
+            }
 
             VerticalScrollbar(
                 modifier = Modifier.align(Alignment.CenterEnd).width(4.dp).height(columnHeight)
@@ -297,14 +286,4 @@ object SettingsUI {
             }
         }
     }
-}
-
-@Composable
-fun SettingDivider() {
-    /** Creating dividers between (and only between) each setting and another */
-    HorizontalDivider(
-        thickness = Dp.Hairline,
-        modifier = Modifier.padding(horizontal = 8.dp),
-        color = MaterialTheme.colorScheme.inverseSurface
-    )}
 }

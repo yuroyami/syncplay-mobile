@@ -16,7 +16,6 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
-import com.yuroyami.syncplay.managers.settings.ExtraConfig
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -27,11 +26,28 @@ import syncplaymobile.shared.generated.resources.okay
 class Pref<T>(
     val key: String,
     val default: T,
-    var configLambda: (SettingConfig.() -> Unit)? = null
+    settingConfigLambda: (SettingConfig.() -> Unit)? = null
 ) {
     val config: SettingConfig? by lazy {
-        configLambda?.let {
+        settingConfigLambda?.let {
             SettingConfig().apply(it)
+        }
+    }
+
+    //Type erasure is annoying, W-we have to cast Pref<*> to its corresponding type
+    //or else we can't call pref.SettingComposable() since it uses a reified generic parameter
+    @Composable
+    fun Render() {
+        @Suppress("UNCHECKED_CAST")
+        when (default) {
+            is Boolean -> (this as Pref<Boolean>).SettingComposable()
+            is Int -> (this as Pref<Int>).SettingComposable()
+            is String -> (this as Pref<String>).SettingComposable()
+            is Long -> (this as Pref<Long>).SettingComposable()
+            is Float -> (this as Pref<Float>).SettingComposable()
+            is Double -> (this as Pref<Double>).SettingComposable()
+            is Set<*> -> (this as Pref<Set<*>>).SettingComposable()
+            else -> throw IllegalArgumentException("Unsupported type for Pref Composable!!")
         }
     }
 }
@@ -45,15 +61,15 @@ class Pref<T>(
 @Suppress("UNCHECKED_CAST")
 inline fun <reified T> prefKeyMapper(name: String): Preferences.Key<T> {
     return when (T::class) {
+        Set::class -> stringSetPreferencesKey(name)
         Int::class -> intPreferencesKey(name)
         Double::class -> doublePreferencesKey(name)
         String::class -> stringPreferencesKey(name)
         Boolean::class -> booleanPreferencesKey(name)
         Float::class -> floatPreferencesKey(name)
         Long::class -> longPreferencesKey(name)
-        Set::class -> stringSetPreferencesKey(name)
         ByteArray::class -> byteArrayPreferencesKey(name)
-        else -> throw IllegalArgumentException("Unsupported type: ${T::class}")
+        else -> throw IllegalArgumentException("Unsupported type:prefKeyMapper!")
     } as Preferences.Key<T>
 }
 
@@ -63,12 +79,14 @@ data class SettingConfig(
     var summary: StringResource = Res.string.okay,
     var icon: ImageVector = Icons.Filled.Done,
 
-    var extraConfig: ExtraConfig? = null
+    var dependencyEnable: () -> Boolean = { true },
+
+    var extraConfig: PrefExtraConfig? = null
 )
 /**
  * Get the current value using the static default.
  */
-inline fun <reified T> Pref<T>.get(): T {
+inline fun <reified T> Pref<T>.value(): T {
     val preferencesKey = prefKeyMapper<T>(key)
     return datastoreStateFlow.value[preferencesKey] ?: default
 }

@@ -62,93 +62,96 @@ val settingGLOBALstyle = SettingStyling(
 
 val settingROOMstyle = SettingStyling(
     titleSize = 11f,
-    summarySize = 8f
+    summarySize = 8f,
+    paddingUsed = 6f
 )
 
 val GLOBAL_GENERAL = SettingCategory(
-    keyID = "global_general",
     title = Res.string.settings_categ_general,
     icon = Icons.Filled.SettingsSuggest
-).apply {
-    booleanSettings.addAll(listOf(REMEMBER_INFO, NEVER_SHOW_TIPS))
-    actionSettings.add(ERASE_SHORTCUTS)
-    stringSetSettings.add(MEDIA_DIRECTORIES)
+) {
+    +REMEMBER_INFO
+    +NEVER_SHOW_TIPS
+    +ERASE_SHORTCUTS
+    +MEDIA_DIRECTORIES
 }
 
 val GLOBAL_LANGUAGE = SettingCategory(
-    keyID = "global_language",
     title = Res.string.settings_categ_language,
     icon = Icons.Filled.Translate
-).apply {
-    stringSettings.addAll(listOf(DISPLAY_LANG, AUDIO_LANG, CC_LANG))
+) {
+    +DISPLAY_LANG
+    +AUDIO_LANG
+    +CC_LANG
 }
 
 val GLOBAL_SYNCING = SettingCategory(
-    keyID = "global_syncing",
     title = Res.string.settings_categ_syncing,
     icon = Icons.Filled.ConnectWithoutContact
-).apply {
-    booleanSettings.addAll(listOf(READY_FIRST_HAND, PAUSE_ON_SOMEONE_LEAVE, FILE_MISMATCH_WARNING))
-    stringSettings.addAll(listOf(HASH_FILENAME, HASH_FILESIZE))
+) {
+    +READY_FIRST_HAND
+    +PAUSE_ON_SOMEONE_LEAVE
+    +FILE_MISMATCH_WARNING
+    +HASH_FILENAME
+    +HASH_FILESIZE
 }
 
 val GLOBAL_NETWORK = SettingCategory(
-    keyID = "global_network",
     title = Res.string.settings_categ_network,
     icon = Icons.Filled.Hub
-).apply {
-    booleanSettings.add(TLS_ENABLE)
-    stringSettings.add(NETWORK_ENGINE)
+) {
+    +TLS_ENABLE
+    +NETWORK_ENGINE
 }
 
 val GLOBAL_ADVANCED = SettingCategory(
-    keyID = "global_advanced",
     title = Res.string.settings_categ_advanced,
     icon = Icons.Filled.Stream
-).apply {
-    actionSettings.add(GLOBAL_RESET_DEFAULTS)
+) {
+    +GLOBAL_RESET_DEFAULTS
 }
 
 val INROOM_CHATCOLORS = SettingCategory(
-    keyID = "inroom_chatcolors",
     title = Res.string.uisetting_categ_chat_colors,
     icon = Icons.Filled.Palette,
-).apply {
-    intSettings.addAll(listOf(COLOR_TIMESTAMP, COLOR_SELFTAG, COLOR_FRIENDTAG, COLOR_SYSTEMMSG, COLOR_USERMSG, COLOR_ERRORMSG))
+) {
+    +COLOR_TIMESTAMP; +COLOR_SELFTAG; +COLOR_FRIENDTAG; +COLOR_SYSTEMMSG; +COLOR_USERMSG; +COLOR_ERRORMSG
 }
 
 val INROOM_CHAT_PROPERTIES = SettingCategory(
-    keyID = "inroom_chat_properties",
     title = Res.string.uisetting_categ_chat_properties,
     icon = Icons.AutoMirrored.Filled.Chat
-).apply {
-    booleanSettings.addAll(listOf(MSG_ACTIVATE_STAMP, MSG_OUTLINE, MSG_SHADOW, MSG_BOX_ACTION))
-    intSettings.addAll(listOf(MSG_BG_OPACITY, MSG_FONTSIZE, MSG_MAXCOUNT, MSG_FADING_DURATION))
+) {
+    +MSG_ACTIVATE_STAMP
+    +MSG_OUTLINE
+    +MSG_SHADOW
+    +MSG_BOX_ACTION
+    +MSG_BG_OPACITY
+    +MSG_FONTSIZE
+    +MSG_MAXCOUNT
+    +MSG_FADING_DURATION
 }
 
 val INROOM_PLAYER_SETTINGS = SettingCategory(
-    keyID = "inroom_player_settings",
     title = Res.string.uisetting_categ_player_settings,
     icon = Icons.Filled.VideoLabel,
-).apply {
-    booleanSettings.add(CUSTOM_SEEK_FRONT)
+) {
+    +CUSTOM_SEEK_FRONT
+    +CUSTOM_SEEK_AMOUNT
+    +SUBTITLE_SIZE
+    +SEEK_FORWARD_JUMP
+    +SEEK_BACKWARD_JUMP
+    //+AUDIO_DELAY
+    //+SUBTITLE_DELAY
 
-    intSettings.addAll(
-        listOf(
-            CUSTOM_SEEK_AMOUNT, SUBTITLE_SIZE, SEEK_FORWARD_JUMP, SEEK_BACKWARD_JUMP
-            //AUDIO_DELAY,
-            //SUBTITLE_DELAY,)
-        )
-    )
 }
 
 val INROOM_ADVANCED = SettingCategory(
-    keyID = "inroom_advanced",
     title = Res.string.settings_categ_advanced,
     icon = Icons.Filled.Stream
-).apply {
-    intSettings.add(RECONNECTION_INTERVAL)
-    actionSettings.add(INROOM_RESET_DEFAULTS)
+) {
+    +RECONNECTION_INTERVAL
+    +INROOM_RESET_DEFAULTS
 }
 
 

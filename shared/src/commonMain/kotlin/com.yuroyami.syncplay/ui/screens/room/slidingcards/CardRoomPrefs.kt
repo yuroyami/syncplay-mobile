@@ -34,7 +34,7 @@ import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.jostFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.screens.home.SettingGridState
-import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
+import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_card_title_in_room_prefs

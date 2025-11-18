@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.ui.theme
+package com.yuroyami.syncplay.ui.screens.theme
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.keyframes
@@ -195,7 +195,9 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
                             }
 
                             items(allCustomThemes.size) { index ->
-                                val theme = allCustomThemes[allCustomThemes.size - 1 - index]
+                                //val theme = allCustomThemes[allCustomThemes.size - 1 - index]
+
+                                val theme = defaultTheme
 
                                 ThemeEntry(
                                     modifier = Modifier

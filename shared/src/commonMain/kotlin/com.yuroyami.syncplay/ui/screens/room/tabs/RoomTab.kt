@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.composeunstyled.buildModifier
 import com.yuroyami.syncplay.ui.components.gradientOverlay
 import com.yuroyami.syncplay.ui.screens.adam.LocalTheme
-import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
+import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 
 @Composable
 fun RoomTab(modifier: Modifier, icon: ImageVector, visibilityState: Boolean, onClick: () -> Unit) {

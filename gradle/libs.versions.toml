@@ -27,7 +27,7 @@ koroutines = "1.10.2"
 datetime = "0.7.1"
 
 #Android
-coreSplashscreen = "1.1.0-rc01"
+coreSplashscreen = "1.2.0"
 activityCompose = "1.12.0-rc01"
 documentfile = "1.1.0"
 shortcuts = "1.2.0-alpha01"

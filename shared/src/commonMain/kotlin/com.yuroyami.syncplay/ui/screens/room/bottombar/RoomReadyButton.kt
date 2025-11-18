@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
-import com.yuroyami.syncplay.ui.theme.Theming
+import com.yuroyami.syncplay.ui.screens.theme.Theming
 
 @Composable
 fun RoomReadyButton() {

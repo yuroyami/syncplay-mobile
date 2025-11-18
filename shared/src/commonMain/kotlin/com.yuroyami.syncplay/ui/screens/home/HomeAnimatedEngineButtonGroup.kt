@@ -29,7 +29,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.yuroyami.syncplay.managers.player.PlayerEngine
-import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
+import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 import org.jetbrains.compose.resources.painterResource
 
 @Composable

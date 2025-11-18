@@ -372,7 +372,7 @@ abstract class BasePlayer(
      *
      * Notifies other users in the room about the loaded file.
      */
-    fun declareFile() {
+    fun announceFileLoaded() {
         viewmodel.networkManager.sendAsync<PacketOut.File> {
             media = viewmodel.media
         }

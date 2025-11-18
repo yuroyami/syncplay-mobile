@@ -1,5 +1,6 @@
 package com.yuroyami.syncplay
 
+import SyncplayMobile.shared.BuildConfig
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_IMMUTABLE
@@ -27,7 +28,7 @@ import androidx.lifecycle.lifecycleScope
 import com.yuroyami.syncplay.managers.player.exo.ExoPlayer
 import com.yuroyami.syncplay.managers.preferences.Preferences.DISPLAY_LANG
 import com.yuroyami.syncplay.managers.preferences.Preferences.SUBTITLE_SIZE
-import com.yuroyami.syncplay.managers.preferences.get
+import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.ui.screens.adam.AdamScreen
 import com.yuroyami.syncplay.utils.applyActivityUiProperties
@@ -225,7 +226,7 @@ class SyncplayActivity : ComponentActivity() {
 
         Thread.setDefaultUncaughtExceptionHandler { _, t2 ->
             loggy(t2.stackTraceToString())
-            throw t2
+            if (BuildConfig.IS_DEBUG) throw t2
         }
     }
 
@@ -236,7 +237,7 @@ class SyncplayActivity : ComponentActivity() {
      */
     override fun attachBaseContext(newBase: Context?) {
         /** Applying saved language */
-        val lang = DISPLAY_LANG.get()
+        val lang = DISPLAY_LANG.value()
         super.attachBaseContext(newBase!!.changeLanguage(lang))
     }
 
@@ -252,7 +253,7 @@ class SyncplayActivity : ComponentActivity() {
 
         /* Loading subtitle appearance */
         lifecycleScope.launch(Dispatchers.Main) {
-            val ccsize = SUBTITLE_SIZE.get()
+            val ccsize = SUBTITLE_SIZE.value()
             (roomViewmodel?.player as? ExoPlayer)?.retweakSubtitleAppearance(ccsize.toFloat())
         }
     }

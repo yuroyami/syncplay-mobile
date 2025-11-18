@@ -18,8 +18,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.yuroyami.syncplay.ui.theme.Theming.backgroundGradient
-import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
+import com.yuroyami.syncplay.ui.screens.theme.Theming.backgroundGradient
+import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 
 /** Shows a popup with the given content.
  * @param dialogOpen Controls whether the popup dialog is shown or not.

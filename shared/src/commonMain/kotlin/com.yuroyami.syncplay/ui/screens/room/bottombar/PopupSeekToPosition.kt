@@ -45,7 +45,7 @@ import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.SyncplayPopup
 import com.yuroyami.syncplay.ui.components.syncplayFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
-import com.yuroyami.syncplay.ui.theme.Theming
+import com.yuroyami.syncplay.ui.screens.theme.Theming
 import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

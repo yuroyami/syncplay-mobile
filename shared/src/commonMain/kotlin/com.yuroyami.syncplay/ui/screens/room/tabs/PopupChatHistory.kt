@@ -42,7 +42,7 @@ import com.yuroyami.syncplay.ui.components.helveticaFont
 import com.yuroyami.syncplay.ui.components.syncplayFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalChatPalette
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
-import com.yuroyami.syncplay.ui.theme.Theming
+import com.yuroyami.syncplay.ui.screens.theme.Theming
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res

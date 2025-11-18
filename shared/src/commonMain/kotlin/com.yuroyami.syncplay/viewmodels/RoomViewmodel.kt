@@ -16,7 +16,7 @@ import com.yuroyami.syncplay.managers.player.PlayerManager
 import com.yuroyami.syncplay.managers.preferences.Preferences.PLAYER_ENGINE
 import com.yuroyami.syncplay.managers.preferences.Preferences.READY_FIRST_HAND
 import com.yuroyami.syncplay.managers.preferences.Preferences.TLS_ENABLE
-import com.yuroyami.syncplay.managers.preferences.get
+import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.managers.protocol.ProtocolManager
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.JoinConfig
@@ -97,13 +97,13 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            setReadyDirectly = READY_FIRST_HAND.get()
+            setReadyDirectly = READY_FIRST_HAND.value()
 
             networkManager = instantiateNetworkManager()
 
             joinConfig?.let {
                 launch {
-                    val engine = availablePlatformPlayerEngines.first { it.name == PLAYER_ENGINE.get() }
+                    val engine = availablePlatformPlayerEngines.first { it.name == PLAYER_ENGINE.value() }
                     playerManager.player = engine.instantiate(this@RoomViewmodel)
                     playerManager.isPlayerReady.value = true
                 }
@@ -115,7 +115,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
                     sessionManager.session.currentPassword = joinConfig.pw
 
                     /** Connecting (via TLS or noTLS) */
-                    val tls = TLS_ENABLE.get()
+                    val tls = TLS_ENABLE.value()
                     if (tls && networkManager.supportsTLS()) {
                         callbackManager.onTLSCheck()
                         networkManager.tls = Constants.TLS.TLS_ASK

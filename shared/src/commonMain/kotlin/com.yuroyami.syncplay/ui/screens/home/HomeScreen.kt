@@ -54,7 +54,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.managers.preferences.Preferences.NEVER_SHOW_TIPS
 import com.yuroyami.syncplay.managers.preferences.Preferences.PLAYER_ENGINE
-import com.yuroyami.syncplay.managers.preferences.get
+import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.managers.preferences.set
 import com.yuroyami.syncplay.managers.preferences.watchPref
 import com.yuroyami.syncplay.models.JoinConfig
@@ -62,8 +62,8 @@ import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.sairaFont
 import com.yuroyami.syncplay.ui.popups.PopupDidYaKnow.DidYaKnowPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
-import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.theme.Theming.useSyncplayGradient
+import com.yuroyami.syncplay.ui.screens.theme.Theming
+import com.yuroyami.syncplay.ui.screens.theme.Theming.useSyncplayGradient
 import com.yuroyami.syncplay.utils.ShowSystemBars
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.platformCallback
@@ -112,7 +112,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
     LaunchedEffect(null) {
         withContext(Dispatchers.IO) {
             delay(1000)
-            val neverShowTips = NEVER_SHOW_TIPS.get()
+            val neverShowTips = NEVER_SHOW_TIPS.value()
             if (!globalViewmodel.hasEnteredRoomOnce && !neverShowTips) {
                 didYaKnowPopup.value = true
             }

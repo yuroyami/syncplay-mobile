@@ -3,7 +3,7 @@ package com.yuroyami.syncplay.managers
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
 import com.yuroyami.syncplay.managers.preferences.Preferences.PAUSE_ON_SOMEONE_LEAVE
-import com.yuroyami.syncplay.managers.preferences.get
+import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.managers.protocol.ProtocolCallback
 import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import com.yuroyami.syncplay.managers.protocol.handler.Set
@@ -146,7 +146,7 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         /* If the setting is enabled, pause playback **/
         viewmodel.viewModelScope.launch(Dispatchers.Main) {
             if (viewmodel.player.hasMedia()) {
-                val pauseOnLeft = PAUSE_ON_SOMEONE_LEAVE.get()
+                val pauseOnLeft = PAUSE_ON_SOMEONE_LEAVE.value()
                 if (pauseOnLeft) {
                     broadcaster.pausePlayback()
                 }

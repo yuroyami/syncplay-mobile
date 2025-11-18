@@ -377,7 +377,7 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
                         if (durationMs / 1000.0 != viewmodel.media?.fileDuration) {
                             viewmodel.media?.fileDuration = durationMs / 1000.0
 
-                            declareFile()
+                            announceFileLoaded()
                         }
                     }
                 }

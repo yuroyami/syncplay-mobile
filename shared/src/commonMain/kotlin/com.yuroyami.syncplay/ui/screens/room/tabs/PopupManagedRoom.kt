@@ -36,7 +36,7 @@ import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.SyncplayPopup
 import com.yuroyami.syncplay.ui.components.jostFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
-import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
+import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 import com.yuroyami.syncplay.utils.RandomStringGenerator
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res

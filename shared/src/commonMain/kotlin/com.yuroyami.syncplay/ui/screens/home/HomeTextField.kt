@@ -29,8 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.composeunstyled.TextInput
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.components.gradientOverlay
-import com.yuroyami.syncplay.ui.screens.adam.LocalTheme
-import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
+import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 import com.composeunstyled.Icon as UnstyledIcon
 import com.composeunstyled.Text as UnstyledText
 import com.composeunstyled.TextField as UnstyledTextField
@@ -46,10 +45,9 @@ fun HomeTextField(
     type: KeyboardType? = null,
     cornerRadius: Dp = 35.dp,
     height: Dp = 56.dp,
-    clearFocusWhenDone: Boolean = false
+    clearFocusWhenDone: Boolean = false,
+    enabled: Boolean = true,
 ) {
-    val theme = LocalTheme.current
-
     val focusManager = LocalFocusManager.current
 
     val cornerRadiusAnimated by animateDpAsState(
@@ -64,7 +62,7 @@ fun HomeTextField(
         textColor = MaterialTheme.colorScheme.onTertiaryContainer,
         singleLine = true,
         textAlign = TextAlign.Center,
-        editable = dropdownState == null,
+        editable = dropdownState == null && enabled,
         keyboardActions = KeyboardActions(
             onDone = {
                 if (clearFocusWhenDone) {

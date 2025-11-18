@@ -27,8 +27,8 @@ import com.yuroyami.syncplay.managers.preferences.watchPref
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.components.gradientOverlay
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
-import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.theme.Theming.ROOM_ICON_SIZE
+import com.yuroyami.syncplay.ui.screens.theme.Theming
+import com.yuroyami.syncplay.ui.screens.theme.Theming.ROOM_ICON_SIZE
 import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

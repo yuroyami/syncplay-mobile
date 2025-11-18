@@ -59,15 +59,15 @@ import androidx.compose.ui.window.PopupProperties
 import com.eygraber.uri.Uri
 import com.yuroyami.syncplay.managers.SharedPlaylistManager
 import com.yuroyami.syncplay.managers.preferences.Preferences.MEDIA_DIRECTORIES
-import com.yuroyami.syncplay.managers.preferences.get
+import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.managers.preferences.set
 import com.yuroyami.syncplay.managers.preferences.watchPref
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.SyncplayPopup
 import com.yuroyami.syncplay.ui.components.jostFont
 import com.yuroyami.syncplay.ui.components.sairaFont
-import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
+import com.yuroyami.syncplay.ui.screens.theme.Theming
+import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLauncher
 import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.Dispatchers
@@ -208,7 +208,7 @@ object PopupMediaDirs {
                                             itemMenuState.value = false
 
                                             scope.launch {
-                                                val paths = MEDIA_DIRECTORIES.get().toMutableSet()
+                                                val paths = MEDIA_DIRECTORIES.value().toMutableSet()
 
                                                 if (paths.contains(item)) {
                                                     paths.remove(item)

@@ -6,7 +6,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import com.yuroyami.syncplay.ui.theme.Theming
+import com.yuroyami.syncplay.ui.screens.theme.Theming
 
 /** Adds a gradient overlay on the composable (Syncplay gradient by default) */
 fun Modifier.gradientOverlay(colors: List<Color> = Theming.SP_GRADIENT): Modifier {

@@ -1,14 +1,18 @@
-package com.yuroyami.syncplay.managers.settings
+package com.yuroyami.syncplay.managers.preferences
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,21 +33,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yuroyami.syncplay.managers.preferences.Pref
-import com.yuroyami.syncplay.managers.preferences.set
-import com.yuroyami.syncplay.managers.preferences.watchPref
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.MultiChoiceDialog
 import com.yuroyami.syncplay.ui.components.sairaFont
+import com.yuroyami.syncplay.ui.components.solidOverlay
 import com.yuroyami.syncplay.ui.popups.PopupColorPicker.ColorPickingPopup
 import com.yuroyami.syncplay.ui.screens.adam.LocalSettingStyling
 import com.yuroyami.syncplay.ui.screens.home.HomeTextField
-import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
+import com.yuroyami.syncplay.ui.screens.theme.Theming
+import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -62,23 +65,39 @@ inline fun <reified T> Pref<T>.SettingComposable() {
 
     val renderableComposableState = remember { mutableStateOf(false) }
 
-    val actionConfig = config?.extraConfig as? ExtraConfig.ActionSettingConfig
-    val multiChoiceConfig = config?.extraConfig as? ExtraConfig.MultiChoiceSettingConfig
-    val sliderConfig = config?.extraConfig as? ExtraConfig.SliderSettingConfig
-    val textfieldConfig = config?.extraConfig as? ExtraConfig.TextFieldSettingConfig
-    val showColorConfig = config?.extraConfig as? ExtraConfig.ShowColorPickerSettingConfig
-    val showYesNoPopup = config?.extraConfig as? ExtraConfig.ShowYesNoPickerSettingConfig
-    val showExtraComposable = config?.extraConfig as? ExtraConfig.ShowComposableSettingConfig
+    val actionConfig = config?.extraConfig as? PrefExtraConfig.PerformAction
+    val booleanCallbackConfig = config?.extraConfig as? PrefExtraConfig.BooleanCallback
+    val multiChoiceConfig = config?.extraConfig as? PrefExtraConfig.MultiChoice
+    val sliderConfig = config?.extraConfig as? PrefExtraConfig.Slider
+    val textfieldConfig = config?.extraConfig as? PrefExtraConfig.TextField
+    val showColorConfig = config?.extraConfig as? PrefExtraConfig.ColorPick
+    val showYesNoPopup = config?.extraConfig as? PrefExtraConfig.YesNoDialog
+    val showExtraComposable = config?.extraConfig as? PrefExtraConfig.ShowComposable
+
+    val isEnabled = remember { config?.dependencyEnable?.invoke() ?: true }
+    val isBooleanSetting = value is Boolean || booleanCallbackConfig != null
 
     /** Base Composable */
     Column(
         modifier = Modifier.fillMaxWidth().clickable(
             interactionSource = null,
             indication = ripple(bounded = true, color = Theming.SP_ORANGE),
+            enabled = isEnabled,
             onClick = {
-                actionConfig?.onClick() //TODO only action config?
+                actionConfig?.onClick()
+
+                if (isBooleanSetting) {
+                    scope.launch {
+                        set(!(value as Boolean) as T)
+                    }
+                    booleanCallbackConfig?.onBooleanChanged(!(value as Boolean))
+                }
             }
-        ).padding(styling.paddingUsed.dp),
+        ).run {
+            if (!isEnabled) {
+                Modifier.solidOverlay(Color.Black.copy(0.3f))
+            } else this
+        }.padding(styling.paddingUsed.dp),
         horizontalAlignment = Alignment.Start
     ) {
         Row(
@@ -114,13 +133,14 @@ inline fun <reified T> Pref<T>.SettingComposable() {
             /** Trailing Content */
             when {
                 //If boolean setting, show checkbox as trailing
-                value is Boolean -> Checkbox(
+                isBooleanSetting -> Checkbox(
                     checked = value as Boolean,
+                    enabled = isEnabled,
                     onCheckedChange = { b ->
                         scope.launch {
                             set(b as T)
                         }
-                        //onBooleanChanged.invoke(b) TODO Is this ever needed ?
+                        booleanCallbackConfig?.onBooleanChanged(b)
                     }
                 )
 
@@ -133,6 +153,7 @@ inline fun <reified T> Pref<T>.SettingComposable() {
                             set(it as T)
                         }
                     },
+                    enabled = isEnabled,
                     type = KeyboardType.Number,
                     height = 48.dp,
                     clearFocusWhenDone = true
@@ -147,22 +168,29 @@ inline fun <reified T> Pref<T>.SettingComposable() {
 
                 //If slider, show value as trailing
                 sliderConfig != null -> Text(
-                    modifier = Modifier,
+                    modifier = Modifier.defaultMinSize(minWidth = 42.dp),
                     text = value.toString(),
-                    color = MaterialTheme.colorScheme.outline,
-                    fontSize = styling.summarySize.sp,
-                    lineHeight = (styling.summarySize + 2).sp
+                    color = MaterialTheme.colorScheme.tertiary,
+                    fontSize = styling.titleSize.sp,
+                    lineHeight = (styling.titleSize + 2).sp,
+                    textAlign = TextAlign.Center
                 )
 
+                //If color picking, show color as trailing
+                showColorConfig != null -> Button(
+                    onClick = { renderableComposableState.value = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(value as Int)),
+                    modifier = Modifier.size(24.dp)
+                ) {}
             }
         }
-
 
         /** Supporting Content beneath */
         when {
             sliderConfig != null -> {
                 Slider(
                     value = (value as Int).toFloat(),
+                    enabled = isEnabled,
                     valueRange = (sliderConfig.minValue.toFloat())..(sliderConfig.maxValue.toFloat()),
                     onValueChange = { f ->
                         if (f != (value as Int).toFloat()) {

@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.ui.theme
+package com.yuroyami.syncplay.ui.screens.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable

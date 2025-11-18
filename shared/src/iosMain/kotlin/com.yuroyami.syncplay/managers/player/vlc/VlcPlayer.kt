@@ -360,7 +360,7 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
             playerManager.timeFullMillis.value = if (it < 0) 0 else it
 
             playerManager.media.value?.fileDuration = playerManager.timeFullMillis.value / 1000.0
-            declareFile()
+            announceFileLoaded()
         }
     }
 

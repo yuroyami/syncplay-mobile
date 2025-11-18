@@ -56,10 +56,10 @@ import com.yuroyami.syncplay.managers.settings.SETTINGS_GLOBAL
 import com.yuroyami.syncplay.managers.settings.SettingsUI
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.screens.home.PopupAPropos.AProposPopup
-import com.yuroyami.syncplay.ui.theme.ThemeMenu
-import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.theme.Theming.SP_GRADIENT
-import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
+import com.yuroyami.syncplay.ui.screens.theme.ThemeMenu
+import com.yuroyami.syncplay.ui.screens.theme.Theming
+import com.yuroyami.syncplay.ui.screens.theme.Theming.SP_GRADIENT
+import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.vectorResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular

@@ -2,7 +2,7 @@ package com.yuroyami.syncplay.ui.screens
 
 import androidx.navigation3.runtime.NavKey
 import com.yuroyami.syncplay.models.JoinConfig
-import com.yuroyami.syncplay.ui.theme.SaveableTheme
+import com.yuroyami.syncplay.ui.screens.theme.SaveableTheme
 import kotlinx.serialization.Serializable
 
 /**

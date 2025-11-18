@@ -42,9 +42,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.preferences.core.edit
-import com.yuroyami.syncplay.managers.settings.ExtraConfig
 import com.yuroyami.syncplay.ui.popups.PopupMediaDirs.MediaDirsPopup
-import com.yuroyami.syncplay.ui.theme.Theming
+import com.yuroyami.syncplay.ui.screens.theme.Theming
+import com.yuroyami.syncplay.ui.screens.theme.defaultTheme
 import com.yuroyami.syncplay.utils.PLATFORM
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.platform
@@ -157,19 +157,7 @@ import syncplaymobile.shared.generated.resources.uisetting_timestamp_summary
 import syncplaymobile.shared.generated.resources.uisetting_timestamp_title
 
 /**
- * Centralized preference definitions with type safety and default values.
- *
- * Usage:
- * ```
- * // Read without specifying default
- * val lang = Preferences.DISPLAY_LANG.get()
- *
- * // Observe in Composable
- * val theme by Preferences.CURRENT_THEME.asState()
- *
- * // Write
- * Preferences.DISPLAY_LANG.set("fr")
- * ```
+ * Centralized preference definitions with type safety
  */
 object Preferences {
     const val SYNCPLAY_PREFS = "syncplayprefs.preferences_pb"
@@ -177,13 +165,10 @@ object Preferences {
     /** ------------ Miscellaneous -------------*/
     val JOIN_CONFIG = Pref<String?>("misc_join_config", null)
 
-    val PLAYER_ENGINE = Pref("misc_player_engine", availablePlatformPlayerEngines.first { it.isDefault }.name) {
-
-    }
+    val PLAYER_ENGINE = Pref("misc_player_engine", availablePlatformPlayerEngines.first { it.isDefault }.name)
     val GESTURES = Pref("misc_gestures", true)
-    val CURRENT_THEME = Pref("misc_current_theme", "dark")
-    val ALL_THEMES = Pref<Set<String>>("misc_all_themes", emptySet())
-
+    val CURRENT_THEME = Pref("misc_current_theme", defaultTheme.asString())
+    val CUSTOM_THEMES = Pref<Set<String>>("misc_custom_themes", emptySet())
     //val ROOM_ORIENTATION = PreferenceDef("misc_room_orientation", "auto")
 
     /** ------------ General -------------*/
@@ -197,12 +182,12 @@ object Preferences {
         summary = Res.string.setting_never_show_tips_summary
         icon = Icons.Filled.Lightbulb
     }
-    val ERASE_SHORTCUTS = Pref<Any>("pref_erase_shortcuts", "") {
+    val ERASE_SHORTCUTS = Pref("pref_erase_shortcuts", "") {
         title = Res.string.setting_erase_shortcuts_title
         summary = Res.string.setting_erase_shortcuts_summary
         icon = Icons.Filled.BookmarkRemove
 
-        extraConfig = ExtraConfig.ShowYesNoPickerSettingConfig(
+        extraConfig = PrefExtraConfig.YesNoDialog(
             rationale = Res.string.setting_erase_shortcuts_dialog,
             onYes = {
                 platformCallback.onEraseConfigShortcuts()
@@ -214,7 +199,7 @@ object Preferences {
         summary = Res.string.media_directories_setting_summary
         icon = Icons.AutoMirrored.Filled.QueueMusic
 
-        extraConfig = ExtraConfig.ShowComposableSettingConfig(
+        extraConfig = PrefExtraConfig.ShowComposable(
             composable = {
                 val state = remember { mutableStateOf(false) }
                 MediaDirsPopup(state)
@@ -229,7 +214,7 @@ object Preferences {
         icon = Icons.Filled.Translate
 
         extraConfig = if (platform == PLATFORM.Android) {
-            ExtraConfig.MultiChoiceSettingConfig(
+            PrefExtraConfig.MultiChoice(
                 entries = {
                     val langNames = stringArrayResource(Res.array.language_names)
                     val langCodes = stringArrayResource(Res.array.language_codes)
@@ -240,7 +225,7 @@ object Preferences {
                 }
             )
         } else {
-            ExtraConfig.ActionSettingConfig(
+            PrefExtraConfig.PerformAction(
                 onClick = {
                     platformCallback.onLanguageChanged("")
                 }
@@ -279,7 +264,7 @@ object Preferences {
         summary = Res.string.setting_fileinfo_behaviour_name_summary
         icon = Icons.Filled.DesignServices
 
-        extraConfig = ExtraConfig.MultiChoiceSettingConfig(
+        extraConfig = PrefExtraConfig.MultiChoice(
             entries = {
                 mapOf(
                     stringResource(Res.string.setting_fileinfo_behavior_a) to "1",
@@ -294,7 +279,7 @@ object Preferences {
         summary = Res.string.setting_fileinfo_behaviour_size_summary
         icon = Icons.Filled.DesignServices
 
-        extraConfig = ExtraConfig.MultiChoiceSettingConfig(
+        extraConfig = PrefExtraConfig.MultiChoice(
             entries = {
                 mapOf(
                     stringResource(Res.string.setting_fileinfo_behavior_a) to "1",
@@ -311,7 +296,7 @@ object Preferences {
         summary = Res.string.setting_network_engine_summary
         icon = Icons.Filled.Lan
 
-        extraConfig = ExtraConfig.MultiChoiceSettingConfig(
+        extraConfig = PrefExtraConfig.MultiChoice(
             entries = {
                 buildMap {
                     if (platform == PLATFORM.Android) {
@@ -383,21 +368,29 @@ object Preferences {
         title = Res.string.uisetting_messagery_alpha_title
         summary = Res.string.uisetting_messagery_alpha_summary
         icon = Icons.Filled.Opacity
+
+        extraConfig = PrefExtraConfig.Slider(maxValue = 255, minValue = 0)
     }
     val MSG_FONTSIZE = Pref("pref_inroom_msg_fontsize", 9) {
         title = Res.string.uisetting_msgsize_title
         summary = Res.string.uisetting_msgsize_summary
         icon = Icons.Filled.FormatSize
+
+        extraConfig = PrefExtraConfig.Slider(maxValue = 28, minValue = 6)
     }
     val MSG_MAXCOUNT = Pref("pref_inroom_msg_maxcount", 10) {
         title = Res.string.uisetting_msgcount_title
         summary = Res.string.uisetting_msgcount_summary
         icon = Icons.Filled.FormatListNumbered
+
+        extraConfig = PrefExtraConfig.Slider(maxValue = 30, minValue = 1)
     }
     val MSG_FADING_DURATION = Pref("pref_inroom_fading_msg_duration", 3) {
         title = Res.string.uisetting_msglife_title
         summary = Res.string.uisetting_msglife_summary
         icon = Icons.Filled.Timer
+
+        extraConfig = PrefExtraConfig.Slider(maxValue = 10, minValue = 1)
     }
     val MSG_BOX_ACTION = Pref("pref_inroom_msg_box_action", true) {
         title = Res.string.uisetting_msgboxaction_title
@@ -411,7 +404,7 @@ object Preferences {
         summary = Res.string.uisetting_subtitle_size_summary
         icon = Icons.Filled.SortByAlpha
 
-        extraConfig = ExtraConfig.SliderSettingConfig(maxValue = 200, minValue = 2, onValueChanged = {
+        extraConfig = PrefExtraConfig.Slider(maxValue = 200, minValue = 2, onValueChanged = {
             //TODO viewmodel?.player?.changeSubtitleSize(v)
         })
     }
@@ -421,14 +414,14 @@ object Preferences {
         summary = Res.string.uisetting_audio_delay_summary
         icon = Icons.AutoMirrored.Filled.CompareArrows
 
-        extraConfig = ExtraConfig.SliderSettingConfig(maxValue = 120_000, minValue = -120_000)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 120_000, minValue = -120_000)
     }
     val SUBTITLE_DELAY = Pref("pref_inroom_subtitle_delay", 0) {
         title = Res.string.uisetting_subtitle_delay_title
         summary = Res.string.uisetting_subtitle_delay_summary
         icon = Icons.AutoMirrored.Filled.CompareArrows
 
-        extraConfig = ExtraConfig.SliderSettingConfig(maxValue = 120_000, minValue = -120_000)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 120_000, minValue = -120_000)
     }
 
     val CUSTOM_SEEK_AMOUNT = Pref("pref_inroom_custom_seek_amount", 90) {
@@ -436,7 +429,7 @@ object Preferences {
         summary = Res.string.uisetting_custom_seek_front_summary
         icon = Icons.Filled.Update
 
-        extraConfig = ExtraConfig.SliderSettingConfig(maxValue = 300, minValue = 30) }
+        extraConfig = PrefExtraConfig.Slider(maxValue = 300, minValue = 30) }
     val CUSTOM_SEEK_FRONT = Pref("pref_inroom_custom_seek_front", true) {
         title = Res.string.uisetting_custom_seek_amount_title
         summary = Res.string.uisetting_custom_seek_amount_summary
@@ -448,7 +441,7 @@ object Preferences {
         summary = Res.string.uisetting_seek_forward_jump_summary
         icon = Icons.Filled.FastForward
 
-        extraConfig = ExtraConfig.SliderSettingConfig(maxValue = 120, minValue = 1)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 120, minValue = 1)
 
     }
     val SEEK_BACKWARD_JUMP = Pref("pref_inroom_seek_backward_jump", 10) {
@@ -456,7 +449,7 @@ object Preferences {
         summary = Res.string.uisetting_seek_backward_jump_summary
         icon = Icons.Filled.FastRewind
 
-        extraConfig = ExtraConfig.SliderSettingConfig(maxValue = 120, minValue = 1)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 120, minValue = 1)
     }
 
     /** ------------ MPV Settings -------------*/
@@ -474,8 +467,6 @@ object Preferences {
         title = Res.string.ui_setting_mpv_debug_title
         summary = Res.string.ui_setting_mpv_debug_summary
         icon = Icons.Filled.Adb
-
-        extraConfig = ExtraConfig.SliderSettingConfig(maxValue = 3, minValue = 0)
     }
     val MPV_VIDSYNC = Pref("pref_mpv_video_sync", "audio") {
         title = Res.string.ui_setting_mpv_vidsync_title
@@ -499,21 +490,21 @@ object Preferences {
         summary = Res.string.setting_max_buffer_summary
         icon = Icons.Filled.HourglassTop
 
-        extraConfig = ExtraConfig.SliderSettingConfig(maxValue = 60, minValue = 1)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 60, minValue = 1)
     }
     val EXO_MIN_BUFFER = Pref("pref_min_buffer_size", 15) {
         title = Res.string.setting_min_buffer_title
         summary = Res.string.setting_min_buffer_summary
         icon = Icons.Filled.HourglassBottom
 
-        extraConfig = ExtraConfig.SliderSettingConfig(maxValue = 30, minValue = 1)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 30, minValue = 1)
     }
     val EXO_SEEK_BUFFER = Pref("pref_seek_buffer_size", 5000) {
         title = Res.string.setting_playback_buffer_title
         summary = Res.string.setting_playback_buffer_summary
         icon = Icons.Filled.HourglassEmpty
 
-        extraConfig = ExtraConfig.SliderSettingConfig(maxValue = 15000, minValue = 100)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 15000, minValue = 100)
     }
 
     /** ------------ Advanced -------------*/
@@ -522,15 +513,15 @@ object Preferences {
         summary = Res.string.uisetting_reconnect_interval_summary
         icon = Icons.Filled.Web
 
-        extraConfig = ExtraConfig.SliderSettingConfig(maxValue = 15, minValue = 0)
+        extraConfig = PrefExtraConfig.Slider(maxValue = 15, minValue = 0)
     }
 
-    val GLOBAL_RESET_DEFAULTS = Pref("global_reset_defaults", Any()) {
+    val GLOBAL_RESET_DEFAULTS = Pref("global_reset_defaults", "") {
         title = Res.string.setting_resetdefault_title
         summary = Res.string.setting_resetdefault_summary
         icon = Icons.Filled.ClearAll
 
-        extraConfig = ExtraConfig.ShowYesNoPickerSettingConfig(
+        extraConfig = PrefExtraConfig.YesNoDialog(
             rationale = Res.string.setting_resetdefault_dialog,
             onYes = {
                 datastore.edit { preferences ->
@@ -540,12 +531,12 @@ object Preferences {
         )
     }
 
-    val INROOM_RESET_DEFAULTS = Pref("inroom_reset_defaults", Any()) {
+    val INROOM_RESET_DEFAULTS = Pref("inroom_reset_defaults", "") {
         title = Res.string.uisetting_resetdefault_title
         summary = Res.string.uisetting_resetdefault_summary
         icon = Icons.Filled.ClearAll
 
-        extraConfig = ExtraConfig.ShowYesNoPickerSettingConfig(
+        extraConfig = PrefExtraConfig.YesNoDialog(
             rationale = Res.string.setting_resetdefault_dialog,
             onYes = {
                 datastore.edit { preferences ->

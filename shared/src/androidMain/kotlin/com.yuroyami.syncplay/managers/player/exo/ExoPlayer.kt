@@ -8,6 +8,8 @@ import android.media.AudioManager
 import android.util.TypedValue
 import android.view.LayoutInflater
 import androidx.annotation.UiThread
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SettingsInputComponent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
@@ -39,6 +41,10 @@ import com.yuroyami.syncplay.databinding.ExoviewBinding
 import com.yuroyami.syncplay.managers.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.managers.player.PlayerOptions
+import com.yuroyami.syncplay.managers.preferences.Preferences.EXO_MAX_BUFFER
+import com.yuroyami.syncplay.managers.preferences.Preferences.EXO_MIN_BUFFER
+import com.yuroyami.syncplay.managers.preferences.Preferences.EXO_SEEK_BUFFER
+import com.yuroyami.syncplay.managers.settings.SettingCategory
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
@@ -55,6 +61,7 @@ import syncplaymobile.shared.generated.resources.room_scaling_fit_screen
 import syncplaymobile.shared.generated.resources.room_scaling_fixed_height
 import syncplaymobile.shared.generated.resources.room_scaling_fixed_width
 import syncplaymobile.shared.generated.resources.room_scaling_zoom
+import syncplaymobile.shared.generated.resources.settings_categ_exoplayer
 import java.util.Collections
 import java.util.UUID
 import kotlin.math.abs
@@ -177,7 +184,7 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
                         if (durationMs / 1000.0 != viewmodel.media?.fileDuration) {
                             viewmodel.media?.fileDuration = durationMs / 1000.0
 
-                            declareFile()
+                            announceFileLoaded()
                         }
                     }
                 }
@@ -249,7 +256,12 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         )
     }
 
-    override suspend fun configurableSettings() = getExtraSettings()
+    override suspend fun configurableSettings() = SettingCategory(
+        title = Res.string.settings_categ_exoplayer,
+        icon = Icons.Filled.SettingsInputComponent
+    ) {
+        +EXO_MAX_BUFFER; +EXO_MIN_BUFFER; +EXO_SEEK_BUFFER
+    }
 
     override fun getMaxVolume() = audioManager.getStreamMaxVolume(STREAM_TYPE_MUSIC)
     override fun getCurrentVolume() = audioManager.getStreamVolume(STREAM_TYPE_MUSIC)

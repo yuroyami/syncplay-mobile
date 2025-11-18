@@ -1,4 +1,4 @@
-package com.yuroyami.syncplay.ui.theme
+package com.yuroyami.syncplay.ui.screens.theme
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background

@@ -377,7 +377,7 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
                     playerManager.timeFullMillis.value = if (dur < 0) 0 else dur
 
                     playerManager.media.value?.fileDuration = playerManager.timeFullMillis.value / 1000.0
-                    declareFile()
+                    announceFileLoaded()
                 }
             }
 

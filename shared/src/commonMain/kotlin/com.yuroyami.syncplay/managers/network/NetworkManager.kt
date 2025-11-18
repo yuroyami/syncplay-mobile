@@ -3,7 +3,7 @@ package com.yuroyami.syncplay.managers.network
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
 import com.yuroyami.syncplay.managers.preferences.Preferences.RECONNECTION_INTERVAL
-import com.yuroyami.syncplay.managers.preferences.get
+import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.managers.protocol.ProtocolManager.Companion.createPacketInstance
 import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import com.yuroyami.syncplay.models.Constants
@@ -158,7 +158,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
             if (reconnectionJob == null || reconnectionJob?.isCompleted == true) {
                 reconnectionJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
                     state = Constants.CONNECTIONSTATE.STATE_SCHEDULING_RECONNECT
-                    val reconnectionInterval = RECONNECTION_INTERVAL.get() * 1000L
+                    val reconnectionInterval = RECONNECTION_INTERVAL.value() * 1000L
 
                     delay(reconnectionInterval)
 

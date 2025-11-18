@@ -4,14 +4,18 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.yuroyami.syncplay.managers.preferences.Pref
 import org.jetbrains.compose.resources.StringResource
 
-data class SettingCategory(
-    val keyID: String,
+class SettingCategory(
     val title: StringResource,
-    val icon: ImageVector
+    val icon: ImageVector,
+    settingBuilder: SettingListBuilder.() -> Unit
 ) {
-    val booleanSettings: MutableList<Pref<Boolean>> = mutableListOf()
-    val actionSettings: MutableList<Pref<Any>> = mutableListOf()
-    val stringSettings: MutableList<Pref<String>> = mutableListOf()
-    val intSettings: MutableList<Pref<Int>> = mutableListOf()
-    val stringSetSettings: MutableList<Pref<Set<String>>> = mutableListOf()
+    val settings: List<Pref<*>> = SettingListBuilder().apply(settingBuilder).list
+
+    class SettingListBuilder {
+        internal val list = mutableListOf<Pref<*>>()
+
+        operator fun <T> Pref<T>.unaryPlus() {
+            list.add(this)
+        }
+    }
 }

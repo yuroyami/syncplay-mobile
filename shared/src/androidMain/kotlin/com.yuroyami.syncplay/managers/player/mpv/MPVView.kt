@@ -12,7 +12,7 @@ import com.yuroyami.syncplay.managers.player.PlayerOptions
 import com.yuroyami.syncplay.managers.preferences.Preferences.MPV_GPU_NEXT
 import com.yuroyami.syncplay.managers.preferences.Preferences.MPV_HARDWARE_ACCELERATION
 import com.yuroyami.syncplay.managers.preferences.Preferences.MPV_INTERPOLATION
-import com.yuroyami.syncplay.managers.preferences.get
+import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.utils.contextObtainer
 import `is`.xyz.mpv.MPVLib
 import `is`.xyz.mpv.MPVLib.MpvFormat.MPV_FORMAT_DOUBLE
@@ -23,6 +23,7 @@ import `is`.xyz.mpv.MPVLib.MpvFormat.MPV_FORMAT_STRING
 import kotlin.reflect.KProperty
 
 internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(context, attrs), SurfaceHolder.Callback {
+
     fun initialize(configDir: String, cacheDir: String) {
         MPVLib.create(contextObtainer.invoke())
         MPVLib.setOptionString("config", "yes")
@@ -56,8 +57,8 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
         MPVLib.setOptionString("profile", "fast")
 
 
-        voInUse = if (MPV_GPU_NEXT.get()) "gpu-next" else "gpu"
-        val hwdec = if (MPV_HARDWARE_ACCELERATION.get()) "auto" else "no"
+        voInUse = if (MPV_GPU_NEXT.value()) "gpu-next" else "gpu"
+        val hwdec = if (MPV_HARDWARE_ACCELERATION.value()) "auto" else "no"
 
         // vo: set display fps as reported by android
         val refreshRate = @Suppress("DEPRECATION") if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -111,7 +112,7 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
         MPVLib.setOptionString("video-sync", "audio")
 
 
-        if (MPV_INTERPOLATION.get()) MPVLib.setOptionString("interpolation", "yes")
+        if (MPV_INTERPOLATION.value()) MPVLib.setOptionString("interpolation", "yes")
 
         MPVLib.setOptionString("gpu-debug", "no")
 
@@ -140,6 +141,10 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
     }
 
     private var filePath: String? = null
+        set(value) {
+            field = value
+            if (value != null) MPVLib.command(arrayOf("loadfile", value))
+        }
 
     fun playFile(filePath: String) {
         this.filePath = filePath
@@ -325,10 +330,7 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
         // This forces mpv to render subs/osd/whatever into our surface even if it would ordinarily not
         MPVLib.setOptionString("force-window", "yes")
 
-        if (filePath != null) {
-            MPVLib.command(arrayOf("loadfile", filePath!!))
-            filePath = null
-        } else {
+        if (filePath == null) {
             // We disable video output when the context disappears, enable it back
             MPVLib.setPropertyString("vo", voInUse)
         }
@@ -343,5 +345,14 @@ internal class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(cont
 
     companion object {
         private const val TAG = "mpv"
+
+        val vidsyncEntries = listOf(
+            "audio", "display-resample", "display-resample-vdrop", "display-resample-desync", "display-tempo",
+            "display-vdrop", "display-adrop", "display-desync", "desync"
+        )
+
+        val profileEntries = listOf(
+            "fast", "high-quality", "gpu-hq", "low-latency", "sw-fast"
+        )
     }
 }

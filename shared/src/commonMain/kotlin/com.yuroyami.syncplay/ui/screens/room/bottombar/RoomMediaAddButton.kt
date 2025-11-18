@@ -61,9 +61,9 @@ import com.yuroyami.syncplay.ui.components.jostFont
 import com.yuroyami.syncplay.ui.components.sairaFont
 import com.yuroyami.syncplay.ui.components.syncplayFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
-import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.theme.Theming.ROOM_ICON_SIZE
-import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
+import com.yuroyami.syncplay.ui.screens.theme.Theming
+import com.yuroyami.syncplay.ui.screens.theme.Theming.ROOM_ICON_SIZE
+import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 import com.yuroyami.syncplay.utils.getText
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.vidExs

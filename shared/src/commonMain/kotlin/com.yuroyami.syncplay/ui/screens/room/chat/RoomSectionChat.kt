@@ -57,7 +57,7 @@ import com.yuroyami.syncplay.managers.preferences.watchPref
 import com.yuroyami.syncplay.ui.components.FlexibleAnnotatedText
 import com.yuroyami.syncplay.ui.screens.adam.LocalChatPalette
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
-import com.yuroyami.syncplay.ui.theme.Theming.flexibleGradient
+import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 import com.yuroyami.syncplay.utils.isEmoji
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import org.jetbrains.compose.resources.stringResource

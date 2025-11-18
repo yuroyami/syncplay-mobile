@@ -15,8 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
-import com.yuroyami.syncplay.ui.theme.Theming
-import com.yuroyami.syncplay.ui.theme.Theming.ROOM_ICON_SIZE
+import com.yuroyami.syncplay.ui.screens.theme.Theming
+import com.yuroyami.syncplay.ui.screens.theme.Theming.ROOM_ICON_SIZE
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

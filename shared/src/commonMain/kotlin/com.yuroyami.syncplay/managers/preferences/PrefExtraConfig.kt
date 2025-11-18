@@ -1,36 +1,41 @@
-package com.yuroyami.syncplay.managers.settings
+package com.yuroyami.syncplay.managers.preferences
 
 import androidx.compose.runtime.Composable
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.compose.resources.StringResource
 
-sealed interface ExtraConfig {
-    data class ActionSettingConfig(
+sealed interface PrefExtraConfig {
+    data class PerformAction(
         val onClick: () -> Unit
-    ) : ExtraConfig
+    ) : PrefExtraConfig
 
-    data class SliderSettingConfig(
+    //Only using this when the boolean change callback is needed
+    data class BooleanCallback(
+        val onBooleanChanged: (b: Boolean) -> Unit
+    ) : PrefExtraConfig
+
+    data class Slider(
         val maxValue: Int = 100,
         val minValue: Int = 0,
         val onValueChanged: ((newValue: Int) -> Unit)? = null
-    ) : ExtraConfig
+    ) : PrefExtraConfig
 
-    data class MultiChoiceSettingConfig(
+    data class MultiChoice(
         val entries: @Composable () -> Map<String, String>,
         val onItemChosen: ((value: String) -> Unit)? = null
-    ) : ExtraConfig
+    ) : PrefExtraConfig
 
-    data class ShowComposableSettingConfig(
+    data class ShowComposable(
         val composable: @Composable () -> Unit
-    ) : ExtraConfig
+    ) : PrefExtraConfig
 
-    data object ShowColorPickerSettingConfig : ExtraConfig
+    data object ColorPick : PrefExtraConfig
 
-    data class ShowYesNoPickerSettingConfig(
+    data class YesNoDialog(
         val rationale: StringResource,
         val onYes: suspend CoroutineScope.() -> Unit,
         val onNo: suspend CoroutineScope.() -> Unit = {}
-    ) : ExtraConfig
+    ) : PrefExtraConfig
 
-    data object TextFieldSettingConfig : ExtraConfig
+    data object TextField : PrefExtraConfig
 }
