@@ -49,9 +49,7 @@ import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.screens.theme.Theming
 import com.yuroyami.syncplay.utils.timeStamper
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
@@ -258,10 +256,10 @@ object PopupSeekToPosition {
 }
 
 fun RoomViewmodel.customSkip()  {
-    player.playerScopeIO.launch {
+    player.playerScopeMain.launch {
         val customSkipAmount = CUSTOM_SEEK_AMOUNT.value()
 
-        val currentMs = withContext(Dispatchers.Main) { player.currentPositionMs() }
+        val currentMs = player.currentPositionMs()
         val newPos = (currentMs) + (customSkipAmount * 1000L)
 
         actionManager.sendSeek(newPos)

@@ -32,9 +32,7 @@ import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.screens.theme.Theming.ROOM_ICON_SIZE
 import com.yuroyami.syncplay.utils.timeStamper
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_chapters_skip
@@ -73,7 +71,7 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
         if (customSkipToFront) {
             val customSkipAmountString by derivedStateOf {
                 timeStamper(
-                    customSkipAmount
+                    customSkipAmount * 1000
                 )
             }
             OutlinedButton(
@@ -104,8 +102,8 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
                 border = BorderStroke(Dp.Hairline, color = MaterialTheme.colorScheme.primary),
                 modifier = Modifier.zIndex(100f),
                 onClick = {
-                    viewmodel.player.playerScopeIO.launch {
-                        val currentMs = withContext(Dispatchers.Main) { viewmodel.player.currentPositionMs() }
+                    viewmodel.player.playerScopeMain.launch {
+                        val currentMs = viewmodel.player.currentPositionMs()
                         val nextChapter = viewmodel.media?.chapters?.filter { it.timestamp > currentMs }?.minByOrNull { it.timestamp }
                         if (nextChapter != null) {
                             viewmodel.player.seekTo(nextChapter.timestamp)

@@ -166,8 +166,10 @@ data class State(
 
                 if (lastGlobalUpdate == null) {
                     if (protocol.viewmodel.playerManager.media.value != null) {
-                        viewmodel.player.seekTo(position.toLong())
-                        if (paused) viewmodel.player.pause() else viewmodel.player.play()
+                        withContext(Dispatchers.Main) {
+                            viewmodel.player.seekTo(position.toLong())
+                            if (paused) viewmodel.player.pause() else viewmodel.player.play()
+                        }
                     }
                 }
 

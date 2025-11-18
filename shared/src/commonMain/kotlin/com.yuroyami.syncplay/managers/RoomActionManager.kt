@@ -121,10 +121,10 @@ class RoomActionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmode
      * In solo mode, records the seek operation in [RoomViewmodel.seeks].
      */
     fun seekBckwd() {
-        viewmodel.player.playerScopeIO.launch {
+        viewmodel.player.playerScopeMain.launch {
             val dec = SEEK_BACKWARD_JUMP.value()
 
-            val currentMs = withContext(Dispatchers.Main) { viewmodel.player.currentPositionMs() }
+            val currentMs = viewmodel.player.currentPositionMs()
             var newPos = ((currentMs) - (dec * 1000L)).coerceIn(0, viewmodel.playerManager.media.value?.fileDuration?.toLong()?.times(1000L) ?: 0)
 
             if (newPos < 0) newPos = 0
@@ -148,10 +148,10 @@ class RoomActionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmode
      * TODO: Start with main dispatcher then switch
      */
     fun seekFrwrd() {
-        viewmodel.player.playerScopeIO.launch {
+        viewmodel.player.playerScopeMain.launch {
             val inc = SEEK_FORWARD_JUMP.value()
 
-            val currentMs = withContext(Dispatchers.Main) { viewmodel.player.currentPositionMs() }
+            val currentMs = viewmodel.player.currentPositionMs()
             val newPos = ((currentMs) + (inc * 1000L)).coerceIn(0, viewmodel.playerManager.media.value?.fileDuration?.toLong()?.times(1000L) ?: 0)
             sendSeek(newPos)
             viewmodel.player.seekTo(newPos)

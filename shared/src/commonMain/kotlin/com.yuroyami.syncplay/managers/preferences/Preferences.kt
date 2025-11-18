@@ -426,14 +426,14 @@ object Preferences {
     }
 
     val CUSTOM_SEEK_AMOUNT = Pref("pref_inroom_custom_seek_amount", 90) {
-        title = Res.string.uisetting_custom_seek_front_title
-        summary = Res.string.uisetting_custom_seek_front_summary
+        title = Res.string.uisetting_custom_seek_amount_title
+        summary = Res.string.uisetting_custom_seek_amount_summary
         icon = Icons.Filled.Update
 
         extraConfig = PrefExtraConfig.Slider(maxValue = 300, minValue = 30) }
     val CUSTOM_SEEK_FRONT = Pref("pref_inroom_custom_seek_front", true) {
-        title = Res.string.uisetting_custom_seek_amount_title
-        summary = Res.string.uisetting_custom_seek_amount_summary
+        title = Res.string.uisetting_custom_seek_front_title
+        summary = Res.string.uisetting_custom_seek_front_summary
         icon = Icons.Filled.Update
 
     }

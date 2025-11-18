@@ -7,7 +7,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.interop.UIKitView
 import com.yuroyami.syncplay.managers.player.ApplePlayerEngine
 import com.yuroyami.syncplay.managers.player.BasePlayer
-import com.yuroyami.syncplay.managers.settings.ExtraSettingBundle
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
@@ -166,7 +165,7 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
      *
      * @return null (no custom settings)
      */
-    override suspend fun configurableSettings(): ExtraSettingBundle? = null
+    override suspend fun configurableSettings() = null
 
     /**
      * Renders the AVPlayer video view within Compose.
