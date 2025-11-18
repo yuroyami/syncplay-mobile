@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardTab
 import androidx.compose.material.icons.automirrored.filled.NoteAdd
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.BrowseGallery
+import androidx.compose.material.icons.filled.ClosedCaptionDisabled
 import androidx.compose.material.icons.filled.DoNotTouch
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.SpeakerGroup
@@ -35,6 +37,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
@@ -47,7 +52,7 @@ import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.jostFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
-import com.yuroyami.syncplay.ui.screens.theme.Theming
+import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 import com.yuroyami.syncplay.utils.ccExs
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
@@ -95,6 +100,11 @@ fun RoomControlPanelCard(modifier: Modifier) {
     val scope = rememberCoroutineScope()
     val viewmodel = LocalRoomViewmodel.current
     val cardController = LocalCardController.current
+    val hapticFeedback = LocalHapticFeedback.current
+
+    fun haptic() {
+        hapticFeedback.performHapticFeedback(HapticFeedbackType.ContextClick)
+    }
 
     val composeScope = rememberCoroutineScope()
 
@@ -174,9 +184,59 @@ fun RoomControlPanelCard(modifier: Modifier) {
 
         /* Subtitle Tracks */
         val ccTracksPopup = remember { mutableStateOf(false) }
+        val ccImportFileStr = stringResource(Res.string.room_button_desc_subtitle_tracks_import_from_file)
+        val ccDisableStr = stringResource(Res.string.room_sub_track_disable)
+        val ccItems by remember(ccTracksPopup.value) {
+            mutableStateOf(
+                buildList {
+                    add(
+                        ControlPanelDropdownAction(
+                            text = ccImportFileStr,
+                            icon = Icons.AutoMirrored.Filled.NoteAdd,
+                            action = {
+                                haptic()
+
+                                subtitlePicker.launch()
+                            }
+                        )
+                    )
+                    add(
+                        ControlPanelDropdownAction(
+                            text = ccDisableStr,
+                            icon = Icons.Filled.ClosedCaptionDisabled,
+                            action = {
+                                haptic()
+
+                                viewmodel.viewModelScope.launch {
+                                    viewmodel.player.selectTrack(null, BasePlayer.TRACKTYPE.SUBTITLE)
+                                }
+                            }
+                        )
+                    )
+
+                    for (track in (viewmodel.media?.subtitleTracks) ?: listOf()) {
+                        add(
+                            ControlPanelDropdownAction(
+                                text = track.name,
+                                isChecked = track.selected.value,
+                                action = {
+                                    haptic()
+
+                                    viewmodel.viewModelScope.launch {
+                                        viewmodel.player.selectTrack(track, BasePlayer.TRACKTYPE.SUBTITLE)
+                                    }
+                                }
+                            )
+                        )
+                    }
+                }
+            )
+        }
         ControlPanelDropdownButton(
             icon = Icons.Filled.Subtitles,
             onClick = {
+                haptic()
+
                 composeScope.launch {
                     viewmodel.player.analyzeTracks(viewmodel.media ?: return@launch)
                     ccTracksPopup.value = true
@@ -184,49 +244,38 @@ fun RoomControlPanelCard(modifier: Modifier) {
             },
             popupVisibility = ccTracksPopup,
             popupTitle = stringResource(Res.string.room_button_desc_subtitle_tracks),
-            popupItems = buildList {
-                add(
-                    ControlPanelDropdownAction(
-                        text = stringResource(Res.string.room_button_desc_subtitle_tracks_import_from_file),
-                        icon = Icons.AutoMirrored.Filled.NoteAdd,
-                        action = {
-                            subtitlePicker.launch()
-                        }
-                    )
-                )
-                add(
-                    ControlPanelDropdownAction(
-                        text = stringResource(Res.string.room_sub_track_disable),
-                        icon = Icons.AutoMirrored.Filled.NoteAdd,
-                        action = {
-                            viewmodel.viewModelScope.launch {
-                                viewmodel.player.selectTrack(null, BasePlayer.TRACKTYPE.SUBTITLE)
-                            }
-                        }
-                    )
-                )
-
-                for (track in (viewmodel.media?.subtitleTracks) ?: listOf()) {
-                    add(
-                        ControlPanelDropdownAction(
-                            text = track.name,
-                            isChecked = track.selected.value,
-                            action = {
-                                viewmodel.viewModelScope.launch {
-                                    viewmodel.player.selectTrack(track, BasePlayer.TRACKTYPE.SUBTITLE)
-                                }
-                            }
-                        )
-                    )
-                }
-            }
+            popupItems = ccItems
         )
 
         /* Audio Tracks */
         val audioTracksPopup = remember { mutableStateOf(false) }
+        val audioItems by remember(audioTracksPopup.value) {
+            mutableStateOf(
+                buildList {
+                    for (track in (viewmodel.media?.audioTracks) ?: listOf()) {
+                        add(
+                            ControlPanelDropdownAction(
+                                text = track.name,
+                                isChecked = track.selected.value,
+                                action = {
+                                    haptic()
+
+                                    viewmodel.viewModelScope.launch {
+                                        viewmodel.player.selectTrack(track, BasePlayer.TRACKTYPE.AUDIO)
+                                    }
+                                }
+                            )
+                        )
+                    }
+                }
+            )
+        }
+
         ControlPanelDropdownButton(
             icon = Icons.Filled.SpeakerGroup,
             onClick = {
+                haptic()
+
                 composeScope.launch {
                     viewmodel.player.analyzeTracks(viewmodel.media ?: return@launch)
                     audioTracksPopup.value = true
@@ -234,29 +283,52 @@ fun RoomControlPanelCard(modifier: Modifier) {
             },
             popupVisibility = audioTracksPopup,
             popupTitle = stringResource(Res.string.room_button_desc_audio_tracks),
-            popupItems = buildList {
-                for (track in (viewmodel.media?.audioTracks) ?: listOf()) {
-                    add(
-                        ControlPanelDropdownAction(
-                            text = track.name,
-                            isChecked = track.selected.value,
-                            action = {
-                                viewmodel.viewModelScope.launch {
-                                    viewmodel.player.selectTrack(track, BasePlayer.TRACKTYPE.AUDIO)
-                                }
-                            }
-                        )
-                    )
-                }
-            }
+            popupItems = audioItems
         )
 
         /* Chapters */
         if (viewmodel.player.supportsChapters) {
             val chaptersPopup = remember { mutableStateOf(false) }
+            val skipStr = stringResource(Res.string.room_chapters_skip)
+            val items by remember(chaptersPopup.value) {
+                mutableStateOf(
+                    buildList {
+                        add(
+                            ControlPanelDropdownAction(
+                                text = skipStr,
+                                icon = Icons.AutoMirrored.Filled.KeyboardTab,
+                                action = {
+                                    haptic()
+
+                                    viewmodel.viewModelScope.launch {
+                                        viewmodel.player.skipChapter()
+                                    }
+                                }
+                            )
+                        )
+
+                        for (chapter in (viewmodel.media?.chapters) ?: listOf()) {
+                            add(
+                                ControlPanelDropdownAction(
+                                    text = chapter.name,
+                                    action = {
+                                        haptic()
+
+                                        viewmodel.viewModelScope.launch {
+                                            viewmodel.player.jumpToChapter(chapter)
+                                        }
+                                    }
+                                )
+                            )
+                        }
+                    }
+                )
+            }
             ControlPanelDropdownButton(
                 icon = Icons.Filled.Theaters,
                 onClick = {
+                    haptic()
+
                     composeScope.launch {
                         viewmodel.player.analyzeChapters(viewmodel.media ?: return@launch)
                         chaptersPopup.value = true
@@ -264,31 +336,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
                 },
                 popupVisibility = chaptersPopup,
                 popupTitle = stringResource(Res.string.room_chapters),
-                popupItems = buildList {
-                    add(
-                        ControlPanelDropdownAction(
-                            text = stringResource(Res.string.room_chapters_skip),
-                            action = {
-                                viewmodel.viewModelScope.launch {
-                                    viewmodel.player.skipChapter()
-                                }
-                            }
-                        )
-                    )
-
-                    for (chapter in (viewmodel.media?.chapters) ?: listOf()) {
-                        add(
-                            ControlPanelDropdownAction(
-                                text = chapter.name,
-                                action = {
-                                    viewmodel.viewModelScope.launch {
-                                        viewmodel.player.jumpToChapter(chapter)
-                                    }
-                                }
-                            )
-                        )
-                    }
-                }
+                popupItems = items
             )
         }
     }
@@ -321,10 +369,10 @@ fun ControlPanelDropdownButton(
         )
 
         DropdownMenu(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.8f),
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
             tonalElevation = 0.dp,
             shadowElevation = 0.dp,
-            border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+            border = BorderStroke(width = Dp.Hairline, brush = Brush.linearGradient(colors = flexibleGradient)),
             shape = RoundedCornerShape(8.dp),
             expanded = popupVisibility.value,
             properties = PopupProperties(
