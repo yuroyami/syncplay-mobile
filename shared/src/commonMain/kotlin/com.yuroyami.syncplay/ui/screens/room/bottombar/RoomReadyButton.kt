@@ -25,6 +25,10 @@ import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.screens.theme.Theming
+import org.jetbrains.compose.resources.stringResource
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_not_ready
+import syncplaymobile.shared.generated.resources.room_ready
 
 @Composable
 fun RoomReadyButton() {
@@ -61,7 +65,7 @@ fun RoomReadyButton() {
 
                     )
                     Spacer(Modifier.width(4.dp))
-                    Text("Ready", fontSize = 14.sp) //TODO Localize
+                    Text(stringResource(Res.string.room_ready), fontSize = 14.sp)
                     Spacer(Modifier.width(4.dp))
 
                 }
@@ -76,7 +80,7 @@ fun RoomReadyButton() {
                     )
                     Spacer(Modifier.width(4.dp))
 
-                    Text("Not Ready", fontSize = 13.sp) //TODO Localize
+                    Text(stringResource(Res.string.room_not_ready), fontSize = 13.sp)
                     Spacer(Modifier.width(4.dp))
 
                 }

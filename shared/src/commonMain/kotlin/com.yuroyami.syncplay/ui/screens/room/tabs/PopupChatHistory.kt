@@ -39,14 +39,15 @@ import com.yuroyami.syncplay.ui.components.FlexibleAnnotatedText
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.SyncplayPopup
 import com.yuroyami.syncplay.ui.components.helveticaFont
-import com.yuroyami.syncplay.ui.components.syncplayFont
+import com.yuroyami.syncplay.ui.components.jostFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalChatPalette
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
-import com.yuroyami.syncplay.ui.screens.theme.Theming
+import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.close
+import syncplaymobile.shared.generated.resources.room_overflow_msghistory
 
 
 @Composable
@@ -76,11 +77,11 @@ fun ChatHistoryPopup() {
             /* The title */
             FlexibleText(
                 modifier = Modifier.padding(6.dp),
-                text = "Chat History", //TODO Localize
+                text = stringResource(Res.string.room_overflow_msghistory),
                 shadowColors = listOf(Color.Black),
-                fillingColors = Theming.SP_GRADIENT,
-                size = 18f,
-                font = syncplayFont
+                fillingColors = flexibleGradient,
+                size = 17f,
+                font = jostFont
             )
 
             /* The actual messages */

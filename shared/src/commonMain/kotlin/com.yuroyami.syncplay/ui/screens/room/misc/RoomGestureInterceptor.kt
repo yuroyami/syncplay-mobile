@@ -58,6 +58,10 @@ import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_brightness
+import syncplaymobile.shared.generated.resources.room_volume
 import kotlin.math.roundToInt
 
 var dragdistance = 0f
@@ -295,11 +299,8 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                     Icon(imageVector = Icons.Filled.Brightness6, "")
 
                     //TODO: Delegate 'times(100).toInt()' to platform
-                    //TODO: Localize
-                    Text(
-                        "Brightness: ${currentBrightness.times(100).toInt()}%",
-                        color = Color.Black
-                    )
+                    val brightness = stringResource(Res.string.room_brightness, "${currentBrightness.times(100).toInt()}%")
+                    Text(brightness, color = Color.Black)
                 }
             }
 
@@ -311,7 +312,8 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                     verticalAlignment = CenterVertically
                 ) {
                     Icon(imageVector = Icons.AutoMirrored.Filled.VolumeUp, "")
-                    Text("Volume: $currentVolume/$volumeSteps", color = Color.Black)
+                    val volume = stringResource(Res.string.room_volume, "$currentVolume/$volumeSteps")
+                    Text(volume, color = Color.Black)
                 }
             }
         }

@@ -77,6 +77,9 @@ import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.done
 import syncplaymobile.shared.generated.resources.room_addmedia_offline
 import syncplaymobile.shared.generated.resources.room_addmedia_online
+import syncplaymobile.shared.generated.resources.room_addmedia_online_details
+import syncplaymobile.shared.generated.resources.room_addmedia_online_popup_subtext
+import syncplaymobile.shared.generated.resources.room_addmedia_online_url
 import syncplaymobile.shared.generated.resources.room_button_desc_add
 
 @Composable
@@ -123,7 +126,7 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
             FlexibleText(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
                     .padding(horizontal = 2.dp),
-                text = "Add media", //TODO Localize
+                text = stringResource(Res.string.room_button_desc_add),
                 strokeColors = listOf(Color.Black),
                 fillingColors = flexibleGradient,
                 size = 14f,
@@ -233,7 +236,7 @@ fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
 
             /* The title */
             FlexibleText(
-                text = "Load media from URL", //TODO Localize
+                text = stringResource(Res.string.room_addmedia_online_details),
                 strokeColors = listOf(Color.Black),
                 size = 17f,
                 font = jostFont
@@ -241,8 +244,7 @@ fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
 
             /* Title's subtext */
             Text(
-                //TODO Localize
-                text = "Make sure to provide direct links (for example: www.example.com/video.mp4). YouTube and other media streaming services are not supported yet.",
+                text = stringResource(Res.string.room_addmedia_online_popup_subtext),
                 color = MaterialTheme.colorScheme.primary,
                 fontSize = 10.sp,
                 fontFamily = FontFamily(sairaFont),
@@ -291,7 +293,7 @@ fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
                     fontSize = 16.sp,
                 ),
                 label = {
-                    Text("URL Address", color = Color.Gray) //TODO Localize
+                    Text(stringResource(Res.string.room_addmedia_online_url), color = Color.Gray)
                 }
             )
 

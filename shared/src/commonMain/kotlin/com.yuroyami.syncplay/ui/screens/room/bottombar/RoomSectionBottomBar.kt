@@ -50,7 +50,7 @@ fun RoomBottomBarSection(modifier: Modifier) {
                     verticalArrangement = Arrangement.Bottom,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    //RoomBottomBarVideoControlRow(modifier = Modifier.fillMaxWidth())
+                    RoomBottomBarVideoControlRow(modifier = Modifier.fillMaxWidth())
 
                     RoomSeekbar(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp))
                 }

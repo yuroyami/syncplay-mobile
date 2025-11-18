@@ -42,6 +42,8 @@ import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.cancel
 import syncplaymobile.shared.generated.resources.okay
+import syncplaymobile.shared.generated.resources.room_managed_room_popup_create
+import syncplaymobile.shared.generated.resources.room_managed_room_popup_pw_identify_as_operator
 import syncplaymobile.shared.generated.resources.room_overflow_create_managed_room
 import syncplaymobile.shared.generated.resources.room_overflow_identify_as_operator
 
@@ -96,8 +98,8 @@ fun ManagedRoomPopup(purpose: ManagedRoomPopupPurpose) {
 
             Text(
                 when (purpose) {
-                    ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM -> "Enter name of managed room\nsee https://syncplay.pl/guide/ for usage instructions)"
-                    ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR -> "Enter operator password for this room\nsee https://syncplay.pl/guide/ for usage instructions)"
+                    ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM -> stringResource(Res.string.room_managed_room_popup_create)
+                    ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR -> stringResource(Res.string.room_managed_room_popup_pw_identify_as_operator)
                 },
                 color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 11.sp

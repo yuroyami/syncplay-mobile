@@ -62,9 +62,6 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
     val cardController = remember { CardController() }
     val lockedMode by cardController.tabLock.collectAsState()
 
-    val popupStateChatHistory by viewmodel.uiManager.popupChatHistory.collectAsState()
-    val popupStateSeekToPosition = remember { mutableStateOf(false) }
-
     CompositionLocalProvider(LocalCardController provides cardController) {
         Box(modifier = Modifier.fillMaxSize()) {
             /* Room Background Artwork */
@@ -158,7 +155,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
 
         /** Popups */
         if (!soloMode) ChatHistoryPopup()
-        SeekToPositionPopup(visibilityState = popupStateSeekToPosition)
+        SeekToPositionPopup()
         ManagedRoomPopup(ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM)
         ManagedRoomPopup(ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR)
 

@@ -4,8 +4,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.NoteAdd
@@ -15,7 +13,6 @@ import androidx.compose.material.icons.filled.DoNotTouch
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.SpeakerGroup
 import androidx.compose.material.icons.filled.Subtitles
-import androidx.compose.material.icons.filled.SubtitlesOff
 import androidx.compose.material.icons.filled.Theaters
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.VideoSettings
@@ -32,13 +29,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
@@ -48,7 +44,7 @@ import com.yuroyami.syncplay.managers.preferences.set
 import com.yuroyami.syncplay.managers.preferences.watchPref
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.components.FlexibleText
-import com.yuroyami.syncplay.ui.components.syncplayFont
+import com.yuroyami.syncplay.ui.components.jostFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.screens.theme.Theming
@@ -59,6 +55,19 @@ import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.stringResource
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_button_desc_audio_tracks
+import syncplaymobile.shared.generated.resources.room_button_desc_subtitle_tracks
+import syncplaymobile.shared.generated.resources.room_button_desc_subtitle_tracks_import_from_file
+import syncplaymobile.shared.generated.resources.room_chapters
+import syncplaymobile.shared.generated.resources.room_chapters_skip
+import syncplaymobile.shared.generated.resources.room_gestures_disabled
+import syncplaymobile.shared.generated.resources.room_gestures_enabled
+import syncplaymobile.shared.generated.resources.room_no_recent_seek
+import syncplaymobile.shared.generated.resources.room_seek_undone
+import syncplaymobile.shared.generated.resources.room_sub_track_disable
 
 @Composable
 fun RoomControlPanelButton(modifier: Modifier, popupStateAddMedia: MutableState<Boolean>) {
@@ -82,7 +91,7 @@ fun RoomControlPanelButton(modifier: Modifier, popupStateAddMedia: MutableState<
 }
 
 @Composable
-fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
+fun RoomControlPanelCard(modifier: Modifier) {
     val scope = rememberCoroutineScope()
     val viewmodel = LocalRoomViewmodel.current
     val cardController = LocalCardController.current
@@ -97,7 +106,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
         }
     }
 
-    val iconSize = (height.value - 2).toInt()
+    val iconSize = 44
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.SpaceEvenly
@@ -125,7 +134,9 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
         ) {
             composeScope.launch(Dispatchers.IO) {
                 GESTURES.set(!gesturesEnabled)
-                viewmodel.osdManager.dispatchOSD { if (gesturesEnabled) "Gestures enabled" else "Gestures disabled" } //TODO Localize
+                viewmodel.osdManager.dispatchOSD {
+                    getString(if (gesturesEnabled) Res.string.room_gestures_enabled else Res.string.room_gestures_disabled)
+                }
             }
         }
 
@@ -136,7 +147,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
             shadowColors = listOf(Color.Black)
         ) {
             cardController.controlPanel.value = false
-            //TODO seektopopupstate.value = true
+            viewmodel.uiManager.popupSeekToPosition.value = true
         }
 
         /* Undo Last Seek */
@@ -146,7 +157,7 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
             shadowColors = listOf(Color.Black)
         ) {
             if (viewmodel.seeks.isEmpty()) {
-                viewmodel.osdManager.dispatchOSD { "There is no recent seek in the room." }
+                viewmodel.osdManager.dispatchOSD { getString(Res.string.room_no_recent_seek) }
                 return@FlexibleIcon
             }
 
@@ -158,292 +169,205 @@ fun RoomControlPanelCard(modifier: Modifier, height: Dp) {
             }
             viewmodel.actionManager.sendSeek(lastSeek.first)
             viewmodel.seeks.remove(lastSeek)
-            viewmodel.osdManager.dispatchOSD { "Seek undone." } //TODO
+            viewmodel.osdManager.dispatchOSD { getString(Res.string.room_seek_undone) }
         }
 
         /* Subtitle Tracks */
-        Box {
-            val tracksPopup = remember { mutableStateOf(false) }
-
-            FlexibleIcon(
-                icon = Icons.Filled.Subtitles,
-                size = iconSize,
-                shadowColors = listOf(Color.Black)
-            ) {
+        val ccTracksPopup = remember { mutableStateOf(false) }
+        ControlPanelDropdownButton(
+            icon = Icons.Filled.Subtitles,
+            onClick = {
                 composeScope.launch {
                     viewmodel.player.analyzeTracks(viewmodel.media ?: return@launch)
-                    tracksPopup.value = true
+                    ccTracksPopup.value = true
                 }
-            }
-
-            DropdownMenu(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.8f),
-                tonalElevation = 0.dp,
-                shadowElevation = 0.dp,
-                border = BorderStroke(
-                    width = Dp.Hairline,
-                    brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map {
-                        it.copy(alpha = 0.5f)
-                    })
-                ),
-                shape = RoundedCornerShape(8.dp),
-                expanded = tracksPopup.value,
-                properties = PopupProperties(
-                    dismissOnBackPress = true,
-                    focusable = true,
-                    dismissOnClickOutside = true
-                ),
-                onDismissRequest = {
-                    tracksPopup.value = !tracksPopup.value
-                }) {
-
-                FlexibleText(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    text = "Subtitle Track", //TODO Localize
-                    strokeColors = listOf(Color.Black),
-                    size = 14f,
-                    font = syncplayFont
-                )
-
-                DropdownMenuItem(text = {
-                    Row(verticalAlignment = CenterVertically) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.NoteAdd,
-                            "",
-                            tint = Color.LightGray
-                        )
-
-                        Spacer(Modifier.width(2.dp))
-
-                        Text(
-                            "Import from file", //TODO
-                            color = Color.LightGray
-                        )
-                    }
-                }, onClick = {
-                    tracksPopup.value = false
-                    cardController.controlPanel.value = false
-
-                    subtitlePicker.launch()
-                })
-
-
-                DropdownMenuItem(
-                    text = {
-                        Row(verticalAlignment = CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Filled.SubtitlesOff,
-                                "",
-                                tint = Color.LightGray
-                            )
-
-                            Spacer(Modifier.width(2.dp))
-
-                            Text(
-                                "Disable subtitles.", //TODO
-                                color = Color.LightGray
-                            )
-
+            },
+            popupVisibility = ccTracksPopup,
+            popupTitle = stringResource(Res.string.room_button_desc_subtitle_tracks),
+            popupItems = buildList {
+                add(
+                    ControlPanelDropdownAction(
+                        text = stringResource(Res.string.room_button_desc_subtitle_tracks_import_from_file),
+                        icon = Icons.AutoMirrored.Filled.NoteAdd,
+                        action = {
+                            subtitlePicker.launch()
                         }
-                    },
-                    onClick = {
-                        scope.launch(Dispatchers.Main.immediate) {
-                            viewmodel.player.selectTrack(null, BasePlayer.TRACKTYPE.SUBTITLE)
-                            tracksPopup.value = false
-                            cardController.controlPanel.value = false
-                        }
-                    }
+                    )
                 )
-
-                for (track in (viewmodel.media?.subtitleTracks)
-                    ?: listOf()) {
-                    DropdownMenuItem(
-                        text = {
-                            Row(verticalAlignment = CenterVertically) {
-                                Checkbox(
-                                    checked = track.selected.value,
-                                    onCheckedChange = {
-                                        scope.launch(Dispatchers.Main.immediate) {
-                                            viewmodel.player.selectTrack(track, BasePlayer.TRACKTYPE.SUBTITLE)
-                                            tracksPopup.value = false
-                                        }
-                                    })
-
-                                Text(
-                                    color = Color.LightGray,
-                                    text = track.name
-                                )
-                            }
-                        },
-                        onClick = {
-                            scope.launch(Dispatchers.Main.immediate) {
-                                viewmodel.player.selectTrack(track, BasePlayer.TRACKTYPE.SUBTITLE)
-                                tracksPopup.value = false
-                                cardController.controlPanel.value = false
+                add(
+                    ControlPanelDropdownAction(
+                        text = stringResource(Res.string.room_sub_track_disable),
+                        icon = Icons.AutoMirrored.Filled.NoteAdd,
+                        action = {
+                            viewmodel.viewModelScope.launch {
+                                viewmodel.player.selectTrack(null, BasePlayer.TRACKTYPE.SUBTITLE)
                             }
                         }
                     )
+                )
+
+                for (track in (viewmodel.media?.subtitleTracks) ?: listOf()) {
+                    add(
+                        ControlPanelDropdownAction(
+                            text = track.name,
+                            isChecked = track.selected.value,
+                            action = {
+                                viewmodel.viewModelScope.launch {
+                                    viewmodel.player.selectTrack(track, BasePlayer.TRACKTYPE.SUBTITLE)
+                                }
+                            }
+                        )
+                    )
                 }
             }
-        }
+        )
 
         /* Audio Tracks */
-        Box {
-            val tracksPopup = remember { mutableStateOf(false) }
-
-            FlexibleIcon(
-                icon = Icons.Filled.SpeakerGroup,
-                size = iconSize,
-                shadowColors = listOf(Color.Black)
-            ) {
-                viewmodel.viewModelScope.launch {
-                    viewmodel.player.analyzeTracks(
-                        viewmodel.media ?: return@launch
+        val audioTracksPopup = remember { mutableStateOf(false) }
+        ControlPanelDropdownButton(
+            icon = Icons.Filled.SpeakerGroup,
+            onClick = {
+                composeScope.launch {
+                    viewmodel.player.analyzeTracks(viewmodel.media ?: return@launch)
+                    audioTracksPopup.value = true
+                }
+            },
+            popupVisibility = audioTracksPopup,
+            popupTitle = stringResource(Res.string.room_button_desc_audio_tracks),
+            popupItems = buildList {
+                for (track in (viewmodel.media?.audioTracks) ?: listOf()) {
+                    add(
+                        ControlPanelDropdownAction(
+                            text = track.name,
+                            isChecked = track.selected.value,
+                            action = {
+                                viewmodel.viewModelScope.launch {
+                                    viewmodel.player.selectTrack(track, BasePlayer.TRACKTYPE.AUDIO)
+                                }
+                            }
+                        )
                     )
-                    tracksPopup.value = true
                 }
             }
-
-            DropdownMenu(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.8f),
-                tonalElevation = 0.dp,
-                shadowElevation = 0.dp,
-                border = BorderStroke(
-                    width = 1.dp,
-                    brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map {
-                        it.copy(alpha = 0.5f)
-                    })
-                ),
-                shape = RoundedCornerShape(8.dp),
-                expanded = tracksPopup.value,
-                properties = PopupProperties(
-                    dismissOnBackPress = true,
-                    focusable = true,
-                    dismissOnClickOutside = true
-                ),
-                onDismissRequest = {
-                    tracksPopup.value = !tracksPopup.value
-                }) {
-
-                FlexibleText(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    text = "Audio Track", //TODO Localize
-                    strokeColors = listOf(Color.Black),
-                    size = 14f,
-                    font = syncplayFont
-                )
-
-                for (track in (viewmodel.media?.audioTracks
-                    ?: listOf())) {
-                    DropdownMenuItem(text = {
-                        Row(verticalAlignment = CenterVertically) {
-                            Checkbox(
-                                checked = track.selected.value,
-                                onCheckedChange = {
-                                    scope.launch(Dispatchers.Main.immediate) {
-                                        viewmodel.player.selectTrack(track, BasePlayer.TRACKTYPE.AUDIO)
-                                        tracksPopup.value = false
-                                    }
-                                })
-
-                            Text(
-                                color = Color.LightGray,
-                                text = track.name
-                            )
-                        }
-                    }, onClick = {
-                        scope.launch(Dispatchers.Main.immediate) {
-                            viewmodel.player.selectTrack(track, BasePlayer.TRACKTYPE.AUDIO)
-                            tracksPopup.value = false
-                        }
-                    })
-                }
-            }
-        }
-
+        )
 
         /* Chapters */
         if (viewmodel.player.supportsChapters) {
-            Box {
-                var chaptersPopup by remember { mutableStateOf(false) }
-
-                FlexibleIcon(
-                    icon = Icons.Filled.Theaters,
-                    size = iconSize,
-                    shadowColors = listOf(Color.Black)
-                ) {
-                    viewmodel.viewModelScope.launch {
-                        viewmodel.player.analyzeChapters(
-                            viewmodel.media ?: return@launch
-                        )
-                        chaptersPopup = !chaptersPopup
+            val chaptersPopup = remember { mutableStateOf(false) }
+            ControlPanelDropdownButton(
+                icon = Icons.Filled.Theaters,
+                onClick = {
+                    composeScope.launch {
+                        viewmodel.player.analyzeChapters(viewmodel.media ?: return@launch)
+                        chaptersPopup.value = true
                     }
-                }
-
-                DropdownMenu(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.8f),
-                    tonalElevation = 0.dp,
-                    shadowElevation = 0.dp,
-                    border = BorderStroke(
-                        width = 1.dp,
-                        brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map {
-                            it.copy(alpha = 0.5f)
-                        })
-                    ),
-                    shape = RoundedCornerShape(8.dp),
-                    expanded = chaptersPopup,
-                    properties = PopupProperties(
-                        dismissOnBackPress = true,
-                        focusable = true,
-                        dismissOnClickOutside = true
-                    ),
-                    onDismissRequest = { chaptersPopup = false }) {
-
-                    FlexibleText(
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
-                        text = "Chapters", //TODO Localize
-                        strokeColors = listOf(Color.Black),
-                        size = 14f,
-                        font = syncplayFont
+                },
+                popupVisibility = chaptersPopup,
+                popupTitle = stringResource(Res.string.room_chapters),
+                popupItems = buildList {
+                    add(
+                        ControlPanelDropdownAction(
+                            text = stringResource(Res.string.room_chapters_skip),
+                            action = {
+                                viewmodel.viewModelScope.launch {
+                                    viewmodel.player.skipChapter()
+                                }
+                            }
+                        )
                     )
 
-                    DropdownMenuItem(
-                        text = {
-                            Row(verticalAlignment = CenterVertically) {
-                                Text(
-                                    color = Color.LightGray,
-                                    text = "Skip chapter" //TODO
-                                )
-                            }
-                        },
-                        onClick = {
-                            scope.launch(Dispatchers.Main.immediate) {
-                                viewmodel.player.skipChapter()
-                                chaptersPopup = false
-                            }
+                    for (chapter in (viewmodel.media?.chapters) ?: listOf()) {
+                        add(
+                            ControlPanelDropdownAction(
+                                text = chapter.name,
+                                action = {
+                                    viewmodel.viewModelScope.launch {
+                                        viewmodel.player.jumpToChapter(chapter)
+                                    }
+                                }
+                            )
+                        )
+                    }
+                }
+            )
+        }
+    }
+}
+
+data class ControlPanelDropdownAction(
+    val text: String,
+    val icon: ImageVector? = null,
+    val isChecked: Boolean? = null,
+    val action: () -> Unit
+)
+
+@Composable
+fun ControlPanelDropdownButton(
+    icon: ImageVector,
+    onClick: () -> Unit = {},
+    popupTitle: String,
+    popupVisibility: MutableState<Boolean>,
+    popupItems: List<ControlPanelDropdownAction>
+) {
+    Box {
+        FlexibleIcon(
+            icon = icon,
+            size = 44,
+            shadowColors = listOf(Color.Black),
+            onClick = {
+                onClick()
+                popupVisibility.value = true
+            }
+        )
+
+        DropdownMenu(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.8f),
+            tonalElevation = 0.dp,
+            shadowElevation = 0.dp,
+            border = BorderStroke(width = 1.dp, brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.5f) })),
+            shape = RoundedCornerShape(8.dp),
+            expanded = popupVisibility.value,
+            properties = PopupProperties(
+                dismissOnBackPress = true, focusable = true, dismissOnClickOutside = true
+            ),
+            onDismissRequest = { popupVisibility.value = false }
+        ) {
+            FlexibleText(
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+                text = popupTitle,
+                strokeColors = listOf(Color.Black),
+                size = 13f,
+                font = jostFont
+            )
+
+            popupItems.forEach { item ->
+                DropdownMenuItem(
+                    leadingIcon = {
+                        if (item.icon != null) {
+                            Icon(item.icon, null)
                         }
-                    )
-
-                    for (chapter in (viewmodel.media?.chapters
-                        ?: listOf())) {
-                        DropdownMenuItem(
-                            text = {
-                                Row(verticalAlignment = CenterVertically) {
-                                    Text(
-                                        color = Color.LightGray,
-                                        text = chapter.name
-                                    )
+                        if (item.isChecked != null) {
+                            Checkbox(
+                                checked = item.isChecked,
+                                onCheckedChange = {
+                                    item.action()
+                                    popupVisibility.value = false
                                 }
-                            }, onClick = {
-                                scope.launch(Dispatchers.Main.immediate) {
-                                    viewmodel.player.jumpToChapter(chapter)
-                                    chaptersPopup = false
-                                }
-
-                            }
-                        )
+                            )
+                        }
+                    },
+                    text = {
+                        Row(verticalAlignment = CenterVertically) {
+                            Text(
+                                color = Color.LightGray,
+                                text = item.text
+                            )
+                        }
+                    }, onClick = {
+                        item.action()
+                        popupVisibility.value = false
                     }
-                }
+                )
             }
         }
     }

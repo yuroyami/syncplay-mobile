@@ -33,9 +33,9 @@ import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_chapters_skip
 import syncplaymobile.shared.generated.resources.room_custom_skip_button
 
 @Composable
@@ -77,25 +77,7 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
                     }), shape = CircleShape
                 ),
                 onClick = {
-                    viewmodel.player.playerScopeIO.launch {
-                        val currentMs = withContext(Dispatchers.Main) { viewmodel.player.currentPositionMs() }
-                        val newPos = (currentMs) + (customSkipAmount * 1000L)
-
-                        viewmodel.actionManager.sendSeek(newPos)
-                        viewmodel.player.seekTo(newPos)
-
-                        if (viewmodel.isSoloMode) {
-                            viewmodel.seeks.add(
-                                Pair(
-                                    (currentMs), newPos * 1000
-                                )
-                            )
-                        }
-
-                        viewmodel.osdManager.dispatchOSD {
-                            getString(Res.string.room_custom_skip_button, customSkipAmountString)
-                        }
-                    }
+                    viewmodel.customSkip()
                 },
             ) {
                 Icon(imageVector = Icons.Filled.AvTimer, "")
@@ -135,12 +117,11 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
                 )
                 Text(
                     modifier = Modifier.padding(start = 4.dp),
-                    text = "Skip chapter",
+                    text = stringResource(Res.string.room_chapters_skip),
                     fontSize = 12.sp,
                     maxLines = 1
                 )
             }
         }
     }
-
 }

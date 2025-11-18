@@ -95,12 +95,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.Font
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.delete
 import syncplaymobile.shared.generated.resources.done
 import syncplaymobile.shared.generated.resources.play
+import syncplaymobile.shared.generated.resources.room_shared_playlist
+import syncplaymobile.shared.generated.resources.room_shared_playlist_actions
+import syncplaymobile.shared.generated.resources.room_shared_playlist_add_url
+import syncplaymobile.shared.generated.resources.room_shared_playlist_add_url_subtext
 import syncplaymobile.shared.generated.resources.room_shared_playlist_button_add_file
 import syncplaymobile.shared.generated.resources.room_shared_playlist_button_add_folder
 import syncplaymobile.shared.generated.resources.room_shared_playlist_button_add_url
@@ -110,6 +115,11 @@ import syncplaymobile.shared.generated.resources.room_shared_playlist_button_pla
 import syncplaymobile.shared.generated.resources.room_shared_playlist_button_set_media_directories
 import syncplaymobile.shared.generated.resources.room_shared_playlist_button_shuffle
 import syncplaymobile.shared.generated.resources.room_shared_playlist_button_shuffle_rest
+import syncplaymobile.shared.generated.resources.room_shared_playlist_clear_playlist
+import syncplaymobile.shared.generated.resources.room_shared_playlist_filepick_rationale1
+import syncplaymobile.shared.generated.resources.room_shared_playlist_filepick_rationale2
+import syncplaymobile.shared.generated.resources.room_shared_playlist_item_actions
+import syncplaymobile.shared.generated.resources.room_shared_playlist_playlist_is_empty
 import kotlin.time.Clock
 
 object CardSharedPlaylist {
@@ -124,7 +134,7 @@ object CardSharedPlaylist {
         val mediaFilePicker  = rememberFilePickerLauncher(
             type = FileKitType.File(extensions = vidExs),
             mode = FileKitMode.Multiple(),
-            title = "Select one or multiple files to add to playlist"
+            title = stringResource(Res.string.room_shared_playlist_filepick_rationale1)
         ) { files ->
             if (files?.isEmpty() == true || files == null) return@rememberFilePickerLauncher
 
@@ -134,7 +144,7 @@ object CardSharedPlaylist {
         }
 
         val mediaDirectoryPicker =rememberDirectoryPickerLauncher(
-            title = "Select directory to add its files to playlist"
+            title = stringResource(Res.string.room_shared_playlist_filepick_rationale2)
         ) { directoryUri ->
             if (directoryUri == null) return@rememberDirectoryPickerLauncher
             scope.launch {
@@ -172,7 +182,7 @@ object CardSharedPlaylist {
             ) {
                 /* Card title */
                 FlexibleText(
-                    text = "Shared Playlist", //TODO Localize
+                    text = stringResource(Res.string.room_shared_playlist),
                     fillingColors = flexibleGradient,
                     size = 17f,
                     font = jostFont
@@ -229,7 +239,7 @@ object CardSharedPlaylist {
                                     fillingColors = Theming.SP_GRADIENT,
                                     strokeColors = listOf(Color.Black),
                                     modifier = Modifier.align(Alignment.CenterHorizontally),
-                                    text = "Item Actions", //TODO Localize
+                                    text = stringResource(Res.string.room_shared_playlist_item_actions),
                                     size = 12f,
                                     font = Font(Res.font.Directive4_Regular)
                                 )
@@ -322,7 +332,7 @@ object CardSharedPlaylist {
                                 fillingColors = flexibleGradient,
                                 strokeColors = listOf(Color.Black),
                                 modifier = Modifier.align(Alignment.CenterHorizontally),
-                                text = "Shared Playlist Actions", //TODO
+                                text = stringResource(Res.string.room_shared_playlist_actions),
                                 size = 13f,
                                 font = jostFont
                             )
@@ -461,7 +471,7 @@ object CardSharedPlaylist {
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
                                     if (viewmodel.session.sharedPlaylist.isEmpty()) {
-                                        viewmodel.osdManager.dispatchOSD { "Shared Playlist is empty. Nothing to save." }
+                                        viewmodel.osdManager.dispatchOSD { getString(Res.string.room_shared_playlist_playlist_is_empty) }
                                         return@DropdownMenuItem
                                     }
 
@@ -494,7 +504,7 @@ object CardSharedPlaylist {
 
                             //Shared Playlist Action: Clear playlist
                             DropdownMenuItem(
-                                text = { Text(fontSize = txtsize.sp, color = Color.LightGray, text = "Clear the playlist") },
+                                text = { Text(fontSize = txtsize.sp, color = Color.LightGray, text = stringResource(Res.string.room_shared_playlist_clear_playlist)) },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.ClearAll, "", tint = Color.LightGray) },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
@@ -529,7 +539,7 @@ object CardSharedPlaylist {
             ) {
                 /* The title */
                 FlexibleText(
-                    text = "Add URLs to Shared Playlist",
+                    text = stringResource(Res.string.room_shared_playlist_add_url),
                     strokeColors = listOf(Color.Black),
                     size = 17f,
                     font = jostFont
@@ -537,7 +547,7 @@ object CardSharedPlaylist {
 
                 /* Title's subtext */
                 Text(
-                    text = "Each line wil be added as an entry to the shared playlist.\nSyncplay Android supports only direct links for now.",
+                    text = stringResource(Res.string.room_shared_playlist_add_url_subtext),
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 10.sp,
                     fontFamily = FontFamily(helveticaFont),

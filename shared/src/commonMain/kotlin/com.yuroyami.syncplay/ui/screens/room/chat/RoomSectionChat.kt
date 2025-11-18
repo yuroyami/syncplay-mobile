@@ -60,8 +60,10 @@ import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 import com.yuroyami.syncplay.utils.isEmoji
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_coming_soon
 import syncplaymobile.shared.generated.resources.room_type_message
 
 @Composable
@@ -135,7 +137,7 @@ fun ChatTextField(
                 }
             } else {
                 IconButton(onClick = {
-                    viewmodel.osdManager.dispatchOSD { "GIF Feature is coming soon!" }
+                    viewmodel.osdManager.dispatchOSD { "GIF: ${getString(Res.string.room_coming_soon)}" }
                 }) {
                     Icon(
                         imageVector = Icons.Outlined.GifBox,

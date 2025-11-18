@@ -36,8 +36,10 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_details_current_room
+import syncplaymobile.shared.generated.resources.room_more_info_change_network_engine_msg
 import syncplaymobile.shared.generated.resources.room_ping_connected
 import syncplaymobile.shared.generated.resources.room_ping_disconnected
+import syncplaymobile.shared.generated.resources.room_reconnect_button
 
 
 @Composable
@@ -93,14 +95,14 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                             containerColor = Color.Red
                         ), shape = CircleShape
                     ) {
-                        Text(text = "Reconnect", color = Color.White)
+                        Text(text = stringResource(Res.string.room_reconnect_button), color = Color.White)
                     }
                 }
 
 
                 AnimatedVisibility(pingo == null && viewmodel.session.userList.value.isNotEmpty()) {
                     Text(
-                        text = "Try changing network engine in Settings > Network to Ktor if you're experiencing connection issues.",
+                        text = stringResource(Res.string.room_more_info_change_network_engine_msg),
                         color = Color.White,
                         modifier = Modifier.fillMaxWidth(0.95f),
                         textAlign = TextAlign.Center,

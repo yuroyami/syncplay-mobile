@@ -46,6 +46,11 @@ class UIManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
      */
     val popupIdentifyAsRoomOperator = MutableStateFlow(false)
 
+
+    
+    val popupSeekToPosition = MutableStateFlow(false)
+
+
     /**
      * Tracks whether the user has navigated away for file picking.
      * Used to handle lifecycle events during file selection.

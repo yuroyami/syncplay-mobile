@@ -29,10 +29,11 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.yuroyami.syncplay.ui.components.gradientOverlay
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.screens.theme.Theming
-import com.yuroyami.syncplay.ui.components.gradientOverlay
+import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -80,7 +81,7 @@ fun RoomUnlockableLayout() {
                     shape = RoundedCornerShape(6.dp),
                     border = BorderStroke(
                         width = 1.dp,
-                        brush = Brush.linearGradient(colors = Theming.SP_GRADIENT)
+                        brush = Brush.linearGradient(colors = flexibleGradient)
                     ),
                     colors = CardDefaults.cardColors(containerColor = Color.DarkGray),
                     elevation = CardDefaults.elevatedCardElevation(defaultElevation = 6.dp),

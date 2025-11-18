@@ -21,12 +21,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.composeunstyled.buildModifier
 import com.yuroyami.syncplay.ui.components.gradientOverlay
-import com.yuroyami.syncplay.ui.screens.adam.LocalTheme
 import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 
 @Composable
 fun RoomTab(modifier: Modifier, icon: ImageVector, visibilityState: Boolean, onClick: () -> Unit) {
-    val theme = LocalTheme.current
     Card(
         modifier = modifier.aspectRatio(1f).padding(3.dp),
         shape = RoundedCornerShape(6.dp),

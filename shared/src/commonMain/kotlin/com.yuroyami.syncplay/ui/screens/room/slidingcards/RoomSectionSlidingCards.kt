@@ -79,8 +79,6 @@ fun RoomSectionSlidingCards(modifier: Modifier) {
             }
         }
 
-        val h = 46.dp
-
         FreeAnimatedVisibility(
             enter = expandIn(),
             exit = shrinkVertically(),
@@ -88,7 +86,7 @@ fun RoomSectionSlidingCards(modifier: Modifier) {
             modifier = Modifier.align(Alignment.End).padding(end = 6.dp)
         ) {
             Surface(
-                modifier = Modifier.height(h),
+                modifier = Modifier.height(46.dp),
                 shape = RoundedCornerShape(8.dp),
                 border = BorderStroke(
                     width = 1.dp,
@@ -97,8 +95,7 @@ fun RoomSectionSlidingCards(modifier: Modifier) {
                     })
                 ),
             ) {
-
-                RoomControlPanelCard(modifier = Modifier.height(h-1.dp), height = h)
+                RoomControlPanelCard(modifier = Modifier.height(45.dp))
             }
         }
     }

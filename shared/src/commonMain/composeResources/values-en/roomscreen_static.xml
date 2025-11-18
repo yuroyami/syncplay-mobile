@@ -25,7 +25,7 @@
     <string name="room_file_mismatch_warning_name">Name.</string>
     <string name="room_file_mismatch_warning_duration">Duration.</string>
     <string name="room_file_mismatch_warning_size">Size.</string>
-    <string name="room_shared_playlist">Room's Shared Playlist</string>
+    <string name="room_shared_playlist">Shared Playlist</string>
     <string name="room_shared_playlist_brief">Import a file or a directory to include file name(s) into the playlist. Click on a file line to get all users to play it.</string>
     <string name="room_shared_playlist_no_directories">You have not specified any media directories for shared playlists. Manually add the files.</string>
     <string name="room_shared_playlist_not_found">Syncplay couldn't find the file that is currently playing in the shared playlist in your media directories.</string>
@@ -42,10 +42,19 @@
     <string name="room_shared_playlist_button_set_media_directories">Set media directories</string>
     <string name="room_shared_playlist_button_set_trusted_domains">Set trusted domains</string>
     <string name="room_shared_playlist_button_undo">Undo last change</string>
+    <string name="room_shared_playlist_item_actions">Item Actions</string>
+    <string name="room_shared_playlist_actions">Shared Playlist actions</string>
+    <string name="room_shared_playlist_clear_playlist">Clear the playlist</string>
+    <string name="room_shared_playlist_playlist_is_empty">Shared Playlist is empty. Nothing to save.</string>
+    <string name="room_shared_playlist_filepick_rationale1">Select one or multiple files to add to playlist</string>
+    <string name="room_shared_playlist_filepick_rationale2">Select directory to add its files to playlist</string>
+    <string name="room_shared_playlist_add_url">Add URL to Shared Playlist</string>
+    <string name="room_shared_playlist_add_url_subtext">This line wil be added as an entry to the shared playlist.\nSyncplay Android supports only direct links for now.</string>
     <string name="room_button_desc_aspect_ratio">Aspect Ratio</string>
     <string name="room_button_desc_shared_playlist">Shared Playlist</string>
     <string name="room_button_desc_audio_tracks">Audio Tracks</string>
     <string name="room_button_desc_subtitle_tracks">Subtitle Tracks</string>
+    <string name="room_button_desc_subtitle_tracks_import_from_file">Import from file</string>
     <string name="room_button_desc_rewind">Rewind</string>
     <string name="room_button_desc_toggle">.</string>
     <string name="room_button_desc_play">Play</string>
@@ -56,6 +65,8 @@
     <string name="room_button_desc_more">More Settings</string>
     <string name="room_addmedia_offline">From phone storage</string>
     <string name="room_addmedia_online">From a network URL</string>
+    <string name="room_addmedia_online_details">Load Media from a network URL</string>
+    <string name="room_addmedia_online_popup_subtext">Make sure to provide direct links (for example: www.example.com/video.mp4). YouTube and other media streaming services are not supported yet.</string>
     <string name="room_addmedia_online_url">URL address</string>
     <string name="room_overflow_title">More Options...</string>
     <string name="room_overflow_create_managed_room">Create managed room</string>
@@ -68,8 +79,23 @@
     <string name="room_card_title_user_info">User info</string>
     <string name="room_card_title_in_room_prefs">In-room Preferences</string>
     <string name="room_audio_track_not_found">No audio found !</string>
-
     <string name="room_msg_problem_loading_file">There was a problem loading this file.</string>
-
+    <string name="room_managed_room_popup_create">Enter name of managed room\nsee https://syncplay.pl/guide/ for usage instructions)</string>
+    <string name="room_managed_room_popup_pw_identify_as_operator">Enter operator password for this room\nsee https://syncplay.pl/guide/ for usage instructions)</string>
     <string name ="room_setting_pick_color">Pick a Color</string>
+    <string name ="room_reconnect_button">Reconnect</string>
+    <string name="room_more_info_change_network_engine_msg">Try changing network engine in Settings > Network to Ktor if you're experiencing connection issues.</string>
+    <string name="room_volume">Volume: %s</string>
+    <string name="room_brightness">Brightness: %s</string>
+    <string name="room_coming_soon">Coming soon!</string>
+    <string name="room_chapters_skip">Skip chapter</string>
+    <string name="room_chapters">Chapters</string>
+    <string name="room_gestures_enabled">Touch Gestures enabled</string>
+    <string name="room_gestures_disabled">Touch Gestures disabled</string>
+    <string name="room_no_recent_seek">There is no recent seek in this room.</string>
+    <string name="room_seek_undone">Seek undone.</string>
+    <string name="room_seek_toposition_title">Seek to precise position</string>
+    <string name="room_seek_toposition_timeformat">Hour:Minute:Second</string>
+    <string name="room_seek_toposition_timediff">Skipping %s seconds of time</string>
+    <string name="room_seek_toposition_success">Seeking to %s</string>
 </resources>

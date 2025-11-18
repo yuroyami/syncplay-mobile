@@ -1,15 +1,17 @@
 package com.yuroyami.syncplay.ui.components
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import com.yuroyami.syncplay.ui.screens.theme.Theming
+import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 
 /** Adds a gradient overlay on the composable (Syncplay gradient by default) */
-fun Modifier.gradientOverlay(colors: List<Color> = Theming.SP_GRADIENT): Modifier {
+@Composable
+fun Modifier.gradientOverlay(colors: List<Color> = flexibleGradient): Modifier {
     return this
         .graphicsLayer(alpha = 0.99f)
         .drawWithCache {

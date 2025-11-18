@@ -22,7 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yuroyami.syncplay.managers.preferences.Preferences.CUSTOM_SEEK_AMOUNT
+import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.managers.preferences.watchPref
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.SyncplayPopup
@@ -47,22 +48,32 @@ import com.yuroyami.syncplay.ui.components.syncplayFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.screens.theme.Theming
 import com.yuroyami.syncplay.utils.timeStamper
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.done
 import syncplaymobile.shared.generated.resources.room_custom_skip_button
+import syncplaymobile.shared.generated.resources.room_seek_toposition_success
+import syncplaymobile.shared.generated.resources.room_seek_toposition_timeformat
+import syncplaymobile.shared.generated.resources.room_seek_toposition_title
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 object PopupSeekToPosition {
 
     @Composable
-    fun SeekToPositionPopup(visibilityState: MutableState<Boolean>) {
+    fun SeekToPositionPopup() {
+        val viewmodel = LocalRoomViewmodel.current
+        val visible by viewmodel.uiManager.popupSeekToPosition.collectAsState()
+
         SyncplayPopup(
-            dialogOpen = visibilityState.value,
+            dialogOpen = visible,
             strokeWidth = 0.5f,
-            onDismiss = { visibilityState.value = false }
+            onDismiss = { viewmodel.uiManager.popupSeekToPosition.value = false }
         ) {
             val viewmodel = LocalRoomViewmodel.current
             val focusManager = LocalFocusManager.current
@@ -75,7 +86,7 @@ object PopupSeekToPosition {
 
                 /* The title */
                 FlexibleText(
-                    text = "Seek to Precise Position", //TODO Localize
+                    text = stringResource(Res.string.room_seek_toposition_title),
                     strokeColors = listOf(Color.Black),
                     fillingColors = Theming.SP_GRADIENT,
                     size = 18f,
@@ -84,7 +95,7 @@ object PopupSeekToPosition {
 
                 /* Title's subtext */
                 Text(
-                    text = "Hours:Minutes:Seconds", //TODO Localize
+                    text = stringResource(Res.string.room_seek_toposition_timeformat),
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 10.sp,
                     fontFamily = FontFamily(syncplayFont),
@@ -194,21 +205,9 @@ object PopupSeekToPosition {
                     border = BorderStroke(width = 1.dp, color = Color.Black),
                     modifier = Modifier.Companion,
                     onClick = {
-                        visibilityState.value = false
-                        viewmodel.player.playerScopeIO?.launch {
-                            val currentMs = withContext(Dispatchers.Main) { viewmodel.player.currentPositionMs() }
-                            val newPos = (currentMs) + (customSkipAmount * 1000L)
+                        viewmodel.uiManager.popupSeekToPosition.value = false
 
-                            viewmodel.actionManager.sendSeek(newPos)
-                            viewmodel.player.seekTo(newPos)
-
-                            if (viewmodel.isSoloMode) {
-                                viewmodel.seeks.add(Pair((currentMs), newPos * 1000))
-                            }
-
-                            //TODO: Localize
-                            viewmodel.osdManager.dispatchOSD { "Skipping  of time" }
-                        }
+                        viewmodel.customSkip()
                     },
                 ) {
                     Icon(imageVector = Icons.Filled.AvTimer, "")
@@ -223,7 +222,7 @@ object PopupSeekToPosition {
                     border = BorderStroke(width = 1.dp, color = Color.Black),
                     modifier = Modifier.Companion,
                     onClick = {
-                        visibilityState.value = false
+                        viewmodel.uiManager.popupSeekToPosition.value = false
 
                         var ss = seconds.value.toLongOrNull() ?: 0
                         var mm = minutes.value.toLongOrNull() ?: 0
@@ -244,8 +243,7 @@ object PopupSeekToPosition {
 
                             viewmodel.player.seekTo(result)
 
-                            //TODO: Localize
-                            viewmodel.osdManager.dispatchOSD { "Seeking to ${timeStamper(result)}" }
+                            viewmodel.osdManager.dispatchOSD { getString(Res.string.room_seek_toposition_success, timeStamper(result)) }
                         }
 
                     },
@@ -256,5 +254,24 @@ object PopupSeekToPosition {
                 }
             }
         }
+    }
+}
+
+fun RoomViewmodel.customSkip()  {
+    player.playerScopeIO.launch {
+        val customSkipAmount = CUSTOM_SEEK_AMOUNT.value()
+
+        val currentMs = withContext(Dispatchers.Main) { player.currentPositionMs() }
+        val newPos = (currentMs) + (customSkipAmount * 1000L)
+
+        actionManager.sendSeek(newPos)
+        player.seekTo(newPos)
+
+        if (isSoloMode) {
+            seeks.add(Pair((currentMs), newPos * 1000))
+        }
+
+        val timeDiff = abs(newPos - currentMs).div(1000.0).roundToInt()
+        osdManager.dispatchOSD { getString(Res.string.room_seek_toposition_success, timeDiff.toString()) }
     }
 }
