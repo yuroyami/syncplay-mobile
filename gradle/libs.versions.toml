@@ -25,6 +25,7 @@ navigation3Runtime = "1.0.0-rc01"
 navigation3Ui = "1.0.0-alpha04"
 koroutines = "1.10.2"
 datetime = "0.7.1"
+atomicfu = "0.29.0"
 
 #Android
 coreSplashscreen = "1.2.0"
@@ -68,6 +69,7 @@ kolorpicker = { module = "com.kborowy:kolor-picker", version.ref = "kolorpicker"
 uriKmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
 compose-unstyled = { module = "com.composables:core", version.ref = "compose-unstyled" }
 materialKolor = { module = "com.materialkolor:material-kolor", version.ref = "materialkolor" }
+atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu" }
 
 #Android
 kotlin-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "koroutines" }

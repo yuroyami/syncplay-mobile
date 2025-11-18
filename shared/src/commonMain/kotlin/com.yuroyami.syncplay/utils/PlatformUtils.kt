@@ -2,7 +2,6 @@ package com.yuroyami.syncplay.utils
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ClipEntry
-import co.touchlab.kermit.Logger
 import com.yuroyami.syncplay.PlatformCallback
 import com.yuroyami.syncplay.managers.network.NetworkManager
 import com.yuroyami.syncplay.managers.player.PlayerEngine
@@ -53,24 +52,6 @@ expect val platform: PLATFORM
  * Each platform provides different player implementations (e.g., ExoPlayer on Android).
  */
 expect val availablePlatformPlayerEngines: List<PlayerEngine>
-
-/**
- * Logs messages and exceptions to the platform-specific logging system.
- *
- * Uses Kermit library.
- * This checks whether the passed argument is an exception, if so, it logs the whole stacktrace.
- *
- * @param s The message or exception to log
- */
-fun loggy(s: Any?) {
-    Logger.e(
-        if (s is Exception) {
-            s.stackTraceToString()
-        } else {
-            s.toString()
-        }
-    )
-}
 
 /**
  * Creates a platform-specific network manager instance for the room.

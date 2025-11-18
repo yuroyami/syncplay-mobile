@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Lan
 import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.LogoDev
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Opacity
 import androidx.compose.material.icons.filled.Pin
@@ -38,6 +39,7 @@ import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled.Web
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.preferences.core.edit
 import com.yuroyami.syncplay.ui.popups.PopupMediaDirs.MediaDirsPopup
@@ -45,8 +47,11 @@ import com.yuroyami.syncplay.ui.screens.theme.Theming
 import com.yuroyami.syncplay.ui.screens.theme.defaultTheme
 import com.yuroyami.syncplay.utils.PLATFORM
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
+import com.yuroyami.syncplay.utils.generateTimestampMillis
+import com.yuroyami.syncplay.utils.logFile
 import com.yuroyami.syncplay.utils.platform
 import com.yuroyami.syncplay.utils.platformCallback
+import io.github.vinceglb.filekit.dialogs.compose.rememberFileSaverLauncher
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
@@ -63,6 +68,8 @@ import syncplaymobile.shared.generated.resources.setting_display_language_title
 import syncplaymobile.shared.generated.resources.setting_erase_shortcuts_dialog
 import syncplaymobile.shared.generated.resources.setting_erase_shortcuts_summary
 import syncplaymobile.shared.generated.resources.setting_erase_shortcuts_title
+import syncplaymobile.shared.generated.resources.setting_export_log_summary
+import syncplaymobile.shared.generated.resources.setting_export_log_title
 import syncplaymobile.shared.generated.resources.setting_fileinfo_behavior_a
 import syncplaymobile.shared.generated.resources.setting_fileinfo_behavior_b
 import syncplaymobile.shared.generated.resources.setting_fileinfo_behavior_c
@@ -542,6 +549,28 @@ object Preferences {
             onYes = {
                 datastore.edit { preferences ->
                     preferences.clear()
+                }
+            }
+        )
+    }
+
+    val EXPORT_LOGS = Pref<String>("log_saver", "") {
+        title = Res.string.setting_export_log_title
+        summary = Res.string.setting_export_log_summary
+        icon = Icons.Filled.LogoDev
+
+        extraConfig = PrefExtraConfig.ShowComposable(
+            composable = {
+                val logSaver = rememberFileSaverLauncher { directoryUri ->
+                    if (directoryUri == null) return@rememberFileSaverLauncher
+                }
+
+                LaunchedEffect(null) {
+                    logSaver.launch(
+                        bytes = logFile,
+                        baseName = "SyncplayLog_${generateTimestampMillis()}",
+                        extension = "txt"
+                    )
                 }
             }
         )

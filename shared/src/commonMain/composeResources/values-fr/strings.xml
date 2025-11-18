@@ -234,7 +234,8 @@
     <string name="setting_network_engine_netty">Netty (Recommandé + TLS)</string>
     <string name="setting_network_engine_swift_nio">SwiftNIO (Recommandé + TLS)</string>
     <string name="setting_network_engine_ktor">Ktor (Expérimental)</string>
-
+    <string name="setting_export_log_title">Exporter les journaux</string>
+    <string name="setting_export_log_summary">Exporter les journaux de l\'application de cette session sous forme de fichier texte vers votre appareil</string>
 
     <!-- UI Settings Categories -->
     <string name="uisetting_categ_chat_colors">Couleurs du chat</string>

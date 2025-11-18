@@ -235,7 +235,9 @@
     <string name="setting_network_engine_netty">Netty (موصى به + TLS)</string>
     <string name="setting_network_engine_swift_nio">SwiftNIO (موصى به + TLS)</string>
     <string name="setting_network_engine_ktor">Ktor (تجريبي)</string>
-
+    <string name="setting_export_log_title">تصدير السجلات</string>
+    <string name="setting_export_log_summary">تصدير سجلات التطبيق من هذه الجلسة كملف نصي إلى جهازك</string>
+    
     <!-- UI Settings Categories -->
     <string name="uisetting_categ_chat_colors">ألوان المحادثة</string>
     <string name="uisetting_categ_player_settings">إعدادات المشغل</string>

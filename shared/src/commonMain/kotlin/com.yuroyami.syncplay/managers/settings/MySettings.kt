@@ -21,6 +21,7 @@ import com.yuroyami.syncplay.managers.preferences.Preferences.CUSTOM_SEEK_AMOUNT
 import com.yuroyami.syncplay.managers.preferences.Preferences.CUSTOM_SEEK_FRONT
 import com.yuroyami.syncplay.managers.preferences.Preferences.DISPLAY_LANG
 import com.yuroyami.syncplay.managers.preferences.Preferences.ERASE_SHORTCUTS
+import com.yuroyami.syncplay.managers.preferences.Preferences.EXPORT_LOGS
 import com.yuroyami.syncplay.managers.preferences.Preferences.FILE_MISMATCH_WARNING
 import com.yuroyami.syncplay.managers.preferences.Preferences.GLOBAL_RESET_DEFAULTS
 import com.yuroyami.syncplay.managers.preferences.Preferences.HASH_FILENAME
@@ -108,6 +109,7 @@ val GLOBAL_ADVANCED = SettingCategory(
     title = Res.string.settings_categ_advanced,
     icon = Icons.Filled.Stream
 ) {
+    +EXPORT_LOGS
     +GLOBAL_RESET_DEFAULTS
 }
 

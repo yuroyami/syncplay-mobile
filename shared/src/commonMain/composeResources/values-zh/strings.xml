@@ -223,7 +223,9 @@
     <string name="setting_network_engine_netty">Netty（推荐 + TLS）</string>
     <string name="setting_network_engine_swift_nio">SwiftNIO（推荐 + TLS）</string>
     <string name="setting_network_engine_ktor">Ktor（实验性）</string>
-
+    <string name="setting_export_log_title">导出日志</string>
+    <string name="setting_export_log_summary">将本次会话的应用日志导出为文本文件到您的设备</string>
+    
     <!-- UI Settings Categories -->
     <string name="uisetting_categ_chat_colors">聊天颜色</string>
     <string name="uisetting_categ_player_settings">播放器设置</string>

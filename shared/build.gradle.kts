@@ -133,6 +133,9 @@ kotlin {
 
             /* File opener/saver multiplatform */
             implementation(libs.filekit)
+
+            /* Atomics (used only for logs at the moment) */
+            implementation(libs.atomicfu)
         }
 
         androidMain.dependencies {
