@@ -260,7 +260,7 @@ android {
 
     packaging {
         jniLibs {
-            //pickFirsts += "**/libsc++_shared.so" //Pick our local c++_shared only and not the one in VLC aar
+            pickFirsts += "**/libc++_shared.so" //Pick our local c++_shared only and not the one in VLC aar
         }
     }
 
