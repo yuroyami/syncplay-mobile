@@ -177,7 +177,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
             scope.launch(Dispatchers.Main.immediate) {
                 viewmodel.player.seekTo(lastSeek.first)
             }
-            viewmodel.actionManager.sendSeek(lastSeek.first)
+            viewmodel.actionManager.sendSeek(lastSeek.first, lastSeek.second)
             viewmodel.seeks.remove(lastSeek)
             viewmodel.osdManager.dispatchOSD { getString(Res.string.room_seek_undone) }
         }
@@ -237,7 +237,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
             onClick = {
                 haptic()
 
-                composeScope.launch {
+                viewmodel.viewModelScope.launch {
                     viewmodel.player.analyzeTracks(viewmodel.media ?: return@launch)
                     ccTracksPopup.value = true
                 }
@@ -276,7 +276,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
             onClick = {
                 haptic()
 
-                composeScope.launch {
+                viewmodel.viewModelScope.launch {
                     viewmodel.player.analyzeTracks(viewmodel.media ?: return@launch)
                     audioTracksPopup.value = true
                 }
@@ -329,7 +329,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
                 onClick = {
                     haptic()
 
-                    composeScope.launch {
+                    viewmodel.viewModelScope.launch {
                         viewmodel.player.analyzeChapters(viewmodel.media ?: return@launch)
                         chaptersPopup.value = true
                     }

@@ -8,10 +8,14 @@ import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import com.yuroyami.syncplay.models.Message
 import com.yuroyami.syncplay.utils.platformCallback
+import com.yuroyami.syncplay.utils.timeStamper
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.getString
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_seeked
 import kotlin.math.roundToLong
 
 /**
@@ -58,8 +62,15 @@ class RoomActionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmode
      *
      * @param newPosMs The new playback position in milliseconds
      */
-    fun sendSeek(newPosMs: Long) {
+    fun sendSeek(newPosMs: Long, oldPosms: Long) {
         if (viewmodel.isSoloMode) return
+
+        viewmodel.actionManager.broadcastMessage(
+            message = {
+                getString(Res.string.room_seeked, viewmodel.session.currentUsername, timeStamper(oldPosms), timeStamper(newPosMs))
+            },
+            isChat = false
+        )
 
         sender.sendAsync<PacketOut.State> {
             serverTime = null
@@ -129,7 +140,7 @@ class RoomActionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmode
 
             if (newPos < 0) newPos = 0
 
-            sendSeek(newPos)
+            sendSeek(newPos, currentMs)
             viewmodel.player.seekTo(newPos)
 
             if (viewmodel.isSoloMode) {
@@ -153,7 +164,7 @@ class RoomActionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmode
 
             val currentMs = viewmodel.player.currentPositionMs()
             val newPos = ((currentMs) + (inc * 1000L)).coerceIn(0, viewmodel.playerManager.media.value?.fileDuration?.toLong()?.times(1000L) ?: 0)
-            sendSeek(newPos)
+            sendSeek(newPos, currentMs)
             viewmodel.player.seekTo(newPos)
 
             if (viewmodel.isSoloMode) {

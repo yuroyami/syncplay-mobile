@@ -288,7 +288,7 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
 
         viewmodel.media?.audioTracks?.clear()
         viewmodel.media?.subtitleTracks?.clear()
-        playerScopeMain.launch {
+        withContext(Dispatchers.Main) {
             withContext(Dispatchers.Main) {
                 val tracks = exoplayer?.currentTracks ?: return@withContext
                 for (group in tracks.groups) {

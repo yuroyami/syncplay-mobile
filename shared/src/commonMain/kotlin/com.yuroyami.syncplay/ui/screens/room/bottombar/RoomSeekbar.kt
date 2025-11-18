@@ -51,9 +51,6 @@ import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.getString
-import syncplaymobile.shared.generated.resources.Res
-import syncplaymobile.shared.generated.resources.room_seeked
 import kotlin.math.roundToLong
 import com.composeunstyled.Thumb as UnstyledThumb
 
@@ -115,13 +112,7 @@ fun RoomSeekbar(modifier: Modifier) {
                     isSliding = false
                     viewmodel.seeks.add(Pair(preSlidePosition, sliderValue.roundToLong()))
                     if (!viewmodel.isSoloMode) {
-                        viewmodel.actionManager.sendSeek(sliderValue.roundToLong())
-                        viewmodel.actionManager.broadcastMessage(
-                            message = {
-                                getString(Res.string.room_seeked, viewmodel.session.currentUsername, timeStamper(preSlidePosition), timeStamper(sliderValue.roundToLong()))
-                            },
-                            isChat = false
-                        )
+                        viewmodel.actionManager.sendSeek(sliderValue.roundToLong(), preSlidePosition)
                     }
                 }
             },
@@ -159,8 +150,7 @@ fun RoomSeekbar(modifier: Modifier) {
                                 modifier = Modifier
                                     .offset {
                                         // 4.dp to pixels
-                                        val offsetAdjustment = with(density) { 4.dp.toPx() }
-
+                                        val offsetAdjustment = 4.dp.toPx()
                                         IntOffset((positionFraction * trackWidthPx).toInt() - offsetAdjustment.toInt(), 0)
                                     }.align(CenterStart)
                                     .size(8.dp).clip(CircleShape)
@@ -207,7 +197,7 @@ fun RoomSeekbar(modifier: Modifier) {
             val bubbleOffset by derivedStateOf {
                 val sliderFraction = sliderValue / videoFullDurationMs.toFloat().coerceAtLeast(1f)
                 val sliderPx = trackWidthPx * sliderFraction
-                val bubbleHalfPx = with(density) { bubbleTextWidth / 2 }
+                val bubbleHalfPx = bubbleTextWidth / 2
 
                 // Clamp so the bubble stays fully visible
                 val rawOffset = sliderPx - bubbleHalfPx
