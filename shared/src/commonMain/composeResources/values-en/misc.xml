@@ -8,6 +8,8 @@
     <string name="media_directories_add_folder">Add folder</string>
     <string name="media_directories_delete">Remove from list</string>
     <string name="media_directories_show_full_path">Show full path</string>
+    <string name="media_directories_going_for_pick_rationale">"Select directory to save playlist to as a file"</string>
+
 
     <string name="about_version">• Version: %s</string>
     <string name="about_developed_by">• Developed by: yuroyami</string>
@@ -15,6 +17,8 @@
     <string name="about_client_platforms">• Syncplay is officially available for Windows, macOS, and Linux.</string>
     <string name="about_official_website">• Official Website: www.syncplay.pl</string>
 
+    <string name="tips_dontshowmetips">Don't show me tips</string>
+    <string name="tips_did_ya_know">Did ya know?</string>
 
     <string-array name="tips">
         <item>For shared playlists to work, Syncplay needs to know where your media files are stored. Add your media folders in 'Settings > General > Media Directories for Shared Playlist'.</item>

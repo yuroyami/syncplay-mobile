@@ -68,4 +68,8 @@
     <string name="room_card_title_user_info">User info</string>
     <string name="room_card_title_in_room_prefs">In-room Preferences</string>
     <string name="room_audio_track_not_found">No audio found !</string>
+
+    <string name="room_msg_problem_loading_file">There was a problem loading this file.</string>
+
+    <string name ="room_setting_pick_color">Pick a Color</string>
 </resources>

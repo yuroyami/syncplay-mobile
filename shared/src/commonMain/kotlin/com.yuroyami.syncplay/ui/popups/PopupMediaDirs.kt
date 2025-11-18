@@ -59,8 +59,8 @@ import androidx.compose.ui.window.PopupProperties
 import com.eygraber.uri.Uri
 import com.yuroyami.syncplay.managers.SharedPlaylistManager
 import com.yuroyami.syncplay.managers.preferences.Preferences.MEDIA_DIRECTORIES
-import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.managers.preferences.set
+import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.managers.preferences.watchPref
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.SyncplayPopup
@@ -80,6 +80,7 @@ import syncplaymobile.shared.generated.resources.media_directories_add_folder
 import syncplaymobile.shared.generated.resources.media_directories_brief
 import syncplaymobile.shared.generated.resources.media_directories_clear_all
 import syncplaymobile.shared.generated.resources.media_directories_delete
+import syncplaymobile.shared.generated.resources.media_directories_going_for_pick_rationale
 import syncplaymobile.shared.generated.resources.media_directories_save
 import syncplaymobile.shared.generated.resources.no
 import syncplaymobile.shared.generated.resources.setting_resetdefault_dialog
@@ -101,7 +102,7 @@ object PopupMediaDirs {
             onDismiss = { visibilityState.value = false }) {
 
             val directoryPicker = rememberDirectoryPickerLauncher(
-                title = "Select directory to save playlist to as a file" //TODO
+                title = stringResource(Res.string.media_directories_going_for_pick_rationale)
             ) { directoryUri ->
                 if (directoryUri == null) return@rememberDirectoryPickerLauncher
 

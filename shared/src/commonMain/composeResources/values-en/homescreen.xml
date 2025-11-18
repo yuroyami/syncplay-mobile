@@ -21,5 +21,4 @@
     <string name="home_password_if_any">Password (if any)</string>
 
     <string name="home_engine_unavailable_error">This engine is unavailable. Did you download the right APK?</string>
-
 </resources>

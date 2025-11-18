@@ -21,13 +21,16 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.getString
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_msg_problem_loading_file
 import syncplaymobile.shared.generated.resources.room_selected_sub
 import syncplaymobile.shared.generated.resources.room_selected_sub_error
 import syncplaymobile.shared.generated.resources.room_selected_vid
 import syncplaymobile.shared.generated.resources.room_sub_error_load_vid_first
+import syncplaymobile.shared.generated.resources.undefined
 import kotlin.time.Duration
 
 /**
@@ -264,7 +267,7 @@ abstract class BasePlayer(
             } catch (e: Exception) {
                 /* If, for some reason, the video didn't wanna load */
                 e.printStackTrace()
-                viewmodel.osdManager.dispatchOSD { "There was a problem loading this file." }
+                viewmodel.osdManager.dispatchOSD { getString(Res.string.room_msg_problem_loading_file) }
             }
 
             playerManager.media.value = newMediaFile
@@ -405,11 +408,12 @@ abstract class BasePlayer(
      *
      * @param media The MediaFile to populate with URL metadata
      */
+    val undefString = runBlocking { getString(Res.string.undefined) } //TODO
     fun collectInfoURL(media: MediaFile) {
         with(media) {
             try {
                 /** Using Ktor's built-in URL support **/
-                fileName = Uri.parseOrNull(url!!)?.pathSegments?.last() ?: "Undefined"
+                fileName = Uri.parseOrNull(url!!)?.pathSegments?.last() ?: runBlocking { undefString }
                 fileSize = 0L.toString()
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -461,7 +465,7 @@ abstract class BasePlayer(
                     val pos = currentPositionMs()
                     playerManager.timeCurrentMillis.value = pos
                     if (!viewmodel.isSoloMode) {
-                        //viewmodel.protocolManager.globalPositionMs = pos.toDouble()
+                        //TODO is this necessary ? viewmodel.protocolManager.globalPositionMs = pos.toDouble()
                     }
                 }
                 delay(trackerJobInterval)

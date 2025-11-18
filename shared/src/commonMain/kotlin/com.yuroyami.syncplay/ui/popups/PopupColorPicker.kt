@@ -44,6 +44,8 @@ import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.done
+import syncplaymobile.shared.generated.resources.reset_default
+import syncplaymobile.shared.generated.resources.room_setting_pick_color
 import kotlin.math.ceil
 
 object PopupColorPicker {
@@ -73,7 +75,7 @@ object PopupColorPicker {
                 /* The title */
                 FlexibleText(
                     modifier = Modifier.weight(1f).padding(6.dp),
-                    text = "Pick a Color", //TODO
+                    text = stringResource(Res.string.room_setting_pick_color),
                     strokeColors = listOf(Color.Black),
                     fillingColors = flexibleGradient,
                     size = 17f,
@@ -100,7 +102,7 @@ object PopupColorPicker {
                         modifier = Modifier.weight(1f).padding(6.dp),
                         onClick = onDefaultReset
                     ) {
-                        Text("Reset to default", fontSize = 10.sp)
+                        Text(stringResource(Res.string.reset_default), fontSize = 10.sp)
                     }
 
                     Button(

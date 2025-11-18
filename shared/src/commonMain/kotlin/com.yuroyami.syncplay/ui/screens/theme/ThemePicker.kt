@@ -65,6 +65,15 @@ import com.yuroyami.syncplay.ui.components.solidOverlay
 import com.yuroyami.syncplay.ui.screens.Screen
 import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
 import com.yuroyami.syncplay.ui.screens.adam.LocalTheme
+import org.jetbrains.compose.resources.stringResource
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.cancel
+import syncplaymobile.shared.generated.resources.delete
+import syncplaymobile.shared.generated.resources.edit
+import syncplaymobile.shared.generated.resources.theme_popup_builtin_themes
+import syncplaymobile.shared.generated.resources.theme_popup_custom_themes
+import syncplaymobile.shared.generated.resources.theme_popup_customize_button
+import syncplaymobile.shared.generated.resources.theme_popup_select_a_theme
 
 val availableThemes = listOf(PYNCSLAY, GrayOLED, SILVER_LAKE, ALLEY_LAMP)
 
@@ -99,7 +108,7 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
                 Spacer(Modifier.height(12.dp))
 
                 FlexibleText(
-                    text = "Select a theme", //TODO Localize
+                    text = stringResource(Res.string.theme_popup_select_a_theme),
                     size = 16f,
                     textAlign = TextAlign.Center,
                     fillingColors = listOf(MaterialTheme.colorScheme.primary),
@@ -117,9 +126,8 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
                     shadowElevation = 4.dp
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
-                        //TODO Localize
                         Text(
-                            text = "Built-in themes",
+                            text = stringResource(Res.string.theme_popup_builtin_themes),
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.align(Alignment.Start).padding(start = 8.dp)
@@ -163,9 +171,8 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
                     shadowElevation = 4.dp
                 ) {
                     Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
-                        //TODO Localize
                         Text(
-                            text = "Custom themes",
+                            text = stringResource(Res.string.theme_popup_custom_themes),
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.align(Alignment.Start).padding(start = 8.dp)
@@ -195,9 +202,7 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
                             }
 
                             items(allCustomThemes.size) { index ->
-                                //val theme = allCustomThemes[allCustomThemes.size - 1 - index]
-
-                                val theme = defaultTheme
+                                val theme = allCustomThemes[allCustomThemes.size - 1 - index]
 
                                 ThemeEntry(
                                     modifier = Modifier
@@ -239,7 +244,7 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
                                     }
                                 ) {
                                     Icon(Icons.Filled.Close, null)
-                                    Text("Cancel")
+                                    Text(stringResource(Res.string.cancel))
                                 }
 
                                 TextButton(
@@ -250,7 +255,7 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
                                     }
                                 ) {
                                     Icon(Icons.Filled.Delete, null)
-                                    Text("Delete")
+                                    Text(stringResource(Res.string.delete))
                                 }
 
                                 TextButton(
@@ -261,7 +266,7 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
                                     }
                                 ) {
                                     Icon(Icons.Filled.Edit, null)
-                                    Text("Edit")
+                                    Text(stringResource(Res.string.edit))
                                 }
                             }
                         }
@@ -362,7 +367,7 @@ fun AddCustomizedThemeButton(onClick: () -> Unit) {
         }
         Text(
             modifier = Modifier.width(themeCardSize - 4.dp).safeContentPadding().padding(2.dp),
-            text = "Customize", //TODO Localize
+            text = stringResource(Res.string.theme_popup_customize_button),
             autoSize = TextAutoSize.StepBased(minFontSize = 1.sp, maxFontSize = 25.sp),
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1

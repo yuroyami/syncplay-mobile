@@ -187,7 +187,6 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
      * Called when socket operations fail or timeout.
      */
     private fun onError() {
-        loggy("ON ERRORRRRRRRRRRRRRRRR")
         viewmodel.callbackManager.onDisconnected()
     }
 
@@ -254,7 +253,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
                     loggy("SOCKET INVALID")
                     /** Queuing any pending outgoing messages */
                     if (packetClass != PacketOut.Hello::class && packetClass != null) {
-                        //viewmodel.sessionManager.session.outboundQueue.add(json)
+                        //TODO viewmodel.sessionManager.session.outboundQueue.add(json)
                     }
                     onError()
                 } else {

@@ -47,7 +47,7 @@ class ThemeManager(val viewmodel: ViewModel) : AbstractManager(viewmodel) {
         .map { stringSet ->
             stringSet.map { it.toTheme() }.toList()
         }
-        .stateIn(scope = viewmodel.viewModelScope, started = Lazily, emptySet())
+        .stateIn(scope = viewmodel.viewModelScope, started = Lazily, emptyList())
 
 
     fun changeTheme(theme: SaveableTheme) {

@@ -73,6 +73,23 @@ import com.yuroyami.syncplay.ui.screens.home.HomeTextField
 import com.yuroyami.syncplay.ui.screens.room.tabs.RoomTab
 import com.yuroyami.syncplay.utils.loggy
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.cancel
+import syncplaymobile.shared.generated.resources.save
+import syncplaymobile.shared.generated.resources.theme_customize_already_exists_warning
+import syncplaymobile.shared.generated.resources.theme_customize_contrast
+import syncplaymobile.shared.generated.resources.theme_customize_is_amoled
+import syncplaymobile.shared.generated.resources.theme_customize_name
+import syncplaymobile.shared.generated.resources.theme_customize_neutral_color
+import syncplaymobile.shared.generated.resources.theme_customize_neutral_variant_color
+import syncplaymobile.shared.generated.resources.theme_customize_palette_style
+import syncplaymobile.shared.generated.resources.theme_customize_preview
+import syncplaymobile.shared.generated.resources.theme_customize_primary_color
+import syncplaymobile.shared.generated.resources.theme_customize_secondary_color
+import syncplaymobile.shared.generated.resources.theme_customize_tertiary_color
+import syncplaymobile.shared.generated.resources.theme_customize_title
+import syncplaymobile.shared.generated.resources.theme_customize_use_syncplay_gradients
 
 @Composable
 fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
@@ -104,7 +121,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                         ),
                         title = {
                             FlexibleText(
-                                text = "Theme Customization", //TODO Localize
+                                text = stringResource(Res.string.theme_customize_title),
                                 size = 18f,
                                 textAlign = TextAlign.Center,
                                 fillingColors = listOf(MaterialTheme.colorScheme.primary),
@@ -119,9 +136,10 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                                 },
                                 modifier = Modifier.padding(horizontal = 4.dp)
                             ) {
-                                Text("Cancel")
+                                Text(stringResource(Res.string.cancel))
                             }
 
+                            val themeAlreadyExistsString = stringResource(Res.string.theme_customize_already_exists_warning)
                             Button(
                                 onClick = {
                                     globalViewmodel.viewModelScope.launch {
@@ -134,14 +152,14 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                                             globalViewmodel.backstack.removeLast()
                                         } else {
                                             snackState.showSnackbar(
-                                                "Theme already exists!" //TODO
+                                                themeAlreadyExistsString
                                             )
                                         }
                                     }
                                 },
                                 modifier = Modifier.padding(horizontal = 4.dp)
                             ) {
-                                Text("Save") //TODO
+                                Text(stringResource(Res.string.save)) //TODO
                             }
                         }
                     )
@@ -158,7 +176,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                         modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
                     ) {
                         FlexibleText(
-                            text = "Theme name", //TODO Localize
+                            text = stringResource(Res.string.theme_customize_name),
                             size = 14f,
                             textAlign = TextAlign.Center,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),
@@ -172,7 +190,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
 
                         HomeTextField(
                             modifier = Modifier.width(200.dp),
-                            label = "Theme Name",
+                            label = stringResource(Res.string.theme_customize_name),
                             value = newTheme.name,
                             onValueChange = {
                                 newTheme = newTheme.copy(
@@ -189,7 +207,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         FlexibleText(
-                            text = "Primary color", //TODO Localize
+                            text = stringResource(Res.string.theme_customize_primary_color),
                             size = 14f,
                             textAlign = TextAlign.Center,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),
@@ -217,7 +235,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         FlexibleText(
-                            text = "Secondary color", //TODO Localize
+                            text = stringResource(Res.string.theme_customize_secondary_color),
                             size = 14f,
                             textAlign = TextAlign.Center,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),
@@ -245,7 +263,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         FlexibleText(
-                            text = "Tertiary color", //TODO Localize
+                            text = stringResource(Res.string.theme_customize_tertiary_color),
                             size = 14f,
                             textAlign = TextAlign.Center,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),
@@ -273,7 +291,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         FlexibleText(
-                            text = "Neutral color", //TODO Localize
+                            text = stringResource(Res.string.theme_customize_neutral_color),
                             size = 14f,
                             textAlign = TextAlign.Center,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),
@@ -301,7 +319,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         FlexibleText(
-                            text = "Neutral Variant color", //TODO Localize
+                            text = stringResource(Res.string.theme_customize_neutral_variant_color),
                             size = 14f,
                             textAlign = TextAlign.Center,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),
@@ -353,7 +371,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         FlexibleText(
-                            text = "is an AMOLED Theme", //TODO Localize
+                            text = stringResource(Res.string.theme_customize_is_amoled),
                             size = 14f,
                             textAlign = TextAlign.Center,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),
@@ -377,7 +395,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         FlexibleText(
-                            text = "Use Syncplay gradients", //TODO Localize
+                            text = stringResource(Res.string.theme_customize_use_syncplay_gradients),
                             size = 14f,
                             textAlign = TextAlign.Center,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),
@@ -401,7 +419,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         FlexibleText(
-                            text = "Contrast", //TODO Localize
+                            text = stringResource(Res.string.theme_customize_contrast),
                             size = 14f,
                             textAlign = TextAlign.Center,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),
@@ -449,7 +467,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                         val paletteSelector = remember { mutableStateOf(false) }
 
                         FlexibleText(
-                            text = "Palette Style", //TODO Localize
+                            text = stringResource(Res.string.theme_customize_palette_style),
                             size = 14f,
                             textAlign = TextAlign.Center,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),
@@ -511,14 +529,14 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                         modifier = Modifier.fillMaxWidth().padding(8.dp),
                     ) {
                         HomeLeadingTitle(
-                            string = "Preview"
+                            string = stringResource(Res.string.theme_customize_preview),
                         )
 
                         HomeTextField(
                             modifier = Modifier.width(200.dp),
                             icon = Icons.Filled.WebStories,
-                            label = "Preview",
-                            value = "Preview",
+                            label = stringResource(Res.string.theme_customize_preview),
+                            value = stringResource(Res.string.theme_customize_preview),
                             dropdownState = null,
                             onValueChange = { },
                         )
@@ -537,7 +555,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                             content = {
                                 Icon(imageVector = Icons.Filled.WebStories, "")
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Preview", fontSize = 18.sp)
+                                Text(stringResource(Res.string.theme_customize_preview), fontSize = 18.sp)
                             }
                         )
 

@@ -26,6 +26,8 @@ import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.okay
 import syncplaymobile.shared.generated.resources.tips
+import syncplaymobile.shared.generated.resources.tips_did_ya_know
+import syncplaymobile.shared.generated.resources.tips_dontshowmetips
 
 object PopupDidYaKnow {
 
@@ -67,14 +69,14 @@ object PopupDidYaKnow {
                             state.value = false
                         }
                     ) {
-                        Text("Don't show me tips") //TODO Localize
+                        Text(stringResource(Res.string.tips_dontshowmetips))
                     }
                 },
                 icon = {
                     Icon(imageVector = Icons.Filled.Lightbulb, null)
                 },
                 title = {
-                    Text("Did you know?")
+                    Text(stringResource(Res.string.tips_did_ya_know))
                 },
                 text = {
                     tips.getOrNull(tipIndex)?.let { tip ->

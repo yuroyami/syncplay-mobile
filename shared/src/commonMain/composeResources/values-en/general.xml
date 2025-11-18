@@ -11,6 +11,8 @@
 
     <string name="dont_show_again">Don't show this again</string>
 
+    <string name="edit">Edit</string>
+
     <string name="play">Play</string>
     <string name="pause">Pause</string>
 
@@ -18,4 +20,11 @@
 
     <string name="off">Off</string>
     <string name="on">On</string>
+
+    <string name="save">Save</string>
+
+    <string name="undefined">Undefined</string>
+
+    <string name="reset_default">Reset Default</string>
+
 </resources>
