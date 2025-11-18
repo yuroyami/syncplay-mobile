@@ -60,6 +60,7 @@ import com.yuroyami.syncplay.ui.screens.theme.ThemeMenu
 import com.yuroyami.syncplay.ui.screens.theme.Theming
 import com.yuroyami.syncplay.ui.screens.theme.Theming.SP_GRADIENT
 import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
+import com.yuroyami.syncplay.viewmodels.HomeViewmodel
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.vectorResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
@@ -71,10 +72,10 @@ enum class SettingGridState {
 }
 
 @Composable
-fun HomeTopBar() {
+fun HomeTopBar(viewmodel: HomeViewmodel) {
     val aboutpopupState = remember { mutableStateOf(false) }
 
-    AProposPopup(aboutpopupState)
+    AProposPopup(aboutpopupState, viewmodel)
 
     Card(
         modifier = Modifier.fillMaxWidth()

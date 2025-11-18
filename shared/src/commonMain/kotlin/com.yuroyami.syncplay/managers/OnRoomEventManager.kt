@@ -305,7 +305,6 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
             }
         }
 
-
         /** Telling user that they're connected **/
         broadcaster.broadcastMessage(message = { getString(Res.string.room_connected_to_server) }, isChat = false)
 

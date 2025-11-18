@@ -31,8 +31,6 @@ fun RoomReadyButton() {
     val viewmodel = LocalRoomViewmodel.current
 
     if (!viewmodel.isSoloMode) {
-        //TODO var ready by remember { mutableStateOf(viewmodel.setReadyDirectly) }
-
         var ready by remember { viewmodel.session.ready }
 
         IconToggleButton(
@@ -63,7 +61,7 @@ fun RoomReadyButton() {
 
                     )
                     Spacer(Modifier.width(4.dp))
-                    Text("Ready", fontSize = 14.sp)
+                    Text("Ready", fontSize = 14.sp) //TODO Localize
                     Spacer(Modifier.width(4.dp))
 
                 }
@@ -78,7 +76,7 @@ fun RoomReadyButton() {
                     )
                     Spacer(Modifier.width(4.dp))
 
-                    Text("Not Ready", fontSize = 13.sp)
+                    Text("Not Ready", fontSize = 13.sp) //TODO Localize
                     Spacer(Modifier.width(4.dp))
 
                 }

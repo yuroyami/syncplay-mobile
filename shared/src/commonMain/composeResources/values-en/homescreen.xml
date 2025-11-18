@@ -15,4 +15,11 @@
     <string name="connect_custom_server_password">Password (Empty if not required)</string>
     <string name="connect_port">Port</string>
     <string name="connect_solomode">Offline mode</string>
+
+    <string name="home_ip_address">IP Address</string>
+    <string name="home_port">Port</string>
+    <string name="home_password_if_any">Password (if any)</string>
+
+    <string name="home_engine_unavailable_error">This engine is unavailable. Did you download the right APK?</string>
+
 </resources>

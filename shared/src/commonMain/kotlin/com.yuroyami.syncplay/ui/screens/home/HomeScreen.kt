@@ -54,8 +54,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.managers.preferences.Preferences.NEVER_SHOW_TIPS
 import com.yuroyami.syncplay.managers.preferences.Preferences.PLAYER_ENGINE
-import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.managers.preferences.set
+import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.managers.preferences.watchPref
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.ui.components.FlexibleText
@@ -88,6 +88,10 @@ import syncplaymobile.shared.generated.resources.connect_roomname_empty_error
 import syncplaymobile.shared.generated.resources.connect_server
 import syncplaymobile.shared.generated.resources.connect_username
 import syncplaymobile.shared.generated.resources.connect_username_empty_error
+import syncplaymobile.shared.generated.resources.home_engine_unavailable_error
+import syncplaymobile.shared.generated.resources.home_ip_address
+import syncplaymobile.shared.generated.resources.home_password_if_any
+import syncplaymobile.shared.generated.resources.home_port
 
 val officialServers = listOf("syncplay.pl:8995", "syncplay.pl:8996", "syncplay.pl:8997", "syncplay.pl:8998", "syncplay.pl:8999")
 
@@ -96,7 +100,6 @@ val officialServers = listOf("syncplay.pl:8995", "syncplay.pl:8996", "syncplay.p
 fun HomeScreenUI(viewmodel: HomeViewmodel) {
     ShowSystemBars()
 
-    val servers = officialServers + stringResource(Res.string.connect_enter_custom_server)
     var savedConfig by remember { mutableStateOf<JoinConfig?>(null) }
 
     LaunchedEffect(null) {
@@ -122,7 +125,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
     Scaffold(
         snackbarHost = { SnackbarHost(viewmodel.snackManager.snack) },
         topBar = {
-            HomeTopBar()
+            HomeTopBar(viewmodel)
         },
         content = { paddingValues ->
             val focusManager = LocalFocusManager.current
@@ -218,6 +221,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                 onValueChange = {}
                             )
 
+                            val servers = officialServers + stringResource(Res.string.connect_enter_custom_server)
                             ExposedDropdownMenu(
                                 modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
                                 expanded = expanded.value,
@@ -267,7 +271,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                         modifier = Modifier.weight(2.25f).padding(end = 4.dp),
                                         value = serverAddress,
                                         onValueChange = { serverAddress = it.trim() },
-                                        label = "IP Address", //TODO Localize
+                                        label = stringResource(Res.string.home_ip_address),
                                         cornerRadius = 16.dp
                                     )
 
@@ -276,7 +280,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                         value = serverPort,
                                         onValueChange = { serverPort = it.trim() },
                                         type = KeyboardType.Number,
-                                        label = "Port", //TODO Localize
+                                        label = stringResource(Res.string.home_port),
                                         cornerRadius = 16.dp
                                     )
                                 }
@@ -286,7 +290,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                     value = serverPassword,
                                     onValueChange = { serverPassword = it.trim() },
                                     type = KeyboardType.Password,
-                                    label = "Password (if any)", //TODO Localize
+                                    label = stringResource(Res.string.home_password_if_any),
                                     cornerRadius = 16.dp
                                 )
                             }
@@ -306,6 +310,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
 
                         val selectedEngine by PLAYER_ENGINE.watchPref()
 
+                        val errorString = stringResource(Res.string.home_engine_unavailable_error)
                         HomeAnimatedEngineButtonGroup(
                             modifier = Modifier.fillMaxWidth(0.75f),
                             engines = availablePlatformPlayerEngines,
@@ -315,7 +320,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                     if (engine.isAvailable) {
                                         PLAYER_ENGINE.set(engine.name)
                                     } else {
-                                        viewmodel.snackManager.snackIt("This engine is unavailable. Did you download the right APK?") //TODO Localize
+                                        viewmodel.snackManager.snackIt(errorString)
                                     }
                                 }
                             }
@@ -330,7 +335,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                 contentPadding = PaddingValues(vertical = 16.dp),
                                 modifier = Modifier.fillMaxWidth(0.85f),
                                 onClick = {
-                                    viewmodel.viewModelScope.launch(Dispatchers.Default) {
+                                    globalViewmodel.viewModelScope.launch(Dispatchers.Default) {
                                         val errorMessage: StringResource? = when {
                                             textUsername.isBlank() -> Res.string.connect_username_empty_error
                                             textRoomname.isBlank() -> Res.string.connect_roomname_empty_error

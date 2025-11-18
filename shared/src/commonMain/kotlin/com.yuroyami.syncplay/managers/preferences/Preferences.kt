@@ -38,8 +38,6 @@ import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled.Web
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.preferences.core.edit
 import com.yuroyami.syncplay.ui.popups.PopupMediaDirs.MediaDirsPopup
@@ -200,10 +198,7 @@ object Preferences {
         icon = Icons.AutoMirrored.Filled.QueueMusic
 
         extraConfig = PrefExtraConfig.ShowComposable(
-            composable = {
-                val state = remember { mutableStateOf(false) }
-                MediaDirsPopup(state)
-            }
+            composable = { MediaDirsPopup(this) }
         )
     }
 

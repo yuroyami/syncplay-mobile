@@ -1,6 +1,7 @@
 package com.yuroyami.syncplay.managers.preferences
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.compose.resources.StringResource
 
@@ -26,7 +27,7 @@ sealed interface PrefExtraConfig {
     ) : PrefExtraConfig
 
     data class ShowComposable(
-        val composable: @Composable () -> Unit
+        val composable: @Composable MutableState<Boolean>.() -> Unit
     ) : PrefExtraConfig
 
     data object ColorPick : PrefExtraConfig

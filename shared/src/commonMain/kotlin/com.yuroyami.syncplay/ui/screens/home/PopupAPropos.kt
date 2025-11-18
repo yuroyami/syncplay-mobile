@@ -31,12 +31,21 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.ui.components.SyncplayPopup
 import com.yuroyami.syncplay.ui.components.SyncplayishText
+import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
+import com.yuroyami.syncplay.viewmodels.HomeViewmodel
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.about_client_is_unofficial_disclaimer
+import syncplaymobile.shared.generated.resources.about_client_platforms
+import syncplaymobile.shared.generated.resources.about_developed_by
+import syncplaymobile.shared.generated.resources.about_official_website
+import syncplaymobile.shared.generated.resources.about_version
 import syncplaymobile.shared.generated.resources.connect_solomode
 import syncplaymobile.shared.generated.resources.github
 import syncplaymobile.shared.generated.resources.syncplay_logo_gradient
@@ -44,7 +53,9 @@ import syncplaymobile.shared.generated.resources.syncplay_logo_gradient
 object PopupAPropos {
 
     @Composable
-    fun AProposPopup(visibilityState: MutableState<Boolean>) {
+    fun AProposPopup(visibilityState: MutableState<Boolean>, homeViewmodel: HomeViewmodel) {
+        val globalViewmodel = LocalGlobalViewmodel.current
+
         return SyncplayPopup(
             dialogOpen = visibilityState.value,
             strokeWidth = 0f,
@@ -93,18 +104,18 @@ object PopupAPropos {
 
                 Text(
                     modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start,
-                    color = MaterialTheme.colorScheme.primary, text = "• Version: ${BuildConfig.APP_VERSION}", fontSize = 11.sp, maxLines = 1
+                    color = MaterialTheme.colorScheme.primary, text = stringResource(Res.string.about_version, BuildConfig.APP_VERSION), fontSize = 11.sp, maxLines = 1
                 )
 
                 Text(
                     modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start,
-                    color = MaterialTheme.colorScheme.primary, text = "• Developed by: yuroyami", fontSize = 11.sp, maxLines = 1
+                    color = MaterialTheme.colorScheme.primary, text = stringResource(Res.string.about_developed_by), fontSize = 11.sp, maxLines = 1
                 )
 
                 Text(
                     modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start,
                     color = MaterialTheme.colorScheme.primary,
-                    text = "• This client is not official. Thanks to official Syncplay team for their amazing software.",
+                    text = stringResource(Res.string.about_client_is_unofficial_disclaimer),
                     fontSize = 11.sp,
                     lineHeight = 14.sp
                 )
@@ -112,14 +123,14 @@ object PopupAPropos {
                 Text(
                     modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start,
                     color = MaterialTheme.colorScheme.primary,
-                    text = "• Syncplay is officially available for Windows, macOS, and Linux.",
+                    text = stringResource(Res.string.about_client_platforms),
                     fontSize = 11.sp,
                     lineHeight = 14.sp
                 )
 
                 Text(
                     modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Start,
-                    color = MaterialTheme.colorScheme.primary, text = "• Official Website: www.syncplay.pl", fontSize = 11.sp, maxLines = 1
+                    color = MaterialTheme.colorScheme.primary, text = stringResource(Res.string.about_official_website), fontSize = 11.sp, maxLines = 1
                 )
 
                 Row(
@@ -132,7 +143,10 @@ object PopupAPropos {
                         onClick = {
                             visibilityState.value = false
 
-                            //TODO platformCallback?.onJoin(null) //Passing null to indicate we're in offline mode
+                            globalViewmodel.viewModelScope.launch {
+                                //Passing null to indicate we're in offline mode
+                                homeViewmodel.joinRoom(null)
+                            }
                         },
                     ) {
                         Icon(imageVector = Icons.Filled.Tv, "")

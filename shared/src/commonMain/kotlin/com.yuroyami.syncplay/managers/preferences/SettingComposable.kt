@@ -30,8 +30,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpSize
@@ -129,6 +132,9 @@ inline fun <reified T> Pref<T>.SettingComposable() {
                     modifier = Modifier,
                     text = stringResource(config!!.summary),
                     color = MaterialTheme.colorScheme.outline,
+                    style = TextStyle(
+                        shadow = Shadow(color = Color.Black, offset = Offset(1f,1f), blurRadius = 2f)
+                    ),
                     fontSize = styling.summarySize.sp,
                     lineHeight = (styling.summarySize + 2).sp
                 )
@@ -283,7 +289,7 @@ inline fun <reified T> Pref<T>.SettingComposable() {
             }
 
             showExtraComposable != null -> {
-                showExtraComposable.composable.invoke()
+                showExtraComposable.composable.invoke(renderableComposableState)
             }
         }
     }

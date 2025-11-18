@@ -1,0 +1,27 @@
+<resources>
+
+    <!-- Home Screen -->
+    <string name="connect_username">اكتب اسم المستخدم الخاص بك</string>
+    <string name="connect_roomname">أدخل اسم الغرفة</string>
+    <string name="connect_server">اختر خادم Syncplay</string>
+    <string name="connect_button_join">الانضمام إلى الغرفة</string>
+    <string name="connect_button_saveshortcut">حفظ التكوين الحالي كاختصار للرئيسية</string>
+    <string name="connect_footnote">Syncplay's Unofficial Android Client</string>
+    <string name="connect_username_empty_error">يجب ألا يكون اسم المستخدم فارغًا</string>
+    <string name="connect_roomname_empty_error">يجب ألا يكون اسم الغرفة فارغًا</string>
+    <string name="connect_address_empty_error">يجب ألا يكون عنوان الخادم فارغًا</string>
+    <string name="connect_port_empty_error">أدخل رقم المنفذ!</string>
+    <string name="connect_enter_custom_server">أدخل خادم مخصص</string>
+    <string name="connect_custom_server_password">كلمة المرور (فارغة إذا لم تكون مطلوبة)</string>
+    <string name="connect_port">المنفذ</string>
+    <string name="connect_nightmodeswitch">تبديل وضع الليل/النهار.</string>
+    <string name="connect_solomode">الدخول إلى وضع فردي (مشغل الفيديو فقط)</string>
+    <string name="connect_choose_video_engine">اختر محرك الفيديو</string>
+
+    <string name="home_ip_address">عنوان IP</string>
+    <string name="home_port">بورت</string>
+    <string name="home_password_if_any">كلمة السر (إن وجدت)</string>
+
+    <string name="home_engine_unavailable_error">هذا المحرك غير متوفر. هل أنت متأكد من تحميلك التطبيق السليم ؟</string>
+
+</resources>
