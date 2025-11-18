@@ -123,7 +123,6 @@
     <string name="settings_categ_general">General</string>
     <string name="settings_categ_language">Idioma</string>
     <string name="settings_categ_syncing">Sincronización</string>
-    <string name="settings_categ_exoplayer">Exoplayer</string>
     <string name="settings_categ_network">Red</string>
     <string name="settings_categ_advanced">Avanzado</string>
 
@@ -180,7 +179,6 @@
     <string name="uisetting_categ_chat_colors">Colores del chat</string>
     <string name="uisetting_categ_player_settings">Configuración del reproductor</string>
     <string name="uisetting_categ_chat_properties">Propiedades del chat</string>
-    <string name="uisetting_categ_mpv">mpv</string>
 
     <!-- UI Settings -->
     <string name="uisetting_apply">APLICAR</string>

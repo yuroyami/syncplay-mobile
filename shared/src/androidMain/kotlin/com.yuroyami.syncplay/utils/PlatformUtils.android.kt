@@ -213,8 +213,8 @@ actual fun HideSystemBars() {
     val activity = LocalActivity.current as? ComponentActivity
 
     LaunchedEffect(null) {
-        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         activity?.hideSystemUI()
+        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
     }
 }
 

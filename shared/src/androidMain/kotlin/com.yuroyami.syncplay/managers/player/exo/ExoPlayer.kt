@@ -61,7 +61,7 @@ import syncplaymobile.shared.generated.resources.room_scaling_fit_screen
 import syncplaymobile.shared.generated.resources.room_scaling_fixed_height
 import syncplaymobile.shared.generated.resources.room_scaling_fixed_width
 import syncplaymobile.shared.generated.resources.room_scaling_zoom
-import syncplaymobile.shared.generated.resources.settings_categ_exoplayer
+import syncplaymobile.shared.generated.resources.uisetting_categ_exo
 import java.util.Collections
 import java.util.UUID
 import kotlin.math.abs
@@ -257,7 +257,7 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun configurableSettings() = SettingCategory(
-        title = Res.string.settings_categ_exoplayer,
+        title = Res.string.uisetting_categ_exo,
         icon = Icons.Filled.SettingsInputComponent
     ) {
         +EXO_MAX_BUFFER; +EXO_MIN_BUFFER; +EXO_SEEK_BUFFER

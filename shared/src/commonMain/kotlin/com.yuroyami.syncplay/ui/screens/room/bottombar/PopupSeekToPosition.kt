@@ -262,7 +262,7 @@ fun RoomViewmodel.customSkip()  {
         val currentMs = player.currentPositionMs()
         val newPos = (currentMs) + (customSkipAmount * 1000L)
 
-        actionManager.sendSeek(newPos)
+        actionManager.sendSeek(newPos, currentMs)
         player.seekTo(newPos)
 
         if (isSoloMode) {

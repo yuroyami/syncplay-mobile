@@ -31,4 +31,8 @@
         <item>zh</item>
 
     </string-array>
+
+    <string name="uisetting_categ_mpv">mpv</string>
+    <string name="uisetting_categ_exo">Exoplayer</string>
+    
 </resources>

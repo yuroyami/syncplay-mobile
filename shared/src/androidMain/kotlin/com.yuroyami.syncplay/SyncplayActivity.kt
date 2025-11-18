@@ -1,6 +1,5 @@
 package com.yuroyami.syncplay
 
-import SyncplayMobile.shared.BuildConfig
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_IMMUTABLE
@@ -42,6 +41,7 @@ import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import com.yuroyami.syncplay.viewmodels.SyncplayViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 /**
  * Main Activity for the Syncplay Android application.
@@ -226,7 +226,7 @@ class SyncplayActivity : ComponentActivity() {
 
         Thread.setDefaultUncaughtExceptionHandler { _, t2 ->
             loggy(t2.stackTraceToString())
-            if (BuildConfig.IS_DEBUG) throw t2
+            //throw t2
         }
     }
 
@@ -237,10 +237,22 @@ class SyncplayActivity : ComponentActivity() {
      */
     override fun attachBaseContext(newBase: Context?) {
         /** Applying saved language */
+        loggy("ATTACHING BASE CONTEXT -----------------")
         val lang = DISPLAY_LANG.value()
         super.attachBaseContext(newBase!!.changeLanguage(lang))
     }
 
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // Reapply locale after orientation changes
+        val lang = DISPLAY_LANG.value()
+        val locale = Locale(lang)
+        Locale.setDefault(locale)
+        val config = resources.configuration
+        config.setLocale(locale)
+        resources.updateConfiguration(config, resources.displayMetrics)
+    }
 
     /**
      * Called when the activity is becoming visible to the user.
