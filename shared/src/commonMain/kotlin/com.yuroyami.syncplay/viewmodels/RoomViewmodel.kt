@@ -154,9 +154,9 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
 
                 // Map mismatch conditions to their respective warning messages
                 val mismatches = listOf(
-                    (localMedia.fileName != theirFile.fileName || localMedia.fileNameHashed != theirFile.fileNameHashed) to Res.string.room_file_mismatch_warning_name,
+                    (localMedia.fileName != theirFile.fileName) to Res.string.room_file_mismatch_warning_name,
                     (localMedia.fileDuration != theirFile.fileDuration) to Res.string.room_file_mismatch_warning_duration,
-                    (localMedia.fileSize != theirFile.fileSize || localMedia.fileSizeHashed != theirFile.fileSizeHashed) to Res.string.room_file_mismatch_warning_size
+                    (localMedia.fileSize != theirFile.fileSize) to Res.string.room_file_mismatch_warning_size
                 )
 
                 // If all three mismatch, skip showing a warning
@@ -173,8 +173,6 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
             }
         }
     }
-
-
 
     /**
      * Indicates whether the room is in solo mode (offline playback).

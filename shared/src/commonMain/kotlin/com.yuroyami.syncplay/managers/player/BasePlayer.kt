@@ -12,7 +12,6 @@ import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.getFileSize
-import com.yuroyami.syncplay.utils.sha256
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -413,15 +412,11 @@ abstract class BasePlayer(
         with(media) {
             try {
                 /** Using Ktor's built-in URL support **/
-                fileName = Uri.parseOrNull(url!!)?.pathSegments?.last() ?: runBlocking { undefString }
+                fileName = Uri.parseOrNull(url!!)?.pathSegments?.last() ?: undefString
                 fileSize = 0L.toString()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-
-            /** Hashing name and size in case they're used **/
-            fileNameHashed = sha256(fileName).toHexString(HexFormat.UpperCase)
-            fileSizeHashed = sha256(fileSize).toHexString(HexFormat.UpperCase)
         }
     }
 
@@ -438,10 +433,6 @@ abstract class BasePlayer(
                 /** Using MiscUtils **/
                 fileName = getFileName(uri!!)!!
                 fileSize = getFileSize(uri!!).toString()
-
-                /** Hashing name and size in case they're used **/
-                fileNameHashed = sha256(fileName).toHexString(HexFormat.UpperCase)
-                fileSizeHashed = sha256(fileSize).toHexString(HexFormat.UpperCase)
             }
         }
     }

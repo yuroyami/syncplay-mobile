@@ -478,6 +478,6 @@ tasks.register<Exec>("runAndroidMpvNativeBuildScripts") {
 
 buildConfig {
     buildConfigField("APP_VERSION", verString)
-    buildConfigField("IS_DEBUG", false)
+    buildConfigField("IS_DEBUG", true)
     buildConfigField("EXOPLAYER_ONLY", exoOnly)
 }

@@ -239,7 +239,7 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
             isChat = false
         )
 
-        viewmodel. checkFileMismatches()
+        viewmodel.checkFileMismatches()
     }
 
     /**

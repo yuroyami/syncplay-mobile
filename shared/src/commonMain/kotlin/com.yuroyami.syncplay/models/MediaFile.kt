@@ -1,5 +1,7 @@
 package com.yuroyami.syncplay.models
 
+import com.yuroyami.syncplay.utils.sha256
+
 /**************************************************************************************
  * File wrapper class. It encapsulates all information and data we need about a file  *
  **************************************************************************************/
@@ -14,13 +16,11 @@ data class MediaFile(
 
     /** The name of the file with its extension **/
     var fileName: String = "",
-    var fileNameHashed: String = "",
 
     /** The size of the file in bytes **/
     var fileSize: String = "",
-    var fileSizeHashed: String = "",
 
-    /** The duration of the file (ms) **/
+    /** The duration of the file (seconds) **/
     var fileDuration: Double = -1.0,
 
     /** the subtitle tracks, audio tracks and chapters for this file **/
@@ -34,4 +34,8 @@ data class MediaFile(
 
     /** MediaInfo chart for this file **/
     var mediainfo: MediaInfo = MediaInfo()
-)
+) {
+    companion object {
+        fun String.hashed() = sha256(this).toHexString(HexFormat.UpperCase)
+    }
+}

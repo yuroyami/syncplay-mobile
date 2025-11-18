@@ -5,6 +5,7 @@ import com.yuroyami.syncplay.managers.preferences.Preferences.HASH_FILESIZE
 import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.managers.protocol.ProtocolManager
 import com.yuroyami.syncplay.models.MediaFile
+import com.yuroyami.syncplay.models.MediaFile.Companion.hashed
 import com.yuroyami.syncplay.utils.generateTimestampMillis
 import com.yuroyami.syncplay.utils.md5
 import kotlinx.serialization.json.JsonElement
@@ -156,14 +157,14 @@ sealed class PacketOut {
                     put(
                         "name", when (nameBehavior) {
                             "1" -> media!!.fileName
-                            "2" -> media!!.fileNameHashed.take(12)
+                            "2" -> media!!.fileName.hashed().take(12)
                             else -> ""
                         }
                     )
                     put(
                         "size", when (sizeBehavior) {
                             "1" -> media!!.fileSize
-                            "2" -> media!!.fileSizeHashed.take(12)
+                            "2" -> media!!.fileSize.hashed().take(12)
                             else -> ""
                         }
                     )

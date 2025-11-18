@@ -163,9 +163,11 @@ object CardUserInfo {
 
                             /* File properties */
                             val fileSize = user.file?.fileSize?.toDoubleOrNull()?.div(1000000.0)?.toString() ?: "???"
+                            val fileDuration = timestampFromMillis(user.file?.fileDuration?.times(1000)?.toLong() ?: 0)
                             Text(
                                 text = stringResource(
-                                    Res.string.room_details_file_properties, timestampFromMillis(user.file?.fileDuration?.toLong() ?: 0),
+                                    Res.string.room_details_file_properties,
+                                    fileDuration,
                                     fileSize
                                 ),
                                 modifier = Modifier.fillMaxWidth(),
