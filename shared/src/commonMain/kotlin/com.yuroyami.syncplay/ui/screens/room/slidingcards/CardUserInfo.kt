@@ -42,7 +42,7 @@ import com.yuroyami.syncplay.ui.components.jostFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.screens.theme.Theming
 import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
-import com.yuroyami.syncplay.utils.timeStamper
+import com.yuroyami.syncplay.utils.timestampFromMillis
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
@@ -165,7 +165,7 @@ object CardUserInfo {
                             val fileSize = user.file?.fileSize?.toDoubleOrNull()?.div(1000000.0)?.toString() ?: "???"
                             Text(
                                 text = stringResource(
-                                    Res.string.room_details_file_properties, timeStamper(user.file?.fileDuration?.toLong() ?: 0),
+                                    Res.string.room_details_file_properties, timestampFromMillis(user.file?.fileDuration?.toLong() ?: 0),
                                     fileSize
                                 ),
                                 modifier = Modifier.fillMaxWidth(),

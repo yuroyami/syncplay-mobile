@@ -11,7 +11,7 @@ import com.yuroyami.syncplay.managers.protocol.handler.Set
 import com.yuroyami.syncplay.managers.protocol.handler.Set.ControllerAuthResponse
 import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.utils.loggy
-import com.yuroyami.syncplay.utils.timeStamper
+import com.yuroyami.syncplay.utils.timestampFromMillis
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -74,7 +74,7 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         }
 
         broadcaster.broadcastMessage(
-            message = { getString(Res.string.room_guy_paused, pauser, timeStamper(viewmodel.protocolManager.globalPositionMs)) },
+            message = { getString(Res.string.room_guy_paused, pauser, timestampFromMillis(viewmodel.protocolManager.globalPositionMs)) },
             isChat = false
         )
     }
@@ -186,7 +186,7 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
                 viewmodel.player.seekTo(newPosMs)
             }
 
-            broadcaster.broadcastMessage(message = { getString(Res.string.room_seeked, seeker, timeStamper(oldPosMs), timeStamper(newPosMs)) }, isChat = false)
+            broadcaster.broadcastMessage(message = { getString(Res.string.room_seeked, seeker, timestampFromMillis(oldPosMs), timestampFromMillis(newPosMs)) }, isChat = false)
         }
     }
 
@@ -234,7 +234,7 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
             message = { getString(Res.string.room_isplayingfile,
                 person,
                 file ?: "",
-                timeStamper(fileduration?.toLong()?.times(1000L) ?: 0)
+                timestampFromMillis(fileduration?.toLong()?.times(1000L) ?: 0)
             ) },
             isChat = false
         )

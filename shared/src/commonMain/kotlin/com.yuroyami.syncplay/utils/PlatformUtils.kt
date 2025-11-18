@@ -90,7 +90,7 @@ expect fun RoomViewmodel.instantiateNetworkManager(): NetworkManager
  * @param milliseconds Duration in milliseconds
  * @return Formatted time string with zero-padding
  */
-fun timeStamper(milliseconds: Number): String {
+fun timestampFromMillis(milliseconds: Number): String {
     val secs = (milliseconds.toLong() / 1000L)
     return if (secs < 3600) {
         "${(secs / 60) % 60}:${(secs % 60).toString().padStart(2, '0')}".padStart(5, '0')

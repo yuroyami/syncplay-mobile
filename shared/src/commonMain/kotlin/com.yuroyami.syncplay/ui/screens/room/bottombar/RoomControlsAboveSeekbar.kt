@@ -31,7 +31,7 @@ import com.yuroyami.syncplay.managers.preferences.watchPref
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.screens.theme.Theming.ROOM_ICON_SIZE
-import com.yuroyami.syncplay.utils.timeStamper
+import com.yuroyami.syncplay.utils.timestampFromMillis
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
@@ -70,7 +70,7 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
         val customSkipToFront by CUSTOM_SEEK_FRONT.watchPref()
         if (customSkipToFront) {
             val customSkipAmountString by derivedStateOf {
-                timeStamper(
+                timestampFromMillis(
                     customSkipAmount * 1000
                 )
             }

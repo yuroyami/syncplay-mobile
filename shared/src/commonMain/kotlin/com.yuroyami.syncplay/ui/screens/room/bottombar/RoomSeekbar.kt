@@ -48,7 +48,7 @@ import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.gradientOverlay
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
-import com.yuroyami.syncplay.utils.timeStamper
+import com.yuroyami.syncplay.utils.timestampFromMillis
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.math.roundToLong
@@ -87,9 +87,9 @@ fun RoomSeekbar(modifier: Modifier) {
         }
     }
 
-    val currentTimeText by derivedStateOf { timeStamper(milliseconds = videoCurrentTimeMs) }
-    val currentSliderValueText by derivedStateOf { timeStamper(milliseconds = sliderValue) }
-    val fullTimeText by derivedStateOf { if (videoFullDurationMs >= Long.MAX_VALUE) "???" else timeStamper(videoFullDurationMs) }
+    val currentTimeText by derivedStateOf { timestampFromMillis(milliseconds = videoCurrentTimeMs) }
+    val currentSliderValueText by derivedStateOf { timestampFromMillis(milliseconds = sliderValue) }
+    val fullTimeText by derivedStateOf { if (videoFullDurationMs >= Long.MAX_VALUE) "???" else timestampFromMillis(videoFullDurationMs) }
 
     var trackWidthPx by remember { mutableIntStateOf(0) }
 

@@ -33,7 +33,7 @@ import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.utils.loggy
-import com.yuroyami.syncplay.utils.timeStamper
+import com.yuroyami.syncplay.utils.timestampFromMillis
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import `is`.xyz.mpv.MPVLib
 import kotlinx.coroutines.Dispatchers
@@ -238,7 +238,7 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
             if (chapters.isEmpty()) return@withContext
             mediafile.chapters.clear()
             mediafile.chapters.addAll(chapters.map {
-                val timestamp = " (${timeStamper(it.time.roundToLong())})"
+                val timestamp = " (${timestampFromMillis(it.time.roundToLong())})"
                 Chapter(
                     it.index,
                     (it.title ?: "Chapter ${it.index}") + timestamp,

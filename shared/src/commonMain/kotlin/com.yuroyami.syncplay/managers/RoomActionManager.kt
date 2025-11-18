@@ -8,7 +8,7 @@ import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import com.yuroyami.syncplay.models.Message
 import com.yuroyami.syncplay.utils.platformCallback
-import com.yuroyami.syncplay.utils.timeStamper
+import com.yuroyami.syncplay.utils.timestampFromMillis
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -67,7 +67,7 @@ class RoomActionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmode
 
         viewmodel.actionManager.broadcastMessage(
             message = {
-                getString(Res.string.room_seeked, viewmodel.session.currentUsername, timeStamper(oldPosms), timeStamper(newPosMs))
+                getString(Res.string.room_seeked, viewmodel.session.currentUsername, timestampFromMillis(oldPosms), timestampFromMillis(newPosMs))
             },
             isChat = false
         )

@@ -47,7 +47,7 @@ import com.yuroyami.syncplay.ui.components.SyncplayPopup
 import com.yuroyami.syncplay.ui.components.syncplayFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.screens.theme.Theming
-import com.yuroyami.syncplay.utils.timeStamper
+import com.yuroyami.syncplay.utils.timestampFromMillis
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
@@ -196,7 +196,7 @@ object PopupSeekToPosition {
 
                 /* Custom Skip intro */
                 val customSkipAmount by CUSTOM_SEEK_AMOUNT.watchPref()
-                val customSkipAmountString by derivedStateOf { timeStamper(customSkipAmount) }
+                val customSkipAmountString by derivedStateOf { timestampFromMillis(customSkipAmount * 1000) }
 
                 Button(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
@@ -241,7 +241,7 @@ object PopupSeekToPosition {
 
                             viewmodel.player.seekTo(result)
 
-                            viewmodel.osdManager.dispatchOSD { getString(Res.string.room_seek_toposition_success, timeStamper(result)) }
+                            viewmodel.osdManager.dispatchOSD { getString(Res.string.room_seek_toposition_success, timestampFromMillis(result)) }
                         }
 
                     },

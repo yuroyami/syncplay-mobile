@@ -25,11 +25,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
+import com.yuroyami.syncplay.ui.components.sairaFont
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.screens.theme.Theming
 import kotlinx.coroutines.Dispatchers
@@ -124,8 +125,9 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                 lineHeight = (Theming.USER_INFO_TXT_SIZE + 4).sp,
                 color = Theming.SP_PALE,
                 text = osd,
+                fontFamily = FontFamily(sairaFont),
                 textAlign = TextAlign.Center,
-                fontWeight = FontWeight.W300
+                style = TextStyle(shadow = Shadow(color = Color.Black, offset = Offset(1f,1f), blurRadius = 1f))
             )
             if (osd.isEmpty()) viewmodel.media?.let {
                 val filename = it.fileName.lowercase()
