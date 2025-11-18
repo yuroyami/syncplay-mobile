@@ -164,8 +164,8 @@
     <string name ="room_setting_pick_color">اختر لوناً</string>
     <string name ="room_reconnect_button">إعادة الاتصال</string>
     <string name="room_more_info_change_network_engine_msg">جرب تغيير محرك الشبكة في الإعدادات > الشبكة إلى Ktor إذا كنت تواجه مشاكل في الاتصال.</string>
-    <string name="room_volume">مستوى الصوت: %s</string>
-    <string name="room_brightness">السطوع: %s</string>
+    <string name="room_volume">مستوى الصوت: %1$s</string>
+    <string name="room_brightness">السطوع: %1$s</string>
     <string name="room_coming_soon">قريباً!</string>
     <string name="room_chapters_skip">تخطي الفصل</string>
     <string name="room_chapters">الفصول</string>
@@ -175,8 +175,8 @@
     <string name="room_seek_undone">تم التراجع عن الانتقال.</string>
     <string name="room_seek_toposition_title">الانتقال إلى موضع محدد</string>
     <string name="room_seek_toposition_timeformat">ساعة:دقيقة:ثانية</string>
-    <string name="room_seek_toposition_timediff">تخطي %s ثانية من الوقت</string>
-    <string name="room_seek_toposition_success">الانتقال إلى %s</string>
+    <string name="room_seek_toposition_timediff">تخطي %1$s ثانية من الوقت</string>
+    <string name="room_seek_toposition_success">الانتقال إلى %1$s</string>
 
     <!-- Settings Categories -->
     <string name="settings_categ_general">عام</string>
@@ -337,7 +337,7 @@
     <string name="media_directories_going_for_pick_rationale">اختر المجلد لحفظ قائمة التشغيل كملف</string>
 
 
-    <string name="about_version">• الإصدار: %s</string>
+    <string name="about_version">• الإصدار: %1$s</string>
     <string name="about_developed_by">• تطوير: yuroyami</string>
     <string name="about_client_is_unofficial_disclaimer">• هذا التطبيق غير رسمي. شكراً لفريق Syncplay الرسمي على برنامجهم الرائع.</string>
     <string name="about_client_platforms">• Syncplay متاح رسمياً لأنظمة Windows و macOS و Linux.</string>

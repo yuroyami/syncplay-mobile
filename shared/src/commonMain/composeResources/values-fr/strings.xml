@@ -163,8 +163,8 @@
     <string name="room_setting_pick_color">Choisissez une couleur</string>
     <string name="room_reconnect_button">Reconnecter</string>
     <string name="room_more_info_change_network_engine_msg">Essayez de changer le moteur réseau vers Ktor dans Paramètres > Réseau si vous rencontrez des problèmes de connexion.</string>
-    <string name="room_volume">Volume : %s</string>
-    <string name="room_brightness">Luminosité : %s</string>
+    <string name="room_volume">Volume : %1$s</string>
+    <string name="room_brightness">Luminosité : %1$s</string>
     <string name="room_coming_soon">Bientôt disponible !</string>
     <string name="room_chapters_skip">Passer le chapitre</string>
     <string name="room_chapters">Chapitres</string>
@@ -174,8 +174,8 @@
     <string name="room_seek_undone">Retour en arrière effectué.</string>
     <string name="room_seek_toposition_title">Aller à une position précise</string>
     <string name="room_seek_toposition_timeformat">Heure:Minute:Seconde</string>
-    <string name="room_seek_toposition_timediff">Saut de %s secondes</string>
-    <string name="room_seek_toposition_success">Aller à %s</string>
+    <string name="room_seek_toposition_timediff">Saut de %1$s secondes</string>
+    <string name="room_seek_toposition_success">Aller à %1$s</string>
 
     <!-- Settings Categories -->
     <string name="settings_categ_general">Général</string>
@@ -337,7 +337,7 @@
     <string name="media_directories_show_full_path">Afficher le chemin complet</string>
     <string name="media_directories_going_for_pick_rationale">"Sélectionnez le répertoire où sauvegarder la playlist en tant que fichier"</string>
 
-    <string name="about_version">• Version : %s</string>
+    <string name="about_version">• Version : %1$s</string>
     <string name="about_developed_by">• Développé par : yuroyami</string>
     <string name="about_client_is_unofficial_disclaimer">• Ce client n'est pas officiel. Merci à l'équipe Syncplay officielle pour leur incroyable logiciel.</string>
     <string name="about_client_platforms">• Syncplay est officiellement disponible sur Windows, macOS et Linux.</string>

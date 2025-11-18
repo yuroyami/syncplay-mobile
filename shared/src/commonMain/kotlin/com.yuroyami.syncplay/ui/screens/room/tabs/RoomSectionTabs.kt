@@ -120,7 +120,11 @@ fun RoomTabSection(modifier: Modifier) {
             visibilityState = stateRoomPreferences
         ) { cardController.toggleRoomPreferences() }
 
-        Spacer(modifier = Modifier.weight(1f))
+        if (viewmodel.isSoloMode) {
+            Spacer(modifier = Modifier.width(8.dp))
+        } else {
+            Spacer(modifier = Modifier.weight(1f))
+        }
 
         /* Shared Playlist */
         if (!viewmodel.isSoloMode) {
@@ -156,7 +160,11 @@ fun RoomTabSection(modifier: Modifier) {
             viewmodel.uiManager.visibleHUD.value = false
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        if (viewmodel.isSoloMode) {
+            Spacer(modifier = Modifier.width(8.dp))
+        } else {
+            Spacer(modifier = Modifier.weight(1f))
+        }
 
         Box {
             val overflowMenuState = remember { mutableStateOf(false) }

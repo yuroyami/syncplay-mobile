@@ -13,6 +13,7 @@ import com.yuroyami.syncplay.managers.UIManager
 import com.yuroyami.syncplay.managers.network.NetworkManager
 import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.managers.player.PlayerManager
+import com.yuroyami.syncplay.managers.preferences.Preferences.FILE_MISMATCH_WARNING
 import com.yuroyami.syncplay.managers.preferences.Preferences.PLAYER_ENGINE
 import com.yuroyami.syncplay.managers.preferences.Preferences.TLS_ENABLE
 import com.yuroyami.syncplay.managers.preferences.value
@@ -29,6 +30,12 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_file_mismatch_warning_core
+import syncplaymobile.shared.generated.resources.room_file_mismatch_warning_duration
+import syncplaymobile.shared.generated.resources.room_file_mismatch_warning_name
+import syncplaymobile.shared.generated.resources.room_file_mismatch_warning_size
 
 /**
  * ViewModel for the Syncplay room screen where synchronized playback occurs.
@@ -92,12 +99,13 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
         viewModelScope.launch(Dispatchers.IO) {
             networkManager = instantiateNetworkManager()
 
+            launch {
+                val engine = availablePlatformPlayerEngines.first { it.name == PLAYER_ENGINE.value() }
+                playerManager.player = engine.instantiate(this@RoomViewmodel)
+                playerManager.isPlayerReady.value = true
+            }
+
             joinConfig?.let {
-                launch {
-                    val engine = availablePlatformPlayerEngines.first { it.name == PLAYER_ENGINE.value() }
-                    playerManager.player = engine.instantiate(this@RoomViewmodel)
-                    playerManager.isPlayerReady.value = true
-                }
                 launch {
                     sessionManager.session.serverHost = joinConfig.ip.takeIf { it != "syncplay.pl" } ?: "151.80.32.178"
                     sessionManager.session.serverPort = joinConfig.port
@@ -133,38 +141,40 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
      *
      * Mismatches checked: Name, Size, Duration. If 3 mismatches are detected, no error is thrown
      * since that would mean the two files are completely and obviously different.
-     *
-     * TODO: This needs full refactoring
      */
     fun checkFileMismatches() {
         if (isSoloMode) return
 
-//        viewModelScope.launch {
-//            /** First, we check if user wanna be notified about file mismatchings */
-//            val pref = valueBlockingly(PREF_FILE_MISMATCH_WARNING, true)
-//
-//            if (!pref) return@launch
-//
-//            for (user in p.session.userList.value) {
-//                val theirFile = user.file ?: continue /* If they have no file, iterate unto next */
-//
-//                val nameMismatch = (media?.fileName != theirFile.fileName) and (media?.fileNameHashed != theirFile.fileNameHashed)
-//                val durationMismatch = media?.fileDuration != theirFile.fileDuration
-//                val sizeMismatch = (media?.fileSize != theirFile.fileSize) and (media?.fileSizeHashed != theirFile.fileSizeHashed)
-//
-//                if (nameMismatch && durationMismatch && sizeMismatch) continue /* 2 mismatches or less */
-//
-//
-//                var warning = getString(Res.string.room_file_mismatch_warning_core, user.name)
-//
-//                if (nameMismatch) warning += getString(Res.string.room_file_mismatch_warning_name)
-//                if (durationMismatch) warning += getString(Res.string.room_file_mismatch_warning_duration)
-//                if (sizeMismatch) warning += getString(Res.string.room_file_mismatch_warning_size)
-//
-//                broadcastMessage(message = { warning }, isChat = false, isError = true)
-//            }
-//        }
+        viewModelScope.launch {
+            if (!FILE_MISMATCH_WARNING.value()) return@launch //Return if user doesn't want warnings
+            val localMedia = media ?: return@launch //No media is loaded
+
+            for (user in session.userList.value) {
+                val theirFile = user.file ?: continue //User has no file
+
+                // Map mismatch conditions to their respective warning messages
+                val mismatches = listOf(
+                    (localMedia.fileName != theirFile.fileName || localMedia.fileNameHashed != theirFile.fileNameHashed) to Res.string.room_file_mismatch_warning_name,
+                    (localMedia.fileDuration != theirFile.fileDuration) to Res.string.room_file_mismatch_warning_duration,
+                    (localMedia.fileSize != theirFile.fileSize || localMedia.fileSizeHashed != theirFile.fileSizeHashed) to Res.string.room_file_mismatch_warning_size
+                )
+
+                // If all three mismatch, skip showing a warning
+                if (mismatches.all { it.first }) continue
+
+                // Build warning message dynamically
+                val warning = buildString {
+                    append(getString(Res.string.room_file_mismatch_warning_core, user.name))
+                    mismatches.filter { it.first }
+                        .forEach { append(getString(it.second)) }
+                }
+
+                actionManager.broadcastMessage(message = { warning }, isChat = false, isError = true)
+            }
+        }
     }
+
+
 
     /**
      * Indicates whether the room is in solo mode (offline playback).
