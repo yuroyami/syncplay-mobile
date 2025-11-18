@@ -149,7 +149,7 @@ data class State(
 
                     viewmodel.protocolManager.pingService.receiveMessage(timestamp.roundToLong(), serverRtt)
                 }
-                messageAge = 10.0 //FIXME viewmodel.protocolManager.pingService.forwardDelay
+                messageAge = viewmodel.protocolManager.pingService.forwardDelay
             }
 
             if (position != null && paused != null && viewmodel.protocolManager.clientIgnFly == 0) {

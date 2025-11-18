@@ -1,71 +1,75 @@
 package com.yuroyami.syncplay.managers.protocol
 
 import com.yuroyami.syncplay.utils.generateTimestampMillis
+import com.yuroyami.syncplay.utils.loggy
 
 /**
- * Service for measuring and tracking network latency in the Syncplay protocol.
+ * Tracks network lag between you and the server.
  *
- * Calculates round-trip time (RTT) and forward delay using timestamps exchanged with
- * the server. Uses exponential moving average to smooth out latency fluctuations and
- * provide more stable synchronization.
- *
- * The forward delay calculation accounts for asymmetric network conditions where
- * upload and download speeds may differ, which is critical for accurate playback
- * synchronization.
+ * This helps Syncplay figure out how delayed your video should be so everyone
+ * stays in sync, even when internet speeds are different.
  */
 class PingService {
     companion object {
         /**
-         * Weight factor for exponential moving average calculation.
-         * Higher values (closer to 1.0) give more weight to historical measurements,
-         * providing smoother but less responsive latency tracking.
-         * Value: 0.85 (85% historical, 15% current measurement)
+         * How much we trust old measurements vs new ones.
+         * 0.85 means we trust the history more, making changes gradual and smooth.
          */
         private const val PING_MOVING_AVERAGE_WEIGHT = 0.85
     }
 
     /**
-     * Current round-trip time in seconds.
-     * Time for a message to travel to the server and back.
+     * How long (in seconds) it takes for a message to go to the server and come back.
      */
     var rtt: Double = 0.0
 
     /**
-     * Estimated one-way forward delay in seconds.
-     * The time it takes for a message to reach the server (half the trip).
-     * Adjusted for asymmetric network conditions using sender's RTT.
+     * How long (in seconds) it takes for a message to reach the server (one-way trip).
+     * This accounts for your upload being slower/faster than your download.
      */
     var forwardDelay: Double = 0.0
 
     /**
-     * Exponentially smoothed average RTT in seconds.
-     * Provides a stable baseline for latency calculations.
+     * Smoothed average of RTT. Helps avoid jumpiness from temporary lag spikes.
      */
     private var avrRtt: Double = 0.0
 
     /**
-     * Processes a ping response message from the server and updates latency metrics.
+     * Updates lag measurements when we get a response from the server.
      *
-     * Calculates current RTT from the timestamp, updates the moving average, and
-     * computes forward delay accounting for network asymmetry. If the sender's RTT
-     * is less than ours, it indicates slower upload than download, requiring
-     * adjustment to the forward delay calculation.
-     *
-     * @param timestamp The original timestamp (in milliseconds) when the message was sent
-     * @param senderRtt The server's measured RTT for this client in seconds
+     * @param timestamp When we originally sent the message (seconds)
+     * @param senderRtt How long the server thinks our lag is (seconds)
      */
     fun receiveMessage(timestamp: Long?, senderRtt: Double) {
-        rtt = (generateTimestampMillis() - (timestamp ?: return)) / 1000.0
-        if (rtt < 0 || senderRtt < 0) return
+        // Calculate current round-trip time
+        rtt = (generateTimestampMillis() - (timestamp?.times(1000L) ?: return)) / 1000.0
+        loggy("Raw RTT calculated: $rtt seconds")
 
-        if (avrRtt == 0.0) avrRtt = rtt
+        if (rtt < 0 || senderRtt < 0) {
+            loggy("Invalid RTT values - rtt: $rtt, senderRtt: $senderRtt")
+            return
+        }
 
+        // Initialize average on first ping
+        if (avrRtt == 0.0) {
+            avrRtt = rtt
+            loggy("Initial average RTT set: $avrRtt seconds")
+        }
+
+        // Smooth out the average using exponential moving average
         avrRtt = avrRtt * PING_MOVING_AVERAGE_WEIGHT + rtt * (1 - PING_MOVING_AVERAGE_WEIGHT)
+        loggy("Updated average RTT: $avrRtt seconds")
 
+        // Calculate one-way delay
+        // If server's RTT is lower, our upload is slower - add the difference
         forwardDelay = if (senderRtt < rtt) {
-            avrRtt / 2 + (rtt - senderRtt)
+            val asymmetricDelay = avrRtt / 2 + (rtt - senderRtt)
+            loggy("Asymmetric network detected - forwardDelay: $asymmetricDelay seconds")
+            asymmetricDelay
         } else {
-            avrRtt / 2
+            val symmetricDelay = avrRtt / 2
+            loggy("Symmetric network - forwardDelay: $symmetricDelay seconds")
+            symmetricDelay
         }
     }
 }

@@ -61,7 +61,7 @@ kotlin {
         pod("SPLPing", "1.1.8") //Light-weight Objective-C library to add the ICMP ping functionality
         pod("MobileVLCKit", libs.versions.libvlc.ios.get()) //Adds the VLC player engine to iOS
     }
-    
+
     sourceSets {
         all {
             languageSettings {
@@ -285,10 +285,7 @@ android {
                 isEnable = true
                 reset()
                 for (abi in abiCodes) {
-                    val exists = file("$projectDir/src/main/jniLibs/$abi").exists()
-                    if (exists) {
-                        include(abi.key)
-                    }
+                    include(abi.key)
                 }
                 isUniversalApk = true
             }
