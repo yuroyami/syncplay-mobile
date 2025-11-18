@@ -425,8 +425,7 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
                         playerScopeIO.launch {
                             while (true) {
                                 if (playerManager.timeFullMillis.value.toDouble() > 0) {
-                                    playerManager.media.value?.fileDuration =
-                                        playerManager.timeFullMillis.value.toDouble().div(1000.0) + 1
+                                    playerManager.media.value?.fileDuration = playerManager.timeFullMillis.value.toDouble().div(1000.0)
 
                                     announceFileLoaded()
                                     break
