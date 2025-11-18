@@ -27,7 +27,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -145,7 +149,8 @@ object CardUserInfo {
                             lineHeight = (Theming.USER_INFO_TXT_SIZE + 4).sp,
                             color = MaterialTheme.colorScheme.onTertiaryContainer,
                             text = user.file?.fileName ?: stringResource(Res.string.room_details_nofileplayed),
-                            fontWeight = FontWeight.W300
+                            fontWeight = FontWeight.W300,
+                            style = TextStyle(shadow = Shadow(color = Color.Black, offset = Offset(1f,1f), blurRadius = 1f))
                         )
                     }
 
@@ -166,7 +171,8 @@ object CardUserInfo {
                                 modifier = Modifier.fillMaxWidth(),
                                 fontSize = (Theming.USER_INFO_TXT_SIZE - 2).sp,
                                 fontWeight = FontWeight.W300,
-                                color = Theming.SP_CUTE_PINK, /* Paletting.ROOM_USER_PERSON_ICON */
+                                color = MaterialTheme.colorScheme.outline,
+                                style = TextStyle(shadow = Shadow(color = Color.Black, offset = Offset(1f,1f), blurRadius = 1f))
                             )
                         }
                     }

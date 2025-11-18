@@ -13,7 +13,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
+import com.yuroyami.syncplay.ui.screens.room.bottombar.BlackContrastUnderlay
 import com.yuroyami.syncplay.ui.screens.room.bottombar.PopupSeekToPosition.SeekToPositionPopup
 import com.yuroyami.syncplay.ui.screens.room.bottombar.RoomBottomBarSection
 import com.yuroyami.syncplay.ui.screens.room.chat.FadingMessageLayout
@@ -94,6 +94,10 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                     exit = fadeOut(animationSpec = keyframes { durationMillis = 75 })
                 ) {
                     Box(modifier = Modifier.fillMaxSize()) {
+                        if (hasVideo) {
+                            BlackContrastUnderlay()
+                        }
+
                         if (!isInPipMode && !soloMode) {
                             /* Chat Section (Top-Left): Input and messages */
                             RoomChatSection(
@@ -135,9 +139,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
 
                         /* Bottom Bar: Playback and advanced controls */
                         RoomBottomBarSection(
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .fillMaxWidth()
+                            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
                         )
 
                         /* Central Play Button */

@@ -21,7 +21,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -61,7 +64,8 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                             Res.string.room_ping_connected,
                             pingo.toString()
                         ),
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        style = TextStyle(shadow = Shadow(color = Color.Black, offset = Offset(1f,1f), blurRadius = 1f))
                     )
                     Spacer(Modifier.width(4.dp))
 
@@ -71,7 +75,8 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                 Text(
                     text = stringResource(Res.string.room_details_current_room, viewmodel.session.currentRoom),
                     fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    style = TextStyle(shadow = Shadow(color = Color.Black, offset = Offset(1f,1f), blurRadius = 1f))
                 )
 
                 var showReconnectButton by remember { mutableStateOf(false) }
@@ -106,7 +111,8 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                         color = Color.White,
                         modifier = Modifier.fillMaxWidth(0.95f),
                         textAlign = TextAlign.Center,
-                        fontSize = 12.sp
+                        fontSize = 12.sp,
+                        style = TextStyle(shadow = Shadow(color = Color.Black, offset = Offset(1f,1f), blurRadius = 1f))
                     )
                 }
             }
@@ -135,6 +141,7 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                     Text(
                         text = "S${season}E${episode}",
                         color = Theming.SP_PALE,
+                        style = TextStyle(shadow = Shadow(color = Color.Black, offset = Offset(1f,1f), blurRadius = 1f))
                     )
                 }
             }

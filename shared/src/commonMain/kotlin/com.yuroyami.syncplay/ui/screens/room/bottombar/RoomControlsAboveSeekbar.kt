@@ -1,33 +1,35 @@
 package com.yuroyami.syncplay.ui.screens.room.bottombar
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AvTimer
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FastRewind
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.yuroyami.syncplay.managers.preferences.Preferences.CUSTOM_SEEK_AMOUNT
 import com.yuroyami.syncplay.managers.preferences.Preferences.CUSTOM_SEEK_FRONT
 import com.yuroyami.syncplay.managers.preferences.Preferences.GESTURES
 import com.yuroyami.syncplay.managers.preferences.watchPref
 import com.yuroyami.syncplay.ui.components.FlexibleIcon
-import com.yuroyami.syncplay.ui.components.gradientOverlay
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
-import com.yuroyami.syncplay.ui.screens.theme.Theming
 import com.yuroyami.syncplay.ui.screens.theme.Theming.ROOM_ICON_SIZE
 import com.yuroyami.syncplay.utils.timeStamper
 import kotlinx.coroutines.Dispatchers
@@ -44,7 +46,11 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
 
     val gesturesEnabled by GESTURES.watchPref()
 
-    Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         if (!gesturesEnabled) {
             FlexibleIcon(
                 icon = Icons.Filled.FastRewind,
@@ -70,12 +76,12 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
                     customSkipAmount
                 )
             }
-            TextButton(
-                modifier = Modifier.gradientOverlay().background(
-                    brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map {
-                        it.copy(alpha = 0.1f)
-                    }), shape = CircleShape
+            OutlinedButton(
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.3f)
                 ),
+                border = BorderStroke(Dp.Hairline, color = MaterialTheme.colorScheme.primary),
+                modifier = Modifier.zIndex(100f),
                 onClick = {
                     viewmodel.customSkip()
                 },
@@ -91,18 +97,16 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
         }
 
         if (viewmodel.media?.chapters?.isNotEmpty() == true) {
-            TextButton(
-                modifier = Modifier.gradientOverlay().background(
-                    brush = Brush.linearGradient(colors = Theming.SP_GRADIENT.map {
-                        it.copy(alpha = 0.1f)
-                    }), shape = CircleShape
-                ), onClick = {
+            OutlinedButton(
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.3f)
+                ),
+                border = BorderStroke(Dp.Hairline, color = MaterialTheme.colorScheme.primary),
+                modifier = Modifier.zIndex(100f),
+                onClick = {
                     viewmodel.player.playerScopeIO.launch {
-                        val currentMs =
-                            withContext(Dispatchers.Main) { viewmodel.player.currentPositionMs() }
-                        val nextChapter =
-                            viewmodel.media?.chapters?.filter { it.timestamp > currentMs }
-                                ?.minByOrNull { it.timestamp }
+                        val currentMs = withContext(Dispatchers.Main) { viewmodel.player.currentPositionMs() }
+                        val nextChapter = viewmodel.media?.chapters?.filter { it.timestamp > currentMs }?.minByOrNull { it.timestamp }
                         if (nextChapter != null) {
                             viewmodel.player.seekTo(nextChapter.timestamp)
                         } else {
@@ -110,7 +114,8 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
                             viewmodel.player.seekTo(currentMs + (customSkipAmount * 1000L))
                         }
                     }
-                }) {
+                }
+            ) {
                 Icon(
                     imageVector = Icons.Filled.FastForward,
                     contentDescription = null
