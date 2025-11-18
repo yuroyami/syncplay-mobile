@@ -3,6 +3,7 @@ package com.yuroyami.syncplay.managers
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
 import com.yuroyami.syncplay.managers.preferences.Preferences.PAUSE_ON_SOMEONE_LEAVE
+import com.yuroyami.syncplay.managers.preferences.Preferences.READY_FIRST_HAND
 import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.managers.protocol.ProtocolCallback
 import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
@@ -298,9 +299,8 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
 
         /** Set as ready first-hand */
         if (viewmodel.media == null) {
-            viewmodel.session.ready.value = viewmodel.setReadyDirectly
             viewmodel.networkManager.send<PacketOut.Readiness> {
-                this.isReady = viewmodel.setReadyDirectly
+                this.isReady = READY_FIRST_HAND.value()
                 manuallyInitiated = false
             }
         }

@@ -14,7 +14,6 @@ import com.yuroyami.syncplay.managers.network.NetworkManager
 import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.managers.player.PlayerManager
 import com.yuroyami.syncplay.managers.preferences.Preferences.PLAYER_ENGINE
-import com.yuroyami.syncplay.managers.preferences.Preferences.READY_FIRST_HAND
 import com.yuroyami.syncplay.managers.preferences.Preferences.TLS_ENABLE
 import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.managers.protocol.ProtocolManager
@@ -84,12 +83,6 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
     val ping = MutableStateFlow<Int?>(null)
 
     /**
-     * Whether to immediately set the user as ready when joining the room.
-     * Loaded from user preferences.
-     */
-    var setReadyDirectly = false
-
-    /**
      * List of seek operations as pairs of (fromPosition, toPosition) in milliseconds.
      * Used for tracking and potentially reverting seek operations.
      */
@@ -97,8 +90,6 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            setReadyDirectly = READY_FIRST_HAND.value()
-
             networkManager = instantiateNetworkManager()
 
             joinConfig?.let {

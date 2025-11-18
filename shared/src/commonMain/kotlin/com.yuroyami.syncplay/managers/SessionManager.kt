@@ -4,6 +4,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import com.yuroyami.syncplay.AbstractManager
+import com.yuroyami.syncplay.managers.preferences.Preferences.READY_FIRST_HAND
+import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.models.Message
 import com.yuroyami.syncplay.models.RoomFeatures
 import com.yuroyami.syncplay.models.User
@@ -139,7 +141,7 @@ class SessionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) 
          * Whether the local user is marked as "ready" for playback synchronization.
          * Initialized based on user preference for automatic ready state.
          */
-        val ready = mutableStateOf(viewmodel.setReadyDirectly)
+        val ready = mutableStateOf(READY_FIRST_HAND.value())
 
         /**
          * Protocol-level ping latency with the server in milliseconds.

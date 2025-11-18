@@ -321,31 +321,37 @@ object Preferences {
         title = Res.string.uisetting_timestamp_color_title
         summary = Res.string.uisetting_timestamp_summary
         icon = Icons.Filled.Brush
+        extraConfig = PrefExtraConfig.ColorPick
     }
     val COLOR_SELFTAG = Pref("pref_inroom_color_selftag", Theming.MSG_SELF_TAG.toArgb()) {
         title = Res.string.uisetting_self_color_title
         summary = Res.string.uisetting_self_color_summary
         icon = Icons.Filled.Brush
+        extraConfig = PrefExtraConfig.ColorPick
     }
     val COLOR_FRIENDTAG = Pref("pref_inroom_color_friendtag", Theming.MSG_FRIEND_TAG.toArgb()) {
         title = Res.string.uisetting_friend_color_title
         summary = Res.string.uisetting_friend_color_summary
         icon = Icons.Filled.Brush
+        extraConfig = PrefExtraConfig.ColorPick
     }
     val COLOR_SYSTEMMSG = Pref("pref_inroom_color_systemmsg", Theming.MSG_SYSTEM.toArgb()) {
         title = Res.string.uisetting_system_color_title
         summary = Res.string.uisetting_system_color_summary
         icon = Icons.Filled.Brush
+        extraConfig = PrefExtraConfig.ColorPick
     }
     val COLOR_USERMSG = Pref("pref_inroom_color_usermsg", Theming.MSG_CHAT.toArgb()) {
         title = Res.string.uisetting_human_color_title
         summary = Res.string.uisetting_human_color_summary
         icon = Icons.Filled.Brush
+        extraConfig = PrefExtraConfig.ColorPick
     }
     val COLOR_ERRORMSG = Pref("pref_inroom_color_errormsg", Theming.MSG_ERROR.toArgb()) {
         title = Res.string.uisetting_error_color_title
         summary = Res.string.uisetting_error_color_summary
         icon = Icons.Filled.Brush
+        extraConfig = PrefExtraConfig.ColorPick
     }
 
     /** ------------ Chat Properties -------------*/

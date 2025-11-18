@@ -92,6 +92,10 @@ inline fun <reified T> Pref<T>.SettingComposable() {
                     }
                     booleanCallbackConfig?.onBooleanChanged(!(value as Boolean))
                 }
+
+                if (multiChoiceConfig != null || showColorConfig != null || showYesNoPopup != null || showExtraComposable != null) {
+                    renderableComposableState.value = true
+                }
             }
         ).run {
             if (!isEnabled) {

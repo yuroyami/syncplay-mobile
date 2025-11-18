@@ -174,12 +174,11 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
         }
 
         val globalViewmodel = LocalGlobalViewmodel.current
-        if (!globalViewmodel.hasEnteredRoomOnce) {
-            LaunchedEffect(null) {
-                delay(600)
-                cardController.toggleUserInfo(true)
-                globalViewmodel.hasEnteredRoomOnce = true
-            }
+
+        LaunchedEffect(null) {
+            delay(600)
+            cardController.toggleUserInfo(true)
+            globalViewmodel.hasEnteredRoomOnce = true
         }
     }
 }
