@@ -4,7 +4,7 @@
   "description": "My apps are always multiplatform. You can find them on Android and iOS (and some other times, even on Desktop)",
   "iconURL": "https://avatars.githubusercontent.com/u/72363167?v=4",
   "headerURL": "https://i.pinimg.com/736x/4e/85/eb/4e85ebe4cb616c7166f9eb7209c29719.jpg",
-  "patreonURL": "",
+  "patreonURL": "https://patreon.com/SidenaAkram?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink",
   "website": "https://github.com/yuroyami",
   "tintColor": "#ffd700",
   "featuredApps": [
@@ -19,7 +19,7 @@
       "localizedDescription": "Unofficial Syncplay client app for Android and iOS. Watch stuff in sync with your friends. Works well with Syncplay on PC. Fully written in Kotlin and Compose multiplatform.",
       "iconURL": "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/LOGO.png",
       "tintColor": "#f72800",
-      "patreonURL": "",
+      "patreonURL": "https://patreon.com/SidenaAkram?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink",
       "category": "entertainment",
       "screenshots": [
       ],
