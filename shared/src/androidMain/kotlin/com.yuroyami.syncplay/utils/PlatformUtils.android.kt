@@ -3,7 +3,6 @@ package com.yuroyami.syncplay.utils
 import android.content.ContentResolver
 import android.content.Context
 import android.content.pm.ActivityInfo
-import android.media.AudioManager
 import android.net.Uri
 import android.os.Build
 import android.provider.DocumentsContract
@@ -14,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.platform.ClipEntry
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
@@ -59,19 +57,6 @@ actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {
         "netty" -> NettyNetworkManager(this)
         else -> KtorNetworkManager(this)
     }
-}
-
-/**
- * Gets the maximum volume level for media playback from Android AudioManager.
- *
- * TODO: Don't do this EVERY RECOMPOSITION - consider caching or hoisting
- *
- * @return Maximum volume value for the music stream
- */
-@Composable
-actual fun getSystemMaxVolume(): Int {
-    val audioManager = LocalContext.current.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-    return audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
 }
 
 /**
@@ -222,8 +207,6 @@ actual fun HideSystemBars() {
 
 @Composable
 actual fun ShowSystemBars() {
-    val view = LocalView.current
-
     val activity = LocalActivity.current as? ComponentActivity
 
     LaunchedEffect(null) {

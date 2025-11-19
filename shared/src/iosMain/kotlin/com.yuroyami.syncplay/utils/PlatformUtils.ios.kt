@@ -45,13 +45,6 @@ actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {
     }
 }
 
-@Composable
-actual fun getSystemMaxVolume(): Int {
-    // iOS doesn't expose a step count; choose a fallback value.
-    return 16
-}
-
-
 actual fun generateTimestampMillis(): Long {
     return (NSDate().timeIntervalSince1970 * 1000.0).roundToLong()
 }

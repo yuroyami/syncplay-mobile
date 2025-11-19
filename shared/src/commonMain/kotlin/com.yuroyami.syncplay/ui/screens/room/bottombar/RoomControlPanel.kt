@@ -321,6 +321,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
                             add(
                                 ControlPanelDropdownAction(
                                     text = "${chapter.name} [${timestampFromMillis(chapter.timeOffsetMillis)}]",
+                                    icon = Icons.Filled.Theaters,
                                     action = {
                                         haptic()
 

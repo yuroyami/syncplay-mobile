@@ -26,6 +26,7 @@ import kotlinx.cinterop.cstr
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.toKString
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import platform.Foundation.NSNotification
@@ -34,7 +35,6 @@ import platform.Foundation.NSURL
 import platform.UIKit.UIColor
 import platform.UIKit.UIView
 import platform.darwin.NSObject
-import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -275,9 +275,9 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         if (!isInitialized || vlcPlayer == null) return
 
         withContext(Dispatchers.Main) {
-            mediafile.chapters.clear()
-
             val chapterDescs = vlcPlayer!!.chapterDescriptionsOfTitle(vlcPlayer!!.currentTitleIndex)
+            mediafile.chapters.clear()
+            delay(500)
             chapterDescs.forEachIndexed { i, desc ->
                 val descMap = desc as? Map<*, *>
 
@@ -510,7 +510,7 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         override fun mediaPlayerStateChanged(aNotification: NSNotification) {
             playerScopeMain.launch {
                 if (hasMedia()) {
-                    val isPlaying = vlcPlayer?.state != VLCMediaPlayerState.VLCMediaPlayerStatePaused
+                    val isPlaying = vlcPlayer?.state == VLCMediaPlayerState.VLCMediaPlayerStatePlaying
                     viewmodel.playerManager.isNowPlaying.value = isPlaying // Just to inform UI
 
                     // Tell server about playback state change
@@ -529,16 +529,14 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
     /********** Volume Control **********/
 
     /**
-     * Maximum volume level (0-100 scale).
+     * Maximum volume level (0-200 scale).
      */
-    private val MAX_VOLUME = 100
+    private val MAX_VLC_VOLUME = 200
 
-    override fun getMaxVolume() = MAX_VOLUME
-
-    override fun getCurrentVolume(): Int = (vlcPlayer?.pitch?.times(MAX_VOLUME))?.roundToInt() ?: 0
-
+    override fun getMaxVolume() = 200
+    override fun getCurrentVolume(): Int = vlcPlayer?.audio?.volume ?: 0
     override fun changeCurrentVolume(v: Int) {
-        val clampedVolume = v.toFloat().coerceIn(0.0f, MAX_VOLUME.toFloat()) / MAX_VOLUME
-        vlcPlayer?.setPitch(clampedVolume)
+        vlcPlayer?.audio?.volume = v.coerceIn(0, MAX_VLC_VOLUME)
+
     }
 }

@@ -26,14 +26,6 @@ expect class WeakRef<T: Any>
 expect fun <T : Any> createWeakRef(obj: T): WeakRef<T>
 
 /**
- * Gets the maximum volume level supported by the system.
- *
- * @return Maximum volume value (typically 15 on Android, varies by platform)
- */
-@Composable
-expect fun getSystemMaxVolume(): Int
-
-/**
  * Enumeration of supported platforms where Syncplay can run.
  */
 enum class PLATFORM {

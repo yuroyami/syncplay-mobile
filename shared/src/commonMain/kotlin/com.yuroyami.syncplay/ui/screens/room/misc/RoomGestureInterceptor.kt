@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -53,7 +54,6 @@ import com.yuroyami.syncplay.managers.preferences.watchPref
 import com.yuroyami.syncplay.ui.components.screenHeightPx
 import com.yuroyami.syncplay.ui.components.screenWidthPx
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
-import com.yuroyami.syncplay.utils.getSystemMaxVolume
 import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -62,11 +62,8 @@ import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_brightness
 import syncplaymobile.shared.generated.resources.room_volume
+import kotlin.math.abs
 import kotlin.math.roundToInt
-
-var dragdistance = 0f
-var initialVolume = 0
-var initialBrightness = 0f
 
 @Composable
 fun RoomGestureInterceptor(modifier: Modifier) {
@@ -75,24 +72,27 @@ fun RoomGestureInterceptor(modifier: Modifier) {
     val gesturesEnabled by GESTURES.watchPref()
     val hasVideo by viewmodel.hasVideo.collectAsState()
 
-    val volumeSteps = getSystemMaxVolume()
-
     val seekLeftInteraction = remember { MutableInteractionSource() }
     val seekRightInteraction = remember { MutableInteractionSource() }
 
     val h = screenHeightPx
     val w = screenWidthPx
 
-    //TODO: Individual gesture toggling option
-
     var currentBrightness by remember { mutableFloatStateOf(-1f) }
     var currentVolume by remember { mutableIntStateOf(-1) }
-
     var vertdragOffset by remember { mutableStateOf(Offset.Zero) }
+
+    // Track initial and last values for drag gestures
+    var initialBrightness by remember { mutableFloatStateOf(0f) }
+    var initialVolume by remember { mutableIntStateOf(0) }
+    var dragDistance by remember { mutableFloatStateOf(0f) }
+    var lastAppliedBrightness by remember { mutableFloatStateOf(0f) }
+    var lastAppliedVolume by remember { mutableIntStateOf(0) }
 
     Box(modifier) {
         var fastForward by remember { mutableStateOf(false) }
         var fastRewind by remember { mutableStateOf(false) }
+
         if (gesturesEnabled) {
             /** Seek back - visual-feedback left section */
             Box(
@@ -100,9 +100,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                     .clickable(
                         enabled = false,
                         interactionSource = seekLeftInteraction,
-                        indication = ripple(
-                            bounded = false, color = Color(100, 100, 100, 190)
-                        ),
+                        indication = ripple(bounded = false, color = Color(100, 100, 100, 190)),
                         onClick = {}
                     )
             ) {
@@ -127,9 +125,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                     .clickable(
                         enabled = false,
                         interactionSource = seekRightInteraction,
-                        indication = ripple(
-                            bounded = false, color = Color(100, 100, 100, 190)
-                        ),
+                        indication = ripple(bounded = false, color = Color(100, 100, 100, 190)),
                         onClick = {}
                     )
             ) {
@@ -148,6 +144,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                 }
             }
         }
+
         /** Actual gesture-detection logic box */
         val haptic = LocalHapticFeedback.current
         val softwareKB = LocalSoftwareKeyboardController.current
@@ -159,7 +156,6 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                     onPress = { offset ->
                         if (gesturesEnabled && hasVideo && offset.x > w.times(0.65f)) {
                             val press = PressInteraction.Press(offset)
-
                             val job = scope.launch {
                                 delay(1000)
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -179,7 +175,6 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                             job.cancel()
                             fastForward = false
                             seekRightInteraction.emit(PressInteraction.Release(press))
-
                         }
                         if (gesturesEnabled && hasVideo && offset.x < w.times(0.35f)) {
                             val press = PressInteraction.Press(offset)
@@ -201,86 +196,92 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                             job.cancel()
                             fastRewind = false
                             seekLeftInteraction.emit(PressInteraction.Release(press))
-
                         }
                     },
-                    onDoubleTap = if (gesturesEnabled && hasVideo) { offset ->
-                        scope.launch {
-                            if (offset.x < w.times(0.35f)) {
-                                viewmodel.actionManager.seekBckwd()
-                                haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                    onDoubleTap = if (gesturesEnabled && hasVideo) {
+                        { offset ->
+                            scope.launch {
+                                if (offset.x < w.times(0.35f)) {
+                                    viewmodel.actionManager.seekBckwd()
+                                    haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
 
-                                val press = PressInteraction.Press(Offset.Zero)
-                                seekLeftInteraction.emit(press)
-                                delay(200)
-                                seekLeftInteraction.emit(PressInteraction.Release(press))
-                            }
-                            if (offset.x > w.times(0.65f)) {
-                                viewmodel.actionManager.seekFrwrd()
-                                haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                                    val press = PressInteraction.Press(Offset.Zero)
+                                    seekLeftInteraction.emit(press)
+                                    delay(200)
+                                    seekLeftInteraction.emit(PressInteraction.Release(press))
+                                }
+                                if (offset.x > w.times(0.65f)) {
+                                    viewmodel.actionManager.seekFrwrd()
+                                    haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
 
-                                val press = PressInteraction.Press(Offset.Zero)
-                                seekRightInteraction.emit(press)
-                                delay(150)
-                                seekRightInteraction.emit(PressInteraction.Release(press))
+                                    val press = PressInteraction.Press(Offset.Zero)
+                                    seekRightInteraction.emit(press)
+                                    delay(150)
+                                    seekRightInteraction.emit(PressInteraction.Release(press))
+                                }
                             }
                         }
                     } else null,
                     onTap = {
                         viewmodel.uiManager.visibleHUD.value = !viewmodel.uiManager.visibleHUD.value
                         haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-
                         if (!viewmodel.uiManager.visibleHUD.value) softwareKB?.hide()
                     },
                 )
             }.pointerInput(gesturesEnabled, hasVideo) {
                 if (gesturesEnabled && hasVideo) {
-                    var lastVolume = 0
-                    var lastBrightness = 0f
-
                     detectVerticalDragGestures(
                         onDragStart = {
                             initialBrightness = platformCallback.getCurrentBrightness()
                             initialVolume = viewmodel.player.getCurrentVolume()
-                            lastBrightness = initialBrightness
-                            lastVolume = initialVolume
+                            lastAppliedBrightness = initialBrightness
+                            lastAppliedVolume = initialVolume
+                            dragDistance = 0f
                         },
                         onDragEnd = {
-                            dragdistance = 0F
+                            dragDistance = 0f
                             currentBrightness = -1f
                             currentVolume = -1
                         },
                         onVerticalDrag = { pntr, f ->
-                            dragdistance += f
+                            dragDistance += f
                             vertdragOffset = pntr.position
 
                             if (pntr.position.x >= w * 0.5f) {
                                 // Volume adjusting
-                                val height = h / 1.5f
+                                val height = h / 2f
                                 val maxVolume = viewmodel.player.getMaxVolume()
-                                var newVolume = (initialVolume + (-dragdistance * maxVolume / height)).roundToInt()
-                                if (newVolume > maxVolume) newVolume = maxVolume
-                                if (newVolume < 0) newVolume = 0
+                                var newVolume = (initialVolume + (-dragDistance * maxVolume / height)).roundToInt()
+                                newVolume = newVolume.coerceIn(0, maxVolume)
 
                                 currentVolume = newVolume
-                                if (newVolume != lastVolume) {
-                                    haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                    lastVolume = newVolume
-                                }
-                                viewmodel.player.changeCurrentVolume(newVolume)
-                            } else {
-                                // Brightness adjusting in 5% increments
-                                val height = h / 1.5f
-                                val maxBright = platformCallback.getMaxBrightness()
-                                var newBright = initialBrightness + (-dragdistance * maxBright / height)
-                                newBright = if (newBright > 0.1f) (newBright / 0.05f).roundToInt() * 0.05f else newBright
 
-                                currentBrightness = newBright.coerceIn(0f, 1f)
-                                if (newBright != lastBrightness) {
+                                // Only apply if changed
+                                if (newVolume != lastAppliedVolume) {
+                                    viewmodel.player.changeCurrentVolume(newVolume)
                                     haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                    lastBrightness = newBright
+                                    lastAppliedVolume = newVolume
                                 }
-                                platformCallback.changeCurrentBrightness(newBright.coerceIn(0f, 1f))
+                            } else {
+                                // Brightness adjusting
+                                val height = h / 2f
+                                val maxBright = platformCallback.getMaxBrightness()
+                                var newBright = initialBrightness + (-dragDistance * maxBright / height)
+
+                                // Snap to 5% increments above 10%
+                                if (newBright > 0.1f) {
+                                    newBright = (newBright / 0.05f).roundToInt() * 0.05f
+                                }
+                                newBright = newBright.coerceIn(0f, 1f)
+
+                                currentBrightness = newBright
+
+                                // Only apply if changed significantly (avoid tiny fluctuations)
+                                if (abs(newBright - lastAppliedBrightness) >= 0.025f) {
+                                    platformCallback.changeCurrentBrightness(newBright)
+                                    haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
+                                    lastAppliedBrightness = newBright
+                                }
                             }
                         }
                     )
@@ -291,28 +292,43 @@ fun RoomGestureInterceptor(modifier: Modifier) {
         with(LocalDensity.current) {
             if (currentBrightness != -1f) {
                 Row(
-                    modifier = Modifier.offset(
-                        (vertdragOffset.x + 100).toDp(), vertdragOffset.y.toDp()
-                    ).clip(RoundedCornerShape(25)).background(Color.LightGray),
+                    modifier = Modifier
+                        .offset((vertdragOffset.x - 100).toDp(), vertdragOffset.y.toDp())
+                        .clip(RoundedCornerShape(25.dp))
+                        .background(Color.LightGray)
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = CenterVertically
                 ) {
-                    Icon(imageVector = Icons.Filled.Brightness6, "")
-
-                    //TODO: Delegate 'times(100).toInt()' to platform
-                    val brightness = stringResource(Res.string.room_brightness, "${currentBrightness.times(100).toInt()}%")
+                    Icon(
+                        imageVector = Icons.Filled.Brightness6,
+                        contentDescription = "",
+                        modifier = Modifier.padding(end = 4.dp)
+                    )
+                    val brightness = stringResource(
+                        Res.string.room_brightness,
+                        "${currentBrightness.times(100).toInt()}%"
+                    )
                     Text(brightness, color = Color.Black)
                 }
             }
 
             if (currentVolume != -1) {
                 Row(
-                    modifier = Modifier.offset(
-                        (vertdragOffset.x - 500).toDp(), vertdragOffset.y.toDp()
-                    ).clip(RoundedCornerShape(25)).background(Color.LightGray),
+                    modifier = Modifier
+                        .offset((vertdragOffset.x + 100).toDp(), vertdragOffset.y.toDp())
+                        .clip(RoundedCornerShape(25.dp))
+                        .background(Color.LightGray)
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = CenterVertically
                 ) {
-                    Icon(imageVector = Icons.AutoMirrored.Filled.VolumeUp, "")
-                    val volume = stringResource(Res.string.room_volume, "$currentVolume/$volumeSteps")
+                    val maxVolume = remember { viewmodel.player.getMaxVolume() }
+
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                        contentDescription = "",
+                        modifier = Modifier.padding(end = 4.dp)
+                    )
+                    val volume = stringResource(Res.string.room_volume, "$currentVolume/$maxVolume")
                     Text(volume, color = Color.Black)
                 }
             }
