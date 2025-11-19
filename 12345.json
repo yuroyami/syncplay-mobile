@@ -1,0 +1,16 @@
+{
+  "name": "Yuroyami dev",
+  "subtitle": "Making life easier with free apps",
+  "description": "My apps are always multiplatform. You can find them on Android and iOS (and some other times, even on Desktop)",
+  "iconURL": "https://github.com/yuroyami/syncplay-mobile/blob/master/art/LOGO.png",
+  "website": "https://github.com/yuroyami/syncplay-mobile",
+  "patreonURL": "https://patreon.com/yuroyami",
+  "tintColor": "#6156e2",
+  "featuredApps": [
+  ],
+  "apps": [
+
+  ],
+  "news": [
+  ]
+}
