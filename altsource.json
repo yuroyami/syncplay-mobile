@@ -1,9 +1,9 @@
 {
-  "name": "My Example Source",
-  "subtitle": "A source for all of my apps",
-  "description": "Welcome to my source! Here you'll find all of my apps.",
-  "iconURL": "https://i.imgur.com/pqIZoZo.jpeg",
-  "website": "https://altstudio.app",
+  "name": "Syncplay Mobile",
+  "subtitle": "Watch videos in sync with your friends.",
+  "description": "nofficial Syncplay client app for Android and iOS. Watch stuff in sync with your friends. Works well with Syncplay on PC. Fully written in Kotlin and Compose multiplatform.",
+  "iconURL": "https://github.com/yuroyami/syncplay-mobile/blob/master/art/LOGO.png",
+  "website": "https://github.com/yuroyami/syncplay-mobile",
   "patreonURL": "https://patreon.com/altstudio",
   "tintColor": "#6156e2",
   "featuredApps": [
@@ -17,7 +17,7 @@
       "developerName": "yuroyami",
       "subtitle": "Watch videos with friends in sync.",
       "localizedDescription": "Unofficial Syncplay client app for Android and iOS. Watch stuff in sync with your friends. Works well with Syncplay on PC. Fully written in Kotlin and Compose multiplatform.",
-      "iconURL": "https://github.com/yuroyami/syncplay-mobile/blob/master/shared/src/androidMain/app_store.png",
+      "iconURL": "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/LOGO.png",
       "tintColor": "#f72800",
       "category": "entertainment",
       "screenshots": [
@@ -27,14 +27,15 @@
           "downloadURL": "https://github.com/yuroyami/syncplay-mobile/releases/download/v0.16.0/syncplay-0.16.0-ios.ipa",
           "size": 68000000,
           "version": "0.16.0",
-          "buildVersion": null,
+          "buildVersion": "0.16.0",
           "date": "2025-11-19T20:51:00+01:00",
-          "localizedDescription": null,
-          "minOSVersion": null
+          "localizedDescription": "",
+          "minOSVersion": ""
         }
       ],
       "appPermissions": {
         "entitlements": [
+          "audio"
         ],
         "privacy": {
         }
