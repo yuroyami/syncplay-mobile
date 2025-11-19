@@ -1,5 +1,5 @@
 {
-  "name": "Yuroyami dev",
+  "name": "yuroyami",
   "subtitle": "Making life easier with free apps",
   "description": "My apps are always multiplatform. You can find them on Android and iOS (and some other times, even on Desktop)",
   "iconURL": "https://github.com/yuroyami/syncplay-mobile/blob/master/art/LOGO.png",
@@ -11,7 +11,7 @@
   ],
   "apps": [
     {
-      "name": "Syncplay",
+      "name": "Syncplay iOS",
       "bundleIdentifier": "com.yuroyami.syncplay.iosApp",
       "marketplaceID": "",
       "developerName": "yuroyami",
@@ -24,7 +24,7 @@
       ],
       "versions": [
         {
-          "downloadURL": "https://github.com/yuroyami/syncplay-mobile/releases/download/v0.16.0/syncplay-0.16.0-ios.ipa",
+          "downloadURL": "https://github.com/yuroyami/syncplay-mobile/releases/download/v0.16.0/syncplay-0.16.0-iosss.ipa",
           "size": 68000000,
           "version": "0.16.0",
           "buildVersion": "0.16.0",
