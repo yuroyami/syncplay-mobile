@@ -21,7 +21,6 @@ import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.videolan.libvlc.LibVLC
@@ -239,7 +238,6 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
-        delay(500)
         val desc = contextObtainer().contentResolver.openFileDescriptor(location.file.uri, "r")
         val media = Media(libvlc, desc?.fileDescriptor)
         media.parse()

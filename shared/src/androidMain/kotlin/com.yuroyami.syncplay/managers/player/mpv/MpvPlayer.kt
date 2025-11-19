@@ -289,14 +289,12 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
-        delay(500)
         ctx.resolveUri(location.file.uri)?.let {
             mpvView.playFile(it)
         }
     }
 
     override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
-        delay(500)
         mpvView.playFile(location.url)
     }
 

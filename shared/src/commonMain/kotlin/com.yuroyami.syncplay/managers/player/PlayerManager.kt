@@ -64,12 +64,14 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
      * Total duration of the currently loaded media in milliseconds.
      * Zero when no media is loaded or duration is unknown.
      */
+    //TODO Remove in favor of media.fileDuration
     val timeFullMillis = MutableStateFlow<Long>(0L)
 
     /**
      * Current playback position in milliseconds.
      * Updated continuously by the player's progress tracking job.
      */
+    //TODO Remove in favor of media.fileTimePos
     val timeCurrentMillis = MutableStateFlow<Long>(0L)
 
     /**

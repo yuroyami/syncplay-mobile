@@ -11,9 +11,13 @@ import com.yuroyami.syncplay.models.MediaFileLocation
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
+import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import platform.AVFoundation.AVAsset
 import platform.AVFoundation.AVLayerVideoGravityResize
 import platform.AVFoundation.AVLayerVideoGravityResizeAspect
 import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
@@ -24,6 +28,7 @@ import platform.AVFoundation.AVMediaTypeAudio
 import platform.AVFoundation.AVMediaTypeText
 import platform.AVFoundation.AVPlayer
 import platform.AVFoundation.AVPlayerItem
+import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
 import platform.AVFoundation.AVPlayerLayer
 import platform.AVFoundation.asset
 import platform.AVFoundation.availableMediaCharacteristicsWithMediaSelectionOptions
@@ -45,15 +50,20 @@ import platform.CoreMedia.CMTime
 import platform.CoreMedia.CMTimeGetSeconds
 import platform.CoreMedia.CMTimeMake
 import platform.Foundation.NSKeyValueObservingOptionNew
+import platform.Foundation.NSNotificationCenter
+import platform.Foundation.NSURL
 import platform.Foundation.addObserver
+import platform.Foundation.removeObserver
 import platform.QuartzCore.CATransaction
 import platform.QuartzCore.kCATransactionDisableActions
 import platform.UIKit.UIView
 import platform.darwin.NSObject
+import platform.foundation.NSKeyValueObservingProtocol
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * AVPlayer implementation for iOS using Apple's native AVFoundation framework.
@@ -100,6 +110,8 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
      */
     private var avMedia: AVPlayerItem? = null
 
+    val observer = AVPlayerObserver()
+
     override val trackerJobInterval: Duration
         get() = 250.milliseconds
 
@@ -108,33 +120,58 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
      * and starting progress tracking.
      */
     override fun initialize() {
-        //avView.view.setBackgroundColor(UIColor.clearColor())
-        //avPlayerLayer!!.setBackgroundColor(UIColor.clearColor().CGColor)
         avView.showsPlaybackControls = false
 
-        startTrackingProgress()
-    }
-
-    /**
-     * Hooks the AVPlayer instance to the view controller and layer.
-     *
-     * Sets up Key-Value Observing (KVO) for monitoring playback state changes.
-     * Called after creating a new AVPlayer instance.
-     */
-    private fun hookPlayerAgain() {
-        avView.player = avPlayer!!
-        avPlayerLayer?.player = avPlayer
-
         avPlayer?.addObserver(
-            observer = object : NSObject() {
-                //todo
-            },
+            observer = observer,
             forKeyPath = "timeControlStatus",
             options = NSKeyValueObservingOptionNew,
             context = null
         )
+//
+//        avPlayer?.addObserver(
+//            observer = observer,
+//            forKeyPath = "rate",
+//            options = NSKeyValueObservingOptionNew,
+//            context = null
+//        )
 
-        val status = avPlayer?.timeControlStatus()
+        startTrackingProgress()
+    }
+
+
+    /**
+     * KVO Observer for AVPlayer timeControlStatus changes
+     */
+    inner class AVPlayerObserver : NSObject(), NSKeyValueObservingProtocol {
+
+        @OptIn(ExperimentalForeignApi::class)
+        override fun observeValueForKeyPath(
+            keyPath: String?,
+            ofObject: Any?,
+            change: Map<Any?, *>?,
+            context: CPointer<*>?
+        ) {
+            when (keyPath) {
+                "timeControlStatus" -> {
+                    val isPlaying = avPlayer?.timeControlStatus != platform.AVFoundation.AVPlayerTimeControlStatusPaused
+
+                    // Player started playing
+                    viewmodel.playerManager.isNowPlaying.value = isPlaying
+                    if (!viewmodel.isSoloMode) {
+                        viewmodel.actionManager.sendPlayback(isPlaying)
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Hooks the AVPlayer instance to the view controller and layer.
+     */
+    private fun hookPlayerAgain() {
+        avView.player = avPlayer!!
+        avPlayerLayer?.player = avPlayer
     }
 
     /**
@@ -143,10 +180,14 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
     override suspend fun destroy() {
         if (!isInitialized) return
 
+        avPlayer?.let { NSNotificationCenter.defaultCenter.removeObserver(it) }
+
+        avPlayer?.removeObserver(observer, "timeControlStatus")
         avPlayer?.pause()
         avPlayer?.finalize()
         avPlayer = null
         avContainer = null
+        isInitialized = false
     }
 
     /**
@@ -178,6 +219,7 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
                     initialize()
                     avContainer = UIView()
                     avContainer!!.addSubview(avView.view)
+                    isInitialized = true
                     return@factorylambda avContainer!!
                 }
             },
@@ -325,59 +367,37 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
         }
     }
 
-    /**
-     * Loads and prepares a media file for playback.
-     *
-     * Creates an AVPlayerItem from either a URL or local file path, waits for the
-     * media to become ready (with 10-second timeout), extracts duration, and declares
-     * it to the server.
-     *
-     * @param media The media file to load
-     * @param isUrl Whether the URI is a remote URL or local file path
-     * @throws Exception if media fails to load within the timeout period
-     */
-    suspend fun injectVideoImpl(media: MediaFile, isUrl: Boolean) {
-        if (!isInitialized) return
-
-        delay(500)
-
-        /* media.uri?.let { it ->
-             val nsUrl = it.nsUrl /* when (isUrl) {
-                 true -> URLWithString(it)
-                 false -> fileURLWithPath(it)
-             } ?: throw Exception() */
-
-             avMedia = AVPlayerItem(uRL = nsUrl)
-             avPlayer = AVPlayer.playerWithPlayerItem(avMedia)
-
-             hookPlayerAgain()
-
-             val isTimeout = withTimeoutOrNull(10.seconds) {
-                 while (avMedia?.status != AVPlayerItemStatusReadyToPlay) {
-                     delay(250)
-                 }
-
-                 //File is loaded, get duration and declare file
-                 avMedia!!.asset.duration.toMillis().let { dur ->
-                     playerManager.timeFullMillis.value = if (dur < 0) 0 else dur
-
-                     playerManager.media.value?.fileDuration = playerManager.timeFullMillis.value / 1000.0
-                     announceFileLoaded()
-                 }
-             }
-
-             if (isTimeout == null) throw Exception("Media not loaded by AVPlayer")
-         }
-
-         */
-    }
-
     override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
-        TODO("Not yet implemented")
+        val nsUrl = location.file.nsUrl
+        nsUrl.startAccessingSecurityScopedResource()
+        val asset = AVAsset.assetWithURL(nsUrl)
+        avMedia = AVPlayerItem(asset)
+        avPlayer = AVPlayer.playerWithPlayerItem(avMedia)
     }
 
     override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
-        TODO("Not yet implemented")
+        val nsUrl = NSURL.URLWithString(location.url) ?: throw Exception()
+        avMedia = AVPlayerItem(uRL = nsUrl)
+        avPlayer = AVPlayer.playerWithPlayerItem(avMedia)
+    }
+
+    override suspend fun parseMedia(media: MediaFile) {
+        hookPlayerAgain()
+
+        withTimeoutOrNull(10.seconds) {
+            while (avMedia?.status != AVPlayerItemStatusReadyToPlay) {
+                delay(250)
+            }
+        }
+
+        //File is loaded, get duration and declare file
+        avMedia!!.asset.duration.toMillis().let { dur ->
+            val actualDur = if (dur < 0) 0 else dur
+            playerManager.timeFullMillis.value = actualDur
+            playerManager.media.value?.fileDuration = actualDur / 1000.0
+        }
+
+        super.parseMedia(media)
     }
 
     /**
@@ -493,14 +513,11 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
     /**
      * Maximum volume level (0-100 scale).
      */
-    private val MAX_VOLUME = 100
-
-    override fun getMaxVolume() = MAX_VOLUME
-
-    override fun getCurrentVolume(): Int = (avPlayer?.volume?.times(MAX_VOLUME))?.roundToInt() ?: 0
-
+    private val MAX_VOLUME = 100f
+    override fun getMaxVolume() = MAX_VOLUME.toInt()
+    override fun getCurrentVolume(): Int = (avPlayer?.volume?.times(100))?.roundToInt() ?: 0
     override fun changeCurrentVolume(v: Int) {
-        val clampedVolume = v.toFloat().coerceIn(0.0f, MAX_VOLUME.toFloat()) / MAX_VOLUME
+        val clampedVolume = v.toFloat().coerceIn(0.0f, MAX_VOLUME) / MAX_VOLUME
         avPlayer?.setVolume(clampedVolume)
     }
 }

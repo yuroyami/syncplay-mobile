@@ -295,6 +295,7 @@ abstract class BasePlayer(
         val media = toMedia(source)
         withContext(Dispatchers.Main) {
             try {
+                delay(500) //Some players aren't ready right away (mpv, vlc)
                 impl(media)
                 parseMedia(media)
             } catch (e: Exception) {

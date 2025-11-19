@@ -43,9 +43,17 @@ kotlin {
     }
 
     // Activating iOS targets (iosMain)
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        iosTarget.compilations.getByName("main") {
+            val nsKVO by cinterops.creating {
+                defFile("src/nativeInterop/cinterop/NSKeyValueObserving.def")
+            }
+        }
+    }
 
     // iOS configuration
     cocoapods {
@@ -59,7 +67,7 @@ kotlin {
             isStatic = false
         }
 
-        pod("SPLPing", "1.1.8") //Light-weight Objective-C library to add the ICMP ping functionality
+        pod("SPLPing", libs.versions.splping.get()) //Light-weight Objective-C library to add the ICMP ping functionality
         pod("MobileVLCKit", libs.versions.libvlc.ios.get()) //Adds the VLC player engine to iOS
     }
 
