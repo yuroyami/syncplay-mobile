@@ -41,7 +41,6 @@ import com.yuroyami.syncplay.managers.preferences.Preferences.EXO_MAX_BUFFER
 import com.yuroyami.syncplay.managers.preferences.Preferences.EXO_MIN_BUFFER
 import com.yuroyami.syncplay.managers.preferences.Preferences.EXO_SEEK_BUFFER
 import com.yuroyami.syncplay.managers.settings.SettingCategory
-import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.MediaFileLocation
 import com.yuroyami.syncplay.models.Track
@@ -348,8 +347,6 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     override suspend fun analyzeChapters(mediafile: MediaFile) {}
-    override suspend fun jumpToChapter(chapter: Chapter) {}
-    override suspend fun skipChapter() {}
 
     override suspend fun reapplyTrackChoices() {
         if (!isInitialized) return

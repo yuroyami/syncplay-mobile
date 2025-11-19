@@ -234,17 +234,19 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
 
     override suspend fun jumpToChapter(chapter: Chapter) {
         if (!isInitialized) return
+        super.jumpToChapter(chapter)
+
         withContext(Dispatchers.Main.immediate) {
             MPVLib.setPropertyInt("chapter", chapter.index)
         }
     }
-
-    override suspend fun skipChapter() {
-        if (!isInitialized) return
-        withContext(Dispatchers.Main.immediate) {
-            MPVLib.command(arrayOf("add", "chapter", "1"))
-        }
-    }
+//
+//    override suspend fun skipChapter() {
+//        if (!isInitialized) return
+//        withContext(Dispatchers.Main.immediate) {
+//            MPVLib.command(arrayOf("add", "chapter", "1"))
+//        }
+//    }
 
     override suspend fun reapplyTrackChoices() {
         if (!isInitialized) return

@@ -302,20 +302,21 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
      */
     override suspend fun jumpToChapter(chapter: Chapter) {
         if (!isInitialized) return
+        super.jumpToChapter(chapter)
         withContext(Dispatchers.Main.immediate) {
             vlcPlayer?.setCurrentChapterIndex(chapter.index)
         }
     }
 
-    /**
-     * Skips to the next chapter in the media.
-     */
-    override suspend fun skipChapter() {
-        if (!isInitialized) return
-        withContext(Dispatchers.Main.immediate) {
-            vlcPlayer?.nextChapter()
-        }
-    }
+//    /**
+//     * Skips to the next chapter in the media.
+//     */
+//    override suspend fun skipChapter() {
+//        if (!isInitialized) return
+//        withContext(Dispatchers.Main.immediate) {
+//            vlcPlayer?.nextChapter()
+//        }
+//    }
 
     /**
      * Reapplies previously selected track choices.
@@ -353,17 +354,17 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         val nsUrl = location.file.nsUrl
         nsUrl.startAccessingSecurityScopedResource()
         vlcMedia = VLCMedia(uRL = nsUrl)
+        vlcMedia?.synchronousParse()
         vlcPlayer?.setMedia(vlcMedia)
     }
 
     override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
         vlcMedia = NSURL.URLWithString(location.url)?.let { VLCMedia(uRL = it) }
+        vlcMedia?.synchronousParse()
         vlcPlayer?.setMedia(vlcMedia)
     }
 
     override suspend fun parseMedia(media: MediaFile) {
-        vlcMedia?.synchronousParse()
-
         vlcMedia?.length?.numberValue?.doubleValue?.toLong()?.let {
             val dur = if (it < 0) 0 else it
             playerManager.timeFullMillis.value = dur

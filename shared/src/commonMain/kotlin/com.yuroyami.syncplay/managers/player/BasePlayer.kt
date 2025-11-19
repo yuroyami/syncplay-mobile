@@ -77,6 +77,7 @@ abstract class BasePlayer(
     enum class TrackType {
         /** Audio track (language, codec) */
         AUDIO,
+
         /** Subtitle/closed caption track */
         SUBTITLE
     }
@@ -180,12 +181,41 @@ abstract class BasePlayer(
      *
      * @param chapter The chapter to jump to
      */
-    abstract suspend fun jumpToChapter(chapter: Chapter)
+    @CallSuper
+    open suspend fun jumpToChapter(chapter: Chapter) {
+        if (!supportsChapters) return
+        val currentPos = currentPositionMs()
+
+        if (!viewmodel.isSoloMode) {
+            viewmodel.actionManager.sendSeek(
+                oldPosms = currentPos,
+                newPosMs = chapter.timeOffsetMillis
+            )
+        }
+    }
 
     /**
      * Skips to the next chapter in the media.
      */
-    abstract suspend fun skipChapter()
+    fun skipChapter() {
+        if (!supportsChapters) return
+
+        val currentMs = currentPositionMs()
+
+        viewmodel.media?.chapters
+            ?.filter { it.timeOffsetMillis > currentMs }
+            ?.minByOrNull { it.timeOffsetMillis }
+            ?.let { nextChapter ->
+                viewmodel.player.seekTo(nextChapter.timeOffsetMillis)
+
+                if (!viewmodel.isSoloMode) {
+                    viewmodel.actionManager.sendSeek(
+                        oldPosms = currentMs,
+                        newPosMs = nextChapter.timeOffsetMillis
+                    )
+                }
+            }
+    }
 
     /**
      * Reapplies previously selected track choices after media change.

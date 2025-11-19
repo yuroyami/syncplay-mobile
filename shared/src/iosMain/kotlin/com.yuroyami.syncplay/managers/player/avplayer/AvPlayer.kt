@@ -6,7 +6,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.interop.UIKitView
 import com.yuroyami.syncplay.managers.player.ApplePlayerEngine
 import com.yuroyami.syncplay.managers.player.BasePlayer
-import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.MediaFileLocation
 import com.yuroyami.syncplay.models.Track
@@ -477,9 +476,6 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
     override val supportsChapters = false
 
     override suspend fun analyzeChapters(mediafile: MediaFile) = Unit
-    override suspend fun jumpToChapter(chapter: Chapter) = Unit
-    override suspend fun skipChapter() = Unit
-
 
     /**
      * Converts CMTime to milliseconds.

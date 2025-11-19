@@ -103,14 +103,7 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
                 modifier = Modifier.zIndex(100f),
                 onClick = {
                     viewmodel.player.playerScopeMain.launch {
-                        val currentMs = viewmodel.player.currentPositionMs()
-                        val nextChapter = viewmodel.media?.chapters?.filter { it.timestamp > currentMs }?.minByOrNull { it.timestamp }
-                        if (nextChapter != null) {
-                            viewmodel.player.seekTo(nextChapter.timestamp)
-                        } else {
-                            // fallback if no chapter is ahead
-                            viewmodel.player.seekTo(currentMs + (customSkipAmount * 1000L))
-                        }
+                        viewmodel.player.skipChapter()
                     }
                 }
             ) {

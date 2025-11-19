@@ -173,7 +173,7 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
                     Chapter(
                         index = i,
                         name = chptr.name,
-                        timestamp = chptr.timeOffset
+                        timeOffsetMillis = chptr.timeOffset
                     )
                 )
             }
@@ -182,19 +182,20 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
 
     override suspend fun jumpToChapter(chapter: Chapter) {
         if (!isInitialized) return
+        super.jumpToChapter(chapter)
 
         withContext(Dispatchers.Main.immediate) {
             vlcPlayer?.chapter = chapter.index
         }
     }
-
-    override suspend fun skipChapter() {
-        if (!isInitialized) return
-
-        withContext(Dispatchers.Main.immediate) {
-            vlcPlayer?.nextChapter()
-        }
-    }
+//
+//    override suspend fun skipChapter() {
+//        if (!isInitialized) return
+//
+//        withContext(Dispatchers.Main.immediate) {
+//            vlcPlayer?.nextChapter()
+//        }
+//    }
 
     override suspend fun reapplyTrackChoices() {
         if (!isInitialized) return
