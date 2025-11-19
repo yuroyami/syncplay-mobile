@@ -1,9 +1,9 @@
 package com.yuroyami.syncplay.managers.player.vlc
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitView
 import cocoapods.MobileVLCKit.VLCLibrary
 import cocoapods.MobileVLCKit.VLCMedia
@@ -14,17 +14,22 @@ import cocoapods.MobileVLCKit.VLCMediaPlayerState
 import cocoapods.MobileVLCKit.VLCTime
 import com.yuroyami.syncplay.managers.player.ApplePlayerEngine
 import com.yuroyami.syncplay.managers.player.BasePlayer
+import com.yuroyami.syncplay.managers.preferences.Preferences.SUBTITLE_SIZE
+import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.MediaFileLocation
 import com.yuroyami.syncplay.models.Track
+import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.toKString
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import platform.AVFoundation.AVLayerVideoGravityResizeAspect
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import platform.AVFoundation.AVPlayerLayer
 import platform.Foundation.NSArray
 import platform.Foundation.NSNotification
@@ -85,7 +90,7 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         get() = true
 
     override val supportsChapters: Boolean
-        get() = false //todo: fix chapters
+        get() = true
 
     override val trackerJobInterval: Duration
         get() = 1.seconds
@@ -98,12 +103,20 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
     override suspend fun destroy() {
         if (!isInitialized) return
 
-        vlcPlayer?.stop()
-        vlcPlayer?.finalize()
-        vlcPlayer = null
-        vlcMedia = null
-        libvlc?.finalize()
-        libvlc = null
+        try {
+            vlcPlayer?.stop()
+            vlcPlayer?.finalize()
+            vlcPlayer?.drawable = null
+            vlcPlayer = null
+
+            vlcMedia = null
+
+            libvlc?.finalize()
+            libvlc = null
+            vlcView = null
+        } catch (e: Exception) {
+            loggy("Error disposing VLC: ${e.message}")
+        }
     }
 
     /**
@@ -125,27 +138,36 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
      */
     @Composable
     override fun VideoPlayer(modifier: Modifier) {
+        DisposableEffect(Unit) {
+            onDispose {
+                if (vlcPlayer?.drawable === vlcView) {
+                    vlcPlayer?.drawable = null
+                }
+            }
+        }
+
         UIKitView(
             modifier = modifier,
             factory = {
                 vlcView = UIView()
                 vlcView!!.setBackgroundColor(UIColor.clearColor())
-                libvlc = VLCLibrary(listOf("-vv"))
+
+                val subSizeArg = "--freetype-fontsize=${SUBTITLE_SIZE.value() * 4}"
+                libvlc = VLCLibrary(listOf("-vv", subSizeArg))
+
                 vlcPlayer = VLCMediaPlayer(libvlc!!)
                 vlcPlayer!!.drawable = vlcView
-
-                /* Layer for PIP */
-                pipLayer = AVPlayerLayer.playerLayerWithPlayer(null)
-                pipLayer?.frame = vlcView!!.bounds
-                pipLayer?.videoGravity = AVLayerVideoGravityResizeAspect
-                pipLayer?.addSublayer(vlcView!!.layer)
 
                 initialize()
 
                 return@UIKitView vlcView!!
             },
-            update = {},
-            properties = UIKitInteropProperties(interactionMode = null),
+            update = { view ->
+                // Ensure drawable is still set
+                if (vlcPlayer?.drawable !== view) {
+                    vlcPlayer?.drawable = view
+                }
+            }
         )
     }
 
@@ -167,8 +189,7 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
      */
     override suspend fun hasMedia(): Boolean {
         if (!isInitialized) return false
-
-        return vlcPlayer?.media != null
+        return withContext(Dispatchers.Main.immediate) { vlcPlayer?.media != null }
     }
 
     /**
@@ -178,8 +199,7 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
      */
     override suspend fun isPlaying(): Boolean {
         if (!isInitialized) return false
-
-        return vlcPlayer?.isPlaying() == true
+        return withContext(Dispatchers.Main.immediate) { vlcPlayer?.isPlaying() == true }
     }
 
     /**
@@ -194,31 +214,33 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         if (!isInitialized) return
         if (vlcPlayer == null) return
 
-        viewmodel.media?.subtitleTracks?.clear()
-        viewmodel.media?.audioTracks?.clear()
+        withContext(Dispatchers.Main.immediate) {
+            viewmodel.media?.subtitleTracks?.clear()
+            viewmodel.media?.audioTracks?.clear()
 
-        val audioTracks = vlcPlayer!!.audioTrackIndexes.zip(vlcPlayer!!.audioTrackNames).toMap()
-        audioTracks.forEach { (index, name) ->
-            viewmodel.media?.audioTracks?.add(
-                object : Track {
-                    override val name = name.toString()
-                    override val index = index as? Int ?: 0
-                    override val type = TRACKTYPE.AUDIO
-                    override val selected = mutableStateOf(vlcPlayer!!.currentAudioTrackIndex == index)
-                }
-            )
-        }
+            val audioTracks = vlcPlayer!!.audioTrackIndexes.zip(vlcPlayer!!.audioTrackNames).toMap()
+            audioTracks.forEach { (index, name) ->
+                viewmodel.media?.audioTracks?.add(
+                    object : Track {
+                        override val name = name.toString()
+                        override val index = index as? Int ?: 0
+                        override val type = TRACKTYPE.AUDIO
+                        override val selected = mutableStateOf(vlcPlayer!!.currentAudioTrackIndex == index)
+                    }
+                )
+            }
 
-        val subtitleTracks = vlcPlayer!!.videoSubTitlesIndexes.zip(vlcPlayer!!.videoSubTitlesNames).toMap()
-        subtitleTracks.forEach { (index, name) ->
-            viewmodel.media?.subtitleTracks?.add(
-                object : Track {
-                    override val name = name.toString()
-                    override val index = index as? Int ?: 0
-                    override val type = TRACKTYPE.SUBTITLE
-                    override val selected = mutableStateOf(vlcPlayer!!.currentAudioTrackIndex == index)
-                }
-            )
+            val subtitleTracks = vlcPlayer!!.videoSubTitlesIndexes.zip(vlcPlayer!!.videoSubTitlesNames).toMap()
+            subtitleTracks.forEach { (index, name) ->
+                viewmodel.media?.subtitleTracks?.add(
+                    object : Track {
+                        override val name = name.toString()
+                        override val index = index as? Int ?: 0
+                        override val type = TRACKTYPE.SUBTITLE
+                        override val selected = mutableStateOf(vlcPlayer!!.currentAudioTrackIndex == index)
+                    }
+                )
+            }
         }
     }
 
@@ -233,22 +255,24 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
     override suspend fun selectTrack(track: Track?, type: TRACKTYPE) {
         if (!isInitialized) return
 
-        when (type) {
-            TRACKTYPE.SUBTITLE -> {
-                val index = track?.index ?: -1
-                if (index >= 0) {
-                    vlcPlayer?.setCurrentVideoSubTitleIndex(index)
-                } else {
-                    vlcPlayer?.setCurrentVideoSubTitleIndex(-1)
+        withContext(Dispatchers.Main.immediate) {
+            when (type) {
+                TRACKTYPE.SUBTITLE -> {
+                    val index = track?.index ?: -1
+                    if (index >= 0) {
+                        vlcPlayer?.setCurrentVideoSubTitleIndex(index)
+                    } else {
+                        vlcPlayer?.setCurrentVideoSubTitleIndex(-1)
+                    }
                 }
-            }
 
-            TRACKTYPE.AUDIO -> {
-                val index = track?.index ?: -1
-                if (index >= 0) {
-                    vlcPlayer?.setCurrentAudioTrackIndex(index)
-                } else {
-                    vlcPlayer?.setCurrentAudioTrackIndex(-1)
+                TRACKTYPE.AUDIO -> {
+                    val index = track?.index ?: -1
+                    if (index >= 0) {
+                        vlcPlayer?.setCurrentAudioTrackIndex(index)
+                    } else {
+                        vlcPlayer?.setCurrentAudioTrackIndex(-1)
+                    }
                 }
             }
         }
@@ -264,19 +288,21 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
     override suspend fun analyzeChapters(mediafile: MediaFile) {
         if (!isInitialized) return
 
-        mediafile.chapters.clear()
-        val chapters = (vlcPlayer?.chapterDescriptionsOfTitle(0) as? NSArray)?.toKList<String>()
+        withContext(Dispatchers.Main) {
+            mediafile.chapters.clear()
+            val chapters = (vlcPlayer?.chapterDescriptionsOfTitle(0) as? NSArray)?.toKList<String>()
 
-        chapters?.forEachIndexed { index, name ->
-            if (name.isNullOrBlank()) return@forEachIndexed
+            chapters?.forEachIndexed { index, name ->
+                if (name.isNullOrBlank()) return@forEachIndexed
 
-            mediafile.chapters.add(
-                Chapter(
-                    index = index,
-                    name = name,
-                    timestamp = 0 // TODO: Implement chapter timestamps
+                mediafile.chapters.add(
+                    Chapter(
+                        index = index,
+                        name = name,
+                        timestamp = 0 // TODO: Implement chapter timestamps
+                    )
                 )
-            )
+            }
         }
     }
 
@@ -287,8 +313,9 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
      */
     override suspend fun jumpToChapter(chapter: Chapter) {
         if (!isInitialized) return
-
-        vlcPlayer?.setCurrentChapterIndex(chapter.index)
+        withContext(Dispatchers.Main.immediate) {
+            vlcPlayer?.setCurrentChapterIndex(chapter.index)
+        }
     }
 
     /**
@@ -296,8 +323,9 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
      */
     override suspend fun skipChapter() {
         if (!isInitialized) return
-
-        vlcPlayer?.nextChapter()
+        withContext(Dispatchers.Main.immediate) {
+            vlcPlayer?.nextChapter()
+        }
     }
 
     /**
@@ -307,7 +335,9 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
      */
     override suspend fun reapplyTrackChoices() {
         if (!isInitialized) return
+        withContext(Dispatchers.Main.immediate) {
 
+        }
         //TODO Not implemented for iOS VLC player
     }
 
@@ -321,37 +351,36 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
      */
     override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
         if (!isInitialized) return
-
-        vlcPlayer?.addPlaybackSlave(
-            uri.nsUrl,
-            VLCMediaPlaybackSlaveTypeSubtitle,
-            true
-        )
+        withContext(Dispatchers.Main.immediate) {
+            vlcPlayer?.addPlaybackSlave(
+                uri.nsUrl,
+                VLCMediaPlaybackSlaveTypeSubtitle,
+                true
+            )
+        }
     }
 
-    override suspend fun injectVideoFileImpl(media: MediaFile) {
-        val loc = media.location as MediaFileLocation.Local
-        val nsUrl = loc.file.nsUrl
+    override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
+        val nsUrl = location.file.nsUrl
         nsUrl.startAccessingSecurityScopedResource()
         vlcMedia = VLCMedia(uRL = nsUrl)
         vlcPlayer?.setMedia(vlcMedia)
-        vlcMedia?.synchronousParse()
     }
 
-    override fun parseMedia(media: MediaFile) {
+    override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
+        vlcMedia = NSURL.URLWithString(location.url)?.let { VLCMedia(uRL = it) }
+        vlcPlayer?.setMedia(vlcMedia)
+    }
+
+    override suspend fun parseMedia(media: MediaFile) {
+        vlcMedia?.synchronousParse()
+
         vlcMedia?.length?.numberValue?.doubleValue?.toLong()?.let {
             val dur = if (it < 0) 0 else it
             playerManager.timeFullMillis.value = dur
             media.fileDuration = dur / 1000.0
         }
         super.parseMedia(media)
-    }
-
-    override suspend fun injectVideoURLImpl(media: MediaFile) {
-        val loc = media.location as MediaFileLocation.Remote
-        vlcMedia = NSURL.URLWithString(loc.url)?.let { VLCMedia(uRL = it) }
-        vlcPlayer?.setMedia(vlcMedia)
-        vlcMedia?.synchronousParse()
     }
 
     /**
@@ -361,7 +390,7 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         if (!isInitialized) return
         println("VLC PLAYER DELEGATE: ${vlcPlayer!!.delegate}")
 
-        playerScopeMain.launch {
+        withContext(Dispatchers.Main.immediate) {
             vlcPlayer?.pause()
         }
     }
@@ -371,10 +400,7 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
      */
     override suspend fun play() {
         if (!isInitialized) return
-
-        println("VLC PLAYER DELEGATE: ${vlcPlayer!!.delegate}")
-
-        playerScopeMain.launch {
+        withContext(Dispatchers.Main.immediate) {
             vlcPlayer?.play()
         }
     }
@@ -387,7 +413,7 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
     override suspend fun isSeekable(): Boolean {
         if (!isInitialized) return false
 
-        return vlcPlayer?.isSeekable() == true
+        return withContext(Dispatchers.Main.immediate) { vlcPlayer?.isSeekable() == true }
     }
 
     /**
@@ -397,7 +423,9 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
      */
     override fun seekTo(toPositionMs: Long) {
         super.seekTo(toPositionMs)
-        vlcPlayer?.setTime(toPositionMs.toVLCTime())
+        playerScopeMain.launch(Dispatchers.Main.immediate) {
+            vlcPlayer?.setTime(toPositionMs.toVLCTime())
+        }
     }
 
     /**
@@ -419,48 +447,47 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
      */
     override suspend fun switchAspectRatio(): String {
         if (!isInitialized) return "NO PLAYER FOUND"
+        return withContext(Dispatchers.Main.immediate) {
+            // Available aspect ratio options
+            val aspectRatios = listOf(
+                "1:1", "4:3", "16:9", "16:10", "2.21:1", "2.35:1"
+                // Add more aspect ratios as needed
+            )
 
-        // Available aspect ratio options
-        val aspectRatios = listOf(
-            "1:1", "4:3", "16:9", "16:10", "2.21:1", "2.35:1"
-            // Add more aspect ratios as needed
-        )
+            // Read the current aspect ratio
+            val currentAspectRatio = vlcPlayer?.videoAspectRatio()?.toKString()
 
-        // Read the current aspect ratio
-        val currentAspectRatio = vlcPlayer?.videoAspectRatio()?.toKString()
+            // Find the index of the current aspect ratio in the list
+            val currentIndex = if (currentAspectRatio != null) {
+                aspectRatios.indexOf(currentAspectRatio)
+            } else {
+                -1 // If current aspect ratio is null, set it to -1
+            }
 
-        // Find the index of the current aspect ratio in the list
-        val currentIndex = if (currentAspectRatio != null) {
-            aspectRatios.indexOf(currentAspectRatio)
-        } else {
-            -1 // If current aspect ratio is null, set it to -1
+            // Calculate the index of the next aspect ratio
+            val nextIndex = (currentIndex + 1) % aspectRatios.size
+
+            // Get the next aspect ratio
+            val newAspectRatio = aspectRatios[nextIndex]
+
+            // Convert the new aspect ratio to C string and set it
+            memScoped {
+                vlcPlayer?.videoAspectRatio = newAspectRatio.cstr.ptr
+            }
+
+            return@withContext newAspectRatio
         }
-
-        // Calculate the index of the next aspect ratio
-        val nextIndex = (currentIndex + 1) % aspectRatios.size
-
-        // Get the next aspect ratio
-        val newAspectRatio = aspectRatios[nextIndex]
-
-        // Convert the new aspect ratio to C string and set it
-        memScoped {
-            vlcPlayer?.videoAspectRatio = newAspectRatio.cstr.ptr
-        }
-
-        return newAspectRatio
     }
 
     /**
-     * Changes the subtitle font size.
-     *
-     * TODO: Implement subtitle size control for iOS VLC player.
-     *
-     * @param newSize The new subtitle size
+     * Sadly, MobileVLCKit doesn't allow to change subtitle size at runtime
      */
     override suspend fun changeSubtitleSize(newSize: Int) {
         if (!isInitialized) return
 
-        // TODO: Implement subtitle size changing for iOS VLC player
+        viewmodel.osdManager.dispatchOSD {
+            "Subtitle size will take effect next time you open the room"
+        }
     }
 
     /********** VLC-Specific Helper Methods **********/
@@ -506,19 +533,17 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
          * @param aNotification Notification containing state change information
          */
         override fun mediaPlayerStateChanged(aNotification: NSNotification) {
-            playerScopeMain.launch {
-                if (hasMedia()) {
-                    val isPlaying = vlcPlayer?.state != VLCMediaPlayerState.VLCMediaPlayerStatePaused
-                    viewmodel.playerManager.isNowPlaying.value = isPlaying // Just to inform UI
+            if (runBlocking { hasMedia() }) {
+                val isPlaying = vlcPlayer?.state != VLCMediaPlayerState.VLCMediaPlayerStatePaused
+                viewmodel.playerManager.isNowPlaying.value = isPlaying // Just to inform UI
 
-                    // Tell server about playback state change
-                    if (!viewmodel.isSoloMode) {
-                        viewmodel.actionManager.sendPlayback(isPlaying)
-                    }
+                // Tell server about playback state change
+                if (!viewmodel.isSoloMode) {
+                    viewmodel.actionManager.sendPlayback(isPlaying)
+                }
 
-                    if (vlcPlayer?.state == VLCMediaPlayerState.VLCMediaPlayerStateEnded) {
-                        onPlaybackEnded()
-                    }
+                if (vlcPlayer?.state == VLCMediaPlayerState.VLCMediaPlayerStateEnded) {
+                    onPlaybackEnded()
                 }
             }
         }

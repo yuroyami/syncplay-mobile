@@ -295,6 +295,7 @@ abstract class BasePlayer(
      */
     abstract suspend fun play()
 
+
     /**
      * Checks whether the current media supports seeking.
      *
@@ -374,6 +375,8 @@ abstract class BasePlayer(
      * Notifies other users in the room about the loaded file.
      */
     fun announceFileLoaded() {
+        if (viewmodel.isSoloMode) return
+
         viewmodel.networkManager.sendAsync<PacketOut.File> {
             media = viewmodel.media
         }

@@ -484,6 +484,6 @@ if (!exoOnly) {
 buildConfig {
     buildConfigField("APP_VERSION", verString)
     buildConfigField("IS_DEBUG", true)
-    buildConfigField("DEBUG_PROTOCOL_IN_OUT", false)
+    buildConfigField("DEBUG_PROTOCOL_IN_OUT", true)
     buildConfigField("EXOPLAYER_ONLY", exoOnly)
 }

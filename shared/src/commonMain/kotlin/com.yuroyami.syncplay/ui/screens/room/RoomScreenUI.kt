@@ -1,9 +1,5 @@
 package com.yuroyami.syncplay.ui.screens.room
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.keyframes
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -56,7 +52,6 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
 
     val soloMode = remember { viewmodel.isSoloMode }
     val hasVideo by viewmodel.playerManager.hasVideo.collectAsState(initial = false)
-    val isHUDVisible by viewmodel.uiManager.visibleHUD.collectAsState()
     val isInPipMode by viewmodel.uiManager.hasEnteredPipMode.collectAsState()
 
     val cardController = remember { CardController() }
@@ -87,12 +82,8 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                 /* Gesture Interceptor for playback control */
                 RoomGestureInterceptor(modifier = Modifier.fillMaxSize())
 
-                AnimatedVisibility(
-                    modifier = Modifier.fillMaxSize(),
-                    visible = isHUDVisible,
-                    enter = fadeIn(animationSpec = keyframes { durationMillis = 75 }),
-                    exit = fadeOut(animationSpec = keyframes { durationMillis = 75 })
-                ) {
+                val isHUDVisible by viewmodel.uiManager.visibleHUD.collectAsState()
+                if (isHUDVisible) {
                     Box(modifier = Modifier.fillMaxSize()) {
                         if (hasVideo) {
                             BlackContrastUnderlay()

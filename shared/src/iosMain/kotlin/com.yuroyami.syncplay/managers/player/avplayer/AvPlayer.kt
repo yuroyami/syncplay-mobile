@@ -9,6 +9,7 @@ import com.yuroyami.syncplay.managers.player.ApplePlayerEngine
 import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
+import com.yuroyami.syncplay.models.MediaFileLocation
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
@@ -382,11 +383,11 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
         */
     }
 
-    override suspend fun injectVideoFileImpl(media: MediaFile) {
+    override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
         TODO("Not yet implemented")
     }
 
-    override suspend fun injectVideoURLImpl(media: MediaFile) {
+    override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
         TODO("Not yet implemented")
     }
 

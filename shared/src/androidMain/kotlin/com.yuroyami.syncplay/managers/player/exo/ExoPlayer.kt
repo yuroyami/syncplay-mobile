@@ -441,7 +441,7 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         exoplayer?.setMediaItem(vid)
     }
 
-    override fun parseMedia(media: MediaFile) {
+    override suspend fun parseMedia(media: MediaFile) {
         exoplayer?.prepare()
         exoplayer?.duration?.let { playerManager.timeFullMillis.value = if (it < 0) 0 else it }
         super.parseMedia(media)

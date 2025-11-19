@@ -241,7 +241,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                     detectVerticalDragGestures(
                         onDragStart = {
                             initialBrightness = platformCallback.getCurrentBrightness()
-                            initialVolume = viewmodel.player.getCurrentVolume() ?: return@detectVerticalDragGestures
+                            initialVolume = viewmodel.player.getCurrentVolume()
                             lastBrightness = initialBrightness
                             lastVolume = initialVolume
                         },

@@ -82,6 +82,8 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
      * @throws Exception if connection fails (caught and triggers onConnectionFailed callback)
      */
     open suspend fun connect() {
+        if (viewmodel.isSoloMode) return
+
         terminateExistingConnection()
 
         /** Informing UI controllers that we are starting a connection attempt */

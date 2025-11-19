@@ -44,7 +44,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.ui.components.FlexibleText
 import com.yuroyami.syncplay.ui.components.gradientOverlay
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
@@ -61,11 +60,7 @@ fun RoomSeekbar(modifier: Modifier) {
     val chapters = remember(viewmodel.media?.fileName) { viewmodel.media?.chapters ?: emptyList() }
 
     LaunchedEffect(viewmodel.media?.fileName) {
-        viewmodel.viewModelScope.launch {
-            viewmodel.player?.analyzeChapters(
-                viewmodel.media ?: return@launch
-            )
-        }
+        //TODO viewmodel.player.analyzeChapters(viewmodel.media ?: return@LaunchedEffect)
     }
 
     var sliderValue by remember { mutableFloatStateOf(0f) }
