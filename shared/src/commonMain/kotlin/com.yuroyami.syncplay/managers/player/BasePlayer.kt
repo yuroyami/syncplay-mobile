@@ -4,6 +4,8 @@ import androidx.annotation.CallSuper
 import androidx.annotation.UiThread
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.yuroyami.syncplay.managers.preferences.Preferences.SUBTITLE_SIZE
+import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import com.yuroyami.syncplay.managers.settings.SettingCategory
 import com.yuroyami.syncplay.models.Chapter
@@ -269,7 +271,7 @@ abstract class BasePlayer(
         }
     }
 
-    open fun parseMedia(media: MediaFile) {
+    open suspend fun parseMedia(media: MediaFile) {
         playerManager.media.value = media
 
         /* Finally, show a a toast to the user that the media file has been added */
@@ -278,6 +280,8 @@ abstract class BasePlayer(
         }
 
         announceFileLoaded()
+
+        changeSubtitleSize(SUBTITLE_SIZE.value())
     }
 
 
