@@ -31,9 +31,10 @@ import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.managers.settings.SettingCategory
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
+import com.yuroyami.syncplay.models.MediaFileLocation
 import com.yuroyami.syncplay.models.Track
-import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timestampFromMillis
+import com.yuroyami.syncplay.utils.uri
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.path
@@ -303,17 +304,16 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         }
     }
 
-    override suspend fun injectVideoImpl(media: MediaFile, isUrl: Boolean) {
-        withContext(Dispatchers.Main.immediate) {
-            delay(500)
-            media.uri?.let { uri ->
-                val finalUri = if (isUrl) uri.path else ctx.resolveUri(uri.path.toUri())
-                finalUri?.let {
-                    loggy("Final path $it")
-                    mpvView.playFile(it)
-                }
-            }
+    override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
+        delay(500)
+        ctx.resolveUri(location.file.uri)?.let {
+            mpvView.playFile(it)
         }
+    }
+
+    override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
+        delay(500)
+        mpvView.playFile(location.url)
     }
 
     override suspend fun pause() {

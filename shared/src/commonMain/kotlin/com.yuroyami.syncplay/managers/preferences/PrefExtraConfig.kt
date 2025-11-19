@@ -2,6 +2,7 @@ package com.yuroyami.syncplay.managers.preferences
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import com.yuroyami.syncplay.viewmodels.SyncplayViewmodel
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.compose.resources.StringResource
 
@@ -18,7 +19,7 @@ sealed interface PrefExtraConfig {
     data class Slider(
         val maxValue: Int = 100,
         val minValue: Int = 0,
-        val onValueChanged: ((newValue: Int) -> Unit)? = null
+        val onValueChanged: (suspend SyncplayViewmodel.(newValue: Int) -> Unit)? = null
     ) : PrefExtraConfig
 
     data class MultiChoice(

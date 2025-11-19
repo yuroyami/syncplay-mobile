@@ -142,3 +142,6 @@ expect fun HideSystemBars()
  */
 @Composable
 expect fun ShowSystemBars()
+
+
+expect fun <T : Any> WeakRef<T>?.get(): T?

@@ -46,6 +46,7 @@ import com.yuroyami.syncplay.ui.components.MultiChoiceDialog
 import com.yuroyami.syncplay.ui.components.sairaFont
 import com.yuroyami.syncplay.ui.components.solidOverlay
 import com.yuroyami.syncplay.ui.popups.PopupColorPicker.ColorPickingPopup
+import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
 import com.yuroyami.syncplay.ui.screens.adam.LocalSettingStyling
 import com.yuroyami.syncplay.ui.screens.home.HomeTextField
 import com.yuroyami.syncplay.ui.screens.theme.Theming
@@ -61,6 +62,8 @@ import kotlin.math.roundToInt
 
 @Composable
 inline fun <reified T> Pref<T>.SettingComposable() {
+    val viewmodel = LocalGlobalViewmodel.current
+
     val scope = rememberCoroutineScope { Dispatchers.IO }
     val styling = LocalSettingStyling.current
 
@@ -133,7 +136,7 @@ inline fun <reified T> Pref<T>.SettingComposable() {
                     text = stringResource(config!!.summary),
                     color = MaterialTheme.colorScheme.outline,
                     style = TextStyle(
-                        shadow = Shadow(color = Color.Black, offset = Offset(1f,1f), blurRadius = 2f)
+                        shadow = Shadow(color = Color.Black, offset = Offset(1f, 1f), blurRadius = 2f)
                     ),
                     fontSize = styling.summarySize.sp,
                     lineHeight = (styling.summarySize + 2).sp
@@ -203,11 +206,11 @@ inline fun <reified T> Pref<T>.SettingComposable() {
                     enabled = isEnabled,
                     valueRange = (sliderConfig.minValue.toFloat())..(sliderConfig.maxValue.toFloat()),
                     onValueChange = { f ->
-                        if (f != (value as Int).toFloat()) {
-                            sliderConfig.onValueChanged?.invoke(f.roundToInt())
-                        }
-
                         scope.launch {
+                            if (f != (value as Int).toFloat()) {
+                                sliderConfig.onValueChanged?.invoke(viewmodel, f.roundToInt())
+                            }
+
                             set(f.roundToInt() as T)
                         }
                     },

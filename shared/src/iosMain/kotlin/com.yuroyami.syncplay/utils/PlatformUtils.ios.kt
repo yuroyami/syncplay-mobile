@@ -131,3 +131,4 @@ actual typealias WeakRef<T> = WeakReference<T>
 actual fun <T : Any> createWeakRef(obj: T): WeakRef<T> {
     return WeakReference(obj)
 }
+actual fun <T : Any> WeakRef<T>?.get(): T? = this?.get()

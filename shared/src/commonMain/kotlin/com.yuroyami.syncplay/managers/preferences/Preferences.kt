@@ -48,6 +48,7 @@ import com.yuroyami.syncplay.ui.screens.theme.defaultTheme
 import com.yuroyami.syncplay.utils.PLATFORM
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.generateTimestampMillis
+import com.yuroyami.syncplay.utils.get
 import com.yuroyami.syncplay.utils.logFile
 import com.yuroyami.syncplay.utils.platform
 import com.yuroyami.syncplay.utils.platformCallback
@@ -412,9 +413,12 @@ object Preferences {
         summary = Res.string.uisetting_subtitle_size_summary
         icon = Icons.Filled.SortByAlpha
 
-        extraConfig = PrefExtraConfig.Slider(maxValue = 200, minValue = 2, onValueChanged = {
-            //TODO viewmodel?.player?.changeSubtitleSize(v)
-        })
+        extraConfig = PrefExtraConfig.Slider(
+            maxValue = 200, minValue = 2,
+            onValueChanged = { v ->
+                roomWeakRef?.get()?.player?.changeSubtitleSize(v)
+            }
+        )
     }
 
     val AUDIO_DELAY = Pref("pref_inroom_audio_delay", 0) {
@@ -437,7 +441,8 @@ object Preferences {
         summary = Res.string.uisetting_custom_seek_amount_summary
         icon = Icons.Filled.Update
 
-        extraConfig = PrefExtraConfig.Slider(maxValue = 300, minValue = 30) }
+        extraConfig = PrefExtraConfig.Slider(maxValue = 300, minValue = 30)
+    }
     val CUSTOM_SEEK_FRONT = Pref("pref_inroom_custom_seek_front", true) {
         title = Res.string.uisetting_custom_seek_front_title
         summary = Res.string.uisetting_custom_seek_front_summary

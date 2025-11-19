@@ -34,9 +34,6 @@ data class MediaFile(
     var subtitleTracks: MutableList<Track> = mutableListOf(),
     val chapters: MutableList<Chapter> = mutableListOf(),
 
-    /** This refers to any external subtitle file that was loaded **/
-    var externalSub: Any? = null,
-
     /** MediaInfo chart for this file **/
     var mediainfo: MediaInfo = MediaInfo()
 ) {

@@ -10,6 +10,7 @@ import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.MediaFile.Companion.mediaFromFile
 import com.yuroyami.syncplay.models.MediaFile.Companion.mediaFromUrl
+import com.yuroyami.syncplay.models.MediaFileLocation
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
@@ -247,11 +248,11 @@ abstract class BasePlayer(
         }
     }
 
-    abstract suspend fun injectVideoURLImpl(media: MediaFile)
-    abstract suspend fun injectVideoFileImpl(media: MediaFile)
+    abstract suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote)
+    abstract suspend fun injectVideoFileImpl(location: MediaFileLocation.Local)
 
-    suspend fun injectVideoURL(url: String) = inject(url, { it.mediaFromUrl() }) { injectVideoURLImpl(it) }
-    suspend fun injectVideoFile(file: PlatformFile) = inject(file, { it.mediaFromFile() }) { injectVideoFileImpl(it) }
+    suspend fun injectVideoURL(url: String) = inject(url, { it.mediaFromUrl() }) { injectVideoURLImpl(it.location as MediaFileLocation.Remote) }
+    suspend fun injectVideoFile(file: PlatformFile) = inject(file, { it.mediaFromFile() }) { injectVideoFileImpl(it.location as MediaFileLocation.Local) }
 
     private suspend inline fun <T> inject(source: T, crossinline toMedia: suspend (T) -> MediaFile, crossinline impl: suspend (MediaFile) -> Unit) {
         val media = toMedia(source)
@@ -432,4 +433,6 @@ abstract class BasePlayer(
         playerTrackerJob
     }
 
+
+    open suspend fun reloadVideo() {}
 }

@@ -46,13 +46,14 @@ import com.yuroyami.syncplay.managers.preferences.Preferences.EXO_SEEK_BUFFER
 import com.yuroyami.syncplay.managers.settings.SettingCategory
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
+import com.yuroyami.syncplay.models.MediaFileLocation
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.utils.contextObtainer
 import com.yuroyami.syncplay.utils.loggy
+import com.yuroyami.syncplay.utils.uri
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.dialogs.toAndroidUri
-import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -388,10 +389,12 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         }
     }
 
+    var externalSub: MediaItem.SubtitleConfiguration? = null
+
     override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
         val authority = "${contextObtainer().packageName}.fileprovider"
 
-        viewmodel.media?.externalSub = MediaItem.SubtitleConfiguration.Builder(uri.toAndroidUri(authority))
+        externalSub = MediaItem.SubtitleConfiguration.Builder(uri.toAndroidUri(authority))
             .setUri(uri.toAndroidUri(authority))
             .setMimeType(extension.mimeType)
             .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
@@ -399,7 +402,7 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
 
         withContext(Dispatchers.Main.immediate) {
             //Exo requires that we reload the video
-            injectVideo(uri)
+            reloadVideo()
         }
     }
 
@@ -412,27 +415,44 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
             else -> ""
         }
 
-    override suspend fun injectVideoImpl(media: MediaFile, isUrl: Boolean) {
+    override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
         if (!isInitialized) return
 
-        /* This is the builder responsible for building a MediaItem component for ExoPlayer **/
         val vid = MediaItem.Builder()
-            .setUri(media.uri?.path)
-            .setMediaId(media.uri.toString())
-            .apply {
-                setSubtitleConfigurations(
-                    Collections.singletonList(
-                        media.externalSub as? MediaItem.SubtitleConfiguration ?: return@apply
-                    )
-                )
+            .setUri(location.file.uri)
+            .setMediaId(location.file.uri.toString())
+            .run {
+                if (externalSub != null) setSubtitleConfigurations(Collections.singletonList(externalSub!!)) else this
             }
             .build()
 
-        /* Injecting it into ExoPlayer and getting relevant info **/
-        exoplayer?.setMediaItem(vid) /* This loads the media into ExoPlayer **/
-        exoplayer?.prepare() /* This prepares it and makes the first frame visible */
+        exoplayer?.setMediaItem(vid)
+    }
 
+    override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
+        val vid = MediaItem.Builder()
+            .setUri(location.url)
+            .setMediaId(location.url)
+            .run {
+                if (externalSub != null) setSubtitleConfigurations(Collections.singletonList(externalSub!!)) else this
+            }
+            .build()
+
+        exoplayer?.setMediaItem(vid)
+    }
+
+    override fun parseMedia(media: MediaFile) {
+        exoplayer?.prepare()
         exoplayer?.duration?.let { playerManager.timeFullMillis.value = if (it < 0) 0 else it }
+        super.parseMedia(media)
+    }
+
+    override suspend fun reloadVideo() {
+        val mediaLoc = viewmodel.media?.location ?: return
+        when (mediaLoc) {
+            is MediaFileLocation.Local -> injectVideoFile(mediaLoc.file)
+            is MediaFileLocation.Remote -> injectVideoURL(mediaLoc.url)
+        }
     }
 
     override suspend fun pause() {

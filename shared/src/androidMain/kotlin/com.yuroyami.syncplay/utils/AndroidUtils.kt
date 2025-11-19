@@ -2,6 +2,7 @@ package com.yuroyami.syncplay.utils
 
 import android.content.Context
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Build
 import android.view.View
 import android.view.WindowManager
@@ -17,6 +18,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.yuroyami.syncplay.SyncplayActivity
 import com.yuroyami.syncplay.managers.preferences.createDataStore
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.dialogs.toAndroidUri
 import java.util.Locale
 
 /**
@@ -184,3 +187,6 @@ fun ComponentActivity.applyActivityUiProperties() {
     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     WindowCompat.setDecorFitsSystemWindows(window, false)
 }
+
+val PlatformFile.uri: Uri
+    get() = toAndroidUri(contextObtainer().packageName+".provider")

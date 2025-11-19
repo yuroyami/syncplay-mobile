@@ -9,14 +9,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.net.toUri
 import androidx.media3.common.C.STREAM_TYPE_MUSIC
 import com.yuroyami.syncplay.databinding.VlcviewBinding
 import com.yuroyami.syncplay.managers.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
+import com.yuroyami.syncplay.models.MediaFileLocation
 import com.yuroyami.syncplay.utils.contextObtainer
+import com.yuroyami.syncplay.utils.uri
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.path
@@ -51,7 +52,9 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     override val supportsChapters: Boolean
         get() = true
 
-    override val trackerJobInterval: Duration = 50.milliseconds
+    override val trackerJobInterval: Duration = 200.milliseconds
+
+    //TODO CHANGE HOW TIME IS TRACKED
 
     @UiThread
     override fun initialize() {
@@ -240,29 +243,28 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
 
     override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
         withContext(Dispatchers.Main.immediate) {
-            vlcPlayer?.addSlave(
-                IMedia.Slave.Type.Subtitle, uri.path, true
-            )
-            //todo: catch specific error
+            try {
+                vlcPlayer?.addSlave(
+                    IMedia.Slave.Type.Subtitle, uri.path, true
+                )
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
-    override suspend fun injectVideoImpl(media: MediaFile, isUrl: Boolean) {
-        withContext(Dispatchers.Main.immediate) {
-            delay(500)
-            media.uri?.path?.toUri()?.let { uri ->
-                if (isUrl) {
-                    vlcPlayer?.play(uri)
-                } else {
-                    val desc = contextObtainer().contentResolver.openFileDescriptor(uri, "r")
-                    val media = Media(libvlc, desc?.fileDescriptor)
-                    media.parse()
-                    //todo: global property to switch hw/sw
-                    vlcPlayer?.play(media)
-                    vlcMedia = media
-                }
-            }
-        }
+    override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
+        delay(500)
+        val desc = contextObtainer().contentResolver.openFileDescriptor(location.file.uri, "r")
+        val media = Media(libvlc, desc?.fileDescriptor)
+        media.parse()
+        //todo: global property to switch hw/sw
+        vlcPlayer?.play(media)
+        vlcMedia = media
+    }
+
+    override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
+        vlcPlayer?.play(location.url)
     }
 
     override suspend fun pause() {
