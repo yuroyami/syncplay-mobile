@@ -23,6 +23,17 @@
     <img alt="Syncplay Android on Google Play store" title="Syncplay Android" src="https://i0.wp.com/reefcentral.pt/wp-content/uploads/2019/04/get-on-google-play.png?fit=564%2C168&ssl=1" width="150">
   </a>
 </p>
+<p align="center" style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; align-items: center;">
+  <a href="https://celloserenity.github.io/altdirect/?url=https://raw.githubusercontent.com/yuroyami/syncplay-mobile/refs/heads/master/altstore_yuroyami.json&exclude=sidestore,livecontainer,feather" target="_blank" style="display: flex; align-items: center; gap: 5px;">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="iOS" width="20">
+    <img src="https://github.com/CelloSerenity/altdirect/blob/main/assets/png/AltSource_Blue.png?raw=true" alt="Add AltSource" width="150">
+  </a>
+
+  <a href="https://example.com/app.ipa" target="_blank" style="display: flex; align-items: center; gap: 5px;">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="iOS" width="20">
+    <img src="https://github.com/CelloSerenity/altdirect/blob/main/assets/png/Download_Blue.png?raw=true" alt="Download .ipa" width="150">
+  </a>
+</p>
 <p align="center">Syncplay comes bundled with multiple built-in video players on both platforms.<br> More info is available throughout this readme.<br>Note: The IzzyOnDroid Android release only contains ExoPlayer
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->  
