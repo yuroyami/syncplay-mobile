@@ -28,7 +28,6 @@ import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.toKString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import platform.AVFoundation.AVPlayerLayer
 import platform.Foundation.NSArray
@@ -237,7 +236,7 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
                         override val name = name.toString()
                         override val index = index as? Int ?: 0
                         override val type = TRACKTYPE.SUBTITLE
-                        override val selected = mutableStateOf(vlcPlayer!!.currentAudioTrackIndex == index)
+                        override val selected = mutableStateOf(vlcPlayer!!.currentVideoSubTitleIndex == index)
                     }
                 )
             }
@@ -533,17 +532,19 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
          * @param aNotification Notification containing state change information
          */
         override fun mediaPlayerStateChanged(aNotification: NSNotification) {
-            if (runBlocking { hasMedia() }) {
-                val isPlaying = vlcPlayer?.state != VLCMediaPlayerState.VLCMediaPlayerStatePaused
-                viewmodel.playerManager.isNowPlaying.value = isPlaying // Just to inform UI
+            playerScopeMain.launch {
+                if (hasMedia()) {
+                    val isPlaying = vlcPlayer?.state != VLCMediaPlayerState.VLCMediaPlayerStatePaused
+                    viewmodel.playerManager.isNowPlaying.value = isPlaying // Just to inform UI
 
-                // Tell server about playback state change
-                if (!viewmodel.isSoloMode) {
-                    viewmodel.actionManager.sendPlayback(isPlaying)
-                }
+                    // Tell server about playback state change
+                    if (!viewmodel.isSoloMode) {
+                        viewmodel.actionManager.sendPlayback(isPlaying)
+                    }
 
-                if (vlcPlayer?.state == VLCMediaPlayerState.VLCMediaPlayerStateEnded) {
-                    onPlaybackEnded()
+                    if (vlcPlayer?.state == VLCMediaPlayerState.VLCMediaPlayerStateEnded) {
+                        onPlaybackEnded()
+                    }
                 }
             }
         }
