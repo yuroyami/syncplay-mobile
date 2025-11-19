@@ -1,11 +1,11 @@
 {
-  "name": "Yuroyami apps",
+  "name": "yuroyami dev",
   "subtitle": "Making life easier with free apps",
   "description": "My apps are always multiplatform. You can find them on Android and iOS (and some other times, even on Desktop)",
   "iconURL": "https://github.com/yuroyami/syncplay-mobile/blob/master/art/LOGO.png",
-  "website": "https://github.com/yuroyami/syncplay-mobile",
-  "patreonURL": "https://patreon.com/yuroyami",
-  "tintColor": "#6156e2",
+  "headerURL": "",
+  "website": "https://github.com/yuroyami",
+  "tintColor": "#ffd700",
   "featuredApps": [
     "com.yuroyami.syncplay.iosApplication"
   ],
@@ -18,6 +18,7 @@
       "localizedDescription": "Unofficial Syncplay client app for Android and iOS. Watch stuff in sync with your friends. Works well with Syncplay on PC. Fully written in Kotlin and Compose multiplatform.",
       "iconURL": "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/LOGO.png",
       "tintColor": "#f72800",
+      "patreonURL": "",
       "category": "entertainment",
       "screenshots": [
       ],
@@ -33,7 +34,7 @@
         }
       ],
       "appPermissions": {
-        "entitlements": [],
+        "entitlements": ["audio"],
         "privacy": {
         }
       },
