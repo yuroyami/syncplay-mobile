@@ -7,17 +7,20 @@
 <p align="center">  
   <b> Syncplay - The Unofficial Mobile Client (for Android and iOS) </b>  
 </p>  
-<p align="center">  
-  <a href="https://github.com/yuroyami/syncplay-mobile/releases/latest">  
-    <img alt="Syncplay Android on GitHub releases" title="Syncplay Android" src="https://raw.githubusercontent.com/flocke/andOTP/master/assets/badges/get-it-on-github.png" width="200">  
-  </a>  
-  <a href="https://apt.izzysoft.de/fdroid/index/apk/com.reddnek.syncplay">  
-    <img alt="Syncplay Android on IzzyOnDroid Repo" title="Syncplay Android" src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" width="200">  
-  </a>  
-</p>
-<p align="center">  
-  <a href="https://play.google.com/store/apps/details?id=com.yuroyami.syncplay">  
-    <img alt="Syncplay Android on Google Play store" title="Syncplay Android" src="https://i0.wp.com/reefcentral.pt/wp-content/uploads/2019/04/get-on-google-play.png?fit=564%2C168&ssl=1" width="200">  
+<p align="center" style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; align-items: center;">
+  <a href="https://github.com/yuroyami/syncplay-mobile/releases/latest" style="display: flex; align-items: center; gap: 5px;">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/d/d7/Android_robot.svg" alt="Android" width="20">
+    <img alt="Syncplay Android on GitHub releases" title="Syncplay Android" src="https://raw.githubusercontent.com/flocke/andOTP/master/assets/badges/get-it-on-github.png" width="150">
+  </a>
+
+  <a href="https://apt.izzysoft.de/fdroid/index/apk/com.reddnek.syncplay" style="display: flex; align-items: center; gap: 5px;">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/d/d7/Android_robot.svg" alt="Android" width="20">
+    <img alt="Syncplay Android on IzzyOnDroid Repo" title="Syncplay Android" src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" width="150">
+  </a>
+
+  <a href="https://play.google.com/store/apps/details?id=com.yuroyami.syncplay" style="display: flex; align-items: center; gap: 5px;">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/d/d7/Android_robot.svg" alt="Android" width="20">
+    <img alt="Syncplay Android on Google Play store" title="Syncplay Android" src="https://i0.wp.com/reefcentral.pt/wp-content/uploads/2019/04/get-on-google-play.png?fit=564%2C168&ssl=1" width="150">
   </a>
 </p>
 <p align="center">Syncplay comes bundled with multiple built-in video players on both platforms.<br> More info is available throughout this readme.<br>Note: The IzzyOnDroid Android release only contains ExoPlayer
