@@ -386,7 +386,7 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
         TODO("Not yet implemented")
     }
 
-    override fun injectVideoURLImpl(media: MediaFile) {
+    override suspend fun injectVideoURLImpl(media: MediaFile) {
         TODO("Not yet implemented")
     }
 

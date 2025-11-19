@@ -508,7 +508,7 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         override fun mediaPlayerStateChanged(aNotification: NSNotification) {
             playerScopeMain.launch {
                 if (hasMedia()) {
-                    val isPlaying = vlcPlayer?.state == VLCMediaPlayerState.VLCMediaPlayerStatePaused
+                    val isPlaying = vlcPlayer?.state != VLCMediaPlayerState.VLCMediaPlayerStatePaused
                     viewmodel.playerManager.isNowPlaying.value = isPlaying // Just to inform UI
 
                     // Tell server about playback state change
