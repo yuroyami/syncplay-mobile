@@ -2,6 +2,7 @@ package com.yuroyami.syncplay.utils
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import com.yuroyami.syncplay.managers.preferences.Preferences.SYNCPLAY_PREFS
 import com.yuroyami.syncplay.managers.preferences.createDataStore
 import com.yuroyami.syncplay.managers.preferences.datastore
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -26,6 +27,6 @@ fun dataStore(fileName: String): DataStore<Preferences> = createDataStore(
 
 fun initializeDS() {
     runCatching {
-        datastore = dataStore(DataStoreKeys.SYNCPLAY_PREFS)
+        datastore = dataStore(SYNCPLAY_PREFS)
     }
 }

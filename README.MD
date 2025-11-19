@@ -43,14 +43,14 @@
 ## Introduction
 
 [![OS - Android](https://img.shields.io/badge/Android-a4c639?style=for-the-badge&logo=android)]()[![OS - iOS](https://img.shields.io/badge/iOS-555555?style=for-the-badge&logo=apple)]()<br>
-[![Version Release](https://img.shields.io/badge/Version-0.15.0.beta-e2203c?style=for-the-badge&logo=v)]()[![Written Language](https://img.shields.io/badge/Made%20with-Kotlin-lightgrey?style=for-the-badge&logo=kotlin)]()[![is Maintained?](https://img.shields.io/badge/Maintained-YES-green?style=for-the-badge)]()[![License](https://img.shields.io/badge/License-AGPL--3.0-brightgreen?style=for-the-badge)]()[![Requirement](https://img.shields.io/badge/REQUIREMENT-Android%205.0%20and%20later-blueviolet?style=for-the-badge&logo=android%20studio)]()[![Requirement](https://img.shields.io/badge/REQUIREMENT-iOS%2014.0%20and%20later-blueviolet?style=for-the-badge&logo=xcode)]()
+[![Version Release](https://img.shields.io/badge/Version-0.16.0-e2203c?style=for-the-badge&logo=v)]()[![Written Language](https://img.shields.io/badge/Made%20with-Kotlin-lightgrey?style=for-the-badge&logo=kotlin)]()[![is Maintained?](https://img.shields.io/badge/Maintained-YES-green?style=for-the-badge)]()[![License](https://img.shields.io/badge/License-AGPL--3.0-brightgreen?style=for-the-badge)]()[![Requirement](https://img.shields.io/badge/REQUIREMENT-Android%207.0%20and%20later-blueviolet?style=for-the-badge&logo=android%20studio)]()[![Requirement](https://img.shields.io/badge/REQUIREMENT-iOS%2014.0%20and%20later-blueviolet?style=for-the-badge&logo=xcode)]()
 
 Syncplay Mobile is a unofficial Syncplay client brings the remarkable functionality of Syncplay PC client to the mobile platforms (Android and iOS). You can synchronize media playback with your friends, allowing you to watch videos together, even
 when you're physically apart.
 
 It includes real-time chat functionality, enabling seamless communication while enjoying synchronized playback on your Android or iOS device. You can use Syncplay Mobile with your friends who also use Syncplay Mobile, or Syncplay on PC.
 
-**Requires at least Android 5.0 Lollipop or iOS 14.0**
+**Requires at least Android 7.0 Nougat or iOS 14.0**
 
 <p align="center">  
   <img src = "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS1.png" width=150 alt="">  
@@ -64,7 +64,7 @@ It includes real-time chat functionality, enabling seamless communication while 
 * Bundled with multiple video players with varying capabilities.
 * Real-time colorful chat functionality, including support for emojis.
 * Extensive range of settings and preferences for customization.
-* Multi-language support (Currently available in English, Chinese, French and Arabic, with more languages coming soon).
+* Multi-language support.
 
 <p align="center">  
   <img src = "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS2.png" width="30%" alt="">  
@@ -130,11 +130,11 @@ Some video players are more potent than others in certain areas. Here's a genera
 
 > If my friend uses Syncplay on PC, can I watch with them ?
 
-- Yes, you can. Syncplay Android is made to be interoperable.
+- Yes, you can. Syncplay Mobile is made to be interoperable with official Syncplay on PC because it implements the same protocol and the same servers and features.
 
 > On Android, I get an error saying "App not installed" upon installing the app. What's wrong ?
 
-- Uninstall the older version before installing the new one.
+- Seems like the app can't be updated. Freshly install it: Uninstall the older version before installing the new one.
 
 > Where is the iOS release ?
 
@@ -175,6 +175,8 @@ Thanks to [Et0h](https://www.github.com/Et0h/) for his amazing hard work on offi
 for lending a hand in our issues tracker section.
 
 Thanks to [soredake](https://www.github.com/soredake) for their thorough testing.
+
+Thanks to [Osanosa](https://www.github.com/Osanosa) for his valuable contributions.
 
 Thanks to everyone who contributed with translations for the app.
 

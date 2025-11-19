@@ -13,7 +13,7 @@ plugins {
     alias(libs.plugins.buildConfig)
 }
 
-val exoOnly = false
+val exoOnly = true
 val abiCodes = mapOf(
     "armeabi-v7a" to "armv7l",
     "arm64-v8a" to "arm64",
@@ -242,14 +242,18 @@ android {
         }
     }
 
-//    applicationVariants.all {
-//        outputs.all {
-//            val output = this as? com.android.build.gradle.internal.api.BaseVariantOutputImpl
-//            val abiFilter = output?.getFilter(com.android.build.OutputFile.ABI)
-//            val abiName = abiFilter ?: "universal"
-//            output?.outputFileName = "syncplay-${verString}-${abiName}.apk"
-//        }
-//    }
+    applicationVariants.all {
+        outputs.all {
+            val output = this as? com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            if (exoOnly) {
+                output?.outputFileName = "syncplay-${verString}-exo-only.apk"
+            } else {
+                val abiFilter = output?.getFilter(com.android.build.OutputFile.ABI)
+                val abiName = abiFilter ?: "universal"
+                output?.outputFileName = "syncplay-${verString}-full-${abiName}.apk"
+            }
+        }
+    }
 
     packaging {
         jniLibs.useLegacyPackaging = true

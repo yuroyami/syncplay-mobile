@@ -97,6 +97,7 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
             viewmodel.viewModelScope.launch {
                 viewmodel.player.injectVideo(it, false)
             }
+            showPopup = false
         }
     }
 
@@ -150,8 +151,8 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
                     }
                 },
                 onClick = {
-                    showPopup = false
                     videoPicker.launch()
+                    //showPopup = false
                 }
             )
 
