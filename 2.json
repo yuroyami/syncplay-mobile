@@ -7,12 +7,12 @@
   "patreonURL": "https://patreon.com/yuroyami",
   "tintColor": "#6156e2",
   "featuredApps": [
-    "com.yuroyami.syncplay"
+    "com.yuroyami.syncplay.iosApplication"
   ],
   "apps": [
     {
-      "name": "Syncplay",
-      "bundleIdentifier": "com.yuroyami.syncplay",
+      "name": "Syncplay for iOS",
+      "bundleIdentifier": "com.yuroyami.syncplay.iosApplication",
       "marketplaceID": "",
       "developerName": "yuroyami",
       "subtitle": "Watch videos with friends in sync.",
@@ -24,7 +24,7 @@
       ],
       "versions": [
         {
-          "downloadURL": "https://github.com/yuroyami/syncplay-mobile/releases/download/v0.16.0/syncplay-0.16.0-ios.ipa",
+          "downloadURL": "https://github.com/yuroyami/syncplay-mobile/releases/download/v0.16.0/syncplay_0.16.0_ios.ipa",
           "size": 68000000,
           "version": "0.16.0",
           "buildVersion": "0.16.0",
