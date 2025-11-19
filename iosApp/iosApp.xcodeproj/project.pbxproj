@@ -468,7 +468,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 0.16.0;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = 6GF83VF64P;
+				DEVELOPMENT_TEAM = B5573QN48P;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Syncplay;
@@ -479,7 +479,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.16.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.yuroyami.syncplay.iosApp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yuroyami.syncplay;
 				PRODUCT_NAME = "${TARGET_NAME}";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -495,7 +495,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 0.16.0;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = 6GF83VF64P;
+				DEVELOPMENT_TEAM = B5573QN48P;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Syncplay;
@@ -506,7 +506,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.16.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.yuroyami.syncplay.iosApp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yuroyami.syncplay;
 				PRODUCT_NAME = "${TARGET_NAME}";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
