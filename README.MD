@@ -29,7 +29,7 @@
     <img src="https://github.com/CelloSerenity/altdirect/blob/main/assets/png/AltSource_Blue.png?raw=true" alt="Add AltSource" width="150">
   </a>
 
-  <a href="https://example.com/app.ipa" target="_blank" style="display: flex; align-items: center; gap: 5px;">
+  <a href="https://github.com/yuroyami/syncplay-mobile/releases/download/v0.16.0/syncplay-0.16.0-ios.ipa" target="_blank" style="display: flex; align-items: center; gap: 5px;">
     <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="iOS" width="20">
     <img src="https://github.com/CelloSerenity/altdirect/blob/main/assets/png/Download_Blue.png?raw=true" alt="Download .ipa" width="150">
   </a>
