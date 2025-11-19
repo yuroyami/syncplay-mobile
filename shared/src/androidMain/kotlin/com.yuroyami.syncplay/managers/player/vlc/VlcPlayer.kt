@@ -18,6 +18,8 @@ import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.utils.contextObtainer
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -236,10 +238,10 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         }
     }
 
-    override suspend fun loadExternalSubImpl(uri: String, extension: String) {
+    override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
         withContext(Dispatchers.Main.immediate) {
             vlcPlayer?.addSlave(
-                IMedia.Slave.Type.Subtitle, uri, true
+                IMedia.Slave.Type.Subtitle, uri.path, true
             )
             //todo: catch specific error
         }
@@ -248,7 +250,7 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     override suspend fun injectVideoImpl(media: MediaFile, isUrl: Boolean) {
         withContext(Dispatchers.Main.immediate) {
             delay(500)
-            media.uri?.toUri()?.let { uri ->
+            media.uri?.path?.toUri()?.let { uri ->
                 if (isUrl) {
                     vlcPlayer?.play(uri)
                 } else {

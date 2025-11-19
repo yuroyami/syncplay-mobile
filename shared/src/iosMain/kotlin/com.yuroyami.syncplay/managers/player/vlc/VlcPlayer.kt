@@ -16,12 +16,13 @@ import com.yuroyami.syncplay.managers.player.ApplePlayerEngine
 import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
+import com.yuroyami.syncplay.models.MediaFileLocation
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
+import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.toKString
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import platform.AVFoundation.AVLayerVideoGravityResizeAspect
 import platform.AVFoundation.AVPlayerLayer
@@ -318,49 +319,39 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
      * @param uri The file URI or URL of the subtitle
      * @param extension The subtitle file extension (unused by VLC)
      */
-    override suspend fun loadExternalSubImpl(uri: String, extension: String) {
+    override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
         if (!isInitialized) return
 
         vlcPlayer?.addPlaybackSlave(
-            NSURL.URLWithString(uri)!!,
+            uri.nsUrl,
             VLCMediaPlaybackSlaveTypeSubtitle,
             true
         )
     }
 
-    /**
-     * Loads and prepares a media file for playback.
-     *
-     * Creates a VLCMedia object from either a URL or local file path,
-     * parses the media to extract duration, and declares it to the server.
-     *
-     * @param media The media file to load
-     * @param isUrl Whether the URI is a remote URL or local file path
-     */
-    override suspend fun injectVideoImpl(media: MediaFile, isUrl: Boolean) {
-        if (!isInitialized) return
-
-        delay(500)
-
-        media.uri?.let {
-            vlcMedia = if (isUrl) {
-                VLCMedia(uRL = NSURL.URLWithString(it) ?: throw Exception())
-            } else {
-                VLCMedia(path = it)
-            }
-            vlcPlayer?.setMedia(vlcMedia)
-        }
-
+    override suspend fun injectVideoFileImpl(media: MediaFile) {
+        val loc = media.location as MediaFileLocation.Local
+        val nsUrl = loc.file.nsUrl
+        nsUrl.startAccessingSecurityScopedResource()
+        vlcMedia = VLCMedia(uRL = nsUrl)
+        vlcPlayer?.setMedia(vlcMedia)
         vlcMedia?.synchronousParse()
+    }
 
-        seekTo(0) //VLC retains video position for some reason
-
+    override fun parseMedia(media: MediaFile) {
         vlcMedia?.length?.numberValue?.doubleValue?.toLong()?.let {
-            playerManager.timeFullMillis.value = if (it < 0) 0 else it
-
-            playerManager.media.value?.fileDuration = playerManager.timeFullMillis.value / 1000.0
-            announceFileLoaded()
+            val dur = if (it < 0) 0 else it
+            playerManager.timeFullMillis.value = dur
+            media.fileDuration = dur / 1000.0
         }
+        super.parseMedia(media)
+    }
+
+    override suspend fun injectVideoURLImpl(media: MediaFile) {
+        val loc = media.location as MediaFileLocation.Remote
+        vlcMedia = NSURL.URLWithString(loc.url)?.let { VLCMedia(uRL = it) }
+        vlcPlayer?.setMedia(vlcMedia)
+        vlcMedia?.synchronousParse()
     }
 
     /**
@@ -517,16 +508,16 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         override fun mediaPlayerStateChanged(aNotification: NSNotification) {
             playerScopeMain.launch {
                 if (hasMedia()) {
-                    val isPlaying = vlcPlayer?.state != VLCMediaPlayerState.VLCMediaPlayerStatePaused
+                    val isPlaying = vlcPlayer?.state == VLCMediaPlayerState.VLCMediaPlayerStatePaused
                     viewmodel.playerManager.isNowPlaying.value = isPlaying // Just to inform UI
 
                     // Tell server about playback state change
                     if (!viewmodel.isSoloMode) {
                         viewmodel.actionManager.sendPlayback(isPlaying)
+                    }
 
-                        if (vlcPlayer?.state == VLCMediaPlayerState.VLCMediaPlayerStateEnded) {
-                            onPlaybackEnded()
-                        }
+                    if (vlcPlayer?.state == VLCMediaPlayerState.VLCMediaPlayerStateEnded) {
+                        onPlaybackEnded()
                     }
                 }
             }

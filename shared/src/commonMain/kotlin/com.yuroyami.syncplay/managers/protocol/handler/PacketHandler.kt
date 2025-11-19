@@ -1,5 +1,6 @@
 package com.yuroyami.syncplay.managers.protocol.handler
 
+import SyncplayMobile.shared.BuildConfig
 import com.yuroyami.syncplay.managers.protocol.ProtocolManager
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
@@ -96,7 +97,7 @@ class PacketHandler(
      * @throws SerializationException if the JSON is malformed or contains unknown message types
      */
     suspend fun parse(jsonString: String) {
-        loggy("**SERVER** $jsonString")
+        if (BuildConfig.DEBUG_PROTOCOL_IN_OUT) loggy("**SERVER** $jsonString")
 
         try {
             // Parse the JSON to determine message type

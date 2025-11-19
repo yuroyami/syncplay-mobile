@@ -1,7 +1,6 @@
 package com.yuroyami.syncplay.managers.protocol
 
 import com.yuroyami.syncplay.utils.generateTimestampMillis
-import com.yuroyami.syncplay.utils.loggy
 
 /**
  * Tracks network lag between you and the server.
@@ -43,32 +42,23 @@ class PingService {
     fun receiveMessage(timestamp: Long?, senderRtt: Double) {
         // Calculate current round-trip time
         rtt = (generateTimestampMillis() - (timestamp?.times(1000L) ?: return)) / 1000.0
-        loggy("Raw RTT calculated: $rtt seconds")
-
-        if (rtt < 0 || senderRtt < 0) {
-            loggy("Invalid RTT values - rtt: $rtt, senderRtt: $senderRtt")
-            return
-        }
+        if (rtt < 0 || senderRtt < 0) return
 
         // Initialize average on first ping
         if (avrRtt == 0.0) {
             avrRtt = rtt
-            loggy("Initial average RTT set: $avrRtt seconds")
         }
 
         // Smooth out the average using exponential moving average
         avrRtt = avrRtt * PING_MOVING_AVERAGE_WEIGHT + rtt * (1 - PING_MOVING_AVERAGE_WEIGHT)
-        loggy("Updated average RTT: $avrRtt seconds")
 
         // Calculate one-way delay
         // If server's RTT is lower, our upload is slower - add the difference
         forwardDelay = if (senderRtt < rtt) {
             val asymmetricDelay = avrRtt / 2 + (rtt - senderRtt)
-            loggy("Asymmetric network detected - forwardDelay: $asymmetricDelay seconds")
             asymmetricDelay
         } else {
             val symmetricDelay = avrRtt / 2
-            loggy("Symmetric network - forwardDelay: $symmetricDelay seconds")
             symmetricDelay
         }
     }

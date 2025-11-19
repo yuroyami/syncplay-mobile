@@ -26,6 +26,8 @@ import com.yuroyami.syncplay.managers.player.PlayerEngine
 import com.yuroyami.syncplay.managers.preferences.Preferences.NETWORK_ENGINE
 import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.path
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
@@ -108,8 +110,8 @@ actual fun getFolderName(uri: String): String? {
  * @param uri File URI as a string
  * @return The filename, or null if it cannot be determined
  */
-actual fun getFileName(uri: String): String? {
-    val actualuri = uri.toUri()
+actual fun getFileName(uri: PlatformFile): String? {
+    val actualuri = uri.path.toUri()
     val context = contextObtainer.invoke()
     return when (actualuri.scheme) {
         ContentResolver.SCHEME_CONTENT -> context.getContentFileName(actualuri)
@@ -125,9 +127,9 @@ actual fun getFileName(uri: String): String? {
  * @param uri File URI as a string
  * @return File size in bytes, or null if it cannot be determined
  */
-actual fun getFileSize(uri: String): Long? {
+actual fun getFileSize(uri: PlatformFile): Long? {
     val context = contextObtainer()
-    val df = DocumentFile.fromSingleUri(context, uri.toUri()) ?: return null
+    val df = DocumentFile.fromSingleUri(context, uri.path.toUri()) ?: return null
     return df.length()
 }
 

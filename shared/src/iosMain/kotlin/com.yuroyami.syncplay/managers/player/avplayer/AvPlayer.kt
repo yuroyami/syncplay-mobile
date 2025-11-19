@@ -12,10 +12,10 @@ import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
+import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withTimeoutOrNull
 import platform.AVFoundation.AVLayerVideoGravityResize
 import platform.AVFoundation.AVLayerVideoGravityResizeAspect
 import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
@@ -26,7 +26,6 @@ import platform.AVFoundation.AVMediaTypeAudio
 import platform.AVFoundation.AVMediaTypeText
 import platform.AVFoundation.AVPlayer
 import platform.AVFoundation.AVPlayerItem
-import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
 import platform.AVFoundation.AVPlayerLayer
 import platform.AVFoundation.asset
 import platform.AVFoundation.availableMediaCharacteristicsWithMediaSelectionOptions
@@ -48,8 +47,6 @@ import platform.CoreMedia.CMTime
 import platform.CoreMedia.CMTimeGetSeconds
 import platform.CoreMedia.CMTimeMake
 import platform.Foundation.NSKeyValueObservingOptionNew
-import platform.Foundation.NSURL.Companion.URLWithString
-import platform.Foundation.NSURL.Companion.fileURLWithPath
 import platform.Foundation.addObserver
 import platform.QuartzCore.CATransaction
 import platform.QuartzCore.kCATransactionDisableActions
@@ -59,7 +56,6 @@ import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * AVPlayer implementation for iOS using Apple's native AVFoundation framework.
@@ -330,7 +326,7 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
      * @param uri The subtitle file URI (unused)
      * @param extension The subtitle file extension (unused)
      */
-    override suspend fun loadExternalSubImpl(uri: String, extension: String) {
+    override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
         if (!isInitialized) return
 
         viewmodel.osdManager.dispatchOSD {
@@ -350,16 +346,16 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
      * @param isUrl Whether the URI is a remote URL or local file path
      * @throws Exception if media fails to load within the timeout period
      */
-    override suspend fun injectVideoImpl(media: MediaFile, isUrl: Boolean) {
+    suspend fun injectVideoImpl(media: MediaFile, isUrl: Boolean) {
         if (!isInitialized) return
 
         delay(500)
 
-        media.uri?.let { it ->
-            val nsUrl = when (isUrl) {
+       /* media.uri?.let { it ->
+            val nsUrl = it.nsUrl /* when (isUrl) {
                 true -> URLWithString(it)
                 false -> fileURLWithPath(it)
-            } ?: throw Exception()
+            } ?: throw Exception() */
 
             avMedia = AVPlayerItem(uRL = nsUrl)
             avPlayer = AVPlayer.playerWithPlayerItem(avMedia)
@@ -382,6 +378,16 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
 
             if (isTimeout == null) throw Exception("Media not loaded by AVPlayer")
         }
+
+        */
+    }
+
+    override suspend fun injectVideoFileImpl(media: MediaFile) {
+        TODO("Not yet implemented")
+    }
+
+    override fun injectVideoURLImpl(media: MediaFile) {
+        TODO("Not yet implemented")
     }
 
     /**

@@ -69,7 +69,6 @@ import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.vidExs
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
-import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -92,10 +91,10 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
     val popupStateAddUrl = remember { mutableStateOf(false) }
 
     val videoPicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = vidExs)) { file ->
-        file?.path?.let {
+        file?.let {
             loggy(it)
             viewmodel.viewModelScope.launch {
-                viewmodel.player.injectVideo(it, false)
+                viewmodel.player.injectVideoFile(it)
             }
             showPopup = false
         }
@@ -307,7 +306,7 @@ fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
 
                     if (url.value.trim().isNotBlank()) {
                         viewmodel.viewModelScope.launch {
-                            viewmodel.player.injectVideo(url.value.trim(), isUrl = true)
+                            viewmodel.player.injectVideoURL(url.value.trim())
                         }
                     }
 

@@ -6,6 +6,7 @@ import com.yuroyami.syncplay.PlatformCallback
 import com.yuroyami.syncplay.managers.network.NetworkManager
 import com.yuroyami.syncplay.managers.player.PlayerEngine
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
+import io.github.vinceglb.filekit.PlatformFile
 
 /********************************************************************************
  * Collection of platform-specific utility functions that need to be actualized *
@@ -89,7 +90,7 @@ fun timestampFromMillis(milliseconds: Number): String {
  * @param uri The file URI string
  * @return The filename, or null if it cannot be determined
  */
-expect fun getFileName(uri: String): String?
+expect fun getFileName(uri: PlatformFile): String?
 
 /**
  * Extracts the parent folder name from a file URI.
@@ -105,7 +106,7 @@ expect fun getFolderName(uri: String): String?
  * @param uri The file URI string
  * @return The file size in bytes, or null if it cannot be determined
  */
-expect fun getFileSize(uri: String): Long?
+expect fun getFileSize(uri: PlatformFile): Long?
 
 /**
  * Performs an ICMP ping to a host and measures round-trip time.

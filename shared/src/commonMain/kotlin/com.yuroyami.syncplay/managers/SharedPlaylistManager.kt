@@ -1,13 +1,15 @@
 package com.yuroyami.syncplay.managers
 
 import com.yuroyami.syncplay.AbstractManager
+import com.yuroyami.syncplay.managers.player.BasePlayer.Companion.injectVideo
 import com.yuroyami.syncplay.managers.preferences.Preferences.MEDIA_DIRECTORIES
-import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.managers.preferences.set
+import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.managers.protocol.creator.PacketOut
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.iterateDirectory
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
+import io.github.vinceglb.filekit.PlatformFile
 import org.jetbrains.compose.resources.getString
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_shared_playlist_no_directories
@@ -65,14 +67,14 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     suspend fun addFiles(uris: List<String>) {
         for (uri in uris) {
             /* We get the file name */
-            val filename = getFileName(uri) ?: return
+            val filename = getFileName(PlatformFile(uri)) ?: return
 
             /* If the playlist already contains this file name, prevent adding it */
             if (viewmodel.session.sharedPlaylist.contains(filename)) return
 
             /* If there is no duplicate, then we proceed, we check if the list is empty */
             if (viewmodel.session.sharedPlaylist.isEmpty() && viewmodel.session.spIndex.intValue == -1) {
-                viewmodel.player.injectVideo(uri, true)
+                viewmodel.player.injectVideo(uri)
 
                 viewmodel.networkManager.send<PacketOut.PlaylistIndex> {
                     index = 0
@@ -139,7 +141,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     }
 
     /**
-     * name and load it into ExoPlayer. This is executed on a separate thread since the IO operation
+     * name and load it into player. This is executed on a separate thread since the IO operation
      * is heavy.
      */
     suspend fun retrieveFile(fileName: String) {
@@ -148,7 +150,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             fileName.contains("https://", true) ||
             fileName.contains("ftp://", true)
         ) {
-            viewmodel.player.injectVideo(fileName, isUrl = true)
+            viewmodel.player.injectVideoURL(fileName)
         } else {
             /* We search our media directories which were added by the user in settings */
             val paths = MEDIA_DIRECTORIES.value()
@@ -165,7 +167,8 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
                     fileUri2Play  = it
 
                     /* Loading the file into our player **/
-                    viewmodel.player.injectVideo(fileUri2Play)
+                    //TODO
+                    viewmodel.player.injectVideoFile(PlatformFile(fileUri2Play))
                 }
             }
             if (fileUri2Play == null) {

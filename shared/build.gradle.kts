@@ -13,7 +13,8 @@ plugins {
     alias(libs.plugins.buildConfig)
 }
 
-val exoOnly = true
+val exoOnly = false
+
 val abiCodes = mapOf(
     "armeabi-v7a" to "armv7l",
     "arm64-v8a" to "arm64",
@@ -21,7 +22,7 @@ val abiCodes = mapOf(
     "x86_64" to "x86_64"
 )
 val mpvLibs = listOf(
-    "libavcodec.so",  "libavdevice.so", "libavfilter.so", "libavformat.so", "libavutil.so",
+    "libavcodec.so", "libavdevice.so", "libavfilter.so", "libavformat.so", "libavutil.so",
     "libmpv.so", "libplayer.so",
     "libswresample.so", "libswscale.so"
 )
@@ -319,7 +320,7 @@ android {
 }
 
 dependencies {
-    coreLibraryDesugaring (libs.desugaring)
+    coreLibraryDesugaring(libs.desugaring)
 }
 
 compose.resources {
@@ -327,14 +328,14 @@ compose.resources {
     generateResClass = always
 }
 
+if (!exoOnly) {
+    afterEvaluate {
+        val androidExt = extensions.getByType<com.android.build.gradle.BaseExtension>()
+        val ndkPath = androidExt.ndkDirectory
 
-afterEvaluate {
-    val androidExt = extensions.getByType<com.android.build.gradle.BaseExtension>()
-    val ndkPath = androidExt.ndkDirectory
-
-    if (!ndkPath.exists()) {
-        throw GradleException(
-            """
+        if (!ndkPath.exists()) {
+            throw GradleException(
+                """
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             ❌ ANDROID NDK $ndkRequired REQUIRED!
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -348,137 +349,141 @@ afterEvaluate {
               ndk.dir=/path/to/android/sdk/ndk/$ndkRequired
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             """.trimIndent()
-        )
-    }
+            )
+        }
 
-    // Verify it's the correct version
-    val actualVersion = ndkPath.name // e.g., "26.1.10909125"
-    if (actualVersion != ndkRequired) {
-        throw GradleException(
-            """
+        // Verify it's the correct version
+        val actualVersion = ndkPath.name // e.g., "26.1.10909125"
+        if (actualVersion != ndkRequired) {
+            throw GradleException(
+                """
             ❌ Wrong NDK version!
             Required: $ndkRequired
             Found: $actualVersion at ${ndkPath.absolutePath}
             
             Please install NDK $ndkRequired via SDK Manager.
             """.trimIndent()
+            )
+        }
+
+        logger.lifecycle("✓ NDK $actualVersion found at: ${ndkPath.absolutePath}")
+    }
+
+    tasks.register<Exec>("runAndroidMpvNativeBuildScripts") {
+        workingDir = File(rootProject.rootDir, "buildscripts")
+
+        inputs.files(
+            File(workingDir, "mpv_download_deps.sh"),
+            File(workingDir, "mpv_build.sh")
         )
-    }
 
-    logger.lifecycle("✓ NDK $actualVersion found at: ${ndkPath.absolutePath}")
-}
+        // Use inputs.property with normalization
+        inputs.property("ndkVersion", ndkRequired)
+            .optional(false)
 
-tasks.register<Exec>("runAndroidMpvNativeBuildScripts") {
-    workingDir = File(rootProject.rootDir, "buildscripts")
-
-    inputs.files(
-        File(workingDir, "mpv_download_deps.sh"),
-        File(workingDir, "mpv_build.sh")
-    )
-
-    // Use inputs.property with normalization
-    inputs.property("ndkVersion", ndkRequired)
-        .optional(false)
-
-    // Register all output files explicitly
-    abiCodes.forEach { abiCode ->
-        mpvLibs.forEach { mpvLib ->
-            outputs.file(File(projectDir, "src/androidMain/libs/${abiCode.key}/$mpvLib"))
+        // Register all output files explicitly
+        abiCodes.forEach { abiCode ->
+            mpvLibs.forEach { mpvLib ->
+                outputs.file(File(projectDir, "src/androidMain/libs/${abiCode.key}/$mpvLib"))
+            }
         }
-    }
 
-    outputs.cacheIf { true }
+        outputs.cacheIf { true }
 
-    if (System.getProperty("os.name").startsWith("Windows")) {
-        doFirst {
-            logger.warn("Native library build is not supported on Windows. Skipping...")
-        }
-        isEnabled = false
-    } else {
-        val androidExt = project.extensions.getByType<com.android.build.gradle.BaseExtension>()
-
-        doFirst {
-            val sdkPath = androidExt.sdkDirectory
-            val ndkPath = androidExt.ndkDirectory
-
-            if (!ndkPath.exists()) {
-                throw GradleException(
-                    "Android NDK is required but not found!\n" +
-                            "Please install NDK via Android Studio SDK Manager or set ndk.dir in local.properties"
-                )
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            doFirst {
+                logger.warn("Native library build is not supported on Windows. Skipping...")
             }
+            isEnabled = false
+        } else {
+            val androidExt = project.extensions.getByType<com.android.build.gradle.BaseExtension>()
 
-            environment("ANDROID_SDK_ROOT", sdkPath.absolutePath)
-            environment("ANDROID_NDK_HOME", ndkPath.absolutePath)
+            doFirst {
+                val sdkPath = androidExt.sdkDirectory
+                val ndkPath = androidExt.ndkDirectory
 
-            println("✓ NDK found at: ${ndkPath.absolutePath}")
-
-            val osName = System.getProperty("os.name").lowercase()
-            val myOS = when {
-                osName.contains("mac") || osName.contains("darwin") -> "mac"
-                osName.contains("linux") -> "linux"
-                osName.contains("windows") -> "windows"
-                else -> "unknown"
-            }
-
-            logger.lifecycle("Detected OS: $myOS")
-
-            val sdkSymlinkDir = File(workingDir, "sdk")
-            val symlink = File(sdkSymlinkDir, "android-sdk-$myOS")
-
-            if (!sdkSymlinkDir.exists()) {
-                sdkSymlinkDir.mkdirs()
-            }
-
-            if (symlink.exists()) {
-                if (Files.isSymbolicLink(symlink.toPath())) {
-                    Files.delete(symlink.toPath())
-                    logger.lifecycle("Removed old symlink: ${symlink.absolutePath}")
-                } else {
-                    throw GradleException("${symlink.absolutePath} exists but is not a symlink!")
+                if (!ndkPath.exists()) {
+                    throw GradleException(
+                        "Android NDK is required but not found!\n" +
+                                "Please install NDK via Android Studio SDK Manager or set ndk.dir in local.properties"
+                    )
                 }
-            }
 
-            try {
-                Files.createSymbolicLink(symlink.toPath(), sdkPath.toPath())
-                logger.lifecycle("✓ Created symlink: ${symlink.absolutePath} -> ${sdkPath.absolutePath}")
-            } catch (e: Exception) {
-                throw GradleException("Failed to create symlink: ${e.message}")
-            }
+                environment("ANDROID_SDK_ROOT", sdkPath.absolutePath)
+                environment("ANDROID_NDK_HOME", ndkPath.absolutePath)
 
-            commandLine("sh", "-c", """
+                println("✓ NDK found at: ${ndkPath.absolutePath}")
+
+                val osName = System.getProperty("os.name").lowercase()
+                val myOS = when {
+                    osName.contains("mac") || osName.contains("darwin") -> "mac"
+                    osName.contains("linux") -> "linux"
+                    osName.contains("windows") -> "windows"
+                    else -> "unknown"
+                }
+
+                logger.lifecycle("Detected OS: $myOS")
+
+                val sdkSymlinkDir = File(workingDir, "sdk")
+                val symlink = File(sdkSymlinkDir, "android-sdk-$myOS")
+
+                if (!sdkSymlinkDir.exists()) {
+                    sdkSymlinkDir.mkdirs()
+                }
+
+                if (symlink.exists()) {
+                    if (Files.isSymbolicLink(symlink.toPath())) {
+                        Files.delete(symlink.toPath())
+                        logger.lifecycle("Removed old symlink: ${symlink.absolutePath}")
+                    } else {
+                        throw GradleException("${symlink.absolutePath} exists but is not a symlink!")
+                    }
+                }
+
+                try {
+                    Files.createSymbolicLink(symlink.toPath(), sdkPath.toPath())
+                    logger.lifecycle("✓ Created symlink: ${symlink.absolutePath} -> ${sdkPath.absolutePath}")
+                } catch (e: Exception) {
+                    throw GradleException("Failed to create symlink: ${e.message}")
+                }
+
+                commandLine(
+                    "sh", "-c", """
                 sh mpv_download_deps.sh "$sdkPath" "$ndkPath" &&
                 sh mpv_build.sh --arch armv7l mpv &&
                 sh mpv_build.sh --arch arm64 mpv &&
                 sh mpv_build.sh --arch x86 mpv &&
                 sh mpv_build.sh --arch x86_64 mpv &&
                 sh mpv_build.sh -n syncplay-withmpv
-            """.trimIndent())
+            """.trimIndent()
+                )
 
-            logger.lifecycle("Running: ${commandLine.joinToString(" ")}")
-        }
-    }
-
-    // Run task only if output files are missing (partially or fully)
-    onlyIf {
-        val allFilesExist = abiCodes.all { abiCode ->
-            mpvLibs.all { mpvLib ->
-                File(projectDir, "src/androidMain/libs/${abiCode.key}/$mpvLib").exists()
+                logger.lifecycle("Running: ${commandLine.joinToString(" ")}")
             }
         }
 
-        if (allFilesExist) {
-            logger.lifecycle("✓ All MPV libs exist, skipping build")
-        } else {
-            logger.lifecycle("✗ Some MPV libs missing, will build")
-        }
+        // Run task only if output files are missing (partially or fully)
+        onlyIf {
+            val allFilesExist = abiCodes.all { abiCode ->
+                mpvLibs.all { mpvLib ->
+                    File(projectDir, "src/androidMain/libs/${abiCode.key}/$mpvLib").exists()
+                }
+            }
 
-        !allFilesExist
+            if (allFilesExist) {
+                logger.lifecycle("✓ All MPV libs exist, skipping build")
+            } else {
+                logger.lifecycle("✗ Some MPV libs missing, will build")
+            }
+
+            !allFilesExist
+        }
     }
 }
 
 buildConfig {
     buildConfigField("APP_VERSION", verString)
     buildConfigField("IS_DEBUG", true)
+    buildConfigField("DEBUG_PROTOCOL_IN_OUT", false)
     buildConfigField("EXOPLAYER_ONLY", exoOnly)
 }

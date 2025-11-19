@@ -14,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.C.STREAM_TYPE_MUSIC
@@ -51,6 +50,9 @@ import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.utils.contextObtainer
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.dialogs.toAndroidUri
+import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -386,9 +388,11 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         }
     }
 
-    override suspend fun loadExternalSubImpl(uri: String, extension: String) {
-        viewmodel.media?.externalSub = MediaItem.SubtitleConfiguration.Builder(uri.toUri())
-            .setUri(uri.toUri())
+    override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
+        val authority = "${contextObtainer().packageName}.fileprovider"
+
+        viewmodel.media?.externalSub = MediaItem.SubtitleConfiguration.Builder(uri.toAndroidUri(authority))
+            .setUri(uri.toAndroidUri(authority))
             .setMimeType(extension.mimeType)
             .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
             .build()
@@ -413,7 +417,7 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
 
         /* This is the builder responsible for building a MediaItem component for ExoPlayer **/
         val vid = MediaItem.Builder()
-            .setUri(media.uri)
+            .setUri(media.uri?.path)
             .setMediaId(media.uri.toString())
             .apply {
                 setSubtitleConfigurations(

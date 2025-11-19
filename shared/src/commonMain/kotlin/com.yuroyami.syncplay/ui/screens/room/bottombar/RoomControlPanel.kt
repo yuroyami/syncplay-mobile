@@ -56,7 +56,6 @@ import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 import com.yuroyami.syncplay.utils.ccExs
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
-import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -109,7 +108,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
     val composeScope = rememberCoroutineScope()
 
     val subtitlePicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = ccExs)) { file ->
-        file?.path?.let {
+        file?.let {
             scope.launch(Dispatchers.IO) {
                 viewmodel.player.loadExternalSub(it)
             }

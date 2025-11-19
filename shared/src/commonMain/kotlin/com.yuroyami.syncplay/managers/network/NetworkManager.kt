@@ -1,5 +1,6 @@
 package com.yuroyami.syncplay.managers.network
 
+import SyncplayMobile.shared.BuildConfig
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.AbstractManager
 import com.yuroyami.syncplay.managers.preferences.Preferences.RECONNECTION_INTERVAL
@@ -244,7 +245,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
             try {
                 withTimeout(10.seconds) {
                     val finalOut = json + "\r\n"
-                    loggy("Client>>> $finalOut")
+                    if (BuildConfig.DEBUG_PROTOCOL_IN_OUT) loggy("Client>>> $finalOut")
                     writeActualString(finalOut)
                 }
             } catch (e: Exception) {

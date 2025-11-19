@@ -14,6 +14,8 @@ import com.yuroyami.syncplay.managers.player.PlayerEngine
 import com.yuroyami.syncplay.managers.preferences.Preferences.NETWORK_ENGINE
 import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeoutOrNull
 import platform.Foundation.NSDate
@@ -54,18 +56,24 @@ actual fun generateTimestampMillis(): Long {
     return (NSDate().timeIntervalSince1970 * 1000.0).roundToLong()
 }
 
-actual fun getFileName(uri: String): String? {
-    return NSURL.fileURLWithPath(uri).lastPathComponent
+actual fun getFileName(uri: PlatformFile): String? {
+    return uri.nsUrl.lastPathComponent
 }
 
 actual fun getFolderName(uri: String): String? {
     return NSURL.fileURLWithPath(uri).lastPathComponent
 }
 
-actual fun getFileSize(uri: String): Long? {
-    val fileAttributes = NSFileManager.defaultManager.attributesOfItemAtPath(uri, null)
-    val fileSize = fileAttributes?.get(NSFileSize) as? NSNumber ?: return null
-    return fileSize.longValue
+actual fun getFileSize(uri: PlatformFile): Long? {
+    return uri.nsUrl.accessSecurely {
+        val fileManager = NSFileManager.defaultManager
+        val fileAttributes = fileManager.attributesOfItemAtPath(uri.path, null) ?: return null
+
+        val fileSize = fileAttributes[NSFileSize] as? NSNumber
+        val fileSizeFallback = fileAttributes["NSFileSize"] as? NSNumber
+
+        fileSize?.longLongValue ?: fileSizeFallback?.longLongValue ?: fileSize?.longValue ?: fileSizeFallback?.longValue
+    }
 }
 
 actual suspend fun pingIcmp(host: String, packet: Int): Int? {

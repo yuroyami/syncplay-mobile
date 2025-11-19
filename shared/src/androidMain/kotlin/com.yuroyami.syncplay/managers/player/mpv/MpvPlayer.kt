@@ -35,6 +35,8 @@ import com.yuroyami.syncplay.models.Track
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.timestampFromMillis
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.path
 import `is`.xyz.mpv.MPVLib
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -290,10 +292,10 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         }
     }
 
-    override suspend fun loadExternalSubImpl(uri: String, extension: String) {
+    override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
         if (!isInitialized) return
         withContext(Dispatchers.IO) {
-            ctx.resolveUri(uri.toUri())?.let { subUri ->
+            ctx.resolveUri(uri.path.toUri())?.let { subUri ->
                 withContext(Dispatchers.Main) {
                     MPVLib.command(arrayOf("sub-add", subUri, "cached"))
                 }
@@ -305,7 +307,7 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         withContext(Dispatchers.Main.immediate) {
             delay(500)
             media.uri?.let { uri ->
-                val finalUri = if (isUrl) uri else ctx.resolveUri(uri.toUri())
+                val finalUri = if (isUrl) uri.path else ctx.resolveUri(uri.path.toUri())
                 finalUri?.let {
                     loggy("Final path $it")
                     mpvView.playFile(it)
