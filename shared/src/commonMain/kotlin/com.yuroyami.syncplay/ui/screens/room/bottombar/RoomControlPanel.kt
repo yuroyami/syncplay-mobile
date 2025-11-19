@@ -43,7 +43,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.managers.player.BasePlayer.TrackType
 import com.yuroyami.syncplay.managers.preferences.Preferences.GESTURES
 import com.yuroyami.syncplay.managers.preferences.set
@@ -55,6 +54,7 @@ import com.yuroyami.syncplay.ui.screens.adam.LocalCardController
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 import com.yuroyami.syncplay.utils.ccExs
+import com.yuroyami.syncplay.utils.timestampFromMillis
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import kotlinx.coroutines.Dispatchers
@@ -208,7 +208,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
                                 haptic()
 
                                 viewmodel.viewModelScope.launch {
-                                    viewmodel.player.selectTrack(null, BasePlayer.TrackType.SUBTITLE)
+                                    viewmodel.player.selectTrack(null, TrackType.SUBTITLE)
                                 }
                             }
                         )
@@ -224,7 +224,11 @@ fun RoomControlPanelCard(modifier: Modifier) {
                                     haptic()
 
                                     viewmodel.viewModelScope.launch {
-                                        viewmodel.player.selectTrack(track, BasePlayer.TrackType.SUBTITLE)
+                                        viewmodel.player.selectTrack(track, TrackType.SUBTITLE)
+                                    }
+
+                                    viewmodel.osdManager.dispatchOSD {
+                                        "Subtitle: ${track.name}"
                                     }
                                 }
                             )
@@ -263,7 +267,11 @@ fun RoomControlPanelCard(modifier: Modifier) {
                                     haptic()
 
                                     viewmodel.viewModelScope.launch {
-                                        viewmodel.player.selectTrack(track, BasePlayer.TrackType.AUDIO)
+                                        viewmodel.player.selectTrack(track, TrackType.AUDIO)
+                                    }
+
+                                    viewmodel.osdManager.dispatchOSD {
+                                        "Audio: ${track.name}"
                                     }
                                 }
                             )
@@ -312,7 +320,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
                         for (chapter in (viewmodel.media?.chapters) ?: listOf()) {
                             add(
                                 ControlPanelDropdownAction(
-                                    text = chapter.name,
+                                    text = "${chapter.name} [${timestampFromMillis(chapter.timeOffsetMillis)}]",
                                     action = {
                                         haptic()
 

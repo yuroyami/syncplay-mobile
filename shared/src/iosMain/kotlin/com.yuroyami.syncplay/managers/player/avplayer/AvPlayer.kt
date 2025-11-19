@@ -104,9 +104,6 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
     override val trackerJobInterval: Duration
         get() = 250.milliseconds
 
-    override val canChangeAspectRatio: Boolean
-        get() = true
-
     /**
      * Initializes the AVPlayer view controller by disabling default playback controls
      * and starting progress tracking.

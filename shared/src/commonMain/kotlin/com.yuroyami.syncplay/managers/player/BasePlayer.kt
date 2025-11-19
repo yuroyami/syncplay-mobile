@@ -100,12 +100,17 @@ abstract class BasePlayer(
     /**
      * Whether this player supports changing aspect ratio dynamically.
      */
-    abstract val canChangeAspectRatio: Boolean
+    open val canChangeAspectRatio: Boolean = true
 
     /**
      * Whether this player supports chapter navigation.
      */
     abstract val supportsChapters: Boolean
+
+    /**
+     * Whether this player can go into PiP (always true on Android, but on iOS, only AVPlayer can PiP)
+     */
+    open val supportsPictureInPicture: Boolean = true
 
     /**
      * Whether the player has been initialized and is ready for use.

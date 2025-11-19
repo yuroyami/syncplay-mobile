@@ -56,11 +56,7 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     private lateinit var mpvView: MPVView
     private lateinit var ctx: Context
 
-    override val canChangeAspectRatio: Boolean
-        get() = true
-
-    override val supportsChapters: Boolean
-        get() = true
+    override val supportsChapters: Boolean = true
 
     override val trackerJobInterval: Duration = 500.milliseconds
 

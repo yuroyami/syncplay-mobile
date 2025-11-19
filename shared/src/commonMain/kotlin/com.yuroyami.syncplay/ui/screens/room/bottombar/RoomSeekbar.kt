@@ -60,7 +60,7 @@ fun RoomSeekbar(modifier: Modifier) {
     val chapters = remember(viewmodel.media?.fileName) { viewmodel.media?.chapters ?: emptyList() }
 
     LaunchedEffect(viewmodel.media?.fileName) {
-        //TODO viewmodel.player.analyzeChapters(viewmodel.media ?: return@LaunchedEffect)
+        viewmodel.player.analyzeChapters(viewmodel.media ?: return@LaunchedEffect)
     }
 
     var sliderValue by remember { mutableFloatStateOf(0f) }
@@ -138,9 +138,9 @@ fun RoomSeekbar(modifier: Modifier) {
                         }
                 ) {
                     chapters.forEach { chapter ->
-                        if (chapter.timestamp / 1000 != 0L) {
+                        if (chapter.timeOffsetMillis / 1000 != 0L) {
                             // Calculate horizontal position fraction based on chapter timestamp
-                            val positionFraction = (chapter.timestamp / videoFullDurationMs.toFloat().coerceAtLeast(1f))
+                            val positionFraction = (chapter.timeOffsetMillis / videoFullDurationMs.toFloat().coerceAtLeast(1f))
                             Box(
                                 modifier = Modifier
                                     .offset {

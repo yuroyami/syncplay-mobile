@@ -199,18 +199,19 @@ fun RoomTabSection(modifier: Modifier) {
                     font = jostFont
                 )
 
-                /* Picture-in-Picture mode */
-                RoomOverflowItem(
-                    text = stringResource(Res.string.room_overflow_pip),
-                    icon = Icons.Filled.PictureInPicture,
-                    onClick = {
-                        overflowMenuState.value = false
-                        platformCallback.onPictureInPicture(true)
-                    }
-                )
+                if (viewmodel.player.supportsPictureInPicture) {
+                    /* Picture-in-Picture mode */
+                    RoomOverflowItem(
+                        text = stringResource(Res.string.room_overflow_pip),
+                        icon = Icons.Filled.PictureInPicture,
+                        onClick = {
+                            overflowMenuState.value = false
+                            platformCallback.onPictureInPicture(true)
+                        }
+                    )
+                }
 
                 val managedRoomAreSupported by viewmodel.sessionManager.supportsManagedRooms.collectAsState()
-
                 if (!viewmodel.isSoloMode) {
                     if (managedRoomAreSupported) {
                         /* Create managed room */

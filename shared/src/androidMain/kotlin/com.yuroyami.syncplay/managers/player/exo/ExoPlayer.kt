@@ -80,11 +80,7 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     private var currentMedia: MediaItem? = null
     private lateinit var exoView: PlayerView
 
-    override val canChangeAspectRatio: Boolean
-        get() = true
-
-    override val supportsChapters: Boolean
-        get() = false
+    override val supportsChapters: Boolean = false
 
     override val trackerJobInterval: Duration = 500.milliseconds
 

@@ -28,8 +28,6 @@ import kotlinx.cinterop.toKString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import platform.AVFoundation.AVPlayerLayer
-import platform.Foundation.NSArray
 import platform.Foundation.NSNotification
 import platform.Foundation.NSNumber
 import platform.Foundation.NSURL
@@ -78,17 +76,10 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
      */
     private var vlcMedia: VLCMedia? = null
 
-    /**
-     * AVPlayerLayer wrapper for Picture-in-Picture support.
-     * VLC's UIView is added as a sublayer to enable PiP functionality.
-     */
-    var pipLayer: AVPlayerLayer? = null
+    override val supportsChapters: Boolean = true
 
-    override val canChangeAspectRatio: Boolean
-        get() = true
-
-    override val supportsChapters: Boolean
-        get() = true
+    /** Sadly, iOS doesn't allow PiP for anything other than AVPlayer */
+    override val supportsPictureInPicture: Boolean = false
 
     override val trackerJobInterval: Duration
         get() = 1.seconds
@@ -278,25 +269,26 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
     /**
      * Analyzes and extracts chapter information from the loaded media.
      *
-     * TODO: Implement chapter timestamp extraction (currently set to 0).
-     *
      * @param mediafile The media file to populate with chapter information
      */
     override suspend fun analyzeChapters(mediafile: MediaFile) {
-        if (!isInitialized) return
+        if (!isInitialized || vlcPlayer == null) return
 
         withContext(Dispatchers.Main) {
             mediafile.chapters.clear()
-            val chapters = (vlcPlayer?.chapterDescriptionsOfTitle(0) as? NSArray)?.toKList<String>()
 
-            chapters?.forEachIndexed { index, name ->
-                if (name.isNullOrBlank()) return@forEachIndexed
+            val chapterDescs = vlcPlayer!!.chapterDescriptionsOfTitle(vlcPlayer!!.currentTitleIndex)
+            chapterDescs.forEachIndexed { i, desc ->
+                val descMap = desc as? Map<*, *>
+
+                val timeOffset = (descMap?.get("VLCChapterDescriptionTimeOffset") as? NSNumber)?.longValue ?: 0L
+                val name = descMap?.get("VLCChapterDescriptionName") as? String ?: ""
 
                 mediafile.chapters.add(
                     Chapter(
-                        index = index,
+                        index = i,
                         name = name,
-                        timestamp = 0 // TODO: Implement chapter timestamps
+                        timeOffsetMillis = timeOffset
                     )
                 )
             }
@@ -498,21 +490,6 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
     private fun Long.toVLCTime(): VLCTime {
         return VLCTime(number = NSNumber(long = this))
     }
-
-    /**
-     * Converts an NSArray to a Kotlin List for working with VLC track data.
-     *
-     * @param T The element type
-     * @receiver NSArray to convert
-     * @return List of elements from the array
-     */
-    @Suppress("UNCHECKED_CAST")
-    private fun <T> NSArray.toKList(): List<T?> {
-        return List(count.toInt()) { index ->
-            objectAtIndex(index.toULong()) as? T
-        }
-    }
-
 
     /**
      * Delegate for receiving VLC media player state change notifications.

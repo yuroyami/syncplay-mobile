@@ -45,12 +45,7 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
 
     private var vlcMedia: Media? = null
 
-    override val canChangeAspectRatio: Boolean
-        get() = true
-
-    override val supportsChapters: Boolean
-        get() = true
-
+    override val supportsChapters: Boolean = true
     override val trackerJobInterval: Duration = 200.milliseconds
 
     //TODO CHANGE HOW TIME IS TRACKED

@@ -1,7 +1,6 @@
 package com.yuroyami.syncplay
 
 import com.yuroyami.syncplay.managers.player.avplayer.AvPlayer
-import com.yuroyami.syncplay.managers.player.vlc.VlcPlayer
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.viewmodels.HomeViewmodel
 import platform.AVKit.AVPictureInPictureController
@@ -51,18 +50,13 @@ object ApplePlatformCallback : PlatformCallback {
      */
     override fun onPictureInPicture(enable: Boolean) {
         if (AVPictureInPictureController.isPictureInPictureSupported()) {
-             val layer = when (roomViewmodel?.player) {
-                is AvPlayer -> (roomViewmodel?.player as? AvPlayer)?.avPlayerLayer
-                is VlcPlayer -> (roomViewmodel?.player as? VlcPlayer)?.pipLayer
-                else -> null
-            }
-            layer?.let {
+            (roomViewmodel?.player as? AvPlayer)?.avPlayerLayer?.let { layer ->
                 pipcontroller = AVPictureInPictureController(layer)
-            }
-        }
 
-        if (pipcontroller?.pictureInPicturePossible == true && roomViewmodel?.media != null) {
-            pipcontroller?.startPictureInPicture()
+                if (pipcontroller?.pictureInPicturePossible == true && roomViewmodel?.media != null) {
+                    pipcontroller?.startPictureInPicture()
+                }
+            }
         }
     }
 
