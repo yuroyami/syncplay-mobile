@@ -1,21 +1,20 @@
 package com.yuroyami.syncplay.models
 
-import androidx.compose.runtime.MutableState
 import com.yuroyami.syncplay.managers.player.BasePlayer
 
 /*****************************************************************************************
  * Track wrapper class. It encapsulates all info we need about a track in a track group  *
  *****************************************************************************************/
-interface Track {
+abstract class Track {
     /** Name of the track */
-    val name: String
+    abstract val name: String
 
     /** Corresponds to either subtitle track or audio track type **/
-    val type: BasePlayer.TRACKTYPE?
+    abstract val type: BasePlayer.TrackType?
 
     /** The index of the format (track) **/
-    val index: Int
+    abstract val index: Int
 
     /** The current status of the track **/
-    val selected: MutableState<Boolean>
+    abstract val selected: Boolean
 }

@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
 import com.yuroyami.syncplay.managers.player.BasePlayer
+import com.yuroyami.syncplay.managers.player.BasePlayer.TrackType
 import com.yuroyami.syncplay.managers.preferences.Preferences.GESTURES
 import com.yuroyami.syncplay.managers.preferences.set
 import com.yuroyami.syncplay.managers.preferences.watchPref
@@ -207,22 +208,23 @@ fun RoomControlPanelCard(modifier: Modifier) {
                                 haptic()
 
                                 viewmodel.viewModelScope.launch {
-                                    viewmodel.player.selectTrack(null, BasePlayer.TRACKTYPE.SUBTITLE)
+                                    viewmodel.player.selectTrack(null, BasePlayer.TrackType.SUBTITLE)
                                 }
                             }
                         )
                     )
 
-                    for (track in (viewmodel.media?.subtitleTracks) ?: listOf()) {
+                    val subs = viewmodel.media?.tracks?.filter { it.type == TrackType.SUBTITLE }
+                    subs?.forEach { track ->
                         add(
                             ControlPanelDropdownAction(
                                 text = track.name,
-                                isChecked = track.selected.value,
+                                isChecked = track.selected,
                                 action = {
                                     haptic()
 
                                     viewmodel.viewModelScope.launch {
-                                        viewmodel.player.selectTrack(track, BasePlayer.TRACKTYPE.SUBTITLE)
+                                        viewmodel.player.selectTrack(track, BasePlayer.TrackType.SUBTITLE)
                                     }
                                 }
                             )
@@ -251,16 +253,17 @@ fun RoomControlPanelCard(modifier: Modifier) {
         val audioItems by remember(audioTracksPopup.value) {
             mutableStateOf(
                 buildList {
-                    for (track in (viewmodel.media?.audioTracks) ?: listOf()) {
+                    val audios = viewmodel.media?.tracks?.filter { it.type == TrackType.AUDIO }
+                    audios?.forEach { track ->
                         add(
                             ControlPanelDropdownAction(
                                 text = track.name,
-                                isChecked = track.selected.value,
+                                isChecked = track.selected,
                                 action = {
                                     haptic()
 
                                     viewmodel.viewModelScope.launch {
-                                        viewmodel.player.selectTrack(track, BasePlayer.TRACKTYPE.AUDIO)
+                                        viewmodel.player.selectTrack(track, BasePlayer.TrackType.AUDIO)
                                     }
                                 }
                             )

@@ -6,7 +6,6 @@ import android.view.LayoutInflater
 import androidx.annotation.MainThread
 import androidx.annotation.UiThread
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.C.STREAM_TYPE_MUSIC
@@ -120,44 +119,32 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         if (!isInitialized) return
 
         withContext(Dispatchers.Main.immediate) {
-            viewmodel.media?.subtitleTracks?.clear()
-            viewmodel.media?.audioTracks?.clear()
-            val audioTracks = vlcPlayer?.getTracks(Track.Type.Audio)
-            audioTracks?.forEachIndexed { i, tracky ->
-                viewmodel.media?.audioTracks?.add(
-                    object : VlcTrack {
-                        override val name = tracky.name
-                        override val type = TRACKTYPE.AUDIO
-                        override val index = i
-                        override val id = tracky.id
-                        override val selected = mutableStateOf(tracky.selected)
-                    }
-                )
-            }
+            viewmodel.media?.tracks?.clear()
 
-            val subtitleTracks = vlcPlayer?.getTracks(Track.Type.Text)
-            subtitleTracks?.forEachIndexed { i, tracky ->
-                viewmodel.media?.subtitleTracks?.add(
-                    object : VlcTrack {
-                        override val name = tracky.name
-                        override val type = TRACKTYPE.SUBTITLE
-                        override val index = i
-                        override val id = tracky.id
-                        override val selected = mutableStateOf(tracky.selected)
-                    }
+            val audioTracks = vlcPlayer?.getTracks(Track.Type.Audio) ?: emptyArray()
+            val subtitleTracks = vlcPlayer?.getTracks(Track.Type.Text) ?: emptyArray()
+            (audioTracks + subtitleTracks).forEachIndexed {  i, vlcTrack ->
+                viewmodel.media?.tracks?.add(
+                    VlcTrack(
+                        name = vlcTrack.name,
+                        type = if (vlcTrack.type == Track.Type.Audio) TrackType.AUDIO else TrackType.SUBTITLE,
+                        index = i,
+                        id = vlcTrack.id,
+                        selected = vlcTrack.selected,
+                    )
                 )
             }
         }
     }
 
-    override suspend fun selectTrack(track: com.yuroyami.syncplay.models.Track?, type: TRACKTYPE) {
+    override suspend fun selectTrack(track: com.yuroyami.syncplay.models.Track?, type: TrackType) {
         if (!isInitialized) return
 
         withContext(Dispatchers.Main.immediate) {
             val vlcTrack = track as? VlcTrack
 
             when (type) {
-                TRACKTYPE.SUBTITLE -> {
+                TrackType.SUBTITLE -> {
                     if (vlcTrack != null) {
                         vlcPlayer?.selectTrack(vlcTrack.id)
                     } else {
@@ -167,7 +154,7 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
                     viewmodel.playerManager.currentTrackChoices.subtitleSelectionIdVlc = vlcTrack?.id ?: "-1"
                 }
 
-                TRACKTYPE.AUDIO -> {
+                TrackType.AUDIO -> {
                     if (vlcTrack != null) {
                         vlcPlayer?.selectTrack(vlcTrack.id)
                     } else {
@@ -220,23 +207,25 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         val subId = viewmodel.playerManager.currentTrackChoices.subtitleSelectionIdVlc
         val audioId = viewmodel.playerManager.currentTrackChoices.audioSelectionIdVlc
 
-        val ccMap = viewmodel.media?.subtitleTracks?.map { it as VlcTrack }
-        val audioMap = viewmodel.media?.subtitleTracks?.map { it as VlcTrack }
+        val tracks = playerManager.media.value?.tracks
+
+        val ccMap = tracks?.filter { it.type == TrackType.SUBTITLE }?.map { it as VlcTrack }
+        val audioMap = tracks?.filter { it.type == TrackType.AUDIO }?.map { it as VlcTrack }
 
         val ccGet = ccMap?.firstOrNull { it.id == subId }
         val audioGet = audioMap?.firstOrNull { it.id == audioId }
 
-        with(viewmodel.player ?: return) {
+        with(viewmodel.player) {
             if (subId == "-1") {
-                selectTrack(null, TRACKTYPE.SUBTITLE)
+                selectTrack(null, TrackType.SUBTITLE)
             } else if (ccGet != null) {
-                selectTrack(ccGet, TRACKTYPE.SUBTITLE)
+                selectTrack(ccGet, TrackType.SUBTITLE)
             }
 
             if (audioId == "-1") {
-                selectTrack(null, TRACKTYPE.AUDIO)
+                selectTrack(null, TrackType.AUDIO)
             } else if (audioGet != null) {
-                selectTrack(audioGet, TRACKTYPE.AUDIO)
+                selectTrack(audioGet, TrackType.AUDIO)
             }
         }
     }
@@ -386,9 +375,5 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         if (!audioManager.isVolumeFixed) {
             audioManager.setStreamVolume(STREAM_TYPE_MUSIC, v, 0)
         }
-    }
-
-    interface VlcTrack : com.yuroyami.syncplay.models.Track {
-        val id: String
     }
 }

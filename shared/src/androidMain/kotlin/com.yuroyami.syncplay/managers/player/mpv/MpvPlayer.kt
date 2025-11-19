@@ -10,7 +10,6 @@ import androidx.annotation.UiThread
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SettingsInputComponent
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
@@ -118,7 +117,7 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
             )
         }
         +MPV_INTERPOLATION.apply {
-            config?.dependencyEnable = booleanMet@ {
+            config?.dependencyEnable = booleanMet@{
                 val currentVidSyncMode = MPV_VIDSYNC.value()
                 return@booleanMet currentVidSyncMode != "audio" && currentVidSyncMode != "desync"
             }
@@ -150,15 +149,15 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     override suspend fun isPlaying(): Boolean {
         if (!isInitialized) return false
         return withContext(Dispatchers.Main.immediate) {
-             !mpvView.paused
+            !mpvView.paused
         }
     }
 
     override suspend fun analyzeTracks(mediafile: MediaFile) {
         if (!isInitialized) return
         withContext(Dispatchers.Main.immediate) {
-            playerManager.media.value?.subtitleTracks?.clear()
-            playerManager.media.value?.audioTracks?.clear()
+            playerManager.media.value?.tracks?.clear()
+
             val count = MPVLib.getPropertyInt("track-list/count")!!
             // Note that because events are async, properties might disappear at any moment
             // so use ?: continue instead of !!
@@ -180,38 +179,24 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
                 else "Track $mpvId [UND]"
 
                 Log.e("trck", "Found track $mpvId: $type, $title [$lang], $selected")
-                when (type) {
-                    "audio" -> {
-                        playerManager.media.value?.audioTracks?.add(
-                            object : Track {
-                                override val name = trackName
-                                override val type = TRACKTYPE.AUDIO
-                                override val index = mpvId
-                                override val selected = mutableStateOf(selected)
-                            }
-                        )
-                    }
 
-                    "sub" -> {
-                        playerManager.media.value?.subtitleTracks?.add(
-                            object : Track {
-                                override val name = trackName
-                                override val type = TRACKTYPE.SUBTITLE
-                                override val index = mpvId
-                                override val selected = mutableStateOf(selected)
-                            }
-                        )
-                    }
-                }
+                playerManager.media.value?.tracks?.add(
+                    MpvTrack(
+                        name = trackName,
+                        type = if (type == "audio") TrackType.AUDIO else TrackType.SUBTITLE,
+                        index = mpvId,
+                        selected = selected
+                    )
+                )
             }
         }
     }
 
-    override suspend fun selectTrack(track: Track?, type: TRACKTYPE) {
+    override suspend fun selectTrack(track: Track?, type: TrackType) {
         if (!isInitialized) return
         withContext(Dispatchers.Main.immediate) {
             when (type) {
-                TRACKTYPE.SUBTITLE -> {
+                TrackType.SUBTITLE -> {
                     if (track != null) {
                         MPVLib.setPropertyInt("sid", track.index)
                     } else {
@@ -221,7 +206,7 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
                     playerManager.currentTrackChoices.subtitleSelectionIndexMpv = track?.index ?: -1
                 }
 
-                TRACKTYPE.AUDIO -> {
+                TrackType.AUDIO -> {
                     if (track != null) {
                         MPVLib.setPropertyInt("aid", track.index)
                     } else {
@@ -271,23 +256,24 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
             val subIndex = playerManager.currentTrackChoices.subtitleSelectionIndexMpv
             val audioIndex = playerManager.currentTrackChoices.audioSelectionIndexMpv
 
-            val ccMap = playerManager.media.value?.subtitleTracks
-            val audioMap = playerManager.media.value?.subtitleTracks
+
+            val ccMap = playerManager.media.value?.tracks?.filter { it.type == TrackType.SUBTITLE }
+            val audioMap = playerManager.media.value?.tracks?.filter { it.type == TrackType.AUDIO }
 
             val ccGet = ccMap?.firstOrNull { it.index == subIndex }
             val audioGet = audioMap?.firstOrNull { it.index == audioIndex }
 
             with(playerManager.player) {
                 if (subIndex == -1) {
-                    selectTrack(null, TRACKTYPE.SUBTITLE)
+                    selectTrack(null, TrackType.SUBTITLE)
                 } else if (ccGet != null) {
-                    selectTrack(ccGet, TRACKTYPE.SUBTITLE)
+                    selectTrack(ccGet, TrackType.SUBTITLE)
                 }
 
                 if (audioIndex == -1) {
-                    selectTrack(null, TRACKTYPE.AUDIO)
+                    selectTrack(null, TrackType.AUDIO)
                 } else if (audioGet != null) {
-                    selectTrack(audioGet, TRACKTYPE.AUDIO)
+                    selectTrack(audioGet, TrackType.AUDIO)
                 }
             }
         }
@@ -436,6 +422,7 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
                             }
                         }
                     }
+
                     MPVLib.MpvEvent.MPV_EVENT_END_FILE -> {
                         playerScopeMain.launch {
                             pause()

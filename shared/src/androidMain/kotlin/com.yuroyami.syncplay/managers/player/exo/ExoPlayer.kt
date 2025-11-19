@@ -11,18 +11,15 @@ import androidx.annotation.UiThread
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SettingsInputComponent
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.C.STREAM_TYPE_MUSIC
-import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import androidx.media3.common.TrackGroup
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.decoder.ffmpeg.FfmpegLibrary
@@ -289,8 +286,8 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     override suspend fun analyzeTracks(mediafile: MediaFile) {
         if (!isInitialized) return
 
-        viewmodel.media?.audioTracks?.clear()
-        viewmodel.media?.subtitleTracks?.clear()
+        viewmodel.media?.tracks?.clear()
+
         withContext(Dispatchers.Main) {
             withContext(Dispatchers.Main) {
                 val tracks = exoplayer?.currentTracks ?: return@withContext
@@ -303,20 +300,16 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
                             val index = trackGroup.indexOf(format)
 
                             /** Creating a custom Track instance for every track in a track group **/
-                            val exoTrack = object : ExoTrack {
-                                override val trackGroup = trackGroup
-                                override val format = format
-                                override val name = "${format.label} [${format.language?.uppercase() ?: "UND"}]"
-                                override val type = trackType.toCommonType()
-                                override val index = index
-                                override val selected = mutableStateOf(group.isTrackSelected(index))
-                            }
+                            val exoTrack = ExoTrack(
+                                trackGroup = trackGroup,
+                                format = format,
+                                name = "${format.label} [${format.language?.uppercase() ?: "UND"}]",
+                                type = trackType.toCommonType(),
+                                index = index,
+                                selected = group.isTrackSelected(index)
+                            )
 
-                            if (trackType == C.TRACK_TYPE_TEXT) {
-                                viewmodel.media?.subtitleTracks?.add(exoTrack)
-                            } else {
-                                viewmodel.media?.audioTracks?.add(exoTrack)
-                            }
+                            viewmodel.media?.tracks?.add(exoTrack)
                         }
                     }
                 }
@@ -324,7 +317,7 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         }
     }
 
-    override suspend fun selectTrack(track: Track?, type: TRACKTYPE) {
+    override suspend fun selectTrack(track: Track?, type: TrackType) {
         if (!isInitialized) return
 
         val exoTrack = track as? ExoTrack
@@ -338,14 +331,14 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         /* Now, selecting our subtitle track should one be selected */
         if (exoTrack != null) {
             when (type) {
-                TRACKTYPE.SUBTITLE -> {
+                TrackType.SUBTITLE -> {
                     playerManager.currentTrackChoices.lastSubtitleOverride = TrackSelectionOverride(
                         exoTrack.trackGroup,
                         exoTrack.index
                     )
                 }
 
-                TRACKTYPE.AUDIO -> {
+                TrackType.AUDIO -> {
                     playerManager.currentTrackChoices.lastSubtitleOverride = TrackSelectionOverride(
                         exoTrack.trackGroup,
                         exoTrack.index
@@ -518,18 +511,18 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     /** EXO-EXCLUSIVE */
-    private fun TRACKTYPE.getExoType(): Int {
+    private fun TrackType.getExoType(): Int {
         return when (this) {
-            TRACKTYPE.AUDIO -> C.TRACK_TYPE_AUDIO
-            TRACKTYPE.SUBTITLE -> C.TRACK_TYPE_TEXT
+            TrackType.AUDIO -> C.TRACK_TYPE_AUDIO
+            TrackType.SUBTITLE -> C.TRACK_TYPE_TEXT
         }
     }
 
-    private fun Int.toCommonType(): TRACKTYPE {
+    private fun Int.toCommonType(): TrackType {
         return when (this) {
-            C.TRACK_TYPE_AUDIO -> TRACKTYPE.AUDIO
-            C.TRACK_TYPE_TEXT -> TRACKTYPE.SUBTITLE
-            else -> TRACKTYPE.SUBTITLE
+            C.TRACK_TYPE_AUDIO -> TrackType.AUDIO
+            C.TRACK_TYPE_TEXT -> TrackType.SUBTITLE
+            else -> TrackType.SUBTITLE
         }
     }
 
@@ -547,8 +540,5 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         }
     }
 
-    interface ExoTrack : Track {
-        val trackGroup: TrackGroup
-        val format: Format
-    }
+
 }

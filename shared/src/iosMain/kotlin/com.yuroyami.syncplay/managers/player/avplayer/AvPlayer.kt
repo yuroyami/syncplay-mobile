@@ -1,7 +1,6 @@
 package com.yuroyami.syncplay.managers.player.avplayer
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.interop.UIKitView
@@ -11,7 +10,6 @@ import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.MediaFileLocation
 import com.yuroyami.syncplay.models.Track
-import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.cinterop.CValue
@@ -132,7 +130,7 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
         avPlayerLayer?.player = avPlayer
 
         avPlayer?.addObserver(
-            observer = object: NSObject() {
+            observer = object : NSObject() {
                 //todo
             },
             forKeyPath = "timeControlStatus",
@@ -230,33 +228,27 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
      */
     override suspend fun analyzeTracks(mediafile: MediaFile) {
         // Check if the AVPlayer is initialized
-        if (avPlayer == null || avMedia == null) return
+        if (avPlayer == null || avMedia == null || isInitialized) return
 
-        viewmodel.media?.subtitleTracks?.clear()
-        viewmodel.media?.audioTracks?.clear()
+        viewmodel.media?.tracks?.clear()
 
         //Groups
         val asset = avPlayer?.currentItem?.asset ?: return
         val characteristics = asset.availableMediaCharacteristicsWithMediaSelectionOptions.map { it as AVMediaCharacteristic }
         characteristics.forEach {
-            loggy("Characteristic: $it")
-
             val group = asset.mediaSelectionGroupForMediaCharacteristic(it)
             group?.options?.map { op -> op as AVMediaSelectionOption }?.forEachIndexed { i, option ->
-                loggy("Option: $option")
-
-                val isSelected = group.defaultOption == option
 
                 if (option.mediaType == AVMediaTypeText || option.mediaType == AVMediaTypeAudio) {
-                    mediafile.audioTracks.add(
-                        object : AvTrack {
-                            override val sOption = option
-                            override val sGroup: AVMediaSelectionGroup = group
-                            override val name = option.displayName + " [${option.extendedLanguageTag}]"
-                            override val index = i
-                            override val type = if (option.mediaType == AVMediaTypeAudio) TRACKTYPE.AUDIO else TRACKTYPE.SUBTITLE
-                            override val selected = mutableStateOf(isSelected)
-                        }
+                    mediafile.tracks.add(
+                        AvTrack(
+                            sOption = option,
+                            sGroup = group,
+                            name = option.displayName + " [${option.extendedLanguageTag}]",
+                            index = i,
+                            type = if (option.mediaType == AVMediaTypeAudio) TrackType.AUDIO else TrackType.SUBTITLE,
+                            selected = group.defaultOption == option
+                        )
                     )
                 }
             }
@@ -272,7 +264,7 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
      * @param track The track to select (must be AvTrack), or null to disable
      * @param type Whether this is an audio or subtitle track
      */
-    override suspend fun selectTrack(track: Track?, type: TRACKTYPE) {
+    override suspend fun selectTrack(track: Track?, type: TrackType) {
         if (!isInitialized) return
 
         val avtrack = track as? AvTrack
@@ -287,13 +279,14 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
                 val group = asset.mediaSelectionGroupForMediaCharacteristic(characteristic)
 
                 when (type) {
-                    TRACKTYPE.AUDIO -> {
+                    TrackType.AUDIO -> {
                         val isAudio = group?.options?.any { (it as? AVMediaSelectionOption)?.mediaType == AVMediaTypeAudio }
                         if (isAudio == true) {
                             groupInQuestion = group
                         }
                     }
-                    TRACKTYPE.SUBTITLE -> {
+
+                    TrackType.SUBTITLE -> {
                         val isSubtitle = group?.options?.any { (it as? AVMediaSelectionOption)?.mediaType == AVMediaTypeText }
                         if (isSubtitle == true) {
                             groupInQuestion = group
@@ -352,35 +345,35 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
 
         delay(500)
 
-       /* media.uri?.let { it ->
-            val nsUrl = it.nsUrl /* when (isUrl) {
-                true -> URLWithString(it)
-                false -> fileURLWithPath(it)
-            } ?: throw Exception() */
+        /* media.uri?.let { it ->
+             val nsUrl = it.nsUrl /* when (isUrl) {
+                 true -> URLWithString(it)
+                 false -> fileURLWithPath(it)
+             } ?: throw Exception() */
 
-            avMedia = AVPlayerItem(uRL = nsUrl)
-            avPlayer = AVPlayer.playerWithPlayerItem(avMedia)
+             avMedia = AVPlayerItem(uRL = nsUrl)
+             avPlayer = AVPlayer.playerWithPlayerItem(avMedia)
 
-            hookPlayerAgain()
+             hookPlayerAgain()
 
-            val isTimeout = withTimeoutOrNull(10.seconds) {
-                while (avMedia?.status != AVPlayerItemStatusReadyToPlay) {
-                    delay(250)
-                }
+             val isTimeout = withTimeoutOrNull(10.seconds) {
+                 while (avMedia?.status != AVPlayerItemStatusReadyToPlay) {
+                     delay(250)
+                 }
 
-                //File is loaded, get duration and declare file
-                avMedia!!.asset.duration.toMillis().let { dur ->
-                    playerManager.timeFullMillis.value = if (dur < 0) 0 else dur
+                 //File is loaded, get duration and declare file
+                 avMedia!!.asset.duration.toMillis().let { dur ->
+                     playerManager.timeFullMillis.value = if (dur < 0) 0 else dur
 
-                    playerManager.media.value?.fileDuration = playerManager.timeFullMillis.value / 1000.0
-                    announceFileLoaded()
-                }
-            }
+                     playerManager.media.value?.fileDuration = playerManager.timeFullMillis.value / 1000.0
+                     announceFileLoaded()
+                 }
+             }
 
-            if (isTimeout == null) throw Exception("Media not loaded by AVPlayer")
-        }
+             if (isTimeout == null) throw Exception("Media not loaded by AVPlayer")
+         }
 
-        */
+         */
     }
 
     override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
@@ -501,18 +494,6 @@ class AvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEngi
         return CMTimeGetSeconds(this).times(1000.0).roundToLong()
     }
 
-    /**
-     * Extended Track interface for AVPlayer tracks.
-     *
-     * Includes references to AVFoundation's media selection option and group
-     * required for track switching operations.
-     */
-    interface AvTrack : Track {
-        /** The AVFoundation media selection option representing this track */
-        val sOption: AVMediaSelectionOption
-        /** The media selection group this track belongs to */
-        val sGroup: AVMediaSelectionGroup
-    }
 
     /********** Volume Control **********/
 

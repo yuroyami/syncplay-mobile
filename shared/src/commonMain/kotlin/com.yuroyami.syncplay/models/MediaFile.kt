@@ -30,8 +30,7 @@ data class MediaFile(
     var fileDuration: Double = -1.0,
 
     /** the subtitle tracks, audio tracks and chapters for this file **/
-    var audioTracks: MutableList<Track> = mutableListOf(),
-    var subtitleTracks: MutableList<Track> = mutableListOf(),
+    var tracks: MutableList<Track> = mutableListOf(),
     val chapters: MutableList<Chapter> = mutableListOf(),
 
     /** MediaInfo chart for this file **/

@@ -74,7 +74,7 @@ abstract class BasePlayer(
     /**
      * Types of media tracks that can be selected.
      */
-    enum class TRACKTYPE {
+    enum class TrackType {
         /** Audio track (language, codec) */
         AUDIO,
         /** Subtitle/closed caption track */
@@ -161,7 +161,7 @@ abstract class BasePlayer(
      * @param track The track to select, or null to disable that track type
      * @param type Whether this is an audio or subtitle track
      */
-    abstract suspend fun selectTrack(track: Track?, type: TRACKTYPE)
+    abstract suspend fun selectTrack(track: Track?, type: TrackType)
 
     /**
      * Analyzes and extracts chapter information from the loaded media.

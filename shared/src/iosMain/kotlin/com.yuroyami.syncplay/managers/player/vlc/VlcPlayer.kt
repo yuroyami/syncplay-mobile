@@ -2,7 +2,6 @@ package com.yuroyami.syncplay.managers.player.vlc
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.UIKitView
 import cocoapods.MobileVLCKit.VLCLibrary
@@ -214,30 +213,29 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
         if (vlcPlayer == null) return
 
         withContext(Dispatchers.Main.immediate) {
-            viewmodel.media?.subtitleTracks?.clear()
-            viewmodel.media?.audioTracks?.clear()
+            viewmodel.media?.tracks?.clear()
 
             val audioTracks = vlcPlayer!!.audioTrackIndexes.zip(vlcPlayer!!.audioTrackNames).toMap()
             audioTracks.forEach { (index, name) ->
-                viewmodel.media?.audioTracks?.add(
-                    object : Track {
-                        override val name = name.toString()
-                        override val index = index as? Int ?: 0
-                        override val type = TRACKTYPE.AUDIO
-                        override val selected = mutableStateOf(vlcPlayer!!.currentAudioTrackIndex == index)
-                    }
+                viewmodel.media?.tracks?.add(
+                    VlcKitTrack(
+                        name = name.toString(),
+                        type = TrackType.AUDIO,
+                        index = index as? Int ?: 0,
+                        selected = vlcPlayer!!.currentAudioTrackIndex == index
+                    )
                 )
             }
 
             val subtitleTracks = vlcPlayer!!.videoSubTitlesIndexes.zip(vlcPlayer!!.videoSubTitlesNames).toMap()
             subtitleTracks.forEach { (index, name) ->
-                viewmodel.media?.subtitleTracks?.add(
-                    object : Track {
-                        override val name = name.toString()
-                        override val index = index as? Int ?: 0
-                        override val type = TRACKTYPE.SUBTITLE
-                        override val selected = mutableStateOf(vlcPlayer!!.currentVideoSubTitleIndex == index)
-                    }
+                viewmodel.media?.tracks?.add(
+                    VlcKitTrack(
+                        name = name.toString(),
+                        type = TrackType.SUBTITLE,
+                        index = index as? Int ?: 0,
+                        selected = vlcPlayer!!.currentVideoSubTitleIndex == index
+                    )
                 )
             }
         }
@@ -251,12 +249,12 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
      * @param track The track to select, or null to disable
      * @param type Whether this is an audio or subtitle track
      */
-    override suspend fun selectTrack(track: Track?, type: TRACKTYPE) {
+    override suspend fun selectTrack(track: Track?, type: TrackType) {
         if (!isInitialized) return
 
         withContext(Dispatchers.Main.immediate) {
             when (type) {
-                TRACKTYPE.SUBTITLE -> {
+                TrackType.SUBTITLE -> {
                     val index = track?.index ?: -1
                     if (index >= 0) {
                         vlcPlayer?.setCurrentVideoSubTitleIndex(index)
@@ -265,7 +263,7 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, ApplePlayerEng
                     }
                 }
 
-                TRACKTYPE.AUDIO -> {
+                TrackType.AUDIO -> {
                     val index = track?.index ?: -1
                     if (index >= 0) {
                         vlcPlayer?.setCurrentAudioTrackIndex(index)
