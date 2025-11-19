@@ -19,7 +19,7 @@
   <a href="https://play.google.com/store/apps/details?id=com.yuroyami.syncplay">  
     <img alt="Syncplay Android on Google Play store" title="Syncplay Android" src="https://i0.wp.com/reefcentral.pt/wp-content/uploads/2019/04/get-on-google-play.png?fit=564%2C168&ssl=1" width="200">  
   </a>
-</p> 
+</p>
 <p align="center">Syncplay comes bundled with multiple built-in video players on both platforms.<br> More info is available throughout this readme.<br>Note: The IzzyOnDroid Android release only contains ExoPlayer
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->  
@@ -138,7 +138,8 @@ Some video players are more potent than others in certain areas. Here's a genera
 
 > Where is the iOS release ?
 
-- The release has to be uploaded to the Apple app store to make it available to everyone, which I do not own. Volunteers are welcome.
+- The app is not on the Apple app store. However, you can sideload the app via `AltStore` if you have a normal non-jailbroken iPhone/iPad.
+- If you have a jailbroken device, simply sideload the latest `.ipa` file which you will find attached to every release.
 
 ## Translating
 
