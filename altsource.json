@@ -34,9 +34,7 @@
         }
       ],
       "appPermissions": {
-        "entitlements": [
-          "audio"
-        ],
+        "entitlements": [],
         "privacy": {
         }
       },
