@@ -13,7 +13,6 @@
     {
       "name": "Syncplay for iOS",
       "bundleIdentifier": "com.yuroyami.syncplay.iosApplication",
-      "marketplaceID": "",
       "developerName": "yuroyami",
       "subtitle": "Watch videos with friends in sync.",
       "localizedDescription": "Unofficial Syncplay client app for Android and iOS. Watch stuff in sync with your friends. Works well with Syncplay on PC. Fully written in Kotlin and Compose multiplatform.",
