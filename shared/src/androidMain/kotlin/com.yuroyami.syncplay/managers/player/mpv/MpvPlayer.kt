@@ -32,6 +32,7 @@ import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.MediaFileLocation
 import com.yuroyami.syncplay.models.Track
+import com.yuroyami.syncplay.utils.GlobalPlayerSession
 import com.yuroyami.syncplay.utils.timestampFromMillis
 import com.yuroyami.syncplay.utils.uri
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
@@ -53,14 +54,13 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
 
     var mpvPos = 0L
     private lateinit var observer: MPVLib.EventObserver
-    private lateinit var mpvView: MPVView
+    lateinit var mpvView: MPVView
     private lateinit var ctx: Context
 
     override val supportsChapters: Boolean = true
 
     override val trackerJobInterval: Duration = 500.milliseconds
 
-    //TODO Initialize mpv once to quicken up video loading
     override fun initialize() {
         ctx = mpvView.context.applicationContext
         audioManager = ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -70,6 +70,16 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
         isInitialized = true
         mpvObserverAttach()
+
+        super.initialize()
+    }
+
+    override fun initMediaSession(): GlobalPlayerSession? {
+        TODO("Not yet implemented")
+    }
+
+    override fun finalizeMediaSession() {
+        TODO("Not yet implemented")
     }
 
     override suspend fun destroy() {

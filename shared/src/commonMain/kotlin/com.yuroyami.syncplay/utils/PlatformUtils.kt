@@ -46,6 +46,8 @@ expect val platform: PLATFORM
  */
 expect val availablePlatformPlayerEngines: List<PlayerEngine>
 
+expect class GlobalPlayerSession
+
 /**
  * Creates a platform-specific network manager instance for the room.
  *

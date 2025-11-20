@@ -14,6 +14,7 @@ import com.yuroyami.syncplay.models.MediaFile.Companion.mediaFromFile
 import com.yuroyami.syncplay.models.MediaFile.Companion.mediaFromUrl
 import com.yuroyami.syncplay.models.MediaFileLocation
 import com.yuroyami.syncplay.models.Track
+import com.yuroyami.syncplay.utils.GlobalPlayerSession
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
@@ -71,36 +72,30 @@ abstract class BasePlayer(
      */
     val playerManager: PlayerManager = viewmodel.playerManager
 
-    /**
-     * Types of media tracks that can be selected.
+    /** The Global MediaSession that is connected to the player.
+     * MediaSessions are responsible for the system notification that shows everything about what's being played.
+     * It also routes playback from outside the app to inside the app. For example,
+     * if the phone is connected to a TV, then you can control the playback from the phone.
+     * You can even control playback from that notification.
+     * The session also allows background play and prevents the app from being killed.
      */
-    enum class TrackType {
-        /** Audio track (language, codec) */
-        AUDIO,
+    val session: GlobalPlayerSession? = null
 
-        /** Subtitle/closed caption track */
-        SUBTITLE
+    /** Types of media tracks that can be selected. */
+    enum class TrackType {
+        AUDIO, SUBTITLE
     }
 
-    /**
-     * Supervisor job for player-related coroutines.
-     * Ensures child job failures don't cancel the entire player scope.
+    /** Supervisor job for player-related coroutines, and its CoroutineScopes
      */
     private val playerSupervisorJob = SupervisorJob()
-
-    /**
-     * Coroutine scope for main thread operations (UI updates, player commands).
-     */
     val playerScopeMain = CoroutineScope(Dispatchers.Main + playerSupervisorJob)
-
-    /**
-     * Coroutine scope for IO operations (file loading, network requests).
-     */
     val playerScopeIO = CoroutineScope(Dispatchers.IO + playerSupervisorJob)
 
     /**
      * Whether this player supports changing aspect ratio dynamically.
      */
+    //TODO
     open val canChangeAspectRatio: Boolean = true
 
     /**
@@ -121,15 +116,24 @@ abstract class BasePlayer(
     /**
      * Initializes the player and prepares it for media playback.
      * Must be called on the UI thread.
+     *
+     * NOTE: The super has to be called AFTER the player is ready.
      */
+    @CallSuper
     @UiThread
-    abstract fun initialize()
+    open fun initialize() {
+        initMediaSession()
+    }
 
     /**
      * Destroys the player and releases all resources.
      * Called when leaving the room or switching players.
      */
     abstract suspend fun destroy()
+
+    abstract fun initMediaSession(): GlobalPlayerSession?
+
+    abstract fun finalizeMediaSession()
 
     /**
      * Returns platform-specific configuration settings for this player, if any.

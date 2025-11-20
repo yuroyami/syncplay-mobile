@@ -15,6 +15,7 @@ import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.models.Chapter
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.MediaFileLocation
+import com.yuroyami.syncplay.utils.GlobalPlayerSession
 import com.yuroyami.syncplay.utils.contextObtainer
 import com.yuroyami.syncplay.utils.uri
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
@@ -61,6 +62,8 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
 
         vlcAttachObserver()
 
+        super.initialize()
+
         startTrackingProgress()
     }
 
@@ -73,6 +76,15 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
             vlcPlayer?.release()
             libvlc?.release()
         }
+    }
+
+
+    override fun initMediaSession(): GlobalPlayerSession? {
+        TODO("Not yet implemented")
+    }
+
+    override fun finalizeMediaSession() {
+        TODO("Not yet implemented")
     }
 
     @Composable

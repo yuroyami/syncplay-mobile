@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalView
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import androidx.media3.session.MediaSession
 import com.yuroyami.syncplay.managers.network.KtorNetworkManager
 import com.yuroyami.syncplay.managers.network.NettyNetworkManager
 import com.yuroyami.syncplay.managers.network.NetworkManager
@@ -32,9 +33,7 @@ import java.io.InputStreamReader
 import java.lang.ref.WeakReference
 import kotlin.math.roundToInt
 
-/**
- * Android platform identifier for platform-specific implementations.
- */
+
 actual val platform: PLATFORM = PLATFORM.Android
 
 /**
@@ -45,12 +44,8 @@ actual val platform: PLATFORM = PLATFORM.Android
  */
 actual val availablePlatformPlayerEngines: List<PlayerEngine> = listOf(AndroidPlayerEngine.Exoplayer, AndroidPlayerEngine.Mpv, AndroidPlayerEngine.VLC)
 
-/**
- * Creates a platform-specific network manager instance for Android.
- *
- * @param engine The requested network engine type
- * @return NettyNetworkManager for NETTY engine, KtorNetworkManager for others
- */
+actual typealias GlobalPlayerSession = MediaSession
+
 actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {
     val preferredEngine = NETWORK_ENGINE.value()
     return when (preferredEngine) {
@@ -59,22 +54,8 @@ actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {
     }
 }
 
-/**
- * Gets the current system time in milliseconds since Unix epoch.
- *
- * @return Current timestamp in milliseconds
- */
 actual fun generateTimestampMillis() = System.currentTimeMillis()
 
-/**
- * Extracts the folder name from a document tree URI.
- *
- * Uses Android's Storage Access Framework to resolve the folder name from
- * a tree URI obtained via document picker.
- *
- * @param uri Document tree URI as a string
- * @return The folder name, or null if it cannot be determined
- */
 actual fun getFolderName(uri: String): String? {
     val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
         uri.toUri(),
@@ -86,15 +67,6 @@ actual fun getFolderName(uri: String): String? {
     return d?.name
 }
 
-/**
- * Extracts the filename from a file URI.
- *
- * Handles both content:// URIs (from Storage Access Framework) and file:// URIs.
- * For content URIs, queries the ContentResolver to get the display name.
- *
- * @param uri File URI as a string
- * @return The filename, or null if it cannot be determined
- */
 actual fun getFileName(uri: PlatformFile): String? {
     val actualuri = uri.path.toUri()
     val context = contextObtainer.invoke()
@@ -104,14 +76,6 @@ actual fun getFileName(uri: PlatformFile): String? {
     }
 }
 
-/**
- * Gets the size of a file from its URI.
- *
- * Uses DocumentFile to query the file size through the Storage Access Framework.
- *
- * @param uri File URI as a string
- * @return File size in bytes, or null if it cannot be determined
- */
 actual fun getFileSize(uri: PlatformFile): Long? {
     val context = contextObtainer()
     val df = DocumentFile.fromSingleUri(context, uri.path.toUri()) ?: return null
@@ -135,19 +99,6 @@ private fun Context.getContentFileName(uri: Uri): String? = runCatching {
     }
 }.getOrNull()
 
-
-/**
- * Performs an ICMP ping to a host using Android's system ping utility.
- *
- * Executes the system ping command and parses the output to extract round-trip time.
- * Returns null if the ping fails (100% packet loss) or if the command cannot be executed.
- *
- * Note: May not work on all devices, particularly emulators that restrict ping access.
- *
- * @param host The hostname or IP address to ping
- * @param packet The packet size in bytes
- * @return Round-trip time in milliseconds, or null if ping failed
- */
 actual suspend fun pingIcmp(host: String, packet: Int): Int? {
     try {
         val pingprocess = Runtime.getRuntime().exec("/system/bin/ping -c 1 -w 1 -s $packet $host") ?: return null
@@ -166,12 +117,6 @@ actual suspend fun pingIcmp(host: String, packet: Int): Int? {
     }
 }
 
-/**
- * Extracts text content from a ClipEntry (clipboard data).
- *
- * @receiver The ClipEntry to extract text from
- * @return The text content, or null if the entry doesn't contain text
- */
 actual fun ClipEntry.getText(): String? {
     return this.clipData.getItemAt(0).text?.toString()
 }

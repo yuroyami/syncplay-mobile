@@ -37,6 +37,8 @@ actual val platform: PLATFORM = PLATFORM.IOS
 
 actual val availablePlatformPlayerEngines: List<PlayerEngine> = listOf(ApplePlayerEngine.AVPlayer, ApplePlayerEngine.VLC)
 
+actual typealias GlobalPlayerSession = String
+
 actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {
     val preferredEngine = NETWORK_ENGINE.value()
     return when (preferredEngine) {

@@ -5,6 +5,8 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
 import android.media.AudioManager
+import android.os.Handler
+import android.os.Looper
 import android.util.TypedValue
 import android.view.LayoutInflater
 import androidx.annotation.UiThread
@@ -27,12 +29,9 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
-import androidx.media3.session.MediaSession
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.CaptionStyleCompat
 import androidx.media3.ui.PlayerView
-import com.google.common.util.concurrent.Futures
-import com.google.common.util.concurrent.ListenableFuture
 import com.yuroyami.syncplay.databinding.ExoviewBinding
 import com.yuroyami.syncplay.managers.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.managers.player.BasePlayer
@@ -44,6 +43,8 @@ import com.yuroyami.syncplay.managers.settings.SettingCategory
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.models.MediaFileLocation
 import com.yuroyami.syncplay.models.Track
+import com.yuroyami.syncplay.utils.GlobalPlayerSession
+import com.yuroyami.syncplay.utils.buildAndroidMediaSession
 import com.yuroyami.syncplay.utils.contextObtainer
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.utils.uri
@@ -62,7 +63,6 @@ import syncplaymobile.shared.generated.resources.room_scaling_fixed_width
 import syncplaymobile.shared.generated.resources.room_scaling_zoom
 import syncplaymobile.shared.generated.resources.uisetting_categ_exo
 import java.util.Collections
-import java.util.UUID
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.time.Duration
@@ -71,12 +71,8 @@ import kotlin.time.Duration.Companion.milliseconds
 class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerEngine.Exoplayer) {
     lateinit var audioManager: AudioManager
 
-    //TODO TERMINATE THE SESSION ON PLAYER DESTROY!!!! KEEP THIS SINGLE-SESSION ONLY
-
     /*-- Exoplayer-related properties --*/
     var exoplayer: ExoPlayer? = null
-    private var session: MediaSession? = null
-    private var currentMedia: MediaItem? = null
     private lateinit var exoView: PlayerView
 
     override val supportsChapters: Boolean = false
@@ -84,7 +80,7 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     override val trackerJobInterval: Duration = 500.milliseconds
 
     override fun initialize() {
-        playerScopeMain.launch(Dispatchers.Main.immediate) {
+        Handler(Looper.getMainLooper()).post {
             val context = contextObtainer()
 
             audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -138,31 +134,6 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
             exoView.player = exoplayer
 
             exoplayer?.playWhenReady = false
-
-            /** Creating our MediaSession */
-            session = MediaSession
-                .Builder(context, exoplayer!!)
-                .setId("session_${UUID.randomUUID()}")
-                .setCallback(object : MediaSession.Callback {
-                    override fun onAddMediaItems(
-                        mediaSession: MediaSession,
-                        controller: MediaSession.ControllerInfo,
-                        mediaItems: MutableList<MediaItem>,
-                    ): ListenableFuture<MutableList<MediaItem>> {
-                        currentMedia = if (mediaItems.isEmpty()) {
-                            null
-                        } else {
-                            mediaItems[0]
-                        }
-
-                        val newMediaItems = mediaItems.map {
-                            it.buildUpon().setUri(it.mediaId).build()
-                        }.toMutableList()
-                        return Futures.immediateFuture(newMediaItems)
-                    }
-                })
-                .build()
-
 
             exoplayer?.addListener(object : Player.Listener {
 
@@ -226,7 +197,18 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
             isInitialized = true
 
             startTrackingProgress()
+
+            //Finally, initialize media session by calling the super method
+            super.initialize()
         }
+    }
+
+    override fun initMediaSession(): GlobalPlayerSession {
+        return exoplayer!!.buildAndroidMediaSession(contextObtainer())
+    }
+
+    override fun finalizeMediaSession() {
+        TODO("Not yet implemented")
     }
 
     override suspend fun destroy() {

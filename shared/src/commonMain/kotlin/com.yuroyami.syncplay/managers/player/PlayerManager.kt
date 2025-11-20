@@ -95,6 +95,7 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         GlobalScope.launch {
             //Has to run in GlobalScope because room viewmodelscope is cancelled at this point of invalidation
             player.destroy()
+            player.finalizeMediaSession()
         }
         media.value = null
         isNowPlaying.value = false

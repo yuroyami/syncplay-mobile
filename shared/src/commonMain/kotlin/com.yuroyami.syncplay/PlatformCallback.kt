@@ -55,15 +55,8 @@ interface PlatformCallback {
      */
     fun changeCurrentBrightness(v: Float)
 
-    /**
-     * Events representing room state transitions.
-     */
-    enum class RoomEvent {
-        /** User is leaving/exiting a room */
-        LEAVE,
-        /** User is entering/joining a room */
-        ENTER
-    }
+
+    fun initializeMediaSessionController()
 
     /**
      * Called when playback state changes.
