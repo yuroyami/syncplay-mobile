@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.os.Build
 import android.os.StrictMode
+import androidx.media3.session.MediaSession
 import com.yuroyami.syncplay.managers.preferences.Preferences
 import com.yuroyami.syncplay.managers.preferences.datastore
 import com.yuroyami.syncplay.utils.contextObtainer
@@ -23,6 +24,10 @@ import java.security.Security
  * This class is instantiated once per app process and lives for the entire app lifecycle.
  */
 class SyncplayApp: Application() {
+
+    //This allows us to share the mediasession instance we get from common module's BasePlayer
+    //with SyncplayMediaSessionService using reflection
+    lateinit var mediaSession: MediaSession
 
     /***
      * Performs the one-time critical initialization:

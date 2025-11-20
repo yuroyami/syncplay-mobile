@@ -116,14 +116,9 @@ abstract class BasePlayer(
     /**
      * Initializes the player and prepares it for media playback.
      * Must be called on the UI thread.
-     *
-     * NOTE: The super has to be called AFTER the player is ready.
      */
-    @CallSuper
     @UiThread
-    open fun initialize() {
-        initMediaSession()
-    }
+    abstract fun initialize()
 
     /**
      * Destroys the player and releases all resources.
@@ -131,7 +126,7 @@ abstract class BasePlayer(
      */
     abstract suspend fun destroy()
 
-    abstract fun initMediaSession(): GlobalPlayerSession?
+    abstract fun initMediaSession(): GlobalPlayerSession
 
     abstract fun finalizeMediaSession()
 

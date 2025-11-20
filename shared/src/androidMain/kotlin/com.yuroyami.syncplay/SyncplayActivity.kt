@@ -27,6 +27,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.managers.player.exo.ExoPlayer
 import com.yuroyami.syncplay.managers.preferences.Preferences.DISPLAY_LANG
 import com.yuroyami.syncplay.managers.preferences.Preferences.SUBTITLE_SIZE
@@ -88,8 +89,19 @@ class SyncplayActivity : ComponentActivity() {
 
         /** Binding common logic with platform logic */
         platformCallback = object : PlatformCallback {
-            override fun initializeMediaSessionController() {
-                setupMedia3Session()
+            override fun initializeMediaSession(player: BasePlayer) {
+                (application as SyncplayApp).mediaSession = player.initMediaSession()
+
+                /* Getting a session token that defines our underlying service */
+                val sessionToken = SessionToken(
+                    applicationContext,
+                    ComponentName(applicationContext, SyncplayMediaSessionService::class.java)
+                )
+
+                /* initializing the media session controller using the session token, the service will launch if it hasn't already */
+                media3Controller = MediaController.Builder(applicationContext, sessionToken)
+                    .setListener(object : MediaController.Listener {})
+                    .buildAsync().get()
             }
 
             /**
@@ -407,19 +419,7 @@ class SyncplayActivity : ComponentActivity() {
      */
     override fun onDestroy() {
         super.onDestroy()
+
         unregisterReceiver(pipBroadcastReceiver)
-    }
-
-    fun setupMedia3Session() {
-        /* Getting a session token that defines our underlying service */
-        val sessionToken = SessionToken(
-            applicationContext,
-            ComponentName(applicationContext, SyncplayMediaSessionService::class.java)
-        )
-
-        /* initializing the media session controller using the session token, the service will launch if it hasn't already */
-        media3Controller = MediaController.Builder(applicationContext, sessionToken)
-            .setListener(object : MediaController.Listener {})
-            .buildAsync().get()
     }
 }

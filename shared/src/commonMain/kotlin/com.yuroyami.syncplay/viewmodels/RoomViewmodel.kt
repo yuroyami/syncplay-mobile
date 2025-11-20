@@ -25,6 +25,7 @@ import com.yuroyami.syncplay.ui.screens.Screen
 import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
 import com.yuroyami.syncplay.utils.instantiateNetworkManager
 import com.yuroyami.syncplay.utils.loggy
+import com.yuroyami.syncplay.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -103,6 +104,8 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
                 val engine = availablePlatformPlayerEngines.first { it.name == PLAYER_ENGINE.value() }
                 playerManager.player = engine.instantiate(this@RoomViewmodel)
                 playerManager.isPlayerReady.value = true
+
+                platformCallback.initializeMediaSessionController()
             }
 
             joinConfig?.let {

@@ -197,9 +197,6 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
             isInitialized = true
 
             startTrackingProgress()
-
-            //Finally, initialize media session by calling the super method
-            super.initialize()
         }
     }
 

@@ -1,5 +1,6 @@
 package com.yuroyami.syncplay
 
+import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.viewmodels.HomeViewmodel
 
@@ -56,7 +57,7 @@ interface PlatformCallback {
     fun changeCurrentBrightness(v: Float)
 
 
-    fun initializeMediaSessionController()
+    fun initializeMediaSession(player: BasePlayer)
 
     /**
      * Called when playback state changes.
