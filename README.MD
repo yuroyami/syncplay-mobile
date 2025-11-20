@@ -28,7 +28,12 @@
     <img src="https://github.com/CelloSerenity/altdirect/blob/main/assets/png/Download_Blue.png?raw=true" alt="Download .ipa" width="150" valign="middle">
   </a>
 </p>
-<p align="center">Syncplay comes bundled with multiple built-in video players on both platforms.<br>The Google Play store release is not always up-to-date. Download the APK from here preferably.<br>Note: The IzzyOnDroid Android release only contains ExoPlayer
+<p align="center">
+Syncplay comes bundled with multiple built-in video players on both platforms.<br>
+You can follow my [iOS guide](https://github.com/yuroyami/syncplay-mobile/wiki/How-to-install-the-app-on-iOS) to install the app on your iPhone/iPad.<br>
+Your iOS device DOES NOT HAVE to be jailbroken.<br>
+The Google Play store release is not always up-to-date. Download the APK from here preferably.<br>
+Note: The IzzyOnDroid Android release only contains ExoPlayer
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->  
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->  
