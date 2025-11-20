@@ -24,7 +24,7 @@
   </a>
 </p>
 <p align="center" style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; align-items: center;">
-  <a href="https://celloserenity.github.io/altdirect/?url=https://raw.githubusercontent.com/yuroyami/syncplay-mobile/refs/heads/master/altstore_yuroyami.json&exclude=sidestore,livecontainer,feather" target="_blank" style="display: flex; align-items: center; gap: 5px;">
+  <a href="https://celloserenity.github.io/altdirect/?url=https://raw.githubusercontent.com/yuroyami/syncplay-mobile/refs/heads/master/altstore_yuroyami.json&exclude=livecontainer,feather" target="_blank" style="display: flex; align-items: center; gap: 5px;">
     <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="iOS" width="20">
     <img src="https://github.com/CelloSerenity/altdirect/blob/main/assets/png/AltSource_Blue.png?raw=true" alt="Add AltSource" width="150">
   </a>
