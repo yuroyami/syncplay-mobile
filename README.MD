@@ -29,12 +29,11 @@
   </a>
 </p>
 <p align="center">
-Syncplay comes bundled with multiple built-in video players on both platforms.<br>
-Your iOS device DOES NOT HAVE to be jailbroken.<br>
-The Google Play store release is not always up-to-date. Download the APK from here preferably.<br>
-Note: The IzzyOnDroid Android release only contains ExoPlayer
+Syncplay comes bundled with multiple built-in video players (on Android and iOS).<br>
+The Google Play store release is not always up-to-date. Please download the APK from our GitHub releases preferably.<br>
+Note: The IzzyOnDroid Android release is a lite APK containing only ExoPlayer video engine.
 
-You can follow my [iOS guide](https://github.com/yuroyami/syncplay-mobile/wiki/How-to-install-the-app-on-iOS) to install the app on your iPhone/iPad.
+You can follow my [iOS guide](https://github.com/yuroyami/syncplay-mobile/wiki/How-to-install-the-app-on-iOS) to install the app on your iPhone/iPad (works for both non-jailbroken and jailbroken devices).
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->  
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->  
@@ -99,8 +98,7 @@ Usage on Android is fairly simple:
 
 ### How to use (iOS)
 
-The iOS version cannot be distributed in package format (like Android's APKs). The only ways to install an app on iOS are to either compile this project by yourself on your macOS, or someone would kindly donate to host this app on the Apple app
-store (the fee is a yearly $99). The iOS app compiles and runs without issues on any iOS device with 14.0 (I assume this can be lowered further but I didn't try).
+The iOS version cannot be distributed in package format (like Android's APKs). The only ways to install an app on iOS are to either use AltStore (as explained in the [iOS guide](https://github.com/yuroyami/syncplay-mobile/wiki/How-to-install-the-app-on-iOS)), or compile this project by yourself on your macOS.
 
 ## Capabilities
 
@@ -111,6 +109,7 @@ The UI on both Android and iOS are 99.9% identical, minus some differences due t
 | Feature                       | Android                                 | iOS                           |
 |-------------------------------|-----------------------------------------|-------------------------------|
 | Chat                          | <p align="center">✔</p>                 | <p align="center">✔</p>       |
+| Managed Rooms                 | <p align="center">✔</p>                 | <p align="center">✔</p>       |
 | Settings & Preferences        | <p align="center">✔</p>                 | <p align="center">✔</p>       |
 | Shared Playlists              | <p align="center">✔</p>                 | ✔ (Untested)                  |
 | Video players                 | - mpv (Default)<br>- ExoPlayer<br>- VLC | - VLC (Default)<br>- AVPlayer |
@@ -133,7 +132,7 @@ Some video players are more potent than others in certain areas. Here's a genera
 ## Architecture
 
 * <b>UI:</b> Compose multiplatform
-* <b>Architecture:</b> modular (mostly MVVM)
+* <b>Architecture:</b> modular, manager-scoped (mostly MVVM)
 * <b>Network backbone:</b> Netty (Android), SwiftNIO (iOS) and Ktor (both)
 * <b>Preferences:</b> Jetpack Datastore
 * <b>Integrated media players:</b>
@@ -152,7 +151,7 @@ Some video players are more potent than others in certain areas. Here's a genera
 
 > Where is the iOS release ?
 
-- The app is not on the Apple app store. However, you can sideload the app via `AltStore` if you have a normal non-jailbroken iPhone/iPad.
+- The app is not on the Apple app store. However, you can sideload the app via `AltStore` (see [iOS guide](https://github.com/yuroyami/syncplay-mobile/wiki/How-to-install-the-app-on-iOS)) if you have a normal non-jailbroken iPhone/iPad.
 - If you have a jailbroken device, simply sideload the latest `.ipa` file which you will find attached to every release.
 
 ## Translating
