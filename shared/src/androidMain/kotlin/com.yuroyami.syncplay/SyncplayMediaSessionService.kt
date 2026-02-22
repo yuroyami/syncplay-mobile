@@ -2,6 +2,7 @@ package com.yuroyami.syncplay
 
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import com.yuroyami.syncplay.utils.loggy
 
 class SyncplayMediaSessionService : MediaSessionService() {
 
@@ -9,10 +10,14 @@ class SyncplayMediaSessionService : MediaSessionService() {
 
     override fun onCreate() {
         super.onCreate()
+
+        loggy("The Media Service is CREATED !")
     }
 
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
-        return (application as SyncplayApp).mediaSession
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession {
+        return (application as SyncplayApp).mediaSession.also {
+            loggy("The Media Service is GOTTEEEEEEEEEEN !")
+        }
     }
 
     override fun onDestroy() {

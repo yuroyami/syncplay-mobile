@@ -247,7 +247,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
             try {
                 withTimeout(10.seconds) {
                     val finalOut = json + "\r\n"
-                    if (BuildConfig.DEBUG_PROTOCOL_IN_OUT) loggy("Client>>> $finalOut")
+                    if (BuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("Client>>> $finalOut")
                     writeActualString(finalOut)
                 }
             } catch (e: Exception) {

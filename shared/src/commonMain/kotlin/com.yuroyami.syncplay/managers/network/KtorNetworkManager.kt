@@ -9,7 +9,7 @@ import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.connection
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
-import io.ktor.utils.io.readUTF8Line
+import io.ktor.utils.io.readLineStrict
 import io.ktor.utils.io.writeStringUtf8
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -80,7 +80,7 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
                 viewmodel.viewModelScope.launch {
                     while (true) {
                         connection?.input?.awaitContent()
-                        input?.readUTF8Line()?.let {
+                        input?.readLineStrict()?.let { //TODO maybe only need readLine()?
                             handlePacket(it)
                         }
 

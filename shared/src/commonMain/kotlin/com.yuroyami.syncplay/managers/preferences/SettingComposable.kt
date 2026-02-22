@@ -61,7 +61,7 @@ import syncplaymobile.shared.generated.resources.yes
 import kotlin.math.roundToInt
 
 @Composable
-inline fun <reified T> Pref<T>.SettingComposable() {
+internal inline fun <reified T> Pref<T>.SettingComposable() {
     val viewmodel = LocalGlobalViewmodel.current
 
     val scope = rememberCoroutineScope { Dispatchers.IO }

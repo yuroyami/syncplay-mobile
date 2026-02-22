@@ -1,4 +1,4 @@
-//enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
     repositories {
         mavenCentral()
@@ -23,5 +23,6 @@ plugins {
 
 
 rootProject.name = "SyncplayMobile"
+include(":androidApp")
 include(":shared")
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:tools="http://schemas.android.com/tools"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -8,37 +8,11 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:ignore="ForegroundServicesPolicy" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
-    <application
-        android:name=".SyncplayApp"
-        android:allowBackup="false"
-        android:appCategory="video"
-        android:icon="@mipmap/ic_launcher"
-        android:label="Syncplay"
-        android:requestLegacyExternalStorage="true"
-        android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="false"
-        android:usesCleartextTraffic="true"
-        android:enableOnBackInvokedCallback="false"
-        android:theme="@style/SplashTheme"
-        tools:targetApi="36">
-        <activity
-            android:name=".SyncplayActivity"
-            android:configChanges="orientation|keyboardHidden|screenLayout|screenSize|smallestScreenSize"
-            android:exported="true"
-            android:imeOptions="flagNoExtractUi"
-            android:supportsPictureInPicture="true"
-            android:resizeableActivity="true"
-            android:launchMode="singleTask"
-            android:windowSoftInputMode="adjustNothing">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+    <application>
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -47,7 +21,8 @@
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/provider_paths" />
+                android:resource="@xml/provider_paths"
+                />
         </provider>
 
         <service
@@ -56,7 +31,8 @@
             android:exported="false">
             <meta-data
                 android:name="autoStoreLocales"
-                android:value="true" />
+                android:value="true"
+                />
         </service>
 
         <service
@@ -65,7 +41,6 @@
             android:exported="true"
             android:foregroundServiceType="mediaPlayback"
             tools:ignore="ExportedService">
-
             <intent-filter>
                 <action android:name="androidx.media3.session.MediaSessionService" />
             </intent-filter>

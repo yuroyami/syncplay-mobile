@@ -5,8 +5,6 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
 import android.media.AudioManager
-import android.os.Handler
-import android.os.Looper
 import android.util.TypedValue
 import android.view.LayoutInflater
 import androidx.annotation.UiThread
@@ -32,7 +30,7 @@ import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.CaptionStyleCompat
 import androidx.media3.ui.PlayerView
-import com.yuroyami.syncplay.databinding.ExoviewBinding
+import com.yuroyami.syncplay.R
 import com.yuroyami.syncplay.managers.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.managers.player.PlayerOptions
@@ -80,132 +78,131 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     override val trackerJobInterval: Duration = 500.milliseconds
 
     override fun initialize() {
-        Handler(Looper.getMainLooper()).post {
-            val context = contextObtainer()
+        val context = contextObtainer()
 
-            audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
-            /** LoadControl (Buffering manager) and track selector (for track language preference) **/
-            val options = PlayerOptions.get()
-            val loadControl = DefaultLoadControl.Builder()
-                .setBufferDurationsMs(
-                    options.minBuffer,
-                    options.maxBuffer,
-                    options.playbackBuffer,
-                    options.playbackBuffer + 500
-                ).build()
+        /** LoadControl (Buffering manager) and track selector (for track language preference) **/
+        val options = PlayerOptions.get()
+        val loadControl = DefaultLoadControl.Builder()
+            .setBufferDurationsMs(
+                options.minBuffer,
+                options.maxBuffer,
+                options.playbackBuffer,
+                options.playbackBuffer + 500
+            ).build()
 
-            val trackSelector = DefaultTrackSelector(context)
-            val params = trackSelector.buildUponParameters()
-                .setPreferredAudioLanguage(options.audioPreference)
-                .setPreferredTextLanguage(options.ccPreference)
-                .build()
-            trackSelector.parameters = params
+        val trackSelector = DefaultTrackSelector(context)
+        val params = trackSelector.buildUponParameters()
+            .setPreferredAudioLanguage(options.audioPreference)
+            .setPreferredTextLanguage(options.ccPreference)
+            .build()
+        trackSelector.parameters = params
 
-            /** Building ExoPlayer to use FFmpeg Audio Renderer and also enable fast-seeking */
-            val ffmpegAvailable = FfmpegLibrary.isAvailable()
+        /** Building ExoPlayer to use FFmpeg Audio Renderer and also enable fast-seeking */
+        val ffmpegAvailable = FfmpegLibrary.isAvailable()
 
-            loggy("FFMPEG IS AVAILABLE?: $ffmpegAvailable")
+        loggy("FFMPEG IS AVAILABLE?: $ffmpegAvailable")
 
-            exoplayer = ExoPlayer.Builder(context)
-                .setLoadControl(loadControl) /* We use the custom LoadControl we initialized before */
-                .setTrackSelector(trackSelector)
-                .setRenderersFactory(
-                    DefaultRenderersFactory(context).setExtensionRendererMode(
-                        if (ffmpegAvailable) {
-                            DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON/* We force extensions, crash if no FFmpeg, but `ffmpegAvailable` ensures they are*/
-                        } else {
-                            DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF/* We use platform renderer, crash if playing unsupported format which means ffmpeg is missing*/
-                        }
-                    ).setEnableDecoderFallback(true)
-                )
-                .setWakeMode(C.WAKE_MODE_NETWORK) /* Prevent the service from being killed during playback */
-                .setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(C.USAGE_MEDIA)
-                        .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
-                        .build(),
-                    true // Handle audio focus automatically
-                )
-                .build()
+        exoplayer = ExoPlayer.Builder(context)
+            .setLoadControl(loadControl) /* We use the custom LoadControl we initialized before */
+            .setTrackSelector(trackSelector)
+            .setRenderersFactory(
+                DefaultRenderersFactory(context).setExtensionRendererMode(
+                    if (ffmpegAvailable) {
+                        DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON/* We force extensions, crash if no FFmpeg, but `ffmpegAvailable` ensures they are*/
+                    } else {
+                        DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF/* We use platform renderer, crash if playing unsupported format which means ffmpeg is missing*/
+                    }
+                ).setEnableDecoderFallback(true)
+            )
+            .setWakeMode(C.WAKE_MODE_NETWORK) /* Prevent the service from being killed during playback */
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(C.USAGE_MEDIA)
+                    .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                    .build(),
+                true // Handle audio focus automatically
+            )
+            .build()
 
-            exoplayer?.videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT /* Starter scaling */
+        exoplayer?.videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT /* Starter scaling */
 
-            exoView.player = exoplayer
+        exoView.player = exoplayer
 
-            exoplayer?.playWhenReady = false
+        exoplayer?.playWhenReady = false
 
-            exoplayer?.addListener(object : Player.Listener {
+        exoplayer?.addListener(object : Player.Listener {
 
-                /* This detects when the player loads a file/URL, so we tell the server */
-                override fun onIsLoadingChanged(isLoading: Boolean) {
-                    super.onIsLoadingChanged(isLoading)
+            /* This detects when the player loads a file/URL, so we tell the server */
+            override fun onIsLoadingChanged(isLoading: Boolean) {
+                super.onIsLoadingChanged(isLoading)
 
-                    if (!isLoading && exoplayer != null) {
-                        /* Updating our timeFull */
-                        val durationMs = exoplayer!!.duration
-                        playerManager.timeFullMillis.value = abs(durationMs)
+                if (!isLoading && exoplayer != null) {
+                    /* Updating our timeFull */
+                    val durationMs = exoplayer!!.duration
+                    playerManager.timeFullMillis.value = abs(durationMs)
 
-                        if (viewmodel.isSoloMode) return
-                        if (durationMs / 1000.0 != viewmodel.media?.fileDuration) {
-                            viewmodel.media?.fileDuration = durationMs / 1000.0
+                    if (viewmodel.isSoloMode) return
+                    if (durationMs / 1000.0 != viewmodel.media?.fileDuration) {
+                        viewmodel.media?.fileDuration = durationMs / 1000.0
 
-                            announceFileLoaded()
-                        }
+                        announceFileLoaded()
                     }
                 }
+            }
 
-                /* This detects when the user pauses or plays */
-                override fun onIsPlayingChanged(isPlaying: Boolean) {
-                    super.onIsPlayingChanged(isPlaying)
+            /* This detects when the user pauses or plays */
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                super.onIsPlayingChanged(isPlaying)
 
-                    if (exoplayer != null && exoplayer?.mediaItemCount != 0) {
-                        if (exoplayer!!.playbackState != ExoPlayer.STATE_BUFFERING) {
-                            playerManager.isNowPlaying.value = isPlaying //Just to inform UI
+                if (exoplayer != null && exoplayer?.mediaItemCount != 0) {
+                    if (exoplayer!!.playbackState != ExoPlayer.STATE_BUFFERING) {
+                        playerManager.isNowPlaying.value = isPlaying //Just to inform UI
 
-                            //Tell server about playback state change
-                            if (!viewmodel.isSoloMode) {
-                                viewmodel.actionManager.sendPlayback(isPlaying)
-                            }
+                        //Tell server about playback state change
+                        if (!viewmodel.isSoloMode) {
+                            viewmodel.actionManager.sendPlayback(isPlaying)
+                        }
 
-                            if (exoplayer!!.playbackState == ExoPlayer.STATE_ENDED) {
-                                onPlaybackEnded() //signaling end of playback
-                            }
+                        if (exoplayer!!.playbackState == ExoPlayer.STATE_ENDED) {
+                            onPlaybackEnded() //signaling end of playback
                         }
                     }
                 }
+            }
 
-                /* This detects when a media track change has happened (such as loading a custom sub) */
-                override fun onTracksChanged(tracks: Tracks) {
-                    super.onTracksChanged(tracks)
+            /* This detects when a media track change has happened (such as loading a custom sub) */
+            override fun onTracksChanged(tracks: Tracks) {
+                super.onTracksChanged(tracks)
 
-                    /* Updating our HUD's timeFull here again, just in case. */
-                    //val duration = exoplayer.duration / 1000.0
-                    //timeFull.longValue = kotlin.math.abs(duration.toLong())
+                /* Updating our HUD's timeFull here again, just in case. */
+                //val duration = exoplayer.duration / 1000.0
+                //timeFull.longValue = kotlin.math.abs(duration.toLong())
 
-                    /* Repopulate audio and subtitle track lists with the new analysis of tracks **/
-                    playerScopeMain.launch lol@{
-                        analyzeTracks(viewmodel.media ?: return@lol)
-                    }
+                /* Repopulate audio and subtitle track lists with the new analysis of tracks **/
+                playerScopeMain.launch lol@{
+                    analyzeTracks(viewmodel.media ?: return@lol)
                 }
+            }
 
-                override fun onPlayerError(error: PlaybackException) {
-                    loggy("Player error: ${error.message ?: ""}")
-                }
-            })
+            override fun onPlayerError(error: PlaybackException) {
+                loggy("Player error: ${error.message ?: ""}")
+            }
+        })
 
-            isInitialized = true
+        isInitialized = true
 
-            startTrackingProgress()
-        }
+        startTrackingProgress()
     }
 
     override fun initMediaSession(): GlobalPlayerSession {
+        loggy("Exoplayer: $exoplayer")
         return exoplayer!!.buildAndroidMediaSession(contextObtainer())
     }
 
     override fun finalizeMediaSession() {
-        TODO("Not yet implemented")
+        //TODO("Not yet implemented")
     }
 
     override suspend fun destroy() {
@@ -218,13 +215,15 @@ class ExoPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         }
     }
 
+    @SuppressLint("InflateParams")
     @Composable
-    override fun VideoPlayer(modifier: Modifier) {
+    override fun VideoPlayer(modifier: Modifier, onPlayerReady: () -> Unit) {
         AndroidView(
             modifier = modifier,
             factory = { context ->
-                exoView = ExoviewBinding.inflate(LayoutInflater.from(context)).exoview
+                exoView = LayoutInflater.from(context).inflate(R.layout.exoview, null) as PlayerView
                 initialize()
+                onPlayerReady()
                 return@AndroidView exoView
             }
         )

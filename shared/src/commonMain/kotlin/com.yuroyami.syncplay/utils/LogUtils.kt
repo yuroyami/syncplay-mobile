@@ -12,6 +12,8 @@ import kotlinx.datetime.format.byUnicodePattern
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 
+//TODO COMPLETELY REWORK BY WRITING TO A FILE PROGRESSIVELY
+
 private val logBuffer = ArrayDeque<String>(10_000)
 private val logLock = SynchronizedObject()
 private const val MAX_LOG_SIZE = 10_000
@@ -28,7 +30,7 @@ fun loggy(s: Any?) {
         s.toString()
     }
 
-    if (BuildConfig.IS_DEBUG) {
+    if (BuildConfig.DEBUG) {
         Logger.e(string)
     }
 

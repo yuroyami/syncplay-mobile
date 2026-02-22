@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:name="com.yuroyami.syncplay.SyncplayApp"
+        android:allowBackup="false"
+        android:appCategory="video"
+        android:icon="@mipmap/ic_launcher"
+        android:label="Syncplay"
+        android:requestLegacyExternalStorage="true"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="false"
+        android:usesCleartextTraffic="true"
+        android:enableOnBackInvokedCallback="false"
+        android:theme="@style/SplashTheme"
+        tools:targetApi="36">
+
+        <activity
+            android:name="com.yuroyami.syncplay.SyncplayActivity"
+            android:configChanges="orientation|keyboardHidden|screenLayout|screenSize|smallestScreenSize"
+            android:exported="true"
+            android:imeOptions="flagNoExtractUi"
+            android:supportsPictureInPicture="true"
+            android:resizeableActivity="true"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustNothing">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>

@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.C.STREAM_TYPE_MUSIC
-import com.yuroyami.syncplay.databinding.VlcviewBinding
+import com.yuroyami.syncplay.R
 import com.yuroyami.syncplay.managers.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.models.Chapter
@@ -62,8 +62,6 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
 
         vlcAttachObserver()
 
-        super.initialize()
-
         startTrackingProgress()
     }
 
@@ -79,7 +77,7 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
 
-    override fun initMediaSession(): GlobalPlayerSession? {
+    override fun initMediaSession(): GlobalPlayerSession {
         TODO("Not yet implemented")
     }
 
@@ -88,12 +86,13 @@ class VlcPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
     }
 
     @Composable
-    override fun VideoPlayer(modifier: Modifier) {
+    override fun VideoPlayer(modifier: Modifier, onPlayerReady: () -> Unit) {
         AndroidView(
             modifier = modifier,
             factory = { context ->
-                vlcView = VlcviewBinding.inflate(LayoutInflater.from(context)).vlcview
+                vlcView = LayoutInflater.from(context).inflate(R.layout.vlcview, null) as VLCVideoLayout
                 initialize()
+                onPlayerReady()
                 return@AndroidView vlcView
             },
             onRelease = {

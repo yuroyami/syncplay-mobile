@@ -1,47 +1,48 @@
 [versions] #####################################################
 #KMM-Plugins
-kotlin = "2.2.21"
-agp = "8.13.1" #"9.0.0-alpha05"
-compose-multiplatform = "1.10.0-beta01"
-kSerialization = "1.9.0"
-ksp = "2.3.1"
-skie = "0.10.8"
-buildConfig = "5.7.1"
+kotlin = "2.3.10"
+agp = "9.0.1" #"9.0.0-alpha05"
+compose-multiplatform = "1.11.0-alpha02"
+kSerialization = "1.10.0"
+ksp = "2.3.6"
+skie = "0.10.10"
+buildConfig = "6.0.7"
 
 #KMM-Libs
 compose-multiplatform-icons = "1.7.3"
-compose-material3 = "1.10.0-alpha04"
+compose-material3 = "1.11.0-alpha02"
+lifecycleViewmodelCompose = "2.10.0-alpha08"
+navigation3Runtime = "1.1.0-alpha02"
+navigation3Ui = "1.1.0-alpha02"
+compose-unstyled = "1.49.6"
 kermit = "2.0.8"
 krypto = "0.8.0"
-datastore = "1.2.0-rc01"
+datastore = "1.2.0"
 filekit = "0.12.0"
 kolorpicker = "1.0.0"
 uriKmp = "0.0.21"
-compose-unstyled = "1.49.0"
-materialkolor = "5.0.0-alpha02"
-ktor = "3.3.2"
-lifecycleViewmodelCompose = "2.10.0-alpha04"
-navigation3Runtime = "1.0.0-rc01"
-navigation3Ui = "1.0.0-alpha04"
+materialkolor = "5.0.0-alpha06"
+ktor = "3.4.0"
 koroutines = "1.10.2"
 datetime = "0.7.1"
-atomicfu = "0.29.0"
+atomicfu = "0.31.0"
 
 #Android
 coreSplashscreen = "1.2.0"
-activityCompose = "1.12.0-rc01"
+corePip = "1.0.0-alpha02"
+activityCompose = "1.13.0-alpha01"
 documentfile = "1.1.0"
 shortcuts = "1.2.0-alpha01"
 appcompat = "1.7.1"
-coreKtx = "1.17.0"
+coreKtx = "1.18.0-rc01"
 desugaring = "2.1.5"
-media3 = "1.8.0"
+media3 = "1.10.0-alpha01"
 netty = "4.1.128.Final" #"4.2.7" requires API 26
 conscrypt = "2.5.3"
 libvlc-android = "4.0.0-eap23"
 
 #iOS
-libvlc-ios = "3.7.0b1"
+libvlc-ios = "3.7.0"
 splping = "1.1.8"
 
 [libraries] #######################################################################################
@@ -74,11 +75,13 @@ atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu"
 
 #Android
 kotlin-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "koroutines" }
+kotlin-coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "koroutines" }
 jetpack-core = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 jetpack-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 jetpack-documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
 jetpack-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 jetpack-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+jetpack-pip = { module = "androidx.core:core-pip", version.ref = "corePip" }
 desugaring = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugaring" }
 m3-exo = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
 m3-exo-dash = { module = "androidx.media3:media3-exoplayer-dash", version.ref = "media3" }
@@ -108,6 +111,7 @@ media3 = [
 ]
 krypto = ["krypto-digest", "krypto-md", "krypto-sha2"]
 navigation3 = ["navigation3-runtime", "navigation3-ui"]
+jetpack-androidx-extensions = ["jetpack-activity-compose", "jetpack-appcompat", "jetpack-core", "jetpack-documentfile", "jetpack-pip", "jetpack-splashscreen"]
 
 [plugins] ########################################################################################
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
@@ -117,8 +121,10 @@ kotlin-cocoapods = { id = "org.jetbrains.kotlin.native.cocoapods", version.ref =
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 compose-plugin = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
 
+
 android-application = { id = "com.android.application", version.ref = "agp" }
-android-library = { id = "com.android.library", version.ref = "agp" }
+android-kmp-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp"}
+android-legacy-library = { id = "com.android.library", version.ref = "agp" }
 
 kSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

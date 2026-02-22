@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
     spec.name                     = 'shared'
-    spec.version                  = '1.0.1'
+    spec.version                  = '1.0.2'
     spec.homepage                 = 'www.github.com/yuroyami/syncplay-mobile'
     spec.source                   = { :http=> ''}
     spec.authors                  = ''
@@ -9,29 +9,20 @@ Pod::Spec.new do |spec|
     spec.vendored_frameworks      = 'build/cocoapods/framework/shared.framework'
     spec.libraries                = 'c++'
     spec.ios.deployment_target    = '14.0'
-    spec.dependency 'MobileVLCKit', '3.7.0b1'
-    spec.dependency 'SPLPing', '1.1.8'
-                
     if !Dir.exist?('build/cocoapods/framework/shared.framework') || Dir.empty?('build/cocoapods/framework/shared.framework')
         raise "
-
         Kotlin framework 'shared' doesn't exist yet, so a proper Xcode project can't be generated.
         'pod install' should be executed after running ':generateDummyFramework' Gradle task:
-
             ./gradlew :shared:generateDummyFramework
-
         Alternatively, proper pod installation is performed during Gradle sync in the IDE (if Podfile location is set)"
     end
-                
     spec.xcconfig = {
         'ENABLE_USER_SCRIPT_SANDBOXING' => 'NO',
     }
-                
     spec.pod_target_xcconfig = {
         'KOTLIN_PROJECT_PATH' => ':shared',
         'PRODUCT_MODULE_NAME' => 'shared',
     }
-                
     spec.script_phases = [
         {
             :name => 'Build shared',
@@ -39,8 +30,8 @@ Pod::Spec.new do |spec|
             :shell_path => '/bin/sh',
             :script => <<-SCRIPT
                 if [ "YES" = "$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED" ]; then
-                  echo "Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \"YES\""
-                  exit 0
+                    echo "Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \"YES\""
+                    exit 0
                 fi
                 set -ev
                 REPO_ROOT="$PODS_TARGET_SRCROOT"

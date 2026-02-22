@@ -2,6 +2,7 @@
 
 package com.yuroyami.syncplay.managers.player.mpv
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.media.AudioManager
 import android.util.Log
@@ -14,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import androidx.media3.common.C.STREAM_TYPE_MUSIC
-import com.yuroyami.syncplay.databinding.MpvviewBinding
+import com.yuroyami.syncplay.R
 import com.yuroyami.syncplay.managers.player.AndroidPlayerEngine
 import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.managers.player.mpv.MpvFileUtils.copyAssets
@@ -70,11 +71,9 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
         isInitialized = true
         mpvObserverAttach()
-
-        super.initialize()
     }
 
-    override fun initMediaSession(): GlobalPlayerSession? {
+    override fun initMediaSession(): GlobalPlayerSession {
         TODO("Not yet implemented")
     }
 
@@ -90,13 +89,15 @@ class MpvPlayer(viewmodel: RoomViewmodel) : BasePlayer(viewmodel, AndroidPlayerE
         }
     }
 
+    @SuppressLint("InflateParams")
     @Composable
-    override fun VideoPlayer(modifier: Modifier) {
+    override fun VideoPlayer(modifier: Modifier, onPlayerReady: () -> Unit) {
         AndroidView(
             modifier = modifier,
             factory = { context ->
-                mpvView = MpvviewBinding.inflate(LayoutInflater.from(context)).mpvview
+                mpvView = LayoutInflater.from(context).inflate(R.layout.mpvview, null) as MPVView
                 initialize()
+                onPlayerReady()
                 return@AndroidView mpvView
             },
             update = {})

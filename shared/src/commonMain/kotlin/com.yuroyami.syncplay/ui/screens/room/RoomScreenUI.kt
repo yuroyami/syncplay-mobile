@@ -35,6 +35,7 @@ import com.yuroyami.syncplay.ui.screens.room.tabs.RoomTabSection
 import com.yuroyami.syncplay.ui.screens.room.tabs.RoomUnlockableLayout
 import com.yuroyami.syncplay.utils.HideSystemBars
 import com.yuroyami.syncplay.utils.beginPingUpdate
+import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -70,14 +71,16 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                 viewmodel.player.VideoPlayer(
                     modifier = Modifier
                         .fillMaxSize()
-                        .alpha(if (hasVideo) 1f else 0f) // Keeps composable alive even if hidden
+                        .alpha(if (hasVideo) 1f else 0f), // Keeps composable alive even if hidden
+                    onPlayerReady = {
+                        platformCallback.initializeMediaSession(viewmodel.player)
+                    }
                 )
             }
 
             if (lockedMode) {
                 /* Simple unlock layout shown when screen is locked */
                 RoomUnlockableLayout()
-
             } else {
                 /* Gesture Interceptor for playback control */
                 RoomGestureInterceptor(modifier = Modifier.fillMaxSize())

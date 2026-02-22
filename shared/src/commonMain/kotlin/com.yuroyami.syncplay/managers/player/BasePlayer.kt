@@ -381,7 +381,7 @@ abstract class BasePlayer(
      * @param modifier Compose modifier for styling and layout
      */
     @Composable
-    abstract fun VideoPlayer(modifier: Modifier)
+    abstract fun VideoPlayer(modifier: Modifier, onPlayerReady: () -> Unit)
 
     /**
      * Gets the maximum volume level for this player.

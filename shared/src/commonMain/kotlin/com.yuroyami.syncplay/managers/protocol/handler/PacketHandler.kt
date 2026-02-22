@@ -97,7 +97,7 @@ class PacketHandler(
      * @throws SerializationException if the JSON is malformed or contains unknown message types
      */
     suspend fun parse(jsonString: String) {
-        if (BuildConfig.DEBUG_PROTOCOL_IN_OUT) loggy("**SERVER** $jsonString")
+        if (BuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("**SERVER** $jsonString")
 
         try {
             // Parse the JSON to determine message type

@@ -23,6 +23,7 @@ import androidx.media3.common.util.UnstableApi
 import `is`.xyz.mpv.MPVLib
 import kotlinx.coroutines.runBlocking
 
+@Suppress("OVERRIDE_DEPRECATION")
 @UnstableApi
 fun MpvPlayer.mapToMedia3BasePlayer(): Player {
     val mpvPlayer = this
@@ -64,13 +65,12 @@ fun MpvPlayer.mapToMedia3BasePlayer(): Player {
         }
 
         override fun setMediaItem(mediaItem: MediaItem, startPositionMs: Long) {
-            runBlocking {
-                val uri = mediaItem.localConfiguration?.uri?.toString() ?: return@runBlocking
+
+                val uri = mediaItem.localConfiguration?.uri?.toString() ?: return
                 mpvPlayer.mpvView.playFile(uri)
                 if (startPositionMs > 0) {
                     seekTo(startPositionMs)
                 }
-            }
         }
 
         override fun setMediaItem(mediaItem: MediaItem, resetPosition: Boolean) {
@@ -126,11 +126,10 @@ fun MpvPlayer.mapToMedia3BasePlayer(): Player {
         }
 
         override fun clearMediaItems() {
-            runBlocking {
                 if (mpvPlayer.isInitialized) {
                     MPVLib.command(arrayOf("stop"))
                 }
-            }
+
         }
 
         override fun isCommandAvailable(command: Int): Boolean {
@@ -207,7 +206,7 @@ fun MpvPlayer.mapToMedia3BasePlayer(): Player {
             if (playWhenReady) play() else pause()
         }
 
-        override fun getPlayWhenReady(): Boolean = isPlaying()
+        override fun getPlayWhenReady(): Boolean = isPlaying
 
         override fun setRepeatMode(repeatMode: Int) {
             when (repeatMode) {
@@ -232,7 +231,7 @@ fun MpvPlayer.mapToMedia3BasePlayer(): Player {
         override fun getShuffleModeEnabled(): Boolean = false
 
         override fun isLoading(): Boolean {
-            return getPlaybackState() == Player.STATE_BUFFERING
+            return playbackState == Player.STATE_BUFFERING
         }
 
         override fun seekToDefaultPosition() {
@@ -254,14 +253,14 @@ fun MpvPlayer.mapToMedia3BasePlayer(): Player {
         override fun getSeekBackIncrement(): Long = 10000L
 
         override fun seekBack() {
-            val newPos = (getCurrentPosition() - seekBackIncrement).coerceAtLeast(0)
+            val newPos = (currentPosition - seekBackIncrement).coerceAtLeast(0)
             seekTo(newPos)
         }
 
         override fun getSeekForwardIncrement(): Long = 10000L
 
         override fun seekForward() {
-            val newPos = (getCurrentPosition() + seekForwardIncrement).coerceAtMost(getDuration())
+            val newPos = (currentPosition + seekForwardIncrement).coerceAtMost(duration)
             seekTo(newPos)
         }
 
@@ -354,17 +353,16 @@ fun MpvPlayer.mapToMedia3BasePlayer(): Player {
         override fun getPreviousMediaItemIndex(): Int = C.INDEX_UNSET
 
         override fun getCurrentMediaItem(): MediaItem? {
-            return null
-            /* TODO mpvPlayer.playerManager.media.value?.let { media ->
+            return mpvPlayer.playerManager.media.value?.let { media ->
                 MediaItem.Builder()
-                    .setUri(media.location.uri)
+                    .setUri(media.location?.commonUri ?: "")
                     .setMediaMetadata(
                         MediaMetadata.Builder()
                             .setTitle(media.fileName)
                             .build()
                     )
                     .build()
-            }*/
+            }
         }
 
         override fun getMediaItemCount(): Int {
@@ -373,7 +371,7 @@ fun MpvPlayer.mapToMedia3BasePlayer(): Player {
 
         override fun getMediaItemAt(index: Int): MediaItem {
             if (index == 0) {
-                return getCurrentMediaItem() ?: MediaItem.EMPTY
+                return currentMediaItem ?: MediaItem.EMPTY
             }
             throw IndexOutOfBoundsException()
         }
@@ -387,18 +385,18 @@ fun MpvPlayer.mapToMedia3BasePlayer(): Player {
         }
 
         override fun getBufferedPosition(): Long {
-            return getCurrentPosition()
+            return currentPosition
         }
 
         override fun getBufferedPercentage(): Int {
             val duration = getDuration()
             return if (duration > 0) {
-                ((getBufferedPosition() * 100) / duration).toInt()
+                ((bufferedPosition * 100) / duration).toInt()
             } else 0
         }
 
         override fun getTotalBufferedDuration(): Long {
-            return getBufferedPosition() - getCurrentPosition()
+            return bufferedPosition - currentPosition
         }
 
         override fun isCurrentWindowDynamic(): Boolean = false
@@ -421,11 +419,11 @@ fun MpvPlayer.mapToMedia3BasePlayer(): Player {
 
         override fun getCurrentAdIndexInAdGroup(): Int = C.INDEX_UNSET
 
-        override fun getContentDuration(): Long = getDuration()
+        override fun getContentDuration(): Long = duration
 
-        override fun getContentPosition(): Long = getCurrentPosition()
+        override fun getContentPosition(): Long = currentPosition
 
-        override fun getContentBufferedPosition(): Long = getBufferedPosition()
+        override fun getContentBufferedPosition(): Long = bufferedPosition
 
         override fun getAudioAttributes(): AudioAttributes {
             return AudioAttributes.Builder()
@@ -444,6 +442,14 @@ fun MpvPlayer.mapToMedia3BasePlayer(): Player {
             val current = mpvPlayer.getCurrentVolume().toFloat()
             val max = mpvPlayer.getMaxVolume().toFloat()
             return if (max > 0) current / max else 0f
+        }
+
+        override fun mute() {
+            TODO("Not yet implemented")
+        }
+
+        override fun unmute() {
+            TODO("Not yet implemented")
         }
 
         override fun clearVideoSurface() {
@@ -515,13 +521,13 @@ fun MpvPlayer.mapToMedia3BasePlayer(): Player {
         }
 
         override fun setDeviceVolume(volume: Int, flags: Int) {
-            setDeviceVolume(volume)
+            deviceVolume = volume
         }
 
         override fun increaseDeviceVolume() {
-            val current = getDeviceVolume()
-            val max = getDeviceInfo().maxVolume
-            setDeviceVolume((current + 1).coerceAtMost(max))
+            val current = deviceVolume
+            val max = deviceInfo.maxVolume
+            deviceVolume = (current + 1).coerceAtMost(max)
         }
 
         override fun increaseDeviceVolume(flags: Int) {
@@ -529,8 +535,8 @@ fun MpvPlayer.mapToMedia3BasePlayer(): Player {
         }
 
         override fun decreaseDeviceVolume() {
-            val current = getDeviceVolume()
-            setDeviceVolume((current - 1).coerceAtLeast(0))
+            val current = deviceVolume
+            deviceVolume = (current - 1).coerceAtLeast(0)
         }
 
         override fun decreaseDeviceVolume(flags: Int) {
@@ -539,15 +545,15 @@ fun MpvPlayer.mapToMedia3BasePlayer(): Player {
 
         override fun setDeviceMuted(muted: Boolean) {
             if (muted) {
-                setDeviceVolume(0)
+                deviceVolume = 0
             } else {
-                val max = getDeviceInfo().maxVolume
-                setDeviceVolume(max / 2)
+                val max = deviceInfo.maxVolume
+                deviceVolume = max / 2
             }
         }
 
         override fun setDeviceMuted(muted: Boolean, flags: Int) {
-            setDeviceMuted(muted)
+            isDeviceMuted = muted
         }
 
         override fun setAudioAttributes(audioAttributes: AudioAttributes, handleAudioFocus: Boolean) {

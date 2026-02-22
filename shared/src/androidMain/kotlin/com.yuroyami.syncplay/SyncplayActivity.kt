@@ -15,8 +15,10 @@ import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.LaunchedEffect
 import androidx.core.content.pm.ShortcutInfoCompat
@@ -44,6 +46,7 @@ import com.yuroyami.syncplay.viewmodels.HomeViewmodel
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import com.yuroyami.syncplay.viewmodels.SyncplayViewmodel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -92,16 +95,22 @@ class SyncplayActivity : ComponentActivity() {
             override fun initializeMediaSession(player: BasePlayer) {
                 (application as SyncplayApp).mediaSession = player.initMediaSession()
 
+                loggy("@$@$@$@$@$@$@$ MEDIA SESSION IS INITIALIZED")
                 /* Getting a session token that defines our underlying service */
                 val sessionToken = SessionToken(
                     applicationContext,
                     ComponentName(applicationContext, SyncplayMediaSessionService::class.java)
                 )
 
+                loggy("@$@$@$@$@$@$@$ CREATED SESSION TOKEN")
+
+
                 /* initializing the media session controller using the session token, the service will launch if it hasn't already */
-                media3Controller = MediaController.Builder(applicationContext, sessionToken)
-                    .setListener(object : MediaController.Listener {})
-                    .buildAsync().get()
+                lifecycleScope.launch(Dispatchers.Main) {
+                    media3Controller = MediaController.Builder(applicationContext, sessionToken)
+                        .buildAsync().await()
+                }
+
             }
 
             /**
@@ -246,8 +255,10 @@ class SyncplayActivity : ComponentActivity() {
 
         Thread.setDefaultUncaughtExceptionHandler { _, t2 ->
             loggy(t2.stackTraceToString())
-            //throw t2
+            throw t2
         }
+
+        notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
     }
 
     /**
@@ -422,4 +433,17 @@ class SyncplayActivity : ComponentActivity() {
 
         unregisterReceiver(pipBroadcastReceiver)
     }
+
+    private var notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (!granted) {
+            Toast.makeText(
+                applicationContext,
+                "Notification permission is required to show playback controls outside the app.",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
 }
