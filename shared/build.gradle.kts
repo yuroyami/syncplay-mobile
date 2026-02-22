@@ -41,8 +41,8 @@ kotlin {
             isStatic = true
         }
 
-        //pod("SPLPing", libs.versions.splping.get()) //Light-weight Objective-C library to add the ICMP ping functionality
-        //pod("MobileVLCKit", libs.versions.libvlc.ios.get()) //Adds the VLC player engine to iOS
+        pod("SPLPing", libs.versions.splping.get()) //Light-weight Objective-C library to add the ICMP ping functionality
+        pod("MobileVLCKit", libs.versions.libvlc.ios.get()) //Adds the VLC player engine to iOS
     }
 
     sourceSets {
@@ -92,11 +92,6 @@ kotlin {
 
             /* Compose core dependencies */
             implementation(libs.bundles.compose.multiplatform)
-            /*implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material3)
-            implementation(compose.materialIconsExtended)
-            implementation(compose.components.resources)*/
 
             /* ViewModel support */
             implementation(libs.compose.viewmodel)
