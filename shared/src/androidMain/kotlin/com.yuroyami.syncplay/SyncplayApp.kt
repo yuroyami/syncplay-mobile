@@ -25,7 +25,7 @@ import java.security.Security
  */
 class SyncplayApp: Application() {
 
-    //This allows us to share the mediasession instance we get from common module's BasePlayer
+    //This allows us to share the MediaSession instance we get from common module's BasePlayer
     //with SyncplayMediaSessionService using reflection
     lateinit var mediaSession: MediaSession
 

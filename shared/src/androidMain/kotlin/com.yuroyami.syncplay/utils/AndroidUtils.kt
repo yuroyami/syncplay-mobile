@@ -27,7 +27,9 @@ import java.util.Locale
  *
  * Initialized in [com.yuroyami.syncplay.SyncplayApp.onCreate] to provide
  * access to the application context from anywhere in the codebase without
- * passing Context through multiple layers.
+ * passing Context through multiple layers. This is generally safe because
+ * the app has one visible context which is the SyncplayActivity so there are
+ * no multiple processes/daemons of the app. There is only one task.
  *
  * **Usage:**
  * ```kotlin
@@ -40,7 +42,7 @@ lateinit var contextObtainer: () -> Context
  * Creates a DataStore instance for persistent key-value storage on Android.
  *
  * Wraps the common-code createDataStore function with Android-specific file path
- * resolution. The DataStore file is created in the app's internal files directory.
+ * resolution. The DataStore file is created in the app's internal files' directory.
  *
  * DataStore is used throughout the app for storing user preferences, settings,
  * and configuration values that persist across app sessions.

@@ -10,8 +10,9 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelPipeline
 import io.netty.channel.EventLoopGroup
+import io.netty.channel.MultiThreadIoEventLoopGroup
 import io.netty.channel.SimpleChannelInboundHandler
-import io.netty.channel.nio.NioEventLoopGroup
+import io.netty.channel.nio.NioIoHandler
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.codec.DelimiterBasedFrameDecoder
@@ -59,7 +60,7 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
      * @throws Exception if connection fails (caught and triggers onConnectionFailed)
      */
     override suspend fun connectSocket() {
-        val group: EventLoopGroup = NioEventLoopGroup()
+        val group: EventLoopGroup = MultiThreadIoEventLoopGroup(NioIoHandler.newFactory())
         val b = Bootstrap()
         b.group(group) /* Assigning the event loop group to the bootstrap */
             .channel(NioSocketChannel::class.java) /* We want a NIO Socket Channel */

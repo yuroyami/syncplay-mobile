@@ -19,7 +19,7 @@ kermit = "2.0.8"
 krypto = "0.8.0"
 datastore = "1.2.0"
 filekit = "0.12.0"
-kolorpicker = "1.0.0"
+kolorpicker = "2.0.0"
 uriKmp = "0.0.21"
 materialkolor = "5.0.0-alpha06"
 ktor = "3.4.0"
@@ -32,12 +32,11 @@ coreSplashscreen = "1.2.0"
 corePip = "1.0.0-alpha02"
 activityCompose = "1.13.0-alpha01"
 documentfile = "1.1.0"
-shortcuts = "1.2.0-alpha01"
 appcompat = "1.7.1"
 coreKtx = "1.18.0-rc01"
 desugaring = "2.1.5"
 media3 = "1.10.0-alpha01"
-netty = "4.1.128.Final" #"4.2.7" requires API 26
+netty = "4.2.10.Final" #"4.2.x" (and above) requires Api26 minimum
 conscrypt = "2.5.3"
 libvlc-android = "4.0.0-eap23"
 
@@ -97,7 +96,6 @@ m3-common = { module = "androidx.media3:media3-common", version.ref = "media3" }
 netty = { module = "io.netty:netty-all", version.ref = "netty" }
 conscrypt = { module = "org.conscrypt:conscrypt-android", version.ref = "conscrypt" }
 libvlc-android = { module = "org.videolan.android:libvlc-all", version.ref = "libvlc-android" }
-google-shortcuts = { module = "androidx.core:core-google-shortcuts", version.ref = "shortcuts" }
 
 [bundles] ########################################################################################
 compose-multiplatform = [

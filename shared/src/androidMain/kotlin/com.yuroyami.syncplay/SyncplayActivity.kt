@@ -110,7 +110,6 @@ class SyncplayActivity : ComponentActivity() {
                     media3Controller = MediaController.Builder(applicationContext, sessionToken)
                         .buildAsync().await()
                 }
-
             }
 
             /**

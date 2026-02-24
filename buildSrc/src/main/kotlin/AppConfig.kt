@@ -7,7 +7,7 @@ object AppConfig {
     const val versionName = "0.17.0"
     val versionCode = ("1" + versionName.split(".").joinToString("") { it.padStart(3, '0') }).toInt()
 
-    const val exoOnly = true
+    const val exoOnly = false
     const val forGooglePlay = false
 
     const val ndkRequired = "29.0.14206865"

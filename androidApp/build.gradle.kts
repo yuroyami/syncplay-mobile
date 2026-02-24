@@ -58,10 +58,6 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
-    buildFeatures {
-        //TODO viewBinding = true //I prefer using viewbinding to inflate player XML views.
-    }
-
     buildTypes {
         release {
             isMinifyEnabled = AppConfig.exoOnly //TODO Fix minified build when mpv and libVLC are included
@@ -78,6 +74,9 @@ android {
             pickFirsts += "META-INF/INDEX.LIST"
             pickFirsts += "META-INF/versions/9/previous-compilation-data.bin"
             pickFirsts += "META-INF/io.netty.versions.properties"
+            excludes += "META-INF/license/**"
+            excludes += "META-INF/native-image/**"
+
         }
     }
 
