@@ -65,8 +65,8 @@ fun RoomSeekbar(modifier: Modifier) {
 
     var sliderValue by remember { mutableFloatStateOf(0f) }
 
-    val videoCurrentTimeMs by viewmodel.playerManager.timeCurrentMillis.collectAsState()
-    val videoFullDurationMs by viewmodel.playerManager.timeFullMillis.collectAsState()
+    val videoCurrentTimeMs by viewmodel.videoEngineManager.timeCurrentMillis.collectAsState()
+    val videoFullDurationMs by viewmodel.videoEngineManager.timeFullMillis.collectAsState()
 
     val sliderInteractionSource = remember { MutableInteractionSource() }
     val isSliderBeingDragged by sliderInteractionSource.collectIsDraggedAsState()

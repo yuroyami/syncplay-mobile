@@ -155,4 +155,5 @@ buildConfig {
     buildConfigField("DEBUG", true)
     buildConfigField("DEBUG_SYNCPLAY_PROTOCOL", true)
     buildConfigField("EXOPLAYER_ONLY", AppConfig.exoOnly)
+    buildConfigField("GIPHY_API_KEY", AppConfig.localProperties.getProperty("yuroyami.keyGiphy"))
 }

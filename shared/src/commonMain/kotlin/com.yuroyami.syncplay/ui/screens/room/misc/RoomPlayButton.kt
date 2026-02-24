@@ -28,7 +28,7 @@ fun RoomPlayButton(modifier: Modifier) {
     val hasVideo by viewmodel.hasVideo.collectAsState()
 
     /** PLAY BUTTON */
-    val playing = remember { viewmodel.playerManager.isNowPlaying }
+    val playing = remember { viewmodel.videoEngineManager.isNowPlaying }
     val animatedColor by animateColorAsState(
         animationSpec = tween(500),
         targetValue = if (playing.value) Theming.SP_GRADIENT.last().copy(alpha = 0.1f)

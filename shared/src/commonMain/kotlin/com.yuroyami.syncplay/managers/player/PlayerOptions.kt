@@ -15,7 +15,7 @@ import com.yuroyami.syncplay.managers.preferences.value
  * buffering parameters and default track selections. Values are loaded from
  * persistent storage (DataStore) and are immutable once retrieved.
  *
- * Use [get] for synchronous access or [getSuspendingly] for coroutine contexts.
+ * Use [get] for synchronous access.
  */
 class PlayerOptions private constructor() {
 

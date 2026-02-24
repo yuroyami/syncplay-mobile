@@ -1,0 +1,486 @@
+@file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "KotlinConstantConditions")
+package com.yuroyami.syncplay.managers.player.mpv
+
+import SyncplayMobile.shared.BuildConfig
+import android.annotation.SuppressLint
+import android.content.Context
+import android.media.AudioManager
+import android.util.Log
+import android.view.LayoutInflater
+import androidx.annotation.UiThread
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SettingsInputComponent
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.net.toUri
+import androidx.media3.common.C.STREAM_TYPE_MUSIC
+import com.yuroyami.syncplay.R
+import com.yuroyami.syncplay.managers.player.PlayerImpl
+import com.yuroyami.syncplay.managers.player.VideoEngine
+import com.yuroyami.syncplay.managers.player.mpv.MpvFileUtils.copyAssets
+import com.yuroyami.syncplay.managers.player.mpv.MpvFileUtils.resolveUri
+import com.yuroyami.syncplay.managers.preferences.PrefExtraConfig
+import com.yuroyami.syncplay.managers.preferences.Preferences.MPV_DEBUG_MODE
+import com.yuroyami.syncplay.managers.preferences.Preferences.MPV_GPU_NEXT
+import com.yuroyami.syncplay.managers.preferences.Preferences.MPV_HARDWARE_ACCELERATION
+import com.yuroyami.syncplay.managers.preferences.Preferences.MPV_INTERPOLATION
+import com.yuroyami.syncplay.managers.preferences.Preferences.MPV_PROFILE
+import com.yuroyami.syncplay.managers.preferences.Preferences.MPV_VIDSYNC
+import com.yuroyami.syncplay.managers.preferences.value
+import com.yuroyami.syncplay.managers.settings.SettingCategory
+import com.yuroyami.syncplay.models.Chapter
+import com.yuroyami.syncplay.models.MediaFile
+import com.yuroyami.syncplay.models.MediaFileLocation
+import com.yuroyami.syncplay.models.Track
+import com.yuroyami.syncplay.utils.GlobalPlayerSession
+import com.yuroyami.syncplay.utils.buildAndroidMediaSession
+import com.yuroyami.syncplay.utils.contextObtainer
+import com.yuroyami.syncplay.utils.timestampFromMillis
+import com.yuroyami.syncplay.utils.uri
+import com.yuroyami.syncplay.viewmodels.RoomViewmodel
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.path
+import `is`.xyz.mpv.MPVLib
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.DrawableResource
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.mpv
+import syncplaymobile.shared.generated.resources.uisetting_categ_mpv
+import kotlin.math.roundToLong
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+
+/**
+ * MPV - Powerful open-source media player with extensive format support.
+ *
+ * **Characteristics:**
+ * - Most powerful player with advanced features
+ * - Supports most video/audio codecs and containers
+ * - Mildly stable (occasional issues with edge cases)
+ * - Default for withLibs builds
+ * - Requires native libraries
+ *
+ * **Best for:** Users who need broad format support and advanced features
+ *
+ * **Availability:** Only in withLibs build flavor
+ */
+object MpvEngine: VideoEngine {
+    override val isAvailable: Boolean = !BuildConfig.EXOPLAYER_ONLY
+    override val isDefault: Boolean = !BuildConfig.EXOPLAYER_ONLY
+    override val name: String = "mpv"
+    override val img: DrawableResource = Res.drawable.mpv
+
+    override fun createImpl(viewmodel: RoomViewmodel): PlayerImpl = MpvImpl(viewmodel)
+
+    class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, this@MpvEngine) {
+            lateinit var audioManager: AudioManager
+            var mpvPos = 0L
+            private lateinit var observer: MPVLib.EventObserver
+            lateinit var mpvView: MPVView
+            private lateinit var ctx: Context
+            override val supportsChapters: Boolean = true
+            override val trackerJobInterval: Duration = 500.milliseconds
+
+            override fun initialize() {
+                ctx = mpvView.context.applicationContext
+                audioManager = ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+
+                copyAssets(ctx)
+
+                mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
+                isInitialized = true
+                mpvObserverAttach()
+            }
+
+            override fun initMediaSession(): GlobalPlayerSession {
+                return Media3Equivalent.buildAndroidMediaSession(contextObtainer())
+            }
+
+            override fun finalizeMediaSession() {
+                //TODO("Not yet implemented")
+            }
+
+            override suspend fun destroy() {
+                if (!isInitialized) return
+
+                withContext(Dispatchers.Main) {
+                    mpvView.destroy()
+                }
+            }
+
+            @SuppressLint("InflateParams")
+            @Composable
+            override fun VideoPlayer(modifier: Modifier, onPlayerReady: () -> Unit) {
+                AndroidView(
+                    modifier = modifier,
+                    factory = { context ->
+                        mpvView = LayoutInflater.from(context).inflate(R.layout.mpvview, null) as MPVView
+                        initialize()
+                        onPlayerReady()
+                        return@AndroidView mpvView
+                    },
+                    update = {}
+                )
+            }
+
+            override suspend fun configurableSettings() = SettingCategory(
+                title = Res.string.uisetting_categ_mpv,
+                icon = Icons.Filled.SettingsInputComponent
+            ) {
+                +MPV_HARDWARE_ACCELERATION.apply {
+                    config?.extraConfig = PrefExtraConfig.BooleanCallback { b ->
+                        MPVLib.setOptionString("hwdec", if (b) "auto" else "no")
+                    }
+                }
+                +MPV_GPU_NEXT.apply {
+                    config?.extraConfig = PrefExtraConfig.BooleanCallback { b ->
+                        MPVLib.setOptionString("vo", if (b) "gpu-next" else "gpu")
+                    }
+                }
+                +MPV_VIDSYNC.apply {
+                    config?.extraConfig = PrefExtraConfig.MultiChoice(
+                        entries = { MPVView.vidsyncEntries.zip(MPVView.vidsyncEntries).toMap() },
+                        onItemChosen = { videoSync -> MPVLib.setOptionString("video-sync", videoSync) }
+                    )
+                }
+                +MPV_INTERPOLATION.apply {
+                    config?.dependencyEnable = booleanMet@{
+                        val currentVidSyncMode = MPV_VIDSYNC.value()
+                        return@booleanMet currentVidSyncMode != "audio" && currentVidSyncMode != "desync"
+                    }
+                    config?.extraConfig = PrefExtraConfig.BooleanCallback { b ->
+                        MPVLib.setOptionString("interpolation", if (b) "yes" else "no")
+                    }
+                }
+                +MPV_PROFILE.apply {
+                    config?.extraConfig = PrefExtraConfig.MultiChoice(
+                        entries = { MPVView.profileEntries.zip(MPVView.profileEntries).toMap() },
+                        onItemChosen = { profile -> MPVLib.setOptionString("profile", profile) }
+                    )
+                }
+                +MPV_DEBUG_MODE.apply {
+                    config?.extraConfig = PrefExtraConfig.Slider(maxValue = 3, minValue = 0) { itemChosen ->
+                        MPVLib.command(arrayOf("script-binding", "stats/display-page-$itemChosen"))
+                    }
+                }
+            }
+
+            override suspend fun hasMedia(): Boolean {
+                if (!isInitialized) return false
+                return withContext(Dispatchers.Main.immediate) {
+                    val c = MPVLib.getPropertyInt("playlist-count")
+                    c != null && c > 0
+                }
+            }
+
+            override suspend fun isPlaying(): Boolean {
+                if (!isInitialized) return false
+                return withContext(Dispatchers.Main.immediate) {
+                    !mpvView.paused
+                }
+            }
+
+            override suspend fun analyzeTracks(mediafile: MediaFile) {
+                if (!isInitialized) return
+                withContext(Dispatchers.Main.immediate) {
+                    videoEngineManager.media.value?.tracks?.clear()
+
+                    val count = MPVLib.getPropertyInt("track-list/count")!!
+                    // Note that because events are async, properties might disappear at any moment
+                    // so use ?: continue instead of !!
+                    for (i in 0 until count) {
+                        val type = MPVLib.getPropertyString("track-list/$i/type") ?: continue
+                        if (type != "audio" && type != "sub") continue
+                        val mpvId = MPVLib.getPropertyInt("track-list/$i/id") ?: continue
+                        val lang = MPVLib.getPropertyString("track-list/$i/lang")
+                        val title = MPVLib.getPropertyString("track-list/$i/title")
+                        val selected = MPVLib.getPropertyBoolean("track-list/$i/selected") ?: false
+
+                        /** Speculating the track name based on whatever info there is on it */
+                        val trackName = if (!lang.isNullOrEmpty() && !title.isNullOrEmpty())
+                            "$title [$lang]"
+                        else if (!lang.isNullOrEmpty() && title.isNullOrEmpty()) {
+                            "$title [UND]"
+                        } else if (!title.isNullOrEmpty() && lang.isNullOrEmpty())
+                            "Track [$lang]"
+                        else "Track $mpvId [UND]"
+
+                        Log.e("trck", "Found track $mpvId: $type, $title [$lang], $selected")
+
+                        videoEngineManager.media.value?.tracks?.add(
+                            MpvTrack(
+                                name = trackName,
+                                type = if (type == "audio") TrackType.AUDIO else TrackType.SUBTITLE,
+                                index = mpvId,
+                                selected = selected
+                            )
+                        )
+                    }
+                }
+            }
+
+            override suspend fun selectTrack(track: Track?, type: TrackType) {
+                if (!isInitialized) return
+                withContext(Dispatchers.Main.immediate) {
+                    when (type) {
+                        TrackType.SUBTITLE -> {
+                            if (track != null) {
+                                MPVLib.setPropertyInt("sid", track.index)
+                            } else {
+                                MPVLib.setPropertyString("sid", "no")
+                            }
+
+                            videoEngineManager.currentTrackChoices.subtitleSelectionIndexMpv = track?.index ?: -1
+                        }
+
+                        TrackType.AUDIO -> {
+                            if (track != null) {
+                                MPVLib.setPropertyInt("aid", track.index)
+                            } else {
+                                MPVLib.setPropertyString("aid", "no")
+                            }
+
+                            videoEngineManager.currentTrackChoices.audioSelectionIndexMpv = track?.index ?: -1
+                        }
+                    }
+                }
+            }
+
+            override suspend fun analyzeChapters(mediafile: MediaFile) {
+                if (!isInitialized) return
+                withContext(Dispatchers.Main.immediate) {
+                    val chapters = mpvView.loadChapters()
+                    if (chapters.isEmpty()) return@withContext
+                    mediafile.chapters.clear()
+                    mediafile.chapters.addAll(chapters.map {
+                        val timestamp = " (${timestampFromMillis(it.time.roundToLong())})"
+                        Chapter(
+                            it.index,
+                            (it.title ?: "Chapter ${it.index}") + timestamp,
+                            (it.time * 1000).roundToLong()
+                        )
+                    })
+                }
+            }
+
+            override suspend fun jumpToChapter(chapter: Chapter) {
+                if (!isInitialized) return
+                super.jumpToChapter(chapter)
+
+                withContext(Dispatchers.Main.immediate) {
+                    MPVLib.setPropertyInt("chapter", chapter.index)
+                }
+            }
+//
+//    override suspend fun skipChapter() {
+//        if (!isInitialized) return
+//        withContext(Dispatchers.Main.immediate) {
+//            MPVLib.command(arrayOf("add", "chapter", "1"))
+//        }
+//    }
+
+            override suspend fun reapplyTrackChoices() {
+                if (!isInitialized) return
+                withContext(Dispatchers.Main.immediate) {
+                    val subIndex = videoEngineManager.currentTrackChoices.subtitleSelectionIndexMpv
+                    val audioIndex = videoEngineManager.currentTrackChoices.audioSelectionIndexMpv
+
+
+                    val ccMap = videoEngineManager.media.value?.tracks?.filter { it.type == TrackType.SUBTITLE }
+                    val audioMap = videoEngineManager.media.value?.tracks?.filter { it.type == TrackType.AUDIO }
+
+                    val ccGet = ccMap?.firstOrNull { it.index == subIndex }
+                    val audioGet = audioMap?.firstOrNull { it.index == audioIndex }
+
+                    with(videoEngineManager.player) {
+                        if (subIndex == -1) {
+                            selectTrack(null, TrackType.SUBTITLE)
+                        } else if (ccGet != null) {
+                            selectTrack(ccGet, TrackType.SUBTITLE)
+                        }
+
+                        if (audioIndex == -1) {
+                            selectTrack(null, TrackType.AUDIO)
+                        } else if (audioGet != null) {
+                            selectTrack(audioGet, TrackType.AUDIO)
+                        }
+                    }
+                }
+            }
+
+            override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
+                if (!isInitialized) return
+                withContext(Dispatchers.IO) {
+                    ctx.resolveUri(uri.path.toUri())?.let { subUri ->
+                        withContext(Dispatchers.Main) {
+                            MPVLib.command(arrayOf("sub-add", subUri, "cached"))
+                        }
+                    }
+                }
+            }
+
+            override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
+                ctx.resolveUri(location.file.uri)?.let {
+                    mpvView.playFile(it)
+                }
+            }
+
+            override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
+                mpvView.playFile(location.url)
+            }
+
+            override suspend fun pause() {
+                if (!isInitialized) return
+                mpvView.paused = true
+            }
+
+            override suspend fun play() {
+                if (!isInitialized) return
+                mpvView.paused = false
+            }
+
+            override suspend fun isSeekable(): Boolean {
+                return isInitialized
+            }
+
+            @UiThread
+            override fun seekTo(toPositionMs: Long) {
+                if (!isInitialized) return
+                super.seekTo(toPositionMs)
+                mpvView.timePos = toPositionMs.toInt() / 1000
+            }
+
+            override fun currentPositionMs(): Long {
+                if (!isInitialized) return 0L
+                return mpvPos
+            }
+
+            override suspend fun switchAspectRatio(): String {
+                if (!isInitialized) return "NO PLAYER FOUND"
+                return withContext(Dispatchers.Main.immediate) {
+                    val currentAspect = MPVLib.getPropertyString("video-aspect-override")
+                    val currentPanscan = MPVLib.getPropertyDouble("panscan")
+
+                    val aspectRatios = listOf(
+                        "-1.000000" to "Original", "1.777778" to "16:9",
+                        "1.600000" to "16:10", "1.333333" to "4:3",
+                        "2.350000" to "2.35:1", "panscan" to "Pan/Scan"
+                    )
+
+                    var enablePanscan = false
+                    val nextAspect = if (currentPanscan == 1.0) {
+                        aspectRatios[0]
+                    } else if (currentAspect == "2.350000") {
+                        enablePanscan = true
+                        aspectRatios[5]
+                    } else {
+                        aspectRatios[aspectRatios.indexOfFirst { it.first == currentAspect } + 1]
+                    }
+
+                    if (enablePanscan) {
+                        MPVLib.setPropertyString("video-aspect-override", "-1")
+                        MPVLib.setPropertyDouble("panscan", 1.0)
+                    } else {
+                        MPVLib.setPropertyString("video-aspect-override", nextAspect.first)
+                        MPVLib.setPropertyDouble("panscan", 0.0)
+                    }
+
+                    return@withContext nextAspect.second
+                }
+            }
+
+            override suspend fun changeSubtitleSize(newSize: Int) {
+                if (!isInitialized) return
+                withContext(Dispatchers.Main.immediate) {
+                    val s: Double = when {
+                        newSize == 16 -> 1.0
+                        newSize > 16 -> 1.0 + (newSize - 16) * 0.05
+                        else -> 1.0 - (16 - newSize) * (1.0 / 16)
+                    }
+
+                    MPVLib.setPropertyDouble("sub-scale", s)
+                }
+            }
+
+            /** MPV EXCLUSIVE */
+            private fun mpvObserverAttach() {
+                removeObserver()
+
+                observer = object : MPVLib.EventObserver {
+                    override fun eventProperty(property: String) {}
+
+                    override fun eventProperty(property: String, value: Long) {
+                        when (property) {
+                            "time-pos" -> mpvPos = value * 1000
+                            "duration" -> videoEngineManager.timeFullMillis.value = value * 1000
+                            //"file-size" -> value
+                        }
+                    }
+
+                    override fun eventProperty(property: String, value: Boolean) {
+                        when (property) {
+                            "pause" -> {
+                                videoEngineManager.isNowPlaying.value = !value //Just to inform UI
+
+                                //Tell server about playback state change
+                                if (!viewmodel.isSoloMode) {
+                                    viewmodel.actionManager.sendPlayback(!value)
+                                }
+                            }
+                        }
+                    }
+
+                    override fun eventProperty(property: String, value: String) {}
+                    override fun eventProperty(property: String, value: Double) {}
+
+                    override fun event(eventId: Int) {
+                        when (eventId) {
+                            MPVLib.MpvEvent.MPV_EVENT_START_FILE -> {
+                                if (viewmodel.isSoloMode) return
+                                playerScopeIO.launch {
+                                    while (true) {
+                                        if (videoEngineManager.timeFullMillis.value.toDouble() > 0) {
+                                            videoEngineManager.media.value?.fileDuration = videoEngineManager.timeFullMillis.value.toDouble().div(1000.0)
+
+                                            announceFileLoaded()
+                                            break
+                                        }
+                                        delay(50)
+                                    }
+                                }
+                            }
+
+                            MPVLib.MpvEvent.MPV_EVENT_END_FILE -> {
+                                playerScopeMain.launch {
+                                    pause()
+                                    onPlaybackEnded()
+                                }
+                            }
+                        }
+                    }
+                }
+
+                mpvView.addObserver(observer)
+
+                startTrackingProgress()
+            }
+
+            fun removeObserver() {
+                if (::observer.isInitialized) {
+                    mpvView.removeObserver(observer)
+                }
+            }
+
+            override fun getMaxVolume() = audioManager.getStreamMaxVolume(STREAM_TYPE_MUSIC)
+            override fun getCurrentVolume() = audioManager.getStreamVolume(STREAM_TYPE_MUSIC)
+            override fun changeCurrentVolume(v: Int) {
+                if (!audioManager.isVolumeFixed) {
+                    audioManager.setStreamVolume(STREAM_TYPE_MUSIC, v, 0)
+                }
+            }
+        }
+}

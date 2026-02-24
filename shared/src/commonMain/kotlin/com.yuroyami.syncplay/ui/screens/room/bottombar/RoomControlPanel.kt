@@ -43,7 +43,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.managers.player.BasePlayer.TrackType
+import com.yuroyami.syncplay.managers.player.PlayerImpl
 import com.yuroyami.syncplay.managers.preferences.Preferences.GESTURES
 import com.yuroyami.syncplay.managers.preferences.set
 import com.yuroyami.syncplay.managers.preferences.watchPref
@@ -208,13 +208,13 @@ fun RoomControlPanelCard(modifier: Modifier) {
                                 haptic()
 
                                 viewmodel.viewModelScope.launch {
-                                    viewmodel.player.selectTrack(null, TrackType.SUBTITLE)
+                                    viewmodel.player.selectTrack(null, PlayerImpl.TrackType.SUBTITLE)
                                 }
                             }
                         )
                     )
 
-                    val subs = viewmodel.media?.tracks?.filter { it.type == TrackType.SUBTITLE }
+                    val subs = viewmodel.media?.tracks?.filter { it.type == PlayerImpl.TrackType.SUBTITLE }
                     subs?.forEach { track ->
                         add(
                             ControlPanelDropdownAction(
@@ -224,7 +224,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
                                     haptic()
 
                                     viewmodel.viewModelScope.launch {
-                                        viewmodel.player.selectTrack(track, TrackType.SUBTITLE)
+                                        viewmodel.player.selectTrack(track, PlayerImpl.TrackType.SUBTITLE)
                                     }
 
                                     viewmodel.osdManager.dispatchOSD {
@@ -257,7 +257,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
         val audioItems by remember(audioTracksPopup.value) {
             mutableStateOf(
                 buildList {
-                    val audios = viewmodel.media?.tracks?.filter { it.type == TrackType.AUDIO }
+                    val audios = viewmodel.media?.tracks?.filter { it.type == PlayerImpl.TrackType.AUDIO }
                     audios?.forEach { track ->
                         add(
                             ControlPanelDropdownAction(
@@ -267,7 +267,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
                                     haptic()
 
                                     viewmodel.viewModelScope.launch {
-                                        viewmodel.player.selectTrack(track, TrackType.AUDIO)
+                                        viewmodel.player.selectTrack(track, PlayerImpl.TrackType.AUDIO)
                                     }
 
                                     viewmodel.osdManager.dispatchOSD {

@@ -165,7 +165,7 @@ data class State(
                 //loggy("msgAge: $messageAge")
 
                 if (lastGlobalUpdate == null) {
-                    if (protocol.viewmodel.playerManager.media.value != null) {
+                    if (protocol.viewmodel.videoEngineManager.media.value != null) {
                         withContext(Dispatchers.Main) {
                             viewmodel.player.seekTo(position.toLong())
                             if (paused) viewmodel.player.pause() else viewmodel.player.play()

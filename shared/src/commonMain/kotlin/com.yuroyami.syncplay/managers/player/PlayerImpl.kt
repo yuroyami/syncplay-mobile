@@ -35,151 +35,52 @@ import syncplaymobile.shared.generated.resources.room_selected_vid
 import syncplaymobile.shared.generated.resources.room_sub_error_load_vid_first
 import kotlin.time.Duration
 
-/**
- * Abstract base class for media player implementations in Syncplay.
- *
- * Provides a platform-agnostic interface for video/audio playback with features like:
- * - Media loading from local files or URLs
- * - Playback control (play, pause, seek)
- * - Track management (audio, subtitles)
- * - Chapter navigation
- * - Volume control
- * - Playback progress tracking
- *
- * ## Available Player Engines
- *
- * **Android:**
- * - ExoPlayer (Google) - Most stable, limited format support
- * - MPV - Most powerful, supports most formats, mildly stable
- * - VLC - Widest format support (QuickTime, Xvid), powerful but unstable
- *
- * **iOS:**
- * - AVPlayer - Apple's native media player, access to it is available via Kotlin ObjC interop
- * - VLC  - Default player to use, powerful and versatile, provided via MobileVLCKit pod
- *
- * Concrete implementations delegate to platform-specific player frameworks while
- * maintaining a consistent API for Syncplay's synchronization logic.
- *
- * @property viewmodel The parent RoomViewModel managing this player
- * @property engine The player engine type being used
- */
-abstract class BasePlayer(
+/** The actual platform-agnostic interface for video/audio playback in Syncplay.
+ * Engines: ExoPlayer/MPV/VLC (Android), AVPlayer/VLC (iOS)*/
+abstract class PlayerImpl(
     val viewmodel: RoomViewmodel,
-    val engine: PlayerEngine
+    val engine: VideoEngine
 ) {
-    /**
-     * Reference to the player manager that owns this player instance.
-     */
-    val playerManager: PlayerManager = viewmodel.playerManager
+    val videoEngineManager: VideoEngineManager = viewmodel.videoEngineManager
 
-    /** The Global MediaSession that is connected to the player.
-     * MediaSessions are responsible for the system notification that shows everything about what's being played.
-     * It also routes playback from outside the app to inside the app. For example,
-     * if the phone is connected to a TV, then you can control the playback from the phone.
-     * You can even control playback from that notification.
-     * The session also allows background play and prevents the app from being killed.
-     */
+    /** MediaSession for system notification and external playback control. */
     val session: GlobalPlayerSession? = null
 
-    /** Types of media tracks that can be selected. */
     enum class TrackType {
         AUDIO, SUBTITLE
     }
 
-    /** Supervisor job for player-related coroutines, and its CoroutineScopes
-     */
     private val playerSupervisorJob = SupervisorJob()
     val playerScopeMain = CoroutineScope(Dispatchers.Main + playerSupervisorJob)
     val playerScopeIO = CoroutineScope(Dispatchers.IO + playerSupervisorJob)
 
-    /**
-     * Whether this player supports changing aspect ratio dynamically.
-     */
     //TODO
     open val canChangeAspectRatio: Boolean = true
-
-    /**
-     * Whether this player supports chapter navigation.
-     */
     abstract val supportsChapters: Boolean
-
-    /**
-     * Whether this player can go into PiP (always true on Android, but on iOS, only AVPlayer can PiP)
-     */
     open val supportsPictureInPicture: Boolean = true
-
-    /**
-     * Whether the player has been initialized and is ready for use.
-     */
     var isInitialized: Boolean = false
 
-    /**
-     * Initializes the player and prepares it for media playback.
-     * Must be called on the UI thread.
-     */
     @UiThread
     abstract fun initialize()
 
-    /**
-     * Destroys the player and releases all resources.
-     * Called when leaving the room or switching players.
-     */
     abstract suspend fun destroy()
 
     abstract fun initMediaSession(): GlobalPlayerSession
 
     abstract fun finalizeMediaSession()
 
-    /**
-     * Returns platform-specific configuration settings for this player, if any.
-     *
-     * @return Bundle of extra settings, or null if no custom settings available
-     */
     abstract suspend fun configurableSettings(): SettingCategory?
 
-    /**
-     * Checks whether any media is currently loaded in the player.
-     *
-     * @return true if media is loaded, false otherwise
-     */
     abstract suspend fun hasMedia(): Boolean
 
-    /**
-     * Checks whether playback is currently active (not paused).
-     *
-     * @return true if playing, false if paused or stopped
-     */
     abstract suspend fun isPlaying(): Boolean
 
-    /**
-     * Analyzes and extracts available tracks from the loaded media.
-     *
-     * Populates the media file's track information (audio, subtitles).
-     *
-     * @param mediafile The media file to analyze
-     */
     abstract suspend fun analyzeTracks(mediafile: MediaFile)
 
-    /**
-     * Selects a specific track for playback.
-     *
-     * @param track The track to select, or null to disable that track type
-     * @param type Whether this is an audio or subtitle track
-     */
     abstract suspend fun selectTrack(track: Track?, type: TrackType)
 
-    /**
-     * Analyzes and extracts chapter information from the loaded media.
-     *
-     * @param mediafile The media file to analyze for chapters
-     */
     abstract suspend fun analyzeChapters(mediafile: MediaFile)
 
-    /**
-     * Jumps to a specific chapter in the media.
-     *
-     * @param chapter The chapter to jump to
-     */
     @CallSuper
     open suspend fun jumpToChapter(chapter: Chapter) {
         if (!supportsChapters) return
@@ -193,9 +94,6 @@ abstract class BasePlayer(
         }
     }
 
-    /**
-     * Skips to the next chapter in the media.
-     */
     fun skipChapter() {
         if (!supportsChapters) return
 
@@ -216,20 +114,8 @@ abstract class BasePlayer(
             }
     }
 
-    /**
-     * Reapplies previously selected track choices after media change.
-     * Useful for maintaining user preferences across playlist items.
-     */
     abstract suspend fun reapplyTrackChoices()
 
-    /**
-     * Loads an external subtitle file from a URI.
-     *
-     * Validates the file extension, loads the subtitle if valid, and displays
-     * appropriate feedback messages to the user.
-     *
-     * @param uri The URI of the subtitle file to load
-     */
     suspend fun loadExternalSub(uri: PlatformFile) {
         if (!isInitialized) return
 
@@ -255,27 +141,15 @@ abstract class BasePlayer(
         }
     }
 
-    /**
-     * Platform-specific implementation for loading external subtitle files.
-     *
-     * @param uri The URI of the subtitle file
-     * @param extension The file extension (e.g., "srt", "ass")
-     */
     abstract suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String)
 
-    /**
-     * Validates whether a file extension represents a supported subtitle format.
-     *
-     * @param extension The file extension to check
-     * @return true if the extension is a valid subtitle format
-     */
     private fun isValidSubtitleFile(extension: String) =
         listOf("srt", "ass", "ssa", "ttml", "vtt").any { it in extension.lowercase() }
 
 
     companion object {
         //TODO Bookmarking on iOS
-        suspend fun BasePlayer.injectVideo(string: String) {
+        suspend fun PlayerImpl.injectVideo(string: String) {
             if (string.startsWith("http://") || string.startsWith("https://") || string.startsWith("www") || string.startsWith("ftp://")) {
                 injectVideoURL(string)
             } else {
@@ -307,9 +181,8 @@ abstract class BasePlayer(
     }
 
     open suspend fun parseMedia(media: MediaFile) {
-        playerManager.media.value = media
+        videoEngineManager.media.value = media
 
-        /* Finally, show a a toast to the user that the media file has been added */
         viewmodel.osdManager.dispatchOSD {
             getString(Res.string.room_selected_vid, "${viewmodel.media?.fileName}")
         }
@@ -320,95 +193,34 @@ abstract class BasePlayer(
     }
 
 
-    /**
-     * Pauses playback.
-     */
     abstract suspend fun pause()
 
-    /**
-     * Resumes or starts playback.
-     */
     abstract suspend fun play()
 
-
-    /**
-     * Checks whether the current media supports seeking.
-     *
-     * @return true if seeking is supported, false for live streams or unsupported formats
-     */
     abstract suspend fun isSeekable(): Boolean
 
-    /**
-     * Seeks to a specific position in the media.
-     *
-     * Base implementation checks if the app is in background to prevent seeks
-     * during lifecycle transitions. Subclasses should call super and add their seek logic.
-     *
-     * @param toPositionMs The target position in milliseconds
-     */
     @UiThread
     @CallSuper
     open fun seekTo(toPositionMs: Long) {
         if (viewmodel.lifecycleManager.isInBackground) return
     }
 
-    /**
-     * Gets the current playback position.
-     * Must be called on the UI thread.
-     *
-     * @return Current position in milliseconds
-     */
     @UiThread
     abstract fun currentPositionMs(): Long
 
-    /**
-     * Cycles to the next aspect ratio mode and returns its name.
-     *
-     * @return The name of the newly selected aspect ratio
-     */
     abstract suspend fun switchAspectRatio(): String
 
-    /**
-     * Changes the subtitle font size.
-     *
-     * @param newSize The new subtitle size (platform-specific units)
-     */
     abstract suspend fun changeSubtitleSize(newSize: Int)
 
-    /**
-     * Composable function that renders the video player surface.
-     *
-     * @param modifier Compose modifier for styling and layout
-     */
     @Composable
     abstract fun VideoPlayer(modifier: Modifier, onPlayerReady: () -> Unit)
 
-    /**
-     * Gets the maximum volume level for this player.
-     *
-     * @return Maximum volume value
-     */
     abstract fun getMaxVolume(): Int
 
-    /**
-     * Gets the current volume level.
-     *
-     * @return Current volume value
-     */
     abstract fun getCurrentVolume(): Int
 
-    /**
-     * Sets the player volume.
-     *
-     * @param v The new volume level (0 to max)
-     */
     abstract fun changeCurrentVolume(v: Int)
 
-    /**
-     * Sends the current media file information to the Syncplay server.
-     *
-     * Notifies other users in the room about the loaded file.
-     */
     fun announceFileLoaded() {
         if (viewmodel.isSoloMode) return
 
@@ -418,12 +230,6 @@ abstract class BasePlayer(
         viewmodel.networkManager.sendAsync<PacketOut.EmptyList>()
     }
 
-    /**
-     * Called when media playback reaches the end.
-     *
-     * In online mode with shared playlist, automatically advances to the next
-     * playlist item (or loops to the first item).
-     */
     fun onPlaybackEnded() {
         if (!isInitialized) return
 
@@ -437,24 +243,14 @@ abstract class BasePlayer(
         }
     }
 
-    /**
-     * The interval at which to update playback position tracking.
-     * Platform-specific based on performance characteristics.
-     */
     abstract val trackerJobInterval: Duration
 
-    /**
-     * Coroutine job that continuously tracks playback progress.
-     *
-     * Updates the current position state at regular intervals for UI display
-     * and synchronization purposes. Lazily initialized on first access.
-     */
     private val playerTrackerJob by lazy {
         playerScopeMain.launch {
             while (isActive) {
                 if (isSeekable()) {
                     val pos = currentPositionMs()
-                    playerManager.timeCurrentMillis.value = pos
+                    videoEngineManager.timeCurrentMillis.value = pos
                     if (!viewmodel.isSoloMode) {
                         //TODO is this necessary ? viewmodel.protocolManager.globalPositionMs = pos.toDouble()
                     }
@@ -464,12 +260,6 @@ abstract class BasePlayer(
         }
     }
 
-    /**
-     * Starts tracking playback progress.
-     *
-     * Accessing the lazy playerTrackerJob property initiates the tracking coroutine
-     * if it hasn't been started yet.
-     */
     fun startTrackingProgress() {
         // Accessing playerTrackerJob here will start it if it hasn't started yet
         playerTrackerJob

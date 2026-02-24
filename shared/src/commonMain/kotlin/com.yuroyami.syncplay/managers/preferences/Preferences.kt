@@ -46,7 +46,7 @@ import com.yuroyami.syncplay.ui.popups.PopupMediaDirs.MediaDirsPopup
 import com.yuroyami.syncplay.ui.screens.theme.Theming
 import com.yuroyami.syncplay.ui.screens.theme.defaultTheme
 import com.yuroyami.syncplay.utils.PLATFORM
-import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
+import com.yuroyami.syncplay.utils.availablePlatformVideoEngines
 import com.yuroyami.syncplay.utils.generateTimestampMillis
 import com.yuroyami.syncplay.utils.get
 import com.yuroyami.syncplay.utils.logFile
@@ -171,7 +171,7 @@ object Preferences {
     /** ------------ Miscellaneous -------------*/
     val JOIN_CONFIG = Pref<String?>("misc_join_config", null)
 
-    val PLAYER_ENGINE = Pref("misc_player_engine", availablePlatformPlayerEngines.first { it.isDefault }.name)
+    val PLAYER_ENGINE = Pref("misc_player_engine", availablePlatformVideoEngines.first { it.isDefault }.name)
     val GESTURES = Pref("misc_gestures", true)
     val CURRENT_THEME = Pref("misc_current_theme", defaultTheme.asString())
     val CUSTOM_THEMES = Pref<Set<String>>("misc_custom_themes", emptySet())

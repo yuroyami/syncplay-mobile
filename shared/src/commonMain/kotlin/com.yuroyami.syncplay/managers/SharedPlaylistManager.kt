@@ -1,7 +1,7 @@
 package com.yuroyami.syncplay.managers
 
 import com.yuroyami.syncplay.AbstractManager
-import com.yuroyami.syncplay.managers.player.BasePlayer.Companion.injectVideo
+import com.yuroyami.syncplay.managers.player.PlayerImpl.Companion.injectVideo
 import com.yuroyami.syncplay.managers.preferences.Preferences.MEDIA_DIRECTORIES
 import com.yuroyami.syncplay.managers.preferences.set
 import com.yuroyami.syncplay.managers.preferences.value

@@ -23,13 +23,13 @@ import kotlinx.coroutines.launch
  *
  * @property viewmodel The parent RoomViewModel that owns this manager
  */
-class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
+class VideoEngineManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
     /**
      * The active media player instance.
      * Initialized during room setup with the user's preferred player engine (or the platform default one if unchanged)
      */
-    lateinit var player: BasePlayer
+    lateinit var player: PlayerImpl
 
     /**
      * Whether the player has been initialized and is ready for use.
@@ -93,7 +93,7 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
     override fun invalidate() {
         GlobalScope.launch {
-            //Has to run in GlobalScope because room viewmodelscope is cancelled at this point of invalidation
+            //Has to run in GlobalScope because room viewModelScope is canceled at this point of invalidation
             player.destroy()
             player.finalizeMediaSession()
         }

@@ -1,4 +1,12 @@
+import java.io.File
+import java.util.Properties
+
 object AppConfig {
+    val localProperties = Properties().apply {
+        val file = File("local.properties")
+        if (file.exists()) load(file.inputStream())
+    }
+
     const val javaVersion = 21
 
     const val compileSdk = 36
@@ -12,6 +20,7 @@ object AppConfig {
 
     const val ndkRequired = "29.0.14206865"
 
+    val giphyApiKey = Properties()
     val abiCodes = mapOf(
         "armeabi-v7a" to "armv7l",
         "arm64-v8a" to "arm64",

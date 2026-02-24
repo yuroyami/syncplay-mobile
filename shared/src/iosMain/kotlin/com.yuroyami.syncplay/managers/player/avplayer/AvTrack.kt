@@ -1,6 +1,5 @@
 package com.yuroyami.syncplay.managers.player.avplayer
 
-import com.yuroyami.syncplay.managers.player.BasePlayer
 import com.yuroyami.syncplay.models.Track
 import platform.AVFoundation.AVMediaSelectionGroup
 import platform.AVFoundation.AVMediaSelectionOption

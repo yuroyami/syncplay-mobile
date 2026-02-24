@@ -1,7 +1,6 @@
 
 import AppConfig.ndkRequired
 import java.nio.file.Files
-import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -20,19 +19,14 @@ android {
     ndkVersion = ndkRequired
 
     signingConfigs {
-        val localProperties = Properties()
-        val localPropertiesFile = rootProject.file("local.properties")
-        if (localPropertiesFile.exists()) {
-            localProperties.load(localPropertiesFile.inputStream())
-        }
-
-        val keystore = file("${rootDir}/keystore/syncplaykey.jks")
-        if (keystore.exists()) {
+        file("${rootDir}/keystore/syncplaykey.jks").takeIf { it.exists() }?.let { keystoreFile ->
             create("syncplay_keystore") {
-                storeFile = keystore
-                keyAlias = localProperties.getProperty("yuroyami.keyAlias")
-                keyPassword = localProperties.getProperty("yuroyami.keyPassword")
-                storePassword = localProperties.getProperty("yuroyami.storePassword")
+                storeFile = keystoreFile
+                AppConfig.localProperties.apply {
+                    keyAlias = getProperty("yuroyami.keyAlias")
+                    keyPassword = getProperty("yuroyami.keyPassword")
+                    storePassword = getProperty("yuroyami.storePassword")
+                }
             }
         }
     }

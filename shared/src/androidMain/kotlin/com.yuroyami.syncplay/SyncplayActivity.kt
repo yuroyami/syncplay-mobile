@@ -29,8 +29,8 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import com.yuroyami.syncplay.managers.player.BasePlayer
-import com.yuroyami.syncplay.managers.player.exo.ExoPlayer
+import com.yuroyami.syncplay.managers.player.PlayerImpl
+import com.yuroyami.syncplay.managers.player.exo.ExoplayerEngine
 import com.yuroyami.syncplay.managers.preferences.Preferences.DISPLAY_LANG
 import com.yuroyami.syncplay.managers.preferences.Preferences.SUBTITLE_SIZE
 import com.yuroyami.syncplay.managers.preferences.value
@@ -92,7 +92,7 @@ class SyncplayActivity : ComponentActivity() {
 
         /** Binding common logic with platform logic */
         platformCallback = object : PlatformCallback {
-            override fun initializeMediaSession(player: BasePlayer) {
+            override fun initializeMediaSession(player: PlayerImpl) {
                 (application as SyncplayApp).mediaSession = player.initMediaSession()
 
                 loggy("@$@$@$@$@$@$@$ MEDIA SESSION IS INITIALIZED")
@@ -296,7 +296,7 @@ class SyncplayActivity : ComponentActivity() {
         /* Loading subtitle appearance */
         lifecycleScope.launch(Dispatchers.Main) {
             val ccsize = SUBTITLE_SIZE.value()
-            (roomViewmodel?.player as? ExoPlayer)?.retweakSubtitleAppearance(ccsize.toFloat())
+            (roomViewmodel?.player as? ExoplayerEngine.ExoImpl)?.retweakSubtitleAppearance(ccsize.toFloat())
         }
     }
 

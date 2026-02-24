@@ -65,7 +65,7 @@ import com.yuroyami.syncplay.ui.screens.adam.LocalGlobalViewmodel
 import com.yuroyami.syncplay.ui.screens.theme.Theming
 import com.yuroyami.syncplay.ui.screens.theme.Theming.useSyncplayGradient
 import com.yuroyami.syncplay.utils.ShowSystemBars
-import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
+import com.yuroyami.syncplay.utils.availablePlatformVideoEngines
 import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.utils.substringSafely
 import com.yuroyami.syncplay.viewmodels.HomeViewmodel
@@ -313,7 +313,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         val errorString = stringResource(Res.string.home_engine_unavailable_error)
                         HomeAnimatedEngineButtonGroup(
                             modifier = Modifier.fillMaxWidth(0.75f),
-                            engines = availablePlatformPlayerEngines,
+                            engines = availablePlatformVideoEngines,
                             selectedEngine = selectedEngine,
                             onSelectEngine = { engine ->
                                 viewmodel.viewModelScope.launch(Dispatchers.IO) {

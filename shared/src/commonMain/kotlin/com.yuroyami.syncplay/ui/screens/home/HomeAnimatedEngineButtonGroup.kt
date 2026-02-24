@@ -28,15 +28,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.yuroyami.syncplay.managers.player.PlayerEngine
+import com.yuroyami.syncplay.managers.player.VideoEngine
 import com.yuroyami.syncplay.ui.screens.theme.Theming.flexibleGradient
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun HomeAnimatedEngineButtonGroup(
-    engines: List<PlayerEngine>,
+    engines: List<VideoEngine>,
     selectedEngine: String,
-    onSelectEngine: (PlayerEngine) -> Unit,
+    onSelectEngine: (VideoEngine) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(

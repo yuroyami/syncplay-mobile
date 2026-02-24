@@ -20,8 +20,10 @@ import androidx.media3.session.MediaSession
 import com.yuroyami.syncplay.managers.network.KtorNetworkManager
 import com.yuroyami.syncplay.managers.network.NettyNetworkManager
 import com.yuroyami.syncplay.managers.network.NetworkManager
-import com.yuroyami.syncplay.managers.player.AndroidPlayerEngine
-import com.yuroyami.syncplay.managers.player.PlayerEngine
+import com.yuroyami.syncplay.managers.player.VideoEngine
+import com.yuroyami.syncplay.managers.player.exo.ExoplayerEngine
+import com.yuroyami.syncplay.managers.player.mpv.MpvEngine
+import com.yuroyami.syncplay.managers.player.vlc.VlcEngine
 import com.yuroyami.syncplay.managers.preferences.Preferences.NETWORK_ENGINE
 import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
@@ -42,7 +44,8 @@ actual val platform: PLATFORM = PLATFORM.Android
  * Includes ExoPlayer, MPV, and VLC. Actual availability depends on build flavor
  * (noLibs vs withLibs).
  */
-actual val availablePlatformPlayerEngines: List<PlayerEngine> = listOf(AndroidPlayerEngine.Exoplayer, AndroidPlayerEngine.Mpv, AndroidPlayerEngine.VLC)
+actual val availablePlatformVideoEngines: List<VideoEngine> =
+    listOf(ExoplayerEngine, MpvEngine, VlcEngine)
 
 actual typealias GlobalPlayerSession = MediaSession
 

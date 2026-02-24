@@ -1,6 +1,5 @@
 package com.yuroyami.syncplay.managers.player.vlc
 
-import com.yuroyami.syncplay.managers.player.BasePlayer.TrackType
 import com.yuroyami.syncplay.models.Track
 
 class VlcKitTrack(

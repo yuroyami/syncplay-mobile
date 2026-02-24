@@ -9,8 +9,8 @@ import com.yuroyami.syncplay.delegato
 import com.yuroyami.syncplay.managers.network.KtorNetworkManager
 import com.yuroyami.syncplay.managers.network.NetworkManager
 import com.yuroyami.syncplay.managers.network.instantiateSwiftNioNetworkManager
-import com.yuroyami.syncplay.managers.player.ApplePlayerEngine
-import com.yuroyami.syncplay.managers.player.PlayerEngine
+import com.yuroyami.syncplay.managers.player.AppleVideoEngine
+import com.yuroyami.syncplay.managers.player.VideoEngine
 import com.yuroyami.syncplay.managers.preferences.Preferences.NETWORK_ENGINE
 import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
@@ -35,7 +35,7 @@ import kotlin.native.ref.WeakReference
 
 actual val platform: PLATFORM = PLATFORM.IOS
 
-actual val availablePlatformPlayerEngines: List<PlayerEngine> = listOf(ApplePlayerEngine.AVPlayer, ApplePlayerEngine.VLC)
+actual val availablePlatformVideoEngines: List<VideoEngine> = listOf(AppleVideoEngine.AVPlayer, AppleVideoEngine.VLC)
 
 actual typealias GlobalPlayerSession = String
 

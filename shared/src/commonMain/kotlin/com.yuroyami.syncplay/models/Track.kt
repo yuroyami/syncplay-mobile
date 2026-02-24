@@ -1,6 +1,6 @@
 package com.yuroyami.syncplay.models
 
-import com.yuroyami.syncplay.managers.player.BasePlayer
+import com.yuroyami.syncplay.managers.player.PlayerImpl
 
 /*****************************************************************************************
  * Track wrapper class. It encapsulates all info we need about a track in a track group  *
@@ -10,7 +10,7 @@ abstract class Track {
     abstract val name: String
 
     /** Corresponds to either subtitle track or audio track type **/
-    abstract val type: BasePlayer.TrackType?
+    abstract val type: PlayerImpl.TrackType?
 
     /** The index of the format (track) **/
     abstract val index: Int

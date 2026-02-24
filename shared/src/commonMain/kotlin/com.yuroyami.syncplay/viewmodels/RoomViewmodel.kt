@@ -11,8 +11,8 @@ import com.yuroyami.syncplay.managers.SessionManager
 import com.yuroyami.syncplay.managers.SharedPlaylistManager
 import com.yuroyami.syncplay.managers.UIManager
 import com.yuroyami.syncplay.managers.network.NetworkManager
-import com.yuroyami.syncplay.managers.player.BasePlayer
-import com.yuroyami.syncplay.managers.player.PlayerManager
+import com.yuroyami.syncplay.managers.player.PlayerImpl
+import com.yuroyami.syncplay.managers.player.VideoEngineManager
 import com.yuroyami.syncplay.managers.preferences.Preferences.FILE_MISMATCH_WARNING
 import com.yuroyami.syncplay.managers.preferences.Preferences.PLAYER_ENGINE
 import com.yuroyami.syncplay.managers.preferences.Preferences.TLS_ENABLE
@@ -22,7 +22,7 @@ import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.models.JoinConfig
 import com.yuroyami.syncplay.models.MediaFile
 import com.yuroyami.syncplay.ui.screens.Screen
-import com.yuroyami.syncplay.utils.availablePlatformPlayerEngines
+import com.yuroyami.syncplay.utils.availablePlatformVideoEngines
 import com.yuroyami.syncplay.utils.instantiateNetworkManager
 import com.yuroyami.syncplay.utils.loggy
 import kotlinx.coroutines.Dispatchers
@@ -54,7 +54,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
     val uiManager: UIManager by lazy { UIManager(this) }
 
     /** Manages media player lifecycle, controls, and state */
-    val playerManager: PlayerManager by lazy { PlayerManager(this) }
+    val videoEngineManager: VideoEngineManager by lazy { VideoEngineManager(this) }
 
     /** Manages the network connection and communication with the Syncplay server */
     lateinit var networkManager: NetworkManager
@@ -100,9 +100,9 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
             networkManager = instantiateNetworkManager()
 
             launch {
-                val engine = availablePlatformPlayerEngines.first { it.name == PLAYER_ENGINE.value() }
-                playerManager.player = engine.instantiate(this@RoomViewmodel)
-                playerManager.isPlayerReady.value = true
+                val engine = availablePlatformVideoEngines.first { it.name == PLAYER_ENGINE.value() }
+                videoEngineManager.player = engine.createImpl(this@RoomViewmodel)
+                videoEngineManager.isPlayerReady.value = true
             }
 
             joinConfig?.let {
@@ -184,8 +184,8 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
     /************ Extension Properties for Quick Access ***************/
 
     /** Quick access to the current media player instance */
-    val player: BasePlayer
-        get() = playerManager.player
+    val player: PlayerImpl
+        get() = videoEngineManager.player
 
     /** Quick access to the current room session state */
     val session: SessionManager.Session
@@ -193,11 +193,11 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
 
     /** Quick access to the currently loaded media file, if any */
     val media: MediaFile?
-        get() = playerManager.media.value
+        get() = videoEngineManager.media.value
 
     /** Quick access to whether the current media contains video */
     val hasVideo: StateFlow<Boolean>
-        get() = playerManager.hasVideo
+        get() = videoEngineManager.hasVideo
 
     /**
      * Cleans up all managers and resources when the ViewModel is destroyed.
@@ -205,7 +205,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
      */
     override fun onCleared() {
         loggy("²²²²²²²²²²²² Clearing viewmodel")
-        playerManager.invalidate()
+        videoEngineManager.invalidate()
         networkManager.invalidate()
         uiManager.invalidate()
         protocolManager.invalidate()

@@ -14,7 +14,18 @@ fun Media3Player.buildAndroidMediaSession(ctx: Context): GlobalPlayerSession {
     return MediaSession
         .Builder(ctx, this)
         .setId("session_${UUID.randomUUID()}")
-        .setCallback(mediaSessionCallback)
+        .setCallback(object : MediaSession.Callback {
+            override fun onAddMediaItems(
+                mediaSession: MediaSession,
+                controller: MediaSession.ControllerInfo,
+                mediaItems: MutableList<MediaItem>,
+            ): ListenableFuture<MutableList<MediaItem>> {
+                val newMediaItems = mediaItems.map {
+                    it.buildUpon().setUri(it.mediaId).build()
+                }.toMutableList()
+                return Futures.immediateFuture(newMediaItems)
+            }
+        })
         .setId(ctx.packageName)
         .run {
             ctx.packageManager?.getLaunchIntentForPackage(ctx.packageName)?.let { sessionIntent ->
@@ -30,18 +41,3 @@ fun Media3Player.buildAndroidMediaSession(ctx: Context): GlobalPlayerSession {
         }
         .build()
 }
-
-
-val mediaSessionCallback: MediaSession.Callback
-    get() = object : MediaSession.Callback {
-        override fun onAddMediaItems(
-            mediaSession: MediaSession,
-            controller: MediaSession.ControllerInfo,
-            mediaItems: MutableList<MediaItem>,
-        ): ListenableFuture<MutableList<MediaItem>> {
-            val newMediaItems = mediaItems.map {
-                it.buildUpon().setUri(it.mediaId).build()
-            }.toMutableList()
-            return Futures.immediateFuture(newMediaItems)
-        }
-    }
