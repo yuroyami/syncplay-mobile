@@ -316,8 +316,11 @@ fun ThemeEntry(modifier: Modifier, theme: SaveableTheme, isSelected: Boolean) {
                 }
             }
         }
+
+        Spacer(modifier = Modifier.size(0.dp))
+
         Text(
-            modifier = Modifier.width(themeCardSize - 4.dp).safeContentPadding().padding(2.dp),
+            modifier = Modifier.width(themeCardSize - 4.dp).padding(2.dp),
             text = theme.name,
             autoSize = TextAutoSize.StepBased(minFontSize = 1.sp, maxFontSize = 25.sp),
             color = MaterialTheme.colorScheme.onSurface,

@@ -27,6 +27,7 @@ app/build/
 keystore/
 obj/
 *.jks
+*.pem
 *.so
 libavcodec.so
 libavdevice.so

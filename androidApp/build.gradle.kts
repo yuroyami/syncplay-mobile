@@ -151,8 +151,6 @@ if (!AppConfig.exoOnly) {
             )
         }
 
-        println("$ndkPath IS YOUR NDK!!!!!!!")
-
         // Verify it's the correct version
         val actualVersion = ndkPath.name // e.g., "26.1.10909125"
         if (actualVersion != ndkRequired) {
