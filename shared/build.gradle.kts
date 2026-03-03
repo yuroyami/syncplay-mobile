@@ -41,7 +41,6 @@ kotlin {
             isStatic = true
         }
 
-        pod("SPLPing", libs.versions.splping.get()) //Light-weight Objective-C library to add the ICMP ping functionality
         pod("MobileVLCKit", libs.versions.libvlc.ios.get()) //Adds the VLC player engine to iOS
     }
 

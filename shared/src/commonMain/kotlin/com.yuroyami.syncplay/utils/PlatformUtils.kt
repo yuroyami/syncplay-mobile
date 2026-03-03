@@ -103,18 +103,6 @@ expect fun getFolderName(uri: String): String?
 expect fun getFileSize(uri: PlatformFile): Long?
 
 /**
- * Performs an ICMP ping to a host and measures round-trip time.
- *
- * Sends a single ping packet and waits for response. May not work on all
- * devices (e.g., Android emulators don't support ICMP).
- *
- * @param host The hostname or IP address to ping
- * @param packet The packet size in bytes
- * @return Round-trip time in milliseconds, or null if ping failed
- */
-expect suspend fun pingIcmp(host: String, packet: Int): Int?
-
-/**
  * Extracts text content from a clipboard entry.
  *
  * @return The text content, or null if the entry doesn't contain text

@@ -2,7 +2,6 @@ PODS:
   - MobileVLCKit (3.7.0)
   - shared (1.0.2):
     - MobileVLCKit (= 3.7.0)
-    - SPLPing (= 1.1.8)
   - SPLPing (1.1.8)
 
 DEPENDENCIES:
@@ -21,7 +20,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   MobileVLCKit: 9adfebbd93b9feb8eeff06b0c6a3739356b6f5cd
-  shared: 864404e9af3e6ae9af1101e822b044c830e14d42
+  shared: 928bcec35ce61eadf1f4f21568246bceaf91fed3
   SPLPing: 420837fae1e19bba0a8360e91e7a384f22509663
 
 PODFILE CHECKSUM: 06eca76e61afe1198b76522833e3fd490a6f4ce8

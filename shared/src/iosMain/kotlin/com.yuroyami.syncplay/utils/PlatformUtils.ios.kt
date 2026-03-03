@@ -71,23 +71,6 @@ actual fun getFileSize(uri: PlatformFile): Long? {
     }
 }
 
-actual suspend fun pingIcmp(host: String, packet: Int): Int? {
-    val future = CompletableDeferred<Int>()
-    SPLPing.pingOnce(
-        host = host,
-        configuration = SPLPingConfiguration(
-            pingInterval = 1000.0, timeoutInterval = 1000.0, timeToLive = 1000L, payloadSize = packet.toULong()
-        )
-    ) {
-        it?.let { response ->
-            future.complete(
-                (response.duration * 1000.0).roundToInt()
-            )
-        }
-    }
-    return withTimeoutOrNull(1000) { future.await() }
-}
-
 actual fun ClipEntry.getText(): String? {
     return this.getPlainText()
 }

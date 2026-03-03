@@ -29,11 +29,8 @@ import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.path
-import java.io.BufferedReader
 import java.io.File
-import java.io.InputStreamReader
 import java.lang.ref.WeakReference
-import kotlin.math.roundToInt
 
 
 actual val platform: PLATFORM = PLATFORM.Android
@@ -101,24 +98,6 @@ private fun Context.getContentFileName(uri: Uri): String? = runCatching {
             .let(cursor::getString)
     }
 }.getOrNull()
-
-actual suspend fun pingIcmp(host: String, packet: Int): Int? {
-    try {
-        val pingprocess = Runtime.getRuntime().exec("/system/bin/ping -c 1 -w 1 -s $packet $host") ?: return null
-        val inputStream = BufferedReader(InputStreamReader(pingprocess.inputStream))
-        val pingOutput = inputStream.use { it.readText() }
-
-        return if (pingOutput.contains("100% packet loss")) {
-            null
-        } else {
-            pingOutput.substringAfter("time=").substringBefore(" ms").trim()
-                .toDouble().roundToInt()
-        }
-    } catch (e: Exception) {
-        loggy(e.stackTraceToString())
-        return null
-    }
-}
 
 actual fun ClipEntry.getText(): String? {
     return this.clipData.getItemAt(0).text?.toString()

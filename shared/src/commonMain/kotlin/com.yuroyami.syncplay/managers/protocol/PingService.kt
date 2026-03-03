@@ -1,6 +1,12 @@
 package com.yuroyami.syncplay.managers.protocol
 
 import com.yuroyami.syncplay.utils.generateTimestampMillis
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 /**
  * Tracks network lag between you and the server.
@@ -15,6 +21,11 @@ class PingService {
          * 0.85 means we trust the history more, making changes gradual and smooth.
          */
         private const val PING_MOVING_AVERAGE_WEIGHT = 0.85
+
+        sealed interface ConnectionState {
+            data class Connected(val pingMs: Int) : ConnectionState
+            object Disconnected : ConnectionState
+        }
     }
 
     /**
@@ -30,9 +41,10 @@ class PingService {
 
     /**
      * Smoothed average of RTT. Helps avoid jumpiness from temporary lag spikes.
+     * This is "PING" shown to users.
      */
-    private var avrRtt: Double = 0.0
-
+    private val lastUpdatedMark = MutableStateFlow<TimeMark?>(null)
+    private val avrRtt = MutableStateFlow(0.0)
     /**
      * Updates lag measurements when we get a response from the server.
      *
@@ -45,21 +57,43 @@ class PingService {
         if (rtt < 0 || senderRtt < 0) return
 
         // Initialize average on first ping
-        if (avrRtt == 0.0) {
-            avrRtt = rtt
+        if (avrRtt.value == 0.0) {
+            avrRtt.value = rtt
+            forwardDelay = rtt / 2
+            return
         }
 
         // Smooth out the average using exponential moving average
-        avrRtt = avrRtt * PING_MOVING_AVERAGE_WEIGHT + rtt * (1 - PING_MOVING_AVERAGE_WEIGHT)
+        avrRtt.value = avrRtt.value * PING_MOVING_AVERAGE_WEIGHT + rtt * (1 - PING_MOVING_AVERAGE_WEIGHT)
 
         // Calculate one-way delay
         // If server's RTT is lower, our upload is slower - add the difference
         forwardDelay = if (senderRtt < rtt) {
-            val asymmetricDelay = avrRtt / 2 + (rtt - senderRtt)
+            val asymmetricDelay = avrRtt.value / 2 + (rtt - senderRtt)
             asymmetricDelay
         } else {
-            val symmetricDelay = avrRtt / 2
+            val symmetricDelay = avrRtt.value / 2
             symmetricDelay
         }
+
+        lastUpdatedMark.value = TimeSource.Monotonic.markNow()
     }
+
+    private val ticker = flow {
+        while (true) {
+            emit(Unit)
+            delay(500)
+        }
+    }
+
+    val connectionState =
+        combine(avrRtt, lastUpdatedMark, ticker) { avr, mark, _ ->
+            val disconnected = mark == null || mark.elapsedNow().inWholeMilliseconds > 5000
+
+            if (disconnected) {
+                ConnectionState.Disconnected
+            } else {
+                ConnectionState.Connected((avr * 1000).toInt())
+            }
+        }
 }

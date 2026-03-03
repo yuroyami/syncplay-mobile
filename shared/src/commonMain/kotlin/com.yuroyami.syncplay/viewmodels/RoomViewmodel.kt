@@ -27,7 +27,6 @@ import com.yuroyami.syncplay.utils.instantiateNetworkManager
 import com.yuroyami.syncplay.utils.loggy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
@@ -79,15 +78,6 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
 
     /** Displays temporary status messages (OSD) in the room */
     val osdManager: OSDManager by lazy { OSDManager(this) }
-
-    /**
-     * Network ping latency in milliseconds with the server.
-     *
-     * Not to be confused with the protocol's ping. This is the result of periodic
-     * ICMP pinging displayed at the top-center of the room screen.
-     * Note: Some devices don't support this natively (e.g., Android emulators).
-     */
-    val ping = MutableStateFlow<Int?>(null)
 
     /**
      * List of seek operations as pairs of (fromPosition, toPosition) in milliseconds.

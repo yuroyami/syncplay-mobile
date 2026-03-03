@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.yuroyami.syncplay.managers.protocol.PingService
 
 sealed class PingLevel(
     val icon: ImageVector,
@@ -26,20 +27,24 @@ sealed class PingLevel(
     data object Poor : PingLevel(Icons.Outlined.NetworkWifi2Bar, Color(181, 80, 25))
     data object Terrible : PingLevel(Icons.Outlined.NetworkWifi1Bar, Color.Red)
     companion object {
-        fun from(ping: Int?): PingLevel = when (ping) {
-            null -> NoInternet
-            in 0..90 -> Excellent
-            in 91..120 -> Good
-            in 121..160 -> Fair
-            in 161..200 -> Poor
-            else -> Terrible
+        fun from(state: PingService.Companion.ConnectionState): PingLevel = when (state) {
+            is PingService.Companion.ConnectionState.Disconnected -> NoInternet
+            is PingService.Companion.ConnectionState.Connected -> {
+                when (state.pingMs / 4) {
+                    in 0..90 -> Excellent
+                    in 91..120 -> Good
+                    in 121..160 -> Fair
+                    in 161..200 -> Poor
+                    else -> Terrible
+                }
+            }
         }
     }
 }
 
 @Composable
-fun PingIndicator(pingValue: Int?) {
-    val pingLevel = PingLevel.from(pingValue)
+fun PingIndicator(state: PingService.Companion.ConnectionState) {
+    val pingLevel = PingLevel.from(state)
     Icon(
         imageVector = pingLevel.icon,
         contentDescription = null,

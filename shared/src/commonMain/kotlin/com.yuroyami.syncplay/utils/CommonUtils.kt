@@ -1,10 +1,5 @@
 package com.yuroyami.syncplay.utils
 
-import androidx.lifecycle.viewModelScope
-import com.yuroyami.syncplay.models.Constants
-import com.yuroyami.syncplay.viewmodels.RoomViewmodel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.kotlincrypto.hash.md.MD5
@@ -39,21 +34,6 @@ fun generateClockstamp(): String {
  * @return String padded to at least 2 characters (e.g., 5 becomes "05")
  */
 private fun Int.fixDigits() = this.toString().padStart(2, '0')
-
-/**
- * Starts a coroutine that continuously pings the server and updates the ping value.
- *
- * Runs every second while the ViewModel scope is active. Only pings when connected.
- * Updates the [RoomViewmodel.ping] state flow with latency in milliseconds.
- */
-suspend fun RoomViewmodel.beginPingUpdate() {
-    while (viewModelScope.isActive) {
-        ping.value = if (networkManager.state == Constants.CONNECTIONSTATE.STATE_CONNECTED) {
-            pingIcmp(sessionManager.session.serverHost, 32)
-        } else null
-        delay(1000)
-    }
-}
 
 /**
  * List of supported video file extensions.

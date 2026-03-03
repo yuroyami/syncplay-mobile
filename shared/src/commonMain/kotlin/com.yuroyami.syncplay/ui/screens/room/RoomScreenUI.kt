@@ -34,13 +34,9 @@ import com.yuroyami.syncplay.ui.screens.room.tabs.ManagedRoomPopupPurpose
 import com.yuroyami.syncplay.ui.screens.room.tabs.RoomTabSection
 import com.yuroyami.syncplay.ui.screens.room.tabs.RoomUnlockableLayout
 import com.yuroyami.syncplay.utils.HideSystemBars
-import com.yuroyami.syncplay.utils.beginPingUpdate
 import com.yuroyami.syncplay.utils.platformCallback
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 
 /**
  * Composable that represents the entire room screen UI.
@@ -154,17 +150,6 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
         SeekToPositionPopup()
         ManagedRoomPopup(ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM)
         ManagedRoomPopup(ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR)
-
-        LaunchedEffect(Unit) {
-            if (!soloMode) {
-                // Starts ping updates for multiplayer mode and cancels when room is exited
-                runCatching {
-                    withContext(Dispatchers.IO) {
-                        viewmodel.beginPingUpdate()
-                    }
-                }
-            }
-        }
 
         val globalViewmodel = LocalGlobalViewmodel.current
 

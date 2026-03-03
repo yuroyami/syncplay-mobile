@@ -15,13 +15,13 @@ lifecycleViewmodelCompose = "2.10.0-alpha08"
 navigation3Runtime = "1.1.0-alpha04"
 navigation3Ui = "1.1.0-alpha03"
 compose-unstyled = "1.49.6"
-kermit = "2.0.8"
+kermit = "2.1.0"
 krypto = "0.8.0"
 datastore = "1.3.0-alpha06"
-filekit = "0.12.0"
+filekit = "0.13.0"
 kolorpicker = "2.0.0"
 uriKmp = "0.0.21"
-materialkolor = "5.0.0-alpha06"
+materialkolor = "5.0.0-alpha07"
 ktor = "3.4.0"
 koroutines = "1.10.2"
 datetime = "0.7.1"
@@ -42,7 +42,6 @@ libvlc-android = "4.0.0-eap23"
 
 #iOS
 libvlc-ios = "3.7.0"
-splping = "1.1.8"
 
 [libraries] #######################################################################################
 #KMM

@@ -146,7 +146,6 @@ class SessionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) 
         /**
          * Protocol-level ping latency with the server in milliseconds.
          * Null when not connected or ping unavailable.
-         * Note: This is different from ICMP ping shown in the UI.
          */
         val protoPing = MutableStateFlow<Int?>(null)
     }
