@@ -30,11 +30,11 @@ sealed class PingLevel(
         fun from(state: PingService.Companion.ConnectionState): PingLevel = when (state) {
             is PingService.Companion.ConnectionState.Disconnected -> NoInternet
             is PingService.Companion.ConnectionState.Connected -> {
-                when (state.pingMs / 4) {
-                    in 0..90 -> Excellent
-                    in 91..120 -> Good
-                    in 121..160 -> Fair
-                    in 161..200 -> Poor
+                when (state.pingMs) {
+                    in 0..125 -> Excellent
+                    in 126..189 -> Good
+                    in 190..239 -> Fair
+                    in 240..299 -> Poor
                     else -> Terrible
                 }
             }
