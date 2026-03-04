@@ -22,6 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -30,6 +31,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
@@ -167,8 +170,9 @@ object PopupSeekToPosition {
 
                     Spacer(Modifier.width(12.dp))
 
+                    val focusRequester = remember { FocusRequester() }
                     TextField(
-                        modifier = Modifier.width(64.dp),
+                        modifier = Modifier.width(64.dp).focusRequester(focusRequester),
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                         singleLine = true,
                         value = seconds.value,
@@ -192,6 +196,10 @@ object PopupSeekToPosition {
                         ),
                         label = { Text("ss", color = Color.Gray) }
                     )
+
+                    LaunchedEffect(Unit) {
+                        focusRequester.requestFocus()
+                    }
                 }
 
                 /* Custom Skip intro */

@@ -1,6 +1,7 @@
 package com.yuroyami.syncplay.ui.screens.room
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -94,7 +95,9 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                                 modifier = Modifier
                                     .align(Alignment.TopStart)
                                     .fillMaxWidth(0.35f)
+                                    .displayCutoutPadding()
                                     .padding(8.dp)
+
                             )
 
                             /* Status Section (Top-Center): Connection info, room name, etc. */

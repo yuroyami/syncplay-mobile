@@ -297,7 +297,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
         )
 
         /* Chapters */
-        if (viewmodel.player.supportsChapters) {
+        if (viewmodel.player.supportsChapters && viewmodel.media?.chapters?.isNotEmpty() == true) {
             val chaptersPopup = remember { mutableStateOf(false) }
             val skipStr = stringResource(Res.string.room_chapters_skip)
             val items by remember(chaptersPopup.value) {
