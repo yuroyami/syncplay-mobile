@@ -134,12 +134,13 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
      */
     fun checkFileMismatches() {
         if (isSoloMode) return
+        if (!FILE_MISMATCH_WARNING.value()) return //Return if user doesn't want warnings
 
         viewModelScope.launch {
-            if (!FILE_MISMATCH_WARNING.value()) return@launch //Return if user doesn't want warnings
             val localMedia = media ?: return@launch //No media is loaded
 
             for (user in session.userList.value) {
+                if (user.name == session.currentUsername) continue //We ain't gonna compare with ourselves
                 val theirFile = user.file ?: continue //User has no file
 
                 // Map mismatch conditions to their respective warning messages
@@ -150,7 +151,8 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
                 )
 
                 // If all three mismatch, skip showing a warning
-                if (mismatches.all { it.first }) continue
+                val matchingMismatches = mismatches.filter { it.first }
+                if (matchingMismatches.isEmpty() || matchingMismatches.size == 3) continue
 
                 // Build warning message dynamically
                 val warning = buildString {
