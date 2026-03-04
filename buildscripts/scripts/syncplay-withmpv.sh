@@ -8,7 +8,7 @@ SYNCPLAY_WITHMPV="$DIR/../.."
 . "$BUILD"/include/depinfo.sh
 
 if [ "$1" == "clean" ]; then
-    rm -rf "$SYNCPLAY_WITHMPV"/{shared,.}/build "$SYNCPLAY_WITHMPV"/shared/src/androidMain/{libs,obj}
+    rm -rf "$SYNCPLAY_WITHMPV"/{shared,.}/build "$SYNCPLAY_WITHMPV"/shared/src/main/{libs,obj}
     exit 0
 fi
 
@@ -31,4 +31,4 @@ if [[ -z "$prefix32" && -z "$prefix64" && -z "$prefix_x64" && -z "$prefix_x86" ]
 fi
 
 PREFIX32=$prefix32 PREFIX64=$prefix64 PREFIX_X64=$prefix_x64 PREFIX_X86=$prefix_x86 \
-ndk-build -C shared/src/androidMain -j${cores:-4}
+ndk-build -C androidApp/src/main -j${cores:-4}

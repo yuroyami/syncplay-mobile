@@ -19,7 +19,6 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.LaunchedEffect
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -257,7 +256,9 @@ class SyncplayActivity : ComponentActivity() {
             throw t2
         }
 
-        notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
 
     /**
@@ -308,7 +309,6 @@ class SyncplayActivity : ComponentActivity() {
      * @param isInPictureInPictureMode Whether PiP mode is active
      * @param newConfig The new configuration after the PiP change
      */
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         roomViewmodel?.uiManager?.hasEnteredPipMode?.value = isInPictureInPictureMode
@@ -327,9 +327,6 @@ class SyncplayActivity : ComponentActivity() {
      */
     @Suppress("DEPRECATION")
     private fun initiatePIPmode() {
-        val isPipAllowed = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-        if (!isPipAllowed) return
-
         roomViewmodel?.uiManager?.hasEnteredPipMode?.value = true
 
         //moveTaskToBack(true)
@@ -347,8 +344,6 @@ class SyncplayActivity : ComponentActivity() {
      * TODO: Implement PiP action buttons for play/pause control.
      */
     private fun updatePiPParams() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-
         lifecycleScope.launch {
             val intent = Intent("pip")
             val pendingIntent = PendingIntent.getBroadcast(

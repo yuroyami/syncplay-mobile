@@ -90,7 +90,9 @@ object AVPlayerEngine: VideoEngine {
     override val name: String = "AVPlayer"
     override val img: DrawableResource = Res.drawable.swift
 
-    override fun createImpl(viewmodel: RoomViewmodel): PlayerImpl = object : PlayerImpl(viewmodel, this@AVPlayerEngine) {
+    override fun createImpl(viewmodel: RoomViewmodel) = AVPlayerImpl(viewmodel)
+
+    class AVPlayerImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, this@AVPlayerEngine) {
         /**
          * Core AVPlayer instance handling media playback.
          */

@@ -1,4 +1,3 @@
-
 import AppConfig.ndkRequired
 import java.nio.file.Files
 
@@ -57,7 +56,7 @@ android {
             isMinifyEnabled = AppConfig.exoOnly //TODO Fix minified build when mpv and libVLC are included
         }
         debug {
-            applicationIdSuffix = ".debug"
+            applicationIdSuffix = ".dev"
         }
     }
 
@@ -278,6 +277,7 @@ if (!AppConfig.exoOnly) {
             !allFilesExist
         }
     }
+
 }
 
 androidComponents {

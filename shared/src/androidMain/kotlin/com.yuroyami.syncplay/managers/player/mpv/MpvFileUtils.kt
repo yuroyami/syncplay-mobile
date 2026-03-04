@@ -3,7 +3,6 @@ package com.yuroyami.syncplay.managers.player.mpv
 import android.content.Context
 import android.content.res.AssetManager
 import android.net.Uri
-import android.os.ParcelFileDescriptor
 import android.util.Log
 import com.yuroyami.syncplay.utils.loggy
 import java.io.File
@@ -59,24 +58,49 @@ object MpvFileUtils {
     }
 
 
+//    private fun openContentFd(context: Context, uri: Uri): String? {
+//        val resolver = context.applicationContext.contentResolver
+//        Log.e("mpv", "Resolving content URI: $uri")
+//        val fd = try {
+//            val desc = resolver.openFileDescriptor(uri, "r")
+//            desc!!.detachFd()
+//        } catch (e: Exception) {
+//            Log.e("mpv", "Failed to open content fd: $e")
+//            return null
+//        }
+//        // See if we skip the indirection and read the real file directly
+//        val path = findRealPath(fd)
+//        if (path != null) {
+//            Log.e("mpv", "Found real file path: $path")
+//            ParcelFileDescriptor.adoptFd(fd).close() // we don't need that anymore
+//            return path
+//        }
+//        // Else, pass the fd to mpv
+//        return "fd://${fd}"
+//    }
+
     private fun openContentFd(context: Context, uri: Uri): String? {
         val resolver = context.applicationContext.contentResolver
         Log.e("mpv", "Resolving content URI: $uri")
-        val fd = try {
-            val desc = resolver.openFileDescriptor(uri, "r")
-            desc!!.detachFd()
+
+        val desc = try {
+            resolver.openFileDescriptor(uri, "r") ?: return null
         } catch (e: Exception) {
             Log.e("mpv", "Failed to open content fd: $e")
             return null
         }
-        // See if we skip the indirection and read the real file directly
-        val path = findRealPath(fd)
+
+        // Try real path first — if found, we close the pfd and return the path
+        val path = findRealPath(desc.fd) // use .fd (not detached) for the check
         if (path != null) {
             Log.e("mpv", "Found real file path: $path")
-            ParcelFileDescriptor.adoptFd(fd).close() // we don't need that anymore
+            desc.close() // safe to close, mpv will open the real path itself
             return path
         }
-        // Else, pass the fd to mpv
+
+        // No real path — detach and pass fd ownership to mpv
+        // mpv WILL close this fd when it's done with it (it takes ownership of fd:// fds)
+        val fd = desc.detachFd()
         return "fd://${fd}"
     }
 

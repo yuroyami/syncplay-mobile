@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled.Web
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.preferences.core.edit
 import com.yuroyami.syncplay.ui.popups.PopupMediaDirs.MediaDirsPopup
@@ -52,7 +53,12 @@ import com.yuroyami.syncplay.utils.get
 import com.yuroyami.syncplay.utils.logFile
 import com.yuroyami.syncplay.utils.platform
 import com.yuroyami.syncplay.utils.platformCallback
+import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
 import io.github.vinceglb.filekit.dialogs.compose.rememberFileSaverLauncher
+import io.github.vinceglb.filekit.write
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
@@ -566,14 +572,17 @@ object Preferences {
 
         extraConfig = PrefExtraConfig.ShowComposable(
             composable = {
-                val logSaver = rememberFileSaverLauncher { directoryUri ->
-                    if (directoryUri == null) return@rememberFileSaverLauncher
+                val scope = rememberCoroutineScope { Dispatchers.IO }
+
+                val logSaver = rememberFileSaverLauncher(dialogSettings = FileKitDialogSettings.createDefault()) { file ->
+                    scope.launch {
+                        file?.write(logFile)
+                    }
                 }
 
                 LaunchedEffect(null) {
                     logSaver.launch(
-                        bytes = logFile,
-                        baseName = "SyncplayLog_${generateTimestampMillis()}",
+                        suggestedName = "SyncplayLog_${generateTimestampMillis()}",
                         extension = "txt"
                     )
                 }

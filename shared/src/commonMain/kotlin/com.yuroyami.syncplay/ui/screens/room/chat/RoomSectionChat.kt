@@ -27,9 +27,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithCache
@@ -87,7 +85,8 @@ fun ChatTextField(
 ) {
     val focusManager = LocalFocusManager.current
 
-    var msg by remember { mutableStateOf("") }
+    val msg by viewmodel.uiManager.msg.collectAsState()
+
     val canSendWithKeyboardOK by MSG_BOX_ACTION.watchPref()
 
     val gradientBrush = Brush.linearGradient(colors = flexibleGradient)
@@ -96,7 +95,7 @@ fun ChatTextField(
         val msgToSend = msg.replace("\\", "").take(149)
         if (msgToSend.isNotBlank()) viewmodel.actionManager.sendMessage(msgToSend)
 
-        msg = ""
+        viewmodel.uiManager.msg.value = ""
         focusManager.clearFocus()
     }
 
@@ -155,7 +154,7 @@ fun ChatTextField(
             }
         },
         value = msg,
-        onValueChange = { msg = it },
+        onValueChange = { viewmodel.uiManager.msg.value = it },
         visualTransformation = VisualTransformation { text ->
             val annotatedString = buildAnnotatedString {
                 text.text.forEach { char ->

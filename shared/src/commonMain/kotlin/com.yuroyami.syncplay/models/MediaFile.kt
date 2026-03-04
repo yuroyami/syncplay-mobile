@@ -1,5 +1,7 @@
 package com.yuroyami.syncplay.models
 
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import com.eygraber.uri.Uri
 import com.yuroyami.syncplay.utils.getFileName
 import com.yuroyami.syncplay.utils.getFileSize
@@ -30,8 +32,8 @@ data class MediaFile(
     var fileDuration: Double = -1.0,
 
     /** the subtitle tracks, audio tracks and chapters for this file **/
-    var tracks: MutableList<Track> = mutableListOf(),
-    val chapters: MutableList<Chapter> = mutableListOf(),
+    var tracks: SnapshotStateList<Track> = mutableStateListOf(),
+    val chapters: SnapshotStateList<Chapter> = mutableStateListOf(),
 
     /** MediaInfo chart for this file **/
     var mediainfo: MediaInfo = MediaInfo()

@@ -88,7 +88,7 @@ class PingService {
 
     val connectionState =
         combine(avrRtt, lastUpdatedMark, ticker) { avr, mark, _ ->
-            val disconnected = mark == null || mark.elapsedNow().inWholeMilliseconds > 5000
+            val disconnected = mark == null || mark.elapsedNow().inWholeSeconds > 5
 
             if (disconnected) {
                 ConnectionState.Disconnected

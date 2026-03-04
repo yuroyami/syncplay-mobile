@@ -170,23 +170,21 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
      * @param toPosition The new position in seconds
      */
     override fun onSomeoneSeeked(seeker: String, toPosition: Double) {
-        if (seeker == viewmodel.session.currentUsername) return
-
         loggy("SYNCPLAY Protocol: $seeker seeked to: $toPosition")
 
-        //val oldPosMs = viewmodel.protocolManager.globalPositionMs.toLong()
         onMainThread {
             val oldPosMs = viewmodel.player.currentPositionMs()
             val newPosMs = toPosition.toLong() * 1000L
 
-            /* Saving seek so it can be undone on mistake */
+            broadcaster.broadcastMessage(message = { getString(Res.string.room_seeked, seeker, timestampFromMillis(oldPosMs), timestampFromMillis(newPosMs)) }, isChat = false)
+
+            //Allow seeks to be undone
             viewmodel.seeks.add(Pair(oldPosMs, newPosMs))
 
-            if (seeker != viewmodel.session.currentUsername) {
+            //If the seeker isn't us, then seek the player to the new position.
+            if (seeker == viewmodel.session.currentUsername) {
                 viewmodel.player.seekTo(newPosMs)
             }
-
-            broadcaster.broadcastMessage(message = { getString(Res.string.room_seeked, seeker, timestampFromMillis(oldPosMs), timestampFromMillis(newPosMs)) }, isChat = false)
         }
     }
 

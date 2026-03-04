@@ -175,6 +175,6 @@ setup_prefix
 build $target
 
 [ "$target" == "syncplay-withmpv" ] && \
-	ls -lh ../shared/build/outputs/apk/default/*/*.apk
+	ls -lh ../androidApp/build/outputs/apk/default/*/*.apk
 
 exit 0

@@ -2,7 +2,6 @@ package com.yuroyami.syncplay
 
 import android.app.Application
 import android.content.Context
-import android.os.Build
 import android.os.StrictMode
 import androidx.media3.session.MediaSession
 import com.yuroyami.syncplay.managers.preferences.Preferences
@@ -39,12 +38,11 @@ class SyncplayApp: Application() {
         super.onCreate()
 
         /* TLS (mainly TLSv1.3) support, via Conscrypt */
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) { // API 24 (Nougat)
-            runCatching {
-                // Insert Conscrypt as the highest priority security provider
-                // This enables TLS 1.3 and modern cryptographic protocols
-                Security.insertProviderAt(Conscrypt.newProvider(), 1)
-            }
+        // API 24 (Nougat)
+        runCatching {
+            // Insert Conscrypt as the highest priority security provider
+            // This enables TLS 1.3 and modern cryptographic protocols
+            Security.insertProviderAt(Conscrypt.newProvider(), 1)
         }
 
         //Initializing datastore

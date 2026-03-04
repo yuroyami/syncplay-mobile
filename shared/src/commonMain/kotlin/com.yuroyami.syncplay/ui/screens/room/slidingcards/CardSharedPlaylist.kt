@@ -85,6 +85,7 @@ import com.yuroyami.syncplay.utils.loadPlaylistLocally
 import com.yuroyami.syncplay.utils.playlistExs
 import com.yuroyami.syncplay.utils.savePlaylistLocally
 import com.yuroyami.syncplay.utils.vidExs
+import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
 import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLauncher
@@ -116,8 +117,6 @@ import syncplaymobile.shared.generated.resources.room_shared_playlist_button_set
 import syncplaymobile.shared.generated.resources.room_shared_playlist_button_shuffle
 import syncplaymobile.shared.generated.resources.room_shared_playlist_button_shuffle_rest
 import syncplaymobile.shared.generated.resources.room_shared_playlist_clear_playlist
-import syncplaymobile.shared.generated.resources.room_shared_playlist_filepick_rationale1
-import syncplaymobile.shared.generated.resources.room_shared_playlist_filepick_rationale2
 import syncplaymobile.shared.generated.resources.room_shared_playlist_item_actions
 import syncplaymobile.shared.generated.resources.room_shared_playlist_playlist_is_empty
 import kotlin.time.Clock
@@ -134,7 +133,7 @@ object CardSharedPlaylist {
         val mediaFilePicker  = rememberFilePickerLauncher(
             type = FileKitType.File(extensions = vidExs),
             mode = FileKitMode.Multiple(),
-            title = stringResource(Res.string.room_shared_playlist_filepick_rationale1)
+            //title = stringResource(Res.string.room_shared_playlist_filepick_rationale1)
         ) { files ->
             if (files?.isEmpty() == true || files == null) return@rememberFilePickerLauncher
 
@@ -143,9 +142,7 @@ object CardSharedPlaylist {
             }
         }
 
-        val mediaDirectoryPicker =rememberDirectoryPickerLauncher(
-            title = stringResource(Res.string.room_shared_playlist_filepick_rationale2)
-        ) { directoryUri ->
+        val mediaDirectoryPicker =rememberDirectoryPickerLauncher() { directoryUri ->
             if (directoryUri == null) return@rememberDirectoryPickerLauncher
             scope.launch {
                 playlist.addFolderToPlaylist(directoryUri.path)
@@ -162,7 +159,9 @@ object CardSharedPlaylist {
             shouldShuffle = false
         }
 
-        val playlistSaver = rememberFileSaverLauncher { directoryUri ->
+        val playlistSaver = rememberFileSaverLauncher(
+            dialogSettings = FileKitDialogSettings.createDefault()
+        ) { directoryUri ->
             if (directoryUri == null) return@rememberFileSaverLauncher
             playlist.savePlaylistLocally(directoryUri.path)
         }

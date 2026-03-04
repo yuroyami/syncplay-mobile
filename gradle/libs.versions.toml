@@ -36,7 +36,7 @@ appcompat = "1.7.1"
 coreKtx = "1.18.0-rc01"
 desugaring = "2.1.5"
 media3 = "1.10.0-beta01"
-netty = "4.2.10.Final" #"4.2.x" (and above) requires Api26 minimum
+netty = "4.1.131.Final" #"4.2.x" (and above) requires Api26 minimum
 conscrypt = "2.5.3"
 libvlc-android = "4.0.0-eap23"
 

@@ -3,7 +3,6 @@ package com.yuroyami.syncplay.ui.screens.room.bottombar
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -19,7 +18,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -49,7 +47,6 @@ import com.yuroyami.syncplay.ui.components.gradientOverlay
 import com.yuroyami.syncplay.ui.screens.adam.LocalRoomViewmodel
 import com.yuroyami.syncplay.utils.timestampFromMillis
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlin.math.roundToLong
 import com.composeunstyled.Thumb as UnstyledThumb
 
@@ -105,7 +102,6 @@ fun RoomSeekbar(modifier: Modifier) {
             onValueChangeFinished = {
                 if (isSliding) {
                     isSliding = false
-                    viewmodel.seeks.add(Pair(preSlidePosition, sliderValue.roundToLong()))
                     if (!viewmodel.isSoloMode) {
                         viewmodel.actionManager.sendSeek(sliderValue.roundToLong(), preSlidePosition)
                     }
@@ -150,14 +146,14 @@ fun RoomSeekbar(modifier: Modifier) {
                                     }.align(CenterStart)
                                     .size(8.dp).clip(CircleShape)
                                     .background(Color.LightGray)
-                                    .clickable(
-                                        interactionSource = null,
-                                        indication = ripple()
-                                    ) {
-                                        scope.launch(Dispatchers.Main.immediate) {
-                                            viewmodel.player.jumpToChapter(chapter)
-                                        }
-                                    }
+//                                    .clickable(
+//                                        interactionSource = null,
+//                                        indication = ripple()
+//                                    ) {
+//                                        scope.launch(Dispatchers.Main.immediate) {
+//                                            viewmodel.player.jumpToChapter(chapter)
+//                                        }
+//                                    }
                             )
                         }
                     }

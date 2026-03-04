@@ -1,8 +1,8 @@
 package com.yuroyami.syncplay
 
-import com.yuroyami.syncplay.managers.player.avplayer.AvPlayer
+import com.yuroyami.syncplay.managers.player.avplayer.AVPlayerEngine
 import com.yuroyami.syncplay.models.JoinConfig
-import com.yuroyami.syncplay.viewmodels.HomeViewmodel
+import platform.AVFoundation.AVPlayer
 import platform.AVKit.AVPictureInPictureController
 import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
@@ -50,7 +50,7 @@ object ApplePlatformCallback : PlatformCallback {
      */
     override fun onPictureInPicture(enable: Boolean) {
         if (AVPictureInPictureController.isPictureInPictureSupported()) {
-            (roomViewmodel?.player as? AvPlayer)?.avPlayerLayer?.let { layer ->
+            (roomViewmodel?.player as? AVPlayerEngine.AVPlayerImpl)?.avPlayerLayer?.let { layer ->
                 pipcontroller = AVPictureInPictureController(layer)
 
                 if (pipcontroller?.pictureInPicturePossible == true && roomViewmodel?.media != null) {

@@ -80,7 +80,6 @@ import syncplaymobile.shared.generated.resources.media_directories_add_folder
 import syncplaymobile.shared.generated.resources.media_directories_brief
 import syncplaymobile.shared.generated.resources.media_directories_clear_all
 import syncplaymobile.shared.generated.resources.media_directories_delete
-import syncplaymobile.shared.generated.resources.media_directories_going_for_pick_rationale
 import syncplaymobile.shared.generated.resources.media_directories_save
 import syncplaymobile.shared.generated.resources.no
 import syncplaymobile.shared.generated.resources.setting_resetdefault_dialog
@@ -101,9 +100,7 @@ object PopupMediaDirs {
             strokeWidth = 0.5f,
             onDismiss = { visibilityState.value = false }) {
 
-            val directoryPicker = rememberDirectoryPickerLauncher(
-                title = stringResource(Res.string.media_directories_going_for_pick_rationale)
-            ) { directoryUri ->
+            val directoryPicker = rememberDirectoryPickerLauncher() { directoryUri ->
                 if (directoryUri == null) return@rememberDirectoryPickerLauncher
 
                 scope.launch {
