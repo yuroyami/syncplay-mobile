@@ -30,7 +30,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
@@ -109,18 +108,21 @@ object PopupSeekToPosition {
                 val minutes = remember { mutableStateOf("") }
                 val seconds = remember { mutableStateOf("") }
 
+                val hhRequester = remember { FocusRequester() }
+                val mmRequester = remember { FocusRequester() }
+                val ssRequester = remember { FocusRequester() }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
                     TextField(
-                        modifier = Modifier.width(64.dp),
+                        modifier = Modifier.width(64.dp).focusRequester(hhRequester),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
                         value = hours.value,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         keyboardActions = KeyboardActions(onDone = {
-                            focusManager.moveFocus(FocusDirection.Next)
+                            focusManager.clearFocus(true)
                         }),
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.DarkGray,
@@ -143,13 +145,13 @@ object PopupSeekToPosition {
 
 
                     TextField(
-                        modifier = Modifier.width(64.dp),
+                        modifier = Modifier.width(64.dp).focusRequester(mmRequester),
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                         singleLine = true,
                         value = minutes.value,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         keyboardActions = KeyboardActions(onDone = {
-                            focusManager.moveFocus(FocusDirection.Next)
+                            hhRequester.requestFocus()
                         }),
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.DarkGray,
@@ -170,15 +172,14 @@ object PopupSeekToPosition {
 
                     Spacer(Modifier.width(12.dp))
 
-                    val focusRequester = remember { FocusRequester() }
                     TextField(
-                        modifier = Modifier.width(64.dp).focusRequester(focusRequester),
+                        modifier = Modifier.width(64.dp).focusRequester(ssRequester),
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                         singleLine = true,
                         value = seconds.value,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         keyboardActions = KeyboardActions(onDone = {
-                            focusManager.moveFocus(FocusDirection.Next)
+                            mmRequester.requestFocus()
                         }),
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.DarkGray,
@@ -196,10 +197,10 @@ object PopupSeekToPosition {
                         ),
                         label = { Text("ss", color = Color.Gray) }
                     )
+                }
 
-                    LaunchedEffect(Unit) {
-                        focusRequester.requestFocus()
-                    }
+                LaunchedEffect(Unit) {
+                    ssRequester.requestFocus()
                 }
 
                 /* Custom Skip intro */

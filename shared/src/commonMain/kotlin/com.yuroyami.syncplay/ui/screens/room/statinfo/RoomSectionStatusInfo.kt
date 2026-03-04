@@ -111,7 +111,7 @@ fun RoomStatusInfoSection(modifier: Modifier) {
 
             val osd by remember { viewmodel.osdManager.osdMsg }
             if (osd.isNotEmpty()) Text(
-                modifier = Modifier.fillMaxWidth(0.3f),
+                modifier = Modifier.fillMaxWidth(0.95f),
                 fontSize = 11.sp,
                 lineHeight = (Theming.USER_INFO_TXT_SIZE + 4).sp,
                 color = Theming.SP_PALE,

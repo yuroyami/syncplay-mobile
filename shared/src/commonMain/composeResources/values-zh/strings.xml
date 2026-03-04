@@ -237,6 +237,8 @@
     <string name="uisetting_timestamp_summary">禁用此选项以隐藏聊天消息开头的时间戳。</string>
     <string name="uisetting_msgoutline_title">聊天消息轮廓</string>
     <string name="uisetting_msgoutline_summary">启用此选项以为聊天消息添加轮廓，减少与背景视频的混合。</string>
+    <string name="uisetting_msgoutline_thickness_title">聊天消息轮廓厚度</string>
+    <string name="uisetting_msgoutline_thickness_summary">激活时聊天消息轮廓的厚度。</string>
     <string name="uisetting_msgshadow_title">聊天消息阴影</string>
     <string name="uisetting_msgshadow_summary">启用此选项以为聊天消息添加阴影，减少与背景视频的混合。</string>
     <string name="uisetting_msgboxaction_title">键盘的OK按钮功能</string>

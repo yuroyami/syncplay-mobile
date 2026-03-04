@@ -237,6 +237,8 @@
     <string name="uisetting_timestamp_summary">Отключите это, чтобы скрыть временные метки в начале сообщений чата.</string>
     <string name="uisetting_msgoutline_title">Контур сообщения в чате</string>
     <string name="uisetting_msgoutline_summary">Включите это, чтобы придать контуры сообщениям чата и предотвратить их слияние с фоновым видео.</string>
+    <string name="uisetting_msgoutline_thickness_title">Толщина контура сообщений</string>
+    <string name="uisetting_msgoutline_thickness_summary">Толщина контура сообщений чата, если он активирован.</string>
     <string name="uisetting_msgshadow_title">Тень сообщения в чате</string>
     <string name="uisetting_msgshadow_summary">Включите это, чтобы сообщения чата имели тень и избежать их слияния с фоновым видео.</string>
     <string name="uisetting_msgboxaction_title">Реакция на нажатие кнопки 'OK' на клавиатуре</string>

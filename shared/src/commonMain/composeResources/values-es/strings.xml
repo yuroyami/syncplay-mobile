@@ -237,6 +237,8 @@
     <string name="uisetting_timestamp_summary">Desactiva esto para ocultar las marcas de tiempo al principio de los mensajes de chat.</string>
     <string name="uisetting_msgoutline_title">Contorno de mensajes de chat</string>
     <string name="uisetting_msgoutline_summary">Activa esto para darle a los mensajes de chat un contorno y reducir su fusión con el fondo del video.</string>
+    <string name="uisetting_msgoutline_thickness_title">Grosor del contorno del mensaje</string>
+    <string name="uisetting_msgoutline_thickness_summary">Grosor del contorno del mensaje de chat si está activado.</string>
     <string name="uisetting_msgshadow_title">Sombra de mensajes de chat</string>
     <string name="uisetting_msgshadow_summary">Activa esto para darle a los mensajes de chat una sombra y reducir su fusión con el fondo del video.</string>
     <string name="uisetting_msgboxaction_title">Función del botón ACEPTAR del teclado</string>

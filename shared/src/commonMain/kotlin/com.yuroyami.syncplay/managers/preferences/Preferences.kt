@@ -369,12 +369,19 @@ object Preferences {
         summary = Res.string.uisetting_timestamp_summary
         icon = Icons.Filled.Pin
     }
-    val MSG_OUTLINE = Pref("pref_inroom_msg_outline", true) {
+    val MSG_OUTLINE_ACTIVATE = Pref("pref_inroom_msg_outline_activate", true) {
         title = Res.string.uisetting_msgoutline_title
         summary = Res.string.uisetting_msgoutline_summary
         icon = Icons.Filled.BorderColor
     }
-    val MSG_SHADOW = Pref("pref_inroom_msg_shadow", false) {
+    val MSG_OUTLINE_THICKNESS = Pref("pref_inroom_msg_outline_thickness", 2) {
+        title = Res.string.uisetting_msgoutline_title
+        summary = Res.string.uisetting_msgoutline_summary
+        icon = Icons.Filled.BorderColor
+
+        extraConfig = PrefExtraConfig.Slider(maxValue = 30, minValue = 0)
+    }
+    val MSG_SHADOW_ACTIVATE = Pref("pref_inroom_msg_shadow_activate", false) {
         title = Res.string.uisetting_msgshadow_title
         summary = Res.string.uisetting_msgshadow_summary
         icon = Icons.Filled.BorderColor

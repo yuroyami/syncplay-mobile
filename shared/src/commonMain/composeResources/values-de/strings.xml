@@ -249,6 +249,8 @@
     <string name="uisetting_timestamp_summary">Deaktivieren, um die Zeitstempel am Anfang von Chat-Nachrichten auszublenden.</string>
     <string name="uisetting_msgoutline_title">Chat-Nachrichten-Kontur</string>
     <string name="uisetting_msgoutline_summary">Aktivieren, um Chat-Nachrichten eine Kontur zu geben, um Vermischung mit dem Hintergrundvideo zu reduzieren.</string>
+    <string name="uisetting_msgoutline_thickness_title">Dicke der Chat-Nachrichtenumrandung</string>
+    <string name="uisetting_msgoutline_thickness_summary">Dicke der Umrandung von Chat-Nachrichten, falls aktiviert.</string>
     <string name="uisetting_msgshadow_title">Chat-Nachrichten-Schatten</string>
     <string name="uisetting_msgshadow_summary">Aktivieren, um Chat-Nachrichten einen Schatten zu geben, um Vermischung mit dem Hintergrundvideo zu reduzieren.</string>
     <string name="uisetting_msgboxaction_title">OK-Tasten-Funktion der Tastatur</string>

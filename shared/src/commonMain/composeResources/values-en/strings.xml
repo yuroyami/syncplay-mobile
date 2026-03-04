@@ -249,6 +249,8 @@
     <string name="uisetting_timestamp_summary">Disable this to hide the timestamps at the beginning of chat messages.</string>
     <string name="uisetting_msgoutline_title">Chat message outline</string>
     <string name="uisetting_msgoutline_summary">Enable this to give chat messages an outline, to reduce blending with background video.</string>
+    <string name="uisetting_msgoutline_thickness_title">Chat message outline thickness</string>
+    <string name="uisetting_msgoutline_thickness_summary">Thickness of the chat message outline if activated.</string>
     <string name="uisetting_msgshadow_title">Chat message shadow</string>
     <string name="uisetting_msgshadow_summary">Enable this to give chat messages a shadow, to reduce blending with background video.</string>
     <string name="uisetting_msgboxaction_title">Keyboard's OK button function</string>

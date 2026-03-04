@@ -247,6 +247,8 @@
     <string name="uisetting_apply">تطبيق</string>
     <string name="uisetting_timestamp_title">الطوابع الزمنية للمحادثة</string>
     <string name="uisetting_timestamp_summary">عطّل هذا لإخفاء الطوابع الزمنية في بداية رسائل المحادثة.</string>
+    <string name="uisetting_msgoutline_thickness_title">سُمك مخطط رسالة الدردشة</string>
+    <string name="uisetting_msgoutline_thickness_summary">سُمك مخطط رسالة الدردشة في حالة التفعيل.</string>
     <string name="uisetting_msgoutline_title">حدود رسالة المحادثة</string>
     <string name="uisetting_msgoutline_summary">فعّل هذا لإعطاء رسائل المحادثة حدوداً، لتقليل الاندماج مع فيديو الخلفية.</string>
     <string name="uisetting_msgshadow_title">ظل رسالة المحادثة</string>

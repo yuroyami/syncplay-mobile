@@ -123,7 +123,9 @@ object MpvEngine: VideoEngine {
                         onPlayerReady()
                         return@AndroidView mpvView
                     },
-                    update = {}
+                    update = {
+
+                    }
                 )
             }
 

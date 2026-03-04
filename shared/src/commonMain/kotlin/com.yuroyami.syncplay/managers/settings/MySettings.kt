@@ -34,8 +34,9 @@ import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_BOX_ACTION
 import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_FADING_DURATION
 import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_FONTSIZE
 import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_MAXCOUNT
-import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_OUTLINE
-import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_SHADOW
+import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_OUTLINE_ACTIVATE
+import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_OUTLINE_THICKNESS
+import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_SHADOW_ACTIVATE
 import com.yuroyami.syncplay.managers.preferences.Preferences.NETWORK_ENGINE
 import com.yuroyami.syncplay.managers.preferences.Preferences.NEVER_SHOW_TIPS
 import com.yuroyami.syncplay.managers.preferences.Preferences.PAUSE_ON_SOMEONE_LEAVE
@@ -125,8 +126,9 @@ val INROOM_CHAT_PROPERTIES = SettingCategory(
     icon = Icons.AutoMirrored.Filled.Chat
 ) {
     +MSG_ACTIVATE_STAMP
-    +MSG_OUTLINE
-    +MSG_SHADOW
+    +MSG_OUTLINE_ACTIVATE
+    +MSG_OUTLINE_THICKNESS
+    +MSG_SHADOW_ACTIVATE
     +MSG_BOX_ACTION
     +MSG_BG_OPACITY
     +MSG_FONTSIZE

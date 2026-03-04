@@ -248,6 +248,8 @@
     <string name="uisetting_timestamp_summary">Désactivez pour masquer les heures au début des messages dans le chat.</string>
     <string name="uisetting_msgoutline_title">Contour des messages</string>
     <string name="uisetting_msgoutline_summary">Active un contour autour des messages pour éviter qu'ils se fondent dans la vidéo.</string>
+    <string name="uisetting_msgoutline_thickness_title">Épaisseur du contour des messages</string>
+    <string name="uisetting_msgoutline_thickness_summary">Épaisseur du contour des messages de chat lorsqu\'il est activé.</string>
     <string name="uisetting_msgshadow_title">Ombre des messages</string>
     <string name="uisetting_msgshadow_summary">Ajoute une ombre aux messages pour une meilleure lisibilité.</string>
     <string name="uisetting_msgboxaction_title">Fonction du bouton OK du clavier</string>

@@ -248,6 +248,8 @@
     <string name="uisetting_timestamp_summary">Wyłącz to, aby ukryć znaczniki czasu na początku wiadomości czatu.</string>
     <string name="uisetting_msgoutline_title">Obramowanie wiadomości czatu</string>
     <string name="uisetting_msgoutline_summary">Włącz to, aby nadać wiadomościom czatu obramowanie, aby zmniejszyć mieszanie się z tłem wideo.</string>
+    <string name="uisetting_msgoutline_thickness_title">Grubość obramowania wiadomości czatu</string>
+    <string name="uisetting_msgoutline_thickness_summary">Grubość obramowania wiadomości czatu, jeśli opcja jest włączona.</string>
     <string name="uisetting_msgshadow_title">Cień wiadomości czatu</string>
     <string name="uisetting_msgshadow_summary">Włącz to, aby nadać wiadomościom czatu cień, aby zmniejszyć mieszanie się z tłem wideo.</string>
     <string name="uisetting_msgboxaction_title">Funkcja przycisku OK klawiatury</string>

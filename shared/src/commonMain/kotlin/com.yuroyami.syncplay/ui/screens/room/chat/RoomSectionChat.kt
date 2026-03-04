@@ -49,8 +49,9 @@ import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_BG_OPACITY
 import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_BOX_ACTION
 import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_FONTSIZE
 import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_MAXCOUNT
-import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_OUTLINE
-import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_SHADOW
+import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_OUTLINE_ACTIVATE
+import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_OUTLINE_THICKNESS
+import com.yuroyami.syncplay.managers.preferences.Preferences.MSG_SHADOW_ACTIVATE
 import com.yuroyami.syncplay.managers.preferences.watchPref
 import com.yuroyami.syncplay.ui.components.FlexibleAnnotatedText
 import com.yuroyami.syncplay.ui.screens.adam.LocalChatPalette
@@ -179,8 +180,9 @@ fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel) {
     val chatMessages = remember { if (!viewmodel.isSoloMode) viewmodel.session.messageSequence else mutableStateListOf() }
 
     val msgBoxOpacity = MSG_BG_OPACITY.watchPref()
-    val msgOutline by MSG_OUTLINE.watchPref()
-    val msgShadow by MSG_SHADOW.watchPref()
+    val msgOutlineActivate by MSG_OUTLINE_ACTIVATE.watchPref()
+    val msgOutlineThickness by MSG_OUTLINE_THICKNESS.watchPref()
+    val msgShadowActivate by MSG_SHADOW_ACTIVATE.watchPref()
     val msgFontSize = MSG_FONTSIZE.watchPref()
     val msgMaxCount by MSG_MAXCOUNT.watchPref()
 
@@ -212,8 +214,9 @@ fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel) {
                     modifier = Modifier.fillMaxWidth().focusable(enabled = false).clickable(enabled = false) {},
                     text = chatMessage.factorize(LocalChatPalette.current),
                     size = /* TODO if (pipModeObserver) 6f else*/ (msgFontSize.value.toFloat()),
-                    shadowColors = if (msgShadow) listOf(Color.Black) else listOf(),
-                    strokeColors = if (msgOutline) listOf(Color.Black, Color.Black) else listOf(),
+                    shadowColors = if (msgShadowActivate) listOf(Color.Black) else listOf(),
+                    strokeColors = if (msgOutlineActivate) listOf(Color.Black, Color.Black) else listOf(),
+                    strokeWidth = msgOutlineThickness.toFloat()
                 )
             }
         }
