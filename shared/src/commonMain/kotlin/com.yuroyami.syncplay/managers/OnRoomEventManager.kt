@@ -296,11 +296,13 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         viewmodel.networkManager.state = Constants.CONNECTIONSTATE.STATE_CONNECTED
 
         /** Set as ready first-hand */
-        if (viewmodel.media == null) {
-            viewmodel.networkManager.send<PacketOut.Readiness> {
-                this.isReady = READY_FIRST_HAND.value()
-                manuallyInitiated = false
+        viewmodel.networkManager.send<PacketOut.Readiness> {
+            if (viewmodel.media == null && READY_FIRST_HAND.value()) {
+                this.isReady = true
+            } else {
+                this.isReady = viewmodel.session.ready.value
             }
+            manuallyInitiated = false
         }
 
         /** Telling user that they're connected **/
