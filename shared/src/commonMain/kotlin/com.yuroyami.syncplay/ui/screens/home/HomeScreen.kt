@@ -291,7 +291,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                     onValueChange = { serverPassword = it.trim() },
                                     type = KeyboardType.Password,
                                     label = stringResource(Res.string.home_password_if_any),
-                                    cornerRadius = 16.dp
+                                    cornerRadius = 16.dp,
+                                    clearFocusWhenDone = true
                                 )
                             }
                         }

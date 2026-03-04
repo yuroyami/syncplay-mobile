@@ -215,10 +215,10 @@ fun RoomControlPanelCard(modifier: Modifier) {
                     )
 
                     val subs = viewmodel.media?.tracks?.filter { it.type == PlayerImpl.TrackType.SUBTITLE }
-                    subs?.forEach { track ->
+                    subs?.forEachIndexed { i, track ->
                         add(
                             ControlPanelDropdownAction(
-                                text = track.name,
+                                text = "$i. ${track.name}",
                                 isChecked = track.selected,
                                 action = {
                                     haptic()
@@ -258,10 +258,10 @@ fun RoomControlPanelCard(modifier: Modifier) {
             mutableStateOf(
                 buildList {
                     val audios = viewmodel.media?.tracks?.filter { it.type == PlayerImpl.TrackType.AUDIO }
-                    audios?.forEach { track ->
+                    audios?.forEachIndexed { i, track ->
                         add(
                             ControlPanelDropdownAction(
-                                text = track.name,
+                                text = "$i. ${track.name}",
                                 isChecked = track.selected,
                                 action = {
                                     haptic()
