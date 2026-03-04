@@ -26,7 +26,6 @@ fun Media3Player.buildAndroidMediaSession(ctx: Context): GlobalPlayerSession {
                 return Futures.immediateFuture(newMediaItems)
             }
         })
-        .setId(ctx.packageName)
         .run {
             ctx.packageManager?.getLaunchIntentForPackage(ctx.packageName)?.let { sessionIntent ->
                 setSessionActivity(

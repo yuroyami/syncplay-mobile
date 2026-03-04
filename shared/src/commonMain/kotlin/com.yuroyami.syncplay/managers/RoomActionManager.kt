@@ -136,8 +136,13 @@ class RoomActionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmode
             val dec = SEEK_BACKWARD_JUMP.value()
 
             val currentMs = viewmodel.player.currentPositionMs()
-            var newPos = ((currentMs) - (dec * 1000L)).coerceIn(0, viewmodel.videoEngineManager.media.value?.fileDuration?.toLong()?.times(1000L) ?: 0)
-
+            var newPos = viewmodel.videoEngineManager.timeFullMillis.value.let { declaredDur ->
+                if (declaredDur == 0L) {
+                    (currentMs) - (dec * 1000L)
+                } else {
+                    ((currentMs) - (dec * 1000L)).coerceIn(0, declaredDur)
+                }
+            }
             if (newPos < 0) newPos = 0
 
             sendSeek(newPos, currentMs)
@@ -163,7 +168,14 @@ class RoomActionManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmode
             val inc = SEEK_FORWARD_JUMP.value()
 
             val currentMs = viewmodel.player.currentPositionMs()
-            val newPos = ((currentMs) + (inc * 1000L)).coerceIn(0, viewmodel.videoEngineManager.media.value?.fileDuration?.toLong()?.times(1000L) ?: 0)
+            val newPos = viewmodel.videoEngineManager.timeFullMillis.value.let { declaredDur ->
+                if (declaredDur == 0L) {
+                    (currentMs) + (inc * 1000L)
+                } else {
+                    ((currentMs) + (inc * 1000L)).coerceIn(0, declaredDur)
+                }
+            }
+
             sendSeek(newPos, currentMs)
             viewmodel.player.seekTo(newPos)
 

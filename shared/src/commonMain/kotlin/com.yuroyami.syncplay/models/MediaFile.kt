@@ -29,7 +29,7 @@ data class MediaFile(
     var fileSize: String = "",
 
     /** The duration of the file (seconds) **/
-    var fileDuration: Double = -1.0,
+    var fileDuration: Double? = null,
 
     /** the subtitle tracks, audio tracks and chapters for this file **/
     var tracks: SnapshotStateList<Track> = mutableStateListOf(),

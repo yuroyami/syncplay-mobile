@@ -96,7 +96,7 @@ fun ChatHistoryPopup() {
             ) {
                 LazyColumn(
                     state = lazyListState,
-                    contentPadding = PaddingValues(8.dp),
+                    contentPadding = PaddingValues(0.dp),
                     modifier = Modifier.fillMaxSize().background(Color(50, 50, 50, 50))
                 ) {
                     items(msgs) { msg ->
