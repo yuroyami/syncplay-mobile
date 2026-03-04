@@ -296,7 +296,7 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         viewmodel.networkManager.state = Constants.CONNECTIONSTATE.STATE_CONNECTED
 
         /** Set as ready first-hand */
-        viewmodel.networkManager.send<PacketOut.Readiness> {
+        viewmodel.networkManager.sendAsync<PacketOut.Readiness> {
             if (viewmodel.media == null && READY_FIRST_HAND.value()) {
                 this.isReady = true
             } else {
@@ -313,15 +313,14 @@ class OnRoomEventManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
 
         /** Resubmit any ongoing file being played **/
         if (viewmodel.media != null) {
-            viewmodel.networkManager.send<PacketOut.File> {
-                this@send.media = viewmodel.media
+            viewmodel.networkManager.sendAsync<PacketOut.File> {
+                this@sendAsync.media = viewmodel.media
             }
         }
 
         /** Pass any messages that have been pending due to disconnection, then clear the queue */
         for (m in viewmodel.session.outboundQueue) {
             viewmodel.networkManager.transmitPacket(m)
-
         }
         viewmodel.session.outboundQueue.clear()
     }

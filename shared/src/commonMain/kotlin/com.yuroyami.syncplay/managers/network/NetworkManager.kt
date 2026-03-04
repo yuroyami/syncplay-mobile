@@ -11,11 +11,9 @@ import com.yuroyami.syncplay.models.Constants
 import com.yuroyami.syncplay.utils.ProtocolDsl
 import com.yuroyami.syncplay.utils.loggy
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -209,8 +207,8 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
      * @return Deferred<Unit> that completes when the packet is sent
      */
     @ProtocolDsl
-    inline fun <reified T : PacketOut> sendAsync(noinline init: suspend T.() -> Unit = {}): Deferred<Unit> {
-        return viewmodel.viewModelScope.async(Dispatchers.IO) {
+    inline fun <reified T : PacketOut> sendAsync(noinline init: suspend T.() -> Unit = {}) {
+        viewmodel.viewModelScope.launch(Dispatchers.IO) {
             send(init)
         }
     }
