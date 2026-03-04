@@ -218,7 +218,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
                     subs?.forEachIndexed { i, track ->
                         add(
                             ControlPanelDropdownAction(
-                                text = "$i. ${track.name}",
+                                text = "${i+1}. ${track.name}",
                                 isChecked = track.selected,
                                 action = {
                                     haptic()
@@ -261,7 +261,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
                     audios?.forEachIndexed { i, track ->
                         add(
                             ControlPanelDropdownAction(
-                                text = "$i. ${track.name}",
+                                text = "${i+1}. ${track.name}",
                                 isChecked = track.selected,
                                 action = {
                                     haptic()
