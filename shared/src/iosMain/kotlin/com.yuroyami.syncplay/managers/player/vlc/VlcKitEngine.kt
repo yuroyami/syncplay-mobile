@@ -26,6 +26,7 @@ import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.toKString
+import kotlinx.cinterop.useContents
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -459,14 +460,15 @@ object VlcKitEngine : VideoEngine {
         override suspend fun switchAspectRatio(): String {
             if (!isInitialized) return "NO PLAYER FOUND"
             return withContext(Dispatchers.Main.immediate) {
-                // Available aspect ratio options
-                val aspectRatios = listOf(
-                    "1:1", "4:3", "16:9", "16:10", "2.21:1", "2.35:1"
-                    // Add more aspect ratios as needed
-                )
+                val currentAspectRatio = vlcPlayer?.videoAspectRatio?.toKString()
 
-                // Read the current aspect ratio
-                val currentAspectRatio = vlcPlayer?.videoAspectRatio()?.toKString()
+                val (width, height) = vlcPlayer?.videoSize?.useContents { width.toInt() to height.toInt() } ?: (0 to 0)
+
+                // Available aspect ratio options
+                val aspectRatios = mutableListOf(
+                    "$width:$height",
+                    "1:1", "4:3", "16:9", "16:10",
+                )
 
                 // Find the index of the current aspect ratio in the list
                 val currentIndex = if (currentAspectRatio != null) {
@@ -475,10 +477,7 @@ object VlcKitEngine : VideoEngine {
                     -1 // If current aspect ratio is null, set it to -1
                 }
 
-                // Calculate the index of the next aspect ratio
                 val nextIndex = (currentIndex + 1) % aspectRatios.size
-
-                // Get the next aspect ratio
                 val newAspectRatio = aspectRatios[nextIndex]
 
                 // Convert the new aspect ratio to C string and set it

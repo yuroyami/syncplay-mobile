@@ -34,12 +34,12 @@ kotlin {
     cocoapods {
         summary = "Syncplay Common Code (Platform-agnostic)"
         homepage = "www.github.com/yuroyami/syncplay-mobile"
-        version = "1.0.2"
+        version = "1.0.3"
         ios.deploymentTarget = "14.0"
         podfile = project.file("../iosApp/Podfile")
         framework {
             baseName = "shared"
-            isStatic = true
+            isStatic = false
         }
 
         pod("MobileVLCKit", libs.versions.libvlc.ios.get()) //Adds the VLC player engine to iOS

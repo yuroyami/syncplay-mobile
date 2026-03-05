@@ -1,8 +1,9 @@
 package com.yuroyami.syncplay
 
+import com.yuroyami.syncplay.managers.player.PlayerImpl
 import com.yuroyami.syncplay.managers.player.avplayer.AVPlayerEngine
 import com.yuroyami.syncplay.models.JoinConfig
-import platform.AVFoundation.AVPlayer
+import com.yuroyami.syncplay.viewmodels.HomeViewmodel
 import platform.AVKit.AVPictureInPictureController
 import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
@@ -93,6 +94,10 @@ object ApplePlatformCallback : PlatformCallback {
      */
     override fun changeCurrentBrightness(v: Float) {
         UIScreen.mainScreen.brightness = v.coerceIn(0.0f, MAX_BRIGHTNESS).toDouble()
+    }
+
+    override fun initializeMediaSession(player: PlayerImpl) {
+        //TODO("Not yet implemented")
     }
 
     /**

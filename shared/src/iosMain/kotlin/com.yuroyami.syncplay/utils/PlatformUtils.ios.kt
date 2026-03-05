@@ -3,21 +3,18 @@ package com.yuroyami.syncplay.utils
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.ClipEntry
-import cocoapods.SPLPing.SPLPing
-import cocoapods.SPLPing.SPLPingConfiguration
 import com.yuroyami.syncplay.delegato
 import com.yuroyami.syncplay.managers.network.KtorNetworkManager
 import com.yuroyami.syncplay.managers.network.NetworkManager
 import com.yuroyami.syncplay.managers.network.instantiateSwiftNioNetworkManager
-import com.yuroyami.syncplay.managers.player.AppleVideoEngine
 import com.yuroyami.syncplay.managers.player.VideoEngine
+import com.yuroyami.syncplay.managers.player.avplayer.AVPlayerEngine
+import com.yuroyami.syncplay.managers.player.vlc.VlcKitEngine
 import com.yuroyami.syncplay.managers.preferences.Preferences.NETWORK_ENGINE
 import com.yuroyami.syncplay.managers.preferences.value
 import com.yuroyami.syncplay.viewmodels.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.path
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.withTimeoutOrNull
 import platform.Foundation.NSDate
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSFileSize
@@ -29,13 +26,12 @@ import platform.UIKit.UIInterfaceOrientationMaskAll
 import platform.UIKit.UIInterfaceOrientationMaskLandscape
 import platform.UIKit.UIWindowScene
 import platform.UIKit.UIWindowSceneGeometryPreferencesIOS
-import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.native.ref.WeakReference
 
 actual val platform: PLATFORM = PLATFORM.IOS
 
-actual val availablePlatformVideoEngines: List<VideoEngine> = listOf(AppleVideoEngine.AVPlayer, AppleVideoEngine.VLC)
+actual val availablePlatformVideoEngines: List<VideoEngine> = listOf(AVPlayerEngine, VlcKitEngine)
 
 actual typealias GlobalPlayerSession = String
 

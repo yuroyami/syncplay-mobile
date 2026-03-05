@@ -1,5 +1,6 @@
 package com.yuroyami.syncplay.managers.player.avplayer
 
+import com.yuroyami.syncplay.managers.player.PlayerImpl
 import com.yuroyami.syncplay.models.Track
 import platform.AVFoundation.AVMediaSelectionGroup
 import platform.AVFoundation.AVMediaSelectionOption
@@ -14,7 +15,7 @@ class AvTrack(
     val sOption: AVMediaSelectionOption, /* The AVFoundation media selection option representing this track */
     val sGroup: AVMediaSelectionGroup, /* The media selection group this track belongs to */
     override val name: String,
-    override val type: BasePlayer.TrackType?,
+    override val type: PlayerImpl.TrackType?,
     override val index: Int,
     override val selected: Boolean
 ): Track()
