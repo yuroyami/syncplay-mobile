@@ -1,15 +1,15 @@
-package app.room.event
+package app.protocol.event
 
 import androidx.lifecycle.viewModelScope
 import app.AbstractManager
-import app.room.RoomViewmodel
-import app.room.models.Message
-import app.utils.platformCallback
-import app.utils.timestampFromMillis
 import app.preferences.Preferences.SEEK_BACKWARD_JUMP
 import app.preferences.Preferences.SEEK_FORWARD_JUMP
 import app.preferences.value
 import app.protocol.models.ClientMessage
+import app.room.RoomViewmodel
+import app.room.models.Message
+import app.utils.platformCallback
+import app.utils.timestampFromMillis
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -24,12 +24,12 @@ import kotlin.math.roundToLong
  */
 class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
-    val sender = viewmodel.networkManager
+    val dispatcher = viewmodel.networkManager
 
     fun sendPlayback(play: Boolean) {
         if (viewmodel.isSoloMode) return
 
-        sender.sendAsync<ClientMessage.State> {
+        dispatcher.sendAsync<ClientMessage.State> {
             serverTime = null
             doSeek = null
             position = withContext(Dispatchers.Main.immediate) { viewmodel.player.currentPositionMs().div(1000.0).roundToLong() }
@@ -38,15 +38,15 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
         }
     }
 
-    fun sendSeek(newPosMs: Long, oldPosms: Long) {
+    fun sendSeek(newPosMs: Long, oldPosMs: Long) {
         if (viewmodel.isSoloMode) return
 
         viewmodel.roomOut.broadcastMessage(
-            message = { getString(Res.string.room_seeked, viewmodel.session.currentUsername, timestampFromMillis(oldPosms), timestampFromMillis(newPosMs)) },
+            message = { getString(Res.string.room_seeked, viewmodel.session.currentUsername, timestampFromMillis(oldPosMs), timestampFromMillis(newPosMs)) },
             isChat = false
         )
 
-        sender.sendAsync<ClientMessage.State> {
+        dispatcher.sendAsync<ClientMessage.State> {
             serverTime = null
             doSeek = true
             position = newPosMs / 1000L
@@ -57,7 +57,7 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
 
     fun sendMessage(msg: String) {
         if (viewmodel.isSoloMode) return
-        sender.sendAsync<ClientMessage.Chat> { message = msg }
+        dispatcher.sendAsync<ClientMessage.Chat> { message = msg }
     }
 
     fun pausePlayback() {
@@ -108,12 +108,12 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
         viewmodel.viewModelScope.launch {
             val msg = Message(
                 sender = if (isChat) chatter else null,
-                isMainUser = chatter == viewmodel.sessionManager.session.currentUsername,
+                isMainUser = chatter == viewmodel.session.currentUsername,
                 content = message.invoke(),
                 isError = isError
             )
             withContext(Dispatchers.Main) {
-                viewmodel.sessionManager.session.messageSequence.add(msg)
+                viewmodel.session.messageSequence.add(msg)
             }
         }
     }

@@ -88,7 +88,7 @@ abstract class PlayerImpl(
 
         if (!viewmodel.isSoloMode) {
             viewmodel.roomOut.sendSeek(
-                oldPosms = currentPos,
+                oldPosMs = currentPos,
                 newPosMs = chapter.timeOffsetMillis
             )
         }
@@ -107,7 +107,7 @@ abstract class PlayerImpl(
 
                 if (!viewmodel.isSoloMode) {
                     viewmodel.roomOut.sendSeek(
-                        oldPosms = currentMs,
+                        oldPosMs = currentMs,
                         newPosMs = nextChapter.timeOffsetMillis
                     )
                 }

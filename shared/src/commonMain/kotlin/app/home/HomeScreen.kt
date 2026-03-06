@@ -56,6 +56,7 @@ import app.LocalGlobalViewmodel
 import app.home.components.HomeAnimatedEngineButtonGroup
 import app.home.components.HomeTextField
 import app.home.components.HomeTopBar
+import app.home.components.PopupDidYaKnow.DidYaKnowPopup
 import app.preferences.Preferences.NEVER_SHOW_TIPS
 import app.preferences.Preferences.PLAYER_ENGINE
 import app.preferences.set
@@ -69,7 +70,6 @@ import app.utils.ShowSystemBars
 import app.utils.availablePlatformPlayerEngines
 import app.utils.platformCallback
 import app.utils.substringSafely
-import app.home.components.PopupDidYaKnow.DidYaKnowPopup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
@@ -175,7 +175,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             modifier = Modifier.fillMaxWidth(0.75f),
                             icon = Icons.Outlined.PersonPin,
                             value = textUsername,
-                            onValueChange = { s -> textUsername = s.trim() }
+                            onValueChange = { textUsername = it }
                         )
                     }
 
@@ -192,7 +192,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             modifier = Modifier.fillMaxWidth(0.75f),
                             icon = Icons.Outlined.MeetingRoom,
                             value = textRoomname,
-                            onValueChange = { s -> textRoomname = s.trim() }
+                            onValueChange = { textRoomname = it }
                         )
                     }
 

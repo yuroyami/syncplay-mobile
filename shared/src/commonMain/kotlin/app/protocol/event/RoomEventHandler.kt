@@ -1,12 +1,12 @@
-package app.room.event
+package app.protocol.event
 
 import androidx.lifecycle.viewModelScope
 import app.AbstractManager
 import app.preferences.Preferences.PAUSE_ON_SOMEONE_LEAVE
 import app.preferences.Preferences.READY_FIRST_HAND
 import app.preferences.value
-import app.protocol.models.CONNECTIONSTATE
 import app.protocol.models.ClientMessage
+import app.protocol.models.ConnectionState
 import app.protocol.models.TlsState
 import app.protocol.server.Set
 import app.protocol.server.Set.ControllerAuthResponse
@@ -45,14 +45,23 @@ import syncplaymobile.shared.generated.resources.room_you_joined_room
 class RoomEventHandler(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     val dispatcher = viewmodel.networkManager
     val broadcaster = viewmodel.roomOut
+    val protocol = viewmodel.protocol
+    val session = viewmodel.protocol.session
 
     fun onSomeonePaused(pauser: String) {
         loggy("SYNCPLAY Protocol: Someone ($pauser) paused.")
 
-        if (pauser != viewmodel.session.currentUsername) broadcaster.pausePlayback()
+        if (pauser != session.currentUsername) {
+            broadcaster.pausePlayback()
+        }
 
         broadcaster.broadcastMessage(
-            message = { getString(Res.string.room_guy_paused, pauser, timestampFromMillis(viewmodel.protocol.globalPositionMs)) },
+            message = {
+                getString(
+                    resource = Res.string.room_guy_paused,
+                    pauser, timestampFromMillis(protocol.globalPositionMs)
+                )
+            },
             isChat = false
         )
     }
@@ -60,7 +69,9 @@ class RoomEventHandler(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel
     fun onSomeonePlayed(player: String) {
         loggy("SYNCPLAY Protocol: Someone ($player) unpaused.")
 
-        if (player != viewmodel.session.currentUsername) broadcaster.playPlayback()
+        if (player != viewmodel.session.currentUsername) {
+            broadcaster.playPlayback()
+        }
 
         broadcaster.broadcastMessage(message = { getString(Res.string.room_guy_played, player) }, isChat = false)
     }
@@ -100,7 +111,7 @@ class RoomEventHandler(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel
         loggy("SYNCPLAY Protocol: $seeker seeked to: $toPosition")
 
         onMainThread {
-            val oldPosMs = viewmodel.player.currentPositionMs()
+            val oldPosMs = protocol.globalPositionMs.toLong()
             val newPosMs = toPosition.toLong() * 1000L
 
             broadcaster.broadcastMessage(
@@ -162,7 +173,7 @@ class RoomEventHandler(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel
     suspend fun onConnected() {
         loggy("SYNCPLAY Protocol: Connected!")
 
-        viewmodel.networkManager.state = CONNECTIONSTATE.STATE_CONNECTED
+        viewmodel.networkManager.state = ConnectionState.STATE_CONNECTED
 
         viewmodel.networkManager.sendAsync<ClientMessage.Readiness> {
             isReady = if (viewmodel.media == null && READY_FIRST_HAND.value()) true
@@ -196,7 +207,7 @@ class RoomEventHandler(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel
     fun onConnectionFailed() {
         loggy("SYNCPLAY Protocol: Connection failed :/")
 
-        viewmodel.networkManager.state = CONNECTIONSTATE.STATE_DISCONNECTED
+        viewmodel.networkManager.state = ConnectionState.STATE_DISCONNECTED
         broadcaster.broadcastMessage(message = { getString(Res.string.room_connection_failed) }, isChat = false, isError = true)
         viewmodel.networkManager.reconnect()
     }
@@ -204,7 +215,7 @@ class RoomEventHandler(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel
     fun onDisconnected() {
         loggy("SYNCPLAY Protocol: Disconnected.")
 
-        viewmodel.networkManager.state = CONNECTIONSTATE.STATE_DISCONNECTED
+        viewmodel.networkManager.state = ConnectionState.STATE_DISCONNECTED
         broadcaster.broadcastMessage(message = { getString(Res.string.room_attempting_reconnection) }, isChat = false, isError = true)
         viewmodel.networkManager.reconnect()
     }

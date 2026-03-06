@@ -3,7 +3,7 @@ package app.protocol.server
 import app.protocol.ProtocolManager
 import app.protocol.network.NetworkManager
 import app.room.RoomViewmodel
-import app.room.event.RoomEventHandler
+import app.protocol.event.RoomEventHandler
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

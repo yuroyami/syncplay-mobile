@@ -5,7 +5,7 @@ import app.protocol.ProtocolManager.Companion.SEEK_THRESHOLD
 import app.protocol.models.ClientMessage
 import app.protocol.network.NetworkManager
 import app.room.RoomViewmodel
-import app.room.event.RoomEventHandler
+import app.protocol.event.RoomEventHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName

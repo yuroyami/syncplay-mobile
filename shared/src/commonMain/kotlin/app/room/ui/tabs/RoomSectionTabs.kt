@@ -177,7 +177,7 @@ fun RoomTabSection(modifier: Modifier) {
                     )
                 }
 
-                val managedRoomAreSupported by viewmodel.sessionManager.supportsManagedRooms.collectAsState()
+                val managedRoomAreSupported by viewmodel.protocol.supportsManagedRooms.collectAsState()
                 if (!viewmodel.isSoloMode) {
                     if (managedRoomAreSupported) {
                         /* Create managed room */

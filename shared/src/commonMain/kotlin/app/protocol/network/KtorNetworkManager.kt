@@ -66,13 +66,13 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
                 socket = aSocket(SelectorManager(Dispatchers.IO))
                     .tcp()
                     .connect(
-                        hostname = viewmodel.sessionManager.session.serverHost,
-                        port = viewmodel.sessionManager.session.serverPort
+                        hostname = viewmodel.session.serverHost,
+                        port = viewmodel.session.serverPort
                     ) {
                         socketTimeout = 10000
                     }
 
-                connection = socket!!.connection()
+                connection = socket?.connection() ?: throw Exception("Ktor: Socket unobtainable (is null)")
 
                 input = connection?.input
                 output = connection?.output

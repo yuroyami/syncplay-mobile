@@ -1,7 +1,7 @@
 package app.protocol.models
 
 /** The 4 States of Connection - Needed for the protocol to function seamlessly */
-enum class CONNECTIONSTATE {
+enum class ConnectionState {
     STATE_DISCONNECTED,
     STATE_CONNECTING,
     STATE_CONNECTED,

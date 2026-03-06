@@ -15,8 +15,8 @@ import app.protocol.ProtocolManager
 import app.protocol.Session
 import app.protocol.models.TlsState
 import app.protocol.network.NetworkManager
-import app.room.event.RoomEventDispatcher
-import app.room.event.RoomEventHandler
+import app.protocol.event.RoomEventDispatcher
+import app.protocol.event.RoomEventHandler
 import app.room.sharedplaylist.SharedPlaylistManager
 import app.utils.availablePlatformPlayerEngines
 import app.utils.instantiateNetworkManager

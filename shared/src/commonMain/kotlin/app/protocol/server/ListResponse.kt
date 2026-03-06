@@ -7,7 +7,7 @@ import app.protocol.ProtocolManager.Companion.serverJson
 import app.protocol.models.User
 import app.protocol.network.NetworkManager
 import app.room.RoomViewmodel
-import app.room.event.RoomEventHandler
+import app.protocol.event.RoomEventHandler
 import app.utils.loggy
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName

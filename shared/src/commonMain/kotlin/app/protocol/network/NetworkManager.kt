@@ -7,8 +7,8 @@ import app.preferences.Preferences.RECONNECTION_INTERVAL
 import app.preferences.value
 import app.protocol.ProtocolManager.Companion.createPacketInstance
 import app.protocol.ProtocolManager.Companion.serverJson
-import app.protocol.models.CONNECTIONSTATE
 import app.protocol.models.ClientMessage
+import app.protocol.models.ConnectionState
 import app.protocol.models.TlsState
 import app.room.RoomViewmodel
 import app.utils.ProtocolApi
@@ -16,6 +16,7 @@ import app.utils.loggy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -28,7 +29,7 @@ import kotlin.time.Duration.Companion.seconds
 abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
     open val engine: NetworkEngine = NetworkEngine.SWIFTNIO
-    var state: CONNECTIONSTATE = CONNECTIONSTATE.STATE_DISCONNECTED
+    var state: ConnectionState = ConnectionState.STATE_DISCONNECTED
 
     /** TLS_NO = plain TCP, TLS_YES = encrypted, TLS_ASK = negotiate with server. */
     var tls: TlsState = TlsState.TLS_NO
@@ -41,7 +42,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
 
     override fun invalidate() {
         terminateExistingConnection()
-        state = CONNECTIONSTATE.STATE_DISCONNECTED
+        state = ConnectionState.STATE_DISCONNECTED
         tls = TlsState.TLS_NO
     }
 
@@ -54,7 +55,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
 
         terminateExistingConnection()
         viewmodel.roomIn.onConnectionAttempt()
-        state = CONNECTIONSTATE.STATE_CONNECTING
+        state = ConnectionState.STATE_CONNECTING
 
         try {
             connectSocket()
@@ -82,10 +83,10 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
 
     private var reconnectionJob: Job? = null
     fun reconnect() {
-        if (state == CONNECTIONSTATE.STATE_DISCONNECTED) {
+        if (state == ConnectionState.STATE_DISCONNECTED) {
             if (reconnectionJob == null || reconnectionJob?.isCompleted == true) {
                 reconnectionJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
-                    state = CONNECTIONSTATE.STATE_SCHEDULING_RECONNECT
+                    state = ConnectionState.STATE_SCHEDULING_RECONNECT
                     delay(RECONNECTION_INTERVAL.value() * 1000L)
                     connect()
                 }
@@ -121,6 +122,8 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
 
     typealias SendablePacket = String
 
+    private val sendChannel = Channel<SendablePacket>(capacity = Channel.BUFFERED)
+
     @ProtocolApi
     inline fun <reified T : ClientMessage> sendAsync(noinline init: suspend T.() -> Unit = {}) {
         viewmodel.viewModelScope.launch(Dispatchers.IO) { send(init) }
@@ -128,6 +131,8 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
 
     @ProtocolApi
     suspend inline fun <reified T : ClientMessage> send(noinline init: suspend T.() -> Unit = {}) {
+        if (viewmodel.isSoloMode) return
+
         val packetInstance = createPacketInstance<T>(protocolManager = viewmodel.protocol)
         init(packetInstance)
         val jsonPacket = Json.encodeToString(packetInstance.build())
@@ -152,7 +157,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
                     }
                     onError()
                 } else {
-                    transmitPacket(json, packetClass, retryCounter = +retryCounter)
+                    transmitPacket(json, packetClass, retryCounter = retryCounter + 1)
                 }
             }
         }

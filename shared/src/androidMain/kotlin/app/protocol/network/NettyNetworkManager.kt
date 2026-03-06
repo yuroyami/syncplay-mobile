@@ -110,8 +110,8 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
         TrafficStats.setThreadStatsTag(0xF00DFAF) //Satisfies Android's StrictMode policy
 
         val f = b.connect(
-            viewmodel.sessionManager.session.serverHost,
-            viewmodel.sessionManager.session.serverPort
+            viewmodel.session.serverHost,
+            viewmodel.session.serverPort
         )
         val success = f.await(10000)
         if (!success) {
@@ -180,8 +180,8 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
 
         val h = sslContext.newHandler(
             pipeline.channel().alloc(),
-            viewmodel.sessionManager.session.serverHost,
-            viewmodel.sessionManager.session.serverPort
+            viewmodel.session.serverHost,
+            viewmodel.session.serverPort
         )
         pipeline.addFirst(h)
 
