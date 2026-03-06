@@ -132,13 +132,12 @@ class RoomEventHandler(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel
     fun onSomeoneBehind(behinder: String, toPosition: Double) {
         loggy("SYNCPLAY Protocol: $behinder is behind. Rewinding to $toPosition")
 
-        onMainThread {
-            if (behinder.isNotSelf()) {
+        if (behinder.isNotSelf()) {
+            onMainThread {
                 viewmodel.player.seekTo((toPosition * 1000L).toLong())
+                dispatcher.broadcastMessage(message = { getString(Res.string.room_rewinded, behinder) }, isChat = false)
             }
         }
-
-        dispatcher.broadcastMessage(message = { getString(Res.string.room_rewinded, behinder) }, isChat = false)
     }
 
     fun onReceivedList() {
@@ -207,10 +206,13 @@ class RoomEventHandler(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel
         loggy("SYNCPLAY Protocol: Attempting connection...")
 
         dispatcher.broadcastMessage(
-            message = { getString(Res.string.room_attempting_connect,
-                if (session.serverHost == "151.80.32.178") "syncplay.pl" else session.serverHost,
-                session.serverPort.toString()
-            )},
+            message = {
+                getString(
+                    Res.string.room_attempting_connect,
+                    if (session.serverHost == "151.80.32.178") "syncplay.pl" else session.serverHost,
+                    session.serverPort.toString()
+                )
+            },
             isChat = false
         )
     }
@@ -269,10 +271,14 @@ class RoomEventHandler(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel
         network.sendAsync<ClientMessage.EmptyList>()
 
         dispatcher.broadcastMessage(
-            message = { getString(when (data.success) {
-                true -> Res.string.room_on_controller_auth_success
-                false -> Res.string.room_on_controller_auth_failed
-            }, user) },
+            message = {
+                getString(
+                    when (data.success) {
+                        true -> Res.string.room_on_controller_auth_success
+                        false -> Res.string.room_on_controller_auth_failed
+                    }, user
+                )
+            },
             isChat = false,
             isError = !data.success
         )
