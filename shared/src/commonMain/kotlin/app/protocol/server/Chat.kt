@@ -1,5 +1,8 @@
 package app.protocol.server
 
+import app.protocol.ProtocolManager
+import app.protocol.network.NetworkManager
+import app.room.RoomViewmodel
 import app.room.event.RoomEventHandler
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -10,11 +13,15 @@ data class Chat(
     @SerialName("Chat") val chat: ChatData
 ) : ServerMessage {
 
-    context(packetHandler: PacketHandler)
-    override suspend fun handle() {
+    override suspend fun handle(
+        protocol: ProtocolManager,
+        viewmodel: RoomViewmodel,
+        dispatcher: NetworkManager,
+        callback: RoomEventHandler
+    ) {
         val sender = chat.username ?: return
         val message = chat.message ?: return
-        packetHandler.callback.onChatReceived(sender, message)
+        callback.onChatReceived(sender, message)
     }
 
     @Serializable

@@ -1,8 +1,11 @@
 package app.protocol.server
 
-import app.room.event.RoomEventHandler
+import app.protocol.ProtocolManager
 import app.protocol.models.ClientMessage
 import app.protocol.models.RoomFeatures
+import app.protocol.network.NetworkManager
+import app.room.RoomViewmodel
+import app.room.event.RoomEventHandler
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -17,20 +20,24 @@ data class Hello(
 ) : ServerMessage {
 
     /** Updates session info, sends join/list requests, and triggers [RoomEventHandler.onConnected]. */
-    context(packetHandler: PacketHandler)
-    override suspend fun handle() {
+    override suspend fun handle(
+        protocol: ProtocolManager,
+        viewmodel: RoomViewmodel,
+        dispatcher: NetworkManager,
+        callback: RoomEventHandler
+    ) {
         hello.username?.let { username ->
-            packetHandler.viewmodel.session.currentUsername = username
+            protocol.session.currentUsername = username
         }
 
-        packetHandler.viewmodel.session.roomFeatures = hello.features
+        protocol.session.roomFeatures = hello.features
 
-        packetHandler.sender.send<ClientMessage.Joined> {
-            roomname = packetHandler.viewmodel.session.currentRoom
+        dispatcher.send<ClientMessage.Joined> {
+            roomname = protocol.session.currentRoom
         }
 
-        packetHandler.sender.send<ClientMessage.EmptyList>()
-        packetHandler.callback.onConnected()
+        dispatcher.send<ClientMessage.EmptyList>()
+        callback.onConnected()
     }
 
     @Serializable

@@ -1,4 +1,4 @@
-package com.yuroyami.app.room.ui.chat
+package app.room.ui.chat
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -68,7 +68,7 @@ import syncplaymobile.shared.generated.resources.room_type_message
 @Composable
 fun RoomChatSection(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
-    val isChatSupported by viewmodel.sessionManager.supportsChat.collectAsState()
+    val isChatSupported by viewmodel.protocol.supportsChat.collectAsState()
 
     if (isChatSupported) {
         Column(modifier = modifier) {

@@ -45,7 +45,7 @@ fun RoomStatusInfoSection(modifier: Modifier) {
             modifier = modifier
         ) {
             if (!viewmodel.isSoloMode) {
-                val connectionState by viewmodel.protocolManager.pingService.connectionState.collectAsState(ConnectionState.Disconnected)
+                val connectionState by viewmodel.protocol.pingService.connectionState.collectAsState(ConnectionState.Disconnected)
 
                 Row(verticalAlignment = CenterVertically) {
                     Text(

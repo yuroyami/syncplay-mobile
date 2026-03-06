@@ -1,9 +1,14 @@
 package app.protocol.server
 
 import androidx.lifecycle.viewModelScope
-import app.utils.loggy
 import app.player.models.MediaFile
+import app.protocol.ProtocolManager
+import app.protocol.ProtocolManager.Companion.serverJson
 import app.protocol.models.User
+import app.protocol.network.NetworkManager
+import app.room.RoomViewmodel
+import app.room.event.RoomEventHandler
+import app.utils.loggy
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -27,20 +32,24 @@ data class ListResponse(
      * For each user, builds a [User] object with readiness, controller state,
      * and file info if available.
      */
-    context(packetHandler: PacketHandler)
-    override suspend fun handle() {
-        val userlist = list[packetHandler.viewmodel.session.currentRoom] as? JsonObject ?: return
+    override suspend fun handle(
+        protocol: ProtocolManager,
+        viewmodel: RoomViewmodel,
+        dispatcher: NetworkManager,
+        callback: RoomEventHandler
+    ) {
+        val userlist = list[protocol.session.currentRoom] as? JsonObject ?: return
         val newList = mutableListOf<User>()
 
         var indexer = 1
 
         for ((userName, userDataElement) in userlist) {
             try {
-                val userData = packetHandler.handlerJson.decodeFromString<UserData>(userDataElement.toString())
+                val userData = serverJson.decodeFromString<UserData>(userDataElement.toString())
 
                 val user = User(
                     name = userName,
-                    index = if (userName != packetHandler.viewmodel.session.currentUsername) indexer++ else 0,
+                    index = if (userName != protocol.session.currentUsername) indexer++ else 0,
                     readiness = userData.isReady ?: false,
                     file = userData.file?.let { fileData ->
                         if (fileData.name != null) {
@@ -61,9 +70,9 @@ data class ListResponse(
             }
         }
 
-        packetHandler.viewmodel.viewModelScope.launch {
-            packetHandler.viewmodel.session.userList.emit(newList)
-            packetHandler.callback.onReceivedList()
+        viewmodel.viewModelScope.launch {
+            protocol.session.userList.emit(newList)
+            callback.onReceivedList()
         }
     }
 

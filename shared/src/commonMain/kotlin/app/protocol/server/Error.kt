@@ -1,5 +1,9 @@
 package app.protocol.server
 
+import app.protocol.ProtocolManager
+import app.protocol.network.NetworkManager
+import app.room.RoomViewmodel
+import app.room.event.RoomEventHandler
 import app.utils.loggy
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -10,8 +14,12 @@ data class Error(
     @SerialName("Error") val error: ErrorData
 ) : ServerMessage {
 
-    context(packetHandler: PacketHandler)
-    override suspend fun handle() {
+    override suspend fun handle(
+        protocol: ProtocolManager,
+        viewmodel: RoomViewmodel,
+        dispatcher: NetworkManager,
+        callback: RoomEventHandler
+    ) {
         error.message?.let { loggy("Server error: $it") }
     }
 

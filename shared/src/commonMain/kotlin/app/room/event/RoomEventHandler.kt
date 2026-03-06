@@ -2,9 +2,6 @@ package app.room.event
 
 import androidx.lifecycle.viewModelScope
 import app.AbstractManager
-import app.room.RoomViewmodel
-import app.utils.loggy
-import app.utils.timestampFromMillis
 import app.preferences.Preferences.PAUSE_ON_SOMEONE_LEAVE
 import app.preferences.Preferences.READY_FIRST_HAND
 import app.preferences.value
@@ -13,6 +10,9 @@ import app.protocol.models.ClientMessage
 import app.protocol.models.TlsState
 import app.protocol.server.Set
 import app.protocol.server.Set.ControllerAuthResponse
+import app.room.RoomViewmodel
+import app.utils.loggy
+import app.utils.timestampFromMillis
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
@@ -43,7 +43,7 @@ import syncplaymobile.shared.generated.resources.room_you_joined_room
  * user-facing messages. Counterpart to [RoomEventDispatcher] which handles outgoing actions.
  */
 class RoomEventHandler(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
-
+    val dispatcher = viewmodel.networkManager
     val broadcaster = viewmodel.roomOut
 
     fun onSomeonePaused(pauser: String) {
@@ -52,7 +52,7 @@ class RoomEventHandler(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel
         if (pauser != viewmodel.session.currentUsername) broadcaster.pausePlayback()
 
         broadcaster.broadcastMessage(
-            message = { getString(Res.string.room_guy_paused, pauser, timestampFromMillis(viewmodel.protocolManager.globalPositionMs)) },
+            message = { getString(Res.string.room_guy_paused, pauser, timestampFromMillis(viewmodel.protocol.globalPositionMs)) },
             isChat = false
         )
     }
@@ -78,8 +78,8 @@ class RoomEventHandler(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel
     }
 
     fun onSomeoneLeft(leaver: String) {
-        if (viewmodel.protocolManager.isRoomChanging) {
-            viewmodel.protocolManager.isRoomChanging = false
+        if (viewmodel.protocol.isRoomChanging) {
+            viewmodel.protocol.isRoomChanging = false
             return
         }
 

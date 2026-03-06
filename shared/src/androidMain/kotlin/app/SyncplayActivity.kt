@@ -30,9 +30,9 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import app.home.HomeViewmodel
 import app.home.JoinConfig
-import app.player.exo.ExoEngine
 import app.player.PlayerImpl
 import app.player.SyncplayMediaSessionService
+import app.player.exo.ExoImpl
 import app.preferences.Preferences.DISPLAY_LANG
 import app.preferences.Preferences.SUBTITLE_SIZE
 import app.preferences.value
@@ -296,7 +296,7 @@ class SyncplayActivity : ComponentActivity() {
         /* Loading subtitle appearance */
         lifecycleScope.launch(Dispatchers.Main) {
             val ccsize = SUBTITLE_SIZE.value()
-            (roomViewmodel?.player as? ExoEngine.ExoImpl)?.retweakSubtitleAppearance(ccsize.toFloat())
+            (roomViewmodel?.player as? ExoImpl)?.retweakSubtitleAppearance(ccsize.toFloat())
         }
     }
 

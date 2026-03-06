@@ -1,17 +1,22 @@
 package app.protocol.server
 
+import app.protocol.ProtocolManager
+import app.protocol.network.NetworkManager
+import app.room.RoomViewmodel
+import app.room.event.RoomEventHandler
 import kotlinx.serialization.Serializable
 
 /**
  * Base sealed interface for all incoming Syncplay protocol messages.
- *
- * Each implementation provides a [handle] method executed within a [PacketHandler] context,
- * giving access to the viewmodel, sender, protocol state, and UI callbacks.
  */
 @Serializable
 sealed interface ServerMessage {
 
-    context(packetHandler: PacketHandler)
-    suspend fun handle()
+    suspend fun handle(
+        protocol: ProtocolManager,
+        viewmodel: RoomViewmodel,
+        dispatcher: NetworkManager,
+        callback: RoomEventHandler
+    )
 
 }

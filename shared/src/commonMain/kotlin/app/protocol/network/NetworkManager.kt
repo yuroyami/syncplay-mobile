@@ -3,15 +3,16 @@ package app.protocol.network
 import SyncplayMobile.shared.BuildConfig
 import androidx.lifecycle.viewModelScope
 import app.AbstractManager
-import app.protocol.ProtocolManager.Companion.createPacketInstance
-import app.room.RoomViewmodel
-import app.utils.ProtocolDsl
-import app.utils.loggy
 import app.preferences.Preferences.RECONNECTION_INTERVAL
 import app.preferences.value
+import app.protocol.ProtocolManager.Companion.createPacketInstance
+import app.protocol.ProtocolManager.Companion.serverJson
 import app.protocol.models.CONNECTIONSTATE
 import app.protocol.models.ClientMessage
 import app.protocol.models.TlsState
+import app.room.RoomViewmodel
+import app.utils.ProtocolDsl
+import app.utils.loggy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
@@ -19,6 +20,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
@@ -61,9 +63,9 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
                 send<ClientMessage.TLS>()
             } else {
                 send<ClientMessage.Hello> {
-                    username = viewmodel.sessionManager.session.currentUsername
-                    roomname = viewmodel.sessionManager.session.currentRoom
-                    serverPassword = viewmodel.sessionManager.session.currentPassword
+                    username = viewmodel.session.currentUsername
+                    roomname = viewmodel.session.currentRoom
+                    serverPassword = viewmodel.session.currentPassword
                 }
             }
         } catch (e: Exception) {
@@ -91,9 +93,25 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
         }
     }
 
-    fun handlePacket(data: String) {
+    fun handlePacket(jsonString: String) {
         viewmodel.viewModelScope.launch(Dispatchers.Default) {
-            viewmodel.protocolManager.packetHandler.parse(data)
+            if (BuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("**SERVER** $jsonString")
+
+            try {
+                serverJson.decodeFromString(
+                    deserializer = ServerMessageDeserializer,
+                    string = jsonString
+                ).handle(
+                    protocol = viewmodel.protocol,
+                    viewmodel = viewmodel,
+                    dispatcher = viewmodel.networkManager,
+                    callback = viewmodel.roomIn
+                )
+            } catch (e: SerializationException) {
+                loggy("Problematic Json: $jsonString")
+                loggy("Serialization error: ${e.message}")
+                throw e
+            }
         }
     }
 
@@ -110,7 +128,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
 
     @ProtocolDsl
     suspend inline fun <reified T : ClientMessage> send(noinline init: suspend T.() -> Unit = {}) {
-        val packetInstance = createPacketInstance<T>(protocolManager = viewmodel.protocolManager)
+        val packetInstance = createPacketInstance<T>(protocolManager = viewmodel.protocol)
         init(packetInstance)
         val jsonPacket = Json.encodeToString(packetInstance.build())
         transmitPacket(jsonPacket, packetClass = T::class)

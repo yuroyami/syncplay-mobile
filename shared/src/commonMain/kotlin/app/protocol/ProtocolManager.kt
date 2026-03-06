@@ -1,14 +1,28 @@
 package app.protocol
 
 import app.AbstractManager
-import app.room.RoomViewmodel
-import app.utils.ProtocolDsl
 import app.protocol.models.ClientMessage
 import app.protocol.models.PingService
 import app.protocol.network.NetworkManager
-import app.protocol.server.PacketHandler
+import app.protocol.server.Chat
+import app.protocol.server.Error
+import app.protocol.server.Hello
+import app.protocol.server.ListResponse
+import app.protocol.server.ServerMessage
+import app.protocol.server.Set
+import app.protocol.server.State
+import app.protocol.server.TLS
+import app.room.RoomViewmodel
+import app.utils.ProtocolDsl
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
+import kotlin.time.Instant
 
 class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
+    var session: Session = Session(this)
 
     var globalPaused: Boolean = true
     var globalPositionMs: Double = 0.0
@@ -22,13 +36,18 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     /** Position drift threshold for hard seek. 12s per Syncplay spec — do not change. */
     val rewindThreshold = 12L
 
-    var pingService = PingService()
+    /** Timestamp of the last received global state update, used for sync timing. */
+    var lastGlobalUpdate: Instant? = null
 
-    @ProtocolDsl
-    val packetHandler = PacketHandler(viewmodel, this)
+    var pingService = PingService()
 
     /** Set during room transitions to ignore stale packets from the previous room. */
     var isRoomChanging = false
+
+    val supportsChat = MutableStateFlow(true)
+    val supportsManagedRooms = MutableStateFlow(false)
+    
+    val isManagedRoom = MutableStateFlow(false)
 
     override fun invalidate() {
         globalPaused = true
@@ -39,6 +58,23 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     }
 
     companion object {
+        val serverJson = Json {
+            ignoreUnknownKeys = true
+            coerceInputValues = true
+
+            serializersModule = SerializersModule {
+                polymorphic(ServerMessage::class) {
+                    subclass(Hello::class)
+                    subclass(Chat::class)
+                    subclass(Set::class)
+                    subclass(ListResponse::class)
+                    subclass(State::class)
+                    subclass(TLS::class)
+                    subclass(Error::class)
+                }
+            }
+        }
+
         @ProtocolDsl
         inline fun <reified T : ClientMessage> NetworkManager.createPacketInstance(protocolManager: ProtocolManager): T {
             return when (T::class) {
@@ -57,5 +93,8 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
                 else -> throw IllegalArgumentException("Unknown packet type: ${T::class.simpleName}")
             }
         }
+
+        /** Playback drift threshold in seconds before a corrective seek is triggered. */
+        const val SEEK_THRESHOLD = 1L
     }
 }

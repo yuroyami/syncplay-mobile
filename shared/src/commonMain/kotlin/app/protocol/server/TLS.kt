@@ -1,10 +1,14 @@
 package app.protocol.server
 
+import app.protocol.ProtocolManager
+import app.protocol.network.NetworkManager
+import app.room.RoomViewmodel
+import app.room.event.RoomEventHandler
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * TLS negotiation message. When received, triggers [PacketHandler.callback]
+ * TLS negotiation message. When received, triggers [RoomEventHandler]
  * to upgrade the connection from plain TCP to TLS.
  */
 @Serializable
@@ -13,10 +17,14 @@ data class TLS(
     val tls: TLSData
 ) : ServerMessage {
 
-    context(packetHandler: PacketHandler)
-    override suspend fun handle() {
+    override suspend fun handle(
+        protocol: ProtocolManager,
+        viewmodel: RoomViewmodel,
+        dispatcher: NetworkManager,
+        callback: RoomEventHandler
+    ) {
         tls.startTLS?.let { startTLS ->
-            packetHandler.callback.onReceivedTLS(startTLS)
+            callback.onReceivedTLS(startTLS)
         }
     }
 

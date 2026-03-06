@@ -145,7 +145,7 @@ fun ManagedRoomPopup(purpose: ManagedRoomPopupPurpose) {
                     onClick = {
                         state.value = false
 
-                        viewmodel.protocolManager.isRoomChanging = true
+                        viewmodel.protocol.isRoomChanging = true
 
                         viewmodel.networkManager.sendAsync<ClientMessage.ControllerAuth> {
                             when (purpose) {

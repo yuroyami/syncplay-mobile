@@ -24,7 +24,7 @@ import com.yuroyami.app.room.ui.bottombar.BlackContrastUnderlay
 import com.yuroyami.app.room.ui.bottombar.PopupSeekToPosition.SeekToPositionPopup
 import com.yuroyami.app.room.ui.bottombar.RoomBottomBarSection
 import com.yuroyami.app.room.ui.chat.FadingMessageLayout
-import com.yuroyami.app.room.ui.chat.RoomChatSection
+import app.room.ui.chat.RoomChatSection
 import com.yuroyami.app.room.ui.misc.RoomBackgroundArtwork
 import com.yuroyami.app.room.ui.misc.RoomGestureInterceptor
 import com.yuroyami.app.room.ui.misc.RoomPlayButton

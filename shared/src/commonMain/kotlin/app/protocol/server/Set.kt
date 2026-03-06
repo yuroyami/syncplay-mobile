@@ -1,8 +1,13 @@
 package app.protocol.server
 
 import androidx.lifecycle.viewModelScope
-import app.utils.loggy
+import app.protocol.ProtocolManager
+import app.protocol.ProtocolManager.Companion.serverJson
 import app.protocol.models.ClientMessage
+import app.protocol.network.NetworkManager
+import app.room.RoomViewmodel
+import app.room.event.RoomEventHandler
+import app.utils.loggy
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
@@ -19,18 +24,22 @@ data class Set(
 ) : ServerMessage {
 
     /** Routes to the appropriate handler based on which field is present. */
-    context(packetHandler: PacketHandler)
-    override suspend fun handle() {
-        with(packetHandler) {
-            when {
-                set.user != null -> handleUserSet(set.user)
-                set.playlistIndex != null -> handlePlaylistIndex(set.playlistIndex)
-                set.playlistChange != null -> handlePlaylistChange(set.playlistChange)
-                set.newControlledRoom != null -> handleNewControlledRoom(set.newControlledRoom)
-                set.controllerAuth != null -> callback.onHandleControllerAuth(set.controllerAuth)
-            }
-            sender.sendAsync<ClientMessage.EmptyList>()
+    override suspend fun handle(
+        protocol: ProtocolManager,
+        viewmodel: RoomViewmodel,
+        dispatcher: NetworkManager,
+        callback: RoomEventHandler
+    ) {
+        when {
+            set.user != null -> callback.handleUserSet(set.user)
+            set.playlistIndex != null -> callback.handlePlaylistIndex(set.playlistIndex)
+            set.playlistChange != null -> callback.handlePlaylistChange(set.playlistChange)
+            set.newControlledRoom != null -> callback.handleNewControlledRoom(set.newControlledRoom)
+            set.controllerAuth != null -> callback.onHandleControllerAuth(set.controllerAuth)
         }
+
+        dispatcher.sendAsync<ClientMessage.EmptyList>()
+
     }
 
     @Serializable
@@ -85,21 +94,21 @@ data class Set(
         val success: Boolean
     )
 
-    private fun PacketHandler.handleUserSet(userObject: JsonObject) {
+    private fun RoomEventHandler.handleUserSet(userObject: JsonObject) {
         val userName = userObject.keys.firstOrNull() ?: return
 
         try {
-            val userData = handlerJson.decodeFromString<UserEventData>(userObject[userName].toString())
+            val userData = serverJson.decodeFromString<UserEventData>(userObject[userName].toString())
 
             userData.event?.let { event ->
                 when {
-                    event.left != null -> callback.onSomeoneLeft(userName)
-                    event.joined != null -> callback.onSomeoneJoined(userName)
+                    event.left != null -> onSomeoneLeft(userName)
+                    event.joined != null -> onSomeoneJoined(userName)
                 }
             }
 
             userData.file?.let { file ->
-                callback.onSomeoneLoadedFile(userName, file.name ?: "", file.duration ?: 0.0)
+                onSomeoneLoadedFile(userName, file.name ?: "", file.duration ?: 0.0)
             }
         } catch (e: SerializationException) {
             loggy("Error parsing user data: ${e.message}")
@@ -107,34 +116,34 @@ data class Set(
         }
     }
 
-    private fun PacketHandler.handlePlaylistIndex(playlistIndex: PlaylistIndexData) {
+    private fun RoomEventHandler.handlePlaylistIndex(playlistIndex: PlaylistIndexData) {
         val user = playlistIndex.user ?: return
         val index = playlistIndex.index ?: return
-        callback.onPlaylistIndexChanged(user, index)
+        onPlaylistIndexChanged(user, index)
         viewmodel.session.spIndex.intValue = index
     }
 
-    private fun PacketHandler.handlePlaylistChange(playlistChange: PlaylistChangeData) {
+    private fun RoomEventHandler.handlePlaylistChange(playlistChange: PlaylistChangeData) {
         val user = playlistChange.user ?: ""
         val files = playlistChange.files ?: return
         viewmodel.session.sharedPlaylist.clear()
         viewmodel.session.sharedPlaylist.addAll(files)
-        callback.onPlaylistUpdated(user)
+        onPlaylistUpdated(user)
     }
 
-    private suspend fun PacketHandler.handleNewControlledRoom(data: NewControlledRoom) {
+    private suspend fun RoomEventHandler.handleNewControlledRoom(data: NewControlledRoom) {
         try {
-            callback.onNewControlledRoom(data)
-            viewmodel.networkManager.send<ClientMessage.RoomChange> { room = data.roomName }
-            viewmodel.networkManager.sendAsync<ClientMessage.EmptyList>()
-            viewmodel.networkManager.send<ClientMessage.ControllerAuth> {
+            onNewControlledRoom(data)
+            dispatcher.send<ClientMessage.RoomChange> { room = data.roomName }
+            dispatcher.sendAsync<ClientMessage.EmptyList>()
+            dispatcher.send<ClientMessage.ControllerAuth> {
                 room = data.roomName
                 password = data.password
             }
         } finally {
             viewmodel.viewModelScope.launch {
                 delay(1000)
-                viewmodel.protocolManager.isRoomChanging = false
+                viewmodel.protocol.isRoomChanging = false
             }
         }
     }

@@ -5,11 +5,6 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.Screen
-import app.room.event.RoomEventDispatcher
-import app.room.event.RoomEventHandler
-import app.utils.availablePlatformVideoEngines
-import app.utils.instantiateNetworkManager
-import app.utils.loggy
 import app.home.JoinConfig
 import app.player.PlayerImpl
 import app.player.VideoEngineManager
@@ -17,10 +12,15 @@ import app.player.models.MediaFile
 import app.preferences.Preferences
 import app.preferences.value
 import app.protocol.ProtocolManager
+import app.protocol.Session
 import app.protocol.models.TlsState
 import app.protocol.network.NetworkManager
-import app.protocol.session.SessionManager
+import app.room.event.RoomEventDispatcher
+import app.room.event.RoomEventHandler
 import app.room.sharedplaylist.SharedPlaylistManager
+import app.utils.availablePlatformVideoEngines
+import app.utils.instantiateNetworkManager
+import app.utils.loggy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
@@ -57,10 +57,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
     lateinit var networkManager: NetworkManager
 
     /** Manages the Syncplay protocol and its events */
-    val protocolManager: ProtocolManager by lazy { ProtocolManager(this) }
-
-    /** Manages the current room session state and user list */
-    val sessionManager: SessionManager by lazy { SessionManager(this) }
+    val protocol: ProtocolManager by lazy { ProtocolManager(this) }
 
     /** Manages callbacks from protocol events (e.g., when someone pauses) - receiving actions */
     val roomIn: RoomEventHandler by lazy { RoomEventHandler(this) }
@@ -89,11 +86,11 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
 
             joinConfig?.let {
                 launch {
-                    sessionManager.session.serverHost = joinConfig.ip.takeIf { it != "syncplay.pl" } ?: "151.80.32.178"
-                    sessionManager.session.serverPort = joinConfig.port
-                    sessionManager.session.currentUsername = joinConfig.user
-                    sessionManager.session.currentRoom = joinConfig.room
-                    sessionManager.session.currentPassword = joinConfig.pw
+                    session.serverHost = joinConfig.ip.takeIf { it != "syncplay.pl" } ?: "151.80.32.178"
+                    session.serverPort = joinConfig.port
+                    session.currentUsername = joinConfig.user
+                    session.currentRoom = joinConfig.room
+                    session.currentPassword = joinConfig.pw
 
                     /** Connecting (via TLS or noTLS) */
                     val tls = Preferences.TLS_ENABLE.value()
@@ -180,8 +177,8 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
         get() = videoEngineManager.player
 
     /** Quick access to the current room session state */
-    val session: SessionManager.Session
-        get() = sessionManager.session
+    val session: Session
+        get() = protocol.session
 
     /** Quick access to the currently loaded media file, if any */
     val media: MediaFile?
@@ -200,8 +197,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
         videoEngineManager.invalidate()
         networkManager.invalidate()
         uiState.invalidate()
-        protocolManager.invalidate()
-        sessionManager.invalidate()
+        protocol.invalidate()
         super.onCleared()
     }
 }
