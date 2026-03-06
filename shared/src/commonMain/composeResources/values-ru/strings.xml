@@ -147,8 +147,8 @@
     <string name="room_card_title_in_room_prefs">Настройки комнаты</string>
     <string name="room_audio_track_not_found">Звуковая дорожка не найдена!</string>
     <string name="room_msg_problem_loading_file">Возникла проблема при загрузке этого файла.</string>
-    <string name="room_managed_room_popup_create">Введите название управляемой комнаты\n(см. https://syncplay.pl/guide/ для инструкций по использованию)</string>
-    <string name="room_managed_room_popup_pw_identify_as_operator">Введите пароль оператора для этой комнаты\n(см. https://syncplay.pl/guide/ для инструкций по использованию)</string>
+    <string name="room_managed_room_popup_create">Введите название управляемой комнаты\n(см. https://app.pl/guide/ для инструкций по использованию)</string>
+    <string name="room_managed_room_popup_pw_identify_as_operator">Введите пароль оператора для этой комнаты\n(см. https://app.pl/guide/ для инструкций по использованию)</string>
     <string name="room_setting_pick_color">Выберите цвет</string>
     <string name="room_reconnect_button">Переподключиться</string>
     <string name="room_more_info_change_network_engine_msg">Попробуйте изменить сетевой движок в Настройки > Сеть на Ktor, если у вас возникают проблемы с подключением.</string>
@@ -332,7 +332,7 @@
     <string name="about_developed_by">• Разработано: yuroyami</string>
     <string name="about_client_is_unofficial_disclaimer">• Этот клиент не является официальным. Благодарим официальную команду Syncplay за их удивительное программное обеспечение.</string>
     <string name="about_client_platforms">• Syncplay официально доступен для Windows, macOS и Linux.</string>
-    <string name="about_official_website">• Официальный сайт: www.syncplay.pl</string>
+    <string name="about_official_website">• Официальный сайт: www.app.pl</string>
 
     <string name="tips_dontshowmetips">Не показывать мне подсказки</string>
     <string name="tips_did_ya_know">А вы знали?</string>

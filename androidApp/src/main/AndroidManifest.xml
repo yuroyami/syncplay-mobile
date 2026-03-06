@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
-        android:name="com.yuroyami.syncplay.SyncplayApp"
+        android:name="app.SyncplayApp"
         android:allowBackup="false"
         android:appCategory="video"
         android:icon="@mipmap/ic_launcher"
@@ -17,7 +17,7 @@
         tools:targetApi="36">
 
         <activity
-            android:name="com.yuroyami.syncplay.SyncplayActivity"
+            android:name="app.SyncplayActivity"
             android:configChanges="orientation|keyboardHidden|screenLayout|screenSize|smallestScreenSize"
             android:exported="true"
             android:imeOptions="flagNoExtractUi"

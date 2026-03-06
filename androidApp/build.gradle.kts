@@ -12,7 +12,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.yuroyami.syncplay.app"
+    namespace = "androidApp"
     compileSdk = AppConfig.compileSdk
 
     ndkVersion = ndkRequired
@@ -43,7 +43,6 @@ android {
             signingConfig = config
         }
     }
-
 
     compileOptions {
         sourceCompatibility = JavaVersion.toVersion(AppConfig.javaVersion)

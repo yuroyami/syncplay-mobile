@@ -158,8 +158,8 @@
     <string name="room_card_title_in_room_prefs">Preferencje w pokoju</string>
     <string name="room_audio_track_not_found">Nie znaleziono dźwięku!</string>
     <string name="room_msg_problem_loading_file">Wystąpił problem z wczytaniem tego pliku.</string>
-    <string name="room_managed_room_popup_create">Wprowadź nazwę zarządzanego pokoju\n(zobacz https://syncplay.pl/guide/ instrukcje użycia)</string>
-    <string name="room_managed_room_popup_pw_identify_as_operator">Wprowadź hasło operatora dla tego pokoju\n(zobacz https://syncplay.pl/guide/ instrukcje użycia)</string>
+    <string name="room_managed_room_popup_create">Wprowadź nazwę zarządzanego pokoju\n(zobacz https://app.pl/guide/ instrukcje użycia)</string>
+    <string name="room_managed_room_popup_pw_identify_as_operator">Wprowadź hasło operatora dla tego pokoju\n(zobacz https://app.pl/guide/ instrukcje użycia)</string>
     <string name ="room_setting_pick_color">Wybierz kolor</string>
     <string name ="room_reconnect_button">Połącz ponownie</string>
     <string name="room_more_info_change_network_engine_msg">Spróbuj zmienić silnik sieciowy w Ustawienia > Sieć na Ktor, jeśli masz problemy z połączeniem.</string>
@@ -343,7 +343,7 @@
     <string name="about_developed_by">• Opracowane przez: yuroyami</string>
     <string name="about_client_is_unofficial_disclaimer">• Ten klient nie jest oficjalny. Dziękujemy oficjalnemu zespołowi Syncplay za ich niesamowite oprogramowanie.</string>
     <string name="about_client_platforms">• Syncplay jest oficjalnie dostępny dla Windows, macOS i Linux.</string>
-    <string name="about_official_website">• Oficjalna strona: www.syncplay.pl</string>
+    <string name="about_official_website">• Oficjalna strona: www.app.pl</string>
 
     <string name="tips_dontshowmetips">Nie pokazuj mi wskazówek</string>
     <string name="tips_did_ya_know">Czy wiedziałeś?</string>

@@ -147,8 +147,8 @@
     <string name="room_card_title_in_room_prefs">房间偏好设置</string>
     <string name="room_audio_track_not_found">未找到音频！</string>
     <string name="room_msg_problem_loading_file">加载此文件时出现问题。</string>
-    <string name="room_managed_room_popup_create">输入托管房间名称\n（请参阅 https://syncplay.pl/guide/ 获取使用说明）</string>
-    <string name="room_managed_room_popup_pw_identify_as_operator">输入此房间的操作员密码\n（请参阅 https://syncplay.pl/guide/ 获取使用说明）</string>
+    <string name="room_managed_room_popup_create">输入托管房间名称\n（请参阅 https://app.pl/guide/ 获取使用说明）</string>
+    <string name="room_managed_room_popup_pw_identify_as_operator">输入此房间的操作员密码\n（请参阅 https://app.pl/guide/ 获取使用说明）</string>
     <string name="room_setting_pick_color">选择颜色</string>
     <string name="room_reconnect_button">重新连接</string>
     <string name="room_more_info_change_network_engine_msg">如果您遇到连接问题，请尝试在设置 > 网络中将网络引擎更改为Ktor。</string>
@@ -332,7 +332,7 @@
     <string name="about_developed_by">• 开发人员：yuroyami</string>
     <string name="about_client_is_unofficial_disclaimer">• 此客户端不是官方版本。感谢官方Syncplay团队提供的出色软件。</string>
     <string name="about_client_platforms">• Syncplay官方适用于Windows、macOS和Linux。</string>
-    <string name="about_official_website">• 官方网站：www.syncplay.pl</string>
+    <string name="about_official_website">• 官方网站：www.app.pl</string>
 
     <string name="tips_dontshowmetips">不再显示提示</string>
     <string name="tips_did_ya_know">您知道吗？</string>

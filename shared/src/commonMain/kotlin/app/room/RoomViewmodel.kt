@@ -1,0 +1,207 @@
+package app.room
+
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import app.Screen
+import app.room.event.RoomEventDispatcher
+import app.room.event.RoomEventHandler
+import app.utils.availablePlatformVideoEngines
+import app.utils.instantiateNetworkManager
+import app.utils.loggy
+import app.home.JoinConfig
+import app.player.PlayerImpl
+import app.player.VideoEngineManager
+import app.player.models.MediaFile
+import app.preferences.Preferences
+import app.preferences.value
+import app.protocol.ProtocolManager
+import app.protocol.models.TlsState
+import app.protocol.network.NetworkManager
+import app.protocol.session.SessionManager
+import app.room.sharedplaylist.SharedPlaylistManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.getString
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_file_mismatch_warning_core
+import syncplaymobile.shared.generated.resources.room_file_mismatch_warning_duration
+import syncplaymobile.shared.generated.resources.room_file_mismatch_warning_name
+import syncplaymobile.shared.generated.resources.room_file_mismatch_warning_size
+
+/**
+ * ViewModel for the Syncplay room screen where synchronized playback occurs.
+ *
+ * Coordinates all room-level managers including networking, media playback, protocol handling,
+ * session state, and user interactions. Supports both online synchronized rooms and solo mode.
+ *
+ * @property joinConfig The room connection configuration, or null for solo mode
+ * @property backStack The navigation stack for leaving the room
+ */
+class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateList<Screen>) : ViewModel() {
+
+    /************ Managers ***************/
+
+    /** Manages and holds UI state for the room screen */
+    val uiState: RoomUiStateManager by lazy { RoomUiStateManager(this) }
+
+    /** Manages media player lifecycle, controls, and state */
+    val videoEngineManager: VideoEngineManager by lazy { VideoEngineManager(this) }
+
+    /** Manages the network connection and communication with the Syncplay server */
+    lateinit var networkManager: NetworkManager
+
+    /** Manages the Syncplay protocol and its events */
+    val protocolManager: ProtocolManager by lazy { ProtocolManager(this) }
+
+    /** Manages the current room session state and user list */
+    val sessionManager: SessionManager by lazy { SessionManager(this) }
+
+    /** Manages callbacks from protocol events (e.g., when someone pauses) - receiving actions */
+    val roomIn: RoomEventHandler by lazy { RoomEventHandler(this) }
+
+    /** Manages actions performed by the user to send to the server - sending actions */
+    val roomOut: RoomEventDispatcher by lazy { RoomEventDispatcher(this) }
+
+    /** Manages the shared playlist and all playlist-related functionality */
+    val playlistManager: SharedPlaylistManager by lazy { SharedPlaylistManager(this) }
+
+    /**
+     * List of seek operations as pairs of (fromPosition, toPosition) in milliseconds.
+     * Used for tracking and potentially reverting seek operations.
+     */
+    val seeks = mutableListOf<Pair<Long, Long>>()
+
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            networkManager = instantiateNetworkManager()
+
+            launch {
+                val engine = availablePlatformVideoEngines.first { it.name == Preferences.PLAYER_ENGINE.value() }
+                videoEngineManager.player = engine.createImpl(this@RoomViewmodel)
+                videoEngineManager.isPlayerReady.value = true
+            }
+
+            joinConfig?.let {
+                launch {
+                    sessionManager.session.serverHost = joinConfig.ip.takeIf { it != "syncplay.pl" } ?: "151.80.32.178"
+                    sessionManager.session.serverPort = joinConfig.port
+                    sessionManager.session.currentUsername = joinConfig.user
+                    sessionManager.session.currentRoom = joinConfig.room
+                    sessionManager.session.currentPassword = joinConfig.pw
+
+                    /** Connecting (via TLS or noTLS) */
+                    val tls = Preferences.TLS_ENABLE.value()
+                    if (tls && networkManager.supportsTLS()) {
+                        roomIn.onTLSCheck()
+                        networkManager.tls = TlsState.TLS_ASK
+                    }
+
+                    networkManager.connect()
+                }
+            }
+        }
+    }
+
+    /**
+     * Exits the current room and returns to the home screen.
+     */
+    fun leaveRoom() {
+        backStack.removeLast()
+    }
+
+    /**
+     * Checks for file mismatches between the local media and other users' files.
+     */
+    fun checkFileMismatches() {
+        if (isSoloMode) return
+        if (!Preferences.FILE_MISMATCH_WARNING.value()) return //Return if user doesn't want warnings
+
+        viewModelScope.launch {
+            val localMedia = media ?: return@launch //No media is loaded
+
+            for (user in session.userList.value) {
+                if (user.name == session.currentUsername) continue //We ain't gonna compare with ourselves
+                val theirFile = user.file ?: continue //User has no file
+
+                // Map mismatch conditions to their respective warning messages
+                val mismatches = listOf(
+                    (localMedia.fileName != theirFile.fileName) to Res.string.room_file_mismatch_warning_name,
+                    (localMedia.fileDuration != theirFile.fileDuration) to Res.string.room_file_mismatch_warning_duration,
+                    (localMedia.fileSize != theirFile.fileSize) to Res.string.room_file_mismatch_warning_size
+                )
+
+                // If all three mismatch, skip showing a warning
+                val matchingMismatches = mismatches.filter { it.first }
+                if (matchingMismatches.isEmpty() || matchingMismatches.size == 3) continue
+
+                // Build warning message dynamically
+                val warning = buildString {
+                    append(getString(Res.string.room_file_mismatch_warning_core, user.name))
+                    mismatches.filter { it.first }
+                        .forEach { append(getString(it.second)) }
+                }
+
+                roomOut.broadcastMessage(message = { warning }, isChat = false, isError = true)
+            }
+        }
+    }
+
+    /**
+     * Indicates whether the room is in solo mode (offline playback).
+     * When true, online-only components like networking and session sync are disabled.
+     */
+    val isSoloMode: Boolean
+        get() = joinConfig == null
+
+
+    val osdMsg = mutableStateOf("")
+    var osdJob: Job? = null
+    fun dispatchOSD(getter: suspend () -> String) {
+        runCatching {
+            osdJob?.cancel(null)
+        }
+        osdJob = viewModelScope.launch(Dispatchers.IO) {
+            osdMsg.value = getter()
+            delay(2000) //TODO Don't hardcore delay, make it a setting
+            osdMsg.value = ""
+        }
+    }
+
+    /************ Extension Properties for Quick Access ***************/
+
+    /** Quick access to the current media player instance */
+    val player: PlayerImpl
+        get() = videoEngineManager.player
+
+    /** Quick access to the current room session state */
+    val session: SessionManager.Session
+        get() = sessionManager.session
+
+    /** Quick access to the currently loaded media file, if any */
+    val media: MediaFile?
+        get() = videoEngineManager.media.value
+
+    /** Quick access to whether the current media contains video */
+    val hasVideo: StateFlow<Boolean>
+        get() = videoEngineManager.hasVideo
+
+    /**
+     * Cleans up all managers and resources when the ViewModel is destroyed.
+     * Ensures proper shutdown of network connections, player, and other subsystems.
+     */
+    override fun onCleared() {
+        loggy("²²²²²²²²²²²² Clearing viewmodel")
+        videoEngineManager.invalidate()
+        networkManager.invalidate()
+        uiState.invalidate()
+        protocolManager.invalidate()
+        sessionManager.invalidate()
+        super.onCleared()
+    }
+}

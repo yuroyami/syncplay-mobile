@@ -14,14 +14,13 @@ kotlin {
     jvmToolchain(AppConfig.javaVersion)
 
     android {
-        namespace = "com.yuroyami.syncplay"
+        namespace = "app"
         compileSdk = AppConfig.compileSdk
         minSdk = AppConfig.minSdk
         androidResources { enable = true }
     }
 
     // Activating iOS targets (iosMain)
-    //
     iosArm64().also {
         it.compilations.getByName("main") {
             @Suppress("unused") val nsKVO by cinterops.creating {

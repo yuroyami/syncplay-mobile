@@ -147,8 +147,8 @@
     <string name="room_card_title_in_room_prefs">Preferencias en la sala</string>
     <string name="room_audio_track_not_found">¡No se encontró audio!</string>
     <string name="room_msg_problem_loading_file">Hubo un problema cargando este archivo.</string>
-    <string name="room_managed_room_popup_create">Ingresa el nombre de la sala administrada\n(consulta https://syncplay.pl/guide/ para instrucciones de uso)</string>
-    <string name="room_managed_room_popup_pw_identify_as_operator">Ingresa la contraseña de operador para esta sala\n(consulta https://syncplay.pl/guide/ para instrucciones de uso)</string>
+    <string name="room_managed_room_popup_create">Ingresa el nombre de la sala administrada\n(consulta https://app.pl/guide/ para instrucciones de uso)</string>
+    <string name="room_managed_room_popup_pw_identify_as_operator">Ingresa la contraseña de operador para esta sala\n(consulta https://app.pl/guide/ para instrucciones de uso)</string>
     <string name="room_setting_pick_color">Elegir un color</string>
     <string name="room_reconnect_button">Reconectar</string>
     <string name="room_more_info_change_network_engine_msg">Intenta cambiar el motor de red en Configuración > Red a Ktor si experimentas problemas de conexión.</string>
@@ -332,7 +332,7 @@
     <string name="about_developed_by">• Desarrollado por: yuroyami</string>
     <string name="about_client_is_unofficial_disclaimer">• Este cliente no es oficial. Gracias al equipo oficial de Syncplay por su increíble software.</string>
     <string name="about_client_platforms">• Syncplay está disponible oficialmente para Windows, macOS y Linux.</string>
-    <string name="about_official_website">• Sitio web oficial: www.syncplay.pl</string>
+    <string name="about_official_website">• Sitio web oficial: www.app.pl</string>
 
     <string name="tips_dontshowmetips">No mostrarme consejos</string>
     <string name="tips_did_ya_know">¿Sabías que?</string>

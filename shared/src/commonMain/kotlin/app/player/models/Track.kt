@@ -1,0 +1,20 @@
+package app.player.models
+
+import app.player.PlayerImpl
+
+/*****************************************************************************************
+ * Track wrapper class. It encapsulates all info we need about a track in a track group  *
+ *****************************************************************************************/
+abstract class Track {
+    /** Name of the track */
+    abstract val name: String
+
+    /** Corresponds to either subtitle track or audio track type **/
+    abstract val type: PlayerImpl.TrackType?
+
+    /** The index of the format (track) **/
+    abstract val index: Int
+
+    /** The current status of the track **/
+    abstract val selected: Boolean
+}
