@@ -286,22 +286,26 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
 
     override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
         if (!isInitialized) return
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Main) {
             ctx.resolveUri(uri.path.toUri())?.let { subUri ->
-                withContext(Dispatchers.Main) {
-                    MPVLib.command(arrayOf("sub-add", subUri, "cached"))
-                }
+                MPVLib.command(arrayOf("sub-add", subUri, "cached"))
             }
         }
     }
 
     override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
         ctx.resolveUri(location.file.uri)?.let {
+            if (isInitialized) MPVLib.destroy()
+            mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
+            mpvObserverAttach()
             mpvView.playFile(it)
         }
     }
 
     override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
+        if (isInitialized) MPVLib.destroy()
+        mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
+        mpvObserverAttach()
         mpvView.playFile(location.url)
     }
 

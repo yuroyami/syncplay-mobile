@@ -146,6 +146,7 @@ class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(context, attr
 
     fun playFile(filePath: String) {
         this.filePath = filePath
+        surfaceCreated(holder)
     }
 
     // Called when back button is pressed, or app is shutting down
