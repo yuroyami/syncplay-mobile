@@ -40,7 +40,6 @@ import app.room.RoomViewmodel
 import app.utils.applyActivityUiProperties
 import app.utils.bindWatchdog
 import app.utils.changeLanguage
-import app.utils.hideSystemUI
 import app.utils.loggy
 import app.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
@@ -407,8 +406,6 @@ class SyncplayActivity : ComponentActivity() {
         } else {
             registerReceiver(pipBroadcastReceiver, filter)
         }
-
-        hideSystemUI(false)
 
         /** Applying track choices again so the player doesn't forget about track choices **/
         lifecycleScope.launch {
