@@ -13,10 +13,10 @@ import app.preferences.Preferences
 import app.preferences.value
 import app.protocol.ProtocolManager
 import app.protocol.Session
-import app.protocol.models.TlsState
-import app.protocol.network.NetworkManager
 import app.protocol.event.RoomEventDispatcher
 import app.protocol.event.RoomEventHandler
+import app.protocol.models.TlsState
+import app.protocol.network.NetworkManager
 import app.room.sharedplaylist.SharedPlaylistManager
 import app.utils.availablePlatformPlayerEngines
 import app.utils.instantiateNetworkManager
@@ -181,8 +181,11 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
         get() = protocol.session
 
     /** Quick access to the currently loaded media file, if any */
-    val media: MediaFile?
+    var media: MediaFile?
         get() = playerManager.media.value
+        set(value) {
+            playerManager.media.value = value
+        }
 
     /** Quick access to whether the current media contains video */
     val hasVideo: StateFlow<Boolean>

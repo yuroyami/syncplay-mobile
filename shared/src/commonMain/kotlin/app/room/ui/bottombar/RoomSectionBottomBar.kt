@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import app.LocalGlobalViewmodel
 import app.LocalRoomViewmodel
+import app.room.ui.bottombar.RoomSeekbar
 
 
 @Composable

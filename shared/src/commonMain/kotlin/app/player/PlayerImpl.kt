@@ -87,10 +87,7 @@ abstract class PlayerImpl(
         val currentPos = currentPositionMs()
 
         if (!viewmodel.isSoloMode) {
-            viewmodel.roomOut.sendSeek(
-                oldPosMs = currentPos,
-                newPosMs = chapter.timeOffsetMillis
-            )
+            viewmodel.roomOut.sendSeek(newPosMs = chapter.timeOffsetMillis)
         }
     }
 
@@ -106,10 +103,7 @@ abstract class PlayerImpl(
                 viewmodel.player.seekTo(nextChapter.timeOffsetMillis)
 
                 if (!viewmodel.isSoloMode) {
-                    viewmodel.roomOut.sendSeek(
-                        oldPosMs = currentMs,
-                        newPosMs = nextChapter.timeOffsetMillis
-                    )
+                    viewmodel.roomOut.sendSeek(newPosMs = nextChapter.timeOffsetMillis)
                 }
             }
     }

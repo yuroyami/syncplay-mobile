@@ -63,11 +63,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
             if (tls == TlsState.TLS_ASK) {
                 send<ClientMessage.TLS>()
             } else {
-                send<ClientMessage.Hello> {
-                    username = viewmodel.session.currentUsername
-                    roomname = viewmodel.session.currentRoom
-                    serverPassword = viewmodel.session.currentPassword
-                }
+                viewmodel.roomOut.sendHello()
             }
         } catch (e: Exception) {
             loggy(e.stackTraceToString())

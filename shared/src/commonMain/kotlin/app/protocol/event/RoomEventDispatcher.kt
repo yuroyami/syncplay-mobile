@@ -9,13 +9,9 @@ import app.protocol.models.ClientMessage
 import app.room.RoomViewmodel
 import app.room.models.Message
 import app.utils.platformCallback
-import app.utils.timestampFromMillis
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.compose.resources.getString
-import syncplaymobile.shared.generated.resources.Res
-import syncplaymobile.shared.generated.resources.room_seeked
 import kotlin.math.roundToLong
 
 /**
@@ -23,13 +19,21 @@ import kotlin.math.roundToLong
  * seeking, and chat. Counterpart to [RoomEventHandler]. All send operations are no-ops in solo mode.
  */
 class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
+    val network = viewmodel.networkManager
+    val session = viewmodel.session
 
-    val dispatcher = viewmodel.networkManager
+    suspend fun sendHello() {
+       network.send<ClientMessage.Hello> {
+            username = session.currentUsername
+            roomname = session.currentRoom
+            serverPassword = session.currentPassword
+        }
+    }
 
     fun sendPlayback(play: Boolean) {
         if (viewmodel.isSoloMode) return
 
-        dispatcher.sendAsync<ClientMessage.State> {
+        this@RoomEventDispatcher.network.sendAsync<ClientMessage.State> {
             serverTime = null
             doSeek = null
             position = withContext(Dispatchers.Main.immediate) { viewmodel.player.currentPositionMs().div(1000.0).roundToLong() }
@@ -38,15 +42,11 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
         }
     }
 
-    fun sendSeek(newPosMs: Long, oldPosMs: Long) {
+    var pendingSeekFromMs: Long = 0L
+    fun sendSeek(newPosMs: Long) {
         if (viewmodel.isSoloMode) return
 
-        viewmodel.roomOut.broadcastMessage(
-            message = { getString(Res.string.room_seeked, viewmodel.session.currentUsername, timestampFromMillis(oldPosMs), timestampFromMillis(newPosMs)) },
-            isChat = false
-        )
-
-        dispatcher.sendAsync<ClientMessage.State> {
+        this@RoomEventDispatcher.network.sendAsync<ClientMessage.State> {
             serverTime = null
             doSeek = true
             position = newPosMs / 1000L
@@ -57,7 +57,7 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
 
     fun sendMessage(msg: String) {
         if (viewmodel.isSoloMode) return
-        dispatcher.sendAsync<ClientMessage.Chat> { message = msg }
+        this@RoomEventDispatcher.network.sendAsync<ClientMessage.Chat> { message = msg }
     }
 
     fun pausePlayback() {
@@ -82,7 +82,7 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
             }
             if (newPos < 0) newPos = 0
 
-            sendSeek(newPos, currentMs)
+            sendSeek(newPos)
             viewmodel.player.seekTo(newPos)
             if (viewmodel.isSoloMode) viewmodel.seeks.add(Pair(currentMs, newPos * 1000))
         }
@@ -96,7 +96,7 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
                 if (dur == 0L) currentMs + (inc * 1000L) else (currentMs + (inc * 1000L)).coerceIn(0, dur)
             }
 
-            sendSeek(newPos, currentMs)
+            sendSeek(newPos)
             viewmodel.player.seekTo(newPos)
             if (viewmodel.isSoloMode) viewmodel.seeks.add(Pair(currentMs, newPos * 1000))
         }

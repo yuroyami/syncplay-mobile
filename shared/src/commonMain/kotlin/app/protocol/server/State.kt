@@ -2,10 +2,10 @@ package app.protocol.server
 
 import app.protocol.ProtocolManager
 import app.protocol.ProtocolManager.Companion.SEEK_THRESHOLD
+import app.protocol.event.RoomEventHandler
 import app.protocol.models.ClientMessage
 import app.protocol.network.NetworkManager
 import app.room.RoomViewmodel
-import app.protocol.event.RoomEventHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
@@ -69,7 +69,6 @@ data class State(
         dispatcher: NetworkManager,
         callback: RoomEventHandler
     ) {
-
         var position: Double? = null
         var paused: Boolean? = null
         var doSeek: Boolean? = null
@@ -80,11 +79,11 @@ data class State(
 
         state.ignoringOnTheFly?.let { ignoringOnTheFly ->
             if (ignoringOnTheFly.server != null) {
-                viewmodel.protocol.serverIgnFly = ignoringOnTheFly.server
-                viewmodel.protocol.clientIgnFly = 0
+                protocol.serverIgnFly = ignoringOnTheFly.server
+                protocol.clientIgnFly = 0
             } else if (ignoringOnTheFly.client != null) {
-                if (viewmodel.protocol.clientIgnFly == ignoringOnTheFly.client) {
-                    viewmodel.protocol.clientIgnFly = 0
+                if (protocol.clientIgnFly == ignoringOnTheFly.client) {
+                    protocol.clientIgnFly = 0
                 }
             }
         }
@@ -120,7 +119,7 @@ data class State(
             //loggy("msgAge: $messageAge")
 
             if (protocol.lastGlobalUpdate == null) {
-                if (protocol.viewmodel.playerManager.media.value != null) {
+                if (viewmodel.media != null) {
                     withContext(Dispatchers.Main) {
                         viewmodel.player.seekTo(position.toLong())
                         if (paused) viewmodel.player.pause() else viewmodel.player.play()

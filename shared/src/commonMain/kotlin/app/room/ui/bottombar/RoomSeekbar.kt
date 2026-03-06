@@ -1,4 +1,4 @@
-package com.yuroyami.app.room.ui.bottombar
+package app.room.ui.bottombar
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateIntAsState
@@ -25,7 +25,6 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -49,6 +48,7 @@ import app.utils.timestampFromMillis
 import kotlinx.coroutines.Dispatchers
 import kotlin.math.roundToLong
 import com.composeunstyled.Thumb as UnstyledThumb
+
 
 @Composable
 fun RoomSeekbar(modifier: Modifier) {
@@ -86,15 +86,14 @@ fun RoomSeekbar(modifier: Modifier) {
     var trackWidthPx by remember { mutableIntStateOf(0) }
 
     var isSliding by remember { mutableStateOf(false) }
-    var preSlidePosition by remember { mutableLongStateOf(0L) }
 
     Box(modifier) {
         Slider(
             value = sliderValue,
             onValueChange = { newVal ->
                 if (!isSliding) {
-                    preSlidePosition = viewmodel.player.currentPositionMs()
                     isSliding = true
+                    viewmodel.roomOut.pendingSeekFromMs = viewmodel.player.currentPositionMs()
                 }
                 sliderValue = newVal
                 viewmodel.player.seekTo(newVal.roundToLong())
@@ -103,7 +102,7 @@ fun RoomSeekbar(modifier: Modifier) {
                 if (isSliding) {
                     isSliding = false
                     if (!viewmodel.isSoloMode) {
-                        viewmodel.roomOut.sendSeek(sliderValue.roundToLong(), preSlidePosition)
+                        viewmodel.roomOut.sendSeek(sliderValue.roundToLong())
                     }
                 }
             },

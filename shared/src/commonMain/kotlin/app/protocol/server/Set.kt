@@ -134,9 +134,9 @@ data class Set(
     private suspend fun RoomEventHandler.handleNewControlledRoom(data: NewControlledRoom) {
         try {
             onNewControlledRoom(data)
-            dispatcher.send<ClientMessage.RoomChange> { room = data.roomName }
-            dispatcher.sendAsync<ClientMessage.EmptyList>()
-            dispatcher.send<ClientMessage.ControllerAuth> {
+            network.send<ClientMessage.RoomChange> { room = data.roomName }
+            network.sendAsync<ClientMessage.EmptyList>()
+            network.send<ClientMessage.ControllerAuth> {
                 room = data.roomName
                 password = data.password
             }

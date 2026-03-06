@@ -43,19 +43,22 @@ import syncplaymobile.shared.generated.resources.room_you_joined_room
  * user-facing messages. Counterpart to [RoomEventDispatcher] which handles outgoing actions.
  */
 class RoomEventHandler(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
-    val dispatcher = viewmodel.networkManager
-    val broadcaster = viewmodel.roomOut
+    val network = viewmodel.networkManager
+    val dispatcher = viewmodel.roomOut
     val protocol = viewmodel.protocol
     val session = viewmodel.protocol.session
+
+    fun String.isSelf(): Boolean = (this == session.currentUsername)
+    fun String.isNotSelf(): Boolean = (this != session.currentUsername)
 
     fun onSomeonePaused(pauser: String) {
         loggy("SYNCPLAY Protocol: Someone ($pauser) paused.")
 
-        if (pauser != session.currentUsername) {
-            broadcaster.pausePlayback()
+        if (pauser.isNotSelf()) {
+            dispatcher.pausePlayback()
         }
 
-        broadcaster.broadcastMessage(
+        dispatcher.broadcastMessage(
             message = {
                 getString(
                     resource = Res.string.room_guy_paused,
@@ -69,23 +72,23 @@ class RoomEventHandler(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel
     fun onSomeonePlayed(player: String) {
         loggy("SYNCPLAY Protocol: Someone ($player) unpaused.")
 
-        if (player != viewmodel.session.currentUsername) {
-            broadcaster.playPlayback()
+        if (player.isNotSelf()) {
+            dispatcher.playPlayback()
         }
 
-        broadcaster.broadcastMessage(message = { getString(Res.string.room_guy_played, player) }, isChat = false)
+        dispatcher.broadcastMessage(message = { getString(Res.string.room_guy_played, player) }, isChat = false)
     }
 
     fun onChatReceived(chatter: String, chatmessage: String) {
         loggy("SYNCPLAY Protocol: $chatter sent: $chatmessage")
 
-        broadcaster.broadcastMessage(message = { chatmessage }, isChat = true, chatter = chatter)
+        dispatcher.broadcastMessage(message = { chatmessage }, isChat = true, chatter = chatter)
     }
 
     fun onSomeoneJoined(joiner: String) {
         loggy("SYNCPLAY Protocol: $joiner joined the room.")
 
-        broadcaster.broadcastMessage(message = { getString(Res.string.room_guy_joined, joiner) }, isChat = false)
+        dispatcher.broadcastMessage(message = { getString(Res.string.room_guy_joined, joiner) }, isChat = false)
     }
 
     fun onSomeoneLeft(leaver: String) {
@@ -96,41 +99,46 @@ class RoomEventHandler(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel
 
         loggy("SYNCPLAY Protocol: $leaver left the room.")
 
-        broadcaster.broadcastMessage(message = { getString(Res.string.room_guy_left, leaver) }, isChat = false)
+        dispatcher.broadcastMessage(message = { getString(Res.string.room_guy_left, leaver) }, isChat = false)
 
         viewmodel.viewModelScope.launch(Dispatchers.Main) {
             if (viewmodel.player.hasMedia() && PAUSE_ON_SOMEONE_LEAVE.value()) {
-                broadcaster.pausePlayback()
+                this@RoomEventHandler.dispatcher.pausePlayback()
             }
         }
 
-        if (leaver == viewmodel.session.currentUsername) onDisconnected()
+        if (leaver.isSelf()) onDisconnected()
     }
 
     fun onSomeoneSeeked(seeker: String, toPosition: Double) {
         loggy("SYNCPLAY Protocol: $seeker seeked to: $toPosition")
 
         onMainThread {
-            val oldPosMs = protocol.globalPositionMs.toLong()
+            val oldPosMs = if (seeker.isSelf()) dispatcher.pendingSeekFromMs else viewmodel.player.currentPositionMs()
             val newPosMs = toPosition.toLong() * 1000L
 
-            broadcaster.broadcastMessage(
+            if (seeker.isNotSelf()) viewmodel.player.seekTo(newPosMs)
+
+            dispatcher.broadcastMessage(
                 message = { getString(Res.string.room_seeked, seeker, timestampFromMillis(oldPosMs), timestampFromMillis(newPosMs)) },
                 isChat = false
             )
 
             viewmodel.seeks.add(Pair(oldPosMs, newPosMs))
 
-            if (seeker == viewmodel.session.currentUsername) viewmodel.player.seekTo(newPosMs)
         }
     }
 
     fun onSomeoneBehind(behinder: String, toPosition: Double) {
         loggy("SYNCPLAY Protocol: $behinder is behind. Rewinding to $toPosition")
 
-        onMainThread { viewmodel.player.seekTo((toPosition * 1000L).toLong()) }
+        onMainThread {
+            if (behinder.isNotSelf()) {
+                viewmodel.player.seekTo((toPosition * 1000L).toLong())
+            }
+        }
 
-        broadcaster.broadcastMessage(message = { getString(Res.string.room_rewinded, behinder) }, isChat = false)
+        dispatcher.broadcastMessage(message = { getString(Res.string.room_rewinded, behinder) }, isChat = false)
     }
 
     fun onReceivedList() {
@@ -140,12 +148,14 @@ class RoomEventHandler(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel
     fun onSomeoneLoadedFile(person: String, file: String?, fileduration: Double?) {
         loggy("SYNCPLAY Protocol: $person loaded: $file - Duration: $fileduration")
 
-        broadcaster.broadcastMessage(
+        dispatcher.broadcastMessage(
             message = { getString(Res.string.room_isplayingfile, person, file ?: "", timestampFromMillis(fileduration?.toLong()?.times(1000L) ?: 0)) },
             isChat = false
         )
 
-        viewmodel.checkFileMismatches()
+        if (person.isNotSelf()) {
+            viewmodel.checkFileMismatches()
+        }
     }
 
     fun onPlaylistUpdated(user: String) {
@@ -156,49 +166,50 @@ class RoomEventHandler(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel
         }
 
         if (user == "") return
-        broadcaster.broadcastMessage(message = { getString(Res.string.room_shared_playlist_updated, user) }, isChat = false)
+        dispatcher.broadcastMessage(message = { getString(Res.string.room_shared_playlist_updated, user) }, isChat = false)
     }
 
     fun onPlaylistIndexChanged(user: String, index: Int) {
         loggy("SYNCPLAY Protocol: Playlist index changed by $user to $index")
 
         viewmodel.viewModelScope.launch {
-            viewmodel.playlistManager.changePlaylistSelection(index)
+            if (user.isNotSelf()) {
+                viewmodel.playlistManager.changePlaylistSelection(index)
+            }
         }
 
         if (user == "") return
-        broadcaster.broadcastMessage(message = { getString(Res.string.room_shared_playlist_changed, user) }, isChat = false)
+        dispatcher.broadcastMessage(message = { getString(Res.string.room_shared_playlist_changed, user) }, isChat = false)
     }
 
     suspend fun onConnected() {
         loggy("SYNCPLAY Protocol: Connected!")
 
-        viewmodel.networkManager.state = ConnectionState.STATE_CONNECTED
+        network.state = ConnectionState.STATE_CONNECTED
 
-        viewmodel.networkManager.sendAsync<ClientMessage.Readiness> {
-            isReady = if (viewmodel.media == null && READY_FIRST_HAND.value()) true
-            else viewmodel.session.ready.value
+        network.sendAsync<ClientMessage.Readiness> {
+            isReady = if (viewmodel.media == null && READY_FIRST_HAND.value()) true else session.ready.value
             manuallyInitiated = false
         }
 
-        broadcaster.broadcastMessage(message = { getString(Res.string.room_connected_to_server) }, isChat = false)
-        broadcaster.broadcastMessage(message = { getString(Res.string.room_you_joined_room, viewmodel.session.currentRoom) }, isChat = false)
+        dispatcher.broadcastMessage(message = { getString(Res.string.room_connected_to_server) }, isChat = false)
+        dispatcher.broadcastMessage(message = { getString(Res.string.room_you_joined_room, session.currentRoom) }, isChat = false)
 
         if (viewmodel.media != null) {
-            viewmodel.networkManager.sendAsync<ClientMessage.File> { this@sendAsync.media = viewmodel.media }
+            network.sendAsync<ClientMessage.File> { this@sendAsync.media = viewmodel.media }
         }
 
-        for (m in viewmodel.session.outboundQueue) viewmodel.networkManager.transmitPacket(m)
-        viewmodel.session.outboundQueue.clear()
+        for (m in session.outboundQueue) network.transmitPacket(m)
+        session.outboundQueue.clear()
     }
 
     fun onConnectionAttempt() {
         loggy("SYNCPLAY Protocol: Attempting connection...")
 
-        broadcaster.broadcastMessage(
+        dispatcher.broadcastMessage(
             message = { getString(Res.string.room_attempting_connect,
-                if (viewmodel.session.serverHost == "151.80.32.178") "syncplay.pl" else viewmodel.session.serverHost,
-                viewmodel.session.serverPort.toString()
+                if (session.serverHost == "151.80.32.178") "syncplay.pl" else session.serverHost,
+                session.serverPort.toString()
             )},
             isChat = false
         )
@@ -207,61 +218,57 @@ class RoomEventHandler(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel
     fun onConnectionFailed() {
         loggy("SYNCPLAY Protocol: Connection failed :/")
 
-        viewmodel.networkManager.state = ConnectionState.STATE_DISCONNECTED
-        broadcaster.broadcastMessage(message = { getString(Res.string.room_connection_failed) }, isChat = false, isError = true)
-        viewmodel.networkManager.reconnect()
+        network.state = ConnectionState.STATE_DISCONNECTED
+        dispatcher.broadcastMessage(message = { getString(Res.string.room_connection_failed) }, isChat = false, isError = true)
+        network.reconnect()
     }
 
     fun onDisconnected() {
         loggy("SYNCPLAY Protocol: Disconnected.")
 
-        viewmodel.networkManager.state = ConnectionState.STATE_DISCONNECTED
-        broadcaster.broadcastMessage(message = { getString(Res.string.room_attempting_reconnection) }, isChat = false, isError = true)
-        viewmodel.networkManager.reconnect()
+        network.state = ConnectionState.STATE_DISCONNECTED
+        dispatcher.broadcastMessage(message = { getString(Res.string.room_attempting_reconnection) }, isChat = false, isError = true)
+        network.reconnect()
     }
 
     fun onTLSCheck() {
         loggy("SYNCPLAY Protocol: Checking TLS...")
 
-        broadcaster.broadcastMessage(message = { getString(Res.string.room_attempting_tls) }, isChat = false)
+        dispatcher.broadcastMessage(message = { getString(Res.string.room_attempting_tls) }, isChat = false)
     }
 
     suspend fun onReceivedTLS(supported: Boolean) {
         loggy("SYNCPLAY Protocol: Received TLS...")
 
         if (supported) {
-            broadcaster.broadcastMessage(message = { getString(Res.string.room_tls_supported) }, isChat = false)
-            viewmodel.networkManager.tls = TlsState.TLS_YES
-            viewmodel.networkManager.upgradeTls()
+            dispatcher.broadcastMessage(message = { getString(Res.string.room_tls_supported) }, isChat = false)
+            network.tls = TlsState.TLS_YES
+            network.upgradeTls()
         } else {
-            broadcaster.broadcastMessage(message = { getString(Res.string.room_tls_not_supported) }, isChat = false, isError = true)
-            viewmodel.networkManager.tls = TlsState.TLS_NO
+            dispatcher.broadcastMessage(message = { getString(Res.string.room_tls_not_supported) }, isChat = false, isError = true)
+            network.tls = TlsState.TLS_NO
         }
 
-        viewmodel.networkManager.send<ClientMessage.Hello> {
-            username = viewmodel.session.currentUsername
-            roomname = viewmodel.session.currentRoom
-            serverPassword = viewmodel.session.currentPassword
-        }
+        dispatcher.sendHello()
     }
 
     // TODO: Copy +room:password to clipboard
     fun onNewControlledRoom(data: Set.NewControlledRoom) {
-        viewmodel.session.currentRoom = data.roomName
-        viewmodel.session.currentOperatorPassword = data.password
+        session.currentRoom = data.roomName
+        session.currentOperatorPassword = data.password
 
-        broadcaster.broadcastMessage(
+        dispatcher.broadcastMessage(
             message = { getString(Res.string.room_on_newcontrolledroom, data.roomName, data.password) },
             isChat = false
         )
     }
 
     fun onHandleControllerAuth(data: ControllerAuthResponse) {
-        val user = data.user ?: viewmodel.session.currentUsername
+        val user = data.user ?: session.currentUsername
 
-        viewmodel.networkManager.sendAsync<ClientMessage.EmptyList>()
+        network.sendAsync<ClientMessage.EmptyList>()
 
-        broadcaster.broadcastMessage(
+        dispatcher.broadcastMessage(
             message = { getString(when (data.success) {
                 true -> Res.string.room_on_controller_auth_success
                 false -> Res.string.room_on_controller_auth_failed
