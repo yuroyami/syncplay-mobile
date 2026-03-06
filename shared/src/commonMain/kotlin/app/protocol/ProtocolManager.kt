@@ -1,7 +1,7 @@
 package app.protocol
 
 import app.AbstractManager
-import app.protocol.models.ClientMessage
+import app.protocol.event.ClientMessage
 import app.protocol.models.PingService
 import app.protocol.network.NetworkManager
 import app.protocol.server.Chat

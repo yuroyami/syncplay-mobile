@@ -1,4 +1,4 @@
-package app.protocol.models
+package app.protocol.event
 
 import app.player.models.MediaFile
 import app.player.models.MediaFile.Companion.hashed

@@ -90,7 +90,7 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                viewmodel.roomIn.onConnectionFailed()
+                viewmodel.callback.onConnectionFailed()
             }
         }
     }
@@ -125,7 +125,7 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
             connection?.output?.flush()
         } catch (e: Exception) {
             e.printStackTrace()
-            viewmodel.roomIn.onDisconnected()
+            viewmodel.callback.onDisconnected()
         }
     }
 

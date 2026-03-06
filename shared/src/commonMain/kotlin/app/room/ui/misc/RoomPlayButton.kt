@@ -48,8 +48,8 @@ fun RoomPlayButton(modifier: Modifier) {
         ) {
             viewmodel.viewModelScope.launch(Dispatchers.Main) {
                 when (viewmodel.player.isPlaying()) {
-                    true -> viewmodel.roomOut.pausePlayback()
-                    false -> viewmodel.roomOut.playPlayback()
+                    true -> viewmodel.dispatcher.pausePlayback()
+                    false -> viewmodel.dispatcher.playPlayback()
                 }
             }
         }

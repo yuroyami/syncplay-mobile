@@ -7,7 +7,7 @@ import app.player.PlayerImpl.Companion.injectVideo
 import app.preferences.Preferences
 import app.preferences.set
 import app.preferences.value
-import app.protocol.models.ClientMessage
+import app.protocol.event.ClientMessage
 import io.github.vinceglb.filekit.PlatformFile
 import org.jetbrains.compose.resources.getString
 import syncplaymobile.shared.generated.resources.Res
@@ -155,7 +155,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             val paths = Preferences.MEDIA_DIRECTORIES.value()
 
             if (paths.isEmpty()) {
-                viewmodel.roomOut.broadcastMessage(message = { getString(Res.string.room_shared_playlist_no_directories) }, isChat = false)
+                viewmodel.dispatcher.broadcastMessage(message = { getString(Res.string.room_shared_playlist_no_directories) }, isChat = false)
             }
 
             var fileUri2Play: String? = null
@@ -174,7 +174,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
                 if (viewmodel.media?.fileName != fileName) {
                     val s = getString(Res.string.room_shared_playlist_not_found)
                     viewmodel.dispatchOSD { s }
-                    viewmodel.roomOut.broadcastMessage(message = { s }, isChat = false)
+                    viewmodel.dispatcher.broadcastMessage(message = { s }, isChat = false)
                 }
             }
 

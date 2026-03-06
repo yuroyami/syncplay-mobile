@@ -5,7 +5,6 @@ import app.AbstractManager
 import app.preferences.Preferences.PAUSE_ON_SOMEONE_LEAVE
 import app.preferences.Preferences.READY_FIRST_HAND
 import app.preferences.value
-import app.protocol.models.ClientMessage
 import app.protocol.models.ConnectionState
 import app.protocol.models.TlsState
 import app.protocol.server.Set
@@ -42,9 +41,9 @@ import syncplaymobile.shared.generated.resources.room_you_joined_room
  * Handles incoming Syncplay protocol events, updating local state and broadcasting
  * user-facing messages. Counterpart to [RoomEventDispatcher] which handles outgoing actions.
  */
-class RoomEventHandler(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
+class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     val network = viewmodel.networkManager
-    val dispatcher = viewmodel.roomOut
+    val dispatcher = viewmodel.dispatcher
     val protocol = viewmodel.protocol
     val session = viewmodel.protocol.session
 
@@ -103,7 +102,7 @@ class RoomEventHandler(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel
 
         viewmodel.viewModelScope.launch(Dispatchers.Main) {
             if (viewmodel.player.hasMedia() && PAUSE_ON_SOMEONE_LEAVE.value()) {
-                this@RoomEventHandler.dispatcher.pausePlayback()
+                this@RoomCallback.dispatcher.pausePlayback()
             }
         }
 

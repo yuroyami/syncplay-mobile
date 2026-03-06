@@ -93,7 +93,7 @@ fun RoomSeekbar(modifier: Modifier) {
             onValueChange = { newVal ->
                 if (!isSliding) {
                     isSliding = true
-                    viewmodel.roomOut.pendingSeekFromMs = viewmodel.player.currentPositionMs()
+                    viewmodel.dispatcher.pendingSeekFromMs = viewmodel.player.currentPositionMs()
                 }
                 sliderValue = newVal
                 viewmodel.player.seekTo(newVal.roundToLong())
@@ -102,7 +102,7 @@ fun RoomSeekbar(modifier: Modifier) {
                 if (isSliding) {
                     isSliding = false
                     if (!viewmodel.isSoloMode) {
-                        viewmodel.roomOut.sendSeek(sliderValue.roundToLong())
+                        viewmodel.dispatcher.sendSeek(sliderValue.roundToLong())
                     }
                 }
             },

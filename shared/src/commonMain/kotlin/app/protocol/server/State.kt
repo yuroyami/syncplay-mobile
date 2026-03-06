@@ -2,8 +2,8 @@ package app.protocol.server
 
 import app.protocol.ProtocolManager
 import app.protocol.ProtocolManager.Companion.SEEK_THRESHOLD
-import app.protocol.event.RoomEventHandler
-import app.protocol.models.ClientMessage
+import app.protocol.event.RoomCallback
+import app.protocol.event.ClientMessage
 import app.protocol.network.NetworkManager
 import app.room.RoomViewmodel
 import kotlinx.coroutines.Dispatchers
@@ -67,7 +67,7 @@ data class State(
         protocol: ProtocolManager,
         viewmodel: RoomViewmodel,
         dispatcher: NetworkManager,
-        callback: RoomEventHandler
+        callback: RoomCallback
     ) {
         var position: Double? = null
         var paused: Boolean? = null

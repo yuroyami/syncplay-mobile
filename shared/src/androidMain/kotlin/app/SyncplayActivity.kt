@@ -384,9 +384,9 @@ class SyncplayActivity : ComponentActivity() {
                     val pausePlayValue = intnt.getIntExtra("pause_zero_play_one", -1)
 
                     if (pausePlayValue == 1) {
-                        roomViewmodel?.roomOut?.playPlayback()
+                        roomViewmodel?.dispatcher?.playPlayback()
                     } else {
-                        roomViewmodel?.roomOut?.pausePlayback()
+                        roomViewmodel?.dispatcher?.pausePlayback()
                     }
                 }
             }

@@ -4,13 +4,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.interop.UIKitView
-import app.player.PlayerImpl
 import app.player.PlayerEngine
+import app.player.PlayerImpl
 import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
 import app.player.models.Track
-import app.utils.GlobalPlayerSession
 import app.room.RoomViewmodel
+import app.utils.GlobalPlayerSession
 import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CValue
@@ -168,7 +168,7 @@ object AVPlayerEngine: PlayerEngine {
                         // Player started playing
                         viewmodel.playerManager.isNowPlaying.value = isPlaying
                         if (!viewmodel.isSoloMode) {
-                            viewmodel.roomOut.sendPlayback(isPlaying)
+                            viewmodel.dispatcher.sendPlayback(isPlaying)
                         }
                     }
                 }
@@ -379,7 +379,7 @@ object AVPlayerEngine: PlayerEngine {
         override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
             if (!isInitialized) return
 
-            viewmodel.osdManager.dispatchOSD {
+            viewmodel.dispatchOSD {
                 "Player does not support external subtitles."
                 //TODO LOCALIZE
             }

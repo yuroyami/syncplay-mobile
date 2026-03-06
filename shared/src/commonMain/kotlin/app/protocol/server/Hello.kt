@@ -1,11 +1,11 @@
 package app.protocol.server
 
 import app.protocol.ProtocolManager
-import app.protocol.models.ClientMessage
+import app.protocol.event.ClientMessage
 import app.protocol.models.RoomFeatures
 import app.protocol.network.NetworkManager
 import app.room.RoomViewmodel
-import app.protocol.event.RoomEventHandler
+import app.protocol.event.RoomCallback
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -19,12 +19,12 @@ data class Hello(
     val hello: HelloData
 ) : ServerMessage {
 
-    /** Updates session info, sends join/list requests, and triggers [RoomEventHandler.onConnected]. */
+    /** Updates session info, sends join/list requests, and triggers [RoomCallback.onConnected]. */
     override suspend fun handle(
         protocol: ProtocolManager,
         viewmodel: RoomViewmodel,
         dispatcher: NetworkManager,
-        callback: RoomEventHandler
+        callback: RoomCallback
     ) {
         hello.username?.let { username ->
             protocol.session.currentUsername = username

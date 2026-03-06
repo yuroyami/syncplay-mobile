@@ -75,14 +75,14 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
         }
         result.whenFailure { error in
             print(error)
-            self.viewmodel.callbackManager.onConnectionFailed()
+            self.viewmodel.callback.onConnectionFailed()
         }
 
         do {
             _ = try await result.get()
         } catch {
             print("Connection error: \(error)")
-            self.viewmodel.callbackManager.onConnectionFailed()
+            self.viewmodel.callback.onConnectionFailed()
         }
     }
 
@@ -121,7 +121,7 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
      */
     override func writeActualString(s: String) async throws {
         guard let channel = channel else {
-            viewmodel.callbackManager.onDisconnected()
+            viewmodel.callback.onDisconnected()
             return
         }
 
@@ -132,7 +132,7 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
             do {
                 try result.get()
             } catch {
-                self.viewmodel.callbackManager.onDisconnected()
+                self.viewmodel.callback.onDisconnected()
                 print("Error writing to channel: \(error)")
             }
         }
@@ -157,7 +157,7 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
                 try channel?.pipeline.addHandler(tlsHandler, position: .first).wait()
             } catch {
                 print("Error initializing TLS: \(error)")
-                self.viewmodel.callbackManager.onConnectionFailed()
+                self.viewmodel.callback.onConnectionFailed()
             }
         }
     }
@@ -182,7 +182,7 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
         let data = buffer.readData(length: readableBytes)!
 
         if let received = String(data: data, encoding: .utf8) {
-            self.handlePacket(data: received)
+            self.handlePacket(jsonString: received)
         }
     }
 

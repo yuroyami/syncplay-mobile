@@ -3,7 +3,7 @@ package app.room.sharedplaylist
 import androidx.lifecycle.viewModelScope
 import app.utils.generateTimestampMillis
 import app.utils.vidExs
-import app.protocol.models.ClientMessage
+import app.protocol.event.ClientMessage
 import app.room.sharedplaylist.SharedPlaylistManager.Companion.saveFolderPathAsMediaDirectory
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi

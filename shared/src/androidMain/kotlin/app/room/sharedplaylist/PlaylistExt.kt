@@ -3,7 +3,7 @@ package app.room.sharedplaylist
 import android.provider.DocumentsContract
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import app.protocol.models.ClientMessage
+import app.protocol.event.ClientMessage
 import app.room.sharedplaylist.SharedPlaylistManager.Companion.saveFolderPathAsMediaDirectory
 import app.utils.contextObtainer
 import app.utils.loggy

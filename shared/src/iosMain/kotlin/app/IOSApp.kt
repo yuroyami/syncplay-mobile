@@ -3,9 +3,9 @@
 package app
 
 import androidx.compose.ui.window.ComposeUIViewController
-import app.utils.platformCallback
 import app.home.HomeViewmodel
 import app.room.RoomViewmodel
+import app.utils.platformCallback
 import platform.UIKit.NSLayoutConstraint
 import platform.UIKit.UIViewController
 import platform.UIKit.addChildViewController
@@ -82,7 +82,7 @@ fun SyncplayController(): UIViewController {
                 composeController.view.bottomAnchor.constraintEqualToAnchor(view.bottomAnchor)
             ))
 
-            roomViewmodel?.lifecycleManager?.onCreate()
+            roomViewmodel?.uiState?.onLifecycleCreate()
         }
 
         /**
@@ -92,7 +92,7 @@ fun SyncplayController(): UIViewController {
         override fun viewDidAppear(animated: Boolean) {
             super.viewDidAppear(animated)
 
-            roomViewmodel?.lifecycleManager?.onResume()
+            roomViewmodel?.uiState?.onLifecycleResume()
         }
 
         /**
@@ -102,7 +102,7 @@ fun SyncplayController(): UIViewController {
         override fun viewDidDisappear(animated: Boolean) {
             super.viewDidDisappear(animated)
 
-            roomViewmodel?.lifecycleManager?.onStop()
+            roomViewmodel?.uiState?.onLifecycleStop()
         }
 
         /**
@@ -113,7 +113,7 @@ fun SyncplayController(): UIViewController {
         override fun viewWillAppear(animated: Boolean) {
             super.viewWillAppear(animated)
 
-            roomViewmodel?.lifecycleManager?.onStart()
+            roomViewmodel?.uiState?.onLifecycleStart()
         }
 
         /**
@@ -123,7 +123,7 @@ fun SyncplayController(): UIViewController {
          */
         override fun viewWillDisappear(animated: Boolean) {
             super.viewWillDisappear(animated)
-            roomViewmodel?.lifecycleManager?.onPause()
+            roomViewmodel?.uiState?.onLifecyclePause()
         }
     }
 

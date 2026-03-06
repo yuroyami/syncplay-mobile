@@ -32,7 +32,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.LocalRoomViewmodel
-import app.protocol.models.ClientMessage
+import app.protocol.event.ClientMessage
 import app.theme.Theming.flexibleGradient
 import app.uicomponents.FlexibleText
 import app.uicomponents.SyncplayPopup

@@ -177,7 +177,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
             scope.launch(Dispatchers.Main.immediate) {
                 viewmodel.player.seekTo(lastSeek.first)
             }
-            viewmodel.roomOut.sendSeek(lastSeek.first)
+            viewmodel.dispatcher.sendSeek(lastSeek.first)
             viewmodel.seeks.remove(lastSeek)
             viewmodel.dispatchOSD { getString(Res.string.room_seek_undone) }
         }

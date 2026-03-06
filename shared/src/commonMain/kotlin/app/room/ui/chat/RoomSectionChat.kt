@@ -94,7 +94,7 @@ fun ChatTextField(
 
     fun send() {
         val msgToSend = msg.replace("\\", "").take(149)
-        if (msgToSend.isNotBlank()) viewmodel.roomOut.sendMessage(msgToSend)
+        if (msgToSend.isNotBlank()) viewmodel.dispatcher.sendMessage(msgToSend)
 
         viewmodel.uiState.msg.value = ""
         focusManager.clearFocus()

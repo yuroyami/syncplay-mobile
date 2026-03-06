@@ -55,7 +55,7 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
                 size = ROOM_ICON_SIZE + 6,
                 shadowColors = listOf(Color.Black)
             ) {
-                viewmodel.roomOut.seekBckwd()
+                viewmodel.dispatcher.seekBckwd()
             }
 
             FlexibleIcon(
@@ -63,7 +63,7 @@ fun RoomBottomBarVideoControlRow(modifier: Modifier) {
                 size = ROOM_ICON_SIZE + 6,
                 shadowColors = listOf(Color.Black)
             ) {
-                viewmodel.roomOut.seekFrwrd()
+                viewmodel.dispatcher.seekFrwrd()
             }
         }
         val customSkipAmount by CUSTOM_SEEK_AMOUNT.watchPref()

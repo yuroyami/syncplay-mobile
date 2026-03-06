@@ -13,8 +13,8 @@ import app.preferences.Preferences
 import app.preferences.value
 import app.protocol.ProtocolManager
 import app.protocol.Session
+import app.protocol.event.RoomCallback
 import app.protocol.event.RoomEventDispatcher
-import app.protocol.event.RoomEventHandler
 import app.protocol.models.TlsState
 import app.protocol.network.NetworkManager
 import app.room.sharedplaylist.SharedPlaylistManager
@@ -60,10 +60,10 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
     val protocol: ProtocolManager by lazy { ProtocolManager(this) }
 
     /** Manages callbacks from protocol events (e.g., when someone pauses) - receiving actions */
-    val roomIn: RoomEventHandler by lazy { RoomEventHandler(this) }
+    val callback: RoomCallback by lazy { RoomCallback(this) }
 
     /** Manages actions performed by the user to send to the server - sending actions */
-    val roomOut: RoomEventDispatcher by lazy { RoomEventDispatcher(this) }
+    val dispatcher: RoomEventDispatcher by lazy { RoomEventDispatcher(this) }
 
     /** Manages the shared playlist and all playlist-related functionality */
     val playlistManager: SharedPlaylistManager by lazy { SharedPlaylistManager(this) }
@@ -95,7 +95,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
                     /** Connecting (via TLS or noTLS) */
                     val tls = Preferences.TLS_ENABLE.value()
                     if (tls && networkManager.supportsTLS()) {
-                        roomIn.onTLSCheck()
+                        callback.onTLSCheck()
                         networkManager.tls = TlsState.TLS_ASK
                     }
 
@@ -144,7 +144,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
                         .forEach { append(getString(it.second)) }
                 }
 
-                roomOut.broadcastMessage(message = { warning }, isChat = false, isError = true)
+                dispatcher.broadcastMessage(message = { warning }, isChat = false, isError = true)
             }
         }
     }

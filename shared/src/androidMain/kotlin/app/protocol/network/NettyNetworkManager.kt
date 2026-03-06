@@ -100,7 +100,7 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
                         override fun exceptionCaught(ctx: ChannelHandlerContext?, cause: Throwable?) {
                             super.exceptionCaught(ctx, cause)
                             loggy("EXCEPTION CAUGHT IN NETTY: ${cause?.stackTraceToString()}")
-                            viewmodel.roomIn.onDisconnected()
+                            viewmodel.callback.onDisconnected()
                         }
                     })
                 }
@@ -115,7 +115,7 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
         )
         val success = f.await(10000)
         if (!success) {
-            viewmodel.roomIn.onConnectionFailed()
+            viewmodel.callback.onConnectionFailed()
         } else {
             /* This is the channel, only variable we should memorize from the entire bootstrap/connection phase */
             channel = f.channel()
@@ -151,7 +151,7 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
         f?.addListener(ChannelFutureListener { future ->
             if (!future.isSuccess) {
                 loggy("OH NO, no future...")
-                viewmodel.roomIn.onDisconnected()
+                viewmodel.callback.onDisconnected()
             }
         })
     }

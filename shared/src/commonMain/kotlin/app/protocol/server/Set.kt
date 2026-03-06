@@ -3,10 +3,10 @@ package app.protocol.server
 import androidx.lifecycle.viewModelScope
 import app.protocol.ProtocolManager
 import app.protocol.ProtocolManager.Companion.serverJson
-import app.protocol.models.ClientMessage
+import app.protocol.event.ClientMessage
 import app.protocol.network.NetworkManager
 import app.room.RoomViewmodel
-import app.protocol.event.RoomEventHandler
+import app.protocol.event.RoomCallback
 import app.utils.loggy
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -28,7 +28,7 @@ data class Set(
         protocol: ProtocolManager,
         viewmodel: RoomViewmodel,
         dispatcher: NetworkManager,
-        callback: RoomEventHandler
+        callback: RoomCallback
     ) {
         when {
             set.user != null -> callback.handleUserSet(set.user)
@@ -94,7 +94,7 @@ data class Set(
         val success: Boolean
     )
 
-    private fun RoomEventHandler.handleUserSet(userObject: JsonObject) {
+    private fun RoomCallback.handleUserSet(userObject: JsonObject) {
         val userName = userObject.keys.firstOrNull() ?: return
 
         try {
@@ -116,14 +116,14 @@ data class Set(
         }
     }
 
-    private fun RoomEventHandler.handlePlaylistIndex(playlistIndex: PlaylistIndexData) {
+    private fun RoomCallback.handlePlaylistIndex(playlistIndex: PlaylistIndexData) {
         val user = playlistIndex.user ?: return
         val index = playlistIndex.index ?: return
         onPlaylistIndexChanged(user, index)
         viewmodel.session.spIndex.intValue = index
     }
 
-    private fun RoomEventHandler.handlePlaylistChange(playlistChange: PlaylistChangeData) {
+    private fun RoomCallback.handlePlaylistChange(playlistChange: PlaylistChangeData) {
         val user = playlistChange.user ?: ""
         val files = playlistChange.files ?: return
         viewmodel.session.sharedPlaylist.clear()
@@ -131,7 +131,7 @@ data class Set(
         onPlaylistUpdated(user)
     }
 
-    private suspend fun RoomEventHandler.handleNewControlledRoom(data: NewControlledRoom) {
+    private suspend fun RoomCallback.handleNewControlledRoom(data: NewControlledRoom) {
         try {
             onNewControlledRoom(data)
             network.send<ClientMessage.RoomChange> { room = data.roomName }

@@ -7,7 +7,7 @@ import app.preferences.Preferences.RECONNECTION_INTERVAL
 import app.preferences.value
 import app.protocol.ProtocolManager.Companion.createPacketInstance
 import app.protocol.ProtocolManager.Companion.serverJson
-import app.protocol.models.ClientMessage
+import app.protocol.event.ClientMessage
 import app.protocol.models.ConnectionState
 import app.protocol.models.TlsState
 import app.room.RoomViewmodel
@@ -54,7 +54,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
         if (viewmodel.isSoloMode) return
 
         terminateExistingConnection()
-        viewmodel.roomIn.onConnectionAttempt()
+        viewmodel.callback.onConnectionAttempt()
         state = ConnectionState.STATE_CONNECTING
 
         try {
@@ -63,11 +63,11 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
             if (tls == TlsState.TLS_ASK) {
                 send<ClientMessage.TLS>()
             } else {
-                viewmodel.roomOut.sendHello()
+                viewmodel.dispatcher.sendHello()
             }
         } catch (e: Exception) {
             loggy(e.stackTraceToString())
-            viewmodel.roomIn.onConnectionFailed()
+            viewmodel.callback.onConnectionFailed()
         }
     }
 
@@ -102,7 +102,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
                     protocol = viewmodel.protocol,
                     viewmodel = viewmodel,
                     dispatcher = viewmodel.networkManager,
-                    callback = viewmodel.roomIn
+                    callback = viewmodel.callback
                 )
             } catch (e: SerializationException) {
                 loggy("Problematic Json: $jsonString")
@@ -113,7 +113,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     }
 
     private fun onError() {
-        viewmodel.roomIn.onDisconnected()
+        viewmodel.callback.onDisconnected()
     }
 
     typealias SendablePacket = String

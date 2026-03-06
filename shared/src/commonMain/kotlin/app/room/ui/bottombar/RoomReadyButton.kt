@@ -23,7 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.LocalRoomViewmodel
-import app.protocol.models.ClientMessage
+import app.protocol.event.ClientMessage
 import app.theme.Theming
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res

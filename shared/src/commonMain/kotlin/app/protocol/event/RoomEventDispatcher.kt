@@ -2,10 +2,8 @@ package app.protocol.event
 
 import androidx.lifecycle.viewModelScope
 import app.AbstractManager
-import app.preferences.Preferences.SEEK_BACKWARD_JUMP
-import app.preferences.Preferences.SEEK_FORWARD_JUMP
+import app.preferences.Preferences
 import app.preferences.value
-import app.protocol.models.ClientMessage
 import app.room.RoomViewmodel
 import app.room.models.Message
 import app.utils.platformCallback
@@ -16,7 +14,7 @@ import kotlin.math.roundToLong
 
 /**
  * Handles user-initiated actions and outbound protocol messages for playback control,
- * seeking, and chat. Counterpart to [RoomEventHandler]. All send operations are no-ops in solo mode.
+ * seeking, and chat. Counterpart to [RoomCallback]. All send operations are no-ops in solo mode.
  */
 class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     val network = viewmodel.networkManager
@@ -76,7 +74,7 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
     fun seekBckwd() {
         viewmodel.player.playerScopeMain.launch {
             val currentMs = viewmodel.player.currentPositionMs()
-            val dec = SEEK_BACKWARD_JUMP.value()
+            val dec = Preferences.SEEK_BACKWARD_JUMP.value()
             var newPos = viewmodel.playerManager.timeFullMillis.value.let { dur ->
                 if (dur == 0L) currentMs - (dec * 1000L) else (currentMs - (dec * 1000L)).coerceIn(0, dur)
             }
@@ -91,7 +89,7 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
     fun seekFrwrd() {
         viewmodel.player.playerScopeMain.launch {
             val currentMs = viewmodel.player.currentPositionMs()
-            val inc = SEEK_FORWARD_JUMP.value()
+            val inc = Preferences.SEEK_FORWARD_JUMP.value()
             val newPos = viewmodel.playerManager.timeFullMillis.value.let { dur ->
                 if (dur == 0L) currentMs + (inc * 1000L) else (currentMs + (inc * 1000L)).coerceIn(0, dur)
             }

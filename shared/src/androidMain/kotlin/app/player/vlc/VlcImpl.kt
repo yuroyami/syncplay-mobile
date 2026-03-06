@@ -329,7 +329,7 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
 
                         //Tell server about playback state change
                         if (!viewmodel.isSoloMode) {
-                            viewmodel.roomOut.sendPlayback(true)
+                            viewmodel.dispatcher.sendPlayback(true)
                         }
                     }
                 }
@@ -340,7 +340,7 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
 
                         //Tell server about playback state change
                         if (!viewmodel.isSoloMode) {
-                            viewmodel.roomOut.sendPlayback(false)
+                            viewmodel.dispatcher.sendPlayback(false)
                         }
                     }
                 }

@@ -165,7 +165,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                 seekRightInteraction.emit(press)
                                 while (isActive) {
                                     haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                    viewmodel.roomOut.seekFrwrd()
+                                    viewmodel.dispatcher.seekFrwrd()
                                     seekRightInteraction.emit(press)
                                     delay(200)
                                     seekRightInteraction.emit(PressInteraction.Release(press))
@@ -186,7 +186,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                 seekLeftInteraction.emit(press)
                                 while (isActive) {
                                     haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                    viewmodel.roomOut.seekBckwd()
+                                    viewmodel.dispatcher.seekBckwd()
                                     seekLeftInteraction.emit(press)
                                     delay(200)
                                     seekLeftInteraction.emit(PressInteraction.Release(press))
@@ -202,7 +202,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                         { offset ->
                             scope.launch {
                                 if (offset.x < w.times(0.35f)) {
-                                    viewmodel.roomOut.seekBckwd()
+                                    viewmodel.dispatcher.seekBckwd()
                                     haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
 
                                     val press = PressInteraction.Press(Offset.Zero)
@@ -211,7 +211,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                     seekLeftInteraction.emit(PressInteraction.Release(press))
                                 }
                                 if (offset.x > w.times(0.65f)) {
-                                    viewmodel.roomOut.seekFrwrd()
+                                    viewmodel.dispatcher.seekFrwrd()
                                     haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
 
                                     val press = PressInteraction.Press(Offset.Zero)

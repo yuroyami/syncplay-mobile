@@ -161,7 +161,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
                         //Tell server about playback state change
                         if (!viewmodel.isSoloMode) {
-                            viewmodel.roomOut.sendPlayback(isPlaying)
+                            viewmodel.dispatcher.sendPlayback(isPlaying)
                         }
 
                         if (exoplayer!!.playbackState == ExoPlayer.STATE_ENDED) {

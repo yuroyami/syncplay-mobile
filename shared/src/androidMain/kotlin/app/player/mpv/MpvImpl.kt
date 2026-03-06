@@ -403,7 +403,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
 
                         //Tell server about playback state change
                         if (!viewmodel.isSoloMode) {
-                            viewmodel.roomOut.sendPlayback(!value)
+                            viewmodel.dispatcher.sendPlayback(!value)
                         }
                     }
                 }

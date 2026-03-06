@@ -7,7 +7,7 @@ import app.protocol.ProtocolManager.Companion.serverJson
 import app.protocol.models.User
 import app.protocol.network.NetworkManager
 import app.room.RoomViewmodel
-import app.protocol.event.RoomEventHandler
+import app.protocol.event.RoomCallback
 import app.utils.loggy
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
@@ -36,7 +36,7 @@ data class ListResponse(
         protocol: ProtocolManager,
         viewmodel: RoomViewmodel,
         dispatcher: NetworkManager,
-        callback: RoomEventHandler
+        callback: RoomCallback
     ) {
         val userlist = list[protocol.session.currentRoom] as? JsonObject ?: return
         val newList = mutableListOf<User>()

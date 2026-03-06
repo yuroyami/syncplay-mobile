@@ -13,7 +13,7 @@ import app.player.models.Track
 import app.preferences.Preferences.SUBTITLE_SIZE
 import app.preferences.settings.SettingCategory
 import app.preferences.value
-import app.protocol.models.ClientMessage
+import app.protocol.event.ClientMessage
 import app.room.RoomViewmodel
 import app.utils.GlobalPlayerSession
 import app.utils.getFileName
@@ -87,7 +87,7 @@ abstract class PlayerImpl(
         val currentPos = currentPositionMs()
 
         if (!viewmodel.isSoloMode) {
-            viewmodel.roomOut.sendSeek(newPosMs = chapter.timeOffsetMillis)
+            viewmodel.dispatcher.sendSeek(newPosMs = chapter.timeOffsetMillis)
         }
     }
 
@@ -103,7 +103,7 @@ abstract class PlayerImpl(
                 viewmodel.player.seekTo(nextChapter.timeOffsetMillis)
 
                 if (!viewmodel.isSoloMode) {
-                    viewmodel.roomOut.sendSeek(newPosMs = nextChapter.timeOffsetMillis)
+                    viewmodel.dispatcher.sendSeek(newPosMs = nextChapter.timeOffsetMillis)
                 }
             }
     }

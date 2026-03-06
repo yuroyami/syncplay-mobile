@@ -4,6 +4,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.UIKitView
+import app.player.PlayerEngine
+import app.player.PlayerImpl
+import app.player.models.Chapter
+import app.player.models.MediaFile
+import app.player.models.MediaFileLocation
+import app.player.models.Track
+import app.preferences.Preferences.SUBTITLE_SIZE
+import app.preferences.value
+import app.room.RoomViewmodel
+import app.utils.GlobalPlayerSession
+import app.utils.loggy
 import cocoapods.MobileVLCKit.VLCLibrary
 import cocoapods.MobileVLCKit.VLCMedia
 import cocoapods.MobileVLCKit.VLCMediaPlaybackSlaveTypeSubtitle
@@ -11,17 +22,6 @@ import cocoapods.MobileVLCKit.VLCMediaPlayer
 import cocoapods.MobileVLCKit.VLCMediaPlayerDelegateProtocol
 import cocoapods.MobileVLCKit.VLCMediaPlayerState
 import cocoapods.MobileVLCKit.VLCTime
-import app.player.PlayerImpl
-import app.player.PlayerEngine
-import app.preferences.Preferences.SUBTITLE_SIZE
-import app.preferences.value
-import app.player.models.Chapter
-import app.player.models.MediaFile
-import app.player.models.MediaFileLocation
-import app.player.models.Track
-import app.utils.GlobalPlayerSession
-import app.utils.loggy
-import app.room.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.memScoped
@@ -495,7 +495,8 @@ object VlcKitEngine : PlayerEngine {
         override suspend fun changeSubtitleSize(newSize: Int) {
             if (!isInitialized) return
 
-            viewmodel.osdManager.dispatchOSD {
+            viewmodel.dispatchOSD {
+                //TODO Localize
                 "Subtitle size will take effect next time you open the room"
             }
         }
@@ -535,7 +536,7 @@ object VlcKitEngine : PlayerEngine {
 
                         // Tell server about playback state change
                         if (!viewmodel.isSoloMode) {
-                            viewmodel.roomOut.sendPlayback(isPlaying)
+                            viewmodel.dispatcher.sendPlayback(isPlaying)
                         }
 
                         if (vlcPlayer?.state == VLCMediaPlayerState.VLCMediaPlayerStateEnded) {
