@@ -1,4 +1,4 @@
-package com.yuroyami.app.room.ui.tabs
+package app.room.ui.tabs
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

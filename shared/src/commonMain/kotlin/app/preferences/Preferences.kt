@@ -46,7 +46,7 @@ import androidx.datastore.preferences.core.edit
 import app.theme.Theming
 import app.theme.defaultTheme
 import app.uicomponents.PopupMediaDirs.MediaDirsPopup
-import app.utils.PLATFORM
+import app.utils.Platform
 import app.utils.availablePlatformPlayerEngines
 import app.utils.generateTimestampMillis
 import app.utils.get
@@ -222,7 +222,7 @@ object Preferences {
         summary = Res.string.setting_display_language_summry
         icon = Icons.Filled.Translate
 
-        extraConfig = if (platform == PLATFORM.Android) {
+        extraConfig = if (platform == Platform.Android) {
             PrefExtraConfig.MultiChoice(
                 entries = {
                     val langNames = stringArrayResource(Res.array.language_names)
@@ -300,7 +300,7 @@ object Preferences {
     }
 
     /** ------------ Network -------------*/
-    val NETWORK_ENGINE = Pref("pref_network_engine", if (platform == PLATFORM.Android) "netty" else "swiftnio") {
+    val NETWORK_ENGINE = Pref("pref_network_engine", if (platform == Platform.Android) "netty" else "swiftnio") {
         title = Res.string.setting_network_engine_title
         summary = Res.string.setting_network_engine_summary
         icon = Icons.Filled.Lan
@@ -308,7 +308,7 @@ object Preferences {
         extraConfig = PrefExtraConfig.MultiChoice(
             entries = {
                 buildMap {
-                    if (platform == PLATFORM.Android) {
+                    if (platform == Platform.Android) {
                         put(stringResource(Res.string.setting_network_engine_netty), "netty")
                     } else {
                         put(stringResource(Res.string.setting_network_engine_swift_nio), "swiftnio")

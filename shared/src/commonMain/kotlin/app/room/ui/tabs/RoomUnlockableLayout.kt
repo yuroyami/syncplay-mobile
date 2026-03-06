@@ -1,4 +1,4 @@
-package com.yuroyami.app.room.ui.tabs
+package app.room.ui.tabs
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable

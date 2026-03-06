@@ -33,7 +33,7 @@ import java.io.File
 import java.lang.ref.WeakReference
 
 
-actual val platform: PLATFORM = PLATFORM.Android
+actual val platform: Platform = Platform.Android
 
 /**
  * List of media player engines available on Android.

@@ -1,4 +1,4 @@
-package com.yuroyami.app.room.ui.tabs
+package app.room.ui.tabs
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -31,10 +31,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.composables.core.ScrollArea
-import com.composables.core.Thumb
-import com.composables.core.VerticalScrollbar
-import com.composables.core.rememberScrollAreaState
 import app.LocalChatPalette
 import app.LocalRoomViewmodel
 import app.theme.Theming.flexibleGradient
@@ -43,6 +39,10 @@ import app.uicomponents.FlexibleText
 import app.uicomponents.SyncplayPopup
 import app.uicomponents.helveticaFont
 import app.uicomponents.jostFont
+import com.composables.core.ScrollArea
+import com.composables.core.Thumb
+import com.composables.core.VerticalScrollbar
+import com.composables.core.rememberScrollAreaState
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res

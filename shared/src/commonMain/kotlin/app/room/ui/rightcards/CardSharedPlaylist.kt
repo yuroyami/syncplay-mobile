@@ -1,4 +1,4 @@
-package com.yuroyami.app.room.ui.rightcards
+package app.room.ui.rightcards
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background

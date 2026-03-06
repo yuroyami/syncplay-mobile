@@ -29,7 +29,7 @@ import platform.UIKit.UIWindowSceneGeometryPreferencesIOS
 import kotlin.math.roundToLong
 import kotlin.native.ref.WeakReference
 
-actual val platform: PLATFORM = PLATFORM.IOS
+actual val platform: Platform = Platform.IOS
 
 actual val availablePlatformPlayerEngines: List<PlayerEngine> = listOf(AVPlayerEngine, VlcKitEngine)
 

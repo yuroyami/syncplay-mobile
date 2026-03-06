@@ -1,4 +1,4 @@
-package com.yuroyami.app.room.ui.tabs
+package app.room.ui.tabs
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -19,9 +19,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import com.composeunstyled.buildModifier
 import app.theme.Theming.flexibleGradient
 import app.uicomponents.gradientOverlay
+import com.composeunstyled.buildModifier
 
 @Composable
 fun RoomTab(modifier: Modifier, icon: ImageVector, visibilityState: Boolean, onClick: () -> Unit) {

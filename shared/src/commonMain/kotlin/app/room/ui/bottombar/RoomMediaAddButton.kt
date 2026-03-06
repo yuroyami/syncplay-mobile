@@ -1,4 +1,4 @@
-package com.yuroyami.app.room.ui.bottombar
+package app.room.ui.bottombar
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement

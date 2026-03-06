@@ -123,7 +123,7 @@ sealed class ClientMessage {
                     val nameBehavior = Preferences.HASH_FILENAME.value()
                     val sizeBehavior = Preferences.HASH_FILESIZE.value()
 
-                    put("duration", media!!.fileDuration)
+                    put("duration", media!!.fileDuration ?: -1)
                     put(
                         "name", when (nameBehavior) {
                             "1" -> media!!.fileName

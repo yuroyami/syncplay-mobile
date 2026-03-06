@@ -1,4 +1,4 @@
-package com.yuroyami.app.room.ui.rightcards
+package app.room.ui.rightcards
 
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.shrinkVertically
@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
 import app.LocalRoomUiState
 import app.LocalRoomViewmodel
-import com.yuroyami.app.room.ui.bottombar.RoomControlPanelCard
+import app.room.ui.bottombar.RoomControlPanelCard
 import app.theme.Theming
 import app.uicomponents.FreeAnimatedVisibility
 import app.uicomponents.screenWidthPx

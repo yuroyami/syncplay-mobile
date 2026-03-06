@@ -1,4 +1,4 @@
-package com.yuroyami.app.room.ui.statinfo
+package app.room.ui.statinfo
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row

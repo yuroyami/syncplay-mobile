@@ -16,7 +16,9 @@ import app.preferences.value
 import app.protocol.event.ClientMessage
 import app.room.RoomViewmodel
 import app.utils.GlobalPlayerSession
+import app.utils.Platform
 import app.utils.getFileName
+import app.utils.platform
 import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -181,11 +183,13 @@ abstract class PlayerImpl(
             getString(Res.string.room_selected_vid, "${viewmodel.media?.fileName}")
         }
 
-        announceFileLoaded()
+        if (platform == Platform.IOS) {
+            //TODO Better come up with a better DSL to streamline file loading announcement
+            announceFileLoaded()
+        }
 
         changeSubtitleSize(SUBTITLE_SIZE.value())
     }
-
 
     abstract suspend fun pause()
 

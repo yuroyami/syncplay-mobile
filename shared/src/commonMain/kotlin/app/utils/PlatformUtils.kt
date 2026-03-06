@@ -28,7 +28,7 @@ expect fun <T : Any> createWeakRef(obj: T): WeakRef<T>
 /**
  * Enumeration of supported platforms where Syncplay can run.
  */
-enum class PLATFORM {
+enum class Platform {
     /** Android mobile/tablet platform */
     Android,
     /** iOS/iPadOS platform */
@@ -38,7 +38,7 @@ enum class PLATFORM {
 /**
  * The current platform the application is running on.
  */
-expect val platform: PLATFORM
+expect val platform: Platform
 
 /**
  * List of media player engines available on the current platform.

@@ -1,4 +1,4 @@
-package com.yuroyami.app.room.ui.misc
+package app.room.ui.misc
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween

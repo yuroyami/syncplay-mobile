@@ -1,4 +1,4 @@
-package com.yuroyami.app.room.ui.statinfo
+package app.room.ui.statinfo
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons

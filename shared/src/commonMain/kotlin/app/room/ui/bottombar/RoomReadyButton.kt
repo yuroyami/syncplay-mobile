@@ -1,4 +1,4 @@
-package com.yuroyami.app.room.ui.bottombar
+package app.room.ui.bottombar
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer

@@ -71,7 +71,7 @@ import com.composeunstyled.rememberSliderState
 import com.kborowy.colorpicker.KolorPicker
 import com.materialkolor.PaletteStyle
 import app.home.HomeLeadingTitle
-import com.yuroyami.app.room.ui.tabs.RoomTab
+import app.room.ui.tabs.RoomTab
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
