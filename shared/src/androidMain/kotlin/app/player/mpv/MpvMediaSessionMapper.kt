@@ -25,7 +25,7 @@ import kotlinx.coroutines.runBlocking
 
 @Suppress("OVERRIDE_DEPRECATION")
 @get:UnstableApi
-val MpvEngine.MpvImpl.Media3Equivalent: Player
+val MpvImpl.Media3Equivalent: Player
     get() {
         val mpvPlayer = this
 

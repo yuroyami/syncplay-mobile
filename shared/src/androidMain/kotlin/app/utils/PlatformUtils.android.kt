@@ -18,7 +18,7 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.media3.session.MediaSession
 import app.protocol.network.NettyNetworkManager
-import app.player.exo.ExoplayerEngine
+import app.player.exo.ExoEngine
 import app.player.mpv.MpvEngine
 import app.player.vlc.VlcEngine
 import app.player.VideoEngine
@@ -42,7 +42,7 @@ actual val platform: PLATFORM = PLATFORM.Android
  * (noLibs vs withLibs).
  */
 actual val availablePlatformVideoEngines: List<VideoEngine> =
-    listOf(ExoplayerEngine, MpvEngine, VlcEngine)
+    listOf(ExoEngine, MpvEngine, VlcEngine)
 
 actual typealias GlobalPlayerSession = MediaSession
 
