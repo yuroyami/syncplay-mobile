@@ -34,7 +34,6 @@ import app.preferences.value
 import app.room.RoomViewmodel
 import app.utils.GlobalPlayerSession
 import app.utils.contextObtainer
-import app.utils.timestampFromMillis
 import app.utils.uri
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.path
@@ -227,18 +226,23 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
 
     override suspend fun analyzeChapters(mediafile: MediaFile) {
         if (!isInitialized) return
+        mediafile.chapters.clear()
+
         withContext(Dispatchers.Main.immediate) {
-            val chapters = mpvView.loadChapters()
-            if (chapters.isEmpty()) return@withContext
-            mediafile.chapters.clear()
-            mediafile.chapters.addAll(chapters.map {
-                val timestamp = " (${timestampFromMillis(it.time.roundToLong())})"
-                Chapter(
-                    it.index,
-                    (it.title ?: "Chapter ${it.index}") + timestamp,
-                    (it.time * 1000).roundToLong()
+            val count = MPVLib.getPropertyInt("chapter-list/count")!!
+
+            for (i in 0 until count) {
+                val title = MPVLib.getPropertyString("chapter-list/$i/title")
+                val time = MPVLib.getPropertyDouble("chapter-list/$i/time")!!
+
+                mediafile.chapters.add(
+                    Chapter(
+                        index = i,
+                        name = title ?: "Chapter $i",
+                        timeOffsetMillis = (time * 1000).roundToLong()
+                    )
                 )
-            })
+            }
         }
     }
 
@@ -250,13 +254,6 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
             MPVLib.setPropertyInt("chapter", chapter.index)
         }
     }
-//
-//    override suspend fun skipChapter() {
-//        if (!isInitialized) return
-//        withContext(Dispatchers.Main.immediate) {
-//            MPVLib.command(arrayOf("add", "chapter", "1"))
-//        }
-//    }
 
     override suspend fun reapplyTrackChoices() {
         if (!isInitialized) return
