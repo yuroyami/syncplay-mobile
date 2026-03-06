@@ -308,6 +308,8 @@
     <string name="uisetting_custom_seek_front_summary">Włączenie tego wyświetli niestandardowy przycisk 'Pomiń okres', znaleziony w oknie 'Przewiń do pozycji', na głównym ekranie odtwarzacza między przyciskami przewijania do tyłu i do przodu dla łatwiejszego dostępu.</string>
     <string name="uisetting_custom_seek_amount_title">Niestandardowy czas pomijania</string>
     <string name="uisetting_custom_seek_amount_summary">Domyślny czas pomijania to 90 sekund (1:30 minuty), co jest idealne dla anime. Możesz dostosować ten czas dla niestandardowego przycisku pomijania tutaj.</string>
+    <string name="uisetting_ui_opacity_title">Przezroczystość interfejsu</string>
+    <string name="uisetting_ui_opacity_summary">Dostosowuje przezroczystość tła interfejsu.</string>
 
     <string name="theme_popup_select_a_theme">Wybierz motyw</string>
     <string name="theme_popup_builtin_themes">Wbudowane motywy</string>

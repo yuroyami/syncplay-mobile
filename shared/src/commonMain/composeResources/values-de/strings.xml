@@ -309,6 +309,8 @@
     <string name="uisetting_custom_seek_front_summary">Aktivieren, um die benutzerdefinierte 'Zeitspanne überspringen'-Taste, die im 'Zu Position springen'-Popup gefunden wird, auf dem Hauptplayer-Bildschirm zwischen den Zurückspulen- und Vorspulen-Tasten für einfacheren Zugriff anzuzeigen.</string>
     <string name="uisetting_custom_seek_amount_title">Benutzerdefinierte Überspring-Dauer</string>
     <string name="uisetting_custom_seek_amount_summary">Die standardmäßige Überspring-Dauer ist 90 Sekunden (1:30 Minuten), was ideal für Anime ist. Sie können diese Dauer für die benutzerdefinierte Überspring-Taste hier anpassen.</string>
+    <string name="uisetting_ui_opacity_title">Oberflächentransparenz</string>
+    <string name="uisetting_ui_opacity_summary">Passt die Transparenz von Hintergründen der Benutzeroberfläche an.</string>
 
     <string name="theme_popup_select_a_theme">Theme auswählen</string>
     <string name="theme_popup_builtin_themes">Integrierte Themes</string>

@@ -21,7 +21,7 @@ fun BlackContrastUnderlay(modifier: Modifier = Modifier) {
                     listOf(
                         Color.Transparent,Color.Transparent,
                         Color.Transparent,Color.Transparent,Color.Transparent,
-                        Color.Transparent, Color.Transparent, Color.Transparent,
+                        Color.Transparent, Color.Transparent, blacky,
                         blacky, blacky)
                 )
             )

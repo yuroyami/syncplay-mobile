@@ -1,7 +1,13 @@
 package app.room
 
+import androidx.lifecycle.viewModelScope
 import app.AbstractManager
+import app.preferences.Preferences.ROOM_UI_OPACITY
+import app.preferences.flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlin.concurrent.Volatile
 
 class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
@@ -92,6 +98,10 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     val isInBackground: Boolean
         get() = background
 
+
+    val uiOpacity = ROOM_UI_OPACITY.flow()
+        .map { it / 100f }
+        .stateIn(viewmodel.viewModelScope, SharingStarted.WhileSubscribed(5000), 1f)
 
     /** Resets all UI state to defaults. */
     override fun invalidate() {

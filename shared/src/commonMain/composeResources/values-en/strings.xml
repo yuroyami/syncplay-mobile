@@ -310,6 +310,10 @@
     <string name="uisetting_custom_seek_amount_title">Custom Skip Duration</string>
     <string name="uisetting_custom_seek_amount_summary">The default skip duration is 90 seconds (1:30 minutes), which is ideal for anime. You can adjust this duration for the custom skip button here.</string>
 
+    <string name="uisetting_ui_opacity_title">UI Opacity</string>
+    <string name="uisetting_ui_opacity_summary">This adjusts the transparency of interface backgrounds.</string>
+
+
     <string name="theme_popup_select_a_theme">Select a Theme</string>
     <string name="theme_popup_builtin_themes">Built-in themes</string>
     <string name="theme_popup_custom_themes">Custom themes</string>

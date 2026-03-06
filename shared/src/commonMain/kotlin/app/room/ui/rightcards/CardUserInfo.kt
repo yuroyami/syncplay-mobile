@@ -56,11 +56,14 @@ object CardUserInfo {
     @Composable
     fun UserInfoCard() {
         val viewmodel = LocalRoomViewmodel.current
+
+        val uiOpacity by viewmodel.uiState.uiOpacity.collectAsState()
+
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(8.dp),
             border = BorderStroke(width = Dp.Hairline, brush = Brush.linearGradient(colors = flexibleGradient)),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.5f)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(uiOpacity)),
         ) {
             FlexibleText(
                 modifier = Modifier

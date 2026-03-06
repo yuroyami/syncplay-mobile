@@ -80,7 +80,6 @@ import syncplaymobile.shared.generated.resources.room_addmedia_online_details
 import syncplaymobile.shared.generated.resources.room_addmedia_online_popup_subtext
 import syncplaymobile.shared.generated.resources.room_addmedia_online_url
 import syncplaymobile.shared.generated.resources.room_button_desc_add
-import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
@@ -95,8 +94,6 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
         file?.let {
             loggy(it)
             viewmodel.viewModelScope.launch {
-                viewmodel.player.injectVideoFile(it)
-                delay(3.seconds)
                 viewmodel.player.injectVideoFile(it)
             }
             showPopup = false

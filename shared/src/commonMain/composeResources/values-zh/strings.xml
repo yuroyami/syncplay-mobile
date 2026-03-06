@@ -297,6 +297,8 @@
     <string name="uisetting_custom_seek_front_summary">启用此选项将在主播放器屏幕上显示自定义的'跳过时段'按钮，该按钮位于快退和快进按钮之间，方便访问。</string>
     <string name="uisetting_custom_seek_amount_title">自定义跳过时长</string>
     <string name="uisetting_custom_seek_amount_summary">默认跳过时长为90秒（1:30分钟），适合动漫。您可以在此调整自定义跳过按钮的时长。</string>
+    <string name="uisetting_ui_opacity_title">界面透明度</string>
+    <string name="uisetting_ui_opacity_summary">调整界面背景的透明度。</string>
 
     <string name="theme_popup_select_a_theme">选择主题</string>
     <string name="theme_popup_builtin_themes">内置主题</string>

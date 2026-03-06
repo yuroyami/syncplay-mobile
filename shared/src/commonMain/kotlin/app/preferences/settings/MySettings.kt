@@ -43,6 +43,7 @@ import app.preferences.Preferences.PAUSE_ON_SOMEONE_LEAVE
 import app.preferences.Preferences.READY_FIRST_HAND
 import app.preferences.Preferences.RECONNECTION_INTERVAL
 import app.preferences.Preferences.REMEMBER_INFO
+import app.preferences.Preferences.ROOM_UI_OPACITY
 import app.preferences.Preferences.SEEK_BACKWARD_JUMP
 import app.preferences.Preferences.SEEK_FORWARD_JUMP
 import app.preferences.Preferences.SUBTITLE_SIZE
@@ -154,6 +155,7 @@ val INROOM_ADVANCED = SettingCategory(
     title = Res.string.settings_categ_advanced,
     icon = Icons.Filled.Stream
 ) {
+    +ROOM_UI_OPACITY
     +RECONNECTION_INTERVAL
     +INROOM_RESET_DEFAULTS
 }

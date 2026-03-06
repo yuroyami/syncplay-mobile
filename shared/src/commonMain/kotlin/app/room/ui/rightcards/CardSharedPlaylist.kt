@@ -50,6 +50,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -170,10 +171,11 @@ object CardSharedPlaylist {
         val addUrlsPopupState = remember { mutableStateOf(false) }
 
         /* Now to the actual content in the card */
+        val uiOpacity by viewmodel.uiState.uiOpacity.collectAsState()
         Card(
             shape = RoundedCornerShape(8.dp),
             border = BorderStroke(width = Dp.Hairline, brush = Brush.linearGradient(colors = flexibleGradient)),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.55f)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(uiOpacity)),
         ) {
             Column(modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.SpaceEvenly,

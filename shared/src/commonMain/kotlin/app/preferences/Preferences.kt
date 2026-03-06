@@ -167,6 +167,8 @@ import syncplaymobile.shared.generated.resources.uisetting_system_color_title
 import syncplaymobile.shared.generated.resources.uisetting_timestamp_color_title
 import syncplaymobile.shared.generated.resources.uisetting_timestamp_summary
 import syncplaymobile.shared.generated.resources.uisetting_timestamp_title
+import syncplaymobile.shared.generated.resources.uisetting_ui_opacity_summary
+import syncplaymobile.shared.generated.resources.uisetting_ui_opacity_title
 
 /**
  * Centralized preference definitions with type safety
@@ -534,6 +536,14 @@ object Preferences {
     }
 
     /** ------------ Advanced -------------*/
+    val ROOM_UI_OPACITY = Pref("pref_room_ui_opacity", 80) {
+        title = Res.string.uisetting_ui_opacity_title
+        summary = Res.string.uisetting_ui_opacity_summary
+        icon = Icons.Filled.Opacity
+
+        extraConfig = PrefExtraConfig.Slider(maxValue = 100, minValue = 0)
+    }
+
     val RECONNECTION_INTERVAL = Pref("pref_inroom_reconnection_interval", 2) {
         title = Res.string.uisetting_reconnect_interval_title
         summary = Res.string.uisetting_reconnect_interval_summary

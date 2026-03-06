@@ -13,6 +13,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,10 +58,11 @@ object CardRoomPrefs {
         }
 
         roomSettings?.let { settings ->
+            val uiOpacity by viewmodel.uiState.uiOpacity.collectAsState()
             Card(
                 shape = RoundedCornerShape(8.dp),
                 border = BorderStroke(width = Dp.Hairline, brush = Brush.linearGradient(colors = flexibleGradient)),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(0.7f)),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(uiOpacity)),
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     FlexibleText(

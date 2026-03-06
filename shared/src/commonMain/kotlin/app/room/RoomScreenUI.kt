@@ -153,8 +153,8 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
 
         /** Popups */
         if (!soloMode) ChatHistoryPopup()
-       SeekToPositionPopup()
-       ManagedRoomPopup(ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM)
+        SeekToPositionPopup()
+        ManagedRoomPopup(ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM)
         ManagedRoomPopup(ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR)
 
         val globalViewmodel = LocalGlobalViewmodel.current
