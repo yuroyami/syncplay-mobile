@@ -7,7 +7,7 @@ import app.delegato
 import app.protocol.network.instantiateSwiftNioNetworkManager
 import app.player.avplayer.AVPlayerEngine
 import app.player.vlc.VlcKitEngine
-import app.player.VideoEngine
+import app.player.PlayerEngine
 import app.preferences.Preferences.NETWORK_ENGINE
 import app.preferences.value
 import app.protocol.network.KtorNetworkManager
@@ -31,7 +31,7 @@ import kotlin.native.ref.WeakReference
 
 actual val platform: PLATFORM = PLATFORM.IOS
 
-actual val availablePlatformVideoEngines: List<VideoEngine> = listOf(AVPlayerEngine, VlcKitEngine)
+actual val availablePlatformPlayerEngines: List<PlayerEngine> = listOf(AVPlayerEngine, VlcKitEngine)
 
 actual typealias GlobalPlayerSession = String
 

@@ -324,7 +324,7 @@ val MpvImpl.Media3Equivalent: Player
             }
 
             override fun getMediaMetadata(): MediaMetadata {
-                return mpvPlayer.videoEngineManager.media.value?.let {
+                return mpvPlayer.playerManager.media.value?.let {
                     MediaMetadata.Builder()
                         .setTitle(it.fileName)
                         .build()
@@ -356,7 +356,7 @@ val MpvImpl.Media3Equivalent: Player
             override fun getPreviousMediaItemIndex(): Int = C.INDEX_UNSET
 
             override fun getCurrentMediaItem(): MediaItem? {
-                return mpvPlayer.videoEngineManager.media.value?.let { media ->
+                return mpvPlayer.playerManager.media.value?.let { media ->
                     MediaItem.Builder()
                         .setUri(media.location?.commonUri ?: "")
                         .setMediaMetadata(
@@ -380,7 +380,7 @@ val MpvImpl.Media3Equivalent: Player
             }
 
             override fun getDuration(): Long {
-                return mpvPlayer.videoEngineManager.timeFullMillis.value
+                return mpvPlayer.playerManager.timeFullMillis.value
             }
 
             override fun getCurrentPosition(): Long {

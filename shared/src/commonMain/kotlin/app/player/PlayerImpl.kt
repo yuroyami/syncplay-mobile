@@ -4,6 +4,12 @@ import androidx.annotation.CallSuper
 import androidx.annotation.UiThread
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import app.player.models.Chapter
+import app.player.models.MediaFile
+import app.player.models.MediaFile.Companion.mediaFromFile
+import app.player.models.MediaFile.Companion.mediaFromUrl
+import app.player.models.MediaFileLocation
+import app.player.models.Track
 import app.preferences.Preferences.SUBTITLE_SIZE
 import app.preferences.settings.SettingCategory
 import app.preferences.value
@@ -11,12 +17,6 @@ import app.protocol.models.ClientMessage
 import app.room.RoomViewmodel
 import app.utils.GlobalPlayerSession
 import app.utils.getFileName
-import app.player.models.Chapter
-import app.player.models.MediaFile
-import app.player.models.MediaFile.Companion.mediaFromFile
-import app.player.models.MediaFile.Companion.mediaFromUrl
-import app.player.models.MediaFileLocation
-import app.player.models.Track
 import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,9 +39,9 @@ import kotlin.time.Duration
  * Engines: ExoPlayer/MPV/VLC (Android), AVPlayer/VLC (iOS)*/
 abstract class PlayerImpl(
     val viewmodel: RoomViewmodel,
-    val engine: VideoEngine
+    val engine: PlayerEngine
 ) {
-    val videoEngineManager: VideoEngineManager = viewmodel.videoEngineManager
+    val playerManager: PlayerManager = viewmodel.playerManager
 
     /** MediaSession for system notification and external playback control. */
     val session: GlobalPlayerSession? = null
@@ -181,7 +181,7 @@ abstract class PlayerImpl(
     }
 
     open suspend fun parseMedia(media: MediaFile) {
-        videoEngineManager.media.value = media
+        playerManager.media.value = media
 
         viewmodel.dispatchOSD {
             getString(Res.string.room_selected_vid, "${viewmodel.media?.fileName}")
@@ -234,9 +234,9 @@ abstract class PlayerImpl(
         if (!isInitialized) return
 
         if (!viewmodel.isSoloMode) {
-            if (viewmodel.sessionManager.session.sharedPlaylist.isEmpty()) return
-            val currentIndex = viewmodel.sessionManager.session.spIndex.intValue
-            val playlistSize = viewmodel.sessionManager.session.sharedPlaylist.size
+            if (viewmodel.session.sharedPlaylist.isEmpty()) return
+            val currentIndex = viewmodel.session.spIndex.intValue
+            val playlistSize = viewmodel.session.sharedPlaylist.size
 
             val next = if (playlistSize == currentIndex + 1) 0 else currentIndex + 1
             viewmodel.playlistManager.sendPlaylistSelection(next)
@@ -250,7 +250,7 @@ abstract class PlayerImpl(
             while (isActive) {
                 if (isSeekable()) {
                     val pos = currentPositionMs()
-                    videoEngineManager.timeCurrentMillis.value = pos
+                    playerManager.timeCurrentMillis.value = pos
                     if (!viewmodel.isSoloMode) {
                         //TODO is this necessary ? viewmodel.protocolManager.globalPositionMs = pos.toDouble()
                     }

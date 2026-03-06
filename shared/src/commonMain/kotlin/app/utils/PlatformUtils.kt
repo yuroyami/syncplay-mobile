@@ -3,7 +3,7 @@ package app.utils
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ClipEntry
 import app.PlatformCallback
-import app.player.VideoEngine
+import app.player.PlayerEngine
 import app.protocol.network.NetworkManager
 import app.room.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
@@ -44,7 +44,7 @@ expect val platform: PLATFORM
  * List of media player engines available on the current platform.
  * Each platform provides different player implementations (e.g., ExoPlayer on Android).
  */
-expect val availablePlatformVideoEngines: List<VideoEngine>
+expect val availablePlatformPlayerEngines: List<PlayerEngine>
 
 expect class GlobalPlayerSession
 

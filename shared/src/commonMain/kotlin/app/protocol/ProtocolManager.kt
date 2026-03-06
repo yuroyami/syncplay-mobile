@@ -13,7 +13,7 @@ import app.protocol.server.Set
 import app.protocol.server.State
 import app.protocol.server.TLS
 import app.room.RoomViewmodel
-import app.utils.ProtocolDsl
+import app.utils.ProtocolApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
@@ -22,6 +22,7 @@ import kotlinx.serialization.modules.subclass
 import kotlin.time.Instant
 
 class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
+
     var session: Session = Session(this)
 
     var globalPaused: Boolean = true
@@ -46,10 +47,11 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
 
     val supportsChat = MutableStateFlow(true)
     val supportsManagedRooms = MutableStateFlow(false)
-    
+
     val isManagedRoom = MutableStateFlow(false)
 
     override fun invalidate() {
+        session = Session(this)
         globalPaused = true
         globalPositionMs = 0.0
         serverIgnFly = 0
@@ -58,6 +60,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     }
 
     companion object {
+        @ProtocolApi
         val serverJson = Json {
             ignoreUnknownKeys = true
             coerceInputValues = true
@@ -75,7 +78,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
             }
         }
 
-        @ProtocolDsl
+        @ProtocolApi
         inline fun <reified T : ClientMessage> NetworkManager.createPacketInstance(protocolManager: ProtocolManager): T {
             return when (T::class) {
                 ClientMessage.Hello::class -> ClientMessage.Hello() as T

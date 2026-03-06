@@ -162,7 +162,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     override suspend fun analyzeTracks(mediafile: MediaFile) {
         if (!isInitialized) return
         withContext(Dispatchers.Main.immediate) {
-            videoEngineManager.media.value?.tracks?.clear()
+            playerManager.media.value?.tracks?.clear()
 
             val count = MPVLib.getPropertyInt("track-list/count")!!
             // Note that because events are async, properties might disappear at any moment
@@ -186,7 +186,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
 
                 Log.e("trck", "Found track $mpvId: $type, $title [$lang], $selected")
 
-                videoEngineManager.media.value?.tracks?.add(
+                playerManager.media.value?.tracks?.add(
                     MpvTrack(
                         name = trackName,
                         type = if (type == "audio") TrackType.AUDIO else TrackType.SUBTITLE,
@@ -209,7 +209,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
                         MPVLib.setPropertyString("sid", "no")
                     }
 
-                    videoEngineManager.currentTrackChoices.subtitleSelectionIndexMpv = track?.index ?: -1
+                    playerManager.currentTrackChoices.subtitleSelectionIndexMpv = track?.index ?: -1
                 }
 
                 TrackType.AUDIO -> {
@@ -219,7 +219,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
                         MPVLib.setPropertyString("aid", "no")
                     }
 
-                    videoEngineManager.currentTrackChoices.audioSelectionIndexMpv = track?.index ?: -1
+                    playerManager.currentTrackChoices.audioSelectionIndexMpv = track?.index ?: -1
                 }
             }
         }
@@ -261,17 +261,17 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     override suspend fun reapplyTrackChoices() {
         if (!isInitialized) return
         withContext(Dispatchers.Main.immediate) {
-            val subIndex = videoEngineManager.currentTrackChoices.subtitleSelectionIndexMpv
-            val audioIndex = videoEngineManager.currentTrackChoices.audioSelectionIndexMpv
+            val subIndex = playerManager.currentTrackChoices.subtitleSelectionIndexMpv
+            val audioIndex = playerManager.currentTrackChoices.audioSelectionIndexMpv
 
 
-            val ccMap = videoEngineManager.media.value?.tracks?.filter { it.type == TrackType.SUBTITLE }
-            val audioMap = videoEngineManager.media.value?.tracks?.filter { it.type == TrackType.AUDIO }
+            val ccMap = playerManager.media.value?.tracks?.filter { it.type == TrackType.SUBTITLE }
+            val audioMap = playerManager.media.value?.tracks?.filter { it.type == TrackType.AUDIO }
 
             val ccGet = ccMap?.firstOrNull { it.index == subIndex }
             val audioGet = audioMap?.firstOrNull { it.index == audioIndex }
 
-            with(videoEngineManager.player) {
+            with(playerManager.player) {
                 if (subIndex == -1) {
                     selectTrack(null, TrackType.SUBTITLE)
                 } else if (ccGet != null) {
@@ -391,7 +391,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
             override fun eventProperty(property: String, value: Long) {
                 when (property) {
                     "time-pos" -> mpvPos = value * 1000
-                    "duration" -> videoEngineManager.timeFullMillis.value = value * 1000
+                    "duration" -> playerManager.timeFullMillis.value = value * 1000
                     //"file-size" -> value
                 }
             }
@@ -399,7 +399,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
             override fun eventProperty(property: String, value: Boolean) {
                 when (property) {
                     "pause" -> {
-                        videoEngineManager.isNowPlaying.value = !value //Just to inform UI
+                        playerManager.isNowPlaying.value = !value //Just to inform UI
 
                         //Tell server about playback state change
                         if (!viewmodel.isSoloMode) {
@@ -418,8 +418,8 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
                         if (viewmodel.isSoloMode) return
                         playerScopeIO.launch {
                             while (true) {
-                                if (videoEngineManager.timeFullMillis.value.toDouble() > 0) {
-                                    videoEngineManager.media.value?.fileDuration = videoEngineManager.timeFullMillis.value.toDouble().div(1000.0)
+                                if (playerManager.timeFullMillis.value.toDouble() > 0) {
+                                    playerManager.media.value?.fileDuration = playerManager.timeFullMillis.value.toDouble().div(1000.0)
 
                                     announceFileLoaded()
                                     break

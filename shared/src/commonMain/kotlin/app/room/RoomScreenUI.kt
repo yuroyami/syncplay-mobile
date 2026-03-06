@@ -47,7 +47,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
     HideSystemBars() // Prevents the navigation bar from reappearing when popups/menus are shown.
 
     val soloMode = remember { viewmodel.isSoloMode }
-    val hasVideo by viewmodel.videoEngineManager.hasVideo.collectAsState(initial = false)
+    val hasVideo by viewmodel.playerManager.hasVideo.collectAsState(initial = false)
     val isInPipMode by viewmodel.uiState.hasEnteredPipMode.collectAsState()
 
     val lockedMode by viewmodel.uiState.tabLock.collectAsState()
@@ -60,7 +60,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
             }
 
             /* Video Surface */
-            val playerIsReady by viewmodel.videoEngineManager.isPlayerReady.collectAsState()
+            val playerIsReady by viewmodel.playerManager.isPlayerReady.collectAsState()
             if (playerIsReady) {
                 viewmodel.player.VideoPlayer(
                     modifier = Modifier

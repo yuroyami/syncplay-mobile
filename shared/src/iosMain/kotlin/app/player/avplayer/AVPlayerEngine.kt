@@ -5,7 +5,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.interop.UIKitView
 import app.player.PlayerImpl
-import app.player.VideoEngine
+import app.player.PlayerEngine
 import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
 import app.player.models.Track
@@ -85,7 +85,7 @@ import kotlin.time.Duration.Companion.seconds
  *
  * **Note:** Not the default despite stability due to limited format support.
  */
-object AVPlayerEngine: VideoEngine {
+object AVPlayerEngine: PlayerEngine {
     override val isAvailable: Boolean = true
     override val isDefault: Boolean = false
     override val name: String = "AVPlayer"
@@ -166,7 +166,7 @@ object AVPlayerEngine: VideoEngine {
                         val isPlaying = avPlayer?.timeControlStatus != AVPlayerTimeControlStatusPaused
 
                         // Player started playing
-                        viewmodel.videoEngineManager.isNowPlaying.value = isPlaying
+                        viewmodel.playerManager.isNowPlaying.value = isPlaying
                         if (!viewmodel.isSoloMode) {
                             viewmodel.roomOut.sendPlayback(isPlaying)
                         }
@@ -411,8 +411,8 @@ object AVPlayerEngine: VideoEngine {
             //File is loaded, get duration and declare file
             avMedia!!.asset.duration.toMillis().let { dur ->
                 val actualDur = if (dur < 0) 0 else dur
-                videoEngineManager.timeFullMillis.value = actualDur
-                videoEngineManager.media.value?.fileDuration = actualDur / 1000.0
+                playerManager.timeFullMillis.value = actualDur
+                playerManager.media.value?.fileDuration = actualDur / 1000.0
             }
 
             super.parseMedia(media)

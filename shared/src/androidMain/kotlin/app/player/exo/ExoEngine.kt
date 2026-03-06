@@ -2,7 +2,7 @@ package app.player.exo
 
 import SyncplayMobile.shared.BuildConfig
 import app.player.PlayerImpl
-import app.player.VideoEngine
+import app.player.PlayerEngine
 import app.room.RoomViewmodel
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.exoplayer
@@ -19,7 +19,7 @@ import syncplaymobile.shared.generated.resources.exoplayer
  * **Best for:** Users who prioritize stability and common formats (MP4, MKV)
  * **Terrible for:** Softcoded subtitles. mpv and VLC would be best in that case.
  */
-object ExoEngine : VideoEngine {
+object ExoEngine : PlayerEngine {
     override val name = "ExoPlayer"
     override val isDefault = BuildConfig.EXOPLAYER_ONLY
     override val isAvailable = true

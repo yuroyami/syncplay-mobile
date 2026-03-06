@@ -66,7 +66,7 @@ import app.theme.Theming.useSyncplayGradient
 import app.uicomponents.FlexibleText
 import app.uicomponents.sairaFont
 import app.utils.ShowSystemBars
-import app.utils.availablePlatformVideoEngines
+import app.utils.availablePlatformPlayerEngines
 import app.utils.platformCallback
 import app.utils.substringSafely
 import app.home.components.PopupDidYaKnow.DidYaKnowPopup
@@ -315,7 +315,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         val errorString = stringResource(Res.string.home_engine_unavailable_error)
                         HomeAnimatedEngineButtonGroup(
                             modifier = Modifier.fillMaxWidth(0.75f),
-                            engines = availablePlatformVideoEngines,
+                            engines = availablePlatformPlayerEngines,
                             selectedEngine = selectedEngine,
                             onSelectEngine = { engine ->
                                 viewmodel.viewModelScope.launch(Dispatchers.IO) {

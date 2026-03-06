@@ -12,7 +12,7 @@ import cocoapods.MobileVLCKit.VLCMediaPlayerDelegateProtocol
 import cocoapods.MobileVLCKit.VLCMediaPlayerState
 import cocoapods.MobileVLCKit.VLCTime
 import app.player.PlayerImpl
-import app.player.VideoEngine
+import app.player.PlayerEngine
 import app.preferences.Preferences.SUBTITLE_SIZE
 import app.preferences.value
 import app.player.models.Chapter
@@ -56,7 +56,7 @@ import kotlin.time.Duration.Companion.seconds
  * **Best for:** Users who need to play various file formats and subtitle types.
  * The iOS version is more stable than its Android counterpart.
  */
-object VlcKitEngine : VideoEngine {
+object VlcKitEngine : PlayerEngine {
     override val isAvailable: Boolean = true
     override val isDefault: Boolean = true
     override val name: String = "VLCKit" //We name this one VLCKit to differentiate it from Android's VLC when saving to datastore
@@ -389,7 +389,7 @@ object VlcKitEngine : VideoEngine {
         override suspend fun parseMedia(media: MediaFile) {
             vlcMedia?.length?.numberValue?.doubleValue?.toLong()?.let {
                 val dur = if (it < 0) 0 else it
-                videoEngineManager.timeFullMillis.value = dur
+                playerManager.timeFullMillis.value = dur
                 media.fileDuration = dur / 1000.0
             }
             super.parseMedia(media)
@@ -531,7 +531,7 @@ object VlcKitEngine : VideoEngine {
                 playerScopeMain.launch {
                     if (hasMedia()) {
                         val isPlaying = vlcPlayer?.state == VLCMediaPlayerState.VLCMediaPlayerStatePlaying
-                        viewmodel.videoEngineManager.isNowPlaying.value = isPlaying // Just to inform UI
+                        viewmodel.playerManager.isNowPlaying.value = isPlaying // Just to inform UI
 
                         // Tell server about playback state change
                         if (!viewmodel.isSoloMode) {

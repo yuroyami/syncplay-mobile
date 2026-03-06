@@ -155,7 +155,7 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
                         vlcPlayer?.unselectTrackType(Track.Type.Text)
                     }
 
-                    viewmodel.videoEngineManager.currentTrackChoices.subtitleSelectionIdVlc = vlcTrack?.id ?: "-1"
+                    viewmodel.playerManager.currentTrackChoices.subtitleSelectionIdVlc = vlcTrack?.id ?: "-1"
                 }
 
                 TrackType.AUDIO -> {
@@ -165,7 +165,7 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
                         vlcPlayer?.unselectTrackType(Track.Type.Audio)
                     }
 
-                    viewmodel.videoEngineManager.currentTrackChoices.audioSelectionIdVlc = vlcTrack?.id ?: "-1"
+                    viewmodel.playerManager.currentTrackChoices.audioSelectionIdVlc = vlcTrack?.id ?: "-1"
                 }
             }
         }
@@ -209,10 +209,10 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
     override suspend fun reapplyTrackChoices() {
         if (!isInitialized) return
 
-        val subId = viewmodel.videoEngineManager.currentTrackChoices.subtitleSelectionIdVlc
-        val audioId = viewmodel.videoEngineManager.currentTrackChoices.audioSelectionIdVlc
+        val subId = viewmodel.playerManager.currentTrackChoices.subtitleSelectionIdVlc
+        val audioId = viewmodel.playerManager.currentTrackChoices.audioSelectionIdVlc
 
-        val tracks = videoEngineManager.media.value?.tracks
+        val tracks = playerManager.media.value?.tracks
 
         val ccMap = tracks?.filter { it.type == TrackType.SUBTITLE }?.map { it as VlcTrack }
         val audioMap = tracks?.filter { it.type == TrackType.AUDIO }?.map { it as VlcTrack }
@@ -325,7 +325,7 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
             when (event.type) {
                 MediaPlayer.Event.Playing -> {
                     if (vlcPlayer?.hasMedia() == true) {
-                        viewmodel.videoEngineManager.isNowPlaying.value = true //Just to inform UI
+                        viewmodel.playerManager.isNowPlaying.value = true //Just to inform UI
 
                         //Tell server about playback state change
                         if (!viewmodel.isSoloMode) {
@@ -336,7 +336,7 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
 
                 MediaPlayer.Event.Paused -> {
                     if (vlcPlayer?.hasMedia() == true) {
-                        viewmodel.videoEngineManager.isNowPlaying.value = false //Just to inform UI
+                        viewmodel.playerManager.isNowPlaying.value = false //Just to inform UI
 
                         //Tell server about playback state change
                         if (!viewmodel.isSoloMode) {
@@ -357,7 +357,7 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
                         /* Updating our timeFull */
                         val durationMs = vlcPlayer!!.length
 
-                        viewmodel.videoEngineManager.timeFullMillis.value = abs(durationMs)
+                        viewmodel.playerManager.timeFullMillis.value = abs(durationMs)
 
                         if (viewmodel.isSoloMode) return@setEventListener
 

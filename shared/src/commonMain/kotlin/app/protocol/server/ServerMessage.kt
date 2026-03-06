@@ -4,6 +4,7 @@ import app.protocol.ProtocolManager
 import app.protocol.network.NetworkManager
 import app.room.RoomViewmodel
 import app.room.event.RoomEventHandler
+import app.utils.ProtocolApi
 import kotlinx.serialization.Serializable
 
 /**
@@ -12,6 +13,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed interface ServerMessage {
 
+    @ProtocolApi
     suspend fun handle(
         protocol: ProtocolManager,
         viewmodel: RoomViewmodel,

@@ -1,12 +1,13 @@
 package app.protocol.models
 
-import app.protocol.ProtocolManager
-import app.utils.generateTimestampMillis
-import app.utils.md5
 import app.player.models.MediaFile
 import app.player.models.MediaFile.Companion.hashed
 import app.preferences.Preferences
 import app.preferences.value
+import app.protocol.ProtocolManager
+import app.utils.ProtocolApi
+import app.utils.generateTimestampMillis
+import app.utils.md5
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
@@ -31,6 +32,7 @@ sealed class ClientMessage {
     abstract fun build(): JsonElement
 
     /** Initial handshake — identifies the client with username, room, password, and supported features. */
+    @ProtocolApi
     class Hello : ClientMessage() {
         var username: String = ""
         var roomname: String = ""
@@ -62,6 +64,7 @@ sealed class ClientMessage {
     }
 
     /** Acknowledges room join after the server grants access. */
+    @ProtocolApi
     class Joined : ClientMessage() {
         var roomname: String = ""
 
@@ -80,6 +83,7 @@ sealed class ClientMessage {
     }
 
     /** Clears or acknowledges playlist state. */
+    @ProtocolApi
     class EmptyList : ClientMessage() {
         override fun build() = buildJsonObject {
             putJsonArray("List") {}
@@ -87,6 +91,7 @@ sealed class ClientMessage {
     }
 
     /** Declares whether this client is ready for synchronized playback. */
+    @ProtocolApi
     class Readiness : ClientMessage() {
         var isReady: Boolean = false
         /** True if user-initiated, false if automatic. */
@@ -106,6 +111,7 @@ sealed class ClientMessage {
      * Declares the currently loaded media file to the room.
      * File name/size are sent, hashed, or omitted based on privacy preferences.
      */
+    @ProtocolApi
     class File : ClientMessage() {
         var media: MediaFile? = null
 
@@ -138,6 +144,7 @@ sealed class ClientMessage {
     }
 
     /** Sends a chat message to all users in the room. */
+    @ProtocolApi
     class Chat : ClientMessage() {
         var message: String = ""
 
@@ -150,6 +157,7 @@ sealed class ClientMessage {
      * Core synchronization packet — reports current playback position, pause state,
      * and ping timing to the server. Sent regularly to keep all clients in sync.
      */
+    @ProtocolApi
     class State(private var p: ProtocolManager) : ClientMessage() {
         /** Server timestamp echoed from the last received State packet, for RTT calculation. */
         var serverTime: Double? = null
@@ -204,6 +212,7 @@ sealed class ClientMessage {
     }
 
     /** Replaces the shared playlist with a new list of files. */
+    @ProtocolApi
     class PlaylistChange : ClientMessage() {
         var files: List<String> = emptyList()
 
@@ -219,6 +228,7 @@ sealed class ClientMessage {
     }
 
     /** Changes the selected item in the shared playlist for all users. */
+    @ProtocolApi
     class PlaylistIndex : ClientMessage() {
         var index: Int = 0
 
@@ -232,6 +242,7 @@ sealed class ClientMessage {
     }
 
     /** Authenticates as a room operator in a managed room. */
+    @ProtocolApi
     class ControllerAuth : ClientMessage() {
         var room: String = ""
         var password: String = ""
@@ -247,6 +258,7 @@ sealed class ClientMessage {
     }
 
     /** Moves the client to a different room on the same server. */
+    @ProtocolApi
     class RoomChange : ClientMessage() {
         var room: String = ""
 
@@ -260,6 +272,7 @@ sealed class ClientMessage {
     }
 
     /** Requests the server to upgrade the connection to TLS. */
+    @ProtocolApi
     class TLS : ClientMessage() {
         override fun build() = buildJsonObject {
             putJsonObject("TLS") {

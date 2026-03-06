@@ -77,7 +77,7 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
         viewmodel.player.playerScopeMain.launch {
             val currentMs = viewmodel.player.currentPositionMs()
             val dec = SEEK_BACKWARD_JUMP.value()
-            var newPos = viewmodel.videoEngineManager.timeFullMillis.value.let { dur ->
+            var newPos = viewmodel.playerManager.timeFullMillis.value.let { dur ->
                 if (dur == 0L) currentMs - (dec * 1000L) else (currentMs - (dec * 1000L)).coerceIn(0, dur)
             }
             if (newPos < 0) newPos = 0
@@ -92,7 +92,7 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
         viewmodel.player.playerScopeMain.launch {
             val currentMs = viewmodel.player.currentPositionMs()
             val inc = SEEK_FORWARD_JUMP.value()
-            val newPos = viewmodel.videoEngineManager.timeFullMillis.value.let { dur ->
+            val newPos = viewmodel.playerManager.timeFullMillis.value.let { dur ->
                 if (dur == 0L) currentMs + (inc * 1000L) else (currentMs + (inc * 1000L)).coerceIn(0, dur)
             }
 

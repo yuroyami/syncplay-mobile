@@ -28,15 +28,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import app.player.VideoEngine
+import app.player.PlayerEngine
 import app.theme.Theming.flexibleGradient
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun HomeAnimatedEngineButtonGroup(
-    engines: List<VideoEngine>,
+    engines: List<PlayerEngine>,
     selectedEngine: String,
-    onSelectEngine: (VideoEngine) -> Unit,
+    onSelectEngine: (PlayerEngine) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(

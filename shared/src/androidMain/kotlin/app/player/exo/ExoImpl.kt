@@ -140,7 +140,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
                 if (!isLoading && exoplayer != null) {
                     /* Updating our timeFull */
                     val durationMs = exoplayer!!.duration
-                    videoEngineManager.timeFullMillis.value = abs(durationMs)
+                    playerManager.timeFullMillis.value = abs(durationMs)
 
                     if (viewmodel.isSoloMode) return
                     if (durationMs / 1000.0 != viewmodel.media?.fileDuration) {
@@ -157,7 +157,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
                 if (exoplayer != null && exoplayer?.mediaItemCount != 0) {
                     if (exoplayer!!.playbackState != ExoPlayer.STATE_BUFFERING) {
-                        videoEngineManager.isNowPlaying.value = isPlaying //Just to inform UI
+                        playerManager.isNowPlaying.value = isPlaying //Just to inform UI
 
                         //Tell server about playback state change
                         if (!viewmodel.isSoloMode) {
@@ -298,27 +298,27 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
         /* First, clearing our subtitle track selection (This helps troubleshoot many issues */
         exoplayer?.trackSelector?.parameters = builder.clearOverridesOfType(type.getExoType()).build()
-        videoEngineManager.currentTrackChoices.lastSubtitleOverride = null
+        playerManager.currentTrackChoices.lastSubtitleOverride = null
 
         /* Now, selecting our subtitle track should one be selected */
         if (exoTrack != null) {
             when (type) {
                 TrackType.SUBTITLE -> {
-                    videoEngineManager.currentTrackChoices.lastSubtitleOverride = TrackSelectionOverride(
+                    playerManager.currentTrackChoices.lastSubtitleOverride = TrackSelectionOverride(
                         exoTrack.trackGroup,
                         exoTrack.index
                     )
                 }
 
                 TrackType.AUDIO -> {
-                    videoEngineManager.currentTrackChoices.lastSubtitleOverride = TrackSelectionOverride(
+                    playerManager.currentTrackChoices.lastSubtitleOverride = TrackSelectionOverride(
                         exoTrack.trackGroup,
                         exoTrack.index
                     )
                 }
             }
             exoplayer?.trackSelector?.parameters = builder.addOverride(
-                videoEngineManager.currentTrackChoices.lastSubtitleOverride as TrackSelectionOverride
+                playerManager.currentTrackChoices.lastSubtitleOverride as TrackSelectionOverride
             ).build()
         }
     }
@@ -337,14 +337,14 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
                 var newParams = builder.build()
 
-                if (videoEngineManager.currentTrackChoices.lastAudioOverride != null) {
+                if (playerManager.currentTrackChoices.lastAudioOverride != null) {
                     newParams = newParams.buildUpon().addOverride(
-                        videoEngineManager.currentTrackChoices.lastAudioOverride as? TrackSelectionOverride ?: return@withContext
+                        playerManager.currentTrackChoices.lastAudioOverride as? TrackSelectionOverride ?: return@withContext
                     ).build()
                 }
-                if (videoEngineManager.currentTrackChoices.lastSubtitleOverride != null) {
+                if (playerManager.currentTrackChoices.lastSubtitleOverride != null) {
                     newParams = newParams.buildUpon().addOverride(
-                        videoEngineManager.currentTrackChoices.lastSubtitleOverride as? TrackSelectionOverride ?: return@withContext
+                        playerManager.currentTrackChoices.lastSubtitleOverride as? TrackSelectionOverride ?: return@withContext
                     ).build()
                 }
                 trackSelectionParameters = newParams
@@ -406,7 +406,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
     override suspend fun parseMedia(media: MediaFile) {
         exoplayer?.prepare()
-        exoplayer?.duration?.let { videoEngineManager.timeFullMillis.value = if (it < 0) 0 else it }
+        exoplayer?.duration?.let { playerManager.timeFullMillis.value = if (it < 0) 0 else it }
         super.parseMedia(media)
     }
 

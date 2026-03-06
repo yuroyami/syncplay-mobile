@@ -21,7 +21,7 @@ import app.protocol.network.NettyNetworkManager
 import app.player.exo.ExoEngine
 import app.player.mpv.MpvEngine
 import app.player.vlc.VlcEngine
-import app.player.VideoEngine
+import app.player.PlayerEngine
 import app.preferences.Preferences.NETWORK_ENGINE
 import app.preferences.value
 import app.protocol.network.KtorNetworkManager
@@ -41,7 +41,7 @@ actual val platform: PLATFORM = PLATFORM.Android
  * Includes ExoPlayer, MPV, and VLC. Actual availability depends on build flavor
  * (noLibs vs withLibs).
  */
-actual val availablePlatformVideoEngines: List<VideoEngine> =
+actual val availablePlatformPlayerEngines: List<PlayerEngine> =
     listOf(ExoEngine, MpvEngine, VlcEngine)
 
 actual typealias GlobalPlayerSession = MediaSession

@@ -47,7 +47,7 @@ import app.theme.Theming
 import app.theme.defaultTheme
 import app.uicomponents.PopupMediaDirs.MediaDirsPopup
 import app.utils.PLATFORM
-import app.utils.availablePlatformVideoEngines
+import app.utils.availablePlatformPlayerEngines
 import app.utils.generateTimestampMillis
 import app.utils.get
 import app.utils.logFile
@@ -177,7 +177,7 @@ object Preferences {
     /** ------------ Miscellaneous -------------*/
     val JOIN_CONFIG = Pref<String?>("misc_join_config", null)
 
-    val PLAYER_ENGINE = Pref("misc_player_engine", availablePlatformVideoEngines.first { it.isDefault }.name)
+    val PLAYER_ENGINE = Pref("misc_player_engine", availablePlatformPlayerEngines.first { it.isDefault }.name)
     val GESTURES = Pref("misc_gestures", true)
     val CURRENT_THEME = Pref("misc_current_theme", defaultTheme.asString())
     val CUSTOM_THEMES = Pref<Set<String>>("misc_custom_themes", emptySet())

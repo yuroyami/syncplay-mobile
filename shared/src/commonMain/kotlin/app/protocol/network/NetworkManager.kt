@@ -11,7 +11,7 @@ import app.protocol.models.CONNECTIONSTATE
 import app.protocol.models.ClientMessage
 import app.protocol.models.TlsState
 import app.room.RoomViewmodel
-import app.utils.ProtocolDsl
+import app.utils.ProtocolApi
 import app.utils.loggy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -121,12 +121,12 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
 
     typealias SendablePacket = String
 
-    @ProtocolDsl
+    @ProtocolApi
     inline fun <reified T : ClientMessage> sendAsync(noinline init: suspend T.() -> Unit = {}) {
         viewmodel.viewModelScope.launch(Dispatchers.IO) { send(init) }
     }
 
-    @ProtocolDsl
+    @ProtocolApi
     suspend inline fun <reified T : ClientMessage> send(noinline init: suspend T.() -> Unit = {}) {
         val packetInstance = createPacketInstance<T>(protocolManager = viewmodel.protocol)
         init(packetInstance)

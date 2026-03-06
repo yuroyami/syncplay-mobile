@@ -15,7 +15,7 @@ import kotlin.time.Clock
  * DSL marker annotation for protocol-related builders and scopes.
  */
 @DslMarker
-annotation class ProtocolDsl
+annotation class ProtocolApi
 
 /**
  * Generates a timestamp string in HH:MM:SS format using the current system time.

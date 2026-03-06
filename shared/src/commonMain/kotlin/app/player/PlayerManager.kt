@@ -3,9 +3,9 @@ package app.player
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
 import app.AbstractManager
-import app.room.RoomViewmodel
 import app.player.models.MediaFile
 import app.player.models.TrackChoices
+import app.room.RoomViewmodel
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class VideoEngineManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
+class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
     lateinit var player: PlayerImpl
     val isPlayerReady = MutableStateFlow(false)

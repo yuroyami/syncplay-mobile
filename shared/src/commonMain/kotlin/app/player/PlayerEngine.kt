@@ -4,7 +4,7 @@ import app.room.RoomViewmodel
 import org.jetbrains.compose.resources.DrawableResource
 
 /** Media player engine usable in Syncplay; platform engines listed via availablePlatformVideoEngines. */
-interface VideoEngine {
+interface PlayerEngine {
     /** Engine display name (e.g., ExoPlayer, MPV, VLC, AVPlayer, VLCKit). */
     val name: String
 
