@@ -21,7 +21,10 @@ kotlin {
     }
 
     // Activating iOS targets (iosMain)
-    iosArm64().also {
+    listOf(
+        //iosSimulatorArm64(), //We enable this only if we're planning to test on a simulator
+        iosArm64()
+    ).forEach {
         it.compilations.getByName("main") {
             @Suppress("unused") val nsKVO by cinterops.creating {
                 defFile("src/nativeInterop/cinterop/NSKeyValueObserving.def")

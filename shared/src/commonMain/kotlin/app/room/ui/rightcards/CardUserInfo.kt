@@ -56,7 +56,6 @@ object CardUserInfo {
     @Composable
     fun UserInfoCard() {
         val viewmodel = LocalRoomViewmodel.current
-
         val uiOpacity by viewmodel.uiState.uiOpacity.collectAsState()
 
         Card(
