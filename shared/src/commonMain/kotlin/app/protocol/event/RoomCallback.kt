@@ -183,7 +183,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     suspend fun onConnected() {
         loggy("SYNCPLAY Protocol: Connected!")
 
-        network.state = ConnectionState.STATE_CONNECTED
+        network.state.value = ConnectionState.CONNECTED
 
         network.sendAsync<ClientMessage.Readiness> {
             isReady = if (viewmodel.media == null && READY_FIRST_HAND.value()) true else session.ready.value
@@ -219,7 +219,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     fun onConnectionFailed() {
         loggy("SYNCPLAY Protocol: Connection failed :/")
 
-        network.state = ConnectionState.STATE_DISCONNECTED
+        network.state.value = ConnectionState.DISCONNECTED
         dispatcher.broadcastMessage(message = { getString(Res.string.room_connection_failed) }, isChat = false, isError = true)
         network.reconnect()
     }
@@ -227,7 +227,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     fun onDisconnected() {
         loggy("SYNCPLAY Protocol: Disconnected.")
 
-        network.state = ConnectionState.STATE_DISCONNECTED
+        network.state.value = ConnectionState.DISCONNECTED
         dispatcher.broadcastMessage(message = { getString(Res.string.room_attempting_reconnection) }, isChat = false, isError = true)
         network.reconnect()
     }

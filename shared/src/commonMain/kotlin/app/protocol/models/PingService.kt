@@ -1,12 +1,7 @@
 package app.protocol.models
 
 import app.utils.generateTimestampMillis
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flow
-import kotlin.time.TimeMark
-import kotlin.time.TimeSource
 
 /**
  * Measures network latency between client and server to keep playback in sync.
@@ -19,11 +14,6 @@ class PingService {
     companion object {
         /** EMA weight — higher value means slower, smoother adaptation to RTT changes. */
         private const val PING_MOVING_AVERAGE_WEIGHT = 0.85
-
-        sealed interface ConnectionState {
-            data class Connected(val pingMs: Int) : ConnectionState
-            object Disconnected : ConnectionState
-        }
     }
 
     /** Current round-trip time in seconds. */
@@ -36,7 +26,6 @@ class PingService {
      */
     var forwardDelay: Double = 0.0
 
-    private val lastUpdatedMark = MutableStateFlow<TimeMark?>(null)
     private val avrRtt = MutableStateFlow(0.0)
 
     /** Called on each server ping response to update RTT and [forwardDelay]. */
@@ -57,21 +46,5 @@ class PingService {
         } else {
             avrRtt.value / 2
         }
-
-        lastUpdatedMark.value = TimeSource.Monotonic.markNow()
     }
-
-    private val ticker = flow {
-        while (true) {
-            emit(Unit)
-            delay(500)
-        }
-    }
-
-    val connectionState =
-        combine(avrRtt, lastUpdatedMark, ticker) { avr, mark, _ ->
-            val disconnected = mark == null || mark.elapsedNow().inWholeSeconds > 5
-            if (disconnected) ConnectionState.Disconnected
-            else ConnectionState.Connected((avr * 1000).toInt())
-        }
 }

@@ -54,7 +54,7 @@
     <string name="connect_button_current_engine">المحرك الحالي: %1$s</string>
     <string name="room_selected_vid">ملف الفيديو المحدد: %1$s</string>
     <string name="room_selected_sub">ملف الترجمة المحمل: %1$s</string>
-    <string name="room_ping_connected">متصل - %1$s ميلي ثانية</string>
+    <string name="room_ping_connected">متصل</string>
     <string name="room_attempting_connect">محاولة الاتصال بـ %1$s:%2$s</string>
     <string name="room_guy_played">%1$s استأنف التشغيل</string>
     <string name="room_guy_paused">%1$s أوقف التشغيل عند %2$s</string>

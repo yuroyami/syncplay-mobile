@@ -43,7 +43,7 @@
     <string name="connect_button_current_engine">Текущий движок: %1$s</string>
     <string name="room_selected_vid">Выбран видео файл: %1$s</string>
     <string name="room_selected_sub">Загружен файл субтитров: %1$s</string>
-    <string name="room_ping_connected">Подключено - %1$s мс</string>
+    <string name="room_ping_connected">Подключено</string>
     <string name="room_attempting_connect">Попытка подключения к %1$s:%2$s</string>
     <string name="room_guy_played">%1$s возобновил воспроизведение</string>
     <string name="room_guy_paused">%1$s поставил на паузу на %2$s</string>

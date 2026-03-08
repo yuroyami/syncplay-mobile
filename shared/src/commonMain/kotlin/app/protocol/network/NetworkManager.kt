@@ -18,6 +18,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -29,7 +30,8 @@ import kotlin.time.Duration.Companion.seconds
 abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
     open val engine: NetworkEngine = NetworkEngine.SWIFTNIO
-    var state: ConnectionState = ConnectionState.STATE_DISCONNECTED
+
+    val state = MutableStateFlow<ConnectionState>(ConnectionState.DISCONNECTED)
 
     /** TLS_NO = plain TCP, TLS_YES = encrypted, TLS_ASK = negotiate with server. */
     var tls: TlsState = TlsState.TLS_NO
@@ -42,7 +44,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
 
     override fun invalidate() {
         terminateExistingConnection()
-        state = ConnectionState.STATE_DISCONNECTED
+        state.value = ConnectionState.DISCONNECTED
         tls = TlsState.TLS_NO
     }
 
@@ -55,7 +57,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
 
         terminateExistingConnection()
         viewmodel.callback.onConnectionAttempt()
-        state = ConnectionState.STATE_CONNECTING
+        state.value = ConnectionState.CONNECTING
 
         try {
             connectSocket()
@@ -79,11 +81,11 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
 
     private var reconnectionJob: Job? = null
     fun reconnect() {
-        if (state == ConnectionState.STATE_DISCONNECTED) {
+        if (state.value == ConnectionState.DISCONNECTED) {
             if (reconnectionJob == null || reconnectionJob?.isCompleted == true) {
                 reconnectionJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
-                    state = ConnectionState.STATE_SCHEDULING_RECONNECT
-                    delay(RECONNECTION_INTERVAL.value() * 1000L)
+                    state.value = ConnectionState.SCHEDULING_RECONNECT
+                    delay(RECONNECTION_INTERVAL.value().seconds)
                     connect()
                 }
             }

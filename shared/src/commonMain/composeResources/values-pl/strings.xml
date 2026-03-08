@@ -53,7 +53,7 @@
     <string name="connect_button_current_engine">Aktualny silnik: %1$s</string>
     <string name="room_selected_vid">Wybrany plik wideo: %1$s</string>
     <string name="room_selected_sub">Wczytany plik napisów: %1$s</string>
-    <string name="room_ping_connected">Połączono - %1$s ms</string>
+    <string name="room_ping_connected">Połączono</string>
     <string name="room_attempting_connect">Próba połączenia z %1$s:%2$s</string>
     <string name="room_guy_played">%1$s wznowił odtwarzanie</string>
     <string name="room_guy_paused">%1$s zapauzował o %2$s</string>

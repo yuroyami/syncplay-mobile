@@ -43,7 +43,7 @@
     <string name="connect_button_current_engine">当前引擎：%1$s</string>
     <string name="room_selected_vid">选择的视频文件：%1$s</string>
     <string name="room_selected_sub">加载的字幕文件：%1$s</string>
-    <string name="room_ping_connected">已连接 - %1$s 毫秒</string>
+    <string name="room_ping_connected">已连接</string>
     <string name="room_attempting_connect">正在尝试连接到 %1$s:%2$s</string>
     <string name="room_guy_played">%1$s 取消暂停</string>
     <string name="room_guy_paused">%1$s 暂停在 %2$s</string>

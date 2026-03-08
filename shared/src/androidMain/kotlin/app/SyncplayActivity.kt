@@ -260,7 +260,7 @@ class SyncplayActivity : ComponentActivity() {
         super.onConfigurationChanged(newConfig)
         // Reapply locale after orientation changes
         val lang = DISPLAY_LANG.value()
-        val locale = Locale(lang)
+        val locale = Locale.Builder().setLanguage(lang).build()
         Locale.setDefault(locale)
         val config = resources.configuration
         config.setLocale(locale)

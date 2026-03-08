@@ -54,7 +54,7 @@
     <string name="connect_button_current_engine">Current engine: %1$s</string>
     <string name="room_selected_vid">Selected video file: %1$s</string>
     <string name="room_selected_sub">Loaded subtitle file: %1$s</string>
-    <string name="room_ping_connected">Connected - %1$s ms</string>
+    <string name="room_ping_connected">Connected</string>
     <string name="room_attempting_connect">Attempting to connect to %1$s:%2$s</string>
     <string name="room_guy_played">%1$s unpaused</string>
     <string name="room_guy_paused">%1$s paused at %2$s</string>

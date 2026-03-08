@@ -53,7 +53,7 @@
     <string name="connect_button_current_engine">Moteur actuel : %1$s</string>
     <string name="room_selected_vid">Fichier vidéo sélectionné : %1$s</string>
     <string name="room_selected_sub">Fichier de sous-titres chargé : %1$s</string>
-    <string name="room_ping_connected">Connecté - %1$s ms</string>
+    <string name="room_ping_connected">Connecté</string>
     <string name="room_attempting_connect">Tentative de connexion à %1$s:%2$s</string>
     <string name="room_guy_played">%1$s a relancé la lecture</string>
     <string name="room_guy_paused">%1$s a mis en pause à %2$s</string>
