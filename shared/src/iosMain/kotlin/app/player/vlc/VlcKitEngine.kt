@@ -506,34 +506,32 @@ object VlcKitEngine : PlayerEngine {
 
         /**
          * Delegate for receiving VLC media player state change notifications.
-         *
-         * Monitors playback state changes and notifies the server about play/pause events.
-         * Also detects when playback ends to trigger playlist advancement.
          */
         inner class VlcDelegate : NSObject(), VLCMediaPlayerDelegateProtocol {
-            /**
-             * Called when the media player's state changes.
-             *
-             * Updates local playback state and sends state changes to the server
-             * for synchronization. Handles end-of-playback for playlist advancement.
-             *
-             * @param aNotification Notification containing state change information
-             */
             override fun mediaPlayerStateChanged(aNotification: NSNotification) {
-                playerScopeMain.launch {
-                    if (hasMedia()) {
-                        val isPlaying = vlcPlayer?.state == VLCMediaPlayerState.VLCMediaPlayerStatePlaying
-                        viewmodel.playerManager.isNowPlaying.value = isPlaying // Just to inform UI
+                if (vlcPlayer?.media == null) return
 
-                        // Tell server about playback state change
-                        if (!viewmodel.isSoloMode) {
-                            viewmodel.dispatcher.sendPlayback(isPlaying)
-                        }
+                val isPlaying = vlcPlayer?.isPlaying() == true
+                playerManager.isNowPlaying.value = isPlaying
 
-                        if (vlcPlayer?.state == VLCMediaPlayerState.VLCMediaPlayerStateEnded) {
-                            onPlaybackEnded()
-                        }
+                if (!viewmodel.isSoloMode) {
+                    val state = vlcPlayer?.state
+                    if (state == VLCMediaPlayerState.VLCMediaPlayerStatePlaying ||
+                        state == VLCMediaPlayerState.VLCMediaPlayerStatePaused) {
+                        viewmodel.dispatcher.sendPlayback(isPlaying)
                     }
+                }
+
+                if (vlcPlayer?.state == VLCMediaPlayerState.VLCMediaPlayerStateEnded) {
+                    onPlaybackEnded()
+                }
+            }
+
+            override fun mediaPlayerTimeChanged(aNotification: NSNotification) {
+                // Time ticking = definitely playing
+                val isPlaying = vlcPlayer?.isPlaying() == true
+                if (playerManager.isNowPlaying.value != isPlaying) {
+                    playerManager.isNowPlaying.value = isPlaying
                 }
             }
         }

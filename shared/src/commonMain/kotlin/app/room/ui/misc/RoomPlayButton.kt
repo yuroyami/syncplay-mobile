@@ -10,7 +10,6 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewModelScope
@@ -28,15 +27,15 @@ fun RoomPlayButton(modifier: Modifier) {
     val hasVideo by viewmodel.hasVideo.collectAsState()
 
     /** PLAY BUTTON */
-    val playing = remember { viewmodel.playerManager.isNowPlaying }
+    val playing by viewmodel.playerManager.isNowPlaying.collectAsState()
     val animatedColor by animateColorAsState(
         animationSpec = tween(500),
-        targetValue = if (playing.value) Theming.SP_GRADIENT.last().copy(alpha = 0.1f)
+        targetValue = if (playing) Theming.SP_GRADIENT.last().copy(alpha = 0.1f)
         else Theming.SP_GRADIENT.first().copy(alpha = 0.1f)
     )
     if (hasVideo) {
         FlexibleIcon(
-            icon = when (playing.value) {
+            icon = when (playing) {
                 true -> Icons.Filled.Pause
                 false -> Icons.Filled.PlayArrow
             },

@@ -1,6 +1,5 @@
 package app.player
 
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
 import app.AbstractManager
 import app.player.models.MediaFile
@@ -29,7 +28,7 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
             initialValue = false
         )
 
-    var isNowPlaying = mutableStateOf(false)
+    val isNowPlaying = MutableStateFlow(false)
 
     //TODO Remove in favor of media.fileDuration
     val timeFullMillis = MutableStateFlow<Long>(0L)
