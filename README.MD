@@ -42,7 +42,7 @@ You can also check my [iOS guide](https://github.com/yuroyami/syncplay-mobile/wi
 ## Introduction
 
 [![OS - Android](https://img.shields.io/badge/Android-a4c639?style=for-the-badge&logo=android)]()[![OS - iOS](https://img.shields.io/badge/iOS-555555?style=for-the-badge&logo=apple)]()<br>
-[![Version Release](https://img.shields.io/badge/Version-0.17.0-e2203c?style=for-the-badge&logo=v)]()[![Written Language](https://img.shields.io/badge/Made%20with-Kotlin-lightgrey?style=for-the-badge&logo=kotlin)]()[![is Maintained?](https://img.shields.io/badge/Maintained-YES-green?style=for-the-badge)]()[![License](https://img.shields.io/badge/License-AGPL--3.0-brightgreen?style=for-the-badge)]()[![Requirement](https://img.shields.io/badge/REQUIREMENT-Android%207.0%20and%20later-blueviolet?style=for-the-badge&logo=android%20studio)]()[![Requirement](https://img.shields.io/badge/REQUIREMENT-iOS%2014.0%20and%20later-blueviolet?style=for-the-badge&logo=xcode)]()
+[![Version Release](https://img.shields.io/badge/Version-0.17.0-e2203c?style=for-the-badge&logo=v)]()[![Written Language](https://img.shields.io/badge/Made%20with-Kotlin-lightgrey?style=for-the-badge&logo=kotlin)]()[![is Maintained?](https://img.shields.io/badge/Maintained-YES-green?style=for-the-badge)]()[![License](https://img.shields.io/badge/License-AGPL--3.0-brightgreen?style=for-the-badge)]()[![Requirement](https://img.shields.io/badge/REQUIREMENT-Android%208.0%20and%20later-blueviolet?style=for-the-badge&logo=android%20studio)]()[![Requirement](https://img.shields.io/badge/REQUIREMENT-iOS%2014.0%20and%20later-blueviolet?style=for-the-badge&logo=xcode)]()
 
 Syncplay Mobile is a unofficial Syncplay client brings the remarkable functionality of Syncplay PC client to the mobile platforms (Android and iOS). You can synchronize media playback with your friends, allowing you to watch videos together, even
 when you're physically apart.
@@ -76,11 +76,14 @@ It includes real-time chat functionality, enabling seamless communication while 
 
 Usage on Android is fairly simple:
 
+To get the newest possible release:
 - Download the latest release APK from [here](https://github.com/yuroyami/syncplay-mobile/releases/latest).
 - Install the APK. If any installation issues arise, uninstall the previous version of the app before installing the new one.
 - Open Syncplay. Specify a username of your choice, a room name of your choice (Tell your friends about it). Select a server from the list (Tell your friends about this one too)
 - Click "Join Room". You will be taken to the Room screen. You're all set. Tell your friends to join the same room and server.
 - ...and that's it. Load the same video file as your friends and enjoy the synchronized playback.
+
+Or you can download the Google Play store version, but that's not always guaranteed to be the newest version. Check the version before you download it and make sure it matches the newest version here.
 
 ### How to use (iOS)
 
@@ -135,9 +138,9 @@ Some video players are more potent than others in certain areas. Here's a genera
 
 - Seems like the app can't be updated. Freshly install it: Uninstall the older version before installing the new one.
 
-> Where is the iOS release ?
+> I don't have access to iOS's Apple store
 
-- The app is not on the Apple app store. However, you can sideload the app via `AltStore` (see [iOS guide](https://github.com/yuroyami/syncplay-mobile/wiki/How-to-install-the-app-on-iOS)) if you have a normal non-jailbroken iPhone/iPad.
+- You can sideload the app via `AltStore` (see [iOS guide](https://github.com/yuroyami/syncplay-mobile/wiki/How-to-install-the-app-on-iOS)) if you have a normal non-jailbroken iPhone/iPad.
 - If you have a jailbroken device, simply sideload the latest `.ipa` file which you will find attached to every release.
 
 ## Translating
@@ -163,7 +166,7 @@ If there's anything you'd like to chat about, please feel free to open a new dis
 
 ## Build Process
 
-Requirement: Android Studio Jellyfish or newer. If you want to build the iOS version, you will ***also*** need to have Xcode 15.2 or newer. Your Android Studio will need to have the `Kotlin Multiplatform Mobile` plugin installed.
+Requirement: Android Studio Panda or newer. If you want to build the iOS version, you will ***also*** need to have Xcode 16.3 or newer. Your Android Studio will need to have the `Kotlin Multiplatform Mobile` plugin installed.
 Simply open the repo project using its GitHub link and build the app. It won't require any further tweaking.
 
 ## Acknowledgments
