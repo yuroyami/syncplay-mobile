@@ -16,15 +16,14 @@ import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalView
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import androidx.media3.session.MediaSession
-import app.protocol.network.NettyNetworkManager
+import app.player.PlayerEngine
 import app.player.exo.ExoEngine
 import app.player.mpv.MpvEngine
 import app.player.vlc.VlcEngine
-import app.player.PlayerEngine
 import app.preferences.Preferences.NETWORK_ENGINE
 import app.preferences.value
 import app.protocol.network.KtorNetworkManager
+import app.protocol.network.NettyNetworkManager
 import app.protocol.network.NetworkManager
 import app.room.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
@@ -43,8 +42,6 @@ actual val platform: Platform = Platform.Android
  */
 actual val availablePlatformPlayerEngines: List<PlayerEngine> =
     listOf(ExoEngine, MpvEngine, VlcEngine)
-
-actual typealias GlobalPlayerSession = MediaSession
 
 actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {
     val preferredEngine = NETWORK_ENGINE.value()

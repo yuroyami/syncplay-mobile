@@ -32,7 +32,6 @@ import androidx.media3.ui.CaptionStyleCompat
 import androidx.media3.ui.PlayerView
 import app.R
 import app.player.PlayerImpl
-import app.player.buildAndroidMediaSession
 import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
 import app.player.models.PlayerOptions
@@ -42,7 +41,6 @@ import app.preferences.Preferences.EXO_MIN_BUFFER
 import app.preferences.Preferences.EXO_SEEK_BUFFER
 import app.preferences.settings.SettingCategory
 import app.room.RoomViewmodel
-import app.utils.GlobalPlayerSession
 import app.utils.contextObtainer
 import app.utils.loggy
 import app.utils.uri
@@ -140,7 +138,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
                 if (!isLoading && exoplayer != null) {
                     /* Updating our timeFull */
                     val durationMs = exoplayer!!.duration
-                    playerManager.timeFullMillis.value = abs(durationMs)
+                    viewmodel.playerManager.timeFullMillis.value = abs(durationMs)
 
                     if (viewmodel.isSoloMode) return
                     if (durationMs / 1000.0 != viewmodel.media?.fileDuration) {
@@ -157,7 +155,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
                 if (exoplayer != null && exoplayer?.mediaItemCount != 0) {
                     if (exoplayer!!.playbackState != ExoPlayer.STATE_BUFFERING) {
-                        playerManager.isNowPlaying.value = isPlaying //Just to inform UI
+                        viewmodel.playerManager.isNowPlaying.value = isPlaying //Just to inform UI
 
                         //Tell server about playback state change
                         if (!viewmodel.isSoloMode) {
@@ -193,15 +191,6 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
         isInitialized = true
 
         startTrackingProgress()
-    }
-
-    override fun initMediaSession(): GlobalPlayerSession {
-        loggy("Exoplayer: $exoplayer")
-        return exoplayer!!.buildAndroidMediaSession(contextObtainer())
-    }
-
-    override fun finalizeMediaSession() {
-        //TODO("Not yet implemented")
     }
 
     override suspend fun destroy() {
@@ -298,7 +287,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
         /* First, clearing our subtitle track selection (This helps troubleshoot many issues */
         exoplayer?.trackSelector?.parameters = builder.clearOverridesOfType(type.getExoType()).build()
-        playerManager.currentTrackChoices.lastSubtitleOverride = null
+        viewmodel.playerManager.currentTrackChoices.lastSubtitleOverride = null
 
         /* Now, selecting our subtitle track should one be selected */
         if (exoTrack != null) {

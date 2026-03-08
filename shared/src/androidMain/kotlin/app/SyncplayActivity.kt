@@ -6,7 +6,6 @@ import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.app.PictureInPictureParams
 import android.app.RemoteAction
 import android.content.BroadcastReceiver
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -27,10 +26,8 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.session.MediaController
-import androidx.media3.session.SessionToken
 import app.home.HomeViewmodel
 import app.home.JoinConfig
-import app.player.PlayerImpl
 import app.player.SyncplayMediaSessionService
 import app.player.exo.ExoImpl
 import app.preferences.Preferences.DISPLAY_LANG
@@ -43,7 +40,6 @@ import app.utils.changeLanguage
 import app.utils.loggy
 import app.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -89,24 +85,12 @@ class SyncplayActivity : ComponentActivity() {
 
         /** Binding common logic with platform logic */
         platformCallback = object : PlatformCallback {
-            override fun initializeMediaSession(player: PlayerImpl) {
-                (application as SyncplayApp).mediaSession = player.initMediaSession()
+            override fun mediaSessionInitialize() {
+                startForegroundService(Intent(this@SyncplayActivity, SyncplayMediaSessionService::class.java))
+            }
 
-                loggy("@$@$@$@$@$@$@$ MEDIA SESSION IS INITIALIZED")
-                /* Getting a session token that defines our underlying service */
-                val sessionToken = SessionToken(
-                    applicationContext,
-                    ComponentName(applicationContext, SyncplayMediaSessionService::class.java)
-                )
-
-                loggy("@$@$@$@$@$@$@$ CREATED SESSION TOKEN")
-
-
-                /* initializing the media session controller using the session token, the service will launch if it hasn't already */
-                lifecycleScope.launch(Dispatchers.Main) {
-                    media3Controller = MediaController.Builder(applicationContext, sessionToken)
-                        .buildAsync().await()
-                }
+            override fun mediaSessionFinalize() {
+                stopService(Intent(this@SyncplayActivity, SyncplayMediaSessionService::class.java))
             }
 
             /**

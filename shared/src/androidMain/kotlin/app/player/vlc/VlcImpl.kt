@@ -15,7 +15,6 @@ import app.player.models.Chapter
 import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
 import app.room.RoomViewmodel
-import app.utils.GlobalPlayerSession
 import app.utils.contextObtainer
 import app.utils.uri
 import io.github.vinceglb.filekit.PlatformFile
@@ -73,15 +72,6 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
             vlcPlayer?.release()
             libvlc?.release()
         }
-    }
-
-
-    override fun initMediaSession(): GlobalPlayerSession {
-        TODO("Not yet implemented")
-    }
-
-    override fun finalizeMediaSession() {
-        TODO("Not yet implemented")
     }
 
     @Composable

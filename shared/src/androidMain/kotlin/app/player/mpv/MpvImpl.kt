@@ -15,7 +15,6 @@ import androidx.core.net.toUri
 import androidx.media3.common.C.STREAM_TYPE_MUSIC
 import app.R
 import app.player.PlayerImpl
-import app.player.buildAndroidMediaSession
 import app.player.models.Chapter
 import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
@@ -32,8 +31,6 @@ import app.preferences.Preferences.MPV_VIDSYNC
 import app.preferences.settings.SettingCategory
 import app.preferences.value
 import app.room.RoomViewmodel
-import app.utils.GlobalPlayerSession
-import app.utils.contextObtainer
 import app.utils.uri
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.path
@@ -66,14 +63,6 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
         isInitialized = true
         mpvObserverAttach()
-    }
-
-    override fun initMediaSession(): GlobalPlayerSession {
-        return Media3Equivalent.buildAndroidMediaSession(contextObtainer())
-    }
-
-    override fun finalizeMediaSession() {
-        //TODO("Not yet implemented")
     }
 
     override suspend fun destroy() {

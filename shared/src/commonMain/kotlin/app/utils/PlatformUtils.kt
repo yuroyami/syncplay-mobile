@@ -46,12 +46,9 @@ expect val platform: Platform
  */
 expect val availablePlatformPlayerEngines: List<PlayerEngine>
 
-expect class GlobalPlayerSession
-
 /**
  * Creates a platform-specific network manager instance for the room.
  *
- * @param engine The network engine type to use (e.g., Ktor, Netty, SwiftNIO)
  * @return Platform-specific NetworkManager implementation
  */
 expect fun RoomViewmodel.instantiateNetworkManager(): NetworkManager

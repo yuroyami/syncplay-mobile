@@ -15,7 +15,6 @@ import app.preferences.settings.SettingCategory
 import app.preferences.value
 import app.protocol.event.ClientMessage
 import app.room.RoomViewmodel
-import app.utils.GlobalPlayerSession
 import app.utils.Platform
 import app.utils.getFileName
 import app.utils.platform
@@ -39,14 +38,9 @@ import kotlin.time.Duration
 
 /** The actual platform-agnostic interface for video/audio playback in Syncplay.
  * Engines: ExoPlayer/MPV/VLC (Android), AVPlayer/VLC (iOS)*/
-abstract class PlayerImpl(
-    val viewmodel: RoomViewmodel,
-    val engine: PlayerEngine
-) {
-    val playerManager: PlayerManager = viewmodel.playerManager
+abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine) {
 
-    /** MediaSession for system notification and external playback control. */
-    val session: GlobalPlayerSession? = null
+    val playerManager: PlayerManager = viewmodel.playerManager
 
     enum class TrackType {
         AUDIO, SUBTITLE
@@ -66,10 +60,6 @@ abstract class PlayerImpl(
     abstract fun initialize()
 
     abstract suspend fun destroy()
-
-    abstract fun initMediaSession(): GlobalPlayerSession
-
-    abstract fun finalizeMediaSession()
 
     abstract suspend fun configurableSettings(): SettingCategory?
 

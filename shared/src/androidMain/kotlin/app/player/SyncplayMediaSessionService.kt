@@ -1,30 +1,41 @@
 package app.player
 
-import androidx.media3.session.MediaSession
-import androidx.media3.session.MediaSessionService
-import app.SyncplayApp
-import app.utils.loggy
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.Service
+import android.content.Intent
+import androidx.core.app.NotificationCompat
+import app.R
 
-class SyncplayMediaSessionService : MediaSessionService() {
+class SyncplayMediaSessionService : Service() {
 
-    //TODO request FOREGROUND_SERVICE and NOTIFICATIONS permissions
+    override fun onBind(intent: Intent?) = null
 
-    override fun onCreate() {
-        super.onCreate()
-
-        loggy("The Media Service is CREATED !")
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        createNotificationChannel()
+        startForeground(NOTIFICATION_ID, buildNotification())
+        return START_STICKY
     }
 
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession {
-        return (application as SyncplayApp).mediaSession.also {
-            loggy("The Media Service is GOTTEEEEEEEEEEN !")
-        }
+    private fun createNotificationChannel() {
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            "Syncplay Playback",
+            NotificationManager.IMPORTANCE_LOW // LOW = no sound, no heads-up, just tray presence
+        )
+        getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
     }
 
-    override fun onDestroy() {
-        val session = (application as SyncplayApp).mediaSession
-        session.player.release()
-        session.release()
-        super.onDestroy()
+    private fun buildNotification() = NotificationCompat.Builder(this, CHANNEL_ID)
+        .setSmallIcon(R.drawable.syncplay_logo_solid) // swap for whatever your app icon res is
+        .setContentTitle("Syncplay")
+        .setContentText("Room active")
+        .setSilent(true)
+        .setOngoing(true)
+        .build()
+
+    companion object {
+        const val CHANNEL_ID = "syncplay_playback"
+        const val NOTIFICATION_ID = 1
     }
 }

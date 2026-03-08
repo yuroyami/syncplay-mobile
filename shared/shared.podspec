@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
     spec.name                     = 'shared'
-    spec.version                  = '1.0.3'
+    spec.version                  = '1.0.4'
     spec.homepage                 = 'www.github.com/yuroyami/syncplay-mobile'
     spec.source                   = { :http=> ''}
     spec.authors                  = ''
@@ -9,7 +9,7 @@ Pod::Spec.new do |spec|
     spec.vendored_frameworks      = 'build/cocoapods/framework/shared.framework'
     spec.libraries                = 'c++'
     spec.ios.deployment_target    = '14.0'
-    spec.dependency 'MobileVLCKit', '3.7.0'
+    spec.dependency 'MobileVLCKit', '3.7.2'
     if !Dir.exist?('build/cocoapods/framework/shared.framework') || Dir.empty?('build/cocoapods/framework/shared.framework')
         raise "
         Kotlin framework 'shared' doesn't exist yet, so a proper Xcode project can't be generated.

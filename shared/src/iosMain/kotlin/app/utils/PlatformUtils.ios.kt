@@ -4,14 +4,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.ClipEntry
 import app.delegato
-import app.protocol.network.instantiateSwiftNioNetworkManager
+import app.player.PlayerEngine
 import app.player.avplayer.AVPlayerEngine
 import app.player.vlc.VlcKitEngine
-import app.player.PlayerEngine
 import app.preferences.Preferences.NETWORK_ENGINE
 import app.preferences.value
 import app.protocol.network.KtorNetworkManager
 import app.protocol.network.NetworkManager
+import app.protocol.network.instantiateSwiftNioNetworkManager
 import app.room.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.path
@@ -32,8 +32,6 @@ import kotlin.native.ref.WeakReference
 actual val platform: Platform = Platform.IOS
 
 actual val availablePlatformPlayerEngines: List<PlayerEngine> = listOf(AVPlayerEngine, VlcKitEngine)
-
-actual typealias GlobalPlayerSession = String
 
 actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {
     val preferredEngine = NETWORK_ENGINE.value()

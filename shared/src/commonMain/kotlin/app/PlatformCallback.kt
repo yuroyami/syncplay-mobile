@@ -2,7 +2,6 @@ package app
 
 import app.home.HomeViewmodel
 import app.home.JoinConfig
-import app.player.PlayerImpl
 
 /**
  * Platform-specific callback interface for handling system-level operations.
@@ -57,7 +56,8 @@ interface PlatformCallback {
     fun changeCurrentBrightness(v: Float)
 
 
-    fun initializeMediaSession(player: PlayerImpl)
+    fun mediaSessionInitialize()
+    fun mediaSessionFinalize()
 
     /**
      * Called when playback state changes.

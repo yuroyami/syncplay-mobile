@@ -6,6 +6,7 @@ import app.AbstractManager
 import app.player.models.MediaFile
 import app.player.models.TrackChoices
 import app.room.RoomViewmodel
+import app.utils.platformCallback
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -45,9 +46,9 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
     override fun invalidate() {
         // GlobalScope required — viewModelScope is already cancelled at this point
+        platformCallback.mediaSessionFinalize()
         GlobalScope.launch {
             player.destroy()
-            player.finalizeMediaSession()
         }
         media.value = null
         isNowPlaying.value = false

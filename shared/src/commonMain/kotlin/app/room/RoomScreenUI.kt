@@ -72,7 +72,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                         .fillMaxSize()
                         .alpha(if (hasVideo) 1f else 0f), // Keeps composable alive even if hidden
                     onPlayerReady = {
-                        platformCallback.initializeMediaSession(viewmodel.player)
+                        platformCallback.mediaSessionInitialize()
                     }
                 )
             }
