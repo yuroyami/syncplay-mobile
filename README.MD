@@ -11,14 +11,15 @@
 | Platform                                                                                                   | Option 1                                                                                                                                                                                                                                                                                                 | Option 2                                                                                                                                                                                                                                           | Option 3                                                                                                                                                                                                                                                                              |
 |------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | <img src="https://upload.wikimedia.org/wikipedia/commons/d/d7/Android_robot.svg" alt="Android" width="20"> | <a href="https://github.com/yuroyami/syncplay-mobile/releases/latest"><img alt="Syncplay Android on GitHub releases" title="Syncplay Android" src="https://raw.githubusercontent.com/flocke/andOTP/master/assets/badges/get-it-on-github.png" width="150"></a>                                           | <a href="https://apt.izzysoft.de/fdroid/index/apk/com.reddnek.syncplay"><img alt="Syncplay Android on IzzyOnDroid Repo" title="Syncplay Android" src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" width="150"></a>    | <a href="https://play.google.com/store/apps/details?id=com.yuroyami.syncplay"><img alt="Syncplay Android on Google Play store" title="Syncplay Android" src="https://i0.wp.com/reefcentral.pt/wp-content/uploads/2019/04/get-on-google-play.png?fit=564%2C168&ssl=1" width="150"></a> |
-| <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="iOS" width="20">  | <a href="https://celloserenity.github.io/altdirect/?url=https://raw.githubusercontent.com/yuroyami/syncplay-mobile/refs/heads/master/altstore_yuroyami.json"><img src="https://github.com/CelloSerenity/altdirect/blob/main/assets/png/AltSource_Blue.png?raw=true" alt="Add AltSource" width="150"></a> | <a href="https://github.com/yuroyami/syncplay-mobile/releases/download/v0.16.0/syncplay-0.16.0-ios.ipa"><img src="https://github.com/CelloSerenity/altdirect/blob/main/assets/png/Download_Blue.png?raw=true" alt="Download .ipa" width="150"></a> |                                                                                                                                                                                                                                                                                       |
+| <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="iOS" width="20">  | <a href="https://celloserenity.github.io/altdirect/?url=https://raw.githubusercontent.com/yuroyami/syncplay-mobile/refs/heads/master/altstore_yuroyami.json"><img src="https://github.com/CelloSerenity/altdirect/blob/main/assets/png/AltSource_Blue.png?raw=true" alt="Add AltSource" width="150"></a> | <a href="https://github.com/yuroyami/syncplay-mobile/releases/download/v0.16.0/syncplay-0.16.0-ios.ipa"><img src="https://github.com/CelloSerenity/altdirect/blob/main/assets/png/Download_Blue.png?raw=true" alt="Download .ipa" width="150"></a> | <a href="https://apps.apple.com/us/app/syncplay-mobile/id6760187432"><img alt="Syncplay iOS on Apple store" title="Syncplay iOS" src="https://developer.apple.com/assets/elements/icons/download-on-the-app-store/download-on-the-app-store.svg" width="150"></a>                     |
+
 
 <p align="center">
-Syncplay comes bundled with multiple built-in video players (on Android and iOS).<br>
-The Google Play store release is not always up-to-date. Please download the APK from our GitHub releases preferably.<br>
+Syncplay has built-in video players (on Android and iOS).<br>
+GitHub releases are recommended over Play Store due to potential update delays.<br>
 Note: The IzzyOnDroid Android release is a lite APK containing only ExoPlayer video engine.
 
-You can follow my [iOS guide](https://github.com/yuroyami/syncplay-mobile/wiki/How-to-install-the-app-on-iOS) to install the app on your iPhone/iPad (works for both non-jailbroken and jailbroken devices).
+You can also check my [iOS guide](https://github.com/yuroyami/syncplay-mobile/wiki/How-to-install-the-app-on-iOS) to install the app on your iPhone/iPad (works for both non-jailbroken and jailbroken devices) if you don't have access to the Apple store.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->  
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->  
@@ -41,14 +42,14 @@ You can follow my [iOS guide](https://github.com/yuroyami/syncplay-mobile/wiki/H
 ## Introduction
 
 [![OS - Android](https://img.shields.io/badge/Android-a4c639?style=for-the-badge&logo=android)]()[![OS - iOS](https://img.shields.io/badge/iOS-555555?style=for-the-badge&logo=apple)]()<br>
-[![Version Release](https://img.shields.io/badge/Version-0.16.0-e2203c?style=for-the-badge&logo=v)]()[![Written Language](https://img.shields.io/badge/Made%20with-Kotlin-lightgrey?style=for-the-badge&logo=kotlin)]()[![is Maintained?](https://img.shields.io/badge/Maintained-YES-green?style=for-the-badge)]()[![License](https://img.shields.io/badge/License-AGPL--3.0-brightgreen?style=for-the-badge)]()[![Requirement](https://img.shields.io/badge/REQUIREMENT-Android%207.0%20and%20later-blueviolet?style=for-the-badge&logo=android%20studio)]()[![Requirement](https://img.shields.io/badge/REQUIREMENT-iOS%2014.0%20and%20later-blueviolet?style=for-the-badge&logo=xcode)]()
+[![Version Release](https://img.shields.io/badge/Version-0.17.0-e2203c?style=for-the-badge&logo=v)]()[![Written Language](https://img.shields.io/badge/Made%20with-Kotlin-lightgrey?style=for-the-badge&logo=kotlin)]()[![is Maintained?](https://img.shields.io/badge/Maintained-YES-green?style=for-the-badge)]()[![License](https://img.shields.io/badge/License-AGPL--3.0-brightgreen?style=for-the-badge)]()[![Requirement](https://img.shields.io/badge/REQUIREMENT-Android%207.0%20and%20later-blueviolet?style=for-the-badge&logo=android%20studio)]()[![Requirement](https://img.shields.io/badge/REQUIREMENT-iOS%2014.0%20and%20later-blueviolet?style=for-the-badge&logo=xcode)]()
 
 Syncplay Mobile is a unofficial Syncplay client brings the remarkable functionality of Syncplay PC client to the mobile platforms (Android and iOS). You can synchronize media playback with your friends, allowing you to watch videos together, even
 when you're physically apart.
 
 It includes real-time chat functionality, enabling seamless communication while enjoying synchronized playback on your Android or iOS device. You can use Syncplay Mobile with your friends who also use Syncplay Mobile, or Syncplay on PC.
 
-**Requires at least Android 7.0 Nougat or iOS 14.0**
+**Requires at least Android 8.0 Oreo or iOS 14.0**
 
 <p align="center">  
   <img src = "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS1.png" width=150 alt="">  
@@ -83,7 +84,7 @@ Usage on Android is fairly simple:
 
 ### How to use (iOS)
 
-The iOS version cannot be distributed in package format (like Android's APKs). The only ways to install an app on iOS are to either use AltStore (as explained in the [iOS guide](https://github.com/yuroyami/syncplay-mobile/wiki/How-to-install-the-app-on-iOS)), or compile this project by yourself on your macOS.
+The iOS version cannot be distributed in package format (like Android's APKs). The only ways to install an app on iOS are to either use the official Apple store, or AltStore (as explained in the [iOS guide](https://github.com/yuroyami/syncplay-mobile/wiki/How-to-install-the-app-on-iOS)), or compile this project by yourself on your macOS.
 
 ## Capabilities
 
