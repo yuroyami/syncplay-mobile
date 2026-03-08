@@ -334,7 +334,7 @@
     <string name="about_developed_by">• 开发人员：yuroyami</string>
     <string name="about_client_is_unofficial_disclaimer">• 此客户端不是官方版本。感谢官方Syncplay团队提供的出色软件。</string>
     <string name="about_client_platforms">• Syncplay官方适用于Windows、macOS和Linux。</string>
-    <string name="about_official_website">• 官方网站：www.app.pl</string>
+    <string name="about_official_website">• 官方网站：www.syncplay.pl</string>
 
     <string name="tips_dontshowmetips">不再显示提示</string>
     <string name="tips_did_ya_know">您知道吗？</string>

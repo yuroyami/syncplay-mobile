@@ -93,9 +93,9 @@ object PopupAPropos {
 
                         /* The 2nd title TODO: Platform-specific text with colors */
                         SyncplayishText(
-                            string = "for Android & iOS",
+                            string = "for Android and iOS",
                             textAlign = TextAlign.Center,
-                            colorStops = listOf(Color(50, 222, 132), Color(4, 219, 107), Color(50, 222, 132)),
+                            colorStops = listOf(Color(226, 219, 219, 255), Color(94, 94, 94, 255), Color(50, 222, 132)),
                             size = 20f
                         )
 
