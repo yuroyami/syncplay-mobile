@@ -154,8 +154,8 @@ kotlin {
 
 buildConfig {
     buildConfigField("APP_VERSION", AppConfig.versionName)
-    buildConfigField("DEBUG", true)
-    buildConfigField("DEBUG_SYNCPLAY_PROTOCOL", true)
+    buildConfigField("DEBUG", false)
+    buildConfigField("DEBUG_SYNCPLAY_PROTOCOL", false)
     buildConfigField("EXOPLAYER_ONLY", AppConfig.exoOnly)
     buildConfigField("GIPHY_API_KEY", AppConfig.localProperties.getProperty("yuroyami.keyGiphy"))
 }
