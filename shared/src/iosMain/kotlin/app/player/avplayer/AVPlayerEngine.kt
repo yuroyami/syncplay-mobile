@@ -10,7 +10,6 @@ import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
 import app.player.models.Track
 import app.room.RoomViewmodel
-import app.utils.GlobalPlayerSession
 import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CValue
@@ -197,14 +196,6 @@ object AVPlayerEngine: PlayerEngine {
             avPlayer = null
             avContainer = null
             isInitialized = false
-        }
-
-        override fun initMediaSession(): GlobalPlayerSession {
-            TODO("Not yet implemented")
-        }
-
-        override fun finalizeMediaSession() {
-            TODO("Not yet implemented")
         }
 
         /**

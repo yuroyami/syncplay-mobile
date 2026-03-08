@@ -13,7 +13,6 @@ import app.player.models.Track
 import app.preferences.Preferences.SUBTITLE_SIZE
 import app.preferences.value
 import app.room.RoomViewmodel
-import app.utils.GlobalPlayerSession
 import app.utils.loggy
 import cocoapods.MobileVLCKit.VLCLibrary
 import cocoapods.MobileVLCKit.VLCMedia
@@ -118,14 +117,6 @@ object VlcKitEngine : PlayerEngine {
             } catch (e: Exception) {
                 loggy("Error disposing VLC: ${e.message}")
             }
-        }
-
-        override fun initMediaSession(): GlobalPlayerSession {
-            TODO("Not yet implemented")
-        }
-
-        override fun finalizeMediaSession() {
-            TODO("Not yet implemented")
         }
 
         /**

@@ -3,7 +3,6 @@ package app
 import app.home.HomeViewmodel
 import app.home.JoinConfig
 import app.player.avplayer.AVPlayerEngine
-import app.player.PlayerImpl
 import platform.AVKit.AVPictureInPictureController
 import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
@@ -96,8 +95,13 @@ object ApplePlatformCallback : PlatformCallback {
         UIScreen.mainScreen.brightness = v.coerceIn(0.0f, MAX_BRIGHTNESS).toDouble()
     }
 
-    override fun initializeMediaSession(player: PlayerImpl) {
-        //TODO("Not yet implemented")
+
+    override fun mediaSessionInitialize() {
+
+    }
+
+    override fun mediaSessionFinalize() {
+        
     }
 
     /**
