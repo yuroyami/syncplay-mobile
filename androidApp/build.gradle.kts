@@ -17,6 +17,7 @@ android {
 
     ndkVersion = ndkRequired
 
+    ""
     signingConfigs {
         file("${rootDir}/keystore/syncplaykey.jks").takeIf { it.exists() }?.let { keystoreFile ->
             create("syncplay_keystore") {
@@ -31,7 +32,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = if (AppConfig.forGooglePlay) "com.yuroyami.syncplay" else "com.reddnek.syncplay"
+        applicationId = "com.yuroyami.syncplay"
         minSdk = AppConfig.minSdk
         targetSdk = AppConfig.compileSdk
         versionCode = AppConfig.versionCode
@@ -276,7 +277,6 @@ if (!AppConfig.exoOnly) {
             !allFilesExist
         }
     }
-
 }
 
 androidComponents {
