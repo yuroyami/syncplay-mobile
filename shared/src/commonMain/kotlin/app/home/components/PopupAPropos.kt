@@ -36,6 +36,7 @@ import app.LocalGlobalViewmodel
 import app.home.HomeViewmodel
 import app.uicomponents.SyncplayPopup
 import app.uicomponents.SyncplayishText
+import app.utils.platform
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -84,19 +85,17 @@ object PopupAPropos {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.SpaceAround
                     ) {
-                        /** 1st title */
+                        /** title */
                         SyncplayishText(
                             string = "Syncplay",
                             textAlign = TextAlign.Center,
                             size = 20f
                         )
-
-                        /* The 2nd title TODO: Platform-specific text with colors */
                         SyncplayishText(
-                            string = "for Android and iOS",
+                            string = "for ${platform.label}",
                             textAlign = TextAlign.Center,
-                            colorStops = listOf(Color(226, 219, 219, 255), Color(94, 94, 94, 255), Color(50, 222, 132)),
-                            size = 20f
+                            colorStops = listOf(platform.color, platform.color),
+                            size = 17f
                         )
 
                     }

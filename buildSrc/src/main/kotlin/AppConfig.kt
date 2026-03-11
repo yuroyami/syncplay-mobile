@@ -12,7 +12,7 @@ object AppConfig {
     const val compileSdk = 36
     const val minSdk = 26
 
-    const val versionName = "0.17.0"
+    const val versionName = "0.17.1"
     val versionCode = ("1" + versionName.split(".").joinToString("") { it.padStart(3, '0') }).toInt()
 
     const val exoOnly = false

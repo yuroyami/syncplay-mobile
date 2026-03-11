@@ -1,6 +1,7 @@
 package app.utils
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipEntry
 import app.PlatformCallback
 import app.player.PlayerEngine
@@ -28,11 +29,9 @@ expect fun <T : Any> createWeakRef(obj: T): WeakRef<T>
 /**
  * Enumeration of supported platforms where Syncplay can run.
  */
-enum class Platform {
-    /** Android mobile/tablet platform */
-    Android,
-    /** iOS/iPadOS platform */
-    IOS,
+enum class Platform(val label: String, val color: Color) {
+    Android(label = "Android", color = Color(0xFF32DE84)),
+    IOS(label = "iOS", color = Color(0xFFA2AAAD)),
 }
 
 /**

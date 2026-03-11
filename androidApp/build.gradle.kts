@@ -1,3 +1,4 @@
+import AppConfig.exoOnly
 import AppConfig.ndkRequired
 import java.nio.file.Files
 
@@ -17,7 +18,6 @@ android {
 
     ndkVersion = ndkRequired
 
-    ""
     signingConfigs {
         file("${rootDir}/keystore/syncplaykey.jks").takeIf { it.exists() }?.let { keystoreFile ->
             create("syncplay_keystore") {
@@ -32,7 +32,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.yuroyami.syncplay"
+        applicationId = if (exoOnly) "com.reddnek.syncplay" else "com.yuroyami.syncplay"
         minSdk = AppConfig.minSdk
         targetSdk = AppConfig.compileSdk
         versionCode = AppConfig.versionCode
@@ -53,7 +53,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = AppConfig.exoOnly //TODO Fix minified build when mpv and libVLC are included
+            isMinifyEnabled = exoOnly //TODO Fix minified build when mpv and libVLC are included
         }
         debug {
             applicationIdSuffix = ".dev"
@@ -79,7 +79,7 @@ android {
         }
     }
 
-    if (AppConfig.exoOnly) {
+    if (exoOnly) {
         packaging {
             jniLibs {
                 //mpv libs
@@ -106,7 +106,7 @@ android {
 
     flavorDimensions.add("flavor")
     productFlavors {
-        create(if (AppConfig.exoOnly) "exoOnly" else "allEngines") {
+        create(if (exoOnly) "exoOnly" else "allEngines") {
             dimension = "flavor"
         }
     }
@@ -119,7 +119,7 @@ android {
 
     // This block strips out odd, unused artifacts that the google-shortcuts library brings along,
     // none of which are needed for its main features.
-    //This will remove them also from any other library that might use them
+    // This will remove them also from any other library that might use them
     configurations.all {
         exclude(group = "com.google.crypto.tink", module = "tink-android")
         exclude(group = "com.google.android.gms")
@@ -284,7 +284,7 @@ androidComponents {
         variant.outputs.forEach { output ->
             if (output is com.android.build.api.variant.impl.VariantOutputImpl) {
                 val abiFilter = output.filters.find { it.filterType == com.android.build.api.variant.FilterConfiguration.FilterType.ABI }?.identifier
-                val fileName = if (AppConfig.exoOnly) {
+                val fileName = if (exoOnly) {
                     "syncplay-${AppConfig.versionName}-exo-only.apk"
                 } else {
                     val abiName = abiFilter ?: "universal"
