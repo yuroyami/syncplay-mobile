@@ -28,6 +28,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.media3.session.MediaController
 import app.home.HomeViewmodel
 import app.home.JoinConfig
+import app.player.Playback
 import app.player.SyncplayMediaSessionService
 import app.player.exo.ExoImpl
 import app.preferences.Preferences.DISPLAY_LANG
@@ -367,9 +368,9 @@ class SyncplayActivity : ComponentActivity() {
                     val pausePlayValue = intnt.getIntExtra("pause_zero_play_one", -1)
 
                     if (pausePlayValue == 1) {
-                        roomViewmodel?.dispatcher?.playPlayback()
+                        roomViewmodel?.dispatcher?.controlPlayback(Playback.PLAY, true)
                     } else {
-                        roomViewmodel?.dispatcher?.pausePlayback()
+                        roomViewmodel?.dispatcher?.controlPlayback(Playback.PAUSE, true)
                     }
                 }
             }

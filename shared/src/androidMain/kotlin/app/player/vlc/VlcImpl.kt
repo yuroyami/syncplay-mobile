@@ -313,25 +313,9 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
     private fun vlcAttachObserver() {
         vlcPlayer?.setEventListener { event ->
             when (event.type) {
-                MediaPlayer.Event.Playing -> {
+                MediaPlayer.Event.Playing, MediaPlayer.Event.Paused -> {
                     if (vlcPlayer?.hasMedia() == true) {
-                        viewmodel.playerManager.isNowPlaying.value = true //Just to inform UI
-
-                        //Tell server about playback state change
-                        if (!viewmodel.isSoloMode) {
-                            viewmodel.dispatcher.sendPlayback(true)
-                        }
-                    }
-                }
-
-                MediaPlayer.Event.Paused -> {
-                    if (vlcPlayer?.hasMedia() == true) {
-                        viewmodel.playerManager.isNowPlaying.value = false //Just to inform UI
-
-                        //Tell server about playback state change
-                        if (!viewmodel.isSoloMode) {
-                            viewmodel.dispatcher.sendPlayback(false)
-                        }
+                        viewmodel.playerManager.isNowPlaying.value = vlcPlayer?.isPlaying == true //Just to inform UI
                     }
                 }
 

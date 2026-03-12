@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewModelScope
 import app.LocalRoomViewmodel
+import app.player.Playback
 import app.theme.Theming
 import app.theme.Theming.ROOM_ICON_SIZE
 import app.uicomponents.FlexibleIcon
@@ -47,8 +48,8 @@ fun RoomPlayButton(modifier: Modifier) {
         ) {
             viewmodel.viewModelScope.launch(Dispatchers.Main) {
                 when (viewmodel.player.isPlaying()) {
-                    true -> viewmodel.dispatcher.pausePlayback()
-                    false -> viewmodel.dispatcher.playPlayback()
+                    true -> viewmodel.dispatcher.controlPlayback(Playback.PAUSE, true)
+                    false -> viewmodel.dispatcher.controlPlayback(Playback.PLAY, true)
                 }
             }
         }

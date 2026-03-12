@@ -2,6 +2,7 @@ package app.protocol.event
 
 import androidx.lifecycle.viewModelScope
 import app.AbstractManager
+import app.player.Playback
 import app.preferences.Preferences.PAUSE_ON_SOMEONE_LEAVE
 import app.preferences.Preferences.READY_FIRST_HAND
 import app.preferences.value
@@ -53,9 +54,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     fun onSomeonePaused(pauser: String) {
         loggy("SYNCPLAY Protocol: Someone ($pauser) paused.")
 
-        if (pauser.isNotSelf()) {
-            dispatcher.pausePlayback()
-        }
+        if (pauser.isNotSelf()) dispatcher.controlPlayback(Playback.PAUSE, false)
 
         dispatcher.broadcastMessage(
             message = {
@@ -72,7 +71,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         loggy("SYNCPLAY Protocol: Someone ($player) unpaused.")
 
         if (player.isNotSelf()) {
-            dispatcher.playPlayback()
+            dispatcher.controlPlayback(Playback.PLAY, false)
         }
 
         dispatcher.broadcastMessage(message = { getString(Res.string.room_guy_played, player) }, isChat = false)
@@ -102,7 +101,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
         viewmodel.viewModelScope.launch(Dispatchers.Main) {
             if (viewmodel.player.hasMedia() && PAUSE_ON_SOMEONE_LEAVE.value()) {
-                this@RoomCallback.dispatcher.pausePlayback()
+                this@RoomCallback.dispatcher.controlPlayback(Playback.PAUSE, true)
             }
         }
 

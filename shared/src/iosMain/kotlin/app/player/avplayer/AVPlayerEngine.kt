@@ -166,9 +166,6 @@ object AVPlayerEngine: PlayerEngine {
 
                         // Player started playing
                         viewmodel.playerManager.isNowPlaying.value = isPlaying
-                        if (!viewmodel.isSoloMode) {
-                            viewmodel.dispatcher.sendPlayback(isPlaying)
-                        }
                     }
                 }
             }

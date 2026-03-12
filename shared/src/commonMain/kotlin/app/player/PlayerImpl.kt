@@ -35,6 +35,7 @@ import syncplaymobile.shared.generated.resources.room_selected_sub_error
 import syncplaymobile.shared.generated.resources.room_selected_vid
 import syncplaymobile.shared.generated.resources.room_sub_error_load_vid_first
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /** The actual platform-agnostic interface for video/audio playback in Syncplay.
  * Engines: ExoPlayer/MPV/VLC (Android), AVPlayer/VLC (iOS)*/
@@ -233,6 +234,9 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
 
     abstract val trackerJobInterval: Duration
 
+    val shouldTrackTimeManually: Boolean
+        get() = trackerJobInterval != 0.seconds
+
     private val playerTrackerJob by lazy {
         playerScopeMain.launch {
             while (isActive) {
@@ -250,7 +254,9 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
 
     fun startTrackingProgress() {
         // Accessing playerTrackerJob here will start it if it hasn't started yet
-        playerTrackerJob
+        if (shouldTrackTimeManually) {
+            playerTrackerJob
+        }
     }
 
 

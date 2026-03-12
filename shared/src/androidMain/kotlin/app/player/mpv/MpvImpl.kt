@@ -390,11 +390,6 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
                 when (property) {
                     "pause" -> {
                         playerManager.isNowPlaying.value = !value //Just to inform UI
-
-                        //Tell server about playback state change
-                        if (!viewmodel.isSoloMode) {
-                            viewmodel.dispatcher.sendPlayback(!value)
-                        }
                     }
                 }
             }

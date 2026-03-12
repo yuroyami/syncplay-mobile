@@ -2,6 +2,7 @@ package app.protocol.event
 
 import androidx.lifecycle.viewModelScope
 import app.AbstractManager
+import app.player.Playback
 import app.preferences.Preferences
 import app.preferences.value
 import app.room.RoomViewmodel
@@ -28,18 +29,6 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
         }
     }
 
-    fun sendPlayback(play: Boolean) {
-        if (viewmodel.isSoloMode) return
-
-        this@RoomEventDispatcher.network.sendAsync<ClientMessage.State> {
-            serverTime = null
-            doSeek = null
-            position = withContext(Dispatchers.Main.immediate) { viewmodel.player.currentPositionMs().div(1000.0).roundToLong() }
-            changeState = 1
-            this.play = play
-        }
-    }
-
     var pendingSeekFromMs: Long = 0L
     fun sendSeek(newPosMs: Long) {
         if (viewmodel.isSoloMode) return
@@ -58,16 +47,27 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
         this@RoomEventDispatcher.network.sendAsync<ClientMessage.Chat> { message = msg }
     }
 
-    fun pausePlayback() {
-        if (viewmodel.uiState.isInBackground) return
-        onMainThread { viewmodel.player.pause() }
-        platformCallback.onPlayback(true)
-    }
+    fun controlPlayback(playback: Playback, tellServer: Boolean) {
+        //TODO if (viewmodel.uiState.isInBackground) return
 
-    fun playPlayback() {
-        if (viewmodel.uiState.isInBackground) return
-        onMainThread { viewmodel.player.play() }
-        platformCallback.onPlayback(false)
+        onMainThread {
+            when (playback) {
+                Playback.PAUSE -> viewmodel.player.pause()
+                Playback.PLAY -> viewmodel.player.play()
+            }
+        }
+
+        platformCallback.onPlayback(!playback.play)
+
+        if (viewmodel.isSoloMode || !tellServer) return
+
+        this@RoomEventDispatcher.network.sendAsync<ClientMessage.State> {
+            serverTime = null
+            doSeek = null
+            position = withContext(Dispatchers.Main.immediate) { viewmodel.player.currentPositionMs().div(1000.0).roundToLong() }
+            changeState = 1
+            this.play = playback.play
+        }
     }
 
     // TODO: Start with main dispatcher then switch

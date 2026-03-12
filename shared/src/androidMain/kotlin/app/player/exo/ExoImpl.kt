@@ -157,11 +157,6 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
                     if (exoplayer!!.playbackState != ExoPlayer.STATE_BUFFERING) {
                         viewmodel.playerManager.isNowPlaying.value = isPlaying //Just to inform UI
 
-                        //Tell server about playback state change
-                        if (!viewmodel.isSoloMode) {
-                            viewmodel.dispatcher.sendPlayback(isPlaying)
-                        }
-
                         if (exoplayer!!.playbackState == ExoPlayer.STATE_ENDED) {
                             onPlaybackEnded() //signaling end of playback
                         }
