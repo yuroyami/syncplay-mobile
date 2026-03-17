@@ -1,7 +1,7 @@
 <h1 align="center"> Syncplay for Mobile (Android & iOS) </h1> <br>  
 <p align="center">  
   <a href="">  
-    <img alt="Syncplay for Mobile" title="Syncplay Mobile" src="https://github.com/yuroyami/syncplay-mobile/blob/master/shared/src/androidMain/ic_launcher-playstore.png?raw=true" width="250">  
+    <img alt="Syncplay for Mobile" title="Syncplay Mobile" src="https://github.com/yuroyami/syncplay-mobile/blob/master/shared/src/androidMain/ic_launcher-playstore.png" width="250">  
   </a>  
 </p>  
 <p align="center">  
