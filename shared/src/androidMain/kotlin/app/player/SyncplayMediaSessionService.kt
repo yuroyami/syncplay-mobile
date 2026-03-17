@@ -27,7 +27,7 @@ class SyncplayMediaSessionService : Service() {
     }
 
     private fun buildNotification() = NotificationCompat.Builder(this, CHANNEL_ID)
-        .setSmallIcon(R.drawable.syncplay_logo_solid) // swap for whatever your app icon res is
+        .setSmallIcon(R.drawable.ic_launcher_foreground) // swap for whatever your app icon res is
         .setContentTitle("Syncplay")
         .setContentText("Room active")
         .setSilent(true)
