@@ -152,27 +152,9 @@ kotlin {
     }
 }
 
-fun updateIOSVersion() {
-    val pbxprojFile = file("${rootDir}/iosApp/iosApp.xcodeproj/project.pbxproj")
-    if (!pbxprojFile.exists()) {
-        logger.warn("project.pbxproj not found at: ${pbxprojFile.absolutePath}")
-        return
-    }
-
-    val original = pbxprojFile.readText()
-    val updated = original
-        .replace(Regex("""MARKETING_VERSION = [^;]+;"""), "MARKETING_VERSION = ${AppConfig.versionName};")
-        .replace(Regex("""CURRENT_PROJECT_VERSION = [^;]+;"""), "CURRENT_PROJECT_VERSION = ${AppConfig.versionCode};")
-
-    if (updated != original) {
-        pbxprojFile.writeText(updated)
-        logger.lifecycle("✅ Xcode version updated to ${AppConfig.versionName} (${AppConfig.versionCode})")
-    } else {
-        logger.warn("⚠️ Version fields not found in project.pbxproj")
-    }
+with(AppConfig) {
+    updateIOSVersion() //We keep this line uncommented unless you change version. for some reason it breaks Gradle build from within Xcode
 }
-
-//updateIOSVersion() //We keep this line uncommented unless you change version. for some reason it breaks Gradle build from within Xcode
 
 buildConfig {
     buildConfigField("APP_VERSION", AppConfig.versionName)

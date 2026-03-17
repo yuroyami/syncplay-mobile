@@ -16,11 +16,18 @@ object Theming {
             return if (useSyncplayGradient) SP_GRADIENT else listOf(fallback, fallback)
         }
 
+    /** Neo-Syncplay, branded mobile logo */
+    val NeoSP1 = Color(0xFF4FD1FF)
+    val NeoSP2 = Color(0xFF5A7CFF)
+    val NeoSP3 = Color(0xFF7A3CFF)
+    val NeoSP_GRADIENT = listOf(NeoSP1, NeoSP2, NeoSP3)
+
     /** Main Syncplay Colors, found in logo */
     val SP_YELLOW = Color(255, 198, 4)
     val SP_ORANGE = Color(255, 113, 54)
     val SP_PINK = Color(255, 40, 97)
-    val SP_GRADIENT = listOf(SP_YELLOW, SP_ORANGE, SP_PINK)
+    val SP_GRADIENT = NeoSP_GRADIENT //listOf(SP_YELLOW, SP_ORANGE, SP_PINK)
+
 
     /** Default in-room colors for messages */
     val MSG_SELF_TAG = Color(204, 36, 36, 255)
