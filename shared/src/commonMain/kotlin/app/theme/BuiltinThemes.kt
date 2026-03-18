@@ -34,7 +34,8 @@ val PYNCSLAY = SaveableTheme(
     neutralVariantColor = -16777216,
     contrast = 0.0,
     isAMOLED = true,
-    style = PaletteStyle.Rainbow
+    style = PaletteStyle.Rainbow,
+    syncplayGradients = false
 )
 
 /**

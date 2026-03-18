@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.LocalRoomViewmodel
 import app.theme.Theming
+import app.utils.appName
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
@@ -62,7 +63,7 @@ fun RoomBackgroundArtwork() {
             Box(modifier = Modifier.padding(bottom = 6.dp)) {
                 Text(
                     modifier = Modifier.wrapContentWidth(),
-                    text = "Syncplay",
+                    text = appName,
                     style = TextStyle(
                         color = Theming.SP_PALE,
                         drawStyle = Stroke(miter = 10f, width = 2f, join = StrokeJoin.Round
@@ -78,7 +79,7 @@ fun RoomBackgroundArtwork() {
                 )
                 Text(
                     modifier = Modifier.wrapContentWidth(),
-                    text = "Syncplay",
+                    text = appName,
                     style = TextStyle(
                         brush = Brush.linearGradient(colors = Theming.SP_GRADIENT),
                         fontFamily = FontFamily(Font(Res.font.Directive4_Regular))
