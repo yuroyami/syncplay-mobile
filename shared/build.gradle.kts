@@ -125,7 +125,7 @@ kotlin {
 
         androidMain.dependencies {
             /* Backward compatibility APIs from Google's Jetpack AndroidX */
-            /* Contains AndroidX Libs: Core (+Core-SplashScreen +Core-PiP), AppCompat, Activity Compose, DocumentFile */
+            /* Contains AndroidX Libs: Core (+CoreSplashScreen +CorePiP), AppCompat, Activity Compose, DocumentFile */
             implementation(libs.bundles.jetpack.androidx.extensions)
 
             /* Extended coroutine support for Android threading */

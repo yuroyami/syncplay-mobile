@@ -22,7 +22,7 @@
     <!-- Home Screen -->
     <string name="connect_username">Введите ваше имя пользователя</string>
     <string name="connect_roomname">Введите название комнаты</string>
-    <string name="connect_server">Выберите сервер Syncplay</string>
+    <string name="connect_server">Выберите сервер Synkplay</string>
     <string name="connect_choose_video_engine">Выберите ваш видео движок</string>
     <string name="connect_button_join">Присоединиться к комнате</string>
     <string name="connect_button_saveshortcut">Сохранить текущую конфигурацию как ярлык на главном экране</string>
@@ -61,7 +61,7 @@
     <string name="room_shared_playlist_updated">%1$s обновил список воспроизведения</string>
     <string name="room_shared_playlist_changed">%1$s изменил выделение в текущем списке воспроизведения</string>
     <string name="room_custom_skip_button">Пропустить %1$s</string>
-    <string name="media_directories_setting_summary">Syncplay будет искать среди любых указанных вами здесь папок с медиа, чтобы найти имя, которое воспроизводится в общем списке воспроизведения.</string>
+    <string name="media_directories_setting_summary">Synkplay будет искать среди любых указанных вами здесь папок с медиа, чтобы найти имя, которое воспроизводится в общем списке воспроизведения.</string>
     <string name="room_on_newcontrolledroom">Создана управляемая комната '%1$s' с паролем '%2$s'. Пожалуйста, сохраните эту информацию для дальнейшего использования! Она скопирована в ваш буфер обмена, чтобы вы могли вставить её в другом месте.\n\nВ управляемых комнатах все синхронизируются с операторами комнаты, которые являются единственными, кто может ставить на паузу, возобновлять воспроизведение, перематывать и изменять список воспроизведения.\n\nВы должны попросить обычных зрителей присоединиться к комнате '%1$s', но операторы комнаты могут присоединиться к комнате '%1$s:%2$s' для автоматической аутентификации.</string>
     <string name="room_on_controller_auth_success">%1$s аутентифицирован как оператор комнаты</string>
     <string name="room_on_controller_auth_failed">%1$s не удалось идентифицировать как оператора комнаты</string>
@@ -95,7 +95,7 @@
     <string name="room_shared_playlist">Общий список воспроизведения</string>
     <string name="room_shared_playlist_brief">Импортируйте файл или папку, чтобы включить название файла (названия файлов) в список воспроизведения. Щелкните по строке с файлом чтобы дать всем пользователям воспроизвести его.</string>
     <string name="room_shared_playlist_no_directories">Вы не указали папки с медиа файлами для общих списков воспроизведения. Добавьте файлы вручную.</string>
-    <string name="room_shared_playlist_not_found">Syncplay не может найти текущий воспроизводимый файл из общего списка воспроизведения в ваших папках с медиа.</string>
+    <string name="room_shared_playlist_not_found">Synkplay не может найти текущий воспроизводимый файл из общего списка воспроизведения в ваших папках с медиа.</string>
     <string name="room_shared_playlist_not_featured">В этой комнате или на сервере, функция Общих списков воспроизведения не включена.</string>
     <string name="room_shared_playlist_button_add_file">Добавить файл(ы) в конец списка воспроизведения</string>
     <string name="room_shared_playlist_button_add_folder">Добавить папку в список воспроизведения (и в папки с медиа)</string>
@@ -116,7 +116,7 @@
     <string name="room_shared_playlist_filepick_rationale1">Выберите один или несколько файлов для добавления в список воспроизведения</string>
     <string name="room_shared_playlist_filepick_rationale2">Выберите папку для добавления её файлов в список воспроизведения</string>
     <string name="room_shared_playlist_add_url">Добавить URL в общий список воспроизведения</string>
-    <string name="room_shared_playlist_add_url_subtext">Эта строка будет добавлена как запись в общий список воспроизведения.\nSyncplay Android пока поддерживает только прямые ссылки.</string>
+    <string name="room_shared_playlist_add_url_subtext">Эта строка будет добавлена как запись в общий список воспроизведения.\nSynkplay Android пока поддерживает только прямые ссылки.</string>
     <string name="room_button_desc_aspect_ratio">Соотношение сторон</string>
     <string name="room_button_desc_shared_playlist">Общий список воспроизведения</string>
     <string name="room_button_desc_audio_tracks">Звуковые дорожки</string>
@@ -177,14 +177,14 @@
     <string name="setting_night_mode_title">Ночной режим</string>
     <string name="setting_night_mode_summary">Выберите поведение ночного режима.</string>
     <string name="setting_remember_join_info_title">Запомнить информацию о присоединении</string>
-    <string name="setting_remember_join_info_summary">Включено по умолчанию. Это позволит SyncPlay сохранить ваш последний логин, имя комнаты и последний используемый официальный сервер.</string>
+    <string name="setting_remember_join_info_summary">Включено по умолчанию. Это позволит Synkplay сохранить ваш последний логин, имя комнаты и последний используемый официальный сервер.</string>
     <string name="setting_never_show_tips_title">Никогда не показывать подсказки</string>
     <string name="setting_never_show_tips_summary">Это предотвратит появление подсказок при запуске приложения.</string>
     <string name="setting_erase_shortcuts_title">Удалить все ярлыки домашнего экрана</string>
     <string name="setting_erase_shortcuts_summary">Это удалит все 'быстрые запуски' ярлыки домашнего экрана, которые вы создали через основной экран, чтобы сохранить настройки комнаты.</string>
     <string name="setting_erase_shortcuts_dialog">Вы действительно хотите удалить все существующие ярлыки?</string>
     <string name="setting_display_language_title">Язык отображения</string>
-    <string name="setting_display_language_summry">Выберите язык, на котором отображается Syncplay.</string>
+    <string name="setting_display_language_summry">Выберите язык, на котором отображается Synkplay.</string>
     <string name="setting_display_language_toast">Язык изменён. Перезапустите приложение, чтобы изменения вступили в силу полностью.</string>
     <string name="setting_audio_default_language_title">Предпочтительный язык звуковой дорожки</string>
     <string name="setting_audio_default_language_summry">Автоматически загружать звуковую дорожку с установленным вами здесь языковым кодом. Например, для английского код - 'en-US', для японского - 'ja-JP'. Произведите поиск в Google по запросу 'IETF BCP 47 codes' для получения дополнительной информации.</string>
@@ -203,7 +203,7 @@
     <string name="setting_rewind_threshold_title">Порог перемотки</string>
     <string name="setting_rewind_threshold_summary">Если кто-то отстает на выбранное вами значение, ваше видео будет перемотано, чтобы соответствовать тому, что позади.</string>
     <string name="setting_tls_title">Использовать защищенное соединение (TLS)</string>
-    <string name="setting_tls_summary">Syncplay попытается установить безопасное зашифрованное соединение (в основном TLSv1.3, но с откатом на более старые версии) с сервером, если он это поддерживает. Этот параметр будет проигнорирован, если сетевой движок не поддерживает TLS.</string>
+    <string name="setting_tls_summary">Synkplay попытается установить безопасное зашифрованное соединение (в основном TLSv1.3, но с откатом на более старые версии) с сервером, если он это поддерживает. Этот параметр будет проигнорирован, если сетевой движок не поддерживает TLS.</string>
     <string name="setting_resetdefault_title">Сбросить настройки по умолчанию</string>
     <string name="setting_resetdefault_summary">Сбросить всё к значениям по умолчанию (Рекомендуется)</string>
     <string name="setting_resetdefault_dialog">Вы уверены, что хотите очистить настройки для этого экрана?</string>
@@ -314,14 +314,14 @@
     <string name="theme_customize_neutral_color">Нейтральный цвет</string>
     <string name="theme_customize_neutral_variant_color">Вариант нейтрального цвета</string>
     <string name="theme_customize_is_amoled">является AMOLED темой</string>
-    <string name="theme_customize_use_syncplay_gradients">Использовать градиенты Syncplay</string>
+    <string name="theme_customize_use_syncplay_gradients">Использовать градиенты Synkplay</string>
     <string name="theme_customize_contrast">Контраст</string>
     <string name="theme_customize_palette_style">Стиль палитры</string>
     <string name="theme_customize_preview">Предпросмотр</string>
 
     <!-- Media Directories -->
     <string name="media_directories">Папки с медиа для общего списка воспроизведения</string>
-    <string name="media_directories_brief">Syncplay будет производить поиск среди любых папок с медиа указанных вами тут, чтобы найти название, которое воспроизводится в общем списке воспроизведения. Желательно указывать небольшие папки, так как операция поиска может вызвать задержки и быть очень медленной.</string>
+    <string name="media_directories_brief">Synkplay будет производить поиск среди любых папок с медиа указанных вами тут, чтобы найти название, которое воспроизводится в общем списке воспроизведения. Желательно указывать небольшие папки, так как операция поиска может вызвать задержки и быть очень медленной.</string>
     <string name="media_directories_save">Сохранить и выйти</string>
     <string name="media_directories_clear_all">Очистить все</string>
     <string name="media_directories_clear_all_confirm">Вы уверены, что хотите очистить список?</string>
@@ -334,18 +334,18 @@
     <string name="about_developed_by">• Разработано: yuroyami</string>
     <string name="about_client_is_unofficial_disclaimer">• Этот клиент не является официальным. Благодарим официальную команду Syncplay за их удивительное программное обеспечение.</string>
     <string name="about_client_platforms">• Syncplay официально доступен для Windows, macOS и Linux.</string>
-    <string name="about_official_website">• Официальный сайт: www.syncplay.pl</string>
+    <string name="about_official_website">• Официальный сайт: www.Syncplay.pl</string>
 
     <string name="tips_dontshowmetips">Не показывать мне подсказки</string>
     <string name="tips_did_ya_know">А вы знали?</string>
 
     <string-array name="tips">
-        <item>Для работы общих списков воспроизведения Syncplay необходимо знать, где хранятся ваши медиафайлы. Добавьте свои медиапапки в 'Настройки > Общие > Папки с медиа для общего списка воспроизведения'.</item>
-        <item>Хотите использовать видеоплеер отдельно? Выберите плеер, нажмите на логотип Syncplay выше, затем выберите 'Автономный режим'.</item>
+        <item>Для работы общих списков воспроизведения Synkplay необходимо знать, где хранятся ваши медиафайлы. Добавьте свои медиапапки в 'Настройки > Общие > Папки с медиа для общего списка воспроизведения'.</item>
+        <item>Хотите использовать видеоплеер отдельно? Выберите плеер, нажмите на логотип Synkplay выше, затем выберите 'Автономный режим'.</item>
         <item>Вы всегда можете сбросить настройки к значениям по умолчанию, перейдя в 'Настройки -> Расширенные -> Сбросить к умолчаниям'.</item>
         <item>Часто присоединяетесь к одной и той же комнате? Сохраните её как ярлык на вашем устройстве для доступа в одно касание, нажав на маленькую кнопку рядом с 'Присоединиться к комнате'.</item>
         <item>Каждый плеер имеет разные преимущества. Если один не работает хорошо с вашим форматом видео, попробуйте другой.</item>
-        <item>Syncplay Mobile позволяет воспроизводить медиа с прямых ссылок. Однако YouTube пока НЕ поддерживается.</item>
+        <item>Synkplay Mobile позволяет воспроизводить медиа с прямых ссылок. Однако YouTube пока НЕ поддерживается.</item>
         <item>Если вы хотите временно свернуть комнату без выхода, вы можете перейти в режим "Картинка в картинке", где экран становится маленьким плавающим окном поверх других приложений.</item>
     </string-array>
 </resources>

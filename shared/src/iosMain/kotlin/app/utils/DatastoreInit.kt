@@ -2,7 +2,7 @@ package app.utils
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import app.preferences.Preferences.SYNCPLAY_PREFS
+import app.preferences.Preferences.SYNKPLAY_PREFS
 import app.preferences.createDataStore
 import app.preferences.datastore
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -27,6 +27,6 @@ fun dataStore(fileName: String): DataStore<Preferences> = createDataStore(
 
 fun initializeDS() {
     runCatching {
-        datastore = dataStore(SYNCPLAY_PREFS)
+        datastore = dataStore(SYNKPLAY_PREFS)
     }
 }

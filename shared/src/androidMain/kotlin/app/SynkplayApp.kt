@@ -3,7 +3,6 @@ package app
 import android.app.Application
 import android.content.Context
 import android.os.StrictMode
-import androidx.media3.session.MediaSession
 import app.preferences.Preferences
 import app.preferences.datastore
 import app.utils.contextObtainer
@@ -22,11 +21,7 @@ import java.security.Security
  *
  * This class is instantiated once per app process and lives for the entire app lifecycle.
  */
-class SyncplayApp: Application() {
-
-    //This allows us to share the MediaSession instance we get from common module's BasePlayer
-    //with SyncplayMediaSessionService using reflection
-    lateinit var mediaSession: MediaSession
+class SynkplayApp: Application() {
 
     /***
      * Performs the one-time critical initialization:
@@ -46,7 +41,7 @@ class SyncplayApp: Application() {
         }
 
         //Initializing datastore
-        datastore = dataStore(applicationContext, Preferences.SYNCPLAY_PREFS)
+        datastore = dataStore(applicationContext, Preferences.SYNKPLAY_PREFS)
 
         // Register application context provider for global access
         contextObtainer = ::returnAppContext

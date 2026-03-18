@@ -30,7 +30,7 @@
     <!-- Home Screen -->
     <string name="connect_username">Entrez votre nom d'utilisateur</string>
     <string name="connect_roomname">Entrez le nom de la salle</string>
-    <string name="connect_server">Sélectionnez un serveur Syncplay</string>
+    <string name="connect_server">Sélectionnez un serveur Synkplay</string>
     <string name="connect_choose_video_engine">Choisissez votre moteur vidéo</string>
     <string name="connect_button_join">Rejoindre la salle</string>
     <string name="connect_button_saveshortcut">Sauvegarder cette configuration comme raccourci d’accueil</string>
@@ -71,7 +71,7 @@
     <string name="room_shared_playlist_updated">%1$s a mis à jour la playlist</string>
     <string name="room_shared_playlist_changed">%1$s a changé la sélection actuelle de la playlist</string>
     <string name="room_custom_skip_button">Passer %1$s</string>
-    <string name="media_directories_setting_summary">Syncplay recherchera dans les répertoires que vous spécifiez ici pour trouver le nom des fichiers joués dans une playlist partagée.</string>
+    <string name="media_directories_setting_summary">Synkplay recherchera dans les répertoires que vous spécifiez ici pour trouver le nom des fichiers joués dans une playlist partagée.</string>
 
     <string name="room_on_newcontrolledroom">Salle gérée '%1$s' créée avec le mot de passe '%2$s'. Veuillez sauvegarder ces informations ! Elles ont été copiées dans votre presse-papiers.\n\nDans les salles gérées, tout le monde est synchronisé avec les opérateurs, qui sont les seuls à pouvoir mettre en pause, reprendre, avancer ou modifier la playlist.\n\nLes spectateurs normaux doivent rejoindre la salle '%1$s', mais les opérateurs peuvent se connecter à '%1$s:%2$s' pour être authentifiés automatiquement.</string>
     <string name="room_on_controller_auth_success">%1$s a été authentifié en tant qu'opérateur</string>
@@ -106,7 +106,7 @@
     <string name="room_shared_playlist">Liste de lecture partagée</string>
     <string name="room_shared_playlist_brief">Importez un fichier ou un dossier pour inclure les noms de fichiers dans la liste. Cliquez sur un fichier pour que tous les utilisateurs le lisent.</string>
     <string name="room_shared_playlist_no_directories">Aucun répertoire média spécifié pour les listes de lecture partagées. Ajoutez manuellement les fichiers.</string>
-    <string name="room_shared_playlist_not_found">Syncplay n'a pas trouvé le fichier en cours de lecture dans vos répertoires média.</string>
+    <string name="room_shared_playlist_not_found">Synkplay n'a pas trouvé le fichier en cours de lecture dans vos répertoires média.</string>
     <string name="room_shared_playlist_not_featured">Cette salle ou ce serveur ne dispose pas de la fonction de liste de lecture partagée.</string>
     <string name="room_shared_playlist_button_add_file">Ajouter fichier(s) en bas de la liste</string>
     <string name="room_shared_playlist_button_add_folder">Ajouter dossier à la liste (et aux répertoires média)</string>
@@ -127,7 +127,7 @@
     <string name="room_shared_playlist_filepick_rationale1">Sélectionnez un ou plusieurs fichiers à ajouter à la liste</string>
     <string name="room_shared_playlist_filepick_rationale2">Sélectionnez un dossier pour ajouter ses fichiers à la liste</string>
     <string name="room_shared_playlist_add_url">Ajouter une URL à la liste partagée</string>
-    <string name="room_shared_playlist_add_url_subtext">Cette ligne sera ajoutée comme entrée dans la liste.\nSyncplay Android ne prend en charge que les liens directs pour le moment.</string>
+    <string name="room_shared_playlist_add_url_subtext">Cette ligne sera ajoutée comme entrée dans la liste.\nSynkplay Android ne prend en charge que les liens directs pour le moment.</string>
     <string name="room_button_desc_aspect_ratio">Ratio d’aspect</string>
     <string name="room_button_desc_shared_playlist">Liste partagée</string>
     <string name="room_button_desc_audio_tracks">Pistes audio</string>
@@ -188,14 +188,14 @@
     <string name="setting_night_mode_title">Mode nuit</string>
     <string name="setting_night_mode_summary">Sélectionnez le comportement du mode nuit.</string>
     <string name="setting_remember_join_info_title">Se souvenir des infos de connexion</string>
-    <string name="setting_remember_join_info_summary">Activé par défaut. Cela permet à SyncPlay d'enregistrer votre dernier nom d'utilisateur, le nom de la salle et le dernier serveur officiel utilisé.</string>
+    <string name="setting_remember_join_info_summary">Activé par défaut. Cela permet à Synkplay d'enregistrer votre dernier nom d'utilisateur, le nom de la salle et le dernier serveur officiel utilisé.</string>
     <string name="setting_never_show_tips_title">Ne jamais afficher les astuces</string>
     <string name="setting_never_show_tips_summary">Empêche l’affichage des astuces au lancement de l’application.</string>
     <string name="setting_erase_shortcuts_title">Effacer tous les raccourcis</string>
     <string name="setting_erase_shortcuts_summary">Efface tous les raccourcis de lancement rapide créés via l’écran principal pour sauvegarder les configurations de vos salles.</string>
     <string name="setting_erase_shortcuts_dialog">Souhaitez-vous vraiment effacer tous les raccourcis existants ?</string>
     <string name="setting_display_language_title">Langue d’affichage</string>
-    <string name="setting_display_language_summry">Choisissez la langue dans laquelle Syncplay est affiché.</string>
+    <string name="setting_display_language_summry">Choisissez la langue dans laquelle Synkplay est affiché.</string>
     <string name="setting_display_language_toast">Langue modifiée. Veuillez redémarrer l’application pour appliquer complètement le changement.</string>
     <string name="setting_audio_default_language_title">Langue audio préférée</string>
     <string name="setting_audio_default_language_summry">Charge automatiquement la piste audio dans la langue définie ici. Par exemple : anglais → 'en-US', japonais → 'ja-JP'. Recherchez “IETF BCP 47 codes” pour plus d’infos.</string>
@@ -214,7 +214,7 @@
     <string name="setting_rewind_threshold_title">Seuil de rembobinage</string>
     <string name="setting_rewind_threshold_summary">Si un utilisateur est en retard au-delà de la valeur définie ici, votre vidéo sera rembobinée pour s’aligner avec la sienne.</string>
     <string name="setting_tls_title">Connexion sécurisée (TLS)</string>
-    <string name="setting_tls_summary">Syncplay essayera d'établir une connexion sécurisée (principalement TLSv1.3). Ignoré si le moteur réseau ne supporte pas TLS.</string>
+    <string name="setting_tls_summary">Synkplay essayera d'établir une connexion sécurisée (principalement TLSv1.3). Ignoré si le moteur réseau ne supporte pas TLS.</string>
     <string name="setting_resetdefault_title">Réinitialiser les paramètres</string>
     <string name="setting_resetdefault_summary">Réinitialise tous les paramètres à leur valeur par défaut (recommandé).</string>
     <string name="setting_resetdefault_dialog">Êtes-vous sûr de vouloir réinitialiser les paramètres pour cet écran ?</string>
@@ -325,14 +325,14 @@
     <string name="theme_customize_neutral_color">Couleur neutre</string>
     <string name="theme_customize_neutral_variant_color">Couleur neutre variante</string>
     <string name="theme_customize_is_amoled">Thème écran AMOLED</string>
-    <string name="theme_customize_use_syncplay_gradients">Utiliser les dégradés Syncplay</string>
+    <string name="theme_customize_use_syncplay_gradients">Utiliser les dégradés Synkplay</string>
     <string name="theme_customize_contrast">Contraste</string>
     <string name="theme_customize_palette_style">Style de palette</string>
     <string name="theme_customize_preview">Aperçu</string>
 
     <!-- Media Directories -->
     <string name="media_directories">Répertoires multimédias pour la playlist partagée</string>
-    <string name="media_directories_brief">Syncplay recherchera dans les répertoires que vous spécifiez ici afin de trouver les noms des fichiers joués dans une playlist partagée. Il est préférable de choisir de petits dossiers, car la recherche peut être lente et gourmande en ressources.</string>
+    <string name="media_directories_brief">Synkplay recherchera dans les répertoires que vous spécifiez ici afin de trouver les noms des fichiers joués dans une playlist partagée. Il est préférable de choisir de petits dossiers, car la recherche peut être lente et gourmande en ressources.</string>
     <string name="media_directories_save">Enregistrer et quitter</string>
     <string name="media_directories_clear_all">Tout effacer</string>
     <string name="media_directories_clear_all_confirm">Êtes-vous sûr de vouloir effacer la liste ?</string>
@@ -351,12 +351,12 @@
     <string name="tips_did_ya_know">Le saviez-vous ?</string>
 
     <string-array name="tips">
-        <item>Pour que les playlists partagées fonctionnent, Syncplay doit savoir où sont stockés vos fichiers multimédias. Ajoutez vos dossiers dans 'Paramètres > Général > Répertoires multimédias pour la playlist partagée'.</item>
-        <item>Vous voulez utiliser le lecteur vidéo seul ? Sélectionnez un lecteur, appuyez sur le logo Syncplay, puis choisissez 'Mode hors ligne'.</item>
+        <item>Pour que les playlists partagées fonctionnent, Synkplay doit savoir où sont stockés vos fichiers multimédias. Ajoutez vos dossiers dans 'Paramètres > Général > Répertoires multimédias pour la playlist partagée'.</item>
+        <item>Vous voulez utiliser le lecteur vidéo seul ? Sélectionnez un lecteur, appuyez sur le logo Synkplay, puis choisissez 'Mode hors ligne'.</item>
         <item>Vous pouvez réinitialiser les paramètres par défaut dans 'Paramètres -> Avancés -> Réinitialiser par défaut'</item>
         <item>Vous rejoignez souvent la même salle ? Sauvegardez-la en raccourci sur votre appareil pour y accéder en un tapotement, en cliquant sur le petit bouton à côté de 'Rejoindre la salle'.</item>
         <item>Chaque lecteur a ses forces. Si l’un d’eux ne fonctionne pas bien avec votre format vidéo, essayez-en un autre.</item>
-        <item>Syncplay Mobile vous permet de lire des liens directs vers des médias. Cependant, YouTube n'est PAS encore supporté.</item>
+        <item>Synkplay Mobile vous permet de lire des liens directs vers des médias. Cependant, YouTube n'est PAS encore supporté.</item>
         <item>Si vous souhaitez minimiser temporairement la salle sans quitter, activez le mode "Picture-in-Picture" et gardez l'écran en flottant par-dessus les autres applications.</item>
     </string-array>
 </resources>

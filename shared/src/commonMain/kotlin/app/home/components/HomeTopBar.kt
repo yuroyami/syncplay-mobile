@@ -60,6 +60,7 @@ import app.theme.Theming
 import app.theme.Theming.SP_GRADIENT
 import app.theme.Theming.flexibleGradient
 import app.uicomponents.FlexibleIcon
+import app.utils.appName
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.vectorResource
 import syncplaymobile.shared.generated.resources.Directive4_Regular
@@ -95,6 +96,63 @@ fun HomeTopBar(viewmodel: HomeViewmodel) {
             ListItem(
                 modifier = Modifier.fillMaxWidth().padding(top = (TopAppBarDefaults.windowInsets.asPaddingValues().calculateTopPadding())),
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                /* Syncplay Header (logo + text) */
+                headlineContent = {
+                    Row(
+                        modifier = Modifier.clip(CircleShape).background(
+                            brush = Brush.linearGradient(
+                                colors = listOf(
+                                    SP_GRADIENT.first().copy(0.05f),
+                                    SP_GRADIENT.last().copy(0.05f)
+                                )
+                            )
+                        ).clickable(
+                            enabled = true,
+                            interactionSource = null,
+                            indication = ripple(
+                                bounded = false, color = Color(100, 100, 100, 200)
+                            )
+                        ) { aboutpopupState.value = true }.padding(16.dp)
+                    ) {
+                        Image(
+                            imageVector = vectorResource(Res.drawable.syncplay_logo_gradient),
+                            contentDescription = "",
+                            modifier = Modifier.height(32.dp).aspectRatio(1f)
+                        )
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Box(modifier = Modifier.padding(bottom = 6.dp)) {
+                            Text(
+                                modifier = Modifier.wrapContentWidth(),
+                                text = appName,
+                                style = TextStyle(
+                                    color = Theming.SP_PALE,
+                                    drawStyle = Stroke(
+                                        miter = 10f,
+                                        width = 2f,
+                                        join = StrokeJoin.Round
+                                    ),
+                                    shadow = Shadow(
+                                        color = Theming.NeoSP2.copy(alpha = 0.2f),
+                                        offset = Offset(0f, 10f),
+                                        blurRadius = 2f
+                                    ),
+                                    fontFamily = FontFamily(Font(Res.font.Directive4_Regular)),
+                                    fontSize = 24.sp,
+                                )
+                            )
+
+                            Text(
+                                text = appName, style = TextStyle(
+                                    brush = Brush.linearGradient(colors = SP_GRADIENT),
+                                    fontFamily = FontFamily(Font(Res.font.Directive4_Regular)),
+                                    fontSize = 24.sp,
+                                )
+                            )
+                        }
+                    }
+                },
                 trailingContent = {
                     Row(verticalAlignment = CenterVertically) {
                         var themePopupState by remember { mutableStateOf(false) }
@@ -128,65 +186,7 @@ fun HomeTopBar(viewmodel: HomeViewmodel) {
                             }
                         )
                     }
-                },
-
-                /* Syncplay Header (logo + text) */
-                headlineContent = {
-                    Row(
-                        modifier = Modifier.clip(CircleShape).background(
-                            brush = Brush.linearGradient(
-                                colors = listOf(
-                                    SP_GRADIENT.first().copy(0.05f),
-                                    SP_GRADIENT.last().copy(0.05f)
-                                )
-                            )
-                        ).clickable(
-                            enabled = true,
-                            interactionSource = null,
-                            indication = ripple(
-                                bounded = false, color = Color(100, 100, 100, 200)
-                            )
-                        ) { aboutpopupState.value = true }.padding(16.dp)
-                    ) {
-                        Image(
-                            imageVector = vectorResource(Res.drawable.syncplay_logo_gradient),
-                            contentDescription = "",
-                            modifier = Modifier.height(32.dp).aspectRatio(1f)
-                        )
-
-                        Spacer(modifier = Modifier.width(12.dp))
-
-                        Box(modifier = Modifier.padding(bottom = 6.dp)) {
-                            Text(
-                                modifier = Modifier.wrapContentWidth(),
-                                text = "Syncplay",
-                                style = TextStyle(
-                                    color = Theming.SP_PALE,
-                                    drawStyle = Stroke(
-                                        miter = 10f,
-                                        width = 2f,
-                                        join = StrokeJoin.Round
-                                    ),
-                                    shadow = Shadow(
-                                        color = Theming.SP_INTENSE_PINK,
-                                        offset = Offset(0f, 10f),
-                                        blurRadius = 5f
-                                    ),
-                                    fontFamily = FontFamily(Font(Res.font.Directive4_Regular)),
-                                    fontSize = 24.sp,
-                                )
-                            )
-
-                            Text(
-                                text = "Syncplay", style = TextStyle(
-                                    brush = Brush.linearGradient(colors = SP_GRADIENT),
-                                    fontFamily = FontFamily(Font(Res.font.Directive4_Regular)),
-                                    fontSize = 24.sp,
-                                )
-                            )
-                        }
-                    }
-                },
+                }
             )
 
             /* Settings */

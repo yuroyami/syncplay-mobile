@@ -75,9 +75,9 @@ import syncplaymobile.shared.generated.resources.theme_popup_custom_themes
 import syncplaymobile.shared.generated.resources.theme_popup_customize_button
 import syncplaymobile.shared.generated.resources.theme_popup_select_a_theme
 
-val availableThemes = listOf(PYNCSLAY, GrayOLED, SILVER_LAKE, ALLEY_LAMP)
+val availableThemes = listOf(SILVER_LAKE, PYNCSLAY, GrayOLED, ALLEY_LAMP)
 
-val themeCardSize = 64.dp
+val themeCardSize = 72.dp
 
 @Composable
 fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {

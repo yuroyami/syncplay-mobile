@@ -11,6 +11,8 @@ import kotlin.time.Clock
  * without requiring platform-specific implementations (expect/actual).         *
  ********************************************************************************/
 
+const val appName: String = "Synkplay" //In case we need to rebrand the app, we use a constant to store the app name
+
 /**
  * DSL marker annotation for protocol-related builders and scopes.
  */

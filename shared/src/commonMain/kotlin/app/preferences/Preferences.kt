@@ -174,7 +174,7 @@ import syncplaymobile.shared.generated.resources.uisetting_ui_opacity_title
  * Centralized preference definitions with type safety
  */
 object Preferences {
-    const val SYNCPLAY_PREFS = "syncplayprefs.preferences_pb"
+    const val SYNKPLAY_PREFS = "syncplayprefs.preferences_pb"
 
     /** ------------ Miscellaneous -------------*/
     val JOIN_CONFIG = Pref<String?>("misc_join_config", null)

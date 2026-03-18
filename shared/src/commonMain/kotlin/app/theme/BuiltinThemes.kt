@@ -6,7 +6,7 @@ import com.materialkolor.PaletteStyle
 
 
 val defaultTheme: SaveableTheme
-    get() = PYNCSLAY
+    get() = SILVER_LAKE
 
 val BLANK_THEME = SaveableTheme(
     name = "Untitled theme",
@@ -77,11 +77,11 @@ val ALLEY_LAMP = SaveableTheme(
 
 val SILVER_LAKE = SaveableTheme(
     name = "Silver Lake",
-    primaryColor = Color(68, 112, 173).toArgb(),
+    primaryColor = Color(179, 179, 179, 255).toArgb(),
     secondaryColor = Color(104, 136, 190).toArgb(),
-    tertiaryColor = Color(35, 60, 103).toArgb(),
+    tertiaryColor = Color(61, 80, 113, 255).toArgb(),
     neutralColor = Color(204, 219, 238).toArgb(),
     isDark = true,
-    style = PaletteStyle.TonalSpot,
-    syncplayGradients = false
+    style = PaletteStyle.Neutral,
+    syncplayGradients = true
 )
