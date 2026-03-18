@@ -17,9 +17,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.TextStyle
@@ -67,11 +65,6 @@ fun RoomBackgroundArtwork() {
                     style = TextStyle(
                         color = Theming.SP_PALE,
                         drawStyle = Stroke(miter = 10f, width = 2f, join = StrokeJoin.Round
-                        ),
-                        shadow = Shadow(
-                            color = Theming.SP_INTENSE_PINK,
-                            offset = Offset(0f, 10f),
-                            blurRadius = 5f
                         ),
                         fontFamily = FontFamily(Font(Res.font.Directive4_Regular))
                     ),
