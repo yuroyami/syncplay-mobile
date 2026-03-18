@@ -221,7 +221,7 @@ fun RoomTabSection(modifier: Modifier) {
                     onClick = {
                         overflowMenuState.value = false
                         viewmodel.viewModelScope.launch(Dispatchers.Main) {
-                            viewmodel.leaveRoom()
+                            viewmodel.goHome()
                         }
                     }
                 )

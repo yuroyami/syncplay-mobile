@@ -20,7 +20,7 @@ android {
 
     signingConfigs {
         file("${rootDir}/keystore/syncplaykey.jks").takeIf { it.exists() }?.let { keystoreFile ->
-            create("syncplay_keystore") {
+            create("synkplay_keystore") {
                 storeFile = keystoreFile
                 AppConfig.localProperties.apply {
                     keyAlias = getProperty("yuroyami.keyAlias")
@@ -32,7 +32,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = if (exoOnly) "com.reddnek.syncplay" else "com.yuroyami.syncplay"
+        applicationId = if (exoOnly) "com.reddnek.syncplay" else "com.yuroyami.synkplay"
         minSdk = AppConfig.minSdk
         targetSdk = AppConfig.compileSdk
         versionCode = AppConfig.versionCode
@@ -40,7 +40,7 @@ android {
 
         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
 
-        signingConfigs.findByName("syncplay_keystore")?.let { config ->
+        signingConfigs.findByName("synkplay_keystore")?.let { config ->
             signingConfig = config
         }
     }
@@ -106,7 +106,7 @@ android {
 
     flavorDimensions.add("flavor")
     productFlavors {
-        create(if (exoOnly) "exoOnly" else "allEngines") {
+        create(if (exoOnly) "exoOnly" else "full") {
             dimension = "flavor"
         }
     }
@@ -126,7 +126,7 @@ android {
     }
 }
 
-if (!AppConfig.exoOnly) {
+if (!exoOnly) {
     afterEvaluate {
         val sdkComponents = androidComponents.sdkComponents
         val ndkPath = sdkComponents.ndkDirectory.get().asFile
@@ -288,7 +288,7 @@ androidComponents {
                     "syncplay-${AppConfig.versionName}-exo-only.apk"
                 } else {
                     val abiName = abiFilter ?: "universal"
-                    "syncplay-${AppConfig.versionName}-full-${abiName}.apk"
+                    "synkplay-${AppConfig.versionName}-full-${abiName}.apk"
                 }
                 output.outputFileName = fileName
             }
@@ -301,7 +301,7 @@ dependencies {
     implementation(projects.shared)
 }
 
-if (!AppConfig.exoOnly) {
+if (!exoOnly) {
     tasks.named("preBuild") {
         dependsOn("runAndroidMpvNativeBuildScripts")
     }

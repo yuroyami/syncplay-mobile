@@ -61,7 +61,9 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
 import app.LocalGlobalViewmodel
 import app.LocalTheme
+import app.home.HomeLeadingTitle
 import app.home.components.HomeTextField
+import app.room.ui.tabs.RoomTab
 import app.uicomponents.FlexibleText
 import app.uicomponents.jostFont
 import app.uicomponents.lexendFont
@@ -70,8 +72,6 @@ import com.composeunstyled.Slider
 import com.composeunstyled.rememberSliderState
 import com.kborowy.colorpicker.KolorPicker
 import com.materialkolor.PaletteStyle
-import app.home.HomeLeadingTitle
-import app.room.ui.tabs.RoomTab
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
@@ -132,7 +132,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                         actions = {
                             Button(
                                 onClick = {
-                                    globalViewmodel.backstack.removeLast()
+                                    globalViewmodel.backstack.removeAt(globalViewmodel.backstack.lastIndex)
                                 },
                                 modifier = Modifier.padding(horizontal = 4.dp)
                             ) {
@@ -149,7 +149,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                                         val isSaved = globalViewmodel.saveNewTheme(newTheme)
 
                                         if (isSaved) {
-                                            globalViewmodel.backstack.removeLast()
+                                            globalViewmodel.backstack.removeAt(globalViewmodel.backstack.lastIndex)
                                         } else {
                                             snackState.showSnackbar(
                                                 themeAlreadyExistsString

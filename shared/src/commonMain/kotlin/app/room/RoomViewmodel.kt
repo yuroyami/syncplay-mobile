@@ -108,8 +108,8 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
     /**
      * Exits the current room and returns to the home screen.
      */
-    fun leaveRoom() {
-        backStack.removeLast()
+    fun goHome() {
+        backStack.removeAt(backStack.lastIndex)
     }
 
     /**
