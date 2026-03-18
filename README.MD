@@ -1,11 +1,11 @@
-<h1 align="center"> Syncplay for Mobile (Android & iOS) </h1> <br>  
+<h1 align="center">Synkplay - a mobile (Android & iOS) Syncplay client app</h1> <br>  
 <p align="center">  
   <a href="">  
-    <img alt="Syncplay for Mobile" title="Syncplay Mobile" src="https://github.com/yuroyami/syncplay-mobile/blob/master/shared/src/androidMain/ic_launcher-playstore.png" width="250">  
+    <img alt="Syncplay for Mobile" title="Synkplay" src="https://github.com/yuroyami/syncplay-mobile/blob/master/shared/src/androidMain/ic_launcher-playstore.png" width="250">  
   </a>  
 </p>  
 <p align="center">  
-  <b> Syncplay - The Unofficial Mobile Client (for Android and iOS) </b>  
+  <b> Synkplay - a Syncplay client for Android and iOS </b>
 </p>  
 
 | Platform                                                                                                   | Option 1                                                                                                                                                                                                                                                                                                 | Option 2                                                                                                                                                                                                                                           | Option 3                                                                                                                                                                                                                                                                              |
@@ -15,7 +15,7 @@
 
 
 <p align="center">
-Syncplay has built-in video players (on Android and iOS).<br>
+Synkplay has built-in video players (on Android and iOS).<br>
 GitHub releases are recommended over Play Store due to potential update delays.<br>
 Note: The IzzyOnDroid Android release is a lite APK containing only ExoPlayer video engine.
 
@@ -44,16 +44,17 @@ You can also check my [iOS guide](https://github.com/yuroyami/syncplay-mobile/wi
 [![OS - Android](https://img.shields.io/badge/Android-a4c639?style=for-the-badge&logo=android)]()[![OS - iOS](https://img.shields.io/badge/iOS-555555?style=for-the-badge&logo=apple)]()<br>
 [![Version Release](https://img.shields.io/badge/Version-0.17.0-e2203c?style=for-the-badge&logo=v)]()[![Written Language](https://img.shields.io/badge/Made%20with-Kotlin-lightgrey?style=for-the-badge&logo=kotlin)]()[![is Maintained?](https://img.shields.io/badge/Maintained-YES-green?style=for-the-badge)]()[![License](https://img.shields.io/badge/License-AGPL--3.0-brightgreen?style=for-the-badge)]()[![Requirement](https://img.shields.io/badge/REQUIREMENT-Android%208.0%20and%20later-blueviolet?style=for-the-badge&logo=android%20studio)]()[![Requirement](https://img.shields.io/badge/REQUIREMENT-iOS%2014.0%20and%20later-blueviolet?style=for-the-badge&logo=xcode)]()
 
-Syncplay Mobile is a unofficial Syncplay client brings the remarkable functionality of Syncplay PC client to the mobile platforms (Android and iOS). You can synchronize media playback with your friends, allowing you to watch videos together, even
+Synkplay is a third-party (unofficial) Syncplay client that brings the remarkable functionality of Syncplay PC client to the mobile platforms (Android and iOS). You can synchronize media playback with your friends, allowing you to watch videos together, even
 when you're physically apart.
 
-It includes real-time chat functionality, enabling seamless communication while enjoying synchronized playback on your Android or iOS device. You can use Syncplay Mobile with your friends who also use Syncplay Mobile, or Syncplay on PC.
+It includes real-time chat functionality, enabling seamless communication while enjoying synchronized playback on your Android or iOS device. You can use Synkplay with your friends who also use Synkplay, or Syncplay on PC.
+
+The "k" in Synkplay stands for Kotlin :)
 
 **Requires at least Android 8.0 Oreo or iOS 14.0**
 
 <p align="center">  
-  <img src = "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS1.png" width=150 alt="">  
-  <img src = "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS3.png" width=150 alt="">  
+  <img src = "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS1.png" width=200 alt="">  
 </p>  
 
 ## Features
@@ -66,8 +67,7 @@ It includes real-time chat functionality, enabling seamless communication while 
 * Multi-language support.
 
 <p align="center">  
-  <img src = "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS2.png" width="30%" alt="">  
-  <img src = "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS4.png" width="30%" alt="">  
+  <img src = "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS2.png" width="40%" alt="">  
 </p>  
 
 ## How to use
@@ -79,7 +79,7 @@ Usage on Android is fairly simple:
 To get the newest possible release:
 - Download the latest release APK from [here](https://github.com/yuroyami/syncplay-mobile/releases/latest).
 - Install the APK. If any installation issues arise, uninstall the previous version of the app before installing the new one.
-- Open Syncplay. Specify a username of your choice, a room name of your choice (Tell your friends about it). Select a server from the list (Tell your friends about this one too)
+- Open Synkplay. Specify a username of your choice, a room name of your choice (Tell your friends about it). Select a server from the list (Tell your friends about this one too)
 - Click "Join Room". You will be taken to the Room screen. You're all set. Tell your friends to join the same room and server.
 - ...and that's it. Load the same video file as your friends and enjoy the synchronized playback.
 
@@ -121,9 +121,7 @@ Some video players are more potent than others in certain areas. Here's a genera
 ## Architecture
 
 * <b>UI:</b> Compose multiplatform
-* <b>Architecture:</b> modular, manager-scoped (mostly MVVM)
 * <b>Network backbone:</b> Netty (Android), SwiftNIO (iOS) and Ktor (both)
-* <b>Preferences:</b> Jetpack Datastore
 * <b>Integrated media players:</b>
   **_Android_**: Exoplayer (via media3) - mpv (via libmpv) - VLC (via libVLC)
   **_iOS_**: AVPlayer (via AVFoundation) - VLC (via MobileVLCKit)
@@ -132,7 +130,7 @@ Some video players are more potent than others in certain areas. Here's a genera
 
 > If my friend uses Syncplay on PC, can I watch with them ?
 
-- Yes, you can. Syncplay Mobile is made to be interoperable with official Syncplay on PC because it implements the same protocol and the same servers and features.
+- Yes, you can. Synkplay (Syncplay Mobile) is made to be interoperable with official Syncplay on PC because it implements the same protocol and the same servers and features.
 
 > On Android, I get an error saying "App not installed" upon installing the app. What's wrong ?
 
@@ -145,7 +143,7 @@ Some video players are more potent than others in certain areas. Here's a genera
 
 ## Translating
 
-Syncplay is available in the following languages :
+Synkplay is available in the following languages :
 
 [![Translation status](https://hosted.weblate.org/widget/syncplay-mobile/syncplay-mobile/multi-auto.svg)](https://hosted.weblate.org/engage/syncplay-mobile)
 
@@ -153,8 +151,8 @@ Syncplay is available in the following languages :
 - Thanks to [@DoncanC](https://github.com/DoncanC) for the Spanish translation.
 - Thanks to [@ivy-reps](https://github.com/ivy-reps) for the Russian translation.
 
-* If you want to contribute with a translation in a language that isn't available in Syncplay, or  
-  enhance the actual translations, you can click the image above to go to the Weblate website
+* If you want to contribute with a translation in a language that isn't available in Synkplay, or  
+  enhance the actual translations, you can click the image above to go to the Weblate website,
   which is linked to this repository and you can easily add/edit/remove translations.
 * For more info, please refer to [#132](https://github.com/yuroyami/syncplay-mobile/issues/30)
 
@@ -166,7 +164,7 @@ If there's anything you'd like to chat about, please feel free to open a new dis
 
 ## Build Process
 
-Requirement: Android Studio Panda or newer. If you want to build the iOS version, you will ***also*** need to have Xcode 16.3 or newer. Your Android Studio will need to have the `Kotlin Multiplatform Mobile` plugin installed.
+Requirement: Android Studio 2025.3.1 or newer. If you want to build the iOS version, you will ***also*** need to have Xcode 16.3 or newer.
 Simply open the repo project using its GitHub link and build the app. It won't require any further tweaking.
 
 ## Acknowledgments

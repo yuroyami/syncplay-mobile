@@ -12,11 +12,11 @@
   ],
   "apps": [
     {
-      "name": "Syncplay for iOS",
+      "name": "Synkplay",
       "bundleIdentifier": "com.yuroyami.syncplay.iosApp",
       "developerName": "yuroyami",
       "subtitle": "Watch videos with friends in sync.",
-      "localizedDescription": "Unofficial Syncplay client app for Android and iOS. Watch stuff in sync with your friends. Works well with Syncplay on PC. Fully written in Kotlin and Compose multiplatform.",
+      "localizedDescription": "an unofficial Syncplay client app for Android and iOS. Watch stuff in sync with your friends. Works well with Syncplay on PC. Fully written in Kotlin and Compose multiplatform.",
       "iconURL": "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/LOGO.png",
       "tintColor": "#f72800",
       "patreonURL": "https://patreon.com/SidenaAkram?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink",
@@ -24,6 +24,15 @@
       "screenshots": [
       ],
       "versions": [
+        {
+          "downloadURL": "https://github.com/yuroyami/syncplay-mobile/releases/download/v0.18.0/synkplay-0.17.0-ios.ipa",
+          "size": 110000000,
+          "version": "0.18.0",
+          "buildVersion": "1000018000",
+          "date": "2026-03-18T13:00:00+01:00",
+          "localizedDescription": "",
+          "minOSVersion": ""
+        },
         {
           "downloadURL": "https://github.com/yuroyami/syncplay-mobile/releases/download/v0.17.0/syncplay-0.17.0-ios.ipa",
           "size": 110000000,
