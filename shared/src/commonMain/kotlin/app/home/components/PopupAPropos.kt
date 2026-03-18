@@ -93,10 +93,11 @@ object PopupAPropos {
                             size = 20f
                         )
                         SyncplayishText(
-                            string = "Syncplay for ${platform.label}",
+                            string = "a Syncplay client for ${platform.label}",
                             textAlign = TextAlign.Center,
                             colorStops = listOf(platform.color, platform.color),
-                            size = 17f
+                            shadow = Color.Black.copy(alpha = 0.1f),
+                            size = 14f
                         )
 
                     }

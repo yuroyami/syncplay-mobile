@@ -22,7 +22,7 @@ kotlin {
 
     // Activating iOS targets (iosMain)
     listOf(
-        //iosSimulatorArm64(), //We enable this only if we're planning to test on a simulator
+        iosSimulatorArm64(), //We enable this only if we're planning to test on a simulator
         iosArm64()
     ).forEach {
         it.compilations.getByName("main") {
