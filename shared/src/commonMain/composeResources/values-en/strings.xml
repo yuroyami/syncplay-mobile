@@ -347,9 +347,9 @@
 
     <string name="about_version">• Version: %1$s</string>
     <string name="about_developed_by">• Developed by: yuroyami</string>
-    <string name="about_client_is_unofficial_disclaimer">• This client is not official. Thanks to official Syncplay team for their amazing software.</string>
-    <string name="about_client_platforms">• Syncplay is officially available for Windows, macOS, and Linux.</string>
-    <string name="about_official_website">• Official Website: www.syncplay.pl</string>
+    <string name="about_client_is_unofficial_disclaimer">• This client is a third-party client implementation for the Syncplay protocol. Thanks to the maintainers of the Syncplay team for their work on the open-source protocol.</string>
+    <string name="about_client_platforms">• Report bugs on our GitHub repository below.</string>
+    <string name="about_official_website">• www.syncplay.pl</string>
 
     <string name="tips_dontshowmetips">Don't show me tips</string>
     <string name="tips_did_ya_know">Did ya know?</string>
