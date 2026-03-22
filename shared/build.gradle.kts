@@ -121,6 +121,12 @@ kotlin {
 
             /* Atomics (used only for logs at the moment) */
             implementation(libs.atomicfu)
+
+            /* Coil for async image loading (GIF panel) */
+            implementation(libs.bundles.coil)
+
+            /* Ktor HTTP client for REST API calls (Klipy GIF API) */
+            implementation(libs.bundles.ktor.client)
         }
 
         androidMain.dependencies {
@@ -144,10 +150,14 @@ kotlin {
 
             /* Video player engine: VLC (via libVLC) */
             implementation(libs.libvlc.android)
+
+            /* Ktor HTTP client engine for Android */
+            implementation(libs.ktor.client.okhttp)
         }
 
         iosMain.dependencies {
-            //Nothing for the moment
+            /* Ktor HTTP client engine for iOS */
+            implementation(libs.ktor.client.darwin)
         }
     }
 }

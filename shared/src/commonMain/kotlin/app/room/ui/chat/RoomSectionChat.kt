@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.GifBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -21,6 +22,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
@@ -59,22 +62,33 @@ import app.room.RoomViewmodel
 import app.theme.Theming.flexibleGradient
 import app.uicomponents.FlexibleAnnotatedText
 import app.utils.isEmoji
-import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
-import syncplaymobile.shared.generated.resources.room_coming_soon
 import syncplaymobile.shared.generated.resources.room_type_message
 
 @Composable
 fun RoomChatSection(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
     val isChatSupported by viewmodel.protocol.supportsChat.collectAsState()
+    val gifPanelVisible by viewmodel.uiState.gifPanelVisible.collectAsState()
+    val msg by viewmodel.uiState.msg.collectAsState()
 
     if (isChatSupported) {
         Column(modifier = modifier) {
             ChatTextField(viewmodel = viewmodel, modifier = Modifier.fillMaxWidth())
 
-            ChatBox(viewmodel = viewmodel, modifier = Modifier.fillMaxSize())
+            if (gifPanelVisible) {
+                GifPanel(
+                    query = msg,
+                    onGifSelected = { gifUrl ->
+                        viewmodel.dispatcher.sendMessage(gifUrl)
+                        viewmodel.uiState.gifPanelVisible.value = false
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                ChatBox(viewmodel = viewmodel, modifier = Modifier.fillMaxSize())
+            }
         }
     }
 }
@@ -97,6 +111,7 @@ fun ChatTextField(
         if (msgToSend.isNotBlank()) viewmodel.dispatcher.sendMessage(msgToSend)
 
         viewmodel.uiState.msg.value = ""
+        viewmodel.uiState.gifPanelVisible.value = false
         focusManager.clearFocus()
     }
 
@@ -118,39 +133,63 @@ fun ChatTextField(
             )
         },
         trailingIcon = {
-            if (msg.isNotBlank()) {
-                IconButton(onClick = {
-                    send()
-                }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = null,
-                        modifier = Modifier.graphicsLayer(alpha = 0.99f).drawWithCache {
-                            onDrawWithContent {
-                                drawContent()
-                                drawRect(
-                                    brush = gradientBrush, blendMode = BlendMode.SrcAtop
-                                )
+            Row {
+                if (msg.isNotBlank()) {
+                    /* Clear (X) button */
+                    IconButton(
+                        onClick = {
+                            viewmodel.uiState.msg.value = ""
+                            viewmodel.uiState.gifPanelVisible.value = false
+                        },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Close,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp).graphicsLayer(alpha = 0.99f).drawWithCache {
+                                onDrawWithContent {
+                                    drawContent()
+                                    drawRect(
+                                        brush = gradientBrush, blendMode = BlendMode.SrcAtop
+                                    )
+                                }
                             }
-                        }
-                    )
-                }
-            } else {
-                IconButton(onClick = {
-                    viewmodel.dispatchOSD { "GIF: ${getString(Res.string.room_coming_soon)}" }
-                }) {
-                    Icon(
-                        imageVector = Icons.Outlined.GifBox,
-                        contentDescription = null,
-                        modifier = Modifier.graphicsLayer(alpha = 0.99f).drawWithCache {
-                            onDrawWithContent {
-                                drawContent()
-                                drawRect(
-                                    brush = gradientBrush, blendMode = BlendMode.SrcAtop
-                                )
+                        )
+                    }
+
+                    /* Send button */
+                    IconButton(onClick = { send() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Send,
+                            contentDescription = null,
+                            modifier = Modifier.graphicsLayer(alpha = 0.99f).drawWithCache {
+                                onDrawWithContent {
+                                    drawContent()
+                                    drawRect(
+                                        brush = gradientBrush, blendMode = BlendMode.SrcAtop
+                                    )
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
+                } else {
+                    /* GIF button */
+                    IconButton(onClick = {
+                        viewmodel.uiState.gifPanelVisible.value = !viewmodel.uiState.gifPanelVisible.value
+                    }) {
+                        Icon(
+                            imageVector = Icons.Outlined.GifBox,
+                            contentDescription = null,
+                            modifier = Modifier.graphicsLayer(alpha = 0.99f).drawWithCache {
+                                onDrawWithContent {
+                                    drawContent()
+                                    drawRect(
+                                        brush = gradientBrush, blendMode = BlendMode.SrcAtop
+                                    )
+                                }
+                            }
+                        )
+                    }
                 }
             }
         },

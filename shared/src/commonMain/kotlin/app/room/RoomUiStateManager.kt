@@ -4,8 +4,10 @@ import androidx.lifecycle.viewModelScope
 import app.AbstractManager
 import app.preferences.Preferences.ROOM_UI_OPACITY
 import app.preferences.flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlin.concurrent.Volatile
@@ -32,6 +34,17 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     val tabLock = MutableStateFlow(false)
 
     val controlPanel = MutableStateFlow(false)
+
+    /** GIF panel visibility state */
+    val gifPanelVisible = MutableStateFlow(false)
+
+    /** Haptic feedback event bus - emits Unit when a haptic should be triggered */
+    private val _hapticEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 5)
+    val hapticEvent = _hapticEvent.asSharedFlow()
+
+    fun triggerHaptic() {
+        _hapticEvent.tryEmit(Unit)
+    }
 
     /** True while the user has navigated away for file picking. */
     var wentForFilePick = false
@@ -108,5 +121,6 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         wentForFilePick = false
         hasEnteredPipMode.value = false
         visibleHUD.value = true
+        gifPanelVisible.value = false
     }
 }
