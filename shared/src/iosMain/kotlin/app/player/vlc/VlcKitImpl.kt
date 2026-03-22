@@ -13,6 +13,7 @@ import app.preferences.Preferences.SUBTITLE_SIZE
 import app.preferences.value
 import app.room.RoomViewmodel
 import app.utils.loggy
+import co.touchlab.kermit.Logger
 import cocoapods.MobileVLCKit.VLCLibrary
 import cocoapods.MobileVLCKit.VLCMedia
 import cocoapods.MobileVLCKit.VLCMediaPlaybackSlaveTypeSubtitle
@@ -39,40 +40,22 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) {
-    /**
-     * VLC library instance providing codec and media parsing capabilities.
-     */
+    /** VLC library instance providing codec and media parsing capabilities. */
     private var libvlc: VLCLibrary? = null
-
-    /**
-     * Main VLC media player instance handling playback.
-     */
     var vlcPlayer: VLCMediaPlayer? = null
-
-    /**
-     * UIView that renders the video content.
-     */
     private var vlcView: UIView? = null
-
-    /**
-     * Delegate for receiving VLC player state change notifications.
-     */
     private var vlcDelegate = VlcDelegate()
-
-    /**
-     * Currently loaded VLC media object.
-     */
     private var vlcMedia: VLCMedia? = null
 
     override val supportsChapters: Boolean = true
 
-    /** Sadly, iOS doesn't allow PiP for anything other than AVPlayer */
+    /* Sadly, iOS doesn't allow PiP for anything other than AVPlayer */
     override val supportsPictureInPicture: Boolean = false
 
     override val trackerJobInterval: Duration
         get() = 0.seconds
 
-
+    private var pausedSeekPosition: Long? = null
 
     /**
      * Cleans up VLC resources and stops playback.
@@ -136,6 +119,8 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
 
                 vlcPlayer = VLCMediaPlayer(libvlc!!)
                 vlcPlayer!!.drawable = vlcView
+
+                vlcPlayer
 
                 initialize()
 
@@ -370,8 +355,6 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
      */
     override suspend fun pause() {
         if (!isInitialized) return
-        println("VLC PLAYER DELEGATE: ${vlcPlayer!!.delegate}")
-
         withContext(Dispatchers.Main.immediate) {
             vlcPlayer?.pause()
         }
@@ -383,6 +366,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     override suspend fun play() {
         if (!isInitialized) return
         withContext(Dispatchers.Main.immediate) {
+            pausedSeekPosition = null // VLC becomes reliable at updating time, again
             vlcPlayer?.play()
         }
     }
@@ -404,6 +388,9 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     override fun seekTo(toPositionMs: Long) {
         super.seekTo(toPositionMs)
         playerScopeMain.launch(Dispatchers.Main.immediate) {
+            // If paused → VLC won't update time, so we manually declare current ms pos
+            pausedSeekPosition = if (vlcPlayer?.isPlaying() != true) toPositionMs else null
+
             vlcPlayer?.setTime(toPositionMs.toVLCTime())
         }
     }
@@ -414,7 +401,9 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
      * @return Current position in milliseconds
      */
     override fun currentPositionMs(): Long {
-        return vlcPlayer?.time?.value()?.longValue ?: 0L
+        // If paused and we have a manual position → use it
+        return (pausedSeekPosition ?: vlcPlayer?.time?.value()?.longValue ?: playerManager.timeCurrentMillis.value)
+            .also { Logger.e("VLCTime: $it")}
     }
 
     /**
@@ -486,8 +475,10 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
      */
     inner class VlcDelegate : NSObject(), VLCMediaPlayerDelegateProtocol {
         override fun mediaPlayerStateChanged(aNotification: NSNotification) {
-            val isPlaying = vlcPlayer?.media == null && vlcPlayer?.isPlaying() == true
+            val isPlaying = vlcPlayer?.media != null && vlcPlayer?.isPlaying() == true
             playerManager.isNowPlaying.value = isPlaying
+
+            if (isPlaying) pausedSeekPosition = null
 
             if (vlcPlayer?.state == VLCMediaPlayerState.VLCMediaPlayerStateEnded) {
                 onPlaybackEnded()
@@ -495,6 +486,8 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         }
 
         override fun mediaPlayerTimeChanged(aNotification: NSNotification) {
+            Logger.e("AUTOMATIC VLC UPDATOR")
+
             // Time ticking = definitely playing
             val isPlaying = vlcPlayer?.isPlaying() == true
             if (playerManager.isNowPlaying.value != isPlaying) {
@@ -502,6 +495,8 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
             }
 
             playerManager.timeCurrentMillis.value = currentPositionMs()
+
+            if (isPlaying && pausedSeekPosition != null) pausedSeekPosition = null
         }
     }
 

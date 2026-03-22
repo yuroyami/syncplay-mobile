@@ -32,7 +32,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = if (exoOnly) "com.reddnek.syncplay" else "com.yuroyami.synkplay"
+        applicationId = if (exoOnly) "com.reddnek.syncplay" else "com.yuroyami.syncplay"
         minSdk = AppConfig.minSdk
         targetSdk = AppConfig.compileSdk
         versionCode = AppConfig.versionCode
