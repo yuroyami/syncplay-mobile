@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import com.eygraber.uri.Uri
+import app.utils.appName
 import app.preferences.Preferences
 import app.preferences.set
 import app.preferences.value
@@ -117,7 +118,7 @@ object PopupMediaDirs {
 
                 /* Title's subtext */
                 Text(
-                    text = stringResource(Res.string.media_directories_brief),
+                    text = stringResource(Res.string.media_directories_brief, appName),
                     color = MaterialTheme.colorScheme.primary,
                     lineHeight = 13.sp,
                     fontSize = 10.sp,

@@ -67,6 +67,7 @@ import app.room.ui.tabs.RoomTab
 import app.uicomponents.FlexibleText
 import app.uicomponents.jostFont
 import app.uicomponents.lexendFont
+import app.utils.appName
 import app.utils.loggy
 import com.composeunstyled.Slider
 import com.composeunstyled.rememberSliderState
@@ -395,7 +396,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         FlexibleText(
-                            text = stringResource(Res.string.theme_customize_use_syncplay_gradients),
+                            text = stringResource(Res.string.theme_customize_use_syncplay_gradients, appName),
                             size = 14f,
                             textAlign = TextAlign.Center,
                             fillingColors = listOf(MaterialTheme.colorScheme.primary),

@@ -21,6 +21,7 @@ import app.preferences.set
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
+import app.utils.appName
 import org.jetbrains.compose.resources.getStringArray
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
@@ -43,7 +44,7 @@ object PopupDidYaKnow {
 
             LaunchedEffect(null) {
                 //We only fetch tips when necessary
-                tips.addAll(getStringArray(Res.array.tips).shuffled())
+                tips.addAll(getStringArray(Res.array.tips).map { it.replace("%1\$s", appName) }.shuffled())
             }
 
             AlertDialog(

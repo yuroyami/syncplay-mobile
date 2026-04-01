@@ -31,7 +31,7 @@
     <!-- Home Screen -->
     <string name="connect_username">Type your username</string>
     <string name="connect_roomname">Insert room name</string>
-    <string name="connect_server">Select Synkplay server</string>
+    <string name="connect_server">Select %1$s server</string>
     <string name="connect_choose_video_engine">Choose your video engine</string>
     <string name="connect_button_join">Join Room</string>
     <string name="connect_button_saveshortcut">Save current config as home shortcut</string>
@@ -72,7 +72,7 @@
     <string name="room_shared_playlist_updated">%1$s updated the playlist</string>
     <string name="room_shared_playlist_changed">%1$s changed the playlist current selection</string>
     <string name="room_custom_skip_button">Skip %1$s</string>
-    <string name="media_directories_setting_summary">Synkplay will search any media directories you specify here in order to find a name that a shared playlist is playing.</string>
+    <string name="media_directories_setting_summary">%1$s will search any media directories you specify here in order to find a name that a shared playlist is playing.</string>
 
     <string name="room_on_newcontrolledroom">Created managed room '%1$s' with password '%2$s'. Please save this information for future reference! It is copied to your clipboard so you can paste it elsewhere.\n\nIn managed rooms everyone is kept in sync with the room operator(s) who are the only ones who can pause, unpause, seek, and change the playlist.\n\nYou should ask regular viewers to join the room '%1$s' but the room operators can join the room '%1$s:%2$s' to automatically authenticate themselves.</string>
     <string name="room_on_controller_auth_success">%1$s authenticated as a room operator</string>
@@ -107,7 +107,7 @@
     <string name="room_shared_playlist">Shared Playlist</string>
     <string name="room_shared_playlist_brief">Import a file or a directory to include file name(s) into the playlist. Click on a file line to get all users to play it.</string>
     <string name="room_shared_playlist_no_directories">You have not specified any media directories for shared playlists. Manually add the files.</string>
-    <string name="room_shared_playlist_not_found">Synkplay couldn't find the file that is currently playing in the shared playlist in your media directories.</string>
+    <string name="room_shared_playlist_not_found">%1$s couldn't find the file that is currently playing in the shared playlist in your media directories.</string>
     <string name="room_shared_playlist_not_featured">This room or server do not have Shared Playlists feature on.</string>
     <string name="room_shared_playlist_button_add_file">Add file(s) to bottom of playlist</string>
     <string name="room_shared_playlist_button_add_folder">Add folder to playlist (and media directories)</string>
@@ -128,7 +128,7 @@
     <string name="room_shared_playlist_filepick_rationale1">Select one or multiple files to add to playlist</string>
     <string name="room_shared_playlist_filepick_rationale2">Select directory to add its files to playlist</string>
     <string name="room_shared_playlist_add_url">Add URL to Shared Playlist</string>
-    <string name="room_shared_playlist_add_url_subtext">This line wil be added as an entry to the shared playlist.\nSynkplay Android supports only direct links for now.</string>
+    <string name="room_shared_playlist_add_url_subtext">This line wil be added as an entry to the shared playlist.\n%1$s Android supports only direct links for now.</string>
     <string name="room_button_desc_aspect_ratio">Aspect Ratio</string>
     <string name="room_button_desc_shared_playlist">Shared Playlist</string>
     <string name="room_button_desc_audio_tracks">Audio Tracks</string>
@@ -216,14 +216,14 @@
     <string name="setting_night_mode_title">Night Mode</string>
     <string name="setting_night_mode_summary">Select the night mode behavior.</string>
     <string name="setting_remember_join_info_title">Remember joining info</string>
-    <string name="setting_remember_join_info_summary">Enabled by default. This will allow Synkplay to save your last username, roomname, and which official server you last used.</string>
+    <string name="setting_remember_join_info_summary">Enabled by default. This will allow %1$s to save your last username, roomname, and which official server you last used.</string>
     <string name="setting_never_show_tips_title">Never show tips</string>
     <string name="setting_never_show_tips_summary">This will prevent tips from showing up at app launch.</string>
     <string name="setting_erase_shortcuts_title">Erase all home shortcuts</string>
     <string name="setting_erase_shortcuts_summary">This will erase all the 'quick run' home shortcuts that you created via the main screen to save your room configs.</string>
     <string name="setting_erase_shortcuts_dialog">Do you really wish to erase all existing shortcuts ?</string>
     <string name="setting_display_language_title">Display Language</string>
-    <string name="setting_display_language_summry">Select your language of choice with which Synkplay is displayed.</string>
+    <string name="setting_display_language_summry">Select your language of choice with which %1$s is displayed.</string>
     <string name="setting_display_language_toast">Changed language. Restart app for the setting to take full effect.</string>
     <string name="setting_audio_default_language_title">Preferred Audio Track Language</string>
     <string name="setting_audio_default_language_summry">Automatically load a audio track with the language code you set here. For example, English code is 'en-US', Japanese is 'ja-JP'. Google 'IETF BCP 47 codes' for more information.</string>
@@ -242,7 +242,7 @@
     <string name="setting_rewind_threshold_title">Rewind thresold</string>
     <string name="setting_rewind_threshold_summary">If someone is behind with the value you select here, your video will be rewinded to match with the one behind.</string>
     <string name="setting_tls_title">Use Secure Connection (TLS)</string>
-    <string name="setting_tls_summary">Synkplay will attempt to establish a secure encrypted connection (mainly TLSv1.3 but fallbacks to older versions) with the server if the latter supports it. This setting will be ignored if the network engine does not support TLS.</string>
+    <string name="setting_tls_summary">%1$s will attempt to establish a secure encrypted connection (mainly TLSv1.3 but fallbacks to older versions) with the server if the latter supports it. This setting will be ignored if the network engine does not support TLS.</string>
     <string name="setting_resetdefault_title">Reset Default Settings</string>
     <string name="setting_resetdefault_summary">Reset everything to its default value (Recommended)</string>
     <string name="setting_resetdefault_dialog">Are you sure to clear settings for this screen ?</string>
@@ -355,14 +355,14 @@
     <string name="theme_customize_neutral_color">Neutral color</string>
     <string name="theme_customize_neutral_variant_color">Neutral Variant color</string>
     <string name="theme_customize_is_amoled">is an AMOLED theme</string>
-    <string name="theme_customize_use_syncplay_gradients">Use Synkplay gradients</string>
+    <string name="theme_customize_use_syncplay_gradients">Use %1$s gradients</string>
     <string name="theme_customize_contrast">Contrast</string>
     <string name="theme_customize_palette_style">Palette Style</string>
     <string name="theme_customize_preview">Preview</string>
 
     <!-- Media Directories -->
     <string name="media_directories">Media Directories for Shared Playlist</string>
-    <string name="media_directories_brief">Synkplay will search any media directories you specify here in order to find a name that a shared playlist is playing. It is much better if you specify small directories as the searching operation can throttle and be very slow.</string>
+    <string name="media_directories_brief">%1$s will search any media directories you specify here in order to find a name that a shared playlist is playing. It is much better if you specify small directories as the searching operation can throttle and be very slow.</string>
     <string name="media_directories_save">Save &amp; Exit</string>
     <string name="media_directories_clear_all">Clear all</string>
     <string name="media_directories_clear_all_confirm">Are you sure you want to clear the list ?</string>
@@ -382,12 +382,12 @@
     <string name="tips_did_ya_know">Did ya know?</string>
 
     <string-array name="tips">
-        <item>For shared playlists to work, Synkplay needs to know where your media files are stored. Add your media folders in 'Settings > General > Media Directories for Shared Playlist'.</item>
-        <item>Want to use the video player solo? Select a player, tap the Synkplay logo above, then choose 'Offline Mode'.</item>
+        <item>For shared playlists to work, %1$s needs to know where your media files are stored. Add your media folders in 'Settings > General > Media Directories for Shared Playlist'.</item>
+        <item>Want to use the video player solo? Select a player, tap the %1$s logo above, then choose 'Offline Mode'.</item>
         <item>You can always reset settings to their default states by going to 'Settings -> Advanced -> Reset to Default'</item>
         <item>Joining the same room repeatedly? Save it as a shortcut on your device for one-tap access by clicking the small button next to 'Join Room'.</item>
         <item>Each player has different strengths. If one doesn't work well with your video format, try another.</item>
-        <item>Synkplay Mobile allows you to play media from direct links. However, YouTube is NOT supported, yet.</item>
+        <item>%1$s Mobile allows you to play media from direct links. However, YouTube is NOT supported, yet.</item>
         <item>If you want to minimize the room temporarily without leaving, you can go into "Picture-in-Picture" mode where the screen is a small floating screen above other apps.</item>
     </string-array>
 </resources>

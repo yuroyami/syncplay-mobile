@@ -53,6 +53,7 @@ import app.utils.generateTimestampMillis
 import app.utils.get
 import app.utils.logFile
 import app.utils.platform
+import app.utils.appName
 import app.utils.platformCallback
 import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
 import io.github.vinceglb.filekit.dialogs.compose.rememberFileSaverLauncher
@@ -206,6 +207,7 @@ object Preferences {
     val REMEMBER_INFO = Pref("pref_remember_info", true) {
         title = Res.string.setting_remember_join_info_title
         summary = Res.string.setting_remember_join_info_summary
+        summaryFormatArgs = arrayOf(appName)
         icon = Icons.Filled.Face
     }
     val NEVER_SHOW_TIPS = Pref("pref_never_show_tips", false) {
@@ -228,6 +230,7 @@ object Preferences {
     val MEDIA_DIRECTORIES = Pref<Set<String>>("pref_syncplay_media_directories", emptySet()) {
         title = Res.string.media_directories
         summary = Res.string.media_directories_setting_summary
+        summaryFormatArgs = arrayOf(appName)
         icon = Icons.AutoMirrored.Filled.QueueMusic
 
         extraConfig = PrefExtraConfig.ShowComposable(
@@ -239,6 +242,7 @@ object Preferences {
     val DISPLAY_LANG = Pref("pref_lang", "en") {
         title = Res.string.setting_display_language_title
         summary = Res.string.setting_display_language_summry
+        summaryFormatArgs = arrayOf(appName)
         icon = Icons.Filled.Translate
 
         extraConfig = if (platform == Platform.Android) {
@@ -341,6 +345,7 @@ object Preferences {
     val TLS_ENABLE = Pref("pref_tls", true) {
         title = Res.string.setting_tls_title
         summary = Res.string.setting_tls_summary
+        summaryFormatArgs = arrayOf(appName)
         icon = Icons.Filled.Key
     }
 
@@ -658,7 +663,7 @@ object Preferences {
 
                 LaunchedEffect(null) {
                     logSaver.launch(
-                        suggestedName = "SyncplayLog_${generateTimestampMillis()}",
+                        suggestedName = "${appName}Log_${generateTimestampMillis()}",
                         extension = "txt"
                     )
                 }

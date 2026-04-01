@@ -34,7 +34,7 @@ kotlin {
 
     // iOS configuration
     cocoapods {
-        summary = "Syncplay Common Code (Platform-agnostic)"
+        summary = "${AppConfig.appName} Common Code (Platform-agnostic)"
         homepage = "www.github.com/yuroyami/syncplay-mobile"
         version = "1.0.4"
         ios.deploymentTarget = "14.0"
@@ -167,6 +167,7 @@ with(AppConfig) {
 }
 
 buildConfig {
+    buildConfigField("APP_NAME", AppConfig.appName)
     buildConfigField("APP_VERSION", AppConfig.versionName)
     buildConfigField("DEBUG", false)
     buildConfigField("DEBUG_SYNCPLAY_PROTOCOL", false)

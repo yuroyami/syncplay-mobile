@@ -31,7 +31,7 @@
     <!-- Home Screen -->
     <string name="connect_username">Benutzernamen eingeben</string>
     <string name="connect_roomname">Raumname eingeben</string>
-    <string name="connect_server">Synkplay-Server auswählen</string>
+    <string name="connect_server">%1$s-Server auswählen</string>
     <string name="connect_choose_video_engine">Video-Engine auswählen</string>
     <string name="connect_button_join">Raum beitreten</string>
     <string name="connect_button_saveshortcut">Aktuelle Konfiguration als Startbildschirm-Verknüpfung speichern</string>
@@ -72,7 +72,7 @@
     <string name="room_shared_playlist_updated">%1$s hat die Playlist aktualisiert</string>
     <string name="room_shared_playlist_changed">%1$s hat die aktuelle Playlist-Auswahl geändert</string>
     <string name="room_custom_skip_button">%1$s überspringen</string>
-    <string name="media_directories_setting_summary">Synkplay durchsucht alle hier angegebenen Medienverzeichnisse, um einen Namen zu finden, der in einer gemeinsamen Playlist abgespielt wird.</string>
+    <string name="media_directories_setting_summary">%1$s durchsucht alle hier angegebenen Medienverzeichnisse, um einen Namen zu finden, der in einer gemeinsamen Playlist abgespielt wird.</string>
 
     <string name="room_on_newcontrolledroom">Verwalteter Raum '%1$s' mit Passwort '%2$s' erstellt. Bitte speichern Sie diese Informationen für die Zukunft! Sie wurden in Ihre Zwischenablage kopiert, damit Sie sie anderswo einfügen können.\n\nIn verwalteten Räumen werden alle mit dem Raumoperator synchron gehalten, der als Einziger pausieren, fortsetzen, suchen und die Playlist ändern kann.\n\nSie sollten normale Zuschauer bitten, dem Raum '%1$s' beizutreten, aber Raumoperatoren können dem Raum '%1$s:%2$s' beitreten, um sich automatisch zu authentifizieren.</string>
     <string name="room_on_controller_auth_success">%1$s erfolgreich als Raumoperator authentifiziert</string>
@@ -107,7 +107,7 @@
     <string name="room_shared_playlist">Gemeinsame Playlist</string>
     <string name="room_shared_playlist_brief">Importieren Sie eine Datei oder ein Verzeichnis, um Dateinamen in die Playlist aufzunehmen. Klicken Sie auf eine Dateizeile, damit alle Benutzer sie abspielen.</string>
     <string name="room_shared_playlist_no_directories">Sie haben keine Medienverzeichnisse für gemeinsame Playlists angegeben. Fügen Sie die Dateien manuell hinzu.</string>
-    <string name="room_shared_playlist_not_found">Synkplay konnte die Datei, die aktuell in der gemeinsamen Playlist abgespielt wird, nicht in Ihren Medienverzeichnissen finden.</string>
+    <string name="room_shared_playlist_not_found">%1$s konnte die Datei, die aktuell in der gemeinsamen Playlist abgespielt wird, nicht in Ihren Medienverzeichnissen finden.</string>
     <string name="room_shared_playlist_not_featured">Dieser Raum oder Server hat die gemeinsame Playlist-Funktion nicht aktiviert.</string>
     <string name="room_shared_playlist_button_add_file">Datei(en) unten in Playlist hinzufügen</string>
     <string name="room_shared_playlist_button_add_folder">Ordner zur Playlist hinzufügen (und zu Medienverzeichnissen)</string>
@@ -128,7 +128,7 @@
     <string name="room_shared_playlist_filepick_rationale1">Eine oder mehrere Dateien zur Playlist hinzufügen</string>
     <string name="room_shared_playlist_filepick_rationale2">Verzeichnis auswählen, um dessen Dateien zur Playlist hinzuzufügen</string>
     <string name="room_shared_playlist_add_url">URL zur gemeinsamen Playlist hinzufügen</string>
-    <string name="room_shared_playlist_add_url_subtext">Diese Zeile wird als Eintrag zur gemeinsamen Playlist hinzugefügt.\nSynkplay Android unterstützt vorerst nur direkte Links.</string>
+    <string name="room_shared_playlist_add_url_subtext">Diese Zeile wird als Eintrag zur gemeinsamen Playlist hinzugefügt.\n%1$s Android unterstützt vorerst nur direkte Links.</string>
     <string name="room_button_desc_aspect_ratio">Seitenverhältnis</string>
     <string name="room_button_desc_shared_playlist">Gemeinsame Playlist</string>
     <string name="room_button_desc_audio_tracks">Audiospuren</string>
@@ -189,14 +189,14 @@
     <string name="setting_night_mode_title">Nachtmodus</string>
     <string name="setting_night_mode_summary">Nachtmodus-Verhalten auswählen.</string>
     <string name="setting_remember_join_info_title">Beitrittsinfo merken</string>
-    <string name="setting_remember_join_info_summary">Standardmäßig aktiviert. Ermöglicht Synkplay, Ihren letzten Benutzernamen, Raumnamen und den zuletzt verwendeten offiziellen Server zu speichern.</string>
+    <string name="setting_remember_join_info_summary">Standardmäßig aktiviert. Ermöglicht %1$s, Ihren letzten Benutzernamen, Raumnamen und den zuletzt verwendeten offiziellen Server zu speichern.</string>
     <string name="setting_never_show_tips_title">Tipps nie anzeigen</string>
     <string name="setting_never_show_tips_summary">Verhindert, dass Tipps beim App-Start angezeigt werden.</string>
     <string name="setting_erase_shortcuts_title">Alle Startbildschirm-Verknüpfungen löschen</string>
     <string name="setting_erase_shortcuts_summary">Löscht alle 'Schnellstart'-Startbildschirm-Verknüpfungen, die Sie über den Hauptbildschirm erstellt haben, um Ihre Raumkonfigurationen zu speichern.</string>
     <string name="setting_erase_shortcuts_dialog">Wirklich alle vorhandenen Verknüpfungen löschen?</string>
     <string name="setting_display_language_title">Anzeigesprache</string>
-    <string name="setting_display_language_summry">Bevorzugte Sprache für die Synkplay-Oberfläche auswählen.</string>
+    <string name="setting_display_language_summry">Bevorzugte Sprache für die %1$s-Oberfläche auswählen.</string>
     <string name="setting_display_language_toast">Sprache geändert. App neu starten, damit die Einstellung vollständig wirksam wird.</string>
     <string name="setting_audio_default_language_title">Bevorzugte Audiospur-Sprache</string>
     <string name="setting_audio_default_language_summry">Automatisch eine Audiospur mit dem hier festgelegten Sprachcode laden. Zum Beispiel ist Englisch 'en-US', Japanisch 'ja-JP'. Suchen Sie nach 'IETF BCP 47 codes' für mehr Informationen.</string>
@@ -215,7 +215,7 @@
     <string name="setting_rewind_threshold_title">Rückspul-Schwellenwert</string>
     <string name="setting_rewind_threshold_summary">Wenn jemand um den hier ausgewählten Wert hinterherhinkt, wird Ihr Video zurückgespult, um mit dem Hinterherhinkenden synchron zu sein.</string>
     <string name="setting_tls_title">Sichere Verbindung verwenden (TLS)</string>
-    <string name="setting_tls_summary">Synkplay versucht eine sichere verschlüsselte Verbindung (hauptsächlich TLSv1.3, fallback zu älteren Versionen) mit dem Server herzustellen, falls dieser es unterstützt. Diese Einstellung wird ignoriert, wenn die Netzwerk-Engine TLS nicht unterstützt.</string>
+    <string name="setting_tls_summary">%1$s versucht eine sichere verschlüsselte Verbindung (hauptsächlich TLSv1.3, fallback zu älteren Versionen) mit dem Server herzustellen, falls dieser es unterstützt. Diese Einstellung wird ignoriert, wenn die Netzwerk-Engine TLS nicht unterstützt.</string>
     <string name="setting_resetdefault_title">Standardeinstellungen zurücksetzen</string>
     <string name="setting_resetdefault_summary">Alles auf Standardwerte zurücksetzen (Empfohlen)</string>
     <string name="setting_resetdefault_dialog">Einstellungen für diesen Bildschirm wirklich zurücksetzen?</string>
@@ -326,14 +326,14 @@
     <string name="theme_customize_neutral_color">Neutrale Farbe</string>
     <string name="theme_customize_neutral_variant_color">Neutrale Variantenfarbe</string>
     <string name="theme_customize_is_amoled">Ist ein AMOLED-Theme</string>
-    <string name="theme_customize_use_syncplay_gradients">Synkplay-Verläufe verwenden</string>
+    <string name="theme_customize_use_syncplay_gradients">%1$s-Verläufe verwenden</string>
     <string name="theme_customize_contrast">Kontrast</string>
     <string name="theme_customize_palette_style">Palettenstil</string>
     <string name="theme_customize_preview">Vorschau</string>
 
     <!-- Media Directories -->
     <string name="media_directories">Medienverzeichnisse für gemeinsame Playlist</string>
-    <string name="media_directories_brief">Synkplay durchsucht alle hier angegebenen Medienverzeichnisse, um einen Namen zu finden, der in einer gemeinsamen Playlist abgespielt wird. Es ist viel besser, wenn Sie kleine Verzeichnisse angeben, da der Suchvorgang drosseln und sehr langsam sein kann.</string>
+    <string name="media_directories_brief">%1$s durchsucht alle hier angegebenen Medienverzeichnisse, um einen Namen zu finden, der in einer gemeinsamen Playlist abgespielt wird. Es ist viel besser, wenn Sie kleine Verzeichnisse angeben, da der Suchvorgang drosseln und sehr langsam sein kann.</string>
     <string name="media_directories_save">Speichern &amp; Beenden</string>
     <string name="media_directories_clear_all">Alle löschen</string>
     <string name="media_directories_clear_all_confirm">Wirklich die Liste löschen?</string>
@@ -353,12 +353,12 @@
     <string name="tips_did_ya_know">Wussten Sie schon?</string>
 
     <string-array name="tips">
-        <item>Damit gemeinsame Playlists funktionieren, muss Syncplay wissen, wo Ihre Mediendateien gespeichert sind. Fügen Sie Ihre Medienordner unter 'Einstellungen > Allgemein > Medienverzeichnisse für gemeinsame Playlist' hinzu.</item>
-        <item>Möchten Sie den Video-Player solo verwenden? Wählen Sie einen Player, tippen Sie auf das Syncplay-Logo oben und wählen Sie dann 'Offline-Modus'.</item>
+        <item>Damit gemeinsame Playlists funktionieren, muss %1$s wissen, wo Ihre Mediendateien gespeichert sind. Fügen Sie Ihre Medienordner unter 'Einstellungen > Allgemein > Medienverzeichnisse für gemeinsame Playlist' hinzu.</item>
+        <item>Möchten Sie den Video-Player solo verwenden? Wählen Sie einen Player, tippen Sie auf das %1$s-Logo oben und wählen Sie dann 'Offline-Modus'.</item>
         <item>Sie können Einstellungen immer auf ihre Standardzustände zurücksetzen, indem Sie zu 'Einstellungen -> Erweitert -> Auf Standard zurücksetzen' gehen.</item>
         <item>Treten Sie demselben Raum wiederholt bei? Speichern Sie ihn als Verknüpfung auf Ihrem Gerät für Ein-Klick-Zugriff, indem Sie auf die kleine Schaltfläche neben 'Raum beitreten' klicken.</item>
         <item>Jeder Player hat unterschiedliche Stärken. Wenn einer nicht gut mit Ihrem Videoformat funktioniert, versuchen Sie einen anderen.</item>
-        <item>Syncplay Mobile ermöglicht Ihnen, Medien von direkten Links abzuspielen. YouTube wird jedoch NOCH nicht unterstützt.</item>
+        <item>%1$s Mobile ermöglicht Ihnen, Medien von direkten Links abzuspielen. YouTube wird jedoch NOCH nicht unterstützt.</item>
         <item>Wenn Sie den Raum vorübergehend minimieren möchten, ohne ihn zu verlassen, können Sie in den "Bild-in-Bild"-Modus wechseln, wo der Bildschirm ein kleiner schwebender Bildschirm über anderen Apps ist.</item>
     </string-array>
 </resources>

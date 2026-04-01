@@ -477,6 +477,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         override fun mediaPlayerStateChanged(aNotification: NSNotification) {
             val isPlaying = vlcPlayer?.media != null && vlcPlayer?.isPlaying() == true
             playerManager.isNowPlaying.value = isPlaying
+            playerManager.timeCurrentMillis.value = currentPositionMs()
 
             if (isPlaying) pausedSeekPosition = null
 
