@@ -16,6 +16,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -56,6 +58,14 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
     val isInPipMode by viewmodel.uiState.hasEnteredPipMode.collectAsState()
 
     val lockedMode by viewmodel.uiState.tabLock.collectAsState()
+
+    /* Haptic feedback collector - triggers haptics from non-composable RoomCallback */
+    val haptic = LocalHapticFeedback.current
+    LaunchedEffect(Unit) {
+        viewmodel.uiState.hapticEvent.collect {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
+    }
 
     CompositionLocalProvider(LocalRoomUiState provides viewmodel.uiState) {
         Box(modifier = Modifier.fillMaxSize()) {

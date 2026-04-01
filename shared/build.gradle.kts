@@ -63,7 +63,7 @@ kotlin {
                 optIn("kotlinx.cinterop.ExperimentalForeignApi") //for iOS
                 optIn("kotlinx.cinterop.BetaInteropApi") //for iOS
                 optIn("kotlin.time.ExperimentalTime")
-                enableLanguageFeature("ExplicitBackingFields") //same as -Xexplicit-baxcking-fields compiler flag
+                enableLanguageFeature("ExplicitBackingFields") //same as -Xexplicit-backing-fields compiler flag
                 enableLanguageFeature("NestedTypeAliases") //-Xnested-type-aliases
                 enableLanguageFeature("ExpectActualClasses") //-Xexpect-actual-classes
                 enableLanguageFeature("ContextParameters") //Xcontext-parameters
@@ -74,7 +74,7 @@ kotlin {
             /* Forcing Kotlin libs to match the compiler */
             implementation(libs.kotlin.stdlib)
 
-            /* Explicitly specifying a newer koroutines version */
+            /* Explicitly specifying a newer coroutines version */
             implementation(libs.kotlin.coroutines.core)
 
             /* Official JetBrains Kotlin Date 'n time manager (i.e: generating date from epoch) */
@@ -121,6 +121,12 @@ kotlin {
 
             /* Atomics (used only for logs at the moment) */
             implementation(libs.atomicfu)
+
+            /* Coil for async image loading (GIF panel) */
+            implementation(libs.bundles.coil)
+
+            /* Ktor HTTP client for REST API calls (Klipy GIF API) */
+            implementation(libs.bundles.ktor.client)
         }
 
         androidMain.dependencies {
@@ -144,16 +150,20 @@ kotlin {
 
             /* Video player engine: VLC (via libVLC) */
             implementation(libs.libvlc.android)
+
+            /* Ktor HTTP client engine for Android */
+            implementation(libs.ktor.client.okhttp)
         }
 
         iosMain.dependencies {
-            //Nothing for the moment
+            /* Ktor HTTP client engine for iOS */
+            implementation(libs.ktor.client.darwin)
         }
     }
 }
 
 with(AppConfig) {
-    updateIOSVersion() //We keep this line uncommented unless you change version. for some reason it breaks Gradle build from within Xcode
+    updateIOSVersion() //Uncomment if Xcode build fails, for some reason it breaks Gradle build from within Xcode
 }
 
 buildConfig {

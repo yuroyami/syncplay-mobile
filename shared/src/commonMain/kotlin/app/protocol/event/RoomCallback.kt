@@ -3,6 +3,14 @@ package app.protocol.event
 import androidx.lifecycle.viewModelScope
 import app.AbstractManager
 import app.player.Playback
+import app.preferences.Preferences.HAPTIC_ON_CHAT
+import app.preferences.Preferences.HAPTIC_ON_CONNECTION
+import app.preferences.Preferences.HAPTIC_ON_JOINED
+import app.preferences.Preferences.HAPTIC_ON_LEFT
+import app.preferences.Preferences.HAPTIC_ON_PAUSED
+import app.preferences.Preferences.HAPTIC_ON_PLAYED
+import app.preferences.Preferences.HAPTIC_ON_PLAYLIST
+import app.preferences.Preferences.HAPTIC_ON_SEEKED
 import app.preferences.Preferences.PAUSE_ON_SOMEONE_LEAVE
 import app.preferences.Preferences.READY_FIRST_HAND
 import app.preferences.value
@@ -51,10 +59,18 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     fun String.isSelf(): Boolean = (this == session.currentUsername)
     fun String.isNotSelf(): Boolean = (this != session.currentUsername)
 
+    /** Triggers a platform haptic feedback event if the given preference is enabled */
+    private fun hapticIf(pref: app.preferences.Pref<Boolean>) {
+        if (pref.value()) viewmodel.uiState.triggerHaptic()
+    }
+
     fun onSomeonePaused(pauser: String) {
         loggy("SYNCPLAY Protocol: Someone ($pauser) paused.")
 
-        if (pauser.isNotSelf()) dispatcher.controlPlayback(Playback.PAUSE, false)
+        if (pauser.isNotSelf()) {
+            hapticIf(HAPTIC_ON_PAUSED)
+            dispatcher.controlPlayback(Playback.PAUSE, false)
+        }
 
         dispatcher.broadcastMessage(
             message = {
@@ -71,6 +87,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         loggy("SYNCPLAY Protocol: Someone ($player) unpaused.")
 
         if (player.isNotSelf()) {
+            hapticIf(HAPTIC_ON_PLAYED)
             dispatcher.controlPlayback(Playback.PLAY, false)
         }
 
@@ -80,12 +97,14 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     fun onChatReceived(chatter: String, chatmessage: String) {
         loggy("SYNCPLAY Protocol: $chatter sent: $chatmessage")
 
+        if (chatter.isNotSelf()) hapticIf(HAPTIC_ON_CHAT)
         dispatcher.broadcastMessage(message = { chatmessage }, isChat = true, chatter = chatter)
     }
 
     fun onSomeoneJoined(joiner: String) {
         loggy("SYNCPLAY Protocol: $joiner joined the room.")
 
+        if (joiner.isNotSelf()) hapticIf(HAPTIC_ON_JOINED)
         dispatcher.broadcastMessage(message = { getString(Res.string.room_guy_joined, joiner) }, isChat = false)
     }
 
@@ -97,6 +116,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
         loggy("SYNCPLAY Protocol: $leaver left the room.")
 
+        hapticIf(HAPTIC_ON_LEFT)
         dispatcher.broadcastMessage(message = { getString(Res.string.room_guy_left, leaver) }, isChat = false)
 
         viewmodel.viewModelScope.launch(Dispatchers.Main) {
@@ -111,6 +131,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     fun onSomeoneSeeked(seeker: String, toPosition: Double) {
         loggy("SYNCPLAY Protocol: $seeker seeked to: $toPosition")
 
+        if (seeker.isNotSelf()) hapticIf(HAPTIC_ON_SEEKED)
         onMainThread {
             val oldPosMs = if (seeker.isSelf()) dispatcher.pendingSeekFromMs else viewmodel.player.currentPositionMs()
             val newPosMs = toPosition.toLong() * 1000L
@@ -157,6 +178,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
     fun onPlaylistUpdated(user: String) {
         loggy("SYNCPLAY Protocol: Playlist updated by $user")
+        if (user.isNotEmpty()) hapticIf(HAPTIC_ON_PLAYLIST)
 
         if (viewmodel.session.sharedPlaylist.isNotEmpty() && viewmodel.session.spIndex.intValue == -1) {
             //changePlaylistSelection(0)
@@ -218,6 +240,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     fun onConnectionFailed() {
         loggy("SYNCPLAY Protocol: Connection failed :/")
 
+        hapticIf(HAPTIC_ON_CONNECTION)
         network.state.value = ConnectionState.DISCONNECTED
         dispatcher.broadcastMessage(message = { getString(Res.string.room_connection_failed) }, isChat = false, isError = true)
         network.reconnect()
@@ -226,6 +249,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     fun onDisconnected() {
         loggy("SYNCPLAY Protocol: Disconnected.")
 
+        hapticIf(HAPTIC_ON_CONNECTION)
         network.state.value = ConnectionState.DISCONNECTED
         dispatcher.broadcastMessage(message = { getString(Res.string.room_attempting_reconnection) }, isChat = false, isError = true)
         network.reconnect()

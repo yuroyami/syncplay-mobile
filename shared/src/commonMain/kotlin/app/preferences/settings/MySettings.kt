@@ -5,6 +5,7 @@ import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.ConnectWithoutContact
 import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.SettingsSuggest
 import androidx.compose.material.icons.filled.Stream
 import androidx.compose.material.icons.filled.Translate
@@ -12,6 +13,14 @@ import androidx.compose.material.icons.filled.VideoLabel
 import app.preferences.Preferences.AUDIO_LANG
 import app.preferences.Preferences.CC_LANG
 import app.preferences.Preferences.COLOR_ERRORMSG
+import app.preferences.Preferences.HAPTIC_ON_CHAT
+import app.preferences.Preferences.HAPTIC_ON_CONNECTION
+import app.preferences.Preferences.HAPTIC_ON_JOINED
+import app.preferences.Preferences.HAPTIC_ON_LEFT
+import app.preferences.Preferences.HAPTIC_ON_PAUSED
+import app.preferences.Preferences.HAPTIC_ON_PLAYED
+import app.preferences.Preferences.HAPTIC_ON_PLAYLIST
+import app.preferences.Preferences.HAPTIC_ON_SEEKED
 import app.preferences.Preferences.COLOR_FRIENDTAG
 import app.preferences.Preferences.COLOR_SELFTAG
 import app.preferences.Preferences.COLOR_SYSTEMMSG
@@ -56,6 +65,7 @@ import syncplaymobile.shared.generated.resources.settings_categ_network
 import syncplaymobile.shared.generated.resources.settings_categ_syncing
 import syncplaymobile.shared.generated.resources.uisetting_categ_chat_colors
 import syncplaymobile.shared.generated.resources.uisetting_categ_chat_properties
+import syncplaymobile.shared.generated.resources.uisetting_categ_haptics
 import syncplaymobile.shared.generated.resources.uisetting_categ_player_settings
 
 /* Styles */
@@ -151,6 +161,20 @@ val INROOM_PLAYER_SETTINGS = SettingCategory(
 
 }
 
+val INROOM_HAPTICS = SettingCategory(
+    title = Res.string.uisetting_categ_haptics,
+    icon = Icons.Filled.Vibration,
+) {
+    +HAPTIC_ON_JOINED
+    +HAPTIC_ON_LEFT
+    +HAPTIC_ON_CHAT
+    +HAPTIC_ON_PAUSED
+    +HAPTIC_ON_PLAYED
+    +HAPTIC_ON_SEEKED
+    +HAPTIC_ON_PLAYLIST
+    +HAPTIC_ON_CONNECTION
+}
+
 val INROOM_ADVANCED = SettingCategory(
     title = Res.string.settings_categ_advanced,
     icon = Icons.Filled.Stream
@@ -162,4 +186,4 @@ val INROOM_ADVANCED = SettingCategory(
 
 
 val SETTINGS_GLOBAL = listOf(GLOBAL_GENERAL, GLOBAL_LANGUAGE, GLOBAL_SYNCING, GLOBAL_NETWORK, GLOBAL_ADVANCED)
-val SETTINGS_ROOM = listOf(INROOM_CHATCOLORS, INROOM_CHAT_PROPERTIES, INROOM_PLAYER_SETTINGS, INROOM_ADVANCED)
+val SETTINGS_ROOM = listOf(INROOM_CHATCOLORS, INROOM_CHAT_PROPERTIES, INROOM_PLAYER_SETTINGS, INROOM_HAPTICS, INROOM_ADVANCED)

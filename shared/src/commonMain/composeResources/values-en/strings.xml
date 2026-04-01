@@ -178,6 +178,33 @@
     <string name="room_seek_toposition_timediff">Skipping %1$sseconds of time</string>
     <string name="room_seek_toposition_success">Seeking to %1$s</string>
 
+    <!-- GIF Panel -->
+    <string name="room_gif_tab_gifs">GIFs</string>
+    <string name="room_gif_tab_stickers">Stickers</string>
+    <string name="room_gif_search_hint">Search GIFs...</string>
+    <string name="room_gif_powered_by">Powered by Klipy</string>
+    <string name="room_gif_no_results">No results found</string>
+    <string name="room_gif_error">Failed to load GIFs</string>
+
+    <!-- Haptics -->
+    <string name="uisetting_categ_haptics">Haptics</string>
+    <string name="uisetting_haptic_on_joined_title">Someone joined</string>
+    <string name="uisetting_haptic_on_joined_summary">Vibrate when someone joins the room.</string>
+    <string name="uisetting_haptic_on_left_title">Someone left</string>
+    <string name="uisetting_haptic_on_left_summary">Vibrate when someone leaves the room.</string>
+    <string name="uisetting_haptic_on_chat_title">Chat message received</string>
+    <string name="uisetting_haptic_on_chat_summary">Vibrate when a chat message is received.</string>
+    <string name="uisetting_haptic_on_paused_title">Someone paused</string>
+    <string name="uisetting_haptic_on_paused_summary">Vibrate when someone pauses playback.</string>
+    <string name="uisetting_haptic_on_played_title">Someone unpaused</string>
+    <string name="uisetting_haptic_on_played_summary">Vibrate when someone resumes playback.</string>
+    <string name="uisetting_haptic_on_seeked_title">Someone seeked</string>
+    <string name="uisetting_haptic_on_seeked_summary">Vibrate when someone seeks in the video.</string>
+    <string name="uisetting_haptic_on_playlist_title">Playlist updated</string>
+    <string name="uisetting_haptic_on_playlist_summary">Vibrate when the shared playlist is updated.</string>
+    <string name="uisetting_haptic_on_connection_title">Connection event</string>
+    <string name="uisetting_haptic_on_connection_summary">Vibrate on connection failure or disconnection.</string>
+
     <!-- Settings Categories -->
     <string name="settings_categ_general">General</string>
     <string name="settings_categ_language">Language</string>

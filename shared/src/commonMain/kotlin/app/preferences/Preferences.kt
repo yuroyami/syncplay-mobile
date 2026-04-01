@@ -38,6 +38,7 @@ import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Update
+import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.Web
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
@@ -125,6 +126,22 @@ import syncplaymobile.shared.generated.resources.uisetting_custom_seek_amount_su
 import syncplaymobile.shared.generated.resources.uisetting_custom_seek_amount_title
 import syncplaymobile.shared.generated.resources.uisetting_custom_seek_front_summary
 import syncplaymobile.shared.generated.resources.uisetting_custom_seek_front_title
+import syncplaymobile.shared.generated.resources.uisetting_haptic_on_chat_summary
+import syncplaymobile.shared.generated.resources.uisetting_haptic_on_chat_title
+import syncplaymobile.shared.generated.resources.uisetting_haptic_on_connection_summary
+import syncplaymobile.shared.generated.resources.uisetting_haptic_on_connection_title
+import syncplaymobile.shared.generated.resources.uisetting_haptic_on_joined_summary
+import syncplaymobile.shared.generated.resources.uisetting_haptic_on_joined_title
+import syncplaymobile.shared.generated.resources.uisetting_haptic_on_left_summary
+import syncplaymobile.shared.generated.resources.uisetting_haptic_on_left_title
+import syncplaymobile.shared.generated.resources.uisetting_haptic_on_paused_summary
+import syncplaymobile.shared.generated.resources.uisetting_haptic_on_paused_title
+import syncplaymobile.shared.generated.resources.uisetting_haptic_on_played_summary
+import syncplaymobile.shared.generated.resources.uisetting_haptic_on_played_title
+import syncplaymobile.shared.generated.resources.uisetting_haptic_on_playlist_summary
+import syncplaymobile.shared.generated.resources.uisetting_haptic_on_playlist_title
+import syncplaymobile.shared.generated.resources.uisetting_haptic_on_seeked_summary
+import syncplaymobile.shared.generated.resources.uisetting_haptic_on_seeked_title
 import syncplaymobile.shared.generated.resources.uisetting_error_color_summary
 import syncplaymobile.shared.generated.resources.uisetting_error_color_title
 import syncplaymobile.shared.generated.resources.uisetting_friend_color_summary
@@ -538,6 +555,48 @@ object Preferences {
         icon = Icons.Filled.HourglassEmpty
 
         extraConfig = PrefExtraConfig.Slider(maxValue = 15000, minValue = 100)
+    }
+
+    /** ------------ Haptics -------------*/
+    val HAPTIC_ON_JOINED = Pref("pref_haptic_on_joined", false) {
+        title = Res.string.uisetting_haptic_on_joined_title
+        summary = Res.string.uisetting_haptic_on_joined_summary
+        icon = Icons.Filled.Vibration
+    }
+    val HAPTIC_ON_LEFT = Pref("pref_haptic_on_left", true) {
+        title = Res.string.uisetting_haptic_on_left_title
+        summary = Res.string.uisetting_haptic_on_left_summary
+        icon = Icons.Filled.Vibration
+    }
+    val HAPTIC_ON_CHAT = Pref("pref_haptic_on_chat", true) {
+        title = Res.string.uisetting_haptic_on_chat_title
+        summary = Res.string.uisetting_haptic_on_chat_summary
+        icon = Icons.Filled.Vibration
+    }
+    val HAPTIC_ON_PAUSED = Pref("pref_haptic_on_paused", false) {
+        title = Res.string.uisetting_haptic_on_paused_title
+        summary = Res.string.uisetting_haptic_on_paused_summary
+        icon = Icons.Filled.Vibration
+    }
+    val HAPTIC_ON_PLAYED = Pref("pref_haptic_on_played", false) {
+        title = Res.string.uisetting_haptic_on_played_title
+        summary = Res.string.uisetting_haptic_on_played_summary
+        icon = Icons.Filled.Vibration
+    }
+    val HAPTIC_ON_SEEKED = Pref("pref_haptic_on_seeked", false) {
+        title = Res.string.uisetting_haptic_on_seeked_title
+        summary = Res.string.uisetting_haptic_on_seeked_summary
+        icon = Icons.Filled.Vibration
+    }
+    val HAPTIC_ON_PLAYLIST = Pref("pref_haptic_on_playlist", false) {
+        title = Res.string.uisetting_haptic_on_playlist_title
+        summary = Res.string.uisetting_haptic_on_playlist_summary
+        icon = Icons.Filled.Vibration
+    }
+    val HAPTIC_ON_CONNECTION = Pref("pref_haptic_on_connection", false) {
+        title = Res.string.uisetting_haptic_on_connection_title
+        summary = Res.string.uisetting_haptic_on_connection_summary
+        icon = Icons.Filled.Vibration
     }
 
     /** ------------ Advanced -------------*/
