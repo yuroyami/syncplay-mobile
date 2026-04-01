@@ -2,6 +2,7 @@ package app.room.sharedplaylist
 
 import app.AbstractManager
 import app.room.RoomViewmodel
+import app.utils.appName
 import app.utils.getFileName
 import app.player.PlayerImpl.Companion.injectVideo
 import app.preferences.Preferences
@@ -172,7 +173,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             }
             if (fileUri2Play == null) {
                 if (viewmodel.media?.fileName != fileName) {
-                    val s = getString(Res.string.room_shared_playlist_not_found)
+                    val s = getString(Res.string.room_shared_playlist_not_found, appName)
                     viewmodel.dispatchOSD { s }
                     viewmodel.dispatcher.broadcastMessage(message = { s }, isChat = false)
                 }

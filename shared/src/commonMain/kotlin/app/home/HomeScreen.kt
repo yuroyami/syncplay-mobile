@@ -66,6 +66,7 @@ import app.theme.Theming
 import app.theme.Theming.useSyncplayGradient
 import app.uicomponents.FlexibleText
 import app.uicomponents.sairaFont
+import app.utils.appName
 import app.utils.ShowSystemBars
 import app.utils.availablePlatformPlayerEngines
 import app.utils.platformCallback
@@ -205,7 +206,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         HomeLeadingTitle(
-                            string = stringResource(Res.string.connect_server)
+                            string = stringResource(Res.string.connect_server, appName)
                         )
 
                         ExposedDropdownMenuBox(

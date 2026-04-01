@@ -31,7 +31,7 @@
     <!-- Home Screen -->
     <string name="connect_username">اكتب اسم المستخدم</string>
     <string name="connect_roomname">أدخل اسم الغرفة</string>
-    <string name="connect_server">اختر خادم Synkplay</string>
+    <string name="connect_server">اختر خادم %1$s</string>
     <string name="connect_choose_video_engine">اختر محرك الفيديو</string>
     <string name="connect_button_join">الانضمام للغرفة</string>
     <string name="connect_button_saveshortcut">حفظ الإعدادات الحالية كاختصار على الشاشة الرئيسية</string>
@@ -72,7 +72,7 @@
     <string name="room_shared_playlist_updated">%1$s حدّث قائمة التشغيل</string>
     <string name="room_shared_playlist_changed">%1$s غيّر الاختيار الحالي لقائمة التشغيل</string>
     <string name="room_custom_skip_button">تخطي %1$s</string>
-    <string name="media_directories_setting_summary">سيبحث Synkplay في أي مجلدات وسائط تحددها هنا للعثور على اسم يتم تشغيله في قائمة التشغيل المشتركة.</string>
+    <string name="media_directories_setting_summary">سيبحث %1$s في أي مجلدات وسائط تحددها هنا للعثور على اسم يتم تشغيله في قائمة التشغيل المشتركة.</string>
 
     <string name="room_on_newcontrolledroom">تم إنشاء غرفة مُدارة '%1$s' بكلمة مرور '%2$s'. يرجى حفظ هذه المعلومات للرجوع إليها مستقبلاً! تم نسخها إلى الحافظة لتتمكن من لصقها في مكان آخر.\n\nفي الغرف المُدارة يتم مزامنة الجميع مع مشغل (مشغلي) الغرفة الذين هم الوحيدون القادرون على الإيقاف والاستئناف والانتقال وتغيير قائمة التشغيل.\n\nيجب أن تطلب من المشاهدين العاديين الانضمام إلى الغرفة '%1$s' ولكن يمكن لمشغلي الغرفة الانضمام إلى الغرفة '%1$s:%2$s' للمصادقة تلقائياً.</string>
     <string name="room_on_controller_auth_success">%1$s تمت المصادقة عليه كمشغل للغرفة</string>
@@ -107,7 +107,7 @@
     <string name="room_shared_playlist">قائمة التشغيل المشتركة</string>
     <string name="room_shared_playlist_brief">استورد ملفاً أو مجلداً لإضافة أسماء الملفات إلى قائمة التشغيل. انقر على سطر ملف لجعل جميع المستخدمين يشغلونه.</string>
     <string name="room_shared_playlist_no_directories">لم تحدد أي مجلدات وسائط لقوائم التشغيل المشتركة. أضف الملفات يدوياً.</string>
-    <string name="room_shared_playlist_not_found">لم يتمكن Synkplay من العثور على الملف الذي يتم تشغيله حالياً في قائمة التشغيل المشتركة في مجلدات الوسائط الخاصة بك.</string>
+    <string name="room_shared_playlist_not_found">لم يتمكن %1$s من العثور على الملف الذي يتم تشغيله حالياً في قائمة التشغيل المشتركة في مجلدات الوسائط الخاصة بك.</string>
     <string name="room_shared_playlist_not_featured">هذه الغرفة أو الخادم لا تحتوي على ميزة قوائم التشغيل المشتركة.</string>
     <string name="room_shared_playlist_button_add_file">إضافة ملف (ملفات) إلى أسفل قائمة التشغيل</string>
     <string name="room_shared_playlist_button_add_folder">إضافة مجلد إلى قائمة التشغيل (ومجلدات الوسائط)</string>
@@ -128,7 +128,7 @@
     <string name="room_shared_playlist_filepick_rationale1">اختر ملفاً واحداً أو عدة ملفات لإضافتها إلى قائمة التشغيل</string>
     <string name="room_shared_playlist_filepick_rationale2">اختر مجلداً لإضافة ملفاته إلى قائمة التشغيل</string>
     <string name="room_shared_playlist_add_url">إضافة رابط إلى قائمة التشغيل المشتركة</string>
-    <string name="room_shared_playlist_add_url_subtext">سيتم إضافة هذا السطر كإدخال في قائمة التشغيل المشتركة.\nيدعم Synkplay Android الروابط المباشرة فقط في الوقت الحالي.</string>
+    <string name="room_shared_playlist_add_url_subtext">سيتم إضافة هذا السطر كإدخال في قائمة التشغيل المشتركة.\nيدعم %1$s Android الروابط المباشرة فقط في الوقت الحالي.</string>
     <string name="room_button_desc_aspect_ratio">نسبة العرض إلى الارتفاع</string>
     <string name="room_button_desc_shared_playlist">قائمة التشغيل المشتركة</string>
     <string name="room_button_desc_audio_tracks">مسارات الصوت</string>
@@ -189,14 +189,14 @@
     <string name="setting_night_mode_title">الوضع الليلي</string>
     <string name="setting_night_mode_summary">اختر سلوك الوضع الليلي.</string>
     <string name="setting_remember_join_info_title">تذكر معلومات الانضمام</string>
-    <string name="setting_remember_join_info_summary">مفعّل افتراضياً. سيسمح هذا لـ Synkplay بحفظ آخر اسم مستخدم واسم غرفة وآخر خادم رسمي استخدمته.</string>
+    <string name="setting_remember_join_info_summary">مفعّل افتراضياً. سيسمح هذا لـ %1$s بحفظ آخر اسم مستخدم واسم غرفة وآخر خادم رسمي استخدمته.</string>
     <string name="setting_never_show_tips_title">عدم إظهار النصائح أبداً</string>
     <string name="setting_never_show_tips_summary">سيمنع هذا ظهور النصائح عند تشغيل التطبيق.</string>
     <string name="setting_erase_shortcuts_title">مسح جميع اختصارات الشاشة الرئيسية</string>
     <string name="setting_erase_shortcuts_summary">سيؤدي هذا إلى مسح جميع اختصارات "التشغيل السريع" على الشاشة الرئيسية التي أنشأتها عبر الشاشة الرئيسية لحفظ إعدادات الغرفة.</string>
     <string name="setting_erase_shortcuts_dialog">هل تريد حقاً مسح جميع الاختصارات الموجودة؟</string>
     <string name="setting_display_language_title">لغة العرض</string>
-    <string name="setting_display_language_summry">اختر اللغة المفضلة لديك التي سيتم عرض Synkplay بها.</string>
+    <string name="setting_display_language_summry">اختر اللغة المفضلة لديك التي سيتم عرض %1$s بها.</string>
     <string name="setting_display_language_toast">تم تغيير اللغة. أعد تشغيل التطبيق ليصبح الإعداد ساري المفعول بالكامل.</string>
     <string name="setting_audio_default_language_title">لغة مسار الصوت المفضلة</string>
     <string name="setting_audio_default_language_summry">تحميل مسار صوتي تلقائياً برمز اللغة الذي تحدده هنا. على سبيل المثال، رمز اللغة الإنجليزية هو 'en-US'، واليابانية هي 'ja-JP'. ابحث عن 'IETF BCP 47 codes' في Google لمزيد من المعلومات.</string>
@@ -215,7 +215,7 @@
     <string name="setting_rewind_threshold_title">عتبة الترجيع</string>
     <string name="setting_rewind_threshold_summary">إذا كان شخص ما متأخراً بالقيمة التي تحددها هنا، سيتم ترجيع الفيديو الخاص بك ليتطابق مع الشخص المتأخر.</string>
     <string name="setting_tls_title">استخدام اتصال آمن (TLS)</string>
-    <string name="setting_tls_summary">سيحاول Synkplay إنشاء اتصال آمن ومشفر (بشكل أساسي TLSv1.3 ولكن يعود إلى إصدارات أقدم) مع الخادم إذا كان الأخير يدعمه. سيتم تجاهل هذا الإعداد إذا كان محرك الشبكة لا يدعم TLS.</string>
+    <string name="setting_tls_summary">سيحاول %1$s إنشاء اتصال آمن ومشفر (بشكل أساسي TLSv1.3 ولكن يعود إلى إصدارات أقدم) مع الخادم إذا كان الأخير يدعمه. سيتم تجاهل هذا الإعداد إذا كان محرك الشبكة لا يدعم TLS.</string>
     <string name="setting_resetdefault_title">إعادة تعيين الإعدادات الافتراضية</string>
     <string name="setting_resetdefault_summary">إعادة تعيين كل شيء إلى قيمته الافتراضية (موصى به)</string>
     <string name="setting_resetdefault_dialog">هل أنت متأكد من مسح الإعدادات لهذه الشاشة؟</string>
@@ -326,14 +326,14 @@
     <string name="theme_customize_neutral_color">اللون المحايد</string>
     <string name="theme_customize_neutral_variant_color">لون متغير محايد</string>
     <string name="theme_customize_is_amoled">سمة بشاشة AMOLED</string>
-    <string name="theme_customize_use_syncplay_gradients">استخدام تدرجات Synkplay</string>
+    <string name="theme_customize_use_syncplay_gradients">استخدام تدرجات %1$s</string>
     <string name="theme_customize_contrast">التباين</string>
     <string name="theme_customize_palette_style">نمط لوحة الألوان</string>
     <string name="theme_customize_preview">معاينة</string>
 
     <!-- Media Directories -->
     <string name="media_directories">مجلدات الوسائط لقائمة التشغيل المشتركة</string>
-    <string name="media_directories_brief">سيبحث Synkplay في أي مجلدات وسائط تحددها هنا للعثور على اسم يتم تشغيله في قائمة التشغيل المشتركة. من الأفضل بكثير تحديد مجلدات صغيرة لأن عملية البحث قد تكون بطيئة جداً.</string>
+    <string name="media_directories_brief">سيبحث %1$s في أي مجلدات وسائط تحددها هنا للعثور على اسم يتم تشغيله في قائمة التشغيل المشتركة. من الأفضل بكثير تحديد مجلدات صغيرة لأن عملية البحث قد تكون بطيئة جداً.</string>
     <string name="media_directories_save">حفظ والخروج</string>
     <string name="media_directories_clear_all">مسح الكل</string>
     <string name="media_directories_clear_all_confirm">هل أنت متأكد من رغبتك في مسح القائمة؟</string>
@@ -353,12 +353,12 @@
     <string name="tips_did_ya_know">هل تعلم؟</string>
 
     <string-array name="tips">
-        <item>لكي تعمل قوائم التشغيل المشتركة، يحتاج Synkplay لمعرفة مكان تخزين ملفات الوسائط. أضف مجلدات الوسائط في 'الإعدادات > عام > مجلدات الوسائط لقائمة التشغيل المشتركة'.</item>
-        <item>تريد استخدام مشغل الفيديو بمفردك؟ اختر مشغلاً، اضغط على شعار Synkplay في الأعلى، ثم اختر 'الوضع غير المتصل'.</item>
+        <item>لكي تعمل قوائم التشغيل المشتركة، يحتاج %1$s لمعرفة مكان تخزين ملفات الوسائط. أضف مجلدات الوسائط في 'الإعدادات > عام > مجلدات الوسائط لقائمة التشغيل المشتركة'.</item>
+        <item>تريد استخدام مشغل الفيديو بمفردك؟ اختر مشغلاً، اضغط على شعار %1$s في الأعلى، ثم اختر 'الوضع غير المتصل'.</item>
         <item>يمكنك دائماً إعادة تعيين الإعدادات إلى حالتها الافتراضية بالانتقال إلى 'الإعدادات -> متقدم -> إعادة تعيين إلى الافتراضي'</item>
         <item>تنضم إلى نفس الغرفة بشكل متكرر؟ احفظها كاختصار على جهازك للوصول السريع بنقرة واحدة عن طريق النقر على الزر الصغير بجوار 'الانضمام للغرفة'.</item>
         <item>لكل مشغل نقاط قوة مختلفة. إذا لم يعمل أحدها بشكل جيد مع تنسيق الفيديو، جرب آخر.</item>
-        <item>يتيح لك Synkplay Mobile تشغيل الوسائط من روابط مباشرة. ومع ذلك، YouTube غير مدعوم بعد.</item>
+        <item>يتيح لك %1$s Mobile تشغيل الوسائط من روابط مباشرة. ومع ذلك، YouTube غير مدعوم بعد.</item>
         <item>إذا كنت تريد تصغير الغرفة مؤقتاً دون المغادرة، يمكنك الانتقال إلى وضع "صورة داخل صورة" حيث تكون الشاشة عبارة عن شاشة عائمة صغيرة فوق التطبيقات الأخرى.</item>
     </string-array>
 

@@ -13,6 +13,8 @@ object AppConfig {
     const val compileSdk = 36
     const val minSdk = 26
 
+    const val appName = "Synkplay"
+
     const val versionName = "0.18.0"
     val versionCode = ("1" + versionName.split(".").joinToString("") { it.padStart(3, '0') }).toInt()
 
@@ -46,12 +48,24 @@ object AppConfig {
         val updated = original
             .replace(Regex("""MARKETING_VERSION = [^;]+;"""), "MARKETING_VERSION = $versionName;")
             .replace(Regex("""CURRENT_PROJECT_VERSION = [^;]+;"""), "CURRENT_PROJECT_VERSION = $versionCode;")
+            .replace(Regex("""INFOPLIST_KEY_CFBundleDisplayName = [^;]+;"""), "INFOPLIST_KEY_CFBundleDisplayName = $appName;")
 
         if (updated != original) {
             pbxprojFile.writeText(updated)
             logger.lifecycle("✅ Xcode version updated to $versionName ($versionCode)")
         } else {
             logger.warn("⚠️ Version fields not found in project.pbxproj")
+        }
+
+        // Sync app name to Config.xcconfig
+        val xcconfigFile = File("${rootDir}/iosApp/Configuration/Config.xcconfig")
+        if (xcconfigFile.exists()) {
+            val xcOriginal = xcconfigFile.readText()
+            val xcUpdated = xcOriginal.replace(Regex("""APP_NAME=.*"""), "APP_NAME=$appName")
+            if (xcUpdated != xcOriginal) {
+                xcconfigFile.writeText(xcUpdated)
+                logger.lifecycle("✅ Config.xcconfig APP_NAME updated to $appName")
+            }
         }
     }
 }

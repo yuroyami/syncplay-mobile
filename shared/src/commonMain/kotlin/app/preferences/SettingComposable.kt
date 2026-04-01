@@ -133,7 +133,7 @@ internal inline fun <reified T> Pref<T>.SettingComposable() {
 
                 Text(
                     modifier = Modifier,
-                    text = stringResource(config!!.summary),
+                    text = stringResource(config!!.summary, *config!!.summaryFormatArgs),
                     color = MaterialTheme.colorScheme.outline,
                     style = TextStyle(
                         shadow = Shadow(color = Color.Black, offset = Offset(1f, 1f), blurRadius = 2f)

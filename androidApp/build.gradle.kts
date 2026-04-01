@@ -38,6 +38,8 @@ android {
         versionCode = AppConfig.versionCode
         versionName = AppConfig.versionName
 
+        manifestPlaceholders["appName"] = AppConfig.appName
+
         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
 
         signingConfigs.findByName("synkplay_keystore")?.let { config ->
@@ -285,10 +287,10 @@ androidComponents {
             if (output is com.android.build.api.variant.impl.VariantOutputImpl) {
                 val abiFilter = output.filters.find { it.filterType == com.android.build.api.variant.FilterConfiguration.FilterType.ABI }?.identifier
                 val fileName = if (exoOnly) {
-                    "syncplay-${AppConfig.versionName}-exo-only.apk"
+                    "${AppConfig.appName.lowercase()}-${AppConfig.versionName}-exo-only.apk"
                 } else {
                     val abiName = abiFilter ?: "universal"
-                    "synkplay-${AppConfig.versionName}-full-${abiName}.apk"
+                    "${AppConfig.appName.lowercase()}-${AppConfig.versionName}-full-${abiName}.apk"
                 }
                 output.outputFileName = fileName
             }

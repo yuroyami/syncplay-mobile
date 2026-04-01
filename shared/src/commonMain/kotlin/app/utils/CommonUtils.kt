@@ -4,6 +4,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.kotlincrypto.hash.md.MD5
 import org.kotlincrypto.hash.sha2.SHA256
+import SyncplayMobile.shared.BuildConfig
 import kotlin.time.Clock
 
 /********************************************************************************
@@ -11,7 +12,8 @@ import kotlin.time.Clock
  * without requiring platform-specific implementations (expect/actual).         *
  ********************************************************************************/
 
-const val appName: String = "Synkplay" //In case we need to rebrand the app, we use a constant to store the app name
+/** App name sourced from BuildConfig (defined once in AppConfig.kt in buildSrc) */
+val appName: String = BuildConfig.APP_NAME
 
 /**
  * DSL marker annotation for protocol-related builders and scopes.

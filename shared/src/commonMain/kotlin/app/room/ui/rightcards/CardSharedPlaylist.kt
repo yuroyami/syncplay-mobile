@@ -84,6 +84,7 @@ import app.uicomponents.SyncplayPopup
 import app.uicomponents.gradientOverlay
 import app.uicomponents.helveticaFont
 import app.uicomponents.jostFont
+import app.utils.appName
 import app.utils.playlistExs
 import app.utils.vidExs
 import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
@@ -548,7 +549,7 @@ object CardSharedPlaylist {
 
                 /* Title's subtext */
                 Text(
-                    text = stringResource(Res.string.room_shared_playlist_add_url_subtext),
+                    text = stringResource(Res.string.room_shared_playlist_add_url_subtext, appName),
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 10.sp,
                     fontFamily = FontFamily(helveticaFont),

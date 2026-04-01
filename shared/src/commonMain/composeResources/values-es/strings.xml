@@ -22,7 +22,7 @@
     <!-- Home Screen -->
     <string name="connect_username">Escribe tu nombre de usuario</string>
     <string name="connect_roomname">Ingresa el nombre de la sala</string>
-    <string name="connect_server">Selecciona el servidor Synkplay</string>
+    <string name="connect_server">Selecciona el servidor %1$s</string>
     <string name="connect_choose_video_engine">Elige tu motor de video</string>
     <string name="connect_button_join">Unirse a la sala</string>
     <string name="connect_button_saveshortcut">Guardar configuración actual como acceso directo de inicio</string>
@@ -61,7 +61,7 @@
     <string name="room_shared_playlist_updated">%1$s actualizó la lista de reproducción</string>
     <string name="room_shared_playlist_changed">%1$s cambió la selección actual de la lista de reproducción</string>
     <string name="room_custom_skip_button">Saltar %1$s</string>
-    <string name="media_directories_setting_summary">Synkplay buscará en los directorios de medios que especifiques aquí para encontrar el nombre que está reproduciendo una lista de reproducción compartida.</string>
+    <string name="media_directories_setting_summary">%1$s buscará en los directorios de medios que especifiques aquí para encontrar el nombre que está reproduciendo una lista de reproducción compartida.</string>
     <string name="room_on_newcontrolledroom">Sala administrada '%1$s' creada con contraseña '%2$s'. ¡Por favor guarda esta información para referencia futura! Se ha copiado a tu portapapeles para que puedas pegarla en otro lugar.\n\nEn las salas administradas, todos se mantienen sincronizados con los operadores de la sala, quienes son los únicos que pueden pausar, reanudar, saltar y cambiar la lista de reproducción.\n\nDebes pedir a los espectadores regulares que se unan a la sala '%1$s', pero los operadores de la sala pueden unirse a la sala '%1$s:%2$s' para autenticarse automáticamente.</string>
     <string name="room_on_controller_auth_success">%1$s autenticado como operador de sala</string>
     <string name="room_on_controller_auth_failed">%1$s no pudo identificarse como operador de sala</string>
@@ -95,7 +95,7 @@
     <string name="room_shared_playlist">Lista de reproducción compartida</string>
     <string name="room_shared_playlist_brief">Importa un archivo o un directorio para incluir nombres de archivo en la lista de reproducción. Haz clic en una línea de archivo para que todos los usuarios lo reproduzcan.</string>
     <string name="room_shared_playlist_no_directories">No has especificado ningún directorio de medios para listas de reproducción compartidas. Añade manualmente los archivos.</string>
-    <string name="room_shared_playlist_not_found">Synkplay no pudo encontrar el archivo que se está reproduciendo actualmente en la lista de reproducción compartida en tus directorios de medios.</string>
+    <string name="room_shared_playlist_not_found">%1$s no pudo encontrar el archivo que se está reproduciendo actualmente en la lista de reproducción compartida en tus directorios de medios.</string>
     <string name="room_shared_playlist_not_featured">Esta sala o servidor no tiene la función de Listas de reproducción compartidas activada.</string>
     <string name="room_shared_playlist_button_add_file">Añadir archivo(s) al final de la lista de reproducción</string>
     <string name="room_shared_playlist_button_add_folder">Añadir carpeta a la lista de reproducción (y directorios de medios)</string>
@@ -116,7 +116,7 @@
     <string name="room_shared_playlist_filepick_rationale1">Selecciona uno o múltiples archivos para añadir a la lista de reproducción</string>
     <string name="room_shared_playlist_filepick_rationale2">Selecciona directorio para añadir sus archivos a la lista de reproducción</string>
     <string name="room_shared_playlist_add_url">Añadir URL a la lista de reproducción compartida</string>
-    <string name="room_shared_playlist_add_url_subtext">Esta línea se añadirá como una entrada a la lista de reproducción compartida.\nSynkplay Android solo admite enlaces directos por ahora.</string>
+    <string name="room_shared_playlist_add_url_subtext">Esta línea se añadirá como una entrada a la lista de reproducción compartida.\n%1$s Android solo admite enlaces directos por ahora.</string>
     <string name="room_button_desc_aspect_ratio">Relación de aspecto</string>
     <string name="room_button_desc_shared_playlist">Lista de reproducción compartida</string>
     <string name="room_button_desc_audio_tracks">Pistas de audio</string>
@@ -177,14 +177,14 @@
     <string name="setting_night_mode_title">Modo nocturno</string>
     <string name="setting_night_mode_summary">Selecciona el comportamiento del modo nocturno.</string>
     <string name="setting_remember_join_info_title">Recordar información de unión</string>
-    <string name="setting_remember_join_info_summary">Activado por defecto. Esto permitirá a Synkplay guardar tu último nombre de usuario, nombre de sala y qué servidor oficial usaste por última vez.</string>
+    <string name="setting_remember_join_info_summary">Activado por defecto. Esto permitirá a %1$s guardar tu último nombre de usuario, nombre de sala y qué servidor oficial usaste por última vez.</string>
     <string name="setting_never_show_tips_title">Nunca mostrar consejos</string>
     <string name="setting_never_show_tips_summary">Esto evitará que se muestren consejos al iniciar la aplicación.</string>
     <string name="setting_erase_shortcuts_title">Eliminar todos los accesos directos de inicio</string>
     <string name="setting_erase_shortcuts_summary">Esto eliminará todos los accesos directos de inicio de 'ejecución rápida' que creaste a través de la pantalla principal para guardar tus configuraciones de sala.</string>
     <string name="setting_erase_shortcuts_dialog">¿Realmente deseas eliminar todos los accesos directos existentes?</string>
     <string name="setting_display_language_title">Idioma de visualización</string>
-    <string name="setting_display_language_summry">Selecciona tu idioma de preferencia con el que se mostrará Synkplay.</string>
+    <string name="setting_display_language_summry">Selecciona tu idioma de preferencia con el que se mostrará %1$s.</string>
     <string name="setting_display_language_toast">Idioma cambiado. Reinicia la aplicación para que la configuración tenga efecto completo.</string>
     <string name="setting_audio_default_language_title">Idioma preferido de la pista de audio</string>
     <string name="setting_audio_default_language_summry">Carga automáticamente una pista de audio con el código de idioma que establezcas aquí. Por ejemplo, el código en inglés es 'en-US', en japonés es 'ja-JP'. Busca 'códigos IETF BCP 47' para más información.</string>
@@ -203,7 +203,7 @@
     <string name="setting_rewind_threshold_title">Umbral de retroceso</string>
     <string name="setting_rewind_threshold_summary">Si alguien está rezagado con el valor que seleccionas aquí, tu video retrocederá para coincidir con el de la persona rezagada.</string>
     <string name="setting_tls_title">Usar conexión segura (TLS)</string>
-    <string name="setting_tls_summary">Synkplay intentará establecer una conexión segura cifrada (principalmente TLSv1.3 pero con versiones anteriores como respaldo) con el servidor si este lo admite. Esta configuración se ignorará si el motor de red no admite TLS.</string>
+    <string name="setting_tls_summary">%1$s intentará establecer una conexión segura cifrada (principalmente TLSv1.3 pero con versiones anteriores como respaldo) con el servidor si este lo admite. Esta configuración se ignorará si el motor de red no admite TLS.</string>
     <string name="setting_resetdefault_title">Restablecer configuración predeterminada</string>
     <string name="setting_resetdefault_summary">Restablece todo a su valor predeterminado (Recomendado)</string>
     <string name="setting_resetdefault_dialog">¿Estás seguro de borrar la configuración de esta pantalla?</string>
@@ -314,14 +314,14 @@
     <string name="theme_customize_neutral_color">Color neutral</string>
     <string name="theme_customize_neutral_variant_color">Color variante neutral</string>
     <string name="theme_customize_is_amoled">es un tema AMOLED</string>
-    <string name="theme_customize_use_syncplay_gradients">Usar gradientes de Synkplay</string>
+    <string name="theme_customize_use_syncplay_gradients">Usar gradientes de %1$s</string>
     <string name="theme_customize_contrast">Contraste</string>
     <string name="theme_customize_palette_style">Estilo de paleta</string>
     <string name="theme_customize_preview">Vista previa</string>
 
     <!-- Media Directories -->
     <string name="media_directories">Directorios de medios para Lista de reproducción compartida</string>
-    <string name="media_directories_brief">Synkplay buscará en los directorios de medios que especifiques aquí para encontrar el nombre que está reproduciendo una lista de reproducción compartida. Es mucho mejor si especificas directorios pequeños, ya que la operación de búsqueda puede limitarse y ser muy lenta.</string>
+    <string name="media_directories_brief">%1$s buscará en los directorios de medios que especifiques aquí para encontrar el nombre que está reproduciendo una lista de reproducción compartida. Es mucho mejor si especificas directorios pequeños, ya que la operación de búsqueda puede limitarse y ser muy lenta.</string>
     <string name="media_directories_save">Guardar y salir</string>
     <string name="media_directories_clear_all">Limpiar todo</string>
     <string name="media_directories_clear_all_confirm">¿Estás seguro de que quieres borrar la lista?</string>
@@ -340,12 +340,12 @@
     <string name="tips_did_ya_know">¿Sabías que?</string>
 
     <string-array name="tips">
-        <item>Para que las listas de reproducción compartidas funcionen, Synkplay necesita saber dónde se almacenan tus archivos multimedia. Añade tus carpetas de medios en 'Configuración > General > Directorios de medios para lista de reproducción compartida'.</item>
-        <item>¿Quieres usar el reproductor de video solo? Selecciona un reproductor, toca el logo de Synkplay arriba, luego elige 'Modo sin conexión'.</item>
+        <item>Para que las listas de reproducción compartidas funcionen, %1$s necesita saber dónde se almacenan tus archivos multimedia. Añade tus carpetas de medios en 'Configuración > General > Directorios de medios para lista de reproducción compartida'.</item>
+        <item>¿Quieres usar el reproductor de video solo? Selecciona un reproductor, toca el logo de %1$s arriba, luego elige 'Modo sin conexión'.</item>
         <item>Siempre puedes restablecer la configuración a su estado predeterminado yendo a 'Configuración -> Avanzado -> Restablecer a predeterminado'.</item>
         <item>¿Te unes a la misma sala repetidamente? Guárdala como un acceso directo en tu dispositivo para acceso con un toque haciendo clic en el botón pequeño junto a 'Unirse a sala'.</item>
         <item>Cada reproductor tiene diferentes fortalezas. Si uno no funciona bien con tu formato de video, prueba otro.</item>
-        <item>Synkplay Mobile te permite reproducir medios desde enlaces directos. Sin embargo, YouTube NO es compatible todavía.</item>
+        <item>%1$s Mobile te permite reproducir medios desde enlaces directos. Sin embargo, YouTube NO es compatible todavía.</item>
         <item>Si quieres minimizar la sala temporalmente sin salir, puedes entrar en modo "Imagen en imagen" donde la pantalla es una pequeña ventana flotante sobre otras aplicaciones.</item>
     </string-array>
 </resources>

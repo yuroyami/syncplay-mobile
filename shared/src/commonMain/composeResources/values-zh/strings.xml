@@ -22,7 +22,7 @@
     <!-- Home Screen -->
     <string name="connect_username">输入您的用户名</string>
     <string name="connect_roomname">输入房间名称</string>
-    <string name="connect_server">选择Synkplay服务器</string>
+    <string name="connect_server">选择%1$s服务器</string>
     <string name="connect_choose_video_engine">选择您的视频引擎</string>
     <string name="connect_button_join">加入房间</string>
     <string name="connect_button_saveshortcut">保存当前配置为主屏幕快捷方式</string>
@@ -61,7 +61,7 @@
     <string name="room_shared_playlist_updated">%1$s 更新了播放列表</string>
     <string name="room_shared_playlist_changed">%1$s 更改了播放列表当前选择</string>
     <string name="room_custom_skip_button">跳过 %1$s</string>
-    <string name="media_directories_setting_summary">Synkplay将搜索您在此指定的任何媒体目录，以便找到共享播放列表正在播放的文件名。</string>
+    <string name="media_directories_setting_summary">%1$s将搜索您在此指定的任何媒体目录，以便找到共享播放列表正在播放的文件名。</string>
     <string name="room_on_newcontrolledroom">已创建托管房间 '%1$s'，密码为 '%2$s'。请保存此信息以备将来参考！它已复制到剪贴板，您可以将其粘贴到其他地方。\n\n在托管房间中，所有人都与房间操作员保持同步，只有房间操作员可以暂停、取消暂停、跳转和更改播放列表。\n\n您应该要求普通观众加入房间 '%1$s'，但房间操作员可以加入房间 '%1$s:%2$s' 以自动验证身份。</string>
     <string name="room_on_controller_auth_success">%1$s 已验证为房间操作员</string>
     <string name="room_on_controller_auth_failed">%1$s 未能验证为房间操作员</string>
@@ -95,7 +95,7 @@
     <string name="room_shared_playlist">共享播放列表</string>
     <string name="room_shared_playlist_brief">导入文件或目录以将文件名包含到播放列表中。点击文件行使所有用户播放它。</string>
     <string name="room_shared_playlist_no_directories">您没有为共享播放列表指定任何媒体目录。请手动添加文件。</string>
-    <string name="room_shared_playlist_not_found">Synkplay在您的媒体目录中找不到共享播放列表中当前正在播放的文件。</string>
+    <string name="room_shared_playlist_not_found">%1$s在您的媒体目录中找不到共享播放列表中当前正在播放的文件。</string>
     <string name="room_shared_playlist_not_featured">此房间或服务器未启用共享播放列表功能。</string>
     <string name="room_shared_playlist_button_add_file">添加文件到播放列表底部</string>
     <string name="room_shared_playlist_button_add_folder">将文件夹添加到播放列表（和媒体目录）</string>
@@ -116,7 +116,7 @@
     <string name="room_shared_playlist_filepick_rationale1">选择一个或多个文件添加到播放列表</string>
     <string name="room_shared_playlist_filepick_rationale2">选择目录以将其文件添加到播放列表</string>
     <string name="room_shared_playlist_add_url">添加URL到共享播放列表</string>
-    <string name="room_shared_playlist_add_url_subtext">此行将作为条目添加到共享播放列表中。\nSynkplay Android目前仅支持直接链接。</string>
+    <string name="room_shared_playlist_add_url_subtext">此行将作为条目添加到共享播放列表中。\n%1$s Android目前仅支持直接链接。</string>
     <string name="room_button_desc_aspect_ratio">纵横比</string>
     <string name="room_button_desc_shared_playlist">共享播放列表</string>
     <string name="room_button_desc_audio_tracks">音频轨道</string>
@@ -177,14 +177,14 @@
     <string name="setting_night_mode_title">夜间模式</string>
     <string name="setting_night_mode_summary">选择夜间模式的行为。</string>
     <string name="setting_remember_join_info_title">记住加入信息</string>
-    <string name="setting_remember_join_info_summary">默认启用。这将允许Synkplay保存您最后的用户名、房间名以及您最后使用的官方服务器。</string>
+    <string name="setting_remember_join_info_summary">默认启用。这将允许%1$s保存您最后的用户名、房间名以及您最后使用的官方服务器。</string>
     <string name="setting_never_show_tips_title">永不显示提示</string>
     <string name="setting_never_show_tips_summary">这将防止在应用启动时显示提示。</string>
     <string name="setting_erase_shortcuts_title">删除所有主屏幕快捷方式</string>
     <string name="setting_erase_shortcuts_summary">这将删除您通过主屏幕创建的所有"快速运行"主屏幕快捷方式，以保存您的房间配置。</string>
     <string name="setting_erase_shortcuts_dialog">您真的要删除所有现有的快捷方式吗？</string>
     <string name="setting_display_language_title">显示语言</string>
-    <string name="setting_display_language_summry">选择Synkplay显示的语言。</string>
+    <string name="setting_display_language_summry">选择%1$s显示的语言。</string>
     <string name="setting_display_language_toast">语言已更改。重启应用以使设置完全生效。</string>
     <string name="setting_audio_default_language_title">首选音频轨道语言</string>
     <string name="setting_audio_default_language_summry">自动加载您在此处设置的语言代码的音频轨道。例如，英语代码是'en-US'，日语是'ja-JP'。请谷歌'IETF BCP 47 codes'以获取更多信息。</string>
@@ -203,7 +203,7 @@
     <string name="setting_rewind_threshold_title">倒退阈值</string>
     <string name="setting_rewind_threshold_summary">如果有人落后于您在此处选择的值，您的视频将倒退以与落后的人匹配。</string>
     <string name="setting_tls_title">使用安全连接（TLS）</string>
-    <string name="setting_tls_summary">如果服务器支持，Synkplay将尝试建立安全加密连接（主要是TLSv1.3，但会回退到旧版本）。如果网络引擎不支持TLS，此设置将被忽略。</string>
+    <string name="setting_tls_summary">如果服务器支持，%1$s将尝试建立安全加密连接（主要是TLSv1.3，但会回退到旧版本）。如果网络引擎不支持TLS，此设置将被忽略。</string>
     <string name="setting_resetdefault_title">重置默认设置</string>
     <string name="setting_resetdefault_summary">将所有内容重置为其默认值（推荐）</string>
     <string name="setting_resetdefault_dialog">确定清除此屏幕的设置吗？</string>
@@ -314,14 +314,14 @@
     <string name="theme_customize_neutral_color">中性颜色</string>
     <string name="theme_customize_neutral_variant_color">中性变体颜色</string>
     <string name="theme_customize_is_amoled">是AMOLED主题</string>
-    <string name="theme_customize_use_syncplay_gradients">使用Synkplay渐变</string>
+    <string name="theme_customize_use_syncplay_gradients">使用%1$s渐变</string>
     <string name="theme_customize_contrast">对比度</string>
     <string name="theme_customize_palette_style">调色板样式</string>
     <string name="theme_customize_preview">预览</string>
 
     <!-- Media Directories -->
     <string name="media_directories">共享播放列表的媒体目录</string>
-    <string name="media_directories_brief">Synkplay将搜索您在此指定的任何媒体目录，以便找到共享播放列表正在播放的文件名。最好指定较小的目录，因为搜索操作可能会受限并非常慢。</string>
+    <string name="media_directories_brief">%1$s将搜索您在此指定的任何媒体目录，以便找到共享播放列表正在播放的文件名。最好指定较小的目录，因为搜索操作可能会受限并非常慢。</string>
     <string name="media_directories_save">保存并退出</string>
     <string name="media_directories_clear_all">全部清除</string>
     <string name="media_directories_clear_all_confirm">您确定要清除列表吗？</string>
@@ -340,12 +340,12 @@
     <string name="tips_did_ya_know">您知道吗？</string>
 
     <string-array name="tips">
-        <item>要使共享播放列表正常工作，Synkplay需要知道您的媒体文件存储位置。在"设置 > 常规 > 共享播放列表的媒体目录"中添加您的媒体文件夹。</item>
-        <item>想单独使用视频播放器吗？选择一个播放器，点击上方的Synkplay徽标，然后选择"离线模式"。</item>
+        <item>要使共享播放列表正常工作，%1$s需要知道您的媒体文件存储位置。在"设置 > 常规 > 共享播放列表的媒体目录"中添加您的媒体文件夹。</item>
+        <item>想单独使用视频播放器吗？选择一个播放器，点击上方的%1$s徽标，然后选择"离线模式"。</item>
         <item>您始终可以通过转到"设置 -> 高级 -> 重置为默认"将设置重置为其默认状态。</item>
         <item>反复加入同一个房间？点击"加入房间"旁边的小按钮，将其保存为设备上的快捷方式，以便一键访问。</item>
         <item>每个播放器都有不同的优势。如果一个播放器不能很好地处理您的视频格式，请尝试另一个。</item>
-        <item>Synkplay Mobile允许您从直接链接播放媒体。但是，目前不支持YouTube。</item>
+        <item>%1$s Mobile允许您从直接链接播放媒体。但是，目前不支持YouTube。</item>
         <item>如果您想暂时最小化房间而不离开，可以进入"画中画"模式，屏幕将变为浮动在其他应用上方的小屏幕。</item>
     </string-array>
 </resources>

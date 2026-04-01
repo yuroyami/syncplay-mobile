@@ -77,6 +77,7 @@ inline fun <reified T> prefKeyMapper(name: String): Preferences.Key<T> {
 data class SettingConfig(
     var title: StringResource = Res.string.okay,
     var summary: StringResource = Res.string.okay,
+    var summaryFormatArgs: Array<Any> = emptyArray(),
     var icon: ImageVector = Icons.Filled.Done,
 
     var dependencyEnable: () -> Boolean = { true },

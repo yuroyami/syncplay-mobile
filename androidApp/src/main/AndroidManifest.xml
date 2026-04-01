@@ -7,7 +7,7 @@
         android:allowBackup="false"
         android:appCategory="video"
         android:icon="@mipmap/ic_launcher"
-        android:label="Synkplay"
+        android:label="${appName}"
         android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="false"

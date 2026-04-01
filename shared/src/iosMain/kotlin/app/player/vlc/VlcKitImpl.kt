@@ -486,8 +486,9 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
      */
     inner class VlcDelegate : NSObject(), VLCMediaPlayerDelegateProtocol {
         override fun mediaPlayerStateChanged(aNotification: NSNotification) {
-            val isPlaying = vlcPlayer?.media == null && vlcPlayer?.isPlaying() == true
+            val isPlaying = vlcPlayer?.media != null && vlcPlayer?.isPlaying() == true
             playerManager.isNowPlaying.value = isPlaying
+            playerManager.timeCurrentMillis.value = currentPositionMs()
 
             if (vlcPlayer?.state == VLCMediaPlayerState.VLCMediaPlayerStateEnded) {
                 onPlaybackEnded()
