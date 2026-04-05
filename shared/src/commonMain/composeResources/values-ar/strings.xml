@@ -213,6 +213,13 @@
     <string name="setting_playback_buffer_summary">الافتراضي هو 2500 ميلي ثانية. يمثل هذا حجم التخزين المؤقت عند الانتقال أو استئناف تشغيل الفيديو. غيّر هذا إذا لم تكن راضياً عن التأخير الصغير عند الانتقال في الفيديو.</string>
     <string name="setting_ready_firsthand_title">تعيين كجاهز مباشرة</string>
     <string name="setting_ready_firsthand_summary">فعّل هذا إذا كنت تريد أن يتم تعيينك تلقائياً كجاهز بمجرد دخولك الغرفة.</string>
+    <string name="setting_unpause_action_title">إجراء استئناف الجاهزية</string>
+    <string name="setting_unpause_action_summary">عند الضغط على تشغيل، سيتم تعيينك كجاهز. سيُستأنف التشغيل فقط إذا تحقق الشرط المحدد.</string>
+    <string name="setting_unpause_action_if_ready">استئناف إذا كنت معيّناً كجاهز بالفعل</string>
+    <string name="setting_unpause_action_if_others_ready">استئناف إذا كان الآخرون جاهزين</string>
+    <string name="setting_unpause_action_if_min_users_ready">استئناف إذا كان الآخرون جاهزين + حد أدنى للمستخدمين</string>
+    <string name="setting_unpause_action_always">استئناف دائماً</string>
+    <string name="room_set_as_ready">تم التعيين كجاهز للاستئناف</string>
     <string name="setting_rewind_threshold_title">عتبة الترجيع</string>
     <string name="setting_rewind_threshold_summary">إذا كان شخص ما متأخراً بالقيمة التي تحددها هنا، سيتم ترجيع الفيديو الخاص بك ليتطابق مع الشخص المتأخر.</string>
     <string name="setting_tls_title">استخدام اتصال آمن (TLS)</string>

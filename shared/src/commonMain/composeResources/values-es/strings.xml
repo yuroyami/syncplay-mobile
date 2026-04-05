@@ -201,6 +201,13 @@
     <string name="setting_playback_buffer_summary">El valor predeterminado es 2500 milisegundos. Esto representa el tamaño del búfer al SALTAR o REANUDAR el video. Cambia esto si no estás satisfecho con el pequeño retraso al saltar el video.</string>
     <string name="setting_ready_firsthand_title">Establecer como listo de inmediato</string>
     <string name="setting_ready_firsthand_summary">Activa esto si quieres que se te establezca automáticamente como listo una vez que ingreses a la sala.</string>
+    <string name="setting_unpause_action_title">Acción de reanudación de preparación</string>
+    <string name="setting_unpause_action_summary">Al presionar reproducir, serás marcado como listo. La reproducción solo se reanudará si se cumple la condición seleccionada.</string>
+    <string name="setting_unpause_action_if_ready">Reanudar si ya estás marcado como listo</string>
+    <string name="setting_unpause_action_if_others_ready">Reanudar si los demás están listos</string>
+    <string name="setting_unpause_action_if_min_users_ready">Reanudar si otros listos + mín. usuarios</string>
+    <string name="setting_unpause_action_always">Siempre reanudar</string>
+    <string name="room_set_as_ready">Marcado como listo para reanudar</string>
     <string name="setting_rewind_threshold_title">Umbral de retroceso</string>
     <string name="setting_rewind_threshold_summary">Si alguien está rezagado con el valor que seleccionas aquí, tu video retrocederá para coincidir con el de la persona rezagada.</string>
     <string name="setting_tls_title">Usar conexión segura (TLS)</string>

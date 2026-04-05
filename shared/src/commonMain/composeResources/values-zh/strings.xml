@@ -201,6 +201,13 @@
     <string name="setting_playback_buffer_summary">默认为2500毫秒。这表示在跳转或取消暂停视频时的缓冲区大小。如果您对跳转视频时的小延迟不满意，请更改此设置。</string>
     <string name="setting_ready_firsthand_title">自动设为准备就绪</string>
     <string name="setting_ready_firsthand_summary">如果您想在进入房间后自动设置为准备就绪，请启用此选项。</string>
+    <string name="setting_unpause_action_title">就绪状态恢复播放操作</string>
+    <string name="setting_unpause_action_summary">当您按下播放时，您将被标记为就绪。只有满足所选条件时，播放才会恢复。</string>
+    <string name="setting_unpause_action_if_ready">已标记为就绪时恢复播放</string>
+    <string name="setting_unpause_action_if_others_ready">其他人就绪时恢复播放</string>
+    <string name="setting_unpause_action_if_min_users_ready">其他人就绪且达到最少人数时恢复播放</string>
+    <string name="setting_unpause_action_always">始终恢复播放</string>
+    <string name="room_set_as_ready">已设为就绪以恢复播放</string>
     <string name="setting_rewind_threshold_title">倒退阈值</string>
     <string name="setting_rewind_threshold_summary">如果有人落后于您在此处选择的值，您的视频将倒退以与落后的人匹配。</string>
     <string name="setting_tls_title">使用安全连接（TLS）</string>

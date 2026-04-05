@@ -212,6 +212,13 @@
     <string name="setting_playback_buffer_summary">Valeur par défaut : 2500 ms. Représente la taille du tampon lors d’une recherche ou pause/lecture.</string>
     <string name="setting_ready_firsthand_title">Prêt automatiquement</string>
     <string name="setting_ready_firsthand_summary">Activez cette option pour être automatiquement marqué comme prêt en entrant dans une salle.</string>
+    <string name="setting_unpause_action_title">Action de reprise de lecture</string>
+    <string name="setting_unpause_action_summary">Quand vous appuyez sur lecture, vous serez marqué comme prêt. La lecture ne reprendra que si la condition sélectionnée est remplie.</string>
+    <string name="setting_unpause_action_if_ready">Reprendre si déjà marqué comme prêt</string>
+    <string name="setting_unpause_action_if_others_ready">Reprendre si les autres sont prêts</string>
+    <string name="setting_unpause_action_if_min_users_ready">Reprendre si autres prêts + min. utilisateurs</string>
+    <string name="setting_unpause_action_always">Toujours reprendre</string>
+    <string name="room_set_as_ready">Marqué comme prêt pour reprendre</string>
     <string name="setting_rewind_threshold_title">Seuil de rembobinage</string>
     <string name="setting_rewind_threshold_summary">Si un utilisateur est en retard au-delà de la valeur définie ici, votre vidéo sera rembobinée pour s’aligner avec la sienne.</string>
     <string name="setting_tls_title">Connexion sécurisée (TLS)</string>

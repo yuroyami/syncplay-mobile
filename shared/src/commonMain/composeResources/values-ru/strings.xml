@@ -201,6 +201,13 @@
     <string name="setting_playback_buffer_summary">По умолчанию 2500 миллисекунд. Это представляет собой размер буфера при ПЕРЕМОТКЕ или ВОЗОБНОВЛЕНИИ воспроизведения видео. Измените это значение, если вы не удовлетворены небольшой задержкой при перемотке видео.</string>
     <string name="setting_ready_firsthand_title">Устанавливать готовность первым</string>
     <string name="setting_ready_firsthand_summary">Включите это, если хотите, чтобы вас автоматически устанавливали в режим готовности сразу после входа в комнату.</string>
+    <string name="setting_unpause_action_title">Действие при возобновлении воспроизведения</string>
+    <string name="setting_unpause_action_summary">При нажатии на воспроизведение вы будете отмечены как готовый. Воспроизведение возобновится только при выполнении выбранного условия.</string>
+    <string name="setting_unpause_action_if_ready">Возобновить, если уже отмечен как готовый</string>
+    <string name="setting_unpause_action_if_others_ready">Возобновить, если другие готовы</string>
+    <string name="setting_unpause_action_if_min_users_ready">Возобновить, если другие готовы + мин. пользователей</string>
+    <string name="setting_unpause_action_always">Всегда возобновлять</string>
+    <string name="room_set_as_ready">Отмечен как готовый к воспроизведению</string>
     <string name="setting_rewind_threshold_title">Порог перемотки</string>
     <string name="setting_rewind_threshold_summary">Если кто-то отстает на выбранное вами значение, ваше видео будет перемотано, чтобы соответствовать тому, что позади.</string>
     <string name="setting_tls_title">Использовать защищенное соединение (TLS)</string>

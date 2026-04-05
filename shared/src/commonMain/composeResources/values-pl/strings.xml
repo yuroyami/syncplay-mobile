@@ -212,6 +212,13 @@
     <string name="setting_playback_buffer_summary">Domyślnie 2500 milisekund. Reprezentuje rozmiar bufora podczas PRZEWIJANIA lub WZNOWIENIA wideo. Zmień to, jeśli nie jesteś zadowolony z małego opóźnienia podczas przewijania wideo.</string>
     <string name="setting_ready_firsthand_title">Ustaw jako gotowy od razu</string>
     <string name="setting_ready_firsthand_summary">Włącz to, jeśli chcesz być automatycznie ustawiany jako gotowy po wejściu do pokoju.</string>
+    <string name="setting_unpause_action_title">Akcja wznowienia gotowości</string>
+    <string name="setting_unpause_action_summary">Po naciśnięciu odtwarzania zostaniesz oznaczony jako gotowy. Odtwarzanie zostanie wznowione tylko jeśli wybrany warunek jest spełniony.</string>
+    <string name="setting_unpause_action_if_ready">Wznów jeśli już oznaczony jako gotowy</string>
+    <string name="setting_unpause_action_if_others_ready">Wznów jeśli inni są gotowi</string>
+    <string name="setting_unpause_action_if_min_users_ready">Wznów jeśli inni gotowi + min. użytkowników</string>
+    <string name="setting_unpause_action_always">Zawsze wznawiaj</string>
+    <string name="room_set_as_ready">Oznaczono jako gotowy do wznowienia</string>
     <string name="setting_rewind_threshold_title">Próg przewijania</string>
     <string name="setting_rewind_threshold_summary">Jeśli ktoś jest opóźniony o wartość, którą tu wybierzesz, twoje wideo zostanie przewinięte, aby dopasować się do osoby opóźnionej.</string>
     <string name="setting_tls_title">Użyj bezpiecznego połączenia (TLS)</string>

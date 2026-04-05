@@ -213,6 +213,13 @@
     <string name="setting_playback_buffer_summary">Standard ist 2500 Millisekunden. Repräsentiert die Puffergröße beim SUCHE oder FORTSETZEN des Videos. Ändern Sie dies, wenn Sie mit der kleinen Verzögerung beim Suchen von Videos nicht zufrieden sind.</string>
     <string name="setting_ready_firsthand_title">Sofort als bereit setzen</string>
     <string name="setting_ready_firsthand_summary">Aktivieren, wenn Sie automatisch als bereit gesetzt werden möchten, sobald Sie den Raum betreten.</string>
+    <string name="setting_unpause_action_title">Bereitschaft-Fortsetzen-Aktion</string>
+    <string name="setting_unpause_action_summary">Wenn Sie auf Wiedergabe drücken, werden Sie als bereit markiert. Die Wiedergabe wird nur fortgesetzt, wenn die ausgewählte Bedingung erfüllt ist.</string>
+    <string name="setting_unpause_action_if_ready">Fortsetzen wenn bereits als bereit markiert</string>
+    <string name="setting_unpause_action_if_others_ready">Fortsetzen wenn andere bereit sind</string>
+    <string name="setting_unpause_action_if_min_users_ready">Fortsetzen wenn andere bereit + Min. Benutzer</string>
+    <string name="setting_unpause_action_always">Immer fortsetzen</string>
+    <string name="room_set_as_ready">Als bereit gesetzt zum Fortsetzen</string>
     <string name="setting_rewind_threshold_title">Rückspul-Schwellenwert</string>
     <string name="setting_rewind_threshold_summary">Wenn jemand um den hier ausgewählten Wert hinterherhinkt, wird Ihr Video zurückgespult, um mit dem Hinterherhinkenden synchron zu sein.</string>
     <string name="setting_tls_title">Sichere Verbindung verwenden (TLS)</string>
