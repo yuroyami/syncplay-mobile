@@ -59,6 +59,7 @@
     <string name="room_guy_paused">%1$s zapauzował o %2$s</string>
     <string name="room_seeked">%1$s przeskoczył z %2$s na %3$s</string>
     <string name="room_rewinded">Przewinięto z powodu różnicy czasu z %1$s</string>
+    <string name="room_fastforwarded">Przewinięto do przodu z powodu różnicy czasu z %1$s</string>
     <string name="room_guy_left">%1$s opuścił pokój.</string>
     <string name="room_guy_joined">%1$s dołączył do pokoju.</string>
     <string name="room_isplayingfile">%1$s odtwarza '%2$s' (%3$s)</string>

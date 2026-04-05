@@ -49,6 +49,7 @@
     <string name="room_guy_paused">%1$s 暂停在 %2$s</string>
     <string name="room_seeked">%1$s 从 %2$s 跳转到 %3$s</string>
     <string name="room_rewinded">由于与 %1$s 的时间差异而倒退</string>
+    <string name="room_fastforwarded">由于与 %1$s 的时间差异而快进</string>
     <string name="room_guy_left">%1$s 离开了房间。</string>
     <string name="room_guy_joined">%1$s 加入了房间。</string>
     <string name="room_isplayingfile">%1$s 正在播放 '%2$s' (%3$s)</string>

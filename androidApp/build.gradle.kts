@@ -287,7 +287,7 @@ androidComponents {
             if (output is com.android.build.api.variant.impl.VariantOutputImpl) {
                 val abiFilter = output.filters.find { it.filterType == com.android.build.api.variant.FilterConfiguration.FilterType.ABI }?.identifier
                 val fileName = if (exoOnly) {
-                    "${AppConfig.appName.lowercase()}-${AppConfig.versionName}-exo-only.apk"
+                    "syncplay-${AppConfig.versionName}-exo-only.apk"
                 } else {
                     val abiName = abiFilter ?: "universal"
                     "${AppConfig.appName.lowercase()}-${AppConfig.versionName}-full-${abiName}.apk"

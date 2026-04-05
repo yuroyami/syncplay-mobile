@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.ksp)
     //alias(libs.plugins.touchlab.skie)
     alias(libs.plugins.buildConfig)
+    alias(libs.plugins.ktorfit)
 }
 
 kotlin {
@@ -63,10 +64,12 @@ kotlin {
                 optIn("kotlinx.cinterop.ExperimentalForeignApi") //for iOS
                 optIn("kotlinx.cinterop.BetaInteropApi") //for iOS
                 optIn("kotlin.time.ExperimentalTime")
-                enableLanguageFeature("ExplicitBackingFields") //same as -Xexplicit-backing-fields compiler flag
-                enableLanguageFeature("NestedTypeAliases") //-Xnested-type-aliases
-                enableLanguageFeature("ExpectActualClasses") //-Xexpect-actual-classes
-                enableLanguageFeature("ContextParameters") //Xcontext-parameters
+                @Suppress("DEPRECATION") run {
+                    enableLanguageFeature("ExplicitBackingFields") //same as -Xexplicit-backing-fields compiler flag
+                    enableLanguageFeature("NestedTypeAliases") //-Xnested-type-aliases
+                    enableLanguageFeature("ExpectActualClasses") //-Xexpect-actual-classes
+                    enableLanguageFeature("ContextParameters") //Xcontext-parameters
+                }
             }
         }
 
@@ -127,6 +130,8 @@ kotlin {
 
             /* Ktor HTTP client for REST API calls (Klipy GIF API) */
             implementation(libs.bundles.ktor.client)
+
+            implementation(libs.ktorfit)
         }
 
         androidMain.dependencies {
@@ -163,7 +168,11 @@ kotlin {
 }
 
 with(AppConfig) {
-    updateIOSVersion() //Uncomment if Xcode build fails, for some reason it breaks Gradle build from within Xcode
+    //updateIOSVersion() //Uncomment if Xcode build fails, for some reason it breaks Gradle build from within Xcode
+}
+
+ktorfit {
+    compilerPluginVersion.set("2.3.3")
 }
 
 buildConfig {
@@ -172,5 +181,5 @@ buildConfig {
     buildConfigField("DEBUG", false)
     buildConfigField("DEBUG_SYNCPLAY_PROTOCOL", false)
     buildConfigField("EXOPLAYER_ONLY", AppConfig.exoOnly)
-    buildConfigField("GIPHY_API_KEY", AppConfig.localProperties.getProperty("yuroyami.keyGiphy"))
+    buildConfigField("KLIPY_API_KEY", AppConfig.localProperties.getProperty("yuroyami.keyKlipyApi"))
 }

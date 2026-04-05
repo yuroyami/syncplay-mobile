@@ -49,6 +49,7 @@
     <string name="room_guy_paused">%1$s поставил на паузу на %2$s</string>
     <string name="room_seeked">%1$s перешел с %2$s на %3$s</string>
     <string name="room_rewinded">Перемотано из-за разницы во времени с %1$s</string>
+    <string name="room_fastforwarded">Перемотано вперёд из-за разницы во времени с %1$s</string>
     <string name="room_guy_left">%1$s покинул комнату.</string>
     <string name="room_guy_joined">%1$s присоединился к комнате.</string>
     <string name="room_isplayingfile">%1$s воспроизводит '%2$s' (%3$s)</string>

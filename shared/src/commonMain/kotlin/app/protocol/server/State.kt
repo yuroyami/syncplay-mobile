@@ -2,6 +2,13 @@ package app.protocol.server
 
 import app.protocol.ProtocolManager
 import app.protocol.ProtocolManager.Companion.SEEK_THRESHOLD
+import app.protocol.ProtocolManager.Companion.FASTFORWARD_BEHIND_THRESHOLD
+import app.protocol.ProtocolManager.Companion.FASTFORWARD_EXTRA_TIME
+import app.protocol.ProtocolManager.Companion.FASTFORWARD_RESET_THRESHOLD
+import app.protocol.ProtocolManager.Companion.FASTFORWARD_THRESHOLD
+import app.protocol.ProtocolManager.Companion.SLOWDOWN_RATE
+import app.protocol.ProtocolManager.Companion.SLOWDOWN_RESET_THRESHOLD
+import app.protocol.ProtocolManager.Companion.SLOWDOWN_THRESHOLD
 import app.protocol.event.RoomCallback
 import app.protocol.event.ClientMessage
 import app.protocol.network.NetworkManager
@@ -13,6 +20,7 @@ import kotlinx.serialization.Serializable
 import kotlin.math.abs
 import kotlin.math.roundToLong
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Handles incoming [State] messages from the Syncplay server, encoding global playback state
@@ -130,29 +138,58 @@ data class State(
             protocol.lastGlobalUpdate = Clock.System.now()
 
             if (doSeek == true && setBy != null) {
+                if (protocol.speedChanged) {
+                    withContext(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
+                    protocol.speedChanged = false
+                }
                 callback.onSomeoneSeeked(setBy, position)
             }
 
             /* Rewind check if someone is behind */
             if (diff > protocol.rewindThreshold && doSeek != true /* && rewindOnDesync pref */) {
+                if (protocol.speedChanged) {
+                    withContext(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
+                    protocol.speedChanged = false
+                }
                 callback.onSomeoneBehind(setBy ?: "", position)
             }
 
-            //if (fastforwardOnDesyncPref && (currentUser.canControl() == false or dontSlowDownWithMe == true)
-            //      if (diff < (constants.FASTFORWARD_BEHIND_THRESHOLD * -1)  && doSeek != true
-            //          if (behindFirstDetected == true)
-            //              behindFirstDetected = now()
-            //          else
-            //              durationBehind = now() - behindFirstDetected
-            //              if (durationBehind > if (durationBehind > (self._config['fastforwardThreshold']-constants.FASTFORWARD_BEHIND_THRESHOLD))\ and (diff < (self._config['fastforwardThreshold'] * -1))
-            //                  madeChangeOnPlayer = fastforwardPlayerDueToTimeDifference(position, setBy)
-            //                  behindFirstDetected = now() + constants.FASTFORWARD_RESET_THRESHOLD
-            //      else behindFirstDetected = null
+            /* Fast-forward if persistently behind (like PC client's fastforward on desync) */
+            if (diff < -FASTFORWARD_BEHIND_THRESHOLD && doSeek != true) {
+                val now = Clock.System.now()
+                if (protocol.behindFirstDetected == null) {
+                    protocol.behindFirstDetected = now
+                } else {
+                    val durationBehind = (now - protocol.behindFirstDetected!!).inWholeMilliseconds / 1000.0
+                    if (durationBehind > (FASTFORWARD_THRESHOLD - FASTFORWARD_BEHIND_THRESHOLD)
+                        && diff < -FASTFORWARD_THRESHOLD
+                    ) {
+                        callback.onSomeoneFastForwarded(setBy ?: "", position + FASTFORWARD_EXTRA_TIME)
+                        protocol.behindFirstDetected = now + FASTFORWARD_RESET_THRESHOLD.seconds
+                    }
+                }
+            } else {
+                protocol.behindFirstDetected = null
+            }
 
-            //if self._player.speedSupported and not doSeek and not paused and  not self._config['slowOnDesync'] == False:
-            //madeChangeOnPlayer = self._slowDownToCoverTimeDifference(diff, setBy)
+            /* Slow down to cover time difference (like PC client's _slowDownToCoverTimeDifference) */
+            if (doSeek != true && !paused) {
+                if (diff > SLOWDOWN_THRESHOLD && !protocol.speedChanged) {
+                    if (setBy != null && setBy != protocol.session.currentUsername) {
+                        withContext(Dispatchers.Main) { viewmodel.player.setSpeed(SLOWDOWN_RATE) }
+                        protocol.speedChanged = true
+                    }
+                } else if (protocol.speedChanged && diff < SLOWDOWN_RESET_THRESHOLD) {
+                    withContext(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
+                    protocol.speedChanged = false
+                }
+            }
 
             if (pausedChanged) {
+                if (paused && protocol.speedChanged) {
+                    withContext(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
+                    protocol.speedChanged = false
+                }
                 if (!paused) callback.onSomeonePlayed(setBy ?: "")
                 if (paused) callback.onSomeonePaused(setBy ?: "")
             }

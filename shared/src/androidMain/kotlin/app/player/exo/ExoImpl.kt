@@ -418,6 +418,14 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
         }
     }
 
+    override suspend fun setSpeed(speed: Double) {
+        if (!isInitialized) return
+
+        withContext(Dispatchers.Main.immediate) {
+            exoplayer?.setPlaybackSpeed(speed.toFloat())
+        }
+    }
+
     override suspend fun isSeekable(): Boolean {
         if (!isInitialized) return false
 

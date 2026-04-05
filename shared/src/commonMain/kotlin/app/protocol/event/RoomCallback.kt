@@ -38,6 +38,7 @@ import syncplaymobile.shared.generated.resources.room_isplayingfile
 import syncplaymobile.shared.generated.resources.room_on_controller_auth_failed
 import syncplaymobile.shared.generated.resources.room_on_controller_auth_success
 import syncplaymobile.shared.generated.resources.room_on_newcontrolledroom
+import syncplaymobile.shared.generated.resources.room_fastforwarded
 import syncplaymobile.shared.generated.resources.room_rewinded
 import syncplaymobile.shared.generated.resources.room_seeked
 import syncplaymobile.shared.generated.resources.room_shared_playlist_changed
@@ -69,6 +70,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
         if (pauser.isNotSelf()) {
             hapticIf(HAPTIC_ON_PAUSED)
+            onMainThread { viewmodel.player.seekTo(protocol.globalPositionMs.toLong()) }
             dispatcher.controlPlayback(Playback.PAUSE, false)
         }
 
@@ -155,6 +157,17 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
             onMainThread {
                 viewmodel.player.seekTo((toPosition * 1000L).toLong())
                 dispatcher.broadcastMessage(message = { getString(Res.string.room_rewinded, behinder) }, isChat = false)
+            }
+        }
+    }
+
+    fun onSomeoneFastForwarded(setBy: String, toPosition: Double) {
+        loggy("SYNCPLAY Protocol: Fast-forwarding to $toPosition due to time difference with $setBy")
+
+        if (setBy.isNotSelf()) {
+            onMainThread {
+                viewmodel.player.seekTo((toPosition * 1000L).toLong())
+                dispatcher.broadcastMessage(message = { getString(Res.string.room_fastforwarded, setBy) }, isChat = false)
             }
         }
     }

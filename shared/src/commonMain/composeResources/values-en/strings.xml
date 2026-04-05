@@ -60,6 +60,7 @@
     <string name="room_guy_paused">%1$s paused at %2$s</string>
     <string name="room_seeked">%1$s jumped from %2$s to %3$s</string>
     <string name="room_rewinded">Rewinded due to time difference with %1$s</string>
+    <string name="room_fastforwarded">Fast-forwarded due to time difference with %1$s</string>
     <string name="room_guy_left">%1$s left the room.</string>
     <string name="room_guy_joined">%1$s joined the room.</string>
     <string name="room_isplayingfile">%1$s is playing '%2$s' (%3$s)</string>

@@ -266,6 +266,14 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
         }
     }
 
+    override suspend fun setSpeed(speed: Double) {
+        if (!isInitialized) return
+
+        withContext(Dispatchers.Main.immediate) {
+            vlcPlayer?.rate = speed.toFloat()
+        }
+    }
+
     override suspend fun isSeekable(): Boolean {
         if (!isInitialized) return false
 

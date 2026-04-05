@@ -36,7 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import app.klipy.KlipyAPI
+import app.klipy.KlipyUtils
 import app.klipy.KlipyMedia
 import app.klipy.KlipyMediaType
 import coil3.compose.AsyncImage
@@ -80,7 +80,7 @@ fun GifPanel(
             .distinctUntilChanged()
             .collectLatest { q ->
                 isLoading = true
-                val response = KlipyAPI.search(query = q, type = selectedTab)
+                val response = KlipyUtils.search(query = q, type = selectedTab)
                 results.clear()
                 results.addAll(response)
                 isLoading = false

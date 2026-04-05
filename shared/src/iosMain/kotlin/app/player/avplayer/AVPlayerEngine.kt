@@ -422,6 +422,11 @@ object AVPlayerEngine: PlayerEngine {
             avPlayer?.play()
         }
 
+        override suspend fun setSpeed(speed: Double) {
+            if (!isInitialized) return
+            avPlayer?.rate = speed.toFloat()
+        }
+
         /**
          * Checks if the current media supports seeking.
          *

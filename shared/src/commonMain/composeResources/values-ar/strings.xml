@@ -60,6 +60,7 @@
     <string name="room_guy_paused">%1$s أوقف التشغيل عند %2$s</string>
     <string name="room_seeked">%1$s انتقل من %2$s إلى %3$s</string>
     <string name="room_rewinded">تم الترجيع بسبب فرق التوقيت مع %1$s</string>
+    <string name="room_fastforwarded">تم التقديم السريع بسبب فرق التوقيت مع %1$s</string>
     <string name="room_guy_left">%1$s غادر الغرفة.</string>
     <string name="room_guy_joined">%1$s انضم إلى الغرفة.</string>
     <string name="room_isplayingfile">%1$s يشغل '%2$s' (%3$s)</string>

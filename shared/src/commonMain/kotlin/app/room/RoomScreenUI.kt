@@ -16,11 +16,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import app.LocalGlobalViewmodel
@@ -106,7 +106,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                             RoomChatSection(
                                 modifier = Modifier
                                     .align(Alignment.TopStart)
-                                    .fillMaxWidth(0.35f)
+                                    .fillMaxWidth(0.44f)
                                     .displayCutoutPadding()
                                     .padding(8.dp)
 

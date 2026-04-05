@@ -59,6 +59,7 @@
     <string name="room_guy_paused">%1$s a mis en pause à %2$s</string>
     <string name="room_seeked">%1$s a sauté de %2$s à %3$s</string>
     <string name="room_rewinded">Rembobinage dû à un décalage avec %1$s</string>
+    <string name="room_fastforwarded">Avance rapide due à un décalage avec %1$s</string>
     <string name="room_guy_left">%1$s a quitté la salle.</string>
     <string name="room_guy_joined">%1$s a rejoint la salle.</string>
     <string name="room_isplayingfile">%1$s lit '%2$s' (%3$s)</string>

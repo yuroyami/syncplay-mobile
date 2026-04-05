@@ -186,6 +186,9 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
 
     abstract suspend fun play()
 
+    /** Sets playback speed (1.0 = normal, 0.95 = slowdown for sync). */
+    abstract suspend fun setSpeed(speed: Double)
+
     abstract suspend fun isSeekable(): Boolean
 
     @UiThread

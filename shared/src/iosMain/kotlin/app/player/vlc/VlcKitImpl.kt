@@ -371,6 +371,13 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         }
     }
 
+    override suspend fun setSpeed(speed: Double) {
+        if (!isInitialized) return
+        withContext(Dispatchers.Main.immediate) {
+            vlcPlayer?.rate = speed.toFloat()
+        }
+    }
+
     /**
      * Checks if the current media supports seeking.
      *

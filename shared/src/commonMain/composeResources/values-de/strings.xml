@@ -60,6 +60,7 @@
     <string name="room_guy_paused">%1$s pausiert bei %2$s</string>
     <string name="room_seeked">%1$s ist von %2$s zu %3$s gesprungen</string>
     <string name="room_rewinded">Zurückgespult wegen Zeitunterschied zu %1$s</string>
+    <string name="room_fastforwarded">Vorgespult wegen Zeitdifferenz mit %1$s</string>
     <string name="room_guy_left">%1$s hat den Raum verlassen.</string>
     <string name="room_guy_joined">%1$s ist dem Raum beigetreten.</string>
     <string name="room_isplayingfile">%1$s spielt '%2$s' ab (%3$s)</string>

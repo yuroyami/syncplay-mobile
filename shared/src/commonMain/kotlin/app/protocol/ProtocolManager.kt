@@ -42,6 +42,12 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
 
     var pingService = PingService()
 
+    /** Tracks whether playback speed has been adjusted for desync correction. */
+    var speedChanged = false
+
+    /** Timestamp when we first detected the client is behind. Null if not behind. */
+    var behindFirstDetected: Instant? = null
+
     /** Set during room transitions to ignore stale packets from the previous room. */
     var isRoomChanging = false
 
@@ -56,6 +62,8 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         globalPositionMs = 0.0
         serverIgnFly = 0
         clientIgnFly = 0
+        speedChanged = false
+        behindFirstDetected = null
         pingService = PingService()
     }
 
@@ -99,5 +107,26 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
 
         /** Playback drift threshold in seconds before a corrective seek is triggered. */
         const val SEEK_THRESHOLD = 1L
+
+        /** Playback speed used to gradually catch up when ahead of others. */
+        const val SLOWDOWN_RATE = 0.95
+
+        /** Time difference (seconds) at which slowdown kicks in. */
+        const val SLOWDOWN_THRESHOLD = 1.5
+
+        /** Time difference (seconds) at which speed reverts to normal. */
+        const val SLOWDOWN_RESET_THRESHOLD = 0.1
+
+        /** Time difference (seconds, negative/behind) at which fastforward detection starts. */
+        const val FASTFORWARD_BEHIND_THRESHOLD = 1.75
+
+        /** Time difference (seconds, behind) at which fastforward triggers after waiting. */
+        const val FASTFORWARD_THRESHOLD = 5.0
+
+        /** Extra time (seconds) added when fastforwarding to overshoot slightly. */
+        const val FASTFORWARD_EXTRA_TIME = 0.25
+
+        /** Cooldown (seconds) after a fastforward before it can trigger again. */
+        const val FASTFORWARD_RESET_THRESHOLD = 3.0
     }
 }

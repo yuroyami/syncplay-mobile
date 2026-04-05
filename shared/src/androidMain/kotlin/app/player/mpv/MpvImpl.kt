@@ -308,6 +308,11 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         mpvView.paused = false
     }
 
+    override suspend fun setSpeed(speed: Double) {
+        if (!isInitialized) return
+        MPVLib.setPropertyDouble("speed", speed)
+    }
+
     override suspend fun isSeekable(): Boolean {
         return isInitialized
     }

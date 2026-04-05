@@ -13,6 +13,8 @@ object AppConfig {
     const val compileSdk = 36
     const val minSdk = 26
 
+    const val appName = "Synkplay"
+
     const val versionName = "0.18.1"
     val versionCode = ("1" + versionName.split(".").joinToString("") { it.padStart(3, '0') }).toInt()
 
@@ -20,7 +22,6 @@ object AppConfig {
 
     const val ndkRequired = "29.0.14206865"
 
-    val giphyApiKey = Properties()
     val abiCodes = mapOf(
         "armeabi-v7a" to "armv7l",
         "arm64-v8a" to "arm64",
