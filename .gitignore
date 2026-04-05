@@ -49,6 +49,6 @@ buildscripts/prefix
 buildscripts/prefix64
 *.h
 *.tgz
-
+syncplay-pc-src-master
 # Hide python files which i offload into my project for quickly viewing syncplay official code
 *.py
