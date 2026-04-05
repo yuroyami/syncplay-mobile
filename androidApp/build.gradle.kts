@@ -301,6 +301,13 @@ androidComponents {
 dependencies {
     coreLibraryDesugaring(libs.desugaring)
     implementation(projects.shared)
+
+    if (!exoOnly) {
+        //We enable analytics and crashlytics in Google Play store version
+        implementation(platform("com.google.firebase:firebase-bom:34.11.0"))
+        implementation("com.google.firebase:firebase-crashlytics")
+        implementation("com.google.firebase:firebase-analytics")
+    }
 }
 
 if (!exoOnly) {

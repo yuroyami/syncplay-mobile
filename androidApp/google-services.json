@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "984978610071",
+    "project_id": "syncplay-mobile",
+    "storage_bucket": "syncplay-mobile.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:984978610071:android:d20af2f31f6f278ea596d2",
+        "android_client_info": {
+          "package_name": "com.yuroyami.syncplay"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD022Ifji3WRJLfWWDMpNfFMMilJmwPgTs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
