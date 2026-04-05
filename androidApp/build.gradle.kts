@@ -8,6 +8,11 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
+if (!exoOnly) {
+    apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
+}
+
 kotlin {
     jvmToolchain(AppConfig.javaVersion)
 }
@@ -58,7 +63,7 @@ android {
             isMinifyEnabled = exoOnly //TODO Fix minified build when mpv and libVLC are included
         }
         debug {
-            applicationIdSuffix = ".dev"
+            //applicationIdSuffix = ".dev"
         }
     }
 
@@ -124,7 +129,9 @@ android {
     // This will remove them also from any other library that might use them
     configurations.all {
         exclude(group = "com.google.crypto.tink", module = "tink-android")
-        exclude(group = "com.google.android.gms")
+        if (exoOnly) {
+            exclude(group = "com.google.android.gms")
+        }
     }
 }
 
