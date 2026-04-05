@@ -4,6 +4,8 @@ import androidx.compose.animation.expandIn
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -81,7 +83,8 @@ fun RoomSectionSlidingCards(modifier: Modifier) {
             modifier = Modifier.align(Alignment.End).padding(end = 6.dp)
         ) {
             Surface(
-                modifier = Modifier.height(46.dp),
+                modifier = Modifier.height(46.dp)
+                    .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), RoundedCornerShape(10.dp)),
                 shape = RoundedCornerShape(10.dp),
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
                 tonalElevation = 2.dp,

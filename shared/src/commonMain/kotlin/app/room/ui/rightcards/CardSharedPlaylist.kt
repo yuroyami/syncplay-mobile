@@ -175,6 +175,7 @@ object CardSharedPlaylist {
         val uiOpacity by viewmodel.uiState.uiOpacity.collectAsState()
         Card(
             shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.outlineVariant),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(uiOpacity)),
             elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
         ) {

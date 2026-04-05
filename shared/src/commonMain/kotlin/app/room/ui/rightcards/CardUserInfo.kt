@@ -1,5 +1,6 @@
 package app.room.ui.rightcards
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -50,6 +51,7 @@ object CardUserInfo {
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.outlineVariant),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(uiOpacity)),
             elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
         ) {
