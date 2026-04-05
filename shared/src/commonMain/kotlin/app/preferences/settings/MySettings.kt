@@ -50,6 +50,7 @@ import app.preferences.Preferences.NETWORK_ENGINE
 import app.preferences.Preferences.NEVER_SHOW_TIPS
 import app.preferences.Preferences.PAUSE_ON_SOMEONE_LEAVE
 import app.preferences.Preferences.READY_FIRST_HAND
+import app.preferences.Preferences.UNPAUSE_ACTION
 import app.preferences.Preferences.RECONNECTION_INTERVAL
 import app.preferences.Preferences.REMEMBER_INFO
 import app.preferences.Preferences.ROOM_UI_OPACITY
@@ -103,6 +104,7 @@ val GLOBAL_SYNCING = SettingCategory(
     icon = Icons.Filled.ConnectWithoutContact
 ) {
     +READY_FIRST_HAND
+    +UNPAUSE_ACTION
     +PAUSE_ON_SOMEONE_LEAVE
     +FILE_MISMATCH_WARNING
     +HASH_FILENAME

@@ -4,13 +4,18 @@ import androidx.lifecycle.viewModelScope
 import app.AbstractManager
 import app.player.Playback
 import app.preferences.Preferences
+import app.preferences.Preferences.UNPAUSE_ACTION
 import app.preferences.value
 import app.room.RoomViewmodel
 import app.room.models.Message
+import app.utils.loggy
 import app.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.getString
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_set_as_ready
 import kotlin.math.roundToLong
 
 /**
@@ -50,6 +55,23 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
     fun controlPlayback(playback: Playback, tellServer: Boolean) {
         //TODO if (viewmodel.uiState.isInBackground) return
 
+        /* If this is a user-initiated play request, check readiness gating */
+        if (playback == Playback.PLAY && tellServer && !viewmodel.isSoloMode
+            && viewmodel.session.roomFeatures.supportsReadiness
+        ) {
+            if (!instaplayConditionsMet()) {
+                /* Block the unpause — set as ready instead */
+                loggy("SYNCPLAY Readiness: Conditions not met, setting as ready instead of unpausing")
+                viewmodel.session.ready.value = true
+                network.sendAsync<ClientMessage.Readiness> {
+                    isReady = true
+                    manuallyInitiated = true
+                }
+                broadcastMessage(isChat = false) { getString(Res.string.room_set_as_ready) }
+                return
+            }
+        }
+
         onMainThread {
             when (playback) {
                 Playback.PAUSE -> viewmodel.player.pause()
@@ -67,6 +89,25 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
             position = withContext(Dispatchers.Main.immediate) { viewmodel.player.currentPositionMs().div(1000.0).roundToLong() }
             changeState = 1
             this.play = playback.play
+        }
+    }
+
+    /**
+     * Checks whether the user is allowed to unpause based on the readiness unpause mode.
+     * Mirrors the PC client's `instaplayConditionsMet()`.
+     */
+    private fun instaplayConditionsMet(): Boolean {
+        val unpauseAction = UNPAUSE_ACTION.value()
+        val session = viewmodel.session
+
+        return when (unpauseAction) {
+            "IfAlreadyReady" -> session.ready.value
+            "IfOthersReady" -> session.ready.value || session.areAllOtherUsersReady()
+            "IfMinUsersReady" -> {
+                session.areAllOtherUsersReady() && session.usersInRoomCount() >= 2
+            }
+            "Always" -> true
+            else -> true
         }
     }
 

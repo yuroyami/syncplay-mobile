@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.LogoDev
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Opacity
 import androidx.compose.material.icons.filled.Pin
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SlowMotionVideo
 import androidx.compose.material.icons.filled.SortByAlpha
 import androidx.compose.material.icons.filled.SpatialAudio
@@ -103,6 +104,12 @@ import syncplaymobile.shared.generated.resources.setting_playback_buffer_summary
 import syncplaymobile.shared.generated.resources.setting_playback_buffer_title
 import syncplaymobile.shared.generated.resources.setting_ready_firsthand_summary
 import syncplaymobile.shared.generated.resources.setting_ready_firsthand_title
+import syncplaymobile.shared.generated.resources.setting_unpause_action_always
+import syncplaymobile.shared.generated.resources.setting_unpause_action_if_min_users_ready
+import syncplaymobile.shared.generated.resources.setting_unpause_action_if_others_ready
+import syncplaymobile.shared.generated.resources.setting_unpause_action_if_ready
+import syncplaymobile.shared.generated.resources.setting_unpause_action_summary
+import syncplaymobile.shared.generated.resources.setting_unpause_action_title
 import syncplaymobile.shared.generated.resources.setting_remember_join_info_summary
 import syncplaymobile.shared.generated.resources.setting_remember_join_info_title
 import syncplaymobile.shared.generated.resources.setting_resetdefault_dialog
@@ -280,6 +287,22 @@ object Preferences {
         title = Res.string.setting_ready_firsthand_title
         summary = Res.string.setting_ready_firsthand_summary
         icon = Icons.Filled.TaskAlt
+    }
+    val UNPAUSE_ACTION = Pref("pref_unpause_action", "IfOthersReady") {
+        title = Res.string.setting_unpause_action_title
+        summary = Res.string.setting_unpause_action_summary
+        icon = Icons.Filled.PlayArrow
+
+        extraConfig = PrefExtraConfig.MultiChoice(
+            entries = {
+                mapOf(
+                    stringResource(Res.string.setting_unpause_action_if_ready) to "IfAlreadyReady",
+                    stringResource(Res.string.setting_unpause_action_if_others_ready) to "IfOthersReady",
+                    stringResource(Res.string.setting_unpause_action_if_min_users_ready) to "IfMinUsersReady",
+                    stringResource(Res.string.setting_unpause_action_always) to "Always"
+                )
+            }
+        )
     }
     val PAUSE_ON_SOMEONE_LEAVE = Pref("pref_pause_if_someone_left", false) {
         title = Res.string.setting_pause_if_someone_left_title

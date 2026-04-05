@@ -39,4 +39,25 @@ class Session(val protocol: ProtocolManager) {
 
     val ready = mutableStateOf(Preferences.READY_FIRST_HAND.value())
     val protoPing = MutableStateFlow<Int?>(null)
+
+    /** Whether all other users in the room are ready (ignores users with no file). */
+    fun areAllOtherUsersReady(): Boolean {
+        return userList.value
+            .filter { it.name != currentUsername && it.file != null }
+            .all { it.readiness }
+    }
+
+    /** Count of users in the room who have a file and are ready. */
+    fun readyUserCount(): Int {
+        val selfReady = if (ready.value) 1 else 0
+        val othersReady = userList.value.count { it.name != currentUsername && it.file != null && it.readiness }
+        return selfReady + othersReady
+    }
+
+    /** Total count of users in the room who have a file loaded. */
+    fun usersInRoomCount(): Int {
+        val selfHasFile = if (protocol.viewmodel.media != null) 1 else 0
+        val othersWithFile = userList.value.count { it.name != currentUsername && it.file != null }
+        return selfHasFile + othersWithFile
+    }
 }

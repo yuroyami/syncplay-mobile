@@ -240,6 +240,13 @@
     <string name="setting_playback_buffer_summary">Default is 2500 milliseconds. This represents the buffer size when SEEKING or UNPAUSING the video. Change this if you're not satisfied with the small delay when seeking video.</string>
     <string name="setting_ready_firsthand_title">Set as ready first-hand</string>
     <string name="setting_ready_firsthand_summary">Enable this if you want to be set automatically as ready once you enter the room.</string>
+    <string name="setting_unpause_action_title">Readiness unpause action</string>
+    <string name="setting_unpause_action_summary">When you press play, you will be set as ready. Playback will only unpause if the selected condition is met.</string>
+    <string name="setting_unpause_action_if_ready">Unpause if already set as ready</string>
+    <string name="setting_unpause_action_if_others_ready">Unpause if others are ready</string>
+    <string name="setting_unpause_action_if_min_users_ready">Unpause if others ready + min users</string>
+    <string name="setting_unpause_action_always">Always unpause</string>
+    <string name="room_set_as_ready">Set as ready to unpause</string>
     <string name="setting_rewind_threshold_title">Rewind thresold</string>
     <string name="setting_rewind_threshold_summary">If someone is behind with the value you select here, your video will be rewinded to match with the one behind.</string>
     <string name="setting_tls_title">Use Secure Connection (TLS)</string>
