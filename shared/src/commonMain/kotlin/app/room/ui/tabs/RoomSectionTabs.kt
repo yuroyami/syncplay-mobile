@@ -1,6 +1,5 @@
 package app.room.ui.tabs
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -35,19 +34,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
 import app.LocalRoomUiState
 import app.LocalRoomViewmodel
-import app.theme.Theming.flexibleGradient
 import app.uicomponents.FlexibleIcon
-import app.uicomponents.FlexibleText
-import app.uicomponents.jostFont
 import app.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -143,9 +137,8 @@ fun RoomTabSection(modifier: Modifier) {
             }
 
             DropdownMenu(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                border = BorderStroke(width = Dp.Hairline, brush = Brush.linearGradient(colors = flexibleGradient)),
-                shape = RoundedCornerShape(8.dp),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                shape = RoundedCornerShape(12.dp),
                 expanded = overflowMenuState.value,
                 properties = PopupProperties(dismissOnBackPress = true, dismissOnClickOutside = true),
                 onDismissRequest = {
@@ -156,13 +149,11 @@ fun RoomTabSection(modifier: Modifier) {
                 }
             ) {
                 /* Popup title */
-                FlexibleText(
-                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 2.dp),
+                Text(
+                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 8.dp, vertical = 4.dp),
                     text = stringResource(Res.string.room_overflow_title),
-                    strokeColors = listOf(Color.Black),
-                    fillingColors = flexibleGradient,
-                    size = 14f,
-                    font = jostFont
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
                 )
 
                 if (viewmodel.player.supportsPictureInPicture) {

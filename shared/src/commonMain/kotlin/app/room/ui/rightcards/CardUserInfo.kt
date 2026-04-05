@@ -1,6 +1,5 @@
 package app.room.ui.rightcards
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -27,21 +26,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.LocalRoomViewmodel
 import app.theme.Theming
-import app.theme.Theming.flexibleGradient
-import app.uicomponents.FlexibleText
-import app.uicomponents.gradientOverlay
-import app.uicomponents.jostFont
 import app.utils.timestampFromMillis
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -60,18 +49,17 @@ object CardUserInfo {
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp),
-            border = BorderStroke(width = Dp.Hairline, brush = Brush.linearGradient(colors = flexibleGradient)),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(uiOpacity)),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(uiOpacity)),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
         ) {
-            FlexibleText(
+            Text(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
-                    .padding(vertical = 4.dp),
+                    .padding(vertical = 8.dp),
                 text = stringResource(Res.string.room_card_title_user_info),
-                fillingColors = flexibleGradient,
-                size = 17f,
-                font = jostFont
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.titleSmall,
             )
 
             val userlist by viewmodel.session.userList.collectAsState()
@@ -88,27 +76,18 @@ object CardUserInfo {
                             modifier = Modifier.size(Theming.USER_INFO_IC_SIZE.dp),
                             imageVector = if (user.readiness) Icons.Filled.Check else Icons.Filled.Clear,
                             contentDescription = "",
-                            tint = when (user.readiness) {
-                                true -> Theming.ROOM_USER_READY_ICON
-                                false -> Theming.ROOM_USER_UNREADY_ICON
-                            }
+                            tint = if (user.readiness) Theming.READY_GREEN else Theming.UNREADY_RED
                         )
 
-
-
                         if (user.isController) {
-                            /* If user is a controller (room operator), add corresponding icon */
                             Image(
-                                modifier = Modifier.size((Theming.USER_INFO_IC_SIZE-1).dp).padding(2.dp),
+                                modifier = Modifier.size((Theming.USER_INFO_IC_SIZE - 1).dp).padding(2.dp),
                                 painter = painterResource(Res.drawable.user_key),
                                 contentDescription = null
                             )
                         } else {
-                            /* User's 'person' icon if he's not a room operatir */
                             Icon(
-                                modifier = Modifier
-                                    .size(Theming.USER_INFO_IC_SIZE.dp)
-                                    .gradientOverlay(flexibleGradient),
+                                modifier = Modifier.size(Theming.USER_INFO_IC_SIZE.dp),
                                 imageVector = Icons.Filled.Person,
                                 contentDescription = "",
                                 tint = MaterialTheme.colorScheme.primary
@@ -123,36 +102,29 @@ object CardUserInfo {
                             text = user.name,
                             lineHeight = (Theming.USER_INFO_TXT_SIZE + 6).sp,
                             fontSize = (Theming.USER_INFO_TXT_SIZE + 2).sp,
-                            color = Theming.OLD_SP_YELLOW,
-                            fontWeight = if (user.name == viewmodel.session.currentUsername) FontWeight.W900 else FontWeight.W400
+                            color = if (user.name == viewmodel.session.currentUsername) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                            fontWeight = if (user.name == viewmodel.session.currentUsername) FontWeight.W700 else FontWeight.W400
                         )
                     }
 
                     /* Filename row */
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-
-                        /* Small spacer to align texts together */
                         Spacer(Modifier.width((Theming.USER_INFO_IC_SIZE * 1.25).dp))
 
-                        /* Small arrow to indicate user's file name */
                         Icon(
-                            modifier = Modifier
-                                .size(Theming.USER_INFO_IC_SIZE.dp)
-                                .gradientOverlay(flexibleGradient),
+                            modifier = Modifier.size(Theming.USER_INFO_IC_SIZE.dp),
                             imageVector = Icons.Filled.SubdirectoryArrowRight,
                             contentDescription = "",
-                            tint = Theming.OLD_SP_YELLOW
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
-                        /* Actual filename */
                         Text(
                             modifier = Modifier.fillMaxWidth(),
                             fontSize = Theming.USER_INFO_TXT_SIZE.sp,
                             lineHeight = (Theming.USER_INFO_TXT_SIZE + 4).sp,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             text = user.file?.fileName ?: stringResource(Res.string.room_details_nofileplayed),
                             fontWeight = FontWeight.W300,
-                            style = TextStyle(shadow = Shadow(color = Color.Black, offset = Offset(1f,1f), blurRadius = 1f))
                         )
                     }
 
@@ -176,7 +148,6 @@ object CardUserInfo {
                                 fontSize = (Theming.USER_INFO_TXT_SIZE - 2).sp,
                                 fontWeight = FontWeight.W300,
                                 color = MaterialTheme.colorScheme.outline,
-                                style = TextStyle(shadow = Shadow(color = Color.Black, offset = Offset(1f,1f), blurRadius = 1f))
                             )
                         }
                     }

@@ -57,9 +57,9 @@ fun FlexibleIcon(
     icon: ImageVector,
     size: Int = Theming.ROOM_ICON_SIZE,
     tintColors: List<Color> = listOf(MaterialTheme.colorScheme.primary),
-    shadowColors: List<Color> = flexibleGradient,
+    shadowColors: List<Color> = emptyList(),
     shadowOffset: Pair<Int, Int> = Pair(1, 1),
-    alpha: Float = 0.95f,
+    alpha: Float = 1f,
     onClick: () -> Unit = {},
 ) {
     IconButton(
@@ -75,7 +75,6 @@ fun FlexibleIcon(
                 .wrapContentSize()
         ) {
             if (shadowColors.isNotEmpty()) {
-                /** Shadow */
                 val shadowModifier = Modifier
                     .size(size.dp)
                     .offset(x = shadowOffset.first.dp, y = shadowOffset.second.dp)
@@ -87,10 +86,7 @@ fun FlexibleIcon(
                 )
             }
 
-            /** Foreground */
-            val fgModifier = Modifier
-                .size((size - 0.5).dp)
-                .alpha(0.9f)
+            val fgModifier = Modifier.size((size - 0.5).dp)
 
             Icon(
                 imageVector = icon,

@@ -15,10 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
@@ -55,8 +52,7 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                 text = stringResource(Res.string.room_details_current_room, viewmodel.session.currentRoom) +
                         if (connectionState == ConnectionState.CONNECTED) " (${stringResource(Res.string.room_ping_connected)})" else "",
                 fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onTertiaryContainer,
-                style = TextStyle(shadow = Shadow(color = Color.Black, offset = Offset(1f, 1f), blurRadius = 1f))
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
             )
 
             val userList by viewmodel.session.userList.collectAsState()
@@ -78,11 +74,10 @@ fun RoomStatusInfoSection(modifier: Modifier) {
 
                     Text(
                         text = stringResource(Res.string.room_more_info_change_network_engine_msg),
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.fillMaxWidth(0.95f),
                         textAlign = TextAlign.Center,
                         fontSize = 12.sp,
-                        style = TextStyle(shadow = Shadow(color = Color.Black, offset = Offset(1f, 1f), blurRadius = 1f))
                     )
                 }
             }
@@ -92,11 +87,10 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                 modifier = Modifier.fillMaxWidth(0.95f),
                 fontSize = 11.sp,
                 lineHeight = (Theming.USER_INFO_TXT_SIZE + 4).sp,
-                color = Theming.SP_PALE,
+                color = MaterialTheme.colorScheme.primary,
                 text = osd,
                 fontFamily = FontFamily(sairaFont),
                 textAlign = TextAlign.Center,
-                style = TextStyle(shadow = Shadow(color = Color.Black, offset = Offset(1f, 1f), blurRadius = 1f))
             )
             if (osd.isEmpty()) viewmodel.media?.let {
                 val filename = it.fileName.lowercase()
@@ -111,8 +105,7 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                         )?.toInt() ?: 0
                     Text(
                         text = "S${season}E${episode}",
-                        color = Theming.SP_PALE,
-                        style = TextStyle(shadow = Shadow(color = Color.Black, offset = Offset(1f, 1f), blurRadius = 1f))
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 }
             }

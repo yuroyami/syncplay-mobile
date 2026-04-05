@@ -41,10 +41,10 @@ fun RoomReadyButton() {
             modifier = Modifier.width(112.dp).padding(4.dp),
             checked = ready,
             colors = IconButtonDefaults.iconToggleButtonColors(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                contentColor = MaterialTheme.colorScheme.primary,
-                checkedContainerColor = MaterialTheme.colorScheme.primary,
-                checkedContentColor = Color.Black
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                checkedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                checkedContentColor = MaterialTheme.colorScheme.onPrimaryContainer
             ),
             onCheckedChange = { b ->
                 ready = b
@@ -58,31 +58,25 @@ fun RoomReadyButton() {
                 true -> Row(verticalAlignment = CenterVertically) {
                     Icon(
                         modifier = Modifier.size(Theming.USER_INFO_IC_SIZE.dp),
-                        imageVector = if (ready) Icons.Filled.Check else Icons.Filled.Clear,
+                        imageVector = Icons.Filled.Check,
                         contentDescription = "",
-                        tint = Theming.ROOM_USER_READY_ICON
-
-
+                        tint = Theming.READY_GREEN
                     )
                     Spacer(Modifier.width(4.dp))
                     Text(stringResource(Res.string.room_ready), fontSize = 14.sp)
                     Spacer(Modifier.width(4.dp))
-
                 }
 
                 false -> Row(verticalAlignment = CenterVertically) {
                     Icon(
                         modifier = Modifier.size(Theming.USER_INFO_IC_SIZE.dp),
-                        imageVector = if (ready) Icons.Filled.Check else Icons.Filled.Clear,
+                        imageVector = Icons.Filled.Clear,
                         contentDescription = "",
-                        tint = Theming.ROOM_USER_UNREADY_ICON
-
+                        tint = Theming.UNREADY_RED
                     )
                     Spacer(Modifier.width(4.dp))
-
                     Text(stringResource(Res.string.room_not_ready), fontSize = 13.sp)
                     Spacer(Modifier.width(4.dp))
-
                 }
             }
         }

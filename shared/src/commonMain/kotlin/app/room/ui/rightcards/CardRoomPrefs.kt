@@ -1,6 +1,5 @@
 package app.room.ui.rightcards
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,6 +10,7 @@ import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -22,9 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.TopCenter
 import androidx.compose.ui.Alignment.Companion.TopEnd
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.LocalRoomViewmodel
 import app.home.components.SettingGridState
@@ -32,10 +29,7 @@ import app.preferences.settings.SETTINGS_ROOM
 import app.preferences.settings.SettingCategory
 import app.preferences.settings.SettingsUI
 import app.preferences.settings.SettingsUI.SettingsGrid
-import app.theme.Theming.flexibleGradient
 import app.uicomponents.FlexibleIcon
-import app.uicomponents.FlexibleText
-import app.uicomponents.jostFont
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_card_title_in_room_prefs
@@ -60,23 +54,22 @@ object CardRoomPrefs {
         roomSettings?.let { settings ->
             val uiOpacity by viewmodel.uiState.uiOpacity.collectAsState()
             Card(
-                shape = RoundedCornerShape(8.dp),
-                border = BorderStroke(width = Dp.Hairline, brush = Brush.linearGradient(colors = flexibleGradient)),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(uiOpacity)),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(uiOpacity)),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    FlexibleText(
-                        modifier = Modifier.align(TopCenter).padding(6.dp),
+                    Text(
+                        modifier = Modifier.align(TopCenter).padding(8.dp),
                         text = stringResource(Res.string.room_card_title_in_room_prefs),
-                        fillingColors = flexibleGradient,
-                        size = 17f,
-                        font = jostFont
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.titleSmall,
                     )
 
                     if (settingState.value == SettingGridState.INSIDE_CATEGORY) {
                         FlexibleIcon(
                             modifier = Modifier.align(TopEnd).padding(6.dp),
-                            icon = Icons.AutoMirrored.Filled.Redo, size = 32, shadowColors = listOf(Color.DarkGray),
+                            icon = Icons.AutoMirrored.Filled.Redo, size = 32,
                             onClick = { settingState.value = SettingGridState.NAVIGATING_CATEGORIES }
                         )
                     }

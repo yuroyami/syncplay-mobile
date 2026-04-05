@@ -42,7 +42,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.LocalRoomViewmodel
-import app.uicomponents.FlexibleText
 import app.uicomponents.gradientOverlay
 import app.utils.timestampFromMillis
 import kotlinx.coroutines.Dispatchers
@@ -158,22 +157,18 @@ fun RoomSeekbar(modifier: Modifier) {
                     }
 
                     if (!isSliderBeingDragged) {
-                        //Current video position text
-                        FlexibleText(
+                        Text(
                             modifier = Modifier.alpha(0.85f).padding(horizontal = 8.dp).align(CenterStart),
                             text = currentTimeText,
-                            size = 11f,
-                            fillingColors = listOf(Color.Black),
-                            //strokeColors = listOf(Color.Black)
+                            fontSize = 11.sp,
+                            color = Color.Black,
                         )
 
-                        //Full video time text
-                        FlexibleText(
+                        Text(
                             modifier = Modifier.alpha(0.85f).padding(horizontal = 8.dp).align(Alignment.CenterEnd),
                             text = fullTimeText,
-                            size = 11f,
-                            fillingColors = listOf(Color.Black),
-                            //strokeColors = listOf(Color.Black)
+                            fontSize = 11.sp,
+                            color = Color.Black,
                         )
                     }
                 }

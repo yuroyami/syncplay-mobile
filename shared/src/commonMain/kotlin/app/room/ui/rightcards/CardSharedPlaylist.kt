@@ -174,20 +174,20 @@ object CardSharedPlaylist {
         /* Now to the actual content in the card */
         val uiOpacity by viewmodel.uiState.uiOpacity.collectAsState()
         Card(
-            shape = RoundedCornerShape(8.dp),
-            border = BorderStroke(width = Dp.Hairline, brush = Brush.linearGradient(colors = flexibleGradient)),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(uiOpacity)),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(uiOpacity)),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
         ) {
             Column(modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.SpaceEvenly,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 /* Card title */
-                FlexibleText(
+                Text(
                     text = stringResource(Res.string.room_shared_playlist),
-                    fillingColors = flexibleGradient,
-                    size = 17f,
-                    font = jostFont
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(vertical = 8.dp)
                 )
 
                 /* The actual shared playlist */
@@ -204,7 +204,7 @@ object CardSharedPlaylist {
                                 .padding(horizontal = 5.dp)
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
-                                    indication = ripple(color = Theming.SP_ORANGE)
+                                    indication = ripple(color = MaterialTheme.colorScheme.primary)
                                 ) { itempopup.value = true },
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -223,12 +223,13 @@ object CardSharedPlaylist {
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(vertical = 4.dp),
-                                    text = item, maxLines = 1, fontSize = 11.sp, color = Color.LightGray
+                                    text = item, maxLines = 1, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
 
                             DropdownMenu(
-                                modifier = Modifier.background(color = Color.DarkGray),
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                shape = RoundedCornerShape(12.dp),
                                 expanded = itempopup.value,
                                 properties = PopupProperties(
                                     dismissOnBackPress = true,
@@ -237,19 +238,17 @@ object CardSharedPlaylist {
                                 ),
                                 onDismissRequest = { itempopup.value = false }) {
 
-                                FlexibleText(
-                                    fillingColors = Theming.SP_GRADIENT,
-                                    strokeColors = listOf(Color.Black),
-                                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                                Text(
+                                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 8.dp, vertical = 4.dp),
                                     text = stringResource(Res.string.room_shared_playlist_item_actions),
-                                    size = 12f,
-                                    font = Font(Res.font.Directive4_Regular)
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.primary,
                                 )
 
                                 //Item Action: Play
                                 DropdownMenuItem(
-                                    text = { Text(color = Color.LightGray, text = stringResource(Res.string.play)) },
-                                    leadingIcon = { Icon(imageVector = Icons.Default.PlayCircle, "", tint = Color.LightGray) },
+                                    text = { Text(text = stringResource(Res.string.play)) },
+                                    leadingIcon = { Icon(imageVector = Icons.Default.PlayCircle, "") },
                                     onClick = {
                                         playlist.sendPlaylistSelection(index)
                                         itempopup.value = false
@@ -258,8 +257,8 @@ object CardSharedPlaylist {
 
                                 //Item Action: Delete
                                 DropdownMenuItem(
-                                    text = { Text(color = Color.LightGray, text = stringResource(Res.string.delete)) },
-                                    leadingIcon = { Icon(imageVector = Icons.Default.Delete, "", tint = Color.LightGray) },
+                                    text = { Text(text = stringResource(Res.string.delete)) },
+                                    leadingIcon = { Icon(imageVector = Icons.Default.Delete, "") },
                                     onClick = {
                                         playlist.deleteItemFromPlaylist(index)
                                         itempopup.value = false
@@ -271,10 +270,8 @@ object CardSharedPlaylist {
 
                         if (index < viewmodel.session.sharedPlaylist.lastIndex)
                             HorizontalDivider(
-                                modifier = Modifier
-                                    .gradientOverlay()
-                                    .alpha(0.7f), thickness = (0.5).dp,
-                                color = Color.Black
+                                thickness = 0.5.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                             )
                     }
                 }
@@ -321,7 +318,8 @@ object CardSharedPlaylist {
                         )
 
                         DropdownMenu(
-                            modifier = Modifier.background(color = Color.DarkGray),
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            shape = RoundedCornerShape(12.dp),
                             expanded = sharedplaylistOverflowState.value,
                             properties = PopupProperties(
                                 dismissOnBackPress = true,
@@ -330,13 +328,11 @@ object CardSharedPlaylist {
                             ),
                             onDismissRequest = { sharedplaylistOverflowState.value = !sharedplaylistOverflowState.value }) {
 
-                            FlexibleText(
-                                fillingColors = flexibleGradient,
-                                strokeColors = listOf(Color.Black),
-                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                            Text(
+                                modifier = Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 8.dp, vertical = 4.dp),
                                 text = stringResource(Res.string.room_shared_playlist_actions),
-                                size = 13f,
-                                font = jostFont
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary,
                             )
 
                             val txtsize = 10f
@@ -346,11 +342,10 @@ object CardSharedPlaylist {
                                 text = {
                                     Text(
                                         fontSize = txtsize.sp,
-                                        color = Color.LightGray,
                                         text = stringResource(Res.string.room_shared_playlist_button_shuffle)
                                     )
                                 },
-                                leadingIcon = { Icon(imageVector = Icons.Filled.Shuffle, "", tint = Color.LightGray) },
+                                leadingIcon = { Icon(imageVector = Icons.Filled.Shuffle, "") },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
                                     scope.launch { playlist.shuffle(false) }
@@ -362,11 +357,10 @@ object CardSharedPlaylist {
                                 text = {
                                     Text(
                                         fontSize = txtsize.sp,
-                                        color = Color.LightGray,
                                         text = stringResource(Res.string.room_shared_playlist_button_shuffle_rest)
                                     )
                                 },
-                                leadingIcon = { Icon(imageVector = Icons.Filled.Shuffle, "", tint = Color.LightGray) },
+                                leadingIcon = { Icon(imageVector = Icons.Filled.Shuffle, "") },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
                                     scope.launch {
@@ -375,18 +369,17 @@ object CardSharedPlaylist {
                                 }
                             )
 
-                            HorizontalDivider(thickness = (0.5).dp, color = Color.LightGray)
+                            HorizontalDivider(thickness = (0.5).dp, color = MaterialTheme.colorScheme.outlineVariant)
 
                             //Shared Playlist Action: Add file(s)
                             DropdownMenuItem(
                                 text = {
                                     Text(
                                         fontSize = txtsize.sp,
-                                        color = Color.LightGray,
-                                        text = stringResource(Res.string.room_shared_playlist_button_add_file)
+                                                                                text = stringResource(Res.string.room_shared_playlist_button_add_file)
                                     )
                                 },
-                                leadingIcon = { Icon(imageVector = Icons.AutoMirrored.Filled.NoteAdd, "", tint = Color.LightGray) },
+                                leadingIcon = { Icon(imageVector = Icons.AutoMirrored.Filled.NoteAdd, "") },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
                                     mediaFilePicker.launch()
@@ -398,11 +391,10 @@ object CardSharedPlaylist {
                                 text = {
                                     Text(
                                         fontSize = txtsize.sp,
-                                        color = Color.LightGray,
-                                        text = stringResource(Res.string.room_shared_playlist_button_add_url)
+                                                                                text = stringResource(Res.string.room_shared_playlist_button_add_url)
                                     )
                                 },
-                                leadingIcon = { Icon(imageVector = Icons.Filled.AddLink, "", tint = Color.LightGray) },
+                                leadingIcon = { Icon(imageVector = Icons.Filled.AddLink, "") },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
                                     addUrlsPopupState.value = true
@@ -414,29 +406,27 @@ object CardSharedPlaylist {
                                 text = {
                                     Text(
                                         fontSize = txtsize.sp,
-                                        color = Color.LightGray,
-                                        text = stringResource(Res.string.room_shared_playlist_button_add_folder)
+                                                                                text = stringResource(Res.string.room_shared_playlist_button_add_folder)
                                     )
                                 },
-                                leadingIcon = { Icon(imageVector = Icons.Filled.CreateNewFolder, "", tint = Color.LightGray) },
+                                leadingIcon = { Icon(imageVector = Icons.Filled.CreateNewFolder, "") },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
                                     mediaDirectoryPicker.launch()
                                 }
                             )
 
-                            HorizontalDivider(thickness = (0.5).dp, color = Color.LightGray)
+                            HorizontalDivider(thickness = (0.5).dp, color = MaterialTheme.colorScheme.outlineVariant)
 
                             //Shared Playlist Action: Import playlist file (txt)
                             DropdownMenuItem(
                                 text = {
                                     Text(
                                         fontSize = txtsize.sp,
-                                        color = Color.LightGray,
-                                        text = stringResource(Res.string.room_shared_playlist_button_playlist_import)
+                                                                                text = stringResource(Res.string.room_shared_playlist_button_playlist_import)
                                     )
                                 },
-                                leadingIcon = { Icon(imageVector = Icons.Filled.Download, "", tint = Color.LightGray) },
+                                leadingIcon = { Icon(imageVector = Icons.Filled.Download, "") },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
                                     playlistLoadPicker.launch()
@@ -448,11 +438,10 @@ object CardSharedPlaylist {
                                 text = {
                                     Text(
                                         fontSize = txtsize.sp,
-                                        color = Color.LightGray,
-                                        text = stringResource(Res.string.room_shared_playlist_button_playlist_import_n_shuffle)
+                                                                                text = stringResource(Res.string.room_shared_playlist_button_playlist_import_n_shuffle)
                                     )
                                 },
-                                leadingIcon = { Icon(imageVector = Icons.Filled.Download, "", tint = Color.LightGray) },
+                                leadingIcon = { Icon(imageVector = Icons.Filled.Download, "") },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
                                     playlistLoadPicker.launch()
@@ -465,11 +454,10 @@ object CardSharedPlaylist {
                                 text = {
                                     Text(
                                         fontSize = txtsize.sp,
-                                        color = Color.LightGray,
-                                        text = stringResource(Res.string.room_shared_playlist_button_playlist_export)
+                                                                                text = stringResource(Res.string.room_shared_playlist_button_playlist_export)
                                     )
                                 },
-                                leadingIcon = { Icon(imageVector = Icons.Filled.Save, "", tint = Color.LightGray) },
+                                leadingIcon = { Icon(imageVector = Icons.Filled.Save, "") },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
                                     if (viewmodel.session.sharedPlaylist.isEmpty()) {
@@ -484,30 +472,29 @@ object CardSharedPlaylist {
                                 }
                             )
 
-                            HorizontalDivider(thickness = (0.5).dp, color = Color.LightGray)
+                            HorizontalDivider(thickness = (0.5).dp, color = MaterialTheme.colorScheme.outlineVariant)
 
                             //Shared Playlist Action: Set Media Directories
                             DropdownMenuItem(
                                 text = {
                                     Text(
                                         fontSize = txtsize.sp,
-                                        color = Color.LightGray,
-                                        text = stringResource(Res.string.room_shared_playlist_button_set_media_directories)
+                                                                                text = stringResource(Res.string.room_shared_playlist_button_set_media_directories)
                                     )
                                 },
-                                leadingIcon = { Icon(imageVector = Icons.Filled.Folder, "", tint = Color.LightGray) },
+                                leadingIcon = { Icon(imageVector = Icons.Filled.Folder, "") },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
                                     mediaDirsPopupState.value = true
                                 }
                             )
 
-                            HorizontalDivider(thickness = (0.5).dp, color = Color.LightGray)
+                            HorizontalDivider(thickness = (0.5).dp, color = MaterialTheme.colorScheme.outlineVariant)
 
                             //Shared Playlist Action: Clear playlist
                             DropdownMenuItem(
                                 text = { Text(fontSize = txtsize.sp, color = Color.LightGray, text = stringResource(Res.string.room_shared_playlist_clear_playlist)) },
-                                leadingIcon = { Icon(imageVector = Icons.Filled.ClearAll, "", tint = Color.LightGray) },
+                                leadingIcon = { Icon(imageVector = Icons.Filled.ClearAll, "") },
                                 onClick = {
                                     sharedplaylistOverflowState.value = false
                                     playlist.clearPlaylist()
@@ -540,11 +527,10 @@ object CardSharedPlaylist {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 /* The title */
-                FlexibleText(
+                Text(
                     text = stringResource(Res.string.room_shared_playlist_add_url),
-                    strokeColors = listOf(Color.Black),
-                    size = 17f,
-                    font = jostFont
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
                 )
 
                 /* Title's subtext */
@@ -564,12 +550,10 @@ object CardSharedPlaylist {
                     shape = RoundedCornerShape(16.dp),
                     value = urls.value,
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.DarkGray,
-                        unfocusedContainerColor = Color.DarkGray,
-                        disabledContainerColor = Color.DarkGray,
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent,
                     ),
                     trailingIcon = {
                         IconButton(onClick = {
@@ -583,9 +567,7 @@ object CardSharedPlaylist {
                     },
                     onValueChange = { urls.value = it },
                     textStyle = TextStyle(
-                        brush = Brush.linearGradient(
-                            colors = Theming.SP_GRADIENT
-                        ),
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontFamily = FontFamily(helveticaFont),
                         fontSize = 16.sp,
                     ),
@@ -598,7 +580,6 @@ object CardSharedPlaylist {
                 /* Ok button */
                 Button(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    border = BorderStroke(width = 1.dp, color = Color.Black),
                     onClick = {
                         visibilityState.value = false
 
