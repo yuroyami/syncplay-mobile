@@ -6,6 +6,8 @@ import androidx.compose.ui.platform.ClipEntry
 import app.delegato
 import app.player.PlayerEngine
 import app.player.avplayer.AVPlayerEngine
+import app.player.mpv.MpvKitEngine
+import app.player.mpv.instantiateMpvKitPlayer
 import app.player.vlc.VlcKitEngine
 import app.preferences.Preferences.NETWORK_ENGINE
 import app.preferences.value
@@ -31,7 +33,11 @@ import kotlin.native.ref.WeakReference
 
 actual val platform: Platform = Platform.IOS
 
-actual val availablePlatformPlayerEngines: List<PlayerEngine> = listOf(AVPlayerEngine, VlcKitEngine)
+actual val availablePlatformPlayerEngines: List<PlayerEngine> = buildList {
+    add(AVPlayerEngine)
+    add(VlcKitEngine)
+    if (instantiateMpvKitPlayer != null) add(MpvKitEngine)
+}
 
 actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {
     val preferredEngine = NETWORK_ENGINE.value()

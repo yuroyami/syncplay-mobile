@@ -32,6 +32,12 @@ struct iOSApp: App {
         SwiftNioNetworkManagerKt.instantiateSwiftNioNetworkManager = { (roomViewmodel: RoomViewmodel) -> NetworkManager in
             return SwiftNioNetworkManager(viewmodel: roomViewmodel) as NetworkManager
         }
+
+        // Bridge MPVKit player to Kotlin common code
+        MpvKitBridgeKt.instantiateMpvKitPlayer = { (viewmodel: RoomViewmodel) -> PlayerImpl in
+            let bridge = MpvKitBridgeImpl()
+            return MpvKitImpl(viewmodel: viewmodel, bridge: bridge)
+        }
     }
 
     /**
