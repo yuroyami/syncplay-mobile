@@ -32,6 +32,8 @@
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
 		2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
+		FA34718F2F85BF5A00698C93 /* MPVKit-GPL in Frameworks */ = {isa = PBXBuildFile; productRef = FA34718E2F85BF5A00698C93 /* MPVKit-GPL */; };
+		FA3471912F85C0AB00698C93 /* MpvKitBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA3471902F85C0AB00698C93 /* MpvKitBridge.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -64,6 +66,7 @@
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		D3A569DEDB2095539D3C35C7 /* Pods-iosApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iosApp.debug.xcconfig"; path = "Target Support Files/Pods-iosApp/Pods-iosApp.debug.xcconfig"; sourceTree = "<group>"; };
 		E94BC4DE8C9E41F2FD82ABC4 /* Pods_iosApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_iosApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		FA3471902F85C0AB00698C93 /* MpvKitBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MpvKitBridge.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -80,6 +83,7 @@
 				04EE38EC2BC00C5100E830A3 /* NIOExtras in Frameworks */,
 				04BF80022B9704B9002E2EDE /* AudioToolbox.framework in Frameworks */,
 				0404ED262BB9374F00FCDAB5 /* NIOEmbedded in Frameworks */,
+				FA34718F2F85BF5A00698C93 /* MPVKit-GPL in Frameworks */,
 				0404ED202BB9374F00FCDAB5 /* NIO in Frameworks */,
 				0404ED222BB9374F00FCDAB5 /* NIOConcurrencyHelpers in Frameworks */,
 				0404ED282BB9374F00FCDAB5 /* NIOFoundationCompat in Frameworks */,
@@ -152,6 +156,7 @@
 		7555FF7D242A565900829871 /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
+				FA3471902F85C0AB00698C93 /* MpvKitBridge.swift */,
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
 				7555FF8C242A565B00829871 /* Info.plist */,
 				2152FB032600AC8F00CF470E /* iOSApp.swift */,
@@ -205,6 +210,7 @@
 				0404ED382BB96D4C00FCDAB5 /* NIOSSL */,
 				04FEEA392BBD821400E9AC8F /* NIOTransportServices */,
 				04EE38EB2BC00C5100E830A3 /* NIOExtras */,
+				FA34718E2F85BF5A00698C93 /* MPVKit-GPL */,
 			);
 			productName = iosApp;
 			productReference = 7555FF7B242A565900829871 /* iosApp.app */;
@@ -239,6 +245,7 @@
 				0404ED372BB96D4C00FCDAB5 /* XCRemoteSwiftPackageReference "swift-nio-ssl" */,
 				04FEEA382BBD821400E9AC8F /* XCRemoteSwiftPackageReference "swift-nio-transport-services" */,
 				04EE38EA2BC00C5100E830A3 /* XCRemoteSwiftPackageReference "swift-nio-extras" */,
+				FA34718D2F85BF5A00698C93 /* XCRemoteSwiftPackageReference "MPVKit" */,
 			);
 			productRefGroup = 7555FF7C242A565900829871 /* Products */;
 			projectDirPath = "";
@@ -293,9 +300,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-iosApp/Pods-iosApp-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-iosApp/Pods-iosApp-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -310,9 +321,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-iosApp/Pods-iosApp-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-iosApp/Pods-iosApp-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -327,6 +342,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */,
+				FA3471912F85C0AB00698C93 /* MpvKitBridge.swift in Sources */,
 				045FEB1D2B91A34200F9C842 /* SyncplayScreen.swift in Sources */,
 				0404ED362BB9379800FCDAB5 /* SwiftNioNetworkManager.swift in Sources */,
 			);
@@ -561,6 +577,14 @@
 				minimumVersion = 1.20.1;
 			};
 		};
+		FA34718D2F85BF5A00698C93 /* XCRemoteSwiftPackageReference "MPVKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mpvkit/MPVKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.41.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -633,6 +657,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 04FEEA382BBD821400E9AC8F /* XCRemoteSwiftPackageReference "swift-nio-transport-services" */;
 			productName = NIOTransportServices;
+		};
+		FA34718E2F85BF5A00698C93 /* MPVKit-GPL */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA34718D2F85BF5A00698C93 /* XCRemoteSwiftPackageReference "MPVKit" */;
+			productName = "MPVKit-GPL";
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

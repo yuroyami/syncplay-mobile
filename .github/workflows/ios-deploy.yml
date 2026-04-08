@@ -1,0 +1,120 @@
+name: iOS Build and Deploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  cleanup-certificates:
+    uses: ./.github/workflows/ios_revoke_certs.yml
+    secrets:
+      APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+
+  build-and-deploy:
+    needs: cleanup-certificates
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Clean CocoaPods cache
+        working-directory: ./iosApp
+        run: |
+          rm -rf Podfile.lock
+          rm -rf Pods
+          pod cache clean --all
+
+      - name: Update CocoaPods repo
+        run: pod repo update
+
+      - name: Build shared framework
+        run: ./gradlew :shared:podPublishXCFramework
+
+      - name: Install CocoaPods dependencies
+        working-directory: ./iosApp
+        run: pod install --repo-update
+
+      - name: Build iOS App
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+        run: |
+          # Save API Key for xcodebuild authentication
+          API_KEY_PATH=$RUNNER_TEMP/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}.p8
+          echo -n "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 --decode > $API_KEY_PATH
+
+          # Create App Store Connect API Key directory
+          mkdir -p ~/private_keys
+          cp $API_KEY_PATH ~/private_keys/
+
+          xcodebuild \
+            -workspace iosApp/iosApp.xcworkspace \
+            -scheme iosApp \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath $RUNNER_TEMP/iosApp.xcarchive \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}.p8 \
+            -authenticationKeyID ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }} \
+            -authenticationKeyIssuerID ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }} \
+            CODE_SIGN_STYLE=Automatic \
+            DEVELOPMENT_TEAM=B5573QN48P \
+            clean archive
+
+      - name: Export IPA
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath $RUNNER_TEMP/iosApp.xcarchive \
+            -exportOptionsPlist .github/workflows/ExportOptions.plist \
+            -exportPath $RUNNER_TEMP/build \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}.p8 \
+            -authenticationKeyID ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }} \
+            -authenticationKeyIssuerID ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+
+      - name: Verify archive signing
+        run: |
+          APP_PATH=$(ls $RUNNER_TEMP/iosApp.xcarchive/Products/Applications)
+          echo "App found: $APP_PATH"
+
+          if [ -f "$RUNNER_TEMP/iosApp.xcarchive/Products/Applications/$APP_PATH/embedded.mobileprovision" ]; then
+            echo "✅ Archive is SIGNED"
+            codesign -dvv "$RUNNER_TEMP/iosApp.xcarchive/Products/Applications/$APP_PATH" 2>&1 || true
+          else
+            echo "❌ Archive is NOT signed"
+            exit 1
+          fi
+
+      - name: Upload to TestFlight
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+        run: |
+          API_KEY_PATH=$RUNNER_TEMP/AuthKey.p8
+          echo -n "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 --decode > $API_KEY_PATH
+
+          xcrun altool --upload-app \
+            --type ios \
+            --file $RUNNER_TEMP/build/*.ipa \
+            --apiKey $APP_STORE_CONNECT_API_KEY_ID \
+            --apiIssuer $APP_STORE_CONNECT_ISSUER_ID \
+            --apiPrivateKey $API_KEY_PATH

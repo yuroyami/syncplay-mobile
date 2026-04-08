@@ -420,13 +420,16 @@ class MpvKitBridgeImpl: MpvKitPlayerBridge, @unchecked Sendable {
     /// Execute an mpv command from a string array.
     private func command(_ args: [String]) {
         guard let ctx = mpv else { return }
-        var cargs = args.map { strdup($0) }
+        // Build a null-terminated array of C strings
+        var cargs: [UnsafeMutablePointer<CChar>?] = args.map { strdup($0) }
         cargs.append(nil)
-        mpv_command(ctx, &cargs)
-        // Free the duplicated strings
-        for ptr in cargs {
-            free(ptr)
+        // mpv_command expects UnsafePointer<UnsafePointer<CChar>?> — bridge via withUnsafeBufferPointer
+        cargs.withUnsafeMutableBufferPointer { buffer in
+            buffer.baseAddress?.withMemoryRebound(to: UnsafePointer<CChar>?.self, capacity: buffer.count) { ptr in
+                mpv_command(ctx, ptr)
+            }
         }
+        for ptr in cargs { free(ptr) }
     }
 
     /// Get a string property from mpv. Returns nil if unavailable.
