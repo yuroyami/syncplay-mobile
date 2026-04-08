@@ -40,6 +40,12 @@ jobs:
       - name: Update CocoaPods repo
         run: pod repo update
 
+      - name: Create local.properties
+        run: |
+          cat > local.properties << EOF
+          yuroyami.keyKlipyApi=${{ secrets.KLIPY_API_KEY }}
+          EOF
+
       - name: Build shared framework
         run: ./gradlew :shared:podPublishXCFramework
 

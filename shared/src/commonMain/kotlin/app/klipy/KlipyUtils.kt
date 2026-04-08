@@ -21,7 +21,7 @@ import kotlinx.serialization.json.jsonPrimitive
  * Supports searching for GIFs and stickers and returns preview/full-size URLs.
  */
 object KlipyUtils {
-    private const val BASE_URL = "https://api.klipy.com/v1/${BuildConfig.KLIPY_API_KEY}/"
+    private val BASE_URL = "https://api.klipy.com/v1/${BuildConfig.KLIPY_API_KEY}/"
 
     private val ktorfit by lazy { Ktorfit.Builder().baseUrl(BASE_URL).build() }
     private val klipy by lazy { ktorfit.createKlipyAPI() }

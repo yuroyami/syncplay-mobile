@@ -35,6 +35,7 @@ jobs:
           yuroyami.keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
           yuroyami.keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
           yuroyami.storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          yuroyami.keyKlipyApi=${{ secrets.KLIPY_API_KEY }}
           EOF
 
       - name: Build Android App Bundle (AAB)
