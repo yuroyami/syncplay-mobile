@@ -46,8 +46,8 @@ jobs:
           yuroyami.keyKlipyApi=${{ secrets.KLIPY_API_KEY }}
           EOF
 
-      - name: Build shared framework
-        run: ./gradlew :shared:podPublishXCFramework
+      - name: Generate dummy framework for CocoaPods
+        run: ./gradlew :shared:generateDummyFramework
 
       - name: Install CocoaPods dependencies
         working-directory: ./iosApp
