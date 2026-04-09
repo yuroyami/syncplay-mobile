@@ -106,6 +106,7 @@ fun ChatTextField(
     val msg by viewmodel.uiState.msg.collectAsState()
     val canSendWithKeyboardOK by MSG_BOX_ACTION.watchPref()
     val gradientBrush = Brush.linearGradient(colors = flexibleGradient)
+    val msgIsNotEmpty by derivedStateOf { msg.isNotEmpty() }
 
     fun send() {
         val msgToSend = msg.replace("\\", "").take(149)
@@ -195,17 +196,20 @@ fun ChatTextField(
 
         /* Clear (X) button */
         IconButton(
-            modifier = Modifier.padding(start = 6.dp),
+            modifier = Modifier.padding(start = 6.dp, top = 4.dp),
+            enabled = msgIsNotEmpty,
             onClick = {
                 viewmodel.uiState.msg.value = ""
                 viewmodel.uiState.gifPanelVisible.value = false
             },
         ) {
-            Icon(
-                imageVector = Icons.Filled.Close,
-                contentDescription = null,
-                modifier = Modifier.gradientOverlay()
-            )
+            if (msgIsNotEmpty) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = null,
+                    modifier = Modifier.gradientOverlay()
+                )
+            }
         }
     }
 }
