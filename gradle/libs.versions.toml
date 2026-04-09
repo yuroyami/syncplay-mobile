@@ -64,6 +64,7 @@ ktor-network = { module = "io.ktor:ktor-network", version.ref = "ktor" }
 ktor-network-tls = { module = "io.ktor:ktor-network-tls", version.ref = "ktor" }
 krypto-digest = { module = "org.kotlincrypto.core:digest", version.ref = "krypto" }
 krypto-md = { module = "org.kotlincrypto.hash:md", version.ref = "krypto" }
+krypto-sha1 = { module = "org.kotlincrypto.hash:sha1", version.ref = "krypto" }
 krypto-sha2 = { module = "org.kotlincrypto.hash:sha2", version.ref = "krypto" }
 datastore = { module = "androidx.datastore:datastore-preferences-core", version.ref = "datastore" }
 filekit = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekit" }
@@ -116,7 +117,7 @@ media3 = [
     "m3-exo", "m3-exo-dash", "m3-exo-hls", "m3-exo-rtsp", "m3-datasource-okhttp",
     "m3-ui", "m3-session", "m3-extractor", "m3-decoder", "m3-datasource", "m3-common"
 ]
-krypto = ["krypto-digest", "krypto-md", "krypto-sha2"]
+krypto = ["krypto-digest", "krypto-md", "krypto-sha1", "krypto-sha2"]
 coil = ["coil-compose", "coil-network-ktor"]
 ktor-client = ["ktor-client-core", "ktor-client-content-negotiation", "ktor-serialization-json"]
 navigation3 = ["navigation3-runtime", "navigation3-ui"]

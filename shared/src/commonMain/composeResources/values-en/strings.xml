@@ -50,6 +50,25 @@
 
     <string name="home_engine_unavailable_error">This engine is unavailable. Did you download the right APK?</string>
 
+    <!-- Server hosting -->
+    <string name="server_host_title">Host Server</string>
+    <string name="server_host_port">Port</string>
+    <string name="server_host_password">Server Password (optional)</string>
+    <string name="server_host_motd">Message of the Day (optional)</string>
+    <string name="server_host_isolate_rooms">Isolate Rooms</string>
+    <string name="server_host_disable_chat">Disable Chat</string>
+    <string name="server_host_disable_ready">Disable Readiness</string>
+    <string name="server_host_start">Start Server</string>
+    <string name="server_host_stop">Stop Server</string>
+    <string name="server_host_status_stopped">Stopped</string>
+    <string name="server_host_status_starting">Starting…</string>
+    <string name="server_host_status_running">Running</string>
+    <string name="server_host_status_error">Error</string>
+    <string name="server_host_clients_connected">%1$d client(s) connected</string>
+    <string name="server_host_server_log">Server Log</string>
+    <string name="server_host_ios_warning">On iOS, the server will stop when the app goes to background.</string>
+    <string name="connect_host_own_server">Host Your Own Server</string>
+
     <!-- String templates (with placeholders... that's why I named them dynamic) -->
     <string name="connect_button_current_engine">Current engine: %1$s</string>
     <string name="room_selected_vid">Selected video file: %1$s</string>

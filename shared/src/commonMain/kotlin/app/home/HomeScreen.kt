@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import app.LocalGlobalViewmodel
+import app.Screen
 import app.home.components.HomeAnimatedEngineButtonGroup
 import app.home.components.HomeTextField
 import app.home.components.HomeTopBar
@@ -93,6 +94,7 @@ import syncplaymobile.shared.generated.resources.connect_username_empty_error
 import syncplaymobile.shared.generated.resources.home_engine_unavailable_error
 import syncplaymobile.shared.generated.resources.home_ip_address
 import syncplaymobile.shared.generated.resources.home_password_if_any
+import syncplaymobile.shared.generated.resources.connect_host_own_server
 import syncplaymobile.shared.generated.resources.home_port
 
 val officialServers = listOf("syncplay.pl:8995", "syncplay.pl:8996", "syncplay.pl:8997", "syncplay.pl:8998", "syncplay.pl:8999")
@@ -223,7 +225,9 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                 onValueChange = {}
                             )
 
-                            val servers = officialServers + stringResource(Res.string.connect_enter_custom_server)
+                            val customServerLabel = stringResource(Res.string.connect_enter_custom_server)
+                            val hostServerLabel = stringResource(Res.string.connect_host_own_server)
+                            val servers = officialServers + customServerLabel
                             ExposedDropdownMenu(
                                 modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
                                 expanded = expanded.value,
@@ -253,6 +257,24 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                         }
                                     )
                                 }
+
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                            Icon(
+                                                imageVector = Icons.Outlined.Lan,
+                                                contentDescription = null,
+                                                tint = Color.White,
+                                                modifier = Modifier.padding(end = 8.dp)
+                                            )
+                                            Text(hostServerLabel, color = Color.White)
+                                        }
+                                    },
+                                    onClick = {
+                                        expanded.value = false
+                                        globalViewmodel.backstack.add(Screen.ServerHost)
+                                    }
+                                )
                             }
                         }
 

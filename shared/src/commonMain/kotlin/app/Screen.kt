@@ -30,4 +30,10 @@ sealed interface Screen : NavKey {
      */
     @Serializable
     data class ThemeCreator(val themeToEdit: SaveableTheme? = null) : Screen
+
+    /**
+     * The screen where user can host a Syncplay server.
+     */
+    @Serializable
+    data object ServerHost : Screen
 }

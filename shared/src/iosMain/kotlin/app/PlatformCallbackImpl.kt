@@ -101,7 +101,15 @@ object ApplePlatformCallback : PlatformCallback {
     }
 
     override fun mediaSessionFinalize() {
-        
+
+    }
+
+    override fun serverServiceStart(port: Int) {
+        // No foreground service on iOS — server runs only while app is in foreground
+    }
+
+    override fun serverServiceStop() {
+        // No-op on iOS
     }
 
     /**

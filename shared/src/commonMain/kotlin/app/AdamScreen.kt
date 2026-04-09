@@ -26,6 +26,8 @@ import app.room.RoomScreenUI
 import app.room.RoomUiStateManager
 import app.room.RoomViewmodel
 import app.room.models.MessagePalette
+import app.server.ServerViewmodel
+import app.server.ui.ServerHostScreenUI
 import app.theme.SaveableTheme
 import app.theme.ThemeCreatorScreenUI
 
@@ -130,6 +132,17 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
                         ThemeCreatorScreenUI(
                             themeToEdit = themeCreator.themeToEdit
                         )
+                    }
+
+                    entry<Screen.ServerHost> {
+                        val viewmodel = viewModel(
+                            key = "server_viewmodel",
+                            modelClass = ServerViewmodel::class,
+                            factory = viewModelFactory {
+                                initializer { ServerViewmodel(backStack = globalviewmodel.backstack) }
+                            }
+                        )
+                        ServerHostScreenUI(viewmodel)
                     }
                 }
             )

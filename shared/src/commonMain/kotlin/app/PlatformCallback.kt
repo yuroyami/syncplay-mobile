@@ -59,6 +59,9 @@ interface PlatformCallback {
     fun mediaSessionInitialize()
     fun mediaSessionFinalize()
 
+    fun serverServiceStart(port: Int)
+    fun serverServiceStop()
+
     /**
      * Called when playback state changes.
      *

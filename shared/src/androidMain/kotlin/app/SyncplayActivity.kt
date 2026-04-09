@@ -31,6 +31,7 @@ import app.home.JoinConfig
 import app.player.Playback
 import app.player.SyncplayMediaSessionService
 import app.player.exo.ExoImpl
+import app.server.SyncplayServerService
 import app.preferences.Preferences.DISPLAY_LANG
 import app.preferences.Preferences.SUBTITLE_SIZE
 import app.preferences.value
@@ -92,6 +93,17 @@ class SyncplayActivity : ComponentActivity() {
 
             override fun mediaSessionFinalize() {
                 stopService(Intent(this@SyncplayActivity, SyncplayMediaSessionService::class.java))
+            }
+
+            override fun serverServiceStart(port: Int) {
+                val intent = Intent(this@SyncplayActivity, SyncplayServerService::class.java).apply {
+                    putExtra(SyncplayServerService.EXTRA_PORT, port)
+                }
+                startForegroundService(intent)
+            }
+
+            override fun serverServiceStop() {
+                stopService(Intent(this@SyncplayActivity, SyncplayServerService::class.java))
             }
 
             /**
