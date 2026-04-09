@@ -9,6 +9,8 @@ import app.protocol.ProtocolManager.Companion.FASTFORWARD_THRESHOLD
 import app.protocol.ProtocolManager.Companion.SLOWDOWN_RATE
 import app.protocol.ProtocolManager.Companion.SLOWDOWN_RESET_THRESHOLD
 import app.protocol.ProtocolManager.Companion.SLOWDOWN_THRESHOLD
+import app.preferences.Preferences
+import app.preferences.value
 import app.protocol.event.RoomCallback
 import app.protocol.event.ClientMessage
 import app.protocol.network.NetworkManager
@@ -146,7 +148,7 @@ data class State(
             }
 
             /* Rewind check if someone is behind */
-            if (diff > protocol.rewindThreshold && doSeek != true /* && rewindOnDesync pref */) {
+            if (diff > protocol.rewindThreshold && doSeek != true && Preferences.SYNC_REWIND.value()) {
                 if (protocol.speedChanged) {
                     withContext(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
                     protocol.speedChanged = false
@@ -155,7 +157,7 @@ data class State(
             }
 
             /* Fast-forward if persistently behind (like PC client's fastforward on desync) */
-            if (diff < -FASTFORWARD_BEHIND_THRESHOLD && doSeek != true) {
+            if (diff < -FASTFORWARD_BEHIND_THRESHOLD && doSeek != true && Preferences.SYNC_FASTFORWARD.value()) {
                 val now = Clock.System.now()
                 if (protocol.behindFirstDetected == null) {
                     protocol.behindFirstDetected = now
@@ -174,12 +176,17 @@ data class State(
 
             /* Slow down to cover time difference (like PC client's _slowDownToCoverTimeDifference) */
             if (doSeek != true && !paused) {
-                if (diff > SLOWDOWN_THRESHOLD && !protocol.speedChanged) {
-                    if (setBy != null && setBy != protocol.session.currentUsername) {
-                        withContext(Dispatchers.Main) { viewmodel.player.setSpeed(SLOWDOWN_RATE) }
-                        protocol.speedChanged = true
+                if (Preferences.SYNC_SLOWDOWN.value()) {
+                    if (diff > SLOWDOWN_THRESHOLD && !protocol.speedChanged) {
+                        if (setBy != null && setBy != protocol.session.currentUsername) {
+                            withContext(Dispatchers.Main) { viewmodel.player.setSpeed(SLOWDOWN_RATE) }
+                            protocol.speedChanged = true
+                        }
+                    } else if (protocol.speedChanged && diff < SLOWDOWN_RESET_THRESHOLD) {
+                        withContext(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
+                        protocol.speedChanged = false
                     }
-                } else if (protocol.speedChanged && diff < SLOWDOWN_RESET_THRESHOLD) {
+                } else if (protocol.speedChanged) {
                     withContext(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
                     protocol.speedChanged = false
                 }
@@ -204,7 +211,11 @@ data class State(
             dispatcher.sendAsync<ClientMessage.State> {
                 serverTime = latencyCalculation
                 this.doSeek = seeked
-                this.position = withContext(Dispatchers.Main.immediate) { viewmodel.player.currentPositionMs().div(1000L) } // if dontSlowDownWithMe useGlobalPosition or else usePlayerPosition
+                this.position = if (Preferences.SYNC_DONT_SLOW_WITH_ME.value()) {
+                    protocol.globalPositionMs.div(1000.0).toLong()
+                } else {
+                    withContext(Dispatchers.Main.immediate) { viewmodel.player.currentPositionMs().div(1000L) }
+                }
                 changeState = if (surelyPausedChanged) 1 else 0
                 play = viewmodel.player.isPlaying()
             }

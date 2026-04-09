@@ -40,7 +40,7 @@ data class JoinConfig(
          * @return The saved JoinConfig if available, otherwise a new default instance
          */
         suspend fun savedConfig(): JoinConfig = withTimeoutOrNull(250.milliseconds) {
-            Preferences.JOIN_CONFIG.value()?.let { Json.Default.decodeFromString<JoinConfig>(it) }
+            Preferences.JOIN_CONFIG.value()?.let { Json.decodeFromString<JoinConfig>(it) }
         } ?: JoinConfig()
     }
 
@@ -56,7 +56,7 @@ data class JoinConfig(
         val saveInfo = Preferences.REMEMBER_INFO.value()
 
         if (saveInfo) {
-            Preferences.JOIN_CONFIG.set(Json.Default.encodeToString(this))
+            Preferences.JOIN_CONFIG.set(Json.encodeToString(this))
         }
     }
 }

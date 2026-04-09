@@ -91,6 +91,14 @@ import syncplaymobile.shared.generated.resources.setting_max_buffer_summary
 import syncplaymobile.shared.generated.resources.setting_max_buffer_title
 import syncplaymobile.shared.generated.resources.setting_min_buffer_summary
 import syncplaymobile.shared.generated.resources.setting_min_buffer_title
+import syncplaymobile.shared.generated.resources.uisetting_sync_dont_slow_with_me_summary
+import syncplaymobile.shared.generated.resources.uisetting_sync_dont_slow_with_me_title
+import syncplaymobile.shared.generated.resources.uisetting_sync_fastforward_summary
+import syncplaymobile.shared.generated.resources.uisetting_sync_fastforward_title
+import syncplaymobile.shared.generated.resources.uisetting_sync_rewind_summary
+import syncplaymobile.shared.generated.resources.uisetting_sync_rewind_title
+import syncplaymobile.shared.generated.resources.uisetting_sync_slowdown_summary
+import syncplaymobile.shared.generated.resources.uisetting_sync_slowdown_title
 import syncplaymobile.shared.generated.resources.setting_network_engine_ktor
 import syncplaymobile.shared.generated.resources.setting_network_engine_netty
 import syncplaymobile.shared.generated.resources.setting_network_engine_summary
@@ -370,6 +378,28 @@ object Preferences {
         summary = Res.string.setting_tls_summary
         summaryFormatArgs = arrayOf(appName)
         icon = Icons.Filled.Key
+    }
+
+    /** ------------ Sync Mechanisms (In-Room) -------------*/
+    val SYNC_FASTFORWARD = Pref("pref_inroom_sync_fastforward", true) {
+        title = Res.string.uisetting_sync_fastforward_title
+        summary = Res.string.uisetting_sync_fastforward_summary
+        icon = Icons.Filled.FastForward
+    }
+    val SYNC_SLOWDOWN = Pref("pref_inroom_sync_slowdown", true) {
+        title = Res.string.uisetting_sync_slowdown_title
+        summary = Res.string.uisetting_sync_slowdown_summary
+        icon = Icons.Filled.SlowMotionVideo
+    }
+    val SYNC_REWIND = Pref("pref_inroom_sync_rewind", true) {
+        title = Res.string.uisetting_sync_rewind_title
+        summary = Res.string.uisetting_sync_rewind_summary
+        icon = Icons.Filled.FastRewind
+    }
+    val SYNC_DONT_SLOW_WITH_ME = Pref("pref_inroom_sync_dont_slow_with_me", false) {
+        title = Res.string.uisetting_sync_dont_slow_with_me_title
+        summary = Res.string.uisetting_sync_dont_slow_with_me_summary
+        icon = Icons.Filled.Speed
     }
 
     /** ------------ Chat Colors -------------*/

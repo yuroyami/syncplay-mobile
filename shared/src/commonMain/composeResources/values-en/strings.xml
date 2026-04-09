@@ -292,6 +292,17 @@
     <string name="setting_export_log_title">Export logs</string>
     <string name="setting_export_log_summary">Export app logs from this session as a text file to your device</string>
 
+    <!-- Sync Mechanism Settings -->
+    <string name="uisetting_categ_sync_mechanisms">Sync</string>
+    <string name="uisetting_sync_fastforward_title">Fast-forward if lagging behind</string>
+    <string name="uisetting_sync_fastforward_summary">When you are lagging behind others, your player will fast-forward to catch up. Recommended.</string>
+    <string name="uisetting_sync_slowdown_title">Slow down on minor desync</string>
+    <string name="uisetting_sync_slowdown_summary">When others are slightly behind, your playback speed will be reduced to let them catch up.</string>
+    <string name="uisetting_sync_rewind_title">Rewind on major desync</string>
+    <string name="uisetting_sync_rewind_summary">When others are significantly behind (12+ seconds), your player will rewind to match their position.</string>
+    <string name="uisetting_sync_dont_slow_with_me_title">Never slow down or rewind others</string>
+    <string name="uisetting_sync_dont_slow_with_me_summary">When you are lagging behind, others will not be slowed down or rewound to match you. Experimental.</string>
+
     <!-- UI Settings Categories -->
     <string name="uisetting_categ_chat_colors">Chat colors</string>
     <string name="uisetting_categ_player_settings">Player settings</string>

@@ -50,6 +50,10 @@ import app.preferences.Preferences.NETWORK_ENGINE
 import app.preferences.Preferences.NEVER_SHOW_TIPS
 import app.preferences.Preferences.PAUSE_ON_SOMEONE_LEAVE
 import app.preferences.Preferences.READY_FIRST_HAND
+import app.preferences.Preferences.SYNC_DONT_SLOW_WITH_ME
+import app.preferences.Preferences.SYNC_FASTFORWARD
+import app.preferences.Preferences.SYNC_REWIND
+import app.preferences.Preferences.SYNC_SLOWDOWN
 import app.preferences.Preferences.UNPAUSE_ACTION
 import app.preferences.Preferences.RECONNECTION_INTERVAL
 import app.preferences.Preferences.REMEMBER_INFO
@@ -68,6 +72,7 @@ import syncplaymobile.shared.generated.resources.uisetting_categ_chat_colors
 import syncplaymobile.shared.generated.resources.uisetting_categ_chat_properties
 import syncplaymobile.shared.generated.resources.uisetting_categ_haptics
 import syncplaymobile.shared.generated.resources.uisetting_categ_player_settings
+import syncplaymobile.shared.generated.resources.uisetting_categ_sync_mechanisms
 
 /* Styles */
 val settingGLOBALstyle = SettingStyling(
@@ -125,6 +130,16 @@ val GLOBAL_ADVANCED = SettingCategory(
 ) {
     +EXPORT_LOGS
     +GLOBAL_RESET_DEFAULTS
+}
+
+val INROOM_SYNC = SettingCategory(
+    title = Res.string.uisetting_categ_sync_mechanisms,
+    icon = Icons.Filled.ConnectWithoutContact,
+) {
+    +SYNC_FASTFORWARD
+    +SYNC_SLOWDOWN
+    +SYNC_REWIND
+    +SYNC_DONT_SLOW_WITH_ME
 }
 
 val INROOM_CHATCOLORS = SettingCategory(
@@ -188,4 +203,4 @@ val INROOM_ADVANCED = SettingCategory(
 
 
 val SETTINGS_GLOBAL = listOf(GLOBAL_GENERAL, GLOBAL_LANGUAGE, GLOBAL_SYNCING, GLOBAL_NETWORK, GLOBAL_ADVANCED)
-val SETTINGS_ROOM = listOf(INROOM_CHATCOLORS, INROOM_CHAT_PROPERTIES, INROOM_PLAYER_SETTINGS, INROOM_HAPTICS, INROOM_ADVANCED)
+val SETTINGS_ROOM = listOf(INROOM_SYNC, INROOM_CHATCOLORS, INROOM_CHAT_PROPERTIES, INROOM_PLAYER_SETTINGS, INROOM_HAPTICS, INROOM_ADVANCED)
