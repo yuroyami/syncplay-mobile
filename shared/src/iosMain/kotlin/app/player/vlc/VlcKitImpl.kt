@@ -410,7 +410,6 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     override fun currentPositionMs(): Long {
         // If paused and we have a manual position → use it
         return (pausedSeekPosition ?: vlcPlayer?.time?.value()?.longValue ?: playerManager.timeCurrentMillis.value)
-            .also { Logger.e("VLCTime: $it")}
     }
 
     /**
@@ -519,6 +518,5 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     override fun getCurrentVolume(): Int = vlcPlayer?.audio?.volume ?: 0
     override fun changeCurrentVolume(v: Int) {
         vlcPlayer?.audio?.volume = v.coerceIn(0, MAX_VLC_VOLUME)
-
     }
 }

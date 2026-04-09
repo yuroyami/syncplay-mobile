@@ -34,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
@@ -61,6 +62,8 @@ import app.theme.Theming.flexibleGradient
 import app.uicomponents.FlexibleAnnotatedText
 import app.uicomponents.gradientOverlay
 import app.utils.isEmoji
+import androidx.compose.ui.layout.ContentScale
+import app.uicomponents.AnimatedImage
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_type_message
@@ -251,14 +254,37 @@ fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel) {
                     chatMessage.seen = true
                 }
 
-                FlexibleAnnotatedText(
-                    modifier = Modifier.fillMaxWidth().focusable(enabled = false).clickable(enabled = false) {},
-                    text = chatMessage.factorize(LocalChatPalette.current),
-                    size = /* TODO if (pipModeObserver) 6f else*/ (msgFontSize.value.toFloat()),
-                    shadowColors = if (msgShadowActivate) listOf(Color.Black) else listOf(),
-                    strokeColors = if (msgOutlineActivate) listOf(Color.Black, Color.Black) else listOf(),
-                    strokeWidth = msgOutlineThickness.toFloat()
-                )
+                if (chatMessage.isImageUrl) {
+                    /* Render GIF/image inline with sender tag above */
+                    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+                        FlexibleAnnotatedText(
+                            modifier = Modifier.fillMaxWidth().focusable(enabled = false),
+                            text = chatMessage.factorizeSenderTag(LocalChatPalette.current),
+                            size = (msgFontSize.value.toFloat()),
+                            shadowColors = if (msgShadowActivate) listOf(Color.Black) else listOf(),
+                            strokeColors = if (msgOutlineActivate) listOf(Color.Black, Color.Black) else listOf(),
+                            strokeWidth = msgOutlineThickness.toFloat()
+                        )
+                        AnimatedImage(
+                            url = chatMessage.content,
+                            contentDescription = null,
+                            contentScale = ContentScale.FillWidth,
+                            modifier = Modifier
+                                .fillMaxWidth(0.45f)
+                                .clip(RoundedCornerShape(6.dp))
+                                .padding(start = 4.dp, top = 2.dp)
+                        )
+                    }
+                } else {
+                    FlexibleAnnotatedText(
+                        modifier = Modifier.fillMaxWidth().focusable(enabled = false).clickable(enabled = false) {},
+                        text = chatMessage.factorize(LocalChatPalette.current),
+                        size = /* TODO if (pipModeObserver) 6f else*/ (msgFontSize.value.toFloat()),
+                        shadowColors = if (msgShadowActivate) listOf(Color.Black) else listOf(),
+                        strokeColors = if (msgOutlineActivate) listOf(Color.Black, Color.Black) else listOf(),
+                        strokeWidth = msgOutlineThickness.toFloat()
+                    )
+                }
             }
         }
     }

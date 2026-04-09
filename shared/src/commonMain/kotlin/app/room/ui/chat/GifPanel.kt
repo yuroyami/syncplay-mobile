@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,8 +30,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,12 +42,8 @@ import androidx.compose.ui.unit.sp
 import app.klipy.KlipyMedia
 import app.klipy.KlipyMediaType
 import app.klipy.KlipyUtils
-import coil3.compose.AsyncImage
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
-import androidx.compose.runtime.rememberCoroutineScope
+import app.uicomponents.AnimatedImage
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
@@ -72,7 +69,6 @@ private enum class GifSource { SEARCH, TRENDING, RECENTS }
  * @param onGifSelected Called when a GIF/sticker is tapped, with the full URL
  * @param modifier Layout modifier
  */
-@OptIn(FlowPreview::class)
 @Composable
 fun GifPanel(
     query: String,
@@ -85,54 +81,43 @@ fun GifPanel(
     var isLoading by remember { mutableStateOf(true) }
 
     /**
-     * Debounced search that reacts to query text, media type, or source tab changes.
-     * Fires immediately on first composition (no distinctUntilChanged gate on the initial value).
+     * Single data-fetching effect keyed on query, type, and source.
+     * Automatically switches to SEARCH when the user types, debounces search queries,
+     * and reacts to tab/type changes immediately.
      */
-    LaunchedEffect(selectedType, selectedSource) {
-        /* When switching tabs with a non-empty query, fetch right away before entering the flow */
-        if (selectedSource == GifSource.SEARCH && query.isNotBlank()) {
-            isLoading = true
-            val response = KlipyUtils.search(query = query, type = selectedType)
-            results.clear()
-            results.addAll(response)
-            isLoading = false
-        } else if (selectedSource == GifSource.TRENDING) {
-            isLoading = true
-            val response = KlipyUtils.trending(type = selectedType)
-            results.clear()
-            results.addAll(response)
-            isLoading = false
-        } else if (selectedSource == GifSource.RECENTS) {
-            isLoading = true
-            val response = KlipyUtils.recents(type = selectedType)
-            results.clear()
-            results.addAll(response)
-            isLoading = false
+    LaunchedEffect(query, selectedType, selectedSource) {
+        /* Auto-switch to SEARCH when user types */
+        if (query.isNotBlank() && selectedSource != GifSource.SEARCH) {
+            selectedSource = GifSource.SEARCH
+            return@LaunchedEffect // will re-launch with updated source
         }
 
-        /* Then keep listening for query changes (only matters for SEARCH source) */
-        if (selectedSource == GifSource.SEARCH) {
-            snapshotFlow { query }
-                .debounce(400)
-                .distinctUntilChanged()
-                .collectLatest { q ->
-                    isLoading = true
-                    val response = KlipyUtils.search(query = q, type = selectedType)
-                    results.clear()
-                    results.addAll(response)
-                    isLoading = false
-                }
-        }
-    }
-
-    /* Auto-switch to SEARCH source when the user starts typing */
-    LaunchedEffect(Unit) {
-        snapshotFlow { query }
-            .collect { q ->
-                if (q.isNotBlank() && selectedSource != GifSource.SEARCH) {
-                    selectedSource = GifSource.SEARCH
-                }
+        when (selectedSource) {
+            GifSource.SEARCH -> {
+                if (query.isNotBlank()) delay(400) // debounce typing
+                isLoading = true
+                results.clear()
+                val response = KlipyUtils.search(query = query, type = selectedType)
+                results.addAll(response)
+                isLoading = false
             }
+
+            GifSource.TRENDING -> {
+                isLoading = true
+                results.clear()
+                val response = KlipyUtils.trending(type = selectedType)
+                results.addAll(response)
+                isLoading = false
+            }
+
+            GifSource.RECENTS -> {
+                isLoading = true
+                results.clear()
+                val response = KlipyUtils.recents(type = selectedType)
+                results.addAll(response)
+                isLoading = false
+            }
+        }
     }
 
     Column(
@@ -142,13 +127,12 @@ fun GifPanel(
                 shape = RoundedCornerShape(6.dp)
             )
     ) {
-        /* Tab Row: GIFs | Stickers | Trending | Recents | Klipy logo */
+        /* Row 1: Media type chips (GIFs | Stickers) + Klipy logo */
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 4.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 2.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            /* Media type chips */
             FilterChip(
                 selected = selectedType == KlipyMediaType.GIF,
                 onClick = { selectedType = KlipyMediaType.GIF },
@@ -161,25 +145,39 @@ fun GifPanel(
                 label = { Text(stringResource(Res.string.room_gif_tab_stickers), fontSize = 10.sp) }
             )
 
-            /* Source chips */
-            FilterChip(
-                selected = selectedSource == GifSource.TRENDING,
-                onClick = { selectedSource = GifSource.TRENDING },
-                label = { Text(stringResource(Res.string.room_gif_tab_trending), fontSize = 10.sp) }
-            )
-
-            FilterChip(
-                selected = selectedSource == GifSource.RECENTS,
-                onClick = { selectedSource = GifSource.RECENTS },
-                label = { Text(stringResource(Res.string.room_gif_tab_recents), fontSize = 10.sp) }
-            )
-
             Spacer(Modifier.weight(1f))
 
             Image(
                 imageVector = vectorResource(Res.drawable.powered_by_klipy),
                 contentDescription = "Powered by Klipy",
                 modifier = Modifier.height(16.dp).aspectRatio(640 / 107f)
+            )
+        }
+
+        /* Row 2: Source chips (Trending | Recents) — different highlight colors */
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 2.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            FilterChip(
+                selected = selectedSource == GifSource.TRENDING,
+                onClick = { selectedSource = GifSource.TRENDING },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.tertiary,
+                    selectedLabelColor = MaterialTheme.colorScheme.onTertiary
+                ),
+                label = { Text(stringResource(Res.string.room_gif_tab_trending), fontSize = 10.sp) }
+            )
+
+            FilterChip(
+                selected = selectedSource == GifSource.RECENTS,
+                onClick = { selectedSource = GifSource.RECENTS },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.tertiary,
+                    selectedLabelColor = MaterialTheme.colorScheme.onTertiary
+                ),
+                label = { Text(stringResource(Res.string.room_gif_tab_recents), fontSize = 10.sp) }
             )
         }
 
@@ -212,8 +210,8 @@ fun GifPanel(
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         items(results, key = { it.id }) { media ->
-                            AsyncImage(
-                                model = media.previewUrl,
+                            AnimatedImage(
+                                url = media.previewUrl,
                                 contentDescription = null,
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier

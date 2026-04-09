@@ -28,6 +28,40 @@ data class Message(
     /** indicates that this message has been seen */
     var seen = false
 
+    /** Whether the message content is a GIF/image URL (for inline rendering in chat) */
+    val isImageUrl: Boolean
+        get() = sender != null && content.startsWith("http") && (
+            content.endsWith(".gif", ignoreCase = true) ||
+            content.endsWith(".webp", ignoreCase = true) ||
+            content.endsWith(".png", ignoreCase = true) ||
+            content.endsWith(".jpg", ignoreCase = true) ||
+            content.endsWith(".jpeg", ignoreCase = true)
+        )
+
+    /** Returns an AnnotatedString with only the timestamp + sender tag (no content).
+     *  Used when the message content is rendered as an inline image instead of text. */
+    fun factorizeSenderTag(msgPalette: MessagePalette): AnnotatedString {
+        val builder = AnnotatedString.Builder()
+        builder.append(
+            AnnotatedString(
+                text = if (msgPalette.includeTimestamp) "[$timestamp] " else "- ",
+                spanStyle = SpanStyle(msgPalette.timestampColor)
+            )
+        )
+        if (sender != null) {
+            builder.append(
+                AnnotatedString(
+                    text = "$sender:",
+                    spanStyle = SpanStyle(
+                        color = if (isMainUser) msgPalette.selftagColor else msgPalette.friendtagColor,
+                        fontWeight = FontWeight.Companion.SemiBold
+                    )
+                )
+            )
+        }
+        return builder.toAnnotatedString()
+    }
+
     /** Returns an AnnotatedString to use with Compose Text
      * @param msgPalette A [MessagePalette] that contains colors and properties
      **/
