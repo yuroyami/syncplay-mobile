@@ -4,10 +4,10 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import app.utils.WeakRef
 import app.home.HomeViewmodel
 import app.preferences.Preferences.CURRENT_THEME
 import app.preferences.Preferences.CUSTOM_THEMES
+import app.preferences.Preferences.USER_ID
 import app.preferences.flow
 import app.preferences.set
 import app.preferences.value
@@ -15,6 +15,7 @@ import app.room.RoomViewmodel
 import app.theme.SaveableTheme
 import app.theme.SaveableTheme.Companion.toTheme
 import app.theme.defaultTheme
+import app.utils.WeakRef
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.SharingStarted.Companion.Eagerly
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.uuid.Uuid
 
 /**
  * Application-level ViewModel for managing global Syncplay state.
@@ -110,6 +112,14 @@ class SyncplayViewmodel : ViewModel() {
             if (currentTheme == theme) {
                 changeTheme(customThemes.firstOrNull()?.toTheme() ?: defaultTheme)
             }
+        }
+    }
+
+    init {
+        //Generate a unique ID for the user and persist, to use it for Klipy API only.
+        viewModelScope.launch(Dispatchers.IO) {
+            val userId = USER_ID.value()
+            if (userId == null) USER_ID.set(Uuid.generateV7().toHexString())
         }
     }
 }

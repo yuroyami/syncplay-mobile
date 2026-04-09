@@ -5,22 +5,14 @@ import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.ConnectWithoutContact
 import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.SettingsSuggest
 import androidx.compose.material.icons.filled.Stream
 import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VideoLabel
 import app.preferences.Preferences.AUDIO_LANG
 import app.preferences.Preferences.CC_LANG
 import app.preferences.Preferences.COLOR_ERRORMSG
-import app.preferences.Preferences.HAPTIC_ON_CHAT
-import app.preferences.Preferences.HAPTIC_ON_CONNECTION
-import app.preferences.Preferences.HAPTIC_ON_JOINED
-import app.preferences.Preferences.HAPTIC_ON_LEFT
-import app.preferences.Preferences.HAPTIC_ON_PAUSED
-import app.preferences.Preferences.HAPTIC_ON_PLAYED
-import app.preferences.Preferences.HAPTIC_ON_PLAYLIST
-import app.preferences.Preferences.HAPTIC_ON_SEEKED
 import app.preferences.Preferences.COLOR_FRIENDTAG
 import app.preferences.Preferences.COLOR_SELFTAG
 import app.preferences.Preferences.COLOR_SYSTEMMSG
@@ -33,6 +25,14 @@ import app.preferences.Preferences.ERASE_SHORTCUTS
 import app.preferences.Preferences.EXPORT_LOGS
 import app.preferences.Preferences.FILE_MISMATCH_WARNING
 import app.preferences.Preferences.GLOBAL_RESET_DEFAULTS
+import app.preferences.Preferences.HAPTIC_ON_CHAT
+import app.preferences.Preferences.HAPTIC_ON_CONNECTION
+import app.preferences.Preferences.HAPTIC_ON_JOINED
+import app.preferences.Preferences.HAPTIC_ON_LEFT
+import app.preferences.Preferences.HAPTIC_ON_PAUSED
+import app.preferences.Preferences.HAPTIC_ON_PLAYED
+import app.preferences.Preferences.HAPTIC_ON_PLAYLIST
+import app.preferences.Preferences.HAPTIC_ON_SEEKED
 import app.preferences.Preferences.HASH_FILENAME
 import app.preferences.Preferences.HASH_FILESIZE
 import app.preferences.Preferences.INROOM_RESET_DEFAULTS
@@ -50,18 +50,18 @@ import app.preferences.Preferences.NETWORK_ENGINE
 import app.preferences.Preferences.NEVER_SHOW_TIPS
 import app.preferences.Preferences.PAUSE_ON_SOMEONE_LEAVE
 import app.preferences.Preferences.READY_FIRST_HAND
-import app.preferences.Preferences.SYNC_DONT_SLOW_WITH_ME
-import app.preferences.Preferences.SYNC_FASTFORWARD
-import app.preferences.Preferences.SYNC_REWIND
-import app.preferences.Preferences.SYNC_SLOWDOWN
-import app.preferences.Preferences.UNPAUSE_ACTION
 import app.preferences.Preferences.RECONNECTION_INTERVAL
 import app.preferences.Preferences.REMEMBER_INFO
 import app.preferences.Preferences.ROOM_UI_OPACITY
 import app.preferences.Preferences.SEEK_BACKWARD_JUMP
 import app.preferences.Preferences.SEEK_FORWARD_JUMP
 import app.preferences.Preferences.SUBTITLE_SIZE
+import app.preferences.Preferences.SYNC_DONT_SLOW_WITH_ME
+import app.preferences.Preferences.SYNC_FASTFORWARD
+import app.preferences.Preferences.SYNC_REWIND
+import app.preferences.Preferences.SYNC_SLOWDOWN
 import app.preferences.Preferences.TLS_ENABLE
+import app.preferences.Preferences.UNPAUSE_ACTION
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.settings_categ_advanced
 import syncplaymobile.shared.generated.resources.settings_categ_general
@@ -136,10 +136,10 @@ val INROOM_SYNC = SettingCategory(
     title = Res.string.uisetting_categ_sync_mechanisms,
     icon = Icons.Filled.ConnectWithoutContact,
 ) {
+    +SYNC_DONT_SLOW_WITH_ME
     +SYNC_FASTFORWARD
     +SYNC_SLOWDOWN
     +SYNC_REWIND
-    +SYNC_DONT_SLOW_WITH_ME
 }
 
 val INROOM_CHATCOLORS = SettingCategory(

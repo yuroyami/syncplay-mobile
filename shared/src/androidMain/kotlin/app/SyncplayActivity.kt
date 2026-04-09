@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.app.PictureInPictureParams
 import android.app.RemoteAction
+import android.content.pm.ActivityInfo
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -213,10 +214,29 @@ class SyncplayActivity : ComponentActivity() {
                     initiatePIPmode()
                 }
             }
+
+            override fun onScreenOrientationChanged(portrait: Boolean) {
+                requestedOrientation = if (portrait)
+                    ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+                else
+                    ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            }
         }
 
         /****** Composing UI using Jetpack Compose *******/
         setContent {
+            coil3.compose.setSingletonImageLoaderFactory { context ->
+                coil3.ImageLoader.Builder(context)
+                    .components {
+                        if (Build.VERSION.SDK_INT >= 28) {
+                            add(coil3.gif.AnimatedImageDecoder.Factory())
+                        } else {
+                            add(coil3.gif.GifDecoder.Factory())
+                        }
+                    }
+                    .build()
+            }
+
             LaunchedEffect(null) {
                 WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = false
             }

@@ -135,6 +135,9 @@ kotlin {
         }
 
         androidMain.dependencies {
+            /* Coil GIF decoder for animated GIF support on Android */
+            implementation(libs.coil.gif)
+
             /* Backward compatibility APIs from Google's Jetpack AndroidX */
             /* Contains AndroidX Libs: Core (+CoreSplashScreen +CorePiP), AppCompat, Activity Compose, DocumentFile */
             implementation(libs.bundles.jetpack.androidx.extensions)

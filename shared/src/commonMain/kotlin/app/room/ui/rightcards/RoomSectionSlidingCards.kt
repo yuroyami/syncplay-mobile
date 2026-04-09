@@ -3,7 +3,9 @@ package app.room.ui.rightcards
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -25,10 +27,11 @@ import app.LocalRoomUiState
 import app.LocalRoomViewmodel
 import app.room.ui.bottombar.RoomControlPanelCard
 import app.uicomponents.FreeAnimatedVisibility
+import app.uicomponents.screenHeightPx
 import app.uicomponents.screenWidthPx
 
 @Composable
-fun RoomSectionSlidingCards(modifier: Modifier) {
+fun RoomSectionSlidingCards(modifier: Modifier, isPortrait: Boolean = false) {
     val viewmodel = LocalRoomViewmodel.current
     val cardController = LocalRoomUiState.current
     val stateUserInfo by cardController.tabCardUserInfo.collectAsState()
@@ -39,10 +42,26 @@ fun RoomSectionSlidingCards(modifier: Modifier) {
 
     /* The cards below */
     Column(modifier) {
-        Box(modifier = Modifier.fillMaxWidth(0.37f).weight(1f).align(Alignment.End).padding(4.dp)) {
+        val cardBoxModifier = if (isPortrait) {
+            Modifier.fillMaxWidth().weight(1f).align(Alignment.CenterHorizontally).padding(4.dp)
+        } else {
+            Modifier.fillMaxWidth(0.37f).weight(1f).align(Alignment.End).padding(4.dp)
+        }
+
+        Box(modifier = cardBoxModifier) {
             val screenW = screenWidthPx
-            val inTransition = slideInHorizontally(initialOffsetX = { (screenW * 1.3).toInt() })
-            val outTransition = slideOutHorizontally(targetOffsetX = { (screenW * 1.3).toInt() })
+            val screenH = screenHeightPx
+
+            val inTransition = if (isPortrait) {
+                slideInVertically(initialOffsetY = { -(screenH * 1.3).toInt() })
+            } else {
+                slideInHorizontally(initialOffsetX = { (screenW * 1.3).toInt() })
+            }
+            val outTransition = if (isPortrait) {
+                slideOutVertically(targetOffsetY = { -(screenH * 1.3).toInt() })
+            } else {
+                slideOutHorizontally(targetOffsetX = { (screenW * 1.3).toInt() })
+            }
 
             /** User-info card (toggled on and off) */
             if (!viewmodel.isSoloMode) {
@@ -80,7 +99,8 @@ fun RoomSectionSlidingCards(modifier: Modifier) {
             enter = expandIn(),
             exit = shrinkVertically(),
             visible = stateControlPanel,
-            modifier = Modifier.align(Alignment.End).padding(end = 6.dp)
+            modifier = Modifier.align(if (isPortrait) Alignment.CenterHorizontally else Alignment.End)
+                .padding(end = if (isPortrait) 0.dp else 6.dp)
         ) {
             Surface(
                 modifier = Modifier.height(46.dp)

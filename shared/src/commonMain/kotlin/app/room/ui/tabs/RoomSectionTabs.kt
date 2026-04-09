@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PictureInPicture
+import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.material.icons.filled.SupervisedUserCircle
 import androidx.compose.material.icons.filled.SupervisorAccount
 import androidx.compose.material3.DropdownMenu
@@ -41,6 +42,7 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
 import app.LocalRoomUiState
 import app.LocalRoomViewmodel
+import app.room.RoomUiStateManager.Companion.RoomOrientation
 import app.uicomponents.FlexibleIcon
 import app.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
@@ -50,9 +52,11 @@ import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_overflow_create_managed_room
 import syncplaymobile.shared.generated.resources.room_overflow_identify_as_operator
+import syncplaymobile.shared.generated.resources.room_overflow_landscape_mode
 import syncplaymobile.shared.generated.resources.room_overflow_leave_room
 import syncplaymobile.shared.generated.resources.room_overflow_msghistory
 import syncplaymobile.shared.generated.resources.room_overflow_pip
+import syncplaymobile.shared.generated.resources.room_overflow_portrait_mode
 import syncplaymobile.shared.generated.resources.room_overflow_title
 
 @Composable
@@ -201,6 +205,24 @@ fun RoomTabSection(modifier: Modifier) {
                         onClick = {
                             overflowMenuState.value = false
                             viewmodel.uiState.popupChatHistory.value = true
+                        }
+                    )
+                }
+
+                /* Toggle portrait/landscape mode */
+                if (false) { //TODO
+                    val currentOrientation by cardController.roomOrientation.collectAsState()
+                    val isCurrentlyPortrait = currentOrientation == RoomOrientation.PORTRAIT
+                    RoomOverflowItem(
+                        text = stringResource(
+                            if (isCurrentlyPortrait) Res.string.room_overflow_landscape_mode
+                            else Res.string.room_overflow_portrait_mode
+                        ),
+                        icon = Icons.Filled.ScreenRotation,
+                        onClick = {
+                            overflowMenuState.value = false
+                            cardController.roomOrientation.value = if (isCurrentlyPortrait)
+                                RoomOrientation.LANDSCAPE else RoomOrientation.PORTRAIT
                         }
                     )
                 }

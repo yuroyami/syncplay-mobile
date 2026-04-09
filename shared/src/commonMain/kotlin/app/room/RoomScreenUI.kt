@@ -1,14 +1,17 @@
 package app.room
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutoutPadding
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeGestures
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -25,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import app.LocalGlobalViewmodel
 import app.LocalRoomUiState
+import app.room.RoomUiStateManager.Companion.RoomOrientation
 import app.room.ui.bottombar.BlackContrastUnderlay
 import app.room.ui.bottombar.PopupSeekToPosition.SeekToPositionPopup
 import app.room.ui.bottombar.RoomBottomBarSection
@@ -95,53 +99,117 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                 RoomGestureInterceptor(modifier = Modifier.fillMaxSize())
 
                 val isHUDVisible by viewmodel.uiState.visibleHUD.collectAsState()
+                val orientation by viewmodel.uiState.roomOrientation.collectAsState()
+                val isPortrait = orientation == RoomOrientation.PORTRAIT
+
+                /* Rotate the screen when orientation changes */
+                LaunchedEffect(orientation) {
+                    platformCallback.onScreenOrientationChanged(isPortrait)
+                }
+
                 if (isHUDVisible) {
                     Box(modifier = Modifier.fillMaxSize()) {
                         if (hasVideo) {
                             BlackContrastUnderlay()
                         }
 
-                        if (!isInPipMode && !soloMode) {
-                            /* Chat Section (Top-Left): Input and messages */
-                            RoomChatSection(
-                                modifier = Modifier
-                                    .align(Alignment.TopStart)
-                                    .fillMaxWidth(0.44f)
-                                    .displayCutoutPadding()
-                                    .padding(8.dp)
+                        if (!isPortrait) {
+                            /* ===== LANDSCAPE LAYOUT ===== */
+                            if (!isInPipMode && !soloMode) {
+                                /* Chat Section (Top-Left): Input and messages */
+                                RoomChatSection(
+                                    modifier = Modifier
+                                        .align(Alignment.TopStart)
+                                        .fillMaxWidth(0.44f)
+                                        .displayCutoutPadding()
+                                        .padding(8.dp)
+                                )
 
+                                /* Status Section (Top-Center): Connection info, room name, etc. */
+                                RoomStatusInfoSection(
+                                    modifier = Modifier
+                                        .align(Alignment.TopCenter)
+                                        .fillMaxWidth(0.28f)
+                                        .padding(8.dp)
+                                )
+                            }
+
+                            /* Tab Section (Top-Right): Tab buttons row */
+                            RoomTabSection(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .fillMaxWidth(0.38f)
+                                    .padding(8.dp)
                             )
 
-                            /* Status Section (Top-Center): Connection info, room name, etc. */
-                            RoomStatusInfoSection(
+                            /* Sliding Cards (Right side) */
+                            RoomSectionSlidingCards(
+                                modifier = Modifier
+                                    .align(Alignment.CenterEnd)
+                                    .fillMaxSize()
+                                    .zIndex(10f)
+                                    .padding(
+                                        top = 74.dp,
+                                        bottom = 58.dp,
+                                        end = 6.dp,
+                                    )
+                                    .windowInsetsPadding(WindowInsets.safeGestures.only(WindowInsetsSides.Bottom)),
+                                isPortrait = false
+                            )
+                        } else {
+                            /* ===== PORTRAIT LAYOUT ===== */
+                            /* Top bar: Status info (left) + Tabs (right) */
+                            if (!isInPipMode) {
+                                Row(
+                                    modifier = Modifier
+                                        .align(Alignment.TopCenter)
+                                        .fillMaxWidth()
+                                        .statusBarsPadding()
+                                        .padding(horizontal = 8.dp),
+                                    verticalAlignment = Alignment.Top
+                                ) {
+                                    if (!soloMode) {
+                                        RoomStatusInfoSection(
+                                            modifier = Modifier.weight(1f).padding(top = 8.dp)
+                                        )
+                                    }
+                                    RoomTabSection(
+                                        modifier = Modifier
+                                            .then(if (soloMode) Modifier.fillMaxWidth() else Modifier.weight(1f))
+                                            .padding(top = 0.dp)
+                                    )
+                                }
+                            }
+
+                            /* Sliding Cards (full width, below top bar) */
+                            RoomSectionSlidingCards(
                                 modifier = Modifier
                                     .align(Alignment.TopCenter)
-                                    .fillMaxWidth(0.28f)
-                                    .padding(8.dp)
+                                    .fillMaxSize()
+                                    .zIndex(10f)
+                                    .statusBarsPadding()
+                                    .padding(
+                                        top = 56.dp,
+                                        bottom = 58.dp,
+                                        start = 6.dp,
+                                        end = 6.dp,
+                                    )
+                                    .windowInsetsPadding(WindowInsets.safeGestures.only(WindowInsetsSides.Bottom)),
+                                isPortrait = true
                             )
-                        }
 
-                        /* Tab Section (Top-Right): Tab buttons row */
-                        RoomTabSection(
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .fillMaxWidth(0.38f)
-                                .padding(8.dp)
-                        )
-
-                        /* Sliding Cards (Right side) */
-                        RoomSectionSlidingCards(
-                            modifier = Modifier
-                                .align(Alignment.CenterEnd)
-                                .fillMaxSize()
-                                .zIndex(10f)
-                                .padding(
-                                    top = 74.dp,
-                                    bottom = 58.dp,
-                                    end = 6.dp,
+                            /* Chat Section (full width, above bottom bar) */
+                            if (!isInPipMode && !soloMode) {
+                                RoomChatSection(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomStart)
+                                        .fillMaxWidth()
+                                        .fillMaxHeight(0.3f)
+                                        .padding(start = 8.dp, end = 8.dp, bottom = 58.dp)
+                                        .windowInsetsPadding(WindowInsets.safeGestures.only(WindowInsetsSides.Bottom))
                                 )
-                                .windowInsetsPadding(WindowInsets.safeGestures.only(WindowInsetsSides.Bottom))
-                        )
+                            }
+                        }
 
                         /* Bottom Bar: Playback and advanced controls */
                         RoomBottomBarSection(

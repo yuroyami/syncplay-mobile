@@ -1,71 +1,47 @@
 package app.klipy
 
 import SyncplayMobile.shared.BuildConfig
+import app.klipy.KlipyUtils.trending
+import app.preferences.Preferences.USER_ID
+import app.preferences.value
 import de.jensklingenberg.ktorfit.Ktorfit
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.request.get
-import io.ktor.client.request.parameter
-import io.ktor.client.statement.bodyAsText
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
+import kotlin.uuid.Uuid
 
 /**
  * Client for the Klipy GIF/Sticker API.
  *
- * Supports searching for GIFs and stickers and returns preview/full-size URLs.
+ * Supports searching, trending, and recent items for both GIFs and stickers.
  */
 object KlipyUtils {
-    private val BASE_URL = "https://api.klipy.com/v1/${BuildConfig.KLIPY_API_KEY}/"
-
-    private val ktorfit by lazy { Ktorfit.Builder().baseUrl(BASE_URL).build() }
+    private val BASE_URL = "https://api.klipy.com/api/v1/${BuildConfig.KLIPY_API_KEY}/"
+    val httpClient = HttpClient { install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true; isLenient = true } ) } }
+    private val ktorfit by lazy { Ktorfit.Builder().baseUrl(BASE_URL).httpClient(httpClient).build() }
     private val klipy by lazy { ktorfit.createKlipyAPI() }
-
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-    }
-
-    private val client by lazy {
-        HttpClient {
-            install(ContentNegotiation) {
-                json(json)
-            }
-        }
-    }
+    val customerId by lazy { USER_ID.value() ?: Uuid.generateV4().toHexString() }
 
     /**
      * Searches Klipy for GIFs or stickers.
      *
-     * @param query The search query string
-     * @param type Either [KlipyMediaType.GIF] or [KlipyMediaType.STICKER]
-     * @param limit Maximum number of results to return
-     * @return A list of [KlipyMedia] results, or empty on failure
+     * If the query is blank, returns [trending] results instead.
      */
     suspend fun search(
         query: String,
         type: KlipyMediaType = KlipyMediaType.GIF,
-        limit: Int = 30
+        limit: Int = 24
     ): List<KlipyMedia> {
         if (query.isBlank()) return trending(type, limit)
 
         return try {
-            val endpoint = when (type) {
-                KlipyMediaType.GIF -> "$BASE_URL/gifs/search"
-                KlipyMediaType.STICKER -> "$BASE_URL/stickers/search"
+            val result = when (type) {
+                KlipyMediaType.GIF -> klipy.searchGifs(query = query, perPage = limit, customerId = customerId)
+                KlipyMediaType.STICKER -> klipy.searchStickers(query = query, perPage = limit, customerId = customerId)
             }
-
-            val response = client.get(endpoint) {
-                parameter("q", query)
-                parameter("limit", limit)
-            }
-
-            parseResponse(response.bodyAsText())
+            result.toMediaList(type)
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()
@@ -77,76 +53,71 @@ object KlipyUtils {
      */
     suspend fun trending(
         type: KlipyMediaType = KlipyMediaType.GIF,
-        limit: Int = 30
+        limit: Int = 24
     ): List<KlipyMedia> {
         return try {
-            val endpoint = when (type) {
-                KlipyMediaType.GIF -> "$BASE_URL/gifs/trending"
-                KlipyMediaType.STICKER -> "$BASE_URL/stickers/trending"
+            val result = when (type) {
+                KlipyMediaType.GIF -> klipy.trendingGifs(perPage = limit, customerId = customerId)
+                KlipyMediaType.STICKER -> klipy.trendingStickers(perPage = limit, customerId = customerId)
             }
-
-            val response = client.get(endpoint) {
-                parameter("limit", limit)
-            }
-
-            parseResponse(response.bodyAsText())
+            result.toMediaList(type)
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()
         }
     }
 
-    private fun parseResponse(body: String): List<KlipyMedia> {
+    /**
+     * Fetches recently used/shared GIFs or stickers for this user.
+     */
+    suspend fun recents(
+        type: KlipyMediaType = KlipyMediaType.GIF,
+        limit: Int = 24
+    ): List<KlipyMedia> {
         return try {
-            val root = json.parseToJsonElement(body).jsonObject
-            val results = root["results"]?.jsonArray ?: root["data"]?.jsonArray ?: return emptyList()
-
-            results.mapNotNull { element ->
-                val obj = element.jsonObject
-                val id = obj["id"]?.jsonPrimitive?.content ?: return@mapNotNull null
-
-                // Try to extract media URLs from various response formats
-                val media = obj["media"]?.jsonArray?.firstOrNull()?.jsonObject
-                    ?: obj["images"]?.jsonObject
-
-                val previewUrl = extractUrl(media, "tinygif", "preview", "fixed_width_small")
-                    ?: extractUrl(obj, "preview_url", "thumbnail")
-                    ?: return@mapNotNull null
-
-                val fullUrl = extractUrl(media, "gif", "original", "fixed_width")
-                    ?: extractUrl(obj, "url", "gif_url")
-                    ?: previewUrl
-
-                KlipyMedia(
-                    id = id,
-                    previewUrl = previewUrl,
-                    fullUrl = fullUrl
-                )
+            val result = when (type) {
+                KlipyMediaType.GIF -> klipy.recentGifs(customerId = customerId, perPage = limit)
+                KlipyMediaType.STICKER -> klipy.recentStickers(customerId = customerId, perPage = limit)
             }
+            result.toMediaList(type)
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()
         }
     }
 
-    /** Tries to extract a URL from nested JSON structures with various key patterns */
-    private fun extractUrl(obj: JsonObject?, vararg keys: String): String? {
-        if (obj == null) return null
-        for (key in keys) {
-            // Direct string field
-            obj[key]?.jsonPrimitive?.content?.let { return it }
-            // Nested object with "url" field
-            obj[key]?.jsonObject?.get("url")?.jsonPrimitive?.content?.let { return it }
+    /** Fires a share event so the item appears in the user's recents. */
+    suspend fun trackShare(slug: String, type: KlipyMediaType) {
+        try {
+            when (type) {
+                KlipyMediaType.GIF -> klipy.shareGif(slug)
+                KlipyMediaType.STICKER -> klipy.shareSticker(slug)
+            }
+        } catch (_: Exception) { /* best-effort analytics */ }
+    }
+
+    /** Maps an API response to a flat [KlipyMedia] list. */
+    private fun GifSearchResponse.toMediaList(type: KlipyMediaType): List<KlipyMedia> {
+        return data.data.map { item ->
+            val isSticker = type == KlipyMediaType.STICKER
+            KlipyMedia(
+                id = item.id,
+                slug = item.slug,
+                previewUrl = if (isSticker) item.file.sm.webp.url else item.file.sm.gif.url,
+                fullUrl = if (isSticker) item.file.hd.webp.url else item.file.hd.gif.url,
+                type = type
+            )
         }
-        return null
     }
 }
 
 @Serializable
 data class KlipyMedia(
-    val id: String,
+    val id: Long,
+    val slug: String = "",
     val previewUrl: String,
-    val fullUrl: String
+    val fullUrl: String,
+    val type: KlipyMediaType = KlipyMediaType.GIF
 )
 
 enum class KlipyMediaType {

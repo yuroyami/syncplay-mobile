@@ -49,12 +49,12 @@ import app.theme.Theming
 import app.theme.defaultTheme
 import app.uicomponents.PopupMediaDirs.MediaDirsPopup
 import app.utils.Platform
+import app.utils.appName
 import app.utils.availablePlatformPlayerEngines
 import app.utils.generateTimestampMillis
 import app.utils.get
 import app.utils.logFile
 import app.utils.platform
-import app.utils.appName
 import app.utils.platformCallback
 import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
 import io.github.vinceglb.filekit.dialogs.compose.rememberFileSaverLauncher
@@ -91,14 +91,6 @@ import syncplaymobile.shared.generated.resources.setting_max_buffer_summary
 import syncplaymobile.shared.generated.resources.setting_max_buffer_title
 import syncplaymobile.shared.generated.resources.setting_min_buffer_summary
 import syncplaymobile.shared.generated.resources.setting_min_buffer_title
-import syncplaymobile.shared.generated.resources.uisetting_sync_dont_slow_with_me_summary
-import syncplaymobile.shared.generated.resources.uisetting_sync_dont_slow_with_me_title
-import syncplaymobile.shared.generated.resources.uisetting_sync_fastforward_summary
-import syncplaymobile.shared.generated.resources.uisetting_sync_fastforward_title
-import syncplaymobile.shared.generated.resources.uisetting_sync_rewind_summary
-import syncplaymobile.shared.generated.resources.uisetting_sync_rewind_title
-import syncplaymobile.shared.generated.resources.uisetting_sync_slowdown_summary
-import syncplaymobile.shared.generated.resources.uisetting_sync_slowdown_title
 import syncplaymobile.shared.generated.resources.setting_network_engine_ktor
 import syncplaymobile.shared.generated.resources.setting_network_engine_netty
 import syncplaymobile.shared.generated.resources.setting_network_engine_summary
@@ -112,12 +104,6 @@ import syncplaymobile.shared.generated.resources.setting_playback_buffer_summary
 import syncplaymobile.shared.generated.resources.setting_playback_buffer_title
 import syncplaymobile.shared.generated.resources.setting_ready_firsthand_summary
 import syncplaymobile.shared.generated.resources.setting_ready_firsthand_title
-import syncplaymobile.shared.generated.resources.setting_unpause_action_always
-import syncplaymobile.shared.generated.resources.setting_unpause_action_if_min_users_ready
-import syncplaymobile.shared.generated.resources.setting_unpause_action_if_others_ready
-import syncplaymobile.shared.generated.resources.setting_unpause_action_if_ready
-import syncplaymobile.shared.generated.resources.setting_unpause_action_summary
-import syncplaymobile.shared.generated.resources.setting_unpause_action_title
 import syncplaymobile.shared.generated.resources.setting_remember_join_info_summary
 import syncplaymobile.shared.generated.resources.setting_remember_join_info_title
 import syncplaymobile.shared.generated.resources.setting_resetdefault_dialog
@@ -125,6 +111,12 @@ import syncplaymobile.shared.generated.resources.setting_resetdefault_summary
 import syncplaymobile.shared.generated.resources.setting_resetdefault_title
 import syncplaymobile.shared.generated.resources.setting_tls_summary
 import syncplaymobile.shared.generated.resources.setting_tls_title
+import syncplaymobile.shared.generated.resources.setting_unpause_action_always
+import syncplaymobile.shared.generated.resources.setting_unpause_action_if_min_users_ready
+import syncplaymobile.shared.generated.resources.setting_unpause_action_if_others_ready
+import syncplaymobile.shared.generated.resources.setting_unpause_action_if_ready
+import syncplaymobile.shared.generated.resources.setting_unpause_action_summary
+import syncplaymobile.shared.generated.resources.setting_unpause_action_title
 import syncplaymobile.shared.generated.resources.setting_warn_file_mismatch_summary
 import syncplaymobile.shared.generated.resources.setting_warn_file_mismatch_title
 import syncplaymobile.shared.generated.resources.ui_setting_mpv_debug_summary
@@ -141,6 +133,10 @@ import syncplaymobile.shared.generated.resources.uisetting_custom_seek_amount_su
 import syncplaymobile.shared.generated.resources.uisetting_custom_seek_amount_title
 import syncplaymobile.shared.generated.resources.uisetting_custom_seek_front_summary
 import syncplaymobile.shared.generated.resources.uisetting_custom_seek_front_title
+import syncplaymobile.shared.generated.resources.uisetting_error_color_summary
+import syncplaymobile.shared.generated.resources.uisetting_error_color_title
+import syncplaymobile.shared.generated.resources.uisetting_friend_color_summary
+import syncplaymobile.shared.generated.resources.uisetting_friend_color_title
 import syncplaymobile.shared.generated.resources.uisetting_haptic_on_chat_summary
 import syncplaymobile.shared.generated.resources.uisetting_haptic_on_chat_title
 import syncplaymobile.shared.generated.resources.uisetting_haptic_on_connection_summary
@@ -157,10 +153,6 @@ import syncplaymobile.shared.generated.resources.uisetting_haptic_on_playlist_su
 import syncplaymobile.shared.generated.resources.uisetting_haptic_on_playlist_title
 import syncplaymobile.shared.generated.resources.uisetting_haptic_on_seeked_summary
 import syncplaymobile.shared.generated.resources.uisetting_haptic_on_seeked_title
-import syncplaymobile.shared.generated.resources.uisetting_error_color_summary
-import syncplaymobile.shared.generated.resources.uisetting_error_color_title
-import syncplaymobile.shared.generated.resources.uisetting_friend_color_summary
-import syncplaymobile.shared.generated.resources.uisetting_friend_color_title
 import syncplaymobile.shared.generated.resources.uisetting_human_color_summary
 import syncplaymobile.shared.generated.resources.uisetting_human_color_title
 import syncplaymobile.shared.generated.resources.uisetting_messagery_alpha_summary
@@ -195,6 +187,14 @@ import syncplaymobile.shared.generated.resources.uisetting_subtitle_delay_summar
 import syncplaymobile.shared.generated.resources.uisetting_subtitle_delay_title
 import syncplaymobile.shared.generated.resources.uisetting_subtitle_size_summary
 import syncplaymobile.shared.generated.resources.uisetting_subtitle_size_title
+import syncplaymobile.shared.generated.resources.uisetting_sync_dont_slow_with_me_summary
+import syncplaymobile.shared.generated.resources.uisetting_sync_dont_slow_with_me_title
+import syncplaymobile.shared.generated.resources.uisetting_sync_fastforward_summary
+import syncplaymobile.shared.generated.resources.uisetting_sync_fastforward_title
+import syncplaymobile.shared.generated.resources.uisetting_sync_rewind_summary
+import syncplaymobile.shared.generated.resources.uisetting_sync_rewind_title
+import syncplaymobile.shared.generated.resources.uisetting_sync_slowdown_summary
+import syncplaymobile.shared.generated.resources.uisetting_sync_slowdown_title
 import syncplaymobile.shared.generated.resources.uisetting_system_color_summary
 import syncplaymobile.shared.generated.resources.uisetting_system_color_title
 import syncplaymobile.shared.generated.resources.uisetting_timestamp_color_title
@@ -210,8 +210,8 @@ object Preferences {
     const val SYNKPLAY_PREFS = "syncplayprefs.preferences_pb"
 
     /** ------------ Miscellaneous -------------*/
+    val USER_ID = Pref<String?>("misc_user_id", null)
     val JOIN_CONFIG = Pref<String?>("misc_join_config", null)
-
     val PLAYER_ENGINE = Pref("misc_player_engine", availablePlatformPlayerEngines.first { it.isDefault }.name)
     val GESTURES = Pref("misc_gestures", true)
     val CURRENT_THEME = Pref("misc_current_theme", defaultTheme.asString())

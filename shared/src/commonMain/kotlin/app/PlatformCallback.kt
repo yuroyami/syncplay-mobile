@@ -77,4 +77,11 @@ interface PlatformCallback {
      * @param enable True to enter PiP mode, false to exit
      */
     fun onPictureInPicture(enable: Boolean)
+
+    /**
+     * Called when the user toggles between portrait and landscape mode in the room.
+     *
+     * @param portrait True to switch to portrait orientation, false for landscape
+     */
+    fun onScreenOrientationChanged(portrait: Boolean)
 }
