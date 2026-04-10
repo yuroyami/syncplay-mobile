@@ -302,6 +302,9 @@
     <string name="setting_network_engine_ktor">Ktor (Experimental)</string>
     <string name="setting_export_log_title">Export logs</string>
     <string name="setting_export_log_summary">Export app logs from this session as a text file to your device</string>
+    <string name="setting_clear_logs_title">Clear logs</string>
+    <string name="setting_clear_logs_summary">Delete all stored log files</string>
+    <string name="setting_clear_logs_dialog">Are you sure you want to delete all log files? This cannot be undone.</string>
 
     <!-- Sync Mechanism Settings -->
     <string name="uisetting_categ_sync_mechanisms">Sync</string>

@@ -49,12 +49,14 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.preferences.core.edit
 import app.theme.Theming
 import app.theme.defaultTheme
+import app.preferences.settings.TrustedDomainsPopup
 import app.uicomponents.PopupMediaDirs.MediaDirsPopup
 import app.utils.Platform
 import app.utils.appName
 import app.utils.availablePlatformPlayerEngines
 import app.utils.generateTimestampMillis
 import app.utils.get
+import app.utils.clearLogs
 import app.utils.logFile
 import app.utils.platform
 import app.utils.platformCallback
@@ -80,6 +82,9 @@ import syncplaymobile.shared.generated.resources.setting_display_language_title
 import syncplaymobile.shared.generated.resources.setting_erase_shortcuts_dialog
 import syncplaymobile.shared.generated.resources.setting_erase_shortcuts_summary
 import syncplaymobile.shared.generated.resources.setting_erase_shortcuts_title
+import syncplaymobile.shared.generated.resources.setting_clear_logs_dialog
+import syncplaymobile.shared.generated.resources.setting_clear_logs_summary
+import syncplaymobile.shared.generated.resources.setting_clear_logs_title
 import syncplaymobile.shared.generated.resources.setting_export_log_summary
 import syncplaymobile.shared.generated.resources.setting_export_log_title
 import syncplaymobile.shared.generated.resources.setting_fileinfo_behavior_a
@@ -219,6 +224,57 @@ import syncplaymobile.shared.generated.resources.uisetting_timestamp_title
 import syncplaymobile.shared.generated.resources.uisetting_ui_opacity_summary
 import syncplaymobile.shared.generated.resources.uisetting_ui_opacity_title
 
+/** Common media languages with ISO 639-2 codes for audio/subtitle track selection. */
+private val mediaLanguageEntries = mapOf(
+    "No preference" to "und",
+    "English" to "eng",
+    "Spanish" to "spa",
+    "French" to "fra",
+    "German" to "deu",
+    "Italian" to "ita",
+    "Portuguese" to "por",
+    "Russian" to "rus",
+    "Japanese" to "jpn",
+    "Korean" to "kor",
+    "Chinese" to "zho",
+    "Arabic" to "ara",
+    "Hindi" to "hin",
+    "Turkish" to "tur",
+    "Polish" to "pol",
+    "Dutch" to "nld",
+    "Swedish" to "swe",
+    "Norwegian" to "nor",
+    "Danish" to "dan",
+    "Finnish" to "fin",
+    "Hungarian" to "hun",
+    "Czech" to "ces",
+    "Romanian" to "ron",
+    "Greek" to "ell",
+    "Hebrew" to "heb",
+    "Thai" to "tha",
+    "Vietnamese" to "vie",
+    "Indonesian" to "ind",
+    "Malay" to "msa",
+    "Ukrainian" to "ukr",
+    "Bulgarian" to "bul",
+    "Croatian" to "hrv",
+    "Serbian" to "srp",
+    "Slovak" to "slk",
+    "Slovenian" to "slv",
+    "Catalan" to "cat",
+    "Filipino" to "fil",
+    "Tamil" to "tam",
+    "Telugu" to "tel",
+    "Bengali" to "ben",
+    "Urdu" to "urd",
+    "Persian" to "fas",
+    "Latvian" to "lav",
+    "Lithuanian" to "lit",
+    "Estonian" to "est",
+    "Icelandic" to "isl",
+    "Swahili" to "swa",
+)
+
 /**
  * Centralized preference definitions with type safety
  */
@@ -299,11 +355,19 @@ object Preferences {
         title = Res.string.setting_audio_default_language_title
         summary = Res.string.setting_audio_default_language_summry
         icon = Icons.Filled.SpatialAudio
+
+        extraConfig = PrefExtraConfig.MultiChoice(
+            entries = { mediaLanguageEntries }
+        )
     }
     val CC_LANG = Pref("pref_cc_preferred_lang", "eng") {
         title = Res.string.setting_cc_default_language_title
         summary = Res.string.setting_cc_default_language_summry
         icon = Icons.Filled.ClosedCaptionOff
+
+        extraConfig = PrefExtraConfig.MultiChoice(
+            entries = { mediaLanguageEntries }
+        )
     }
 
     /** ------------ Syncing -------------*/
@@ -402,7 +466,9 @@ object Preferences {
         summary = Res.string.setting_trusted_domains_summary
         icon = Icons.Filled.Web
 
-        extraConfig = PrefExtraConfig.TextField()
+        extraConfig = PrefExtraConfig.ShowComposable(
+            composable = { TrustedDomainsPopup(this) }
+        )
     }
 
     /** ------------ Sync Mechanisms (In-Room) -------------*/
@@ -762,6 +828,17 @@ object Preferences {
                     preferences.clear()
                 }
             }
+        )
+    }
+
+    val CLEAR_LOGS = Pref("log_clear", "") {
+        title = Res.string.setting_clear_logs_title
+        summary = Res.string.setting_clear_logs_summary
+        icon = Icons.Filled.ClearAll
+
+        extraConfig = PrefExtraConfig.YesNoDialog(
+            rationale = Res.string.setting_clear_logs_dialog,
+            onYes = { clearLogs() }
         )
     }
 

@@ -57,13 +57,15 @@ fun loggy(s: Any?) {
     }
 }
 
-/** Reads and returns log file names as a ByteArray (for export). */
+/** Reads and returns all log file contents as a ByteArray (for export). */
 val logFile: ByteArray
     get() = synchronized(logLock) {
         try {
             val logDir = getLogDirectoryPath() ?: return@synchronized ""
             val files = listFiles(logDir).sorted()
-            files.joinToString("\n") { "Log file: $it" }
+            files.joinToString("\n") { fileName ->
+                "=== $fileName ===\n${readFile("$logDir/$fileName")}"
+            }
         } catch (_: Exception) {
             ""
         }

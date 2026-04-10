@@ -185,6 +185,12 @@ actual fun listFiles(directoryPath: String): List<String> {
     }
 }
 
+actual fun readFile(path: String): String {
+    return try {
+        java.io.File(path).readText()
+    } catch (_: Exception) { "" }
+}
+
 actual fun deleteFile(path: String) {
     try {
         java.io.File(path).delete()

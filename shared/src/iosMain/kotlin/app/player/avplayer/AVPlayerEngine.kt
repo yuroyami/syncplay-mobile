@@ -8,6 +8,8 @@ import app.player.PlayerEngine
 import app.player.PlayerImpl
 import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
+import app.player.PlayerImpl.TrackType
+import app.player.models.PlayerOptions
 import app.player.models.Track
 import app.room.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
@@ -296,6 +298,23 @@ object AVPlayerEngine: PlayerEngine {
                         )
                     }
                 }
+            }
+
+            // Auto-select tracks matching preferred language
+            val options = PlayerOptions.get()
+            if (options.audioPreference != "und") {
+                mediafile.tracks.firstOrNull { track ->
+                    track.type == TrackType.AUDIO &&
+                        (track as? AvTrack)?.sOption?.extendedLanguageTag
+                            ?.contains(options.audioPreference, ignoreCase = true) == true
+                }?.let { selectTrack(it, TrackType.AUDIO) }
+            }
+            if (options.ccPreference != "und") {
+                mediafile.tracks.firstOrNull { track ->
+                    track.type == TrackType.SUBTITLE &&
+                        (track as? AvTrack)?.sOption?.extendedLanguageTag
+                            ?.contains(options.ccPreference, ignoreCase = true) == true
+                }?.let { selectTrack(it, TrackType.SUBTITLE) }
             }
         }
 

@@ -211,7 +211,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         val trustedRaw = Preferences.TRUSTED_DOMAINS.value().trim()
         if (trustedRaw.isEmpty()) return true // No restrictions configured
 
-        val trustedDomains = trustedRaw.split(",").map { it.trim().lowercase() }.filter { it.isNotEmpty() }
+        val trustedDomains = trustedRaw.split("\n", ",").map { it.trim().lowercase() }.filter { it.isNotEmpty() }
         if (trustedDomains.isEmpty()) return true
 
         val urlDomain = extractDomain(url)

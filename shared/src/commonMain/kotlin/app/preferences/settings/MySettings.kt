@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VideoLabel
 import app.preferences.Preferences.AUDIO_LANG
+import app.preferences.Preferences.CLEAR_LOGS
 import app.preferences.Preferences.CC_LANG
 import app.preferences.Preferences.COLOR_ERRORMSG
 import app.preferences.Preferences.COLOR_FRIENDTAG
@@ -137,6 +138,7 @@ val GLOBAL_ADVANCED = SettingCategory(
     icon = Icons.Filled.Stream
 ) {
     +EXPORT_LOGS
+    +CLEAR_LOGS
     +GLOBAL_RESET_DEFAULTS
 }
 
@@ -215,4 +217,4 @@ val INROOM_ADVANCED = SettingCategory(
 
 
 val SETTINGS_GLOBAL = listOf(GLOBAL_GENERAL, GLOBAL_LANGUAGE, GLOBAL_SYNCING, GLOBAL_NETWORK, GLOBAL_ADVANCED)
-val SETTINGS_ROOM = listOf(INROOM_SYNC, INROOM_CHATCOLORS, INROOM_CHAT_PROPERTIES, INROOM_PLAYER_SETTINGS, INROOM_HAPTICS, INROOM_ADVANCED)
+val SETTINGS_ROOM = listOf(INROOM_SYNC, INROOM_CHATCOLORS, INROOM_CHAT_PROPERTIES, INROOM_PLAYER_SETTINGS, INROOM_ADVANCED)

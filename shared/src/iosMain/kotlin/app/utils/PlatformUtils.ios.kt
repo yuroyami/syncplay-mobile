@@ -173,6 +173,15 @@ actual fun listFiles(directoryPath: String): List<String> {
     }
 }
 
+actual fun readFile(path: String): String {
+    return try {
+        val fm = NSFileManager.defaultManager
+        val data = fm.contentsAtPath(path) ?: return ""
+        val nsString = NSString.create(data = data, encoding = NSUTF8StringEncoding) ?: return ""
+        nsString.toString()
+    } catch (_: Exception) { "" }
+}
+
 actual fun deleteFile(path: String) {
     try {
         NSFileManager.defaultManager.removeItemAtPath(path, error = null)

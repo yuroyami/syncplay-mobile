@@ -148,6 +148,12 @@ expect fun appendToFile(path: String, content: String)
 expect fun listFiles(directoryPath: String): List<String>
 
 /**
+ * Reads the entire text content of a file at the given path.
+ * Returns an empty string if the file does not exist or cannot be read.
+ */
+expect fun readFile(path: String): String
+
+/**
  * Deletes the file at the given path.
  */
 expect fun deleteFile(path: String)
