@@ -46,6 +46,8 @@ import app.room.ui.tabs.RoomTabSection
 import app.room.ui.tabs.RoomUnlockableLayout
 import app.utils.HideSystemBars
 import app.utils.platformCallback
+import app.preferences.Preferences.HUD_AUTO_HIDE_TIMEOUT
+import app.preferences.watchPref
 import kotlinx.coroutines.delay
 
 /**
@@ -105,6 +107,15 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                 /* Rotate the screen when orientation changes */
                 LaunchedEffect(orientation) {
                     platformCallback.onScreenOrientationChanged(isPortrait)
+                }
+
+                /* Auto-hide HUD after configured timeout when video is loaded */
+                val hudAutoHideTimeout by HUD_AUTO_HIDE_TIMEOUT.watchPref()
+                LaunchedEffect(isHUDVisible, hudAutoHideTimeout, hasVideo) {
+                    if (isHUDVisible && hasVideo && hudAutoHideTimeout > 0) {
+                        delay(hudAutoHideTimeout * 1000L)
+                        viewmodel.uiState.visibleHUD.value = false
+                    }
                 }
 
                 if (isHUDVisible) {

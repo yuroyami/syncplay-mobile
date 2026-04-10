@@ -11,12 +11,11 @@ import androidx.compose.material.icons.automirrored.filled.NoteAdd
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.BrowseGallery
 import androidx.compose.material.icons.filled.ClosedCaptionDisabled
-import androidx.compose.material.icons.filled.DoNotTouch
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.SpeakerGroup
 import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material.icons.filled.Theaters
-import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.VideoSettings
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
@@ -46,8 +45,6 @@ import androidx.lifecycle.viewModelScope
 import app.LocalRoomUiState
 import app.LocalRoomViewmodel
 import app.player.PlayerImpl
-import app.preferences.Preferences.GESTURES
-import app.preferences.set
 import app.preferences.watchPref
 import app.theme.Theming.flexibleGradient
 import app.uicomponents.FlexibleIcon
@@ -68,9 +65,9 @@ import syncplaymobile.shared.generated.resources.room_button_desc_subtitle_track
 import syncplaymobile.shared.generated.resources.room_button_desc_subtitle_tracks_import_from_file
 import syncplaymobile.shared.generated.resources.room_chapters
 import syncplaymobile.shared.generated.resources.room_chapters_skip
-import syncplaymobile.shared.generated.resources.room_gestures_disabled
-import syncplaymobile.shared.generated.resources.room_gestures_enabled
 import syncplaymobile.shared.generated.resources.room_no_recent_seek
+import syncplaymobile.shared.generated.resources.room_screenshot_saved
+import syncplaymobile.shared.generated.resources.room_screenshot_unsupported
 import syncplaymobile.shared.generated.resources.room_seek_undone
 import syncplaymobile.shared.generated.resources.room_sub_track_disable
 
@@ -133,19 +130,15 @@ fun RoomControlPanelCard(modifier: Modifier) {
             }
         }
 
-        /* Seek Gesture (DoNotTouch for disabling it) */
-        val gesturesEnabled by GESTURES.watchPref()
-
+        /* Screenshot */
         FlexibleIcon(
-            icon = when (gesturesEnabled) {
-                true -> Icons.Filled.TouchApp
-                false -> Icons.Filled.DoNotTouch
-            }, size = iconSize, shadowColors = listOf(Color.Black)
+            icon = Icons.Filled.CameraAlt,
+            size = iconSize, shadowColors = listOf(Color.Black)
         ) {
             composeScope.launch(Dispatchers.IO) {
-                GESTURES.set(!gesturesEnabled)
+                val success = viewmodel.player.takeScreenshot()
                 viewmodel.dispatchOSD {
-                    getString(if (gesturesEnabled) Res.string.room_gestures_enabled else Res.string.room_gestures_disabled)
+                    getString(if (success) Res.string.room_screenshot_saved else Res.string.room_screenshot_unsupported)
                 }
             }
         }

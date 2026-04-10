@@ -18,17 +18,31 @@ import app.room.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.path
 import platform.Foundation.NSDate
+import platform.Foundation.NSDocumentDirectory
+import platform.Foundation.NSFileHandle
 import platform.Foundation.NSFileManager
+import platform.Foundation.closeFile
+import platform.Foundation.fileHandleForWritingAtPath
+import platform.Foundation.seekToEndOfFile
 import platform.Foundation.NSFileSize
 import platform.Foundation.NSNumber
+import platform.Foundation.NSSearchPathForDirectoriesInDomains
+import platform.Foundation.NSString
 import platform.Foundation.NSURL
+import platform.Foundation.NSUTF8StringEncoding
+import platform.Foundation.NSUserDomainMask
+import platform.Foundation.create
+import platform.Foundation.dataUsingEncoding
 import platform.Foundation.timeIntervalSince1970
+import platform.Foundation.writeData
 import platform.UIKit.UIApplication
 import platform.UIKit.UIInterfaceOrientationMaskAll
 import platform.UIKit.UIInterfaceOrientationMaskLandscape
 import platform.UIKit.UIWindowScene
 import platform.UIKit.UIWindowSceneGeometryPreferencesIOS
 import kotlin.math.roundToLong
+import kotlinx.cinterop.toKString
+import platform.ifaddrs.getDeviceLocalIp
 import kotlin.native.ref.WeakReference
 
 actual val platform: Platform = Platform.IOS
@@ -110,3 +124,63 @@ actual fun <T : Any> createWeakRef(obj: T): WeakRef<T> {
     return WeakReference(obj)
 }
 actual fun <T : Any> WeakRef<T>?.get(): T? = this?.get()
+
+actual fun getDeviceIpAddress(): String? {
+    return try {
+        getDeviceLocalIp()?.toKString()
+    } catch (_: Exception) {
+        null
+    }
+}
+
+actual fun getLogDirectoryPath(): String? {
+    return try {
+        val paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true)
+        val docDir = paths.firstOrNull() as? String ?: return null
+        val logDir = "$docDir/logs"
+        val fm = NSFileManager.defaultManager
+        if (!fm.fileExistsAtPath(logDir)) {
+            fm.createDirectoryAtPath(logDir, withIntermediateDirectories = true, attributes = null, error = null)
+        }
+        logDir
+    } catch (_: Exception) {
+        null
+    }
+}
+
+actual fun appendToFile(path: String, content: String) {
+    try {
+        val fm = NSFileManager.defaultManager
+        if (!fm.fileExistsAtPath(path)) {
+            fm.createFileAtPath(path, contents = null, attributes = null)
+        }
+        val handle = NSFileHandle.fileHandleForWritingAtPath(path) ?: return
+        handle.seekToEndOfFile()
+        val nsString = NSString.create(string = content)
+        val data = nsString.dataUsingEncoding(NSUTF8StringEncoding) ?: return
+        handle.writeData(data)
+        handle.closeFile()
+    } catch (_: Exception) { }
+}
+
+actual fun listFiles(directoryPath: String): List<String> {
+    return try {
+        val fm = NSFileManager.defaultManager
+        (fm.contentsOfDirectoryAtPath(directoryPath, error = null) as? List<*>)
+            ?.filterIsInstance<String>() ?: emptyList()
+    } catch (_: Exception) {
+        emptyList()
+    }
+}
+
+actual fun deleteFile(path: String) {
+    try {
+        NSFileManager.defaultManager.removeItemAtPath(path, error = null)
+    } catch (_: Exception) { }
+}
+
+actual fun consumePendingShortcut(): app.home.JoinConfig? {
+    return app.pendingShortcutJoinConfig.value?.also {
+        app.pendingShortcutJoinConfig.value = null
+    }
+}

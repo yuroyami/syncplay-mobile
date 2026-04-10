@@ -39,11 +39,11 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     val gifPanelVisible = MutableStateFlow(false)
 
     /** Haptic feedback event bus - emits Unit when a haptic should be triggered */
-    val hapticEvent: Flow<Unit>
-        field = MutableSharedFlow<Unit>(extraBufferCapacity = 5)
+    private val _hapticEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 5)
+    val hapticEvent: Flow<Unit> = _hapticEvent
 
     fun triggerHaptic() {
-        hapticEvent.tryEmit(Unit)
+        _hapticEvent.tryEmit(Unit)
     }
 
     /** True while the user has navigated away for file picking. */

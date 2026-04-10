@@ -41,10 +41,15 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.ripple
 import app.LocalRoomViewmodel
+import app.preferences.Preferences.SHOW_CHAPTER_DOTS
+import app.preferences.watchPref
 import app.uicomponents.gradientOverlay
 import app.utils.timestampFromMillis
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlin.math.roundToLong
 import com.composeunstyled.Thumb as UnstyledThumb
 
@@ -131,28 +136,30 @@ fun RoomSeekbar(modifier: Modifier) {
                             trackWidthPx = it.size.width
                         }
                 ) {
-                    chapters.forEach { chapter ->
-                        if (chapter.timeOffsetMillis / 1000 != 0L) {
-                            // Calculate horizontal position fraction based on chapter timestamp
-                            val positionFraction = (chapter.timeOffsetMillis / videoFullDurationMs.toFloat().coerceAtLeast(1f))
-                            Box(
-                                modifier = Modifier
-                                    .offset {
-                                        // 4.dp to pixels
-                                        val offsetAdjustment = 4.dp.toPx()
-                                        IntOffset((positionFraction * trackWidthPx).toInt() - offsetAdjustment.toInt(), 0)
-                                    }.align(CenterStart)
-                                    .size(8.dp).clip(CircleShape)
-                                    .background(Color.LightGray)
-//                                    .clickable(
-//                                        interactionSource = null,
-//                                        indication = ripple()
-//                                    ) {
-//                                        scope.launch(Dispatchers.Main.immediate) {
-//                                            viewmodel.player.jumpToChapter(chapter)
-//                                        }
-//                                    }
-                            )
+                    val showChapterDots by SHOW_CHAPTER_DOTS.watchPref()
+                    if (showChapterDots) {
+                        chapters.forEach { chapter ->
+                            if (chapter.timeOffsetMillis / 1000 != 0L) {
+                                // Calculate horizontal position fraction based on chapter timestamp
+                                val positionFraction = (chapter.timeOffsetMillis / videoFullDurationMs.toFloat().coerceAtLeast(1f))
+                                Box(
+                                    modifier = Modifier
+                                        .offset {
+                                            val offsetAdjustment = 4.dp.toPx()
+                                            IntOffset((positionFraction * trackWidthPx).toInt() - offsetAdjustment.toInt(), 0)
+                                        }.align(CenterStart)
+                                        .size(8.dp).clip(CircleShape)
+                                        .background(Color.LightGray)
+                                        .clickable(
+                                            interactionSource = null,
+                                            indication = ripple()
+                                        ) {
+                                            scope.launch(Dispatchers.Main.immediate) {
+                                                viewmodel.player.jumpToChapter(chapter)
+                                            }
+                                        }
+                                )
+                            }
                         }
                     }
 

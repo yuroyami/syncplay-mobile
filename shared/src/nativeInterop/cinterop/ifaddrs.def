@@ -1,0 +1,25 @@
+package = platform.ifaddrs
+---
+#include <ifaddrs.h>
+#include <arpa/inet.h>
+#include <string.h>
+
+static inline const char* getDeviceLocalIp() {
+    struct ifaddrs *ifaddr, *ifa;
+    static char host[64];
+    host[0] = '\0';
+
+    if (getifaddrs(&ifaddr) == -1) return NULL;
+
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+        if (ifa->ifa_addr == NULL) continue;
+        if (ifa->ifa_addr->sa_family != AF_INET) continue;
+        if (strcmp(ifa->ifa_name, "en0") != 0 && strcmp(ifa->ifa_name, "en1") != 0) continue;
+
+        struct sockaddr_in *sin = (struct sockaddr_in *)ifa->ifa_addr;
+        inet_ntop(AF_INET, &sin->sin_addr, host, sizeof(host));
+        break;
+    }
+    freeifaddrs(ifaddr);
+    return host[0] ? host : NULL;
+}

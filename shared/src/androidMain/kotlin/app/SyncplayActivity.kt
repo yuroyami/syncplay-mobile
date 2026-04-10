@@ -15,6 +15,7 @@ import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.view.KeyEvent
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -327,12 +328,6 @@ class SyncplayActivity : ComponentActivity() {
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         roomViewmodel?.uiState?.hasEnteredPipMode?.value = isInPictureInPictureMode
-
-        if (!isInPictureInPictureMode) {
-            lifecycleScope.launch {
-                roomViewmodel?.player?.pause()
-            }
-        }
     }
 
     /**
@@ -340,50 +335,59 @@ class SyncplayActivity : ComponentActivity() {
      *
      * Updates PiP parameters and enters PiP, hiding the HUD controls.
      */
-    @Suppress("DEPRECATION")
     private fun initiatePIPmode() {
         roomViewmodel?.uiState?.hasEnteredPipMode?.value = true
 
-        //moveTaskToBack(true)
-        updatePiPParams()
-        enterPictureInPictureMode()
-        roomViewmodel?.uiState?.visibleHUD?.value = false
+        lifecycleScope.launch {
+            val playing = roomViewmodel?.player?.isPlaying() == true
+            val params = buildPiPParams(playing)
+            runCatching {
+                enterPictureInPictureMode(params)
+            }
+            roomViewmodel?.uiState?.visibleHUD?.value = false
+        }
     }
 
     /**
-     * Updates Picture-in-Picture parameters including control actions.
+     * Builds PiP parameters with play/pause remote action.
      *
-     * Creates play/pause remote actions based on current playback state.
-     * Requires Android 8.0+.
-     *
-     * TODO: Implement PiP action buttons for play/pause control.
+     * Creates a PendingIntent that carries the intended action (0=pause, 1=play)
+     * so the broadcast receiver knows what to do.
+     */
+    private fun buildPiPParams(isPlaying: Boolean = false): PictureInPictureParams {
+
+        // When playing → show pause button (action=0 means pause)
+        // When paused  → show play button  (action=1 means play)
+        val actionValue = if (isPlaying) 0 else 1
+        val intent = Intent("pip").putExtra("pause_zero_play_one", actionValue)
+        val pendingIntent = PendingIntent.getBroadcast(
+            this, 6969 + actionValue, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE
+        )
+
+        val action = RemoteAction(
+            Icon.createWithResource(
+                this,
+                if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
+            ),
+            if (isPlaying) "Pause" else "Play",
+            if (isPlaying) "Pause playback" else "Resume playback",
+            pendingIntent
+        )
+
+        return PictureInPictureParams.Builder()
+            .setActions(if (roomViewmodel?.hasVideo?.value == true) listOf(action) else listOf())
+            .build()
+    }
+
+    /**
+     * Updates the PiP parameters on the activity to reflect current playback state.
      */
     private fun updatePiPParams() {
         lifecycleScope.launch {
-            val intent = Intent("pip")
-            val pendingIntent = PendingIntent.getBroadcast(
-                this@SyncplayActivity, 6969, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE
-            )
-
-            val action = if (roomViewmodel?.player?.isPlaying() == true) {
-                RemoteAction(
-                    Icon.createWithResource(this@SyncplayActivity, R.drawable.ic_pause),
-                    "Play", "", pendingIntent
-                )
-            } else {
-                RemoteAction(
-                    Icon.createWithResource(this@SyncplayActivity, R.drawable.ic_play),
-                    "Pause", "", pendingIntent
-                )
-            }
-
-            val params = with(PictureInPictureParams.Builder()) {
-                setActions(if (roomViewmodel?.hasVideo?.value == true) listOf(action) else listOf())
-            }
-
+            val playing = roomViewmodel?.player?.isPlaying() == true
             runCatching {
-                setPictureInPictureParams(params.build())
+                setPictureInPictureParams(buildPiPParams(playing))
             }
         }
     }
@@ -401,9 +405,12 @@ class SyncplayActivity : ComponentActivity() {
 
                     if (pausePlayValue == 1) {
                         roomViewmodel?.dispatcher?.controlPlayback(Playback.PLAY, true)
-                    } else {
+                    } else if (pausePlayValue == 0) {
                         roomViewmodel?.dispatcher?.controlPlayback(Playback.PAUSE, true)
                     }
+
+                    // Refresh the PiP action button to reflect new state
+                    updatePiPParams()
                 }
             }
         }
@@ -428,6 +435,86 @@ class SyncplayActivity : ComponentActivity() {
         lifecycleScope.launch {
             roomViewmodel?.player?.reapplyTrackChoices()
         }
+    }
+
+    /**
+     * Handles D-pad and media button key events for Android TV / Google TV.
+     *
+     * Media buttons always control playback. When a video is loaded and the HUD is hidden,
+     * D-pad keys control playback (left/right = seek, center = play/pause) and reveal the HUD.
+     * When the HUD is visible, D-pad events pass through to Compose for focus navigation.
+     */
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        val vm = roomViewmodel
+
+        // Media buttons: always handle when in room
+        if (vm != null) {
+            when (keyCode) {
+                KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
+                    val playing = vm.playerManager.hasVideo.value
+                    if (playing) {
+                        lifecycleScope.launch {
+                            val isPlaying = vm.player.isPlaying() == true
+                            vm.dispatcher.controlPlayback(
+                                if (isPlaying) Playback.PAUSE else Playback.PLAY, true
+                            )
+                        }
+                    }
+                    return true
+                }
+                KeyEvent.KEYCODE_MEDIA_PLAY -> {
+                    vm.dispatcher.controlPlayback(Playback.PLAY, true)
+                    return true
+                }
+                KeyEvent.KEYCODE_MEDIA_PAUSE -> {
+                    vm.dispatcher.controlPlayback(Playback.PAUSE, true)
+                    return true
+                }
+                KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> {
+                    vm.dispatcher.seekFrwrd()
+                    return true
+                }
+                KeyEvent.KEYCODE_MEDIA_REWIND -> {
+                    vm.dispatcher.seekBckwd()
+                    return true
+                }
+            }
+
+            // D-pad: only intercept when HUD is hidden and video is loaded
+            val hasVideo = vm.playerManager.hasVideo.value
+            val hudVisible = vm.uiState.visibleHUD.value
+
+            if (hasVideo && !hudVisible) {
+                when (keyCode) {
+                    KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
+                        lifecycleScope.launch {
+                            val isPlaying = vm.player.isPlaying() == true
+                            vm.dispatcher.controlPlayback(
+                                if (isPlaying) Playback.PAUSE else Playback.PLAY, true
+                            )
+                        }
+                        vm.uiState.visibleHUD.value = true
+                        return true
+                    }
+                    KeyEvent.KEYCODE_DPAD_LEFT -> {
+                        vm.dispatcher.seekBckwd()
+                        vm.uiState.visibleHUD.value = true
+                        return true
+                    }
+                    KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                        vm.dispatcher.seekFrwrd()
+                        vm.uiState.visibleHUD.value = true
+                        return true
+                    }
+                    KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> {
+                        vm.uiState.visibleHUD.value = true
+                        return true
+                    }
+                }
+            }
+        }
+
+        return super.onKeyDown(keyCode, event)
     }
 
     /**

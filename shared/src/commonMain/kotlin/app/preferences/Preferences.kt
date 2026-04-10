@@ -35,6 +35,8 @@ import androidx.compose.material.icons.filled.SortByAlpha
 import androidx.compose.material.icons.filled.SpatialAudio
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.SupervisedUserCircle
+import androidx.compose.material.icons.filled.Swipe
+import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Translate
@@ -111,6 +113,8 @@ import syncplaymobile.shared.generated.resources.setting_resetdefault_summary
 import syncplaymobile.shared.generated.resources.setting_resetdefault_title
 import syncplaymobile.shared.generated.resources.setting_tls_summary
 import syncplaymobile.shared.generated.resources.setting_tls_title
+import syncplaymobile.shared.generated.resources.setting_trusted_domains_summary
+import syncplaymobile.shared.generated.resources.setting_trusted_domains_title
 import syncplaymobile.shared.generated.resources.setting_unpause_action_always
 import syncplaymobile.shared.generated.resources.setting_unpause_action_if_min_users_ready
 import syncplaymobile.shared.generated.resources.setting_unpause_action_if_others_ready
@@ -133,12 +137,16 @@ import syncplaymobile.shared.generated.resources.uisetting_custom_seek_amount_su
 import syncplaymobile.shared.generated.resources.uisetting_custom_seek_amount_title
 import syncplaymobile.shared.generated.resources.uisetting_custom_seek_front_summary
 import syncplaymobile.shared.generated.resources.uisetting_custom_seek_front_title
+import syncplaymobile.shared.generated.resources.uisetting_doubletap_seek_summary
+import syncplaymobile.shared.generated.resources.uisetting_doubletap_seek_title
 import syncplaymobile.shared.generated.resources.uisetting_error_color_summary
 import syncplaymobile.shared.generated.resources.uisetting_error_color_title
 import syncplaymobile.shared.generated.resources.uisetting_friend_color_summary
 import syncplaymobile.shared.generated.resources.uisetting_friend_color_title
 import syncplaymobile.shared.generated.resources.uisetting_haptic_on_chat_summary
 import syncplaymobile.shared.generated.resources.uisetting_haptic_on_chat_title
+import syncplaymobile.shared.generated.resources.uisetting_hud_autohide_summary
+import syncplaymobile.shared.generated.resources.uisetting_hud_autohide_title
 import syncplaymobile.shared.generated.resources.uisetting_haptic_on_connection_summary
 import syncplaymobile.shared.generated.resources.uisetting_haptic_on_connection_title
 import syncplaymobile.shared.generated.resources.uisetting_haptic_on_joined_summary
@@ -173,6 +181,8 @@ import syncplaymobile.shared.generated.resources.uisetting_msgshadow_summary
 import syncplaymobile.shared.generated.resources.uisetting_msgshadow_title
 import syncplaymobile.shared.generated.resources.uisetting_msgsize_summary
 import syncplaymobile.shared.generated.resources.uisetting_msgsize_title
+import syncplaymobile.shared.generated.resources.uisetting_osd_duration_summary
+import syncplaymobile.shared.generated.resources.uisetting_osd_duration_title
 import syncplaymobile.shared.generated.resources.uisetting_reconnect_interval_summary
 import syncplaymobile.shared.generated.resources.uisetting_reconnect_interval_title
 import syncplaymobile.shared.generated.resources.uisetting_resetdefault_summary
@@ -183,10 +193,14 @@ import syncplaymobile.shared.generated.resources.uisetting_seek_forward_jump_sum
 import syncplaymobile.shared.generated.resources.uisetting_seek_forward_jump_title
 import syncplaymobile.shared.generated.resources.uisetting_self_color_summary
 import syncplaymobile.shared.generated.resources.uisetting_self_color_title
+import syncplaymobile.shared.generated.resources.uisetting_show_chapter_dots_summary
+import syncplaymobile.shared.generated.resources.uisetting_show_chapter_dots_title
 import syncplaymobile.shared.generated.resources.uisetting_subtitle_delay_summary
 import syncplaymobile.shared.generated.resources.uisetting_subtitle_delay_title
 import syncplaymobile.shared.generated.resources.uisetting_subtitle_size_summary
 import syncplaymobile.shared.generated.resources.uisetting_subtitle_size_title
+import syncplaymobile.shared.generated.resources.uisetting_swipe_gestures_summary
+import syncplaymobile.shared.generated.resources.uisetting_swipe_gestures_title
 import syncplaymobile.shared.generated.resources.uisetting_sync_dont_slow_with_me_summary
 import syncplaymobile.shared.generated.resources.uisetting_sync_dont_slow_with_me_title
 import syncplaymobile.shared.generated.resources.uisetting_sync_fastforward_summary
@@ -380,6 +394,15 @@ object Preferences {
         icon = Icons.Filled.Key
     }
 
+    /** ------------ Security -------------*/
+    val TRUSTED_DOMAINS = Pref("pref_trusted_domains", "") {
+        title = Res.string.setting_trusted_domains_title
+        summary = Res.string.setting_trusted_domains_summary
+        icon = Icons.Filled.Web
+
+        extraConfig = PrefExtraConfig.TextField()
+    }
+
     /** ------------ Sync Mechanisms (In-Room) -------------*/
     val SYNC_FASTFORWARD = Pref("pref_inroom_sync_fastforward", true) {
         title = Res.string.uisetting_sync_fastforward_title
@@ -497,6 +520,14 @@ object Preferences {
         icon = Icons.Filled.Keyboard
     }
 
+    val OSD_DURATION = Pref("pref_inroom_osd_duration", 2) {
+        title = Res.string.uisetting_osd_duration_title
+        summary = Res.string.uisetting_osd_duration_summary
+        icon = Icons.Filled.Timer
+
+        extraConfig = PrefExtraConfig.Slider(maxValue = 10, minValue = 0)
+    }
+
     /** ------------ Player Settings -------------*/
     val SUBTITLE_SIZE = Pref("pref_inroom_subtitle_size", 16) {
         title = Res.string.uisetting_subtitle_size_title
@@ -553,6 +584,24 @@ object Preferences {
         icon = Icons.Filled.FastRewind
 
         extraConfig = PrefExtraConfig.Slider(maxValue = 120, minValue = 1)
+    }
+
+    val SHOW_CHAPTER_DOTS = Pref("pref_inroom_show_chapter_dots", true) {
+        title = Res.string.uisetting_show_chapter_dots_title
+        summary = Res.string.uisetting_show_chapter_dots_summary
+        icon = Icons.Filled.FormatListNumbered
+    }
+
+    val DOUBLETAP_SEEK = Pref("pref_inroom_doubletap_seek", true) {
+        title = Res.string.uisetting_doubletap_seek_title
+        summary = Res.string.uisetting_doubletap_seek_summary
+        icon = Icons.Filled.TouchApp
+    }
+
+    val SWIPE_GESTURES = Pref("pref_inroom_swipe_gestures", true) {
+        title = Res.string.uisetting_swipe_gestures_title
+        summary = Res.string.uisetting_swipe_gestures_summary
+        icon = Icons.Filled.Swipe
     }
 
     /** ------------ MPV Settings -------------*/
@@ -659,6 +708,14 @@ object Preferences {
         icon = Icons.Filled.Opacity
 
         extraConfig = PrefExtraConfig.Slider(maxValue = 100, minValue = 0)
+    }
+
+    val HUD_AUTO_HIDE_TIMEOUT = Pref("pref_inroom_hud_autohide", 3) {
+        title = Res.string.uisetting_hud_autohide_title
+        summary = Res.string.uisetting_hud_autohide_summary
+        icon = Icons.Filled.Timer
+
+        extraConfig = PrefExtraConfig.Slider(maxValue = 15, minValue = 0)
     }
 
     val RECONNECTION_INTERVAL = Pref("pref_inroom_reconnection_interval", 2) {

@@ -75,7 +75,8 @@ internal inline fun <reified T> Pref<T>.SettingComposable() {
     val booleanCallbackConfig = config?.extraConfig as? PrefExtraConfig.BooleanCallback
     val multiChoiceConfig = config?.extraConfig as? PrefExtraConfig.MultiChoice
     val sliderConfig = config?.extraConfig as? PrefExtraConfig.Slider
-    val textfieldConfig = config?.extraConfig as? PrefExtraConfig.TextField
+    val textfieldConfig = (config?.extraConfig as? PrefExtraConfig.TextField)
+        ?: if (value is String && config?.extraConfig == null) PrefExtraConfig.TextField() else null
     val showColorConfig = config?.extraConfig as? PrefExtraConfig.ColorPick
     val showYesNoPopup = config?.extraConfig as? PrefExtraConfig.YesNoDialog
     val showExtraComposable = config?.extraConfig as? PrefExtraConfig.ShowComposable
@@ -167,7 +168,7 @@ internal inline fun <reified T> Pref<T>.SettingComposable() {
                         }
                     },
                     enabled = isEnabled,
-                    type = KeyboardType.Number,
+                    type = if (textfieldConfig.keyboardType == 1) KeyboardType.Number else KeyboardType.Text,
                     height = 48.dp,
                     clearFocusWhenDone = true
                 )

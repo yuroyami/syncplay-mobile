@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import app.Screen
 import app.server.model.ServerConfig
 import app.server.network.ServerNetworkEngine
+import app.utils.getDeviceIpAddress
 import app.utils.loggy
 import app.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
@@ -36,6 +37,7 @@ class ServerViewmodel(
     // --- Server state ---
     val serverStatus = MutableStateFlow<ServerStatus>(ServerStatus.Stopped)
     val connectedClients = MutableStateFlow(0)
+    val deviceIpAddress = mutableStateOf<String?>(null)
 
     /** Server event log entries for UI display. */
     val serverLogs = mutableStateListOf<ServerLogEntry>()
@@ -90,6 +92,7 @@ class ServerViewmodel(
 
                 engine.startListening(portInt)
                 serverStatus.value = ServerStatus.Running
+                deviceIpAddress.value = getDeviceIpAddress()
                 addLog("Server started on port $portInt")
                 platformCallback.serverServiceStart(portInt)
             } catch (e: Exception) {
@@ -109,6 +112,7 @@ class ServerViewmodel(
                 _engine = null
                 serverStatus.value = ServerStatus.Stopped
                 connectedClients.value = 0
+                deviceIpAddress.value = null
                 platformCallback.serverServiceStop()
                 addLog("Server stopped")
             } catch (e: Exception) {

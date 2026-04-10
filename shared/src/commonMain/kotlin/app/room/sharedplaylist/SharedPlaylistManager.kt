@@ -14,6 +14,7 @@ import org.jetbrains.compose.resources.getString
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_shared_playlist_no_directories
 import syncplaymobile.shared.generated.resources.room_shared_playlist_not_found
+import syncplaymobile.shared.generated.resources.room_untrusted_domain_warning
 
 class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
@@ -150,6 +151,15 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             fileName.contains("https://", true) ||
             fileName.contains("ftp://", true)
         ) {
+            // Check trusted domains before loading remote URLs
+            if (!isUrlTrusted(fileName)) {
+                val domain = extractDomain(fileName)
+                val warning = getString(Res.string.room_untrusted_domain_warning, domain)
+                viewmodel.dispatchOSD { warning }
+                viewmodel.dispatcher.broadcastMessage(message = { warning }, isChat = false, isError = true)
+                return
+            }
+
             viewmodel.player.injectVideoURL(fileName)
         } else {
             /* We search our media directories which were added by the user in settings */
@@ -179,6 +189,35 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
                 }
             }
 
+        }
+    }
+
+    /**
+     * Extracts the domain from a URL string (e.g. "https://cdn.example.com/file.mp4" → "cdn.example.com").
+     */
+    private fun extractDomain(url: String): String {
+        return url
+            .substringAfter("://")
+            .substringBefore("/")
+            .substringBefore(":")
+            .lowercase()
+    }
+
+    /**
+     * Checks whether a URL is from a trusted domain.
+     * If no trusted domains are configured, all URLs are allowed.
+     */
+    private fun isUrlTrusted(url: String): Boolean {
+        val trustedRaw = Preferences.TRUSTED_DOMAINS.value().trim()
+        if (trustedRaw.isEmpty()) return true // No restrictions configured
+
+        val trustedDomains = trustedRaw.split(",").map { it.trim().lowercase() }.filter { it.isNotEmpty() }
+        if (trustedDomains.isEmpty()) return true
+
+        val urlDomain = extractDomain(url)
+
+        return trustedDomains.any { trusted ->
+            urlDomain == trusted || urlDomain.endsWith(".$trusted")
         }
     }
 }

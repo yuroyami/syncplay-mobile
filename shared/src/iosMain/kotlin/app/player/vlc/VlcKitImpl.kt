@@ -1,5 +1,9 @@
 package app.player.vlc
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ClosedCaptionOff
+import androidx.compose.material.icons.filled.SettingsInputComponent
+import androidx.compose.material.icons.filled.SpatialAudio
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
@@ -9,7 +13,10 @@ import app.player.models.Chapter
 import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
 import app.player.models.Track
+import app.preferences.Pref
+import app.preferences.PrefExtraConfig
 import app.preferences.Preferences.SUBTITLE_SIZE
+import app.preferences.settings.SettingCategory
 import app.preferences.value
 import app.room.RoomViewmodel
 import app.utils.loggy
@@ -36,6 +43,12 @@ import platform.Foundation.NSURL
 import platform.UIKit.UIColor
 import platform.UIKit.UIView
 import platform.darwin.NSObject
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.uisetting_audio_delay_summary
+import syncplaymobile.shared.generated.resources.uisetting_audio_delay_title
+import syncplaymobile.shared.generated.resources.uisetting_categ_vlc
+import syncplaymobile.shared.generated.resources.uisetting_subtitle_delay_summary
+import syncplaymobile.shared.generated.resources.uisetting_subtitle_delay_title
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -81,14 +94,27 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         }
     }
 
-    /**
-     * Returns player-specific configuration settings.
-     *
-     * TODO: Implement VLC-specific settings (deinterlacing, hardware acceleration, etc.)
-     *
-     * @return null (no custom settings currently implemented)
-     */
-    override suspend fun configurableSettings() = null
+    override suspend fun configurableSettings() = SettingCategory(
+        title = Res.string.uisetting_categ_vlc,
+        icon = Icons.Filled.SettingsInputComponent
+    ) {
+        +Pref("vlc_subtitle_delay_ms", 0) {
+            title = Res.string.uisetting_subtitle_delay_title
+            summary = Res.string.uisetting_subtitle_delay_summary
+            icon = Icons.Filled.ClosedCaptionOff
+            extraConfig = PrefExtraConfig.Slider(minValue = -5000, maxValue = 5000) {
+                vlcPlayer?.currentVideoSubTitleDelay = it * 1000L
+            }
+        }
+        +Pref("vlc_audio_delay_ms", 0) {
+            title = Res.string.uisetting_audio_delay_title
+            summary = Res.string.uisetting_audio_delay_summary
+            icon = Icons.Filled.SpatialAudio
+            extraConfig = PrefExtraConfig.Slider(minValue = -5000, maxValue = 5000) {
+                vlcPlayer?.currentAudioPlaybackDelay = it * 1000L
+            }
+        }
+    }
 
     /**
      * Renders the VLC video player view within Compose.
@@ -115,7 +141,13 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                 vlcView!!.setBackgroundColor(UIColor.clearColor())
 
                 val subSizeArg = "--freetype-fontsize=${SUBTITLE_SIZE.value() * 4}"
-                libvlc = VLCLibrary(listOf("-vv", subSizeArg))
+                libvlc = VLCLibrary(listOf(
+                    "-vv",
+                    subSizeArg,
+                    "--network-caching=2000",
+                    "--adaptive-logic=default",
+                    "--http-reconnect",
+                ))
 
                 vlcPlayer = VLCMediaPlayer(libvlc!!)
                 vlcPlayer!!.drawable = vlcView
@@ -336,16 +368,38 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     }
 
     override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
-        vlcMedia = NSURL.URLWithString(location.url)?.let { VLCMedia(uRL = it) }
-        vlcMedia?.synchronousParse()
+        val url = location.url
+        vlcMedia = NSURL.URLWithString(url)?.let { VLCMedia(uRL = it) }
+
+        val isAdaptiveStream = url.contains(".m3u8", ignoreCase = true)
+                || url.contains(".mpd", ignoreCase = true)
+                || url.contains("/manifest", ignoreCase = true)
+
+        if (isAdaptiveStream) {
+            // For HLS/DASH streams, skip synchronousParse which can block indefinitely
+            // on stream manifests. VLC will parse during playback instead.
+            vlcMedia?.addOption(":network-caching=3000")
+            vlcMedia?.addOption(":clock-jitter=0")
+            vlcMedia?.addOption(":clock-synchro=0")
+        } else {
+            vlcMedia?.synchronousParse()
+        }
         vlcPlayer?.setMedia(vlcMedia)
     }
 
     override suspend fun parseMedia(media: MediaFile) {
-        vlcMedia?.length?.numberValue?.doubleValue?.toLong()?.let {
-            val dur = if (it < 0) 0 else it
+        val lengthMs = vlcMedia?.length?.numberValue?.doubleValue?.toLong() ?: 0L
+        if (lengthMs > 0) {
+            playerManager.timeFullMillis.value = lengthMs
+            media.fileDuration = lengthMs / 1000.0
+        } else {
+            // For streams (HLS/DASH), duration may not be known until playback starts.
+            // Retry after a short delay to let VLC fetch the manifest.
+            delay(1500)
+            val retryMs = vlcMedia?.length?.numberValue?.doubleValue?.toLong() ?: 0L
+            val dur = if (retryMs > 0) retryMs else Long.MAX_VALUE
             playerManager.timeFullMillis.value = dur
-            media.fileDuration = dur / 1000.0
+            media.fileDuration = if (dur == Long.MAX_VALUE) 0.0 else dur / 1000.0
         }
         super.parseMedia(media)
     }

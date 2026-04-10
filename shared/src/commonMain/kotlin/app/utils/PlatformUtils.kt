@@ -123,3 +123,38 @@ expect fun ShowSystemBars()
 
 
 expect fun <T : Any> WeakRef<T>?.get(): T?
+
+/**
+ * Returns the device's local (WiFi/LAN) IP address, or null if unavailable.
+ * Used by the server hosting feature to show users what IP to connect to.
+ */
+expect fun getDeviceIpAddress(): String?
+
+/**
+ * Returns the platform-specific directory path for storing log files.
+ * On Android: context.filesDir/logs
+ * On iOS: NSDocumentDirectory/logs
+ */
+expect fun getLogDirectoryPath(): String?
+
+/**
+ * Appends a line to the specified file path. Creates the file if it doesn't exist.
+ */
+expect fun appendToFile(path: String, content: String)
+
+/**
+ * Lists files in the given directory, returning their names.
+ */
+expect fun listFiles(directoryPath: String): List<String>
+
+/**
+ * Deletes the file at the given path.
+ */
+expect fun deleteFile(path: String)
+
+/**
+ * Returns and clears a pending shortcut JoinConfig, if any.
+ * On iOS, this reads from the pending shortcut flow set by the AppDelegate.
+ * On Android, this always returns null (shortcuts are handled via Intents).
+ */
+expect fun consumePendingShortcut(): app.home.JoinConfig?

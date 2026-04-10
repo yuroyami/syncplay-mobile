@@ -39,5 +39,7 @@ sealed interface PrefExtraConfig {
         val onNo: suspend CoroutineScope.() -> Unit = {}
     ) : PrefExtraConfig
 
-    data object TextField : PrefExtraConfig
+    data class TextField(
+        val keyboardType: Int = 0 // 0 = Text, 1 = Number
+    ) : PrefExtraConfig
 }

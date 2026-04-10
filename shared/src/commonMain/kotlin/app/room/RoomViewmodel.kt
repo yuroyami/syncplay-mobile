@@ -160,12 +160,15 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
     val osdMsg = mutableStateOf("")
     var osdJob: Job? = null
     fun dispatchOSD(getter: suspend () -> String) {
+        val durationSec = app.preferences.Preferences.OSD_DURATION.value()
+        if (durationSec <= 0) return
+
         runCatching {
             osdJob?.cancel(null)
         }
         osdJob = viewModelScope.launch(Dispatchers.IO) {
             osdMsg.value = getter()
-            delay(2000) //TODO Don't hardcore delay, make it a setting
+            delay(durationSec * 1000L)
             osdMsg.value = ""
         }
     }

@@ -60,6 +60,7 @@ import app.home.components.HomeTextField
 import app.server.ServerLogEntry
 import app.server.ServerStatus
 import app.server.ServerViewmodel
+import androidx.compose.foundation.text.selection.SelectionContainer
 import app.utils.ShowSystemBars
 import app.utils.platform
 import app.utils.Platform
@@ -80,6 +81,7 @@ import syncplaymobile.shared.generated.resources.server_host_status_running
 import syncplaymobile.shared.generated.resources.server_host_status_starting
 import syncplaymobile.shared.generated.resources.server_host_status_stopped
 import syncplaymobile.shared.generated.resources.server_host_stop
+import syncplaymobile.shared.generated.resources.server_host_address
 import syncplaymobile.shared.generated.resources.server_host_title
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -213,6 +215,39 @@ fun ServerHostScreenUI(viewmodel: ServerViewmodel) {
 
                 // --- Status ---
                 StatusIndicator(status)
+
+                // --- Server address ---
+                AnimatedVisibility(visible = isRunning) {
+                    val ip = viewmodel.deviceIpAddress.value
+                    val portValue = viewmodel.port.value
+                    if (ip != null) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(Res.string.server_host_address),
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                )
+                                SelectionContainer {
+                                    Text(
+                                        text = "$ip:$portValue",
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
 
                 // --- Connected clients ---
                 AnimatedVisibility(visible = isRunning) {

@@ -27,5 +27,6 @@
 
     <string name="uisetting_categ_mpv">mpv</string>
     <string name="uisetting_categ_exo">Exoplayer</string>
+    <string name="uisetting_categ_vlc">VLC</string>
     
 </resources>

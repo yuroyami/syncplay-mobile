@@ -151,7 +151,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
                 if (retryCounter >= 3) {
                     loggy("SOCKET INVALID")
                     if (packetClass != ClientMessage.Hello::class && packetClass != null) {
-                        //TODO viewmodel.sessionManager.session.outboundQueue.add(json)
+                        viewmodel.session.outboundQueue.add(json)
                     }
                     onError()
                 } else {

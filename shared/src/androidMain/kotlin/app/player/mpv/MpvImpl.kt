@@ -329,6 +329,16 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         return mpvPos
     }
 
+    override suspend fun takeScreenshot(): Boolean {
+        if (!isInitialized) return false
+        return try {
+            MPVLib.command(arrayOf("screenshot"))
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     override suspend fun switchAspectRatio(): String {
         if (!isInitialized) return "NO PLAYER FOUND"
         return withContext(Dispatchers.Main.immediate) {

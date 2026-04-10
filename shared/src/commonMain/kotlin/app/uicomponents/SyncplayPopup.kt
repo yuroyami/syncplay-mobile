@@ -2,8 +2,11 @@ package app.uicomponents
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,6 +14,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -53,26 +57,44 @@ fun SyncplayPopup(
             },
             properties = DialogProperties(
                 usePlatformDefaultWidth = false,
-                dismissOnClickOutside = dismissable,
+                dismissOnClickOutside = false, // Handled by scrim click below
                 dismissOnBackPress = dismissable
             )
         ) {
-            Card(
+            Box(
                 modifier = Modifier
-                    .run { if (widthPercent == 0f) this else fillMaxWidth(widthPercent) }
-                    .run { if (heightPercent == 0f) this else fillMaxHeight(heightPercent) }
-                    .padding(24.dp)
-                    .background(
-                        shape = RoundedCornerShape(size = cardCornerRadius.dp),
-                        brush = Brush.linearGradient(
-                            backgroundGradient.map { it.copy(alpha = alpha) }
-                        )
-                    ), //Safe margin to prevent popup from covering all the screen
-                shape = RoundedCornerShape(size = cardCornerRadius.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                border = BorderStroke(width = Dp(strokeWidth), brush = Brush.linearGradient(flexibleGradient))
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .then(
+                        if (dismissable) Modifier.clickable(
+                            interactionSource = null,
+                            indication = null
+                        ) { onDismiss() }
+                        else Modifier
+                    ),
+                contentAlignment = Alignment.Center
             ) {
-                content()
+                Card(
+                    modifier = Modifier
+                        .run { if (widthPercent == 0f) this else fillMaxWidth(widthPercent) }
+                        .run { if (heightPercent == 0f) this else fillMaxHeight(heightPercent) }
+                        .padding(24.dp)
+                        .clickable(
+                            interactionSource = null,
+                            indication = null
+                        ) { /* Consume clicks on card body to prevent scrim dismiss */ }
+                        .background(
+                            shape = RoundedCornerShape(size = cardCornerRadius.dp),
+                            brush = Brush.linearGradient(
+                                backgroundGradient.map { it.copy(alpha = alpha) }
+                            )
+                        ),
+                    shape = RoundedCornerShape(size = cardCornerRadius.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                    border = BorderStroke(width = Dp(strokeWidth), brush = Brush.linearGradient(flexibleGradient))
+                ) {
+                    content()
+                }
             }
         }
     }

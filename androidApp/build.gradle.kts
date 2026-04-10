@@ -1,6 +1,7 @@
 import AppConfig.exoOnly
 import AppConfig.ndkRequired
-import java.nio.file.Files
+import NativeBuildConfig.registerNativeBuildTask
+import NativeBuildConfig.validateNdk
 
 plugins {
     alias(libs.plugins.android.application)
@@ -137,155 +138,12 @@ android {
 
 if (!exoOnly) {
     afterEvaluate {
-        val sdkComponents = androidComponents.sdkComponents
-        val ndkPath = sdkComponents.ndkDirectory.get().asFile
-
-        if (!ndkPath.exists()) {
-            throw GradleException(
-                """
-            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            ❌ ANDROID NDK $ndkRequired REQUIRED!
-            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            
-            Install via:
-              • Android Studio → SDK Manager → SDK Tools → 
-                NDK (Side by side) → Show Package Details → 
-                Check version $ndkRequired
-            
-            Or add to local.properties:
-              ndk.dir=/path/to/android/sdk/ndk/$ndkRequired
-            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            """.trimIndent()
-            )
-        }
-
-        // Verify it's the correct version
-        val actualVersion = ndkPath.name // e.g., "26.1.10909125"
-        if (actualVersion != ndkRequired) {
-            throw GradleException(
-                """
-            ❌ Wrong NDK version!
-            Required: $ndkRequired
-            Found: $actualVersion at ${ndkPath.absolutePath}
-            
-            Please install NDK $ndkRequired via SDK Manager.
-            """.trimIndent()
-            )
-        }
-
-        logger.lifecycle("✓ NDK $actualVersion found at: ${ndkPath.absolutePath}")
+        validateNdk(androidComponents.sdkComponents.ndkDirectory.get().asFile, ndkRequired)
     }
-
-    tasks.register<Exec>("runAndroidMpvNativeBuildScripts") {
-        workingDir = File(rootProject.rootDir, "buildscripts")
-
-        inputs.files(
-            File(workingDir, "mpv_download_deps.sh"),
-            File(workingDir, "mpv_build.sh")
-        )
-
-        // Use inputs.property with normalization
-        inputs.property("ndkVersion", ndkRequired)
-            .optional(false)
-
-        // Register all output files explicitly
-        AppConfig.abiCodes.forEach { abiCode ->
-            AppConfig.mpvLibs.forEach { mpvLib ->
-                outputs.file(File(projectDir, "src/main/libs/${abiCode.key}/$mpvLib"))
-            }
-        }
-
-        outputs.cacheIf { true }
-
-        if (System.getProperty("os.name").startsWith("Windows")) {
-            doFirst {
-                logger.warn("Native library build is not supported on Windows. Skipping...")
-            }
-            isEnabled = false
-        } else {
-            val sdkComponents = androidComponents.sdkComponents
-
-            doFirst {
-                val sdkPath = sdkComponents.sdkDirectory.get().asFile
-                val ndkPath = sdkComponents.ndkDirectory.get().asFile
-
-                if (!ndkPath.exists()) {
-                    throw GradleException(
-                        "Android NDK is required but not found!\n" +
-                                "Please install NDK via Android Studio SDK Manager or set ndk.dir in local.properties"
-                    )
-                }
-
-                environment("ANDROID_SDK_ROOT", sdkPath.absolutePath)
-                environment("ANDROID_NDK_HOME", ndkPath.absolutePath)
-
-                println("✓ NDK found at: ${ndkPath.absolutePath}")
-
-                val osName = System.getProperty("os.name").lowercase()
-                val myOS = when {
-                    osName.contains("mac") || osName.contains("darwin") -> "mac"
-                    osName.contains("linux") -> "linux"
-                    osName.contains("windows") -> "windows"
-                    else -> "unknown"
-                }
-
-                logger.lifecycle("Detected OS: $myOS")
-
-                val sdkSymlinkDir = File(workingDir, "sdk")
-                val symlink = File(sdkSymlinkDir, "android-sdk-$myOS")
-
-                if (!sdkSymlinkDir.exists()) {
-                    sdkSymlinkDir.mkdirs()
-                }
-
-                if (symlink.exists()) {
-                    if (Files.isSymbolicLink(symlink.toPath())) {
-                        Files.delete(symlink.toPath())
-                        logger.lifecycle("Removed old symlink: ${symlink.absolutePath}")
-                    } else {
-                        throw GradleException("${symlink.absolutePath} exists but is not a symlink!")
-                    }
-                }
-
-                try {
-                    Files.createSymbolicLink(symlink.toPath(), sdkPath.toPath())
-                    logger.lifecycle("✓ Created symlink: ${symlink.absolutePath} -> ${sdkPath.absolutePath}")
-                } catch (e: Exception) {
-                    throw GradleException("Failed to create symlink: ${e.message}")
-                }
-
-                commandLine(
-                    "sh", "-c", """
-                sh mpv_download_deps.sh "$sdkPath" "$ndkPath" &&
-                sh mpv_build.sh --arch armv7l mpv &&
-                sh mpv_build.sh --arch arm64 mpv &&
-                sh mpv_build.sh --arch x86 mpv &&
-                sh mpv_build.sh --arch x86_64 mpv &&
-                sh mpv_build.sh -n syncplay-withmpv
-            """.trimIndent()
-                )
-
-                logger.lifecycle("Running: ${commandLine.joinToString(" ")}")
-            }
-        }
-
-        // Run task only if output files are missing (partially or fully)
-        onlyIf {
-            val allFilesExist = AppConfig.abiCodes.all { abiCode ->
-                AppConfig.mpvLibs.all { mpvLib ->
-                    File(projectDir, "src/main/libs/${abiCode.key}/$mpvLib").exists()
-                }
-            }
-
-            if (allFilesExist) {
-                logger.lifecycle("✓ All MPV libs exist, skipping build")
-            } else {
-                logger.lifecycle("✗f Some MPV libs missing, will build")
-            }
-
-            !allFilesExist
-        }
-    }
+    registerNativeBuildTask(
+        sdkPathProvider = { androidComponents.sdkComponents.sdkDirectory.get().asFile },
+        ndkPathProvider = { androidComponents.sdkComponents.ndkDirectory.get().asFile }
+    )
 }
 
 androidComponents {

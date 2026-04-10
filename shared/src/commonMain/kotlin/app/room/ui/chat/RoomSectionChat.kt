@@ -25,6 +25,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -243,7 +245,15 @@ fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel) {
             }
         }
 
+        val chatListState = rememberLazyListState()
+        LaunchedEffect(latestChatMessages.size) {
+            if (latestChatMessages.isNotEmpty()) {
+                chatListState.animateScrollToItem(latestChatMessages.lastIndex)
+            }
+        }
+
         LazyColumn(
+            state = chatListState,
             contentPadding = PaddingValues(8.dp),
             userScrollEnabled = false,
             modifier = Modifier.fillMaxWidth()

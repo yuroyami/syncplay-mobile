@@ -372,53 +372,6 @@ object CardSharedPlaylist {
 
                             HorizontalDivider(thickness = (0.5).dp, color = MaterialTheme.colorScheme.outlineVariant)
 
-                            //Shared Playlist Action: Add file(s)
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        fontSize = txtsize.sp,
-                                                                                text = stringResource(Res.string.room_shared_playlist_button_add_file)
-                                    )
-                                },
-                                leadingIcon = { Icon(imageVector = Icons.AutoMirrored.Filled.NoteAdd, "") },
-                                onClick = {
-                                    sharedplaylistOverflowState.value = false
-                                    mediaFilePicker.launch()
-                                }
-                            )
-
-                            //Shared Playlist Action: Add URL(s)
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        fontSize = txtsize.sp,
-                                                                                text = stringResource(Res.string.room_shared_playlist_button_add_url)
-                                    )
-                                },
-                                leadingIcon = { Icon(imageVector = Icons.Filled.AddLink, "") },
-                                onClick = {
-                                    sharedplaylistOverflowState.value = false
-                                    addUrlsPopupState.value = true
-                                }
-                            )
-
-                            //Shared Playlist Action: Add folder
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        fontSize = txtsize.sp,
-                                                                                text = stringResource(Res.string.room_shared_playlist_button_add_folder)
-                                    )
-                                },
-                                leadingIcon = { Icon(imageVector = Icons.Filled.CreateNewFolder, "") },
-                                onClick = {
-                                    sharedplaylistOverflowState.value = false
-                                    mediaDirectoryPicker.launch()
-                                }
-                            )
-
-                            HorizontalDivider(thickness = (0.5).dp, color = MaterialTheme.colorScheme.outlineVariant)
-
                             //Shared Playlist Action: Import playlist file (txt)
                             DropdownMenuItem(
                                 text = {

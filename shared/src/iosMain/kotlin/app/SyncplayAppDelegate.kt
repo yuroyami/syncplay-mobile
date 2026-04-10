@@ -2,10 +2,7 @@ package app
 
 import app.utils.platformCallback
 import app.home.JoinConfig
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.json.Json
 import platform.AVKit.AVPictureInPictureController
 import platform.UIKit.UIApplication
@@ -16,7 +13,6 @@ import platform.UIKit.UIInterfaceOrientationMask
 import platform.UIKit.UIInterfaceOrientationMaskPortrait
 import platform.UIKit.UIWindow
 import platform.darwin.NSObject
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * Singleton instance of the UIApplicationDelegate for the Syncplay iOS app.
@@ -112,35 +108,25 @@ class AppleDelegate : NSObject(), UIApplicationDelegateProtocol {
 }
 
 /**
- * Temporary storage for the most recent shortcut item.
+ * Holds a pending shortcut [JoinConfig] to be consumed by the HomeScreen when ready.
  *
- * Used to pass shortcut data to the UI layer after the delegate has processed it.
- * TODO: Replace with a more robust state management solution.
+ * On cold start, the app delegate may receive the shortcut before the Compose UI and
+ * HomeViewmodel are initialized. Instead of polling for the viewmodel, we store the
+ * parsed JoinConfig here. The HomeScreen observes this flow and joins the room as soon
+ * as it finishes initializing.
  */
-var sc: UIApplicationShortcutItem? = null
+val pendingShortcutJoinConfig = MutableStateFlow<JoinConfig?>(null)
 
 /**
- * Processes a Quick Action shortcut item by extracting room configuration and joining.
- *
- * Parses the shortcut's type string (which encodes user, room, server info) and
- * triggers the room join flow.
+ * Processes a Quick Action shortcut item by parsing its room configuration
+ * and posting it to [pendingShortcutJoinConfig] for the UI layer to consume.
  *
  * @param shortcut The UIApplicationShortcutItem containing room configuration
  */
 fun handleShortcut(shortcut: UIApplicationShortcutItem) {
     println("HANDLE AMIGO SHORTCUT $shortcut")
-    sc = shortcut
-
-    //Our HomeViewmodel may not be ready on-the-go when opening the app
-    MainScope().launch {
-        runCatching {
-            withTimeout(10.seconds) {
-                while (homeViewmodel == null) {
-                    delay(500)
-                }
-            }
-            val joinConfig = Json.decodeFromString<JoinConfig>(shortcut.type)
-            homeViewmodel?.joinRoom(joinConfig)
-        }
+    runCatching {
+        val joinConfig = Json.decodeFromString<JoinConfig>(shortcut.type)
+        pendingShortcutJoinConfig.value = joinConfig
     }
 }

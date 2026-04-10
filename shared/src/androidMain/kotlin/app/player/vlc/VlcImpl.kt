@@ -1,19 +1,23 @@
 package app.player.vlc
 
-import android.content.Context
-import android.media.AudioManager
 import android.view.LayoutInflater
 import androidx.annotation.MainThread
 import androidx.annotation.UiThread
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ClosedCaptionOff
+import androidx.compose.material.icons.filled.SettingsInputComponent
+import androidx.compose.material.icons.filled.SpatialAudio
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.media3.common.C.STREAM_TYPE_MUSIC
 import app.R
 import app.player.PlayerImpl
 import app.player.models.Chapter
 import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
+import app.preferences.Pref
+import app.preferences.PrefExtraConfig
+import app.preferences.settings.SettingCategory
 import app.room.RoomViewmodel
 import app.utils.contextObtainer
 import app.utils.uri
@@ -28,13 +32,17 @@ import org.videolan.libvlc.MediaPlayer
 import org.videolan.libvlc.interfaces.IMedia
 import org.videolan.libvlc.interfaces.IMedia.Track
 import org.videolan.libvlc.util.VLCVideoLayout
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.uisetting_audio_delay_summary
+import syncplaymobile.shared.generated.resources.uisetting_audio_delay_title
+import syncplaymobile.shared.generated.resources.uisetting_categ_vlc
+import syncplaymobile.shared.generated.resources.uisetting_subtitle_delay_summary
+import syncplaymobile.shared.generated.resources.uisetting_subtitle_delay_title
 import kotlin.math.abs
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
-    lateinit var audioManager: AudioManager
-
     private val ctx = contextObtainer()
 
     private var libvlc: LibVLC? = null
@@ -50,8 +58,6 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
 
     @UiThread
     override fun initialize() {
-        audioManager = ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-
         libvlc = LibVLC(ctx, listOf("-vv"))
         vlcPlayer = MediaPlayer(libvlc)
         vlcPlayer?.attachViews(vlcView, null, true, true)
@@ -65,12 +71,17 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
 
     override suspend fun destroy() {
         if (!isInitialized) return
+        isInitialized = false
+        playerSupervisorJob.cancel()
 
         withContext(Dispatchers.Main.immediate) {
             vlcPlayer?.stop()
             vlcMedia?.release()
             vlcPlayer?.release()
             libvlc?.release()
+            vlcMedia = null
+            vlcPlayer = null
+            libvlc = null
         }
     }
 
@@ -90,8 +101,27 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
         )
     }
 
-    //TODO
-    override suspend fun configurableSettings() = null
+    override suspend fun configurableSettings() = SettingCategory(
+        title = Res.string.uisetting_categ_vlc,
+        icon = Icons.Filled.SettingsInputComponent
+    ) {
+        +Pref("vlc_subtitle_delay_ms", 0) {
+            title = Res.string.uisetting_subtitle_delay_title
+            summary = Res.string.uisetting_subtitle_delay_summary
+            icon = Icons.Filled.ClosedCaptionOff
+            extraConfig = PrefExtraConfig.Slider(minValue = -5000, maxValue = 5000) {
+                vlcPlayer?.setSpuDelay(it * 1000L)
+            }
+        }
+        +Pref("vlc_audio_delay_ms", 0) {
+            title = Res.string.uisetting_audio_delay_title
+            summary = Res.string.uisetting_audio_delay_summary
+            icon = Icons.Filled.SpatialAudio
+            extraConfig = PrefExtraConfig.Slider(minValue = -5000, maxValue = 5000) {
+                vlcPlayer?.setAudioDelay(it * 1000L)
+            }
+        }
+    }
 
     override suspend fun hasMedia(): Boolean {
         if (!isInitialized) return false
@@ -355,11 +385,9 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
 
     }
 
-    override fun getMaxVolume() = audioManager.getStreamMaxVolume(STREAM_TYPE_MUSIC)
-    override fun getCurrentVolume() = audioManager.getStreamVolume(STREAM_TYPE_MUSIC)
+    override fun getMaxVolume() = 200
+    override fun getCurrentVolume(): Int = vlcPlayer?.volume ?: 0
     override fun changeCurrentVolume(v: Int) {
-        if (!audioManager.isVolumeFixed) {
-            audioManager.setStreamVolume(STREAM_TYPE_MUSIC, v, 0)
-        }
+        vlcPlayer?.volume = v.coerceIn(0, 200)
     }
 }

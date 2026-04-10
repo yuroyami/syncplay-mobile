@@ -70,6 +70,7 @@ import app.uicomponents.sairaFont
 import app.utils.appName
 import app.utils.ShowSystemBars
 import app.utils.availablePlatformPlayerEngines
+import app.utils.consumePendingShortcut
 import app.utils.platformCallback
 import app.utils.substringSafely
 import kotlinx.coroutines.Dispatchers
@@ -109,6 +110,13 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
     LaunchedEffect(null) {
         withContext(Dispatchers.IO) {
             savedConfig = JoinConfig.savedConfig()
+        }
+    }
+
+    // Consume any pending shortcut (iOS cold-start Quick Actions)
+    LaunchedEffect(Unit) {
+        consumePendingShortcut()?.let { joinConfig ->
+            viewmodel.joinRoom(joinConfig)
         }
     }
 
@@ -393,13 +401,10 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             )
                         },
                         trailingButton = {
-                            var checked by remember { mutableStateOf(false) }
-
                             SplitButtonDefaults.TrailingButton(
                                 contentPadding = PaddingValues(vertical = 16.dp),
-                                checked = checked,
-                                onCheckedChange = { b ->
-                                    checked = b
+                                checked = false,
+                                onCheckedChange = {
                                     with (platformCallback) {
                                         viewmodel.onSaveConfigShortcut(
                                             JoinConfig(

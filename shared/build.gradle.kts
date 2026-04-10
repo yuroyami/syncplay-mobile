@@ -30,6 +30,9 @@ kotlin {
             @Suppress("unused") val nsKVO by cinterops.creating {
                 defFile("src/nativeInterop/cinterop/NSKeyValueObserving.def")
             }
+            @Suppress("unused") val ifaddrsInterop by cinterops.creating {
+                defFile("src/nativeInterop/cinterop/ifaddrs.def")
+            }
         }
     }
 

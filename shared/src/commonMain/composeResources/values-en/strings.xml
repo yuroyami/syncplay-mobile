@@ -65,6 +65,7 @@
     <string name="server_host_status_running">Running</string>
     <string name="server_host_status_error">Error</string>
     <string name="server_host_clients_connected">%1$d client(s) connected</string>
+    <string name="server_host_address">Server address</string>
     <string name="server_host_server_log">Server Log</string>
     <string name="server_host_ios_warning">On iOS, the server will stop when the app goes to background.</string>
     <string name="connect_host_own_server">Host Your Own Server</string>
@@ -193,6 +194,8 @@
     <string name="room_chapters">Chapters</string>
     <string name="room_gestures_enabled">Touch Gestures enabled</string>
     <string name="room_gestures_disabled">Touch Gestures disabled</string>
+    <string name="room_screenshot_saved">Screenshot saved</string>
+    <string name="room_screenshot_unsupported">Screenshot not supported by this player engine</string>
     <string name="room_no_recent_seek">There is no recent seek in this room.</string>
     <string name="room_seek_undone">Seek undone.</string>
     <string name="room_seek_toposition_title">Seek to precise position</string>
@@ -382,6 +385,24 @@
     <string name="uisetting_ui_opacity_title">UI Opacity</string>
     <string name="uisetting_ui_opacity_summary">This adjusts the transparency of interface backgrounds.</string>
 
+    <string name="uisetting_hud_autohide_title">HUD Auto-Hide Timeout</string>
+    <string name="uisetting_hud_autohide_summary">Seconds of inactivity before the HUD hides automatically. Set to 0 to disable auto-hide.</string>
+
+    <string name="uisetting_doubletap_seek_title">Double-Tap to Seek</string>
+    <string name="uisetting_doubletap_seek_summary">Seek forward/backward by double-tapping screen sides. Disabling this removes the single-tap delay caused by double-tap detection.</string>
+
+    <string name="uisetting_swipe_gestures_title">Swipe Gestures</string>
+    <string name="uisetting_swipe_gestures_summary">Vertical swipe on left side for brightness, right side for volume.</string>
+
+    <string name="setting_trusted_domains_title">Trusted Domains</string>
+    <string name="setting_trusted_domains_summary">Only auto-load URLs from these domains. Leave empty to allow all. Comma-separated (e.g. example.com, cdn.host.net).</string>
+    <string name="room_untrusted_domain_warning">Blocked URL from untrusted domain: %1$s. Add it to Trusted Domains in settings to allow.</string>
+
+    <string name="uisetting_osd_duration_title">OSD Message Duration</string>
+    <string name="uisetting_osd_duration_summary">How many seconds to show on-screen status messages (e.g. aspect ratio changes, track selections). Set to 0 to disable OSD messages.</string>
+
+    <string name="uisetting_show_chapter_dots_title">Show Chapter Markers</string>
+    <string name="uisetting_show_chapter_dots_summary">Display chapter dot markers on the seekbar when available.</string>
 
     <string name="theme_popup_select_a_theme">Select a Theme</string>
     <string name="theme_popup_builtin_themes">Built-in themes</string>

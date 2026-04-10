@@ -78,13 +78,17 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
                 output = connection?.output
 
                 viewmodel.viewModelScope.launch {
-                    while (true) {
-                        connection?.input?.awaitContent()
-                        input?.readLineStrict()?.let { //TODO maybe only need readLine()?
-                            handlePacket(it)
-                        }
+                    try {
+                        while (true) {
+                            connection?.input?.awaitContent()
+                            input?.readLineStrict()?.let {
+                                handlePacket(it)
+                            }
 
-                        delay(100)
+                            delay(100)
+                        }
+                    } catch (_: Exception) {
+                        viewmodel.callback.onDisconnected()
                     }
                 }
 

@@ -36,6 +36,10 @@ import kotlin.uuid.Uuid
  */
 class SyncplayViewmodel : ViewModel() {
 
+    init {
+        app.utils.cleanupOldLogs()
+    }
+
     /** The navigation backstack */
     val backstack = mutableStateListOf<Screen>(Screen.Home)
 

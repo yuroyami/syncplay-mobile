@@ -20,6 +20,7 @@ import app.preferences.Preferences.COLOR_TIMESTAMP
 import app.preferences.Preferences.COLOR_USERMSG
 import app.preferences.Preferences.CUSTOM_SEEK_AMOUNT
 import app.preferences.Preferences.CUSTOM_SEEK_FRONT
+import app.preferences.Preferences.DOUBLETAP_SEEK
 import app.preferences.Preferences.DISPLAY_LANG
 import app.preferences.Preferences.ERASE_SHORTCUTS
 import app.preferences.Preferences.EXPORT_LOGS
@@ -33,6 +34,10 @@ import app.preferences.Preferences.HAPTIC_ON_PAUSED
 import app.preferences.Preferences.HAPTIC_ON_PLAYED
 import app.preferences.Preferences.HAPTIC_ON_PLAYLIST
 import app.preferences.Preferences.HAPTIC_ON_SEEKED
+import app.preferences.Preferences.HUD_AUTO_HIDE_TIMEOUT
+import app.preferences.Preferences.OSD_DURATION
+import app.preferences.Preferences.SHOW_CHAPTER_DOTS
+import app.preferences.Preferences.SWIPE_GESTURES
 import app.preferences.Preferences.HASH_FILENAME
 import app.preferences.Preferences.HASH_FILESIZE
 import app.preferences.Preferences.INROOM_RESET_DEFAULTS
@@ -61,6 +66,7 @@ import app.preferences.Preferences.SYNC_FASTFORWARD
 import app.preferences.Preferences.SYNC_REWIND
 import app.preferences.Preferences.SYNC_SLOWDOWN
 import app.preferences.Preferences.TLS_ENABLE
+import app.preferences.Preferences.TRUSTED_DOMAINS
 import app.preferences.Preferences.UNPAUSE_ACTION
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.settings_categ_advanced
@@ -122,6 +128,7 @@ val GLOBAL_NETWORK = SettingCategory(
 ) {
     +TLS_ENABLE
     +NETWORK_ENGINE
+    +TRUSTED_DOMAINS
 }
 
 val GLOBAL_ADVANCED = SettingCategory(
@@ -173,8 +180,10 @@ val INROOM_PLAYER_SETTINGS = SettingCategory(
     +SUBTITLE_SIZE
     +SEEK_FORWARD_JUMP
     +SEEK_BACKWARD_JUMP
-    //+AUDIO_DELAY
-    //+SUBTITLE_DELAY
+    +SHOW_CHAPTER_DOTS
+    +DOUBLETAP_SEEK
+    +SWIPE_GESTURES
+    +OSD_DURATION
 
 }
 
@@ -197,6 +206,7 @@ val INROOM_ADVANCED = SettingCategory(
     icon = Icons.Filled.Stream
 ) {
     +ROOM_UI_OPACITY
+    +HUD_AUTO_HIDE_TIMEOUT
     +RECONNECTION_INTERVAL
     +INROOM_RESET_DEFAULTS
 }

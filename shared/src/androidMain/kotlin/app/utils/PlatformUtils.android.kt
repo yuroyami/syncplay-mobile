@@ -148,3 +148,47 @@ actual fun <T : Any> createWeakRef(obj: T): WeakRef<T> {
 }
 
 actual fun <T : Any> WeakRef<T>?.get(): T? = this?.get()
+
+actual fun getDeviceIpAddress(): String? {
+    return try {
+        java.net.NetworkInterface.getNetworkInterfaces()?.toList()
+            ?.flatMap { it.inetAddresses.toList() }
+            ?.firstOrNull { !it.isLoopbackAddress && it is java.net.Inet4Address }
+            ?.hostAddress
+    } catch (_: Exception) {
+        null
+    }
+}
+
+actual fun getLogDirectoryPath(): String? {
+    return try {
+        val ctx = contextObtainer()
+        val logDir = java.io.File(ctx.filesDir, "logs")
+        if (!logDir.exists()) logDir.mkdirs()
+        logDir.absolutePath
+    } catch (_: Exception) {
+        null
+    }
+}
+
+actual fun appendToFile(path: String, content: String) {
+    try {
+        java.io.File(path).appendText(content)
+    } catch (_: Exception) { }
+}
+
+actual fun listFiles(directoryPath: String): List<String> {
+    return try {
+        java.io.File(directoryPath).listFiles()?.map { it.name } ?: emptyList()
+    } catch (_: Exception) {
+        emptyList()
+    }
+}
+
+actual fun deleteFile(path: String) {
+    try {
+        java.io.File(path).delete()
+    } catch (_: Exception) { }
+}
+
+actual fun consumePendingShortcut(): app.home.JoinConfig? = null

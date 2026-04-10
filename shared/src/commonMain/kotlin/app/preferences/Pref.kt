@@ -34,6 +34,14 @@ class Pref<T>(
         }
     }
 
+    /** Cached preference key — avoids recreating on every read/write */
+    @PublishedApi
+    internal var cachedKey: Preferences.Key<*>? = null
+
+    /** Cached flow — avoids rebuilding the map/distinctUntilChanged chain every time */
+    @PublishedApi
+    internal var cachedFlow: Flow<T>? = null
+
     //Type erasure is annoying, W-we have to cast Pref<*> to its corresponding type
     //or else we can't call pref.SettingComposable() since it uses a reified generic parameter
     @Composable
@@ -85,21 +93,29 @@ data class SettingConfig(
     var extraConfig: PrefExtraConfig? = null
 )
 /**
- * Get the current value using the static default.
+ * Returns the cached [Preferences.Key] for this pref, creating it on first access.
  */
-inline fun <reified T> Pref<T>.value(): T {
-    val preferencesKey = prefKeyMapper<T>(key)
-    return datastoreStateFlow.value[preferencesKey] ?: default
+@Suppress("UNCHECKED_CAST")
+inline fun <reified T> Pref<T>.prefKey(): Preferences.Key<T> {
+    return (cachedKey as? Preferences.Key<T>) ?: prefKeyMapper<T>(key).also { cachedKey = it }
 }
 
 /**
- * Get a reactive Flow using the static default.
+ * Get the current value using the static default.
+ */
+inline fun <reified T> Pref<T>.value(): T {
+    return datastoreStateFlow.value[prefKey()] ?: default
+}
+
+/**
+ * Get a reactive Flow using the static default. The flow is cached so repeated calls
+ * don't rebuild the map/distinctUntilChanged chain.
  */
 inline fun <reified T> Pref<T>.flow(): Flow<T> {
-    val preferencesKey = prefKeyMapper<T>(key)
-    return datastoreStateFlow
-        .map { preferences -> preferences[preferencesKey] ?: default }
+    return cachedFlow ?: datastoreStateFlow
+        .map { preferences -> preferences[prefKey()] ?: default }
         .distinctUntilChanged()
+        .also { cachedFlow = it }
 }
 
 /**
@@ -115,7 +131,6 @@ inline fun <reified T> Pref<T>.watchPref(): State<T> {
  */
 suspend inline fun <reified T> Pref<T>.set(value: T) {
     datastore.edit { preferences ->
-        val preferencesKey = prefKeyMapper<T>(key)
-        preferences[preferencesKey] = value
+        preferences[prefKey()] = value
     }
 }

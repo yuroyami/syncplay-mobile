@@ -47,7 +47,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
         AUDIO, SUBTITLE
     }
 
-    private val playerSupervisorJob = SupervisorJob()
+    protected val playerSupervisorJob = SupervisorJob()
     val playerScopeMain = CoroutineScope(Dispatchers.Main + playerSupervisorJob)
     val playerScopeIO = CoroutineScope(Dispatchers.IO + playerSupervisorJob)
 
@@ -201,6 +201,9 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     abstract fun currentPositionMs(): Long
 
     abstract suspend fun switchAspectRatio(): String
+
+    /** Takes a screenshot of the current video frame. Returns true if supported and successful. */
+    open suspend fun takeScreenshot(): Boolean = false
 
     abstract suspend fun changeSubtitleSize(newSize: Int)
 
