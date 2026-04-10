@@ -130,15 +130,17 @@ fun RoomControlPanelCard(modifier: Modifier) {
             }
         }
 
-        /* Screenshot */
-        FlexibleIcon(
-            icon = Icons.Filled.CameraAlt,
-            size = iconSize, shadowColors = listOf(Color.Black)
-        ) {
-            composeScope.launch(Dispatchers.IO) {
-                val success = viewmodel.player.takeScreenshot()
-                viewmodel.dispatchOSD {
-                    getString(if (success) Res.string.room_screenshot_saved else Res.string.room_screenshot_unsupported)
+        /* Screenshot - hidden until properly implemented */
+        if (false) {
+            FlexibleIcon(
+                icon = Icons.Filled.CameraAlt,
+                size = iconSize, shadowColors = listOf(Color.Black)
+            ) {
+                composeScope.launch(Dispatchers.IO) {
+                    val success = viewmodel.player.takeScreenshot()
+                    viewmodel.dispatchOSD {
+                        getString(if (success) Res.string.room_screenshot_saved else Res.string.room_screenshot_unsupported)
+                    }
                 }
             }
         }
