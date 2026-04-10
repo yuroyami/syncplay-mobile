@@ -14,6 +14,8 @@ import android.content.res.Configuration
 import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.provider.Settings
 import android.view.KeyEvent
 import android.widget.Toast
@@ -221,6 +223,15 @@ class SyncplayActivity : ComponentActivity() {
                     ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
                 else
                     ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            }
+
+            override fun performHapticFeedback() {
+                val vibrator = getSystemService(Vibrator::class.java) ?: return
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
+                } else {
+                    vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+                }
             }
         }
 

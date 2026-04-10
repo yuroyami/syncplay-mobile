@@ -12,6 +12,8 @@ import platform.UIKit.UIApplicationShortcutIconType
 import platform.UIKit.UIApplicationShortcutItem
 import platform.UIKit.UIInterfaceOrientationMaskLandscape
 import platform.UIKit.UIInterfaceOrientationMaskPortrait
+import platform.UIKit.UIImpactFeedbackGenerator
+import platform.UIKit.UIImpactFeedbackStyle
 import platform.UIKit.UIScreen
 import platform.UIKit.UIWindowScene
 import platform.UIKit.UIWindowSceneGeometryPreferencesIOS
@@ -165,6 +167,11 @@ object ApplePlatformCallback : PlatformCallback {
      */
     override fun onEraseConfigShortcuts() {
         UIApplication.sharedApplication.shortcutItems = emptyList<UIApplicationShortcutItem>()
+    }
+
+    override fun performHapticFeedback() {
+        val generator = UIImpactFeedbackGenerator(UIImpactFeedbackStyle.UIImpactFeedbackStyleMedium)
+        generator.impactOccurred()
     }
 
     override fun onScreenOrientationChanged(portrait: Boolean) {

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -260,10 +261,13 @@ fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel) {
                 }
 
                 if (chatMessage.isImageUrl) {
-                    /* Render GIF/image inline with sender tag above */
-                    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
+                    /* Render GIF/image inline beside sender tag */
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         FlexibleAnnotatedText(
-                            modifier = Modifier.fillMaxWidth().focusable(enabled = false),
+                            modifier = Modifier.weight(1f, fill = false).focusable(enabled = false),
                             text = chatMessage.factorizeSenderTag(LocalChatPalette.current),
                             size = (msgFontSize.value.toFloat()),
                             shadowColors = if (msgShadowActivate) listOf(Color.Black) else listOf(),
@@ -273,11 +277,11 @@ fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel) {
                         AnimatedImage(
                             url = chatMessage.content,
                             contentDescription = null,
-                            contentScale = ContentScale.FillWidth,
+                            contentScale = ContentScale.Crop,
                             modifier = Modifier
-                                .fillMaxWidth(0.45f)
+                                .padding(start = 4.dp)
+                                .size(64.dp)
                                 .clip(RoundedCornerShape(6.dp))
-                                .padding(start = 4.dp, top = 2.dp)
                         )
                     }
                 } else {

@@ -50,12 +50,14 @@ actual fun AnimatedImage(
             UIImageView().apply {
                 this.contentMode = contentMode
                 this.clipsToBounds = true
+                this.userInteractionEnabled = false
             }
         },
         update = { imageView ->
             imageView.contentMode = contentMode
             imageView.image = nativeImage
         },
+        interactive = false,
         modifier = modifier
     )
 }

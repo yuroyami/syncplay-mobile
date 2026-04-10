@@ -22,12 +22,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import app.LocalGlobalViewmodel
 import app.LocalRoomUiState
+import app.preferences.Preferences.HUD_AUTO_HIDE_TIMEOUT
+import app.preferences.watchPref
 import app.room.RoomUiStateManager.Companion.RoomOrientation
 import app.room.ui.bottombar.BlackContrastUnderlay
 import app.room.ui.bottombar.PopupSeekToPosition.SeekToPositionPopup
@@ -46,10 +49,6 @@ import app.room.ui.tabs.RoomTabSection
 import app.room.ui.tabs.RoomUnlockableLayout
 import app.utils.HideSystemBars
 import app.utils.platformCallback
-import app.preferences.Preferences.HUD_AUTO_HIDE_TIMEOUT
-import app.preferences.watchPref
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.pointerInput
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
@@ -68,14 +67,6 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
     val isInPipMode by viewmodel.uiState.hasEnteredPipMode.collectAsState()
 
     val lockedMode by viewmodel.uiState.tabLock.collectAsState()
-
-    /* Haptic feedback collector - triggers haptics from non-composable RoomCallback */
-    val haptic = LocalHapticFeedback.current
-    LaunchedEffect(Unit) {
-        viewmodel.uiState.hapticEvent.collect {
-            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-        }
-    }
 
     CompositionLocalProvider(LocalRoomUiState provides viewmodel.uiState) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -143,6 +134,11 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                                     viewmodel.uiState.hudInteractionSignal.tryEmit(Unit)
                                 }
                             }
+                        }
+                        .pointerInput(Unit) {
+                            detectTapGestures(onTap = {
+                                viewmodel.uiState.visibleHUD.value = false
+                            })
                         }
                     ) {
                         if (hasVideo) {

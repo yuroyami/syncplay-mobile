@@ -162,7 +162,7 @@ internal inline fun <reified T> Pref<T>.SettingComposable() {
 
                 //If textfield setting, show textfield as trailing
                 textfieldConfig != null -> HomeTextField(
-                    modifier = Modifier,
+                    modifier = Modifier.weight(1f),
                     value = value as String,
                     onValueChange = {
                         scope.launch {

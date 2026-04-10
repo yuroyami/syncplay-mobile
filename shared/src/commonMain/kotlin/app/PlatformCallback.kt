@@ -84,4 +84,13 @@ interface PlatformCallback {
      * @param portrait True to switch to portrait orientation, false for landscape
      */
     fun onScreenOrientationChanged(portrait: Boolean)
+
+    /**
+     * Triggers a haptic feedback vibration using the platform's vibration API directly.
+     *
+     * This bypasses Compose's [LocalHapticFeedback] which relies on View.performHapticFeedback()
+     * and can silently fail when the system "Touch feedback" setting is disabled —
+     * a setting independent of the ringer mode.
+     */
+    fun performHapticFeedback()
 }

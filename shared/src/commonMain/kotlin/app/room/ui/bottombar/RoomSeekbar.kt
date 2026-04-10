@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.ripple
 import app.LocalRoomViewmodel
+import app.preferences.Preferences.CHAPTER_DOTS_CLICKABLE
 import app.preferences.Preferences.SHOW_CHAPTER_DOTS
 import app.preferences.watchPref
 import app.uicomponents.gradientOverlay
@@ -137,6 +138,7 @@ fun RoomSeekbar(modifier: Modifier) {
                         }
                 ) {
                     val showChapterDots by SHOW_CHAPTER_DOTS.watchPref()
+                    val chapterDotsClickable by CHAPTER_DOTS_CLICKABLE.watchPref()
                     if (showChapterDots) {
                         chapters.forEach { chapter ->
                             if (chapter.timeOffsetMillis / 1000 != 0L) {
@@ -150,14 +152,16 @@ fun RoomSeekbar(modifier: Modifier) {
                                         }.align(CenterStart)
                                         .size(8.dp).clip(CircleShape)
                                         .background(Color.LightGray)
-                                        .clickable(
-                                            interactionSource = null,
-                                            indication = ripple()
-                                        ) {
-                                            scope.launch(Dispatchers.Main.immediate) {
-                                                viewmodel.player.jumpToChapter(chapter)
-                                            }
-                                        }
+                                        .then(
+                                            if (chapterDotsClickable) Modifier.clickable(
+                                                interactionSource = null,
+                                                indication = ripple()
+                                            ) {
+                                                scope.launch(Dispatchers.Main.immediate) {
+                                                    viewmodel.player.jumpToChapter(chapter)
+                                                }
+                                            } else Modifier
+                                        )
                                 )
                             }
                         }

@@ -193,6 +193,8 @@ import syncplaymobile.shared.generated.resources.uisetting_seek_forward_jump_sum
 import syncplaymobile.shared.generated.resources.uisetting_seek_forward_jump_title
 import syncplaymobile.shared.generated.resources.uisetting_self_color_summary
 import syncplaymobile.shared.generated.resources.uisetting_self_color_title
+import syncplaymobile.shared.generated.resources.uisetting_chapter_dots_clickable_summary
+import syncplaymobile.shared.generated.resources.uisetting_chapter_dots_clickable_title
 import syncplaymobile.shared.generated.resources.uisetting_show_chapter_dots_summary
 import syncplaymobile.shared.generated.resources.uisetting_show_chapter_dots_title
 import syncplaymobile.shared.generated.resources.uisetting_subtitle_delay_summary
@@ -590,6 +592,13 @@ object Preferences {
         title = Res.string.uisetting_show_chapter_dots_title
         summary = Res.string.uisetting_show_chapter_dots_summary
         icon = Icons.Filled.FormatListNumbered
+    }
+
+    val CHAPTER_DOTS_CLICKABLE = Pref("pref_inroom_chapter_dots_clickable", false) {
+        title = Res.string.uisetting_chapter_dots_clickable_title
+        summary = Res.string.uisetting_chapter_dots_clickable_summary
+        icon = Icons.Filled.TouchApp
+        dependencyEnable = { SHOW_CHAPTER_DOTS.value() }
     }
 
     val DOUBLETAP_SEEK = Pref("pref_inroom_doubletap_seek", true) {

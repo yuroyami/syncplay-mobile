@@ -36,6 +36,7 @@ import app.preferences.Preferences.HAPTIC_ON_PLAYLIST
 import app.preferences.Preferences.HAPTIC_ON_SEEKED
 import app.preferences.Preferences.HUD_AUTO_HIDE_TIMEOUT
 import app.preferences.Preferences.OSD_DURATION
+import app.preferences.Preferences.CHAPTER_DOTS_CLICKABLE
 import app.preferences.Preferences.SHOW_CHAPTER_DOTS
 import app.preferences.Preferences.SWIPE_GESTURES
 import app.preferences.Preferences.HASH_FILENAME
@@ -181,6 +182,7 @@ val INROOM_PLAYER_SETTINGS = SettingCategory(
     +SEEK_FORWARD_JUMP
     +SEEK_BACKWARD_JUMP
     +SHOW_CHAPTER_DOTS
+    +CHAPTER_DOTS_CLICKABLE
     +DOUBLETAP_SEEK
     +SWIPE_GESTURES
     +OSD_DURATION

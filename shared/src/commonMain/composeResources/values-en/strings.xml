@@ -407,6 +407,8 @@
 
     <string name="uisetting_show_chapter_dots_title">Show Chapter Markers</string>
     <string name="uisetting_show_chapter_dots_summary">Display chapter dot markers on the seekbar when available.</string>
+    <string name="uisetting_chapter_dots_clickable_title">Clickable Chapter Markers</string>
+    <string name="uisetting_chapter_dots_clickable_summary">Tap a chapter dot to jump to that position.</string>
 
     <string name="theme_popup_select_a_theme">Select a Theme</string>
     <string name="theme_popup_builtin_themes">Built-in themes</string>

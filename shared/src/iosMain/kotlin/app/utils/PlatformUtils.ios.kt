@@ -38,6 +38,7 @@ import platform.Foundation.writeData
 import platform.UIKit.UIApplication
 import platform.UIKit.UIInterfaceOrientationMaskAll
 import platform.UIKit.UIInterfaceOrientationMaskLandscape
+import platform.UIKit.UIInterfaceOrientationMaskPortrait
 import platform.UIKit.UIWindowScene
 import platform.UIKit.UIWindowSceneGeometryPreferencesIOS
 import kotlin.math.roundToLong
@@ -50,7 +51,6 @@ actual val platform: Platform = Platform.IOS
 actual val availablePlatformPlayerEngines: List<PlayerEngine> = buildList {
     add(AVPlayerEngine)
     add(VlcKitEngine)
-    if (instantiateMpvKitPlayer != null) add(MpvKitEngine)
 }
 
 actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {
@@ -107,11 +107,11 @@ actual fun HideSystemBars() {
 @Composable
 actual fun ShowSystemBars() {
     LaunchedEffect(null) {
-        delegato.myOrientationMask = UIInterfaceOrientationMaskAll
+        delegato.myOrientationMask = UIInterfaceOrientationMaskPortrait
         UIApplication.sharedApplication.connectedScenes.firstOrNull()?.let {
             (it as? UIWindowScene)?.apply {
                 requestGeometryUpdateWithPreferences(
-                    geometryPreferences = UIWindowSceneGeometryPreferencesIOS(interfaceOrientations = UIInterfaceOrientationMaskAll),
+                    geometryPreferences = UIWindowSceneGeometryPreferencesIOS(interfaceOrientations = UIInterfaceOrientationMaskPortrait),
                     errorHandler = null
                 )
             }

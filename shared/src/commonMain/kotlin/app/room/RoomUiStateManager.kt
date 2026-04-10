@@ -4,7 +4,6 @@ import androidx.lifecycle.viewModelScope
 import app.AbstractManager
 import app.preferences.Preferences.ROOM_UI_OPACITY
 import app.preferences.flow
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -51,12 +50,8 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     ) { values -> values.any { it } }
         .stateIn(viewmodel.viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
-    /** Haptic feedback event bus - emits Unit when a haptic should be triggered */
-    private val _hapticEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 5)
-    val hapticEvent: Flow<Unit> = _hapticEvent
-
     fun triggerHaptic() {
-        _hapticEvent.tryEmit(Unit)
+        app.utils.platformCallback.performHapticFeedback()
     }
 
     /** True while the user has navigated away for file picking. */

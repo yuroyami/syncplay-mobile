@@ -38,7 +38,6 @@ class Session(val protocol: ProtocolManager) {
     val spIndex = mutableIntStateOf(-1)
 
     val ready = mutableStateOf(Preferences.READY_FIRST_HAND.value())
-    val protoPing = MutableStateFlow<Int?>(null)
 
     /** Whether all other users in the room are ready (ignores users with no file). */
     fun areAllOtherUsersReady(): Boolean {
