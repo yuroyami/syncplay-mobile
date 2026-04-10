@@ -41,10 +41,10 @@ fun FadingMessageLayout() {
 
     if (!isHUDVisible) {
         var visibility by remember { mutableStateOf(false) }
-        val msgs = remember { viewmodel.session.messageSequence }
+        val msgs by viewmodel.session.messageSequence.collectAsState()
         LaunchedEffect(msgs.size) {
-            if (viewmodel.session.messageSequence.isNotEmpty()) {
-                val lastMsg = viewmodel.session.messageSequence.last()
+            if (msgs.isNotEmpty()) {
+                val lastMsg = msgs.last()
 
                 if (!lastMsg.isMainUser && !lastMsg.seen) {
                     visibility = true
@@ -68,7 +68,7 @@ fun FadingMessageLayout() {
                         .fillMaxWidth(0.8f)
                         .focusable(false),
                     overflow = TextOverflow.Ellipsis,
-                    text = viewmodel.session.messageSequence.last().factorize(palette),
+                    text = msgs.last().factorize(palette),
                     lineHeight = if (isInPiPMode) 9.sp else 15.sp,
                     fontSize = if (isInPiPMode) 8.sp else 13.sp
                 )

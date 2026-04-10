@@ -55,7 +55,7 @@ fun ChatHistoryPopup() {
     val viewmodel = LocalRoomViewmodel.current
     val scope = rememberCoroutineScope()
 
-    val msgs = remember { viewmodel.session.messageSequence }
+    val msgs by viewmodel.session.messageSequence.collectAsState()
     val palette = LocalChatPalette.current.copy(includeTimestamp = true) // We always show timestamp
 
     val visible by viewmodel.uiState.popupChatHistory.collectAsState()

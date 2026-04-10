@@ -26,7 +26,7 @@ class Session(val protocol: ProtocolManager) {
         }
 
     val userList = MutableStateFlow(listOf<User>())
-    val messageSequence = mutableStateListOf<Message>()
+    val messageSequence = MutableStateFlow<List<Message>>(emptyList())
 
     /** Outgoing packets queued while disconnected, flushed on reconnection. */
     val outboundQueue = mutableListOf<String>()

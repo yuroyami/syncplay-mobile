@@ -11,6 +11,7 @@ import app.room.models.Message
 import app.utils.loggy
 import app.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.getString
@@ -138,9 +139,7 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
                 content = message.invoke(),
                 isError = isError
             )
-            withContext(Dispatchers.Main) {
-                viewmodel.session.messageSequence.add(msg)
-            }
+            viewmodel.session.messageSequence.update { it + msg }
         }
     }
 }

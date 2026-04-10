@@ -31,7 +31,6 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -223,7 +222,7 @@ fun ChatTextField(
 fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel) {
     val hasVideo by viewmodel.hasVideo.collectAsState()
 
-    val chatMessages = remember { if (!viewmodel.isSoloMode) viewmodel.session.messageSequence else mutableStateListOf() }
+    val chatMessages by viewmodel.session.messageSequence.collectAsState()
 
     val msgBoxOpacity = MSG_BG_OPACITY.watchPref()
     val msgOutlineActivate by MSG_OUTLINE_ACTIVATE.watchPref()
