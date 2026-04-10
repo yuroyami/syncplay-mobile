@@ -65,7 +65,11 @@
     <string name="server_host_status_running">Running</string>
     <string name="server_host_status_error">Error</string>
     <string name="server_host_clients_connected">%1$d client(s) connected</string>
-    <string name="server_host_address">Server address</string>
+    <string name="server_host_address">Local address (Wi-Fi/LAN)</string>
+    <string name="server_host_public_address">Public address (Internet)</string>
+    <string name="server_host_public_address_fetching">Fetching…</string>
+    <string name="server_host_public_address_unavailable">Could not determine</string>
+    <string name="server_host_port_forward_hint">For friends outside your network, port %1$s must be forwarded on your router.</string>
     <string name="server_host_server_log">Server Log</string>
     <string name="server_host_ios_warning">On iOS, the server will stop when the app goes to background.</string>
     <string name="connect_host_own_server">Host Your Own Server</string>

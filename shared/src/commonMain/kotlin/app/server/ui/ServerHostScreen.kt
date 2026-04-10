@@ -82,6 +82,10 @@ import syncplaymobile.shared.generated.resources.server_host_status_starting
 import syncplaymobile.shared.generated.resources.server_host_status_stopped
 import syncplaymobile.shared.generated.resources.server_host_stop
 import syncplaymobile.shared.generated.resources.server_host_address
+import syncplaymobile.shared.generated.resources.server_host_port_forward_hint
+import syncplaymobile.shared.generated.resources.server_host_public_address
+import syncplaymobile.shared.generated.resources.server_host_public_address_fetching
+import syncplaymobile.shared.generated.resources.server_host_public_address_unavailable
 import syncplaymobile.shared.generated.resources.server_host_title
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -216,15 +220,48 @@ fun ServerHostScreenUI(viewmodel: ServerViewmodel) {
                 // --- Status ---
                 StatusIndicator(status)
 
-                // --- Server address ---
+                // --- Server addresses ---
                 AnimatedVisibility(visible = isRunning) {
-                    val ip = viewmodel.deviceIpAddress.value
+                    val localIp = viewmodel.deviceIpAddress.value
+                    val publicIp = viewmodel.publicIpAddress.value
+                    val publicLoading = viewmodel.publicIpLoading.value
                     val portValue = viewmodel.port.value
-                    if (ip != null) {
+
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        // Local address
+                        if (localIp != null) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                )
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(Res.string.server_host_address),
+                                        fontSize = 12.sp,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                    )
+                                    SelectionContainer {
+                                        Text(
+                                            text = "$localIp:$portValue",
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // Public address
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer
                             )
                         ) {
                             Column(
@@ -232,18 +269,28 @@ fun ServerHostScreenUI(viewmodel: ServerViewmodel) {
                                 verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Text(
-                                    text = stringResource(Res.string.server_host_address),
+                                    text = stringResource(Res.string.server_host_public_address),
                                     fontSize = 12.sp,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                                 )
                                 SelectionContainer {
                                     Text(
-                                        text = "$ip:$portValue",
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        text = when {
+                                            publicLoading -> stringResource(Res.string.server_host_public_address_fetching)
+                                            publicIp != null -> "$publicIp:$portValue"
+                                            else -> stringResource(Res.string.server_host_public_address_unavailable)
+                                        },
+                                        fontSize = if (publicIp != null) 20.sp else 14.sp,
+                                        fontWeight = if (publicIp != null) FontWeight.Bold else FontWeight.Normal,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer
                                     )
                                 }
+                                Text(
+                                    text = stringResource(Res.string.server_host_port_forward_hint, portValue),
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f),
+                                    lineHeight = 14.sp
+                                )
                             }
                         }
                     }

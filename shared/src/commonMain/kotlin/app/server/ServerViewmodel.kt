@@ -10,6 +10,9 @@ import app.server.network.ServerNetworkEngine
 import app.utils.getDeviceIpAddress
 import app.utils.loggy
 import app.utils.platformCallback
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,6 +41,9 @@ class ServerViewmodel(
     val serverStatus = MutableStateFlow<ServerStatus>(ServerStatus.Stopped)
     val connectedClients = MutableStateFlow(0)
     val deviceIpAddress = mutableStateOf<String?>(null)
+    /** Public IP fetched from external service, or null if unavailable/still loading. */
+    val publicIpAddress = mutableStateOf<String?>(null)
+    val publicIpLoading = mutableStateOf(false)
 
     /** Server event log entries for UI display. */
     val serverLogs = mutableStateListOf<ServerLogEntry>()
@@ -94,6 +100,18 @@ class ServerViewmodel(
                 serverStatus.value = ServerStatus.Running
                 deviceIpAddress.value = getDeviceIpAddress()
                 addLog("Server started on port $portInt")
+
+                // Fetch public IP in the background
+                launch {
+                    publicIpLoading.value = true
+                    publicIpAddress.value = try {
+                        val client = HttpClient()
+                        val ip = client.get("https://api.ipify.org").bodyAsText().trim()
+                        client.close()
+                        ip
+                    } catch (_: Exception) { null }
+                    publicIpLoading.value = false
+                }
                 platformCallback.serverServiceStart(portInt)
             } catch (e: Exception) {
                 loggy("Server: Failed to start: ${e.stackTraceToString()}")
@@ -113,6 +131,8 @@ class ServerViewmodel(
                 serverStatus.value = ServerStatus.Stopped
                 connectedClients.value = 0
                 deviceIpAddress.value = null
+                publicIpAddress.value = null
+                publicIpLoading.value = false
                 platformCallback.serverServiceStop()
                 addLog("Server stopped")
             } catch (e: Exception) {
