@@ -174,7 +174,7 @@ kotlin {
 }
 
 with(AppConfig) {
-    //propagateAll() //Uncomment to propagate SSOT (version, app name, locales, colors, logo) to iOS, README, etc.
+    propagateAll() //Uncomment to propagate SSOT (version, app name, locales, colors, logo) to iOS, README, etc.
 }
 
 ktorfit {

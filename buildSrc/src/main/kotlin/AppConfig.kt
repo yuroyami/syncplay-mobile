@@ -73,26 +73,6 @@ object AppConfig {
         }
     }
 
-    /* ── Propagation: version badge in README.md ───────────────────────────────────────────────── */
-    fun Project.updateReadmeVersion() {
-        val readmeFile = File("${rootDir}/README.md")
-        if (!readmeFile.exists()) {
-            logger.warn("README.md not found at: ${readmeFile.absolutePath}")
-            return
-        }
-
-        val original = readmeFile.readText()
-        val updated = original.replace(
-            Regex("""Version-[0-9]+\.[0-9]+\.[0-9]+"""),
-            "Version-$versionName"
-        )
-
-        if (updated != original) {
-            readmeFile.writeText(updated)
-            logger.lifecycle("✅ README.md version badge updated to $versionName")
-        }
-    }
-
     /* ── Propagation: locales from composeResources → iOS (Info.plist + pbxproj knownRegions) ─── */
     fun Project.propagateLocalesToIOS() {
         // Discover locales from composeResources/values-* directories
@@ -183,7 +163,6 @@ object AppConfig {
     /* ── Master propagation: invoke all SSOT propagators at once ────────────────────────────────── */
     fun Project.propagateAll() {
         updateIOSVersionAndAppName()
-        updateReadmeVersion()
         propagateLocalesToIOS()
         propagateTrinityColors()
         propagateLogoToIOS()
