@@ -1,0 +1,358 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_play_store:
+        description: 'Upload AAB to Google Play Store (beta)'
+        type: boolean
+        default: true
+      deploy_app_store:
+        description: 'Upload IPA to App Store / TestFlight'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  # ───────────────────────────────────────────────────────────────────────────
+  # Android Full Build (exoOnly=false) → 4 ABI APKs + 1 universal + 1 AAB
+  # ───────────────────────────────────────────────────────────────────────────
+  build-android-full:
+    runs-on: macos-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      version_code: ${{ steps.version.outputs.version_code }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from AppConfig
+        id: version
+        run: |
+          VERSION=$(grep 'const val versionName' buildSrc/src/main/kotlin/AppConfig.kt | sed 's/.*"\(.*\)".*/\1/')
+          VERSION_CODE=$(python3 -c "v='$VERSION'.split('.'); print('1' + ''.join(s.zfill(3) for s in v))")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+          echo "Version: $VERSION (code: $VERSION_CODE)"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install NDK
+        run: sdkmanager "ndk;29.0.14206865"
+
+      # Native MPV build requires these tools for cross-compiling
+      # FFmpeg, libass, lua, harfbuzz, freetype, etc.
+      - name: Install native build dependencies
+        run: |
+          brew install automake autoconf libtool pkg-config nasm meson
+
+      - name: Decode keystore
+        run: |
+          mkdir -p keystore
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > keystore/syncplaykey.jks
+
+      - name: Create local.properties
+        run: |
+          cat > local.properties <<EOF
+          sdk.dir=$ANDROID_HOME
+          yuroyami.keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          yuroyami.keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          yuroyami.storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          yuroyami.keyKlipyApi=${{ secrets.KLIPY_API_KEY }}
+          EOF
+
+      - name: Ensure release configuration
+        run: |
+          # exoOnly must be false for full build
+          sed -i '' 's/const val exoOnly = true/const val exoOnly = false/' buildSrc/src/main/kotlin/AppConfig.kt
+          # DEBUG must be off
+          sed -i '' "s/buildConfigField(\"DEBUG\", true)/buildConfigField(\"DEBUG\", false)/" shared/build.gradle.kts
+
+      - name: Build APKs
+        run: ./gradlew assembleFullRelease
+
+      - name: Build AAB
+        run: ./gradlew bundleFullRelease
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-full-apks
+          path: androidApp/build/outputs/apk/full/release/*.apk
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-aab
+          path: androidApp/build/outputs/bundle/fullRelease/*.aab
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Android ExoOnly Build (exoOnly=true) → 1 universal APK
+  # ───────────────────────────────────────────────────────────────────────────
+  build-android-exo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Decode keystore
+        run: |
+          mkdir -p keystore
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > keystore/syncplaykey.jks
+
+      - name: Create local.properties
+        run: |
+          cat > local.properties <<EOF
+          sdk.dir=$ANDROID_HOME
+          yuroyami.keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          yuroyami.keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          yuroyami.storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          yuroyami.keyKlipyApi=${{ secrets.KLIPY_API_KEY }}
+          EOF
+
+      - name: Set exoOnly=true
+        run: |
+          sed -i 's/const val exoOnly = false/const val exoOnly = true/' buildSrc/src/main/kotlin/AppConfig.kt
+          sed -i "s/buildConfigField(\"DEBUG\", true)/buildConfigField(\"DEBUG\", false)/" shared/build.gradle.kts
+
+      - name: Build APK
+        run: ./gradlew assembleExoOnlyRelease
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-exo-apk
+          path: androidApp/build/outputs/apk/exoOnly/release/*.apk
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # iOS Build → Archive + IPA + App Store upload
+  # ───────────────────────────────────────────────────────────────────────────
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - name: Revoke stale distribution certificates
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+        run: |
+          pip3 install pyjwt cryptography requests --quiet
+          python3 << 'PYEOF'
+          import jwt, time, os, requests, base64
+
+          api_key_id = os.environ['APP_STORE_CONNECT_API_KEY_ID']
+          issuer_id = os.environ['APP_STORE_CONNECT_ISSUER_ID']
+          api_key = base64.b64decode(os.environ['APP_STORE_CONNECT_API_KEY_BASE64'])
+
+          token = jwt.encode(
+              {'iss': issuer_id, 'iat': int(time.time()), 'exp': int(time.time()) + 1200, 'aud': 'appstoreconnect-v1'},
+              api_key, algorithm='ES256', headers={'kid': api_key_id, 'alg': 'ES256', 'typ': 'JWT'}
+          )
+          headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
+
+          for cert_type in ['IOS_DISTRIBUTION', 'DEVELOPMENT']:
+              resp = requests.get(f'https://api.appstoreconnect.apple.com/v1/certificates?filter[certificateType]={cert_type}', headers=headers)
+              if resp.status_code == 200:
+                  for cert in resp.json().get('data', []):
+                      requests.delete(f"https://api.appstoreconnect.apple.com/v1/certificates/{cert['id']}", headers=headers)
+                      print(f"Revoked {cert_type} cert: {cert['id']}")
+          PYEOF
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Create local.properties
+        run: |
+          cat > local.properties <<EOF
+          yuroyami.keyKlipyApi=${{ secrets.KLIPY_API_KEY }}
+          EOF
+
+      - name: Ensure DEBUG off
+        run: |
+          sed -i '' "s/buildConfigField(\"DEBUG\", true)/buildConfigField(\"DEBUG\", false)/" shared/build.gradle.kts
+
+      - name: Setup CocoaPods
+        working-directory: ./iosApp
+        run: |
+          rm -rf Podfile.lock Pods
+          pod cache clean --all
+          pod repo update
+
+      - name: Generate shared framework
+        run: ./gradlew :shared:generateDummyFramework
+
+      - name: Install CocoaPods dependencies
+        working-directory: ./iosApp
+        run: pod install --repo-update
+
+      - name: Setup App Store Connect API key
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+        run: |
+          mkdir -p ~/private_keys
+          echo -n "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 --decode > ~/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
+
+      - name: Archive
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          xcodebuild \
+            -workspace iosApp/iosApp.xcworkspace \
+            -scheme iosApp \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath $RUNNER_TEMP/iosApp.xcarchive \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8 \
+            -authenticationKeyID $APP_STORE_CONNECT_API_KEY_ID \
+            -authenticationKeyIssuerID $APP_STORE_CONNECT_ISSUER_ID \
+            CODE_SIGN_STYLE=Automatic \
+            DEVELOPMENT_TEAM=B5573QN48P \
+            clean archive
+
+      - name: Export IPA
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath $RUNNER_TEMP/iosApp.xcarchive \
+            -exportOptionsPlist .github/workflows/ExportOptions.plist \
+            -exportPath $RUNNER_TEMP/build \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8 \
+            -authenticationKeyID $APP_STORE_CONNECT_API_KEY_ID \
+            -authenticationKeyIssuerID $APP_STORE_CONNECT_ISSUER_ID
+
+      - name: Upload to App Store
+        if: inputs.deploy_app_store
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          xcrun altool --upload-app \
+            --type ios \
+            --file $RUNNER_TEMP/build/*.ipa \
+            --apiKey $APP_STORE_CONNECT_API_KEY_ID \
+            --apiIssuer $APP_STORE_CONNECT_ISSUER_ID \
+            --apiPrivateKey ~/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
+
+      - name: Rename and extract version for IPA
+        id: ipa
+        run: |
+          VERSION=$(grep 'const val versionName' buildSrc/src/main/kotlin/AppConfig.kt | sed 's/.*"\(.*\)".*/\1/')
+          IPA_SRC=$(ls $RUNNER_TEMP/build/*.ipa | head -1)
+          IPA_NAME="synkplay-${VERSION}-ios.ipa"
+          cp "$IPA_SRC" "$RUNNER_TEMP/$IPA_NAME"
+          echo "ipa_path=$RUNNER_TEMP/$IPA_NAME" >> "$GITHUB_OUTPUT"
+          echo "ipa_name=$IPA_NAME" >> "$GITHUB_OUTPUT"
+          echo "ipa_size=$(stat -f%z "$RUNNER_TEMP/$IPA_NAME")" >> "$GITHUB_OUTPUT"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: ${{ steps.ipa.outputs.ipa_path }}
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Create GitHub Release + Upload artifacts + Update AltStore + Play Store
+  # ───────────────────────────────────────────────────────────────────────────
+  release:
+    needs: [build-android-full, build-android-exo, build-ios]
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.build-android-full.outputs.version }}
+      VERSION_CODE: ${{ needs.build-android-full.outputs.version_code }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: List artifacts
+        run: find artifacts -type f | sort
+
+      # ── Google Play Store ──────────────────────────────────────────────────
+      - name: Upload AAB to Google Play
+        if: inputs.deploy_play_store
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
+          packageName: com.yuroyami.syncplay
+          releaseFiles: artifacts/android-aab/*.aab
+          track: beta
+          status: completed
+
+      # ── GitHub Release ─────────────────────────────────────────────────────
+      - name: Collect release files
+        run: |
+          mkdir -p release-files
+          cp artifacts/android-full-apks/*.apk release-files/
+          cp artifacts/android-exo-apk/*.apk release-files/
+          cp artifacts/ios-ipa/*.ipa release-files/
+          echo "Release files:"
+          ls -lh release-files/
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${VERSION}" \
+            --title "v${VERSION}" \
+            --generate-notes \
+            release-files/*
+
+      # ── AltStore JSON ──────────────────────────────────────────────────────
+      - name: Update AltStore source JSON
+        run: |
+          IPA_SIZE=$(stat -c%s "release-files/synkplay-${VERSION}-ios.ipa" 2>/dev/null || stat -f%z "release-files/synkplay-${VERSION}-ios.ipa")
+          DATE=$(date -u +"%Y-%m-%dT%H:%M:%S+00:00")
+
+          jq --arg ver "$VERSION" \
+             --arg code "$VERSION_CODE" \
+             --arg size "$IPA_SIZE" \
+             --arg date "$DATE" \
+             --arg url "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/synkplay-${VERSION}-ios.ipa" \
+             '
+             .apps[0].versions = [{
+               downloadURL: $url,
+               size: ($size | tonumber),
+               version: $ver,
+               buildVersion: $code,
+               date: $date,
+               localizedDescription: "",
+               minOSVersion: ""
+             }] + .apps[0].versions
+             ' altstore_yuroyami.json > altstore_tmp.json && mv altstore_tmp.json altstore_yuroyami.json
+
+      - name: Commit AltStore update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add altstore_yuroyami.json
+          git diff --cached --quiet && echo "No AltStore changes" || \
+            git commit -m "Update AltStore source for v${VERSION}" && git push
