@@ -3,6 +3,7 @@ package app.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import SyncplayMobile.shared.BuildConfig
 import app.LocalTheme
 
 object Theming {
@@ -11,15 +12,17 @@ object Theming {
         @Composable get() = LocalTheme.current.syncplayGradients
 
     val flexibleGradient: List<Color>
-        @Composable get() {
-            val fallback = MaterialTheme.colorScheme.primary
-            return if (useSyncplayGradient) SP_GRADIENT else listOf(fallback, fallback)
+        @Composable get() = if (useSyncplayGradient) {
+            SP_GRADIENT
+        } else {
+            val cs = MaterialTheme.colorScheme
+            listOf(cs.primary, cs.secondary, cs.tertiary)
         }
 
-    /* ── Brand gradient ─────────────────────────────────────────────── */
-    val NeoSP1 = Color(0xFF4FD1FF)
-    val NeoSP2 = Color(0xFF5A7CFF)
-    val NeoSP3 = Color(0xFF7A3CFF)
+    /* ── Brand gradient (SSOT: AppConfig.TRINITY_*) ────────────────── */
+    val NeoSP1 = Color(BuildConfig.TRINITY_COLOR_1)
+    val NeoSP2 = Color(BuildConfig.TRINITY_COLOR_2)
+    val NeoSP3 = Color(BuildConfig.TRINITY_COLOR_3)
     val SP_GRADIENT = listOf(NeoSP1, NeoSP2, NeoSP3)
 
     /* ── Semantic: chat message colors ──────────────────────────────── */

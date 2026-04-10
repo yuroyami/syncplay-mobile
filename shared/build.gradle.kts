@@ -171,7 +171,7 @@ kotlin {
 }
 
 with(AppConfig) {
-    //updateIOSVersion() //Uncomment if Xcode build fails, for some reason it breaks Gradle build from within Xcode
+    //propagateAll() //Uncomment to propagate SSOT (version, app name, locales, colors, logo) to iOS, README, etc.
 }
 
 ktorfit {
@@ -185,4 +185,19 @@ buildConfig {
     buildConfigField("DEBUG_SYNCPLAY_PROTOCOL", false)
     buildConfigField("EXOPLAYER_ONLY", AppConfig.exoOnly)
     buildConfigField("KLIPY_API_KEY", AppConfig.localProperties.getProperty("yuroyami.keyKlipyApi"))
+
+    /* Trinity brand colors — exposed so Theming.kt reads them from the SSOT */
+    buildConfigField("TRINITY_COLOR_1", AppConfig.TRINITY_1)
+    buildConfigField("TRINITY_COLOR_2", AppConfig.TRINITY_2)
+    buildConfigField("TRINITY_COLOR_3", AppConfig.TRINITY_3)
+}
+
+tasks.register("propagateSSOT") {
+    group = "syncplay"
+    description = "Propagates SSOT values (version, app name, locales, colors, logo) to iOS, README, etc."
+    doLast {
+        with(AppConfig) {
+            project.propagateAll()
+        }
+    }
 }

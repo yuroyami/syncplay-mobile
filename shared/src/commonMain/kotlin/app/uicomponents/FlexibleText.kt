@@ -231,11 +231,15 @@ fun SyncplayishText(
     modifier: Modifier = Modifier,
     string: String,
     size: Float,
-    colorStops: List<Color> = Theming.SP_GRADIENT,
-    stroke: Color = Theming.SP_PALE,
-    shadow: Color = Theming.SP_INTENSE_PINK,
+    colorStops: List<Color>? = null,
+    stroke: Color? = null,
+    shadow: Color? = null,
     textAlign: TextAlign = TextAlign.Start,
 ) {
+    val resolvedColors = colorStops ?: Theming.flexibleGradient
+    val resolvedStroke = stroke ?: MaterialTheme.colorScheme.outlineVariant
+    val resolvedShadow = shadow ?: MaterialTheme.colorScheme.primary
+
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         // Stroke + shadow layer
         Text(
@@ -244,14 +248,14 @@ fun SyncplayishText(
             textAlign = textAlign,
             maxLines = 1,
             style = TextStyle(
-                color = stroke,
+                color = resolvedStroke,
                 drawStyle = Stroke(
                     miter = 10f,
                     width = 2f,
                     join = StrokeJoin.Round
                 ),
                 shadow = Shadow(
-                    color = shadow,
+                    color = resolvedShadow,
                     offset = Offset(0f, 10f),
                     blurRadius = 5f
                 ),
@@ -266,7 +270,7 @@ fun SyncplayishText(
             textAlign = textAlign,
             maxLines = 1,
             style = TextStyle(
-                brush = Brush.linearGradient(colors = colorStops),
+                brush = Brush.linearGradient(colors = resolvedColors),
                 fontFamily = FontFamily(Font(Res.font.Directive4_Regular)),
                 fontSize = size.sp,
             )
