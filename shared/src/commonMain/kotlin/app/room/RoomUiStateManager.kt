@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlin.concurrent.Volatile
@@ -37,6 +38,18 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
 
     /** GIF panel visibility state */
     val gifPanelVisible = MutableStateFlow(false)
+
+    /** Emitted on any touch within the HUD to reset the auto-hide countdown. */
+    val hudInteractionSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    /** True when any card, popup, or panel is open, or the user is typing — suppresses HUD auto-hide. */
+    val hasActiveOverlay = combine(
+        tabCardUserInfo, tabCardSharedPlaylist, tabCardRoomPreferences,
+        controlPanel, popupChatHistory, popupCreateManagedRoom,
+        popupIdentifyAsRoomOperator, popupSeekToPosition, gifPanelVisible,
+        msg.map { it.isNotEmpty() }
+    ) { values -> values.any { it } }
+        .stateIn(viewmodel.viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     /** Haptic feedback event bus - emits Unit when a haptic should be triggered */
     private val _hapticEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 5)

@@ -48,7 +48,11 @@ import app.utils.HideSystemBars
 import app.utils.platformCallback
 import app.preferences.Preferences.HUD_AUTO_HIDE_TIMEOUT
 import app.preferences.watchPref
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Composable that represents the entire room screen UI.
@@ -109,17 +113,38 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                     platformCallback.onScreenOrientationChanged(isPortrait)
                 }
 
-                /* Auto-hide HUD after configured timeout when video is loaded */
+                /* Auto-hide HUD after configured timeout when video is loaded.
+                 * - hasActiveOverlay blocks hiding while any card/popup/typing is active.
+                 * - hudInteractionSignal resets the countdown on every touch within the HUD. */
                 val hudAutoHideTimeout by HUD_AUTO_HIDE_TIMEOUT.watchPref()
-                LaunchedEffect(isHUDVisible, hudAutoHideTimeout, hasVideo) {
-                    if (isHUDVisible && hasVideo && hudAutoHideTimeout > 0) {
-                        delay(hudAutoHideTimeout * 1000L)
-                        viewmodel.uiState.visibleHUD.value = false
+                val hasActiveOverlay by viewmodel.uiState.hasActiveOverlay.collectAsState()
+                val isPlaying by viewmodel.playerManager.isNowPlaying.collectAsState()
+                LaunchedEffect(isHUDVisible, hudAutoHideTimeout, hasVideo, hasActiveOverlay, isPlaying) {
+                    if (isHUDVisible && hasVideo && hudAutoHideTimeout > 0 && !hasActiveOverlay && isPlaying) {
+                        while (true) {
+                            val interaction = withTimeoutOrNull(hudAutoHideTimeout * 1000L) {
+                                viewmodel.uiState.hudInteractionSignal.first()
+                            }
+                            if (interaction == null) {
+                                viewmodel.uiState.visibleHUD.value = false
+                                break
+                            }
+                        }
                     }
                 }
 
                 if (isHUDVisible) {
-                    Box(modifier = Modifier.fillMaxSize()) {
+                    Box(modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInput(Unit) {
+                            awaitPointerEventScope {
+                                while (true) {
+                                    awaitPointerEvent(PointerEventPass.Initial)
+                                    viewmodel.uiState.hudInteractionSignal.tryEmit(Unit)
+                                }
+                            }
+                        }
+                    ) {
                         if (hasVideo) {
                             BlackContrastUnderlay()
                         }
