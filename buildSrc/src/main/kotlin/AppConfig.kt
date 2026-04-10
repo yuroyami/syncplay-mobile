@@ -53,6 +53,7 @@ object AppConfig {
             .replace(Regex("""MARKETING_VERSION = [^;]+;"""), "MARKETING_VERSION = $versionName;")
             .replace(Regex("""CURRENT_PROJECT_VERSION = [^;]+;"""), "CURRENT_PROJECT_VERSION = $versionCode;")
             .replace(Regex("""INFOPLIST_KEY_CFBundleDisplayName = [^;]+;"""), "INFOPLIST_KEY_CFBundleDisplayName = $appName;")
+            .replace(Regex("""PRODUCT_NAME = [^;]+;"""), "PRODUCT_NAME = $appName;")
 
         if (updated != original) {
             pbxprojFile.writeText(updated)
