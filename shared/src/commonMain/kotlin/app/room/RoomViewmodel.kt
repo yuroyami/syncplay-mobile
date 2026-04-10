@@ -79,7 +79,9 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
             networkManager = instantiateNetworkManager()
 
             launch {
-                val engine = availablePlatformPlayerEngines.first { it.name == Preferences.PLAYER_ENGINE.value() }
+                val preferred = Preferences.PLAYER_ENGINE.value()
+                val engine = availablePlatformPlayerEngines.firstOrNull { it.name == preferred }
+                    ?: availablePlatformPlayerEngines.first()
                 playerManager.player = engine.createImpl(this@RoomViewmodel)
                 playerManager.isPlayerReady.value = true
             }
@@ -158,15 +160,13 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
 
 
     val osdMsg = mutableStateOf("")
-    var osdJob: Job? = null
+    private var osdJob: Job? = null
     fun dispatchOSD(getter: suspend () -> String) {
         val durationSec = app.preferences.Preferences.OSD_DURATION.value()
         if (durationSec <= 0) return
 
-        runCatching {
-            osdJob?.cancel(null)
-        }
-        osdJob = viewModelScope.launch(Dispatchers.IO) {
+        osdJob?.cancel()
+        osdJob = viewModelScope.launch {
             osdMsg.value = getter()
             delay(durationSec * 1000L)
             osdMsg.value = ""

@@ -137,28 +137,27 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         UIKitView(
             modifier = modifier,
             factory = {
-                vlcView = UIView()
-                vlcView!!.setBackgroundColor(UIColor.clearColor())
+                val view = UIView().also { it.setBackgroundColor(UIColor.clearColor()) }
+                vlcView = view
 
                 val subSizeArg = "--freetype-fontsize=${SUBTITLE_SIZE.value() * 4}"
-                libvlc = VLCLibrary(listOf(
+                val lib = VLCLibrary(listOf(
                     "-vv",
                     subSizeArg,
                     "--network-caching=2000",
                     "--adaptive-logic=default",
                     "--http-reconnect",
                 ))
+                libvlc = lib
 
-                vlcPlayer = VLCMediaPlayer(libvlc!!)
-                vlcPlayer!!.drawable = vlcView
-
-                vlcPlayer
+                val player = VLCMediaPlayer(lib)
+                player.drawable = view
+                vlcPlayer = player
 
                 initialize()
-
                 onPlayerReady()
 
-                return@UIKitView vlcView!!
+                view
             },
             update = { view ->
                 // Ensure drawable is still set

@@ -239,11 +239,7 @@ fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel) {
                 shape = RoundedCornerShape(4.dp)
             )
     ) {
-        val latestChatMessages by remember {
-            derivedStateOf {
-                chatMessages.takeLast(msgMaxCount)
-            }
-        }
+        val latestChatMessages = chatMessages.takeLast(msgMaxCount)
 
         val chatListState = rememberLazyListState()
         LaunchedEffect(latestChatMessages.size) {

@@ -517,15 +517,13 @@ class SyncplayActivity : ComponentActivity() {
         return super.onKeyDown(keyCode, event)
     }
 
-    /**
-     * Called when the activity is being destroyed.
-     *
-     * Unregisters the PiP broadcast receiver to prevent memory leaks.
-     */
+    override fun onPause() {
+        super.onPause()
+        runCatching { unregisterReceiver(pipBroadcastReceiver) }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
-
-        unregisterReceiver(pipBroadcastReceiver)
     }
 
     private var notificationPermissionLauncher = registerForActivityResult(

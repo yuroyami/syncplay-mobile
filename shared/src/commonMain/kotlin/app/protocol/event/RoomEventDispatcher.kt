@@ -111,28 +111,15 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
         }
     }
 
-    // TODO: Start with main dispatcher then switch
-    fun seekBckwd() {
+    fun seekBckwd() = seekBy(-Preferences.SEEK_BACKWARD_JUMP.value())
+    fun seekFrwrd() = seekBy(Preferences.SEEK_FORWARD_JUMP.value())
+
+    private fun seekBy(deltaSeconds: Int) {
         viewmodel.player.playerScopeMain.launch {
             val currentMs = viewmodel.player.currentPositionMs()
-            val dec = Preferences.SEEK_BACKWARD_JUMP.value()
-            var newPos = viewmodel.playerManager.timeFullMillis.value.let { dur ->
-                if (dur == 0L) currentMs - (dec * 1000L) else (currentMs - (dec * 1000L)).coerceIn(0, dur)
-            }
-            if (newPos < 0) newPos = 0
-
-            sendSeek(newPos)
-            viewmodel.player.seekTo(newPos)
-            if (viewmodel.isSoloMode) viewmodel.seeks.add(Pair(currentMs, newPos * 1000))
-        }
-    }
-
-    fun seekFrwrd() {
-        viewmodel.player.playerScopeMain.launch {
-            val currentMs = viewmodel.player.currentPositionMs()
-            val inc = Preferences.SEEK_FORWARD_JUMP.value()
-            val newPos = viewmodel.playerManager.timeFullMillis.value.let { dur ->
-                if (dur == 0L) currentMs + (inc * 1000L) else (currentMs + (inc * 1000L)).coerceIn(0, dur)
+            val dur = viewmodel.playerManager.timeFullMillis.value
+            val newPos = (currentMs + deltaSeconds * 1000L).let {
+                if (dur > 0L) it.coerceIn(0, dur) else it.coerceAtLeast(0)
             }
 
             sendSeek(newPos)

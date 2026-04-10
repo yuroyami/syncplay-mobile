@@ -62,6 +62,7 @@ import kotlin.math.roundToInt
 
 @Composable
 internal inline fun <reified T> Pref<T>.SettingComposable() {
+    val cfg = config ?: return
     val viewmodel = LocalGlobalViewmodel.current
 
     val scope = rememberCoroutineScope { Dispatchers.IO }
@@ -71,17 +72,18 @@ internal inline fun <reified T> Pref<T>.SettingComposable() {
 
     val renderableComposableState = remember { mutableStateOf(false) }
 
-    val actionConfig = config?.extraConfig as? PrefExtraConfig.PerformAction
-    val booleanCallbackConfig = config?.extraConfig as? PrefExtraConfig.BooleanCallback
-    val multiChoiceConfig = config?.extraConfig as? PrefExtraConfig.MultiChoice
-    val sliderConfig = config?.extraConfig as? PrefExtraConfig.Slider
-    val textfieldConfig = (config?.extraConfig as? PrefExtraConfig.TextField)
-        ?: if (value is String && config?.extraConfig == null) PrefExtraConfig.TextField() else null
-    val showColorConfig = config?.extraConfig as? PrefExtraConfig.ColorPick
-    val showYesNoPopup = config?.extraConfig as? PrefExtraConfig.YesNoDialog
-    val showExtraComposable = config?.extraConfig as? PrefExtraConfig.ShowComposable
+    val extra = cfg.extraConfig
+    val actionConfig = extra as? PrefExtraConfig.PerformAction
+    val booleanCallbackConfig = extra as? PrefExtraConfig.BooleanCallback
+    val multiChoiceConfig = extra as? PrefExtraConfig.MultiChoice
+    val sliderConfig = extra as? PrefExtraConfig.Slider
+    val textfieldConfig = (extra as? PrefExtraConfig.TextField)
+        ?: if (value is String && extra == null) PrefExtraConfig.TextField() else null
+    val showColorConfig = extra as? PrefExtraConfig.ColorPick
+    val showYesNoPopup = extra as? PrefExtraConfig.YesNoDialog
+    val showExtraComposable = extra as? PrefExtraConfig.ShowComposable
 
-    val isEnabled = remember { config?.dependencyEnable?.invoke() ?: true }
+    val isEnabled = cfg.dependencyEnable()
     val isBooleanSetting = value is Boolean || booleanCallbackConfig != null
 
     /** Base Composable */
@@ -118,14 +120,14 @@ internal inline fun <reified T> Pref<T>.SettingComposable() {
                 modifier = Modifier.align(Alignment.Top),
                 tintColors = listOf(MaterialTheme.colorScheme.primary),
                 shadowColors = flexibleGradient.map { it.copy(alpha = 0.25f) },
-                icon = config!!.icon, size = styling.iconSize
+                icon = cfg.icon, size = styling.iconSize
             )
 
             Column(
                 modifier = Modifier.weight(1f),
             ) {
                 FlexibleText(
-                    text = stringResource(config!!.title),
+                    text = stringResource(cfg.title),
                     fillingColors = listOf(MaterialTheme.colorScheme.primary),
                     strokeColors = listOf(MaterialTheme.colorScheme.outline),
                     size = styling.titleSize,
@@ -134,7 +136,7 @@ internal inline fun <reified T> Pref<T>.SettingComposable() {
 
                 Text(
                     modifier = Modifier,
-                    text = stringResource(config!!.summary, *config!!.summaryFormatArgs),
+                    text = stringResource(cfg.summary, *cfg.summaryFormatArgs),
                     color = MaterialTheme.colorScheme.outline,
                     style = TextStyle(
                         shadow = Shadow(color = Color.Black, offset = Offset(1f, 1f), blurRadius = 2f)
@@ -259,7 +261,7 @@ internal inline fun <reified T> Pref<T>.SettingComposable() {
 
                 MultiChoiceDialog(
                     items = actualEntries,
-                    title = stringResource(config!!.title),
+                    title = stringResource(cfg.title),
                     onDismiss = { renderableComposableState.value = false },
                     selectedItem = actualEntries.entries.first { it.value == value },
                     onItemClick = { item ->
