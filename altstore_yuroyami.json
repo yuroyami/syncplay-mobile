@@ -21,9 +21,17 @@
       "tintColor": "#f72800",
       "patreonURL": "https://patreon.com/SidenaAkram?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink",
       "category": "entertainment",
-      "screenshots": [
-      ],
+      "screenshots": [],
       "versions": [
+        {
+          "downloadURL": "https://github.com/yuroyami/syncplay-mobile/releases/download/v0.19.1/synkplay-0.19.1-ios.ipa",
+          "size": 124474619,
+          "version": "0.19.1",
+          "buildVersion": "1000019001",
+          "date": "2026-04-11T07:34:12+00:00",
+          "localizedDescription": "",
+          "minOSVersion": ""
+        },
         {
           "downloadURL": "https://github.com/yuroyami/syncplay-mobile/releases/download/v0.18.0/synkplay-0.18.0-ios.ipa",
           "size": 110000000,
@@ -44,14 +52,13 @@
         }
       ],
       "appPermissions": {
-        "entitlements": ["audio"],
-        "privacy": {
-        }
+        "entitlements": [
+          "audio"
+        ],
+        "privacy": {}
       },
-      "patreon": {
-      }
+      "patreon": {}
     }
   ],
-  "news": [
-  ]
+  "news": []
 }
