@@ -9,11 +9,6 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
-if (!exoOnly) {
-    apply(plugin = "com.google.gms.google-services")
-    apply(plugin = "com.google.firebase.crashlytics")
-}
-
 kotlin {
     jvmToolchain(AppConfig.javaVersion)
 }
@@ -130,9 +125,7 @@ android {
     // This will remove them also from any other library that might use them
     configurations.all {
         exclude(group = "com.google.crypto.tink", module = "tink-android")
-        if (exoOnly) {
-            exclude(group = "com.google.android.gms")
-        }
+        exclude(group = "com.google.android.gms")
     }
 }
 
@@ -166,13 +159,6 @@ androidComponents {
 dependencies {
     coreLibraryDesugaring(libs.desugaring)
     implementation(projects.shared)
-
-    if (!exoOnly) {
-        //We enable analytics and crashlytics in Google Play store version
-        implementation(platform("com.google.firebase:firebase-bom:34.11.0"))
-        implementation("com.google.firebase:firebase-crashlytics")
-        implementation("com.google.firebase:firebase-analytics")
-    }
 }
 
 if (!exoOnly) {

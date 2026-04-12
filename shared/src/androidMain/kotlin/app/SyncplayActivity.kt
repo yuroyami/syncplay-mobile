@@ -5,11 +5,11 @@ import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.app.PictureInPictureParams
 import android.app.RemoteAction
-import android.content.pm.ActivityInfo
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.graphics.drawable.Icon
 import android.os.Build
@@ -22,6 +22,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.LaunchedEffect
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
@@ -35,11 +36,11 @@ import app.home.JoinConfig
 import app.player.Playback
 import app.player.SyncplayMediaSessionService
 import app.player.exo.ExoImpl
-import app.server.SyncplayServerService
 import app.preferences.Preferences.DISPLAY_LANG
 import app.preferences.Preferences.SUBTITLE_SIZE
 import app.preferences.value
 import app.room.RoomViewmodel
+import app.server.SyncplayServerService
 import app.utils.applyActivityUiProperties
 import app.utils.bindWatchdog
 import app.utils.changeLanguage
@@ -84,6 +85,13 @@ class SyncplayActivity : ComponentActivity() {
         bindWatchdog()
 
         super.onCreate(savedInstanceState)
+
+        /** Install crash handler early so it catches everything after this point */
+        CrashHandler.install()
+
+//        GlobalScope.launch {
+//            throw Exception("You're testing the crash handler and its overlay")
+//        }
 
         /** Adjusting the appearance of system window decor */
         /* Tweaking some window UI elements */
@@ -254,11 +262,15 @@ class SyncplayActivity : ComponentActivity() {
             }
 
             //MainUI
-            AdamScreen(
-                onGlobalViewmodel = {
-                    globalViewmodel = it
-                }
-            )
+            Box {
+                AdamScreen(
+                    onGlobalViewmodel = {
+                        globalViewmodel = it
+                    }
+                )
+
+                CrashOverlay()
+            }
         }
 
         /** Maybe there is a shortcut intent */
@@ -276,11 +288,6 @@ class SyncplayActivity : ComponentActivity() {
                     homeViewmodel?.joinRoom(config)
                 }
             }
-        }
-
-        Thread.setDefaultUncaughtExceptionHandler { _, t2 ->
-            loggy(t2.stackTraceToString())
-            throw t2
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
