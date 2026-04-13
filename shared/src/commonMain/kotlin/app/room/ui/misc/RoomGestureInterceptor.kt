@@ -158,7 +158,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
             modifier = Modifier.fillMaxSize().pointerInput(gesturesEnabled, doubletapEnabled, hasVideo) {
                 detectTapGestures(
                     onPress = { offset ->
-                        if (gesturesEnabled && doubletapEnabled && hasVideo && offset.x > w.times(0.65f)) {
+                        if (gesturesEnabled && doubletapEnabled && hasVideo && offset.x > w.times(0.5f)) {
                             val press = PressInteraction.Press(offset)
                             val job = scope.launch {
                                 delay(1000)
@@ -180,7 +180,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                             fastForward = false
                             seekRightInteraction.emit(PressInteraction.Release(press))
                         }
-                        if (gesturesEnabled && doubletapEnabled && hasVideo && offset.x < w.times(0.35f)) {
+                        if (gesturesEnabled && doubletapEnabled && hasVideo && offset.x < w.times(0.5f)) {
                             val press = PressInteraction.Press(offset)
                             val job = scope.launch {
                                 delay(1000)
@@ -205,7 +205,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                     onDoubleTap = if (gesturesEnabled && doubletapEnabled && hasVideo) {
                         { offset ->
                             scope.launch {
-                                if (offset.x < w.times(0.35f)) {
+                                if (offset.x < w.times(0.5f)) {
                                     viewmodel.dispatcher.seekBckwd()
                                     haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
 
@@ -214,7 +214,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                     delay(200)
                                     seekLeftInteraction.emit(PressInteraction.Release(press))
                                 }
-                                if (offset.x > w.times(0.65f)) {
+                                if (offset.x > w.times(0.5f)) {
                                     viewmodel.dispatcher.seekFrwrd()
                                     haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
 
