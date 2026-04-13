@@ -1,5 +1,8 @@
 package app.preferences
 
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
@@ -43,6 +46,18 @@ val datastoreStateFlow: StateFlow<Preferences> by lazy {
         started = SharingStarted.Eagerly,
         initialValue = runBlocking { datastore.data.first() }
     )
+}
+
+/**
+ * Composition-level preferences snapshot. Collected ONCE at the root composable ([app.AdamScreen])
+ * and consumed by [app.preferences.watchPref] via [derivedStateOf] — zero per-composable flow overhead.
+ *
+ * Uses [staticCompositionLocalOf] because the [State] reference itself never changes;
+ * composables that read [State.value] subscribe to its changes automatically via Compose's
+ * snapshot system.
+ */
+val LocalPrefsState = staticCompositionLocalOf<State<Preferences>> {
+    mutableStateOf(datastoreStateFlow.value)
 }
 
 /**

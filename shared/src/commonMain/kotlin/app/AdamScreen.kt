@@ -17,6 +17,8 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import app.preferences.LocalPrefsState
+import app.preferences.datastoreStateFlow
 import app.uicomponents.messagePalette
 import app.utils.createWeakRef
 import app.home.HomeScreenUI
@@ -80,8 +82,10 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
 
     val currentScreen by remember { derivedStateOf { backstack.lastOrNull() } }
     val currentTheme by globalviewmodel.currentTheme.collectAsState()
+    val prefsState = datastoreStateFlow.collectAsState()
 
     CompositionLocalProvider(
+        LocalPrefsState provides prefsState,
         LocalGlobalViewmodel provides globalviewmodel,
         LocalScreen provides currentScreen,
         LocalChatPalette provides messagePalette.value,

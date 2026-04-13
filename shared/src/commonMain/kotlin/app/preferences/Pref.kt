@@ -4,7 +4,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -119,11 +120,16 @@ inline fun <reified T> Pref<T>.flow(): Flow<T> {
 }
 
 /**
- * Observe as Compose State using the static default.
+ * Observe as Compose State. Reads from the single root-level [LocalPrefsState] snapshot
+ * via [derivedStateOf] — no per-composable flow collection, no stale initial defaults.
  */
 @Composable
 inline fun <reified T> Pref<T>.watchPref(): State<T> {
-    return flow().collectAsState(initial = default)
+    val prefsState = LocalPrefsState.current
+    val k = prefKey()
+    return remember(k) {
+        derivedStateOf { prefsState.value[k] ?: default }
+    }
 }
 
 /**
