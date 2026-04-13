@@ -44,6 +44,7 @@ Pods/
 *.mychanges
 
 buildscripts/deps
+buildscripts/deps/*
 buildscripts/sdk
 buildscripts/prefix
 buildscripts/prefix64
