@@ -27,8 +27,6 @@ import androidx.compose.ui.zIndex
 import app.LocalRoomViewmodel
 import app.preferences.Preferences.CUSTOM_SEEK_AMOUNT
 import app.preferences.Preferences.CUSTOM_SEEK_FRONT
-import app.preferences.Preferences.DOUBLETAP_SEEK
-import app.preferences.Preferences.GESTURES
 import app.preferences.watchPref
 import app.theme.Theming.ROOM_ICON_SIZE
 import app.uicomponents.FlexibleIcon
@@ -43,30 +41,25 @@ import syncplaymobile.shared.generated.resources.room_custom_skip_button
 fun RoomBottomBarVideoControlRow(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
 
-    val gesturesEnabled by GESTURES.watchPref()
-    val doubletapEnabled by DOUBLETAP_SEEK.watchPref()
-
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (!gesturesEnabled || !doubletapEnabled) {
-            FlexibleIcon(
-                icon = Icons.Filled.FastRewind,
-                size = ROOM_ICON_SIZE + 6,
-                shadowColors = listOf(Color.Black)
-            ) {
-                viewmodel.dispatcher.seekBckwd()
-            }
+        FlexibleIcon(
+            icon = Icons.Filled.FastRewind,
+            size = ROOM_ICON_SIZE + 6,
+            shadowColors = listOf(Color.Black)
+        ) {
+            viewmodel.dispatcher.seekBckwd()
+        }
 
-            FlexibleIcon(
-                icon = Icons.Filled.FastForward,
-                size = ROOM_ICON_SIZE + 6,
-                shadowColors = listOf(Color.Black)
-            ) {
-                viewmodel.dispatcher.seekFrwrd()
-            }
+        FlexibleIcon(
+            icon = Icons.Filled.FastForward,
+            size = ROOM_ICON_SIZE + 6,
+            shadowColors = listOf(Color.Black)
+        ) {
+            viewmodel.dispatcher.seekFrwrd()
         }
         val customSkipAmount by CUSTOM_SEEK_AMOUNT.watchPref()
         val customSkipToFront by CUSTOM_SEEK_FRONT.watchPref()
