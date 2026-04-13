@@ -93,13 +93,17 @@ actual fun ClipEntry.getText(): String? {
 actual fun HideSystemBars() {
     LaunchedEffect(null) {
         delegato.myOrientationMask = UIInterfaceOrientationMaskLandscape
-        UIApplication.sharedApplication.connectedScenes.firstOrNull()?.let {
-            (it as? UIWindowScene)?.apply {
-                requestGeometryUpdateWithPreferences(
+        // Retry briefly — the UIWindowScene may not be connected yet on first composition
+        repeat(3) {
+            val scene = UIApplication.sharedApplication.connectedScenes.firstOrNull() as? UIWindowScene
+            if (scene != null) {
+                scene.requestGeometryUpdateWithPreferences(
                     geometryPreferences = UIWindowSceneGeometryPreferencesIOS(interfaceOrientations = UIInterfaceOrientationMaskLandscape),
                     errorHandler = null
                 )
+                return@LaunchedEffect
             }
+            kotlinx.coroutines.delay(100)
         }
     }
 }
