@@ -24,6 +24,15 @@
       "screenshots": [],
       "versions": [
         {
+          "downloadURL": "https://github.com/yuroyami/syncplay-mobile/releases/download/v0.20.0/synkplay-0.20.0-ios.ipa",
+          "size": 124527912,
+          "version": "0.20.0",
+          "buildVersion": "1000020000",
+          "date": "2026-04-13T03:24:00+00:00",
+          "localizedDescription": "",
+          "minOSVersion": ""
+        },
+        {
           "downloadURL": "https://github.com/yuroyami/syncplay-mobile/releases/download/v0.19.1/synkplay-0.19.1-ios.ipa",
           "size": 124474619,
           "version": "0.19.1",
