@@ -367,4 +367,102 @@
         <item>%1$s Mobile vous permet de lire des liens directs vers des médias. Cependant, YouTube n'est PAS encore supporté.</item>
         <item>Si vous souhaitez minimiser temporairement la salle sans quitter, activez le mode "Picture-in-Picture" et gardez l'écran en flottant par-dessus les autres applications.</item>
     </string-array>
+
+    <!-- Server hosting -->
+    <string name="connect_host_own_server">Héberger votre propre serveur</string>
+    <string name="server_host_title">Héberger un serveur</string>
+    <string name="server_host_start">Démarrer le serveur</string>
+    <string name="server_host_stop">Arrêter le serveur</string>
+    <string name="server_host_port">Port</string>
+    <string name="server_host_password">Mot de passe du serveur (optionnel)</string>
+    <string name="server_host_motd">Message du jour (optionnel)</string>
+    <string name="server_host_isolate_rooms">Isoler les salles</string>
+    <string name="server_host_disable_chat">Désactiver le chat</string>
+    <string name="server_host_disable_ready">Désactiver le statut Prêt</string>
+    <string name="server_host_ios_warning">Sur iOS, le serveur s\'arrêtera lorsque l\'application passe en arrière-plan.</string>
+    <string name="server_host_address">Adresse locale (Wi-Fi/LAN)</string>
+    <string name="server_host_public_address">Adresse publique (Internet)</string>
+    <string name="server_host_public_address_fetching">Récupération…</string>
+    <string name="server_host_public_address_unavailable">Impossible à déterminer</string>
+    <string name="server_host_port_forward_hint">Pour les amis en dehors de votre réseau, le port %1$s doit être redirigé sur votre routeur.</string>
+    <string name="server_host_clients_connected">%1$d client(s) connecté(s)</string>
+    <string name="server_host_server_log">Journal du serveur</string>
+    <string name="server_host_status_running">En cours d\'exécution</string>
+    <string name="server_host_status_stopped">Arrêté</string>
+    <string name="server_host_status_starting">Démarrage…</string>
+    <string name="server_host_status_error">Erreur</string>
+
+    <!-- GIF panel -->
+    <string name="room_gif_search_hint">Rechercher des GIFs…</string>
+    <string name="room_gif_tab_gifs">GIFs</string>
+    <string name="room_gif_tab_stickers">Autocollants</string>
+    <string name="room_gif_tab_trending">Tendances</string>
+    <string name="room_gif_tab_recents">Récents</string>
+    <string name="room_gif_powered_by">Propulsé par Klipy</string>
+    <string name="room_gif_error">Échec du chargement des GIFs</string>
+    <string name="room_gif_no_results">Aucun résultat trouvé</string>
+
+    <!-- Room overflow and misc -->
+    <string name="room_overflow_landscape_mode">Mode paysage</string>
+    <string name="room_overflow_portrait_mode">Mode portrait</string>
+    <string name="room_screenshot_saved">Capture d\'écran enregistrée</string>
+    <string name="room_screenshot_unsupported">La capture d\'écran n\'est pas prise en charge par ce lecteur</string>
+    <string name="room_untrusted_domain_warning">URL bloquée provenant d\'un domaine non fiable : %1$s. Ajoutez-le aux Domaines de confiance dans les paramètres pour l\'autoriser.</string>
+
+    <!-- Settings: logs and trusted domains -->
+    <string name="setting_clear_logs_title">Effacer les journaux</string>
+    <string name="setting_clear_logs_summary">Supprimer tous les fichiers journaux stockés</string>
+    <string name="setting_clear_logs_dialog">Voulez-vous vraiment supprimer tous les fichiers journaux ? Cette action est irréversible.</string>
+    <string name="setting_trusted_domains_title">Domaines de confiance</string>
+    <string name="setting_trusted_domains_summary">Charger automatiquement uniquement les URL de ces domaines. Laissez vide pour tout autoriser. Séparés par des virgules (ex. example.com, cdn.host.net).</string>
+
+    <!-- UI settings: categories -->
+    <string name="uisetting_categ_haptics">Haptique</string>
+    <string name="uisetting_categ_sync_mechanisms">Synchronisation</string>
+
+    <!-- UI settings: sync -->
+    <string name="uisetting_sync_dont_slow_with_me_title">Ne jamais ralentir ou rembobiner les autres</string>
+    <string name="uisetting_sync_dont_slow_with_me_summary">Lorsque vous êtes en retard, les autres ne seront ni ralentis ni rembobinés pour correspondre à votre position. Expérimental.</string>
+    <string name="uisetting_sync_fastforward_title">Avance rapide si en retard</string>
+    <string name="uisetting_sync_fastforward_summary">Lorsque vous êtes en retard par rapport aux autres, votre lecteur avancera rapidement pour rattraper. Recommandé.</string>
+    <string name="uisetting_sync_rewind_title">Rembobiner en cas de désynchronisation majeure</string>
+    <string name="uisetting_sync_rewind_summary">Lorsque les autres ont un retard important (12+ secondes), votre lecteur rembobinera pour correspondre à leur position.</string>
+    <string name="uisetting_sync_slowdown_title">Ralentir en cas de désynchronisation mineure</string>
+    <string name="uisetting_sync_slowdown_summary">Lorsque les autres sont légèrement en retard, votre vitesse de lecture sera réduite pour leur permettre de rattraper.</string>
+
+    <!-- UI settings: chapter markers -->
+    <string name="uisetting_show_chapter_dots_title">Afficher les marqueurs de chapitres</string>
+    <string name="uisetting_show_chapter_dots_summary">Afficher les marqueurs de chapitres sur la barre de progression lorsqu\'ils sont disponibles.</string>
+    <string name="uisetting_chapter_dots_clickable_title">Marqueurs de chapitres cliquables</string>
+    <string name="uisetting_chapter_dots_clickable_summary">Appuyez sur un marqueur de chapitre pour aller à cette position.</string>
+
+    <!-- UI settings: gestures -->
+    <string name="uisetting_doubletap_seek_title">Double-tap pour avancer/reculer</string>
+    <string name="uisetting_doubletap_seek_summary">Avancez ou reculez en double-tapant sur les côtés de l\'écran. Désactiver ceci supprime le délai du simple tap causé par la détection du double-tap.</string>
+    <string name="uisetting_swipe_gestures_title">Gestes de balayage</string>
+    <string name="uisetting_swipe_gestures_summary">Balayage vertical sur le côté gauche pour la luminosité, côté droit pour le volume.</string>
+
+    <!-- UI settings: HUD and OSD -->
+    <string name="uisetting_hud_autohide_title">Masquage automatique du HUD</string>
+    <string name="uisetting_hud_autohide_summary">Secondes d\'inactivité avant que le HUD ne se masque automatiquement. Mettez 0 pour désactiver le masquage automatique.</string>
+    <string name="uisetting_osd_duration_title">Durée des messages OSD</string>
+    <string name="uisetting_osd_duration_summary">Nombre de secondes d\'affichage des messages d\'état à l\'écran (ex. changements de ratio, sélections de pistes). Mettez 0 pour désactiver les messages OSD.</string>
+
+    <!-- UI settings: haptics -->
+    <string name="uisetting_haptic_on_joined_title">Quelqu\'un a rejoint</string>
+    <string name="uisetting_haptic_on_joined_summary">Vibrer lorsque quelqu\'un rejoint la salle.</string>
+    <string name="uisetting_haptic_on_left_title">Quelqu\'un est parti</string>
+    <string name="uisetting_haptic_on_left_summary">Vibrer lorsque quelqu\'un quitte la salle.</string>
+    <string name="uisetting_haptic_on_paused_title">Quelqu\'un a mis en pause</string>
+    <string name="uisetting_haptic_on_paused_summary">Vibrer lorsque quelqu\'un met la lecture en pause.</string>
+    <string name="uisetting_haptic_on_played_title">Quelqu\'un a repris la lecture</string>
+    <string name="uisetting_haptic_on_played_summary">Vibrer lorsque quelqu\'un reprend la lecture.</string>
+    <string name="uisetting_haptic_on_seeked_title">Quelqu\'un a cherché</string>
+    <string name="uisetting_haptic_on_seeked_summary">Vibrer lorsque quelqu\'un effectue un saut dans la vidéo.</string>
+    <string name="uisetting_haptic_on_chat_title">Message de chat reçu</string>
+    <string name="uisetting_haptic_on_chat_summary">Vibrer lors de la réception d\'un message de chat.</string>
+    <string name="uisetting_haptic_on_playlist_title">Playlist mise à jour</string>
+    <string name="uisetting_haptic_on_playlist_summary">Vibrer lorsque la playlist partagée est mise à jour.</string>
+    <string name="uisetting_haptic_on_connection_title">Événement de connexion</string>
+    <string name="uisetting_haptic_on_connection_summary">Vibrer en cas d\'échec de connexion ou de déconnexion.</string>
 </resources>

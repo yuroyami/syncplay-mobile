@@ -367,4 +367,96 @@
         <item>%1$s Mobile pozwala odtwarzać media z bezpośrednich linków. Jednak YouTube NIE jest obsługiwany, jeszcze.</item>
         <item>Jeśli chcesz tymczasowo zminimalizować pokój bez opuszczania go, możesz przejść w tryb "Obraz w obrazie", gdzie ekran jest małym pływającym okienkiem nad innymi aplikacjami.</item>
     </string-array>
+
+    <!-- Server Hosting -->
+    <string name="connect_host_own_server">Hostuj własny serwer</string>
+    <string name="server_host_title">Hostuj serwer</string>
+    <string name="server_host_port">Port</string>
+    <string name="server_host_password">Hasło serwera (opcjonalne)</string>
+    <string name="server_host_motd">Wiadomość dnia (opcjonalna)</string>
+    <string name="server_host_isolate_rooms">Izoluj pokoje</string>
+    <string name="server_host_disable_chat">Wyłącz czat</string>
+    <string name="server_host_disable_ready">Wyłącz gotowość</string>
+    <string name="server_host_start">Uruchom serwer</string>
+    <string name="server_host_stop">Zatrzymaj serwer</string>
+    <string name="server_host_status_running">Działa</string>
+    <string name="server_host_status_stopped">Zatrzymany</string>
+    <string name="server_host_status_starting">Uruchamianie…</string>
+    <string name="server_host_status_error">Błąd</string>
+    <string name="server_host_address">Adres lokalny (Wi-Fi/LAN)</string>
+    <string name="server_host_public_address">Adres publiczny (Internet)</string>
+    <string name="server_host_public_address_fetching">Pobieranie…</string>
+    <string name="server_host_public_address_unavailable">Nie udało się ustalić</string>
+    <string name="server_host_clients_connected">Połączonych klientów: %1$d</string>
+    <string name="server_host_server_log">Dziennik serwera</string>
+    <string name="server_host_port_forward_hint">Aby znajomi spoza twojej sieci mogli się połączyć, port %1$s musi być przekierowany na routerze.</string>
+    <string name="server_host_ios_warning">Na iOS serwer zatrzyma się, gdy aplikacja przejdzie w tło.</string>
+
+    <!-- GIF Panel -->
+    <string name="room_gif_search_hint">Szukaj GIFów...</string>
+    <string name="room_gif_tab_gifs">GIFs</string>
+    <string name="room_gif_tab_stickers">Naklejki</string>
+    <string name="room_gif_tab_trending">Popularne</string>
+    <string name="room_gif_tab_recents">Ostatnie</string>
+    <string name="room_gif_powered_by">Obsługiwane przez Klipy</string>
+    <string name="room_gif_error">Nie udało się załadować GIFów</string>
+    <string name="room_gif_no_results">Brak wyników</string>
+
+    <!-- Room Misc -->
+    <string name="room_overflow_landscape_mode">Tryb poziomy</string>
+    <string name="room_overflow_portrait_mode">Tryb pionowy</string>
+    <string name="room_screenshot_saved">Zrzut ekranu zapisany</string>
+    <string name="room_screenshot_unsupported">Zrzut ekranu nie jest obsługiwany przez ten silnik odtwarzacza</string>
+    <string name="room_untrusted_domain_warning">Zablokowano URL z niezaufanej domeny: %1$s. Dodaj ją do Zaufanych domen w ustawieniach, aby zezwolić.</string>
+
+    <!-- Settings: Logs & Trusted Domains -->
+    <string name="setting_clear_logs_title">Wyczyść dzienniki</string>
+    <string name="setting_clear_logs_summary">Usuń wszystkie zapisane pliki dzienników</string>
+    <string name="setting_clear_logs_dialog">Czy na pewno chcesz usunąć wszystkie pliki dzienników? Tej operacji nie można cofnąć.</string>
+    <string name="setting_trusted_domains_title">Zaufane domeny</string>
+    <string name="setting_trusted_domains_summary">Automatycznie ładuj URL-e tylko z tych domen. Pozostaw puste, aby zezwolić na wszystkie. Rozdzielone przecinkami (np. example.com, cdn.host.net).</string>
+
+    <!-- Settings: Haptics -->
+    <string name="uisetting_categ_haptics">Wibracje</string>
+    <string name="uisetting_haptic_on_joined_title">Ktoś dołączył</string>
+    <string name="uisetting_haptic_on_joined_summary">Wibruj, gdy ktoś dołączy do pokoju.</string>
+    <string name="uisetting_haptic_on_left_title">Ktoś wyszedł</string>
+    <string name="uisetting_haptic_on_left_summary">Wibruj, gdy ktoś opuści pokój.</string>
+    <string name="uisetting_haptic_on_paused_title">Ktoś wstrzymał</string>
+    <string name="uisetting_haptic_on_paused_summary">Wibruj, gdy ktoś wstrzyma odtwarzanie.</string>
+    <string name="uisetting_haptic_on_played_title">Ktoś wznowił</string>
+    <string name="uisetting_haptic_on_played_summary">Wibruj, gdy ktoś wznowi odtwarzanie.</string>
+    <string name="uisetting_haptic_on_seeked_title">Ktoś przewinął</string>
+    <string name="uisetting_haptic_on_seeked_summary">Wibruj, gdy ktoś przewinie wideo.</string>
+    <string name="uisetting_haptic_on_chat_title">Otrzymano wiadomość czatu</string>
+    <string name="uisetting_haptic_on_chat_summary">Wibruj po otrzymaniu wiadomości na czacie.</string>
+    <string name="uisetting_haptic_on_playlist_title">Lista odtwarzania zaktualizowana</string>
+    <string name="uisetting_haptic_on_playlist_summary">Wibruj, gdy wspólna lista odtwarzania zostanie zaktualizowana.</string>
+    <string name="uisetting_haptic_on_connection_title">Zdarzenie połączenia</string>
+    <string name="uisetting_haptic_on_connection_summary">Wibruj przy błędzie połączenia lub rozłączeniu.</string>
+
+    <!-- Settings: Sync Mechanisms -->
+    <string name="uisetting_categ_sync_mechanisms">Synchronizacja</string>
+    <string name="uisetting_sync_fastforward_title">Przewiń do przodu przy opóźnieniu</string>
+    <string name="uisetting_sync_fastforward_summary">Gdy jesteś za innymi, odtwarzacz przewinie do przodu, aby nadrobić. Zalecane.</string>
+    <string name="uisetting_sync_slowdown_title">Zwolnij przy niewielkiej desynchronizacji</string>
+    <string name="uisetting_sync_slowdown_summary">Gdy inni są nieco w tyle, prędkość odtwarzania zostanie zmniejszona, aby mogli nadrobić.</string>
+    <string name="uisetting_sync_rewind_title">Przewiń przy dużej desynchronizacji</string>
+    <string name="uisetting_sync_rewind_summary">Gdy inni są znacząco w tyle (12+ sekund), odtwarzacz przewinie do ich pozycji.</string>
+    <string name="uisetting_sync_dont_slow_with_me_title">Nigdy nie zwalniaj ani nie przewijaj innych</string>
+    <string name="uisetting_sync_dont_slow_with_me_summary">Gdy jesteś w tyle, inni nie będą zwalniani ani przewijani, aby do ciebie dopasować. Eksperymentalne.</string>
+
+    <!-- Settings: Player UI -->
+    <string name="uisetting_doubletap_seek_title">Podwójne dotknięcie do przewijania</string>
+    <string name="uisetting_doubletap_seek_summary">Przewijaj do przodu/tyłu podwójnym dotknięciem boków ekranu. Wyłączenie tego usuwa opóźnienie pojedynczego dotknięcia spowodowane wykrywaniem podwójnego dotknięcia.</string>
+    <string name="uisetting_swipe_gestures_title">Gesty przesunięcia</string>
+    <string name="uisetting_swipe_gestures_summary">Przesunięcie pionowe po lewej stronie dla jasności, po prawej dla głośności.</string>
+    <string name="uisetting_show_chapter_dots_title">Pokaż znaczniki rozdziałów</string>
+    <string name="uisetting_show_chapter_dots_summary">Wyświetlaj kropki rozdziałów na pasku przewijania, gdy są dostępne.</string>
+    <string name="uisetting_chapter_dots_clickable_title">Klikalne znaczniki rozdziałów</string>
+    <string name="uisetting_chapter_dots_clickable_summary">Stuknij kropkę rozdziału, aby przejść do tej pozycji.</string>
+    <string name="uisetting_hud_autohide_title">Automatyczne ukrywanie HUD</string>
+    <string name="uisetting_hud_autohide_summary">Sekundy bezczynności przed automatycznym ukryciem HUD. Ustaw 0, aby wyłączyć automatyczne ukrywanie.</string>
+    <string name="uisetting_osd_duration_title">Czas wyświetlania komunikatów OSD</string>
+    <string name="uisetting_osd_duration_summary">Ile sekund wyświetlać komunikaty statusu na ekranie (np. zmiana proporcji, wybór ścieżek). Ustaw 0, aby wyłączyć komunikaty OSD.</string>
 </resources>

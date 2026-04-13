@@ -161,11 +161,22 @@ object AppConfig {
         }
     }
 
+    /* ── Propagation: values-en/strings.xml → values/strings.xml (default fallback) ─────────────── */
+    fun Project.propagateDefaultStrings() {
+        val src = File("${rootDir}/shared/src/commonMain/composeResources/values-en/strings.xml")
+        val dst = File("${rootDir}/shared/src/commonMain/composeResources/values/strings.xml")
+        if (src.exists()) {
+            src.copyTo(dst, overwrite = true)
+            logger.lifecycle("✅ Default strings fallback synced from values-en")
+        }
+    }
+
     /* ── Master propagation: invoke all SSOT propagators at once ────────────────────────────────── */
     fun Project.propagateAll() {
         updateIOSVersionAndAppName()
         propagateLocalesToIOS()
         propagateTrinityColors()
         propagateLogoToIOS()
+        propagateDefaultStrings()
     }
 }

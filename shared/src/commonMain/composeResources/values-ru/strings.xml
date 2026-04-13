@@ -356,4 +356,96 @@
         <item>%1$s Mobile позволяет воспроизводить медиа с прямых ссылок. Однако YouTube пока НЕ поддерживается.</item>
         <item>Если вы хотите временно свернуть комнату без выхода, вы можете перейти в режим "Картинка в картинке", где экран становится маленьким плавающим окном поверх других приложений.</item>
     </string-array>
+
+    <!-- Server Hosting -->
+    <string name="connect_host_own_server">Запустить свой сервер</string>
+    <string name="server_host_title">Хост сервера</string>
+    <string name="server_host_port">Порт</string>
+    <string name="server_host_password">Пароль сервера (необязательно)</string>
+    <string name="server_host_motd">Сообщение дня (необязательно)</string>
+    <string name="server_host_isolate_rooms">Изолировать комнаты</string>
+    <string name="server_host_disable_chat">Отключить чат</string>
+    <string name="server_host_disable_ready">Отключить готовность</string>
+    <string name="server_host_start">Запустить сервер</string>
+    <string name="server_host_stop">Остановить сервер</string>
+    <string name="server_host_status_running">Работает</string>
+    <string name="server_host_status_stopped">Остановлен</string>
+    <string name="server_host_status_starting">Запускается…</string>
+    <string name="server_host_status_error">Ошибка</string>
+    <string name="server_host_address">Локальный адрес (Wi-Fi/LAN)</string>
+    <string name="server_host_public_address">Публичный адрес (Интернет)</string>
+    <string name="server_host_public_address_fetching">Получение…</string>
+    <string name="server_host_public_address_unavailable">Не удалось определить</string>
+    <string name="server_host_clients_connected">Подключено клиентов: %1$d</string>
+    <string name="server_host_server_log">Лог сервера</string>
+    <string name="server_host_port_forward_hint">Для друзей за пределами вашей сети необходимо пробросить порт %1$s на роутере.</string>
+    <string name="server_host_ios_warning">На iOS сервер остановится, когда приложение перейдёт в фоновый режим.</string>
+
+    <!-- GIF Panel -->
+    <string name="room_gif_search_hint">Поиск GIFs...</string>
+    <string name="room_gif_tab_gifs">GIFs</string>
+    <string name="room_gif_tab_stickers">Стикеры</string>
+    <string name="room_gif_tab_trending">В тренде</string>
+    <string name="room_gif_tab_recents">Недавние</string>
+    <string name="room_gif_powered_by">При поддержке Klipy</string>
+    <string name="room_gif_error">Не удалось загрузить GIFs</string>
+    <string name="room_gif_no_results">Ничего не найдено</string>
+
+    <!-- Room Misc -->
+    <string name="room_overflow_landscape_mode">Альбомный режим</string>
+    <string name="room_overflow_portrait_mode">Портретный режим</string>
+    <string name="room_screenshot_saved">Скриншот сохранён</string>
+    <string name="room_screenshot_unsupported">Скриншот не поддерживается этим видеодвижком</string>
+    <string name="room_untrusted_domain_warning">Заблокирована ссылка с недоверенного домена: %1$s. Добавьте его в доверенные домены в настройках.</string>
+
+    <!-- Settings: Logs and Trusted Domains -->
+    <string name="setting_clear_logs_title">Очистить логи</string>
+    <string name="setting_clear_logs_summary">Удалить все сохранённые файлы логов</string>
+    <string name="setting_clear_logs_dialog">Вы уверены, что хотите удалить все файлы логов? Это действие необратимо.</string>
+    <string name="setting_trusted_domains_title">Доверенные домены</string>
+    <string name="setting_trusted_domains_summary">Автоматически загружать ссылки только с этих доменов. Оставьте пустым, чтобы разрешить все. Через запятую (например, example.com, cdn.host.net).</string>
+
+    <!-- Settings: Haptics -->
+    <string name="uisetting_categ_haptics">Вибрация</string>
+    <string name="uisetting_haptic_on_joined_title">Кто-то присоединился</string>
+    <string name="uisetting_haptic_on_joined_summary">Вибрация при входе участника в комнату.</string>
+    <string name="uisetting_haptic_on_left_title">Кто-то вышел</string>
+    <string name="uisetting_haptic_on_left_summary">Вибрация при выходе участника из комнаты.</string>
+    <string name="uisetting_haptic_on_chat_title">Получено сообщение</string>
+    <string name="uisetting_haptic_on_chat_summary">Вибрация при получении сообщения в чате.</string>
+    <string name="uisetting_haptic_on_paused_title">Кто-то поставил на паузу</string>
+    <string name="uisetting_haptic_on_paused_summary">Вибрация, когда кто-то ставит воспроизведение на паузу.</string>
+    <string name="uisetting_haptic_on_played_title">Кто-то снял с паузы</string>
+    <string name="uisetting_haptic_on_played_summary">Вибрация, когда кто-то возобновляет воспроизведение.</string>
+    <string name="uisetting_haptic_on_seeked_title">Кто-то перемотал</string>
+    <string name="uisetting_haptic_on_seeked_summary">Вибрация, когда кто-то перематывает видео.</string>
+    <string name="uisetting_haptic_on_playlist_title">Плейлист обновлён</string>
+    <string name="uisetting_haptic_on_playlist_summary">Вибрация при обновлении общего плейлиста.</string>
+    <string name="uisetting_haptic_on_connection_title">Событие подключения</string>
+    <string name="uisetting_haptic_on_connection_summary">Вибрация при ошибке подключения или отключении.</string>
+
+    <!-- Settings: Sync Mechanisms -->
+    <string name="uisetting_categ_sync_mechanisms">Синхронизация</string>
+    <string name="uisetting_sync_dont_slow_with_me_title">Не замедлять и не перематывать других</string>
+    <string name="uisetting_sync_dont_slow_with_me_summary">Когда вы отстаёте, другие не будут замедлены или перемотаны для соответствия. Экспериментально.</string>
+    <string name="uisetting_sync_fastforward_title">Ускорение при отставании</string>
+    <string name="uisetting_sync_fastforward_summary">Когда вы отстаёте от других, плеер ускорится, чтобы догнать. Рекомендуется.</string>
+    <string name="uisetting_sync_rewind_title">Перемотка при значительном рассинхроне</string>
+    <string name="uisetting_sync_rewind_summary">Когда другие значительно отстают (12+ секунд), ваш плеер перемотает назад до их позиции.</string>
+    <string name="uisetting_sync_slowdown_title">Замедление при незначительном рассинхроне</string>
+    <string name="uisetting_sync_slowdown_summary">Когда другие немного отстают, скорость воспроизведения будет снижена, чтобы дать им догнать.</string>
+
+    <!-- Settings: Player UI -->
+    <string name="uisetting_show_chapter_dots_title">Показать маркеры глав</string>
+    <string name="uisetting_show_chapter_dots_summary">Отображать маркеры глав на полосе прокрутки, когда доступно.</string>
+    <string name="uisetting_chapter_dots_clickable_title">Кликабельные маркеры глав</string>
+    <string name="uisetting_chapter_dots_clickable_summary">Нажмите на маркер главы, чтобы перейти к этой позиции.</string>
+    <string name="uisetting_doubletap_seek_title">Двойное нажатие для перемотки</string>
+    <string name="uisetting_doubletap_seek_summary">Перемотка вперёд/назад двойным нажатием по краям экрана. Отключение убирает задержку одиночного нажатия, вызванную распознаванием двойного.</string>
+    <string name="uisetting_swipe_gestures_title">Жесты свайпа</string>
+    <string name="uisetting_swipe_gestures_summary">Вертикальный свайп слева для яркости, справа для громкости.</string>
+    <string name="uisetting_hud_autohide_title">Автоскрытие HUD</string>
+    <string name="uisetting_hud_autohide_summary">Секунды бездействия до автоматического скрытия HUD. Установите 0 для отключения автоскрытия.</string>
+    <string name="uisetting_osd_duration_title">Длительность OSD-сообщений</string>
+    <string name="uisetting_osd_duration_summary">Сколько секунд показывать экранные сообщения (например, смена соотношения сторон, выбор дорожки). Установите 0 для отключения OSD-сообщений.</string>
 </resources>

@@ -356,4 +356,96 @@
         <item>%1$s Mobile te permite reproducir medios desde enlaces directos. Sin embargo, YouTube NO es compatible todavía.</item>
         <item>Si quieres minimizar la sala temporalmente sin salir, puedes entrar en modo "Imagen en imagen" donde la pantalla es una pequeña ventana flotante sobre otras aplicaciones.</item>
     </string-array>
+
+    <!-- Server hosting -->
+    <string name="connect_host_own_server">Alojar tu propio servidor</string>
+    <string name="server_host_title">Alojar servidor</string>
+    <string name="server_host_start">Iniciar servidor</string>
+    <string name="server_host_stop">Detener servidor</string>
+    <string name="server_host_port">Puerto</string>
+    <string name="server_host_password">Contraseña del servidor (opcional)</string>
+    <string name="server_host_motd">Mensaje del día (opcional)</string>
+    <string name="server_host_isolate_rooms">Aislar salas</string>
+    <string name="server_host_disable_chat">Desactivar chat</string>
+    <string name="server_host_disable_ready">Desactivar disponibilidad</string>
+    <string name="server_host_status_running">En ejecución</string>
+    <string name="server_host_status_stopped">Detenido</string>
+    <string name="server_host_status_starting">Iniciando…</string>
+    <string name="server_host_status_error">Error</string>
+    <string name="server_host_clients_connected">%1$d cliente(s) conectado(s)</string>
+    <string name="server_host_address">Dirección local (Wi-Fi/LAN)</string>
+    <string name="server_host_public_address">Dirección pública (Internet)</string>
+    <string name="server_host_public_address_fetching">Obteniendo…</string>
+    <string name="server_host_public_address_unavailable">No se pudo determinar</string>
+    <string name="server_host_port_forward_hint">Para amigos fuera de tu red, el puerto %1$s debe estar redirigido en tu router.</string>
+    <string name="server_host_ios_warning">En iOS, el servidor se detendrá cuando la aplicación pase a segundo plano.</string>
+    <string name="server_host_server_log">Registro del servidor</string>
+
+    <!-- GIF panel -->
+    <string name="room_gif_search_hint">Buscar GIFs...</string>
+    <string name="room_gif_tab_gifs">GIFs</string>
+    <string name="room_gif_tab_stickers">Stickers</string>
+    <string name="room_gif_tab_trending">Tendencias</string>
+    <string name="room_gif_tab_recents">Recientes</string>
+    <string name="room_gif_powered_by">Desarrollado por Klipy</string>
+    <string name="room_gif_error">Error al cargar GIFs</string>
+    <string name="room_gif_no_results">No se encontraron resultados</string>
+
+    <!-- Room overflow and misc -->
+    <string name="room_overflow_landscape_mode">Modo horizontal</string>
+    <string name="room_overflow_portrait_mode">Modo vertical</string>
+    <string name="room_screenshot_saved">Captura de pantalla guardada</string>
+    <string name="room_screenshot_unsupported">Captura de pantalla no compatible con este motor de reproducción</string>
+    <string name="room_untrusted_domain_warning">URL bloqueada de dominio no confiable: %1$s. Agrégalo a Dominios de confianza en la configuración para permitirlo.</string>
+
+    <!-- Trusted domains and logs settings -->
+    <string name="setting_trusted_domains_title">Dominios de confianza</string>
+    <string name="setting_trusted_domains_summary">Solo cargar automáticamente URLs de estos dominios. Dejar vacío para permitir todos. Separados por comas (ej. ejemplo.com, cdn.host.net).</string>
+    <string name="setting_clear_logs_title">Borrar registros</string>
+    <string name="setting_clear_logs_summary">Eliminar todos los archivos de registro almacenados</string>
+    <string name="setting_clear_logs_dialog">¿Estás seguro de que quieres eliminar todos los archivos de registro? Esta acción no se puede deshacer.</string>
+
+    <!-- Haptics category and settings -->
+    <string name="uisetting_categ_haptics">Vibración</string>
+    <string name="uisetting_haptic_on_joined_title">Alguien se unió</string>
+    <string name="uisetting_haptic_on_joined_summary">Vibrar cuando alguien se une a la sala.</string>
+    <string name="uisetting_haptic_on_left_title">Alguien se fue</string>
+    <string name="uisetting_haptic_on_left_summary">Vibrar cuando alguien abandona la sala.</string>
+    <string name="uisetting_haptic_on_paused_title">Alguien pausó</string>
+    <string name="uisetting_haptic_on_paused_summary">Vibrar cuando alguien pausa la reproducción.</string>
+    <string name="uisetting_haptic_on_played_title">Alguien reanudó</string>
+    <string name="uisetting_haptic_on_played_summary">Vibrar cuando alguien reanuda la reproducción.</string>
+    <string name="uisetting_haptic_on_seeked_title">Alguien buscó</string>
+    <string name="uisetting_haptic_on_seeked_summary">Vibrar cuando alguien busca en el video.</string>
+    <string name="uisetting_haptic_on_chat_title">Mensaje de chat recibido</string>
+    <string name="uisetting_haptic_on_chat_summary">Vibrar cuando se recibe un mensaje de chat.</string>
+    <string name="uisetting_haptic_on_playlist_title">Lista de reproducción actualizada</string>
+    <string name="uisetting_haptic_on_playlist_summary">Vibrar cuando se actualiza la lista de reproducción compartida.</string>
+    <string name="uisetting_haptic_on_connection_title">Evento de conexión</string>
+    <string name="uisetting_haptic_on_connection_summary">Vibrar ante un fallo de conexión o desconexión.</string>
+
+    <!-- Sync mechanisms -->
+    <string name="uisetting_categ_sync_mechanisms">Sincronización</string>
+    <string name="uisetting_sync_dont_slow_with_me_title">Nunca ralentizar ni rebobinar a otros</string>
+    <string name="uisetting_sync_dont_slow_with_me_summary">Cuando estés retrasado, los demás no serán ralentizados ni rebobinados para igualarte. Experimental.</string>
+    <string name="uisetting_sync_fastforward_title">Avance rápido si estás retrasado</string>
+    <string name="uisetting_sync_fastforward_summary">Cuando estés retrasado respecto a los demás, tu reproductor avanzará rápidamente para alcanzarlos. Recomendado.</string>
+    <string name="uisetting_sync_rewind_title">Rebobinar en desincronización mayor</string>
+    <string name="uisetting_sync_rewind_summary">Cuando los demás estén significativamente retrasados (12+ segundos), tu reproductor rebobinará para igualar su posición.</string>
+    <string name="uisetting_sync_slowdown_title">Ralentizar en desincronización menor</string>
+    <string name="uisetting_sync_slowdown_summary">Cuando los demás estén ligeramente retrasados, tu velocidad de reproducción se reducirá para dejarlos alcanzarte.</string>
+
+    <!-- Player UI settings -->
+    <string name="uisetting_doubletap_seek_title">Doble toque para buscar</string>
+    <string name="uisetting_doubletap_seek_summary">Buscar hacia adelante o atrás al tocar dos veces los lados de la pantalla. Desactivar esto elimina el retraso del toque simple causado por la detección del doble toque.</string>
+    <string name="uisetting_swipe_gestures_title">Gestos de deslizamiento</string>
+    <string name="uisetting_swipe_gestures_summary">Deslizamiento vertical en el lado izquierdo para brillo, lado derecho para volumen.</string>
+    <string name="uisetting_show_chapter_dots_title">Mostrar marcadores de capítulos</string>
+    <string name="uisetting_show_chapter_dots_summary">Mostrar puntos de marcadores de capítulos en la barra de búsqueda cuando estén disponibles.</string>
+    <string name="uisetting_chapter_dots_clickable_title">Marcadores de capítulos clicables</string>
+    <string name="uisetting_chapter_dots_clickable_summary">Tocar un punto de capítulo para saltar a esa posición.</string>
+    <string name="uisetting_hud_autohide_title">Tiempo de ocultación automática del HUD</string>
+    <string name="uisetting_hud_autohide_summary">Segundos de inactividad antes de que el HUD se oculte automáticamente. Establece en 0 para desactivar la ocultación automática.</string>
+    <string name="uisetting_osd_duration_title">Duración de mensajes OSD</string>
+    <string name="uisetting_osd_duration_summary">Cuántos segundos mostrar mensajes de estado en pantalla (ej. cambios de relación de aspecto, selecciones de pistas). Establece en 0 para desactivar mensajes OSD.</string>
 </resources>
