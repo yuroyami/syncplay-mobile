@@ -15,7 +15,7 @@ object AppConfig {
 
     const val appName = "Synkplay"
 
-    const val versionName = "0.19.1"
+    const val versionName = "0.20.0"
     val versionCode = ("1" + versionName.split(".").joinToString("") { it.padStart(3, '0') }).toInt()
 
     const val exoOnly = false
