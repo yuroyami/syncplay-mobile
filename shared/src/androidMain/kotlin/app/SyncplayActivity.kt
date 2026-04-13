@@ -89,8 +89,10 @@ class SyncplayActivity : ComponentActivity() {
         /** Install crash handler early so it catches everything after this point */
         CrashHandler.install()
 
-//        GlobalScope.launch {
-//            throw Exception("You're testing the crash handler and its overlay")
+        // TEST CRASH — remove before release
+//        lifecycleScope.launch {
+//            kotlinx.coroutines.delay(500)
+//            error("Test crash: CrashOverlay is working!")
 //        }
 
         /** Adjusting the appearance of system window decor */
@@ -301,9 +303,8 @@ class SyncplayActivity : ComponentActivity() {
      * This ensures the correct locale is used when inflating resources.
      */
     override fun attachBaseContext(newBase: Context?) {
-        /** Applying saved language */
-        loggy("ATTACHING BASE CONTEXT -----------------")
-        val lang = DISPLAY_LANG.value()
+        /** Applying saved language (fall back to default if DataStore isn't ready yet) */
+        val lang = runCatching { DISPLAY_LANG.value() }.getOrDefault(DISPLAY_LANG.default as String)
         super.attachBaseContext(newBase!!.changeLanguage(lang))
     }
 
