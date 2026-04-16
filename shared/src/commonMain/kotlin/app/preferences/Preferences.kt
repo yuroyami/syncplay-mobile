@@ -288,6 +288,7 @@ object Preferences {
     val GESTURES = Pref("misc_gestures", true)
     val CURRENT_THEME = Pref("misc_current_theme", defaultTheme.asString())
     val CUSTOM_THEMES = Pref<Set<String>>("misc_custom_themes", emptySet())
+    val KLIPY_FAVORITES = Pref<Set<String>>("misc_klipy_favorites", emptySet())
     //val ROOM_ORIENTATION = PreferenceDef("misc_room_orientation", "auto")
 
     /** ------------ General -------------*/

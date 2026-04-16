@@ -23,7 +23,6 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
 
     val hasEnteredPipMode = MutableStateFlow(false)
     val visibleHUD = MutableStateFlow(true)
-    val popupChatHistory = MutableStateFlow(false)
     val popupCreateManagedRoom = MutableStateFlow(false)
     val popupIdentifyAsRoomOperator = MutableStateFlow(false)
     val popupSeekToPosition = MutableStateFlow(false)
@@ -44,7 +43,7 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     /** True when any card, popup, or panel is open, or the user is typing — suppresses HUD auto-hide. */
     val hasActiveOverlay = combine(
         tabCardUserInfo, tabCardSharedPlaylist, tabCardRoomPreferences,
-        controlPanel, popupChatHistory, popupCreateManagedRoom,
+        controlPanel, popupCreateManagedRoom,
         popupIdentifyAsRoomOperator, popupSeekToPosition, gifPanelVisible,
         msg.map { it.isNotEmpty() }
     ) { values -> values.any { it } }

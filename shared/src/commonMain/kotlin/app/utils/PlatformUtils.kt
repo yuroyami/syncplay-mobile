@@ -8,6 +8,7 @@ import app.player.PlayerEngine
 import app.protocol.network.NetworkManager
 import app.room.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
+import io.ktor.client.HttpClient
 
 /********************************************************************************
  * Collection of platform-specific utility functions that need to be actualized *
@@ -38,6 +39,8 @@ enum class Platform(val label: String, val color: Color) {
  * The current platform the application is running on.
  */
 expect val platform: Platform
+
+expect val httpClient: HttpClient
 
 /**
  * List of media player engines available on the current platform.

@@ -6,8 +6,6 @@ import androidx.compose.ui.platform.ClipEntry
 import app.delegato
 import app.player.PlayerEngine
 import app.player.avplayer.AVPlayerEngine
-import app.player.mpv.MpvKitEngine
-import app.player.mpv.instantiateMpvKitPlayer
 import app.player.vlc.VlcKitEngine
 import app.preferences.Preferences.NETWORK_ENGINE
 import app.preferences.value
@@ -17,13 +15,13 @@ import app.protocol.network.instantiateSwiftNioNetworkManager
 import app.room.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.path
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.darwin.Darwin
+import kotlinx.cinterop.toKString
 import platform.Foundation.NSDate
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileHandle
 import platform.Foundation.NSFileManager
-import platform.Foundation.closeFile
-import platform.Foundation.fileHandleForWritingAtPath
-import platform.Foundation.seekToEndOfFile
 import platform.Foundation.NSFileSize
 import platform.Foundation.NSNumber
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
@@ -31,22 +29,26 @@ import platform.Foundation.NSString
 import platform.Foundation.NSURL
 import platform.Foundation.NSUTF8StringEncoding
 import platform.Foundation.NSUserDomainMask
+import platform.Foundation.closeFile
 import platform.Foundation.create
 import platform.Foundation.dataUsingEncoding
+import platform.Foundation.fileHandleForWritingAtPath
+import platform.Foundation.seekToEndOfFile
 import platform.Foundation.timeIntervalSince1970
 import platform.Foundation.writeData
 import platform.UIKit.UIApplication
-import platform.UIKit.UIInterfaceOrientationMaskAll
 import platform.UIKit.UIInterfaceOrientationMaskLandscape
 import platform.UIKit.UIInterfaceOrientationMaskPortrait
 import platform.UIKit.UIWindowScene
 import platform.UIKit.UIWindowSceneGeometryPreferencesIOS
-import kotlin.math.roundToLong
-import kotlinx.cinterop.toKString
 import platform.ifaddrs.getDeviceLocalIp
+import kotlin.math.roundToLong
 import kotlin.native.ref.WeakReference
 
 actual val platform: Platform = Platform.IOS
+
+actual val httpClient: HttpClient
+    get() = HttpClient(Darwin)
 
 actual val availablePlatformPlayerEngines: List<PlayerEngine> = buildList {
     add(AVPlayerEngine)

@@ -75,6 +75,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
     val doubletapEnabled by DOUBLETAP_SEEK.watchPref()
     val swipeEnabled by SWIPE_GESTURES.watchPref()
     val hasVideo by viewmodel.hasVideo.collectAsState()
+    val isHUDVisible by viewmodel.uiState.visibleHUD.collectAsState()
 
     val seekLeftInteraction = remember { MutableInteractionSource() }
     val seekRightInteraction = remember { MutableInteractionSource() }
@@ -97,7 +98,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
         var fastForward by remember { mutableStateOf(false) }
         var fastRewind by remember { mutableStateOf(false) }
 
-        if (gesturesEnabled && doubletapEnabled) {
+        if (gesturesEnabled && doubletapEnabled && !isHUDVisible) {
             /** Seek back - visual-feedback left section */
             Box(
                 modifier = Modifier.align(Alignment.CenterStart).fillMaxHeight().fillMaxWidth(0.1f)
@@ -155,10 +156,10 @@ fun RoomGestureInterceptor(modifier: Modifier) {
 
         Box(
             content = {},
-            modifier = Modifier.fillMaxSize().pointerInput(gesturesEnabled, doubletapEnabled, hasVideo) {
+            modifier = Modifier.fillMaxSize().pointerInput(gesturesEnabled, doubletapEnabled, hasVideo, isHUDVisible) {
                 detectTapGestures(
                     onPress = { offset ->
-                        if (gesturesEnabled && doubletapEnabled && hasVideo && offset.x > w.times(0.5f)) {
+                        if (gesturesEnabled && doubletapEnabled && !isHUDVisible && hasVideo && offset.x > w.times(0.5f)) {
                             val press = PressInteraction.Press(offset)
                             val job = scope.launch {
                                 delay(1000)
@@ -180,7 +181,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                             fastForward = false
                             seekRightInteraction.emit(PressInteraction.Release(press))
                         }
-                        if (gesturesEnabled && doubletapEnabled && hasVideo && offset.x < w.times(0.5f)) {
+                        if (gesturesEnabled && doubletapEnabled && !isHUDVisible && hasVideo && offset.x < w.times(0.5f)) {
                             val press = PressInteraction.Press(offset)
                             val job = scope.launch {
                                 delay(1000)
@@ -202,7 +203,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                             seekLeftInteraction.emit(PressInteraction.Release(press))
                         }
                     },
-                    onDoubleTap = if (gesturesEnabled && doubletapEnabled && hasVideo) {
+                    onDoubleTap = if (gesturesEnabled && doubletapEnabled && !isHUDVisible && hasVideo) {
                         { offset ->
                             scope.launch {
                                 if (offset.x < w.times(0.5f)) {

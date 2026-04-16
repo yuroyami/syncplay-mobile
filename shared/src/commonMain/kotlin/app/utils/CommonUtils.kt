@@ -1,10 +1,10 @@
 package app.utils
 
+import SyncplayMobile.shared.BuildConfig
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.kotlincrypto.hash.md.MD5
 import org.kotlincrypto.hash.sha2.SHA256
-import SyncplayMobile.shared.BuildConfig
 import kotlin.time.Clock
 
 /********************************************************************************

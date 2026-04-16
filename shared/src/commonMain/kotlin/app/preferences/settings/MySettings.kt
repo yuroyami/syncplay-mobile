@@ -49,7 +49,6 @@ import app.preferences.Preferences.MSG_BG_OPACITY
 import app.preferences.Preferences.MSG_BOX_ACTION
 import app.preferences.Preferences.MSG_FADING_DURATION
 import app.preferences.Preferences.MSG_FONTSIZE
-import app.preferences.Preferences.MSG_MAXCOUNT
 import app.preferences.Preferences.MSG_OUTLINE_ACTIVATE
 import app.preferences.Preferences.MSG_OUTLINE_THICKNESS
 import app.preferences.Preferences.MSG_SHADOW_ACTIVATE
@@ -170,7 +169,6 @@ val INROOM_CHAT_PROPERTIES = SettingCategory(
     +MSG_BOX_ACTION
     +MSG_BG_OPACITY
     +MSG_FONTSIZE
-    +MSG_MAXCOUNT
     +MSG_FADING_DURATION
 }
 

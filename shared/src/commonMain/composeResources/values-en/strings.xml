@@ -123,6 +123,12 @@
     <string name="room_scaling_fill_screen">Resize Mode: FILL SCREEN</string>
     <string name="room_scaling_zoom">Resize Mode: Zoom</string>
     <string name="room_sub_track_disable">Disable Subtitles</string>
+    <string name="room_sub_search_title">Search Subtitles</string>
+    <string name="room_sub_search_hint">Search by movie or episode name…</string>
+    <string name="room_sub_search_no_results">No subtitles found</string>
+    <string name="room_sub_search_downloading">Downloading…</string>
+    <string name="room_sub_search_download_from_web">Search online</string>
+    <string name="room_sub_search_downloads">downloads</string>
     <string name="room_track_track">Track</string>
     <string name="room_sub_track_notfound">No subtitles found !</string>
     <string name="room_details_nofileplayed">(No file being played)</string>
@@ -159,6 +165,7 @@
     <string name="room_button_desc_audio_tracks">Audio Tracks</string>
     <string name="room_button_desc_subtitle_tracks">Subtitle Tracks</string>
     <string name="room_button_desc_subtitle_tracks_import_from_file">Import from file</string>
+    <string name="room_tracks_title">Audio &amp; Subtitles</string>
     <string name="room_button_desc_rewind">Rewind</string>
     <string name="room_button_desc_toggle">.</string>
     <string name="room_button_desc_play">Play</string>
@@ -194,7 +201,8 @@
     <string name="room_volume">Volume: %1$s</string>
     <string name="room_brightness">Brightness: %1$s</string>
     <string name="room_coming_soon">Coming soon!</string>
-    <string name="room_chapters_skip">Skip chapter</string>
+    <string name="room_chapters_skip">Skipped to next chapter</string>
+    <string name="room_chapters_jump">Chapter: %1$s</string>
     <string name="room_chapters">Chapters</string>
     <string name="room_gestures_enabled">Touch Gestures enabled</string>
     <string name="room_gestures_disabled">Touch Gestures disabled</string>
@@ -212,6 +220,10 @@
     <string name="room_gif_tab_stickers">Stickers</string>
     <string name="room_gif_tab_trending">Trending</string>
     <string name="room_gif_tab_recents">Recents</string>
+    <string name="room_gif_tab_favorites">Favorites</string>
+    <string name="room_gif_action_send">Send</string>
+    <string name="room_gif_action_favorite">Favorite</string>
+    <string name="room_gif_action_unfavorite">Unfavorite</string>
     <string name="room_gif_search_hint">Search GIFs...</string>
     <string name="room_gif_powered_by">Powered by Klipy</string>
     <string name="room_gif_no_results">No results found</string>

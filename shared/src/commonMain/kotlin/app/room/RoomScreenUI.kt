@@ -42,7 +42,6 @@ import app.room.ui.misc.RoomGestureInterceptor
 import app.room.ui.misc.RoomPlayButton
 import app.room.ui.rightcards.RoomSectionSlidingCards
 import app.room.ui.statinfo.RoomStatusInfoSection
-import app.room.ui.tabs.ChatHistoryPopup
 import app.room.ui.tabs.ManagedRoomPopup
 import app.room.ui.tabs.ManagedRoomPopupPurpose
 import app.room.ui.tabs.RoomTabSection
@@ -124,9 +123,10 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                     }
                 }
 
-                if (isHUDVisible) {
-                    Box(modifier = Modifier
-                        .fillMaxSize()
+                Box(modifier = Modifier
+                    .fillMaxSize()
+                    .alpha(if (isHUDVisible) 1f else 0f)
+                    .then(if (isHUDVisible) Modifier
                         .pointerInput(Unit) {
                             awaitPointerEventScope {
                                 while (true) {
@@ -140,7 +140,8 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                                 viewmodel.uiState.visibleHUD.value = false
                             })
                         }
-                    ) {
+                    else Modifier)
+                ) {
                         if (hasVideo) {
                             BlackContrastUnderlay()
                         }
@@ -148,13 +149,15 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                         if (!isPortrait) {
                             /* ===== LANDSCAPE LAYOUT ===== */
                             if (!isInPipMode && !soloMode) {
-                                /* Chat Section (Top-Left): Input and messages */
+                                /* Chat Section (Top-Left): Input and messages, extends to bottom bar */
                                 RoomChatSection(
                                     modifier = Modifier
                                         .align(Alignment.TopStart)
                                         .fillMaxWidth(0.44f)
+                                        .fillMaxHeight()
                                         .displayCutoutPadding()
-                                        .padding(8.dp)
+                                        .padding(start = 8.dp, top = 8.dp, end = 8.dp, bottom = if (hasVideo) 58.dp else 8.dp)
+                                        .then(if (hasVideo) Modifier.windowInsetsPadding(WindowInsets.safeGestures.only(WindowInsetsSides.Bottom)) else Modifier)
                                 )
 
                                 /* Status Section (Top-Center): Connection info, room name, etc. */
@@ -230,15 +233,16 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                                 isPortrait = true
                             )
 
-                            /* Chat Section (full width, above bottom bar) */
+                            /* Chat Section (full width, from below top bar to above bottom bar) */
                             if (!isInPipMode && !soloMode) {
                                 RoomChatSection(
                                     modifier = Modifier
                                         .align(Alignment.BottomStart)
                                         .fillMaxWidth()
-                                        .fillMaxHeight(0.3f)
-                                        .padding(start = 8.dp, end = 8.dp, bottom = 58.dp)
-                                        .windowInsetsPadding(WindowInsets.safeGestures.only(WindowInsetsSides.Bottom))
+                                        .fillMaxHeight()
+                                        .statusBarsPadding()
+                                        .padding(start = 8.dp, end = 8.dp, top = 58.dp, bottom = if (hasVideo) 58.dp else 8.dp)
+                                        .then(if (hasVideo) Modifier.windowInsetsPadding(WindowInsets.safeGestures.only(WindowInsetsSides.Bottom)) else Modifier)
                                 )
                             }
                         }
@@ -253,7 +257,6 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                             modifier = Modifier.align(Alignment.Center)
                         )
                     }
-                }
             }
 
             if (!soloMode) {
@@ -262,7 +265,6 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
         }
 
         /** Popups */
-        if (!soloMode) ChatHistoryPopup()
         SeekToPositionPopup()
         ManagedRoomPopup(ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM)
         ManagedRoomPopup(ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR)

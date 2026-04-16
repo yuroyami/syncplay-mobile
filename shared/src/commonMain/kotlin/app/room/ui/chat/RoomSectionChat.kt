@@ -32,7 +32,9 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -54,7 +56,6 @@ import app.LocalRoomViewmodel
 import app.preferences.Preferences.MSG_BG_OPACITY
 import app.preferences.Preferences.MSG_BOX_ACTION
 import app.preferences.Preferences.MSG_FONTSIZE
-import app.preferences.Preferences.MSG_MAXCOUNT
 import app.preferences.Preferences.MSG_OUTLINE_ACTIVATE
 import app.preferences.Preferences.MSG_OUTLINE_THICKNESS
 import app.preferences.Preferences.MSG_SHADOW_ACTIVATE
@@ -92,10 +93,10 @@ fun RoomChatSection(modifier: Modifier) {
                         viewmodel.dispatcher.sendMessage(gifUrl)
                         viewmodel.uiState.gifPanelVisible.value = false
                     },
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.weight(1f).fillMaxWidth()
                 )
             } else {
-                ChatBox(viewmodel = viewmodel, modifier = Modifier.fillMaxSize())
+                ChatBox(viewmodel = viewmodel, modifier = Modifier.weight(1f).fillMaxWidth())
             }
         }
     }
@@ -153,8 +154,19 @@ fun ChatTextField(
             },
             trailingIcon = {
                 Row {
+                    /* GIF button — always visible */
+                    IconButton(onClick = {
+                        viewmodel.uiState.gifPanelVisible.value = !viewmodel.uiState.gifPanelVisible.value
+                    }) {
+                        Icon(
+                            imageVector = Icons.Outlined.GifBox,
+                            contentDescription = null,
+                            modifier = Modifier.gradientOverlay()
+                        )
+                    }
+
+                    /* Send button — only when there is text and GIF panel is closed */
                     if (msg.isNotBlank() && !gifPanelVisible) {
-                        /* Send button */
                         IconButton(
                             onClick = {
                                 focusManager.clearFocus()
@@ -163,17 +175,6 @@ fun ChatTextField(
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.Send,
-                                contentDescription = null,
-                                modifier = Modifier.gradientOverlay()
-                            )
-                        }
-                    } else {
-                        /* GIF button */
-                        IconButton(onClick = {
-                            viewmodel.uiState.gifPanelVisible.value = !viewmodel.uiState.gifPanelVisible.value
-                        }) {
-                            Icon(
-                                imageVector = Icons.Outlined.GifBox,
                                 contentDescription = null,
                                 modifier = Modifier.gradientOverlay()
                             )
@@ -230,7 +231,6 @@ fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel) {
     val msgOutlineThickness by MSG_OUTLINE_THICKNESS.watchPref()
     val msgShadowActivate by MSG_SHADOW_ACTIVATE.watchPref()
     val msgFontSize = MSG_FONTSIZE.watchPref()
-    val msgMaxCount by MSG_MAXCOUNT.watchPref()
 
     Box(
         modifier = modifier
@@ -239,22 +239,23 @@ fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel) {
                 shape = RoundedCornerShape(4.dp)
             )
     ) {
-        val latestChatMessages = chatMessages.takeLast(msgMaxCount)
-
-        val chatListState = rememberLazyListState()
-        LaunchedEffect(latestChatMessages.size) {
-            if (latestChatMessages.isNotEmpty()) {
-                chatListState.animateScrollToItem(latestChatMessages.lastIndex)
+        val chatListState = rememberLazyListState(
+            initialFirstVisibleItemIndex = maxOf(0, chatMessages.size - 1)
+        )
+        var previousSize by remember { mutableStateOf(chatMessages.size) }
+        LaunchedEffect(chatMessages.size) {
+            if (chatMessages.size > previousSize) {
+                chatListState.animateScrollToItem(chatMessages.lastIndex)
             }
+            previousSize = chatMessages.size
         }
 
         LazyColumn(
             state = chatListState,
             contentPadding = PaddingValues(8.dp),
-            userScrollEnabled = false,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxSize()
         ) {
-            items(latestChatMessages) { chatMessage ->
+            items(chatMessages) { chatMessage ->
                 /* Once seen, don't use it in fading message */
                 SideEffect {
                     chatMessage.seen = true

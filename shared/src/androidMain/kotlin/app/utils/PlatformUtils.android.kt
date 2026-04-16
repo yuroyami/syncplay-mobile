@@ -28,11 +28,16 @@ import app.protocol.network.NetworkManager
 import app.room.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.path
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.okhttp.OkHttp
 import java.io.File
 import java.lang.ref.WeakReference
 
 
 actual val platform: Platform = Platform.Android
+
+actual val httpClient: HttpClient
+    get() = HttpClient(OkHttp)
 
 /**
  * List of media player engines available on Android.

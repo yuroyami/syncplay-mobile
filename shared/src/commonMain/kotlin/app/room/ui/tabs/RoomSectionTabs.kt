@@ -13,7 +13,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.AutoFixHigh
-import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
@@ -54,7 +53,6 @@ import syncplaymobile.shared.generated.resources.room_overflow_create_managed_ro
 import syncplaymobile.shared.generated.resources.room_overflow_identify_as_operator
 import syncplaymobile.shared.generated.resources.room_overflow_landscape_mode
 import syncplaymobile.shared.generated.resources.room_overflow_leave_room
-import syncplaymobile.shared.generated.resources.room_overflow_msghistory
 import syncplaymobile.shared.generated.resources.room_overflow_pip
 import syncplaymobile.shared.generated.resources.room_overflow_portrait_mode
 import syncplaymobile.shared.generated.resources.room_overflow_title
@@ -198,15 +196,6 @@ fun RoomTabSection(modifier: Modifier) {
                         )
                     }
 
-                    /* Chat history item */
-                    RoomOverflowItem(
-                        text = stringResource(Res.string.room_overflow_msghistory),
-                        icon = Icons.Filled.Forum,
-                        onClick = {
-                            overflowMenuState.value = false
-                            viewmodel.uiState.popupChatHistory.value = true
-                        }
-                    )
                 }
 
                 /* Toggle portrait/landscape mode */

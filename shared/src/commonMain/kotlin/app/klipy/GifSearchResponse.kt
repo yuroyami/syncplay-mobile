@@ -4,14 +4,15 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class GifSearchResponse(
+data class KlipySearchResponse(
     val result: Boolean,
-    val data: GifSearchDataWrapper
+    val data: KlipySearchWrapper
 )
 
 @Serializable
-data class GifSearchDataWrapper(
-    val data: List<GifItem>,
+data class KlipySearchWrapper(
+    val data: List<KlipyItem>,
+
     @SerialName("current_page")
     val currentPage: Int,
     @SerialName("per_page")
@@ -21,11 +22,11 @@ data class GifSearchDataWrapper(
 )
 
 @Serializable
-data class GifItem(
+data class KlipyItem(
     val id: Long,
     val slug: String,
     val title: String,
-    val file: GifFile,
+    val file: KlipyFile,
     val tags: List<String>,
     val type: String,
     @SerialName("blur_preview")
@@ -33,26 +34,27 @@ data class GifItem(
 )
 
 @Serializable
-data class GifFile(
-    val hd: GifResolution,
-    val md: GifResolution,
-    val sm: GifResolution,
-    val xs: GifResolution
+data class KlipyFile(
+    val hd: KlipyResolution,
+    val md: KlipyResolution,
+    val sm: KlipyResolution,
+    val xs: KlipyResolution
 )
 
 @Serializable
-data class GifResolution(
-    val gif: GifFormat,
-    val webp: GifFormat,
-    val jpg: GifFormat,
-    val mp4: GifFormat,
-    val webm: GifFormat
+data class KlipyResolution(
+    val gif: KlipyFormat = KlipyFormat(),
+    val webp: KlipyFormat = KlipyFormat(),
+    val webm: KlipyFormat = KlipyFormat(),
+    val mp4: KlipyFormat = KlipyFormat(),
+    val jpg: KlipyFormat = KlipyFormat(),
+    val png: KlipyFormat = KlipyFormat()
 )
 
 @Serializable
-data class GifFormat(
-    val url: String,
-    val width: Int,
-    val height: Int,
-    val size: Int
+data class KlipyFormat(
+    val url: String = "",
+    val width: Int = 0,
+    val height: Int = 0,
+    val size: Int = 0
 )
