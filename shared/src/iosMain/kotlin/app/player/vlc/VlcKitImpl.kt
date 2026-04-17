@@ -20,7 +20,6 @@ import app.preferences.settings.SettingCategory
 import app.preferences.value
 import app.room.RoomViewmodel
 import app.utils.loggy
-import co.touchlab.kermit.Logger
 import cocoapods.MobileVLCKit.VLCLibrary
 import cocoapods.MobileVLCKit.VLCMedia
 import cocoapods.MobileVLCKit.VLCMediaPlaybackSlaveTypeSubtitle
@@ -549,8 +548,6 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         }
 
         override fun mediaPlayerTimeChanged(aNotification: NSNotification) {
-            Logger.e("AUTOMATIC VLC UPDATOR")
-
             // Time ticking = definitely playing
             val isPlaying = vlcPlayer?.isPlaying() == true
             if (playerManager.isNowPlaying.value != isPlaying) {
