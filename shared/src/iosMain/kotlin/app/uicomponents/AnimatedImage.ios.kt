@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.interop.UIKitView
 import androidx.compose.ui.layout.ContentScale
 import app.klipy.KlipyUtils
+import app.utils.httpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import kotlinx.cinterop.UByteVar
@@ -65,7 +66,7 @@ actual fun AnimatedImage(
 /** Downloads image data using the shared Ktor client and decodes it as animated GIF/WebP. */
 private suspend fun downloadAndDecodeAnimatedImage(url: String): UIImage? {
     return try {
-        val bytes: ByteArray = KlipyUtils.httpClient.get(url).body()
+        val bytes: ByteArray = httpClient.get(url).body()
         decodeAnimatedImage(bytes)
     } catch (_: Exception) {
         null

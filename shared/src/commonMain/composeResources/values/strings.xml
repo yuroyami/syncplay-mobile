@@ -1,4 +1,11 @@
 <resources>
+    <!--
+        DEFAULT (unqualified) resource bundle. Compose Multiplatform falls back to this
+        bundle whenever the device locale has no qualified translation (e.g. Hebrew, when
+        no values-he/strings.xml exists). Therefore this file MUST contain every key that
+        any code references — otherwise the app crashes with MissingResourceException on
+        unsupported locales. Keep it in lock-step with values-en/strings.xml.
+    -->
     <!-- Common -->
     <string name="yes">Yes</string>
     <string name="no">No</string>

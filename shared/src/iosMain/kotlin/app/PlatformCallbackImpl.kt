@@ -174,6 +174,16 @@ object ApplePlatformCallback : PlatformCallback {
         generator.impactOccurred()
     }
 
+    /**
+     * iOS doesn't suffer from the Android-SAF-SMB MIME-filtering problem the equivalent
+     * Android override addresses, so this is a no-op. The regular FileKit picker is already
+     * the system picker (UIDocumentPickerViewController) on iOS. Returning null tells the
+     * caller to fall back to the normal flow.
+     */
+    override fun launchSystemFilePicker(onResult: (String?) -> Unit) {
+        onResult(null)
+    }
+
     override fun onScreenOrientationChanged(portrait: Boolean) {
         val mask = if (portrait) UIInterfaceOrientationMaskPortrait else UIInterfaceOrientationMaskLandscape
         delegato.myOrientationMask = mask

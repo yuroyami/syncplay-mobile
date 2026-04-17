@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
@@ -129,7 +130,9 @@ fun ChatTextField(
         verticalAlignment = Alignment.CenterVertically
     ) {
         OutlinedTextField(
-            modifier = modifier.alpha(0.75f).weight(1f),
+            modifier = modifier.alpha(0.75f).weight(1f).onFocusChanged { focusState ->
+                viewmodel.uiState.chatInputFocused.value = focusState.isFocused
+            },
             singleLine = true,
             keyboardActions = KeyboardActions(
                 onDone = {

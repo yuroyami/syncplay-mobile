@@ -1,6 +1,7 @@
 package app
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.app.PictureInPictureParams
@@ -12,6 +13,7 @@ import android.content.IntentFilter
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.graphics.drawable.Icon
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
@@ -21,6 +23,7 @@ import android.view.KeyEvent
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.LaunchedEffect
@@ -241,6 +244,22 @@ class SyncplayActivity : ComponentActivity() {
                     vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
                 } else {
                     vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+                }
+            }
+
+            /**
+             * Launches the "custom picker" — an `ACTION_GET_CONTENT` chooser that lets the user
+             * pick which installed file manager / explorer to browse with. Routes the result
+             * through [pendingSystemFilePickerCallback] back to the caller. Helpful for mpv to
+             * play SMB-backed files that are hidden by FileKit's extension-based filter.
+             */
+            override fun launchSystemFilePicker(onResult: (String?) -> Unit) {
+                pendingSystemFilePickerCallback = onResult
+                runCatching {
+                    systemFilePickerLauncher.launch("*/*")
+                }.onFailure {
+                    pendingSystemFilePickerCallback = null
+                    onResult(null)
                 }
             }
         }
@@ -555,6 +574,57 @@ class SyncplayActivity : ComponentActivity() {
                 Toast.LENGTH_SHORT
             ).show()
         }
+    }
+
+    /**
+     * Callback indirection for the "custom picker" (chooser-of-file-managers) flow. The
+     * PlatformCallback override stores the caller's `onResult` here, then launches
+     * [systemFilePickerLauncher]. When the picker returns, the result handler invokes and
+     * clears this callback.
+     */
+    private var pendingSystemFilePickerCallback: ((String?) -> Unit)? = null
+
+    /**
+     * "Custom picker" launcher — fires `ACTION_GET_CONTENT` wrapped in [Intent.createChooser] so
+     * the user is presented with a selector of every installed file manager / explorer / cloud
+     * app that registered as a content source (FX, MiXplorer, Solid Explorer, Drive, Dropbox,
+     * LocalSend, etc.), in addition to the system Documents UI.
+     *
+     * This complements FileKit's default launcher (which goes straight to the SAF Documents UI
+     * via `ACTION_OPEN_DOCUMENT` with an extension-derived MIME filter). Two reasons to offer it:
+     *
+     *  1. **SMB / cloud DocumentsProviders**: some providers report files with opaque MIME types
+     *     (`application/octet-stream`) that FileKit's extension filter hides; routing through a
+     *     third-party file manager bypasses that filter.
+     *  2. **User preference**: some users keep their media indexed in a specific file manager
+     *     and want to browse there directly.
+     *
+     * Note: `ACTION_GET_CONTENT` URIs are **not persistable** (unlike `ACTION_OPEN_DOCUMENT`
+     * results), so we skip [android.content.ContentResolver.takePersistableUriPermission]. The
+     * returned URI is readable for the activity's lifetime, which is sufficient for immediate
+     * playback; it may become invalid on process restart (acceptable trade-off — the FileKit
+     * path is already the recommended choice for persistent playlist entries).
+     */
+    private val systemFilePickerLauncher = registerForActivityResult(
+        object : ActivityResultContract<String, Uri?>() {
+            override fun createIntent(context: Context, input: String): Intent {
+                val pick = Intent(Intent.ACTION_GET_CONTENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = input
+                }
+                // Passing null title lets the system pick a sensible default ("Open with …").
+                return Intent.createChooser(pick, null)
+            }
+
+            override fun parseResult(resultCode: Int, intent: Intent?): Uri? {
+                if (resultCode != Activity.RESULT_OK) return null
+                return intent?.data
+            }
+        }
+    ) { uri ->
+        val callback = pendingSystemFilePickerCallback
+        pendingSystemFilePickerCallback = null
+        callback?.invoke(uri?.toString())
     }
 
 }

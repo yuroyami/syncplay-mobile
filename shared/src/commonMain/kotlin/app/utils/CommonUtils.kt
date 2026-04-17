@@ -1,6 +1,7 @@
 package app.utils
 
 import SyncplayMobile.shared.BuildConfig
+import io.github.vinceglb.filekit.dialogs.FileKitType
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.kotlincrypto.hash.md.MD5
@@ -50,6 +51,24 @@ val vidExs = listOf(
     "3g2", "mpg2", "mpg4", "h264", "h265", "hevc", "mjpeg", "mjpg", "mod",
     "tod", "dat", "wma", "wav", "amv", "mtv", "swf"
 )
+
+/**
+ * Returns a [FileKitType.File] configured for picking video files.
+ *
+ * On Android, the full [vidExs] list is used as a MIME-extension filter so only matching files
+ * appear selectable in the SAF picker.
+ *
+ * On iOS, the extensions filter is OMITTED. Reason: FileKit maps each extension to a UTType via
+ * `UTType.typeWithFilenameExtension(ext)`. Uncommon video extensions (divx, xvid, rm, rmvb, amv,
+ * mtv, mod, tod, dat, vob, f4v, mxf, asf, swf, h264, h265 …) have no registered public UTType,
+ * so the API returns a *dynamic* UTType of the form `dyn.abc123…`. On iOS 26, passing dynamic
+ * UTTypes to `UIDocumentPickerViewController(forOpeningContentTypes:)` causes the picker to
+ * render every file as dimmed/unselectable. Falling back to [FileKitType.File] with `null`
+ * extensions makes FileKit use `UTTypeItem` (all files pickable), and the player layer
+ * (AVPlayer / VLCKit / mpv) naturally rejects unsupported formats downstream.
+ */
+val videoFileKitType: FileKitType
+    get() = if (platform == Platform.IOS) FileKitType.File() else FileKitType.File(extensions = vidExs)
 
 /**
  * List of supported subtitle/closed caption file extensions.

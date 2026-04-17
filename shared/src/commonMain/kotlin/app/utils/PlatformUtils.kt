@@ -162,6 +162,25 @@ expect fun readFile(path: String): String
 expect fun deleteFile(path: String)
 
 /**
+ * Overwrites the file at [path] with [bytes]. Creates the file (and parents on Android) if
+ * missing. No-op on failure. Used for mpv.conf import on Android.
+ */
+expect fun writeFileBytes(path: String, bytes: ByteArray)
+
+/**
+ * Reads all bytes from the file at [path], or null if it does not exist / cannot be read.
+ * Used for mpv.conf export on Android.
+ */
+expect fun readFileBytes(path: String): ByteArray?
+
+/**
+ * Returns the absolute path where mpv looks for its user configuration file, or null on
+ * platforms where mpv does not honor a persistent config file (iOS). On Android this resolves
+ * to `{filesDir}/mpv.conf` — the `config-dir` mpv is initialized with in MPVView.
+ */
+expect fun getMpvConfFilePath(): String?
+
+/**
  * Returns and clears a pending shortcut JoinConfig, if any.
  * On iOS, this reads from the pending shortcut flow set by the AppDelegate.
  * On Android, this always returns null (shortcuts are handled via Intents).

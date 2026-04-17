@@ -91,9 +91,6 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                 /* Simple unlock layout shown when screen is locked */
                 RoomUnlockableLayout()
             } else {
-                /* Gesture Interceptor for playback control */
-                RoomGestureInterceptor(modifier = Modifier.fillMaxSize())
-
                 val isHUDVisible by viewmodel.uiState.visibleHUD.collectAsState()
                 val orientation by viewmodel.uiState.roomOrientation.collectAsState()
                 val isPortrait = orientation == RoomOrientation.PORTRAIT
@@ -104,18 +101,25 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                 }
 
                 /* Auto-hide HUD after configured timeout when video is loaded.
-                 * - hasActiveOverlay blocks hiding while any card/popup/typing is active.
-                 * - hudInteractionSignal resets the countdown on every touch within the HUD. */
+                 * - hasActiveOverlay blocks hiding while any card/popup/typing/keyboard is active.
+                 * - hudInteractionSignal resets the countdown on every touch within the HUD.
+                 * Note: we DON'T restart on isPlaying / hasVideo / hasActiveOverlay flips.
+                 * The timer ticks once HUD becomes visible; only an interaction signal resets it.
+                 * When the timer expires, we re-check the conditions (playing, no overlay) before hiding. */
                 val hudAutoHideTimeout by HUD_AUTO_HIDE_TIMEOUT.watchPref()
                 val hasActiveOverlay by viewmodel.uiState.hasActiveOverlay.collectAsState()
                 val isPlaying by viewmodel.playerManager.isNowPlaying.collectAsState()
-                LaunchedEffect(isHUDVisible, hudAutoHideTimeout, hasVideo, hasActiveOverlay, isPlaying) {
-                    if (isHUDVisible && hasVideo && hudAutoHideTimeout > 0 && !hasActiveOverlay && isPlaying) {
-                        while (true) {
-                            val interaction = withTimeoutOrNull(hudAutoHideTimeout * 1000L) {
-                                viewmodel.uiState.hudInteractionSignal.first()
-                            }
-                            if (interaction == null) {
+                LaunchedEffect(isHUDVisible, hudAutoHideTimeout) {
+                    if (!isHUDVisible || hudAutoHideTimeout <= 0) return@LaunchedEffect
+
+                    while (true) {
+                        val interaction = withTimeoutOrNull(hudAutoHideTimeout * 1000L) {
+                            viewmodel.uiState.hudInteractionSignal.first()
+                        }
+                        if (interaction == null) {
+                            /* Re-check: only hide when video is loaded, no overlay/keyboard, and playing.
+                             * If any of those aren't true, keep waiting — loop again. */
+                            if (hasVideo && !hasActiveOverlay && isPlaying) {
                                 viewmodel.uiState.visibleHUD.value = false
                                 break
                             }
@@ -257,6 +261,13 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                             modifier = Modifier.align(Alignment.Center)
                         )
                     }
+
+                /* Gesture Interceptor — placed on TOP of the HUD so that, when the HUD is
+                 * hidden (alpha=0), it intercepts touches that would otherwise fall through
+                 * to the still-composed HUD elements (chat input, buttons, seekbar etc.).
+                 * When the HUD is visible, it attaches no pointer-input modifiers, leaving
+                 * touches to flow through to the HUD beneath. */
+                RoomGestureInterceptor(modifier = Modifier.fillMaxSize())
             }
 
             if (!soloMode) {

@@ -93,4 +93,18 @@ interface PlatformCallback {
      * a setting independent of the ringer mode.
      */
     fun performHapticFeedback()
+
+    /**
+     * Launches the OS-native file picker WITHOUT any extension/MIME filtering, so that
+     * third-party DocumentsProviders (notably SMB share providers on Android) whose files
+     * report unrecognized MIME types still appear and can be selected.
+     *
+     * Used as a fallback for mpv playback of SMB-backed files which the default FileKit
+     * picker hides when an extension filter is applied.
+     *
+     * @param onResult invoked on the main thread with the picked URI as a string,
+     *                 or null if the user cancelled. Android returns a `content://` URI
+     *                 with persistable read permission; iOS returns a `file://` path.
+     */
+    fun launchSystemFilePicker(onResult: (String?) -> Unit)
 }

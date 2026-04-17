@@ -202,4 +202,30 @@ actual fun deleteFile(path: String) {
     } catch (_: Exception) { }
 }
 
+actual fun writeFileBytes(path: String, bytes: ByteArray) {
+    try {
+        val file = java.io.File(path)
+        file.parentFile?.mkdirs()
+        file.writeBytes(bytes)
+    } catch (_: Exception) { }
+}
+
+actual fun readFileBytes(path: String): ByteArray? {
+    return try {
+        val file = java.io.File(path)
+        if (!file.exists()) null else file.readBytes()
+    } catch (_: Exception) {
+        null
+    }
+}
+
+actual fun getMpvConfFilePath(): String? {
+    return try {
+        val ctx = contextObtainer()
+        "${ctx.filesDir.absolutePath}/mpv.conf"
+    } catch (_: Exception) {
+        null
+    }
+}
+
 actual fun consumePendingShortcut(): app.home.JoinConfig? = null

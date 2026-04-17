@@ -150,148 +150,176 @@ fun RoomGestureInterceptor(modifier: Modifier) {
             }
         }
 
-        /** Actual gesture-detection logic box */
+        /** Actual gesture-detection logic box.
+         *
+         * IMPORTANT: this Box sits ON TOP of the HUD (see RoomScreenUI). When the HUD is
+         * VISIBLE we attach NO pointerInput modifiers at all — touches then fall through
+         * to the HUD beneath (chat input, buttons, scrollable lists). When the HUD is
+         * HIDDEN we attach the tap / drag gesture handlers; this both (a) intercepts
+         * touches that would otherwise reach the still-alive but invisible HUD elements
+         * (preventing ghost clicks) and (b) routes them to volume/brightness/seek/show-HUD.
+         *
+         * Edge gating (issue #13): vertical drags are ignored when the touch starts in
+         * the top/bottom 8% of the screen so that QS / nav bar pull gestures don't get
+         * swallowed by the volume/brightness handler.
+         */
         val haptic = LocalHapticFeedback.current
         val softwareKB = LocalSoftwareKeyboardController.current
+        val edgeGuardFraction = 0.08f // 8% of screen height reserved for system gestures at top/bottom
 
         Box(
             content = {},
-            modifier = Modifier.fillMaxSize().pointerInput(gesturesEnabled, doubletapEnabled, hasVideo, isHUDVisible) {
-                detectTapGestures(
-                    onPress = { offset ->
-                        if (gesturesEnabled && doubletapEnabled && !isHUDVisible && hasVideo && offset.x > w.times(0.5f)) {
-                            val press = PressInteraction.Press(offset)
-                            val job = scope.launch {
-                                delay(1000)
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                delay(1000)
+            modifier = Modifier.fillMaxSize().then(
+                if (!isHUDVisible) {
+                    Modifier
+                        .pointerInput(gesturesEnabled, doubletapEnabled, hasVideo) {
+                            detectTapGestures(
+                                onPress = { offset ->
+                                    if (gesturesEnabled && doubletapEnabled && hasVideo && offset.x > w.times(0.5f)) {
+                                        val press = PressInteraction.Press(offset)
+                                        val job = scope.launch {
+                                            delay(1000)
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            delay(1000)
 
-                                fastForward = true
-                                seekRightInteraction.emit(press)
-                                while (isActive) {
-                                    haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                    viewmodel.dispatcher.seekFrwrd()
-                                    seekRightInteraction.emit(press)
-                                    delay(200)
-                                    seekRightInteraction.emit(PressInteraction.Release(press))
-                                }
+                                            fastForward = true
+                                            seekRightInteraction.emit(press)
+                                            while (isActive) {
+                                                haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
+                                                viewmodel.dispatcher.seekFrwrd()
+                                                seekRightInteraction.emit(press)
+                                                delay(200)
+                                                seekRightInteraction.emit(PressInteraction.Release(press))
+                                            }
+                                        }
+                                        tryAwaitRelease()
+                                        job.cancel()
+                                        fastForward = false
+                                        seekRightInteraction.emit(PressInteraction.Release(press))
+                                    }
+                                    if (gesturesEnabled && doubletapEnabled && hasVideo && offset.x < w.times(0.5f)) {
+                                        val press = PressInteraction.Press(offset)
+                                        val job = scope.launch {
+                                            delay(1000)
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            delay(1000)
+                                            fastRewind = true
+                                            seekLeftInteraction.emit(press)
+                                            while (isActive) {
+                                                haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
+                                                viewmodel.dispatcher.seekBckwd()
+                                                seekLeftInteraction.emit(press)
+                                                delay(200)
+                                                seekLeftInteraction.emit(PressInteraction.Release(press))
+                                            }
+                                        }
+                                        tryAwaitRelease()
+                                        job.cancel()
+                                        fastRewind = false
+                                        seekLeftInteraction.emit(PressInteraction.Release(press))
+                                    }
+                                },
+                                onDoubleTap = if (gesturesEnabled && doubletapEnabled && hasVideo) {
+                                    { offset ->
+                                        scope.launch {
+                                            if (offset.x < w.times(0.5f)) {
+                                                viewmodel.dispatcher.seekBckwd()
+                                                haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+
+                                                val press = PressInteraction.Press(Offset.Zero)
+                                                seekLeftInteraction.emit(press)
+                                                delay(200)
+                                                seekLeftInteraction.emit(PressInteraction.Release(press))
+                                            }
+                                            if (offset.x > w.times(0.5f)) {
+                                                viewmodel.dispatcher.seekFrwrd()
+                                                haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+
+                                                val press = PressInteraction.Press(Offset.Zero)
+                                                seekRightInteraction.emit(press)
+                                                delay(150)
+                                                seekRightInteraction.emit(PressInteraction.Release(press))
+                                            }
+                                        }
+                                    }
+                                } else null,
+                                onTap = {
+                                    /* HUD is currently hidden — single tap reveals it. */
+                                    viewmodel.uiState.visibleHUD.value = true
+                                    haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                                    softwareKB?.hide()
+                                },
+                            )
+                        }.pointerInput(gesturesEnabled, swipeEnabled, hasVideo) {
+                            if (gesturesEnabled && swipeEnabled && hasVideo) {
+                                detectVerticalDragGestures(
+                                    onDragStart = { startOffset ->
+                                        // Edge guard: ignore drags that originate near top or bottom edges
+                                        val topEdge = h * edgeGuardFraction
+                                        val bottomEdge = h * (1f - edgeGuardFraction)
+                                        if (startOffset.y < topEdge || startOffset.y > bottomEdge) {
+                                            initialBrightness = -1f // sentinel: drag is ignored
+                                            return@detectVerticalDragGestures
+                                        }
+
+                                        initialBrightness = platformCallback.getCurrentBrightness()
+                                        initialVolume = viewmodel.player.getCurrentVolume()
+                                        lastAppliedBrightness = initialBrightness
+                                        lastAppliedVolume = initialVolume
+                                        dragDistance = 0f
+                                    },
+                                    onDragEnd = {
+                                        dragDistance = 0f
+                                        currentBrightness = -1f
+                                        currentVolume = -1
+                                    },
+                                    onVerticalDrag = { pntr, f ->
+                                        if (initialBrightness < 0f) return@detectVerticalDragGestures // edge-ignored drag
+                                        dragDistance += f
+                                        vertdragOffset = pntr.position
+
+                                        if (pntr.position.x >= w * 0.5f) {
+                                            // Volume adjusting
+                                            val height = h / 2f
+                                            val maxVolume = viewmodel.player.getMaxVolume()
+                                            var newVolume = (initialVolume + (-dragDistance * maxVolume / height)).roundToInt()
+                                            newVolume = newVolume.coerceIn(0, maxVolume)
+
+                                            currentVolume = newVolume
+
+                                            // Only apply if changed
+                                            if (newVolume != lastAppliedVolume) {
+                                                viewmodel.player.changeCurrentVolume(newVolume)
+                                                haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
+                                                lastAppliedVolume = newVolume
+                                            }
+                                        } else {
+                                            // Brightness adjusting
+                                            val height = h / 2f
+                                            val maxBright = platformCallback.getMaxBrightness()
+                                            var newBright = initialBrightness + (-dragDistance * maxBright / height)
+
+                                            // Snap to 5% increments above 10%
+                                            if (newBright > 0.1f) {
+                                                newBright = (newBright / 0.05f).roundToInt() * 0.05f
+                                            }
+                                            newBright = newBright.coerceIn(0f, 1f)
+
+                                            currentBrightness = newBright
+
+                                            // Only apply if changed significantly (avoid tiny fluctuations)
+                                            if (abs(newBright - lastAppliedBrightness) >= 0.025f) {
+                                                platformCallback.changeCurrentBrightness(newBright)
+                                                haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
+                                                lastAppliedBrightness = newBright
+                                            }
+                                        }
+                                    }
+                                )
                             }
-                            tryAwaitRelease()
-                            job.cancel()
-                            fastForward = false
-                            seekRightInteraction.emit(PressInteraction.Release(press))
                         }
-                        if (gesturesEnabled && doubletapEnabled && !isHUDVisible && hasVideo && offset.x < w.times(0.5f)) {
-                            val press = PressInteraction.Press(offset)
-                            val job = scope.launch {
-                                delay(1000)
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                delay(1000)
-                                fastRewind = true
-                                seekLeftInteraction.emit(press)
-                                while (isActive) {
-                                    haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                    viewmodel.dispatcher.seekBckwd()
-                                    seekLeftInteraction.emit(press)
-                                    delay(200)
-                                    seekLeftInteraction.emit(PressInteraction.Release(press))
-                                }
-                            }
-                            tryAwaitRelease()
-                            job.cancel()
-                            fastRewind = false
-                            seekLeftInteraction.emit(PressInteraction.Release(press))
-                        }
-                    },
-                    onDoubleTap = if (gesturesEnabled && doubletapEnabled && !isHUDVisible && hasVideo) {
-                        { offset ->
-                            scope.launch {
-                                if (offset.x < w.times(0.5f)) {
-                                    viewmodel.dispatcher.seekBckwd()
-                                    haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
-
-                                    val press = PressInteraction.Press(Offset.Zero)
-                                    seekLeftInteraction.emit(press)
-                                    delay(200)
-                                    seekLeftInteraction.emit(PressInteraction.Release(press))
-                                }
-                                if (offset.x > w.times(0.5f)) {
-                                    viewmodel.dispatcher.seekFrwrd()
-                                    haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
-
-                                    val press = PressInteraction.Press(Offset.Zero)
-                                    seekRightInteraction.emit(press)
-                                    delay(150)
-                                    seekRightInteraction.emit(PressInteraction.Release(press))
-                                }
-                            }
-                        }
-                    } else null,
-                    onTap = {
-                        viewmodel.uiState.visibleHUD.value = !viewmodel.uiState.visibleHUD.value
-                        haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-                        if (!viewmodel.uiState.visibleHUD.value) softwareKB?.hide()
-                    },
-                )
-            }.pointerInput(gesturesEnabled, swipeEnabled, hasVideo) {
-                if (gesturesEnabled && swipeEnabled && hasVideo) {
-                    detectVerticalDragGestures(
-                        onDragStart = {
-                            initialBrightness = platformCallback.getCurrentBrightness()
-                            initialVolume = viewmodel.player.getCurrentVolume()
-                            lastAppliedBrightness = initialBrightness
-                            lastAppliedVolume = initialVolume
-                            dragDistance = 0f
-                        },
-                        onDragEnd = {
-                            dragDistance = 0f
-                            currentBrightness = -1f
-                            currentVolume = -1
-                        },
-                        onVerticalDrag = { pntr, f ->
-                            dragDistance += f
-                            vertdragOffset = pntr.position
-
-                            if (pntr.position.x >= w * 0.5f) {
-                                // Volume adjusting
-                                val height = h / 2f
-                                val maxVolume = viewmodel.player.getMaxVolume()
-                                var newVolume = (initialVolume + (-dragDistance * maxVolume / height)).roundToInt()
-                                newVolume = newVolume.coerceIn(0, maxVolume)
-
-                                currentVolume = newVolume
-
-                                // Only apply if changed
-                                if (newVolume != lastAppliedVolume) {
-                                    viewmodel.player.changeCurrentVolume(newVolume)
-                                    haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                    lastAppliedVolume = newVolume
-                                }
-                            } else {
-                                // Brightness adjusting
-                                val height = h / 2f
-                                val maxBright = platformCallback.getMaxBrightness()
-                                var newBright = initialBrightness + (-dragDistance * maxBright / height)
-
-                                // Snap to 5% increments above 10%
-                                if (newBright > 0.1f) {
-                                    newBright = (newBright / 0.05f).roundToInt() * 0.05f
-                                }
-                                newBright = newBright.coerceIn(0f, 1f)
-
-                                currentBrightness = newBright
-
-                                // Only apply if changed significantly (avoid tiny fluctuations)
-                                if (abs(newBright - lastAppliedBrightness) >= 0.025f) {
-                                    platformCallback.changeCurrentBrightness(newBright)
-                                    haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
-                                    lastAppliedBrightness = newBright
-                                }
-                            }
-                        }
-                    )
-                }
-            }
+                } else Modifier
+            )
         )
 
         with(LocalDensity.current) {

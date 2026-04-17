@@ -119,7 +119,15 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
                     .setUsage(C.USAGE_MEDIA)
                     .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
                     .build(),
-                true // Handle audio focus automatically
+                /* IMPORTANT: must stay false. When true, ExoPlayer silently invokes pause()
+                 * on transient/permanent audio-focus loss (notifications, system sounds, OS
+                 * doze, Bluetooth glitches). That fires onIsPlayingChanged(false), which the
+                 * State.kt tick (line ~220) then broadcasts to the room as `play=false`,
+                 * causing the spurious "User X paused" event after long sessions (the bug
+                 * reported as the 30–60 minute auto-pause). If we ever need polite focus
+                 * handling, add a custom AudioFocusListener that pauses LOCALLY only and
+                 * does NOT mutate viewmodel.playerManager.isNowPlaying. */
+                false
             )
             .build()
 

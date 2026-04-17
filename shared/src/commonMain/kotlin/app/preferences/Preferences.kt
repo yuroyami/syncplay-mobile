@@ -12,6 +12,8 @@ import androidx.compose.material.icons.filled.ClearAll
 import androidx.compose.material.icons.filled.ClosedCaptionOff
 import androidx.compose.material.icons.filled.DesignServices
 import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FastRewind
@@ -57,11 +59,18 @@ import app.utils.availablePlatformPlayerEngines
 import app.utils.generateTimestampMillis
 import app.utils.get
 import app.utils.clearLogs
+import app.utils.getMpvConfFilePath
+import app.utils.loggy
 import app.utils.logFile
+import app.utils.readFileBytes
+import app.utils.writeFileBytes
 import app.utils.platform
 import app.utils.platformCallback
 import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.dialogs.compose.rememberFileSaverLauncher
+import io.github.vinceglb.filekit.readBytes
 import io.github.vinceglb.filekit.write
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -188,7 +197,23 @@ import syncplaymobile.shared.generated.resources.uisetting_msgsize_summary
 import syncplaymobile.shared.generated.resources.uisetting_msgsize_title
 import syncplaymobile.shared.generated.resources.uisetting_osd_duration_summary
 import syncplaymobile.shared.generated.resources.uisetting_osd_duration_title
+import syncplaymobile.shared.generated.resources.uisetting_osd_nonoperator_summary
+import syncplaymobile.shared.generated.resources.uisetting_osd_nonoperator_title
+import syncplaymobile.shared.generated.resources.uisetting_osd_otherroom_summary
+import syncplaymobile.shared.generated.resources.uisetting_osd_otherroom_title
+import syncplaymobile.shared.generated.resources.uisetting_osd_sameroom_summary
+import syncplaymobile.shared.generated.resources.uisetting_osd_sameroom_title
+import syncplaymobile.shared.generated.resources.uisetting_osd_slowdown_summary
+import syncplaymobile.shared.generated.resources.uisetting_osd_slowdown_title
+import syncplaymobile.shared.generated.resources.uisetting_mpv_export_conf_summary
+import syncplaymobile.shared.generated.resources.uisetting_mpv_export_conf_title
+import syncplaymobile.shared.generated.resources.uisetting_mpv_import_conf_summary
+import syncplaymobile.shared.generated.resources.uisetting_mpv_import_conf_title
+import syncplaymobile.shared.generated.resources.uisetting_osd_warnings_summary
+import syncplaymobile.shared.generated.resources.uisetting_osd_warnings_title
 import syncplaymobile.shared.generated.resources.uisetting_reconnect_interval_summary
+import syncplaymobile.shared.generated.resources.uisetting_vlc_custom_flags_summary
+import syncplaymobile.shared.generated.resources.uisetting_vlc_custom_flags_title
 import syncplaymobile.shared.generated.resources.uisetting_reconnect_interval_title
 import syncplaymobile.shared.generated.resources.uisetting_resetdefault_summary
 import syncplaymobile.shared.generated.resources.uisetting_resetdefault_title
@@ -289,6 +314,9 @@ object Preferences {
     val CURRENT_THEME = Pref("misc_current_theme", defaultTheme.asString())
     val CUSTOM_THEMES = Pref<Set<String>>("misc_custom_themes", emptySet())
     val KLIPY_FAVORITES = Pref<Set<String>>("misc_klipy_favorites", emptySet())
+    /** When true, the "Undo Seek" action skips its confirmation dialog. Toggled by the
+     * "Always do" button in the dialog itself. Hidden from the settings UI on purpose. */
+    val UNDO_SEEK_NO_CONFIRM = Pref("misc_undo_seek_no_confirm", false)
     //val ROOM_ORIENTATION = PreferenceDef("misc_room_orientation", "auto")
 
     /** ------------ General -------------*/
@@ -597,6 +625,38 @@ object Preferences {
         extraConfig = PrefExtraConfig.Slider(maxValue = 10, minValue = 0)
     }
 
+    /** ------------ OSD Notification Filters -------------
+     *  Mirrors Syncplay PC's "Messages" tab toggles (showSameRoomOSD / showNonControllerOSD /
+     *  showDifferentRoomOSD / showSlowdownOSD / showOSDWarnings). These gate which event-driven
+     *  OSD overlays bubble up via [RoomViewmodel.dispatchOSD]. They do NOT affect the chat log. */
+    val OSD_SAME_ROOM = Pref("pref_inroom_osd_same_room", true) {
+        title = Res.string.uisetting_osd_sameroom_title
+        summary = Res.string.uisetting_osd_sameroom_summary
+        icon = Icons.Filled.SupervisedUserCircle
+    }
+    val OSD_NON_OPERATOR = Pref("pref_inroom_osd_non_operator", true) {
+        title = Res.string.uisetting_osd_nonoperator_title
+        summary = Res.string.uisetting_osd_nonoperator_summary
+        icon = Icons.Filled.Face
+        dependencyEnable = { OSD_SAME_ROOM.value() }
+    }
+    /** Default false to match Syncplay PC's SHOW_DIFFERENT_ROOM_OSD = False default. */
+    val OSD_OTHER_ROOM = Pref("pref_inroom_osd_other_room", false) {
+        title = Res.string.uisetting_osd_otherroom_title
+        summary = Res.string.uisetting_osd_otherroom_summary
+        icon = Icons.Filled.Web
+    }
+    val OSD_SLOWDOWN = Pref("pref_inroom_osd_slowdown", true) {
+        title = Res.string.uisetting_osd_slowdown_title
+        summary = Res.string.uisetting_osd_slowdown_summary
+        icon = Icons.Filled.SlowMotionVideo
+    }
+    val OSD_WARNINGS = Pref("pref_inroom_osd_warnings", true) {
+        title = Res.string.uisetting_osd_warnings_title
+        summary = Res.string.uisetting_osd_warnings_summary
+        icon = Icons.Filled.ErrorOutline
+    }
+
     /** ------------ Player Settings -------------*/
     val SUBTITLE_SIZE = Pref("pref_inroom_subtitle_size", 16) {
         title = Res.string.uisetting_subtitle_size_title
@@ -863,6 +923,96 @@ object Preferences {
                         suggestedName = "${appName}Log_${generateTimestampMillis()}",
                         extension = "txt"
                     )
+                }
+            }
+        )
+    }
+
+    /**
+     * Extra command-line flags forwarded verbatim to LibVLC on both Android (via `LibVLC(ctx, args)`)
+     * and iOS (via `VLCLibrary(args)`). Whitespace-separated; the parser is deliberately simple —
+     * it uses [tokenizeVlcFlags] which splits on whitespace while respecting `"` and `'` quoted
+     * runs so values with spaces can be passed (e.g. `--sub-text-scale="1.5"`).
+     *
+     * Takes effect the next time the VLC engine is (re)initialized.
+     */
+    val VLC_CUSTOM_FLAGS = Pref("pref_vlc_custom_flags", "") {
+        title = Res.string.uisetting_vlc_custom_flags_title
+        summary = Res.string.uisetting_vlc_custom_flags_summary
+        icon = Icons.Filled.Keyboard
+        extraConfig = PrefExtraConfig.TextField()
+    }
+
+    /**
+     * Import an mpv.conf from the user's storage, overwriting the one mpv reads from at
+     * `{filesDir}/mpv.conf`. Android-only — on iOS [getMpvConfFilePath] returns null and this
+     * pref is hidden from the settings list.
+     *
+     * The new config takes effect the next time mpv is initialized (e.g. after loading a video
+     * fresh) because `MPVLib.setOptionString("config-dir", ...)` is read at init() time.
+     */
+    val MPV_IMPORT_CONF = Pref<String>("mpv_import_conf", "") {
+        title = Res.string.uisetting_mpv_import_conf_title
+        summary = Res.string.uisetting_mpv_import_conf_summary
+        icon = Icons.Filled.FileUpload
+
+        extraConfig = PrefExtraConfig.ShowComposable(
+            composable = {
+                val scope = rememberCoroutineScope { Dispatchers.IO }
+                val picker = rememberFilePickerLauncher(type = FileKitType.File()) { file ->
+                    if (file == null) return@rememberFilePickerLauncher
+                    scope.launch {
+                        runCatching {
+                            val bytes = file.readBytes()
+                            val dest = getMpvConfFilePath()
+                            if (dest != null) {
+                                writeFileBytes(dest, bytes)
+                                loggy("mpv.conf imported to $dest (${bytes.size} bytes)")
+                            } else {
+                                loggy("mpv.conf import: platform does not support a config path.")
+                            }
+                        }.onFailure {
+                            loggy("mpv.conf import failed: ${it.message}")
+                        }
+                    }
+                }
+                LaunchedEffect(null) { picker.launch() }
+            }
+        )
+    }
+
+    /**
+     * Export the currently active mpv.conf (if any) to a user-chosen location. On Android this
+     * reads from `{filesDir}/mpv.conf`; if the file does not exist yet the pref is effectively a
+     * no-op (user is informed via logs). Hidden on iOS.
+     */
+    val MPV_EXPORT_CONF = Pref<String>("mpv_export_conf", "") {
+        title = Res.string.uisetting_mpv_export_conf_title
+        summary = Res.string.uisetting_mpv_export_conf_summary
+        icon = Icons.Filled.FileDownload
+
+        extraConfig = PrefExtraConfig.ShowComposable(
+            composable = {
+                val scope = rememberCoroutineScope { Dispatchers.IO }
+                val saver = rememberFileSaverLauncher(dialogSettings = FileKitDialogSettings.createDefault()) { file ->
+                    if (file == null) return@rememberFileSaverLauncher
+                    scope.launch {
+                        runCatching {
+                            val src = getMpvConfFilePath()
+                            val bytes = src?.let { readFileBytes(it) }
+                            if (bytes != null) {
+                                file.write(bytes)
+                                loggy("mpv.conf exported (${bytes.size} bytes)")
+                            } else {
+                                loggy("mpv.conf export: no config file to export yet.")
+                            }
+                        }.onFailure {
+                            loggy("mpv.conf export failed: ${it.message}")
+                        }
+                    }
+                }
+                LaunchedEffect(null) {
+                    saver.launch(suggestedName = "mpv", extension = "conf")
                 }
             }
         )

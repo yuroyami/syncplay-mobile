@@ -3,7 +3,10 @@ package app.preferences.settings
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.ConnectWithoutContact
+import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Hub
+import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SettingsSuggest
 import androidx.compose.material.icons.filled.Stream
@@ -37,6 +40,11 @@ import app.preferences.Preferences.HAPTIC_ON_PLAYLIST
 import app.preferences.Preferences.HAPTIC_ON_SEEKED
 import app.preferences.Preferences.HUD_AUTO_HIDE_TIMEOUT
 import app.preferences.Preferences.OSD_DURATION
+import app.preferences.Preferences.OSD_NON_OPERATOR
+import app.preferences.Preferences.OSD_OTHER_ROOM
+import app.preferences.Preferences.OSD_SAME_ROOM
+import app.preferences.Preferences.OSD_SLOWDOWN
+import app.preferences.Preferences.OSD_WARNINGS
 import app.preferences.Preferences.CHAPTER_DOTS_CLICKABLE
 import app.preferences.Preferences.SHOW_CHAPTER_DOTS
 import app.preferences.Preferences.SWIPE_GESTURES
@@ -44,6 +52,8 @@ import app.preferences.Preferences.HASH_FILENAME
 import app.preferences.Preferences.HASH_FILESIZE
 import app.preferences.Preferences.INROOM_RESET_DEFAULTS
 import app.preferences.Preferences.MEDIA_DIRECTORIES
+import app.preferences.Preferences.MPV_EXPORT_CONF
+import app.preferences.Preferences.MPV_IMPORT_CONF
 import app.preferences.Preferences.MSG_ACTIVATE_STAMP
 import app.preferences.Preferences.MSG_BG_OPACITY
 import app.preferences.Preferences.MSG_BOX_ACTION
@@ -69,6 +79,9 @@ import app.preferences.Preferences.SYNC_SLOWDOWN
 import app.preferences.Preferences.TLS_ENABLE
 import app.preferences.Preferences.TRUSTED_DOMAINS
 import app.preferences.Preferences.UNPAUSE_ACTION
+import app.preferences.Preferences.VLC_CUSTOM_FLAGS
+import app.utils.Platform
+import app.utils.platform
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.settings_categ_advanced
 import syncplaymobile.shared.generated.resources.settings_categ_general
@@ -78,8 +91,11 @@ import syncplaymobile.shared.generated.resources.settings_categ_syncing
 import syncplaymobile.shared.generated.resources.uisetting_categ_chat_colors
 import syncplaymobile.shared.generated.resources.uisetting_categ_chat_properties
 import syncplaymobile.shared.generated.resources.uisetting_categ_haptics
+import syncplaymobile.shared.generated.resources.uisetting_categ_mpv
+import syncplaymobile.shared.generated.resources.uisetting_categ_osd
 import syncplaymobile.shared.generated.resources.uisetting_categ_player_settings
 import syncplaymobile.shared.generated.resources.uisetting_categ_sync_mechanisms
+import syncplaymobile.shared.generated.resources.uisetting_categ_vlc
 
 /* Styles */
 val settingGLOBALstyle = SettingStyling(
@@ -185,7 +201,6 @@ val INROOM_PLAYER_SETTINGS = SettingCategory(
     +CHAPTER_DOTS_CLICKABLE
     +DOUBLETAP_SEEK
     +SWIPE_GESTURES
-    +OSD_DURATION
 
 }
 
@@ -203,6 +218,42 @@ val INROOM_HAPTICS = SettingCategory(
     +HAPTIC_ON_CONNECTION
 }
 
+val INROOM_OSD = SettingCategory(
+    title = Res.string.uisetting_categ_osd,
+    icon = Icons.Filled.NotificationsActive,
+) {
+    +OSD_DURATION
+    +OSD_SAME_ROOM
+    +OSD_NON_OPERATOR
+    +OSD_OTHER_ROOM
+    +OSD_SLOWDOWN
+    +OSD_WARNINGS
+}
+
+/**
+ * mpv config import/export — only meaningful on Android, where the mpv library is initialized
+ * with `config-dir={filesDir}` and reads `mpv.conf` from there. On iOS the mpv engine does not
+ * honor a user config file, so the category is omitted from the settings list below.
+ */
+val INROOM_MPV = SettingCategory(
+    title = Res.string.uisetting_categ_mpv,
+    icon = Icons.Filled.Memory,
+) {
+    +MPV_IMPORT_CONF
+    +MPV_EXPORT_CONF
+}
+
+/**
+ * VLC custom launch flags — applies to both Android (LibVLC) and iOS (VLCKit/VLCLibrary).
+ * Tokens entered here are appended to the base args each VLC instance is constructed with.
+ */
+val INROOM_VLC = SettingCategory(
+    title = Res.string.uisetting_categ_vlc,
+    icon = Icons.Filled.Keyboard,
+) {
+    +VLC_CUSTOM_FLAGS
+}
+
 val INROOM_ADVANCED = SettingCategory(
     title = Res.string.settings_categ_advanced,
     icon = Icons.Filled.Stream
@@ -215,4 +266,14 @@ val INROOM_ADVANCED = SettingCategory(
 
 
 val SETTINGS_GLOBAL = listOf(GLOBAL_GENERAL, GLOBAL_LANGUAGE, GLOBAL_SYNCING, GLOBAL_NETWORK, GLOBAL_ADVANCED)
-val SETTINGS_ROOM = listOf(INROOM_SYNC, INROOM_CHATCOLORS, INROOM_CHAT_PROPERTIES, INROOM_PLAYER_SETTINGS, INROOM_ADVANCED)
+val SETTINGS_ROOM: List<SettingCategory> = buildList {
+    add(INROOM_SYNC)
+    add(INROOM_CHATCOLORS)
+    add(INROOM_CHAT_PROPERTIES)
+    add(INROOM_PLAYER_SETTINGS)
+    add(INROOM_OSD)
+    // mpv.conf import/export is Android-only (iOS mpv does not read a config file).
+    if (platform == Platform.Android) add(INROOM_MPV)
+    add(INROOM_VLC)
+    add(INROOM_ADVANCED)
+}

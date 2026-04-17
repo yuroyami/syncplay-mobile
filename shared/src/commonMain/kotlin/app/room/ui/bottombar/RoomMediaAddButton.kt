@@ -17,8 +17,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddLink
 import androidx.compose.material.icons.filled.AddToQueue
 import androidx.compose.material.icons.filled.ContentPaste
-import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -64,10 +64,13 @@ import app.uicomponents.gradientOverlay
 import app.uicomponents.jostFont
 import app.uicomponents.sairaFont
 import app.uicomponents.syncplayFont
+import app.utils.Platform
 import app.utils.getText
 import app.utils.loggy
-import app.utils.vidExs
-import io.github.vinceglb.filekit.dialogs.FileKitType
+import app.utils.platform
+import app.utils.platformCallback
+import app.utils.videoFileKitType
+import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -75,6 +78,7 @@ import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.done
 import syncplaymobile.shared.generated.resources.room_addmedia_offline
+import syncplaymobile.shared.generated.resources.room_addmedia_offline_system
 import syncplaymobile.shared.generated.resources.room_addmedia_online
 import syncplaymobile.shared.generated.resources.room_addmedia_online_details
 import syncplaymobile.shared.generated.resources.room_addmedia_online_popup_subtext
@@ -90,7 +94,7 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
     val hasVideo by viewmodel.hasVideo.collectAsState()
     val popupStateAddUrl = remember { mutableStateOf(false) }
 
-    val videoPicker = rememberFilePickerLauncher(type = FileKitType.File(extensions = vidExs)) { file ->
+    val videoPicker = rememberFilePickerLauncher(type = videoFileKitType) { file ->
         file?.let {
             loggy(it)
             viewmodel.viewModelScope.launch {
@@ -133,12 +137,14 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
                 font = jostFont
             )
 
-            //From storage
+            // From storage (system picker) — FileKit's default `ACTION_OPEN_DOCUMENT` SAF picker,
+            // filtered by MIME types derived from `vidExs` on Android. Opens Android's Documents UI
+            // directly. On iOS this is the UIDocumentPickerViewController.
             DropdownMenuItem(
                 text = {
                     Row(verticalAlignment = CenterVertically) {
                         FlexibleIcon(
-                            icon = Icons.Filled.CreateNewFolder,
+                            icon = Icons.Filled.FolderOpen,
                             size = ROOM_ICON_SIZE,
                             shadowColors = listOf(Color.Black)
                         ) {}
@@ -154,6 +160,41 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
                     //showPopup = false
                 }
             )
+
+            // From storage (custom picker) — Android only. Fires `ACTION_GET_CONTENT` wrapped in
+            // `Intent.createChooser()` so the user is presented with a selector of every installed
+            // file manager / explorer (FX, MiXplorer, Solid Explorer, cloud apps, SMB apps, etc.).
+            // Two use cases: (1) SMB DocumentsProviders that report opaque MIMEs filtered out by
+            // FileKit's extension filter; (2) users who prefer to browse inside a specific file
+            // manager. iOS has no analogous "chooser" API, so the item is hidden there.
+            if (platform == Platform.Android) {
+                DropdownMenuItem(
+                    text = {
+                        Row(verticalAlignment = CenterVertically) {
+                            FlexibleIcon(
+                                icon = Icons.Filled.FolderOpen,
+                                size = ROOM_ICON_SIZE,
+                                shadowColors = listOf(Color.Black)
+                            ) {}
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                color = Color.LightGray,
+                                text = stringResource(Res.string.room_addmedia_offline_system),
+                            )
+                        }
+                    },
+                    onClick = {
+                        showPopup = false
+                        platformCallback.launchSystemFilePicker { uri ->
+                            if (uri != null) {
+                                viewmodel.viewModelScope.launch {
+                                    viewmodel.player.injectVideoFile(PlatformFile(uri))
+                                }
+                            }
+                        }
+                    }
+                )
+            }
 
             //From network URL
             DropdownMenuItem(

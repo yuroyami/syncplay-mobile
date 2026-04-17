@@ -17,13 +17,19 @@ import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.path
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.darwin.Darwin
+import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.toKString
+import kotlinx.cinterop.usePinned
+import platform.Foundation.NSData
 import platform.Foundation.NSDate
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileHandle
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSFileSize
 import platform.Foundation.NSNumber
+import platform.Foundation.create
+import platform.Foundation.writeToFile
+import platform.posix.memcpy
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
 import platform.Foundation.NSString
 import platform.Foundation.NSURL
@@ -193,6 +199,39 @@ actual fun deleteFile(path: String) {
         NSFileManager.defaultManager.removeItemAtPath(path, error = null)
     } catch (_: Exception) { }
 }
+
+@OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class)
+actual fun writeFileBytes(path: String, bytes: ByteArray) {
+    try {
+        val nsData: NSData = if (bytes.isEmpty()) {
+            NSData.create(bytes = null, length = 0uL)
+        } else {
+            bytes.usePinned { pinned ->
+                NSData.create(bytes = pinned.addressOf(0), length = bytes.size.toULong())
+            }
+        }
+        nsData.writeToFile(path, atomically = true)
+    } catch (_: Exception) { }
+}
+
+@OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class)
+actual fun readFileBytes(path: String): ByteArray? {
+    return try {
+        val data = NSFileManager.defaultManager.contentsAtPath(path) ?: return null
+        val length = data.length.toInt()
+        if (length == 0) return ByteArray(0)
+        val out = ByteArray(length)
+        out.usePinned { pinned ->
+            memcpy(pinned.addressOf(0), data.bytes, length.toULong())
+        }
+        out
+    } catch (_: Exception) {
+        null
+    }
+}
+
+/** mpv on iOS does not read a user-editable mpv.conf file, so import/export is unsupported. */
+actual fun getMpvConfFilePath(): String? = null
 
 actual fun consumePendingShortcut(): app.home.JoinConfig? {
     return app.pendingShortcutJoinConfig.value?.also {

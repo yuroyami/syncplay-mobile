@@ -37,14 +37,18 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     /** GIF panel visibility state */
     val gifPanelVisible = MutableStateFlow(false)
 
+    /** True while the chat input field has focus / the soft keyboard is up. Suppresses HUD auto-hide. */
+    val chatInputFocused = MutableStateFlow(false)
+
     /** Emitted on any touch within the HUD to reset the auto-hide countdown. */
     val hudInteractionSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
-    /** True when any card, popup, or panel is open, or the user is typing — suppresses HUD auto-hide. */
+    /** True when any card, popup, or panel is open, or the user is typing / has focus on the chat input — suppresses HUD auto-hide. */
     val hasActiveOverlay = combine(
         tabCardUserInfo, tabCardSharedPlaylist, tabCardRoomPreferences,
         controlPanel, popupCreateManagedRoom,
         popupIdentifyAsRoomOperator, popupSeekToPosition, gifPanelVisible,
+        chatInputFocused,
         msg.map { it.isNotEmpty() }
     ) { values -> values.any { it } }
         .stateIn(viewmodel.viewModelScope, SharingStarted.WhileSubscribed(5000), false)

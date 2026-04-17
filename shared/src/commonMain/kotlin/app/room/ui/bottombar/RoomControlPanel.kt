@@ -31,11 +31,13 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Theaters
 import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material.icons.filled.VideoSettings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -55,6 +57,7 @@ import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -66,11 +69,16 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import app.LocalRoomUiState
 import app.LocalRoomViewmodel
 import app.player.PlayerImpl
+import app.preferences.Preferences.UNDO_SEEK_NO_CONFIRM
+import app.preferences.set
+import app.preferences.watchPref
 import app.subtitles.SubtitleSearch
 import syncplaymobile.shared.generated.resources.room_sub_search_download_from_web
 import syncplaymobile.shared.generated.resources.room_sub_search_downloads
@@ -103,6 +111,11 @@ import syncplaymobile.shared.generated.resources.room_screenshot_unsupported
 import syncplaymobile.shared.generated.resources.room_seek_undone
 import syncplaymobile.shared.generated.resources.room_sub_track_disable
 import syncplaymobile.shared.generated.resources.room_tracks_title
+import syncplaymobile.shared.generated.resources.room_undo_seek_always
+import syncplaymobile.shared.generated.resources.room_undo_seek_cancel
+import syncplaymobile.shared.generated.resources.room_undo_seek_confirm
+import syncplaymobile.shared.generated.resources.room_undo_seek_message
+import syncplaymobile.shared.generated.resources.room_undo_seek_title
 
 @Composable
 fun RoomControlPanelButton(modifier: Modifier, popupStateAddMedia: MutableState<Boolean>) {
@@ -150,6 +163,9 @@ fun RoomControlPanelCard(modifier: Modifier) {
     /* Track sheet state */
     var showTrackSheet by remember { mutableStateOf(false) }
     var showSubtitleSearch by remember { mutableStateOf(false) }
+    /* Undo-seek confirmation dialog state — null while dismissed; non-null carries the seek pair to undo. */
+    var pendingUndoSeek by remember { mutableStateOf<Pair<Long, Long>?>(null) }
+    val undoNoConfirm by UNDO_SEEK_NO_CONFIRM.watchPref()
 
     val iconSize = 44
     Row(
@@ -193,7 +209,8 @@ fun RoomControlPanelCard(modifier: Modifier) {
             viewmodel.uiState.popupSeekToPosition.value = true
         }
 
-        /* Undo Last Seek */
+        /* Undo Last Seek — only user-initiated seeks are tracked (see RoomCallback.onSomeoneSeeked).
+         * Shows a confirmation dialog unless the user has opted out via "Always do". */
         FlexibleIcon(
             icon = Icons.Filled.History,
             size = iconSize,
@@ -204,15 +221,14 @@ fun RoomControlPanelCard(modifier: Modifier) {
                 return@FlexibleIcon
             }
 
-            cardController.controlPanel.value = false
-
             val lastSeek = viewmodel.seeks.lastOrNull() ?: return@FlexibleIcon
-            scope.launch(Dispatchers.Main.immediate) {
-                viewmodel.player.seekTo(lastSeek.first)
+
+            if (undoNoConfirm) {
+                cardController.controlPanel.value = false
+                performUndoSeek(viewmodel, lastSeek, scope)
+            } else {
+                pendingUndoSeek = lastSeek
             }
-            viewmodel.dispatcher.sendSeek(lastSeek.first)
-            viewmodel.seeks.remove(lastSeek)
-            viewmodel.dispatchOSD { getString(Res.string.room_seek_undone) }
         }
 
         /* Unified Audio & Subtitles button */
@@ -290,6 +306,65 @@ fun RoomControlPanelCard(modifier: Modifier) {
         }
     }
 
+    /* Background opacity for modal sheets — follows the in-room UI transparency preference.
+     * Clamped to a sane minimum so the sheet remains readable even at low opacity values. */
+    val uiOpacity by viewmodel.uiState.uiOpacity.collectAsState()
+    val sheetContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        .copy(alpha = uiOpacity.coerceIn(0.55f, 1f))
+
+    /* ===== Undo Seek Confirmation Dialog ===== */
+    pendingUndoSeek?.let { seekToUndo ->
+        AlertDialog(
+            onDismissRequest = { pendingUndoSeek = null },
+            containerColor = sheetContainerColor,
+            title = {
+                Text(
+                    text = stringResource(Res.string.room_undo_seek_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(
+                        Res.string.room_undo_seek_message,
+                        timestampFromMillis(seekToUndo.second), // "from" position (where we are now)
+                        timestampFromMillis(seekToUndo.first)   // "to" position (where we want to go back to)
+                    ),
+                    fontSize = 13.sp
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    pendingUndoSeek = null
+                    cardController.controlPanel.value = false
+                    performUndoSeek(viewmodel, seekToUndo, scope)
+                }) {
+                    Text(stringResource(Res.string.room_undo_seek_confirm))
+                }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = {
+                        // "Always do" — persist the preference, then perform the undo immediately.
+                        scope.launch { UNDO_SEEK_NO_CONFIRM.set(true) }
+                        pendingUndoSeek = null
+                        cardController.controlPanel.value = false
+                        performUndoSeek(viewmodel, seekToUndo, scope)
+                    }) {
+                        Text(
+                            stringResource(Res.string.room_undo_seek_always),
+                            fontSize = 11.sp
+                        )
+                    }
+                    TextButton(onClick = { pendingUndoSeek = null }) {
+                        Text(stringResource(Res.string.room_undo_seek_cancel))
+                    }
+                }
+            }
+        )
+    }
+
     /* ===== Audio & Subtitles Bottom Sheet ===== */
     if (showTrackSheet) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -299,7 +374,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
         ModalBottomSheet(
             onDismissRequest = { showTrackSheet = false },
             sheetState = sheetState,
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            containerColor = sheetContainerColor,
             shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
         ) {
             /* Title */
@@ -315,7 +390,10 @@ fun RoomControlPanelCard(modifier: Modifier) {
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp).height(320.dp)
             ) {
                 /* Audio column */
-                Column(modifier = Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     Row(
                         verticalAlignment = CenterVertically,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
@@ -328,7 +406,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
+                    HorizontalDivider(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp))
 
                     LazyColumn(
                         contentPadding = PaddingValues(vertical = 4.dp),
@@ -355,7 +433,10 @@ fun RoomControlPanelCard(modifier: Modifier) {
                 androidx.compose.material3.VerticalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                 /* Subtitle column */
-                Column(modifier = Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     Row(
                         verticalAlignment = CenterVertically,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
@@ -368,7 +449,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp))
+                    HorizontalDivider(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp))
 
                     LazyColumn(
                         contentPadding = PaddingValues(vertical = 4.dp),
@@ -441,6 +522,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
     /* ===== Subtitle Search Bottom Sheet ===== */
     if (showSubtitleSearch) {
         val searchSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val searchFocusManager = LocalFocusManager.current
         val initialQuery = remember {
             viewmodel.media?.fileName?.let { SubtitleSearch.cleanMediaName(it) } ?: ""
         }
@@ -451,6 +533,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
 
         fun doSearch() {
             if (searchQuery.isBlank()) return
+            searchFocusManager.clearFocus() // dismiss keyboard so the results list isn't covered
             scope.launch(Dispatchers.IO) {
                 isSearching = true
                 searchResults = SubtitleSearch.search(searchQuery)
@@ -470,7 +553,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
         ModalBottomSheet(
             onDismissRequest = { showSubtitleSearch = false },
             sheetState = searchSheetState,
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            containerColor = sheetContainerColor,
             shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
         ) {
             Column(
@@ -494,7 +577,11 @@ fun RoomControlPanelCard(modifier: Modifier) {
                             modifier = Modifier.clickable { doSearch() }
                         )
                     },
-                    keyboardActions = KeyboardActions(onDone = { doSearch() }),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(
+                        onSearch = { doSearch() },
+                        onDone = { doSearch() }
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -617,6 +704,22 @@ private fun TrackRow(
             color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
         )
     }
+}
+
+/** Performs the actual undo: seeks the local player back to the recorded position, broadcasts
+ * that seek to the room, and removes the entry from the local seek history. Extracted so the
+ * same flow runs whether the confirmation dialog was shown or skipped via "Always do". */
+private fun performUndoSeek(
+    viewmodel: app.room.RoomViewmodel,
+    seek: Pair<Long, Long>,
+    scope: kotlinx.coroutines.CoroutineScope
+) {
+    scope.launch(Dispatchers.Main.immediate) {
+        viewmodel.player.seekTo(seek.first)
+    }
+    viewmodel.dispatcher.sendSeek(seek.first)
+    viewmodel.seeks.remove(seek)
+    viewmodel.dispatchOSD { getString(Res.string.room_seek_undone) }
 }
 
 data class ControlPanelDropdownAction(

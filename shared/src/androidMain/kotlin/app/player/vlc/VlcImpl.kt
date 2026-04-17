@@ -58,7 +58,9 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
 
     @UiThread
     override fun initialize() {
-        libvlc = LibVLC(ctx, listOf("-vv"))
+        // "-vv" keeps the default verbose logging; any user-supplied flags from
+        // Preferences.VLC_CUSTOM_FLAGS are appended verbatim so they can override LibVLC defaults.
+        libvlc = LibVLC(ctx, listOf("-vv") + app.utils.vlcCustomFlags())
         vlcPlayer = MediaPlayer(libvlc)
         vlcPlayer?.attachViews(vlcView, null, true, true)
 

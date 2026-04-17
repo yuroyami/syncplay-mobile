@@ -35,6 +35,24 @@ import syncplaymobile.shared.generated.resources.room_file_mismatch_warning_name
 import syncplaymobile.shared.generated.resources.room_file_mismatch_warning_size
 
 /**
+ * Classification used by the categorized [RoomViewmodel.dispatchOSD] overload to decide whether
+ * an OSD overlay should be shown, based on the user's per-category preferences. Mirrors the
+ * five toggles in Syncplay PC's "Messages" settings tab. Note: the NON_OPERATOR layer is applied
+ * implicitly by the dispatcher when a [SAME_ROOM] event has an `originUser` argument and the
+ * room is operator-controlled — there is no NON_OPERATOR case here on purpose.
+ */
+enum class OSDCategory {
+    /** Pause/play/seek/join/leave/file-load events from a user in your current room. */
+    SAME_ROOM,
+    /** Activity from a different room (peer's chat / cross-room presence). */
+    OTHER_ROOM,
+    /** Local sync mechanism notices (slowing down, rewinding, fast-forwarding to catch up). */
+    SLOWDOWN,
+    /** Red warnings: file mismatch, alone-in-room, connection errors, etc. */
+    WARNING
+}
+
+/**
  * ViewModel for the Syncplay room screen where synchronized playback occurs.
  *
  * Coordinates all room-level managers including networking, media playback, protocol handling,
@@ -147,6 +165,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
                 }
 
                 dispatcher.broadcastMessage(message = { warning }, isChat = false, isError = true)
+                dispatchOSD(OSDCategory.WARNING) { warning }
             }
         }
     }
@@ -171,6 +190,40 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
             delay(durationSec * 1000L)
             osdMsg.value = ""
         }
+    }
+
+    /**
+     * Categorized variant of [dispatchOSD] that consults the user's per-category OSD preferences
+     * before showing. If the relevant toggle is off, the OSD is silently dropped (the chat-log
+     * `broadcastMessage` should still happen separately at the call site, unaffected by this).
+     *
+     * Mirrors Syncplay PC's gating in `client.SyncplayClient.handleOSDMessage` /
+     * `showOSDMessage` (constants `SHOW_SAME_ROOM_OSD`, `SHOW_NON_CONTROLLER_OSD`,
+     * `SHOW_DIFFERENT_ROOM_OSD`, `SHOW_SLOWDOWN_OSD`, `SHOW_OSD_WARNINGS`).
+     *
+     * @param category which OSD class this event belongs to.
+     * @param originUser optional username of the user that triggered the event. When the
+     *                   current room is operator-controlled (`session.currentOperatorPassword
+     *                   != null`) and the originator is not in the controller list, the event
+     *                   is additionally gated by [OSDCategory.NON_OPERATOR]'s preference.
+     */
+    fun dispatchOSD(category: OSDCategory, originUser: String? = null, getter: suspend () -> String) {
+        val prefs = app.preferences.Preferences
+        val baseAllowed = when (category) {
+            OSDCategory.SAME_ROOM -> prefs.OSD_SAME_ROOM.value()
+            OSDCategory.OTHER_ROOM -> prefs.OSD_OTHER_ROOM.value()
+            OSDCategory.SLOWDOWN -> prefs.OSD_SLOWDOWN.value()
+            OSDCategory.WARNING -> prefs.OSD_WARNINGS.value()
+        }
+        if (!baseAllowed) return
+
+        // Layer the non-operator filter on top of same-room events when in a controlled room.
+        if (category == OSDCategory.SAME_ROOM && originUser != null && session.currentOperatorPassword != null) {
+            val originIsController = session.userList.value.firstOrNull { it.name == originUser }?.isController ?: false
+            if (!originIsController && !prefs.OSD_NON_OPERATOR.value()) return
+        }
+
+        dispatchOSD(getter)
     }
 
     /************ Extension Properties for Quick Access ***************/

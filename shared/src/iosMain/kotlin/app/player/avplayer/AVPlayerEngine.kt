@@ -126,27 +126,58 @@ object AVPlayerEngine: PlayerEngine {
             get() = 250.milliseconds
 
         /**
+         * Tracks whether [observer] is currently registered on [avPlayer] so we can detach
+         * cleanly when media is switched (`inject*Impl` creates a brand-new `AVPlayer`
+         * instance that needs its own observer registration).
+         */
+        private var observerAttached = false
+
+        /**
          * Initializes the AVPlayer view controller by disabling default playback controls
          * and starting progress tracking.
+         *
+         * Note: the KVO `timeControlStatus` observer is NOT attached here — at `initialize()`
+         * time `avPlayer` is still null (it's created lazily in [injectVideoFileImpl] /
+         * [injectVideoURLImpl]). Attachment happens in [attachTimeControlObserver] called
+         * after each player instance is created.
          */
         override fun initialize() {
             avView.showsPlaybackControls = false
+            startTrackingProgress()
+        }
 
+        /**
+         * Registers the [AVPlayerObserver] on the current [avPlayer] for `timeControlStatus`
+         * KVO events. Guards against double-registration via [observerAttached].
+         *
+         * This is essential on iPad where the user can pause/play via system-level controls
+         * (Picture-in-Picture, Control Center, lock-screen, external keyboard spacebar,
+         * AirPlay remotes). Without this observer, [app.player.PlayerManager.isNowPlaying]
+         * only updates via the polling progress tracker tick, leaving the Syncplay play
+         * button visually stale and delaying pause-state propagation to peers (the protocol
+         * ping-response in `app.protocol.server.State` carries the current `isPlaying()`
+         * value, but only on the next incoming server State message).
+         */
+        private fun attachTimeControlObserver() {
+            if (observerAttached) return
             avPlayer?.addObserver(
                 observer = observer,
                 forKeyPath = "timeControlStatus",
                 options = NSKeyValueObservingOptionNew,
                 context = null
             )
-//
-//        avPlayer?.addObserver(
-//            observer = observer,
-//            forKeyPath = "rate",
-//            options = NSKeyValueObservingOptionNew,
-//            context = null
-//        )
+            observerAttached = (avPlayer != null)
+        }
 
-            startTrackingProgress()
+        /**
+         * Removes the [AVPlayerObserver] from the current [avPlayer] if previously attached.
+         * Must be called BEFORE reassigning [avPlayer] to a new instance (otherwise the old
+         * player leaks its observer registration).
+         */
+        private fun detachTimeControlObserver() {
+            if (!observerAttached) return
+            try { avPlayer?.removeObserver(observer, "timeControlStatus") } catch (_: Throwable) { }
+            observerAttached = false
         }
 
 
@@ -189,7 +220,7 @@ object AVPlayerEngine: PlayerEngine {
 
             avPlayer?.let { NSNotificationCenter.defaultCenter.removeObserver(it) }
 
-            avPlayer?.removeObserver(observer, "timeControlStatus")
+            detachTimeControlObserver()
             avPlayer?.pause()
             avPlayer?.finalize()
             avPlayer = null
@@ -393,17 +424,23 @@ object AVPlayerEngine: PlayerEngine {
         }
 
         override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
+            // Detach observer from the previous AVPlayer (if any) BEFORE replacing the
+            // reference, otherwise the old instance leaks its KVO registration.
+            detachTimeControlObserver()
             val nsUrl = location.file.nsUrl
             nsUrl.startAccessingSecurityScopedResource()
             val asset = AVAsset.assetWithURL(nsUrl)
             avMedia = AVPlayerItem(asset)
             avPlayer = AVPlayer.playerWithPlayerItem(avMedia)
+            attachTimeControlObserver()
         }
 
         override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
+            detachTimeControlObserver()
             val nsUrl = NSURL.URLWithString(location.url) ?: throw Exception()
             avMedia = AVPlayerItem(uRL = nsUrl)
             avPlayer = AVPlayer.playerWithPlayerItem(avMedia)
+            attachTimeControlObserver()
         }
 
         override suspend fun parseMedia(media: MediaFile) {

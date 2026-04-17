@@ -18,6 +18,7 @@ import app.protocol.models.ConnectionState
 import app.protocol.models.TlsState
 import app.protocol.server.Set
 import app.protocol.server.Set.ControllerAuthResponse
+import app.room.OSDCategory
 import app.room.RoomViewmodel
 import app.utils.loggy
 import app.utils.timestampFromMillis
@@ -74,15 +75,14 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
             dispatcher.controlPlayback(Playback.PAUSE, false)
         }
 
-        dispatcher.broadcastMessage(
-            message = {
-                getString(
-                    resource = Res.string.room_guy_paused,
-                    pauser, timestampFromMillis(protocol.globalPositionMs)
-                )
-            },
-            isChat = false
-        )
+        val osdMessage: suspend () -> String = {
+            getString(
+                resource = Res.string.room_guy_paused,
+                pauser, timestampFromMillis(protocol.globalPositionMs)
+            )
+        }
+        dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+        viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = pauser, getter = osdMessage)
     }
 
     fun onSomeonePlayed(player: String) {
@@ -93,7 +93,9 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
             dispatcher.controlPlayback(Playback.PLAY, false)
         }
 
-        dispatcher.broadcastMessage(message = { getString(Res.string.room_guy_played, player) }, isChat = false)
+        val osdMessage: suspend () -> String = { getString(Res.string.room_guy_played, player) }
+        dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+        viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = player, getter = osdMessage)
     }
 
     fun onChatReceived(chatter: String, chatmessage: String) {
@@ -107,7 +109,9 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         loggy("SYNCPLAY Protocol: $joiner joined the room.")
 
         if (joiner.isNotSelf()) hapticIf(HAPTIC_ON_JOINED)
-        dispatcher.broadcastMessage(message = { getString(Res.string.room_guy_joined, joiner) }, isChat = false)
+        val osdMessage: suspend () -> String = { getString(Res.string.room_guy_joined, joiner) }
+        dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+        viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = joiner, getter = osdMessage)
     }
 
     fun onSomeoneLeft(leaver: String) {
@@ -119,7 +123,9 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         loggy("SYNCPLAY Protocol: $leaver left the room.")
 
         hapticIf(HAPTIC_ON_LEFT)
-        dispatcher.broadcastMessage(message = { getString(Res.string.room_guy_left, leaver) }, isChat = false)
+        val osdMessage: suspend () -> String = { getString(Res.string.room_guy_left, leaver) }
+        dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+        viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = leaver, getter = osdMessage)
 
         viewmodel.viewModelScope.launch(Dispatchers.Main) {
             if (viewmodel.player.hasMedia() && PAUSE_ON_SOMEONE_LEAVE.value()) {
@@ -140,13 +146,19 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
             if (seeker.isNotSelf()) viewmodel.player.seekTo(newPosMs)
 
-            dispatcher.broadcastMessage(
-                message = { getString(Res.string.room_seeked, seeker, timestampFromMillis(oldPosMs), timestampFromMillis(newPosMs)) },
-                isChat = false
-            )
+            val osdMessage: suspend () -> String = {
+                getString(Res.string.room_seeked, seeker, timestampFromMillis(oldPosMs), timestampFromMillis(newPosMs))
+            }
+            dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+            viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = seeker, getter = osdMessage)
 
-            viewmodel.seeks.add(Pair(oldPosMs, newPosMs))
-
+            /* Only record this seek for the local "Undo Seek" history if it was initiated
+             * by the local user. Seeks coming from other users are still applied above
+             * (via player.seekTo for the non-self case) but we don't allow undoing them —
+             * doing so would let one user broadcast a counter-seek that surprises others. */
+            if (seeker.isSelf()) {
+                viewmodel.seeks.add(Pair(oldPosMs, newPosMs))
+            }
         }
     }
 
@@ -156,7 +168,9 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         if (behinder.isNotSelf()) {
             onMainThread {
                 viewmodel.player.seekTo((toPosition * 1000L).toLong())
-                dispatcher.broadcastMessage(message = { getString(Res.string.room_rewinded, behinder) }, isChat = false)
+                val osdMessage: suspend () -> String = { getString(Res.string.room_rewinded, behinder) }
+                dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+                viewmodel.dispatchOSD(OSDCategory.SLOWDOWN, getter = osdMessage)
             }
         }
     }
@@ -167,7 +181,9 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         if (setBy.isNotSelf()) {
             onMainThread {
                 viewmodel.player.seekTo((toPosition * 1000L).toLong())
-                dispatcher.broadcastMessage(message = { getString(Res.string.room_fastforwarded, setBy) }, isChat = false)
+                val osdMessage: suspend () -> String = { getString(Res.string.room_fastforwarded, setBy) }
+                dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+                viewmodel.dispatchOSD(OSDCategory.SLOWDOWN, getter = osdMessage)
             }
         }
     }
@@ -179,10 +195,11 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     fun onSomeoneLoadedFile(person: String, file: String?, fileduration: Double?) {
         loggy("SYNCPLAY Protocol: $person loaded: $file - Duration: $fileduration")
 
-        dispatcher.broadcastMessage(
-            message = { getString(Res.string.room_isplayingfile, person, file ?: "", timestampFromMillis(fileduration?.toLong()?.times(1000L) ?: 0)) },
-            isChat = false
-        )
+        val osdMessage: suspend () -> String = {
+            getString(Res.string.room_isplayingfile, person, file ?: "", timestampFromMillis(fileduration?.toLong()?.times(1000L) ?: 0))
+        }
+        dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+        viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = person, getter = osdMessage)
 
         if (person.isNotSelf()) {
             viewmodel.checkFileMismatches()
@@ -198,7 +215,9 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         }
 
         if (user == "") return
-        dispatcher.broadcastMessage(message = { getString(Res.string.room_shared_playlist_updated, user) }, isChat = false)
+        val osdMessage: suspend () -> String = { getString(Res.string.room_shared_playlist_updated, user) }
+        dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+        viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = user, getter = osdMessage)
     }
 
     fun onPlaylistIndexChanged(user: String, index: Int) {
@@ -211,7 +230,9 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         }
 
         if (user == "") return
-        dispatcher.broadcastMessage(message = { getString(Res.string.room_shared_playlist_changed, user) }, isChat = false)
+        val osdMessage: suspend () -> String = { getString(Res.string.room_shared_playlist_changed, user) }
+        dispatcher.broadcastMessage(message = osdMessage, isChat = false)
+        viewmodel.dispatchOSD(OSDCategory.SAME_ROOM, originUser = user, getter = osdMessage)
     }
 
     suspend fun onConnected() {
@@ -255,7 +276,9 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
         hapticIf(HAPTIC_ON_CONNECTION)
         network.state.value = ConnectionState.DISCONNECTED
-        dispatcher.broadcastMessage(message = { getString(Res.string.room_connection_failed) }, isChat = false, isError = true)
+        val osdMessage: suspend () -> String = { getString(Res.string.room_connection_failed) }
+        dispatcher.broadcastMessage(message = osdMessage, isChat = false, isError = true)
+        viewmodel.dispatchOSD(OSDCategory.WARNING, getter = osdMessage)
         network.reconnect()
     }
 
@@ -264,7 +287,9 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
         hapticIf(HAPTIC_ON_CONNECTION)
         network.state.value = ConnectionState.DISCONNECTED
-        dispatcher.broadcastMessage(message = { getString(Res.string.room_attempting_reconnection) }, isChat = false, isError = true)
+        val osdMessage: suspend () -> String = { getString(Res.string.room_attempting_reconnection) }
+        dispatcher.broadcastMessage(message = osdMessage, isChat = false, isError = true)
+        viewmodel.dispatchOSD(OSDCategory.WARNING, getter = osdMessage)
         network.reconnect()
     }
 
@@ -305,17 +330,17 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
         network.sendAsync<ClientMessage.EmptyList>()
 
-        dispatcher.broadcastMessage(
-            message = {
-                getString(
-                    when (data.success) {
-                        true -> Res.string.room_on_controller_auth_success
-                        false -> Res.string.room_on_controller_auth_failed
-                    }, user
-                )
-            },
-            isChat = false,
-            isError = !data.success
-        )
+        val osdMessage: suspend () -> String = {
+            getString(
+                when (data.success) {
+                    true -> Res.string.room_on_controller_auth_success
+                    false -> Res.string.room_on_controller_auth_failed
+                }, user
+            )
+        }
+        dispatcher.broadcastMessage(message = osdMessage, isChat = false, isError = !data.success)
+        if (!data.success) {
+            viewmodel.dispatchOSD(OSDCategory.WARNING, getter = osdMessage)
+        }
     }
 }

@@ -86,7 +86,7 @@ import app.uicomponents.helveticaFont
 import app.uicomponents.jostFont
 import app.utils.appName
 import app.utils.playlistExs
-import app.utils.vidExs
+import app.utils.videoFileKitType
 import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
 import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.FileKitType
@@ -133,7 +133,7 @@ object CardSharedPlaylist {
 
         /* ActivityResultLaunchers for various shared playlist actions */
         val mediaFilePicker  = rememberFilePickerLauncher(
-            type = FileKitType.File(extensions = vidExs),
+            type = videoFileKitType,
             mode = FileKitMode.Multiple(),
             //title = stringResource(Res.string.room_shared_playlist_filepick_rationale1)
         ) { files ->

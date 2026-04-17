@@ -141,13 +141,16 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                 vlcView = view
 
                 val subSizeArg = "--freetype-fontsize=${SUBTITLE_SIZE.value() * 4}"
-                val lib = VLCLibrary(listOf(
+                val baseArgs = listOf(
                     "-vv",
                     subSizeArg,
                     "--network-caching=2000",
                     "--adaptive-logic=default",
                     "--http-reconnect",
-                ))
+                )
+                // User-supplied flags from Preferences.VLC_CUSTOM_FLAGS are appended last, so
+                // they can override the defaults above (LibVLC honours the last occurrence).
+                val lib = VLCLibrary(baseArgs + app.utils.vlcCustomFlags())
                 libvlc = lib
 
                 val player = VLCMediaPlayer(lib)
