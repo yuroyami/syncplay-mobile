@@ -78,13 +78,15 @@ fun RoomChatSection(modifier: Modifier) {
     val isChatSupported by viewmodel.protocol.supportsChat.collectAsState()
     val gifPanelVisible by viewmodel.uiState.gifPanelVisible.collectAsState()
     val msg by viewmodel.uiState.msg.collectAsState()
+    val isHUDVisible by viewmodel.uiState.visibleHUD.collectAsState()
 
     if (isChatSupported) {
         Column(modifier = modifier) {
             ChatTextField(
                 viewmodel = viewmodel,
                 modifier = Modifier.fillMaxWidth(),
-                gifPanelVisible = gifPanelVisible
+                gifPanelVisible = gifPanelVisible,
+                isHUDVisible = isHUDVisible
             )
 
             if (gifPanelVisible) {
@@ -107,13 +109,20 @@ fun RoomChatSection(modifier: Modifier) {
 fun ChatTextField(
     modifier: Modifier = Modifier,
     viewmodel: RoomViewmodel,
-    gifPanelVisible: Boolean
+    gifPanelVisible: Boolean,
+    isHUDVisible: Boolean
 ) {
     val focusManager = LocalFocusManager.current
     val msg by viewmodel.uiState.msg.collectAsState()
     val canSendWithKeyboardOK by MSG_BOX_ACTION.watchPref()
     val gradientBrush = Brush.linearGradient(colors = flexibleGradient)
     val msgIsNotEmpty by derivedStateOf { msg.isNotEmpty() }
+
+    /* Drop chat focus (and dismiss the soft keyboard) when the HUD hides, so the input
+     * doesn't stay focused behind an invisible overlay. */
+    LaunchedEffect(isHUDVisible) {
+        if (!isHUDVisible) focusManager.clearFocus()
+    }
 
     fun send() {
         val msgToSend = msg.replace("\\", "").take(149)

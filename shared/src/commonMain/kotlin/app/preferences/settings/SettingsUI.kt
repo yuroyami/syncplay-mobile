@@ -91,25 +91,30 @@ object SettingsUI {
 
             when (layout) {
                 Layout.SETTINGS_ROOM -> {
-                    /** FlowRow arranges cards horizontally, then creates another row when space doesn't suffice */
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.SpaceAround,
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        maxItemsInEachRow = gridColumns
+                    /** FlowRow arranges cards horizontally, then creates another row when space doesn't suffice.
+                     *  Wrapped in a vertically scrollable Column so overflow categories stay reachable when the
+                     *  grid has more rows than fit on screen (e.g. room settings + engine-injected category). */
+                    Column(
+                        modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
                     ) {
-
-                        settings.forEach { category ->
-                            SettingCategoryCard1(
-                                0,
-                                categ = category,
-                                titleSize = titleSize,
-                                cardSize = cardSize,
-                                onClick = {
-                                    state.value = SettingGridState.INSIDE_CATEGORY
-                                    enteredCategory = category
-                                }
-                            )
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.SpaceAround,
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            maxItemsInEachRow = gridColumns
+                        ) {
+                            settings.forEach { category ->
+                                SettingCategoryCard1(
+                                    0,
+                                    categ = category,
+                                    titleSize = titleSize,
+                                    cardSize = cardSize,
+                                    onClick = {
+                                        state.value = SettingGridState.INSIDE_CATEGORY
+                                        enteredCategory = category
+                                    }
+                                )
+                            }
                         }
                     }
                 }

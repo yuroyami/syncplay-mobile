@@ -100,28 +100,24 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                 val isHUDVisible by viewmodel.uiState.visibleHUD.collectAsState()
 
                 /* Auto-hide HUD after configured timeout when video is loaded.
-                 * - hasActiveOverlay blocks hiding while any card/popup/typing/keyboard is active.
-                 * - hudInteractionSignal resets the countdown on every touch within the HUD.
-                 * Note: we DON'T restart on isPlaying / hasVideo / hasActiveOverlay flips.
-                 * The timer ticks once HUD becomes visible; only an interaction signal resets it.
-                 * When the timer expires, we re-check the conditions (playing, no overlay) before hiding. */
+                 * Restart keys include hasActiveOverlay/isPlaying so the effect cancels cleanly
+                 * whenever an overlay (cards, popups, chat focus/keyboard, typing) opens or
+                 * playback state flips — then re-arms the timer when conditions allow hiding again.
+                 * hudInteractionSignal resets the countdown on every touch within the HUD. */
                 val hudAutoHideTimeout by HUD_AUTO_HIDE_TIMEOUT.watchPref()
                 val hasActiveOverlay by viewmodel.uiState.hasActiveOverlay.collectAsState()
                 val isPlaying by viewmodel.playerManager.isNowPlaying.collectAsState()
-                LaunchedEffect(isHUDVisible, hudAutoHideTimeout) {
+                LaunchedEffect(isHUDVisible, hudAutoHideTimeout, hasActiveOverlay, isPlaying, hasVideo) {
                     if (!isHUDVisible || hudAutoHideTimeout <= 0) return@LaunchedEffect
+                    if (!hasVideo || hasActiveOverlay || !isPlaying) return@LaunchedEffect
 
                     while (true) {
                         val interaction = withTimeoutOrNull(hudAutoHideTimeout * 1000L) {
                             viewmodel.uiState.hudInteractionSignal.first()
                         }
                         if (interaction == null) {
-                            /* Re-check: only hide when video is loaded, no overlay/keyboard, and playing.
-                             * If any of those aren't true, keep waiting — loop again. */
-                            if (hasVideo && !hasActiveOverlay && isPlaying) {
-                                viewmodel.uiState.visibleHUD.value = false
-                                break
-                            }
+                            viewmodel.uiState.visibleHUD.value = false
+                            break
                         }
                     }
                 }
