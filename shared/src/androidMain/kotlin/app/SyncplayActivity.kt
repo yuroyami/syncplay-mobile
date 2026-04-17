@@ -10,7 +10,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.graphics.drawable.Icon
 import android.net.Uri
@@ -229,13 +228,6 @@ class SyncplayActivity : ComponentActivity() {
                 if (enable) {
                     initiatePIPmode()
                 }
-            }
-
-            override fun onScreenOrientationChanged(portrait: Boolean) {
-                requestedOrientation = if (portrait)
-                    ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
-                else
-                    ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
             }
 
             override fun performHapticFeedback() {

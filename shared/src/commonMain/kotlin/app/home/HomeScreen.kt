@@ -68,7 +68,7 @@ import app.theme.Theming.useSyncplayGradient
 import app.uicomponents.FlexibleText
 import app.uicomponents.sairaFont
 import app.utils.appName
-import app.utils.ShowSystemBars
+import app.utils.ExitRoomMode
 import app.utils.availablePlatformPlayerEngines
 import app.utils.consumePendingShortcut
 import app.utils.platformCallback
@@ -103,7 +103,7 @@ val officialServers = listOf("syncplay.pl:8995", "syncplay.pl:8996", "syncplay.p
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreenUI(viewmodel: HomeViewmodel) {
-    ShowSystemBars()
+    ExitRoomMode()
 
     var savedConfig by remember { mutableStateOf<JoinConfig?>(null) }
 

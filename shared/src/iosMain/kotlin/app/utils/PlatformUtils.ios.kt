@@ -43,6 +43,7 @@ import platform.Foundation.seekToEndOfFile
 import platform.Foundation.timeIntervalSince1970
 import platform.Foundation.writeData
 import platform.UIKit.UIApplication
+import platform.UIKit.UIInterfaceOrientationMaskAll
 import platform.UIKit.UIInterfaceOrientationMaskLandscape
 import platform.UIKit.UIInterfaceOrientationMaskPortrait
 import platform.UIKit.UIWindowScene
@@ -98,36 +99,27 @@ actual fun ClipEntry.getText(): String? {
 }
 
 @Composable
-actual fun HideSystemBars() {
-    LaunchedEffect(null) {
-        delegato.myOrientationMask = UIInterfaceOrientationMaskLandscape
-        // Retry briefly — the UIWindowScene may not be connected yet on first composition
-        repeat(3) {
-            val scene = UIApplication.sharedApplication.connectedScenes.firstOrNull() as? UIWindowScene
-            if (scene != null) {
-                scene.requestGeometryUpdateWithPreferences(
-                    geometryPreferences = UIWindowSceneGeometryPreferencesIOS(interfaceOrientations = UIInterfaceOrientationMaskLandscape),
-                    errorHandler = null
-                )
-                return@LaunchedEffect
-            }
-            kotlinx.coroutines.delay(100)
-        }
+actual fun EnterRoomMode(portrait: Boolean) {
+    LaunchedEffect(portrait) {
+        val mask = if (portrait) UIInterfaceOrientationMaskPortrait else UIInterfaceOrientationMaskLandscape
+        delegato.myOrientationMask = mask
+        (UIApplication.sharedApplication.connectedScenes.firstOrNull() as? UIWindowScene)
+            ?.requestGeometryUpdateWithPreferences(
+                geometryPreferences = UIWindowSceneGeometryPreferencesIOS(interfaceOrientations = mask),
+                errorHandler = null
+            )
     }
 }
 
 @Composable
-actual fun ShowSystemBars() {
+actual fun ExitRoomMode() {
     LaunchedEffect(null) {
-        delegato.myOrientationMask = UIInterfaceOrientationMaskPortrait
-        UIApplication.sharedApplication.connectedScenes.firstOrNull()?.let {
-            (it as? UIWindowScene)?.apply {
-                requestGeometryUpdateWithPreferences(
-                    geometryPreferences = UIWindowSceneGeometryPreferencesIOS(interfaceOrientations = UIInterfaceOrientationMaskPortrait),
-                    errorHandler = null
-                )
-            }
-        }
+        delegato.myOrientationMask = UIInterfaceOrientationMaskAll
+        (UIApplication.sharedApplication.connectedScenes.firstOrNull() as? UIWindowScene)
+            ?.requestGeometryUpdateWithPreferences(
+                geometryPreferences = UIWindowSceneGeometryPreferencesIOS(interfaceOrientations = UIInterfaceOrientationMaskAll),
+                errorHandler = null
+            )
     }
 }
 

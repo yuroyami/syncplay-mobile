@@ -105,19 +105,11 @@ actual fun ClipEntry.getText(): String? {
     return this.clipData.getItemAt(0).text?.toString()
 }
 
-/**
- * Hides system bars (status bar and navigation bar) for fullscreen/immersive mode.
- *
- * Uses SideEffect to ensure the system bars are hidden after composition completes,
- * which is important for dialogs and popups that need to maintain fullscreen mode.
- *
- * Only works on Android 11 (API 30) and above using the modern WindowInsetsController API.
- */
 @Composable
-actual fun HideSystemBars() {
+actual fun EnterRoomMode(portrait: Boolean) {
     val view = LocalView.current
 
-    //We use a side effect here because it is guaranteed to be executed after every composition is concluded, which means right after a popup finishes appearing.
+    // SideEffect runs after every composition — re-hides bars after popups/menus dismiss.
     SideEffect {
         if (Build.VERSION.SDK_INT >= 30) {
             view.windowInsetsController?.hide(
@@ -128,14 +120,17 @@ actual fun HideSystemBars() {
 
     val activity = LocalActivity.current as? ComponentActivity
 
-    LaunchedEffect(null) {
+    LaunchedEffect(portrait) {
         activity?.hideSystemUI()
-        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        activity?.requestedOrientation = if (portrait)
+            ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+        else
+            ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
     }
 }
 
 @Composable
-actual fun ShowSystemBars() {
+actual fun ExitRoomMode() {
     val activity = LocalActivity.current as? ComponentActivity
 
     LaunchedEffect(null) {

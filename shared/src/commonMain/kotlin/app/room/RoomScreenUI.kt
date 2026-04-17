@@ -46,7 +46,7 @@ import app.room.ui.tabs.ManagedRoomPopup
 import app.room.ui.tabs.ManagedRoomPopupPurpose
 import app.room.ui.tabs.RoomTabSection
 import app.room.ui.tabs.RoomUnlockableLayout
-import app.utils.HideSystemBars
+import app.utils.EnterRoomMode
 import app.utils.platformCallback
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -59,7 +59,13 @@ import kotlinx.coroutines.withTimeoutOrNull
  */
 @Composable
 fun RoomScreenUI(viewmodel: RoomViewmodel) {
-    HideSystemBars() // Prevents the navigation bar from reappearing when popups/menus are shown.
+    val orientation by viewmodel.uiState.roomOrientation.collectAsState()
+    val isPortrait = orientation == RoomOrientation.PORTRAIT
+
+    /* Applies room-mode windowing (hidden chrome + orientation lock) and re-fires on
+     * orientation toggle. Single source of truth — avoids the iOS rotation race that
+     * occurs when two geometry-update calls are issued back-to-back. */
+    EnterRoomMode(isPortrait)
 
     val soloMode = remember { viewmodel.isSoloMode }
     val hasVideo by viewmodel.playerManager.hasVideo.collectAsState(initial = false)
@@ -92,13 +98,6 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                 RoomUnlockableLayout()
             } else {
                 val isHUDVisible by viewmodel.uiState.visibleHUD.collectAsState()
-                val orientation by viewmodel.uiState.roomOrientation.collectAsState()
-                val isPortrait = orientation == RoomOrientation.PORTRAIT
-
-                /* Rotate the screen when orientation changes */
-                LaunchedEffect(orientation) {
-                    platformCallback.onScreenOrientationChanged(isPortrait)
-                }
 
                 /* Auto-hide HUD after configured timeout when video is loaded.
                  * - hasActiveOverlay blocks hiding while any card/popup/typing/keyboard is active.

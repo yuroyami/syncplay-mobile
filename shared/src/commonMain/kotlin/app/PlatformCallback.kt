@@ -79,13 +79,6 @@ interface PlatformCallback {
     fun onPictureInPicture(enable: Boolean)
 
     /**
-     * Called when the user toggles between portrait and landscape mode in the room.
-     *
-     * @param portrait True to switch to portrait orientation, false for landscape
-     */
-    fun onScreenOrientationChanged(portrait: Boolean)
-
-    /**
      * Triggers a haptic feedback vibration using the platform's vibration API directly.
      *
      * This bypasses Compose's [LocalHapticFeedback] which relies on View.performHapticFeedback()

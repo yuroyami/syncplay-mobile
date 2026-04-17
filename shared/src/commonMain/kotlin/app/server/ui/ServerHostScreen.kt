@@ -61,7 +61,7 @@ import app.server.ServerLogEntry
 import app.server.ServerStatus
 import app.server.ServerViewmodel
 import androidx.compose.foundation.text.selection.SelectionContainer
-import app.utils.ShowSystemBars
+import app.utils.ExitRoomMode
 import app.utils.platform
 import app.utils.Platform
 import org.jetbrains.compose.resources.stringResource
@@ -91,7 +91,7 @@ import syncplaymobile.shared.generated.resources.server_host_title
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ServerHostScreenUI(viewmodel: ServerViewmodel) {
-    ShowSystemBars()
+    ExitRoomMode()
 
     val globalViewmodel = LocalGlobalViewmodel.current
     val status by viewmodel.serverStatus.collectAsState()

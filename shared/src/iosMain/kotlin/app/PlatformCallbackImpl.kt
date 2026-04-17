@@ -10,13 +10,9 @@ import platform.UIKit.UIApplicationOpenSettingsURLString
 import platform.UIKit.UIApplicationShortcutIcon.Companion.iconWithType
 import platform.UIKit.UIApplicationShortcutIconType
 import platform.UIKit.UIApplicationShortcutItem
-import platform.UIKit.UIInterfaceOrientationMaskLandscape
-import platform.UIKit.UIInterfaceOrientationMaskPortrait
 import platform.UIKit.UIImpactFeedbackGenerator
 import platform.UIKit.UIImpactFeedbackStyle
 import platform.UIKit.UIScreen
-import platform.UIKit.UIWindowScene
-import platform.UIKit.UIWindowSceneGeometryPreferencesIOS
 import platform.UIKit.shortcutItems
 
 /**
@@ -182,16 +178,5 @@ object ApplePlatformCallback : PlatformCallback {
      */
     override fun launchSystemFilePicker(onResult: (String?) -> Unit) {
         onResult(null)
-    }
-
-    override fun onScreenOrientationChanged(portrait: Boolean) {
-        val mask = if (portrait) UIInterfaceOrientationMaskPortrait else UIInterfaceOrientationMaskLandscape
-        delegato.myOrientationMask = mask
-        UIApplication.sharedApplication.connectedScenes.firstOrNull()?.let {
-            (it as? UIWindowScene)?.requestGeometryUpdateWithPreferences(
-                geometryPreferences = UIWindowSceneGeometryPreferencesIOS(interfaceOrientations = mask),
-                errorHandler = null
-            )
-        }
     }
 }

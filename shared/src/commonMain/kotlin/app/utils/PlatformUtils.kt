@@ -109,20 +109,24 @@ expect fun getFileSize(uri: PlatformFile): Long?
 expect fun ClipEntry.getText(): String?
 
 /**
- * Hides system UI bars (status bar and navigation bar) for immersive mode.
+ * Applies the windowing policy for the room screen: hides system UI chrome (Android) and
+ * locks the interface orientation to the requested mode.
  *
- * Called from a Composable context. Platform behavior may vary.
+ * Acts as the single source of truth for orientation changes inside the room — re-fires
+ * whenever [portrait] changes so that toggling between landscape and portrait is a single
+ * geometry update, not a race between two effects.
+ *
+ * @param portrait true to lock to portrait, false to lock to landscape
  */
 @Composable
-expect fun HideSystemBars()
+expect fun EnterRoomMode(portrait: Boolean)
 
 /**
- * Hides system UI bars (status bar and navigation bar) for immersive mode.
- *
- * Called from a Composable context. Platform behavior may vary.
+ * Restores the default windowing policy for screens outside the room (home, server host,
+ * theme creator): system UI chrome visible (Android) and all orientations unlocked.
  */
 @Composable
-expect fun ShowSystemBars()
+expect fun ExitRoomMode()
 
 
 expect fun <T : Any> WeakRef<T>?.get(): T?
