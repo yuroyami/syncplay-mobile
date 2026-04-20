@@ -1,7 +1,7 @@
 import AppConfig.exoOnly
-import AppConfig.ndkRequired
 import NativeBuildConfig.registerNativeBuildTask
 import NativeBuildConfig.validateNdk
+import com.yuroyami.kmpssot.KmpSsotExtension
 
 plugins {
     alias(libs.plugins.android.application)
@@ -9,13 +9,16 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
+val ssot = rootProject.extensions.getByType(KmpSsotExtension::class.java)
+val ndkRequired = providers.gradleProperty("android.ndkVersion").get()
+
 kotlin {
-    jvmToolchain(AppConfig.javaVersion)
+    jvmToolchain(21)
 }
 
 android {
     namespace = "androidApp"
-    compileSdk = AppConfig.compileSdk
+    compileSdk = providers.gradleProperty("android.compileSdk").get().toInt()
 
     ndkVersion = ndkRequired
 
@@ -33,13 +36,12 @@ android {
     }
 
     defaultConfig {
-        applicationId = if (exoOnly) "com.reddnek.syncplay" else "com.yuroyami.syncplay"
-        minSdk = AppConfig.minSdk
-        targetSdk = AppConfig.compileSdk
-        versionCode = AppConfig.versionCode
-        versionName = AppConfig.versionName
-
-        manifestPlaceholders["appName"] = AppConfig.appName
+        // applicationId / versionCode / versionName / manifestPlaceholders[appName] are
+        // set eagerly by kmp-ssot plugin. The exoOnly override below runs in this block
+        // (which evaluates AFTER plugins.withId fires), so it wins for the exoOnly case.
+        if (exoOnly) applicationId = "com.reddnek.syncplay"
+        minSdk = providers.gradleProperty("android.minSdk").get().toInt()
+        targetSdk = providers.gradleProperty("android.targetSdk").get().toInt()
 
         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
 
@@ -49,8 +51,7 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.toVersion(AppConfig.javaVersion)
-        targetCompatibility = JavaVersion.toVersion(AppConfig.javaVersion)
+        // sourceCompatibility / targetCompatibility set by kmp-ssot from javaVersion (default 21).
         isCoreLibraryDesugaringEnabled = true
     }
 
@@ -144,11 +145,13 @@ androidComponents {
         variant.outputs.forEach { output ->
             if (output is com.android.build.api.variant.impl.VariantOutputImpl) {
                 val abiFilter = output.filters.find { it.filterType == com.android.build.api.variant.FilterConfiguration.FilterType.ABI }?.identifier
+                val v = ssot.versionName.get()
+                val name = ssot.appName.get()
                 val fileName = if (exoOnly) {
-                    "syncplay-${AppConfig.versionName}-exo-only.apk"
+                    "syncplay-$v-exo-only.apk"
                 } else {
                     val abiName = abiFilter ?: "universal"
-                    "${AppConfig.appName.lowercase()}-${AppConfig.versionName}-full-${abiName}.apk"
+                    "${name.lowercase()}-$v-full-${abiName}.apk"
                 }
                 output.outputFileName = fileName
             }

@@ -1,3 +1,7 @@
+import com.yuroyami.kmpssot.KmpSsotExtension
+
+val ssot = rootProject.extensions.getByType(KmpSsotExtension::class.java)
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.cocoapods)
@@ -12,12 +16,12 @@ plugins {
 }
 
 kotlin {
-    jvmToolchain(AppConfig.javaVersion)
+    jvmToolchain(21)
 
     android {
         namespace = "app"
-        compileSdk = AppConfig.compileSdk
-        minSdk = AppConfig.minSdk
+        compileSdk { version = release(providers.gradleProperty("android.compileSdk").get().toInt()) }
+        minSdk = providers.gradleProperty("android.minSdk").get().toInt()
         androidResources { enable = true }
     }
 
@@ -38,13 +42,13 @@ kotlin {
 
     // iOS configuration
     cocoapods {
-        summary = "${AppConfig.appName} Common Code (Platform-agnostic)"
+        summary = "${ssot.appName.get()} Common Code (Platform-agnostic)"
         homepage = "www.github.com/yuroyami/syncplay-mobile"
         version = "1.0.4"
         ios.deploymentTarget = "14.0"
         podfile = project.file("../iosApp/Podfile")
         framework {
-            baseName = "shared"
+            baseName = ssot.sharedModule.get()
             isStatic = false
         }
 
@@ -173,8 +177,11 @@ kotlin {
     }
 }
 
+// Custom (non-plugin) propagators: Trinity color XML rewrite, logo→imageset copy,
+// default-strings fallback. The kmp-ssot plugin handles version/appName/bundleId/
+// locales/iOS pbxproj automatically (hooked into iOS framework link tasks).
 with(AppConfig) {
-    propagateAll() //Uncomment to propagate SSOT (version, app name, locales, colors, logo) to iOS, README, etc.
+    propagateAllCustom()
 }
 
 ktorfit {
@@ -182,8 +189,8 @@ ktorfit {
 }
 
 buildConfig {
-    buildConfigField("APP_NAME", AppConfig.appName)
-    buildConfigField("APP_VERSION", AppConfig.versionName)
+    buildConfigField("APP_NAME", ssot.appName.get())
+    buildConfigField("APP_VERSION", ssot.versionName.get())
     buildConfigField("DEBUG", false)
     buildConfigField("DEBUG_SYNCPLAY_PROTOCOL", false)
     buildConfigField("EXOPLAYER_ONLY", AppConfig.exoOnly)
@@ -197,10 +204,10 @@ buildConfig {
 
 tasks.register("propagateSSOT") {
     group = "syncplay"
-    description = "Propagates SSOT values (version, app name, locales, colors, logo) to iOS, README, etc."
+    description = "Run custom non-plugin propagators (Trinity colors, logo imageset, default-strings fallback)."
     doLast {
         with(AppConfig) {
-            project.propagateAll()
+            project.propagateAllCustom()
         }
     }
 }

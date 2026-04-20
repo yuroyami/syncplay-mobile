@@ -80,7 +80,7 @@ object NativeBuildConfig {
                 File(workingDir, "mpv_build.sh")
             )
 
-            inputs.property("ndkVersion", AppConfig.ndkRequired)
+            inputs.property("ndkVersion", providers.gradleProperty("android.ndkVersion").get())
                 .optional(false)
 
             AppConfig.abiCodes.forEach { abiCode ->
