@@ -315,19 +315,21 @@ class SyncplayActivity : ComponentActivity() {
      */
     override fun attachBaseContext(newBase: Context?) {
         /** Applying saved language (fall back to default if DataStore isn't ready yet) */
-        val lang = runCatching { DISPLAY_LANG.value() }.getOrDefault(DISPLAY_LANG.default as String)
+        val lang = runCatching { DISPLAY_LANG.value() }.getOrDefault(DISPLAY_LANG.default)
         super.attachBaseContext(newBase!!.changeLanguage(lang))
     }
 
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        // Reapply locale after orientation changes
+        // Reapply locale after orientation changes.
+        // TODO: migrate to AppCompatDelegate.setApplicationLocales for per-app language on Android 13+.
         val lang = DISPLAY_LANG.value()
         val locale = Locale.Builder().setLanguage(lang).build()
         Locale.setDefault(locale)
         val config = resources.configuration
         config.setLocale(locale)
+        @Suppress("DEPRECATION")
         resources.updateConfiguration(config, resources.displayMetrics)
     }
 

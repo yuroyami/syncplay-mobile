@@ -1,7 +1,7 @@
 import AppConfig.exoOnly
 import NativeBuildConfig.registerNativeBuildTask
 import NativeBuildConfig.validateNdk
-import com.yuroyami.kmpssot.KmpSsotExtension
+import com.yuroyami.kmpssot.kmpSsot
 
 plugins {
     alias(libs.plugins.android.application)
@@ -9,7 +9,6 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
-val ssot = rootProject.extensions.getByType(KmpSsotExtension::class.java)
 val ndkRequired = providers.gradleProperty("android.ndkVersion").get()
 
 kotlin {
@@ -27,9 +26,9 @@ android {
             create("synkplay_keystore") {
                 storeFile = keystoreFile
                 AppConfig.localProperties.apply {
-                    keyAlias = getProperty("yuroyami.keyAlias")
-                    keyPassword = getProperty("yuroyami.keyPassword")
-                    storePassword = getProperty("yuroyami.storePassword")
+                    keyAlias = getProperty("keystore.keyAlias")
+                    keyPassword = getProperty("keystore.keyPassword")
+                    storePassword = getProperty("keystore.storePassword")
                 }
             }
         }
@@ -145,8 +144,8 @@ androidComponents {
         variant.outputs.forEach { output ->
             if (output is com.android.build.api.variant.impl.VariantOutputImpl) {
                 val abiFilter = output.filters.find { it.filterType == com.android.build.api.variant.FilterConfiguration.FilterType.ABI }?.identifier
-                val v = ssot.versionName.get()
-                val name = ssot.appName.get()
+                val v = kmpSsot.versionName.get()
+                val name = kmpSsot.appName.get()
                 val fileName = if (exoOnly) {
                     "syncplay-$v-exo-only.apk"
                 } else {

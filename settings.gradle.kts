@@ -1,20 +1,11 @@
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
     repositories {
+        mavenLocal() // kmp-ssot: remove once com.yuroyami.kmpssot is live on Gradle Plugin Portal
         mavenCentral()
         gradlePluginPortal()
         google()
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/yuroyami/kmp-ssot")
-            credentials {
-                username = providers.gradleProperty("gpr.user").orNull
-                    ?: System.getenv("GITHUB_ACTOR")
-                password = providers.gradleProperty("gpr.key").orNull
-                    ?: System.getenv("GITHUB_TOKEN")
-            }
-        }
     }
 }
 

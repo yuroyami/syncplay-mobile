@@ -61,7 +61,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -464,6 +463,9 @@ object CardSharedPlaylist {
         AddSPUrlsPopup(addUrlsPopupState)
     }
 
+    // TODO: migrate from deprecated ClipboardManager to the suspend-based Clipboard API
+    // (LocalClipboard + ClipEntry). Requires rememberCoroutineScope() for setClipEntry/getClipEntry.
+    @Suppress("DEPRECATION")
     @Composable
     fun AddSPUrlsPopup(visibilityState: MutableState<Boolean>) {
         return SyncplayPopup(
@@ -473,7 +475,7 @@ object CardSharedPlaylist {
             onDismiss = { visibilityState.value = false }
         ) {
             val playlist = LocalRoomViewmodel.current.playlistManager
-            val clipboardManager: ClipboardManager = LocalClipboardManager.current
+            val clipboardManager = LocalClipboardManager.current
 
             Column(
                 modifier = Modifier.fillMaxSize().padding(6.dp),

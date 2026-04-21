@@ -16,10 +16,7 @@ import kotlin.time.Clock
 /** App name sourced from BuildConfig (defined once in AppConfig.kt in buildSrc) */
 val appName: String = BuildConfig.APP_NAME
 
-/**
- * DSL marker annotation for protocol-related builders and scopes.
- */
-@DslMarker
+/** Marker annotation for protocol-related builders and scopes. */
 annotation class ProtocolApi
 
 /**

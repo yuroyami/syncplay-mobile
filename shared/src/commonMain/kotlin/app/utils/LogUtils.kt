@@ -4,7 +4,9 @@ import SyncplayMobile.shared.BuildConfig
 import co.touchlab.kermit.Logger
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
+import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
 
 private val logLock = SynchronizedObject()
@@ -14,17 +16,17 @@ private const val LOG_RETENTION_DAYS = 7
 
 /** Formats epoch millis into "yyyy-MM-dd HH:mm:ss" style timestamp string */
 private fun formatTimestamp(millis: Long): String {
-    val instant = kotlinx.datetime.Instant.fromEpochMilliseconds(millis)
+    val instant = Instant.fromEpochMilliseconds(millis)
     val ldt = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-    return "${ldt.year}-${ldt.monthNumber.pad()}-${ldt.dayOfMonth.pad()} " +
+    return "${ldt.year}-${ldt.month.number.pad()}-${ldt.day.pad()} " +
             "${ldt.hour.pad()}:${ldt.minute.pad()}:${ldt.second.pad()}"
 }
 
 /** Formats epoch millis into "yyyy-MM-dd" date string for log file naming */
 private fun formatDate(millis: Long): String {
-    val instant = kotlinx.datetime.Instant.fromEpochMilliseconds(millis)
+    val instant = Instant.fromEpochMilliseconds(millis)
     val ldt = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-    return "${ldt.year}-${ldt.monthNumber.pad()}-${ldt.dayOfMonth.pad()}"
+    return "${ldt.year}-${ldt.month.number.pad()}-${ldt.day.pad()}"
 }
 
 private fun Int.pad() = toString().padStart(2, '0')

@@ -1,6 +1,4 @@
-import com.yuroyami.kmpssot.KmpSsotExtension
-
-val ssot = rootProject.extensions.getByType(KmpSsotExtension::class.java)
+import com.yuroyami.kmpssot.kmpSsot
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -17,6 +15,14 @@ plugins {
 
 kotlin {
     jvmToolchain(21)
+
+    compilerOptions {
+        freeCompilerArgs.addAll(
+            "-Xexplicit-backing-fields",
+            "-Xexpect-actual-classes",
+            "-Xcontext-parameters",
+        )
+    }
 
     android {
         namespace = "app"
@@ -42,13 +48,13 @@ kotlin {
 
     // iOS configuration
     cocoapods {
-        summary = "${ssot.appName.get()} Common Code (Platform-agnostic)"
+        summary = "${kmpSsot.appName.get()} Common Code (Platform-agnostic)"
         homepage = "www.github.com/yuroyami/syncplay-mobile"
         version = "1.0.4"
         ios.deploymentTarget = "14.0"
         podfile = project.file("../iosApp/Podfile")
         framework {
-            baseName = ssot.sharedModule.get()
+            baseName = kmpSsot.sharedModule.get()
             isStatic = false
         }
 
@@ -71,12 +77,6 @@ kotlin {
                 optIn("kotlinx.cinterop.ExperimentalForeignApi") //for iOS
                 optIn("kotlinx.cinterop.BetaInteropApi") //for iOS
                 optIn("kotlin.time.ExperimentalTime")
-                @Suppress("DEPRECATION") run {
-                    enableLanguageFeature("ExplicitBackingFields") //same as -Xexplicit-backing-fields compiler flag
-                    enableLanguageFeature("NestedTypeAliases") //-Xnested-type-aliases
-                    enableLanguageFeature("ExpectActualClasses") //-Xexpect-actual-classes
-                    enableLanguageFeature("ContextParameters") //Xcontext-parameters
-                }
             }
         }
 
@@ -189,8 +189,8 @@ ktorfit {
 }
 
 buildConfig {
-    buildConfigField("APP_NAME", ssot.appName.get())
-    buildConfigField("APP_VERSION", ssot.versionName.get())
+    buildConfigField("APP_NAME", kmpSsot.appName.get())
+    buildConfigField("APP_VERSION", kmpSsot.versionName.get())
     buildConfigField("DEBUG", false)
     buildConfigField("DEBUG_SYNCPLAY_PROTOCOL", false)
     buildConfigField("EXOPLAYER_ONLY", AppConfig.exoOnly)

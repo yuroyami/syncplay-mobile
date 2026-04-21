@@ -218,7 +218,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
         if (!baseAllowed) return
 
         // Layer the non-operator filter on top of same-room events when in a controlled room.
-        if (category == OSDCategory.SAME_ROOM && originUser != null && session.currentOperatorPassword != null) {
+        if (category == OSDCategory.SAME_ROOM && originUser != null && session.currentOperatorPassword.isNotEmpty()) {
             val originIsController = session.userList.value.firstOrNull { it.name == originUser }?.isController ?: false
             if (!originIsController && !prefs.OSD_NON_OPERATOR.value()) return
         }

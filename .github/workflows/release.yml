@@ -61,9 +61,9 @@ jobs:
         run: |
           cat > local.properties <<EOF
           sdk.dir=$ANDROID_HOME
-          yuroyami.keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
-          yuroyami.keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
-          yuroyami.storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keystore.keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          keystore.keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keystore.storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           yuroyami.keyKlipyApi=${{ secrets.KLIPY_API_KEY }}
           EOF
 
@@ -116,9 +116,9 @@ jobs:
         run: |
           cat > local.properties <<EOF
           sdk.dir=$ANDROID_HOME
-          yuroyami.keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
-          yuroyami.keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
-          yuroyami.storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keystore.keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          keystore.keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keystore.storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           yuroyami.keyKlipyApi=${{ secrets.KLIPY_API_KEY }}
           EOF
 

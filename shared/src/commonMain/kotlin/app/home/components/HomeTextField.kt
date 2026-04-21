@@ -34,6 +34,16 @@ import com.composeunstyled.Icon as UnstyledIcon
 import com.composeunstyled.Text as UnstyledText
 import com.composeunstyled.TextField as UnstyledTextField
 
+// TODO: migrate to the stateful `TextField(state: TextFieldState, ...)` overload in compose-unstyled.
+// Today this wrapper takes value+onValueChange and forwards to the deprecated stateless TextField
+// (which "goes to 2.0"). The modern overload requires callers to switch from
+//   var x by remember { mutableStateOf("") }
+// to
+//   val x = rememberTextFieldState("")
+// and to read `x.text.toString()` / edit via `x.edit { ... }`. All 4 HomeTextField call sites
+// (HomeScreen, ThemeCreatorScreen, SettingComposable, ServerHostScreen) would need that change.
+// Suppressing until the compose-unstyled 2.0 upgrade is scheduled.
+@Suppress("DEPRECATION")
 @Composable
 fun HomeTextField(
     modifier: Modifier,

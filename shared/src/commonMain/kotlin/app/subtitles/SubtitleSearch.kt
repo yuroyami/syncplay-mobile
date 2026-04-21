@@ -20,10 +20,12 @@ object SubtitleSearch {
     private const val BASE_URL = "https://api.opensubtitles.com/api/v1"
     private const val API_KEY = "iesFjGxVcXtBMnEbxMRYyWbU3M1UEaaL"
 
+    private val json = Json { ignoreUnknownKeys = true; isLenient = true }
+
     private val client by lazy {
         httpClient.config {
             install(ContentNegotiation) {
-                json(Json { ignoreUnknownKeys = true; isLenient = true })
+                json(json)
             }
         }
     }
@@ -81,7 +83,7 @@ object SubtitleSearch {
                 header("Api-Key", API_KEY)
                 header("User-Agent", "Syncplay-Mobile v1.0")
             }
-            val downloadInfo = Json { ignoreUnknownKeys = true }.decodeFromString<OpenSubtitlesDownloadResponse>(response.bodyAsText())
+            val downloadInfo = json.decodeFromString<OpenSubtitlesDownloadResponse>(response.bodyAsText())
             val subtitleUrl = downloadInfo.link
 
             /* Download actual subtitle file content */
