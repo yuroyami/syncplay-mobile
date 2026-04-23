@@ -352,8 +352,10 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
         if (!isInitialized) return
         withContext(Dispatchers.Main.immediate) {
+            val nsUrl = uri.nsUrl
+            nsUrl.startAccessingSecurityScopedResource()
             vlcPlayer?.addPlaybackSlave(
-                uri.nsUrl,
+                nsUrl,
                 VLCMediaPlaybackSlaveTypeSubtitle,
                 true
             )
