@@ -1,7 +1,9 @@
 package app.protocol
 
+import androidx.lifecycle.viewModelScope
 import app.AbstractManager
 import app.protocol.event.ClientMessage
+import app.protocol.models.ConnectionState
 import app.protocol.models.PingService
 import app.protocol.network.NetworkManager
 import app.protocol.server.Chat
@@ -14,11 +16,21 @@ import app.protocol.server.State
 import app.protocol.server.TLS
 import app.room.RoomViewmodel
 import app.utils.ProtocolApi
+import app.utils.loggy
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
+import kotlin.concurrent.Volatile
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
@@ -56,7 +68,83 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
 
     val isManagedRoom = MutableStateFlow(false)
 
+    /**
+     * Timestamp of the last State message received from the server. Updated in
+     * [State.handle] at the start of each incoming message. The watchdog uses this to
+     * detect silent disconnects — i.e. the TCP socket looks healthy on our end but the
+     * server stopped sending State packets (common on flaky networks, especially iOS).
+     */
+    @Volatile
+    var lastStateReceivedAt: Instant? = null
+
+    private var watchdogJob: Job? = null
+    private var listProbeJob: Job? = null
+
+    /**
+     * Starts the channel-health coroutines for the current room session.
+     *
+     * Two jobs run while CONNECTED:
+     *  - **List-probe ping** — sends an empty `List` request every [LIST_PROBE_INTERVAL_SECONDS]
+     *    so the server is forced to respond. Keeps the channel warm and surfaces a broken
+     *    socket early: if the send fails, NetworkManager's retry/onError path queues the
+     *    packet and flips state to DISCONNECTED.
+     *  - **State watchdog** — runs every [WATCHDOG_INTERVAL_SECONDS]. If no State message
+     *    has arrived for [STATE_TIMEOUT_SECONDS] seconds while we still believe ourselves
+     *    connected, fires `onDisconnected()` which kicks off a reconnect. This is what
+     *    fixes the "app doesn't know it's disconnected until I send a chat" bug — the
+     *    Syncplay server gives up after ~10–15 unanswered State broadcasts, which matches
+     *    this 15s threshold.
+     *
+     * No-op in solo mode — called from onConnected(), so the guard is defense-in-depth.
+     */
+    fun startChannelHealthMonitoring() {
+        if (viewmodel.isSoloMode) return
+        stopChannelHealthMonitoring()
+
+        // Seed the watchdog so it doesn't immediately fire before any State arrives.
+        lastStateReceivedAt = Clock.System.now()
+
+        val network = viewmodel.networkManager
+
+        listProbeJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
+            while (isActive) {
+                delay(LIST_PROBE_INTERVAL_SECONDS.seconds)
+                if (network.state.value == ConnectionState.CONNECTED) {
+                    network.send<ClientMessage.EmptyList>()
+                }
+            }
+        }
+
+        watchdogJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
+            while (isActive) {
+                delay(WATCHDOG_INTERVAL_SECONDS.seconds)
+                if (network.state.value != ConnectionState.CONNECTED) continue
+
+                val last = lastStateReceivedAt ?: continue
+                val elapsedSec = (Clock.System.now() - last).inWholeSeconds
+                if (elapsedSec >= STATE_TIMEOUT_SECONDS) {
+                    loggy("Channel watchdog: no State received for ${elapsedSec}s — marking disconnected")
+                    // Drop the now-stale socket before firing the callback so the reconnect
+                    // logic in onDisconnected() doesn't try to reuse a dead connection.
+                    network.terminateExistingConnection()
+                    viewmodel.callback.onDisconnected()
+                    break
+                }
+            }
+        }
+    }
+
+    /** Cancels the channel-health coroutines. Safe to call multiple times. */
+    fun stopChannelHealthMonitoring() {
+        watchdogJob?.cancel()
+        watchdogJob = null
+        listProbeJob?.cancel()
+        listProbeJob = null
+    }
+
     override fun invalidate() {
+        stopChannelHealthMonitoring()
+        lastStateReceivedAt = null
         session = Session(this)
         globalPaused = true
         globalPositionMs = 0.0
@@ -128,5 +216,16 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
 
         /** Cooldown (seconds) after a fastforward before it can trigger again. */
         const val FASTFORWARD_RESET_THRESHOLD = 3.0
+
+        /** How often the list-probe coroutine fires an empty List to keep the channel warm. */
+        const val LIST_PROBE_INTERVAL_SECONDS = 15L
+
+        /** How often the State watchdog checks whether the server has gone silent. */
+        const val WATCHDOG_INTERVAL_SECONDS = 5L
+
+        /** If no State message has arrived in this many seconds, we assume the channel is
+         * broken and trigger a reconnect. Chosen to match the Syncplay server's own
+         * ~10–15s threshold for dropping unresponsive clients. */
+        const val STATE_TIMEOUT_SECONDS = 15L
     }
 }

@@ -46,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -96,7 +97,8 @@ private enum class GifSource { SEARCH, TRENDING, RECENTS, FAVORITES }
 fun GifPanel(
     query: String,
     onGifSelected: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isHUDVisible: Boolean = true
 ) {
     var selectedType by remember { mutableStateOf(KlipyMediaType.GIF) }
     var selectedSource by remember { mutableStateOf(GifSource.TRENDING) }
@@ -274,6 +276,9 @@ fun GifPanel(
                     ) {
                         items(results, key = { it.id }) { media ->
                             Box {
+                                /* `.alpha()` is applied directly on AnimatedImage's modifier so the
+                                 * iOS UIKitView honors it (Compose's parent-Box alpha does not
+                                 * cascade into native views — see AnimatedImage.ios.kt). */
                                 AnimatedImage(
                                     url = media.previewUrl,
                                     contentDescription = null,
@@ -281,6 +286,7 @@ fun GifPanel(
                                     modifier = Modifier
                                         .height(80.dp)
                                         .clip(RoundedCornerShape(4.dp))
+                                        .alpha(if (isHUDVisible) 1f else 0f)
                                         .combinedClickable(
                                             onClick = {
                                                 onGifSelected(media.fullUrl)

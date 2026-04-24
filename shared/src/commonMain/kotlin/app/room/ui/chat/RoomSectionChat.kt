@@ -3,6 +3,8 @@ package app.room.ui.chat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -39,7 +41,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
@@ -96,10 +97,15 @@ fun RoomChatSection(modifier: Modifier) {
                         viewmodel.dispatcher.sendMessage(gifUrl)
                         viewmodel.uiState.gifPanelVisible.value = false
                     },
-                    modifier = Modifier.weight(1f).fillMaxWidth()
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    isHUDVisible = isHUDVisible
                 )
             } else {
-                ChatBox(viewmodel = viewmodel, modifier = Modifier.weight(1f).fillMaxWidth())
+                ChatBox(
+                    viewmodel = viewmodel,
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    isHUDVisible = isHUDVisible
+                )
             }
         }
     }
@@ -118,10 +124,20 @@ fun ChatTextField(
     val gradientBrush = Brush.linearGradient(colors = flexibleGradient)
     val msgIsNotEmpty by derivedStateOf { msg.isNotEmpty() }
 
+    /* Authoritative focus signal: drives HUD auto-hide gating. `collectIsFocusedAsState`
+     * reads the TextField's real focus state via its InteractionSource — more reliable
+     * than onFocusChanged, which can fire stale false positives during recomposition. */
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocused by interactionSource.collectIsFocusedAsState()
+
+    LaunchedEffect(isFocused) {
+        viewmodel.uiState.chatInputFocused.value = isFocused
+    }
+
     /* Drop chat focus (and dismiss the soft keyboard) when the HUD hides, so the input
      * doesn't stay focused behind an invisible overlay. */
     LaunchedEffect(isHUDVisible) {
-        if (!isHUDVisible) focusManager.clearFocus()
+        if (!isHUDVisible) focusManager.clearFocus(force = true)
     }
 
     fun send() {
@@ -139,9 +155,8 @@ fun ChatTextField(
         verticalAlignment = Alignment.CenterVertically
     ) {
         OutlinedTextField(
-            modifier = modifier.alpha(0.75f).weight(1f).onFocusChanged { focusState ->
-                viewmodel.uiState.chatInputFocused.value = focusState.isFocused
-            },
+            interactionSource = interactionSource,
+            modifier = modifier.alpha(0.75f).weight(1f),
             singleLine = true,
             keyboardActions = KeyboardActions(
                 onDone = {
@@ -233,7 +248,7 @@ fun ChatTextField(
 }
 
 @Composable
-fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel) {
+fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel, isHUDVisible: Boolean) {
     val hasVideo by viewmodel.hasVideo.collectAsState()
 
     val chatMessages by viewmodel.session.messageSequence.collectAsState()
@@ -268,9 +283,14 @@ fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel) {
             modifier = Modifier.fillMaxSize()
         ) {
             items(chatMessages) { chatMessage ->
-                /* Once seen, don't use it in fading message */
-                SideEffect {
-                    chatMessage.seen = true
+                /* Only mark as seen when the HUD is actually visible. The HUD now stays
+                 * composed (alpha-0) when hidden, so SideEffect would otherwise fire for
+                 * every new message instantly — defeating FadingMessageLayout, which only
+                 * shows unseen messages. */
+                if (isHUDVisible) {
+                    SideEffect {
+                        chatMessage.seen = true
+                    }
                 }
 
                 if (chatMessage.isImageUrl) {
@@ -287,6 +307,9 @@ fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel) {
                             strokeColors = if (msgOutlineActivate) listOf(Color.Black, Color.Black) else listOf(),
                             strokeWidth = msgOutlineThickness.toFloat()
                         )
+                        /* `.alpha()` is applied directly on AnimatedImage's modifier so the
+                         * iOS UIKitView honors it (Compose's parent-Box alpha does not
+                         * cascade into native views — see AnimatedImage.ios.kt). */
                         AnimatedImage(
                             url = chatMessage.content,
                             contentDescription = null,
@@ -295,6 +318,7 @@ fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel) {
                                 .padding(start = 4.dp)
                                 .size(64.dp)
                                 .clip(RoundedCornerShape(6.dp))
+                                .alpha(if (isHUDVisible) 1f else 0f)
                         )
                     }
                 } else {

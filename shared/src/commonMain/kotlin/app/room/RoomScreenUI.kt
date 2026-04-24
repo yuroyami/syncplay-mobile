@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeGestures
@@ -100,16 +101,20 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                 val isHUDVisible by viewmodel.uiState.visibleHUD.collectAsState()
 
                 /* Auto-hide HUD after configured timeout when video is loaded.
-                 * Restart keys include hasActiveOverlay/isPlaying so the effect cancels cleanly
-                 * whenever an overlay (cards, popups, chat focus/keyboard, typing) opens or
-                 * playback state flips — then re-arms the timer when conditions allow hiding again.
-                 * hudInteractionSignal resets the countdown on every touch within the HUD. */
+                 * Restart keys include hasActiveOverlay/isPlaying/isImeVisible so the effect
+                 * cancels cleanly whenever an overlay (cards, popups, chat focus/typing) opens,
+                 * playback state flips, or the soft keyboard is up — then re-arms the timer when
+                 * conditions allow hiding again. The IME check is a belt-and-braces second gate:
+                 * if the keyboard is up, the user is typing even if the focus flag somehow missed
+                 * an update. hudInteractionSignal resets the countdown on every touch. */
                 val hudAutoHideTimeout by HUD_AUTO_HIDE_TIMEOUT.watchPref()
                 val hasActiveOverlay by viewmodel.uiState.hasActiveOverlay.collectAsState()
                 val isPlaying by viewmodel.playerManager.isNowPlaying.collectAsState()
-                LaunchedEffect(isHUDVisible, hudAutoHideTimeout, hasActiveOverlay, isPlaying, hasVideo) {
+                val imeBottom = WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current)
+                val isImeVisible = imeBottom > 0
+                LaunchedEffect(isHUDVisible, hudAutoHideTimeout, hasActiveOverlay, isPlaying, hasVideo, isImeVisible) {
                     if (!isHUDVisible || hudAutoHideTimeout <= 0) return@LaunchedEffect
-                    if (!hasVideo || hasActiveOverlay || !isPlaying) return@LaunchedEffect
+                    if (!hasVideo || hasActiveOverlay || !isPlaying || isImeVisible) return@LaunchedEffect
 
                     while (true) {
                         val interaction = withTimeoutOrNull(hudAutoHideTimeout * 1000L) {

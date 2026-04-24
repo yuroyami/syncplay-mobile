@@ -68,6 +68,7 @@
     <string name="room_sub_track_changed">تم تغيير مسار الترجمة إلى: %1$s</string>
     <string name="room_audio_track_changed">تم تغيير مسار الصوت إلى: %1$s</string>
     <string name="room_details_current_room">الغرفة: %1$s</string>
+    <string name="room_details_user_count">%1$d مستخدمين</string>
     <string name="room_details_file_properties">المدة: %1$s - الحجم: %2$s ميغابايت</string>
     <string name="room_file_mismatch_warning_core">ملفك يختلف عن ملف %1$s بالطرق التالية:</string>
     <string name="room_shared_playlist_updated">%1$s حدّث قائمة التشغيل</string>

@@ -79,6 +79,11 @@ data class State(
         dispatcher: NetworkManager,
         callback: RoomCallback
     ) {
+        // Freshness stamp for the channel-health watchdog. Set before any other processing
+        // so even a State we end up ignoring (clientIgnFly != 0, etc.) still resets the
+        // "no State received" timer — the server is clearly alive.
+        protocol.lastStateReceivedAt = Clock.System.now()
+
         var position: Double? = null
         var paused: Boolean? = null
         var doSeek: Boolean? = null

@@ -1,6 +1,10 @@
 package app.player.vlc
 
+import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.annotation.MainThread
 import androidx.annotation.UiThread
 import androidx.compose.material.icons.Icons
@@ -64,11 +68,36 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
         vlcPlayer = MediaPlayer(libvlc)
         vlcPlayer?.attachViews(vlcView, null, true, true)
 
+        // Force the default scale (preserves aspect ratio and centers the video).
+        vlcPlayer?.videoScale = MediaPlayer.ScaleType.SURFACE_BEST_FIT
+
+        // Workaround for a libVLC 4 eap centering issue: the TextureView/SurfaceView that
+        // attachViews() inserts into VLCVideoLayout gets laid out with default FrameLayout
+        // gravity (TOP|START), so when the scaled video is narrower than the parent, the
+        // black bar ends up on the right side only. Force center-gravity on every child
+        // surface any time the layout changes so both the initial layout and any later
+        // relayout (orientation change, etc.) stay centered. */
+        vlcView.viewTreeObserver.addOnGlobalLayoutListener { centerVlcSurfaces(vlcView) }
+        centerVlcSurfaces(vlcView)
+
         isInitialized = true
 
         vlcAttachObserver()
 
         startTrackingProgress()
+    }
+
+    private fun centerVlcSurfaces(root: View) {
+        if (root !is ViewGroup) return
+        for (i in 0 until root.childCount) {
+            val child = root.getChildAt(i)
+            val lp = child.layoutParams
+            if (lp is FrameLayout.LayoutParams && lp.gravity != Gravity.CENTER) {
+                lp.gravity = Gravity.CENTER
+                child.layoutParams = lp
+            }
+            if (child is ViewGroup) centerVlcSurfaces(child)
+        }
     }
 
     override suspend fun destroy() {

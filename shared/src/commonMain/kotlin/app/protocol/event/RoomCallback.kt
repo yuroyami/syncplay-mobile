@@ -240,6 +240,12 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
         network.state.value = ConnectionState.CONNECTED
 
+        // Channel-health monitoring: starts a periodic List-probe and a State watchdog
+        // that detects silent disconnects. Bound to this room session — stopped in
+        // onDisconnected/onConnectionFailed and on ProtocolManager.invalidate(), so it
+        // never leaks into solo mode or after the user leaves the room.
+        protocol.startChannelHealthMonitoring()
+
         network.sendAsync<ClientMessage.Readiness> {
             isReady = if (viewmodel.media == null && READY_FIRST_HAND.value()) true else session.ready.value
             manuallyInitiated = false
@@ -275,6 +281,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         loggy("SYNCPLAY Protocol: Connection failed :/")
 
         hapticIf(HAPTIC_ON_CONNECTION)
+        protocol.stopChannelHealthMonitoring()
         network.state.value = ConnectionState.DISCONNECTED
         val osdMessage: suspend () -> String = { getString(Res.string.room_connection_failed) }
         dispatcher.broadcastMessage(message = osdMessage, isChat = false, isError = true)
@@ -286,6 +293,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         loggy("SYNCPLAY Protocol: Disconnected.")
 
         hapticIf(HAPTIC_ON_CONNECTION)
+        protocol.stopChannelHealthMonitoring()
         network.state.value = ConnectionState.DISCONNECTED
         val osdMessage: suspend () -> String = { getString(Res.string.room_attempting_reconnection) }
         dispatcher.broadcastMessage(message = osdMessage, isChat = false, isError = true)

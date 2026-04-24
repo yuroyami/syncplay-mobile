@@ -92,6 +92,7 @@
     <string name="room_sub_track_changed">Subtitle Track changed to: %1$s</string>
     <string name="room_audio_track_changed">Audio Track changed to: %1$s</string>
     <string name="room_details_current_room">Room: %1$s</string>
+    <string name="room_details_user_count">%1$d users</string>
     <string name="room_details_file_properties">Duration: %1$s - Size: %2$s MBs</string>
     <string name="room_file_mismatch_warning_core">Your file is different from %1$s's file in the following ways:</string>
     <string name="room_shared_playlist_updated">%1$s updated the playlist</string>

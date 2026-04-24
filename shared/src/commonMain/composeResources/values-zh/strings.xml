@@ -57,6 +57,7 @@
     <string name="room_sub_track_changed">字幕轨道更改为：%1$s</string>
     <string name="room_audio_track_changed">音频轨道更改为：%1$s</string>
     <string name="room_details_current_room">房间：%1$s</string>
+    <string name="room_details_user_count">%1$d 位用户</string>
     <string name="room_details_file_properties">时长：%1$s - 大小：%2$s MB</string>
     <string name="room_file_mismatch_warning_core">您的文件与 %1$s 的文件在以下方面不同：</string>
     <string name="room_shared_playlist_updated">%1$s 更新了播放列表</string>

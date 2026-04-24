@@ -5,40 +5,43 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class KlipySearchResponse(
-    val result: Boolean,
-    val data: KlipySearchWrapper
+    val result: Boolean = false,
+    val data: KlipySearchWrapper = KlipySearchWrapper()
 )
 
 @Serializable
 data class KlipySearchWrapper(
-    val data: List<KlipyItem>,
+    val data: List<KlipyItem> = emptyList(),
 
     @SerialName("current_page")
-    val currentPage: Int,
+    val currentPage: Int = 1,
     @SerialName("per_page")
-    val perPage: Int,
+    val perPage: Int = 0,
     @SerialName("has_next")
-    val hasNext: Boolean
+    val hasNext: Boolean = false
 )
 
+/* Defaults on every field so the parser accepts sparse responses. Klipy's shape changes
+ * subtly between endpoints (search vs trending vs recents), and the Darwin engine on iOS
+ * surfaces missing fields as hard failures — defaults keep deserialization alive. */
 @Serializable
 data class KlipyItem(
-    val id: Long,
-    val slug: String,
-    val title: String,
-    val file: KlipyFile,
-    val tags: List<String>,
-    val type: String,
+    val id: Long = 0L,
+    val slug: String = "",
+    val title: String = "",
+    val file: KlipyFile = KlipyFile(),
+    val tags: List<String> = emptyList(),
+    val type: String = "",
     @SerialName("blur_preview")
-    val blurPreview: String
+    val blurPreview: String = ""
 )
 
 @Serializable
 data class KlipyFile(
-    val hd: KlipyResolution,
-    val md: KlipyResolution,
-    val sm: KlipyResolution,
-    val xs: KlipyResolution
+    val hd: KlipyResolution = KlipyResolution(),
+    val md: KlipyResolution = KlipyResolution(),
+    val sm: KlipyResolution = KlipyResolution(),
+    val xs: KlipyResolution = KlipyResolution()
 )
 
 @Serializable

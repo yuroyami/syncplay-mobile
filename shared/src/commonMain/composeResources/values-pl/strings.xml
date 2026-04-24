@@ -67,6 +67,7 @@
     <string name="room_sub_track_changed">Ścieżka napisów zmieniona na: %1$s</string>
     <string name="room_audio_track_changed">Ścieżka dźwiękowa zmieniona na: %1$s</string>
     <string name="room_details_current_room">Pokój: %1$s</string>
+    <string name="room_details_user_count">%1$d użytkowników</string>
     <string name="room_details_file_properties">Czas trwania: %1$s - Rozmiar: %2$s MB</string>
     <string name="room_file_mismatch_warning_core">Twój plik różni się od pliku %1$s w następujący sposób:</string>
     <string name="room_shared_playlist_updated">%1$s zaktualizował listę odtwarzania</string>

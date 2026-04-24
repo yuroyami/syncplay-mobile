@@ -36,12 +36,26 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import platform.AVFAudio.AVAudioSession
+import platform.AVFAudio.AVAudioSessionCategoryPlayback
+import platform.AVFAudio.AVAudioSessionInterruptionNotification
+import platform.AVFAudio.AVAudioSessionInterruptionOptionKey
+import platform.AVFAudio.AVAudioSessionInterruptionOptionShouldResume
+import platform.AVFAudio.AVAudioSessionInterruptionTypeBegan
+import platform.AVFAudio.AVAudioSessionInterruptionTypeEnded
+import platform.AVFAudio.AVAudioSessionInterruptionTypeKey
+import platform.AVFAudio.AVAudioSessionModeMoviePlayback
+import platform.AVFAudio.AVAudioSessionRouteChangeNotification
+import platform.AVFAudio.setActive
 import platform.Foundation.NSNotification
+import platform.Foundation.NSNotificationCenter
 import platform.Foundation.NSNumber
+import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSURL
 import platform.UIKit.UIColor
 import platform.UIKit.UIView
 import platform.darwin.NSObject
+import platform.darwin.NSObjectProtocol
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.uisetting_audio_delay_summary
 import syncplaymobile.shared.generated.resources.uisetting_audio_delay_title
@@ -69,6 +83,10 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
 
     private var pausedSeekPosition: Long? = null
 
+    /** Observer tokens for AVAudioSession notifications. Kept so we can unregister on destroy. */
+    private var interruptionObserver: NSObjectProtocol? = null
+    private var routeChangeObserver: NSObjectProtocol? = null
+
     /**
      * Cleans up VLC resources and stops playback.
      *
@@ -78,6 +96,8 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         if (!isInitialized) return
 
         try {
+            removeAudioSessionObservers()
+
             vlcPlayer?.stop()
             vlcPlayer?.finalize()
             vlcPlayer?.drawable = null
@@ -176,9 +196,102 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     override fun initialize() {
         vlcPlayer!!.setDelegate(vlcDelegate)
 
+        configureAudioSession()
+        registerAudioSessionObservers()
+
         isInitialized = true
 
         //startTrackingProgress()
+    }
+
+    /**
+     * Configures the shared AVAudioSession for video playback.
+     *
+     * Must use category `.playback` with mode `.moviePlayback` so audio continues in the
+     * background (PiP, lock screen) and mixes correctly with the system. VLCKit does NOT
+     * configure this on our behalf — without this call, audio may drop after the first
+     * interruption or route change.
+     */
+    private fun configureAudioSession() {
+        try {
+            val session = AVAudioSession.sharedInstance()
+            // Positional args: K/N's Obj-C interop exposes overloaded `setCategory:*:` /
+            // `setActive:*:` variants that share a base name, so named-parameter resolution
+            // can fail — positional keeps us on the shortest matching overload.
+            session.setCategory(AVAudioSessionCategoryPlayback, AVAudioSessionModeMoviePlayback, 0uL, null)
+            session.setActive(true, null)
+        } catch (e: Exception) {
+            loggy("AVAudioSession configure failed: ${e.message}")
+        }
+    }
+
+    /**
+     * Registers NSNotificationCenter observers to recover audio after system interruptions
+     * (Siri, incoming FaceTime, alarm, any other AVAudioSession grab) and route changes
+     * (headphones plugged/unplugged, AirPods reconnect). On interruption-end we re-activate
+     * the session and nudge VLC back into sync with a pause/play cycle; on route change we
+     * only re-activate the session. This mirrors Apple's "AVAudioSession best practices"
+     * sample and is the only reliable way to keep audio playing on VLCKit after Siri.
+     */
+    private fun registerAudioSessionObservers() {
+        val center = NSNotificationCenter.defaultCenter
+        val queue = NSOperationQueue.mainQueue
+
+        interruptionObserver = center.addObserverForName(
+            name = AVAudioSessionInterruptionNotification,
+            `object` = null,
+            queue = queue
+        ) { note ->
+            val info = note?.userInfo ?: return@addObserverForName
+            val type = (info[AVAudioSessionInterruptionTypeKey] as? NSNumber)?.unsignedLongValue
+                ?: return@addObserverForName
+
+            when (type) {
+                AVAudioSessionInterruptionTypeBegan -> {
+                    // Nothing to do: iOS already paused us. We'll recover on "ended".
+                }
+                AVAudioSessionInterruptionTypeEnded -> {
+                    val options = (info[AVAudioSessionInterruptionOptionKey] as? NSNumber)
+                        ?.unsignedLongValue ?: 0uL
+                    val shouldResume = (options and AVAudioSessionInterruptionOptionShouldResume) != 0uL
+
+                    try {
+                        AVAudioSession.sharedInstance().setActive(true, error = null)
+                    } catch (e: Exception) {
+                        loggy("AVAudioSession re-activate failed: ${e.message}")
+                    }
+
+                    // VLCKit sometimes gets stuck with a silent audio pipeline even though its
+                    // state says "playing". Toggling pause/play rewires the audio graph.
+                    if (shouldResume) {
+                        playerScopeMain.launch(Dispatchers.Main.immediate) {
+                            val wasPlaying = vlcPlayer?.isPlaying() == true
+                            vlcPlayer?.pause()
+                            delay(50)
+                            if (wasPlaying) vlcPlayer?.play()
+                        }
+                    }
+                }
+            }
+        }
+
+        routeChangeObserver = center.addObserverForName(
+            name = AVAudioSessionRouteChangeNotification,
+            `object` = null,
+            queue = queue
+        ) { _ ->
+            try {
+                AVAudioSession.sharedInstance().setActive(true, error = null)
+            } catch (_: Exception) { }
+        }
+    }
+
+    private fun removeAudioSessionObservers() {
+        val center = NSNotificationCenter.defaultCenter
+        interruptionObserver?.let { center.removeObserver(it) }
+        routeChangeObserver?.let { center.removeObserver(it) }
+        interruptionObserver = null
+        routeChangeObserver = null
     }
 
     /**

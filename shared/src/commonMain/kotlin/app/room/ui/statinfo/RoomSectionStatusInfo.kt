@@ -30,6 +30,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_details_current_room
+import syncplaymobile.shared.generated.resources.room_details_user_count
 import syncplaymobile.shared.generated.resources.room_more_info_change_network_engine_msg
 import syncplaymobile.shared.generated.resources.room_ping_connected
 import syncplaymobile.shared.generated.resources.room_reconnect_button
@@ -47,15 +48,26 @@ fun RoomStatusInfoSection(modifier: Modifier) {
     ) {
         if (!viewmodel.isSoloMode) {
             val connectionState by viewmodel.networkManager.state.collectAsState()
+            val userList by viewmodel.session.userList.collectAsState()
+
+            /* Total users in the room: userList from the server already includes ourselves
+             * (the ListResponse contains all room members keyed by username). Fall back to 1
+             * while the list hasn't populated yet but we're connected, so the count doesn't
+             * flash "0 users" during join. */
+            val totalUsers = when {
+                userList.isNotEmpty() -> userList.size
+                connectionState == ConnectionState.CONNECTED -> 1
+                else -> 0
+            }
 
             Text(
                 text = stringResource(Res.string.room_details_current_room, viewmodel.session.currentRoom) +
-                        if (connectionState == ConnectionState.CONNECTED) " (${stringResource(Res.string.room_ping_connected)})" else "",
+                        (if (connectionState == ConnectionState.CONNECTED) " (${stringResource(Res.string.room_ping_connected)})" else "") +
+                        (if (totalUsers > 0) " · ${stringResource(Res.string.room_details_user_count, totalUsers)}" else ""),
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
             )
 
-            val userList by viewmodel.session.userList.collectAsState()
             val userListAlreadyPopulated by derivedStateOf { userList.isNotEmpty() }
 
             AnimatedVisibility(connectionState == ConnectionState.DISCONNECTED && userListAlreadyPopulated) {

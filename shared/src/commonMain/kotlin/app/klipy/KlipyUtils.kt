@@ -5,13 +5,13 @@ import app.klipy.KlipyUtils.trending
 import app.preferences.Preferences.USER_ID
 import app.preferences.value
 import app.utils.httpClient
-import app.utils.loggy
 import de.jensklingenberg.ktorfit.Ktorfit
 import io.ktor.client.HttpClientConfig
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.observer.ResponseObserver
-import io.ktor.client.statement.bodyAsText
-import io.ktor.client.statement.request
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.request.header
+import io.ktor.http.HttpHeaders
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -124,13 +124,34 @@ object KlipyUtils {
         get() = {
             install(ContentNegotiation) {
                 json(
-                    Json { ignoreUnknownKeys = true; isLenient = true }
+                    /* explicitNulls=false + coerceInputValues=true lets the parser accept
+                     * responses where Klipy omits or nulls out optional fields (blur_preview,
+                     * per-format sub-objects, etc.) without failing. The Darwin engine on iOS
+                     * tends to surface these missing fields as hard failures where OkHttp on
+                     * Android silently shrugs, which is why the GIF panel looked broken on
+                     * iOS only. */
+                    Json {
+                        ignoreUnknownKeys = true
+                        isLenient = true
+                        coerceInputValues = true
+                        explicitNulls = false
+                    }
                 )
             }
-            install(ResponseObserver) {
-                onResponse { response ->
-                    loggy("Klipy [${response.status}] ${response.request.url}: ${response.bodyAsText()}")
-                }
+            install(HttpTimeout) {
+                /* Darwin on iOS has no sensible default timeout — requests can hang forever
+                 * when the network flakes. Keep values generous enough for slow mobile networks
+                 * but finite so the UI is never stuck on a spinner. */
+                requestTimeoutMillis = 20_000
+                connectTimeoutMillis = 10_000
+                socketTimeoutMillis = 20_000
+            }
+            /* Ensure JSON is explicitly requested and identify ourselves as a browser-like
+             * client. Klipy occasionally returns 403 for requests missing these headers when
+             * hit from a fresh NSURLSession on iOS. */
+            defaultRequest {
+                header(HttpHeaders.Accept, "application/json")
+                header(HttpHeaders.UserAgent, "SynkplayMobile/${BuildConfig.APP_VERSION}")
             }
         }
 }

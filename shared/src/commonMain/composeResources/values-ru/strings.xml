@@ -57,6 +57,7 @@
     <string name="room_sub_track_changed">Дорожка с субтитрами изменена на: %1$s</string>
     <string name="room_audio_track_changed">Звуковая дорожка изменена на: %1$s</string>
     <string name="room_details_current_room">Комната: %1$s</string>
+    <string name="room_details_user_count">%1$d пользователей</string>
     <string name="room_details_file_properties">Длительность: %1$s - Размер: %2$s МБ</string>
     <string name="room_file_mismatch_warning_core">Ваш файл отличается от файла %1$s следующим образом:</string>
     <string name="room_shared_playlist_updated">%1$s обновил список воспроизведения</string>
