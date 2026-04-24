@@ -21,6 +21,7 @@ import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
 import app.preferences.Pref
 import app.preferences.PrefExtraConfig
+import app.preferences.Preferences.VLC_CUSTOM_FLAGS
 import app.preferences.settings.SettingCategory
 import app.room.RoomViewmodel
 import app.utils.contextObtainer
@@ -152,6 +153,9 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
                 vlcPlayer?.setAudioDelay(it * 1000L)
             }
         }
+        // Custom LibVLC launch flags — only meaningful when the VLC engine is actually the
+        // one constructing a LibVLC instance, so attached to the engine-specific category.
+        +VLC_CUSTOM_FLAGS
     }
 
     override suspend fun hasMedia(): Boolean {

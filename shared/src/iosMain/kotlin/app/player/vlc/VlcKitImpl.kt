@@ -16,6 +16,7 @@ import app.player.models.Track
 import app.preferences.Pref
 import app.preferences.PrefExtraConfig
 import app.preferences.Preferences.SUBTITLE_SIZE
+import app.preferences.Preferences.VLC_CUSTOM_FLAGS
 import app.preferences.settings.SettingCategory
 import app.preferences.value
 import app.room.RoomViewmodel
@@ -133,6 +134,9 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                 vlcPlayer?.currentAudioPlaybackDelay = it * 1000L
             }
         }
+        // Custom LibVLC launch flags — only meaningful when the VLC engine is actually the
+        // one constructing a VLCLibrary instance, so attached to the engine-specific category.
+        +VLC_CUSTOM_FLAGS
     }
 
     /**

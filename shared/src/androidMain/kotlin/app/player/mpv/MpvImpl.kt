@@ -23,8 +23,10 @@ import app.player.mpv.MpvFileUtils.copyAssets
 import app.player.mpv.MpvFileUtils.resolveUri
 import app.preferences.PrefExtraConfig
 import app.preferences.Preferences.MPV_DEBUG_MODE
+import app.preferences.Preferences.MPV_EXPORT_CONF
 import app.preferences.Preferences.MPV_GPU_NEXT
 import app.preferences.Preferences.MPV_HARDWARE_ACCELERATION
+import app.preferences.Preferences.MPV_IMPORT_CONF
 import app.preferences.Preferences.MPV_INTERPOLATION
 import app.preferences.Preferences.MPV_PROFILE
 import app.preferences.Preferences.MPV_VIDSYNC
@@ -130,6 +132,11 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
                 MPVLib.command(arrayOf("script-binding", "stats/display-page-$itemChosen"))
             }
         }
+        // mpv.conf import/export — Android-only because iOS mpv doesn't read a user config
+        // file (getMpvConfFilePath() returns null there). Attached to the engine-specific
+        // category so it only appears when the MPV engine is active.
+        +MPV_IMPORT_CONF
+        +MPV_EXPORT_CONF
     }
 
     override suspend fun hasMedia(): Boolean {
