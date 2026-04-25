@@ -1,7 +1,7 @@
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
     repositories {
-        mavenLocal() // kmp-ssot: remove once com.yuroyami.kmpssot is live on Gradle Plugin Portal
+        mavenLocal() // kmp-ssot: remove once io.github.yuroyami.kmpssot is live on Gradle Plugin Portal
         mavenCentral()
         gradlePluginPortal()
         google()

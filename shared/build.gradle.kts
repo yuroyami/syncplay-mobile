@@ -1,4 +1,4 @@
-import com.yuroyami.kmpssot.kmpSsot
+import io.github.yuroyami.kmpssot.kmpSsot
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)

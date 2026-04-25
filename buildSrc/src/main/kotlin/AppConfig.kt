@@ -3,7 +3,7 @@ import java.io.File
 import java.util.Properties
 
 /**
- * What lives here: things the kmp-ssot plugin (com.yuroyami.kmpssot) does NOT cover.
+ * What lives here: things the kmp-ssot plugin (io.github.yuroyami.kmpssot) does NOT cover.
  * Plugin owns: appName / versionName / versionCode / bundleId / locales propagation
  * to Android + iOS. Toolchain (compileSdk/minSdk/ndkVersion) lives in gradle.properties.
  *

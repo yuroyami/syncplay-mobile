@@ -1,7 +1,7 @@
 import AppConfig.exoOnly
 import NativeBuildConfig.registerNativeBuildTask
 import NativeBuildConfig.validateNdk
-import com.yuroyami.kmpssot.kmpSsot
+import io.github.yuroyami.kmpssot.kmpSsot
 
 plugins {
     alias(libs.plugins.android.application)
