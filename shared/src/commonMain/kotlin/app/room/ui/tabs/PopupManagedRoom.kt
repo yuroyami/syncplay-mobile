@@ -32,7 +32,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.LocalRoomViewmodel
-import app.protocol.event.ClientMessage
+import app.protocol.ClientMessage
 import app.theme.Theming.flexibleGradient
 import app.uicomponents.FlexibleText
 import app.uicomponents.SyncplayPopup
@@ -147,19 +147,14 @@ fun ManagedRoomPopup(purpose: ManagedRoomPopupPurpose) {
 
                         viewmodel.protocol.isRoomChanging = true
 
-                        viewmodel.networkManager.sendAsync<ClientMessage.ControllerAuth> {
-                            when (purpose) {
-                                ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM -> {
-                                    room = inputValue
-                                    password = generateRoomPassword()
-                                }
+                        val authMsg = when (purpose) {
+                            ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM ->
+                                ClientMessage.controllerAuth(room = inputValue, password = generateRoomPassword())
 
-                                ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR -> {
-                                    password = inputValue
-                                }
-                            }
-
+                            ManagedRoomPopupPurpose.IDENTIFY_AS_OPERATOR ->
+                                ClientMessage.controllerAuth(password = inputValue)
                         }
+                        viewmodel.networkManager.sendAsync(authMsg)
                     },
                 ) {
                     Icon(imageVector = Icons.Filled.Done, null)

@@ -1,7 +1,7 @@
 package app.server.model
 
 import app.protocol.models.RoomFeatures
-import app.protocol.server.FileData
+import app.protocol.wire.FileData
 import app.server.SyncplayServer
 import app.server.model.ServerConfig.Companion.MAX_FILENAME_LENGTH
 import app.utils.generateTimestampMillis

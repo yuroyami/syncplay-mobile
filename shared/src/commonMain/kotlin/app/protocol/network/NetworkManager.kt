@@ -5,28 +5,36 @@ import androidx.lifecycle.viewModelScope
 import app.AbstractManager
 import app.preferences.Preferences.RECONNECTION_INTERVAL
 import app.preferences.value
-import app.protocol.ProtocolManager.Companion.createPacketInstance
-import app.protocol.event.ClientMessage
-import app.protocol.syncplayJson
+import app.protocol.ClientMessage
+import app.protocol.ServerMessage
+import app.protocol.ServerMessageDeserializer
+import app.protocol.ServerMessageHandler
 import app.protocol.models.ConnectionState
 import app.protocol.models.TlsState
+import app.protocol.syncplayJson
+import app.protocol.wire.TLSData
 import app.room.RoomViewmodel
-import app.utils.ProtocolApi
 import app.utils.loggy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.Json
-import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
 
+/**
+ * Client-side TCP network layer.
+ *
+ * Inbound: raw lines → [syncplayJson] decode via [ServerMessageDeserializer] → typed
+ * [ServerMessage] → [ServerMessageHandler.dispatch] (the room's handler implementation).
+ *
+ * Outbound: callers construct typed [ClientMessage] instances and pass them to [send] /
+ * [sendAsync]; encoding goes through [syncplayJson] and onto the wire.
+ */
 abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
     open val engine: NetworkEngine = NetworkEngine.SWIFTNIO
@@ -63,7 +71,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
             connectSocket()
 
             if (tls == TlsState.TLS_ASK) {
-                send<ClientMessage.TLS>()
+                send(ClientMessage.TLS(TLSData(startTLS = "send")))
             } else {
                 viewmodel.dispatcher.sendHello()
             }
@@ -92,20 +100,18 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
         }
     }
 
+    /**
+     * Decodes a raw inbound line and dispatches the typed [ServerMessage] to
+     * [viewmodel.serverHandler]. Same shape, same Kotlinx Serialization plumbing as the
+     * server's mirror-image pipeline.
+     */
     fun handlePacket(jsonString: String) {
         viewmodel.viewModelScope.launch(Dispatchers.Default) {
             if (BuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("**SERVER** $jsonString")
 
             try {
-                syncplayJson.decodeFromString(
-                    deserializer = ServerMessageDeserializer,
-                    string = jsonString
-                ).handle(
-                    protocol = viewmodel.protocol,
-                    viewmodel = viewmodel,
-                    dispatcher = viewmodel.networkManager,
-                    callback = viewmodel.callback
-                )
+                val message = syncplayJson.decodeFromString(ServerMessageDeserializer, jsonString)
+                message.dispatch(viewmodel.serverHandler)
             } catch (e: SerializationException) {
                 loggy("Problematic Json: $jsonString")
                 loggy("Serialization error: ${e.message}")
@@ -118,27 +124,26 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
         viewmodel.callback.onDisconnected()
     }
 
-    typealias SendablePacket = String
-
-    private val sendChannel = Channel<SendablePacket>(capacity = Channel.BUFFERED)
-
-    @ProtocolApi
-    inline fun <reified T : ClientMessage> sendAsync(noinline init: suspend T.() -> Unit = {}) {
-        viewmodel.viewModelScope.launch(Dispatchers.IO) { send(init) }
-    }
-
-    @ProtocolApi
-    suspend inline fun <reified T : ClientMessage> send(noinline init: suspend T.() -> Unit = {}) {
+    /**
+     * Encodes a typed [ClientMessage] to JSON and writes it.
+     * No-op in solo mode.
+     */
+    suspend inline fun <reified T : ClientMessage> send(message: T) {
         if (viewmodel.isSoloMode) return
-
-        val packetInstance = createPacketInstance<T>(protocolManager = viewmodel.protocol)
-        init(packetInstance)
-        val jsonPacket = Json.encodeToString(packetInstance.build())
-        transmitPacket(jsonPacket, packetClass = T::class)
+        val jsonPacket = syncplayJson.encodeToString(message)
+        transmitPacket(jsonPacket, isHello = message is ClientMessage.Hello)
     }
 
-    /** Appends CRLF, writes to socket with 10s timeout. Retries up to 3 times before giving up. */
-    suspend fun transmitPacket(json: SendablePacket, packetClass: KClass<out ClientMessage>? = null, retryCounter: Int = 0) {
+    /** Fire-and-forget [send] — launched on [Dispatchers.IO]. */
+    inline fun <reified T : ClientMessage> sendAsync(message: T) {
+        viewmodel.viewModelScope.launch(Dispatchers.IO) { send(message) }
+    }
+
+    /**
+     * Appends CRLF, writes to socket with a 10s timeout. Retries up to 3 times before giving up.
+     * On final failure non-Hello packets get queued in [Session.outboundQueue].
+     */
+    suspend fun transmitPacket(json: String, isHello: Boolean = false, retryCounter: Int = 0) {
         withContext(Dispatchers.IO) {
             try {
                 withTimeout(10.seconds) {
@@ -150,12 +155,12 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
                 loggy(e.stackTraceToString())
                 if (retryCounter >= 3) {
                     loggy("SOCKET INVALID")
-                    if (packetClass != ClientMessage.Hello::class && packetClass != null) {
+                    if (!isHello) {
                         viewmodel.session.outboundQueue.add(json)
                     }
                     onError()
                 } else {
-                    transmitPacket(json, packetClass, retryCounter = retryCounter + 1)
+                    transmitPacket(json, isHello, retryCounter = retryCounter + 1)
                 }
             }
         }

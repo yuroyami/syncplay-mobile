@@ -1,6 +1,6 @@
 package app.server
 
-import app.protocol.server.Set
+import app.protocol.wire.UserEvent
 import app.server.model.ControlledServerRoom
 import app.server.model.RoomPasswordProvider
 import app.server.model.ServerConfig.Companion.MAX_ROOM_NAME_LENGTH
@@ -131,7 +131,7 @@ class PublicServerRoomManager : ServerRoomManager() {
     override fun moveWatcher(watcher: ServerWatcher, roomName: String) {
         val oldRoom = watcher.room
         if (oldRoom != null) {
-            val leftEvent = Set.UserEvent(left = JsonPrimitive(true))
+            val leftEvent = UserEvent(left = JsonPrimitive(true))
             broadcast(watcher) { w ->
                 w.server.getClientConnection(w)?.sendUserSetting(
                     watcher.name, oldRoom, null, leftEvent

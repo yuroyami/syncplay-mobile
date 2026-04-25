@@ -1,7 +1,7 @@
 package app.server
 
 import app.protocol.models.RoomFeatures
-import app.protocol.server.Set
+import app.protocol.wire.UserEvent
 import app.server.model.ControlledServerRoom
 import app.server.model.NotControlledRoomException
 import app.server.model.RoomPasswordProvider
@@ -170,7 +170,7 @@ class SyncplayServer(
     // --- Broadcasting messages ---
 
     private fun sendJoinMessage(watcher: ServerWatcher) {
-        val event = Set.UserEvent(
+        val event = UserEvent(
             joined = JsonPrimitive(true),
             version = watcher.version
         )
@@ -194,7 +194,7 @@ class SyncplayServer(
     }
 
     private fun sendLeftMessage(watcher: ServerWatcher) {
-        val event = Set.UserEvent(left = JsonPrimitive(true))
+        val event = UserEvent(left = JsonPrimitive(true))
         roomManager.broadcast(watcher) { w ->
             _connections[w]?.sendUserSetting(watcher.name, watcher.room, null, event)
         }

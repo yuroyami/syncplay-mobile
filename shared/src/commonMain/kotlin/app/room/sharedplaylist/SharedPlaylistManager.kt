@@ -8,7 +8,7 @@ import app.player.PlayerImpl.Companion.injectVideo
 import app.preferences.Preferences
 import app.preferences.set
 import app.preferences.value
-import app.protocol.event.ClientMessage
+import app.protocol.ClientMessage
 import io.github.vinceglb.filekit.PlatformFile
 import org.jetbrains.compose.resources.getString
 import syncplaymobile.shared.generated.resources.Res
@@ -45,9 +45,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         }
 
         /* Announcing a new updated list to the room members */
-        viewmodel.networkManager.send<ClientMessage.PlaylistChange> {
-            files = viewmodel.session.sharedPlaylist
-        }
+        viewmodel.networkManager.send(ClientMessage.playlistChange(viewmodel.session.sharedPlaylist.toList()))
     }
 
     /** Adds URLs from the url adding popup */
@@ -57,9 +55,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         for (s in string) {
             if (!viewmodel.session.sharedPlaylist.contains(s)) l.add(s)
         }
-        viewmodel.networkManager.sendAsync<ClientMessage.PlaylistChange> {
-            files = l
-        }
+        viewmodel.networkManager.sendAsync(ClientMessage.playlistChange(l))
     }
 
     /** Adding a file to the playlist: This basically adds one file name to the playlist, then,
@@ -77,16 +73,12 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             if (viewmodel.session.sharedPlaylist.isEmpty() && viewmodel.session.spIndex.intValue == -1) {
                 viewmodel.player.injectVideo(uri)
 
-                viewmodel.networkManager.send<ClientMessage.PlaylistIndex> {
-                    index = 0
-                }
+                viewmodel.networkManager.send(ClientMessage.playlistIndex(0))
                 //TODO MAKE NON=ASYNC
             }
             viewmodel.session.sharedPlaylist.add(filename)
         }
-        viewmodel.networkManager.send<ClientMessage.PlaylistChange> {
-            files = viewmodel.session.sharedPlaylist
-        }
+        viewmodel.networkManager.send(ClientMessage.playlistChange(viewmodel.session.sharedPlaylist.toList()))
     }
 
 
@@ -94,17 +86,13 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     fun clearPlaylist() {
         if (viewmodel.session.sharedPlaylist.isEmpty()) return
 
-        viewmodel.networkManager.sendAsync<ClientMessage.PlaylistChange> {
-            files = emptyList()
-        }
+        viewmodel.networkManager.sendAsync(ClientMessage.playlistChange(emptyList()))
     }
 
     /** This will delete an item from playlist at a given index 'i' */
     fun deleteItemFromPlaylist(i: Int) {
         viewmodel.session.sharedPlaylist.removeAt(i)
-        viewmodel.networkManager.sendAsync<ClientMessage.PlaylistChange> {
-            files = viewmodel.session.sharedPlaylist
-        }
+        viewmodel.networkManager.sendAsync(ClientMessage.playlistChange(viewmodel.session.sharedPlaylist.toList()))
 
         if (viewmodel.session.sharedPlaylist.isEmpty()) {
             viewmodel.session.spIndex.intValue = -1
@@ -114,9 +102,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     /** This is to send a playlist selection change to the server.
      * This occurs when a user selects a different item from the shared playlist. */
     fun sendPlaylistSelection(i: Int) {
-        viewmodel.networkManager.sendAsync<ClientMessage.PlaylistIndex> {
-            index = i
-        }
+        viewmodel.networkManager.sendAsync(ClientMessage.playlistIndex(i))
     }
 
     /** This is to change playlist selection in response other users' selection */

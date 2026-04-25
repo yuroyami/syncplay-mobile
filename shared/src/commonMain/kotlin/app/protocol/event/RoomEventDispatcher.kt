@@ -6,11 +6,17 @@ import app.player.Playback
 import app.preferences.Preferences
 import app.preferences.Preferences.UNPAUSE_ACTION
 import app.preferences.value
+import app.protocol.ClientMessage
+import app.protocol.models.RoomFeatures
+import app.protocol.wire.HelloData
+import app.protocol.wire.Room
 import app.room.RoomViewmodel
 import app.room.models.Message
 import app.utils.loggy
+import app.utils.md5
 import app.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -28,29 +34,43 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
     val session = viewmodel.session
 
     suspend fun sendHello() {
-       network.send<ClientMessage.Hello> {
-            username = session.currentUsername
-            roomname = session.currentRoom
-            serverPassword = session.currentPassword
-        }
+        val passwordHash = session.currentPassword.takeIf { it.isNotEmpty() }
+            ?.let { md5(it).toHexString(HexFormat.Default) }
+        network.send(
+            ClientMessage.Hello(
+                HelloData(
+                    username = session.currentUsername,
+                    password = passwordHash,
+                    room = Room(session.currentRoom),
+                    version = "1.7.3",
+                    realversion = "1.7.3",
+                    features = clientFeatures
+                )
+            )
+        )
     }
 
     var pendingSeekFromMs: Long = 0L
     fun sendSeek(newPosMs: Long) {
         if (viewmodel.isSoloMode) return
 
-        this@RoomEventDispatcher.network.sendAsync<ClientMessage.State> {
-            serverTime = null
-            doSeek = true
-            position = newPosMs / 1000L
-            changeState = 1
-            this.play = viewmodel.player.isPlaying() == true
+        viewmodel.viewModelScope.launch(Dispatchers.IO) {
+            val playing = viewmodel.player.isPlaying()
+            network.send(
+                viewmodel.protocol.buildStatePacket(
+                    serverTime = null,
+                    doSeek = true,
+                    position = newPosMs / 1000L,
+                    changeState = 1,
+                    play = playing
+                )
+            )
         }
     }
 
     fun sendMessage(msg: String) {
         if (viewmodel.isSoloMode) return
-        this@RoomEventDispatcher.network.sendAsync<ClientMessage.Chat> { message = msg }
+        network.sendAsync(ClientMessage.Chat(msg))
     }
 
     fun controlPlayback(playback: Playback, tellServer: Boolean) {
@@ -64,10 +84,7 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
                 /* Block the unpause — set as ready instead */
                 loggy("SYNCPLAY Readiness: Conditions not met, setting as ready instead of unpausing")
                 viewmodel.session.ready.value = true
-                network.sendAsync<ClientMessage.Readiness> {
-                    isReady = true
-                    manuallyInitiated = true
-                }
+                network.sendAsync(ClientMessage.readiness(isReady = true, manuallyInitiated = true))
                 broadcastMessage(isChat = false) { getString(Res.string.room_set_as_ready) }
                 return
             }
@@ -84,12 +101,19 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
 
         if (viewmodel.isSoloMode || !tellServer) return
 
-        this@RoomEventDispatcher.network.sendAsync<ClientMessage.State> {
-            serverTime = null
-            doSeek = null
-            position = withContext(Dispatchers.Main.immediate) { viewmodel.player.currentPositionMs().div(1000.0).roundToLong() }
-            changeState = 1
-            this.play = playback.play
+        viewmodel.viewModelScope.launch(Dispatchers.IO) {
+            val pos = withContext(Dispatchers.Main.immediate) {
+                viewmodel.player.currentPositionMs().div(1000.0).roundToLong()
+            }
+            network.send(
+                viewmodel.protocol.buildStatePacket(
+                    serverTime = null,
+                    doSeek = null,
+                    position = pos,
+                    changeState = 1,
+                    play = playback.play
+                )
+            )
         }
     }
 
@@ -141,5 +165,10 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
             )
             viewmodel.session.messageSequence.update { it + msg }
         }
+    }
+
+    private companion object {
+        /** Static feature manifest the client advertises in its `Hello`. */
+        val clientFeatures = RoomFeatures()
     }
 }

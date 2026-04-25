@@ -3,7 +3,7 @@ package app.room.sharedplaylist
 import androidx.lifecycle.viewModelScope
 import app.utils.generateTimestampMillis
 import app.utils.vidExs
-import app.protocol.event.ClientMessage
+import app.protocol.ClientMessage
 import app.room.sharedplaylist.SharedPlaylistManager.Companion.saveFolderPathAsMediaDirectory
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -83,13 +83,9 @@ actual suspend fun SharedPlaylistManager.addFolderToPlaylist(uri: String) {
 
     if (viewmodel.session.spIndex.intValue == -1) {
         retrieveFile(newList.first())
-        viewmodel.networkManager.send<ClientMessage.PlaylistIndex> {
-            index = 0
-        }
+        viewmodel.networkManager.send(ClientMessage.playlistIndex(0))
     }
-    viewmodel.networkManager.send<ClientMessage.PlaylistChange> {
-        files = viewmodel.session.sharedPlaylist + newList
-    }
+    viewmodel.networkManager.send(ClientMessage.playlistChange(viewmodel.session.sharedPlaylist + newList))
 }
 
 val spExtScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -207,9 +203,7 @@ actual fun SharedPlaylistManager.loadPlaylistLocally(fromUri: String, alsoShuffl
     if (alsoShuffle) lines.shuffle()
 
     /** Updating the shared playlist */
-    viewmodel.networkManager.sendAsync<ClientMessage.PlaylistChange> {
-        files = lines
-    }
+    viewmodel.networkManager.sendAsync(ClientMessage.playlistChange(lines))
 }
 
 

@@ -1,59 +1,72 @@
 package app.server
 
+import SyncplayMobile.shared.BuildConfig
+import app.protocol.ClientMessage
+import app.protocol.ClientMessageDeserializer
+import app.protocol.ClientMessageHandler
+import app.protocol.ServerMessage
 import app.protocol.models.PingService
 import app.protocol.models.RoomFeatures
-import app.protocol.server.Chat
-import app.protocol.server.Error
-import app.protocol.server.FileData
-import app.protocol.server.Hello
-import app.protocol.server.IgnoringOnTheFlyData
-import app.protocol.server.ListResponse
-import app.protocol.server.PingData
-import app.protocol.server.PlaystateData
-import app.protocol.server.Room
-import app.protocol.server.ServerMessage
-import app.protocol.server.Set
-import app.protocol.server.State
-import app.protocol.server.TLS
 import app.protocol.syncplayJson
+import app.protocol.wire.ChatData
+import app.protocol.wire.ControllerAuthData
+import app.protocol.wire.ErrorData
+import app.protocol.wire.FileData
+import app.protocol.wire.HelloData
+import app.protocol.wire.IgnoringOnTheFlyData
+import app.protocol.wire.ListUserData
+import app.protocol.wire.NewControlledRoom
+import app.protocol.wire.PingData
+import app.protocol.wire.PlaylistChangeData
+import app.protocol.wire.PlaylistIndexData
+import app.protocol.wire.PlaystateData
+import app.protocol.wire.ReadyData
+import app.protocol.wire.Room
+import app.protocol.wire.SetData
+import app.protocol.wire.StateData
+import app.protocol.wire.TLSData
+import app.protocol.wire.UserEvent
+import app.protocol.wire.UserSetData
 import app.server.model.ServerConfig.Companion.MAX_FILENAME_LENGTH
 import app.server.model.ServerRoom
 import app.server.model.ServerWatcher
-import app.server.protocol.incoming.IncomingMessageDeserializer
 import app.utils.generateTimestampMillis
 import app.utils.loggy
 import kotlinx.serialization.SerializationException
-import SyncplayMobile.shared.BuildConfig
 
 /**
  * Server-side per-client protocol handler. Port of Python's `SyncServerProtocol`
  * (`syncplay-pc-src-master/syncplay/protocols.py`).
  *
- * Inbound traffic is decoded by [IncomingMessageDeserializer] into the typed
- * [app.server.protocol.incoming.IncomingMessage] hierarchy, then dispatched here via
- * `handlePacket`. Outbound traffic constructs instances of the same
- * `app.protocol.server.*` data classes the client decodes — the wire models, Kotlinx
- * Serialization plumbing, and `JsonContentPolymorphicSerializer` dispatch pattern are all
- * shared between the two sides.
+ * Implements [ClientMessageHandler] for incoming wire messages — typed payloads from the
+ * shared `app.protocol.*` hierarchy, decoded by [ClientMessageDeserializer]. Outbound
+ * traffic constructs instances of [ServerMessage] (the same wire models the client
+ * decodes) and serializes via [syncplayJson].
+ *
+ * Both directions therefore share the same Kotlinx Serialization pipeline; only the
+ * end-tunnel handling differs.
  */
 class ClientConnection(
     val server: SyncplayServer,
     private val sendFn: (String) -> Unit,
     private val dropFn: () -> Unit
-) {
+) : ClientMessageHandler {
 
     var watcher: ServerWatcher? = null
-    private var _version: String? = null
-    private var _features: RoomFeatures? = null
-    private var _logged: Boolean = false
+    private var version: String? = null
+    private var features: RoomFeatures? = null
+    private var logged: Boolean = false
     var clientIgnoringOnTheFly: Int = 0
     var serverIgnoringOnTheFly: Int = 0
 
-    private val _pingService = PingService()
-    private var _clientLatencyCalculation: Double = 0.0
-    private var _clientLatencyCalculationArrivalTime: Double = 0.0
+    private val pingService = PingService()
+    private var clientLatencyCalculation: Double = 0.0
+    private var clientLatencyCalculationArrivalTime: Double = 0.0
 
-    val isLogged: Boolean get() = _logged
+    val isLogged: Boolean get() = logged
+
+    fun getFeatures(): RoomFeatures? = features
+    fun getVersion(): String? = version
 
     /** Encodes a typed [ServerMessage] and writes it to the wire. */
     private inline fun <reified T : ServerMessage> sendTyped(message: T) {
@@ -62,7 +75,7 @@ class ClientConnection(
 
     fun dropWithError(error: String) {
         loggy("Server: Dropping client - $error")
-        sendTyped(Error(Error.ErrorData(message = error)))
+        sendTyped(ServerMessage.Error(ErrorData(message = error)))
         dropFn()
     }
 
@@ -70,23 +83,16 @@ class ClientConnection(
         server.removeWatcher(watcher)
     }
 
-    fun getFeatures(): RoomFeatures? = _features
-    fun getVersion(): String? = _version
-
     /**
-     * Routes a raw wire-JSON line through [IncomingMessageDeserializer] to the typed
-     * [app.server.protocol.incoming.IncomingMessage] hierarchy and dispatches its `handle()`.
-     *
-     * Mirrors the client-side `NetworkManager.handlePacket` pipeline — same shape, same
-     * Kotlinx Serialization plumbing, just rooting at the server end.
+     * Decodes a raw wire-JSON line via [ClientMessageDeserializer] and dispatches to the
+     * matching `on…` method through [ClientMessage.dispatch]. Mirrors the client-side
+     * `NetworkManager.handlePacket` pipeline.
      */
     suspend fun handlePacket(jsonString: String) {
         if (BuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("**CLIENT** $jsonString")
         try {
-            syncplayJson.decodeFromString(
-                deserializer = IncomingMessageDeserializer,
-                string = jsonString
-            ).handle(this)
+            val message = syncplayJson.decodeFromString(ClientMessageDeserializer, jsonString)
+            message.dispatch(this)
         } catch (e: SerializationException) {
             loggy("Server: failed to decode line '$jsonString' — ${e.message}")
             dropWithError("Failed to parse message")
@@ -94,43 +100,39 @@ class ClientConnection(
     }
 
     // -----------------------------------------------------------
-    // INBOUND — entry points from `IncomingMessage.handle(connection)`
+    // ClientMessageHandler — inbound dispatch
     // -----------------------------------------------------------
 
-    /**
-     * Validated `Hello` payload from [app.server.protocol.incoming.IncomingHello].
-     * Authenticates the client, registers the watcher, and sends the `Hello` response.
-     */
-    fun acceptHello(
-        username: String,
-        roomName: String,
-        clientVersion: String,
-        clientPassword: String?,
-        features: RoomFeatures
-    ) {
-        if (!checkPassword(clientPassword)) return
+    override suspend fun onHello(message: ClientMessage.Hello) {
+        val data = message.data
+        val username = data.username?.trim()
+        val roomName = data.room?.name?.trim()
+        val clientVersion = data.realversion ?: data.version
 
-        _version = clientVersion
-        _features = features
+        if (username.isNullOrEmpty() || roomName.isNullOrEmpty() || clientVersion == null) {
+            dropWithError("Hello command does not have enough parameters")
+            return
+        }
+
+        if (!checkPassword(data.password)) return
+
+        version = clientVersion
+        features = data.features
 
         server.addWatcher(this, username, roomName)
-        _logged = true
+        logged = true
         sendHello(clientVersion)
     }
 
-    /** Updates the watcher's pause/position/seek state and ping timing. */
-    fun handleIncomingState(state: State.StateData) {
+    override suspend fun onState(message: ClientMessage.State) {
         if (!requireLogged()) return
+        val state = message.data
 
         state.ignoringOnTheFly?.let { ignore ->
-            ignore.server?.let { serverVal ->
-                if (serverIgnoringOnTheFly == serverVal) {
-                    serverIgnoringOnTheFly = 0
-                }
+            ignore.server?.let { srv ->
+                if (serverIgnoringOnTheFly == srv) serverIgnoringOnTheFly = 0
             }
-            ignore.client?.let { clientVal ->
-                clientIgnoringOnTheFly = clientVal
-            }
+            ignore.client?.let { cl -> clientIgnoringOnTheFly = cl }
         }
 
         val playstate = state.playstate
@@ -141,31 +143,53 @@ class ClientConnection(
         state.ping?.let { ping ->
             val latencyCalc = ping.latencyCalculation ?: 0.0
             val clientRtt = ping.clientRtt ?: 0.0
-            _clientLatencyCalculation = ping.clientLatencyCalculation ?: 0.0
-            _clientLatencyCalculationArrivalTime = currentTimeSeconds()
-            _pingService.receiveMessage(latencyCalc.toLong(), clientRtt)
+            clientLatencyCalculation = ping.clientLatencyCalculation ?: 0.0
+            clientLatencyCalculationArrivalTime = currentTimeSeconds()
+            pingService.receiveMessage(latencyCalc.toLong(), clientRtt)
         }
 
         if (serverIgnoringOnTheFly == 0) {
-            watcher?.updateState(position, paused, doSeek, _pingService.forwardDelay)
+            watcher?.updateState(position, paused, doSeek, pingService.forwardDelay)
         }
     }
 
-    fun handleSetRoom(room: Room) {
+    override suspend fun onSet(message: ClientMessage.Set) {
         if (!requireLogged()) return
         val w = watcher ?: return
-        server.setWatcherRoom(w, room.name)
+        val set = message.data
+
+        set.room?.let { server.setWatcherRoom(w, it.name) }
+        set.file?.let { w.setFile(truncateFileName(it)) }
+        set.ready?.let { handleReady(w, it) }
+        set.controllerAuth?.let { handleControllerAuth(w, it) }
+        set.playlistChange?.let { server.setPlaylist(w, it.files ?: emptyList()) }
+        set.playlistIndex?.let { server.setPlaylistIndex(w, it.index ?: 0) }
+        set.features?.let { features = it }
     }
 
-    fun handleSetFile(file: FileData) {
+    override suspend fun onList(message: ClientMessage.List) {
         if (!requireLogged()) return
-        val w = watcher ?: return
-        w.setFile(truncateFileName(file))
+        sendList()
     }
 
-    fun handleSetReady(ready: Set.ReadyData) {
+    /** Plain-string Chat from the client (asymmetric: `{"Chat": "message"}`). */
+    override suspend fun onChat(message: ClientMessage.Chat) {
         if (!requireLogged()) return
-        val w = watcher ?: return
+        if (!server.config.disableChat) {
+            server.sendChat(watcher ?: return, message.message)
+        }
+    }
+
+    override suspend fun onTLS(message: ClientMessage.TLS) {
+        // Mobile server has no TLS-cert support — always answers "false".
+        sendTyped(ServerMessage.TLS(TLSData(startTLS = "false")))
+    }
+
+    override suspend fun onError(message: ClientMessage.Error) {
+        dropWithError(message.data.message ?: "Unknown error")
+    }
+
+    private fun handleReady(w: ServerWatcher, ready: ReadyData) {
         server.setReady(
             watcher = w,
             isReady = ready.isReady ?: false,
@@ -174,49 +198,9 @@ class ClientConnection(
         )
     }
 
-    fun handleSetControllerAuth(auth: Set.ControllerAuthResponse) {
-        if (!requireLogged()) return
-        val w = watcher ?: return
+    private fun handleControllerAuth(w: ServerWatcher, auth: ControllerAuthData) {
         val password = auth.password?.takeIf { it.isNotEmpty() } ?: return
         server.authRoomController(w, password, auth.room)
-    }
-
-    fun handleSetPlaylistChange(change: Set.PlaylistChangeData) {
-        if (!requireLogged()) return
-        val w = watcher ?: return
-        server.setPlaylist(w, change.files ?: emptyList())
-    }
-
-    fun handleSetPlaylistIndex(index: Set.PlaylistIndexData) {
-        if (!requireLogged()) return
-        val w = watcher ?: return
-        server.setPlaylistIndex(w, index.index ?: 0)
-    }
-
-    fun handleSetFeatures(features: RoomFeatures) {
-        _features = features
-    }
-
-    fun handleListRequest() {
-        if (!requireLogged()) return
-        sendList()
-    }
-
-    /** Plain-string Chat from the client (asymmetric: `{"Chat": "message"}`). */
-    fun handleChatString(message: String) {
-        if (!requireLogged()) return
-        if (!server.config.disableChat) {
-            server.sendChat(watcher ?: return, message)
-        }
-    }
-
-    fun handleTlsRequest(tls: TLS.TLSData) {
-        // Mobile server has no TLS-cert support — always answers "false".
-        sendTyped(TLS(TLS.TLSData(startTLS = "false")))
-    }
-
-    fun handleClientError(message: String?) {
-        dropWithError(message ?: "Unknown error")
     }
 
     private fun checkPassword(clientPassword: String?): Boolean {
@@ -241,33 +225,30 @@ class ClientConnection(
     }
 
     // -----------------------------------------------------------
-    // OUTBOUND — typed messages encoded via `syncplayJson`
+    // Outbound — typed `ServerMessage`s encoded via `syncplayJson`
     // -----------------------------------------------------------
 
     fun sendHello(clientVersion: String) {
         val w = watcher ?: return
         val room = w.room ?: return
 
-        val features = server.buildServerFeatures()
-        val motd = server.config.motd
-
         sendTyped(
-            Hello(
-                Hello.HelloData(
+            ServerMessage.Hello(
+                HelloData(
                     username = w.name,
                     room = Room(name = room.name),
                     version = clientVersion,
                     realversion = "1.7.3",
-                    features = features,
-                    motd = motd
+                    features = server.buildServerFeatures(),
+                    motd = server.config.motd
                 )
             )
         )
     }
 
     /**
-     * Writes a `State` packet to the wire, applying the same
-     * `ignoringOnTheFly` / forced-update bookkeeping as the python reference server.
+     * Writes a `State` packet to the wire, applying the same `ignoringOnTheFly` /
+     * forced-update bookkeeping as the python reference server.
      */
     fun sendState(
         position: Double,
@@ -276,16 +257,16 @@ class ClientConnection(
         setBy: ServerWatcher?,
         forced: Boolean
     ) {
-        val processingTime = if (_clientLatencyCalculationArrivalTime > 0) {
-            currentTimeSeconds() - _clientLatencyCalculationArrivalTime
+        val processingTime = if (clientLatencyCalculationArrivalTime > 0) {
+            currentTimeSeconds() - clientLatencyCalculationArrivalTime
         } else 0.0
 
         if (forced) {
             serverIgnoringOnTheFly += 1
         }
 
-        val clientLatCalc = if (_clientLatencyCalculation > 0) _clientLatencyCalculation else null
-        if (_clientLatencyCalculation > 0) _clientLatencyCalculation = 0.0
+        val clientLatCalc = if (clientLatencyCalculation > 0) clientLatencyCalculation else null
+        if (clientLatencyCalculation > 0) clientLatencyCalculation = 0.0
 
         val shouldSend = serverIgnoringOnTheFly == 0 || forced
 
@@ -298,8 +279,8 @@ class ClientConnection(
             } else null
 
             sendTyped(
-                State(
-                    State.StateData(
+                ServerMessage.State(
+                    StateData(
                         playstate = PlaystateData(
                             position = position,
                             paused = paused,
@@ -308,7 +289,7 @@ class ClientConnection(
                         ),
                         ping = PingData(
                             latencyCalculation = currentTimeSeconds(),
-                            serverRtt = _pingService.rtt,
+                            serverRtt = pingService.rtt,
                             clientLatencyCalculation = clientLatCalc?.let { it + processingTime }
                         ),
                         ignoringOnTheFly = ignoring
@@ -322,20 +303,18 @@ class ClientConnection(
         }
     }
 
-    /**
-     * Broadcasts a user state change (join/leave/file/room) inside a `Set.user` envelope.
-     */
+    /** Broadcasts a user state change (join/leave/file/room) in a `Set.user` envelope. */
     fun sendUserSetting(
         username: String,
         room: ServerRoom?,
         file: FileData?,
-        event: Set.UserEvent?
+        event: UserEvent?
     ) {
         sendTyped(
-            Set(
-                Set.SetData(
+            ServerMessage.Set(
+                SetData(
                     user = mapOf(
-                        username to Set.UserSetData(
+                        username to UserSetData(
                             room = room?.let { Room(it.name) },
                             file = file,
                             event = event
@@ -353,9 +332,9 @@ class ClientConnection(
         setByUsername: String? = null
     ) {
         sendTyped(
-            Set(
-                Set.SetData(
-                    ready = Set.ReadyData(
+            ServerMessage.Set(
+                SetData(
+                    ready = ReadyData(
                         username = username,
                         isReady = isReady,
                         manuallyInitiated = manuallyInitiated,
@@ -367,40 +346,22 @@ class ClientConnection(
     }
 
     fun sendPlaylist(username: String, files: List<String>) {
-        sendTyped(
-            Set(
-                Set.SetData(
-                    playlistChange = Set.PlaylistChangeData(user = username, files = files)
-                )
-            )
-        )
+        sendTyped(ServerMessage.Set(SetData(playlistChange = PlaylistChangeData(user = username, files = files))))
     }
 
     fun sendPlaylistIndex(username: String, index: Int) {
-        sendTyped(
-            Set(
-                Set.SetData(
-                    playlistIndex = Set.PlaylistIndexData(user = username, index = index)
-                )
-            )
-        )
+        sendTyped(ServerMessage.Set(SetData(playlistIndex = PlaylistIndexData(user = username, index = index))))
     }
 
     fun sendNewControlledRoom(roomName: String, password: String) {
-        sendTyped(
-            Set(
-                Set.SetData(
-                    newControlledRoom = Set.NewControlledRoom(password = password, roomName = roomName)
-                )
-            )
-        )
+        sendTyped(ServerMessage.Set(SetData(newControlledRoom = NewControlledRoom(password = password, roomName = roomName))))
     }
 
     fun sendControlledRoomAuthStatus(success: Boolean, username: String, roomName: String) {
         sendTyped(
-            Set(
-                Set.SetData(
-                    controllerAuth = Set.ControllerAuthResponse(
+            ServerMessage.Set(
+                SetData(
+                    controllerAuth = ControllerAuthData(
                         user = username,
                         room = roomName,
                         success = success
@@ -418,7 +379,7 @@ class ClientConnection(
 
         val byRoom = grouped.mapValues { (_, roomWatchers) ->
             roomWatchers.associate { wt ->
-                wt.name to ListResponse.UserData(
+                wt.name to ListUserData(
                     position = wt.getPosition() ?: 0.0,
                     isReady = wt.isReady(),
                     file = wt.file,
@@ -427,15 +388,15 @@ class ClientConnection(
                 )
             }
         }
-        sendTyped(ListResponse(list = byRoom))
+        sendTyped(ServerMessage.List(rooms = byRoom))
     }
 
     fun sendChatMessage(senderName: String, message: String) {
-        sendTyped(Chat(Chat.ChatData(username = senderName, message = message)))
+        sendTyped(ServerMessage.Chat(ChatData(username = senderName, message = message)))
     }
 
     private fun requireLogged(): Boolean {
-        if (!_logged) {
+        if (!logged) {
             dropWithError("Not authenticated")
             return false
         }

@@ -1,10 +1,9 @@
-package app.protocol.server
+package app.protocol.wire
 
 import kotlinx.serialization.Serializable
 
 /**
- * Playback state inside a [State] message. Symmetric across both directions:
- * server broadcasts authoritative state, client reports its own state back.
+ * Playback state inside a `State` message.
  *
  * @property setBy Username of the user who initiated this state change. Server-set only.
  */

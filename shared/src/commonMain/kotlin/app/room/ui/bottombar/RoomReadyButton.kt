@@ -23,7 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.LocalRoomViewmodel
-import app.protocol.event.ClientMessage
+import app.protocol.ClientMessage
 import app.theme.Theming
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
@@ -49,10 +49,7 @@ fun RoomReadyButton() {
             onCheckedChange = { b ->
                 ready = b
                 viewmodel.session.ready.value = b
-                viewmodel.networkManager.sendAsync<ClientMessage.Readiness> {
-                    isReady = b
-                    manuallyInitiated = true
-                }
+                viewmodel.networkManager.sendAsync(ClientMessage.readiness(isReady = b, manuallyInitiated = true))
             }) {
             when (ready) {
                 true -> Row(verticalAlignment = CenterVertically) {

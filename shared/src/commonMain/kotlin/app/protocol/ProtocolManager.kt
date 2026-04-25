@@ -2,12 +2,14 @@ package app.protocol
 
 import androidx.lifecycle.viewModelScope
 import app.AbstractManager
-import app.protocol.event.ClientMessage
 import app.protocol.models.ConnectionState
 import app.protocol.models.PingService
-import app.protocol.network.NetworkManager
+import app.protocol.wire.IgnoringOnTheFlyData
+import app.protocol.wire.PingData
+import app.protocol.wire.PlaystateData
+import app.protocol.wire.StateData
 import app.room.RoomViewmodel
-import app.utils.ProtocolApi
+import app.utils.generateTimestampMillis
 import app.utils.loggy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -57,8 +59,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     val isManagedRoom = MutableStateFlow(false)
 
     /**
-     * Timestamp of the last State message received from the server. Updated in
-     * [State.handle] at the start of each incoming message. The watchdog uses this to
+     * Timestamp of the last `State` message received from the server. The watchdog uses this to
      * detect silent disconnects — i.e. the TCP socket looks healthy on our end but the
      * server stopped sending State packets (common on flaky networks, especially iOS).
      */
@@ -98,7 +99,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
             while (isActive) {
                 delay(LIST_PROBE_INTERVAL_SECONDS.seconds)
                 if (network.state.value == ConnectionState.CONNECTED) {
-                    network.send<ClientMessage.EmptyList>()
+                    network.send(ClientMessage.listRequest())
                 }
             }
         }
@@ -143,26 +144,53 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         pingService = PingService()
     }
 
-    companion object {
-        @ProtocolApi
-        inline fun <reified T : ClientMessage> NetworkManager.createPacketInstance(protocolManager: ProtocolManager): T {
-            return when (T::class) {
-                ClientMessage.Hello::class -> ClientMessage.Hello() as T
-                ClientMessage.Joined::class -> ClientMessage.Joined() as T
-                ClientMessage.EmptyList::class -> ClientMessage.EmptyList() as T
-                ClientMessage.Readiness::class -> ClientMessage.Readiness() as T
-                ClientMessage.File::class -> ClientMessage.File() as T
-                ClientMessage.Chat::class -> ClientMessage.Chat() as T
-                ClientMessage.State::class -> ClientMessage.State(protocolManager) as T
-                ClientMessage.PlaylistChange::class -> ClientMessage.PlaylistChange() as T
-                ClientMessage.PlaylistIndex::class -> ClientMessage.PlaylistIndex() as T
-                ClientMessage.ControllerAuth::class -> ClientMessage.ControllerAuth() as T
-                ClientMessage.RoomChange::class -> ClientMessage.RoomChange() as T
-                ClientMessage.TLS::class -> ClientMessage.TLS() as T
-                else -> throw IllegalArgumentException("Unknown packet type: ${T::class.simpleName}")
-            }
+    /**
+     * Builds an outbound `State` packet, applying the same `ignoringOnTheFly` bookkeeping
+     * (mutating [serverIgnFly] / [clientIgnFly] as side effects) as the python reference
+     * client. Replaces the old `ClientMessage.State.build()` builder.
+     */
+    fun buildStatePacket(
+        serverTime: Double?,
+        doSeek: Boolean?,
+        position: Long?,
+        changeState: Int,
+        play: Boolean?
+    ): ClientMessage.State {
+        val clientIgnoreIsNotSet = clientIgnFly == 0 || serverIgnFly != 0
+
+        val playstate = if (clientIgnoreIsNotSet && position != null && play != null) {
+            PlaystateData(
+                position = position.toDouble(),
+                paused = !play,
+                doSeek = doSeek
+            )
+        } else null
+
+        val ping = PingData(
+            latencyCalculation = serverTime,
+            clientLatencyCalculation = generateTimestampMillis() / 1000.0,
+            clientRtt = pingService.rtt
+        )
+
+        if (changeState == 1) {
+            clientIgnFly += 1
         }
 
+        val ignoring = if (clientIgnFly != 0 || serverIgnFly != 0) {
+            val ign = IgnoringOnTheFlyData(
+                server = serverIgnFly.takeIf { it != 0 },
+                client = clientIgnFly.takeIf { it != 0 }
+            )
+            if (serverIgnFly != 0) serverIgnFly = 0
+            ign
+        } else null
+
+        return ClientMessage.State(
+            StateData(playstate = playstate, ping = ping, ignoringOnTheFly = ignoring)
+        )
+    }
+
+    companion object {
         /** Playback drift threshold in seconds before a corrective seek is triggered. */
         const val SEEK_THRESHOLD = 1L
 

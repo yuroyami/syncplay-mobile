@@ -14,12 +14,14 @@ import app.preferences.Preferences.HAPTIC_ON_SEEKED
 import app.preferences.Preferences.PAUSE_ON_SOMEONE_LEAVE
 import app.preferences.Preferences.READY_FIRST_HAND
 import app.preferences.value
+import app.protocol.ClientMessage
 import app.protocol.models.ConnectionState
 import app.protocol.models.TlsState
-import app.protocol.server.Set
-import app.protocol.server.Set.ControllerAuthResponse
+import app.protocol.wire.ControllerAuthData
+import app.protocol.wire.NewControlledRoom
 import app.room.OSDCategory
 import app.room.RoomViewmodel
+import app.room.toFileData
 import app.utils.loggy
 import app.utils.timestampFromMillis
 import kotlinx.coroutines.Dispatchers
@@ -246,19 +248,15 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         // never leaks into solo mode or after the user leaves the room.
         protocol.startChannelHealthMonitoring()
 
-        network.sendAsync<ClientMessage.Readiness> {
-            isReady = if (viewmodel.media == null && READY_FIRST_HAND.value()) true else session.ready.value
-            manuallyInitiated = false
-        }
+        val initialReady = if (viewmodel.media == null && READY_FIRST_HAND.value()) true else session.ready.value
+        network.sendAsync(ClientMessage.readiness(isReady = initialReady, manuallyInitiated = false))
 
         dispatcher.broadcastMessage(message = { getString(Res.string.room_connected_to_server) }, isChat = false)
         dispatcher.broadcastMessage(message = { getString(Res.string.room_you_joined_room, session.currentRoom) }, isChat = false)
 
-        if (viewmodel.media != null) {
-            network.sendAsync<ClientMessage.File> { this@sendAsync.media = viewmodel.media }
-        }
+        viewmodel.media?.let { network.sendAsync(ClientMessage.file(it.toFileData())) }
 
-        for (m in session.outboundQueue) network.transmitPacket(m)
+        for (m in session.outboundQueue) network.transmitPacket(m, isHello = false)
         session.outboundQueue.clear()
     }
 
@@ -323,7 +321,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     }
 
     // TODO: Copy +room:password to clipboard
-    fun onNewControlledRoom(data: Set.NewControlledRoom) {
+    fun onNewControlledRoom(data: NewControlledRoom) {
         session.currentRoom = data.roomName
         session.currentOperatorPassword = data.password
 
@@ -333,10 +331,10 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         )
     }
 
-    fun onHandleControllerAuth(data: ControllerAuthResponse) {
+    fun onHandleControllerAuth(data: ControllerAuthData) {
         val user = data.user ?: session.currentUsername
 
-        network.sendAsync<ClientMessage.EmptyList>()
+        network.sendAsync(ClientMessage.listRequest())
 
         val osdMessage: suspend () -> String = {
             getString(
