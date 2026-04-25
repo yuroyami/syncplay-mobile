@@ -11,7 +11,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Wire messages travelling from a Syncplay server TO clients.
+ * Wire messages traveling from a Syncplay server TO clients.
  *
  * One sealed hierarchy used by **both** sides:
  * - The server constructs and serializes these via [syncplayJson] to send.

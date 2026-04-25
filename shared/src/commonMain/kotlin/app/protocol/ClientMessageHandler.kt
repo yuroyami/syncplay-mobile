@@ -1,7 +1,7 @@
 package app.protocol
 
 /**
- * Side-agnostic handler for messages travelling from client to server.
+ * Side-agnostic handler for messages traveling from client to server.
  *
  * The Syncplay server side implements this — typically `ClientConnection` — to react to
  * each variant of [ClientMessage]. Dispatch is via [ClientMessage.dispatch].

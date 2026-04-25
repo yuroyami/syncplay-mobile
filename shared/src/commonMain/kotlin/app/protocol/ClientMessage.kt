@@ -16,7 +16,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 
 /**
- * Wire messages travelling from a Syncplay client TO the server.
+ * Wire messages traveling from a Syncplay client TO the server.
  *
  * One sealed hierarchy used by **both** sides:
  * - The client constructs and serializes these via [syncplayJson] to send.
@@ -77,14 +77,10 @@ sealed interface ClientMessage {
     companion object {
         fun roomChange(roomName: String) = Set(SetData(room = Room(roomName)))
         fun file(file: FileData) = Set(SetData(file = file))
-        fun readiness(isReady: Boolean, manuallyInitiated: Boolean) =
-            Set(SetData(ready = ReadyData(isReady = isReady, manuallyInitiated = manuallyInitiated)))
-        fun playlistChange(files: kotlin.collections.List<String>) =
-            Set(SetData(playlistChange = PlaylistChangeData(files = files)))
-        fun playlistIndex(index: Int) =
-            Set(SetData(playlistIndex = PlaylistIndexData(index = index)))
-        fun controllerAuth(room: String? = null, password: String) =
-            Set(SetData(controllerAuth = ControllerAuthData(room = room, password = password)))
+        fun readiness(isReady: Boolean, manuallyInitiated: Boolean) = Set(SetData(ready = ReadyData(isReady = isReady, manuallyInitiated = manuallyInitiated)))
+        fun playlistChange(files: kotlin.collections.List<String>) = Set(SetData(playlistChange = PlaylistChangeData(files = files)))
+        fun playlistIndex(index: Int) = Set(SetData(playlistIndex = PlaylistIndexData(index = index)))
+        fun controllerAuth(room: String? = null, password: String) = Set(SetData(controllerAuth = ControllerAuthData(room = room, password = password)))
 
         /** Empty `List` request — its arrival simply asks the server for a `List` reply. */
         fun listRequest() = List()
