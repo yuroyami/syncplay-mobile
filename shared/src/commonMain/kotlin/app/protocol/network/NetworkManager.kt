@@ -6,8 +6,8 @@ import app.AbstractManager
 import app.preferences.Preferences.RECONNECTION_INTERVAL
 import app.preferences.value
 import app.protocol.ProtocolManager.Companion.createPacketInstance
-import app.protocol.ProtocolManager.Companion.serverJson
 import app.protocol.event.ClientMessage
+import app.protocol.syncplayJson
 import app.protocol.models.ConnectionState
 import app.protocol.models.TlsState
 import app.room.RoomViewmodel
@@ -97,7 +97,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
             if (BuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("**SERVER** $jsonString")
 
             try {
-                serverJson.decodeFromString(
+                syncplayJson.decodeFromString(
                     deserializer = ServerMessageDeserializer,
                     string = jsonString
                 ).handle(

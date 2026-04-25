@@ -8,8 +8,10 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * TLS negotiation message. When received, triggers [RoomCallback]
- * to upgrade the connection from plain TCP to TLS.
+ * `TLS` packet — STARTTLS-style negotiation. The wire payload's [TLSData.startTLS] is
+ * always a string per the original protocol:
+ * - Client→server: `"send"` (request to start TLS).
+ * - Server→client: `"true"` or `"false"` (whether the server accepts).
  */
 @Serializable
 data class TLS(
@@ -24,13 +26,14 @@ data class TLS(
         callback: RoomCallback
     ) {
         tls.startTLS?.let { startTLS ->
-            callback.onReceivedTLS(startTLS)
+            // Match the python client semantics: `"true" in answer` / `"false" in answer`.
+            val supported = startTLS.contains("true", ignoreCase = true)
+            callback.onReceivedTLS(supported)
         }
     }
 
-    /** @property startTLS True if the server requests a TLS upgrade. */
     @Serializable
     data class TLSData(
-        val startTLS: Boolean? = null
+        val startTLS: String? = null
     )
 }

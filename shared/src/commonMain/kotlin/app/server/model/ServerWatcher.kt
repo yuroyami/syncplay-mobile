@@ -1,10 +1,10 @@
 package app.server.model
 
+import app.protocol.models.RoomFeatures
+import app.protocol.server.FileData
 import app.server.SyncplayServer
 import app.server.model.ServerConfig.Companion.MAX_FILENAME_LENGTH
 import app.utils.generateTimestampMillis
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * Represents a connected client on the server side.
@@ -23,11 +23,11 @@ class ServerWatcher(
     private var _position: Double? = null
     private var _lastUpdatedOn: Double = currentTimeSeconds()
 
-    var file: JsonObject? = null
+    var file: FileData? = null
         private set
 
     var ready: Boolean? = null
-    var features: JsonObject? = null
+    var features: RoomFeatures? = null
     var version: String? = null
 
     val name: String get() = _name
@@ -44,24 +44,15 @@ class ServerWatcher(
         _position = position
     }
 
-    fun setFile(fileData: JsonObject?) {
+    fun setFile(fileData: FileData?) {
         file = fileData?.let { truncateFileName(it) }
         server.sendFileUpdate(this)
     }
 
-    private fun truncateFileName(fileJson: JsonObject): JsonObject {
-        val name = fileJson["name"]?.jsonPrimitive?.content ?: return fileJson
-        if (name.length <= MAX_FILENAME_LENGTH) return fileJson
-        val builder = kotlinx.serialization.json.buildJsonObject {
-            for ((k, v) in fileJson) {
-                if (k == "name") {
-                    put(k, kotlinx.serialization.json.JsonPrimitive(name.take(MAX_FILENAME_LENGTH)))
-                } else {
-                    put(k, v)
-                }
-            }
-        }
-        return builder
+    private fun truncateFileName(file: FileData): FileData {
+        val name = file.name ?: return file
+        if (name.length <= MAX_FILENAME_LENGTH) return file
+        return file.copy(name = name.take(MAX_FILENAME_LENGTH))
     }
 
     /**

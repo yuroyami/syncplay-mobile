@@ -25,8 +25,8 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Handles incoming [State] messages from the Syncplay server, encoding global playback state
- * for the shared session: position, pause state, ping/latency, and "ignoring on the fly" counters.
+ * `State` packet — synchronized playback state, exchanged in both directions.
+ * Server broadcasts authoritative state; client reports its own state back. Same shape both ways.
  *
  * Processes synchronization adjustments, desync detection, and sends acknowledgments back to the server.
  */
@@ -40,33 +40,6 @@ data class State(
         val ping: PingData? = null,
         val ignoringOnTheFly: IgnoringOnTheFlyData? = null,
         val playstate: PlaystateData? = null
-    )
-
-    /** Network timing data for latency calculation and synchronization. */
-    @Serializable
-    data class PingData(
-        val latencyCalculation: Double? = null,
-        val clientLatencyCalculation: Double? = null,
-        val serverRtt: Double? = null
-    )
-
-    /**
-     * Prevents feedback loops during rapid state changes by temporarily ignoring
-     * a client's state updates on the server side.
-     */
-    @Serializable
-    data class IgnoringOnTheFlyData(
-        val server: Int? = null,
-        val client: Int? = null
-    )
-
-    /** @property setBy Username of the user who initiated this state change. */
-    @Serializable
-    data class PlaystateData(
-        val doSeek: Boolean? = null,
-        val position: Double? = null,
-        val setBy: String? = null,
-        val paused: Boolean? = null
     )
 
     /**

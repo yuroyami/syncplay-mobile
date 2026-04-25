@@ -10,8 +10,11 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Incoming server "Hello" packet, confirming identity, room assignment, and supported features.
- * Receiving this marks the connection as established.
+ * `Hello` packet — handshake exchanged in both directions:
+ * - Server→client: confirms identity, room assignment, supported features, MOTD.
+ * - Client→server: identifies the client with username, password (md5), room, version, features.
+ *
+ * The single data class supports both shapes — direction-specific fields are nullable.
  */
 @Serializable
 data class Hello(
@@ -43,15 +46,13 @@ data class Hello(
     @Serializable
     data class HelloData(
         val username: String? = null,
-        val room: Room,
+        /** Pre-hashed (MD5) server password. Only set on client→server. */
+        val password: String? = null,
+        val room: Room? = null,
         val version: String? = null,
         val realversion: String? = null,
         val features: RoomFeatures = RoomFeatures(),
+        /** Server-only field. */
         val motd: String = ""
-    )
-
-    @Serializable
-    data class Room(
-        val name: String
     )
 }

@@ -6,14 +6,6 @@ import app.protocol.event.ClientMessage
 import app.protocol.models.ConnectionState
 import app.protocol.models.PingService
 import app.protocol.network.NetworkManager
-import app.protocol.server.Chat
-import app.protocol.server.Error
-import app.protocol.server.Hello
-import app.protocol.server.ListResponse
-import app.protocol.server.ServerMessage
-import app.protocol.server.Set
-import app.protocol.server.State
-import app.protocol.server.TLS
 import app.room.RoomViewmodel
 import app.utils.ProtocolApi
 import app.utils.loggy
@@ -24,10 +16,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.modules.polymorphic
-import kotlinx.serialization.modules.subclass
 import kotlin.concurrent.Volatile
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
@@ -156,24 +144,6 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     }
 
     companion object {
-        @ProtocolApi
-        val serverJson = Json {
-            ignoreUnknownKeys = true
-            coerceInputValues = true
-
-            serializersModule = SerializersModule {
-                polymorphic(ServerMessage::class) {
-                    subclass(Hello::class)
-                    subclass(Chat::class)
-                    subclass(Set::class)
-                    subclass(ListResponse::class)
-                    subclass(State::class)
-                    subclass(TLS::class)
-                    subclass(Error::class)
-                }
-            }
-        }
-
         @ProtocolApi
         inline fun <reified T : ClientMessage> NetworkManager.createPacketInstance(protocolManager: ProtocolManager): T {
             return when (T::class) {

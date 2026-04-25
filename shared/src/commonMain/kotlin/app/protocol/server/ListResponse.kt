@@ -3,34 +3,29 @@ package app.protocol.server
 import androidx.lifecycle.viewModelScope
 import app.player.models.MediaFile
 import app.protocol.ProtocolManager
-import app.protocol.ProtocolManager.Companion.serverJson
+import app.protocol.models.RoomFeatures
 import app.protocol.models.User
 import app.protocol.network.NetworkManager
 import app.room.RoomViewmodel
 import app.protocol.event.RoomCallback
-import app.utils.loggy
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.JsonObject
 
 /**
- * Incoming server "List" packet.
- * To ask the server for this, we simply send an empty list and it returns with the full list of users and their details.
+ * `List` packet — server's response to a `List` request, containing every room and its watchers.
+ *
+ * Wire shape: `{"List": {"<roomName>": {"<userName>": UserData, ...}, ...}}`.
  */
 @Serializable
 data class ListResponse(
-    /** Dynamic JSON map of users per room. */
     @SerialName("List")
-    val list: JsonObject
+    val list: Map<String, Map<String, UserData>>
 ) : ServerMessage {
 
     /**
-     * Parses the user list and updates [session.userList].
-     *
-     * For each user, builds a [User] object with readiness, controller state,
-     * and file info if available.
+     * Parses the user list and updates [session.userList] for the current room.
+     * Other rooms are ignored.
      */
     override suspend fun handle(
         protocol: ProtocolManager,
@@ -38,36 +33,29 @@ data class ListResponse(
         dispatcher: NetworkManager,
         callback: RoomCallback
     ) {
-        val userlist = list[protocol.session.currentRoom] as? JsonObject ?: return
+        val userlist = list[protocol.session.currentRoom] ?: return
         val newList = mutableListOf<User>()
 
         var indexer = 1
 
-        for ((userName, userDataElement) in userlist) {
-            try {
-                val userData = serverJson.decodeFromString<UserData>(userDataElement.toString())
+        for ((userName, userData) in userlist) {
+            val user = User(
+                name = userName,
+                index = if (userName != protocol.session.currentUsername) indexer++ else 0,
+                readiness = userData.isReady ?: false,
+                file = userData.file?.let { fileData ->
+                    if (fileData.name != null) {
+                        MediaFile().apply {
+                            fileName = fileData.name
+                            fileDuration = fileData.duration ?: 0.0
+                            fileSize = fileData.size ?: ""
+                        }
+                    } else null
+                },
+                isController = userData.controller
+            )
 
-                val user = User(
-                    name = userName,
-                    index = if (userName != protocol.session.currentUsername) indexer++ else 0,
-                    readiness = userData.isReady ?: false,
-                    file = userData.file?.let { fileData ->
-                        if (fileData.name != null) {
-                            MediaFile().apply {
-                                fileName = fileData.name
-                                fileDuration = fileData.duration ?: 0.0
-                                fileSize = fileData.size?.toString() ?: ""
-                            }
-                        } else null
-                    },
-                    isController = userData.controller
-                )
-
-                newList.add(user)
-            } catch (e: SerializationException) {
-                loggy("Error parsing user list data: ${e.message}")
-                throw e
-            }
+            newList.add(user)
         }
 
         viewmodel.viewModelScope.launch {
@@ -77,16 +65,20 @@ data class ListResponse(
     }
 
     /**
-     * User data payload from the list packet.
+     * Per-user payload inside a `List` response.
      *
-     * @property isReady Whether the user is marked as ready.
+     * @property position Last reported playback position (server-side, may be 0 for clients without media).
+     * @property isReady Whether the user is marked as ready (null if readiness is disabled on the server).
      * @property file File metadata if the user has a media loaded.
-     * @property controller Whether the user has controller privileges.
+     * @property controller Whether the user has controller privileges in a managed room.
+     * @property features Feature flags reported by that user.
      */
     @Serializable
     data class UserData(
+        val position: Double? = null,
         val isReady: Boolean? = null,
         val file: FileData? = null,
-        val controller: Boolean = false
+        val controller: Boolean = false,
+        val features: RoomFeatures? = null
     )
 }

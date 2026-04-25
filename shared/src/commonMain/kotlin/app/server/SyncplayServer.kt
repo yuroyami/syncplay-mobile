@@ -1,5 +1,7 @@
 package app.server
 
+import app.protocol.models.RoomFeatures
+import app.protocol.server.Set
 import app.server.model.ControlledServerRoom
 import app.server.model.NotControlledRoomException
 import app.server.model.RoomPasswordProvider
@@ -8,7 +10,6 @@ import app.server.model.ServerConfig.Companion.MAX_FILENAME_LENGTH
 import app.server.model.ServerConfig.Companion.MAX_ROOM_NAME_LENGTH
 import app.server.model.ServerConfig.Companion.SERVER_STATE_INTERVAL_MS
 import app.server.model.ServerWatcher
-import app.server.protocol.OutboundMessageBuilder
 import app.utils.generateTimestampMillis
 import app.utils.loggy
 import kotlinx.coroutines.CoroutineScope
@@ -19,10 +20,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 
 /**
  * Central Syncplay server, managing rooms, watchers, and broadcasting.
@@ -132,7 +130,6 @@ class SyncplayServer(
 
     /**
      * Sends a state update to a specific watcher.
-     * Also checks for protocol timeout.
      */
     fun sendState(watcher: ServerWatcher, doSeek: Boolean = false, forcedUpdate: Boolean = false) {
         val room = watcher.room ?: return
@@ -173,9 +170,9 @@ class SyncplayServer(
     // --- Broadcasting messages ---
 
     private fun sendJoinMessage(watcher: ServerWatcher) {
-        val event = mapOf(
-            "joined" to true,
-            "version" to (watcher.version ?: ""),
+        val event = Set.UserEvent(
+            joined = JsonPrimitive(true),
+            version = watcher.version
         )
         roomManager.broadcast(watcher) { w ->
             if (w != watcher) {
@@ -197,16 +194,16 @@ class SyncplayServer(
     }
 
     private fun sendLeftMessage(watcher: ServerWatcher) {
-        val event = mapOf("left" to true)
+        val event = Set.UserEvent(left = JsonPrimitive(true))
         roomManager.broadcast(watcher) { w ->
             _connections[w]?.sendUserSetting(watcher.name, watcher.room, null, event)
         }
     }
 
     fun sendFileUpdate(watcher: ServerWatcher) {
-        if (watcher.file == null) return
+        val file = watcher.file ?: return
         roomManager.broadcast(watcher) { w ->
-            _connections[w]?.sendUserSetting(watcher.name, watcher.room, watcher.file, null)
+            _connections[w]?.sendUserSetting(watcher.name, watcher.room, file, null)
         }
     }
 
@@ -214,12 +211,8 @@ class SyncplayServer(
 
     fun sendChat(watcher: ServerWatcher, message: String) {
         val truncated = message.take(config.maxChatMessageLength)
-        val chatJson = buildJsonObject {
-            put("message", truncated)
-            put("username", watcher.name)
-        }
         roomManager.broadcastRoom(watcher) { w ->
-            _connections[w]?.sendChatMessage(chatJson)
+            _connections[w]?.sendChatMessage(watcher.name, truncated)
         }
     }
 
@@ -307,16 +300,20 @@ class SyncplayServer(
 
     // --- Features ---
 
-    fun getFeaturesJson(): Map<String, JsonElement> = mapOf(
-        "isolateRooms" to JsonPrimitive(config.isolateRooms),
-        "readiness" to JsonPrimitive(!config.disableReady),
-        "managedRooms" to JsonPrimitive(true),
-        "persistentRooms" to JsonPrimitive(false),
-        "chat" to JsonPrimitive(!config.disableChat),
-        "maxChatMessageLength" to JsonPrimitive(config.maxChatMessageLength),
-        "maxUsernameLength" to JsonPrimitive(config.maxUsernameLength),
-        "maxRoomNameLength" to JsonPrimitive(MAX_ROOM_NAME_LENGTH),
-        "maxFilenameLength" to JsonPrimitive(MAX_FILENAME_LENGTH),
+    /**
+     * Builds the [RoomFeatures] payload advertised to clients in our `Hello` response.
+     * Mirrors python's `getFeatures()` server-side.
+     */
+    fun buildServerFeatures(): RoomFeatures = RoomFeatures(
+        isolateRooms = config.isolateRooms,
+        supportsReadiness = !config.disableReady,
+        supportsManagedRooms = true,
+        persistentRooms = false,
+        supportsChat = !config.disableChat,
+        maxChatMessageLength = config.maxChatMessageLength,
+        maxUsernameLength = config.maxUsernameLength,
+        maxRoomNameLength = MAX_ROOM_NAME_LENGTH,
+        maxFilenameLength = MAX_FILENAME_LENGTH,
     )
 
     fun getAllWatchersForUser(watcher: ServerWatcher): List<ServerWatcher> {

@@ -2,7 +2,6 @@ package app.server.network
 
 import app.server.ClientConnection
 import app.server.SyncplayServer
-import app.server.protocol.InboundMessageHandler
 import app.utils.loggy
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.aSocket
@@ -20,9 +19,8 @@ import kotlinx.coroutines.launch
 /**
  * iOS Ktor-based TCP server engine.
  *
- * Uses Ktor raw sockets which work cross-platform on iOS without requiring
- * additional Swift code. Sufficient for local/LAN server hosting where
- * performance requirements are modest.
+ * Each accepted client gets a long-running coroutine that reads lines and forwards
+ * them to [ClientConnection.handlePacket] for typed dispatch.
  */
 actual class ServerNetworkEngine actual constructor(
     private val server: SyncplayServer,
@@ -74,7 +72,7 @@ actual class ServerNetworkEngine actual constructor(
                         while (isActive) {
                             val line = readChannel.readUTF8Line() ?: break
                             if (line.isNotBlank()) {
-                                InboundMessageHandler.handle(line, connection)
+                                connection.handlePacket(line)
                             }
                         }
                     } catch (e: Exception) {

@@ -3,7 +3,6 @@ package app.server.network
 import android.net.TrafficStats
 import app.server.ClientConnection
 import app.server.SyncplayServer
-import app.server.protocol.InboundMessageHandler
 import app.utils.loggy
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.Channel
@@ -19,13 +18,15 @@ import io.netty.handler.codec.Delimiters
 import io.netty.handler.codec.string.StringDecoder
 import io.netty.handler.codec.string.StringEncoder
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.nio.charset.StandardCharsets
 
 /**
  * Android Netty-based TCP server engine.
  *
- * Mirrors the client-side [NettyNetworkManager] pattern but as a ServerBootstrap.
- * Uses NIO event loops for efficient async I/O with CRLF-delimited JSON framing.
+ * Netty's event-loop threads only deliver decoded lines — actual protocol parsing and
+ * dispatch run on [scope] coroutines so the IO threads stay free.
  */
 actual class ServerNetworkEngine actual constructor(
     private val server: SyncplayServer,
@@ -72,7 +73,9 @@ actual class ServerNetworkEngine actual constructor(
 
                         override fun channelRead0(ctx: ChannelHandlerContext, msg: String) {
                             val connection = clientChannels[ctx.channel()] ?: return
-                            InboundMessageHandler.handle(msg, connection)
+                            scope.launch(Dispatchers.Default) {
+                                connection.handlePacket(msg)
+                            }
                         }
 
                         override fun channelInactive(ctx: ChannelHandlerContext) {

@@ -1,10 +1,12 @@
 package app.server
 
+import app.protocol.server.Set
 import app.server.model.ControlledServerRoom
 import app.server.model.RoomPasswordProvider
 import app.server.model.ServerConfig.Companion.MAX_ROOM_NAME_LENGTH
 import app.server.model.ServerRoom
 import app.server.model.ServerWatcher
+import kotlinx.serialization.json.JsonPrimitive
 
 /**
  * Manages room lifecycle, watcher movement between rooms, and broadcasting.
@@ -129,9 +131,10 @@ class PublicServerRoomManager : ServerRoomManager() {
     override fun moveWatcher(watcher: ServerWatcher, roomName: String) {
         val oldRoom = watcher.room
         if (oldRoom != null) {
+            val leftEvent = Set.UserEvent(left = JsonPrimitive(true))
             broadcast(watcher) { w ->
                 w.server.getClientConnection(w)?.sendUserSetting(
-                    watcher.name, oldRoom, null, mapOf("left" to true)
+                    watcher.name, oldRoom, null, leftEvent
                 )
             }
         }
