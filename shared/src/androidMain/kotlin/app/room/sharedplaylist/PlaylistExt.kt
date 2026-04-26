@@ -3,7 +3,7 @@ package app.room.sharedplaylist
 import android.provider.DocumentsContract
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import app.protocol.ClientMessage
+import app.protocol.WireMessage
 import app.room.sharedplaylist.SharedPlaylistManager.Companion.saveFolderPathAsMediaDirectory
 import app.utils.contextObtainer
 import app.utils.loggy
@@ -30,9 +30,9 @@ actual suspend fun SharedPlaylistManager.addFolderToPlaylist(uri: String) {
 
     if (viewmodel.session.spIndex.intValue == -1) {
         retrieveFile(newList.first())
-        viewmodel.networkManager.send(ClientMessage.playlistIndex(0))
+        viewmodel.networkManager.send(WireMessage.playlistIndex(0))
     }
-    viewmodel.networkManager.send(ClientMessage.playlistChange(viewmodel.session.sharedPlaylist + newList))
+    viewmodel.networkManager.send(WireMessage.playlistChange(viewmodel.session.sharedPlaylist + newList))
 }
 
 fun SharedPlaylistManager.iterateDirectory(dir: DocumentFile, onFileDetected: (String) -> Unit) {
@@ -119,5 +119,5 @@ actual fun SharedPlaylistManager.loadPlaylistLocally(fromUri: String, alsoShuffl
     if (alsoShuffle) lines.shuffle()
 
     /** Updating the shared playlist */
-    viewmodel.networkManager.sendAsync(ClientMessage.playlistChange(lines))
+    viewmodel.networkManager.sendAsync(WireMessage.playlistChange(lines))
 }

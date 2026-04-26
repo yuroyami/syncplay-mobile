@@ -4,7 +4,6 @@ import androidx.lifecycle.viewModelScope
 import app.player.models.MediaFile
 import app.preferences.Preferences
 import app.preferences.value
-import app.protocol.ClientMessage
 import app.protocol.ProtocolManager.Companion.FASTFORWARD_BEHIND_THRESHOLD
 import app.protocol.ProtocolManager.Companion.FASTFORWARD_EXTRA_TIME
 import app.protocol.ProtocolManager.Companion.FASTFORWARD_RESET_THRESHOLD
@@ -13,8 +12,8 @@ import app.protocol.ProtocolManager.Companion.SEEK_THRESHOLD
 import app.protocol.ProtocolManager.Companion.SLOWDOWN_RATE
 import app.protocol.ProtocolManager.Companion.SLOWDOWN_RESET_THRESHOLD
 import app.protocol.ProtocolManager.Companion.SLOWDOWN_THRESHOLD
-import app.protocol.ServerMessage
-import app.protocol.ServerMessageHandler
+import app.protocol.WireMessage
+import app.protocol.WireMessageHandler
 import app.protocol.models.User
 import app.protocol.wire.ControllerAuthData
 import app.protocol.wire.NewControlledRoom
@@ -32,16 +31,18 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Client-side implementation of [ServerMessageHandler].
+ * Client-side implementation of [WireMessageHandler].
  *
- * Owns the room-level reactions to every incoming `ServerMessage` — playback
- * synchronization, user-list rendering, chat broadcasts, TLS upgrade, etc.
+ * Owns the room-level reactions to every incoming server-bound [WireMessage] — playback
+ * synchronization, user-list rendering, chat broadcasts, TLS upgrade, etc. Only the
+ * server→client variants are overridden; the client→server ones inherit the no-op
+ * defaults.
  *
  * This is the place where the protocol's typed payloads meet the room's domain logic.
  * The wire models live in `app.protocol.wire` and are deliberately free of any client
  * coupling; only this class knows about [RoomViewmodel], the player, preferences, etc.
  */
-class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : ServerMessageHandler {
+class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessageHandler {
 
     private val protocol get() = viewmodel.protocol
     private val callback get() = viewmodel.callback
@@ -49,17 +50,17 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : ServerMes
     private val network get() = viewmodel.networkManager
     private val session get() = viewmodel.session
 
-    override suspend fun onHello(message: ServerMessage.Hello) {
+    override suspend fun onHello(message: WireMessage.Hello) {
         val data = message.data
         data.username?.let { session.currentUsername = it }
         session.roomFeatures = data.features
 
         // Ask for the user list right away — the server will send a `List` reply.
-        network.send(ClientMessage.listRequest())
+        network.send(WireMessage.listRequest())
         callback.onConnected()
     }
 
-    override suspend fun onState(message: ServerMessage.State) {
+    override suspend fun onState(message: WireMessage.State) {
         // Freshness stamp for the channel-health watchdog. Set before any other processing
         // so even a State we end up ignoring still resets the "no State received" timer —
         // the server is clearly alive.
@@ -221,7 +222,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : ServerMes
         }
     }
 
-    override suspend fun onSet(message: ServerMessage.Set) {
+    override suspend fun onSet(message: WireMessage.Set) {
         val set = message.data
         when {
             set.user != null -> handleUserSet(set.user)
@@ -231,10 +232,10 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : ServerMes
             set.controllerAuth != null -> handleControllerAuth(set.controllerAuth)
         }
 
-        network.sendAsync(ClientMessage.listRequest())
+        network.sendAsync(WireMessage.listRequest())
     }
 
-    override suspend fun onList(message: ServerMessage.List) {
+    override suspend fun onListResponse(message: WireMessage.ListResponse) {
         val userlist = message.rooms[session.currentRoom] ?: return
         val newList = mutableListOf<User>()
         var indexer = 1
@@ -264,20 +265,20 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : ServerMes
         }
     }
 
-    override suspend fun onChat(message: ServerMessage.Chat) {
+    override suspend fun onChatBroadcast(message: WireMessage.ChatBroadcast) {
         val sender = message.data.username ?: return
         val text = message.data.message ?: return
         callback.onChatReceived(sender, text)
     }
 
-    override suspend fun onTLS(message: ServerMessage.TLS) {
+    override suspend fun onTLS(message: WireMessage.TLS) {
         val startTLS = message.data.startTLS ?: return
         // Match python client semantics: `"true" in answer` / `"false" in answer`.
         val supported = startTLS.contains("true", ignoreCase = true)
         callback.onReceivedTLS(supported)
     }
 
-    override suspend fun onError(message: ServerMessage.Error) {
+    override suspend fun onError(message: WireMessage.Error) {
         message.data.message?.let { loggy("Server error: $it") }
     }
 
@@ -318,9 +319,9 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : ServerMes
     private suspend fun handleNewControlledRoom(data: NewControlledRoom) {
         try {
             callback.onNewControlledRoom(data)
-            network.send(ClientMessage.roomChange(data.roomName))
-            network.sendAsync(ClientMessage.listRequest())
-            network.send(ClientMessage.controllerAuth(room = data.roomName, password = data.password))
+            network.send(WireMessage.roomChange(data.roomName))
+            network.sendAsync(WireMessage.listRequest())
+            network.send(WireMessage.controllerAuth(room = data.roomName, password = data.password))
         } finally {
             viewmodel.viewModelScope.launch {
                 delay(1000)

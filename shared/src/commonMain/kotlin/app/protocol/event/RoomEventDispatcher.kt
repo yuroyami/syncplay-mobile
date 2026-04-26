@@ -6,7 +6,7 @@ import app.player.Playback
 import app.preferences.Preferences
 import app.preferences.Preferences.UNPAUSE_ACTION
 import app.preferences.value
-import app.protocol.ClientMessage
+import app.protocol.WireMessage
 import app.protocol.models.RoomFeatures
 import app.protocol.wire.HelloData
 import app.protocol.wire.Room
@@ -37,7 +37,7 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
         val passwordHash = session.currentPassword.takeIf { it.isNotEmpty() }
             ?.let { md5(it).toHexString(HexFormat.Default) }
         network.send(
-            ClientMessage.Hello(
+            WireMessage.Hello(
                 HelloData(
                     username = session.currentUsername,
                     password = passwordHash,
@@ -70,7 +70,7 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
 
     fun sendMessage(msg: String) {
         if (viewmodel.isSoloMode) return
-        network.sendAsync(ClientMessage.Chat(msg))
+        network.sendAsync(WireMessage.chatRequest(msg))
     }
 
     fun controlPlayback(playback: Playback, tellServer: Boolean) {
@@ -84,7 +84,7 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
                 /* Block the unpause — set as ready instead */
                 loggy("SYNCPLAY Readiness: Conditions not met, setting as ready instead of unpausing")
                 viewmodel.session.ready.value = true
-                network.sendAsync(ClientMessage.readiness(isReady = true, manuallyInitiated = true))
+                network.sendAsync(WireMessage.readiness(isReady = true, manuallyInitiated = true))
                 broadcastMessage(isChat = false) { getString(Res.string.room_set_as_ready) }
                 return
             }

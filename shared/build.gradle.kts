@@ -174,6 +174,11 @@ kotlin {
             /* Ktor HTTP client engine for iOS */
             implementation(libs.ktor.client.darwin)
         }
+
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.serialization.json)
+        }
     }
 }
 

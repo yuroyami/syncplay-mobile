@@ -1,30 +1,22 @@
 package app.server
 
 import SyncplayMobile.shared.BuildConfig
-import app.protocol.ClientMessage
-import app.protocol.ClientMessageDeserializer
-import app.protocol.ClientMessageHandler
-import app.protocol.ServerMessage
+import app.protocol.WireMessage
+import app.protocol.WireMessageDeserializer
+import app.protocol.WireMessageHandler
 import app.protocol.models.PingService
 import app.protocol.models.RoomFeatures
 import app.protocol.syncplayJson
-import app.protocol.wire.ChatData
 import app.protocol.wire.ControllerAuthData
-import app.protocol.wire.ErrorData
 import app.protocol.wire.FileData
 import app.protocol.wire.HelloData
 import app.protocol.wire.IgnoringOnTheFlyData
 import app.protocol.wire.ListUserData
-import app.protocol.wire.NewControlledRoom
 import app.protocol.wire.PingData
-import app.protocol.wire.PlaylistChangeData
-import app.protocol.wire.PlaylistIndexData
 import app.protocol.wire.PlaystateData
 import app.protocol.wire.ReadyData
 import app.protocol.wire.Room
-import app.protocol.wire.SetData
 import app.protocol.wire.StateData
-import app.protocol.wire.TLSData
 import app.protocol.wire.UserEvent
 import app.protocol.wire.UserSetData
 import app.server.model.ServerConfig.Companion.MAX_FILENAME_LENGTH
@@ -38,10 +30,10 @@ import kotlinx.serialization.SerializationException
  * Server-side per-client protocol handler. Port of Python's `SyncServerProtocol`
  * (`syncplay-pc-src-master/syncplay/protocols.py`).
  *
- * Implements [ClientMessageHandler] for incoming wire messages — typed payloads from the
- * shared `app.protocol.*` hierarchy, decoded by [ClientMessageDeserializer]. Outbound
- * traffic constructs instances of [ServerMessage] (the same wire models the client
- * decodes) and serializes via [syncplayJson].
+ * Implements [WireMessageHandler] for incoming wire messages — typed payloads from the
+ * shared [WireMessage] hierarchy, decoded by [WireMessageDeserializer]. Outbound traffic
+ * builds the same hierarchy (the client decodes it identically) and serializes via
+ * [syncplayJson].
  *
  * Both directions therefore share the same Kotlinx Serialization pipeline; only the
  * end-tunnel handling differs.
@@ -50,7 +42,7 @@ class ClientConnection(
     val server: SyncplayServer,
     private val sendFn: (String) -> Unit,
     private val dropFn: () -> Unit
-) : ClientMessageHandler {
+) : WireMessageHandler {
 
     var watcher: ServerWatcher? = null
     private var version: String? = null
@@ -68,14 +60,19 @@ class ClientConnection(
     fun getFeatures(): RoomFeatures? = features
     fun getVersion(): String? = version
 
-    /** Encodes a typed [ServerMessage] and writes it to the wire. */
-    private inline fun <reified T : ServerMessage> sendTyped(message: T) {
-        sendFn(syncplayJson.encodeToString(message))
+    /**
+     * Encodes a [WireMessage] and writes it to the wire. Routes through
+     * [WireMessage.toJson] so the concrete-subclass serializer is always used —
+     * encoding via the interface type would otherwise inject a `"type"` discriminator
+     * the protocol doesn't allow.
+     */
+    private fun sendTyped(message: WireMessage) {
+        sendFn(message.toJson())
     }
 
     fun dropWithError(error: String) {
         loggy("Server: Dropping client - $error")
-        sendTyped(ServerMessage.Error(ErrorData(message = error)))
+        sendTyped(WireMessage.error(error))
         dropFn()
     }
 
@@ -84,14 +81,14 @@ class ClientConnection(
     }
 
     /**
-     * Decodes a raw wire-JSON line via [ClientMessageDeserializer] and dispatches to the
-     * matching `on…` method through [ClientMessage.dispatch]. Mirrors the client-side
+     * Decodes a raw wire-JSON line via [WireMessageDeserializer] and dispatches to the
+     * matching `on…` method through [WireMessage.dispatch]. Mirrors the client-side
      * `NetworkManager.handlePacket` pipeline.
      */
     suspend fun handlePacket(jsonString: String) {
         if (BuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("**CLIENT** $jsonString")
         try {
-            val message = syncplayJson.decodeFromString(ClientMessageDeserializer, jsonString)
+            val message = syncplayJson.decodeFromString(WireMessageDeserializer, jsonString)
             message.dispatch(this)
         } catch (e: SerializationException) {
             loggy("Server: failed to decode line '$jsonString' — ${e.message}")
@@ -100,10 +97,10 @@ class ClientConnection(
     }
 
     // -----------------------------------------------------------
-    // ClientMessageHandler — inbound dispatch
+    // WireMessageHandler — inbound dispatch (client→server only)
     // -----------------------------------------------------------
 
-    override suspend fun onHello(message: ClientMessage.Hello) {
+    override suspend fun onHello(message: WireMessage.Hello) {
         val data = message.data
         val username = data.username?.trim()
         val roomName = data.room?.name?.trim()
@@ -124,7 +121,7 @@ class ClientConnection(
         sendHello(clientVersion)
     }
 
-    override suspend fun onState(message: ClientMessage.State) {
+    override suspend fun onState(message: WireMessage.State) {
         if (!requireLogged()) return
         val state = message.data
 
@@ -153,7 +150,7 @@ class ClientConnection(
         }
     }
 
-    override suspend fun onSet(message: ClientMessage.Set) {
+    override suspend fun onSet(message: WireMessage.Set) {
         if (!requireLogged()) return
         val w = watcher ?: return
         val set = message.data
@@ -167,25 +164,24 @@ class ClientConnection(
         set.features?.let { features = it }
     }
 
-    override suspend fun onList(message: ClientMessage.List) {
+    override suspend fun onListRequest(message: WireMessage.ListRequest) {
         if (!requireLogged()) return
         sendList()
     }
 
-    /** Plain-string Chat from the client (asymmetric: `{"Chat": "message"}`). */
-    override suspend fun onChat(message: ClientMessage.Chat) {
+    override suspend fun onChatRequest(message: WireMessage.ChatRequest) {
         if (!requireLogged()) return
         if (!server.config.disableChat) {
             server.sendChat(watcher ?: return, message.message)
         }
     }
 
-    override suspend fun onTLS(message: ClientMessage.TLS) {
+    override suspend fun onTLS(message: WireMessage.TLS) {
         // Mobile server has no TLS-cert support — always answers "false".
-        sendTyped(ServerMessage.TLS(TLSData(startTLS = "false")))
+        sendTyped(WireMessage.tlsResponse(false))
     }
 
-    override suspend fun onError(message: ClientMessage.Error) {
+    override suspend fun onError(message: WireMessage.Error) {
         dropWithError(message.data.message ?: "Unknown error")
     }
 
@@ -225,7 +221,7 @@ class ClientConnection(
     }
 
     // -----------------------------------------------------------
-    // Outbound — typed `ServerMessage`s encoded via `syncplayJson`
+    // Outbound — typed [WireMessage]s encoded via [syncplayJson]
     // -----------------------------------------------------------
 
     fun sendHello(clientVersion: String) {
@@ -233,7 +229,7 @@ class ClientConnection(
         val room = w.room ?: return
 
         sendTyped(
-            ServerMessage.Hello(
+            WireMessage.Hello(
                 HelloData(
                     username = w.name,
                     room = Room(name = room.name),
@@ -279,7 +275,7 @@ class ClientConnection(
             } else null
 
             sendTyped(
-                ServerMessage.State(
+                WireMessage.State(
                     StateData(
                         playstate = PlaystateData(
                             position = position,
@@ -311,14 +307,12 @@ class ClientConnection(
         event: UserEvent?
     ) {
         sendTyped(
-            ServerMessage.Set(
-                SetData(
-                    user = mapOf(
-                        username to UserSetData(
-                            room = room?.let { Room(it.name) },
-                            file = file,
-                            event = event
-                        )
+            WireMessage.userBroadcast(
+                mapOf(
+                    username to UserSetData(
+                        room = room?.let { Room(it.name) },
+                        file = file,
+                        event = event
                     )
                 )
             )
@@ -332,43 +326,29 @@ class ClientConnection(
         setByUsername: String? = null
     ) {
         sendTyped(
-            ServerMessage.Set(
-                SetData(
-                    ready = ReadyData(
-                        username = username,
-                        isReady = isReady,
-                        manuallyInitiated = manuallyInitiated,
-                        setBy = setByUsername
-                    )
-                )
+            WireMessage.readiness(
+                isReady = isReady ?: false,
+                manuallyInitiated = manuallyInitiated,
+                username = username,
+                setBy = setByUsername
             )
         )
     }
 
     fun sendPlaylist(username: String, files: List<String>) {
-        sendTyped(ServerMessage.Set(SetData(playlistChange = PlaylistChangeData(user = username, files = files))))
+        sendTyped(WireMessage.playlistChange(files = files, user = username))
     }
 
     fun sendPlaylistIndex(username: String, index: Int) {
-        sendTyped(ServerMessage.Set(SetData(playlistIndex = PlaylistIndexData(user = username, index = index))))
+        sendTyped(WireMessage.playlistIndex(index = index, user = username))
     }
 
     fun sendNewControlledRoom(roomName: String, password: String) {
-        sendTyped(ServerMessage.Set(SetData(newControlledRoom = NewControlledRoom(password = password, roomName = roomName))))
+        sendTyped(WireMessage.newControlledRoom(roomName = roomName, password = password))
     }
 
     fun sendControlledRoomAuthStatus(success: Boolean, username: String, roomName: String) {
-        sendTyped(
-            ServerMessage.Set(
-                SetData(
-                    controllerAuth = ControllerAuthData(
-                        user = username,
-                        room = roomName,
-                        success = success
-                    )
-                )
-            )
-        )
+        sendTyped(WireMessage.controllerAuth(user = username, room = roomName, success = success))
     }
 
     /** Builds the full per-room user listing in response to a `List` request. */
@@ -388,11 +368,11 @@ class ClientConnection(
                 )
             }
         }
-        sendTyped(ServerMessage.List(rooms = byRoom))
+        sendTyped(WireMessage.ListResponse(rooms = byRoom))
     }
 
     fun sendChatMessage(senderName: String, message: String) {
-        sendTyped(ServerMessage.Chat(ChatData(username = senderName, message = message)))
+        sendTyped(WireMessage.chatBroadcast(username = senderName, message = message))
     }
 
     private fun requireLogged(): Boolean {

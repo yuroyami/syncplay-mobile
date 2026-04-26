@@ -13,7 +13,7 @@ import app.player.models.Track
 import app.preferences.Preferences.SUBTITLE_SIZE
 import app.preferences.settings.SettingCategory
 import app.preferences.value
-import app.protocol.ClientMessage
+import app.protocol.WireMessage
 import app.room.toFileData
 import app.room.RoomViewmodel
 import app.utils.Platform
@@ -237,8 +237,8 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     fun announceFileLoaded() {
         if (viewmodel.isSoloMode) return
 
-        viewmodel.media?.let { viewmodel.networkManager.sendAsync(ClientMessage.file(it.toFileData())) }
-        viewmodel.networkManager.sendAsync(ClientMessage.listRequest())
+        viewmodel.media?.let { viewmodel.networkManager.sendAsync(WireMessage.file(it.toFileData())) }
+        viewmodel.networkManager.sendAsync(WireMessage.listRequest())
     }
 
     fun onPlaybackEnded() {

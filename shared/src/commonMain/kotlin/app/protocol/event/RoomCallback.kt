@@ -14,7 +14,7 @@ import app.preferences.Preferences.HAPTIC_ON_SEEKED
 import app.preferences.Preferences.PAUSE_ON_SOMEONE_LEAVE
 import app.preferences.Preferences.READY_FIRST_HAND
 import app.preferences.value
-import app.protocol.ClientMessage
+import app.protocol.WireMessage
 import app.protocol.models.ConnectionState
 import app.protocol.models.TlsState
 import app.protocol.wire.ControllerAuthData
@@ -249,12 +249,12 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         protocol.startChannelHealthMonitoring()
 
         val initialReady = if (viewmodel.media == null && READY_FIRST_HAND.value()) true else session.ready.value
-        network.sendAsync(ClientMessage.readiness(isReady = initialReady, manuallyInitiated = false))
+        network.sendAsync(WireMessage.readiness(isReady = initialReady, manuallyInitiated = false))
 
         dispatcher.broadcastMessage(message = { getString(Res.string.room_connected_to_server) }, isChat = false)
         dispatcher.broadcastMessage(message = { getString(Res.string.room_you_joined_room, session.currentRoom) }, isChat = false)
 
-        viewmodel.media?.let { network.sendAsync(ClientMessage.file(it.toFileData())) }
+        viewmodel.media?.let { network.sendAsync(WireMessage.file(it.toFileData())) }
 
         for (m in session.outboundQueue) network.transmitPacket(m, isHello = false)
         session.outboundQueue.clear()
@@ -334,7 +334,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     fun onHandleControllerAuth(data: ControllerAuthData) {
         val user = data.user ?: session.currentUsername
 
-        network.sendAsync(ClientMessage.listRequest())
+        network.sendAsync(WireMessage.listRequest())
 
         val osdMessage: suspend () -> String = {
             getString(

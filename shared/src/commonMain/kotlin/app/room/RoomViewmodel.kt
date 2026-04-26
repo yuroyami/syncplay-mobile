@@ -83,7 +83,7 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
     /** Manages actions performed by the user to send to the server - sending actions */
     val dispatcher: RoomEventDispatcher by lazy { RoomEventDispatcher(this) }
 
-    /** Implements [app.protocol.ServerMessageHandler] — routes incoming wire messages. */
+    /** Implements [app.protocol.WireMessageHandler] — routes incoming wire messages. */
     val serverHandler: RoomServerMessageHandler by lazy { RoomServerMessageHandler(this) }
 
     /** Manages the shared playlist and all playlist-related functionality */

@@ -99,7 +99,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
             while (isActive) {
                 delay(LIST_PROBE_INTERVAL_SECONDS.seconds)
                 if (network.state.value == ConnectionState.CONNECTED) {
-                    network.send(ClientMessage.listRequest())
+                    network.send(WireMessage.listRequest())
                 }
             }
         }
@@ -147,7 +147,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     /**
      * Builds an outbound `State` packet, applying the same `ignoringOnTheFly` bookkeeping
      * (mutating [serverIgnFly] / [clientIgnFly] as side effects) as the python reference
-     * client. Replaces the old `ClientMessage.State.build()` builder.
+     * client.
      */
     fun buildStatePacket(
         serverTime: Double?,
@@ -155,7 +155,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         position: Long?,
         changeState: Int,
         play: Boolean?
-    ): ClientMessage.State {
+    ): WireMessage.State {
         val clientIgnoreIsNotSet = clientIgnFly == 0 || serverIgnFly != 0
 
         val playstate = if (clientIgnoreIsNotSet && position != null && play != null) {
@@ -185,7 +185,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
             ign
         } else null
 
-        return ClientMessage.State(
+        return WireMessage.State(
             StateData(playstate = playstate, ping = ping, ignoringOnTheFly = ignoring)
         )
     }

@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 /**
  * Server-only chat payload: `{"Chat": {"username": "...", "message": "..."}}`.
  * Client-originated chat is asymmetric — a bare string — and is modelled inline on
- * `ClientMessage.Chat`.
+ * `WireMessage.ChatRequest`.
  */
 @Serializable
 data class ChatData(

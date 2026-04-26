@@ -5,14 +5,12 @@ import androidx.lifecycle.viewModelScope
 import app.AbstractManager
 import app.preferences.Preferences.RECONNECTION_INTERVAL
 import app.preferences.value
-import app.protocol.ClientMessage
-import app.protocol.ServerMessage
-import app.protocol.ServerMessageDeserializer
-import app.protocol.ServerMessageHandler
+import app.protocol.WireMessage
+import app.protocol.WireMessageDeserializer
+import app.protocol.WireMessageHandler
 import app.protocol.models.ConnectionState
 import app.protocol.models.TlsState
 import app.protocol.syncplayJson
-import app.protocol.wire.TLSData
 import app.room.RoomViewmodel
 import app.utils.loggy
 import kotlinx.coroutines.Dispatchers
@@ -29,10 +27,10 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * Client-side TCP network layer.
  *
- * Inbound: raw lines → [syncplayJson] decode via [ServerMessageDeserializer] → typed
- * [ServerMessage] → [ServerMessageHandler.dispatch] (the room's handler implementation).
+ * Inbound: raw lines → [syncplayJson] decode via [WireMessageDeserializer] → typed
+ * [WireMessage] → [WireMessage.dispatch] into the room's [WireMessageHandler].
  *
- * Outbound: callers construct typed [ClientMessage] instances and pass them to [send] /
+ * Outbound: callers construct typed [WireMessage] instances and pass them to [send] /
  * [sendAsync]; encoding goes through [syncplayJson] and onto the wire.
  */
 abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
@@ -71,7 +69,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
             connectSocket()
 
             if (tls == TlsState.TLS_ASK) {
-                send(ClientMessage.TLS(TLSData(startTLS = "send")))
+                send(WireMessage.tlsRequest())
             } else {
                 viewmodel.dispatcher.sendHello()
             }
@@ -101,16 +99,16 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     }
 
     /**
-     * Decodes a raw inbound line and dispatches the typed [ServerMessage] to
-     * [viewmodel.serverHandler]. Same shape, same Kotlinx Serialization plumbing as the
-     * server's mirror-image pipeline.
+     * Decodes a raw inbound line and dispatches the typed [WireMessage] to
+     * [viewmodel.serverHandler]. Same Kotlinx Serialization plumbing as the server's
+     * mirror-image pipeline.
      */
     fun handlePacket(jsonString: String) {
         viewmodel.viewModelScope.launch(Dispatchers.Default) {
             if (BuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("**SERVER** $jsonString")
 
             try {
-                val message = syncplayJson.decodeFromString(ServerMessageDeserializer, jsonString)
+                val message = syncplayJson.decodeFromString(WireMessageDeserializer, jsonString)
                 message.dispatch(viewmodel.serverHandler)
             } catch (e: SerializationException) {
                 loggy("Problematic Json: $jsonString")
@@ -125,17 +123,20 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     }
 
     /**
-     * Encodes a typed [ClientMessage] to JSON and writes it.
+     * Encodes a [WireMessage] to JSON and writes it. Uses [WireMessage.toJson] so the
+     * concrete-subclass serializer is always used, even when [message] is typed at the
+     * call site as the interface — that protects against the polymorphic-discriminator
+     * trap that would otherwise inject a `"type"` field the protocol doesn't allow.
+     *
      * No-op in solo mode.
      */
-    suspend inline fun <reified T : ClientMessage> send(message: T) {
+    suspend fun send(message: WireMessage) {
         if (viewmodel.isSoloMode) return
-        val jsonPacket = syncplayJson.encodeToString(message)
-        transmitPacket(jsonPacket, isHello = message is ClientMessage.Hello)
+        transmitPacket(message.toJson(), isHello = message is WireMessage.Hello)
     }
 
     /** Fire-and-forget [send] — launched on [Dispatchers.IO]. */
-    inline fun <reified T : ClientMessage> sendAsync(message: T) {
+    fun sendAsync(message: WireMessage) {
         viewmodel.viewModelScope.launch(Dispatchers.IO) { send(message) }
     }
 
