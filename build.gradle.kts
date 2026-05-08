@@ -21,7 +21,7 @@ plugins {
 
 kmpSsot {
     appName         = "Synkplay"
-    versionName     = "0.21.6"
+    versionName     = "0.21.7"
     bundleIdBase    = "com.yuroyami.syncplay"
     iosBundleSuffix = ".iosApp"
 
