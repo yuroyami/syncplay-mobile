@@ -6,6 +6,6 @@ target 'iosApp' do
   use_frameworks!
 
   pod 'shared', :path => '../shared'
-  pod 'MobileVLCKit'
+  pod 'VLCKit'
   pod 'SPLPing', '1.1.8'
 end

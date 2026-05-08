@@ -307,18 +307,18 @@ fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel, isHUDVisibl
                             strokeColors = if (msgOutlineActivate) listOf(Color.Black, Color.Black) else listOf(),
                             strokeWidth = msgOutlineThickness.toFloat()
                         )
-                        /* `.alpha()` is applied directly on AnimatedImage's modifier so the
-                         * iOS UIKitView honors it (Compose's parent-Box alpha does not
-                         * cascade into native views — see AnimatedImage.ios.kt). */
+                        /* Alpha is forwarded to AnimatedImage as a parameter (not via
+                         * Modifier.alpha) so the iOS UIImageView fades natively — Compose's
+                         * Modifier.alpha does not propagate into UIKit interop layers. */
                         AnimatedImage(
                             url = chatMessage.content,
                             contentDescription = null,
                             contentScale = ContentScale.Crop,
+                            alpha = if (isHUDVisible) 1f else 0f,
                             modifier = Modifier
                                 .padding(start = 4.dp)
                                 .size(64.dp)
                                 .clip(RoundedCornerShape(6.dp))
-                                .alpha(if (isHUDVisible) 1f else 0f)
                         )
                     }
                 } else {

@@ -1,28 +1,28 @@
 PODS:
-  - MobileVLCKit (3.7.2)
   - shared (1.0.4):
-    - MobileVLCKit (= 3.7.2)
+    - VLCKit (= 4.0.0a19)
   - SPLPing (1.1.8)
+  - VLCKit (4.0.0a19)
 
 DEPENDENCIES:
-  - MobileVLCKit
   - shared (from `../shared`)
   - SPLPing (= 1.1.8)
+  - VLCKit
 
 SPEC REPOS:
   trunk:
-    - MobileVLCKit
     - SPLPing
+    - VLCKit
 
 EXTERNAL SOURCES:
   shared:
     :path: "../shared"
 
 SPEC CHECKSUMS:
-  MobileVLCKit: 216c67d556bed3c366ccbca21388304f25a37196
-  shared: 8e0fa1f16851974ad03c335f32d5190b42261923
+  shared: 33c5186ad737f5b4e67954905b2bdd07b88c237a
   SPLPing: 420837fae1e19bba0a8360e91e7a384f22509663
+  VLCKit: 436927d83225116c5d786c0c6fc70b84a6fce28b
 
-PODFILE CHECKSUM: 06eca76e61afe1198b76522833e3fd490a6f4ce8
+PODFILE CHECKSUM: 96382c40aabe4988219d43b307322237b769013d
 
 COCOAPODS: 1.16.2

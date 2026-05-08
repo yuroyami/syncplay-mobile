@@ -36,8 +36,9 @@ import java.lang.ref.WeakReference
 
 actual val platform: Platform = Platform.Android
 
-actual val httpClient: HttpClient
-    get() = HttpClient(OkHttp)
+/* Cached singleton — `get()` would create a fresh OkHttp engine on every access. Keep one
+ * shared client so connection pooling actually works. */
+actual val httpClient: HttpClient by lazy { HttpClient(OkHttp) }
 
 /**
  * List of media player engines available on Android.

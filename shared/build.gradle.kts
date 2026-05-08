@@ -58,7 +58,7 @@ kotlin {
             isStatic = false
         }
 
-        pod("MobileVLCKit", libs.versions.libvlc.ios.get()) //Adds the VLC player engine to iOS
+        pod("VLCKit", libs.versions.libvlc.ios.get()) //Adds the VLC player engine to iOS
     }
 
     sourceSets {

@@ -54,8 +54,11 @@ import kotlin.native.ref.WeakReference
 
 actual val platform: Platform = Platform.IOS
 
-actual val httpClient: HttpClient
-    get() = HttpClient(Darwin)
+/* Cached singleton — `get()` would mint a fresh Darwin engine (and a backing NSURLSession)
+ * on every access, which the GIF grid hits per-tile per-scroll. The leak shows up as iOS
+ * throttling new sessions a few seconds in, surfacing as "Klipy works for a moment, then
+ * stops downloading anything." */
+actual val httpClient: HttpClient by lazy { HttpClient(Darwin) }
 
 actual val availablePlatformPlayerEngines: List<PlayerEngine> = buildList {
     add(AVPlayerEngine)

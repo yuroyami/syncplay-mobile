@@ -2,6 +2,7 @@ package app.uicomponents
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
 
@@ -11,11 +12,12 @@ actual fun AnimatedImage(
     modifier: Modifier,
     contentDescription: String?,
     contentScale: ContentScale,
+    alpha: Float,
 ) {
     AsyncImage(
         model = url,
         contentDescription = contentDescription,
         contentScale = contentScale,
-        modifier = modifier,
+        modifier = modifier.alpha(alpha),
     )
 }

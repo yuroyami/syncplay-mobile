@@ -46,7 +46,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -78,8 +77,9 @@ import syncplaymobile.shared.generated.resources.room_gif_tab_recents
 import syncplaymobile.shared.generated.resources.room_gif_tab_stickers
 import syncplaymobile.shared.generated.resources.room_gif_tab_trending
 
-/** Which "source" the panel is fetching from. */
-private enum class GifSource { SEARCH, TRENDING, RECENTS, FAVORITES }
+/** Which "source" the panel is showing when the chat input is empty. When the chat input has
+ *  text, that text is treated as a search query and overrides the source — no chip switching. */
+private enum class GifSource { TRENDING, RECENTS, FAVORITES }
 
 /**
  * GIF/Sticker search panel that overlays the chat message area.
@@ -117,25 +117,26 @@ fun GifPanel(
     var favoriteIds by remember { mutableStateOf(loadFavoriteIds()) }
 
     LaunchedEffect(query, selectedType, selectedSource) {
-        /* Auto-switch to SEARCH when user types */
-        if (query.isNotBlank() && selectedSource != GifSource.SEARCH) {
-            selectedSource = GifSource.SEARCH
-            return@LaunchedEffect
-        }
-
+        /* Favorites are always client-side. The chat input filters by slug — typing doesn't
+         * yank the user to a search tab; it just narrows what's already loaded. */
         if (selectedSource == GifSource.FAVORITES) {
             isLoading = true
             results.clear()
             val favorites = loadFavorites().filter { it.type == selectedType }
-            results.addAll(favorites)
+            val filtered = if (query.isBlank()) favorites
+                else favorites.filter { it.slug.contains(query, ignoreCase = true) }
+            results.addAll(filtered)
             hasNextPage = false
             isLoading = false
             return@LaunchedEffect
         }
 
-        /* Helper — fetches a single page for the current source */
-        suspend fun fetchPage(page: Int) = when (selectedSource) {
-            GifSource.SEARCH -> KlipyUtils.search(query = query, type = selectedType, page = page)
+        /* Helper — fetches a single page. When the chat input has text, search overrides the
+         * selected source for that fetch (no chip switching). When the input is empty, we
+         * fetch from the user-selected source (TRENDING / RECENTS). */
+        suspend fun fetchPage(page: Int) = if (query.isNotBlank()) {
+            KlipyUtils.search(query = query, type = selectedType, page = page)
+        } else when (selectedSource) {
             GifSource.TRENDING -> KlipyUtils.trending(type = selectedType, page = page)
             GifSource.RECENTS -> KlipyUtils.recents(type = selectedType, page = page)
             GifSource.FAVORITES -> error("handled above")
@@ -146,7 +147,8 @@ fun GifPanel(
         hasNextPage = false
         isLoadingMore = false
 
-        if (selectedSource == GifSource.SEARCH && query.isNotBlank()) delay(400)
+        /* Debounce only when the chat input drives a search request — keeps chip taps snappy. */
+        if (query.isNotBlank()) delay(400)
 
         isLoading = true
         results.clear()
@@ -276,17 +278,17 @@ fun GifPanel(
                     ) {
                         items(results, key = { it.id }) { media ->
                             Box {
-                                /* `.alpha()` is applied directly on AnimatedImage's modifier so the
-                                 * iOS UIKitView honors it (Compose's parent-Box alpha does not
-                                 * cascade into native views — see AnimatedImage.ios.kt). */
+                                /* Alpha is forwarded to AnimatedImage as a parameter (not via
+                                 * Modifier.alpha) so the iOS UIImageView fades natively — Compose's
+                                 * Modifier.alpha does not propagate into UIKit interop layers. */
                                 AnimatedImage(
                                     url = media.previewUrl,
                                     contentDescription = null,
                                     contentScale = ContentScale.Crop,
+                                    alpha = if (isHUDVisible) 1f else 0f,
                                     modifier = Modifier
                                         .height(80.dp)
                                         .clip(RoundedCornerShape(4.dp))
-                                        .alpha(if (isHUDVisible) 1f else 0f)
                                         .combinedClickable(
                                             onClick = {
                                                 onGifSelected(media.fullUrl)

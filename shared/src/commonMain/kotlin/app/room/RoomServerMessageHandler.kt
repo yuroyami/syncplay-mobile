@@ -19,6 +19,7 @@ import app.protocol.wire.ControllerAuthData
 import app.protocol.wire.NewControlledRoom
 import app.protocol.wire.PlaylistChangeData
 import app.protocol.wire.PlaylistIndexData
+import app.protocol.wire.ReadyData
 import app.protocol.wire.UserSetData
 import app.utils.loggy
 import kotlinx.coroutines.Dispatchers
@@ -252,14 +253,17 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
         val set = message.data
         when {
             set.user != null -> handleUserSet(set.user)
+            set.ready != null -> handleReadySet(set.ready)
             set.playlistIndex != null -> handlePlaylistIndex(set.playlistIndex)
             set.playlistChange != null -> handlePlaylistChange(set.playlistChange)
             set.newControlledRoom != null -> handleNewControlledRoom(set.newControlledRoom)
             set.controllerAuth != null -> handleControllerAuth(set.controllerAuth)
         }
-        // Note: python doesn't request a List after every Set. The server pushes List
-        // proactively on the events that matter (join/leave/file change), so doing it
-        // here was double-traffic with ~100 ms of latency added to every UI tick.
+        // No List request after every Set. The python client mutates its userlist in
+        // place from the very Set it just received (see `_SetUser` / `setReady` in
+        // protocols.py); [handleUserSet] and [handleReadySet] do the same. The public
+        // server only proactively pushes a List broadcast when persistent rooms are
+        // configured (`roomsDbFile` set on server), so we cannot rely on it.
     }
 
     /**
@@ -325,19 +329,88 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
     // Set sub-routing
     // -----------------------------------------------------------
 
-    private fun handleUserSet(userMap: Map<String, UserSetData>) {
+    /**
+     * Mirrors python's `_SetUser` (protocols.py): mutates the local user list directly
+     * from the Set we just received, instead of round-tripping a List request. Without
+     * this, `session.userList` only refreshes on the periodic 15-second probe, which
+     * is what surfaces as "user info takes 5+ seconds to update."
+     *
+     * Wire shape per user:
+     *  - `event.joined` (with optional file) → add to list
+     *  - `event.left`                        → remove from list
+     *  - file present, no event              → update file in place (`modUser`)
+     */
+    private suspend fun handleUserSet(userMap: Map<String, UserSetData>) {
         val (userName, userData) = userMap.entries.firstOrNull() ?: return
+
+        val current = session.userList.value
+        val updated = current.toMutableList()
+        var changed = false
 
         userData.event?.let { event ->
             when {
-                event.left != null -> callback.onSomeoneLeft(userName)
-                event.joined != null -> callback.onSomeoneJoined(userName)
+                event.left != null -> {
+                    val idx = updated.indexOfFirst { it.name == userName }
+                    if (idx >= 0) {
+                        updated.removeAt(idx)
+                        changed = true
+                    }
+                    callback.onSomeoneLeft(userName)
+                }
+                event.joined != null -> {
+                    if (updated.none { it.name == userName }) {
+                        val nextIndex = (updated.maxOfOrNull { it.index } ?: 0) + 1
+                        updated.add(
+                            User(
+                                name = userName,
+                                index = nextIndex,
+                                readiness = false,
+                                file = null,
+                                isController = false,
+                            )
+                        )
+                        changed = true
+                    }
+                    callback.onSomeoneJoined(userName)
+                }
             }
         }
 
         userData.file?.let { file ->
+            // Re-resolve the index — the join branch above may have just inserted them.
+            val idx = updated.indexOfFirst { it.name == userName }
+            if (idx >= 0 && file.name != null) {
+                val mediaFile = MediaFile().apply {
+                    fileName = file.name
+                    fileDuration = file.duration ?: 0.0
+                    fileSize = file.size ?: ""
+                }
+                updated[idx] = updated[idx].copy(file = mediaFile)
+                changed = true
+            }
             callback.onSomeoneLoadedFile(userName, file.name ?: "", file.duration ?: 0.0)
         }
+
+        if (changed) session.userList.emit(updated)
+    }
+
+    /**
+     * Mirrors python's `setReady` (client.py): toggles the user's readiness flag in the
+     * local user list. The server sends `Set.ready` independently of `Set.user`, so this
+     * is its own branch.
+     */
+    private suspend fun handleReadySet(ready: ReadyData) {
+        val userName = ready.username ?: return
+        val isReady = ready.isReady ?: return
+
+        val current = session.userList.value
+        val idx = current.indexOfFirst { it.name == userName }
+        if (idx < 0) return
+        if (current[idx].readiness == isReady) return
+
+        val updated = current.toMutableList()
+        updated[idx] = updated[idx].copy(readiness = isReady)
+        session.userList.emit(updated)
     }
 
     private fun handlePlaylistIndex(playlistIndex: PlaylistIndexData) {

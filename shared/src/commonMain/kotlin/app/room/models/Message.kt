@@ -28,15 +28,19 @@ data class Message(
     /** indicates that this message has been seen */
     var seen = false
 
-    /** Whether the message content is a GIF/image URL (for inline rendering in chat) */
+    /** Whether the message content is a GIF/image URL (for inline rendering in chat).
+     *  CDN URLs commonly have query strings (`?token=...`) or fragments (`#frame=...`) that
+     *  would defeat a naive `endsWith` check on the raw content — strip them before testing. */
     val isImageUrl: Boolean
-        get() = sender != null && content.startsWith("http") && (
-            content.endsWith(".gif", ignoreCase = true) ||
-            content.endsWith(".webp", ignoreCase = true) ||
-            content.endsWith(".png", ignoreCase = true) ||
-            content.endsWith(".jpg", ignoreCase = true) ||
-            content.endsWith(".jpeg", ignoreCase = true)
-        )
+        get() {
+            if (sender == null || !content.startsWith("http")) return false
+            val path = content.substringBefore('?').substringBefore('#')
+            return path.endsWith(".gif", ignoreCase = true) ||
+                path.endsWith(".webp", ignoreCase = true) ||
+                path.endsWith(".png", ignoreCase = true) ||
+                path.endsWith(".jpg", ignoreCase = true) ||
+                path.endsWith(".jpeg", ignoreCase = true)
+        }
 
     /** Returns an AnnotatedString with only the timestamp + sender tag (no content).
      *  Used when the message content is rendered as an inline image instead of text. */

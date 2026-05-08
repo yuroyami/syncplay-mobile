@@ -21,17 +21,24 @@ import app.preferences.settings.SettingCategory
 import app.preferences.value
 import app.room.RoomViewmodel
 import app.utils.loggy
-import cocoapods.MobileVLCKit.VLCLibrary
-import cocoapods.MobileVLCKit.VLCMedia
-import cocoapods.MobileVLCKit.VLCMediaPlaybackSlaveTypeSubtitle
-import cocoapods.MobileVLCKit.VLCMediaPlayer
-import cocoapods.MobileVLCKit.VLCMediaPlayerDelegateProtocol
-import cocoapods.MobileVLCKit.VLCMediaPlayerState
-import cocoapods.MobileVLCKit.VLCTime
+import cocoapods.VLCKit.VLCLibrary
+import cocoapods.VLCKit.VLCMedia
+import cocoapods.VLCKit.VLCMediaParseLocal
+import cocoapods.VLCKit.VLCMediaPlaybackSlaveTypeSubtitle
+import cocoapods.VLCKit.VLCMediaPlayer
+import cocoapods.VLCKit.VLCMediaPlayerChapterDescription
+import cocoapods.VLCKit.VLCMediaPlayerDelegateProtocol
+import cocoapods.VLCKit.VLCMediaPlayerState
+import cocoapods.VLCKit.VLCMediaPlayerTrack
+import cocoapods.VLCKit.VLCMediaTrackTypeAudio
+import cocoapods.VLCKit.VLCMediaTrackTypeText
+import cocoapods.VLCKit.VLCTime
+import cocoapods.VLCKit.audioTracks
+import cocoapods.VLCKit.deselectAllAudioTracks
+import cocoapods.VLCKit.deselectAllTextTracks
+import cocoapods.VLCKit.selectTrackAtIndex
+import cocoapods.VLCKit.textTracks
 import io.github.vinceglb.filekit.PlatformFile
-import kotlinx.cinterop.cstr
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.toKString
 import kotlinx.cinterop.useContents
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -99,14 +106,15 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         try {
             removeAudioSessionObservers()
 
+            // Clear the delegate before stopping so the synthetic Stopped state
+            // emitted by stop() doesn't get treated as natural playback end.
+            vlcPlayer?.setDelegate(null)
             vlcPlayer?.stop()
-            vlcPlayer?.finalize()
             vlcPlayer?.drawable = null
             vlcPlayer = null
 
             vlcMedia = null
 
-            libvlc?.finalize()
             libvlc = null
             vlcView = null
         } catch (e: Exception) {
@@ -321,8 +329,9 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     /**
      * Analyzes and extracts available audio and subtitle tracks from the loaded media.
      *
-     * Populates the media file's track lists with VLC's detected tracks,
-     * including track names and indices for selection.
+     * Populates the media file's track lists with VLC's detected tracks. The `index`
+     * we record is the position in [VLCMediaPlayer.audioTracks] / [VLCMediaPlayer.textTracks]
+     * — that's what [VLCMediaPlayer.selectTrackAtIndex] expects in VLCKit 4.
      *
      * @param mediafile The media file to populate with track information
      */
@@ -333,26 +342,26 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         withContext(Dispatchers.Main.immediate) {
             viewmodel.media?.tracks?.clear()
 
-            val audioTracks = vlcPlayer!!.audioTrackIndexes.zip(vlcPlayer!!.audioTrackNames).toMap()
-            audioTracks.forEach { (index, name) ->
+            vlcPlayer!!.audioTracks.forEachIndexed { i, raw ->
+                val track = raw as? VLCMediaPlayerTrack ?: return@forEachIndexed
                 viewmodel.media?.tracks?.add(
                     VlcKitTrack(
-                        name = name.toString(),
+                        name = track.trackName,
                         type = TrackType.AUDIO,
-                        index = index as? Int ?: 0,
-                        selected = vlcPlayer!!.currentAudioTrackIndex == index
+                        index = i,
+                        selected = track.isSelected()
                     )
                 )
             }
 
-            val subtitleTracks = vlcPlayer!!.videoSubTitlesIndexes.zip(vlcPlayer!!.videoSubTitlesNames).toMap()
-            subtitleTracks.forEach { (index, name) ->
+            vlcPlayer!!.textTracks.forEachIndexed { i, raw ->
+                val track = raw as? VLCMediaPlayerTrack ?: return@forEachIndexed
                 viewmodel.media?.tracks?.add(
                     VlcKitTrack(
-                        name = name.toString(),
+                        name = track.trackName,
                         type = TrackType.SUBTITLE,
-                        index = index as? Int ?: 0,
-                        selected = vlcPlayer!!.currentVideoSubTitleIndex == index
+                        index = i,
+                        selected = track.isSelected()
                     )
                 )
             }
@@ -362,7 +371,8 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     /**
      * Selects a specific audio or subtitle track for playback.
      *
-     * Pass null or negative index to disable that track type.
+     * Pass null or negative index to disable that track type. The index refers to
+     * the position in [VLCMediaPlayer.audioTracks] / [VLCMediaPlayer.textTracks].
      *
      * @param track The track to select, or null to disable
      * @param type Whether this is an audio or subtitle track
@@ -375,18 +385,18 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                 TrackType.SUBTITLE -> {
                     val index = track?.index ?: -1
                     if (index >= 0) {
-                        vlcPlayer?.setCurrentVideoSubTitleIndex(index)
+                        vlcPlayer?.selectTrackAtIndex(index.toLong(), VLCMediaTrackTypeText)
                     } else {
-                        vlcPlayer?.setCurrentVideoSubTitleIndex(-1)
+                        vlcPlayer?.deselectAllTextTracks()
                     }
                 }
 
                 TrackType.AUDIO -> {
                     val index = track?.index ?: -1
                     if (index >= 0) {
-                        vlcPlayer?.setCurrentAudioTrackIndex(index)
+                        vlcPlayer?.selectTrackAtIndex(index.toLong(), VLCMediaTrackTypeAudio)
                     } else {
-                        vlcPlayer?.setCurrentAudioTrackIndex(-1)
+                        vlcPlayer?.deselectAllAudioTracks()
                     }
                 }
             }
@@ -406,10 +416,10 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
             mediafile.chapters.clear()
             delay(500)
             chapterDescs.forEachIndexed { i, desc ->
-                val descMap = desc as? Map<*, *>
+                val chapter = desc as? VLCMediaPlayerChapterDescription ?: return@forEachIndexed
 
-                val timeOffset = (descMap?.get("VLCChapterDescriptionTimeOffset") as? NSNumber)?.longValue ?: 0L
-                val name = descMap?.get("VLCChapterDescriptionName") as? String ?: ""
+                val timeOffset = chapter.timeOffset.value()?.longValue ?: 0L
+                val name = chapter.name ?: ""
 
                 mediafile.chapters.add(
                     Chapter(
@@ -483,7 +493,9 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         val nsUrl = location.file.nsUrl
         nsUrl.startAccessingSecurityScopedResource()
         vlcMedia = VLCMedia(uRL = nsUrl)
-        vlcMedia?.synchronousParse()
+        // VLCKit 4 removed synchronousParse(); kick off an async local parse and
+        // let parseMedia() poll length below.
+        vlcMedia?.parseWithOptions(VLCMediaParseLocal.toInt())
         vlcPlayer?.setMedia(vlcMedia)
     }
 
@@ -496,27 +508,25 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                 || url.contains("/manifest", ignoreCase = true)
 
         if (isAdaptiveStream) {
-            // For HLS/DASH streams, skip synchronousParse which can block indefinitely
-            // on stream manifests. VLC will parse during playback instead.
+            // HLS/DASH manifests can stall a parse indefinitely — let VLC parse during
+            // playback instead and just feed the network-friendly options.
             vlcMedia?.addOption(":network-caching=3000")
             vlcMedia?.addOption(":clock-jitter=0")
             vlcMedia?.addOption(":clock-synchro=0")
-        } else {
-            vlcMedia?.synchronousParse()
         }
         vlcPlayer?.setMedia(vlcMedia)
     }
 
     override suspend fun parseMedia(media: MediaFile) {
-        val lengthMs = vlcMedia?.length?.numberValue?.doubleValue?.toLong() ?: 0L
+        val lengthMs = vlcMedia?.length?.value()?.longValue ?: 0L
         if (lengthMs > 0) {
             playerManager.timeFullMillis.value = lengthMs
             media.fileDuration = lengthMs / 1000.0
         } else {
-            // For streams (HLS/DASH), duration may not be known until playback starts.
-            // Retry after a short delay to let VLC fetch the manifest.
+            // Parsing is async in VLCKit 4 — and for streams (HLS/DASH) duration may
+            // only be known once playback starts. Retry once after a short delay.
             delay(1500)
-            val retryMs = vlcMedia?.length?.numberValue?.doubleValue?.toLong() ?: 0L
+            val retryMs = vlcMedia?.length?.value()?.longValue ?: 0L
             val dur = if (retryMs > 0) retryMs else Long.MAX_VALUE
             playerManager.timeFullMillis.value = dur
             media.fileDuration = if (dur == Long.MAX_VALUE) 0.0 else dur / 1000.0
@@ -597,44 +607,45 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     override suspend fun switchAspectRatio(): String {
         if (!isInitialized) return "NO PLAYER FOUND"
         return withContext(Dispatchers.Main.immediate) {
-            val currentAspectRatio = vlcPlayer?.videoAspectRatio?.toKString()
+            val currentAspectRatio = vlcPlayer?.videoAspectRatio
 
             val (width, height) = vlcPlayer?.videoSize?.useContents { width.toInt() to height.toInt() } ?: (0 to 0)
 
-            // Available aspect ratio options
             val aspectRatios = mutableListOf(
                 "$width:$height",
                 "1:1", "4:3", "16:9", "16:10",
             )
 
-            // Find the index of the current aspect ratio in the list
             val currentIndex = if (currentAspectRatio != null) {
                 aspectRatios.indexOf(currentAspectRatio)
             } else {
-                -1 // If current aspect ratio is null, set it to -1
+                -1
             }
 
             val nextIndex = (currentIndex + 1) % aspectRatios.size
             val newAspectRatio = aspectRatios[nextIndex]
 
-            // Convert the new aspect ratio to C string and set it
-            memScoped {
-                vlcPlayer?.videoAspectRatio = newAspectRatio.cstr.ptr
-            }
+            // VLCKit 4 exposes videoAspectRatio as NSString — assignment is direct,
+            // no more cstr.ptr round trip.
+            vlcPlayer?.videoAspectRatio = newAspectRatio
 
             return@withContext newAspectRatio
         }
     }
 
     /**
-     * Sadly, MobileVLCKit doesn't allow to change subtitle size at runtime
+     * VLCKit 4 exposes [VLCMediaPlayer.currentSubTitleFontScale] as a runtime-mutable
+     * property — the legacy --freetype-fontsize launch flag still seeds the baseline,
+     * but we can now scale on top of it without a restart.
+     *
+     * The slider in [SUBTITLE_SIZE] runs roughly 1..30; a 1× font scale at the libvlc
+     * default looks right around `newSize == 4` (which is the multiplier seeded into
+     * --freetype-fontsize when the library starts), so we anchor to that.
      */
     override suspend fun changeSubtitleSize(newSize: Int) {
         if (!isInitialized) return
-
-        viewmodel.dispatchOSD {
-            //TODO Localize
-            "Subtitle size will take effect next time you open the room"
+        withContext(Dispatchers.Main.immediate) {
+            vlcPlayer?.currentSubTitleFontScale = (newSize / 4f).coerceAtLeast(0.1f)
         }
     }
 
@@ -652,16 +663,23 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
 
     /**
      * Delegate for receiving VLC media player state change notifications.
+     *
+     * VLCKit 4 changes the [mediaPlayerStateChanged] selector from
+     * `(NSNotification *)` to `(VLCMediaPlayerState)`, and folds the old `Ended`
+     * state into `Stopped` — there's no longer a way to distinguish a natural
+     * playback end from an explicit stop. We treat any Stopped transition as
+     * "ended"; [destroy] clears the delegate before calling stop() so that
+     * teardown doesn't fire a spurious onPlaybackEnded.
      */
     inner class VlcDelegate : NSObject(), VLCMediaPlayerDelegateProtocol {
-        override fun mediaPlayerStateChanged(aNotification: NSNotification) {
+        override fun mediaPlayerStateChanged(newState: VLCMediaPlayerState) {
             val isPlaying = vlcPlayer?.media != null && vlcPlayer?.isPlaying() == true
             playerManager.isNowPlaying.value = isPlaying
             playerManager.timeCurrentMillis.value = currentPositionMs()
 
             if (isPlaying) pausedSeekPosition = null
 
-            if (vlcPlayer?.state == VLCMediaPlayerState.VLCMediaPlayerStateEnded) {
+            if (newState == VLCMediaPlayerState.VLCMediaPlayerStateStopped) {
                 onPlaybackEnded()
             }
         }
