@@ -714,6 +714,7 @@ private fun performUndoSeek(
     seek: Pair<Long, Long>,
     scope: kotlinx.coroutines.CoroutineScope
 ) {
+    viewmodel.dispatcher.pendingSeekFromMs = seek.second
     scope.launch(Dispatchers.Main.immediate) {
         viewmodel.player.seekTo(seek.first)
     }

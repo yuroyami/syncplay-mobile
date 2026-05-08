@@ -1,7 +1,6 @@
 package app.protocol.models
 
 import app.utils.generateTimestampMillis
-import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * Measures network latency between client and server to keep playback in sync.
@@ -26,25 +25,27 @@ class PingService {
      */
     var forwardDelay: Double = 0.0
 
-    private val avrRtt = MutableStateFlow(0.0)
+    private var avrRtt: Double = 0.0
 
-    /** Called on each server ping response to update RTT and [forwardDelay]. */
-    fun receiveMessage(timestamp: Long?, senderRtt: Double) {
-        rtt = (generateTimestampMillis() - (timestamp?.times(1000L) ?: return)) / 1000.0
+    /**
+     * Called on each server ping response to update RTT and [forwardDelay].
+     *
+     * [timestamp] must arrive as full-precision seconds (Double) — rounding it to
+     * whole seconds before the subtraction destroys the only signal it carries
+     * (sub-second drift) and replaces it with up-to-±500 ms quantization noise.
+     */
+    fun receiveMessage(timestamp: Double?, senderRtt: Double) {
+        if (timestamp == null) return
+        rtt = generateTimestampMillis() / 1000.0 - timestamp
         if (rtt < 0 || senderRtt < 0) return
 
-        if (avrRtt.value == 0.0) {
-            avrRtt.value = rtt
-            forwardDelay = rtt / 2
-            return
-        }
-
-        avrRtt.value = avrRtt.value * PING_MOVING_AVERAGE_WEIGHT + rtt * (1 - PING_MOVING_AVERAGE_WEIGHT)
+        if (avrRtt == 0.0) avrRtt = rtt
+        avrRtt = avrRtt * PING_MOVING_AVERAGE_WEIGHT + rtt * (1 - PING_MOVING_AVERAGE_WEIGHT)
 
         forwardDelay = if (senderRtt < rtt) {
-            avrRtt.value / 2 + (rtt - senderRtt)
+            avrRtt / 2 + (rtt - senderRtt)
         } else {
-            avrRtt.value / 2
+            avrRtt / 2
         }
     }
 }

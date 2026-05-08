@@ -62,23 +62,31 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
      * adds the parent directory to the known media directories, after that, it informs the server
      * about it. The server will send back the new playlist which will invoke playlist updating */
     suspend fun addFiles(uris: List<String>) {
-        for (uri in uris) {
-            /* We get the file name */
-            val filename = getFileName(PlatformFile(uri)) ?: return
+        // Was the playlist empty before this add? Decided up front so we can broadcast
+        // the index change *after* the playlistChange — peers receive the list first,
+        // then the index, so their changePlaylistSelection() finds the file and auto-loads.
+        // Reversing this (the old behavior) made every peer's index update arrive against
+        // an empty list and silently no-op.
+        val playlistWasEmpty = viewmodel.session.sharedPlaylist.isEmpty()
+                && viewmodel.session.spIndex.intValue == -1
+        var firstUriToInject: String? = null
 
-            /* If the playlist already contains this file name, prevent adding it */
+        for (uri in uris) {
+            val filename = getFileName(PlatformFile(uri)) ?: return
             if (viewmodel.session.sharedPlaylist.contains(filename)) return
 
-            /* If there is no duplicate, then we proceed, we check if the list is empty */
-            if (viewmodel.session.sharedPlaylist.isEmpty() && viewmodel.session.spIndex.intValue == -1) {
-                viewmodel.player.injectVideo(uri)
-
-                viewmodel.networkManager.send(WireMessage.playlistIndex(0))
-                //TODO MAKE NON=ASYNC
+            if (playlistWasEmpty && firstUriToInject == null) {
+                firstUriToInject = uri
             }
             viewmodel.session.sharedPlaylist.add(filename)
         }
+
         viewmodel.networkManager.send(WireMessage.playlistChange(viewmodel.session.sharedPlaylist.toList()))
+
+        if (firstUriToInject != null) {
+            viewmodel.player.injectVideo(firstUriToInject)
+            viewmodel.networkManager.send(WireMessage.playlistIndex(0))
+        }
     }
 
 

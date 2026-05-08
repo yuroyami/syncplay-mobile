@@ -10,6 +10,9 @@ import app.player.models.MediaFile.Companion.mediaFromFile
 import app.player.models.MediaFile.Companion.mediaFromUrl
 import app.player.models.MediaFileLocation
 import app.player.models.Track
+import app.player.resolver.mediaResolver
+import app.player.resolver.urlLooksLikeDirectMedia
+import app.preferences.Preferences.MEDIA_RESOLVER_ENABLED
 import app.preferences.Preferences.SUBTITLE_SIZE
 import app.preferences.settings.SettingCategory
 import app.preferences.value
@@ -31,6 +34,8 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.getString
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_msg_problem_loading_file
+import syncplaymobile.shared.generated.resources.room_msg_resolved_url
+import syncplaymobile.shared.generated.resources.room_msg_resolving_url
 import syncplaymobile.shared.generated.resources.room_selected_sub
 import syncplaymobile.shared.generated.resources.room_selected_sub_error
 import syncplaymobile.shared.generated.resources.room_selected_vid
@@ -81,6 +86,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
         val currentPos = currentPositionMs()
 
         if (!viewmodel.isSoloMode) {
+            viewmodel.dispatcher.pendingSeekFromMs = currentPos
             viewmodel.dispatcher.sendSeek(newPosMs = chapter.timeOffsetMillis)
         }
     }
@@ -94,11 +100,11 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
             ?.filter { it.timeOffsetMillis > currentMs }
             ?.minByOrNull { it.timeOffsetMillis }
             ?.let { nextChapter ->
-                viewmodel.player.seekTo(nextChapter.timeOffsetMillis)
-
                 if (!viewmodel.isSoloMode) {
+                    viewmodel.dispatcher.pendingSeekFromMs = currentMs
                     viewmodel.dispatcher.sendSeek(newPosMs = nextChapter.timeOffsetMillis)
                 }
+                viewmodel.player.seekTo(nextChapter.timeOffsetMillis)
             }
     }
 
@@ -166,8 +172,43 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     abstract suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote)
     abstract suspend fun injectVideoFileImpl(location: MediaFileLocation.Local)
 
-    suspend fun injectVideoURL(url: String) = inject(url, { it.mediaFromUrl() }) { injectVideoURLImpl(it.location as MediaFileLocation.Remote) }
+    /** Hands a URL to the player. If the URL is a "page URL" (YouTube, SoundCloud, …) and the
+     *  platform resolver is enabled, the URL is first run through the resolver to extract a
+     *  direct streamable URL plus best-effort title/duration metadata. Direct media URLs
+     *  (`*.mp4`, `*.m3u8`, …) short-circuit the resolver entirely.
+     *
+     *  Resolution happens client-side at retrieve time — the shared playlist still stores the
+     *  *original* page URL, since YouTube stream URLs are IP-pinned and time-limited and would
+     *  not be valid across other clients in the room. Each client resolves independently from
+     *  the same input. */
+    suspend fun injectVideoURL(url: String) = inject(
+        source = url,
+        toMedia = { input ->
+            val resolved = maybeResolve(input)
+            val finalUrl = resolved?.directUrl ?: input
+            finalUrl.mediaFromUrl().also { media ->
+                resolved?.title?.takeIf { it.isNotBlank() }?.let { media.fileName = it }
+                resolved?.durationSec?.let { media.fileDuration = it }
+            }
+        },
+    ) { injectVideoURLImpl(it.location as MediaFileLocation.Remote) }
+
     suspend fun injectVideoFile(file: PlatformFile) = inject(file, { it.mediaFromFile() }) { injectVideoFileImpl(it.location as MediaFileLocation.Local) }
+
+    private suspend fun maybeResolve(url: String) = when {
+        !MEDIA_RESOLVER_ENABLED.value() -> null
+        urlLooksLikeDirectMedia(url) -> null
+        else -> {
+            viewmodel.dispatchOSD { getString(Res.string.room_msg_resolving_url) }
+            val resolved = mediaResolver.resolve(url)
+            if (resolved != null) {
+                viewmodel.dispatchOSD {
+                    getString(Res.string.room_msg_resolved_url, resolved.title ?: resolved.directUrl)
+                }
+            }
+            resolved
+        }
+    }
 
     private suspend inline fun <T> inject(source: T, crossinline toMedia: suspend (T) -> MediaFile, crossinline impl: suspend (MediaFile) -> Unit) {
         val media = toMedia(source)

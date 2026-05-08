@@ -11,6 +11,7 @@ import app.protocol.wire.StateData
 import app.room.RoomViewmodel
 import app.utils.generateTimestampMillis
 import app.utils.loggy
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
@@ -18,8 +19,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.concurrent.Volatile
+import kotlin.math.abs
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -30,11 +34,27 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     var globalPaused: Boolean = true
     var globalPositionMs: Double = 0.0
 
-    /** Tracks conflicting state updates during rapid changes. */
-    var serverIgnFly: Int = 0
+    /**
+     * The wall-clock time at which [globalPositionMs] was last set from a server `State`.
+     * Used to extrapolate the room's *current* expected position via [extrapolatedGlobalPositionMs].
+     */
+    var lastGlobalPositionSetAt: Instant? = null
 
-    /** Prevents responding to our own state changes until the server acknowledges them. */
-    var clientIgnFly: Int = 0
+    /** Tracks conflicting state updates during rapid changes. Updated atomically. */
+    private val _serverIgnFly = atomic(0)
+    var serverIgnFly: Int
+        get() = _serverIgnFly.value
+        set(value) { _serverIgnFly.value = value }
+
+    /**
+     * Prevents responding to our own state changes until the server acknowledges them.
+     * Atomic because both [buildStatePacket] (called from `Dispatchers.IO` on every user
+     * action) and the player polling loop can race on the increment-and-send sequence.
+     */
+    private val _clientIgnFly = atomic(0)
+    var clientIgnFly: Int
+        get() = _clientIgnFly.value
+        set(value) { _clientIgnFly.value = value }
 
     /** Position drift threshold for hard seek. 12s per Syncplay spec — do not change. */
     val rewindThreshold = 12L
@@ -68,6 +88,17 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
 
     private var watchdogJob: Job? = null
     private var listProbeJob: Job? = null
+    private var playerPollJob: Job? = null
+
+    /**
+     * Per-iteration baseline for the player-state poller. Each poll compares (now − last)
+     * to detect pauseChange / seeked, then advances the baseline. Reset to `null` whenever
+     * the protocol-side applies a state change to the player, so the next poll doesn't
+     * re-report the change as a phantom user action.
+     */
+    private var pollLastAt: Instant? = null
+    private var pollLastPositionMs: Long = 0L
+    private var pollLastPaused: Boolean = true
 
     /**
      * Starts the channel-health coroutines for the current room session.
@@ -121,6 +152,16 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
                 }
             }
         }
+
+        playerPollJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
+            while (isActive) {
+                delay(PLAYER_POLL_INTERVAL_MS.milliseconds)
+                if (network.state.value != ConnectionState.CONNECTED) continue
+                if (lastGlobalUpdate == null) continue
+                if (isRoomChanging) continue
+                pollPlayerStateOnce()
+            }
+        }
     }
 
     /** Cancels the channel-health coroutines. Safe to call multiple times. */
@@ -129,6 +170,78 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         watchdogJob = null
         listProbeJob?.cancel()
         listProbeJob = null
+        playerPollJob?.cancel()
+        playerPollJob = null
+        pollLastAt = null
+    }
+
+    /**
+     * Polls the player's pause/position once, compares to the last poll's snapshot, and
+     * sends a State packet (with `changeState=1`) if the player has paused/played itself
+     * (buffering, EOF, internal seek) without going through `dispatcher.controlPlayback`.
+     *
+     * This is the missing half of the Syncplay protocol from python's `updatePlayerStatus`
+     * pipeline — without it, the server never learns that the player auto-paused on a
+     * buffer dip, and instead keeps telling us to play, which fights with the player.
+     *
+     * The protocol's `clientIgnoringOnTheFly` counter handles dedup against our own user
+     * actions, so we don't need to skip when those are pending — `buildStatePacket` will
+     * correctly suppress the playstate block during the unacked window.
+     */
+    private suspend fun pollPlayerStateOnce() {
+        val player = viewmodel.player
+        val nowMs = withContext(Dispatchers.Main.immediate) { player.currentPositionMs() }
+        val isPlaying = player.isPlaying()
+        val nowPaused = !isPlaying
+        val now = Clock.System.now()
+
+        val lastAt = pollLastAt
+        val lastPos = pollLastPositionMs
+        val lastPaused = pollLastPaused
+
+        pollLastAt = now
+        pollLastPositionMs = nowMs
+        pollLastPaused = nowPaused
+
+        // First poll after a baseline reset — initialize and skip change detection.
+        if (lastAt == null) return
+
+        val pauseChanged = nowPaused != lastPaused
+        val elapsedMs = (now - lastAt).inWholeMilliseconds
+        val expectedRate = when {
+            lastPaused -> 0.0
+            speedChanged -> SLOWDOWN_RATE
+            else -> 1.0
+        }
+        val expectedAdvanceMs = (elapsedMs * expectedRate).toLong()
+        val actualAdvanceMs = nowMs - lastPos
+        val seeked = abs(actualAdvanceMs - expectedAdvanceMs) > (SEEK_THRESHOLD * 1000L)
+
+        if (pauseChanged || seeked) {
+            viewmodel.networkManager.sendAsync(
+                buildStatePacket(
+                    serverTime = null,
+                    doSeek = seeked,
+                    position = nowMs / 1000.0,
+                    changeState = 1,
+                    play = isPlaying
+                )
+            )
+        }
+    }
+
+    /**
+     * Updates the polling baseline with the user's intent so the next poll doesn't see
+     * a "change" caused by an action that already went through `controlPlayback` /
+     * `sendSeek` / a server-driven seek.
+     *
+     * Called by the dispatcher after every user action, and by [RoomServerMessageHandler]
+     * after applying server-driven state changes to the player.
+     */
+    fun primePollBaseline(paused: Boolean, positionMs: Long) {
+        pollLastAt = Clock.System.now()
+        pollLastPositionMs = positionMs
+        pollLastPaused = paused
     }
 
     override fun invalidate() {
@@ -137,6 +250,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         session = Session(this)
         globalPaused = true
         globalPositionMs = 0.0
+        lastGlobalPositionSetAt = null
         serverIgnFly = 0
         clientIgnFly = 0
         speedChanged = false
@@ -145,14 +259,31 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     }
 
     /**
+     * The room's *current* expected position in ms, extrapolated from the last server
+     * `State`. While the room is playing, advances by wall-clock time elapsed since
+     * [lastGlobalPositionSetAt]. Mirrors python's `getGlobalPosition()` — without the
+     * extrapolation, a SYNC_ON_PAUSE seek lands on a stale frame from the last 1 Hz tick.
+     */
+    fun extrapolatedGlobalPositionMs(): Double {
+        val anchor = lastGlobalPositionSetAt ?: return globalPositionMs
+        if (globalPaused) return globalPositionMs
+        val elapsedMs = (Clock.System.now() - anchor).inWholeMilliseconds.toDouble()
+        return globalPositionMs + elapsedMs
+    }
+
+    /**
      * Builds an outbound `State` packet, applying the same `ignoringOnTheFly` bookkeeping
      * (mutating [serverIgnFly] / [clientIgnFly] as side effects) as the python reference
      * client.
+     *
+     * [position] is full-precision seconds (Double) on the wire — never round to whole
+     * seconds: the protocol depends on sub-second precision for both the desync-detection
+     * algorithm on the server and for `min(watchers)` not picking us as the slowest.
      */
     fun buildStatePacket(
         serverTime: Double?,
         doSeek: Boolean?,
-        position: Long?,
+        position: Double?,
         changeState: Int,
         play: Boolean?
     ): WireMessage.State {
@@ -160,7 +291,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
 
         val playstate = if (clientIgnoreIsNotSet && position != null && play != null) {
             PlaystateData(
-                position = position.toDouble(),
+                position = position,
                 paused = !play,
                 doSeek = doSeek
             )
@@ -173,15 +304,17 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         )
 
         if (changeState == 1) {
-            clientIgnFly += 1
+            _clientIgnFly.incrementAndGet()
         }
 
-        val ignoring = if (clientIgnFly != 0 || serverIgnFly != 0) {
+        val snapshotServer = _serverIgnFly.value
+        val snapshotClient = _clientIgnFly.value
+        val ignoring = if (snapshotClient != 0 || snapshotServer != 0) {
             val ign = IgnoringOnTheFlyData(
-                server = serverIgnFly.takeIf { it != 0 },
-                client = clientIgnFly.takeIf { it != 0 }
+                server = snapshotServer.takeIf { it != 0 },
+                client = snapshotClient.takeIf { it != 0 }
             )
-            if (serverIgnFly != 0) serverIgnFly = 0
+            if (snapshotServer != 0) _serverIgnFly.compareAndSet(snapshotServer, 0)
             ign
         } else null
 
@@ -191,6 +324,16 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     }
 
     companion object {
+        /**
+         * The Syncplay protocol version we advertise in `Hello.realversion`.
+         *
+         * 1.7.5 is the current `RECENT_CLIENT_THRESHOLD` in PC's constants.py — sending
+         * anything below it triggers a "your client is old, please upgrade" MOTD warning.
+         * We implement every protocol feature up through 1.7.5 (managedRooms, readiness,
+         * setOthersReadiness, sharedPlaylists, chat) so the claim is accurate.
+         */
+        const val SYNCPLAY_PROTOCOL_VERSION = "1.7.5"
+
         /** Playback drift threshold in seconds before a corrective seek is triggered. */
         const val SEEK_THRESHOLD = 1L
 
@@ -225,5 +368,12 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
          * broken and trigger a reconnect. Chosen to match the Syncplay server's own
          * ~10–15s threshold for dropping unresponsive clients. */
         const val STATE_TIMEOUT_SECONDS = 15L
+
+        /**
+         * How often [pollPlayerStateOnce] runs. PC's reference client polls the player
+         * every 100 ms; on mobile 250 ms is plenty — that's still 4× the server's 1 Hz
+         * State broadcast rate, so user-visible reactions are bounded by ~250 ms.
+         */
+        const val PLAYER_POLL_INTERVAL_MS = 250L
     }
 }

@@ -271,11 +271,12 @@ fun RoomViewmodel.customSkip()  {
         val currentMs = player.currentPositionMs()
         val newPos = (currentMs) + (customSkipAmount * 1000L)
 
+        dispatcher.pendingSeekFromMs = currentMs
         dispatcher.sendSeek(newPos)
         player.seekTo(newPos)
 
         if (isSoloMode) {
-            seeks.add(Pair((currentMs), newPos * 1000))
+            seeks.add(Pair(currentMs, newPos))
         }
 
         val timeDiff = abs(newPos - currentMs).div(1000.0).roundToInt()

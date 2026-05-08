@@ -1,6 +1,7 @@
 package app.server
 
 import SyncplayMobile.shared.BuildConfig
+import app.protocol.ProtocolManager.Companion.SYNCPLAY_PROTOCOL_VERSION
 import app.protocol.WireMessage
 import app.protocol.WireMessageDeserializer
 import app.protocol.WireMessageHandler
@@ -142,7 +143,7 @@ class ClientConnection(
             val clientRtt = ping.clientRtt ?: 0.0
             clientLatencyCalculation = ping.clientLatencyCalculation ?: 0.0
             clientLatencyCalculationArrivalTime = currentTimeSeconds()
-            pingService.receiveMessage(latencyCalc.toLong(), clientRtt)
+            pingService.receiveMessage(latencyCalc, clientRtt)
         }
 
         if (serverIgnoringOnTheFly == 0) {
@@ -234,7 +235,7 @@ class ClientConnection(
                     username = w.name,
                     room = Room(name = room.name),
                     version = clientVersion,
-                    realversion = "1.7.3",
+                    realversion = SYNCPLAY_PROTOCOL_VERSION,
                     features = server.buildServerFeatures(),
                     motd = server.config.motd
                 )

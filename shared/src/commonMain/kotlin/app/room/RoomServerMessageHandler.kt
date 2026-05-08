@@ -26,7 +26,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.abs
-import kotlin.math.roundToLong
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
@@ -96,28 +95,37 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             latencyCalculation = ping.latencyCalculation
             ping.clientLatencyCalculation?.let { timestamp ->
                 val serverRtt = ping.serverRtt ?: return@let
-                protocol.pingService.receiveMessage(timestamp.roundToLong(), serverRtt)
+                protocol.pingService.receiveMessage(timestamp, serverRtt)
             }
             messageAge = protocol.pingService.forwardDelay
         }
 
         if (position != null && paused != null && protocol.clientIgnFly == 0) {
+            // Match python: when the room is playing, the position the server sent us is
+            // already messageAge seconds stale, so the *current* expected position is
+            // position + messageAge. All threshold comparisons must use this aged value.
+            val agedPosition = if (paused) position else position + messageAge
+
             val pausedChanged = protocol.globalPaused != paused || paused == viewmodel.player.isPlaying()
             val diff = withContext(Dispatchers.Main.immediate) {
-                (viewmodel.player.currentPositionMs() / 1000.0) - position
+                (viewmodel.player.currentPositionMs() / 1000.0) - agedPosition
             }
 
             /* Updating Global State */
             protocol.globalPaused = paused
-            protocol.globalPositionMs = position * 1000L
-            if (!paused) protocol.globalPositionMs += messageAge // Account for network drift
+            protocol.globalPositionMs = agedPosition * 1000.0
+            protocol.lastGlobalPositionSetAt = Clock.System.now()
 
             if (protocol.lastGlobalUpdate == null) {
                 if (viewmodel.media != null) {
                     withContext(Dispatchers.Main) {
-                        viewmodel.player.seekTo(position.toLong())
+                        viewmodel.player.seekTo((agedPosition * 1000.0).toLong())
                         if (paused) viewmodel.player.pause() else viewmodel.player.play()
                     }
+                    // Prime the poll baseline so the first poll after first-sync doesn't
+                    // see the new player state vs the no-baseline default and broadcast it
+                    // back as a phantom user action.
+                    protocol.primePollBaseline(paused = paused, positionMs = (agedPosition * 1000.0).toLong())
                 }
             }
 
@@ -128,7 +136,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                     withContext(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
                     protocol.speedChanged = false
                 }
-                callback.onSomeoneSeeked(setBy, position)
+                callback.onSomeoneSeeked(setBy, agedPosition)
             }
 
             /* Rewind check if someone is behind */
@@ -137,11 +145,16 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                     withContext(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
                     protocol.speedChanged = false
                 }
-                callback.onSomeoneBehind(setBy ?: "", position)
+                callback.onSomeoneBehind(setBy ?: "", agedPosition)
             }
 
-            /* Fast-forward if persistently behind */
-            if (diff < -FASTFORWARD_BEHIND_THRESHOLD && doSeek != true && Preferences.SYNC_FASTFORWARD.value()) {
+            /* Fast-forward if persistently behind. Mirrors python's gating: only triggers
+             * when we cannot control the room (in a controlled room as a non-controller),
+             * OR when SYNC_DONT_SLOW_WITH_ME is on. Without this, a controller in their
+             * own controlled room would yank themselves forward over their own pace. */
+            val canFastForward = Preferences.SYNC_FASTFORWARD.value()
+                    && (!isControllerInControlledRoom() || Preferences.SYNC_DONT_SLOW_WITH_ME.value())
+            if (diff < -FASTFORWARD_BEHIND_THRESHOLD && doSeek != true && canFastForward) {
                 val now = Clock.System.now()
                 if (protocol.behindFirstDetected == null) {
                     protocol.behindFirstDetected = now
@@ -150,7 +163,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                     if (durationBehind > (FASTFORWARD_THRESHOLD - FASTFORWARD_BEHIND_THRESHOLD)
                         && diff < -FASTFORWARD_THRESHOLD
                     ) {
-                        callback.onSomeoneFastForwarded(setBy ?: "", position + FASTFORWARD_EXTRA_TIME)
+                        callback.onSomeoneFastForwarded(setBy ?: "", agedPosition + FASTFORWARD_EXTRA_TIME)
                         protocol.behindFirstDetected = now + FASTFORWARD_RESET_THRESHOLD.seconds
                     }
                 }
@@ -184,21 +197,34 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 if (!paused) callback.onSomeonePlayed(setBy ?: "")
                 if (paused) callback.onSomeonePaused(setBy ?: "")
             }
+
+            // After applying server-driven state to the player, refresh the polling
+            // baseline so the next poll doesn't mistake "we just seeked because the
+            // server told us to" for "the user just seeked".
+            if (doSeek == true || pausedChanged) {
+                val playerPosMs = withContext(Dispatchers.Main.immediate) {
+                    viewmodel.player.currentPositionMs()
+                }
+                protocol.primePollBaseline(paused = paused, positionMs = playerPosMs)
+            }
         }
 
         // Acknowledge with our own State packet.
         if (protocol.lastGlobalUpdate != null && position != null) {
-            val playerDiff = withContext(Dispatchers.Main.immediate) {
-                abs(viewmodel.player.currentPositionMs() / 1000.0 - position)
+            val ackPos = if (Preferences.SYNC_DONT_SLOW_WITH_ME.value()) {
+                // Use the room's *current* expected position, not the last 1 Hz snapshot —
+                // mirrors python's getGlobalPosition() extrapolation.
+                protocol.extrapolatedGlobalPositionMs() / 1000.0
+            } else {
+                withContext(Dispatchers.Main.immediate) { viewmodel.player.currentPositionMs() / 1000.0 }
             }
-            val globalDiff = abs(protocol.globalPositionMs / 1000.0 - position)
+            val playerPosSec = withContext(Dispatchers.Main.immediate) {
+                viewmodel.player.currentPositionMs() / 1000.0
+            }
+            val playerDiff = abs(playerPosSec - position)
+            val globalDiff = abs(protocol.extrapolatedGlobalPositionMs() / 1000.0 - position)
             val surelyPausedChanged = protocol.globalPaused != paused && paused == viewmodel.player.isPlaying()
             val seeked = playerDiff > SEEK_THRESHOLD && globalDiff > SEEK_THRESHOLD
-            val ackPos = if (Preferences.SYNC_DONT_SLOW_WITH_ME.value()) {
-                protocol.globalPositionMs.div(1000.0).toLong()
-            } else {
-                withContext(Dispatchers.Main.immediate) { viewmodel.player.currentPositionMs().div(1000L) }
-            }
 
             network.sendAsync(
                 protocol.buildStatePacket(
@@ -231,8 +257,21 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             set.newControlledRoom != null -> handleNewControlledRoom(set.newControlledRoom)
             set.controllerAuth != null -> handleControllerAuth(set.controllerAuth)
         }
+        // Note: python doesn't request a List after every Set. The server pushes List
+        // proactively on the events that matter (join/leave/file change), so doing it
+        // here was double-traffic with ~100 ms of latency added to every UI tick.
+    }
 
-        network.sendAsync(WireMessage.listRequest())
+    /**
+     * True if we're in a `+room:HASH` controlled room and have not authenticated as
+     * controller yet. Used to gate fastforward, instaplay, and the auto re-auth on
+     * reconnect — same rule as python's `currentUser.canControl()` (inverted).
+     */
+    private fun isControllerInControlledRoom(): Boolean {
+        if (!session.roomFeatures.supportsManagedRooms) return false
+        if (!session.currentRoom.startsWith("+")) return false
+        // Find ourselves in the user list — `isController` is set by the server's auth ack.
+        return session.userList.value.firstOrNull { it.name == session.currentUsername }?.isController == true
     }
 
     override suspend fun onListResponse(message: WireMessage.ListResponse) {
@@ -304,8 +343,13 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
     private fun handlePlaylistIndex(playlistIndex: PlaylistIndexData) {
         val user = playlistIndex.user ?: return
         val index = playlistIndex.index ?: return
+        // Self-initiated changes already updated spIndex locally before the round-trip;
+        // applying it again is harmless but prevents a brief stale-list window if our
+        // own echo arrives before the matching playlistChange.
+        if (user != session.currentUsername) {
+            session.spIndex.intValue = index
+        }
         callback.onPlaylistIndexChanged(user, index)
-        session.spIndex.intValue = index
     }
 
     private fun handlePlaylistChange(playlistChange: PlaylistChangeData) {

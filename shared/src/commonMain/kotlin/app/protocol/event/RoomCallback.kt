@@ -73,7 +73,10 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
         if (pauser.isNotSelf()) {
             hapticIf(HAPTIC_ON_PAUSED)
-            onMainThread { viewmodel.player.seekTo(protocol.globalPositionMs.toLong()) }
+            // Snap to the room's *current* expected position, not the last 1 Hz snapshot —
+            // mirrors python's SYNC_ON_PAUSE which seeks to getGlobalPosition() (extrapolated).
+            // Otherwise we land on a frame from up to 1 s ago and look out of sync with peers.
+            onMainThread { viewmodel.player.seekTo(protocol.extrapolatedGlobalPositionMs().toLong()) }
             dispatcher.controlPlayback(Playback.PAUSE, false)
         }
 
@@ -144,7 +147,10 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         if (seeker.isNotSelf()) hapticIf(HAPTIC_ON_SEEKED)
         onMainThread {
             val oldPosMs = if (seeker.isSelf()) dispatcher.pendingSeekFromMs else viewmodel.player.currentPositionMs()
-            val newPosMs = toPosition.toLong() * 1000L
+            // toPosition is full-precision seconds. Multiply *as Double* before truncating
+            // to Long ms — `toPosition.toLong() * 1000L` first truncates fractional seconds
+            // and loses up to 999 ms.
+            val newPosMs = (toPosition * 1000.0).toLong()
 
             if (seeker.isNotSelf()) viewmodel.player.seekTo(newPosMs)
 
@@ -256,8 +262,24 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
         viewmodel.media?.let { network.sendAsync(WireMessage.file(it.toFileData())) }
 
-        for (m in session.outboundQueue) network.transmitPacket(m, isHello = false)
+        // Drain the queue with a snapshot — otherwise transmitPacket re-adding failed
+        // packets during the loop, followed by clear(), would silently lose them.
+        val drained = session.outboundQueue.toList()
         session.outboundQueue.clear()
+        for (m in drained) network.transmitPacket(m, isHello = false)
+
+        // Mirror python's reIdentifyAsController — after every (re)connect, if we're
+        // in a controlled room and we know the operator password, re-auth so the server
+        // restores our control privileges. Without this, a network blip silently demotes
+        // the operator and their pause/seek attempts get reverted by forcePositionUpdate.
+        if (session.currentRoom.startsWith("+") && session.currentOperatorPassword.isNotEmpty()) {
+            network.sendAsync(
+                WireMessage.controllerAuth(
+                    room = session.currentRoom,
+                    password = session.currentOperatorPassword
+                )
+            )
+        }
     }
 
     fun onConnectionAttempt() {

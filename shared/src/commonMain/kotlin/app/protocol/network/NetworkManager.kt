@@ -83,7 +83,19 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     abstract fun supportsTLS(): Boolean
     abstract fun terminateExistingConnection()
     abstract suspend fun writeActualString(s: String)
-    abstract fun upgradeTls()
+
+    /**
+     * Inserts the TLS handler into the channel pipeline AND awaits handshake completion
+     * before returning.
+     *
+     * The await is critical: callers (specifically [RoomCallback.onReceivedTLS]) send
+     * `Hello` immediately after this returns. If the handshake hasn't completed, the
+     * Hello is either buffered by the SSL handler (Netty/SwiftNIO — usually works) or,
+     * worse, gets framed as a TLS alert by a confused peer. PC's reference client
+     * (`protocols.py`) gates `sendHello` on the `handshakeCompleted` callback for
+     * exactly this reason — we mirror that contract.
+     */
+    abstract suspend fun upgradeTls()
 
     private var reconnectionJob: Job? = null
     fun reconnect() {

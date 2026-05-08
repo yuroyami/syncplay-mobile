@@ -50,6 +50,7 @@ import app.preferences.Preferences.HASH_FILENAME
 import app.preferences.Preferences.HASH_FILESIZE
 import app.preferences.Preferences.INROOM_RESET_DEFAULTS
 import app.preferences.Preferences.MEDIA_DIRECTORIES
+import app.preferences.Preferences.MEDIA_RESOLVER_ENABLED
 import app.preferences.Preferences.MSG_ACTIVATE_STAMP
 import app.preferences.Preferences.MSG_BG_OPACITY
 import app.preferences.Preferences.MSG_BOX_ACTION
@@ -136,6 +137,7 @@ val GLOBAL_NETWORK = SettingCategory(
 ) {
     +TLS_ENABLE
     +NETWORK_ENGINE
+    +MEDIA_RESOLVER_ENABLED
     +TRUSTED_DOMAINS
 }
 

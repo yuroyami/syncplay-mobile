@@ -149,7 +149,7 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
      *
      * https://youtrack.jetbrains.com/issue/KTOR-6623
      */
-    override fun upgradeTls() {
+    override suspend fun upgradeTls() {
         //TODO("Opportunistic TLS not yet supported by Ktor")
     }
 }

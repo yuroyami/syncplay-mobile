@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Lan
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.LogoDev
 import androidx.compose.material.icons.filled.Memory
@@ -105,6 +106,8 @@ import syncplaymobile.shared.generated.resources.setting_fileinfo_behaviour_size
 import syncplaymobile.shared.generated.resources.setting_fileinfo_behaviour_size_title
 import syncplaymobile.shared.generated.resources.setting_max_buffer_summary
 import syncplaymobile.shared.generated.resources.setting_max_buffer_title
+import syncplaymobile.shared.generated.resources.setting_media_resolver_summary
+import syncplaymobile.shared.generated.resources.setting_media_resolver_title
 import syncplaymobile.shared.generated.resources.setting_min_buffer_summary
 import syncplaymobile.shared.generated.resources.setting_min_buffer_title
 import syncplaymobile.shared.generated.resources.setting_network_engine_ktor
@@ -487,6 +490,15 @@ object Preferences {
         summary = Res.string.setting_tls_summary
         summaryFormatArgs = arrayOf(appName)
         icon = Icons.Filled.Key
+    }
+    /** When true, page URLs (YouTube, SoundCloud, …) entered as media are run through the
+     *  platform's native extractor before being handed to the player. Default on — there's
+     *  no cost when the URL already points to direct media (the heuristic short-circuits)
+     *  and no remote service is involved. */
+    val MEDIA_RESOLVER_ENABLED = Pref("pref_media_resolver_enabled", true) {
+        title = Res.string.setting_media_resolver_title
+        summary = Res.string.setting_media_resolver_summary
+        icon = Icons.Filled.Language
     }
 
     /** ------------ Security -------------*/

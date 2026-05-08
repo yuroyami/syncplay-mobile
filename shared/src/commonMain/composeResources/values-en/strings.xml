@@ -424,6 +424,11 @@
     <string name="setting_trusted_domains_summary">Only auto-load URLs from these domains. Leave empty to allow all. Comma-separated (e.g. example.com, cdn.host.net).</string>
     <string name="room_untrusted_domain_warning">Blocked URL from untrusted domain: %1$s. Add it to Trusted Domains in settings to allow.</string>
 
+    <string name="setting_media_resolver_title">Resolve streaming URLs</string>
+    <string name="setting_media_resolver_summary">Extract direct video URLs from supported sites (YouTube, SoundCloud, PeerTube on Android; YouTube on iOS) so you can paste a page link and have it play. Native extraction, no yt-dlp or Python.</string>
+    <string name="room_msg_resolving_url">Resolving stream URL…</string>
+    <string name="room_msg_resolved_url">Resolved: %1$s</string>
+
     <string name="uisetting_osd_duration_title">OSD Message Duration</string>
     <string name="uisetting_osd_duration_summary">How many seconds to show on-screen status messages (e.g. aspect ratio changes, track selections). Set to 0 to disable OSD messages.</string>
 

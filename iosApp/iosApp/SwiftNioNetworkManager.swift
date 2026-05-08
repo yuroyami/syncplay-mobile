@@ -139,26 +139,34 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
     }
 
     /**
-     Upgrades the existing TCP connection to use TLS encryption.
+     Upgrades the existing TCP connection to use TLS encryption AND awaits the handshake.
 
      - Discussion:
-       This method configures a new TLS client context using the default client
-       configuration and inserts a `NIOSSLClientHandler` at the start of the
-       channel pipeline.
+       Inserts a `NIOSSLClientHandler` at the start of the channel pipeline and a
+       one-shot tracking handler that resolves a promise when the TLS handshake
+       completes (signaled by `TLSUserEvent.handshakeCompleted`). Mirrors python's
+       `handshakeCompleted` callback contract — the caller (RoomCallback.onReceivedTLS)
+       sends `Hello` immediately after we return, so we must be fully ciphered by then.
 
        If initialization fails, it triggers the `onConnectionFailed()` callback.
      */
-    override func upgradeTls() {
-        if (channel != nil) {
-            do {
-                let configuration = TLSConfiguration.makeClientConfiguration()
-                let sslContext = try NIOSSLContext(configuration: configuration)
-                let tlsHandler = try NIOSSLClientHandler(context: sslContext, serverHostname: "syncplay.pl")
-                try channel?.pipeline.addHandler(tlsHandler, position: .first).wait()
-            } catch {
-                print("Error initializing TLS: \(error)")
-                self.viewmodel.callback.onConnectionFailed()
-            }
+    override func upgradeTls() async throws {
+        guard let channel = channel else { return }
+        do {
+            let configuration = TLSConfiguration.makeClientConfiguration()
+            let sslContext = try NIOSSLContext(configuration: configuration)
+            let tlsHandler = try NIOSSLClientHandler(context: sslContext, serverHostname: "syncplay.pl")
+
+            let handshakePromise = channel.eventLoop.makePromise(of: Void.self)
+            let trackingHandler = TLSHandshakeTrackingHandler(promise: handshakePromise)
+
+            try await channel.pipeline.addHandler(tlsHandler, position: .first).get()
+            try await channel.pipeline.addHandler(trackingHandler).get()
+            try await handshakePromise.futureResult.get()
+        } catch {
+            print("Error initializing TLS: \(error)")
+            self.viewmodel.callback.onConnectionFailed()
+            throw error
         }
     }
 
@@ -211,5 +219,33 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
     func errorCaught(context: ChannelHandlerContext, error: Error) {
         print("Reader exception: \(error)")
         // context.close(promise: nil)
+    }
+}
+
+/**
+ One-shot handler that resolves [promise] once the TLS handshake fires
+ `TLSUserEvent.handshakeCompleted`, then removes itself from the pipeline.
+ Used by `SwiftNioNetworkManager.upgradeTls` to make TLS upgrade a true
+ await-until-ready operation rather than a fire-and-forget pipeline mutation.
+ */
+private final class TLSHandshakeTrackingHandler: ChannelInboundHandler, RemovableChannelHandler {
+    typealias InboundIn = NIOAny
+    private let promise: EventLoopPromise<Void>
+
+    init(promise: EventLoopPromise<Void>) {
+        self.promise = promise
+    }
+
+    func userInboundEventTriggered(context: ChannelHandlerContext, event: Any) {
+        if let event = event as? TLSUserEvent, event == .handshakeCompleted {
+            promise.succeed(())
+            context.pipeline.removeHandler(self, promise: nil)
+        }
+        context.fireUserInboundEventTriggered(event)
+    }
+
+    func errorCaught(context: ChannelHandlerContext, error: Error) {
+        promise.fail(error)
+        context.fireErrorCaught(error)
     }
 }

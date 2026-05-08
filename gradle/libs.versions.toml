@@ -41,6 +41,7 @@ media3 = "1.10.0"
 netty = "4.1.131.Final" #"4.2.x" (and above) requires Api26 minimum
 conscrypt = "2.5.3"
 libvlc-android = "4.0.0-eap24"
+newpipeExtractor = "v0.24.6"
 
 #iOS
 libvlc-ios = "3.7.2"
@@ -107,6 +108,7 @@ m3-common = { module = "androidx.media3:media3-common", version.ref = "media3" }
 netty = { module = "io.netty:netty-all", version.ref = "netty" }
 conscrypt = { module = "org.conscrypt:conscrypt-android", version.ref = "conscrypt" }
 libvlc-android = { module = "org.videolan.android:libvlc-all", version.ref = "libvlc-android" }
+newpipe-extractor = { module = "com.github.TeamNewPipe:NewPipeExtractor", version.ref = "newpipeExtractor" }
 
 [bundles] ########################################################################################
 compose-multiplatform = [

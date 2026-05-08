@@ -166,6 +166,9 @@ kotlin {
             /* Video player engine: VLC (via libVLC) */
             implementation(libs.libvlc.android)
 
+            /* YouTube/SoundCloud/PeerTube stream URL extractor (no Python, pure JVM) */
+            implementation(libs.newpipe.extractor)
+
             /* Ktor HTTP client engine for Android */
             implementation(libs.ktor.client.okhttp)
         }

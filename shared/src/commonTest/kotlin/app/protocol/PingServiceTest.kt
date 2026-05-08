@@ -11,18 +11,17 @@ import kotlin.test.assertTrue
  * These guard the latency-compensation math the `State` handler uses to bias the global
  * position by message age.
  *
- * Precision note: [PingService.receiveMessage] reads `generateTimestampMillis()`
- * internally and accepts a `timestamp: Long` in **whole seconds**. That truncation
- * means tests can't pin RTT to a precise value — there's an unavoidable 0–1s drift
- * between when the test snapshots wall-clock and when the function call resolves it.
- * Tests therefore assert on ranges and relationships, not on exact computed values.
+ * [PingService.receiveMessage] now accepts a `Double?` in fractional seconds (matching
+ * what the wire actually carries). Tests still assert on ranges rather than exact
+ * values, since there's an unavoidable scheduling drift between when the test
+ * snapshots wall-clock and when the function call reads `generateTimestampMillis()`.
  */
 class PingServiceTest {
 
-    /** Build a `latencyCalculation` (whole-second timestamp) targeting roughly [secondsAgo] of RTT. */
-    private fun timestampSecondsAgo(secondsAgo: Long): Long {
-        val nowSeconds = generateTimestampMillis() / 1000L
-        return nowSeconds - secondsAgo
+    /** Build a `latencyCalculation` (fractional-second timestamp) targeting roughly [secondsAgo] of RTT. */
+    private fun timestampSecondsAgo(secondsAgo: Long): Double {
+        val nowSec = generateTimestampMillis() / 1000.0
+        return nowSec - secondsAgo
     }
 
     @Test
@@ -37,7 +36,7 @@ class PingServiceTest {
     fun `negative computed RTT is rejected`() {
         val ps = PingService()
         // Timestamp from ~60s in the future → rtt would be negative → early return.
-        val futureTimestamp = generateTimestampMillis() / 1000L + 60
+        val futureTimestamp = generateTimestampMillis() / 1000.0 + 60.0
         ps.receiveMessage(timestamp = futureTimestamp, senderRtt = 0.0)
         assertEquals(0.0, ps.forwardDelay, "forwardDelay should still be the initial 0.0")
     }
@@ -50,12 +49,28 @@ class PingServiceTest {
     }
 
     @Test
-    fun `first message seeds forwardDelay to half the observed RTT`() {
+    fun `first message seeds forwardDelay to half the observed RTT in the symmetric path`() {
         val ps = PingService()
-        ps.receiveMessage(timestamp = timestampSecondsAgo(2), senderRtt = 1.0)
-        // Truncation → rtt ∈ [2.0, 3.0). forwardDelay = rtt / 2 ∈ [1.0, 1.5).
-        assertInRange(ps.rtt, 2.0, 3.0, "rtt")
-        assertInRange(ps.forwardDelay, 1.0, 1.5, "forwardDelay (= rtt / 2)")
+        // senderRtt high enough to keep us in the symmetric branch on the first ping
+        // (forwardDelay = avrRtt / 2). Using a small senderRtt would fall into the
+        // asymmetric branch and inflate forwardDelay by (rtt - senderRtt).
+        ps.receiveMessage(timestamp = timestampSecondsAgo(2), senderRtt = 100.0)
+        // Sub-second drift puts rtt slightly above 2.0; assert forwardDelay ≈ rtt / 2.
+        assertInRange(ps.rtt, 2.0, 2.5, "rtt")
+        assertInRange(ps.forwardDelay, 1.0, 1.25, "forwardDelay (= rtt / 2)")
+    }
+
+    @Test
+    fun `first message applies asymmetry compensation when senderRtt is lower`() {
+        val ps = PingService()
+        // senderRtt < rtt → asymmetric branch even on the very first ping.
+        // python applies this from the first sample; mobile used to skip it (#12).
+        ps.receiveMessage(timestamp = timestampSecondsAgo(2), senderRtt = 0.5)
+        // forwardDelay = avrRtt / 2 + (rtt - senderRtt) ≈ 1.0 + 1.5 = 2.5 (with drift).
+        assertTrue(
+            ps.forwardDelay > ps.rtt / 2,
+            "asymmetric path should add (rtt - senderRtt) on first ping: rtt=${ps.rtt}, fd=${ps.forwardDelay}"
+        )
     }
 
     @Test

@@ -38,6 +38,13 @@ struct iOSApp: App {
             let bridge = MpvKitBridgeImpl()
             return MpvKitImpl(viewmodel: viewmodel, bridge: bridge)
         }
+
+        // Bridge YouTubeKit (pure-Swift YouTube extractor) to Kotlin common code.
+        // Without this registration, MediaResolver on iOS no-ops and page URLs are passed
+        // through to the player unresolved (fine for direct media files).
+        YouTubeKitBridgeKt.instantiateYouTubeKitBridge = {
+            return YouTubeKitBridgeImpl()
+        }
     }
 
     /**

@@ -19,6 +19,9 @@ import io.netty.handler.codec.Delimiters
 import io.netty.handler.codec.string.StringDecoder
 import io.netty.handler.codec.string.StringEncoder
 import io.netty.handler.ssl.SslContextBuilder
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlinx.coroutines.suspendCancellableCoroutine
 
 /**
  * Netty-based implementation of NetworkManager for Android.
@@ -164,27 +167,34 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
     override fun supportsTLS() = true
 
     /**
-     * Upgrades the connection to TLS by inserting an SSL handler into the pipeline.
+     * Upgrades the connection to TLS by inserting an SSL handler into the pipeline,
+     * then suspends until the TLS handshake completes (or fails).
      *
-     * Creates an SSL context for client-side TLS, then inserts the SSL handler
-     * at the beginning of the pipeline to encrypt all subsequent traffic.
-     * The handler is configured for the specific server host and port.
+     * Suspending until handshake completion is what makes a subsequent `Hello` write
+     * actually go out as ciphertext. Without the await, the SSL handler still buffers
+     * the Hello in practice, but we'd be relying on a timing-sensitive implementation
+     * detail rather than the protocol's stated contract.
      */
-    override fun upgradeTls() {
-        val sslContext = SslContextBuilder
-            .forClient()
-            //.sslProvider(SslProvider.JDK)
-            //.trustManager(Conscrypt.getDefaultX509TrustManager())
-            .startTls(false) //This isn't necessary for clients, we already do it manually
-            .build()
+    override suspend fun upgradeTls() = suspendCancellableCoroutine<Unit> { cont ->
+        try {
+            val sslContext = SslContextBuilder
+                .forClient()
+                .startTls(false)
+                .build()
 
-        val h = sslContext.newHandler(
-            pipeline.channel().alloc(),
-            viewmodel.session.serverHost,
-            viewmodel.session.serverPort
-        )
-        pipeline.addFirst(h)
-
+            val handler = sslContext.newHandler(
+                pipeline.channel().alloc(),
+                viewmodel.session.serverHost,
+                viewmodel.session.serverPort
+            )
+            pipeline.addFirst(handler)
+            handler.handshakeFuture().addListener { future ->
+                if (future.isSuccess) cont.resume(Unit)
+                else cont.resumeWithException(future.cause() ?: Exception("TLS handshake failed"))
+            }
+        } catch (e: Throwable) {
+            cont.resumeWithException(e)
+        }
     }
 
 }
