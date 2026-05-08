@@ -3,6 +3,7 @@ package app
 import app.home.HomeViewmodel
 import app.home.JoinConfig
 import app.player.avplayer.AVPlayerEngine
+import app.player.vlc.VlcKitImpl
 import platform.AVKit.AVPictureInPictureController
 import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
@@ -43,21 +44,40 @@ object ApplePlatformCallback : PlatformCallback {
     /**
      * Starts or stops Picture-in-Picture mode for video playback.
      *
-     * Checks if PiP is supported on the device, then attempts to start PiP if:
-     * - PiP is possible for the current player
-     * - User is in a room
-     * - Media is loaded
-     **
-     * @param enable True to enter PiP mode (currently only true is handled)
+     * Dispatches to whichever engine is currently active:
+     * - **AVPlayer** uses [AVPictureInPictureController] built around [AVPlayerLayer]
+     *   (the iOS-native path, gated by [AVPictureInPictureController.isPictureInPictureSupported]).
+     * - **VLCKit 4** runs PiP via VLCKit's own `VLCPictureInPictureWindowControlling`
+     *   protocol (see [VlcKitImpl.enterPictureInPicture]). This requires VLCKit ≥ 4.0; the 3.x
+     *   line had no PiP support.
+     * - MPV has no native iOS PiP and is excluded by `supportsPictureInPicture = false`.
+     *
+     * @param enable True to enter PiP mode, false to exit it.
      */
     override fun onPictureInPicture(enable: Boolean) {
-        if (AVPictureInPictureController.isPictureInPictureSupported()) {
-            (roomViewmodel?.player as? AVPlayerEngine.AVPlayerImpl)?.avPlayerLayer?.let { layer ->
-                pipcontroller = AVPictureInPictureController(layer)
+        if (!AVPictureInPictureController.isPictureInPictureSupported()) return
 
-                if (pipcontroller?.pictureInPicturePossible == true && roomViewmodel?.media != null) {
-                    pipcontroller?.startPictureInPicture()
+        when (val player = roomViewmodel?.player) {
+            is AVPlayerEngine.AVPlayerImpl -> {
+                if (enable) {
+                    player.avPlayerLayer?.let { layer ->
+                        // AVPictureInPictureController must be (re)constructed against the
+                        // current AVPlayerLayer; cache it so the system can resume the
+                        // same PiP session if the user dismisses and re-enters.
+                        pipcontroller = AVPictureInPictureController(layer)
+                        if (pipcontroller?.pictureInPicturePossible == true && roomViewmodel?.media != null) {
+                            pipcontroller?.startPictureInPicture()
+                        }
+                    }
+                } else {
+                    pipcontroller?.stopPictureInPicture()
                 }
+            }
+            is VlcKitImpl -> {
+                if (enable) player.enterPictureInPicture() else player.exitPictureInPicture()
+            }
+            else -> {
+                // Engines without PiP support reach here only if the UI gates failed.
             }
         }
     }

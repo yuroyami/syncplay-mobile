@@ -71,23 +71,48 @@ import syncplaymobile.shared.generated.resources.uisetting_categ_vlc
 import syncplaymobile.shared.generated.resources.uisetting_subtitle_delay_summary
 import syncplaymobile.shared.generated.resources.uisetting_subtitle_delay_title
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) {
     /** VLC library instance providing codec and media parsing capabilities. */
     private var libvlc: VLCLibrary? = null
-    var vlcPlayer: VLCMediaPlayer? = null
+    internal var vlcPlayer: VLCMediaPlayer? = null
     private var vlcView: UIView? = null
     private var vlcDelegate = VlcDelegate()
-    private var vlcMedia: VLCMedia? = null
+    internal var vlcMedia: VLCMedia? = null
+
+    /**
+     * VLCKit 4 drawable bridge — also implements [VLCPictureInPictureDrawableProtocol] so
+     * VLCKit hands us a [VLCPictureInPictureWindowControllingProtocol] we can use to start/
+     * stop PiP. Created in [VideoPlayer] alongside [vlcView]; cleared in [destroy].
+     */
+    private var vlcDrawable: VlcDrawable? = null
 
     override val supportsChapters: Boolean = true
 
-    /* Sadly, iOS doesn't allow PiP for anything other than AVPlayer */
-    override val supportsPictureInPicture: Boolean = false
+    /**
+     * VLCKit 4 added native Picture-in-Picture for iOS (see NEWS, "added support for Picture-
+     * in-Picture playback on iOS and macOS"). We drive it through [VlcDrawable] — see
+     * [enterPictureInPicture] / [exitPictureInPicture].
+     */
+    override val supportsPictureInPicture: Boolean = true
 
+    /**
+     * VLCKit 4 rewrote its event management: delegate callbacks now come from libvlc
+     * worker threads (the timer thread holds `player->timer.lock` for `mediaPlayerTimeChanged`),
+     * and `mediaPlayerTimeChanged` fires only once per second by default
+     * (`timeChangeUpdateInterval` = 1.0s). We can't safely read `vlcPlayer.time` from inside
+     * the callback (libvlc's `vlc_player_Lock` asserts `!vlc_mutex_held(timer.lock)`), and
+     * even if we could, 1 Hz updates make the seekbar look stuck.
+     *
+     * So we run our own 250 ms tracker job on the main thread (just like all the other
+     * engines) and ignore VLCKit's time-change notifications for position reads. This
+     * mirrors what MobileVLCKit 3 was doing implicitly via its NSNotificationCenter-backed
+     * 4 Hz delegate.
+     */
     override val trackerJobInterval: Duration
-        get() = 0.seconds
+        get() = 250.milliseconds
 
     private var pausedSeekPosition: Long? = null
 
@@ -106,6 +131,13 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         try {
             removeAudioSessionObservers()
 
+            // Make sure we don't leave a floating PiP window after teardown — this also
+            // releases VLCKit's internal AVPictureInPictureController so the next room can
+            // claim the system PiP slot cleanly.
+            vlcDrawable?.pipController?.stopPictureInPicture()
+            vlcDrawable?.onPipStateChanged = null
+            vlcDrawable = null
+
             // Clear the delegate before stopping so the synthetic Stopped state
             // emitted by stop() doesn't get treated as natural playback end.
             vlcPlayer?.setDelegate(null)
@@ -120,6 +152,32 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         } catch (e: Exception) {
             loggy("Error disposing VLC: ${e.message}")
         }
+    }
+
+    /**
+     * Requests entry into Picture-in-Picture mode.
+     *
+     * VLCKit's PiP controller is only available *after* the framework has finished setting
+     * up the AVSampleBufferDisplayLayer behind our drawable — this typically happens shortly
+     * after the first video frame is rendered. If the user taps PiP before that, we silently
+     * no-op (`pipController == null`). The state-change handler wired up in [VideoPlayer]
+     * pushes the `isStarted` signal into [RoomUiStateManager.hasEnteredPipMode].
+     */
+    fun enterPictureInPicture() {
+        val controller = vlcDrawable?.pipController ?: run {
+            loggy("VLC PiP requested but controller not ready yet.")
+            return
+        }
+        controller.startPictureInPicture()
+    }
+
+    /**
+     * Exits Picture-in-Picture mode if currently active. No-op when the controller hasn't
+     * been provisioned or when not in PiP. The state-change handler will flip
+     * [RoomUiStateManager.hasEnteredPipMode] back to false on dismissal.
+     */
+    fun exitPictureInPicture() {
+        vlcDrawable?.pipController?.stopPictureInPicture()
     }
 
     override suspend fun configurableSettings() = SettingCategory(
@@ -185,7 +243,19 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                 libvlc = lib
 
                 val player = VLCMediaPlayer(lib)
-                player.drawable = view
+
+                // The drawable is a VlcDrawable wrapper, NOT the raw UIView. VLCKit 4
+                // detects the VLCPictureInPictureDrawable protocol on this object and
+                // wires up its PiP machinery; the wrapper forwards addSubview/bounds
+                // into the actual UIView.
+                val drawable = VlcDrawable(view, this@VlcKitImpl).apply {
+                    onPipStateChanged = { isStarted ->
+                        viewmodel.uiState.hasEnteredPipMode.value = isStarted
+                    }
+                }
+                vlcDrawable = drawable
+                player.drawable = drawable
+
                 vlcPlayer = player
 
                 initialize()
@@ -194,9 +264,12 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                 view
             },
             update = { view ->
-                // Ensure drawable is still set
-                if (vlcPlayer?.drawable !== view) {
-                    vlcPlayer?.drawable = view
+                // Re-bind the drawable if Compose recreates the view but keeps the player
+                // alive. Setting the drawable to our wrapper re-attaches the underlying
+                // UIView via VlcDrawable.addSubview and re-arms PiP.
+                val drawable = vlcDrawable
+                if (drawable != null && vlcPlayer?.drawable !== drawable) {
+                    vlcPlayer?.drawable = drawable
                 }
             }
         )
@@ -208,12 +281,23 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     override fun initialize() {
         vlcPlayer!!.setDelegate(vlcDelegate)
 
+        // Tighten VLCKit 4's notification cadence so the system PiP overlay's scrubber
+        // ticks visibly (defaults: timeChangeUpdateInterval = 1.0s, minimalTimePeriod =
+        // 500 ms). Our own time tracker (see [trackerJobInterval]) drives the in-room
+        // seekbar; this just makes the system overlay match.
+        vlcPlayer!!.timeChangeUpdateInterval = 0.25
+        vlcPlayer!!.minimalTimePeriod = 250_000L  // microseconds
+
         configureAudioSession()
         registerAudioSessionObservers()
 
         isInitialized = true
 
-        //startTrackingProgress()
+        // Drive [PlayerManager.timeCurrentMillis] from our own 250 ms main-thread job —
+        // we can't read vlcPlayer.time from inside [VlcDelegate.mediaPlayerTimeChanged]
+        // because VLCKit 4 fires that callback with libvlc's timer.lock held. See the
+        // doc on [trackerJobInterval] for the full story.
+        startTrackingProgress()
     }
 
     /**
@@ -579,9 +663,13 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     override fun seekTo(toPositionMs: Long) {
         super.seekTo(toPositionMs)
         playerScopeMain.launch(Dispatchers.Main.immediate) {
-            // If paused → VLC won't update time, so we manually declare current ms pos
-            pausedSeekPosition = if (vlcPlayer?.isPlaying() != true) toPositionMs else null
-
+            // Always shadow the player's clock with our requested position until VLC's
+            // time-changed callback fires (which means the player has caught up). Without
+            // this, VLCKit 4 has a window between setTime() and the next time-update where
+            // vlcPlayer.time can return 0 or a stale value — the protocol's seek detector
+            // sees this as a sudden 4-second drop and broadcasts a phantom "user jumped
+            // from X to 0" to the room. The shadow gets cleared in mediaPlayerTimeChanged.
+            pausedSeekPosition = toPositionMs
             vlcPlayer?.setTime(toPositionMs.toVLCTime())
         }
     }
@@ -662,38 +750,82 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     }
 
     /**
-     * Delegate for receiving VLC media player state change notifications.
+     * Delegate for VLCMediaPlayer events.
      *
-     * VLCKit 4 changes the [mediaPlayerStateChanged] selector from
-     * `(NSNotification *)` to `(VLCMediaPlayerState)`, and folds the old `Ended`
-     * state into `Stopped` — there's no longer a way to distinguish a natural
-     * playback end from an explicit stop. We treat any Stopped transition as
-     * "ended"; [destroy] clears the delegate before calling stop() so that
-     * teardown doesn't fire a spurious onPlaybackEnded.
+     * **Critical threading rule (VLCKit 4):** these callbacks are dispatched from libvlc
+     * worker threads — `mediaPlayerTimeChanged` in particular fires from the timer thread
+     * with `player->timer.lock` held. Calling ANY method on `vlcPlayer` / `vlcMedia` (or
+     * any object that re-enters libvlc, including the PiP controller's
+     * `invalidatePlaybackState`) from inside these callbacks trips libvlc's lock-ordering
+     * assertion:
+     *
+     *     Assertion failed: (!vlc_mutex_held(&player->timer.lock)),
+     *     function vlc_player_Lock, file player.c, line 992.
+     *
+     * The assertion is the symptom; the underlying issue is that `vlc_player_Lock` and
+     * `timer.lock` are not allowed to be held by the same thread at once. So we keep these
+     * bodies VLC-free: derive what we can from the callback parameters, and `launch` any
+     * VLC calls onto our own coroutine scope so they execute on the main thread *after*
+     * the libvlc lock has been released.
+     *
+     * This was a non-issue under MobileVLCKit 3 because callbacks went through
+     * NSNotificationCenter (a runloop hop, no libvlc locks held). VLCKit 4 rewrote the
+     * event dispatcher; see VLCKit/NEWS, "rewritten event management".
      */
     inner class VlcDelegate : NSObject(), VLCMediaPlayerDelegateProtocol {
         override fun mediaPlayerStateChanged(newState: VLCMediaPlayerState) {
-            val isPlaying = vlcPlayer?.media != null && vlcPlayer?.isPlaying() == true
-            playerManager.isNowPlaying.value = isPlaying
-            playerManager.timeCurrentMillis.value = currentPositionMs()
-
-            if (isPlaying) pausedSeekPosition = null
-
-            if (newState == VLCMediaPlayerState.VLCMediaPlayerStateStopped) {
-                onPlaybackEnded()
+            // Only mirror Playing / Paused into [isNowPlaying]. The other VLCKit 4 states
+            // (Opening, Buffering, Stopping, Stopped, Error) are intermediate transitions
+            // during which the user-visible "is the video running" semantics are unchanged
+            // from before the transition — flipping isNowPlaying false during Buffering,
+            // for example, would flicker the room's play/pause button to "play" every
+            // time playback hiccups for a network buffer dip and snap back to "pause" a
+            // moment later. The Android libVLC engine handles this by listening only to
+            // MediaPlayer.Event.Playing / Paused; we do the equivalent here.
+            //
+            // We deliberately don't call vlcPlayer.isPlaying() — even though it would be
+            // more accurate — because the delegate runs on libvlc's timer thread and that
+            // method takes vlc_player_Lock, which asserts when timer.lock is held.
+            when (newState) {
+                VLCMediaPlayerState.VLCMediaPlayerStatePlaying -> {
+                    playerManager.isNowPlaying.value = true
+                    pausedSeekPosition = null
+                }
+                VLCMediaPlayerState.VLCMediaPlayerStatePaused -> {
+                    playerManager.isNowPlaying.value = false
+                }
+                VLCMediaPlayerState.VLCMediaPlayerStateStopped -> {
+                    // Real end of playback (natural EOF or explicit stop) — reflect
+                    // that in the button so it doesn't stay stuck showing "pause".
+                    playerManager.isNowPlaying.value = false
+                    onPlaybackEnded()
+                }
+                else -> { /* Opening, Buffering, Stopping, Error — leave isNowPlaying alone */ }
             }
+
+            // Bounce off our coroutine scope to invalidate the PiP overlay so libvlc has
+            // a chance to release timer.lock before invalidatePlaybackState() re-enters
+            // it via mediaTime / mediaLength getters in [VlcDrawable].
+            playerScopeMain.launch { vlcDrawable?.pipController?.invalidatePlaybackState() }
         }
 
         override fun mediaPlayerTimeChanged(aNotification: NSNotification) {
-            // Time ticking = definitely playing
-            val isPlaying = vlcPlayer?.isPlaying() == true
-            if (playerManager.isNowPlaying.value != isPlaying) {
-                playerManager.isNowPlaying.value = isPlaying
-            }
+            // We can't read vlcPlayer.time here (it would assert in libvlc — see the
+            // class doc for VlcDelegate), but the mere fact that VLCKit fired this
+            // notification tells us the player's clock is ticking and has caught up
+            // with whatever setTime() we last issued. Drop the post-seek shadow so the
+            // tracker job can pick up real progress on the next 250 ms tick.
+            if (pausedSeekPosition != null) pausedSeekPosition = null
+        }
 
-            playerManager.timeCurrentMillis.value = currentPositionMs()
-
-            if (isPlaying && pausedSeekPosition != null) pausedSeekPosition = null
+        /**
+         * Notify the PiP overlay when media duration becomes known (or changes mid-stream
+         * for HLS/DASH live windows). The system uses [VlcDrawable.mediaLength] for its
+         * scrubbing UI. Like the state-change handler, we bounce off the coroutine scope
+         * to avoid the timer-lock assertion.
+         */
+        override fun mediaPlayerLengthChanged(length: Long) {
+            playerScopeMain.launch { vlcDrawable?.pipController?.invalidatePlaybackState() }
         }
     }
 

@@ -24,6 +24,7 @@ import app.room.RoomViewmodel
 import app.room.toFileData
 import app.utils.loggy
 import app.utils.timestampFromMillis
+import kotlin.math.abs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
@@ -153,6 +154,17 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
             val newPosMs = (toPosition * 1000.0).toLong()
 
             if (seeker.isNotSelf()) viewmodel.player.seekTo(newPosMs)
+
+            // Suppress no-op seeks: if the from/to positions are within a second, the
+            // user-visible message would render as "X to X" or "X to X+0:01" with the
+            // playhead not appearing to have moved. These slip through when the server
+            // reflects a doSeek=true that landed close to the current position (rare
+            // edge cases like a controller force-syncing the room to its own pos).
+            // Showing the OSD/chat for a visually-zero seek is more confusing than
+            // helpful, and recording it in the Undo Seek history would let the user
+            // "undo" something that never happened.
+            val noOpSeek = abs(oldPosMs - newPosMs) < SEEK_NOOP_THRESHOLD_MS
+            if (noOpSeek) return@onMainThread
 
             val osdMessage: suspend () -> String = {
                 getString(Res.string.room_seeked, seeker, timestampFromMillis(oldPosMs), timestampFromMillis(newPosMs))
@@ -370,5 +382,16 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         if (!data.success) {
             viewmodel.dispatchOSD(OSDCategory.WARNING, getter = osdMessage)
         }
+    }
+
+    companion object {
+        /**
+         * Below this from→to delta (ms), a seek is considered visually a no-op and we
+         * skip the room/OSD announcement plus the Undo Seek history entry. 1 second is
+         * also the protocol-wide [ProtocolManager.SEEK_THRESHOLD], so anything tighter
+         * than that wouldn't even register as a seek in the desync-detection algorithm
+         * on either side.
+         */
+        const val SEEK_NOOP_THRESHOLD_MS = 1000L
     }
 }

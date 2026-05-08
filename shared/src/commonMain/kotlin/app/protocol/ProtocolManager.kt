@@ -21,9 +21,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.concurrent.Volatile
-import kotlin.math.abs
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -94,17 +92,29 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
 
     private var watchdogJob: Job? = null
     private var listProbeJob: Job? = null
-    private var playerPollJob: Job? = null
+    private var playbackBroadcastJob: Job? = null
 
     /**
-     * Per-iteration baseline for the player-state poller. Each poll compares (now − last)
-     * to detect pauseChange / seeked, then advances the baseline. Reset to `null` whenever
-     * the protocol-side applies a state change to the player, so the next poll doesn't
-     * re-report the change as a phantom user action.
+     * Our current belief about the player's pause state. The flow collector started by
+     * [startChannelHealthMonitoring] watches [PlayerManager.isNowPlaying] (which every
+     * engine updates from its own native callback — ExoPlayer's `Player.Listener`,
+     * MPV's property observer, VLC's delegate, AVPlayer's KVO) and broadcasts a State
+     * packet only when the engine-reported playing state DIVERGES from this expectation.
+     *
+     * That way, user-initiated pauses (which already broadcast via
+     * [RoomEventDispatcher.controlPlayback]) and server-driven pauses (applied by
+     * [RoomServerMessageHandler]) don't get re-broadcast — the path that updates the
+     * player also calls [noteExpectedPlaybackState] so the engine callback's resulting
+     * flow emission matches our expectation. Only engine-driven auto-pauses/resumes
+     * (buffer underrun, audio focus loss, EOF, etc.) trigger an actual broadcast.
+     *
+     * This replaces a 250 ms polling loop that was a literal port of PC Python's
+     * `updatePlayerStatus` pipeline. PC has to poll because its player drivers (MPV
+     * IPC, VLC HTTP) expose no event API; mobile has callbacks for everything, so
+     * polling was both redundant and a source of phantom seeks (the poll would sample
+     * a player still mid-converging on a seek target and broadcast a spurious doSeek).
      */
-    private var pollLastAt: Instant? = null
-    private var pollLastPositionMs: Long = 0L
-    private var pollLastPaused: Boolean = true
+    private var expectedPaused: Boolean = true
 
     /**
      * Starts the channel-health coroutines for the current room session.
@@ -159,13 +169,40 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
             }
         }
 
-        playerPollJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
-            while (isActive) {
-                delay(PLAYER_POLL_INTERVAL_MS.milliseconds)
-                if (network.state.value != ConnectionState.CONNECTED) continue
-                if (lastGlobalUpdate == null) continue
-                if (isRoomChanging) continue
-                pollPlayerStateOnce()
+        // Reactive replacement for the old 250 ms poll: react to engine-reported pause
+        // changes via the StateFlow they all already update. Suppress the very first
+        // emission (which is just the StateFlow's current value at collection time, not
+        // a change) and any emission that matches our [expectedPaused] expectation.
+        playbackBroadcastJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
+            var seenInitial = false
+            viewmodel.playerManager.isNowPlaying.collect { isPlaying ->
+                if (!seenInitial) {
+                    seenInitial = true
+                    return@collect
+                }
+                if (network.state.value != ConnectionState.CONNECTED) return@collect
+                if (lastGlobalUpdate == null) return@collect
+                if (isRoomChanging) return@collect
+
+                val expectedPlaying = !expectedPaused
+                if (isPlaying == expectedPlaying) return@collect
+
+                // Engine-driven pause/resume (buffer underrun, audio focus loss, EOF
+                // transitions, etc.). Tell the room and update our expectation so we
+                // don't re-broadcast on the next emission.
+                expectedPaused = !isPlaying
+                val nowMs = withContext(Dispatchers.Main.immediate) {
+                    viewmodel.player.currentPositionMs()
+                }
+                viewmodel.networkManager.sendAsync(
+                    buildStatePacket(
+                        serverTime = null,
+                        doSeek = null,
+                        position = nowMs / 1000.0,
+                        changeState = 1,
+                        play = isPlaying
+                    )
+                )
             }
         }
     }
@@ -176,96 +213,25 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         watchdogJob = null
         listProbeJob?.cancel()
         listProbeJob = null
-        playerPollJob?.cancel()
-        playerPollJob = null
-        pollLastAt = null
+        playbackBroadcastJob?.cancel()
+        playbackBroadcastJob = null
     }
 
     /**
-     * Polls the player's pause/position once, compares to the last poll's snapshot, and
-     * sends a State packet (with `changeState=1`) if the player has paused/played itself
-     * (buffering, EOF, internal seek) without going through `dispatcher.controlPlayback`.
+     * Records what we expect the player's pause state to be after a deliberate change —
+     * a user action via [RoomEventDispatcher.controlPlayback] or a server-driven state
+     * applied by [RoomServerMessageHandler]. The flow collector in
+     * [startChannelHealthMonitoring] uses this to suppress its own re-broadcast: when
+     * the engine's resulting `isNowPlaying` callback fires, it matches expectation and
+     * is treated as the natural follow-on of the action that just happened.
      *
-     * This is the missing half of the Syncplay protocol from python's `updatePlayerStatus`
-     * pipeline — without it, the server never learns that the player auto-paused on a
-     * buffer dip, and instead keeps telling us to play, which fights with the player.
-     *
-     * The protocol's `clientIgnoringOnTheFly` counter handles dedup against our own user
-     * actions, so we don't need to skip when those are pending — `buildStatePacket` will
-     * correctly suppress the playstate block during the unacked window.
+     * Must be called BEFORE invoking the player's pause/play (or before the engine has
+     * a chance to fire its callback for a server-driven change), otherwise there's a
+     * brief window where the flow collector sees the engine update against a stale
+     * expectation and broadcasts a redundant State packet.
      */
-    private suspend fun pollPlayerStateOnce() {
-        val player = viewmodel.player
-        val nowMs = withContext(Dispatchers.Main.immediate) { player.currentPositionMs() }
-        val isPlaying = player.isPlaying()
-        val nowPaused = !isPlaying
-        val now = Clock.System.now()
-
-        val lastAt = pollLastAt
-        val lastPos = pollLastPositionMs
-        val lastPaused = pollLastPaused
-
-        pollLastAt = now
-        pollLastPositionMs = nowMs
-        pollLastPaused = nowPaused
-
-        // First poll after a baseline reset — initialize and skip change detection.
-        if (lastAt == null) return
-
-        // Strict pause-change detection (mirrors python's `_determinePlayerStateChange`):
-        // both the last-poll snapshot AND the room's globalPaused must disagree with what
-        // the player is currently reporting. Without the global check, a server-driven
-        // pause that hasn't quite landed on the player yet (player.pause() runs on a
-        // launched coroutine, may still be playing on the next 250 ms tick) would make
-        // us broadcast `paused=false` and contradict the server, kicking off a
-        // pause/unpause ping-pong with peers.
-        val pauseChanged = nowPaused != lastPaused && nowPaused != globalPaused
-        val elapsedMs = (now - lastAt).inWholeMilliseconds
-        val expectedRate = when {
-            lastPaused -> 0.0
-            speedChanged -> SLOWDOWN_RATE
-            else -> 1.0
-        }
-        val expectedAdvanceMs = (elapsedMs * expectedRate).toLong()
-        val actualAdvanceMs = nowMs - lastPos
-        val advanceMismatch = abs(actualAdvanceMs - expectedAdvanceMs) > (SEEK_THRESHOLD * 1000L)
-
-        // Mirrors python's `_determinePlayerStateChange`: a seek is only "ours" to
-        // broadcast if the player AND the room's expected position both disagree
-        // with what the player just did. When the server drives a seek and the
-        // player follows along, the global position is updated to the new target
-        // and globalDiff stays small — so we don't echo a phantom doSeek. Without
-        // this gate, a slow-to-land server-driven seek (mpv/vlc apply seekTo
-        // asynchronously) gets re-broadcast 250 ms later as if the user did it,
-        // and the server bounces it back, looping the seek indefinitely.
-        val globalDiffMs = abs(nowMs - extrapolatedGlobalPositionMs().toLong())
-        val seeked = advanceMismatch && globalDiffMs > (SEEK_THRESHOLD * 1000L)
-
-        if (pauseChanged || seeked) {
-            viewmodel.networkManager.sendAsync(
-                buildStatePacket(
-                    serverTime = null,
-                    doSeek = seeked,
-                    position = nowMs / 1000.0,
-                    changeState = 1,
-                    play = isPlaying
-                )
-            )
-        }
-    }
-
-    /**
-     * Updates the polling baseline with the user's intent so the next poll doesn't see
-     * a "change" caused by an action that already went through `controlPlayback` /
-     * `sendSeek` / a server-driven seek.
-     *
-     * Called by the dispatcher after every user action, and by [RoomServerMessageHandler]
-     * after applying server-driven state changes to the player.
-     */
-    fun primePollBaseline(paused: Boolean, positionMs: Long) {
-        pollLastAt = Clock.System.now()
-        pollLastPositionMs = positionMs
-        pollLastPaused = paused
+    fun noteExpectedPlaybackState(paused: Boolean) {
+        expectedPaused = paused
     }
 
     override fun invalidate() {
@@ -392,12 +358,5 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
          * broken and trigger a reconnect. Chosen to match the Syncplay server's own
          * ~10–15s threshold for dropping unresponsive clients. */
         const val STATE_TIMEOUT_SECONDS = 15L
-
-        /**
-         * How often [pollPlayerStateOnce] runs. PC's reference client polls the player
-         * every 100 ms; on mobile 250 ms is plenty — that's still 4× the server's 1 Hz
-         * State broadcast rate, so user-visible reactions are bounded by ~250 ms.
-         */
-        const val PLAYER_POLL_INTERVAL_MS = 250L
     }
 }

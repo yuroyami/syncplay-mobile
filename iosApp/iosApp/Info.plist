@@ -45,6 +45,13 @@
 	<array>
 		<string>armv7</string>
 	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<!-- Required for Picture-in-Picture: iOS won't keep audio/video alive in the
+		     PiP window once the app is backgrounded unless this background mode is
+		     declared. AVPictureInPictureController and VLCKit 4's PiP both need it. -->
+		<string>audio</string>
+	</array>
 	<key>UIRequiresFullScreen</key>
 	<true/>
 	<key>UISupportedInterfaceOrientations</key>

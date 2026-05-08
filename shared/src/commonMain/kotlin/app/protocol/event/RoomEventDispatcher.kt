@@ -67,9 +67,9 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
 
         viewmodel.viewModelScope.launch(Dispatchers.IO) {
             val playing = viewmodel.player.isPlaying()
-            // Prime the polling baseline so the next ProtocolManager.pollPlayerStateOnce
-            // doesn't re-broadcast this seek as if the player had jumped on its own.
-            viewmodel.protocol.primePollBaseline(paused = !playing, positionMs = newPosMs)
+            // Seeks don't change pause state, so we don't touch protocol.expectedPaused
+            // here. The pause-broadcast flow collector keys off [PlayerManager.isNowPlaying]
+            // changes, which a seek alone won't produce.
             network.send(
                 viewmodel.protocol.buildStatePacket(
                     serverTime = null,
@@ -104,6 +104,14 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
             }
         }
 
+        // Set the expectation BEFORE we touch the player. The engine's isNowPlaying
+        // callback fires synchronously inside player.pause()/play() on some engines
+        // (notably ExoPlayer), and the protocol's flow collector reads this expectation
+        // to decide whether to re-broadcast the change. If we set it AFTER, there's a
+        // race where the collector sees the engine update against the stale expectation
+        // and broadcasts a redundant State packet.
+        viewmodel.protocol.noteExpectedPlaybackState(paused = !playback.play)
+
         onMainThread {
             when (playback) {
                 Playback.PAUSE -> viewmodel.player.pause()
@@ -116,11 +124,9 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
         if (viewmodel.isSoloMode || !tellServer) return
 
         viewmodel.viewModelScope.launch(Dispatchers.IO) {
-            val (posSec, posMs) = withContext(Dispatchers.Main.immediate) {
-                val ms = viewmodel.player.currentPositionMs()
-                (ms / 1000.0) to ms
+            val posSec = withContext(Dispatchers.Main.immediate) {
+                viewmodel.player.currentPositionMs() / 1000.0
             }
-            viewmodel.protocol.primePollBaseline(paused = !playback.play, positionMs = posMs)
             network.send(
                 viewmodel.protocol.buildStatePacket(
                     serverTime = null,

@@ -218,4 +218,4 @@ tasks.register("propagateSSOT") {
             project.propagateAllCustom()
         }
     }
-}
+}//
