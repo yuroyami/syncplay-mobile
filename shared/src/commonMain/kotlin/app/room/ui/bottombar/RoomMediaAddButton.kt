@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -104,6 +105,19 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
         }
     }
 
+    // Compose Multiplatform 1.10+ has an iOS picker race: launching a FileKit picker
+    // while a Compose modal (this dropdown) is closing makes the native picker fire
+    // its delegate twice → "Already resumed" crash inside DocumentPickerDelegate.
+    // Workaround: dismiss the dropdown first, then launch in a LaunchedEffect once
+    // the dismissal has settled. See FileKit issue/PR #575.
+    var launchVideoPickerAfterDismiss by remember { mutableStateOf(false) }
+    LaunchedEffect(showPopup, launchVideoPickerAfterDismiss) {
+        if (!showPopup && launchVideoPickerAfterDismiss) {
+            launchVideoPickerAfterDismiss = false
+            videoPicker.launch()
+        }
+    }
+
     Box(modifier = Modifier.padding(4.dp)) {
         AddVideoButton(
             modifier = Modifier.padding(2.dp),
@@ -156,8 +170,8 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
                     }
                 },
                 onClick = {
-                    videoPicker.launch()
-                    //showPopup = false
+                    launchVideoPickerAfterDismiss = true
+                    showPopup = false
                 }
             )
 

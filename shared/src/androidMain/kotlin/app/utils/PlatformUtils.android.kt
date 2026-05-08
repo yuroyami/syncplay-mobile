@@ -30,15 +30,32 @@ import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.path
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.request.header
+import io.ktor.http.HttpHeaders
 import java.io.File
 import java.lang.ref.WeakReference
+import SyncplayMobile.shared.BuildConfig
 
 
 actual val platform: Platform = Platform.Android
 
 /* Cached singleton — `get()` would create a fresh OkHttp engine on every access. Keep one
- * shared client so connection pooling actually works. */
-actual val httpClient: HttpClient by lazy { HttpClient(OkHttp) }
+ * shared client so connection pooling actually works. Defaults match the iOS twin:
+ * HttpTimeout for fail-fast on flaky CDNs, User-Agent for CDNs that filter on it. */
+actual val httpClient: HttpClient by lazy {
+    HttpClient(OkHttp) {
+        install(HttpTimeout) {
+            requestTimeoutMillis = 15_000
+            connectTimeoutMillis = 10_000
+            socketTimeoutMillis = 15_000
+        }
+        defaultRequest {
+            header(HttpHeaders.UserAgent, "SynkplayMobile/${BuildConfig.APP_VERSION}")
+        }
+    }
+}
 
 /**
  * List of media player engines available on Android.

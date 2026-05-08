@@ -13,6 +13,10 @@ import androidx.compose.ui.viewinterop.UIKitView
 import app.utils.httpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import app.utils.loggy
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.DoubleVar
 import kotlinx.cinterop.UByteVar
@@ -90,12 +94,23 @@ actual fun AnimatedImage(
     )
 }
 
-/** Downloads image data using the shared Ktor client and decodes it as animated GIF/WebP. */
+/**
+ * Downloads image data using the shared Ktor client and decodes it as animated GIF/WebP.
+ * Decoding runs on `Dispatchers.Default` because [decodeAnimatedImage] does CGImageSource
+ * frame-by-frame extraction synchronously — running it on the LaunchedEffect's default
+ * (Compose Main) dispatcher means a 24-tile grid stalls the UI thread for hundreds of ms
+ * per tile. Cancellation is rethrown so a closed/recomposed panel can correctly cancel
+ * the in-flight download instead of being silently swallowed by `catch (_: Exception)`
+ * (which catches `CancellationException` too).
+ */
 private suspend fun downloadAndDecodeAnimatedImage(url: String): UIImage? {
     return try {
         val bytes: ByteArray = httpClient.get(url).body()
-        decodeAnimatedImage(bytes)
-    } catch (_: Exception) {
+        withContext(Dispatchers.Default) { decodeAnimatedImage(bytes) }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        loggy("AnimatedImage: failed to load $url — ${e.message}")
         null
     }
 }

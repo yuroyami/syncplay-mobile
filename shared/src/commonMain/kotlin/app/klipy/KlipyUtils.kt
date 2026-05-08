@@ -5,6 +5,7 @@ import app.klipy.KlipyUtils.trending
 import app.preferences.Preferences.USER_ID
 import app.preferences.value
 import app.utils.httpClient
+import app.utils.loggy
 import de.jensklingenberg.ktorfit.Ktorfit
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.plugins.HttpTimeout
@@ -13,6 +14,7 @@ import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.uuid.Uuid
@@ -48,8 +50,13 @@ object KlipyUtils {
                 KlipyMediaType.STICKER -> klipy.searchStickers(query = query, perPage = limit, customerId = customerId, page = page)
             }
             result.toPagedResult(type)
+        } catch (e: CancellationException) {
+            // Compose forgot the LaunchedEffect (panel closed / re-rendered) — propagate
+            // so the coroutine actually cancels instead of returning an empty result that
+            // would render "No results" briefly before unmount.
+            throw e
         } catch (e: Exception) {
-            e.printStackTrace()
+            loggy("KlipyUtils.search($type, '$query', page=$page) failed: ${e::class.simpleName}: ${e.message}")
             KlipyPagedResult(emptyList(), false)
         }
     }
@@ -68,8 +75,10 @@ object KlipyUtils {
                 KlipyMediaType.STICKER -> klipy.trendingStickers(perPage = limit, customerId = customerId, page = page)
             }
             result.toPagedResult(type)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            e.printStackTrace()
+            loggy("KlipyUtils.trending($type, page=$page) failed: ${e::class.simpleName}: ${e.message}")
             KlipyPagedResult(emptyList(), false)
         }
     }
@@ -88,8 +97,10 @@ object KlipyUtils {
                 KlipyMediaType.STICKER -> klipy.recentStickers(customerId = customerId, perPage = limit, page = page)
             }
             result.toPagedResult(type)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            e.printStackTrace()
+            loggy("KlipyUtils.recents($type, page=$page) failed: ${e::class.simpleName}: ${e.message}")
             KlipyPagedResult(emptyList(), false)
         }
     }
@@ -101,8 +112,9 @@ object KlipyUtils {
                 KlipyMediaType.GIF -> klipy.shareGif(slug, customerId)
                 KlipyMediaType.STICKER -> klipy.shareSticker(slug, customerId)
             }
-        } catch (_: Exception) { /* best-effort analytics */
-        }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) { /* best-effort analytics */ }
     }
 
     /** Maps an API response to a [KlipyPagedResult]. */

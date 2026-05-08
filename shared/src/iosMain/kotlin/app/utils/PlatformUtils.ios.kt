@@ -1,5 +1,6 @@
 package app.utils
 
+import SyncplayMobile.shared.BuildConfig
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.ClipEntry
@@ -17,6 +18,10 @@ import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.path
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.darwin.Darwin
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.request.header
+import io.ktor.http.HttpHeaders
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.usePinned
@@ -27,9 +32,6 @@ import platform.Foundation.NSFileHandle
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSFileSize
 import platform.Foundation.NSNumber
-import platform.Foundation.create
-import platform.Foundation.writeToFile
-import platform.posix.memcpy
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
 import platform.Foundation.NSString
 import platform.Foundation.NSURL
@@ -42,6 +44,7 @@ import platform.Foundation.fileHandleForWritingAtPath
 import platform.Foundation.seekToEndOfFile
 import platform.Foundation.timeIntervalSince1970
 import platform.Foundation.writeData
+import platform.Foundation.writeToFile
 import platform.UIKit.UIApplication
 import platform.UIKit.UIInterfaceOrientationMaskAll
 import platform.UIKit.UIInterfaceOrientationMaskLandscape
@@ -49,6 +52,7 @@ import platform.UIKit.UIInterfaceOrientationMaskPortrait
 import platform.UIKit.UIWindowScene
 import platform.UIKit.UIWindowSceneGeometryPreferencesIOS
 import platform.ifaddrs.getDeviceLocalIp
+import platform.posix.memcpy
 import kotlin.math.roundToLong
 import kotlin.native.ref.WeakReference
 
@@ -57,8 +61,32 @@ actual val platform: Platform = Platform.IOS
 /* Cached singleton — `get()` would mint a fresh Darwin engine (and a backing NSURLSession)
  * on every access, which the GIF grid hits per-tile per-scroll. The leak shows up as iOS
  * throttling new sessions a few seconds in, surfacing as "Klipy works for a moment, then
- * stops downloading anything." */
-actual val httpClient: HttpClient by lazy { HttpClient(Darwin) }
+ * stops downloading anything."
+ *
+ * Defaults installed here apply to every caller of `httpClient` (subtitle search, Klipy
+ * media downloads, AnimatedImage, etc.):
+ *
+ *  - HttpTimeout: NSURLSession on Darwin has no sensible defaults — a flaky CDN can leave
+ *    a request hanging indefinitely instead of failing fast. The 15s/10s/15s envelope
+ *    matches what KlipyUtils already configured for its own (configured-copy) client.
+ *  - defaultRequest with User-Agent: Cloudflare-fronted CDNs (static.klipy.com,
+ *    OpenSubtitles, NewPipe peers) sometimes block requests with no UA. Setting one
+ *    is harmless when the CDN doesn't care.
+ *
+ * Per-feature `HttpClient.config { … }` calls layer additional plugins on top without
+ * unsettling these defaults. */
+actual val httpClient: HttpClient by lazy {
+    HttpClient(Darwin) {
+        install(HttpTimeout) {
+            requestTimeoutMillis = 15_000
+            connectTimeoutMillis = 10_000
+            socketTimeoutMillis = 15_000
+        }
+        defaultRequest {
+            header(HttpHeaders.UserAgent, "SynkplayMobile/${BuildConfig.APP_VERSION}")
+        }
+    }
+}
 
 actual val availablePlatformPlayerEngines: List<PlayerEngine> = buildList {
     add(AVPlayerEngine)

@@ -163,6 +163,19 @@ fun RoomControlPanelCard(modifier: Modifier) {
     /* Track sheet state */
     var showTrackSheet by remember { mutableStateOf(false) }
     var showSubtitleSearch by remember { mutableStateOf(false) }
+
+    // Compose Multiplatform 1.10+ has an iOS picker race: launching a FileKit picker
+    // while a Compose modal (this ModalBottomSheet) is closing makes the native
+    // picker fire its delegate twice → "Already resumed" crash inside
+    // DocumentPickerDelegate. Workaround: dismiss the sheet first, then launch in a
+    // LaunchedEffect once the dismissal has settled. See FileKit issue/PR #575.
+    var launchSubtitlePickerAfterDismiss by remember { mutableStateOf(false) }
+    LaunchedEffect(showTrackSheet, launchSubtitlePickerAfterDismiss) {
+        if (!showTrackSheet && launchSubtitlePickerAfterDismiss) {
+            launchSubtitlePickerAfterDismiss = false
+            subtitlePicker.launch()
+        }
+    }
     /* Undo-seek confirmation dialog state — null while dismissed; non-null carries the seek pair to undo. */
     var pendingUndoSeek by remember { mutableStateOf<Pair<Long, Long>?>(null) }
     val undoNoConfirm by UNDO_SEEK_NO_CONFIRM.watchPref()
@@ -462,8 +475,8 @@ fun RoomControlPanelCard(modifier: Modifier) {
                                 icon = Icons.AutoMirrored.Filled.NoteAdd,
                                 onClick = {
                                     haptic()
+                                    launchSubtitlePickerAfterDismiss = true
                                     showTrackSheet = false
-                                    subtitlePicker.launch()
                                 }
                             )
                         }

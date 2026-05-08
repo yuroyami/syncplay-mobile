@@ -49,6 +49,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -310,6 +311,21 @@ object CardSharedPlaylist {
                     Box {
                         val sharedplaylistOverflowState = remember { mutableStateOf(false) }
 
+                        // Compose Multiplatform 1.10+ has an iOS picker race: launching a
+                        // FileKit picker while a Compose modal (this dropdown) is closing
+                        // makes the native picker fire its delegate twice → "Already
+                        // resumed" crash inside DocumentPickerDelegate. Workaround: capture
+                        // the action, dismiss the dropdown, and let LaunchedEffect run it
+                        // once the dismissal has settled. See FileKit issue/PR #575.
+                        var pendingOverflowAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+                        LaunchedEffect(sharedplaylistOverflowState.value, pendingOverflowAction) {
+                            val action = pendingOverflowAction
+                            if (!sharedplaylistOverflowState.value && action != null) {
+                                pendingOverflowAction = null
+                                action()
+                            }
+                        }
+
                         FlexibleIcon(
                             icon = Icons.Filled.MoreVert, size = Theming.ROOM_ICON_SIZE, shadowColors = listOf(Color.Black),
                             onClick = {
@@ -381,8 +397,8 @@ object CardSharedPlaylist {
                                 },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Download, "") },
                                 onClick = {
+                                    pendingOverflowAction = { playlistLoadPicker.launch() }
                                     sharedplaylistOverflowState.value = false
-                                    playlistLoadPicker.launch()
                                 }
                             )
 
@@ -396,9 +412,11 @@ object CardSharedPlaylist {
                                 },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Download, "") },
                                 onClick = {
-                                    sharedplaylistOverflowState.value = false
-                                    playlistLoadPicker.launch()
+                                    // shouldShuffle has to be set BEFORE the picker fires
+                                    // since the picker callback consumes it.
                                     shouldShuffle = true
+                                    pendingOverflowAction = { playlistLoadPicker.launch() }
+                                    sharedplaylistOverflowState.value = false
                                 }
                             )
 
@@ -412,16 +430,20 @@ object CardSharedPlaylist {
                                 },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.Save, "") },
                                 onClick = {
-                                    sharedplaylistOverflowState.value = false
                                     if (viewmodel.session.sharedPlaylist.isEmpty()) {
                                         viewmodel.dispatchOSD { getString(Res.string.room_shared_playlist_playlist_is_empty) }
+                                        sharedplaylistOverflowState.value = false
                                         return@DropdownMenuItem
                                     }
 
-                                    playlistSaver.launch(
-                                        suggestedName = "SharedPlaylist_${Clock.System.now()}",
-                                        extension = "txt"
-                                    )
+                                    val suggestedName = "SharedPlaylist_${Clock.System.now()}"
+                                    pendingOverflowAction = {
+                                        playlistSaver.launch(
+                                            suggestedName = suggestedName,
+                                            extension = "txt"
+                                        )
+                                    }
+                                    sharedplaylistOverflowState.value = false
                                 }
                             )
 
