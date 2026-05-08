@@ -147,6 +147,13 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                     protocol.speedChanged = false
                 }
                 callback.onSomeoneBehind(setBy ?: "", agedPosition)
+                // Prime the baseline against the rewind target — without this, the
+                // next pollPlayerStateOnce would see the rewind seek as user-initiated
+                // and broadcast a doSeek=true echo that loops with the server.
+                protocol.primePollBaseline(
+                    paused = paused,
+                    positionMs = (agedPosition * 1000.0).toLong(),
+                )
             }
 
             /* Fast-forward if persistently behind. Mirrors python's gating: only triggers
@@ -164,7 +171,15 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                     if (durationBehind > (FASTFORWARD_THRESHOLD - FASTFORWARD_BEHIND_THRESHOLD)
                         && diff < -FASTFORWARD_THRESHOLD
                     ) {
-                        callback.onSomeoneFastForwarded(setBy ?: "", agedPosition + FASTFORWARD_EXTRA_TIME)
+                        val ffTarget = agedPosition + FASTFORWARD_EXTRA_TIME
+                        callback.onSomeoneFastForwarded(setBy ?: "", ffTarget)
+                        // Same rationale as the rewind path: without priming, the
+                        // fastforward seek looks like a phantom user seek to the
+                        // next poll, which then re-broadcasts it.
+                        protocol.primePollBaseline(
+                            paused = paused,
+                            positionMs = (ffTarget * 1000.0).toLong(),
+                        )
                         protocol.behindFirstDetected = now + FASTFORWARD_RESET_THRESHOLD.seconds
                     }
                 }
@@ -202,11 +217,23 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             // After applying server-driven state to the player, refresh the polling
             // baseline so the next poll doesn't mistake "we just seeked because the
             // server told us to" for "the user just seeked".
+            //
+            // Prime against the SERVER's intended position (`agedPosition`), not the
+            // player's currentPositionMs(). Many player engines (mpv via MPVKit,
+            // libVLC) apply seekTo asynchronously: the call returns instantly but
+            // the underlying time-pos / time property only updates a few ms later
+            // when the seek actually lands. Reading currentPositionMs() right after
+            // onSomeoneSeeked launches its seek would capture the pre-seek value,
+            // making the next pollPlayerStateOnce 250 ms later see a giant
+            // "actual advance vs expected advance" gap and broadcast a phantom
+            // doSeek=true — which the server then echoes, looping the seek between
+            // peers indefinitely. Using agedPosition makes the baseline match what
+            // the player WILL converge to, so the poll's diff stays small.
             if (doSeek == true || pausedChanged) {
-                val playerPosMs = withContext(Dispatchers.Main.immediate) {
-                    viewmodel.player.currentPositionMs()
-                }
-                protocol.primePollBaseline(paused = paused, positionMs = playerPosMs)
+                protocol.primePollBaseline(
+                    paused = paused,
+                    positionMs = (agedPosition * 1000.0).toLong(),
+                )
             }
         }
 

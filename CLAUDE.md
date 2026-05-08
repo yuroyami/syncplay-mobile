@@ -206,7 +206,7 @@ Server Hello response includes `features` object. Client adapts behavior:
 | SLOWDOWN_RATE | 0.95 | Playback speed during slowdown |
 | SLOWDOWN_THRESHOLD | 1.5s | Start slowdown when behind by this |
 | SLOWDOWN_RESET_THRESHOLD | 0.1s | Revert speed when diff < this |
-| REWIND_THRESHOLD | 12s (mobile) / 4s (PC) | Force seek if behind by this |
+| REWIND_THRESHOLD | 4s | Force seek if behind by this (matches PC `DEFAULT_REWIND_THRESHOLD`) |
 | FASTFORWARD_BEHIND_THRESHOLD | 1.75s | Detect ahead condition |
 | FASTFORWARD_THRESHOLD | 5s | Trigger fastforward after sustained |
 | FASTFORWARD_EXTRA_TIME | 0.25s | Overshoot compensation |
@@ -214,8 +214,6 @@ Server Hello response includes `features` object. Client adapts behavior:
 | PROTOCOL_TIMEOUT | 12.5s | Connection assumed dead |
 | SERVER_STATE_INTERVAL | 1000ms | Server update frequency |
 | PING_MOVING_AVERAGE_WEIGHT | 0.85 | RTT smoothing factor |
-
-**Note:** Mobile uses 12s rewind threshold vs PC's 4s - a deliberate choice for mobile networks.
 
 ### Latency Compensation (PingService)
 ```
@@ -537,7 +535,7 @@ When user presses play, `instaplayConditionsMet()` checks UNPAUSE_ACTION prefere
 | Seek sync | Y | Y | |
 | Slowdown (95% speed) | Y | Y | Configurable per-pref |
 | Fastforward | Y | Y | |
-| Rewind on desync | Y | Y | 12s threshold (vs 4s PC) |
+| Rewind on desync | Y | Y | 4s threshold (matches PC) |
 | Latency compensation | Y | Y | EMA-smoothed RTT |
 | ignoringOnTheFly | Y | Y | Feedback suppression |
 | **User Features** | | | |
@@ -722,5 +720,5 @@ ServerViewmodel
 - No DI framework - manual wiring could become complex as features grow
 - Some iOS functionality requires Swift bridges (MpvKitBridge, SwiftNioNetworkManager) registered at app init
 - `VlcPlayer4.kt` in iosMain is commented out (legacy code)
-- Rewind threshold is 12s on mobile vs 4s on PC - intentional for mobile network conditions
+- Rewind threshold is 4s, matching PC's `DEFAULT_REWIND_THRESHOLD` in `constants.py`
 - Server password comparison uses MD5 (protocol requirement, not a security concern since it's over TLS)

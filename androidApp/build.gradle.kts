@@ -25,7 +25,7 @@ android {
         file("${rootDir}/keystore/syncplaykey.jks").takeIf { it.exists() }?.let { keystoreFile ->
             create("synkplay_keystore") {
                 storeFile = keystoreFile
-                AppConfig.localProperties.apply {
+                AppConfig.localProperties(rootDir).apply {
                     keyAlias = getProperty("keystore.keyAlias")
                     keyPassword = getProperty("keystore.keyPassword")
                     storePassword = getProperty("keystore.storePassword")

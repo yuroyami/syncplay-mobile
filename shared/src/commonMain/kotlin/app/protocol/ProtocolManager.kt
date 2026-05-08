@@ -56,8 +56,14 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         get() = _clientIgnFly.value
         set(value) { _clientIgnFly.value = value }
 
-    /** Position drift threshold for hard seek. 12s per Syncplay spec — do not change. */
-    val rewindThreshold = 12L
+    /**
+     * Position drift threshold (seconds) at which the client triggers a corrective rewind
+     * to catch up with the room. Matches PC's `DEFAULT_REWIND_THRESHOLD = 4`
+     * ([syncplay-pc-src-master/syncplay/constants.py:63](../../../../../../syncplay-pc-src-master/syncplay/constants.py#L63)).
+     * PC's `MINIMUM_REWIND_THRESHOLD = 3`, so values below 3 wouldn't be valid if this
+     * ever becomes user-configurable.
+     */
+    val rewindThreshold = 4L
 
     /** Timestamp of the last received global state update, used for sync timing. */
     var lastGlobalUpdate: Instant? = null
@@ -206,7 +212,14 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         // First poll after a baseline reset — initialize and skip change detection.
         if (lastAt == null) return
 
-        val pauseChanged = nowPaused != lastPaused
+        // Strict pause-change detection (mirrors python's `_determinePlayerStateChange`):
+        // both the last-poll snapshot AND the room's globalPaused must disagree with what
+        // the player is currently reporting. Without the global check, a server-driven
+        // pause that hasn't quite landed on the player yet (player.pause() runs on a
+        // launched coroutine, may still be playing on the next 250 ms tick) would make
+        // us broadcast `paused=false` and contradict the server, kicking off a
+        // pause/unpause ping-pong with peers.
+        val pauseChanged = nowPaused != lastPaused && nowPaused != globalPaused
         val elapsedMs = (now - lastAt).inWholeMilliseconds
         val expectedRate = when {
             lastPaused -> 0.0
@@ -215,7 +228,18 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         }
         val expectedAdvanceMs = (elapsedMs * expectedRate).toLong()
         val actualAdvanceMs = nowMs - lastPos
-        val seeked = abs(actualAdvanceMs - expectedAdvanceMs) > (SEEK_THRESHOLD * 1000L)
+        val advanceMismatch = abs(actualAdvanceMs - expectedAdvanceMs) > (SEEK_THRESHOLD * 1000L)
+
+        // Mirrors python's `_determinePlayerStateChange`: a seek is only "ours" to
+        // broadcast if the player AND the room's expected position both disagree
+        // with what the player just did. When the server drives a seek and the
+        // player follows along, the global position is updated to the new target
+        // and globalDiff stays small — so we don't echo a phantom doSeek. Without
+        // this gate, a slow-to-land server-driven seek (mpv/vlc apply seekTo
+        // asynchronously) gets re-broadcast 250 ms later as if the user did it,
+        // and the server bounces it back, looping the seek indefinitely.
+        val globalDiffMs = abs(nowMs - extrapolatedGlobalPositionMs().toLong())
+        val seeked = advanceMismatch && globalDiffMs > (SEEK_THRESHOLD * 1000L)
 
         if (pauseChanged || seeked) {
             viewmodel.networkManager.sendAsync(

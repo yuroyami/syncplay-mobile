@@ -22,14 +22,19 @@ import YouTubeKit
 ///     return YouTubeKitBridgeImpl()
 /// }
 /// ```
-class YouTubeKitBridgeImpl: YoutubeKitBridge, @unchecked Sendable {
+class YouTubeKitBridgeImpl: YouTubeKitBridge, @unchecked Sendable {
 
+    /// Kotlin's `(String?, String?, Double) -> Unit` boxes the primitive Double when it
+    /// crosses the ObjC ABI, so the Swift signature here uses `KotlinDouble`, not Swift
+    /// `Double`. Mismatching this is the override-not-found error you get otherwise.
     override func resolve(
         url: String,
-        completion: @escaping (String?, String?, Double) -> Void
+        completion: @escaping (String?, String?, KotlinDouble) -> Void
     ) {
+        let unknownDuration = KotlinDouble(value: -1.0)
+
         guard let videoURL = URL(string: url) else {
-            completion(nil, nil, -1.0)
+            completion(nil, nil, unknownDuration)
             return
         }
         Task {
@@ -43,16 +48,16 @@ class YouTubeKitBridgeImpl: YoutubeKitBridge, @unchecked Sendable {
                     .highestResolutionStream()
 
                 guard let resolvedURL = stream?.url else {
-                    completion(nil, nil, -1.0)
+                    completion(nil, nil, unknownDuration)
                     return
                 }
 
                 // Metadata fetch is best-effort: failure here doesn't abort the resolution.
                 let title: String? = (try? await yt.metadata)?.title
                 // YouTubeMetadata (v0.4.x) doesn't expose duration; pass -1.0 sentinel.
-                completion(resolvedURL.absoluteString, title, -1.0)
+                completion(resolvedURL.absoluteString, title, unknownDuration)
             } catch {
-                completion(nil, nil, -1.0)
+                completion(nil, nil, unknownDuration)
             }
         }
     }

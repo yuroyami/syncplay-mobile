@@ -4,6 +4,7 @@ import NIOFoundationCompat
 import NIOTransportServices
 import NIOExtras
 import NIOSSL
+import NIOTLS
 import Pods_iosApp
 import shared
 
@@ -237,7 +238,10 @@ private final class TLSHandshakeTrackingHandler: ChannelInboundHandler, Removabl
     }
 
     func userInboundEventTriggered(context: ChannelHandlerContext, event: Any) {
-        if let event = event as? TLSUserEvent, event == .handshakeCompleted {
+        // SwiftNIO ≥ 2.55 changed `.handshakeCompleted` from a plain enum case to one
+        // with an associated `negotiatedProtocol: String?` payload, so we pattern-match
+        // instead of using `==`.
+        if let tlsEvent = event as? TLSUserEvent, case .handshakeCompleted = tlsEvent {
             promise.succeed(())
             context.pipeline.removeHandler(self, promise: nil)
         }

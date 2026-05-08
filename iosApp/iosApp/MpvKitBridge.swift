@@ -3,242 +3,249 @@ import UIKit
 import Libmpv
 import shared
 
-/// Swift implementation of MpvKitPlayerBridge using the raw libmpv C API via MPVKit.
+// MARK: - Layer & view subclasses
+
+/// `CAMetalLayer` subclass that ignores the spurious 1×1 `drawableSize` MoltenVK
+/// forces during presentation completion (causes flicker / stuck-tiny rendering
+/// on rotation). Same workaround the upstream MPVKit demo uses.
+/// Reference: https://github.com/KhronosGroup/MoltenVK/issues/2226
+final class MPVMetalLayer: CAMetalLayer {
+    override var drawableSize: CGSize {
+        get { super.drawableSize }
+        set {
+            if Int(newValue.width) > 1 && Int(newValue.height) > 1 {
+                super.drawableSize = newValue
+            }
+        }
+    }
+}
+
+/// Host `UIView` containing a `CAMetalLayer`. mpv is bound to `metalLayer` via the
+/// `wid` option; this class keeps the layer's frame in sync with the host view's
+/// bounds via `layoutSubviews`. Without this override the layer would stay at its
+/// initial bounds (`.zero`) regardless of how the parent is laid out by Compose's
+/// `UIKitView`, and video would render into a 0×0 framebuffer.
+final class MPVRenderView: UIView {
+    let metalLayer = MPVMetalLayer()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = .black
+        metalLayer.contentsScale = UIScreen.main.nativeScale
+        metalLayer.framebufferOnly = true
+        metalLayer.backgroundColor = UIColor.black.cgColor
+        layer.addSublayer(metalLayer)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("MPVRenderView is code-instantiated only") }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        metalLayer.frame = bounds
+    }
+}
+
+// MARK: - Bridge
+
+/// Swift implementation of `MpvKitPlayerBridge` driving the raw libmpv C API via MPVKit.
 ///
-/// This class wraps all libmpv operations (create, load, play, seek, track management, etc.)
-/// and exposes them through the Kotlin-defined abstract class interface.
+/// All bridge methods are called from the Kotlin side through `withContext(Dispatchers.Main.immediate)`,
+/// so they land on the main thread. mpv's C API is itself thread-safe, so no extra
+/// locking is required for property/command calls.
 ///
-/// Rendering uses Metal via MoltenVK (Vulkan backend) for hardware-accelerated video output.
+/// **Rendering** uses Vulkan via MoltenVK (`vo=gpu-next, gpu-api=vulkan, gpu-context=moltenvk`).
+/// The `CAMetalLayer` pointer is bound to mpv via the `wid` option *before* `mpv_initialize`;
+/// mpv then creates its own `VkInstance`/`VkSurface` and draws frames straight into the layer.
 ///
-/// ## Integration
-/// Registered with Kotlin at app startup via:
-/// ```swift
-/// MpvKitBridgeKt.instantiateMpvKitPlayer = { viewmodel in
-///     let bridge = MpvKitBridgeImpl()
-///     return MpvKitImpl(viewmodel: viewmodel, bridge: bridge)
-/// }
-/// ```
-@MainActor
+/// **Events** are delivered via `mpv_set_wakeup_callback`. mpv calls it on its internal
+/// thread when events are available; we hop to a serial queue and drain via `mpv_wait_event`
+/// with a 0-second timeout. `destroy()` removes the callback and `sync`s on the queue as a
+/// barrier before calling `mpv_terminate_destroy`, so no in-flight drain can race the teardown.
 class MpvKitBridgeImpl: MpvKitPlayerBridge, @unchecked Sendable {
 
-    /// The opaque mpv handle.
+    /// The opaque mpv handle. Read on multiple threads; only mutated from main, and the
+    /// destroy path drains the event queue before clearing it, so no atomic needed.
     private var mpv: OpaquePointer?
 
-    /// The UIView containing the CAMetalLayer for video rendering.
-    private var playerView: UIView?
+    /// The view containing the Metal layer. Created in `getPlayerView()`, retained until
+    /// `destroy()`. Compose's `UIKitView` borrows the reference for display.
+    private var renderView: MPVRenderView?
 
-    /// The Metal layer used by mpv for rendering.
-    private var metalLayer: CAMetalLayer?
-
-    /// mpv render context for GPU-based rendering.
-    private var renderContext: OpaquePointer?
-
-    /// Dispatch queue for processing mpv events.
+    /// Serial queue draining mpv events. Wakeup callback dispatches a drain here;
+    /// `destroy()` syncs on it as a barrier.
     private let eventQueue = DispatchQueue(label: "com.syncplay.mpvkit.events", qos: .userInitiated)
 
-    /// Whether the event loop should keep running.
-    private var isRunning = false
-
-    override init() {
-        self.mpv = nil
-        self.playerView = nil
-        self.metalLayer = nil
-        self.renderContext = nil
-        super.init()
-    }
+    override init() { super.init() }
 
     // MARK: - Lifecycle
 
     override func create() {
-        // 1. Create mpv instance
+        // Idempotent: Compose's UIKitView factory may re-fire on recomposition, and
+        // MpvKitImpl.initialize() guards too — but defending here as well is cheap.
+        guard mpv == nil else { return }
+
         guard let ctx = mpv_create() else {
-            print("[MPVKit] Failed to create mpv context")
+            print("[MPVKit] mpv_create failed")
             return
         }
         mpv = ctx
 
-        // 2. Configure mpv options
-        mpv_set_option_string(ctx, "vo", "gpu-next")
-        mpv_set_option_string(ctx, "gpu-api", "vulkan")
-        mpv_set_option_string(ctx, "gpu-context", "moltenvk")
-        mpv_set_option_string(ctx, "hwdec", "videotoolbox")
-        mpv_set_option_string(ctx, "keep-open", "yes")
-        mpv_set_option_string(ctx, "idle", "yes")
-        mpv_set_option_string(ctx, "input-default-bindings", "no")
-        mpv_set_option_string(ctx, "input-vo-keyboard", "no")
+        // 1. Configure mpv. All options must be set BEFORE mpv_initialize.
+        check(mpv_set_option_string(ctx, "vo", "gpu-next"))
+        check(mpv_set_option_string(ctx, "gpu-api", "vulkan"))
+        check(mpv_set_option_string(ctx, "gpu-context", "moltenvk"))
+        check(mpv_set_option_string(ctx, "hwdec", "videotoolbox"))
+        check(mpv_set_option_string(ctx, "keep-open", "yes"))
+        check(mpv_set_option_string(ctx, "idle", "yes"))
+        check(mpv_set_option_string(ctx, "input-default-bindings", "no"))
+        check(mpv_set_option_string(ctx, "input-vo-keyboard", "no"))
+        check(mpv_set_option_string(ctx, "video-rotate", "no"))
+        check(mpv_set_option_string(ctx, "subs-match-os-language", "yes"))
+        check(mpv_set_option_string(ctx, "subs-fallback", "yes"))
 
-        // 3. Initialize mpv
+        // 2. Bind the Metal layer to mpv. mpv reads 8 bytes at the address as an Int64,
+        //    treating it as the layer/window handle. With gpu-context=moltenvk this is
+        //    where mpv will create its surface and present frames. MUST happen before
+        //    mpv_initialize — setting `wid` afterwards has no effect.
+        if let view = renderView {
+            var widLayer: CAMetalLayer = view.metalLayer
+            check(mpv_set_option(ctx, "wid", MPV_FORMAT_INT64, &widLayer))
+        } else {
+            print("[MPVKit] WARNING: create() called before getPlayerView() — video will not render")
+        }
+
+        // 3. Initialize.
         if mpv_initialize(ctx) < 0 {
-            print("[MPVKit] Failed to initialize mpv")
+            print("[MPVKit] mpv_initialize failed")
             mpv_destroy(ctx)
             mpv = nil
             return
         }
 
-        // 4. Set up Metal rendering
-        setupMetalRendering(ctx)
-
-        // 5. Observe key properties
+        // 4. Observe properties for state sync with Kotlin.
         mpv_observe_property(ctx, 0, "time-pos", MPV_FORMAT_DOUBLE)
         mpv_observe_property(ctx, 0, "duration", MPV_FORMAT_DOUBLE)
         mpv_observe_property(ctx, 0, "pause", MPV_FORMAT_FLAG)
 
-        // 6. Start event processing loop
-        isRunning = true
-        startEventLoop()
+        // 5. Wakeup callback drives the event drain. The opaque pointer holds an
+        //    UNRETAINED reference to self; destroy() removes the callback (with
+        //    a barrier on the event queue) before any deallocation can happen.
+        let opaqueSelf = Unmanaged.passUnretained(self).toOpaque()
+        mpv_set_wakeup_callback(ctx, { ctxPtr in
+            guard let ctxPtr else { return }
+            let bridge = Unmanaged<MpvKitBridgeImpl>.fromOpaque(ctxPtr).takeUnretainedValue()
+            bridge.scheduleEventDrain()
+        }, opaqueSelf)
+
+        // 6. Drain any events queued before the callback was wired up
+        //    (start-file, log messages emitted during initialize, etc.).
+        scheduleEventDrain()
     }
 
     override func destroy() {
-        isRunning = false
+        guard let ctx = mpv else { return }
 
-        if let rc = renderContext {
-            mpv_render_context_set_update_callback(rc, nil, nil)
-            mpv_render_context_free(rc)
-            renderContext = nil
-        }
+        // Stop further wakeups, then sync the event queue so any in-flight drain
+        // finishes before we free the handle. Without this barrier, a drain in
+        // progress on `eventQueue` could call `mpv_wait_event` on a destroyed ctx.
+        mpv_set_wakeup_callback(ctx, nil, nil)
+        eventQueue.sync { /* barrier */ }
 
-        if let ctx = mpv {
-            mpv_destroy(ctx)
-            mpv = nil
-        }
+        // Clear the property/event callbacks Kotlin set on us — there's nothing
+        // left to deliver.
+        onPropertyChange = nil
+        onEvent = nil
 
-        metalLayer = nil
-        playerView = nil
+        mpv_terminate_destroy(ctx)
+        mpv = nil
+        renderView = nil
     }
 
     override func getPlayerView() -> UIView {
-        if let existing = playerView {
+        if let existing = renderView {
             return existing
         }
-
-        let view = UIView()
-        view.backgroundColor = .black
-
-        let layer = CAMetalLayer()
-        layer.device = MTLCreateSystemDefaultDevice()
-        layer.framebufferOnly = true
-        layer.pixelFormat = .bgra8Unorm
-        layer.contentsScale = UIScreen.main.scale
-        view.layer.addSublayer(layer)
-
-        // Auto-resize metal layer with view
-        layer.frame = view.bounds
-        view.layoutSubviews()
-
-        metalLayer = layer
-        playerView = view
-
+        let view = MPVRenderView(frame: .zero)
+        renderView = view
         return view
     }
 
-    // MARK: - Metal Rendering Setup
+    // MARK: - Event drain
 
-    private func setupMetalRendering(_ ctx: OpaquePointer) {
-        guard let layer = metalLayer else {
-            print("[MPVKit] Metal layer not available, call getPlayerView() first")
-            return
+    /// Hop from mpv's internal thread (where the wakeup callback fires) onto our
+    /// serial queue, then drain every event with a 0-timeout `mpv_wait_event`.
+    private func scheduleEventDrain() {
+        eventQueue.async { [weak self] in
+            guard let self else { return }
+            while let ctx = self.mpv {
+                let ev = mpv_wait_event(ctx, 0)
+                guard let pointee = ev?.pointee else { return }
+                if pointee.event_id == MPV_EVENT_NONE { return }
+                self.handle(event: pointee)
+            }
         }
-
-        // Get the MoltenVK surface from the CAMetalLayer
-        // mpv with gpu-context=moltenvk needs the CAMetalLayer pointer
-        var params: [mpv_render_param] = []
-
-        // For MoltenVK, we pass the CAMetalLayer as the wl_display-equivalent
-        let layerPtr = Unmanaged.passUnretained(layer).toOpaque()
-
-        var apiType = MPV_RENDER_API_TYPE_OPENGL
-        // Note: For MoltenVK/Vulkan, the render context setup is different.
-        // mpv handles VkInstance/VkSurface creation internally when gpu-context=moltenvk
-        // We just need to ensure the CAMetalLayer is the view's layer.
-
-        // With gpu-context=moltenvk, mpv will find the Metal layer automatically
-        // from the view hierarchy. No explicit render context needed for display.
-        // mpv creates its own Vulkan instance and renders to the CAMetalLayer.
-
-        // Set the wakeup callback so mpv can signal us to redraw
-        let pointer = Unmanaged.passUnretained(self).toOpaque()
-        mpv_set_wakeup_callback(ctx, { (ctx) in
-            // This is called from mpv's thread - we don't need to do anything here
-            // since we have our own event loop
-        }, pointer)
     }
 
-    // MARK: - Event Loop
+    private func handle(event: mpv_event) {
+        switch event.event_id {
+        case MPV_EVENT_PROPERTY_CHANGE:
+            guard let prop = event.data?
+                .assumingMemoryBound(to: mpv_event_property.self)
+                .pointee
+            else { return }
+            let name = String(cString: prop.name)
 
-    private func startEventLoop() {
-        eventQueue.async { [weak self] in
-            while self?.isRunning == true {
-                guard let ctx = self?.mpv else { break }
-
-                let event = mpv_wait_event(ctx, 0.5)
-                guard let pointee = event?.pointee else { continue }
-
-                switch pointee.event_id {
-                case MPV_EVENT_PROPERTY_CHANGE:
-                    guard let prop = pointee.data?.assumingMemoryBound(to: mpv_event_property.self).pointee else { break }
-                    let name = String(cString: prop.name)
-
-                    var value: Any? = nil
-                    switch prop.format {
-                    case MPV_FORMAT_DOUBLE:
-                        if let ptr = prop.data {
-                            value = ptr.assumingMemoryBound(to: Double.self).pointee
-                        }
-                    case MPV_FORMAT_FLAG:
-                        if let ptr = prop.data {
-                            let flag = ptr.assumingMemoryBound(to: Int32.self).pointee
-                            value = (flag != 0)
-                        }
-                    case MPV_FORMAT_INT64:
-                        if let ptr = prop.data {
-                            value = ptr.assumingMemoryBound(to: Int64.self).pointee
-                        }
-                    case MPV_FORMAT_STRING:
-                        if let ptr = prop.data {
-                            let cstr = ptr.assumingMemoryBound(to: UnsafePointer<CChar>.self).pointee
-                            value = String(cString: cstr)
-                        }
-                    default:
-                        break
-                    }
-
-                    DispatchQueue.main.async {
-                        self?.onPropertyChange?(name, value)
-                    }
-
-                case MPV_EVENT_FILE_LOADED:
-                    DispatchQueue.main.async {
-                        self?.onEvent?("file-loaded")
-                    }
-
-                case MPV_EVENT_END_FILE:
-                    DispatchQueue.main.async {
-                        self?.onEvent?("end-file")
-                    }
-
-                case MPV_EVENT_SHUTDOWN:
-                    self?.isRunning = false
-
-                default:
-                    break
+            var value: Any? = nil
+            switch prop.format {
+            case MPV_FORMAT_DOUBLE:
+                if let ptr = prop.data {
+                    value = ptr.assumingMemoryBound(to: Double.self).pointee
                 }
+            case MPV_FORMAT_FLAG:
+                if let ptr = prop.data {
+                    value = ptr.assumingMemoryBound(to: Int32.self).pointee != 0
+                }
+            case MPV_FORMAT_INT64:
+                if let ptr = prop.data {
+                    value = ptr.assumingMemoryBound(to: Int64.self).pointee
+                }
+            case MPV_FORMAT_STRING:
+                if let ptr = prop.data {
+                    let cstr = ptr.assumingMemoryBound(to: UnsafePointer<CChar>.self).pointee
+                    value = String(cString: cstr)
+                }
+            default: break
             }
+            DispatchQueue.main.async { [weak self] in
+                self?.onPropertyChange?(name, value)
+            }
+
+        case MPV_EVENT_FILE_LOADED:
+            DispatchQueue.main.async { [weak self] in self?.onEvent?("file-loaded") }
+
+        case MPV_EVENT_END_FILE:
+            DispatchQueue.main.async { [weak self] in self?.onEvent?("end-file") }
+
+        case MPV_EVENT_SHUTDOWN:
+            // The handle is being destroyed elsewhere; nothing to do here.
+            break
+
+        default: break
         }
     }
 
     // MARK: - Media Loading
 
     override func loadFile(path: String) {
-        guard let ctx = mpv else { return }
         command(["loadfile", path, "replace"])
     }
 
     override func loadURL(url: String) {
-        guard let ctx = mpv else { return }
         command(["loadfile", url, "replace"])
     }
 
-    // MARK: - Playback Control
+    // MARK: - Playback
 
     override func setPaused(paused: Bool) {
         guard let ctx = mpv else { return }
@@ -279,7 +286,7 @@ class MpvKitBridgeImpl: MpvKitPlayerBridge, @unchecked Sendable {
         mpv_set_property(ctx, "speed", MPV_FORMAT_DOUBLE, &s)
     }
 
-    // MARK: - Track Management
+    // MARK: - Tracks
 
     override func getTrackCount() -> Int32 {
         guard let ctx = mpv else { return 0 }
@@ -289,7 +296,7 @@ class MpvKitBridgeImpl: MpvKitPlayerBridge, @unchecked Sendable {
     }
 
     override func getTrackType(index: Int32) -> String? {
-        return getPropertyString("track-list/\(index)/type")
+        getPropertyString("track-list/\(index)/type")
     }
 
     override func getTrackId(index: Int32) -> Int32 {
@@ -300,11 +307,11 @@ class MpvKitBridgeImpl: MpvKitPlayerBridge, @unchecked Sendable {
     }
 
     override func getTrackLang(index: Int32) -> String? {
-        return getPropertyString("track-list/\(index)/lang")
+        getPropertyString("track-list/\(index)/lang")
     }
 
     override func getTrackTitle(index: Int32) -> String? {
-        return getPropertyString("track-list/\(index)/title")
+        getPropertyString("track-list/\(index)/title")
     }
 
     override func isTrackSelected(index: Int32) -> Bool {
@@ -319,8 +326,8 @@ class MpvKitBridgeImpl: MpvKitPlayerBridge, @unchecked Sendable {
         if id < 0 {
             mpv_set_property_string(ctx, "aid", "no")
         } else {
-            var val64 = Int64(id)
-            mpv_set_property(ctx, "aid", MPV_FORMAT_INT64, &val64)
+            var v = Int64(id)
+            mpv_set_property(ctx, "aid", MPV_FORMAT_INT64, &v)
         }
     }
 
@@ -329,8 +336,8 @@ class MpvKitBridgeImpl: MpvKitPlayerBridge, @unchecked Sendable {
         if id < 0 {
             mpv_set_property_string(ctx, "sid", "no")
         } else {
-            var val64 = Int64(id)
-            mpv_set_property(ctx, "sid", MPV_FORMAT_INT64, &val64)
+            var v = Int64(id)
+            mpv_set_property(ctx, "sid", MPV_FORMAT_INT64, &v)
         }
     }
 
@@ -348,14 +355,14 @@ class MpvKitBridgeImpl: MpvKitPlayerBridge, @unchecked Sendable {
     }
 
     override func getChapterTitle(index: Int32) -> String? {
-        return getPropertyString("chapter-list/\(index)/title")
+        getPropertyString("chapter-list/\(index)/title")
     }
 
     override func getChapterTime(index: Int32) -> Double {
         guard let ctx = mpv else { return 0 }
-        var time: Double = 0
-        mpv_get_property(ctx, "chapter-list/\(index)/time", MPV_FORMAT_DOUBLE, &time)
-        return time
+        var t: Double = 0
+        mpv_get_property(ctx, "chapter-list/\(index)/time", MPV_FORMAT_DOUBLE, &t)
+        return t
     }
 
     override func setChapter(index: Int32) {
@@ -364,10 +371,10 @@ class MpvKitBridgeImpl: MpvKitPlayerBridge, @unchecked Sendable {
         mpv_set_property(ctx, "chapter", MPV_FORMAT_INT64, &idx)
     }
 
-    // MARK: - Aspect Ratio
+    // MARK: - Aspect / panscan
 
     override func getAspectOverride() -> String? {
-        return getPropertyString("video-aspect-override")
+        getPropertyString("video-aspect-override")
     }
 
     override func setAspectOverride(aspect: String) {
@@ -377,9 +384,9 @@ class MpvKitBridgeImpl: MpvKitPlayerBridge, @unchecked Sendable {
 
     override func getPanscan() -> Double {
         guard let ctx = mpv else { return 0 }
-        var val_: Double = 0
-        mpv_get_property(ctx, "panscan", MPV_FORMAT_DOUBLE, &val_)
-        return val_
+        var v: Double = 0
+        mpv_get_property(ctx, "panscan", MPV_FORMAT_DOUBLE, &v)
+        return v
     }
 
     override func setPanscan(value: Double) {
@@ -397,47 +404,64 @@ class MpvKitBridgeImpl: MpvKitPlayerBridge, @unchecked Sendable {
     }
 
     // MARK: - Volume
+    // mpv's `volume` property is a Double (0.0 – 100.0+). The previous impl used
+    // INT64 here, which silently no-op'd on every read/write.
 
     override func getVolume() -> Int32 {
         guard let ctx = mpv else { return 0 }
-        var vol: Int64 = 0
-        mpv_get_property(ctx, "volume", MPV_FORMAT_INT64, &vol)
-        return Int32(vol)
+        var vol: Double = 0
+        mpv_get_property(ctx, "volume", MPV_FORMAT_DOUBLE, &vol)
+        return Int32(vol.rounded())
     }
 
     override func setVolume(volume: Int32) {
         guard let ctx = mpv else { return }
-        var vol = Int64(volume)
-        mpv_set_property(ctx, "volume", MPV_FORMAT_INT64, &vol)
+        var vol = Double(volume)
+        mpv_set_property(ctx, "volume", MPV_FORMAT_DOUBLE, &vol)
     }
 
-    override func getMaxVolume() -> Int32 {
-        return 100
-    }
+    override func getMaxVolume() -> Int32 { 100 }
 
     // MARK: - Helpers
 
-    /// Execute an mpv command from a string array.
-    private func command(_ args: [String]) {
-        guard let ctx = mpv else { return }
-        // Build a null-terminated array of C strings
+    /// Run an mpv command from a string array. Logs (and returns) the mpv error code.
+    /// Without surfacing failures, bad URLs / missing files surface as "the player
+    /// shows nothing" with no log entry — debug nightmare.
+    @discardableResult
+    private func command(_ args: [String]) -> Int32 {
+        guard let ctx = mpv else { return -1 }
         var cargs: [UnsafeMutablePointer<CChar>?] = args.map { strdup($0) }
         cargs.append(nil)
-        // mpv_command expects UnsafePointer<UnsafePointer<CChar>?> — bridge via withUnsafeBufferPointer
-        cargs.withUnsafeMutableBufferPointer { buffer in
-            buffer.baseAddress?.withMemoryRebound(to: UnsafePointer<CChar>?.self, capacity: buffer.count) { ptr in
+        let rc: Int32 = cargs.withUnsafeMutableBufferPointer { buffer in
+            buffer.baseAddress?.withMemoryRebound(
+                to: UnsafePointer<CChar>?.self,
+                capacity: buffer.count
+            ) { ptr in
                 mpv_command(ctx, ptr)
-            }
+            } ?? -1
         }
         for ptr in cargs { free(ptr) }
+        if rc < 0 {
+            print("[MPVKit] command \(args) failed: \(String(cString: mpv_error_string(rc)))")
+        }
+        return rc
     }
 
-    /// Get a string property from mpv. Returns nil if unavailable.
     private func getPropertyString(_ name: String) -> String? {
         guard let ctx = mpv else { return nil }
         guard let cstr = mpv_get_property_string(ctx, name) else { return nil }
         let str = String(cString: cstr)
         mpv_free(cstr)
         return str
+    }
+
+    /// Log an mpv return code if it's an error. Used during option/initialize setup
+    /// so failures aren't silent.
+    @discardableResult
+    private func check(_ status: Int32) -> Int32 {
+        if status < 0 {
+            print("[MPVKit] mpv error: \(String(cString: mpv_error_string(status)))")
+        }
+        return status
     }
 }

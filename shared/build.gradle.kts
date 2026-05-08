@@ -202,7 +202,7 @@ buildConfig {
     buildConfigField("DEBUG", false)
     buildConfigField("DEBUG_SYNCPLAY_PROTOCOL", false)
     buildConfigField("EXOPLAYER_ONLY", AppConfig.exoOnly)
-    buildConfigField("KLIPY_API_KEY", AppConfig.localProperties.getProperty("yuroyami.keyKlipyApi"))
+    buildConfigField("KLIPY_API_KEY", AppConfig.localProperties(rootDir).getProperty("yuroyami.keyKlipyApi"))
 
     /* Trinity brand colors — exposed so Theming.kt reads them from the SSOT */
     buildConfigField("TRINITY_COLOR_1", AppConfig.TRINITY_1)

@@ -14,8 +14,16 @@ import java.util.Properties
  *    copy, default-strings fallback) that the plugin's narrow scope doesn't address
  */
 object AppConfig {
-    val localProperties = Properties().apply {
-        val file = File("local.properties")
+    /**
+     * Reads `<rootDir>/local.properties` and returns the parsed [Properties]. Pass
+     * the calling project's `rootDir` explicitly — relying on the JVM's working
+     * directory (the previous behaviour) silently returned an empty Properties
+     * whenever the Gradle daemon's CWD wasn't the project root, which produced the
+     * misleading `SigningConfig "synkplay_keystore" is missing required property
+     * "storePassword"` error at sign time.
+     */
+    fun localProperties(rootDir: File): Properties = Properties().apply {
+        val file = File(rootDir, "local.properties")
         if (file.exists()) load(file.inputStream())
     }
 

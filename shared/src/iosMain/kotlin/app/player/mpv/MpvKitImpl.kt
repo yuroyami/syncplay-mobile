@@ -19,7 +19,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import platform.UIKit.UIColor
 import kotlin.math.roundToLong
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -46,6 +45,11 @@ class MpvKitImpl(
     override val trackerJobInterval: Duration = 500.milliseconds
 
     override fun initialize() {
+        // Compose's UIKitView factory can re-fire on recomposition; calling
+        // bridge.create() twice would leak the previous mpv handle and overwrite
+        // observed-property registrations on the new one.
+        if (isInitialized) return
+
         bridge.create()
 
         bridge.onPropertyChange = lambda@{ name, value ->
@@ -108,7 +112,13 @@ class MpvKitImpl(
     override fun VideoPlayer(modifier: Modifier, onPlayerReady: () -> Unit) {
         DisposableEffect(Unit) {
             onDispose {
-                // Bridge cleanup handled by destroy()
+                // The MpvKitImpl owns the lifecycle exit (PlayerImpl.destroy()), but
+                // when the composable leaves composition we still want to clear the
+                // event/property callbacks so we stop reaching back into Compose state
+                // that may have already been disposed. The bridge itself is torn down
+                // by the next call to destroy().
+                bridge.onPropertyChange = null
+                bridge.onEvent = null
             }
         }
 
@@ -116,7 +126,7 @@ class MpvKitImpl(
             modifier = modifier,
             factory = {
                 val view = bridge.getPlayerView()
-                view.setBackgroundColor(UIColor.blackColor)
+                // Background colour is set by MPVRenderView's init.
 
                 initialize()
                 onPlayerReady()
