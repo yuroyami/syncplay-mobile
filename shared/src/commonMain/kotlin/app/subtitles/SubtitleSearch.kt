@@ -6,8 +6,9 @@ import app.utils.loggy
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
-import io.ktor.client.request.header
+import io.ktor.client.request.headers
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpHeaders
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -24,6 +25,13 @@ object SubtitleSearch {
 
     private val client by lazy {
         httpClient.config {
+            /* Surface 4xx/5xx as ResponseException — Ktor 3's default of false means the
+             * call validator never fires and `body<T>()` runs through ContentNegotiation
+             * on the error body, which the lenient Json below would silently parse as
+             * OpenSubtitlesSearchResponse(data=emptyList()). Result was empty searches with
+             * no log entry. With expectSuccess=true, the catch block writes the real cause. */
+            expectSuccess = true
+
             install(ContentNegotiation) {
                 json(json)
             }
@@ -54,8 +62,15 @@ object SubtitleSearch {
                     parameters.append("order_by", "download_count")
                     parameters.append("order_direction", "desc")
                 }
-                header("Api-Key", API_KEY)
-                header("User-Agent", "Syncplay-Mobile v1.0")
+                headers {
+                    append("Api-Key", API_KEY)
+                    /* Replace the base httpClient's UA wholesale — append() would stack
+                     * "Syncplay-Mobile v1.0,SynkplayMobile/0.19.1" via mergeHeaders, and
+                     * OpenSubtitles documents that comma-merged or "generic-looking" UAs
+                     * are blocked. `remove` first ensures a single, clean UA. */
+                    remove(HttpHeaders.UserAgent)
+                    append(HttpHeaders.UserAgent, "Syncplay-Mobile v1.0")
+                }
             }
             val body = response.body<OpenSubtitlesSearchResponse>()
             body.data.map { item ->
@@ -80,8 +95,11 @@ object SubtitleSearch {
         return try {
             val response = client.get("$BASE_URL/download") {
                 url { parameters.append("file_id", fileId.toString()) }
-                header("Api-Key", API_KEY)
-                header("User-Agent", "Syncplay-Mobile v1.0")
+                headers {
+                    append("Api-Key", API_KEY)
+                    remove(HttpHeaders.UserAgent)
+                    append(HttpHeaders.UserAgent, "Syncplay-Mobile v1.0")
+                }
             }
             val downloadInfo = json.decodeFromString<OpenSubtitlesDownloadResponse>(response.bodyAsText())
             val subtitleUrl = downloadInfo.link

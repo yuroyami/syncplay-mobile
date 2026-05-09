@@ -9,6 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import platform.CoreGraphics.CGRect
 import platform.UIKit.UIView
+import platform.UIKit.UIViewAutoresizingFlexibleHeight
+import platform.UIKit.UIViewAutoresizingFlexibleWidth
 import platform.darwin.NSObject
 
 /**
@@ -68,7 +70,17 @@ internal class VlcDrawable(
     // (`UIView?`) — the override signature must match exactly. We just no-op on null,
     // since VLCKit will never actually pass nil here in practice.
     override fun addSubview(view: UIView?) {
-        if (view != null) containerView.addSubview(view)
+        if (view == null) return
+        // Size the render view to fill the container, and pin it there with an
+        // autoresizing mask so subsequent rotations / layout passes keep it stretched.
+        // Without this, VLCKit's render view sometimes lands at zero-size (especially
+        // on first attach when containerView's bounds haven't fully laid out yet) and
+        // we see the container's background bleed through instead of video.
+        view.setFrame(containerView.bounds)
+        view.setAutoresizingMask(
+            UIViewAutoresizingFlexibleWidth or UIViewAutoresizingFlexibleHeight
+        )
+        containerView.addSubview(view)
     }
 
     override fun bounds(): CValue<CGRect> = containerView.bounds

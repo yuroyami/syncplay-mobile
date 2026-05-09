@@ -1,7 +1,7 @@
 package app.utils
 
-import SyncplayMobile.shared.BuildConfig
 import co.touchlab.kermit.Logger
+import io.ktor.client.plugins.logging.Logger as KtorLogger
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
 import kotlin.time.Instant
@@ -38,9 +38,12 @@ fun loggy(s: Any?) {
         s.toString()
     }
 
-    if (BuildConfig.DEBUG) {
-        Logger.e(string)
-    }
+    /* Always print to console — gating on BuildConfig.DEBUG meant release builds
+     * had zero visibility into runtime errors (Klipy/SubtitleSearch failures had
+     * no stacktrace anywhere because of this). On iOS this surfaces in Xcode's
+     * console; on Android in logcat. The log file write below preserves logs for
+     * after-the-fact export from settings. */
+    Logger.e(string)
 
     synchronized(logLock) {
         try {
@@ -112,4 +115,17 @@ fun clearLogs() {
             deleteFile("$logDir/$fileName")
         }
     } catch (_: Exception) { }
+}
+
+/**
+ * Bridges Ktor's [io.ktor.client.plugins.logging.Logger] interface into [loggy].
+ *
+ * The Logging plugin emits multi-line transcripts (REQUEST line, headers, body,
+ * RESPONSE line, more headers, body). We prefix each line with `[ktor]` so it
+ * stays grep-able in the log file alongside our app logs.
+ */
+object KtorLoggyLogger : KtorLogger {
+    override fun log(message: String) {
+        loggy("[ktor] $message")
+    }
 }

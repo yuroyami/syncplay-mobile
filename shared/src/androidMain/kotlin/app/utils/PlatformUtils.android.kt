@@ -32,6 +32,8 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
 import java.io.File
@@ -50,6 +52,18 @@ actual val httpClient: HttpClient by lazy {
             requestTimeoutMillis = 15_000
             connectTimeoutMillis = 10_000
             socketTimeoutMillis = 15_000
+        }
+        /* Full HTTP transcript piped into loggy() — mirrors iOS for parity. Filter
+         * restricts logging to JSON API hosts; for the iOS rationale see the comment
+         * in PlatformUtils.ios.kt (Darwin's response-channel split truncates binary
+         * body delivery when the plugin tees for logging). Android's OkHttp engine
+         * doesn't have the same bug, but keeping the same filter avoids logging
+         * 100KB+ of base64-ish image bytes per tile, which would drown the log. */
+        install(Logging) {
+            logger = app.utils.KtorLoggyLogger
+            level = LogLevel.ALL
+            sanitizeHeader { header -> header == "Api-Key" || header == HttpHeaders.Authorization }
+            filter { request -> request.url.host.startsWith("api.") }
         }
         defaultRequest {
             header(HttpHeaders.UserAgent, "SynkplayMobile/${BuildConfig.APP_VERSION}")

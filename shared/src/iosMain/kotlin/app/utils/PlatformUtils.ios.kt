@@ -20,8 +20,12 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.darwin.Darwin
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
+import platform.Foundation.NSURLCache
+import platform.Foundation.NSURLRequestUseProtocolCachePolicy
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.usePinned
@@ -77,10 +81,54 @@ actual val platform: Platform = Platform.IOS
  * unsettling these defaults. */
 actual val httpClient: HttpClient by lazy {
     HttpClient(Darwin) {
+        engine {
+            /* Honor `Cache-Control` from the response. Ktor's Darwin engine slaps
+             * `NSURLRequestReloadIgnoringCacheData` on every NSMutableURLRequest in
+             * `toNSUrlRequest()` — see ktor-client-darwin/internal/DarwinRequestUtils.kt.
+             * That makes NSURLSession bypass NSURLCache entirely, so every GIF in the
+             * panel re-downloads over the network on every HUD toggle even though Klipy's
+             * CDN sends `Cache-Control: public, max-age=86400`. configureRequest runs
+             * AFTER toNSUrlRequest(), so we can override the policy back to the protocol-
+             * driven default. Now repeat opens of the GIF panel pull from NSURLSession's
+             * disk cache and the tiles paint instantly. */
+            configureRequest { setCachePolicy(NSURLRequestUseProtocolCachePolicy) }
+            /* Bump NSURLCache from the default ~20 MB disk / 4 MB memory to something
+             * that comfortably holds a panel-worth of GIFs (24 × ~200 KB ≈ 5 MB) plus
+             * scrolling history. Memory cache lets HUD toggles paint instantly; disk
+             * cache survives app restarts so the trending panel comes up populated. */
+            configureSession {
+                setURLCache(
+                    NSURLCache(
+                        memoryCapacity = 32uL * 1024uL * 1024uL,
+                        diskCapacity = 256uL * 1024uL * 1024uL,
+                        diskPath = "ktor-http-cache"
+                    )
+                )
+            }
+        }
         install(HttpTimeout) {
             requestTimeoutMillis = 15_000
             connectTimeoutMillis = 10_000
             socketTimeoutMillis = 15_000
+        }
+        /* Full HTTP transcript piped into loggy(). Restricted to JSON API endpoints
+         * via filter — including image/subtitle download URLs in the logger breaks
+         * those downloads on Darwin: the plugin tees `response.rawContent` into two
+         * channels (one for the printed transcript, one for the consumer), and the
+         * binary-body filter peeks the first 1024 bytes to detect that the body is
+         * binary. On Kotlin/Native that split misbehaves under load — the consumer
+         * side receives truncated bytes, so `AnimatedImage`'s `httpClient.get(url).body()`
+         * returns a partial GIF and CGImageSourceCreateWithData returns null. The
+         * symptom is "GIF panel populates with 24 results but tiles are blank."
+         *
+         * Logging API hosts only is enough for diagnostics — we still see request
+         * URLs, status codes, headers, and JSON bodies for everything that matters.
+         * Image fetches go through the engine without interception. */
+        install(Logging) {
+            logger = app.utils.KtorLoggyLogger
+            level = LogLevel.ALL
+            sanitizeHeader { header -> header == "Api-Key" || header == HttpHeaders.Authorization }
+            filter { request -> request.url.host.startsWith("api.") }
         }
         defaultRequest {
             header(HttpHeaders.UserAgent, "SynkplayMobile/${BuildConfig.APP_VERSION}")

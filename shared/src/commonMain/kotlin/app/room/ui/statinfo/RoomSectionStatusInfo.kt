@@ -32,7 +32,7 @@ import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_details_current_room
 import syncplaymobile.shared.generated.resources.room_details_user_count
 import syncplaymobile.shared.generated.resources.room_more_info_change_network_engine_msg
-import syncplaymobile.shared.generated.resources.room_ping_connected
+import syncplaymobile.shared.generated.resources.room_ping_disconnected
 import syncplaymobile.shared.generated.resources.room_reconnect_button
 
 
@@ -60,10 +60,20 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                 else -> 0
             }
 
+            /* Single parenthesized status: when connected, the user count itself is the
+             * status — the parens visibly carry "what the room is right now," and seeing
+             * (Connected) is redundant on top of a populated user list. Disconnected is
+             * the only state that needs an explicit label, since the user count is stale
+             * the moment the socket drops. */
+            val parenthesized = if (connectionState == ConnectionState.CONNECTED) {
+                stringResource(Res.string.room_details_user_count, totalUsers)
+            } else {
+                stringResource(Res.string.room_ping_disconnected)
+            }
+
             Text(
                 text = stringResource(Res.string.room_details_current_room, viewmodel.session.currentRoom) +
-                        (if (connectionState == ConnectionState.CONNECTED) " (${stringResource(Res.string.room_ping_connected)})" else "") +
-                        (if (totalUsers > 0) " · ${stringResource(Res.string.room_details_user_count, totalUsers)}" else ""),
+                        " ($parenthesized)",
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
             )

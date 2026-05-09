@@ -79,6 +79,7 @@ coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coil" }
 coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 ktor-serialization-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
@@ -122,7 +123,7 @@ media3 = [
 ]
 krypto = ["krypto-digest", "krypto-md", "krypto-sha1", "krypto-sha2"]
 coil = ["coil-compose", "coil-network-ktor"]
-ktor-client = ["ktor-client-core", "ktor-client-content-negotiation", "ktor-serialization-json"]
+ktor-client = ["ktor-client-core", "ktor-client-content-negotiation", "ktor-serialization-json", "ktor-client-logging"]
 navigation3 = ["navigation3-runtime", "navigation3-ui"]
 jetpack-androidx-extensions = ["jetpack-activity-compose", "jetpack-appcompat", "jetpack-core", "jetpack-documentfile", "jetpack-pip", "jetpack-splashscreen"]
 

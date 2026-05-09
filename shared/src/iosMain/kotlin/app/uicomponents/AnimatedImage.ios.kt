@@ -13,6 +13,8 @@ import androidx.compose.ui.viewinterop.UIKitView
 import app.utils.httpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -49,6 +51,45 @@ import platform.UIKit.UIImage
 import platform.UIKit.UIImageView
 import platform.UIKit.UIViewContentMode
 
+/**
+ * Process-wide LRU cache of decoded [UIImage]s keyed by URL. Survives Compose recomposition,
+ * panel teardown, and even leaving the room — so reopening the GIF panel or toggling the HUD
+ * doesn't have to redownload-and-redecode 24 GIFs every time. NSURLCache (configured in
+ * PlatformUtils.ios.kt) handles the byte-level cache; this layer skips the CGImageSource
+ * frame-extraction step too, which is the dominant cost for animated GIFs (≈100-300 ms per
+ * GIF on a multi-frame source).
+ *
+ * Capped at 64 entries: a panel page is 24 tiles plus the loaded second/third pages, so 64
+ * comfortably covers two pages worth and still bounds memory at ≤ ~30 MB worst case.
+ * Eviction is plain LRU via [LinkedHashMap]'s access-order behavior — touching an entry on
+ * read moves it to the end, oldest-untouched gets evicted on overflow. Synchronized lock
+ * because the cache is read on the Compose Main dispatcher and written from
+ * [downloadAndDecodeAnimatedImage] which finishes on Dispatchers.Default.
+ */
+private const val IMAGE_CACHE_MAX_ENTRIES = 64
+private val imageCacheLock = SynchronizedObject()
+/* LinkedHashMap on Kotlin/Native preserves insertion order only — no access-order
+ * constructor like the JVM offers. Implement LRU by removing + re-inserting on read,
+ * which moves the entry to the tail; eviction then picks the head (oldest-untouched). */
+private val imageCache = LinkedHashMap<String, UIImage>()
+
+private fun cachedImage(url: String): UIImage? = synchronized(imageCacheLock) {
+    val hit = imageCache.remove(url) ?: return@synchronized null
+    imageCache[url] = hit
+    hit
+}
+
+private fun cacheImage(url: String, image: UIImage) {
+    synchronized(imageCacheLock) {
+        imageCache.remove(url)
+        imageCache[url] = image
+        while (imageCache.size > IMAGE_CACHE_MAX_ENTRIES) {
+            val oldest = imageCache.keys.iterator().next()
+            imageCache.remove(oldest)
+        }
+    }
+}
+
 @OptIn(ExperimentalForeignApi::class)
 @Composable
 actual fun AnimatedImage(
@@ -58,10 +99,14 @@ actual fun AnimatedImage(
     contentScale: ContentScale,
     alpha: Float,
 ) {
-    var nativeImage by remember(url) { mutableStateOf<UIImage?>(null) }
+    /* Seed from the cache synchronously during composition so cache hits paint on the very
+     * first frame — no flicker, no LaunchedEffect await. Cache misses fall through to the
+     * effect below which downloads + decodes + populates the cache. */
+    var nativeImage by remember(url) { mutableStateOf<UIImage?>(cachedImage(url)) }
 
     LaunchedEffect(url) {
-        nativeImage = downloadAndDecodeAnimatedImage(url)
+        if (nativeImage != null) return@LaunchedEffect
+        nativeImage = downloadAndDecodeAnimatedImage(url)?.also { cacheImage(url, it) }
     }
 
     val contentMode = when (contentScale) {
@@ -106,11 +151,22 @@ actual fun AnimatedImage(
 private suspend fun downloadAndDecodeAnimatedImage(url: String): UIImage? {
     return try {
         val bytes: ByteArray = httpClient.get(url).body()
-        withContext(Dispatchers.Default) { decodeAnimatedImage(bytes) }
+        val image = withContext(Dispatchers.Default) { decodeAnimatedImage(bytes) }
+        if (image == null) {
+            /* Decode failure with non-empty bytes usually means the body was truncated
+             * upstream. Most common cause on Darwin: the Ktor Logging plugin tees the
+             * response channel, and on Kotlin/Native the consumer side receives partial
+             * bytes for binary bodies. The PlatformUtils.ios.kt config filters API hosts
+             * only to avoid this — if you ever see this log line for a static.klipy.com
+             * URL, the filter has been broken or removed. */
+            val firstFour = bytes.take(4).joinToString(" ") { (it.toInt() and 0xff).toString(16).padStart(2, '0') }
+            loggy("AnimatedImage: decode FAILED url=$url bytes=${bytes.size} firstFour=[$firstFour]")
+        }
+        image
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
-        loggy("AnimatedImage: failed to load $url — ${e.message}")
+        loggy("AnimatedImage: download FAILED url=$url ${e::class.simpleName}: ${e.message}")
         null
     }
 }

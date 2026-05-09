@@ -56,7 +56,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = exoOnly //TODO Fix minified build when mpv and libVLC are included
+            isMinifyEnabled = true
+            isShrinkResources = true
         }
         debug {
             //applicationIdSuffix = ".dev"

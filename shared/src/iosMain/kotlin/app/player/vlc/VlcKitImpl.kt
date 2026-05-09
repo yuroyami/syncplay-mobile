@@ -60,6 +60,7 @@ import platform.Foundation.NSNotificationCenter
 import platform.Foundation.NSNumber
 import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSURL
+import platform.UIKit.UIApplicationDidBecomeActiveNotification
 import platform.UIKit.UIColor
 import platform.UIKit.UIView
 import platform.darwin.NSObject
@@ -121,6 +122,15 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     private var routeChangeObserver: NSObjectProtocol? = null
 
     /**
+     * Observer for [UIApplicationDidBecomeActiveNotification]. After the app has been
+     * backgrounded, VLCKit 4's render layer attached to our drawable's containerView is
+     * left in a stale state — coming back to foreground shows a white frame instead of
+     * resuming video. Re-binding the drawable forces VLCKit to re-run its addSubview
+     * flow with a fresh render UIView.
+     */
+    private var didBecomeActiveObserver: NSObjectProtocol? = null
+
+    /**
      * Cleans up VLC resources and stops playback.
      *
      * Properly disposes of the media player, media object, and VLC library.
@@ -131,11 +141,15 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         try {
             removeAudioSessionObservers()
 
+            // Silence the PiP state-change handler BEFORE stopping PiP — otherwise
+            // VLCKit may fire the "PiP stopped" callback synchronously during the stop,
+            // and our recovery code in there would try to rebind a player that's
+            // about to be torn down a few lines below.
+            vlcDrawable?.onPipStateChanged = null
             // Make sure we don't leave a floating PiP window after teardown — this also
             // releases VLCKit's internal AVPictureInPictureController so the next room can
             // claim the system PiP slot cleanly.
             vlcDrawable?.pipController?.stopPictureInPicture()
-            vlcDrawable?.onPipStateChanged = null
             vlcDrawable = null
 
             // Clear the delegate before stopping so the synthetic Stopped state
@@ -226,13 +240,27 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         UIKitView(
             modifier = modifier,
             factory = {
-                val view = UIView().also { it.setBackgroundColor(UIColor.clearColor()) }
+                // Black background, not clear: VLCKit's render view doesn't always
+                // cover the full container (transient zero-size at first layout, or
+                // when the player has no media yet), and "clear" would leak whatever
+                // happens to be behind. Different devices showed different leak
+                // colors — iPhone 13 = white (Compose surface), iPhone XS = black
+                // (prior layer state) — neither of which we want. Black matches the
+                // standard "movie theater" aesthetic and matches what AVPlayer does
+                // by default.
+                val view = UIView().also { it.setBackgroundColor(UIColor.blackColor) }
                 vlcView = view
 
-                val subSizeArg = "--freetype-fontsize=${SUBTITLE_SIZE.value() * 4}"
+                // No --freetype-fontsize flag: VLCKit 4 exposes a runtime
+                // [VLCMediaPlayer.currentSubTitleFontScale] (see [changeSubtitleSize]) that
+                // multiplies on top of libvlc's internal default base size, which already
+                // looks right out of the box. Setting --freetype-fontsize here would seed
+                // a hardcoded pixel size that the runtime scale then multiplies on top of,
+                // producing comically oversized subs. Under MobileVLCKit 3.x we had to
+                // bake the size in at launch because no runtime scale property existed;
+                // VLCKit 4 makes that workaround obsolete.
                 val baseArgs = listOf(
                     "-vv",
-                    subSizeArg,
                     "--network-caching=2000",
                     "--adaptive-logic=default",
                     "--http-reconnect",
@@ -251,6 +279,23 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                 val drawable = VlcDrawable(view, this@VlcKitImpl).apply {
                     onPipStateChanged = { isStarted ->
                         viewmodel.uiState.hasEnteredPipMode.value = isStarted
+                        // When PiP stops (user tapped the X on the floating overlay, or
+                        // we called stopPictureInPicture programmatically), VLCKit doesn't
+                        // reliably hand the render surface back to our drawable's
+                        // containerView — the app shows an empty/white frame instead of
+                        // resuming inline playback. Re-binding the drawable is the same
+                        // recovery trick the DidBecomeActive observer uses for the
+                        // backgrounding case; we apply it here because PiP dismissal
+                        // doesn't always trigger DidBecomeActive (the user may have been
+                        // in the app the whole time, with PiP just floating over it).
+                        if (!isStarted) {
+                            playerScopeMain.launch {
+                                val p = vlcPlayer ?: return@launch
+                                if (p.media == null) return@launch
+                                p.drawable = null
+                                p.drawable = vlcDrawable
+                            }
+                        }
                     }
                 }
                 vlcDrawable = drawable
@@ -380,14 +425,38 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                 AVAudioSession.sharedInstance().setActive(true, error = null)
             } catch (_: Exception) { }
         }
+
+        // After backgrounding, VLCKit 4's render layer hosted on our drawable's
+        // containerView is sometimes left disconnected — the app comes back showing a
+        // white frame instead of resuming video. We've also seen reports of a frozen
+        // last-frame in similar setups. Toggling drawable to nil and back forces VLCKit
+        // to drop its stale render UIView and call addSubview on us with a fresh one.
+        // We listen on DidBecomeActive (rather than WillEnterForeground) so the layout
+        // pass has settled and the containerView's bounds are valid by the time we
+        // re-bind.
+        didBecomeActiveObserver = center.addObserverForName(
+            name = UIApplicationDidBecomeActiveNotification,
+            `object` = null,
+            queue = queue
+        ) { _ ->
+            val drawable = vlcDrawable ?: return@addObserverForName
+            val player = vlcPlayer ?: return@addObserverForName
+            // Skip if there's no media — nothing to render anyway, and rebinding an
+            // empty player can confuse VLCKit's PiP setup.
+            if (player.media == null) return@addObserverForName
+            player.drawable = null
+            player.drawable = drawable
+        }
     }
 
     private fun removeAudioSessionObservers() {
         val center = NSNotificationCenter.defaultCenter
         interruptionObserver?.let { center.removeObserver(it) }
         routeChangeObserver?.let { center.removeObserver(it) }
+        didBecomeActiveObserver?.let { center.removeObserver(it) }
         interruptionObserver = null
         routeChangeObserver = null
+        didBecomeActiveObserver = null
     }
 
     /**
@@ -723,18 +792,29 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
 
     /**
      * VLCKit 4 exposes [VLCMediaPlayer.currentSubTitleFontScale] as a runtime-mutable
-     * property — the legacy --freetype-fontsize launch flag still seeds the baseline,
-     * but we can now scale on top of it without a restart.
+     * multiplier on libvlc's native default base font size. We anchor the slider's
+     * default value ([SUBTITLE_SIZE]'s default of 16) to a 1.0× scale, so a fresh user
+     * sees subs at libvlc's default size — sliding the preference up or down then
+     * scales linearly relative to that baseline.
      *
-     * The slider in [SUBTITLE_SIZE] runs roughly 1..30; a 1× font scale at the libvlc
-     * default looks right around `newSize == 4` (which is the multiplier seeded into
-     * --freetype-fontsize when the library starts), so we anchor to that.
+     * `coerceAtLeast(0.1f)` keeps the minimum visible size from collapsing to zero if
+     * the slider hits its minimum (2).
      */
     override suspend fun changeSubtitleSize(newSize: Int) {
         if (!isInitialized) return
         withContext(Dispatchers.Main.immediate) {
-            vlcPlayer?.currentSubTitleFontScale = (newSize / 4f).coerceAtLeast(0.1f)
+            vlcPlayer?.currentSubTitleFontScale = (newSize / SUBTITLE_SIZE_DEFAULT.toFloat())
+                .coerceAtLeast(0.1f)
         }
+    }
+
+    private companion object {
+        /**
+         * Mirrors [Preferences.SUBTITLE_SIZE]'s default. Used as the anchor for
+         * [changeSubtitleSize]'s linear scale: at this value the libvlc default base
+         * size is shown unscaled (1.0×).
+         */
+        const val SUBTITLE_SIZE_DEFAULT = 16
     }
 
     /********** VLC-Specific Helper Methods **********/

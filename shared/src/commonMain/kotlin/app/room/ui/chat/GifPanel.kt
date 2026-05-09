@@ -277,16 +277,32 @@ fun GifPanel(
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         items(results, key = { it.id }) { media ->
-                            Box {
+                            Box(modifier = Modifier.fillMaxWidth()) {
                                 /* Alpha is forwarded to AnimatedImage as a parameter (not via
                                  * Modifier.alpha) so the iOS UIImageView fades natively — Compose's
-                                 * Modifier.alpha does not propagate into UIKit interop layers. */
+                                 * Modifier.alpha does not propagate into UIKit interop layers.
+                                 *
+                                 * fillMaxWidth() on both the Box and the AnimatedImage modifier is
+                                 * required for iOS. AnimatedImage on iOS wraps a UIImageView via
+                                 * UIKitView, and UIKitView derives its size from the wrapped UIView's
+                                 * intrinsicContentSize. An empty UIImageView reports (0, 0), so an
+                                 * unconstrained-width modifier collapses the tile to width=0 before
+                                 * the image arrives. By the time the image loads and the imageView's
+                                 * intrinsic size becomes non-zero, the LazyGrid cell has already been
+                                 * measured and Compose doesn't re-measure UIKit interop on intrinsic-
+                                 * size changes coming from the `update` block. Constraining width
+                                 * explicitly via fillMaxWidth() (the cell already has a max-width
+                                 * upper bound from GridCells.Adaptive) bypasses the intrinsic-size
+                                 * path entirely — the tile lays out at the cell's width regardless
+                                 * of whether the image has loaded yet. Android's Coil-backed
+                                 * AsyncImage doesn't have this problem; the bug was iOS-only. */
                                 AnimatedImage(
                                     url = media.previewUrl,
                                     contentDescription = null,
                                     contentScale = ContentScale.Crop,
                                     alpha = if (isHUDVisible) 1f else 0f,
                                     modifier = Modifier
+                                        .fillMaxWidth()
                                         .height(80.dp)
                                         .clip(RoundedCornerShape(4.dp))
                                         .combinedClickable(

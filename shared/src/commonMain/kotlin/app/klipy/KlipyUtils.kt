@@ -44,19 +44,23 @@ object KlipyUtils {
     ): KlipyPagedResult {
         if (query.isBlank()) return trending(type, limit, page)
 
+        loggy("KlipyUtils.search → type=$type query='$query' limit=$limit page=$page customerId=$customerId baseUrl=$BASE_URL")
         return try {
             val result = when (type) {
                 KlipyMediaType.GIF -> klipy.searchGifs(query = query, perPage = limit, customerId = customerId, page = page)
                 KlipyMediaType.STICKER -> klipy.searchStickers(query = query, perPage = limit, customerId = customerId, page = page)
             }
+            loggy("KlipyUtils.search ← OK ${result.data.data.size} items, hasNext=${result.data.hasNext}")
             result.toPagedResult(type)
         } catch (e: CancellationException) {
             // Compose forgot the LaunchedEffect (panel closed / re-rendered) — propagate
             // so the coroutine actually cancels instead of returning an empty result that
             // would render "No results" briefly before unmount.
+            loggy("KlipyUtils.search ← cancelled (panel closed / recompose)")
             throw e
         } catch (e: Exception) {
-            loggy("KlipyUtils.search($type, '$query', page=$page) failed: ${e::class.simpleName}: ${e.message}")
+            loggy("KlipyUtils.search ← FAIL ${e::class.simpleName}: ${e.message}")
+            loggy(e)
             KlipyPagedResult(emptyList(), false)
         }
     }
@@ -69,16 +73,20 @@ object KlipyUtils {
         limit: Int = 24,
         page: Int = 1
     ): KlipyPagedResult {
+        loggy("KlipyUtils.trending → type=$type limit=$limit page=$page customerId=$customerId baseUrl=$BASE_URL")
         return try {
             val result = when (type) {
                 KlipyMediaType.GIF -> klipy.trendingGifs(perPage = limit, customerId = customerId, page = page)
                 KlipyMediaType.STICKER -> klipy.trendingStickers(perPage = limit, customerId = customerId, page = page)
             }
+            loggy("KlipyUtils.trending ← OK ${result.data.data.size} items, hasNext=${result.data.hasNext}")
             result.toPagedResult(type)
         } catch (e: CancellationException) {
+            loggy("KlipyUtils.trending ← cancelled")
             throw e
         } catch (e: Exception) {
-            loggy("KlipyUtils.trending($type, page=$page) failed: ${e::class.simpleName}: ${e.message}")
+            loggy("KlipyUtils.trending ← FAIL ${e::class.simpleName}: ${e.message}")
+            loggy(e)
             KlipyPagedResult(emptyList(), false)
         }
     }
@@ -91,16 +99,20 @@ object KlipyUtils {
         limit: Int = 24,
         page: Int = 1
     ): KlipyPagedResult {
+        loggy("KlipyUtils.recents → type=$type limit=$limit page=$page customerId=$customerId baseUrl=$BASE_URL")
         return try {
             val result = when (type) {
                 KlipyMediaType.GIF -> klipy.recentGifs(customerId = customerId, perPage = limit, page = page)
                 KlipyMediaType.STICKER -> klipy.recentStickers(customerId = customerId, perPage = limit, page = page)
             }
+            loggy("KlipyUtils.recents ← OK ${result.data.data.size} items, hasNext=${result.data.hasNext}")
             result.toPagedResult(type)
         } catch (e: CancellationException) {
+            loggy("KlipyUtils.recents ← cancelled")
             throw e
         } catch (e: Exception) {
-            loggy("KlipyUtils.recents($type, page=$page) failed: ${e::class.simpleName}: ${e.message}")
+            loggy("KlipyUtils.recents ← FAIL ${e::class.simpleName}: ${e.message}")
+            loggy(e)
             KlipyPagedResult(emptyList(), false)
         }
     }
@@ -134,36 +146,42 @@ object KlipyUtils {
 
     private val additionalHttpConfig: (HttpClientConfig<*>.() -> Unit)
         get() = {
+            /* expectSuccess=true makes 4xx/5xx responses throw ResponseException instead of
+             * being silently parsed as successful empties (Ktor 3 default is false). Without
+             * this, a Cloudflare 403 / OpenSubtitles 401 on iOS would deserialize through the
+             * lenient JSON path below into KlipySearchResponse(data=KlipySearchWrapper()) — no
+             * exception, no log, just an empty grid. The catch blocks above will now actually
+             * fire and surface the real status code. */
+            expectSuccess = true
+
             install(ContentNegotiation) {
                 json(
-                    /* explicitNulls=false + coerceInputValues=true lets the parser accept
-                     * responses where Klipy omits or nulls out optional fields (blur_preview,
-                     * per-format sub-objects, etc.) without failing. The Darwin engine on iOS
-                     * tends to surface these missing fields as hard failures where OkHttp on
-                     * Android silently shrugs, which is why the GIF panel looked broken on
-                     * iOS only. */
+                    /* ignoreUnknownKeys keeps Klipy's response-shape drift from breaking us.
+                     * coerceInputValues=true is intentionally NOT set: combined with default
+                     * field values on the DTOs, it would silently absorb wrong-shape error
+                     * bodies as empty successes, which is exactly the failure we just fixed
+                     * with expectSuccess. If a 200 OK ever returns a malformed schema, we
+                     * want it to throw so we can see it. */
                     Json {
                         ignoreUnknownKeys = true
                         isLenient = true
-                        coerceInputValues = true
-                        explicitNulls = false
                     }
                 )
             }
             install(HttpTimeout) {
-                /* Darwin on iOS has no sensible default timeout — requests can hang forever
-                 * when the network flakes. Keep values generous enough for slow mobile networks
-                 * but finite so the UI is never stuck on a spinner. */
+                /* Override the base 15s/10s/15s with a slightly more generous envelope —
+                 * search requests can take longer on slow mobile networks. */
                 requestTimeoutMillis = 20_000
                 connectTimeoutMillis = 10_000
                 socketTimeoutMillis = 20_000
             }
-            /* Ensure JSON is explicitly requested and identify ourselves as a browser-like
-             * client. Klipy occasionally returns 403 for requests missing these headers when
-             * hit from a fresh NSURLSession on iOS. */
+            /* Accept-only override. User-Agent is already set by the base httpClient's
+             * defaultRequest; setting it again here would result in two values that Ktor's
+             * mergeHeaders joins with a comma ("App/0.19.1,App/0.19.1") — a malformed UA
+             * that Cloudflare's bot heuristics flag as suspicious on Apple Secure Transport
+             * traffic in particular. */
             defaultRequest {
                 header(HttpHeaders.Accept, "application/json")
-                header(HttpHeaders.UserAgent, "SynkplayMobile/${BuildConfig.APP_VERSION}")
             }
         }
 }

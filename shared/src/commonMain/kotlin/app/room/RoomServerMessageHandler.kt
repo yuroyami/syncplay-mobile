@@ -143,54 +143,64 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 callback.onSomeoneSeeked(setBy, agedPosition)
             }
 
-            /* Rewind check if someone is behind */
-            if (diff > protocol.rewindThreshold && doSeek != true && Preferences.SYNC_REWIND.value()) {
-                if (protocol.speedChanged) {
-                    withContext(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
-                    protocol.speedChanged = false
-                }
-                callback.onSomeoneBehind(setBy ?: "", agedPosition)
-            }
-
-            /* Fast-forward if persistently behind. Mirrors python's gating: only triggers
-             * when we cannot control the room (in a controlled room as a non-controller),
-             * OR when SYNC_DONT_SLOW_WITH_ME is on. Without this, a controller in their
-             * own controlled room would yank themselves forward over their own pace. */
-            val canFastForward = Preferences.SYNC_FASTFORWARD.value()
-                    && (!isControllerInControlledRoom() || Preferences.SYNC_DONT_SLOW_WITH_ME.value())
-            if (diff < -FASTFORWARD_BEHIND_THRESHOLD && doSeek != true && canFastForward) {
-                val now = Clock.System.now()
-                if (protocol.behindFirstDetected == null) {
-                    protocol.behindFirstDetected = now
-                } else {
-                    val durationBehind = (now - protocol.behindFirstDetected!!).inWholeMilliseconds / 1000.0
-                    if (durationBehind > (FASTFORWARD_THRESHOLD - FASTFORWARD_BEHIND_THRESHOLD)
-                        && diff < -FASTFORWARD_THRESHOLD
-                    ) {
-                        val ffTarget = agedPosition + FASTFORWARD_EXTRA_TIME
-                        callback.onSomeoneFastForwarded(setBy ?: "", ffTarget)
-                        protocol.behindFirstDetected = now + FASTFORWARD_RESET_THRESHOLD.seconds
-                    }
-                }
-            } else {
-                protocol.behindFirstDetected = null
-            }
-
-            /* Slow down to cover time difference */
-            if (doSeek != true && !paused) {
-                if (Preferences.SYNC_SLOWDOWN.value()) {
-                    if (diff > SLOWDOWN_THRESHOLD && !protocol.speedChanged) {
-                        if (setBy != null && setBy != session.currentUsername) {
-                            withContext(Dispatchers.Main) { viewmodel.player.setSpeed(SLOWDOWN_RATE) }
-                            protocol.speedChanged = true
-                        }
-                    } else if (protocol.speedChanged && diff < SLOWDOWN_RESET_THRESHOLD) {
+            /* Desync-correction logic (rewind / fastforward / slowdown) only makes sense
+             * when we actually have media loaded. With no media, currentPositionMs() is 0
+             * and `diff = 0 - agedPosition` looks like a multi-second lag, which triggers
+             * a phantom "fast-forwarded to match X" OSD even though there's no playback to
+             * adjust. Mirrors the PC client's `if self._player:` gate around the whole
+             * `_changePlayerStateAccordingToGlobalState` (client.py:459). The pause/play
+             * callbacks below still fire — those are informational and useful even without
+             * a file loaded ("X paused the room"). */
+            if (viewmodel.media != null) {
+                /* Rewind check if someone is behind */
+                if (diff > protocol.rewindThreshold && doSeek != true && Preferences.SYNC_REWIND.value()) {
+                    if (protocol.speedChanged) {
                         withContext(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
                         protocol.speedChanged = false
                     }
-                } else if (protocol.speedChanged) {
-                    withContext(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
-                    protocol.speedChanged = false
+                    callback.onSomeoneBehind(setBy ?: "", agedPosition)
+                }
+
+                /* Fast-forward if persistently behind. Mirrors python's gating: only triggers
+                 * when we cannot control the room (in a controlled room as a non-controller),
+                 * OR when SYNC_DONT_SLOW_WITH_ME is on. Without this, a controller in their
+                 * own controlled room would yank themselves forward over their own pace. */
+                val canFastForward = Preferences.SYNC_FASTFORWARD.value()
+                        && (!isControllerInControlledRoom() || Preferences.SYNC_DONT_SLOW_WITH_ME.value())
+                if (diff < -FASTFORWARD_BEHIND_THRESHOLD && doSeek != true && canFastForward) {
+                    val now = Clock.System.now()
+                    if (protocol.behindFirstDetected == null) {
+                        protocol.behindFirstDetected = now
+                    } else {
+                        val durationBehind = (now - protocol.behindFirstDetected!!).inWholeMilliseconds / 1000.0
+                        if (durationBehind > (FASTFORWARD_THRESHOLD - FASTFORWARD_BEHIND_THRESHOLD)
+                            && diff < -FASTFORWARD_THRESHOLD
+                        ) {
+                            val ffTarget = agedPosition + FASTFORWARD_EXTRA_TIME
+                            callback.onSomeoneFastForwarded(setBy ?: "", ffTarget)
+                            protocol.behindFirstDetected = now + FASTFORWARD_RESET_THRESHOLD.seconds
+                        }
+                    }
+                } else {
+                    protocol.behindFirstDetected = null
+                }
+
+                /* Slow down to cover time difference */
+                if (doSeek != true && !paused) {
+                    if (Preferences.SYNC_SLOWDOWN.value()) {
+                        if (diff > SLOWDOWN_THRESHOLD && !protocol.speedChanged) {
+                            if (setBy != null && setBy != session.currentUsername) {
+                                withContext(Dispatchers.Main) { viewmodel.player.setSpeed(SLOWDOWN_RATE) }
+                                protocol.speedChanged = true
+                            }
+                        } else if (protocol.speedChanged && diff < SLOWDOWN_RESET_THRESHOLD) {
+                            withContext(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
+                            protocol.speedChanged = false
+                        }
+                    } else if (protocol.speedChanged) {
+                        withContext(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
+                        protocol.speedChanged = false
+                    }
                 }
             }
 
@@ -225,16 +235,37 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             }
             val playerDiff = abs(playerPosSec - position)
             val globalDiff = abs(protocol.extrapolatedGlobalPositionMs() / 1000.0 - position)
-            val surelyPausedChanged = protocol.globalPaused != paused && paused == viewmodel.player.isPlaying()
             val seeked = playerDiff > SEEK_THRESHOLD && globalDiff > SEEK_THRESHOLD
 
+            /* `play` MUST be the state we just acknowledged from the server (`!paused`),
+             * NOT the transient `viewmodel.player.isPlaying()`. On VLCKit 4 the libvlc
+             * pause/play API is asynchronous: pause() returns before vlc_player_Pause has
+             * actually transitioned the player state, so isPlaying() right after pause()
+             * still reports true. If we ACK that stale value when the server told us to
+             * pause, we send State(play=true) — which the public Syncplay server interprets
+             * as "this watcher is unpausing the room" and broadcasts the unpause to every
+             * peer, who then unpauses locally and an OSD pop says "iPhone played." A few
+             * cycles later the player has actually paused, the flow collector in
+             * ProtocolManager sees the divergence and broadcasts the pause again, which
+             * peers also apply — producing the user-visible "unpause then re-pause"
+             * artifact whenever someone on Android pauses while a peer is on VLCKit.
+             *
+             * Acknowledging `!paused` from the inbound message is correct because we just
+             * applied that state in the block above. If the application actually fails
+             * (engine refuses pause due to buffer underrun, audio focus loss, etc.) the
+             * isNowPlaying StateFlow will emit a divergence and the flow collector in
+             * ProtocolManager will broadcast the truth — which is the right place for that
+             * detection, since by then the player has settled into a steady state instead
+             * of the transient post-call window we'd otherwise be sampling here. */
             network.sendAsync(
                 protocol.buildStatePacket(
                     serverTime = latencyCalculation,
                     doSeek = seeked,
                     position = ackPos,
-                    changeState = if (surelyPausedChanged) 1 else 0,
-                    play = viewmodel.player.isPlaying()
+                    changeState = 0,
+                    /* `paused` may be null here (the inbound playstate didn't carry one);
+                     * fall back to globalPaused which we treat as the current room state. */
+                    play = !(paused ?: protocol.globalPaused)
                 )
             )
         } else {
