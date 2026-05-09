@@ -77,7 +77,12 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
             // Snap to the room's *current* expected position, not the last 1 Hz snapshot —
             // mirrors python's SYNC_ON_PAUSE which seeks to getGlobalPosition() (extrapolated).
             // Otherwise we land on a frame from up to 1 s ago and look out of sync with peers.
-            onMainThread { viewmodel.player.seekTo(protocol.extrapolatedGlobalPositionMs().toLong()) }
+            // Gate on media: seekTo on an unloaded VLCKit 4 player segfaults the same way
+            // controlPlayback does — same NULL libvlc handle, same dispatch-queue race. The
+            // controlPlayback call below has its own internal gate.
+            if (viewmodel.media != null) {
+                onMainThread { viewmodel.player.seekTo(protocol.extrapolatedGlobalPositionMs().toLong()) }
+            }
             dispatcher.controlPlayback(Playback.PAUSE, false)
         }
 
@@ -153,7 +158,11 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
             // and loses up to 999 ms.
             val newPosMs = (toPosition * 1000.0).toLong()
 
-            if (seeker.isNotSelf()) viewmodel.player.seekTo(newPosMs)
+            // Same media gate as elsewhere — VLCKit 4 alpha crashes on seekTo with no
+            // media loaded. Self-seeks already match the local position so they're a
+            // no-op, but a remote peer's seek arriving while we have no file open would
+            // otherwise crash on iOS.
+            if (seeker.isNotSelf() && viewmodel.media != null) viewmodel.player.seekTo(newPosMs)
 
             // Suppress no-op seeks: if the from/to positions are within a second, the
             // user-visible message would render as "X to X" or "X to X+0:01" with the

@@ -1,5 +1,5 @@
 plugins {
-    id("io.github.yuroyami.kmpssot") version "1.0.4"
+    id("io.github.yuroyami.kmpssot") version "1.2.0"
 
     alias(libs.plugins.kotlin.multiplatform).apply(false)
     alias(libs.plugins.kotlin.android).apply(false)
@@ -21,12 +21,15 @@ plugins {
 
 kmpSsot {
     appName         = "Synkplay"
-    versionName     = "0.21.7"
+    versionName     = "0.21.9"
     bundleIdBase    = "com.yuroyami.syncplay"
     iosBundleSuffix = ".iosApp"
 
     sharedModule     = "shared"
     androidAppModule = "androidApp"
+
+    appLogoPngForeground = File("${rootDir}/shared/src/commonMain/composeResources/drawable/logo_fg.png")
+    appLogoPngBackground = File("${rootDir}/shared/src/commonMain/composeResources/drawable/logo_bg.png")
 
     // exoOnly flavor switches the Android base ID to "com.reddnek.syncplay" — let the
     // user-side flavor branch override the plugin's default (since user's defaultConfig

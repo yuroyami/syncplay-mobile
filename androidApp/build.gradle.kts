@@ -74,6 +74,26 @@ android {
             excludes += "META-INF/license/**"
             excludes += "META-INF/native-image/**"
 
+            // R8 warns when META-INF/services/* points at classes that don't exist on
+            // the runtime classpath. The two below come from transitive deps whose SPI
+            // hooks have no effect on Android, so we drop the service files entirely
+            // rather than carry dead pointers in the APK and quiet R8 with -dontwarn.
+            //
+            //   javax.script.ScriptEngineFactory
+            //     Rhino (pulled in by NewPipeExtractor) registers itself as a JSR-223
+            //     scripting engine via this service file. Android has no javax.script
+            //     package, so the SPI lookup never fires anyway. NewPipe uses Rhino
+            //     directly via org.mozilla.javascript.* APIs, not via JSR-223, so
+            //     dropping the SPI file doesn't break anything we actually use.
+            //
+            //   reactor.blockhound.integration.BlockHoundIntegration
+            //     BlockHound is a JVM agent (uses ByteBuddy) that detects blocking
+            //     calls inside Reactor's non-blocking event loops. It's a Netty
+            //     transitive (via reactor-netty if dragged in by some other chain).
+            //     Doesn't load on Android — no JVM agent support — so the SPI hook
+            //     is purely dead weight.
+            excludes += "META-INF/services/javax.script.ScriptEngineFactory"
+            excludes += "META-INF/services/reactor.blockhound.integration.BlockHoundIntegration"
         }
     }
 

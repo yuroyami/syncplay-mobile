@@ -73,17 +73,6 @@ object AppConfig {
         }
     }
 
-    /* ── Propagation: logo PNG from composeResources → iOS Assets.xcassets imageset ─────────────── */
-    fun Project.propagateLogoToIOS() {
-        val sourcePng = File("${rootDir}/shared/src/commonMain/composeResources/drawable/neosyncplay.png")
-        val targetImageset = File("${rootDir}/iosApp/iosApp/Assets.xcassets/syncplay_original.imageset/neosyncplay.png")
-
-        if (sourcePng.exists() && targetImageset.parentFile.exists()) {
-            sourcePng.copyTo(targetImageset, overwrite = true)
-            logger.lifecycle("✅ Logo PNG propagated to iOS Assets.xcassets")
-        }
-    }
-
     /* ── Propagation: values-en/strings.xml → values/strings.xml (default fallback) ─────────────── */
     fun Project.propagateDefaultStrings() {
         val src = File("${rootDir}/shared/src/commonMain/composeResources/values-en/strings.xml")
@@ -97,7 +86,6 @@ object AppConfig {
     /* ── Master propagation: invoke all custom (non-plugin) SSOT propagators ────────────────────── */
     fun Project.propagateAllCustom() {
         propagateTrinityColors()
-        propagateLogoToIOS()
         propagateDefaultStrings()
     }
 }

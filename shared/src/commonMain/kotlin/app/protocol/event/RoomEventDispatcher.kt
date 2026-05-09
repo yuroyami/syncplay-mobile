@@ -112,10 +112,25 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
         // and broadcasts a redundant State packet.
         viewmodel.protocol.noteExpectedPlaybackState(paused = !playback.play)
 
-        onMainThread {
-            when (playback) {
-                Playback.PAUSE -> viewmodel.player.pause()
-                Playback.PLAY -> viewmodel.player.play()
+        /* Skip the engine call when no media is loaded. On VLCKit 4 alpha (iOS),
+         * libvlc_media_player_play(_p_mi) segfaults with `_p_mi = NULL` when invoked
+         * on a player that has no media — VLCMediaPlayer dispatches the play to its
+         * private libdispatch queue from inside `[VLCMediaPlayer play]`, and by the
+         * time the queue dequeues the block, libvlc_media_player_play does an unguarded
+         * deref at offset 0x58 of the (NULL) media-player handle. Symptom path is a
+         * ~3s-after-launch crash when the room broadcasts a "playing" state (e.g. on
+         * auto-rejoin via JoinConfig) before any media has been loaded. Mirrors the PC
+         * client's `if self._player:` gate in `updateGlobalState` (client.py:459) — we
+         * just substitute `viewmodel.media` for it because our `viewmodel.player` is
+         * never null. Server-side State broadcast still happens below if `tellServer`
+         * is set: the user's intent gets recorded for peers even when local playback
+         * can't honor it. */
+        if (viewmodel.media != null) {
+            onMainThread {
+                when (playback) {
+                    Playback.PAUSE -> viewmodel.player.pause()
+                    Playback.PLAY -> viewmodel.player.play()
+                }
             }
         }
 

@@ -689,22 +689,37 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
 
     /**
      * Pauses playback on the main thread.
+     *
+     * The [vlcPlayer.media] check below is defense-in-depth against a VLCKit 4 alpha
+     * crash: `[VLCMediaPlayer pause]` and `[VLCMediaPlayer play]` dispatch onto a
+     * private libdispatch queue (see VLCMediaPlayer.m), and the queued block calls
+     * `libvlc_media_player_pause/play(_p_mi)`. When no media has been associated with
+     * the player, libvlc dereferences `_p_mi` (which is NULL or freed) at offset 0x58
+     * and segfaults. The protocol-layer gates in RoomEventDispatcher.controlPlayback
+     * and RoomCallback.onSomeonePaused/Played are the primary defense; this guard
+     * catches any future code path that bypasses those (e.g. a service callback or
+     * a system media-control intent that talks directly to the engine).
      */
     override suspend fun pause() {
         if (!isInitialized) return
         withContext(Dispatchers.Main.immediate) {
-            vlcPlayer?.pause()
+            val player = vlcPlayer ?: return@withContext
+            if (player.media == null) return@withContext
+            player.pause()
         }
     }
 
     /**
-     * Starts or resumes playback on the main thread.
+     * Starts or resumes playback on the main thread. See [pause] for the [vlcPlayer.media]
+     * NULL-guard rationale — same VLCKit 4 alpha crash applies.
      */
     override suspend fun play() {
         if (!isInitialized) return
         withContext(Dispatchers.Main.immediate) {
+            val player = vlcPlayer ?: return@withContext
+            if (player.media == null) return@withContext
             pausedSeekPosition = null // VLC becomes reliable at updating time, again
-            vlcPlayer?.play()
+            player.play()
         }
     }
 
@@ -732,6 +747,11 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     override fun seekTo(toPositionMs: Long) {
         super.seekTo(toPositionMs)
         playerScopeMain.launch(Dispatchers.Main.immediate) {
+            val player = vlcPlayer ?: return@launch
+            // Defense-in-depth NULL-media guard — same rationale as in [pause]/[play].
+            // setTime on a media-less VLCMediaPlayer enters the same libdispatch path
+            // and dereferences the NULL libvlc handle.
+            if (player.media == null) return@launch
             // Always shadow the player's clock with our requested position until VLC's
             // time-changed callback fires (which means the player has caught up). Without
             // this, VLCKit 4 has a window between setTime() and the next time-update where
@@ -739,7 +759,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
             // sees this as a sudden 4-second drop and broadcasts a phantom "user jumped
             // from X to 0" to the room. The shadow gets cleared in mediaPlayerTimeChanged.
             pausedSeekPosition = toPositionMs
-            vlcPlayer?.setTime(toPositionMs.toVLCTime())
+            player.setTime(toPositionMs.toVLCTime())
         }
     }
 

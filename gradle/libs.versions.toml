@@ -28,6 +28,11 @@ koroutines = "1.11.0"
 datetime = "0.7.1"
 atomicfu = "0.32.1"
 coil = "3.4.0"
+# Skiko: Compose 1.11.0-rc01 ships with 0.144.6; Coil 3.4.0 declares 0.9.22.2.
+# Pin to the more recent (Compose's), explicitly forced so neither side regresses
+# silently when either library is bumped. Bump this to whatever the new Compose
+# release ships when upgrading compose-multiplatform.
+skiko = "0.144.6"
 
 #Android
 coreSplashscreen = "1.2.0"
@@ -84,6 +89,7 @@ ktor-serialization-json = { module = "io.ktor:ktor-serialization-kotlinx-json", 
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
 ktorfit = { module = "de.jensklingenberg.ktorfit:ktorfit-lib", version.ref = "ktorfit" }
+skiko = { module = "org.jetbrains.skiko:skiko", version.ref = "skiko" }
 
 #Android
 kotlin-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "koroutines" }
