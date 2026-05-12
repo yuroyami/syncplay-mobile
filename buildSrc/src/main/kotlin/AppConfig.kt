@@ -27,7 +27,7 @@ object AppConfig {
         if (file.exists()) load(file.inputStream())
     }
 
-    const val exoOnly = false
+    const val exoOnly = true
 
     /* ── Trinity brand colors (SSOT for the logo gradient) ──────────────────────────────────────── */
     const val TRINITY_1 = 0xFF4FD1FF  // Cyan

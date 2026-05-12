@@ -18,20 +18,26 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import app.LocalGlobalViewmodel
 import app.LocalRoomUiState
 import app.preferences.Preferences.HUD_AUTO_HIDE_TIMEOUT
 import app.preferences.watchPref
+import app.uicomponents.LocalDpadFocusReporter
 import app.room.RoomUiStateManager.Companion.RoomOrientation
 import app.room.ui.bottombar.BlackContrastUnderlay
 import app.room.ui.bottombar.PopupSeekToPosition.SeekToPositionPopup
@@ -52,6 +58,12 @@ import app.utils.platformCallback
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
+
+/** Primary focus target for D-pad/TV navigation in the Room. Bound by either RoomPlayButton
+ * (when a video is loaded) or AddVideoButton (when no video yet). RoomScreenUI calls
+ * `requestFocus()` on it whenever the HUD becomes visible so remote users always land on
+ * the most useful control. */
+val LocalRoomInitialFocus = compositionLocalOf<FocusRequester?> { null }
 
 /**
  * Composable that represents the entire room screen UI.
@@ -74,7 +86,17 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
 
     val lockedMode by viewmodel.uiState.tabLock.collectAsState()
 
-    CompositionLocalProvider(LocalRoomUiState provides viewmodel.uiState) {
+    /* Primary focus target for D-pad/TV: when the HUD becomes visible we land focus on
+     * the play button (or the media-add button if no video is loaded yet). Bound below
+     * inside RoomPlayButton / RoomMediaAddButton via LocalRoomInitialFocus. */
+    val initialFocusRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
+
+    CompositionLocalProvider(
+        LocalRoomUiState provides viewmodel.uiState,
+        LocalDpadFocusReporter provides viewmodel.uiState::onDpadFocusChanged,
+        LocalRoomInitialFocus provides initialFocusRequester,
+    ) {
         Box(modifier = Modifier.fillMaxSize()) {
             /* Room Background Artwork */
             if (!hasVideo) {
@@ -112,9 +134,18 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                 val isPlaying by viewmodel.playerManager.isNowPlaying.collectAsState()
                 val imeBottom = WindowInsets.ime.getBottom(androidx.compose.ui.platform.LocalDensity.current)
                 val isImeVisible = imeBottom > 0
-                LaunchedEffect(isHUDVisible, hudAutoHideTimeout, hasActiveOverlay, isPlaying, hasVideo, isImeVisible) {
+                /* D-pad/TV users: an element is currently focused via keyboard input, so the
+                 * HUD must stay open while they navigate. We gate on InputMode.Keyboard so
+                 * touch users (where focus lingers on the last-tapped button) still get the
+                 * auto-hide behavior. */
+                val inputModeManager = LocalInputModeManager.current
+                val dpadFocusCount by viewmodel.uiState.dpadFocusCount.collectAsState()
+                val isKeyboardMode = inputModeManager.inputMode == InputMode.Keyboard
+                val dpadHolding = isKeyboardMode && dpadFocusCount > 0
+
+                LaunchedEffect(isHUDVisible, hudAutoHideTimeout, hasActiveOverlay, isPlaying, hasVideo, isImeVisible, dpadHolding) {
                     if (!isHUDVisible || hudAutoHideTimeout <= 0) return@LaunchedEffect
-                    if (!hasVideo || hasActiveOverlay || !isPlaying || isImeVisible) return@LaunchedEffect
+                    if (!hasVideo || hasActiveOverlay || !isPlaying || isImeVisible || dpadHolding) return@LaunchedEffect
 
                     while (true) {
                         val interaction = withTimeoutOrNull(hudAutoHideTimeout * 1000L) {
@@ -124,6 +155,22 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                             viewmodel.uiState.visibleHUD.value = false
                             break
                         }
+                    }
+                }
+
+                /* Land D-pad focus on the primary control whenever the HUD becomes visible.
+                 * Only kicks in under Keyboard/D-pad input mode — on touch devices, auto-
+                 * grabbing focus would be jarring and the soft keyboard could pop. Drop
+                 * focus on HUD hide so the invisible-but-composed elements don't keep an
+                 * off-screen focus stop. */
+                LaunchedEffect(isHUDVisible, hasVideo, isKeyboardMode) {
+                    if (isHUDVisible) {
+                        if (isKeyboardMode) {
+                            delay(150)
+                            runCatching { initialFocusRequester.requestFocus() }
+                        }
+                    } else {
+                        focusManager.clearFocus(force = true)
                     }
                 }
 

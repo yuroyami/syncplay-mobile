@@ -60,6 +60,7 @@ import app.home.components.HomeTextField
 import app.server.ServerLogEntry
 import app.server.ServerStatus
 import app.server.ServerViewmodel
+import app.uicomponents.tvFocusable
 import androidx.compose.foundation.text.selection.SelectionContainer
 import app.utils.ExitRoomMode
 import app.utils.platform
@@ -200,7 +201,7 @@ fun ServerHostScreenUI(viewmodel: ServerViewmodel) {
                     onClick = {
                         if (isRunning) viewmodel.stopServer() else viewmodel.startServer()
                     },
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    modifier = Modifier.fillMaxWidth().height(56.dp).tvFocusable(addFocusable = false),
                     contentPadding = PaddingValues(vertical = 16.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isRunning) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary

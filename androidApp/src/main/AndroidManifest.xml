@@ -43,7 +43,16 @@
         <service
             android:name="app.server.SyncplayServerService"
             android:foregroundServiceType="specialUse"
-            android:exported="false" />
+            android:exported="false">
+            <!-- Required for FOREGROUND_SERVICE_SPECIAL_USE: a short, human-readable
+                 description of what the service does. Play review reads this to decide
+                 whether "Special Use" is justified vs one of the predefined categories.
+                 Keep it specific and accurate — generic phrases like "background work"
+                 get flagged. -->
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Hosts a user-initiated Syncplay-protocol TCP server so other clients can connect and join a synchronized watch party. None of the predefined foreground-service types apply to a peer-to-peer server runtime." />
+        </service>
 
     </application>
 

@@ -93,6 +93,22 @@ class WireMessageTest {
     }
 
     @Test
+    fun `FileData size accepts JSON number from PC client at default privacy`() {
+        val raw = """{"name":"ReZero.mp4","duration":1420.138,"size":351594465}"""
+        val decoded = syncplayJson.decodeFromString(FileData.serializer(), raw)
+        assertEquals("ReZero.mp4", decoded.name)
+        assertEquals(1420.138, decoded.duration)
+        assertEquals("351594465", decoded.size)
+    }
+
+    @Test
+    fun `FileData size accepts JSON string from hashed-privacy client`() {
+        val raw = """{"name":"a1b2c3","duration":0.0,"size":"deadbeef0000"}"""
+        val decoded = syncplayJson.decodeFromString(FileData.serializer(), raw)
+        assertEquals("deadbeef0000", decoded.size)
+    }
+
+    @Test
     fun `Set readiness encodes`() {
         val json = syncplayJson.encodeToString(WireMessage.readiness(isReady = true, manuallyInitiated = false))
         assertContainsKey(json, "Set")

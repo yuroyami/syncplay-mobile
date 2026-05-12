@@ -22,9 +22,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.shape.CircleShape
 import app.LocalRoomViewmodel
 import app.protocol.WireMessage
 import app.theme.Theming
+import app.uicomponents.tvFocusable
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_not_ready
@@ -38,7 +40,10 @@ fun RoomReadyButton() {
         var ready by remember { viewmodel.session.ready }
 
         IconToggleButton(
-            modifier = Modifier.width(112.dp).padding(4.dp),
+            modifier = Modifier.width(112.dp).padding(4.dp).tvFocusable(
+                shape = CircleShape,
+                addFocusable = false,
+            ),
             checked = ready,
             colors = IconButtonDefaults.iconToggleButtonColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,

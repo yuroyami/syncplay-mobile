@@ -116,14 +116,36 @@ android {
             }
         }
     } else {
-        splits {
-            abi {
-                isEnable = true
-                reset()
-                for (abi in AppConfig.abiCodes) {
-                    include(abi.key)
+        /* ABI splits and AAB packaging are mutually exclusive: when `splits.abi` is
+         * enabled the resource shrinker writes one `shrunk-resources-proto-format-*-release.ap_`
+         * per ABI (plus a universal one), but `bundleFullRelease` expects exactly one
+         * shrunk resources file in that intermediate directory and fails with
+         * "Multiple shrunk-resources files found in directory ..." (AGP issuetracker
+         * 402800800). The fix is to keep splits for APK builds (where per-ABI artifacts
+         * shave ~70 MB off each download by stripping the libVLC + libmpv .so files for
+         * unused architectures) and turn them off when a bundle task is in the build
+         * graph — Play handles per-ABI delivery server-side from the AAB anyway, so we
+         * lose nothing in that flow.
+         *
+         * Detection happens from `gradle.startParameter.taskNames`. The check uses the
+         * "bundle" substring (case-insensitive) so it matches `bundleFullRelease`,
+         * `bundleRelease`, plain `bundle`, and any project-prefixed variant. APK-only
+         * invocations (`assembleFullRelease`, `installFullRelease`, etc.) keep splits.
+         * Mixing both in one invocation (`./gradlew assembleFullRelease bundleFullRelease`)
+         * would still hit the AGP error — don't do that; run them separately. */
+        val isBuildingBundle = gradle.startParameter.taskNames.any {
+            it.contains("bundle", ignoreCase = true)
+        }
+        if (!isBuildingBundle) {
+            splits {
+                abi {
+                    isEnable = true
+                    reset()
+                    for (abi in AppConfig.abiCodes) {
+                        include(abi.key)
+                    }
+                    isUniversalApk = true
                 }
-                isUniversalApk = true
             }
         }
     }

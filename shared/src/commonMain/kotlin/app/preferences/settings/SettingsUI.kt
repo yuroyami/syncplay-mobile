@@ -55,6 +55,7 @@ import app.theme.Theming.flexibleGradient
 import app.uicomponents.FlexibleText
 import app.uicomponents.gradientOverlay
 import app.uicomponents.sairaFont
+import app.uicomponents.tvFocusable
 import com.composables.core.ScrollArea
 import com.composables.core.Thumb
 import com.composables.core.ThumbVisibility
@@ -181,7 +182,7 @@ object SettingsUI {
 
                 ) {
                     onClick()
-                },
+                }.tvFocusable(addFocusable = false),
                 shape = RoundedCornerShape(8.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = Theming.SP_GRADIENT[index % 3].copy(0.1f)
@@ -228,6 +229,7 @@ object SettingsUI {
                     indication = ripple(color = Theming.SP_ORANGE),
                     onClick = onClick
                 )
+                .tvFocusable(addFocusable = false)
                 .padding(8.dp),
         ) {
             Box(modifier = Modifier) {

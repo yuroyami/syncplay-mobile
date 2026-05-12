@@ -40,6 +40,17 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
     /** True while the chat input field has focus / the soft keyboard is up. Suppresses HUD auto-hide. */
     val chatInputFocused = MutableStateFlow(false)
 
+    /** Count of focused HUD elements. Read together with the input mode in RoomScreenUI:
+     * a non-zero count under Keyboard/D-pad input mode means a remote-control user is
+     * actively navigating, so the HUD must stay open. Under Touch input mode it's ignored
+     * (so clicking a button doesn't leave focus glued to that button forever). */
+    val dpadFocusCount = MutableStateFlow(0)
+
+    fun onDpadFocusChanged(focused: Boolean) {
+        if (focused) dpadFocusCount.value = dpadFocusCount.value + 1
+        else dpadFocusCount.value = (dpadFocusCount.value - 1).coerceAtLeast(0)
+    }
+
     /** Emitted on any touch within the HUD to reset the auto-hide countdown. */
     val hudInteractionSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 

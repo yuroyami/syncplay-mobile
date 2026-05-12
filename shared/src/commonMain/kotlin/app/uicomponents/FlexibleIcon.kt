@@ -5,12 +5,14 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
@@ -60,13 +62,22 @@ fun FlexibleIcon(
     shadowColors: List<Color> = emptyList(),
     shadowOffset: Pair<Int, Int> = Pair(1, 1),
     alpha: Float = 1f,
+    focusRequester: FocusRequester? = null,
+    tvFocus: Boolean = true,
     onClick: () -> Unit = {},
 ) {
     IconButton(
         modifier = modifier
             .alpha(alpha)
             .wrapContentSize()
-            .size(size.dp),
+            .size(size.dp)
+            .tvFocusable(
+                focusRequester = focusRequester,
+                enabled = tvFocus,
+                shape = CircleShape,
+                scaleWhenFocused = 1.12f,
+                addFocusable = false,
+            ),
         onClick = { onClick() }
     ) {
         Box(

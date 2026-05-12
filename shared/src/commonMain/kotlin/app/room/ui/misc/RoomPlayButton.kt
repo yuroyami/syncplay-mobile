@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewModelScope
 import app.LocalRoomViewmodel
 import app.player.Playback
+import app.room.LocalRoomInitialFocus
 import app.theme.Theming
 import app.theme.Theming.ROOM_ICON_SIZE
 import app.uicomponents.FlexibleIcon
@@ -42,6 +43,7 @@ fun RoomPlayButton(modifier: Modifier) {
             },
             size = (ROOM_ICON_SIZE * 2.25).roundToInt(),
             shadowColors = listOf(Color.Black),
+            focusRequester = LocalRoomInitialFocus.current,
             modifier = modifier.background(
                 shape = CircleShape, color = animatedColor
             )

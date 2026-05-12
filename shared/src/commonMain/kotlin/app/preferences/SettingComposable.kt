@@ -51,6 +51,7 @@ import app.uicomponents.FlexibleText
 import app.uicomponents.MultiChoiceDialog
 import app.uicomponents.sairaFont
 import app.uicomponents.solidOverlay
+import app.uicomponents.tvFocusable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -106,7 +107,7 @@ internal inline fun <reified T> Pref<T>.SettingComposable() {
                     renderableComposableState.value = true
                 }
             }
-        ).run {
+        ).tvFocusable(enabled = isEnabled, addFocusable = false).run {
             if (!isEnabled) {
                 Modifier.solidOverlay(Color.Black.copy(0.3f))
             } else this

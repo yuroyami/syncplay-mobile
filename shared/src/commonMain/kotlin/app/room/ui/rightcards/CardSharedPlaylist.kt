@@ -84,6 +84,7 @@ import app.uicomponents.SyncplayPopup
 import app.uicomponents.gradientOverlay
 import app.uicomponents.helveticaFont
 import app.uicomponents.jostFont
+import app.uicomponents.tvFocusable
 import app.utils.appName
 import app.utils.playlistExs
 import app.utils.videoFileKitType
@@ -206,7 +207,8 @@ object CardSharedPlaylist {
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = ripple(color = MaterialTheme.colorScheme.primary)
-                                ) { itempopup.value = true },
+                                ) { itempopup.value = true }
+                                .tvFocusable(addFocusable = false),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 val spi by remember { viewmodel.session.spIndex }

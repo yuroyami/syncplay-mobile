@@ -30,6 +30,8 @@ import com.composeunstyled.TextInput
 import app.theme.Theming.flexibleGradient
 import app.uicomponents.FlexibleIcon
 import app.uicomponents.gradientOverlay
+import app.uicomponents.tvFocusable
+import androidx.compose.ui.focus.FocusRequester
 import com.composeunstyled.Icon as UnstyledIcon
 import com.composeunstyled.Text as UnstyledText
 import com.composeunstyled.TextField as UnstyledTextField
@@ -57,6 +59,7 @@ fun HomeTextField(
     height: Dp = 56.dp,
     clearFocusWhenDone: Boolean = false,
     enabled: Boolean = true,
+    focusRequester: FocusRequester? = null,
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -66,7 +69,11 @@ fun HomeTextField(
     )
 
     UnstyledTextField(
-        modifier = modifier,
+        modifier = modifier.tvFocusable(
+            focusRequester = focusRequester,
+            shape = RoundedCornerShape(cornerRadiusAnimated),
+            addFocusable = false,
+        ),
         value = value,
         onValueChange = onValueChange,
         textColor = MaterialTheme.colorScheme.onTertiaryContainer,

@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import app.LocalRoomViewmodel
+import app.room.LocalRoomInitialFocus
 import app.theme.Theming
 import app.theme.Theming.ROOM_ICON_SIZE
 import app.theme.Theming.flexibleGradient
@@ -65,6 +66,8 @@ import app.uicomponents.gradientOverlay
 import app.uicomponents.jostFont
 import app.uicomponents.sairaFont
 import app.uicomponents.syncplayFont
+import app.uicomponents.tvFocusable
+import androidx.compose.ui.focus.focusRequester
 import app.utils.Platform
 import app.utils.getText
 import app.utils.loggy
@@ -118,9 +121,15 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
         }
     }
 
+    /* When no video is loaded, this is the primary call-to-action — it claims the room's
+     * initial D-pad focus. Once a video plays, the play button takes over. */
+    val initialFocus = LocalRoomInitialFocus.current
+    val claimInitialFocus = !hasVideo
+
     Box(modifier = Modifier.padding(4.dp)) {
         AddVideoButton(
-            modifier = Modifier.padding(2.dp),
+            modifier = Modifier.padding(2.dp)
+                .then(if (claimInitialFocus && initialFocus != null) Modifier.focusRequester(initialFocus) else Modifier),
             expanded = !hasVideo,
             onClick = {
                 showPopup = !showPopup
@@ -247,7 +256,10 @@ fun AddVideoButton(modifier: Modifier, expanded: Boolean, onClick: () -> Unit) {
         )
     } else {
         Surface(
-            modifier = modifier.width(150.dp).height(48.dp),
+            modifier = modifier.width(150.dp).height(48.dp).tvFocusable(
+                shape = RoundedCornerShape(24.dp),
+                addFocusable = false,
+            ),
             shape = RoundedCornerShape(24.dp),
             border = BorderStroke(Dp.Hairline, brush = Brush.linearGradient(colors = flexibleGradient)),
             onClick = onClick,

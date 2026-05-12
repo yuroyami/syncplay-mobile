@@ -13,11 +13,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import app.uicomponents.tvFocusable
 
 @Composable
 fun RoomTab(modifier: Modifier, icon: ImageVector, visibilityState: Boolean, onClick: () -> Unit) {
     Card(
-        modifier = modifier.aspectRatio(1f).padding(3.dp),
+        modifier = modifier.aspectRatio(1f).padding(3.dp).tvFocusable(
+            shape = RoundedCornerShape(10.dp),
+            addFocusable = false,
+        ),
         shape = RoundedCornerShape(10.dp),
         border = BorderStroke(
             width = 1.dp,

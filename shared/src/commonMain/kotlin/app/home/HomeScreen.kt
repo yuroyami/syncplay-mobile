@@ -44,8 +44,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -67,6 +70,7 @@ import app.theme.Theming
 import app.theme.Theming.useSyncplayGradient
 import app.uicomponents.FlexibleText
 import app.uicomponents.sairaFont
+import app.uicomponents.tvFocusable
 import app.utils.appName
 import app.utils.ExitRoomMode
 import app.utils.availablePlatformPlayerEngines
@@ -173,7 +177,18 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                     var serverPort by remember { mutableStateOf(config.port.toString()) }
                     var serverPassword by remember { mutableStateOf(config.pw) }
 
-                    /* Username */
+                    /* Username — first focusable on the screen; grabs initial focus for D-pad/TV
+                     * users. Skipped under touch input mode so the soft keyboard doesn't pop on
+                     * phone/tablet entry. */
+                    val usernameFocusRequester = remember { FocusRequester() }
+                    val inputModeManager = LocalInputModeManager.current
+                    LaunchedEffect(Unit) {
+                        if (inputModeManager.inputMode == InputMode.Keyboard) {
+                            kotlinx.coroutines.delay(150)
+                            runCatching { usernameFocusRequester.requestFocus() }
+                        }
+                    }
+
                     Column(
                         modifier = Modifier.wrapContentHeight().fillMaxWidth(),
                         horizontalAlignment = CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -186,7 +201,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             modifier = Modifier.fillMaxWidth(0.75f),
                             icon = Icons.Outlined.PersonPin,
                             value = textUsername,
-                            onValueChange = { textUsername = it }
+                            onValueChange = { textUsername = it },
+                            focusRequester = usernameFocusRequester
                         )
                     }
 
@@ -366,7 +382,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         leadingButton = {
                             SplitButtonDefaults.LeadingButton(
                                 contentPadding = PaddingValues(vertical = 16.dp),
-                                modifier = Modifier.fillMaxWidth(0.85f),
+                                modifier = Modifier.fillMaxWidth(0.85f).tvFocusable(addFocusable = false),
                                 onClick = {
                                     globalViewmodel.viewModelScope.launch(Dispatchers.Default) {
                                         val errorMessage: StringResource? = when {
@@ -402,6 +418,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         },
                         trailingButton = {
                             SplitButtonDefaults.TrailingButton(
+                                modifier = Modifier.tvFocusable(addFocusable = false),
                                 contentPadding = PaddingValues(vertical = 16.dp),
                                 checked = false,
                                 onCheckedChange = {

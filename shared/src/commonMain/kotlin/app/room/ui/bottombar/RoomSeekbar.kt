@@ -3,6 +3,7 @@ package app.room.ui.bottombar
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -19,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -35,7 +37,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
@@ -47,6 +55,8 @@ import app.LocalRoomViewmodel
 import app.preferences.Preferences.CHAPTER_DOTS_CLICKABLE
 import app.preferences.Preferences.SHOW_CHAPTER_DOTS
 import app.preferences.watchPref
+import app.theme.Theming.flexibleGradient
+import app.uicomponents.LocalDpadFocusReporter
 import app.uicomponents.gradientOverlay
 import app.utils.timestampFromMillis
 import kotlinx.coroutines.Dispatchers
@@ -75,7 +85,10 @@ fun RoomSeekbar(modifier: Modifier) {
     val isSliderBeingPressed by sliderInteractionSource.collectIsPressedAsState()
     val isSliderBeingFocused by sliderInteractionSource.collectIsFocusedAsState()
 
-    val isSliderInUse by remember { derivedStateOf { isSliderBeingFocused || isSliderBeingPressed || isSliderBeingDragged } }
+    /* Drag/press freezes the slider so it doesn't snap back under the user's finger.
+     * Focus alone (D-pad) doesn't freeze — we intercept LEFT/RIGHT and dispatch real seeks,
+     * so the slider should keep tracking the playback position visually. */
+    val isSliderInUse by remember { derivedStateOf { isSliderBeingPressed || isSliderBeingDragged } }
 
     LaunchedEffect(videoCurrentTimeMs) {
         //This passively updates slider value when video progresses
@@ -92,7 +105,35 @@ fun RoomSeekbar(modifier: Modifier) {
 
     var isSliding by remember { mutableStateOf(false) }
 
-    Box(modifier) {
+    /* Report slider focus to the HUD reporter so D-pad navigation holds the HUD open. */
+    val reporter = LocalDpadFocusReporter.current
+    LaunchedEffect(isSliderBeingFocused) {
+        reporter?.invoke(isSliderBeingFocused)
+    }
+    DisposableEffect(reporter) {
+        onDispose { if (isSliderBeingFocused) reporter?.invoke(false) }
+    }
+
+    /* D-pad LEFT/RIGHT on the seekbar performs a configured-amount seek and broadcasts it
+     * to the room (instead of the Slider's default tiny-step change). UP/DOWN falls through
+     * to normal focus traversal. */
+    val seekbarKeyModifier = Modifier.onPreviewKeyEvent { event ->
+        if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+        when (event.key) {
+            Key.DirectionLeft -> { viewmodel.dispatcher.seekBckwd(); true }
+            Key.DirectionRight -> { viewmodel.dispatcher.seekFrwrd(); true }
+            else -> false
+        }
+    }
+
+    /* Visual focus indicator for D-pad: a gradient border matching the rest of the HUD. */
+    val focusIndicatorModifier = if (isSliderBeingFocused) Modifier.border(
+        width = 2.dp,
+        brush = Brush.linearGradient(colors = flexibleGradient),
+        shape = RoundedCornerShape(28.dp),
+    ) else Modifier
+
+    Box(modifier.then(seekbarKeyModifier).then(focusIndicatorModifier)) {
         Slider(
             value = sliderValue,
             onValueChange = { newVal ->

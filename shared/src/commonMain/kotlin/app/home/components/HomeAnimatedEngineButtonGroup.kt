@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.player.PlayerEngine
 import app.theme.Theming.flexibleGradient
+import app.uicomponents.tvFocusable
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
@@ -57,21 +58,23 @@ fun HomeAnimatedEngineButtonGroup(
                 animationSpec = spring()
             )
             
+            val cardShape = when (engines.indexOf(engine)) {
+                0 -> RoundedCornerShape(topStart = 24.dp, bottomStart = 24.dp)
+                engines.lastIndex -> RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp)
+                else -> RoundedCornerShape(0.dp)
+            }
             Card(
                 modifier = Modifier
                     .weight(animatedWeight)
-                    .height(56.dp),
+                    .height(56.dp)
+                    .tvFocusable(shape = cardShape, addFocusable = false),
                 colors = CardDefaults.cardColors(
-                    containerColor = if (isSelected) 
-                        MaterialTheme.colorScheme.primary 
-                    else 
+                    containerColor = if (isSelected)
+                        MaterialTheme.colorScheme.primary
+                    else
                         MaterialTheme.colorScheme.surfaceVariant
                 ),
-                shape = when (engines.indexOf(engine)) {
-                    0 -> RoundedCornerShape(topStart = 24.dp, bottomStart = 24.dp)
-                    engines.lastIndex -> RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp)
-                    else -> RoundedCornerShape(0.dp)
-                },
+                shape = cardShape,
                 onClick = { onSelectEngine(engine) }
             ) {
                 Row(
