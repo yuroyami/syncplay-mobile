@@ -15,6 +15,14 @@ on:
 permissions:
   contents: write
 
+env:
+  # Skip `brew update` — slow and rarely needed since the macos runner image
+  # ships current Homebrew + a recent formula snapshot.
+  HOMEBREW_NO_AUTO_UPDATE: 1
+  HOMEBREW_NO_INSTALL_CLEANUP: 1
+  # Gradle daemon adds overhead in single-invocation CI steps.
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.workers.max=4"
+
 jobs:
   # ───────────────────────────────────────────────────────────────────────────
   # Android Full Build (exoOnly=false) → 4 ABI APKs + 1 universal + 1 AAB
@@ -43,14 +51,43 @@ jobs:
 
       - uses: android-actions/setup-android@v3
 
+      # NDK is ~1GB and rarely changes (pinned in gradle.properties).
+      # Skip the install on cache hit.
+      - name: Cache Android NDK
+        id: ndk-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.ANDROID_HOME }}/ndk/29.0.14206865
+          key: android-ndk-29.0.14206865-${{ runner.os }}
+
       - name: Install NDK
+        if: steps.ndk-cache.outputs.cache-hit != 'true'
         run: sdkmanager "ndk;29.0.14206865"
 
-      # Native MPV build requires these tools for cross-compiling
-      # FFmpeg, libass, lua, harfbuzz, freetype, etc.
+      # Gradle dependency cache + Gradle build cache + wrapper distribution.
+      # Saves the dependency-download phase (~2-3 min on cold start).
+      - uses: gradle/actions/setup-gradle@v4
+
+      # Native MPV build (FFmpeg, libass, harfbuzz, freetype, mbedtls, dav1d,
+      # libplacebo, lua, fribidi, unibreak) cross-compiled for 4 ABIs.
+      # When the cache hits, NativeBuildConfig's `onlyIf` short-circuits the
+      # Exec task because all output libs are already on disk.
+      #
+      # Key inputs: every build script under buildscripts/ (depinfo.sh pins
+      # dep versions; per-lib scripts in scripts/ control build flags) plus
+      # gradle.properties (NDK version) plus the AppConfig lib list.
+      - name: Cache MPV native libs
+        id: mpv-cache
+        uses: actions/cache@v4
+        with:
+          path: androidApp/src/main/libs
+          key: mpv-libs-${{ runner.os }}-${{ hashFiles('buildscripts/mpv_*.sh', 'buildscripts/include/*.sh', 'buildscripts/scripts/*.sh', 'gradle.properties', 'buildSrc/src/main/kotlin/AppConfig.kt') }}
+
+      # Required by the MPV build chain. Skipped entirely when MPV libs are
+      # cached — no need to bootstrap the toolchain for a no-op task.
       - name: Install native build dependencies
-        run: |
-          brew install automake autoconf libtool pkg-config nasm meson
+        if: steps.mpv-cache.outputs.cache-hit != 'true'
+        run: brew install automake autoconf libtool pkg-config nasm meson
 
       - name: Decode keystore
         run: |
@@ -74,11 +111,11 @@ jobs:
           # DEBUG must be off
           sed -i '' "s/buildConfigField(\"DEBUG\", true)/buildConfigField(\"DEBUG\", false)/" shared/build.gradle.kts
 
-      - name: Build APKs
-        run: ./gradlew assembleFullRelease
-
-      - name: Build AAB
-        run: ./gradlew bundleFullRelease
+      # Single Gradle invocation — configuration phase runs once and the task
+      # graph shares the bulk of compileFullReleaseKotlin / minify / dex work
+      # between the assemble and bundle outputs.
+      - name: Build APKs and AAB
+        run: ./gradlew assembleFullRelease bundleFullRelease
 
       - name: Upload APKs
         uses: actions/upload-artifact@v4
@@ -106,6 +143,8 @@ jobs:
           java-version: '21'
 
       - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
 
       - name: Decode keystore
         run: |
@@ -153,6 +192,8 @@ jobs:
         with:
           xcode-version: latest-stable
 
+      - uses: gradle/actions/setup-gradle@v4
+
       - name: Create local.properties
         run: |
           cat > local.properties <<EOF
@@ -163,17 +204,46 @@ jobs:
         run: |
           sed -i '' "s/buildConfigField(\"DEBUG\", true)/buildConfigField(\"DEBUG\", false)/" shared/build.gradle.kts
 
-      - name: Setup CocoaPods
-        working-directory: ./iosApp
-        run: |
-          rm -rf Podfile.lock Pods
-          pod cache clean --all
-          pod repo update
+      # CocoaPods caches at three levels:
+      # 1. ~/.cocoapods/repos — the trunk spec repo (slow to refresh from CDN)
+      # 2. ~/Library/Caches/CocoaPods — downloaded pod sources
+      # 3. iosApp/Pods — fully installed pods, restored as a unit
+      #
+      # When Podfile.lock matches, the Pods cache restores the exact tree and
+      # `pod install` is skipped entirely.
+      - name: Cache CocoaPods spec repo
+        uses: actions/cache@v4
+        with:
+          path: ~/.cocoapods/repos
+          key: cocoapods-repos-${{ runner.os }}-${{ hashFiles('iosApp/Podfile.lock') }}
+          restore-keys: |
+            cocoapods-repos-${{ runner.os }}-
 
+      - name: Cache CocoaPods downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/CocoaPods
+          key: cocoapods-downloads-${{ runner.os }}-${{ hashFiles('iosApp/Podfile.lock') }}
+          restore-keys: |
+            cocoapods-downloads-${{ runner.os }}-
+
+      - name: Cache installed Pods
+        id: pods-cache
+        uses: actions/cache@v4
+        with:
+          path: iosApp/Pods
+          key: pods-${{ runner.os }}-${{ hashFiles('iosApp/Podfile.lock') }}
+
+      # KMP needs a dummy framework on disk before CocoaPods can resolve the
+      # `:shared` pod dependency. Cheap (~10s) so we run it unconditionally
+      # rather than coupling it to the Pods cache.
       - name: Generate shared framework
         run: ./gradlew :shared:generateDummyFramework
 
+      # On cache miss the lock has changed — refresh the spec repo so newly
+      # added pods can resolve. On cache hit this step is skipped entirely.
       - name: Install CocoaPods dependencies
+        if: steps.pods-cache.outputs.cache-hit != 'true'
         working-directory: ./iosApp
         run: pod install --repo-update
 
