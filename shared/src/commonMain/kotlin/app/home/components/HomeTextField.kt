@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.KeyboardActionHandler
 import androidx.compose.foundation.text.input.TextFieldLineLimits
@@ -34,6 +36,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -42,13 +45,15 @@ import app.theme.Theming.flexibleGradient
 import app.uicomponents.FlexibleIcon
 import app.uicomponents.gradientOverlay
 import app.uicomponents.tvFocusable
-import com.composeunstyled.TextInput
 import com.composeunstyled.UnstyledIcon
-import com.composeunstyled.UnstyledTextField
 
-// Bridges the existing value/onValueChange API of 13+ callers onto UnstyledTextField's
-// stateful TextFieldState API introduced in compose-unstyled 2.0. The internal sync is
-// loop-free thanks to equality checks on both directions.
+// We drive BasicTextField directly instead of compose-unstyled 2.0's UnstyledTextField + TextInput
+// because TextInput invokes its inner text composable wrap-content (innerTextField is internal),
+// which means textAlign = Center has no extra width to center within. Calling BasicTextField
+// directly lets us wrap the inner text in a fillMaxWidth Box so center alignment is visible.
+//
+// The wrapper also bridges the existing value/onValueChange API of 13+ callers onto the new
+// stateful TextFieldState. The two-way sync is loop-free thanks to equality checks.
 @Composable
 fun HomeTextField(
     modifier: Modifier,
@@ -85,19 +90,21 @@ fun HomeTextField(
     )
 
     val shape = RoundedCornerShape(cornerRadiusAnimated)
+    val textColor = MaterialTheme.colorScheme.onTertiaryContainer
 
-    UnstyledTextField(
+    BasicTextField(
         state = state,
         modifier = modifier.tvFocusable(
             focusRequester = focusRequester,
             shape = shape,
             addFocusable = false,
         ),
-        textColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        textStyle = TextStyle(color = textColor, textAlign = TextAlign.Center),
         lineLimits = TextFieldLineLimits.SingleLine,
-        textAlign = TextAlign.Center,
         enabled = enabled,
         readOnly = dropdownState != null,
+        cursorBrush = Brush.verticalGradient(colors = flexibleGradient),
+        keyboardOptions = KeyboardOptions(keyboardType = type ?: KeyboardType.Text),
         onKeyboardAction = KeyboardActionHandler {
             if (clearFocusWhenDone) {
                 focusManager.clearFocus(true)
@@ -105,43 +112,46 @@ fun HomeTextField(
                 focusManager.moveFocus(focusDirection = FocusDirection.Next)
             }
         },
-        cursorBrush = Brush.verticalGradient(colors = flexibleGradient),
-        keyboardOptions = KeyboardOptions(keyboardType = type ?: KeyboardType.Text)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().height(height)
-                .clip(shape)
-                .background(MaterialTheme.colorScheme.tertiaryContainer)
-                .border(width = Dp.Hairline, brush = Brush.linearGradient(colors = flexibleGradient), shape = shape)
-                .padding(PaddingValues(horizontal = 4.dp, vertical = 12.dp)),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (icon != null) {
-                FlexibleIcon(
-                    modifier = Modifier.padding(2.dp),
-                    icon = icon,
-                    shadowColors = listOf(MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.5f)),
-                    tintColors = listOf(MaterialTheme.colorScheme.onTertiaryContainer),
-                    size = 36
-                )
+        decorator = { innerTextField ->
+            Row(
+                modifier = Modifier.fillMaxWidth().height(height)
+                    .clip(shape)
+                    .background(MaterialTheme.colorScheme.tertiaryContainer)
+                    .border(width = Dp.Hairline, brush = Brush.linearGradient(colors = flexibleGradient), shape = shape)
+                    .padding(PaddingValues(horizontal = 4.dp, vertical = 12.dp)),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (icon != null) {
+                    FlexibleIcon(
+                        modifier = Modifier.padding(2.dp),
+                        icon = icon,
+                        shadowColors = listOf(textColor.copy(alpha = 0.5f)),
+                        tintColors = listOf(textColor),
+                        size = 36
+                    )
+                }
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(modifier = Modifier.wrapContentWidth(Alignment.CenterHorizontally)) {
+                        if (state.text.isEmpty() && label != null) {
+                            Text(label, color = Color.Gray)
+                        }
+                        innerTextField()
+                    }
+                }
+                // We either show a dropdown cursor or we fill the space with a transparent icon so
+                // that the input text remains exactly in the center.
+                if (dropdownState != null) {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownState.value, modifier = Modifier.gradientOverlay())
+                } else if (icon != null) {
+                    UnstyledIcon(
+                        imageVector = Icons.Default.Done, contentDescription = null,
+                        modifier = Modifier.padding(start = 4.dp), tint = Color.Transparent
+                    )
+                }
             }
-            Box(modifier = Modifier.weight(1f)) {
-                TextInput(
-                    placeholder = if (label != null) {
-                        { Text(label, color = Color.Gray) }
-                    } else null
-                )
-            }
-            // We either show a dropdown cursor or we fill the space with a transparent icon so
-            // that the input text remains exactly in the center.
-            if (dropdownState != null) {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownState.value, modifier = Modifier.gradientOverlay())
-            } else if (icon != null) {
-                UnstyledIcon(
-                    imageVector = Icons.Default.Done, contentDescription = null,
-                    modifier = Modifier.padding(start = 4.dp), tint = Color.Transparent
-                )
-            }
-        }
-    }
+        },
+    )
 }
