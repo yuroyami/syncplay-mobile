@@ -56,11 +56,10 @@ import app.uicomponents.FlexibleText
 import app.uicomponents.gradientOverlay
 import app.uicomponents.sairaFont
 import app.uicomponents.tvFocusable
-import com.composables.core.ScrollArea
-import com.composables.core.Thumb
-import com.composables.core.ThumbVisibility
-import com.composables.core.VerticalScrollbar
-import com.composables.core.rememberScrollAreaState
+import com.composeunstyled.Thumb
+import com.composeunstyled.ThumbVisibility
+import com.composeunstyled.UnstyledVerticalScrollbar
+import com.composeunstyled.rememberScrollbarState
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -259,14 +258,11 @@ object SettingsUI {
     @Composable
     fun SettingScreen(modifier: Modifier = Modifier, settingCategory: SettingCategory) {
         val vss = rememberScrollState()
-        val scrollAreaState = rememberScrollAreaState(vss)
+        val scrollbarState = rememberScrollbarState(vss)
         var columnHeight by remember { mutableStateOf(0.dp) }
         val density = LocalDensity.current
 
-        ScrollArea(
-            state = scrollAreaState,
-            modifier = modifier.fillMaxWidth()
-        ) {
+        Box(modifier = modifier.fillMaxWidth()) {
             Column(modifier = modifier.fillMaxWidth().verticalScroll(vss)
                 .onGloballyPositioned { coordinates ->
                     with(density) {
@@ -283,7 +279,8 @@ object SettingsUI {
                     )                }
             }
 
-            VerticalScrollbar(
+            UnstyledVerticalScrollbar(
+                scrollbarState = scrollbarState,
                 modifier = Modifier.align(Alignment.CenterEnd).width(4.dp).height(columnHeight)
             ) {
                 Thumb(

@@ -112,7 +112,7 @@ kotlin {
             implementation(libs.bundles.navigation3)
 
             /* ComposableHorizons' unstyled composables for more granularly-controlled components */
-            implementation(libs.compose.unstyled)
+            implementation(libs.bundles.compose.unstyled)
 
             /* MaterialKolor generates Material3 themes from seed colors */
             implementation(libs.materialKolor)

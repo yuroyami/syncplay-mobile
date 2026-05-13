@@ -69,8 +69,8 @@ import app.uicomponents.jostFont
 import app.uicomponents.lexendFont
 import app.utils.appName
 import app.utils.loggy
-import com.composeunstyled.Slider
-import com.composeunstyled.rememberSliderState
+import androidx.compose.runtime.mutableFloatStateOf
+import com.composeunstyled.UnstyledSlider
 import com.kborowy.colorpicker.KolorPicker
 import com.materialkolor.PaletteStyle
 import kotlinx.coroutines.launch
@@ -432,16 +432,18 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
 
                         HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
 
-                        val sliderState = rememberSliderState(initialValue = 0.0f, valueRange = (-1.0f..1.0f))
+                        var contrast by remember { mutableFloatStateOf(0f) }
 
-                        LaunchedEffect(sliderState.value) {
+                        LaunchedEffect(contrast) {
                             newTheme = newTheme.copy(
-                                contrast = sliderState.value.toDouble()
+                                contrast = contrast.toDouble()
                             )
                         }
 
-                        Slider(
-                            state = sliderState,
+                        UnstyledSlider(
+                            value = contrast,
+                            onValueChange = { contrast = it },
+                            valueRange = -1f..1f,
                             track = {
                                 Box(
                                     modifier = Modifier

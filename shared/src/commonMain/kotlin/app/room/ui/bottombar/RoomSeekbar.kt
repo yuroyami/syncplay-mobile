@@ -62,7 +62,6 @@ import app.utils.timestampFromMillis
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.math.roundToLong
-import com.composeunstyled.Thumb as UnstyledThumb
 
 
 @Composable
@@ -156,13 +155,13 @@ fun RoomSeekbar(modifier: Modifier) {
             interactionSource = sliderInteractionSource,
             valueRange = 0f..(videoFullDurationMs.toFloat()),
             thumb = {
-                UnstyledThumb(
-                    color = Color.DarkGray.copy(0.8f),
+                Box(
                     modifier = Modifier
                         .height(26.dp)
                         .width(if (isSliderBeingDragged) 8.dp else 8.dp) // keep it thin always
-                        .shadow(4.dp, CircleShape),
-                    shape = CircleShape
+                        .shadow(4.dp, CircleShape)
+                        .clip(CircleShape)
+                        .background(Color.DarkGray.copy(0.8f))
                 )
             },
             track = { state ->

@@ -76,7 +76,10 @@ datastore = { module = "androidx.datastore:datastore-preferences-core", version.
 filekit = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekit" }
 kolorpicker = { module = "com.kborowy:kolor-picker", version.ref = "kolorpicker" }
 uriKmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
-compose-unstyled = { module = "com.composables:composeunstyled-primitives", version.ref = "compose-unstyled" }
+compose-unstyled-text-field = { module = "com.composables:composeunstyled-text-field", version.ref = "compose-unstyled" }
+compose-unstyled-icon = { module = "com.composables:composeunstyled-icon", version.ref = "compose-unstyled" }
+compose-unstyled-slider = { module = "com.composables:composeunstyled-slider", version.ref = "compose-unstyled" }
+compose-unstyled-scrollbars = { module = "com.composables:composeunstyled-scrollbars", version.ref = "compose-unstyled" }
 materialKolor = { module = "com.materialkolor:material-kolor", version.ref = "materialkolor" }
 atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
@@ -128,6 +131,10 @@ media3 = [
     "m3-ui", "m3-session", "m3-extractor", "m3-decoder", "m3-datasource", "m3-common"
 ]
 krypto = ["krypto-digest", "krypto-md", "krypto-sha1", "krypto-sha2"]
+compose-unstyled = [
+    "compose-unstyled-text-field", "compose-unstyled-icon",
+    "compose-unstyled-slider", "compose-unstyled-scrollbars"
+]
 coil = ["coil-compose", "coil-network-ktor"]
 ktor-client = ["ktor-client-core", "ktor-client-content-negotiation", "ktor-serialization-json", "ktor-client-logging"]
 navigation3 = ["navigation3-runtime", "navigation3-ui"]
