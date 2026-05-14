@@ -35,10 +35,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Extract version from AppConfig
+      - name: Extract version from build.gradle.kts
         id: version
         run: |
-          VERSION=$(grep 'const val versionName' buildSrc/src/main/kotlin/AppConfig.kt | sed 's/.*"\(.*\)".*/\1/')
+          # versionName lives in the kmpSsot { } block in the root build script,
+          # not in AppConfig.kt (the plugin owns it — see AppConfig.kt header comment).
+          VERSION=$(grep -E '^[[:space:]]+versionName[[:space:]]*=' build.gradle.kts | sed 's/.*"\(.*\)".*/\1/')
+          if [ -z "$VERSION" ]; then
+            echo "::error::Could not extract versionName from build.gradle.kts" >&2
+            exit 1
+          fi
           VERSION_CODE=$(python3 -c "v='$VERSION'.split('.'); print('1' + ''.join(s.zfill(3) for s in v))")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
@@ -111,11 +117,18 @@ jobs:
           # DEBUG must be off
           sed -i '' "s/buildConfigField(\"DEBUG\", true)/buildConfigField(\"DEBUG\", false)/" shared/build.gradle.kts
 
-      # Single Gradle invocation — configuration phase runs once and the task
-      # graph shares the bulk of compileFullReleaseKotlin / minify / dex work
-      # between the assemble and bundle outputs.
-      - name: Build APKs and AAB
-        run: ./gradlew assembleFullRelease bundleFullRelease
+      # Two Gradle invocations — assembleFullRelease builds the per-ABI APKs
+      # (4 splits + 1 universal) with `splits.abi` enabled; bundleFullRelease
+      # builds the AAB with splits disabled. Mixing both in one invocation is
+      # explicitly unsupported by androidApp/build.gradle.kts (see the comment
+      # at `isBuildingBundle`) — splits get switched off and only the universal
+      # APK ships, which is the bug that produced a single 115 MB universal in
+      # an earlier release. The trade-off is paying configuration twice.
+      - name: Build APKs (per-ABI splits + universal)
+        run: ./gradlew assembleFullRelease
+
+      - name: Build AAB
+        run: ./gradlew bundleFullRelease
 
       - name: Upload APKs
         uses: actions/upload-artifact@v4
@@ -304,7 +317,11 @@ jobs:
       - name: Rename and extract version for IPA
         id: ipa
         run: |
-          VERSION=$(grep 'const val versionName' buildSrc/src/main/kotlin/AppConfig.kt | sed 's/.*"\(.*\)".*/\1/')
+          VERSION=$(grep -E '^[[:space:]]+versionName[[:space:]]*=' build.gradle.kts | sed 's/.*"\(.*\)".*/\1/')
+          if [ -z "$VERSION" ]; then
+            echo "::error::Could not extract versionName from build.gradle.kts" >&2
+            exit 1
+          fi
           IPA_SRC=$(ls $RUNNER_TEMP/build/*.ipa | head -1)
           IPA_NAME="synkplay-${VERSION}-ios.ipa"
           cp "$IPA_SRC" "$RUNNER_TEMP/$IPA_NAME"
