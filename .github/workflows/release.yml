@@ -220,10 +220,17 @@ jobs:
       # CocoaPods caches at three levels:
       # 1. ~/.cocoapods/repos — the trunk spec repo (slow to refresh from CDN)
       # 2. ~/Library/Caches/CocoaPods — downloaded pod sources
-      # 3. iosApp/Pods — fully installed pods, restored as a unit
+      # 3. iosApp/Pods — installed Pods tree, restored as a unit to skip
+      #    framework extraction
       #
-      # When Podfile.lock matches, the Pods cache restores the exact tree and
-      # `pod install` is skipped entirely.
+      # `pod install` always runs (cheap with sources cached) so the generated
+      # files inside Pods/ — xcfilelist inputs/outputs, .xcconfig, manifest,
+      # Pods.xcodeproj — are regenerated to match the installed CocoaPods/Xcode
+      # versions on the runner. Caching `iosApp/Pods` alone and skipping
+      # `pod install` is fragile: the cached tree carries over generated
+      # artifacts from an older CocoaPods version, and the new Xcode then fails
+      # with `Unable to load contents of file list ... .xcfilelist` (which is
+      # what blocked the 2026-05-18 release run).
       - name: Cache CocoaPods spec repo
         uses: actions/cache@v4
         with:
@@ -253,12 +260,19 @@ jobs:
       - name: Generate shared framework
         run: ./gradlew :shared:generateDummyFramework
 
-      # On cache miss the lock has changed — refresh the spec repo so newly
-      # added pods can resolve. On cache hit this step is skipped entirely.
+      # Always run pod install so the xcfilelist/xcconfig/manifest under
+      # iosApp/Pods/Target Support Files match the runner's current CocoaPods
+      # version. With sources cached this is ~30s.
+      # --repo-update only on cold start — refreshing the spec repo from CDN
+      # is the slow part and not needed when the lock hasn't changed.
       - name: Install CocoaPods dependencies
-        if: steps.pods-cache.outputs.cache-hit != 'true'
         working-directory: ./iosApp
-        run: pod install --repo-update
+        run: |
+          if [ "${{ steps.pods-cache.outputs.cache-hit }}" = "true" ]; then
+            pod install
+          else
+            pod install --repo-update
+          fi
 
       - name: Setup App Store Connect API key
         env:
