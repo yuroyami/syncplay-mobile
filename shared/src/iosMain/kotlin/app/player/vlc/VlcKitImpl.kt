@@ -117,16 +117,30 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
 
     private var pausedSeekPosition: Long? = null
 
+    /**
+     * True only during the brief window where we open freshly injected media with
+     * ":start-paused" purely to paint its first frame (see [injectVideoFileImpl]). VLCKit
+     * can momentarily report [VLCMediaPlayerStatePlaying] before settling on Paused during
+     * that open; surfacing it as [PlayerManager.isNowPlaying] = true would make
+     * [ProtocolManager]'s channel-health collector broadcast a spurious "unpaused" to the
+     * room and desync everyone. While this flag is set, the delegate swallows that Playing
+     * state. Cleared once the player settles into Paused/Stopped or any deliberate
+     * play()/pause() arrives. Plain var (not atomic) to match [pausedSeekPosition]'s
+     * existing main-thread-write / libvlc-thread-read pattern.
+     */
+    private var primingFirstFrame = false
+
     /** Observer tokens for AVAudioSession notifications. Kept so we can unregister on destroy. */
     private var interruptionObserver: NSObjectProtocol? = null
     private var routeChangeObserver: NSObjectProtocol? = null
 
     /**
      * Observer for [UIApplicationDidBecomeActiveNotification]. After the app has been
-     * backgrounded, VLCKit 4's render layer attached to our drawable's containerView is
-     * left in a stale state — coming back to foreground shows a white frame instead of
-     * resuming video. Re-binding the drawable forces VLCKit to re-run its addSubview
-     * flow with a fresh render UIView.
+     * backgrounded — including the screen being locked/unlocked while a video is open —
+     * VLCKit 4's render layer attached to our drawable's containerView is left in a stale
+     * state — coming back to foreground shows a blank (white/black) frame instead of
+     * resuming video. Recovery is handled by [rebindDrawableAndRepaint]. See its doc for
+     * why a paused player additionally needs a forced frame.
      */
     private var didBecomeActiveObserver: NSObjectProtocol? = null
 
@@ -289,12 +303,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                         // doesn't always trigger DidBecomeActive (the user may have been
                         // in the app the whole time, with PiP just floating over it).
                         if (!isStarted) {
-                            playerScopeMain.launch {
-                                val p = vlcPlayer ?: return@launch
-                                if (p.media == null) return@launch
-                                p.drawable = null
-                                p.drawable = vlcDrawable
-                            }
+                            playerScopeMain.launch { rebindDrawableAndRepaint() }
                         }
                     }
                 }
@@ -426,26 +435,53 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
             } catch (_: Exception) { }
         }
 
-        // After backgrounding, VLCKit 4's render layer hosted on our drawable's
-        // containerView is sometimes left disconnected — the app comes back showing a
-        // white frame instead of resuming video. We've also seen reports of a frozen
-        // last-frame in similar setups. Toggling drawable to nil and back forces VLCKit
-        // to drop its stale render UIView and call addSubview on us with a fresh one.
-        // We listen on DidBecomeActive (rather than WillEnterForeground) so the layout
-        // pass has settled and the containerView's bounds are valid by the time we
-        // re-bind.
+        // After backgrounding (app switch OR a screen lock/unlock with the player open),
+        // VLCKit 4's render layer hosted on our drawable's containerView is sometimes left
+        // disconnected — the app comes back showing a blank frame instead of resuming
+        // video. [rebindDrawableAndRepaint] drops the stale render UIView and forces a
+        // fresh one (plus a frame when paused). We listen on DidBecomeActive (rather than
+        // WillEnterForeground) so the layout pass has settled and the containerView's
+        // bounds are valid by the time we re-bind.
         didBecomeActiveObserver = center.addObserverForName(
             name = UIApplicationDidBecomeActiveNotification,
             `object` = null,
             queue = queue
         ) { _ ->
-            val drawable = vlcDrawable ?: return@addObserverForName
-            val player = vlcPlayer ?: return@addObserverForName
-            // Skip if there's no media — nothing to render anyway, and rebinding an
-            // empty player can confuse VLCKit's PiP setup.
-            if (player.media == null) return@addObserverForName
-            player.drawable = null
-            player.drawable = drawable
+            playerScopeMain.launch { rebindDrawableAndRepaint() }
+        }
+    }
+
+    /**
+     * Re-attaches the render surface to [vlcDrawable] and, when paused, decodes a single
+     * frame so the freshly-attached render view actually shows the current frame instead
+     * of staying blank/black. Shared by the foreground-recovery (DidBecomeActive) and
+     * PiP-stop recovery paths. Must run on the main thread (callers wrap in
+     * `playerScopeMain.launch`).
+     *
+     * **Why the extra frame when paused:** setting `drawable` makes VLCKit hand us a brand
+     * new (empty) render UIView via [VlcDrawable.addSubview]. VLC only paints into it when
+     * it produces a frame. While playing, the next decoded frame fills it within ~1 frame,
+     * so the rebind alone is enough. While PAUSED — the usual state when someone locks
+     * their phone mid-session — no new frame is ever produced, so the view would stay
+     * black until the user seeks/plays. [VLCMediaPlayer.gotoNextFrame] decodes and presents
+     * exactly one frame (and leaves the player paused), repainting the recovered surface.
+     * The ~1-frame advance (~20-40 ms) is far below the protocol's 1 s seek threshold, so
+     * the room can't mistake it for a user seek.
+     */
+    private suspend fun rebindDrawableAndRepaint() {
+        val player = vlcPlayer ?: return
+        val drawable = vlcDrawable ?: return
+        // Skip if there's no media — nothing to render anyway, and rebinding an empty
+        // player can confuse VLCKit's PiP setup.
+        if (player.media == null) return
+        player.drawable = null
+        player.drawable = drawable
+        if (!player.isPlaying()) {
+            // Give VLCKit a beat to stand up the fresh vout behind the rebind before we
+            // ask it to paint a frame into it.
+            delay(120)
+            val p = vlcPlayer ?: return
+            if (p.media != null && !p.isPlaying()) p.gotoNextFrame()
         }
     }
 
@@ -649,7 +685,18 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         // VLCKit 4 removed synchronousParse(); kick off an async local parse and
         // let parseMedia() poll length below.
         vlcMedia?.parseWithOptions(VLCMediaParseLocal.toInt())
+        // Show the first frame as soon as the file is injected instead of a black surface.
+        // VLCKit only spins up its video output (and decodes a frame) once playback starts,
+        // and our load flow never auto-plays — so without this a freshly injected file shows
+        // nothing until the room/user unpauses. ":start-paused" makes libvlc open the input,
+        // decode + present frame 1, then immediately pause itself, so the poster frame is
+        // visible while the room is still paused; the later sync-driven play()/seekTo()
+        // resume from there. (Verified ":start-paused" is a real option in this VLCKit build,
+        // so play() lands paused-on-frame-1 rather than actually starting playback.)
+        vlcMedia?.addOption(":start-paused")
         vlcPlayer?.setMedia(vlcMedia)
+        primingFirstFrame = true
+        vlcPlayer?.play()
     }
 
     override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
@@ -667,7 +714,12 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
             vlcMedia?.addOption(":clock-jitter=0")
             vlcMedia?.addOption(":clock-synchro=0")
         }
+        // Open paused so the first frame paints immediately instead of a black surface
+        // while the room is paused — see injectVideoFileImpl for the full rationale.
+        vlcMedia?.addOption(":start-paused")
         vlcPlayer?.setMedia(vlcMedia)
+        primingFirstFrame = true
+        vlcPlayer?.play()
     }
 
     override suspend fun parseMedia(media: MediaFile) {
@@ -705,6 +757,8 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         withContext(Dispatchers.Main.immediate) {
             val player = vlcPlayer ?: return@withContext
             if (player.media == null) return@withContext
+            // A deliberate pause ends any first-frame priming window.
+            primingFirstFrame = false
             player.pause()
         }
     }
@@ -718,6 +772,9 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         withContext(Dispatchers.Main.immediate) {
             val player = vlcPlayer ?: return@withContext
             if (player.media == null) return@withContext
+            // A real play ends the first-frame priming window, so a subsequent Playing
+            // state is surfaced normally rather than swallowed.
+            primingFirstFrame = false
             pausedSeekPosition = null // VLC becomes reliable at updating time, again
             player.play()
         }
@@ -888,15 +945,23 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
             // method takes vlc_player_Lock, which asserts when timer.lock is held.
             when (newState) {
                 VLCMediaPlayerState.VLCMediaPlayerStatePlaying -> {
-                    playerManager.isNowPlaying.value = true
-                    pausedSeekPosition = null
+                    // Swallow the transient Playing emitted while opening freshly injected
+                    // media with ":start-paused" (see [primingFirstFrame]) — otherwise the
+                    // channel-health collector would broadcast a bogus "unpaused" to the
+                    // room. The Paused state that immediately follows clears the flag.
+                    if (!primingFirstFrame) {
+                        playerManager.isNowPlaying.value = true
+                        pausedSeekPosition = null
+                    }
                 }
                 VLCMediaPlayerState.VLCMediaPlayerStatePaused -> {
+                    primingFirstFrame = false
                     playerManager.isNowPlaying.value = false
                 }
                 VLCMediaPlayerState.VLCMediaPlayerStateStopped -> {
                     // Real end of playback (natural EOF or explicit stop) — reflect
                     // that in the button so it doesn't stay stuck showing "pause".
+                    primingFirstFrame = false
                     playerManager.isNowPlaying.value = false
                     onPlaybackEnded()
                 }

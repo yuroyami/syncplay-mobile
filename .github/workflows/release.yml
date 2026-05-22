@@ -217,6 +217,33 @@ jobs:
         run: |
           sed -i '' "s/buildConfigField(\"DEBUG\", true)/buildConfigField(\"DEBUG\", false)/" shared/build.gradle.kts
 
+      # Stamp the iOS version from the SSOT (kmpSsot.versionName in build.gradle.kts)
+      # into the Xcode project BEFORE xcodebuild reads it.
+      #
+      # The kmp-ssot plugin normally rewrites MARKETING_VERSION/CURRENT_PROJECT_VERSION
+      # in the pbxproj, but it does so during the iOS framework *link* task — which runs
+      # from the CocoaPods "[CP] Build" script phase partway through the archive. By then
+      # Xcode has already read the committed (stale) version and baked it into Info.plist
+      # (CFBundleShortVersionString = $(MARKETING_VERSION)). Locally you build twice and
+      # commit the rewritten pbxproj, so it self-corrects; a one-shot CI `clean archive`
+      # uploads the previous version. Stamping here makes CI authoritative regardless of
+      # what's committed.
+      - name: Stamp iOS version from SSOT
+        id: version
+        run: |
+          VERSION=$(grep -E '^[[:space:]]+versionName[[:space:]]*=' build.gradle.kts | sed 's/.*"\(.*\)".*/\1/')
+          if [ -z "$VERSION" ]; then
+            echo "::error::Could not extract versionName from build.gradle.kts" >&2
+            exit 1
+          fi
+          VERSION_CODE=$(python3 -c "v='$VERSION'.split('.'); print('1' + ''.join(s.zfill(3) for s in v))")
+          PBXPROJ=iosApp/iosApp.xcodeproj/project.pbxproj
+          sed -i '' "s/MARKETING_VERSION = [^;]*;/MARKETING_VERSION = $VERSION;/g" "$PBXPROJ"
+          sed -i '' "s/CURRENT_PROJECT_VERSION = [^;]*;/CURRENT_PROJECT_VERSION = $VERSION_CODE;/g" "$PBXPROJ"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "version_code=$VERSION_CODE" >> "$GITHUB_OUTPUT"
+          echo "iOS version stamped: $VERSION (build $VERSION_CODE)"
+
       # CocoaPods caches at three levels:
       # 1. ~/.cocoapods/repos — the trunk spec repo (slow to refresh from CDN)
       # 2. ~/Library/Caches/CocoaPods — downloaded pod sources
@@ -328,14 +355,10 @@ jobs:
             --apiIssuer $APP_STORE_CONNECT_ISSUER_ID \
             --apiPrivateKey ~/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
 
-      - name: Rename and extract version for IPA
+      - name: Rename IPA
         id: ipa
         run: |
-          VERSION=$(grep -E '^[[:space:]]+versionName[[:space:]]*=' build.gradle.kts | sed 's/.*"\(.*\)".*/\1/')
-          if [ -z "$VERSION" ]; then
-            echo "::error::Could not extract versionName from build.gradle.kts" >&2
-            exit 1
-          fi
+          VERSION="${{ steps.version.outputs.version }}"
           IPA_SRC=$(ls $RUNNER_TEMP/build/*.ipa | head -1)
           IPA_NAME="synkplay-${VERSION}-ios.ipa"
           cp "$IPA_SRC" "$RUNNER_TEMP/$IPA_NAME"

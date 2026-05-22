@@ -1,19 +1,25 @@
 package app.room.ui.bottombar
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardTab
@@ -91,6 +97,10 @@ import app.uicomponents.FlexibleText
 import app.uicomponents.jostFont
 import app.utils.ccExs
 import app.utils.timestampFromMillis
+import com.composeunstyled.Thumb
+import com.composeunstyled.ThumbVisibility
+import com.composeunstyled.UnstyledVerticalScrollbar
+import com.composeunstyled.rememberScrollbarState
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import kotlinx.coroutines.Dispatchers
@@ -383,6 +393,8 @@ fun RoomControlPanelCard(modifier: Modifier) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         val audioTracks = viewmodel.media?.tracks?.filter { it.type == PlayerImpl.TrackType.AUDIO } ?: emptyList()
         val subtitleTracks = viewmodel.media?.tracks?.filter { it.type == PlayerImpl.TrackType.SUBTITLE } ?: emptyList()
+        val audioListState = rememberLazyListState()
+        val subtitleListState = rememberLazyListState()
 
         ModalBottomSheet(
             onDismissRequest = { showTrackSheet = false },
@@ -421,24 +433,28 @@ fun RoomControlPanelCard(modifier: Modifier) {
                     }
                     HorizontalDivider(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp))
 
-                    LazyColumn(
-                        contentPadding = PaddingValues(vertical = 4.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        itemsIndexed(audioTracks) { i, track ->
-                            TrackRow(
-                                label = "${i + 1}. ${track.name}",
-                                selected = track.selected,
-                                onClick = {
-                                    haptic()
-                                    showTrackSheet = false
-                                    viewmodel.viewModelScope.launch {
-                                        viewmodel.player.selectTrack(track, PlayerImpl.TrackType.AUDIO)
+                    Box(modifier = Modifier.weight(1f)) {
+                        LazyColumn(
+                            state = audioListState,
+                            contentPadding = PaddingValues(vertical = 4.dp),
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            itemsIndexed(audioTracks) { i, track ->
+                                TrackRow(
+                                    label = "${i + 1}. ${track.name}",
+                                    selected = track.selected,
+                                    onClick = {
+                                        haptic()
+                                        showTrackSheet = false
+                                        viewmodel.viewModelScope.launch {
+                                            viewmodel.player.selectTrack(track, PlayerImpl.TrackType.AUDIO)
+                                        }
+                                        viewmodel.dispatchOSD { "Audio: ${track.name}" }
                                     }
-                                    viewmodel.dispatchOSD { "Audio: ${track.name}" }
-                                }
-                            )
+                                )
+                            }
                         }
+                        ListScrollbar(audioListState)
                     }
                 }
 
@@ -464,66 +480,70 @@ fun RoomControlPanelCard(modifier: Modifier) {
                     }
                     HorizontalDivider(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp))
 
-                    LazyColumn(
-                        contentPadding = PaddingValues(vertical = 4.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        /* Import from file */
-                        item {
-                            TrackRow(
-                                label = stringResource(Res.string.room_button_desc_subtitle_tracks_import_from_file),
-                                icon = Icons.AutoMirrored.Filled.NoteAdd,
-                                onClick = {
-                                    haptic()
-                                    launchSubtitlePickerAfterDismiss = true
-                                    showTrackSheet = false
-                                }
-                            )
-                        }
-                        /* Search online */
-                        item {
-                            TrackRow(
-                                label = stringResource(Res.string.room_sub_search_download_from_web),
-                                icon = Icons.Filled.Search,
-                                onClick = {
-                                    haptic()
-                                    showTrackSheet = false
-                                    showSubtitleSearch = true
-                                }
-                            )
-                        }
-                        /* Disable subtitles */
-                        item {
-                            TrackRow(
-                                label = stringResource(Res.string.room_sub_track_disable),
-                                icon = Icons.Filled.ClosedCaptionDisabled,
-                                onClick = {
-                                    haptic()
-                                    showTrackSheet = false
-                                    viewmodel.viewModelScope.launch {
-                                        viewmodel.player.selectTrack(null, PlayerImpl.TrackType.SUBTITLE)
+                    Box(modifier = Modifier.weight(1f)) {
+                        LazyColumn(
+                            state = subtitleListState,
+                            contentPadding = PaddingValues(vertical = 4.dp),
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            /* Import from file */
+                            item {
+                                TrackRow(
+                                    label = stringResource(Res.string.room_button_desc_subtitle_tracks_import_from_file),
+                                    icon = Icons.AutoMirrored.Filled.NoteAdd,
+                                    onClick = {
+                                        haptic()
+                                        launchSubtitlePickerAfterDismiss = true
+                                        showTrackSheet = false
                                     }
-                                    viewmodel.dispatchOSD {
-                                        getString(Res.string.room_sub_track_disable)
+                                )
+                            }
+                            /* Search online */
+                            item {
+                                TrackRow(
+                                    label = stringResource(Res.string.room_sub_search_download_from_web),
+                                    icon = Icons.Filled.Search,
+                                    onClick = {
+                                        haptic()
+                                        showTrackSheet = false
+                                        showSubtitleSearch = true
                                     }
-                                }
-                            )
-                        }
-                        /* Available subtitle tracks */
-                        itemsIndexed(subtitleTracks) { i, track ->
-                            TrackRow(
-                                label = "${i + 1}. ${track.name}",
-                                selected = track.selected,
-                                onClick = {
-                                    haptic()
-                                    showTrackSheet = false
-                                    viewmodel.viewModelScope.launch {
-                                        viewmodel.player.selectTrack(track, PlayerImpl.TrackType.SUBTITLE)
+                                )
+                            }
+                            /* Disable subtitles */
+                            item {
+                                TrackRow(
+                                    label = stringResource(Res.string.room_sub_track_disable),
+                                    icon = Icons.Filled.ClosedCaptionDisabled,
+                                    onClick = {
+                                        haptic()
+                                        showTrackSheet = false
+                                        viewmodel.viewModelScope.launch {
+                                            viewmodel.player.selectTrack(null, PlayerImpl.TrackType.SUBTITLE)
+                                        }
+                                        viewmodel.dispatchOSD {
+                                            getString(Res.string.room_sub_track_disable)
+                                        }
                                     }
-                                    viewmodel.dispatchOSD { "Subtitle: ${track.name}" }
-                                }
-                            )
+                                )
+                            }
+                            /* Available subtitle tracks */
+                            itemsIndexed(subtitleTracks) { i, track ->
+                                TrackRow(
+                                    label = "${i + 1}. ${track.name}",
+                                    selected = track.selected,
+                                    onClick = {
+                                        haptic()
+                                        showTrackSheet = false
+                                        viewmodel.viewModelScope.launch {
+                                            viewmodel.player.selectTrack(track, PlayerImpl.TrackType.SUBTITLE)
+                                        }
+                                        viewmodel.dispatchOSD { "Subtitle: ${track.name}" }
+                                    }
+                                )
+                            }
                         }
+                        ListScrollbar(subtitleListState)
                     }
                 }
             }
@@ -543,6 +563,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
         var searchResults by remember { mutableStateOf<List<app.subtitles.SubtitleResult>>(emptyList()) }
         var isSearching by remember { mutableStateOf(false) }
         var isDownloading by remember { mutableStateOf<Int?>(null) }
+        val searchListState = rememberLazyListState()
 
         fun doSearch() {
             if (searchQuery.isBlank()) return
@@ -615,66 +636,70 @@ fun RoomControlPanelCard(modifier: Modifier) {
                         }
                     }
                     else -> {
-                        LazyColumn(
-                            modifier = Modifier.weight(1f),
-                            contentPadding = PaddingValues(vertical = 4.dp)
-                        ) {
-                            itemsIndexed(searchResults) { _, result ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable(enabled = isDownloading == null) {
-                                            isDownloading = result.fileId
-                                            scope.launch(Dispatchers.IO) {
-                                                val path = SubtitleSearch.download(result.fileId)
-                                                if (path != null) {
-                                                    val filename = path.substringAfterLast('/')
-                                                    viewmodel.player.loadSubtitleFromPath(path, filename)
+                        Box(modifier = Modifier.weight(1f)) {
+                            LazyColumn(
+                                state = searchListState,
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(vertical = 4.dp)
+                            ) {
+                                itemsIndexed(searchResults) { _, result ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable(enabled = isDownloading == null) {
+                                                isDownloading = result.fileId
+                                                scope.launch(Dispatchers.IO) {
+                                                    val path = SubtitleSearch.download(result.fileId)
+                                                    if (path != null) {
+                                                        val filename = path.substringAfterLast('/')
+                                                        viewmodel.player.loadSubtitleFromPath(path, filename)
+                                                    }
+                                                    isDownloading = null
+                                                    showSubtitleSearch = false
                                                 }
-                                                isDownloading = null
-                                                showSubtitleSearch = false
                                             }
-                                        }
-                                        .padding(horizontal = 8.dp, vertical = 10.dp),
-                                    verticalAlignment = CenterVertically
-                                ) {
-                                    if (isDownloading == result.fileId) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(16.dp).padding(end = 4.dp),
-                                            strokeWidth = 2.dp
-                                        )
-                                    } else {
-                                        Icon(
-                                            Icons.Filled.Download, null,
-                                            modifier = Modifier.padding(end = 8.dp),
-                                            tint = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = result.releaseInfo.ifBlank { result.filename },
-                                            fontSize = 12.sp,
-                                            maxLines = 1,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                        Row {
-                                            Text(
-                                                text = "${result.language.uppercase()} · ${result.downloadCount} ${stringResource(Res.string.room_sub_search_downloads)}",
-                                                fontSize = 10.sp,
-                                                color = Color.Gray
+                                            .padding(horizontal = 8.dp, vertical = 10.dp),
+                                        verticalAlignment = CenterVertically
+                                    ) {
+                                        if (isDownloading == result.fileId) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(16.dp).padding(end = 4.dp),
+                                                strokeWidth = 2.dp
                                             )
-                                            if (result.hearingImpaired) {
-                                                Spacer(Modifier.width(4.dp))
-                                                Icon(
-                                                    Icons.Filled.HearingDisabled, null,
-                                                    modifier = Modifier.size(12.dp),
-                                                    tint = Color.Gray
+                                        } else {
+                                            Icon(
+                                                Icons.Filled.Download, null,
+                                                modifier = Modifier.padding(end = 8.dp),
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = result.releaseInfo.ifBlank { result.filename },
+                                                fontSize = 12.sp,
+                                                maxLines = 1,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Row {
+                                                Text(
+                                                    text = "${result.language.uppercase()} · ${result.downloadCount} ${stringResource(Res.string.room_sub_search_downloads)}",
+                                                    fontSize = 10.sp,
+                                                    color = Color.Gray
                                                 )
+                                                if (result.hearingImpaired) {
+                                                    Spacer(Modifier.width(4.dp))
+                                                    Icon(
+                                                        Icons.Filled.HearingDisabled, null,
+                                                        modifier = Modifier.size(12.dp),
+                                                        tint = Color.Gray
+                                                    )
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
+                            ListScrollbar(searchListState)
                         }
                     }
                 }
@@ -716,6 +741,28 @@ private fun TrackRow(
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
             color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
         )
+    }
+}
+
+/** Thin overlay scrollbar pinned to the trailing edge of its [Box]. Rendered only while the list
+ * can actually scroll, so an overflowing track list reads as scrollable instead of a clipped block,
+ * while a list that fits stays free of a stray bar. */
+@Composable
+private fun BoxScope.ListScrollbar(listState: LazyListState) {
+    val scrollbarState = rememberScrollbarState(listState)
+    if (listState.canScrollForward || listState.canScrollBackward) {
+        UnstyledVerticalScrollbar(
+            scrollbarState = scrollbarState,
+            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().width(4.dp)
+        ) {
+            Thumb(
+                modifier = Modifier.background(
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f),
+                    shape = RoundedCornerShape(2.dp)
+                ),
+                thumbVisibility = ThumbVisibility.AlwaysVisible
+            )
+        }
     }
 }
 

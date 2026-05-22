@@ -71,6 +71,14 @@ internal class VlcDrawable(
     // since VLCKit will never actually pass nil here in practice.
     override fun addSubview(view: UIView?) {
         if (view == null) return
+        // VLCKit hands us a brand-new render view on every (re)bind — first attach, each
+        // foreground recovery (UIApplicationDidBecomeActive) and each PiP stop. Drop any
+        // previously attached render view first, otherwise repeated lock/unlock or PiP
+        // cycles stack abandoned render surfaces on top of each other inside the
+        // container (the topmost — possibly blank — one wins, and the dead ones leak).
+        // containerView is dedicated to VLC's output, so clearing all its subviews here
+        // is safe.
+        containerView.subviews.forEach { (it as? UIView)?.removeFromSuperview() }
         // Size the render view to fill the container, and pin it there with an
         // autoresizing mask so subsequent rotations / layout passes keep it stretched.
         // Without this, VLCKit's render view sometimes lands at zero-size (especially
