@@ -1,5 +1,5 @@
 plugins {
-    id("io.github.yuroyami.kmpssot") version "1.2.0"
+    id("io.github.yuroyami.kmpssot") version "1.3.1"
 
     alias(libs.plugins.kotlin.multiplatform).apply(false)
     alias(libs.plugins.kotlin.android).apply(false)
@@ -21,7 +21,7 @@ plugins {
 
 kmpSsot {
     appName         = "Synkplay"
-    versionName     = "0.21.10"
+    versionName     = "0.22.0"
     bundleIdBase    = "com.yuroyami.syncplay"
     iosBundleSuffix = ".iosApp"
 
