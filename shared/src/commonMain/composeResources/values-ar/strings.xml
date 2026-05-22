@@ -434,8 +434,6 @@
     <string name="uisetting_haptic_on_playlist_title">تحديث قائمة التشغيل</string>
     <string name="uisetting_haptic_on_seeked_summary">اهتزاز عند تقديم/ترجيع شخص ما في الفيديو.</string>
     <string name="uisetting_haptic_on_seeked_title">تقديم/ترجيع من شخص</string>
-    <string name="uisetting_hud_autohide_summary">عدد ثواني عدم النشاط قبل إخفاء HUD تلقائياً. اضبطه على 0 لتعطيل الإخفاء التلقائي.</string>
-    <string name="uisetting_hud_autohide_title">مهلة الإخفاء التلقائي لـ HUD</string>
     <string name="uisetting_osd_duration_summary">عدد الثواني لعرض رسائل الحالة على الشاشة (مثل تغييرات نسبة العرض، اختيارات المسار). اضبطه على 0 لتعطيل رسائل OSD.</string>
     <string name="uisetting_osd_duration_title">مدة رسائل OSD</string>
     <string name="uisetting_show_chapter_dots_summary">عرض علامات نقاط الفصول على شريط التقدم عند توفرها.</string>

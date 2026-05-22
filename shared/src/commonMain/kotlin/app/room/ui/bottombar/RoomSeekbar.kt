@@ -20,7 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -56,7 +55,6 @@ import app.preferences.Preferences.CHAPTER_DOTS_CLICKABLE
 import app.preferences.Preferences.SHOW_CHAPTER_DOTS
 import app.preferences.watchPref
 import app.theme.Theming.flexibleGradient
-import app.uicomponents.LocalDpadFocusReporter
 import app.uicomponents.gradientOverlay
 import app.utils.timestampFromMillis
 import kotlinx.coroutines.Dispatchers
@@ -103,15 +101,6 @@ fun RoomSeekbar(modifier: Modifier) {
     var trackWidthPx by remember { mutableIntStateOf(0) }
 
     var isSliding by remember { mutableStateOf(false) }
-
-    /* Report slider focus to the HUD reporter so D-pad navigation holds the HUD open. */
-    val reporter = LocalDpadFocusReporter.current
-    LaunchedEffect(isSliderBeingFocused) {
-        reporter?.invoke(isSliderBeingFocused)
-    }
-    DisposableEffect(reporter) {
-        onDispose { if (isSliderBeingFocused) reporter?.invoke(false) }
-    }
 
     /* D-pad LEFT/RIGHT on the seekbar performs a configured-amount seek and broadcasts it
      * to the room (instead of the Slider's default tiny-step change). UP/DOWN falls through

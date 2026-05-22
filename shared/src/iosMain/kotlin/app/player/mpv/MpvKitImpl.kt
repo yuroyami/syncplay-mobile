@@ -259,8 +259,8 @@ class MpvKitImpl(
     }
 
     override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
-        val nsUrl = location.file.nsUrl
-        nsUrl.startAccessingSecurityScopedResource()
+        // Security scope is held centrally by PlayerImpl for the playback lifetime; mpv reads
+        // the file via its POSIX path, which the active scope authorizes.
         bridge.loadFile(location.file.path)
     }
 

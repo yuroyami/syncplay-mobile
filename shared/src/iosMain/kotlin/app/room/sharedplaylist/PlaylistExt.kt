@@ -1,229 +1,76 @@
 package app.room.sharedplaylist
 
-import androidx.lifecycle.viewModelScope
-import app.utils.generateTimestampMillis
-import app.utils.vidExs
-import app.protocol.WireMessage
-import app.room.sharedplaylist.SharedPlaylistManager.Companion.saveFolderPathAsMediaDirectory
+import app.utils.isPlayableMediaFilename
+import app.utils.loggy
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.bookmarkData
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCObjectVar
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.nativeHeap
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.value
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import platform.Foundation.NSDirectoryEnumerationSkipsHiddenFiles
-import platform.Foundation.NSFileCoordinator
-import platform.Foundation.NSFileCoordinatorReadingWithoutChanges
 import platform.Foundation.NSFileManager
-import platform.Foundation.NSString
+import platform.Foundation.NSNumber
 import platform.Foundation.NSURL
-import platform.Foundation.NSURLBookmarkCreationMinimalBookmark
-import platform.Foundation.NSURLBookmarkResolutionWithSecurityScope
 import platform.Foundation.NSURLIsDirectoryKey
 import platform.Foundation.NSURLNameKey
-import platform.Foundation.NSUTF8StringEncoding
-import platform.Foundation.NSUserDefaults
-import platform.Foundation.dataUsingEncoding
-import platform.Foundation.stringWithContentsOfURL
-import platform.Foundation.stringWithString
-import platform.Foundation.writeToURL
 
-@OptIn(BetaInteropApi::class)
-actual suspend fun SharedPlaylistManager.addFolderToPlaylist(uri: String) {
-    /* First, we save it in our media directories as a common directory */
-    saveFolderPathAsMediaDirectory(uri)
+/**
+ * iOS directory walk. The picked directory's [NSURL] is security-scoped; we hold that scope for
+ * the whole enumeration so every descendant is reachable, and — while the scope is held — mint
+ * an independent security-scoped bookmark for each media file via FileKit's [bookmarkData].
+ * Those per-file bookmarks resolve on their own afterwards (no directory scope required), which
+ * is what lets the player keep a file open across a playback session.
+ */
+@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
+actual suspend fun PlatformFile.indexMediaTree(): Map<String, ByteArray> {
+    val out = LinkedHashMap<String, ByteArray>()
+    val dirUrl = this.nsUrl
 
-    /* Now we get children files */
-    val newList = mutableListOf<String>()
-
-    val url = NSURL.fileURLWithPath(uri, isDirectory = true)
-    val access = url.startAccessingSecurityScopedResource()
-
-    NSFileCoordinator().coordinateReadingItemAtURL(url, NSFileCoordinatorReadingWithoutChanges, error = null) { dirUrl ->
-        if (dirUrl == null) return@coordinateReadingItemAtURL
-
-        dirUrl.startAccessingSecurityScopedResource()//Start accessing securely
+    val started = dirUrl.startAccessingSecurityScopedResource()
+    try {
         val enumerator = NSFileManager.defaultManager.enumeratorAtURL(
             url = dirUrl,
             includingPropertiesForKeys = listOf(NSURLNameKey, NSURLIsDirectoryKey),
             options = NSDirectoryEnumerationSkipsHiddenFiles,
-            errorHandler = null
-        )
-
-        var obj = enumerator?.nextObject() as? NSURL
-        while (obj != null) {
-            val isDirectory = memScoped {
-                val isDirectoryPointer = nativeHeap.alloc<ObjCObjectVar<Any?>>()
-
-                obj?.getResourceValue(isDirectoryPointer.ptr, forKey = NSURLIsDirectoryKey, null)
-
-                return@memScoped isDirectoryPointer.value as? Boolean
-            }
-
-            if (isDirectory == false && isValidMediaFileExtension(obj.path?.substringAfterLast("."))) {
-                val filename = obj.lastPathComponent
-                if (!viewmodel.session.sharedPlaylist.contains(filename)) newList.add(filename!!)
-            }
-
-            obj = enumerator?.nextObject() as? NSURL //Next object now
-        }
-        dirUrl.stopAccessingSecurityScopedResource()//Start accessing securely
-    }
-
-    if (access) url.stopAccessingSecurityScopedResource()
-
-    newList.sort()
-
-    if (viewmodel.session.spIndex.intValue == -1) {
-        retrieveFile(newList.first())
-        viewmodel.networkManager.send(WireMessage.playlistIndex(0))
-    }
-    viewmodel.networkManager.send(WireMessage.playlistChange(viewmodel.session.sharedPlaylist + newList))
-}
-
-val spExtScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-
-@OptIn(BetaInteropApi::class)
-actual suspend fun iterateDirectory(uri: String, target: String, onFileFound: suspend (String) -> Unit) {
-    val data = userDefaults().dataForKey(uri) ?: return
-
-    val resolvedUrl = NSURL.URLByResolvingBookmarkData(
-        bookmarkData = data,
-        options = NSURLBookmarkResolutionWithSecurityScope,
-        relativeToURL = null,
-        bookmarkDataIsStale = null,
-        error = null
-    ) ?: return
-
-    val access = resolvedUrl.startAccessingSecurityScopedResource()
-
-    NSFileCoordinator().coordinateReadingItemAtURL(resolvedUrl, NSFileCoordinatorReadingWithoutChanges, error = null) { dirUrl ->
-        if (dirUrl == null) return@coordinateReadingItemAtURL
-
-        val access2 = dirUrl.startAccessingSecurityScopedResource()//Start accessing securely
-
-        val enumerator = NSFileManager.defaultManager.enumeratorAtURL(
-            url = dirUrl,
-            includingPropertiesForKeys = listOf(NSURLNameKey, NSURLIsDirectoryKey),
-            options = NSDirectoryEnumerationSkipsHiddenFiles
-        ) { urlOnError, theError ->
-
-            println("This URL caused an error: ${urlOnError?.path}")
-            println("The error is: ${theError?.localizedDescription}")
-
-            return@enumeratorAtURL true
+        ) { erroringUrl, error ->
+            loggy("indexMediaTree: skipping ${erroringUrl?.path} — ${error?.localizedDescription}")
+            true // keep enumerating past unreadable entries
         }
 
         var obj = enumerator?.nextObject() as? NSURL
-
         while (obj != null) {
-            val objAccess = obj.startAccessingSecurityScopedResource()
-
-            val isDirectory = memScoped {
-                val isDirectoryPointer = nativeHeap.alloc<ObjCObjectVar<Any?>>()
-
-                obj.getResourceValue(isDirectoryPointer.ptr, forKey = NSURLIsDirectoryKey, null)
-
-                return@memScoped isDirectoryPointer.value as? Boolean
-            }
-
-            if (isDirectory == false) {
-                val filename = obj.lastPathComponent
-
-                if (filename == target) {
-
-                    obj.path?.let {
-                        spExtScope.launch {
-                            onFileFound(it)
-                        }
-                    }
-                    break
+            val current = obj
+            if (!current.isDirectoryResource()) {
+                val childName = current.lastPathComponent
+                if (childName != null && isPlayableMediaFilename(childName) && !out.containsKey(childName)) {
+                    // The child is reachable because dirUrl's scope is active; minting a bookmark
+                    // now captures an independently-resolvable security scope for it.
+                    runCatching { PlatformFile(current).bookmarkData().bytes }
+                        .onSuccess { out[childName] = it }
+                        .onFailure { loggy("indexMediaTree: bookmark failed for $childName — ${it.message}") }
                 }
             }
-
-            if (objAccess) obj.stopAccessingSecurityScopedResource()
-
-            obj = enumerator?.nextObject() as? NSURL //Next object now
+            obj = enumerator?.nextObject() as? NSURL
         }
-
-        if (access2) dirUrl.stopAccessingSecurityScopedResource()
+    } finally {
+        if (started) dirUrl.stopAccessingSecurityScopedResource()
     }
 
-    if (access) resolvedUrl.stopAccessingSecurityScopedResource()
+    return out
 }
 
-
-actual fun SharedPlaylistManager.savePlaylistLocally(toFolderUri: String) {
-    val destFolder = NSURL.URLWithString(toFolderUri) ?: return
-    val destFile = destFolder.URLByAppendingPathComponent("SharedPlaylist_${generateTimestampMillis()}.txt")
-        ?: return
-
-
-    /** Converting the shared playlist to a text string, line by line */
-    val stringBuilder = StringBuilder()
-    for (f in viewmodel.session.sharedPlaylist) {
-        stringBuilder.appendLine(f)
-    }
-    val string = stringBuilder.appendLine().trim().toString()
-
-
-    val destFileAccess = destFile.startAccessingSecurityScopedResource()
-
-    viewmodel.viewModelScope.launch(Dispatchers.IO) {
-        try {
-            val data = (NSString.stringWithString(string) as NSString).dataUsingEncoding(NSUTF8StringEncoding)
-            data?.writeToURL(destFile, true)
-        } catch (e: Exception) {
-            println("Error saving playlist: ${e.stackTraceToString()}")
-        }
-    }
-
-    if (destFileAccess) {
-        destFile.stopAccessingSecurityScopedResource()
+@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
+private fun NSURL.isDirectoryResource(): Boolean = memScoped {
+    val valuePtr = alloc<ObjCObjectVar<Any?>>()
+    val ok = getResourceValue(valuePtr.ptr, forKey = NSURLIsDirectoryKey, error = null)
+    if (!ok) return@memScoped false
+    when (val v = valuePtr.value) {
+        is NSNumber -> v.boolValue
+        is Boolean -> v
+        else -> false
     }
 }
-
-actual fun SharedPlaylistManager.loadPlaylistLocally(fromUri: String, alsoShuffle: Boolean) {
-    val url = NSURL.fileURLWithPath(fromUri, isDirectory = false)
-    val access = url.startAccessingSecurityScopedResource()
-    val content = NSString.stringWithContentsOfURL(url, NSUTF8StringEncoding, null) ?: return
-    if (access) url.stopAccessingSecurityScopedResource()
-
-    /** Reading content */
-    val lines = content.split("\n").toMutableList()
-
-    /** If the user chose the shuffling option along with it, then we shuffle it */
-    if (alsoShuffle) lines.shuffle()
-
-    /** Updating the shared playlist */
-    viewmodel.networkManager.sendAsync(WireMessage.playlistChange(lines))
-}
-
-
-fun isValidMediaFileExtension(fileExtension: String?): Boolean {
-    val audioExs = setOf("mp3", "m4a", "wav", "aiff", "aac", "flac", "alac", "ogg", "wma", "ogg")
-    return audioExs.contains(fileExtension?.lowercase() ?: "#") || vidExs.contains(fileExtension?.lowercase() ?: "#")
-}
-
-@OptIn(ExperimentalForeignApi::class)
-fun bookmarkDirectory(dir: String) {
-    val url = NSURL.URLWithString(dir)
-    url?.startAccessingSecurityScopedResource()
-    url?.bookmarkDataWithOptions(
-        NSURLBookmarkCreationMinimalBookmark,
-        includingResourceValuesForKeys = null,
-        relativeToURL = null, error = null
-    )?.let {
-        userDefaults().setObject(it, dir)
-    }
-    url?.stopAccessingSecurityScopedResource()
-}
-
-fun userDefaults(): NSUserDefaults = NSUserDefaults.standardUserDefaults()

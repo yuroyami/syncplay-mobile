@@ -4,10 +4,8 @@ import androidx.lifecycle.viewModelScope
 import app.AbstractManager
 import app.preferences.Preferences.ROOM_UI_OPACITY
 import app.preferences.flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlin.concurrent.Volatile
@@ -36,33 +34,6 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
 
     /** GIF panel visibility state */
     val gifPanelVisible = MutableStateFlow(false)
-
-    /** True while the chat input field has focus / the soft keyboard is up. Suppresses HUD auto-hide. */
-    val chatInputFocused = MutableStateFlow(false)
-
-    /** Count of focused HUD elements. Read together with the input mode in RoomScreenUI:
-     * a non-zero count under Keyboard/D-pad input mode means a remote-control user is
-     * actively navigating, so the HUD must stay open. Under Touch input mode it's ignored
-     * (so clicking a button doesn't leave focus glued to that button forever). */
-    val dpadFocusCount = MutableStateFlow(0)
-
-    fun onDpadFocusChanged(focused: Boolean) {
-        if (focused) dpadFocusCount.value = dpadFocusCount.value + 1
-        else dpadFocusCount.value = (dpadFocusCount.value - 1).coerceAtLeast(0)
-    }
-
-    /** Emitted on any touch within the HUD to reset the auto-hide countdown. */
-    val hudInteractionSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-
-    /** True when any card, popup, or panel is open, or the user is typing / has focus on the chat input — suppresses HUD auto-hide. */
-    val hasActiveOverlay = combine(
-        tabCardUserInfo, tabCardSharedPlaylist, tabCardRoomPreferences,
-        controlPanel, popupCreateManagedRoom,
-        popupIdentifyAsRoomOperator, popupSeekToPosition, gifPanelVisible,
-        chatInputFocused,
-        msg.map { it.isNotEmpty() }
-    ) { values -> values.any { it } }
-        .stateIn(viewmodel.viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     fun triggerHaptic() {
         app.utils.platformCallback.performHapticFeedback()

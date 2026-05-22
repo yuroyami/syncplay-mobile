@@ -68,6 +68,24 @@ val videoFileKitType: FileKitType
     get() = if (platform == Platform.IOS) FileKitType.File() else FileKitType.File(extensions = vidExs)
 
 /**
+ * List of supported audio file extensions. Used (together with [vidExs]) to decide whether a
+ * file discovered while indexing a media directory belongs in the shared playlist.
+ */
+val audioExs = listOf("mp3", "m4a", "aac", "flac", "alac", "aiff", "aif", "opus", "mka", "oga", "wv", "ape", "mp2")
+
+/**
+ * Whether a filename (with extension) names a media file we are willing to put into / resolve
+ * from the shared playlist. Matches video ([vidExs]) and audio ([audioExs]) extensions,
+ * case-insensitively. Files without a recognized extension are ignored so directory indexing
+ * doesn't pull in `.nfo`, `.jpg`, `.txt`, etc.
+ */
+fun isPlayableMediaFilename(filename: String): Boolean {
+    val ext = filename.substringAfterLast('.', "").lowercase()
+    if (ext.isEmpty()) return false
+    return ext in vidExs || ext in audioExs
+}
+
+/**
  * List of supported subtitle/closed caption file extensions.
  * We pass this to the file selection (FileKit)
  */

@@ -3,8 +3,6 @@ package app.room.ui.chat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -124,16 +122,6 @@ fun ChatTextField(
     val gradientBrush = Brush.linearGradient(colors = flexibleGradient)
     val msgIsNotEmpty by derivedStateOf { msg.isNotEmpty() }
 
-    /* Authoritative focus signal: drives HUD auto-hide gating. `collectIsFocusedAsState`
-     * reads the TextField's real focus state via its InteractionSource — more reliable
-     * than onFocusChanged, which can fire stale false positives during recomposition. */
-    val interactionSource = remember { MutableInteractionSource() }
-    val isFocused by interactionSource.collectIsFocusedAsState()
-
-    LaunchedEffect(isFocused) {
-        viewmodel.uiState.chatInputFocused.value = isFocused
-    }
-
     /* Drop chat focus (and dismiss the soft keyboard) when the HUD hides, so the input
      * doesn't stay focused behind an invisible overlay. */
     LaunchedEffect(isHUDVisible) {
@@ -155,7 +143,6 @@ fun ChatTextField(
         verticalAlignment = Alignment.CenterVertically
     ) {
         OutlinedTextField(
-            interactionSource = interactionSource,
             modifier = modifier.alpha(0.75f).weight(1f),
             singleLine = true,
             keyboardActions = KeyboardActions(

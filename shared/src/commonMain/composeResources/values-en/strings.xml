@@ -411,8 +411,6 @@
     <string name="uisetting_ui_opacity_title">UI Opacity</string>
     <string name="uisetting_ui_opacity_summary">This adjusts the transparency of interface backgrounds.</string>
 
-    <string name="uisetting_hud_autohide_title">HUD Auto-Hide Timeout</string>
-    <string name="uisetting_hud_autohide_summary">Seconds of inactivity before the HUD hides automatically. Set to 0 to disable auto-hide.</string>
 
     <string name="uisetting_doubletap_seek_title">Double-Tap to Seek</string>
     <string name="uisetting_doubletap_seek_summary">Seek forward/backward by double-tapping screen sides. Disabling this removes the single-tap delay caused by double-tap detection.</string>

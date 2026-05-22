@@ -162,8 +162,6 @@ import syncplaymobile.shared.generated.resources.uisetting_friend_color_summary
 import syncplaymobile.shared.generated.resources.uisetting_friend_color_title
 import syncplaymobile.shared.generated.resources.uisetting_haptic_on_chat_summary
 import syncplaymobile.shared.generated.resources.uisetting_haptic_on_chat_title
-import syncplaymobile.shared.generated.resources.uisetting_hud_autohide_summary
-import syncplaymobile.shared.generated.resources.uisetting_hud_autohide_title
 import syncplaymobile.shared.generated.resources.uisetting_haptic_on_connection_summary
 import syncplaymobile.shared.generated.resources.uisetting_haptic_on_connection_title
 import syncplaymobile.shared.generated.resources.uisetting_haptic_on_joined_summary
@@ -856,14 +854,6 @@ object Preferences {
         icon = Icons.Filled.Opacity
 
         extraConfig = PrefExtraConfig.Slider(maxValue = 100, minValue = 0)
-    }
-
-    val HUD_AUTO_HIDE_TIMEOUT = Pref("pref_inroom_hud_autohide", 3) {
-        title = Res.string.uisetting_hud_autohide_title
-        summary = Res.string.uisetting_hud_autohide_summary
-        icon = Icons.Filled.Timer
-
-        extraConfig = PrefExtraConfig.Slider(maxValue = 15, minValue = 0)
     }
 
     val RECONNECTION_INTERVAL = Pref("pref_inroom_reconnection_interval", 2) {

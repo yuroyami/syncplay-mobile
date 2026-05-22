@@ -7,6 +7,7 @@ import app.utils.getFileSize
 import app.utils.sha256
 import com.eygraber.uri.Uri
 import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.name
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
@@ -44,7 +45,7 @@ data class MediaFile(
                MediaFile().apply {
                    location = loc
 
-                   fileName = getFileName(loc.file)!!
+                   fileName = getFileName(loc.file) ?: loc.file.name
                    fileSize = getFileSize(loc.file)?.toString() ?: "0"
                }
            }

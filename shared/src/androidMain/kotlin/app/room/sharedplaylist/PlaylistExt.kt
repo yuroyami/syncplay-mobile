@@ -1,123 +1,60 @@
 package app.room.sharedplaylist
 
-import android.provider.DocumentsContract
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import app.protocol.WireMessage
-import app.room.sharedplaylist.SharedPlaylistManager.Companion.saveFolderPathAsMediaDirectory
 import app.utils.contextObtainer
-import app.utils.loggy
+import app.utils.isPlayableMediaFilename
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.path
+import java.io.File
 
-actual suspend fun SharedPlaylistManager.addFolderToPlaylist(uri: String) {
-    /* First, we save it in our media directories as a common directory */
-    saveFolderPathAsMediaDirectory(uri)
+/**
+ * Android directory walk. Picked directories arrive as SAF tree URIs (`content://…/tree/…`),
+ * enumerated via [DocumentFile]; a raw filesystem path (legacy / non-SAF) is walked with
+ * [java.io.File]. Each discovered media file is stored as its content-URI / path bytes — reads
+ * are authorized by the persistable permission FileKit took on the tree when the directory was
+ * remembered, so we don't (and can't, for tree children) take per-file permissions here.
+ */
+actual suspend fun PlatformFile.indexMediaTree(): Map<String, ByteArray> {
+    val out = LinkedHashMap<String, ByteArray>()
+    val identifier = this.path
 
-    /* Now we get children files */
-    val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
-        uri.toUri(),
-        DocumentsContract.getTreeDocumentId(uri.toUri())
-    )
+    if (identifier.startsWith("content://", ignoreCase = true)) {
+        val context = contextObtainer.invoke()
+        val root = DocumentFile.fromTreeUri(context, identifier.toUri()) ?: return out
 
-    /** Obtaining the children tree from the path **/
-    val tree = DocumentFile.fromTreeUri(contextObtainer.invoke(), childrenUri) ?: return
-
-    /** We iterate through the children file tree and add them to playlist */
-    val newList = mutableListOf<String>()
-    iterateDirectory(tree) {
-        newList.add(it)
-    }
-    newList.sort()
-
-    if (viewmodel.session.spIndex.intValue == -1) {
-        retrieveFile(newList.first())
-        viewmodel.networkManager.send(WireMessage.playlistIndex(0))
-    }
-    viewmodel.networkManager.send(WireMessage.playlistChange(viewmodel.session.sharedPlaylist + newList))
-}
-
-fun SharedPlaylistManager.iterateDirectory(dir: DocumentFile, onFileDetected: (String) -> Unit) {
-    val files = dir.listFiles()
-
-    for (file in files) {
-        if (file.isDirectory) {
-            iterateDirectory(file, onFileDetected)
-        } else {
-            if (file.name == null) continue
-
-            if (!viewmodel.session.sharedPlaylist.contains(file.name!!)) {
-                onFileDetected(file.name!!)
+        fun walk(doc: DocumentFile) {
+            for (child in doc.listFiles()) {
+                if (child.isDirectory) {
+                    walk(child)
+                } else {
+                    val childName = child.name ?: continue
+                    if (isPlayableMediaFilename(childName) && !out.containsKey(childName)) {
+                        out[childName] = child.uri.toString().encodeToByteArray()
+                    }
+                }
             }
         }
-    }
-}
+        walk(root)
+    } else {
+        val root = File(identifier)
+        if (!root.isDirectory) return out
 
-actual suspend fun iterateDirectory(uri: String, target: String, onFileFound: suspend (String) -> Unit) {
-    /** Will NOT work if Uri hasn't been declared persistent upon retrieving it */
-    val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(
-        uri.toUri(),
-        DocumentsContract.getTreeDocumentId(uri.toUri())
-    )
-
-    val context = contextObtainer.invoke()
-
-    /** Obtaining the children tree from the path **/
-    val tree = DocumentFile.fromTreeUri(context, childrenUri) ?: return
-    val files = tree.listFiles()
-
-    /** We iterate through the children file tree, and we search for the specific file */
-    for (file in files) {
-        loggy("Iterating: ${file.name}")
-
-        suspend fun stuff(filename: String) {
-            if (filename == target) {
-                onFileFound.invoke((tree.findFile(filename)?.uri).toString())
+        fun walk(dir: File) {
+            val files = dir.listFiles() ?: return
+            for (child in files) {
+                if (child.isDirectory) {
+                    walk(child)
+                } else {
+                    val childName = child.name
+                    if (isPlayableMediaFilename(childName) && !out.containsKey(childName)) {
+                        out[childName] = child.absolutePath.encodeToByteArray()
+                    }
+                }
             }
         }
-
-        if (file.isDirectory) {
-            iterateDirectory(file.uri.toString(), target) {
-                stuff(it)
-            }
-        } else {
-            stuff(file.name!!)
-        }
+        walk(root)
     }
-}
 
-
-actual fun SharedPlaylistManager.savePlaylistLocally(toFolderUri: String) {
-    val context = contextObtainer.invoke()
-    val folder = DocumentFile.fromTreeUri(context, toFolderUri.toUri())
-    val txt = folder?.createFile("text/plain", "SharedPlaylist_${System.currentTimeMillis()}.txt")
-
-    /** Converting the shared playlist to a text string, line by line */
-    val stringBuilder = StringBuilder()
-    for (f in viewmodel.session.sharedPlaylist) {
-        stringBuilder.appendLine(f)
-    }
-    val string = stringBuilder.appendLine().trim().toString()
-
-    /** Writing to the file */
-    val s = context.contentResolver.openOutputStream(txt?.uri ?: return)
-    s?.write(string.toByteArray(Charsets.UTF_8))
-    s?.flush()
-    s?.close()
-}
-
-actual fun SharedPlaylistManager.loadPlaylistLocally(fromUri: String, alsoShuffle: Boolean) {
-    val context = contextObtainer.invoke()
-
-    /** Opening the input stream of the file */
-        val s = context.contentResolver.openInputStream(fromUri.toUri()) ?: return
-        val string = s.readBytes().decodeToString()
-        s.close()
-
-    /** Reading content */
-    val lines = string.split("\n").toMutableList()
-
-    /** If the user chose the shuffling option along with it, then we shuffle it */
-    if (alsoShuffle) lines.shuffle()
-
-    /** Updating the shared playlist */
-    viewmodel.networkManager.sendAsync(WireMessage.playlistChange(lines))
+    return out
 }

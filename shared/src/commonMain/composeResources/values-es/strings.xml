@@ -445,8 +445,6 @@
     <string name="uisetting_show_chapter_dots_summary">Mostrar puntos de marcadores de capítulos en la barra de búsqueda cuando estén disponibles.</string>
     <string name="uisetting_chapter_dots_clickable_title">Marcadores de capítulos clicables</string>
     <string name="uisetting_chapter_dots_clickable_summary">Tocar un punto de capítulo para saltar a esa posición.</string>
-    <string name="uisetting_hud_autohide_title">Tiempo de ocultación automática del HUD</string>
-    <string name="uisetting_hud_autohide_summary">Segundos de inactividad antes de que el HUD se oculte automáticamente. Establece en 0 para desactivar la ocultación automática.</string>
     <string name="uisetting_osd_duration_title">Duración de mensajes OSD</string>
     <string name="uisetting_osd_duration_summary">Cuántos segundos mostrar mensajes de estado en pantalla (ej. cambios de relación de aspecto, selecciones de pistas). Establece en 0 para desactivar mensajes OSD.</string>
 </resources>

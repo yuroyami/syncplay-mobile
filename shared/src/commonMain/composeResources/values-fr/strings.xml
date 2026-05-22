@@ -444,8 +444,6 @@
     <string name="uisetting_swipe_gestures_summary">Balayage vertical sur le côté gauche pour la luminosité, côté droit pour le volume.</string>
 
     <!-- UI settings: HUD and OSD -->
-    <string name="uisetting_hud_autohide_title">Masquage automatique du HUD</string>
-    <string name="uisetting_hud_autohide_summary">Secondes d\'inactivité avant que le HUD ne se masque automatiquement. Mettez 0 pour désactiver le masquage automatique.</string>
     <string name="uisetting_osd_duration_title">Durée des messages OSD</string>
     <string name="uisetting_osd_duration_summary">Nombre de secondes d\'affichage des messages d\'état à l\'écran (ex. changements de ratio, sélections de pistes). Mettez 0 pour désactiver les messages OSD.</string>
 

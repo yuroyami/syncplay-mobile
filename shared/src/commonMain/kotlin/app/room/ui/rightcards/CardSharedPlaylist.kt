@@ -72,9 +72,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewModelScope
 import app.LocalRoomViewmodel
-import app.room.sharedplaylist.addFolderToPlaylist
-import app.room.sharedplaylist.loadPlaylistLocally
-import app.room.sharedplaylist.savePlaylistLocally
 import app.theme.Theming
 import app.theme.Theming.flexibleGradient
 import app.uicomponents.FlexibleIcon
@@ -94,7 +91,6 @@ import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLauncher
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.dialogs.compose.rememberFileSaverLauncher
-import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -141,14 +137,14 @@ object CardSharedPlaylist {
             if (files?.isEmpty() == true || files == null) return@rememberFilePickerLauncher
 
             viewmodel.viewModelScope.launch(Dispatchers.IO) {
-                playlist.addFiles(files.map { it.path })
+                playlist.addFiles(files)
             }
         }
 
         val mediaDirectoryPicker =rememberDirectoryPickerLauncher() { directoryUri ->
             if (directoryUri == null) return@rememberDirectoryPickerLauncher
             scope.launch {
-                playlist.addFolderToPlaylist(directoryUri.path)
+                playlist.addFolderToPlaylist(directoryUri)
             }
         }
 
@@ -157,16 +153,16 @@ object CardSharedPlaylist {
             type = FileKitType.File(extensions = playlistExs)
         ) { playlistFile ->
             if (playlistFile != null) {
-                playlist.loadPlaylistLocally(playlistFile.path, alsoShuffle = shouldShuffle)
+                playlist.loadPlaylistLocally(playlistFile, alsoShuffle = shouldShuffle)
             }
             shouldShuffle = false
         }
 
         val playlistSaver = rememberFileSaverLauncher(
             dialogSettings = FileKitDialogSettings.createDefault()
-        ) { directoryUri ->
-            if (directoryUri == null) return@rememberFileSaverLauncher
-            playlist.savePlaylistLocally(directoryUri.path)
+        ) { savedFile ->
+            if (savedFile == null) return@rememberFileSaverLauncher
+            playlist.savePlaylistLocally(savedFile)
         }
 
         val mediaDirsPopupState = remember { mutableStateOf(false) }

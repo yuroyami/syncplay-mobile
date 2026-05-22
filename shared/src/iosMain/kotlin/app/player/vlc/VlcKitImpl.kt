@@ -643,8 +643,8 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     }
 
     override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
+        // Security scope is held centrally by PlayerImpl for the playback lifetime.
         val nsUrl = location.file.nsUrl
-        nsUrl.startAccessingSecurityScopedResource()
         vlcMedia = VLCMedia(uRL = nsUrl)
         // VLCKit 4 removed synchronousParse(); kick off an async local parse and
         // let parseMedia() poll length below.

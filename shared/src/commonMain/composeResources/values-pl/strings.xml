@@ -456,8 +456,6 @@
     <string name="uisetting_show_chapter_dots_summary">Wyświetlaj kropki rozdziałów na pasku przewijania, gdy są dostępne.</string>
     <string name="uisetting_chapter_dots_clickable_title">Klikalne znaczniki rozdziałów</string>
     <string name="uisetting_chapter_dots_clickable_summary">Stuknij kropkę rozdziału, aby przejść do tej pozycji.</string>
-    <string name="uisetting_hud_autohide_title">Automatyczne ukrywanie HUD</string>
-    <string name="uisetting_hud_autohide_summary">Sekundy bezczynności przed automatycznym ukryciem HUD. Ustaw 0, aby wyłączyć automatyczne ukrywanie.</string>
     <string name="uisetting_osd_duration_title">Czas wyświetlania komunikatów OSD</string>
     <string name="uisetting_osd_duration_summary">Ile sekund wyświetlać komunikaty statusu na ekranie (np. zmiana proporcji, wybór ścieżek). Ustaw 0, aby wyłączyć komunikaty OSD.</string>
 </resources>

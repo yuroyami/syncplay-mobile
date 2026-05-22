@@ -23,6 +23,8 @@ import app.utils.Platform
 import app.utils.getFileName
 import app.utils.platform
 import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.startAccessingSecurityScopedResource
+import io.github.vinceglb.filekit.stopAccessingSecurityScopedResource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -62,6 +64,28 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     abstract val supportsChapters: Boolean
     open val supportsPictureInPicture: Boolean = true
     var isInitialized: Boolean = false
+
+    /**
+     * The local file whose iOS security scope we currently hold open for playback.
+     *
+     * A file resolved from a security-scoped bookmark must have its scope *active for as long as
+     * the engine reads it* — not merely at the moment of injection. We start access when a file
+     * is injected and release the previous one on the next injection (file or URL), so at most
+     * one scope is ever held at a time. On Android the FileKit start/stop calls are no-ops.
+     */
+    private var scopedFile: PlatformFile? = null
+
+    private fun beginScopedFileAccess(file: PlatformFile) {
+        val previous = scopedFile
+        if (previous != null && previous != file) runCatching { previous.stopAccessingSecurityScopedResource() }
+        runCatching { file.startAccessingSecurityScopedResource() }
+        scopedFile = file
+    }
+
+    private fun releaseScopedFileAccess() {
+        scopedFile?.let { runCatching { it.stopAccessingSecurityScopedResource() } }
+        scopedFile = null
+    }
 
     @UiThread
     abstract fun initialize()
@@ -158,17 +182,6 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
         listOf("srt", "ass", "ssa", "ttml", "vtt").any { it in extension.lowercase() }
 
 
-    companion object {
-        //TODO Bookmarking on iOS
-        suspend fun PlayerImpl.injectVideo(string: String) {
-            if (string.startsWith("http://") || string.startsWith("https://") || string.startsWith("www") || string.startsWith("ftp://")) {
-                injectVideoURL(string)
-            } else {
-                injectVideoFile(PlatformFile(string))
-            }
-        }
-    }
-
     abstract suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote)
     abstract suspend fun injectVideoFileImpl(location: MediaFileLocation.Local)
 
@@ -191,9 +204,21 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
                 resolved?.durationSec?.let { media.fileDuration = it }
             }
         },
-    ) { injectVideoURLImpl(it.location as MediaFileLocation.Remote) }
+    ) {
+        // Switching to a remote source: hand back any local file scope we were holding.
+        releaseScopedFileAccess()
+        injectVideoURLImpl(it.location as MediaFileLocation.Remote)
+    }
 
-    suspend fun injectVideoFile(file: PlatformFile) = inject(file, { it.mediaFromFile() }) { injectVideoFileImpl(it.location as MediaFileLocation.Local) }
+    suspend fun injectVideoFile(file: PlatformFile) = inject(file, { it.mediaFromFile() }) {
+        val location = it.location as MediaFileLocation.Local
+        // Hold this file's security scope (iOS) open before the engine touches it, releasing
+        // the previous file's scope. Without this, a bookmark-resolved URL is inaccessible the
+        // instant FileKit's transient scope (from reading name/size) closes, and the engine
+        // fails to open it.
+        beginScopedFileAccess(location.file)
+        injectVideoFileImpl(location)
+    }
 
     private suspend fun maybeResolve(url: String) = when {
         !MEDIA_RESOLVER_ENABLED.value() -> null

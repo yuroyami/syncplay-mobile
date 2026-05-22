@@ -61,10 +61,9 @@ import app.preferences.Preferences
 import app.preferences.set
 import app.preferences.value
 import app.preferences.watchPref
-import app.room.sharedplaylist.SharedPlaylistManager
+import app.room.sharedplaylist.MediaAccessRegistry
 import app.theme.Theming
 import io.github.vinceglb.filekit.dialogs.compose.rememberDirectoryPickerLauncher
-import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -99,7 +98,7 @@ object PopupMediaDirs {
                 if (directoryUri == null) return@rememberDirectoryPickerLauncher
 
                 scope.launch {
-                    SharedPlaylistManager.saveFolderPathAsMediaDirectory(directoryUri.path)
+                    MediaAccessRegistry.rememberDirectory(directoryUri)
                 }
             }
             Column(
@@ -206,6 +205,7 @@ object PopupMediaDirs {
                                                 if (paths.contains(item)) {
                                                     paths.remove(item)
                                                     Preferences.MEDIA_DIRECTORIES.set(paths)
+                                                    MediaAccessRegistry.forgetDirectory(item)
                                                 }
                                             }
                                         })
@@ -284,6 +284,7 @@ object PopupMediaDirs {
                     cleardialog = false
                     scope.launch {
                         Preferences.MEDIA_DIRECTORIES.set(emptySet())
+                        MediaAccessRegistry.clear()
                     }
                 }) { Text(stringResource(Res.string.yes)) }
             }, dismissButton = {

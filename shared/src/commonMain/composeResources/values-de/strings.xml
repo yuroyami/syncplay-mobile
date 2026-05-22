@@ -433,8 +433,6 @@
     <string name="uisetting_haptic_on_playlist_title">Playlist aktualisiert</string>
     <string name="uisetting_haptic_on_seeked_summary">Vibrieren, wenn jemand im Video spult.</string>
     <string name="uisetting_haptic_on_seeked_title">Jemand hat gespult</string>
-    <string name="uisetting_hud_autohide_summary">Sekunden der Inaktivität, bevor das HUD automatisch ausgeblendet wird. Auf 0 setzen, um das automatische Ausblenden zu deaktivieren.</string>
-    <string name="uisetting_hud_autohide_title">HUD Auto-Ausblendung</string>
     <string name="uisetting_osd_duration_summary">Wie viele Sekunden Bildschirm-Statusmeldungen angezeigt werden (z. B. Seitenverhältnis-Änderungen, Spurauswahl). Auf 0 setzen, um OSD-Meldungen zu deaktivieren.</string>
     <string name="uisetting_osd_duration_title">OSD-Anzeigedauer</string>
     <string name="uisetting_show_chapter_dots_summary">Kapitelmarkierungspunkte auf der Zeitleiste anzeigen, wenn verfügbar.</string>

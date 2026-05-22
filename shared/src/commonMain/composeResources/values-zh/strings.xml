@@ -421,8 +421,6 @@
     <string name="uisetting_haptic_on_playlist_title">播放列表已更新</string>
     <string name="uisetting_haptic_on_seeked_summary">有人在视频中跳转时振动。</string>
     <string name="uisetting_haptic_on_seeked_title">有人跳转</string>
-    <string name="uisetting_hud_autohide_summary">无操作多少秒后自动隐藏HUD。设为0可禁用自动隐藏。</string>
-    <string name="uisetting_hud_autohide_title">HUD自动隐藏超时</string>
     <string name="uisetting_osd_duration_summary">OSD状态消息（如画面比例变更、轨道选择）的显示秒数。设为0可禁用OSD消息。</string>
     <string name="uisetting_osd_duration_title">OSD消息显示时长</string>
     <string name="uisetting_show_chapter_dots_summary">可用时在进度条上显示章节标记点。</string>

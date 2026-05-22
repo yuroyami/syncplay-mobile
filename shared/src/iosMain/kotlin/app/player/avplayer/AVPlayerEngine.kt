@@ -427,8 +427,8 @@ object AVPlayerEngine: PlayerEngine {
             // Detach observer from the previous AVPlayer (if any) BEFORE replacing the
             // reference, otherwise the old instance leaks its KVO registration.
             detachTimeControlObserver()
+            // Security scope is held centrally by PlayerImpl for the playback lifetime.
             val nsUrl = location.file.nsUrl
-            nsUrl.startAccessingSecurityScopedResource()
             val asset = AVAsset.assetWithURL(nsUrl)
             avMedia = AVPlayerItem(asset)
             avPlayer = AVPlayer.playerWithPlayerItem(avMedia)

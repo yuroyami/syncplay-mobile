@@ -36,7 +36,6 @@ import app.preferences.Preferences.HAPTIC_ON_PAUSED
 import app.preferences.Preferences.HAPTIC_ON_PLAYED
 import app.preferences.Preferences.HAPTIC_ON_PLAYLIST
 import app.preferences.Preferences.HAPTIC_ON_SEEKED
-import app.preferences.Preferences.HUD_AUTO_HIDE_TIMEOUT
 import app.preferences.Preferences.OSD_DURATION
 import app.preferences.Preferences.OSD_NON_OPERATOR
 import app.preferences.Preferences.OSD_OTHER_ROOM
@@ -228,7 +227,6 @@ val INROOM_ADVANCED = SettingCategory(
     icon = Icons.Filled.Stream
 ) {
     +ROOM_UI_OPACITY
-    +HUD_AUTO_HIDE_TIMEOUT
     +RECONNECTION_INTERVAL
     +INROOM_RESET_DEFAULTS
 }

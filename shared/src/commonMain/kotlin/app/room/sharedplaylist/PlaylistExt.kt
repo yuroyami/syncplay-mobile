@@ -1,15 +1,20 @@
 package app.room.sharedplaylist
 
-expect suspend fun SharedPlaylistManager.addFolderToPlaylist(uri: String)
+import io.github.vinceglb.filekit.PlatformFile
 
-expect suspend fun iterateDirectory(uri: String, target: String, onFileFound: suspend (String) -> Unit)
-
-/** Saves the playlist as a plain text file (.txt) to the designated folder with a timestamp of the current time
- * @param toFolderUri The uri of the save folder */
-expect fun SharedPlaylistManager.savePlaylistLocally(toFolderUri: String)
-
-/** After selecting a txt file, this will attempt to load the contents of the plain text file
- * line by line as separate individual file name entries.
- * @param fromUri Uri of the selected txt file
- * @param alsoShuffle Determines whether the content of the file should be shuffled or not */
-expect fun SharedPlaylistManager.loadPlaylistLocally(fromUri: String, alsoShuffle: Boolean)
+/**
+ * Recursively walks the media directory rooted at this [PlatformFile] and returns a map of
+ * `filename → durable bookmark bytes` for every playable media file found
+ * (see [app.utils.isPlayableMediaFilename]).
+ *
+ * The returned bytes are whatever [PlatformFile.Companion.fromBookmarkData] can later resolve on
+ * the same platform:
+ *  - **iOS**: a security-scoped bookmark for each file, created while the directory's scope is
+ *    held (so descendants are reachable). Resolvable independently afterwards.
+ *  - **Android**: the child document URI bytes; reads are authorized by the persistable
+ *    permission already taken on the parent tree when the directory was remembered.
+ *
+ * Implementations own all security-scope / permission bracketing internally and must not leave
+ * any scope open on return. Returns an empty map if the directory can't be accessed.
+ */
+expect suspend fun PlatformFile.indexMediaTree(): Map<String, ByteArray>

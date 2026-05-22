@@ -445,8 +445,6 @@
     <string name="uisetting_doubletap_seek_summary">Перемотка вперёд/назад двойным нажатием по краям экрана. Отключение убирает задержку одиночного нажатия, вызванную распознаванием двойного.</string>
     <string name="uisetting_swipe_gestures_title">Жесты свайпа</string>
     <string name="uisetting_swipe_gestures_summary">Вертикальный свайп слева для яркости, справа для громкости.</string>
-    <string name="uisetting_hud_autohide_title">Автоскрытие HUD</string>
-    <string name="uisetting_hud_autohide_summary">Секунды бездействия до автоматического скрытия HUD. Установите 0 для отключения автоскрытия.</string>
     <string name="uisetting_osd_duration_title">Длительность OSD-сообщений</string>
     <string name="uisetting_osd_duration_summary">Сколько секунд показывать экранные сообщения (например, смена соотношения сторон, выбор дорожки). Установите 0 для отключения OSD-сообщений.</string>
 </resources>

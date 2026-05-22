@@ -252,10 +252,12 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     fun onPlaylistIndexChanged(user: String, index: Int) {
         loggy("SYNCPLAY Protocol: Playlist index changed by $user to $index")
 
+        // Load for everyone — including our own echo. changePlaylistSelection() guards against
+        // reloading a file we already have loaded, so the self-echo is a cheap no-op while a
+        // genuine selection (local click or a peer's change) actually loads the file. Gating
+        // this on isNotSelf() was why clicking a playlist item never played anything locally.
         viewmodel.viewModelScope.launch {
-            if (user.isNotSelf()) {
-                viewmodel.playlistManager.changePlaylistSelection(index)
-            }
+            viewmodel.playlistManager.changePlaylistSelection(index)
         }
 
         if (user == "") return
