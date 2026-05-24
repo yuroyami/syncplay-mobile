@@ -174,13 +174,16 @@ jobs:
           yuroyami.keyKlipyApi=${{ secrets.KLIPY_API_KEY }}
           EOF
 
-      - name: Set exoOnly=true
+      - name: Ensure DEBUG flag is off
         run: |
-          sed -i 's/const val exoOnly = false/const val exoOnly = true/' buildSrc/src/main/kotlin/AppConfig.kt
           sed -i "s/buildConfigField(\"DEBUG\", true)/buildConfigField(\"DEBUG\", false)/" shared/build.gradle.kts
 
       - name: Build APK
-        run: ./gradlew assembleExoOnlyRelease
+        # -PexoOnly=true selects the exo-only flavor (overrides the gradle.properties default).
+        # That is what creates the `exoOnly` flavor, and therefore the assembleExoOnlyRelease task.
+        # Replaces the old sed-the-constant hack, which no longer works now that exoOnly is read
+        # from a Gradle property (the property wins over the edited constant).
+        run: ./gradlew assembleExoOnlyRelease -PexoOnly=true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
