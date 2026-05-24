@@ -107,7 +107,16 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             // position + messageAge. All threshold comparisons must use this aged value.
             val agedPosition = if (paused) position else position + messageAge
 
-            val pausedChanged = protocol.globalPaused != paused || paused == viewmodel.player.isPlaying()
+            // ONLY a genuine room-state transition: the last room pause-state we recorded
+            // differs from what the server just sent. Do NOT also test
+            // `paused == viewmodel.player.isPlaying()` here — that fires on a *local
+            // player/room divergence* rather than a transition, so when an engine reports a
+            // stale isPlaying() (VLCKit's is asynchronous and unreliable — see the ACK note
+            // below) the "X paused/unpaused" OSD + callbacks re-fire on every 1 Hz State for
+            // as long as the divergence persists, producing the runaway "X unpaused, X
+            // unpaused…" spam. Player drift is corrected by the rewind/fastforward/slowdown
+            // block above and the channel-health collector, not by re-announcing here.
+            val pausedChanged = protocol.globalPaused != paused
             val diff = withContext(Dispatchers.Main.immediate) {
                 (viewmodel.player.currentPositionMs() / 1000.0) - agedPosition
             }

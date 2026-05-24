@@ -1,4 +1,5 @@
 import org.gradle.api.Project
+import org.gradle.api.provider.ProviderFactory
 import java.io.File
 import java.util.Properties
 
@@ -27,7 +28,20 @@ object AppConfig {
         if (file.exists()) load(file.inputStream())
     }
 
+    /** Compile-time default for the [exoOnly] flavor. Override at build time with
+     *  `-PexoOnly=true` (or a line in gradle.properties) — see [resolveExoOnly]. */
     const val exoOnly = false
+
+    /**
+     * Resolves the [exoOnly] flavor flag, letting it be overridden from the command line
+     * or gradle.properties (`-PexoOnly=true`) without editing source. This is what lets a
+     * reproducible-build setup (e.g. IzzyOnDroid) select the exo-only variant — which skips
+     * the mpv/VLC native build scripts entirely — via a plain Gradle invocation. Both the
+     * build logic (androidApp) and the EXOPLAYER_ONLY BuildConfig field (shared) must read
+     * through here so the build and the app code never disagree. Falls back to [exoOnly].
+     */
+    fun resolveExoOnly(providers: ProviderFactory): Boolean =
+        providers.gradleProperty("exoOnly").orNull?.toBooleanStrictOrNull() ?: exoOnly
 
     /* ── Trinity brand colors (SSOT for the logo gradient) ──────────────────────────────────────── */
     const val TRINITY_1 = 0xFF4FD1FF  // Cyan

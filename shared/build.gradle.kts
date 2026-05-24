@@ -13,6 +13,10 @@ plugins {
     alias(libs.plugins.ktorfit)
 }
 
+// Overridable from the CLI / gradle.properties (-PexoOnly=true); defaults to AppConfig.exoOnly.
+// Must match androidApp's resolution so the build logic and BuildConfig agree.
+val exoOnly = AppConfig.resolveExoOnly(providers)
+
 kotlin {
     jvmToolchain(21)
 
@@ -225,7 +229,7 @@ buildConfig {
     buildConfigField("APP_VERSION", kmpSsot.versionName.get())
     buildConfigField("DEBUG", false)
     buildConfigField("DEBUG_SYNCPLAY_PROTOCOL", false)
-    buildConfigField("EXOPLAYER_ONLY", AppConfig.exoOnly)
+    buildConfigField("EXOPLAYER_ONLY", exoOnly)
     buildConfigField("KLIPY_API_KEY", AppConfig.localProperties(rootDir).getProperty("yuroyami.keyKlipyApi"))
 
     /* Trinity brand colors — exposed so Theming.kt reads them from the SSOT */

@@ -1,4 +1,3 @@
-import AppConfig.exoOnly
 import NativeBuildConfig.registerNativeBuildTask
 import NativeBuildConfig.validateNdk
 import io.github.yuroyami.kmpssot.kmpSsot
@@ -9,6 +8,9 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
+// Overridable from the CLI / gradle.properties (-PexoOnly=true); defaults to AppConfig.exoOnly.
+val exoOnly = AppConfig.resolveExoOnly(providers)
+
 val ndkRequired = providers.gradleProperty("android.ndkVersion").get()
 
 kotlin {
@@ -18,6 +20,9 @@ kotlin {
 android {
     namespace = "androidApp"
     compileSdk = providers.gradleProperty("android.compileSdk").get().toInt()
+    // Pinned for reproducible builds — see gradle.properties. Without it AGP uses its default
+    // build-tools, which a clean/CI checkout (e.g. IzzyOnDroid) can resolve to a different version.
+    buildToolsVersion = providers.gradleProperty("android.buildToolsVersion").get()
 
     ndkVersion = ndkRequired
 
@@ -209,6 +214,19 @@ dependencies {
 if (!exoOnly) {
     tasks.named("preBuild") {
         dependsOn("runAndroidMpvNativeBuildScripts")
+    }
+} else {
+    // Reproducible-build fix: the full/mpv native build leaves a libc++_shared.so byproduct in
+    // src/main/libs/<abi>/ (gitignored, so absent from clean checkouts). Packaging that local copy
+    // makes the exo-only APK non-reproducible — a fresh checkout (e.g. IzzyOnDroid's builder) has no
+    // such file and instead packages the VLC AAR's libc++, a different binary. Prune the stray copy
+    // before the build so the exo-only flavor deterministically uses the AAR's libc++, identical to
+    // any clean checkout. (The full flavor keeps its locally-built libc++ via the pickFirst above.)
+    val pruneStaleExoOnlyLibcxx = tasks.register<Delete>("pruneStaleExoOnlyLibcxx") {
+        delete(fileTree("src/main/libs") { include("**/libc++_shared.so") })
+    }
+    tasks.named("preBuild") {
+        dependsOn(pruneStaleExoOnlyLibcxx)
     }
 }
 
