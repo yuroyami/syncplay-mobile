@@ -12,8 +12,14 @@ import org.kotlincrypto.hash.sha2.SHA256
  */
 object RoomPasswordProvider {
 
+    /* PC matches both patterns with re.match (start-anchored, trailing chars tolerated).
+     * - Room regex carries its own trailing `$`, so PC effectively requires the whole
+     *   string to match. We keep that behaviour with matchEntire()/matches().
+     * - Password regex has NO `$` in PC, so "AB-123-456junk" is accepted there. We match
+     *   it start-anchored via find() with a leading `^` to mirror re.match exactly;
+     *   using matches() (full anchor) would wrongly reject those trailing-char inputs. */
     private val CONTROLLED_ROOM_REGEX = Regex("^\\+(.*?):(\\w{12})$")
-    private val PASSWORD_REGEX = Regex("[A-Z]{2}-\\d{3}-\\d{3}")
+    private val PASSWORD_REGEX = Regex("^[A-Z]{2}-\\d{3}-\\d{3}")
 
     fun isControlledRoom(roomName: String): Boolean {
         return CONTROLLED_ROOM_REGEX.matches(roomName)
@@ -27,7 +33,7 @@ object RoomPasswordProvider {
      * @return true if the password matches
      */
     fun check(roomName: String, password: String, salt: String): Boolean {
-        if (password.isEmpty() || !PASSWORD_REGEX.matches(password)) {
+        if (password.isEmpty() || PASSWORD_REGEX.find(password) == null) {
             throw IllegalArgumentException("Invalid password format")
         }
 

@@ -5,6 +5,7 @@ import io.ktor.client.plugins.logging.Logger as KtorLogger
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
 import kotlin.time.Instant
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
@@ -97,15 +98,19 @@ fun cleanupOldLogs() {
     } catch (_: Exception) { }
 }
 
-/** Simple epoch day calculation from "yyyy-MM-dd" string */
-private fun String.toEpochDays(): Int {
+/** Exact epoch-day count for a "yyyy-MM-dd" string, using real calendar arithmetic.
+ *  Throws if the string isn't a valid date; the caller catches and skips such files.
+ *  (The old version approximated every month as 30 days, drifting by several days
+ *   near month/year boundaries and occasionally deleting logs early or late.) */
+private fun String.toEpochDays(): Long {
     val parts = split("-")
-    if (parts.size != 3) return 0
-    val y = parts[0].toIntOrNull() ?: return 0
-    val m = parts[1].toIntOrNull() ?: return 0
-    val d = parts[2].toIntOrNull() ?: return 0
-    // Approximate epoch days (good enough for relative comparisons within 7 days)
-    return y * 365 + y / 4 - y / 100 + y / 400 + (m * 30) + d
+    if (parts.size != 3) throw IllegalArgumentException("Not a date: $this")
+    val y = parts[0].toInt()
+    val m = parts[1].toInt()
+    val d = parts[2].toInt()
+    // .toLong() keeps this compiling whether LocalDate.toEpochDays() returns Int or Long
+    // across kotlinx-datetime versions.
+    return LocalDate(y, m, d).toEpochDays().toLong()
 }
 
 fun clearLogs() {

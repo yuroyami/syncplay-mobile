@@ -33,6 +33,7 @@ import platform.AVFoundation.AVPlayerItem
 import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
 import platform.AVFoundation.AVPlayerLayer
 import platform.AVFoundation.AVPlayerTimeControlStatusPaused
+import platform.AVFoundation.AVPlayerTimeControlStatusPlaying
 import platform.AVFoundation.asset
 import platform.AVFoundation.availableMediaCharacteristicsWithMediaSelectionOptions
 import platform.AVFoundation.currentItem
@@ -195,9 +196,14 @@ object AVPlayerEngine: PlayerEngine {
             ) {
                 when (keyPath) {
                     "timeControlStatus" -> {
-                        val isPlaying = avPlayer?.timeControlStatus != AVPlayerTimeControlStatusPaused
+                        // Only treat the genuine Playing state as "playing". The third
+                        // status, WaitingToPlayAtSpecifiedRate (buffering / stalled), must
+                        // NOT count as playing: when the room is paused and AVPlayer briefly
+                        // enters that state (e.g. a programmatic rate change) the old
+                        // `!= Paused` test flipped isNowPlaying to true and broadcast a
+                        // phantom unpause to the room.
+                        val isPlaying = avPlayer?.timeControlStatus == AVPlayerTimeControlStatusPlaying
 
-                        // Player started playing
                         viewmodel.playerManager.isNowPlaying.value = isPlaying
                     }
                 }
@@ -304,8 +310,11 @@ object AVPlayerEngine: PlayerEngine {
          * @param mediafile The media file to populate with track information
          */
         override suspend fun analyzeTracks(mediafile: MediaFile) {
-            // Check if the AVPlayer is initialized
-            if (avPlayer == null || avMedia == null || isInitialized) return
+            // Check if the AVPlayer is initialized. NOTE: the guard was inverted
+            // (`|| isInitialized`), so it returned early once the player was set up,
+            // meaning tracks were never analyzed and the audio/subtitle pickers stayed
+            // empty. It must bail only when NOT yet initialized.
+            if (avPlayer == null || avMedia == null || !isInitialized) return
 
             viewmodel.media?.tracks?.clear()
 

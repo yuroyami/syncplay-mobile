@@ -37,6 +37,16 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
      */
     private var lastLoadedSource: String? = null
 
+    /**
+     * URLs the *local user* explicitly added (typed in, or imported from a local playlist file).
+     *
+     * These are exempt from the trusted-domain gate in [isUrlTrusted]: adding a URL yourself is an
+     * explicit act of consent, so it should always be allowed to load even with no trusted domains
+     * configured. The gate exists to block auto-switching onto *peer-pushed* untrusted URLs, which
+     * never pass through here.
+     */
+    private val locallyAddedUrls = mutableSetOf<String>()
+
     /** Shuffles the current playlist and sends it to the server.
      * @param mode False to shuffle all playlist, True to shuffle only the remaining non-played items in queue.*/
     suspend fun shuffle(mode: Boolean) {
@@ -54,16 +64,23 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             grp1.addAll(grp2)
             session.sharedPlaylist.clear()
             session.sharedPlaylist.addAll(grp1)
+
+            /* Only the tail past the current index moved, so the current file stays put — announce
+             * the new list and we're done. */
+            viewmodel.networkManager.send(WireMessage.playlistChange(session.sharedPlaylist.toList()))
         } else {
             /* Shuffling everything is easy as Kotlin gives us the 'shuffle()' method */
             session.sharedPlaylist.shuffle()
 
-            /* Index won't change, but the file at the given index did change, play it */
-            retrieveFile(session.sharedPlaylist[session.spIndex.intValue])
+            /* A full shuffle moves every entry, so the old index now points at a different file.
+             * Match PC's shuffleEntirePlaylist: reset to index 0 and broadcast BOTH the new list and
+             * the new index, so every peer re-selects index 0 instead of staying on its stale index
+             * (which would land each client on a different file). */
+            session.spIndex.intValue = 0
+            viewmodel.networkManager.send(WireMessage.playlistChange(session.sharedPlaylist.toList()))
+            viewmodel.networkManager.send(WireMessage.playlistIndex(0))
+            retrieveFile(session.sharedPlaylist[0])
         }
-
-        /* Announcing a new updated list to the room members */
-        viewmodel.networkManager.send(WireMessage.playlistChange(session.sharedPlaylist.toList()))
     }
 
     /** Adds URLs from the url adding popup, de-duplicating against the existing list and within
@@ -72,7 +89,12 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         val merged = session.sharedPlaylist.toMutableList()
         for (raw in urls) {
             val url = raw.trim()
-            if (url.isNotEmpty() && !merged.contains(url)) merged.add(url)
+            if (url.isNotEmpty() && !merged.contains(url)) {
+                merged.add(url)
+                // The local user typed this URL in, so it's trusted by consent regardless of the
+                // trusted-domains setting (see [locallyAddedUrls] / [isUrlTrusted]).
+                if (isRemoteUrl(url)) locallyAddedUrls.add(url)
+            }
         }
         if (merged.size == session.sharedPlaylist.size) return
         viewmodel.networkManager.sendAsync(WireMessage.playlistChange(merged))
@@ -263,6 +285,8 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             val lines = content.split("\n").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
             if (lines.isEmpty()) return@launch
             if (alsoShuffle) lines.shuffle()
+            // The local user is importing this playlist, so any URLs in it are trusted by consent.
+            lines.filter { isRemoteUrl(it) }.forEach { locallyAddedUrls.add(it) }
             viewmodel.networkManager.sendAsync(WireMessage.playlistChange(lines))
         }
     }
@@ -271,9 +295,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
 
     private fun isRemoteUrl(s: String): Boolean =
         s.startsWith("http://", true) ||
-            s.startsWith("https://", true) ||
-            s.startsWith("ftp://", true) ||
-            s.startsWith("www", true)
+            s.startsWith("https://", true)
 
     /**
      * Extracts the domain from a URL string (e.g. "https://cdn.example.com/file.mp4" → "cdn.example.com").
@@ -287,15 +309,22 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     }
 
     /**
-     * Checks whether a URL is from a trusted domain.
-     * If no trusted domains are configured, all URLs are allowed.
+     * Checks whether a remote URL is allowed to auto-load.
+     *
+     * Mirrors PC's `isURITrusted` with `onlySwitchToTrustedDomains` left at its safe default (on):
+     * a peer-pushed http(s) URL is only trusted if it matches a configured trusted domain. Crucially,
+     * when *no* trusted domains are configured we do NOT blanket-allow every URL — that would let any
+     * peer silently auto-switch the room onto an arbitrary URL. URLs the local user added themselves
+     * are exempt (see [locallyAddedUrls]), since adding one is explicit consent.
      */
     private fun isUrlTrusted(url: String): Boolean {
-        val trustedRaw = Preferences.TRUSTED_DOMAINS.value().trim()
-        if (trustedRaw.isEmpty()) return true // No restrictions configured
+        // The local user added this URL — explicit consent, always allowed.
+        if (locallyAddedUrls.contains(url)) return true
 
+        val trustedRaw = Preferences.TRUSTED_DOMAINS.value().trim()
         val trustedDomains = trustedRaw.split("\n", ",").map { it.trim().lowercase() }.filter { it.isNotEmpty() }
-        if (trustedDomains.isEmpty()) return true
+        // Nothing configured: do not auto-trust arbitrary peer-pushed URLs (PC safe default).
+        if (trustedDomains.isEmpty()) return false
 
         val urlDomain = extractDomain(url)
 

@@ -81,12 +81,19 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
         /** LoadControl (Buffering manager) and track selector (for track language preference) **/
         val options = PlayerOptions.get()
+        /* Clamp the buffer values so DefaultLoadControl's invariants always hold, even if a
+         * saved pref combo is invalid (min/max are seconds*1000=ms here, seek is already ms).
+         * DefaultLoadControl requires minBuffer <= maxBuffer and bufferForPlayback(AfterRebuffer) <= minBuffer. */
+        val minBufferMs = options.minBuffer
+        val maxBufferMs = maxOf(options.maxBuffer, minBufferMs)
+        val bufferForPlaybackMs = minOf(options.playbackBuffer, minBufferMs)
+        val bufferForPlaybackAfterRebufferMs = minOf(options.playbackBuffer + 500, minBufferMs)
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
-                options.minBuffer,
-                options.maxBuffer,
-                options.playbackBuffer,
-                options.playbackBuffer + 500
+                minBufferMs,
+                maxBufferMs,
+                bufferForPlaybackMs,
+                bufferForPlaybackAfterRebufferMs
             ).build()
 
         val trackSelector = DefaultTrackSelector(context)
@@ -288,30 +295,24 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
         val builder = exoplayer?.trackSelector?.parameters?.buildUpon() ?: return
 
-        /* First, clearing our subtitle track selection (This helps troubleshoot many issues */
+        /* First, clearing the track selection only for the type we're changing (This helps troubleshoot many issues */
         exoplayer?.trackSelector?.parameters = builder.clearOverridesOfType(type.getExoType()).build()
-        viewmodel.playerManager.currentTrackChoices.lastSubtitleOverride = null
+        when (type) {
+            TrackType.SUBTITLE -> playerManager.currentTrackChoices.lastSubtitleOverride = null
+            TrackType.AUDIO -> playerManager.currentTrackChoices.lastAudioOverride = null
+        }
 
-        /* Now, selecting our subtitle track should one be selected */
+        /* Now, selecting our track should one be selected */
         if (exoTrack != null) {
+            val override = TrackSelectionOverride(
+                exoTrack.trackGroup,
+                exoTrack.index
+            )
             when (type) {
-                TrackType.SUBTITLE -> {
-                    playerManager.currentTrackChoices.lastSubtitleOverride = TrackSelectionOverride(
-                        exoTrack.trackGroup,
-                        exoTrack.index
-                    )
-                }
-
-                TrackType.AUDIO -> {
-                    playerManager.currentTrackChoices.lastSubtitleOverride = TrackSelectionOverride(
-                        exoTrack.trackGroup,
-                        exoTrack.index
-                    )
-                }
+                TrackType.SUBTITLE -> playerManager.currentTrackChoices.lastSubtitleOverride = override
+                TrackType.AUDIO -> playerManager.currentTrackChoices.lastAudioOverride = override
             }
-            exoplayer?.trackSelector?.parameters = builder.addOverride(
-                playerManager.currentTrackChoices.lastSubtitleOverride as TrackSelectionOverride
-            ).build()
+            exoplayer?.trackSelector?.parameters = builder.addOverride(override).build()
         }
     }
 

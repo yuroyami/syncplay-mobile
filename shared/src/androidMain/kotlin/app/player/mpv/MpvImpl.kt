@@ -333,7 +333,13 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
 
     override fun currentPositionMs(): Long {
         if (!isInitialized) return 0L
-        return mpvPos
+        // The observed `time-pos` (mpvPos) is delivered as INT64, i.e. quantized to whole
+        // seconds, because mpv's JNI doesn't push double-format property updates. Read the
+        // precise fractional value directly here so our position reports aren't a 1-second
+        // sawtooth (which kept the room constantly disagreeing about our position and nudged
+        // the sync layer into corrective micro-seeks). Fall back to mpvPos if unavailable.
+        val precise = MPVLib.getPropertyDouble("time-pos")
+        return if (precise != null) (precise * 1000.0).toLong() else mpvPos
     }
 
     override suspend fun takeScreenshot(): Boolean {

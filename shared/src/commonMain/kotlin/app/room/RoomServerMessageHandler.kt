@@ -174,8 +174,13 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                  * when we cannot control the room (in a controlled room as a non-controller),
                  * OR when SYNC_DONT_SLOW_WITH_ME is on. Without this, a controller in their
                  * own controlled room would yank themselves forward over their own pace. */
+                // PC gates fast-forward on !canControl(): only a follower in a controlled (+)
+                // room force-fastforwards to keep up. In a normal room everyone can control,
+                // so nobody force-fastforwards there (the room follows the slowest member via
+                // rewind/slowdown). The old !isControllerInControlledRoom() was also true in
+                // normal rooms, so it yanked normal-room clients forward on any sustained lag.
                 val canFastForward = Preferences.SYNC_FASTFORWARD.value()
-                        && (!isControllerInControlledRoom() || Preferences.SYNC_DONT_SLOW_WITH_ME.value())
+                        && (isInControlledRoomWithoutController() || Preferences.SYNC_DONT_SLOW_WITH_ME.value())
                 if (diff < -FASTFORWARD_BEHIND_THRESHOLD && doSeek != true && canFastForward) {
                     val now = Clock.System.now()
                     if (protocol.behindFirstDetected == null) {
@@ -244,7 +249,10 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             }
             val playerDiff = abs(playerPosSec - position)
             val globalDiff = abs(protocol.extrapolatedGlobalPositionMs() / 1000.0 - position)
-            val seeked = playerDiff > SEEK_THRESHOLD && globalDiff > SEEK_THRESHOLD
+            // Never report a seek based on a 0/unknown player position (a buffer dip, or a
+            // sample taken right after media injection): that 0 would otherwise be broadcast
+            // to the room as a "seek to 0" and yank every peer back to the start.
+            val seeked = playerPosSec > 0.0 && playerDiff > SEEK_THRESHOLD && globalDiff > SEEK_THRESHOLD
 
             /* `play` MUST be the state we just acknowledged from the server (`!paused`),
              * NOT the transient `viewmodel.player.isPlaying()`. On VLCKit 4 the libvlc
@@ -269,7 +277,9 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             network.sendAsync(
                 protocol.buildStatePacket(
                     serverTime = latencyCalculation,
-                    doSeek = seeked,
+                    // Send doSeek only when we genuinely seeked; never an explicit `false`
+                    // every tick (matches the PC client, which omits it on a plain report).
+                    doSeek = seeked.takeIf { it },
                     position = ackPos,
                     changeState = 0,
                     /* `paused` may be null here (the inbound playstate didn't carry one);
@@ -312,6 +322,18 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
      * controller yet. Used to gate fastforward, instaplay, and the auto re-auth on
      * reconnect — same rule as python's `currentUser.canControl()` (inverted).
      */
+    /**
+     * True when we ARE in a controlled (+) room but are NOT a controller, so we must follow
+     * the controller's pace. Mirrors python's `!currentUser.canControl()`. In a normal room
+     * this is false (everyone can control), which is why fast-forward-on-desync must not fire
+     * there. Inverse of [isControllerInControlledRoom]'s controller test.
+     */
+    private fun isInControlledRoomWithoutController(): Boolean {
+        if (!session.roomFeatures.supportsManagedRooms) return false
+        if (!session.currentRoom.startsWith("+")) return false
+        return session.userList.value.firstOrNull { it.name == session.currentUsername }?.isController != true
+    }
+
     private fun isControllerInControlledRoom(): Boolean {
         if (!session.roomFeatures.supportsManagedRooms) return false
         if (!session.currentRoom.startsWith("+")) return false

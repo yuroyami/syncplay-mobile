@@ -61,7 +61,16 @@ class ControlledServerRoom(name: String) : ServerRoom(name) {
         return watcher.name in _controllers
     }
 
-    override fun getControllers(): List<ServerWatcher> = _controllers.values.toList()
+    /**
+     * Disclosure path: deliberately returns an EMPTY list so newly joining watchers are
+     * NOT told who the existing controllers are. Mirrors PC's
+     * `ControlledRoom.getControllers()` (server.py), which returns `{}`.
+     * Permission checks must use [canControl] / [getControllerWatchersInternal], never this.
+     */
+    override fun getControllers(): List<ServerWatcher> = emptyList()
+
+    /** Internal accessor for server-side logic only (never sent to clients). */
+    fun getControllerWatchersInternal(): List<ServerWatcher> = _controllers.values.toList()
 
     override fun removeWatcher(watcher: ServerWatcher) {
         super.removeWatcher(watcher)

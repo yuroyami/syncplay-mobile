@@ -88,7 +88,14 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
     }
 
     fun controlPlayback(playback: Playback, tellServer: Boolean) {
-        //TODO if (viewmodel.uiState.isInBackground) return
+        // When the app is backgrounded, the lifecycle force-pauses the player. That engine
+        // pause must NOT be told to the room — otherwise a backgrounded client broadcasts a
+        // "paused" State and drags everyone else's playback down with it (and with several
+        // clients backgrounding, multiplies "X paused" spam). PC never lets a background
+        // auto-pause propagate. Only this outbound path is gated; the inbound apply path
+        // (server-driven pause/play in RoomServerMessageHandler) is untouched, so a
+        // backgrounded client still follows the room.
+        if (viewmodel.uiState.isInBackground) return
 
         /* If this is a user-initiated play request, check readiness gating */
         if (playback == Playback.PLAY && tellServer && !viewmodel.isSoloMode
@@ -172,7 +179,13 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
             "IfAlreadyReady" -> session.ready.value
             "IfOthersReady" -> session.ready.value || session.areAllOtherUsersReady()
             "IfMinUsersReady" -> {
-                session.areAllOtherUsersReady() && session.usersInRoomCount() >= 2
+                // PC's instaplayConditionsMet gates ALL modes behind "if you're ready you
+                // can always unpause" (client.py:1023, the leading `if isReady() or ...`).
+                // Without this short-circuit, a user who is already ready but alone — or
+                // whose peers aren't all ready — gets silently blocked and re-marked ready,
+                // whereas PC would just play. Mirror the other modes here.
+                session.ready.value ||
+                    (session.areAllOtherUsersReady() && session.usersInRoomCount() >= 2)
             }
             "Always" -> true
             else -> true

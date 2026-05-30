@@ -45,6 +45,15 @@ import syncplaymobile.shared.generated.resources.room_sub_error_load_vid_first
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
+/** Below this media length, playlist auto-advance is suppressed — mirrors PC's
+ *  `PLAYLIST_LOAD_NEXT_FILE_MINIMUM_LENGTH` (10s). Filters spurious end-of-file events from very
+ *  short clips or failed loads. */
+private const val PLAYLIST_ADVANCE_MIN_DURATION_MS = 10_000L
+
+/** Auto-advance only when playback is within this window of the media's end, so a premature "ended"
+ *  callback (e.g. from a load error) does not skip ahead. */
+private const val PLAYLIST_ADVANCE_NEAR_END_MS = 5_000L
+
 /** The actual platform-agnostic interface for video/audio playback in Syncplay.
  * Engines: ExoPlayer/MPV/VLC (Android), AVPlayer/VLC (iOS)*/
 abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine) {
@@ -139,7 +148,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
 
         if (hasMedia()) {
             val filename = getFileName(uri = uri).toString()
-            val extension = filename.substring(filename.length - 4).lowercase()
+            val extension = filename.substringAfterLast('.', "srt").lowercase()
 
             if (isValidSubtitleFile(extension)) {
                 loadExternalSubImpl(uri, extension)
@@ -310,14 +319,29 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     fun onPlaybackEnded() {
         if (!isInitialized) return
 
-        if (!viewmodel.isSoloMode) {
-            if (viewmodel.session.sharedPlaylist.isEmpty()) return
-            val currentIndex = viewmodel.session.spIndex.intValue
-            val playlistSize = viewmodel.session.sharedPlaylist.size
+        // Auto-advance applies online and in solo mode alike (PC's advanceToNextPlaylistItem has no
+        // solo concept and always runs).
+        val playlistSize = viewmodel.session.sharedPlaylist.size
+        // PC only advances when there is more than one item; a single item would only repeat under a
+        // looping option, which this app has none of, so a lone item just stops at its end.
+        if (playlistSize <= 1) return
 
-            val next = if (playlistSize == currentIndex + 1) 0 else currentIndex + 1
-            viewmodel.playlistManager.sendPlaylistSelection(next)
-        }
+        val currentIndex = viewmodel.session.spIndex.intValue
+        if (currentIndex !in 0 until playlistSize) return
+
+        // Guard against spurious EOF (e.g. a load error firing "ended" near position 0): only advance
+        // when the media is long enough (PC's PLAYLIST_LOAD_NEXT_FILE_MINIMUM_LENGTH = 10s) and we are
+        // actually near the end. Otherwise a failed load would skip straight to the next item.
+        val durationMs = playerManager.timeFullMillis.value
+        val positionMs = currentPositionMs()
+        if (durationMs <= PLAYLIST_ADVANCE_MIN_DURATION_MS) return
+        if (durationMs - positionMs > PLAYLIST_ADVANCE_NEAR_END_MS) return
+
+        // At the last item we stop rather than wrap to 0 — there is no "loop at end of playlist"
+        // option, so looping would be wrong (PC returns here unless loopAtEndOfPlaylist is enabled).
+        if (currentIndex + 1 >= playlistSize) return
+
+        viewmodel.playlistManager.sendPlaylistSelection(currentIndex + 1)
     }
 
     abstract val trackerJobInterval: Duration

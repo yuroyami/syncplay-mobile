@@ -118,6 +118,14 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     private var pausedSeekPosition: Long? = null
 
     /**
+     * Debounce job for the libvlc "Paused" state. VLCKit 4 emits transient Paused events
+     * during non-user operations (vout rebuilds, some setTime/rate changes); honoring them
+     * immediately broadcasts a phantom pause+unpause to the room. We only commit a Paused
+     * after it survives a short delay, cancelled by an intervening Playing.
+     */
+    private var pauseDebounceJob: kotlinx.coroutines.Job? = null
+
+    /**
      * True only during the brief window where we open freshly injected media with
      * ":start-paused" purely to paint its first frame (see [injectVideoFileImpl]). VLCKit
      * can momentarily report [VLCMediaPlayerStatePlaying] before settling on Paused during
@@ -477,10 +485,25 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         player.drawable = null
         player.drawable = drawable
         if (!player.isPlaying()) {
-            // Give VLCKit a beat to stand up the fresh vout behind the rebind before we
-            // ask it to paint a frame into it.
-            delay(120)
-            val p = vlcPlayer ?: return
+            // iOS often tears down libvlc's video output (vout) along with the GPU surface
+            // while backgrounded. A single gotoNextFrame() can NOT rebuild a destroyed vout;
+            // only a real play() transition stands the decoder->vout pipeline back up. So
+            // briefly play to force vout re-creation, wait for playback to repaint, then
+            // restore the paused frame. primingFirstFrame swallows the transient Playing so
+            // the room never sees a phantom "unpaused" broadcast.
+            primingFirstFrame = true
+            player.play()
+            // Give libvlc time to rebuild the vout via the real play() transition (a single
+            // gotoNextFrame can't recreate a vout iOS destroyed while backgrounded). ~400 ms
+            // of actual playback reliably stands the decoder->vout pipeline back up; the tiny
+            // advance is far under the 1 s seek threshold so the room can't see it as a seek.
+            delay(400)
+            val p = vlcPlayer
+            if (p == null) {
+                primingFirstFrame = false
+                return
+            }
+            p.pause()
             if (p.media != null && !p.isPlaying()) p.gotoNextFrame()
         }
     }
@@ -827,7 +850,13 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
      */
     override fun currentPositionMs(): Long {
         // If paused and we have a manual position → use it
-        return (pausedSeekPosition ?: vlcPlayer?.time?.value()?.longValue ?: playerManager.timeCurrentMillis.value)
+        // A live VLCKit clock of 0/null means "not known yet" (a buffer dip, or the moment
+        // right after media injection), NOT a real jump to the start. Returning 0 there made
+        // the sync layer broadcast a phantom "seeked to 0" to the room. Treat a non-positive
+        // sample as unknown and fall back to the last good tracked time.
+        pausedSeekPosition?.let { return it }
+        val live = vlcPlayer?.time?.value()?.longValue ?: 0L
+        return if (live > 0L) live else playerManager.timeCurrentMillis.value
     }
 
     /**
@@ -949,6 +978,8 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                     // media with ":start-paused" (see [primingFirstFrame]) — otherwise the
                     // channel-health collector would broadcast a bogus "unpaused" to the
                     // room. The Paused state that immediately follows clears the flag.
+                    // A real (or transient) Playing cancels any pending debounced pause.
+                    pauseDebounceJob?.cancel()
                     if (!primingFirstFrame) {
                         playerManager.isNowPlaying.value = true
                         pausedSeekPosition = null
@@ -956,14 +987,37 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                 }
                 VLCMediaPlayerState.VLCMediaPlayerStatePaused -> {
                     primingFirstFrame = false
-                    playerManager.isNowPlaying.value = false
+                    // Debounce: libvlc 4 briefly flips to Paused during non-user operations
+                    // (vout rebuilds, some setTime/rate changes). Reporting it immediately
+                    // made the channel-health collector broadcast a phantom pause+unpause to
+                    // the room (the "1Hz spasm"). Only commit a Paused that is still paused a
+                    // moment later (an intervening Playing cancels this). Reading isPlaying()
+                    // is safe here because it runs on the main thread after this callback (and
+                    // libvlc's timer.lock) has returned, unlike a call inside the delegate.
+                    pauseDebounceJob?.cancel()
+                    pauseDebounceJob = playerScopeMain.launch(Dispatchers.Main.immediate) {
+                        delay(250)
+                        if (vlcPlayer?.isPlaying() != true) {
+                            playerManager.isNowPlaying.value = false
+                        }
+                    }
                 }
                 VLCMediaPlayerState.VLCMediaPlayerStateStopped -> {
                     // Real end of playback (natural EOF or explicit stop) — reflect
                     // that in the button so it doesn't stay stuck showing "pause".
                     primingFirstFrame = false
                     playerManager.isNowPlaying.value = false
-                    onPlaybackEnded()
+                    // VLCKit 4 has no distinct "Ended" state: Stopped fires on a genuine
+                    // end-of-file AND on error/teardown/manual stop. Only treat it as a
+                    // natural EOF (which auto-advances the shared playlist for the WHOLE
+                    // room) when we were actually near the end. We can't read vlcPlayer.time
+                    // here (libvlc holds timer.lock during this callback), so use the last
+                    // tracked position/duration.
+                    val endPos = playerManager.timeCurrentMillis.value
+                    val endDur = playerManager.timeFullMillis.value
+                    if (endDur > 0L && endPos >= endDur - 1500L) {
+                        onPlaybackEnded()
+                    }
                 }
                 else -> { /* Opening, Buffering, Stopping, Error — leave isNowPlaying alone */ }
             }
@@ -978,9 +1032,12 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
             // We can't read vlcPlayer.time here (it would assert in libvlc — see the
             // class doc for VlcDelegate), but the mere fact that VLCKit fired this
             // notification tells us the player's clock is ticking and has caught up
-            // with whatever setTime() we last issued. Drop the post-seek shadow so the
-            // tracker job can pick up real progress on the next 250 ms tick.
-            if (pausedSeekPosition != null) pausedSeekPosition = null
+            // with whatever setTime() we last issued. We deliberately do NOT drop the
+            // post-seek shadow here anymore: this notification often arrives from a tick
+            // queued BEFORE the seek landed, so clearing the shadow now made
+            // currentPositionMs briefly report the pre-seek position (a phantom backward
+            // jump for the room). The shadow is instead cleared by the main-thread tracker
+            // once the live clock actually converges on the target (see startTrackingProgress).
         }
 
         /**

@@ -12,6 +12,7 @@ import app.server.model.ServerConfig.Companion.SERVER_STATE_INTERVAL_MS
 import app.server.model.ServerWatcher
 import app.utils.generateTimestampMillis
 import app.utils.loggy
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -20,6 +21,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonPrimitive
 
 /**
@@ -32,6 +34,22 @@ class SyncplayServer(
     val config: ServerConfig,
     private val scope: CoroutineScope
 ) {
+    /**
+     * Single-threaded confinement for ALL shared server state (rooms, watchers, connections,
+     * counters, positions). PC's reference server runs on Twisted's single reactor thread; this
+     * mirrors that. Inbound packet handling ([ClientConnection.handlePacket]), the per-watcher
+     * state timers, and connection-lost cleanup all run here, so the unsynchronized [mutableMapOf]
+     * collections and plain mutable fields can never be touched by two threads at once.
+     *
+     * `limitedParallelism(1)` guarantees at most one task executes at a time and establishes the
+     * happens-before edges needed for visibility (Kotlin/Native's modern memory model + JVM).
+     */
+    val serverDispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(1)
+
+    /** Runs [block] confined to [serverDispatcher] so it can safely touch shared state. */
+    suspend fun <T> onServerThread(block: suspend () -> T): T =
+        withContext(serverDispatcher) { block() }
+
     private val roomManager: ServerRoomManager =
         if (config.isolateRooms) PublicServerRoomManager() else ServerRoomManager()
 
@@ -107,11 +125,24 @@ class SyncplayServer(
         log("${watcher.name} disconnected")
     }
 
+    /**
+     * Connection-lost entry point for the platform network engines, which fire on raw transport
+     * threads (Netty event loop / iOS socket). Hops onto [serverDispatcher] so the mutation of
+     * shared maps in [removeWatcher] is serialized with the timer + inbound handling.
+     */
+    fun disconnectWatcher(watcher: ServerWatcher?) {
+        if (watcher == null) return
+        scope.launch(serverDispatcher) { removeWatcher(watcher) }
+    }
+
     // --- State broadcasting ---
 
     private fun startStateTimer(watcher: ServerWatcher) {
         stopStateTimer(watcher)
-        stateTimerJobs[watcher] = scope.launch(Dispatchers.IO) {
+        // Confined to serverDispatcher so timer ticks can never race inbound packet handling
+        // on the shared room/watcher/connection state. `delay` suspends without holding the
+        // single thread, so other confined work still runs between ticks.
+        stateTimerJobs[watcher] = scope.launch(serverDispatcher) {
             // Initial forced state update
             delay(100)
             sendState(watcher, doSeek = true, forcedUpdate = true)

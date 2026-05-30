@@ -37,7 +37,7 @@ data class MediaFile(
     val chapters: SnapshotStateList<Chapter> = mutableStateListOf(),
 ) {
     companion object {
-        fun String.hashed() = sha256(this).toHexString(HexFormat.UpperCase)
+        fun String.hashed() = sha256(this).toHexString(HexFormat.Default)
 
         suspend fun PlatformFile.mediaFromFile(): MediaFile {
             val loc = MediaFileLocation.Local(this)
@@ -57,7 +57,8 @@ data class MediaFile(
                 MediaFile().apply {
                     location = loc
 
-                    fileName = Uri.Companion.parseOrNull(loc.url)?.pathSegments?.last() ?: getString(Res.string.undefined)
+                    fileName = Uri.Companion.parseOrNull(loc.url)?.pathSegments?.lastOrNull()?.takeIf { it.isNotBlank() }
+                        ?: getString(Res.string.undefined)
                     fileSize = "0"
                 }
             }

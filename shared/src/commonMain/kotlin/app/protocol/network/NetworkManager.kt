@@ -18,6 +18,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -98,14 +99,50 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     abstract suspend fun upgradeTls()
 
     private var reconnectionJob: Job? = null
+
+    /**
+     * Schedules automatic reconnection.
+     *
+     * One coroutine owns the whole retry loop. The old design launched a single delayed
+     * [connect] and relied on the next [onConnectionFailed] to re-arm a fresh job — but a
+     * synchronous connect failure (Netty's `await` timing out, Ktor's connect throwing)
+     * re-enters [reconnect] while still nested *inside* this very job. At that moment
+     * `reconnectionJob?.isCompleted` is still `false`, so the old guard refused to
+     * reschedule and auto-reconnect died after a single attempt. We now loop here instead,
+     * and guard on [Job.isActive] so a nested re-entry is a harmless no-op (the running loop
+     * keeps retrying on its own).
+     *
+     * Stops when CONNECTED ([onConnected] sets that), or when the job is cancelled by
+     * [invalidate]/[terminateExistingConnection] (manual disconnect / leaving the room).
+     */
     fun reconnect() {
-        if (state.value == ConnectionState.DISCONNECTED) {
-            if (reconnectionJob == null || reconnectionJob?.isCompleted == true) {
-                reconnectionJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
-                    state.value = ConnectionState.SCHEDULING_RECONNECT
-                    delay(RECONNECTION_INTERVAL.value().seconds)
-                    connect()
-                }
+        // A loop is already running — let it keep driving retries. Guarding on isActive
+        // (not isCompleted) is what fixes the single-retry bug: a synchronous connect
+        // failure re-enters here from within the loop, where the job is still active.
+        if (reconnectionJob?.isActive == true) return
+
+        reconnectionJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
+            while (isActive && state.value != ConnectionState.CONNECTED) {
+                state.value = ConnectionState.SCHEDULING_RECONNECT
+                // Clamp the user-configurable interval: it can be 0, which would otherwise
+                // spin a tight zero-delay reconnect loop hammering the server and the CPU.
+                // Clamping the Duration (not the raw pref number) keeps this agnostic to
+                // whether the pref reads back as Int or Long.
+                val interval = RECONNECTION_INTERVAL.value().seconds
+                    .coerceAtLeast(MIN_RECONNECT_INTERVAL)
+                delay(interval)
+                if (!isActive || state.value == ConnectionState.CONNECTED) break
+                // Re-arm TLS negotiation for the fresh socket. After a successful encrypted
+                // session [tls] is left at TLS_YES, but a brand-new socket has no SSL handler
+                // in its pipeline — if we reconnect with TLS_YES, connect() skips the startTLS
+                // step and sends Hello in plaintext, silently downgrading an encrypted room.
+                // Resetting to TLS_ASK makes the reconnect re-do the same negotiation the
+                // initial connect did. (TLS_NO is left alone: TLS was disabled / unsupported.)
+                if (tls == TlsState.TLS_YES) tls = TlsState.TLS_ASK
+                // connect() flips state to CONNECTING; on success the onConnected callback
+                // sets CONNECTED and the loop exits next iteration. On failure (sync or
+                // async) the state lands back on DISCONNECTED and we retry after the delay.
+                connect()
             }
         }
     }
@@ -177,5 +214,13 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
                 }
             }
         }
+    }
+
+    companion object {
+        /**
+         * Floor for the reconnect delay. The RECONNECTION_INTERVAL preference allows 0,
+         * which would otherwise produce a `delay(0)` tight loop on every retry.
+         */
+        val MIN_RECONNECT_INTERVAL = 1.seconds
     }
 }

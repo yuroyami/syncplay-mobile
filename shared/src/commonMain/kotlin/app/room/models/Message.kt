@@ -22,7 +22,7 @@ data class Message(
     var isMainUser: Boolean = false,
 
     /** Whether the message is an error message (and therefore should be colored in Error color (red in default) */
-    var isError: Boolean = true
+    var isError: Boolean = false
 ) {
 
     /** indicates that this message has been seen */

@@ -21,6 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Android Netty-based TCP server engine.
@@ -35,7 +36,9 @@ actual class ServerNetworkEngine actual constructor(
     private var bossGroup: EventLoopGroup? = null
     private var workerGroup: EventLoopGroup? = null
     private var serverChannel: Channel? = null
-    private val clientChannels = mutableMapOf<Channel, ClientConnection>()
+    // Concurrent: Netty delivers channelActive/channelInactive/exceptionCaught for different
+    // channels on multiple event-loop threads, so this per-channel registry must be thread-safe.
+    private val clientChannels = ConcurrentHashMap<Channel, ClientConnection>()
 
     var isRunning: Boolean = false
         private set

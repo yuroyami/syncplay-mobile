@@ -78,7 +78,9 @@ class ClientConnection(
     }
 
     fun onConnectionLost() {
-        server.removeWatcher(watcher)
+        // Called from raw transport threads (Netty/iOS); route through the server's confined
+        // dispatcher so removeWatcher's shared-map mutation can't race the timer / inbound work.
+        server.disconnectWatcher(watcher)
     }
 
     /**
@@ -88,12 +90,17 @@ class ClientConnection(
      */
     suspend fun handlePacket(jsonString: String) {
         if (BuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("**CLIENT** $jsonString")
-        try {
-            val message = syncplayJson.decodeFromString(WireMessageDeserializer, jsonString)
-            message.dispatch(this)
-        } catch (e: SerializationException) {
-            loggy("Server: failed to decode line '$jsonString' — ${e.message}")
-            dropWithError("Failed to parse message")
+        // Confine all inbound dispatch (and the shared-state mutations it triggers) to the
+        // server's single thread, matching PC's single-reactor model. Decoding is cheap and
+        // kept inside the confinement for simplicity; the heavy lifting is the dispatch.
+        server.onServerThread {
+            try {
+                val message = syncplayJson.decodeFromString(WireMessageDeserializer, jsonString)
+                message.dispatch(this)
+            } catch (e: SerializationException) {
+                loggy("Server: failed to decode line '$jsonString' — ${e.message}")
+                dropWithError("Failed to parse message")
+            }
         }
     }
 
@@ -265,16 +272,24 @@ class ClientConnection(
         val clientLatCalc = if (clientLatencyCalculation > 0) clientLatencyCalculation else null
         if (clientLatencyCalculation > 0) clientLatencyCalculation = 0.0
 
+        // Build the ignoringOnTheFly block exactly as PC does (protocols.py sendState, ~729-735).
+        // The per-client counter is reset ONLY when it is actually carried in this outgoing
+        // message — never decoupled on a plain `!forced` tick. This preserves feedback
+        // suppression: forced echoes that carry `client: N` clear it, and non-forced ticks
+        // that send nothing leave the client's pending correction intact.
+        val ignoring = if (serverIgnoringOnTheFly != 0 || clientIgnoringOnTheFly != 0) {
+            val data = IgnoringOnTheFlyData(
+                server = serverIgnoringOnTheFly.takeIf { it != 0 },
+                client = clientIgnoringOnTheFly.takeIf { it != 0 }
+            )
+            // Mirrors PC: the client counter is zeroed at the moment it is placed in the packet.
+            if (clientIgnoringOnTheFly != 0) clientIgnoringOnTheFly = 0
+            data
+        } else null
+
         val shouldSend = serverIgnoringOnTheFly == 0 || forced
 
         if (shouldSend) {
-            val ignoring = if (serverIgnoringOnTheFly != 0 || clientIgnoringOnTheFly != 0) {
-                IgnoringOnTheFlyData(
-                    server = serverIgnoringOnTheFly.takeIf { it != 0 },
-                    client = clientIgnoringOnTheFly.takeIf { it != 0 }
-                )
-            } else null
-
             sendTyped(
                 WireMessage.State(
                     StateData(
@@ -293,10 +308,6 @@ class ClientConnection(
                     )
                 )
             )
-        }
-
-        if (clientIgnoringOnTheFly != 0 && !forced) {
-            clientIgnoringOnTheFly = 0
         }
     }
 

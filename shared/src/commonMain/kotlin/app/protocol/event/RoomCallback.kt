@@ -140,7 +140,12 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
         viewmodel.viewModelScope.launch(Dispatchers.Main) {
             if (viewmodel.player.hasMedia() && PAUSE_ON_SOMEONE_LEAVE.value()) {
-                this@RoomCallback.dispatcher.controlPlayback(Playback.PAUSE, true)
+                // Pause LOCALLY only. PC's pauseOnLeave (client.py:474) calls the player's
+                // setPaused directly without sending State — it does not broadcast. Passing
+                // tellServer=true here would echo a redundant "X paused" to the room, and with
+                // multiple clients each reacting to the same leave it multiplies the pause
+                // events. Local-only matches PC.
+                this@RoomCallback.dispatcher.controlPlayback(Playback.PAUSE, false)
             }
         }
 
