@@ -21,6 +21,7 @@ import app.preferences.settings.SettingCategory
 import app.preferences.value
 import app.room.RoomViewmodel
 import app.utils.loggy
+import cocoapods.VLCKit.VLCEventsLegacyConfiguration
 import cocoapods.VLCKit.VLCLibrary
 import cocoapods.VLCKit.VLCMedia
 import cocoapods.VLCKit.VLCMediaParseLocal
@@ -289,6 +290,18 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                 )
                 // User-supplied flags from Preferences.VLC_CUSTOM_FLAGS are appended last, so
                 // they can override the defaults above (LibVLC honours the last occurrence).
+                // By default VLCKit 4 delivers its event callbacks (state/length/track/media
+                // changed) SYNCHRONOUSLY on libvlc worker threads — which is why this file grew a
+                // pile of "never touch VLC from inside a callback, always bounce to main" code.
+                // The "legacy" configuration makes every callback arrive asynchronously on the
+                // main thread instead, restoring the MobileVLCKit-3 model. Must be set before any
+                // VLCMediaPlayer / VLCMedia is created, because each one snapshots this shared
+                // config when it wires up its event handler (VLCMediaPlayer.registerObservers /
+                // VLCMedia.initInternalMediaDescriptor). NOTE: this is a behaviour change for every
+                // VLC event delivery — verify on a real device before removing any of the
+                // now-redundant main-thread bounces in VlcDelegate.
+                VLCLibrary.sharedEventsConfiguration = VLCEventsLegacyConfiguration()
+
                 val lib = VLCLibrary(baseArgs + app.utils.vlcCustomFlags())
                 libvlc = lib
 
