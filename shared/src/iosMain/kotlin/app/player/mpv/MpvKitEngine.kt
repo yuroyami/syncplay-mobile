@@ -23,7 +23,9 @@ import syncplaymobile.shared.generated.resources.mpv
  * **Availability:** Requires MPVKit SPM package in the iosApp Xcode project.
  */
 object MpvKitEngine : PlayerEngine {
-    override val isAvailable: Boolean = instantiateMpvKitPlayer != null
+    // Computed on each access (not cached at init) so availability tracks the Swift bridge
+    // registration regardless of whether this object is touched before or after app startup.
+    override val isAvailable: Boolean get() = instantiateMpvKitPlayer != null
     override val isDefault: Boolean = false
     override val name: String = "MPVKit"
     override val img: DrawableResource = Res.drawable.mpv
