@@ -867,8 +867,21 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         // right after media injection), NOT a real jump to the start. Returning 0 there made
         // the sync layer broadcast a phantom "seeked to 0" to the room. Treat a non-positive
         // sample as unknown and fall back to the last good tracked time.
-        pausedSeekPosition?.let { return it }
+        pausedSeekPosition?.let { shadow ->
+            // VLCKIT-DIAG (temporary): catch a clock-shaped value (~1.7e15) leaking via the
+            // seek shadow. 24h is larger than any real media position, so anything above it
+            // is garbage, not a legitimate playhead.
+            if (shadow > 86_400_000L) {
+                loggy("🟥🟥🟥 VLCKIT-DIAG2 shadow garbage: pausedSeekPosition=$shadow ms, duration=${playerManager.timeFullMillis.value} ms")
+            }
+            return shadow
+        }
         val live = vlcPlayer?.time?.value()?.longValue ?: 0L
+        // VLCKIT-DIAG (temporary): log the raw VLCKit reading whenever it's implausibly large,
+        // so we can see exactly what vlcPlayer.time returns at the moment the bad seek fires.
+        if (live > 86_400_000L) {
+            loggy("🟥🟥🟥 VLCKIT-DIAG live garbage: raw vlcPlayer.time=$live ms, duration=${playerManager.timeFullMillis.value} ms, lastTracked=${playerManager.timeCurrentMillis.value}")
+        }
         return if (live > 0L) live else playerManager.timeCurrentMillis.value
     }
 

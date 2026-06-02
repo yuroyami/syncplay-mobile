@@ -107,6 +107,14 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             // position + messageAge. All threshold comparisons must use this aged value.
             val agedPosition = if (paused) position else position + messageAge
 
+            // 🟥🟥🟥 VLCKIT-DIAG (temporary): a real playhead can't exceed 24h. If the inbound
+            // server position is implausible, the garbage arrived over the wire — not generated
+            // locally. If this stays silent but the outbound VlcKitImpl probe fires, we're the
+            // source and the server is just echoing us back.
+            if (agedPosition > 86_400.0) {
+                loggy("🟥🟥🟥 VLCKIT-DIAG1 inbound: server position=$position s, messageAge=$messageAge s, agedPosition=$agedPosition s, doSeek=$doSeek, setBy=$setBy")
+            }
+
             // ONLY a genuine room-state transition: the last room pause-state we recorded
             // differs from what the server just sent. Do NOT also test
             // `paused == viewmodel.player.isPlaying()` here — that fires on a *local
@@ -135,8 +143,14 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                     // as a divergence and re-broadcasts to the room, looping our own
                     // first-sync back at the server.
                     protocol.noteExpectedPlaybackState(paused = paused)
+                    val firstSeekMs = (agedPosition * 1000.0).toLong()
+                    // 🟥🟥🟥 VLCKIT-DIAG (temporary): unconditional — this once-per-session forced
+                    // seek is the prime suspect for the first-file bug. If firstSeekMs is sane here
+                    // but currentPositionMs() logs garbage moments later, VLCKit corrupts a clean
+                    // seek. If firstSeekMs is already huge, the bad value came from the server above.
+                    loggy("🟥🟥🟥 VLCKIT-DIAG first-sync: forcing seekTo=$firstSeekMs ms (agedPosition=$agedPosition s), paused=$paused")
                     withContext(Dispatchers.Main) {
-                        viewmodel.player.seekTo((agedPosition * 1000.0).toLong())
+                        viewmodel.player.seekTo(firstSeekMs)
                         if (paused) viewmodel.player.pause() else viewmodel.player.play()
                     }
                 }
