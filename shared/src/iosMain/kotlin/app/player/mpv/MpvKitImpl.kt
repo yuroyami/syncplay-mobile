@@ -3,15 +3,27 @@ package app.player.mpv
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SettingsInputComponent
 import androidx.compose.ui.viewinterop.UIKitView
 import app.player.PlayerImpl
 import app.player.models.Chapter
 import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
 import app.player.models.Track
+import app.preferences.PrefExtraConfig
+import app.preferences.Preferences.MPV_DEBUG_MODE
+import app.preferences.Preferences.MPV_EXPORT_CONF
+import app.preferences.Preferences.MPV_HARDWARE_ACCELERATION
+import app.preferences.Preferences.MPV_IMPORT_CONF
+import app.preferences.Preferences.MPV_INTERPOLATION
+import app.preferences.Preferences.MPV_PROFILE
+import app.preferences.Preferences.MPV_VIDSYNC
 import app.preferences.Preferences.SUBTITLE_SIZE
+import app.preferences.settings.SettingCategory
 import app.preferences.value
 import app.room.RoomViewmodel
+import app.utils.getMpvConfFilePath
 import app.utils.loggy
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.path
@@ -31,6 +43,8 @@ import platform.posix.O_RDONLY
 import platform.posix.fstat
 import platform.posix.open
 import platform.posix.stat
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.uisetting_categ_mpv
 import kotlin.math.roundToLong
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -54,6 +68,10 @@ class MpvKitImpl(
 
     override val supportsChapters: Boolean = true
     override val supportsPictureInPicture: Boolean = false
+    override val supportsScreenshot: Boolean = true
+    // We announce a loaded file from the "file-loaded" event below (once the real duration is
+    // known), so the base parseMedia() must not announce it again on iOS. See PlayerImpl.
+    override val announcesFileLoadViaEvent: Boolean = true
     override val trackerJobInterval: Duration = 500.milliseconds
 
     override fun initialize() {
@@ -62,7 +80,20 @@ class MpvKitImpl(
         // observed-property registrations on the new one.
         if (isInitialized) return
 
-        bridge.create()
+        // Pass the user's saved MPV prefs as mpv's init-time options. mpv reads vo/hwdec/profile/
+        // config-dir once, before initialize, so they must be set at creation (not after) to take
+        // effect from the first frame, mirroring Android's MPVView.initOptions.
+        bridge.create(
+            configDir = getMpvConfFilePath()?.substringBeforeLast('/') ?: "",
+            hwdec = if (MPV_HARDWARE_ACCELERATION.value()) "auto" else "no",
+            // Always gpu-next on iOS: the plain "gpu" VO can't map VideoToolbox (videotoolbox-pl)
+            // hardware frames under MoltenVK and hangs on the first frame, so MPV_GPU_NEXT is not
+            // honored here.
+            vo = "gpu-next",
+            profile = MPV_PROFILE.value(),
+            videoSync = MPV_VIDSYNC.value(),
+            interpolation = if (MPV_INTERPOLATION.value()) "yes" else "no",
+        )
 
         bridge.onPropertyChange = lambda@{ name, value ->
             when (name) {
@@ -140,7 +171,54 @@ class MpvKitImpl(
         }
     }
 
-    override suspend fun configurableSettings() = null
+    override suspend fun configurableSettings() = SettingCategory(
+        title = Res.string.uisetting_categ_mpv,
+        icon = Icons.Filled.SettingsInputComponent
+    ) {
+        // hwdec and profile are read once by mpv at init (see create()). Switching them live while
+        // a MoltenVK swapchain and a VideoToolbox decoder are bound tears down and recreates the
+        // video output, which on iOS wedges the decoder and kills playback. So they only persist
+        // here and take effect the next time the player is created (next room join); tell the user.
+        // gpu-next is intentionally NOT exposed: the plain "gpu" VO can't render VideoToolbox frames
+        // under MoltenVK (it hangs), so create() always forces gpu-next.
+        +MPV_HARDWARE_ACCELERATION.apply {
+            config?.extraConfig = PrefExtraConfig.BooleanCallback {
+                viewmodel.dispatchOSD { "Hardware decoding change applies after rejoining the room" }
+            }
+        }
+        // video-sync and interpolation are render/timing options mpv applies live safely (no
+        // video-output reinit), so push them straight through.
+        +MPV_VIDSYNC.apply {
+            config?.extraConfig = PrefExtraConfig.MultiChoice(
+                entries = { vidsyncEntries.zip(vidsyncEntries).toMap() },
+                onItemChosen = { videoSync -> bridge.setOptionString("video-sync", videoSync) }
+            )
+        }
+        +MPV_INTERPOLATION.apply {
+            config?.dependencyEnable = booleanMet@{
+                val currentVidSyncMode = MPV_VIDSYNC.value()
+                return@booleanMet currentVidSyncMode != "audio" && currentVidSyncMode != "desync"
+            }
+            config?.extraConfig = PrefExtraConfig.BooleanCallback { b ->
+                bridge.setOptionString("interpolation", if (b) "yes" else "no")
+            }
+        }
+        +MPV_PROFILE.apply {
+            config?.extraConfig = PrefExtraConfig.MultiChoice(
+                entries = { profileEntries.zip(profileEntries).toMap() },
+                onItemChosen = { viewmodel.dispatchOSD { "Profile change applies after rejoining the room" } }
+            )
+        }
+        +MPV_DEBUG_MODE.apply {
+            config?.extraConfig = PrefExtraConfig.Slider(maxValue = 3, minValue = 0) { page ->
+                bridge.setDebugOverlay(page)
+            }
+        }
+        // mpv.conf import/export now works on iOS too: getMpvConfFilePath() returns a real path
+        // and create() points mpv's config-dir at it (the new config applies on next playback).
+        +MPV_IMPORT_CONF
+        +MPV_EXPORT_CONF
+    }
 
     @Composable
     override fun VideoPlayer(modifier: Modifier, onPlayerReady: () -> Unit) {
@@ -353,7 +431,12 @@ class MpvKitImpl(
         }
     }
 
-    override suspend fun isSeekable(): Boolean = isInitialized
+    override suspend fun isSeekable(): Boolean {
+        if (!isInitialized) return false
+        return withContext(Dispatchers.Main.immediate) {
+            bridge.isSeekable()
+        }
+    }
 
     override fun seekTo(toPositionMs: Long) {
         if (!isInitialized) return
@@ -364,6 +447,13 @@ class MpvKitImpl(
     override fun currentPositionMs(): Long {
         if (!isInitialized) return 0L
         return (bridge.getTimePos() * 1000).roundToLong()
+    }
+
+    override suspend fun takeScreenshot(): Boolean {
+        if (!isInitialized) return false
+        return withContext(Dispatchers.Main.immediate) {
+            bridge.takeScreenshot()
+        }
     }
 
     override suspend fun switchAspectRatio(): String {
@@ -417,5 +507,15 @@ class MpvKitImpl(
     override fun getCurrentVolume(): Int = bridge.getVolume()
     override fun changeCurrentVolume(v: Int) {
         bridge.setVolume(v.coerceIn(0, getMaxVolume()))
+    }
+
+    private companion object {
+        // Mirrors MPVView.vidsyncEntries / profileEntries on Android (those live in androidMain
+        // and aren't visible here). Keep in sync with the Android lists.
+        val vidsyncEntries = listOf(
+            "audio", "display-resample", "display-resample-vdrop", "display-resample-desync",
+            "display-tempo", "display-vdrop", "display-adrop", "display-desync", "desync"
+        )
+        val profileEntries = listOf("fast", "high-quality", "gpu-hq", "low-latency", "sw-fast")
     }
 }

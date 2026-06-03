@@ -374,6 +374,19 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                 }
                             }
                         )
+
+                        // Warn when the chosen engine is flagged experimental (MPVKit/AVPlayer on
+                        // iOS, libVLC on Android). Sits between the engine picker and the Join button.
+                        val activeEngine = availablePlatformPlayerEngines.firstOrNull { it.name == selectedEngine }
+                        if (activeEngine?.isExperimental == true) {
+                            FlexibleText(
+                                text = "This video engine is experimental",
+                                size = 12f,
+                                textAlign = TextAlign.Center,
+                                fillingColors = listOf(MaterialTheme.colorScheme.error),
+                                font = sairaFont
+                            )
+                        }
                     }
 
                     /* join button + shortcut saver */

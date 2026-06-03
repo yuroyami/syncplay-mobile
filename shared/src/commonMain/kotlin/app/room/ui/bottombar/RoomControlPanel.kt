@@ -207,8 +207,8 @@ fun RoomControlPanelCard(modifier: Modifier) {
             }
         }
 
-        /* Screenshot - hidden until properly implemented */
-        if (false) {
+        /* Screenshot: shown only for engines that actually support it (MPV on both platforms). */
+        if (viewmodel.player.supportsScreenshot) {
             FlexibleIcon(
                 icon = Icons.Filled.CameraAlt,
                 size = iconSize, shadowColors = listOf(Color.Black)

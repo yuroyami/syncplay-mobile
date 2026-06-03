@@ -61,5 +61,7 @@
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Synkplay saves video screenshots to your photo library.</string>
 </dict>
 </plist>

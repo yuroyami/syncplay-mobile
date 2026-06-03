@@ -24,6 +24,7 @@ import syncplaymobile.shared.generated.resources.vlc
 object VlcEngine : PlayerEngine {
     override val isAvailable: Boolean = !BuildConfig.EXOPLAYER_ONLY
     override val isDefault: Boolean = false
+    override val isExperimental: Boolean = true
     override val name: String = "VLC"
     override val img: DrawableResource = Res.drawable.vlc
     override fun createImpl(viewmodel: RoomViewmodel): PlayerImpl = VlcImpl(viewmodel)

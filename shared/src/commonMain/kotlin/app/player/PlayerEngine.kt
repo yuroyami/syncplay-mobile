@@ -14,6 +14,11 @@ interface PlayerEngine {
     /** True if the engine is available and instantiable on this platform. */
     val isAvailable: Boolean
 
+    /** True if the engine is still experimental (not fully stable). Surfaced as a warning under
+     *  the engine picker so the user knows what they are opting into. Defaults to false;
+     *  experimental engines override it. */
+    val isExperimental: Boolean get() = false
+
     /** Icon resource for this engine in the settings UI. */
     val img: DrawableResource
 

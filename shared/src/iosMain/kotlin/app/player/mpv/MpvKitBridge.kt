@@ -55,8 +55,48 @@ abstract class MpvKitPlayerBridge {
 
     // ── Lifecycle ────────────────────────────────────────────────────
 
-    /** Create mpv handle, set options, initialize, and set up render context (Metal/MoltenVK). */
-    abstract fun create()
+    /**
+     * Create the mpv handle, apply init-time options, initialize, and set up the render context
+     * (Vulkan/MoltenVK).
+     *
+     * The options are passed in (rather than hardcoded) because mpv reads `vo`, `hwdec`, `profile`
+     * and `config-dir` once, before `mpv_initialize`, so they must reflect the user's saved
+     * preferences from the very first frame, mirroring Android's `MPVView.initOptions`.
+     *
+     * @param configDir directory mpv reads a user `mpv.conf` from; empty string disables it.
+     * @param hwdec     `hwdec` value, e.g. "auto" or "no".
+     * @param vo        video output, "gpu-next" or "gpu".
+     * @param profile   mpv profile, e.g. "fast" / "high-quality".
+     * @param videoSync `video-sync` value, e.g. "audio".
+     * @param interpolation "yes" or "no".
+     */
+    abstract fun create(
+        configDir: String,
+        hwdec: String,
+        vo: String,
+        profile: String,
+        videoSync: String,
+        interpolation: String,
+    )
+
+    /**
+     * Set an arbitrary mpv option/property at runtime (`mpv_set_option_string`). Used by the
+     * settings UI to apply live changes (hwdec / vo / video-sync / interpolation / profile).
+     * Some options only fully apply on the next [create]; the saved preference covers that.
+     */
+    abstract fun setOptionString(name: String, value: String)
+
+    /** Toggle mpv's built-in stats overlay page (`script-binding stats/display-page-N`). */
+    abstract fun setDebugOverlay(page: Int)
+
+    /**
+     * Capture the current video frame and save it to the device photo library. Returns true on
+     * success, false if there is no frame or the capture/save failed.
+     */
+    abstract fun takeScreenshot(): Boolean
+
+    /** Whether the current media is seekable (`seekable` property). */
+    abstract fun isSeekable(): Boolean
 
     /** Destroy mpv handle and free all resources. */
     abstract fun destroy()

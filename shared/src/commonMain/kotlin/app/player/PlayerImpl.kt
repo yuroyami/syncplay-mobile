@@ -72,6 +72,18 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     open val canChangeAspectRatio: Boolean = true
     abstract val supportsChapters: Boolean
     open val supportsPictureInPicture: Boolean = true
+
+    /** Whether this engine can capture a still video frame via [takeScreenshot]. Gates the
+     *  screenshot button in the room control panel so it only shows where it actually works. */
+    open val supportsScreenshot: Boolean = false
+
+    /** When true, the engine announces a freshly loaded file to the room itself, typically from
+     *  a player "file-loaded" event once the real duration is known, so [parseMedia] must NOT
+     *  also fire [announceFileLoaded] on iOS. Without this guard such engines announce the file
+     *  twice (once prematurely with no duration, once correctly from the event). Engines that have
+     *  no load event leave this false and rely on the [parseMedia] announce. */
+    protected open val announcesFileLoadViaEvent: Boolean = false
+
     var isInitialized: Boolean = false
 
     /**
@@ -267,7 +279,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
             getString(Res.string.room_selected_vid, "${viewmodel.media?.fileName}")
         }
 
-        if (platform == Platform.IOS) {
+        if (platform == Platform.IOS && !announcesFileLoadViaEvent) {
             //TODO Better come up with a better DSL to streamline file loading announcement
             announceFileLoaded()
         }

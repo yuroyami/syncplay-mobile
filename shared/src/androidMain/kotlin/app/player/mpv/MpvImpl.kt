@@ -3,7 +3,6 @@ package app.player.mpv
 import android.annotation.SuppressLint
 import android.content.Context
 import android.media.AudioManager
-import android.util.Log
 import android.view.LayoutInflater
 import androidx.annotation.UiThread
 import androidx.compose.material.icons.Icons
@@ -54,6 +53,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     lateinit var mpvView: MPVView
     private lateinit var ctx: Context
     override val supportsChapters: Boolean = true
+    override val supportsScreenshot: Boolean = true
     override val trackerJobInterval: Duration = 500.milliseconds
 
     override fun initialize() {
@@ -71,6 +71,10 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         if (!isInitialized) return
 
         withContext(Dispatchers.Main) {
+            // Detach our observer first: MPVLib.observers is a process-global static list, so an
+            // un-removed observer keeps this MpvImpl (and its RoomViewmodel graph) reachable past
+            // teardown until the next attach happens to replace it.
+            removeObserver()
             mpvView.destroy()
         }
     }
@@ -159,9 +163,9 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         withContext(Dispatchers.Main.immediate) {
             playerManager.media.value?.tracks?.clear()
 
-            val count = MPVLib.getPropertyInt("track-list/count")!!
-            // Note that because events are async, properties might disappear at any moment
-            // so use ?: continue instead of !!
+            // Because events are async, properties can disappear at any moment, so prefer
+            // null-safe reads (?: return/continue) over !! which would crash mid-analysis.
+            val count = MPVLib.getPropertyInt("track-list/count") ?: return@withContext
             for (i in 0 until count) {
                 val type = MPVLib.getPropertyString("track-list/$i/type") ?: continue
                 if (type != "audio" && type != "sub") continue
@@ -171,15 +175,12 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
                 val selected = MPVLib.getPropertyBoolean("track-list/$i/selected") ?: false
 
                 /** Speculating the track name based on whatever info there is on it */
-                val trackName = if (!lang.isNullOrEmpty() && !title.isNullOrEmpty())
-                    "$title [$lang]"
-                else if (!lang.isNullOrEmpty() && title.isNullOrEmpty()) {
-                    "$title [UND]"
-                } else if (!title.isNullOrEmpty() && lang.isNullOrEmpty())
-                    "Track [$lang]"
-                else "Track $mpvId [UND]"
-
-                Log.e("trck", "Found track $mpvId: $type, $title [$lang], $selected")
+                val trackName = when {
+                    !title.isNullOrEmpty() && !lang.isNullOrEmpty() -> "$title [$lang]"
+                    !title.isNullOrEmpty() -> "$title [UND]"
+                    !lang.isNullOrEmpty() -> "Track [$lang]"
+                    else -> "Track $mpvId [UND]"
+                }
 
                 playerManager.media.value?.tracks?.add(
                     MpvTrack(
@@ -225,11 +226,11 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         mediafile.chapters.clear()
 
         withContext(Dispatchers.Main.immediate) {
-            val count = MPVLib.getPropertyInt("chapter-list/count")!!
+            val count = MPVLib.getPropertyInt("chapter-list/count") ?: return@withContext
 
             for (i in 0 until count) {
                 val title = MPVLib.getPropertyString("chapter-list/$i/title")
-                val time = MPVLib.getPropertyDouble("chapter-list/$i/time")!!
+                val time = MPVLib.getPropertyDouble("chapter-list/$i/time") ?: continue
 
                 mediafile.chapters.add(
                     Chapter(
@@ -321,14 +322,22 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     }
 
     override suspend fun isSeekable(): Boolean {
-        return isInitialized
+        if (!isInitialized) return false
+        return withContext(Dispatchers.Main.immediate) {
+            // Only report non-seekable when mpv explicitly says so (e.g. live streams); default to
+            // seekable if the property isn't available yet so the position tracker keeps polling.
+            MPVLib.getPropertyBoolean("seekable") ?: true
+        }
     }
 
     @UiThread
     override fun seekTo(toPositionMs: Long) {
         if (!isInitialized) return
         super.seekTo(toPositionMs)
-        mpvView.timePos = toPositionMs.toInt() / 1000
+        // Seek with sub-second precision. mpvView.timePos is INT-backed (whole seconds), so using
+        // it snapped every seek/chapter-jump to a second boundary and disagreed with the fractional
+        // position currentPositionMs() reports. Set the double property directly.
+        MPVLib.setPropertyDouble("time-pos", toPositionMs.toDouble() / 1000.0)
     }
 
     override fun currentPositionMs(): Long {

@@ -307,8 +307,17 @@ actual fun readFileBytes(path: String): ByteArray? {
     }
 }
 
-/** mpv on iOS does not read a user-editable mpv.conf file, so import/export is unsupported. */
-actual fun getMpvConfFilePath(): String? = null
+/**
+ * Path to the user-editable `mpv.conf` on iOS: `<Documents>/mpv.conf`. MPVKit reads it because
+ * [app.player.mpv.MpvKitImpl] points mpv's `config-dir` at the Documents directory at init. Living
+ * in Documents also means a user can drop in / edit the file via the Files app. Returns null only
+ * if the Documents directory can't be resolved.
+ */
+actual fun getMpvConfFilePath(): String? {
+    val docs = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true)
+        .firstOrNull() as? String ?: return null
+    return "$docs/mpv.conf"
+}
 
 actual fun consumePendingShortcut(): app.home.JoinConfig? {
     return app.pendingShortcutJoinConfig.value?.also {

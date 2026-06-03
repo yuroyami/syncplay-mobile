@@ -27,6 +27,7 @@ object MpvKitEngine : PlayerEngine {
     // registration regardless of whether this object is touched before or after app startup.
     override val isAvailable: Boolean get() = instantiateMpvKitPlayer != null
     override val isDefault: Boolean = true
+    override val isExperimental: Boolean = true
     override val name: String = "MPVKit"
     override val img: DrawableResource = Res.drawable.mpv
 

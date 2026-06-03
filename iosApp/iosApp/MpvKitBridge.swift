@@ -104,7 +104,7 @@ class MpvKitBridgeImpl: MpvKitPlayerBridge, @unchecked Sendable {
 
     // MARK: - Lifecycle
 
-    override func create() {
+    override func create(configDir: String, hwdec: String, vo: String, profile: String, videoSync: String, interpolation: String) {
         // Idempotent: Compose's UIKitView factory may re-fire on recomposition, and
         // MpvKitImpl.initialize() guards too — but defending here as well is cheap.
         guard mpv == nil else { return }
@@ -123,10 +123,26 @@ class MpvKitBridgeImpl: MpvKitPlayerBridge, @unchecked Sendable {
         mpv_request_log_messages(ctx, "v")
 
         // 1. Configure mpv. All options must be set BEFORE mpv_initialize.
-        check(mpv_set_option_string(ctx, "vo", "gpu-next"))
+
+        // User mpv.conf support: point mpv at the dir holding mpv.conf so a user-supplied config
+        // is read at init (parity with Android). save-position-on-quit=no keeps mpv from writing
+        // watch_later files into the user's Documents folder.
+        if !configDir.isEmpty {
+            check(mpv_set_option_string(ctx, "config-dir", configDir))
+            check(mpv_set_option_string(ctx, "save-position-on-quit", "no"))
+        }
+
+        // Apply the user-pref-derived profile first so the explicit options below override it.
+        check(mpv_set_option_string(ctx, "profile", profile))
+
+        // Rendering pipeline: gpu-api/gpu-context are fixed for MoltenVK; vo/hwdec come from prefs.
+        check(mpv_set_option_string(ctx, "vo", vo))
         check(mpv_set_option_string(ctx, "gpu-api", "vulkan"))
         check(mpv_set_option_string(ctx, "gpu-context", "moltenvk"))
-        check(mpv_set_option_string(ctx, "hwdec", "videotoolbox"))
+        check(mpv_set_option_string(ctx, "hwdec", hwdec))
+        check(mpv_set_option_string(ctx, "video-sync", videoSync))
+        check(mpv_set_option_string(ctx, "interpolation", interpolation))
+        check(mpv_set_option_string(ctx, "screenshot-format", "png"))
         check(mpv_set_option_string(ctx, "keep-open", "yes"))
         check(mpv_set_option_string(ctx, "idle", "yes"))
         check(mpv_set_option_string(ctx, "input-default-bindings", "no"))
@@ -180,6 +196,10 @@ class MpvKitBridgeImpl: MpvKitPlayerBridge, @unchecked Sendable {
 
     override func destroy() {
         guard let ctx = mpv else { return }
+
+        // Stop the stats overlay refresh (main-queue timer) before tearing the handle down.
+        statsTimer?.cancel()
+        statsTimer = nil
 
         // Stop further wakeups, then sync the event queue so any in-flight drain
         // finishes before we free the handle. Without this barrier, a drain in
@@ -473,6 +493,90 @@ class MpvKitBridgeImpl: MpvKitPlayerBridge, @unchecked Sendable {
     }
 
     override func getMaxVolume() -> Int32 { 100 }
+
+    // MARK: - Options / runtime config
+
+    override func setOptionString(name: String, value: String) {
+        guard let ctx = mpv else { return }
+        check(mpv_set_option_string(ctx, name, value))
+    }
+
+    /// Stats overlay refresh timer. MPVKit is built with `-Dlua=disabled`, so mpv's `stats.lua`
+    /// (the `script-binding stats/...` target) does not exist on iOS. Instead we render our own
+    /// overlay by periodically `show-text`-ing a property-expanded template; this timer keeps it
+    /// on screen (each `show-text` would otherwise fade after its duration).
+    private var statsTimer: DispatchSourceTimer?
+
+    override func setDebugOverlay(page: Int32) {
+        statsTimer?.cancel()
+        statsTimer = nil
+        guard mpv != nil else { return }
+        if page <= 0 {
+            command(["show-text", "", "100"])   // overwrite any visible overlay with nothing
+            return
+        }
+        let template = MpvKitBridgeImpl.statsTemplate(page: page)
+        showStats(template)                      // show immediately
+        // Refresh faster than the message duration so the overlay never blinks off.
+        let timer = DispatchSource.makeTimerSource(queue: .main)
+        timer.schedule(deadline: .now() + 1.0, repeating: 1.0)
+        timer.setEventHandler { [weak self] in self?.showStats(template) }
+        timer.resume()
+        statsTimer = timer
+    }
+
+    private func showStats(_ template: String) {
+        // Duration (1500ms) > refresh interval (1000ms) so it stays continuously visible.
+        command(["show-text", template, "1500"])
+    }
+
+    private static func statsTemplate(page: Int32) -> String {
+        // mpv expands ${property} inside OSD text; this is core mpv, no Lua required.
+        var lines = [
+            "${filename}",
+            "${video-params/w}x${video-params/h}  ${container-fps} fps",
+            "A-V: ${avsync}   drop: ${frame-drop-count}",
+            "VO: ${current-vo}   hwdec: ${hwdec-current}",
+        ]
+        if page >= 2 {
+            lines.append("V: ${video-codec}")
+            lines.append("A: ${audio-codec}")
+            lines.append("cache: ${demuxer-cache-duration}s")
+        }
+        if page >= 3 {
+            lines.append("bitrate V/A: ${video-bitrate}/${audio-bitrate}")
+            lines.append("sync: ${video-sync}  speed: ${speed}")
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    // MARK: - Seekable
+
+    override func isSeekable() -> Bool {
+        guard let ctx = mpv else { return false }
+        var flag: Int32 = 0
+        let rc = mpv_get_property(ctx, "seekable", MPV_FORMAT_FLAG, &flag)
+        // Unknown (no media yet, or transient unavailability) -> assume seekable so the position
+        // tracker keeps polling normal media; only a definite `false` marks it unseekable.
+        if rc < 0 { return true }
+        return flag != 0
+    }
+
+    // MARK: - Screenshot
+
+    override func takeScreenshot() -> Bool {
+        guard mpv != nil else { return false }
+        // mpv writes the frame to a temp file synchronously; we then hand the decoded image to the
+        // photo library (UIImageWriteToSavedPhotosAlbum copies it, so deleting the file after is
+        // safe). Requires NSPhotoLibraryAddUsageDescription in Info.plist.
+        let path = (NSTemporaryDirectory() as NSString).appendingPathComponent("synkplay-screenshot.png")
+        try? FileManager.default.removeItem(atPath: path)
+        guard command(["screenshot-to-file", path]) >= 0 else { return false }
+        guard let image = UIImage(contentsOfFile: path) else { return false }
+        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+        try? FileManager.default.removeItem(atPath: path)
+        return true
+    }
 
     // MARK: - Helpers
 

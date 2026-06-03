@@ -90,6 +90,7 @@ import kotlin.time.Duration.Companion.seconds
 object AVPlayerEngine: PlayerEngine {
     override val isAvailable: Boolean = true
     override val isDefault: Boolean = false
+    override val isExperimental: Boolean = true
     override val name: String = "AVPlayer"
     override val img: DrawableResource = Res.drawable.swift
 
