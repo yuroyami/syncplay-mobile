@@ -221,7 +221,11 @@ with(AppConfig) {
 }
 
 ktorfit {
-    compilerPluginVersion.set("2.3.3")
+    // The Ktorfit compiler plugin is built against a specific Kotlin compiler ABI, so this
+    // must track the `kotlin` version in libs.versions.toml, NOT the ktorfit lib version.
+    // A mismatch crashes compilation with "IrGenerationExtension cannot be cast to
+    // ProjectExtensionDescriptor". Map: Kotlin 2.3.x -> 2.3.3, Kotlin 2.4.0+ -> 2.3.5.
+    compilerPluginVersion.set("2.3.5")
 }
 
 buildConfig {
