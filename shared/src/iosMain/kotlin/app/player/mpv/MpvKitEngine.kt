@@ -26,7 +26,7 @@ object MpvKitEngine : PlayerEngine {
     // Computed on each access (not cached at init) so availability tracks the Swift bridge
     // registration regardless of whether this object is touched before or after app startup.
     override val isAvailable: Boolean get() = instantiateMpvKitPlayer != null
-    override val isDefault: Boolean = false
+    override val isDefault: Boolean = true
     override val name: String = "MPVKit"
     override val img: DrawableResource = Res.drawable.mpv
 

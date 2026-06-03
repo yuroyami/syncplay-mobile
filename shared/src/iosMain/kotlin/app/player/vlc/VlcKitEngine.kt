@@ -15,14 +15,13 @@ import syncplaymobile.shared.generated.resources.vlc
  * - Supports most subtitle formats (SRT, SSA, ASS, etc.)
  * - More battery consumption than AVPlayer
  * - Larger app size due to bundled codecs
- * - Default player for iOS
  *
  * **Best for:** Users who need to play various file formats and subtitle types.
  * The iOS version is more stable than its Android counterpart.
  */
 object VlcKitEngine : PlayerEngine {
     override val isAvailable: Boolean = true
-    override val isDefault: Boolean = true
+    override val isDefault: Boolean = false
     override val name: String = "VLCKit" //We name this one VLCKit to differentiate it from Android's VLC when saving to datastore
     override val img: DrawableResource = Res.drawable.vlc
 

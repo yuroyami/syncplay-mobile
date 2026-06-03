@@ -15,10 +15,22 @@ import app.room.RoomViewmodel
 import app.utils.loggy
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.path
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import platform.AVFAudio.AVAudioSession
+import platform.AVFAudio.AVAudioSessionCategoryPlayback
+import platform.AVFAudio.AVAudioSessionModeMoviePlayback
+import platform.AVFAudio.setActive
+import platform.posix.O_RDONLY
+import platform.posix.fstat
+import platform.posix.open
+import platform.posix.stat
 import kotlin.math.roundToLong
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -93,8 +105,30 @@ class MpvKitImpl(
             }
         }
 
+        configureAudioSession()
+
         isInitialized = true
         startTrackingProgress()
+    }
+
+    /**
+     * Configure the shared AVAudioSession for video playback. MPVKit (unlike VLCKit) never
+     * touches the audio session, so without this the app keeps iOS's default SoloAmbient session:
+     * audio is silenced by the hardware mute switch and stops the instant the app backgrounds.
+     * `.playback` + `.moviePlayback` mirrors [app.player.vlc.VlcKitImpl.configureAudioSession] and
+     * keeps audio alive for PiP / lock-screen. Best-effort — a failure must not block playback.
+     */
+    private fun configureAudioSession() {
+        try {
+            val session = AVAudioSession.sharedInstance()
+            // Positional args: K/N's Obj-C interop exposes overloaded `setCategory:*:` variants
+            // sharing a base name, so named-parameter resolution can fail — positional keeps us on
+            // the shortest matching overload (matches VlcKitImpl).
+            session.setCategory(AVAudioSessionCategoryPlayback, AVAudioSessionModeMoviePlayback, 0uL, null)
+            session.setActive(true, null)
+        } catch (e: Exception) {
+            loggy("MPVKit: AVAudioSession configure failed: ${e.message}")
+        }
     }
 
     override suspend fun destroy() {
@@ -258,10 +292,40 @@ class MpvKitImpl(
         }
     }
 
+    @OptIn(ExperimentalForeignApi::class)
     override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
-        // Security scope is held centrally by PlayerImpl for the playback lifetime; mpv reads
-        // the file via its POSIX path, which the active scope authorizes.
-        bridge.loadFile(location.file.path)
+        val path = location.file.path
+        // Open a blocking descriptor eagerly (while PlayerImpl's security scope is freshest) and
+        // hand mpv the fd via `fdclose://`, instead of letting mpv do its own deferred O_NONBLOCK
+        // path open on its demux thread.
+        val fd = open(path, O_RDONLY)
+        if (fd < 0) {
+            loggy("MPVKit: eager open() failed for $path; letting mpv open the path")
+            bridge.loadFile(path)
+            return
+        }
+
+        // Decisive probe for the "jumps to EOF" failure: an iOS File Provider *dataless*
+        // placeholder reports the file's full logical size via st_size but has almost nothing
+        // actually on disk (st_blocks counts 512-byte blocks really present). When that is the
+        // case, mpv reads the header then hits EOF on the body ("no clusters found") and parks at
+        // end-of-file — no open trick can conjure bytes that were never downloaded. Log both
+        // numbers so a not-downloaded placeholder is distinguishable from a small/corrupt file,
+        // and tell the user instead of silently wedging at the last frame.
+        memScoped {
+            val st = alloc<stat>()
+            if (fstat(fd, st.ptr) == 0) {
+                val logical = st.st_size
+                val onDisk = st.st_blocks * 512L
+                loggy("MPVKit: '$path' logical=${logical}B onDisk≈${onDisk}B")
+                if (logical > 0L && onDisk < logical / 2L) {
+                    loggy("MPVKit: WARNING not fully downloaded (${onDisk}B of ${logical}B local) — mpv will EOF immediately")
+                    viewmodel.dispatchOSD { "This file isn't fully downloaded to your device yet." }
+                }
+            }
+        }
+
+        bridge.loadFile("fdclose://$fd")
     }
 
     override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {

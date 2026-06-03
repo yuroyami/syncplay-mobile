@@ -34,7 +34,9 @@ final class MPVRenderView: UIView {
         metalLayer.contentsScale = UIScreen.main.nativeScale
         metalLayer.framebufferOnly = true
         metalLayer.backgroundColor = UIColor.black.cgColor
+        metalLayer.frame = bounds
         layer.addSublayer(metalLayer)
+        syncDrawableSize()
     }
 
     @available(*, unavailable)
@@ -42,7 +44,29 @@ final class MPVRenderView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
+        // Match the metal layer to the host view with NO implicit animation: an animated
+        // bounds change would present a stretched frame for one cycle and fight mpv's own
+        // swapchain resize. Compose resizes this interop view (the player uses fillMaxSize),
+        // which is what drives this callback.
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
         metalLayer.frame = bounds
+        syncDrawableSize()
+        CATransaction.commit()
+    }
+
+    /// mpv's `moltenvk` gpu-context reads `layer.drawableSize` directly (see MPVKit's
+    /// `0001-player-add-moltenvk-context.patch`) and sizes its Vulkan swapchain from it when the
+    /// video output (re)configures. CAMetalLayer's implicit bounds->drawableSize derivation is
+    /// unreliable for a manually-managed sublayer and is 0x0 until the first real layout — and a
+    /// 0x0 drawableSize makes mpv build a 0-sized swapchain that never recovers: black screen +
+    /// stalled playback. So set it explicitly, and never clobber a good size with a transient 0
+    /// (Compose can briefly flash a zero-size frame during its first layout pass).
+    private func syncDrawableSize() {
+        let scale = metalLayer.contentsScale
+        let size = CGSize(width: bounds.width * scale, height: bounds.height * scale)
+        guard size.width > 1, size.height > 1 else { return }
+        metalLayer.drawableSize = size
     }
 }
 
@@ -91,6 +115,13 @@ class MpvKitBridgeImpl: MpvKitPlayerBridge, @unchecked Sendable {
         }
         mpv = ctx
 
+        // Surface mpv's own diagnostics (vo selection, swapchain, decoder, hwdec fallback).
+        // Without this, a failed video output or codec is completely silent — which is exactly
+        // what made the iOS MPV black-screen so hard to pin down. Delivered via
+        // MPV_EVENT_LOG_MESSAGE (handled below) and printed to the Xcode console. Lower the
+        // level to "info"/"warn" if "v" (verbose) gets too chatty.
+        mpv_request_log_messages(ctx, "v")
+
         // 1. Configure mpv. All options must be set BEFORE mpv_initialize.
         check(mpv_set_option_string(ctx, "vo", "gpu-next"))
         check(mpv_set_option_string(ctx, "gpu-api", "vulkan"))
@@ -109,8 +140,12 @@ class MpvKitBridgeImpl: MpvKitPlayerBridge, @unchecked Sendable {
         //    where mpv will create its surface and present frames. MUST happen before
         //    mpv_initialize — setting `wid` afterwards has no effect.
         if let view = renderView {
-            var widLayer: CAMetalLayer = view.metalLayer
-            check(mpv_set_option(ctx, "wid", MPV_FORMAT_INT64, &widLayer))
+            // mpv's moltenvk context does `(__bridge CAMetalLayer*)(intptr_t)WinID`, so `wid`
+            // must carry the raw pointer value of the CAMetalLayer as an Int64. (Passing the
+            // address of a class-typed local happens to alias the same bytes today, but spelling
+            // out the pointer keeps it from silently breaking under a compiler/ABI change.)
+            var wid = Int64(Int(bitPattern: Unmanaged.passUnretained(view.metalLayer).toOpaque()))
+            check(mpv_set_option(ctx, "wid", MPV_FORMAT_INT64, &wid))
         } else {
             print("[MPVKit] WARNING: create() called before getPlayerView() — video will not render")
         }
@@ -166,7 +201,12 @@ class MpvKitBridgeImpl: MpvKitPlayerBridge, @unchecked Sendable {
         if let existing = renderView {
             return existing
         }
-        let view = MPVRenderView(frame: .zero)
+        // Non-zero initial frame is critical: mpv reads the layer's drawableSize when it first
+        // configures the video output (right after loadfile). If the layer were still 0x0 then —
+        // which `.zero` guarantees until Compose's first layout pass — the swapchain is built at
+        // 0x0 and never recovers, i.e. the reported black screen that won't play. Screen bounds
+        // is just a sane starting size; layoutSubviews refines it to the exact container size.
+        let view = MPVRenderView(frame: UIScreen.main.bounds)
         renderView = view
         return view
     }
@@ -226,6 +266,18 @@ class MpvKitBridgeImpl: MpvKitPlayerBridge, @unchecked Sendable {
 
         case MPV_EVENT_END_FILE:
             DispatchQueue.main.async { [weak self] in self?.onEvent?("end-file") }
+
+        case MPV_EVENT_LOG_MESSAGE:
+            // mpv's internal log line. `text` already carries a trailing newline.
+            if let msg = event.data?
+                .assumingMemoryBound(to: mpv_event_log_message.self)
+                .pointee
+            {
+                let level = String(cString: msg.level)
+                let prefix = String(cString: msg.prefix)
+                let text = String(cString: msg.text)
+                print("[mpv/\(level)] \(prefix): \(text)", terminator: "")
+            }
 
         case MPV_EVENT_SHUTDOWN:
             // The handle is being destroyed elsewhere; nothing to do here.

@@ -139,11 +139,12 @@ actual val httpClient: HttpClient by lazy {
 
 actual val availablePlatformPlayerEngines: List<PlayerEngine> = buildList {
     add(AVPlayerEngine)
-    add(VlcKitEngine)
-    // MPVKit (libmpv) engine. Listing it is safe even when MPVKit isn't linked: the picker
-    // gates selection on engine.isAvailable (see HomeScreen), and MpvKitEngine.isAvailable
-    // is true only once the Swift MpvKitBridge factory has been registered at app startup.
+    // MPVKit (libmpv) is the iOS default and sits second in the home-screen picker. Listing it is
+    // safe even when MPVKit isn't linked: the picker gates selection on engine.isAvailable (see
+    // HomeScreen), and MpvKitEngine.isAvailable is true only once the Swift MpvKitBridge factory
+    // has been registered at app startup.
     add(MpvKitEngine)
+    add(VlcKitEngine)
 }
 
 actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {
