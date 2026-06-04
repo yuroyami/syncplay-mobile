@@ -1,3 +1,7 @@
+import org.gradle.api.file.FileSystemOperations
+import org.gradle.process.ExecOperations
+import javax.inject.Inject
+
 plugins {
     id("io.github.yuroyami.kmpssot") version "1.3.1"
 
@@ -38,4 +42,130 @@ kmpSsot {
 
     // Custom Trinity color, logo→imageset, and default-strings fallback propagation
     // stay in buildSrc/AppConfig.kt — outside plugin scope.
+}
+
+/*
+ * androidReleaseAll: build every shippable Android artifact in one command and
+ * collect them under AndroidAppOutput/ at the repo root.
+ *
+ * Produces 7 files for a release:
+ *   full     5x release APKs   (per-ABI + universal, ABI-split)
+ *   exoOnly  1x release APK    (no native libs, so no split, one universal apk)
+ *   full     1x release AAB    (for Play Store upload)
+ *
+ * Why it shells out to THREE separate `./gradlew` runs instead of just
+ * dependsOn(...)-ing the variant tasks (i.e. why no in-process task can do this):
+ *
+ *   1. Only ONE product flavor exists per Gradle invocation. The active flavor
+ *      ("full" vs "exoOnly") is decided at configuration time from -PexoOnly (see
+ *      androidApp's productFlavors), and that same flag also flips applicationId,
+ *      native-lib packaging, ABI splits, and the preBuild native step. The two
+ *      flavors can never coexist in one build model, so they must be two separate
+ *      invocations with different -PexoOnly values.
+ *   2. ABI splits (full APKs) and the AAB are mutually exclusive in a single task
+ *      graph (AGP issuetracker 402800800, see androidApp's splits comment). So the
+ *      full APKs and the full AAB also have to be separate invocations.
+ *
+ * Each run is a clean OS process, which is exactly the isolation the per-invocation
+ * -PexoOnly switch needs. The per-file renaming already happens in androidApp's
+ * onVariants block, so here we only gather the finished artifacts.
+ *
+ * Run it with:  ./gradlew androidReleaseAll
+ */
+abstract class AndroidReleaseAllTask @Inject constructor(
+    private val execOps: ExecOperations,
+    private val fsOps: FileSystemOperations,
+) : DefaultTask() {
+
+    @get:Input
+    abstract val versionName: Property<String>
+
+    /* The Gradle wrapper used to launch each isolated sub-build. */
+    @get:Internal
+    abstract val gradlewScript: RegularFileProperty
+
+    /* Repo root: working dir for the wrapper and parent of AndroidAppOutput/. */
+    @get:Internal
+    abstract val repoRoot: DirectoryProperty
+
+    @get:Internal
+    abstract val fullApkDir: DirectoryProperty
+
+    @get:Internal
+    abstract val exoApkDir: DirectoryProperty
+
+    @get:Internal
+    abstract val fullAabDir: DirectoryProperty
+
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+
+    private fun gradle(vararg args: String) {
+        val script = gradlewScript.get().asFile
+        val isWindows = System.getProperty("os.name").lowercase().contains("windows")
+        val launcher = if (isWindows) listOf("cmd", "/c", script.absolutePath) else listOf(script.absolutePath)
+        execOps.exec {
+            workingDir = repoRoot.get().asFile
+            commandLine(launcher + args)
+            // Default isIgnoreExitValue = false, so a failed sub-build aborts the whole task.
+        }
+    }
+
+    @TaskAction
+    fun run() {
+        val v = versionName.get()
+
+        /* Three isolated sub-builds. -PexoOnly flips the entire project model; the
+         * bundle run drops ABI splits by itself (it sees "bundle" in the task name). */
+        logger.lifecycle("androidReleaseAll: [1/3] full release APKs (ABI-split)...")
+        gradle(":androidApp:assembleFullRelease", "-PexoOnly=false")
+
+        logger.lifecycle("androidReleaseAll: [2/3] exoOnly release APK...")
+        gradle(":androidApp:assembleExoOnlyRelease", "-PexoOnly=true")
+
+        logger.lifecycle("androidReleaseAll: [3/3] full release AAB...")
+        gradle(":androidApp:bundleFullRelease", "-PexoOnly=false")
+
+        /* Fresh output dir so a version bump never leaves stale artifacts behind. */
+        val out = outputDir.get().asFile
+        fsOps.delete { delete(out) }
+        out.mkdirs()
+
+        /* Copy only this version's APKs: the build dirs keep older-version files
+         * around (the name changes per release), so an unfiltered *.apk would drag
+         * stale builds along. The single AAB is renamed to match the APK naming. */
+        fsOps.copy {
+            from(fullApkDir) { include("*-$v-*.apk") }
+            from(exoApkDir) { include("*-$v-*.apk") }
+            from(fullAabDir) {
+                include("*.aab")
+                rename { "synkplay-$v-full.aab" }
+            }
+            into(out)
+        }
+
+        val produced = out.listFiles()?.filter { it.isFile }?.sortedBy { it.name }.orEmpty()
+        logger.lifecycle("androidReleaseAll: done. ${produced.size} artifact(s) in AndroidAppOutput/:")
+        produced.forEach { logger.lifecycle("    ${it.name}  (${it.length() / 1_000_000} MB)") }
+    }
+}
+
+tasks.register<AndroidReleaseAllTask>("androidReleaseAll") {
+    group = "syncplay"
+    description = "Build all release APKs (full ABI-split + exoOnly) plus the full-flavor AAB into AndroidAppOutput/."
+
+    /* Always run: the real work happens in nested builds whose outputs Gradle can't
+     * track from here, so normal up-to-date checks would wrongly skip the task. */
+    outputs.upToDateWhen { false }
+
+    val isWindows = System.getProperty("os.name").lowercase().contains("windows")
+    versionName.set(kmpSsot.versionName.get())
+    gradlewScript.set(layout.projectDirectory.file(if (isWindows) "gradlew.bat" else "gradlew"))
+    repoRoot.set(layout.projectDirectory)
+    // androidApp uses the default build dir (androidApp/build); reference it via the
+    // repo root so we don't force cross-project configuration from here.
+    fullApkDir.set(layout.projectDirectory.dir("androidApp/build/outputs/apk/full/release"))
+    exoApkDir.set(layout.projectDirectory.dir("androidApp/build/outputs/apk/exoOnly/release"))
+    fullAabDir.set(layout.projectDirectory.dir("androidApp/build/outputs/bundle/fullRelease"))
+    outputDir.set(layout.projectDirectory.dir("AndroidAppOutput"))
 }
