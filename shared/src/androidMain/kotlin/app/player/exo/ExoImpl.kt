@@ -205,6 +205,12 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
     override suspend fun destroy() {
         if (!isInitialized) return
+        // Parity with VlcImpl/MpvImpl: close the guards and stop the 500ms position-tracker job
+        // (started at room entry) before releasing the player. Exo polls a nullable instance, not a
+        // global handle like mpv, so it doesn't hard-crash, but leaving the job alive keeps it polling
+        // a torn-down player and retains the RoomViewmodel graph it captures after every room exit.
+        isInitialized = false
+        playerSupervisorJob.cancel()
 
         withContext(Dispatchers.Main.immediate) {
             exoplayer?.stop()

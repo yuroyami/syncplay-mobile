@@ -69,6 +69,16 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
 
     override suspend fun destroy() {
         if (!isInitialized) return
+        // Close the guards and stop the position tracker BEFORE tearing libmpv down. MPVLib is a
+        // process-global static handle (g_mpv); once mpvView.destroy() nulls it, any lingering call
+        // from the tracker job (isSeekable()/currentPositionMs(), polled every 500ms) sails past its
+        // `if (!isInitialized)` guard and trips the native CHECK_MPV_INIT(), aborting with "libmpv is
+        // not initialized" — reproducible by entering a room and leaving before injecting any media.
+        // Flipping isInitialized makes the per-method guards bail, and cancelling the supervisor job
+        // stops the tracker's next tick. Mirrors VlcImpl.destroy(); mpv is the one engine that hard-
+        // crashes here because its calls go through a global handle, not a nullable per-instance player.
+        isInitialized = false
+        playerSupervisorJob.cancel()
 
         withContext(Dispatchers.Main) {
             // Detach our observer first: MPVLib.observers is a process-global static list, so an
