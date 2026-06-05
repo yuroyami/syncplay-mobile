@@ -212,8 +212,68 @@ dependencies {
 }
 
 if (!exoOnly) {
-    tasks.named("preBuild") {
+    val ndkDirProvider = androidComponents.sdkComponents.ndkDirectory
+
+    // The exoOnly flavor's pruneStaleExoOnlyLibcxx (below) deletes src/main/libs/**/libc++_shared.so.
+    // When you next build full and the mpv libs themselves are still present, the heavy native build
+    // is (correctly) skipped, so nothing would put libc++ back, and the APK would fall back to
+    // libVLC's older libc++ and crash mpv at load (missing __from_chars_floating_point, pulled in by
+    // libplacebo's std::from_chars). This task restores the mpv-matching libc++ straight from the NDK
+    // (the exact file ndk-build would emit) as a plain copy, so flipping exoOnly -> full is instant
+    // and safe with no mpv recompile. It only acts on ABIs that ship libmpv.so and only when the
+    // libc++ is actually missing, so a normal full build is a no-op here.
+    val restoreMpvLibcxx = tasks.register("restoreMpvLibcxx") {
         dependsOn("runAndroidMpvNativeBuildScripts")
+        doLast {
+            val prebuilt = File(ndkDirProvider.get().asFile, "toolchains/llvm/prebuilt")
+                .listFiles()?.firstOrNull { it.isDirectory }
+                ?: throw GradleException("Could not locate the NDK llvm prebuilt toolchain directory")
+            val sysrootLib = File(prebuilt, "sysroot/usr/lib")
+            val triples = mapOf(
+                "armeabi-v7a" to "arm-linux-androideabi",
+                "arm64-v8a" to "aarch64-linux-android",
+                "x86" to "i686-linux-android",
+                "x86_64" to "x86_64-linux-android",
+            )
+            AppConfig.abiCodes.keys.forEach { abi ->
+                if (!File(projectDir, "src/main/libs/$abi/libmpv.so").exists()) return@forEach
+                val dst = File(projectDir, "src/main/libs/$abi/libc++_shared.so")
+                if (dst.exists()) return@forEach
+                val src = File(sysrootLib, "${triples[abi]}/libc++_shared.so")
+                if (!src.exists()) throw GradleException("NDK libc++ not found at $src")
+                src.copyTo(dst, overwrite = true)
+                logger.lifecycle("✓ Restored mpv-matching libc++_shared.so for $abi from the NDK")
+            }
+        }
+    }
+
+    // Belt-and-suspenders: after the native build and the restore above, refuse to package a full
+    // APK whose mpv libc++ is missing or is the wrong one (libVLC's, which lacks the symbol). The
+    // marker is a fragment of __from_chars_floating_point's mangled name, present verbatim as a
+    // string inside any correct (r29) libc++_shared.so and absent from VLC's. Skips ABIs that do not
+    // ship libmpv.so (e.g. Windows, where the native build is disabled).
+    val verifyMpvLibcxx = tasks.register("verifyMpvLibcxx") {
+        dependsOn(restoreMpvLibcxx)
+        doLast {
+            val marker = "from_chars_floating"
+            AppConfig.abiCodes.keys.forEach { abi ->
+                if (!File(projectDir, "src/main/libs/$abi/libmpv.so").exists()) return@forEach
+                val lib = File(projectDir, "src/main/libs/$abi/libc++_shared.so")
+                if (!lib.exists()) throw GradleException(
+                    "$abi ships libmpv.so but is missing libc++_shared.so even after restore. " +
+                    "Delete src/main/libs and rebuild so the native build regenerates it from NDK r29."
+                )
+                if (!lib.readBytes().toString(Charsets.ISO_8859_1).contains(marker)) throw GradleException(
+                    "$lib does not contain '$marker'. This looks like libVLC's older libc++, not " +
+                    "the NDK r29 one mpv needs; the APK would crash on mpv load. Regenerate the " +
+                    "local libc++ from NDK r29 before packaging."
+                )
+            }
+        }
+    }
+
+    tasks.named("preBuild") {
+        dependsOn(verifyMpvLibcxx)
     }
 } else {
     // Reproducible-build fix: the full/mpv native build leaves a libc++_shared.so byproduct in

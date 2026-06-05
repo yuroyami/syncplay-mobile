@@ -162,6 +162,10 @@ object NativeBuildConfig {
             }
 
             onlyIf {
+                // Gate the heavy native build on the mpv libs only. The libc++_shared.so byproduct
+                // is restored cheaply from the NDK by androidApp's restoreMpvLibcxx task, so its
+                // absence must NOT force a full mpv recompile (which would punish exoOnly -> full
+                // flavor flips). See restoreMpvLibcxx / verifyMpvLibcxx in androidApp/build.gradle.kts.
                 val allFilesExist = AppConfig.abiCodes.all { abiCode ->
                     AppConfig.mpvLibs.all { mpvLib ->
                         File(projectDir, "src/main/libs/${abiCode.key}/$mpvLib").exists()
