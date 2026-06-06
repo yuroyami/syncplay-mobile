@@ -1,7 +1,3 @@
-import org.gradle.api.file.FileSystemOperations
-import org.gradle.process.ExecOperations
-import javax.inject.Inject
-
 plugins {
     id("io.github.yuroyami.kmpssot") version "1.3.1"
 
@@ -25,7 +21,7 @@ plugins {
 
 kmpSsot {
     appName         = "Synkplay"
-    versionName     = "0.22.1"
+    versionName     = "0.22.2"
     bundleIdBase    = "com.yuroyami.syncplay"
     iosBundleSuffix = ".iosApp"
 
@@ -34,6 +30,7 @@ kmpSsot {
 
     appLogoPngForeground = File("${rootDir}/shared/src/commonMain/composeResources/drawable/logo_fg.png")
     appLogoPngBackground = File("${rootDir}/shared/src/commonMain/composeResources/drawable/logo_bg.png")
+    appLogoAndroidSafeZoneRatio = 0.5
 
     // exoOnly flavor switches the Android base ID to "com.reddnek.syncplay" — let the
     // user-side flavor branch override the plugin's default (since user's defaultConfig
