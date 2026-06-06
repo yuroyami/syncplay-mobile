@@ -277,6 +277,9 @@ actual fun deleteFile(path: String) {
     } catch (_: Exception) { }
 }
 
+actual fun fileExists(path: String): Boolean =
+    NSFileManager.defaultManager.fileExistsAtPath(path)
+
 @OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class)
 actual fun writeFileBytes(path: String, bytes: ByteArray) {
     try {

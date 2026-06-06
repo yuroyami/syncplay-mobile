@@ -15,7 +15,10 @@ import java.io.OutputStream
 object MpvFileUtils {
     fun copyAssets(context: Context) {
         val assetManager = context.assets
-        val files = arrayOf("subfont.ttf", "cacert.pem")
+        // subfont.ttf is no longer here: it's a shared Compose resource installed by
+        // installMpvSubfontIfNeeded() (commonMain), the same path iOS uses. cacert.pem stays in
+        // assets because it must exist at MPVView.initialize() time (tls-ca-file), before playback.
+        val files = arrayOf("cacert.pem")
         val configDir = context.filesDir.path
         for (filename in files) {
             var ins: InputStream? = null

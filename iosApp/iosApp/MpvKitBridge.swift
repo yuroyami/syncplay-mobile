@@ -128,6 +128,13 @@ class MpvKitBridgeImpl: MpvKitPlayerBridge, @unchecked Sendable {
         // is read at init (parity with Android). save-position-on-quit=no keeps mpv from writing
         // watch_later files into the user's Documents folder.
         if !configDir.isEmpty {
+            // libmpv applies a builtin "libmpv" profile (etc/builtin.conf) that sets `config=no`,
+            // which makes mp_init_paths force the config dir to "" — silently nulling out the
+            // `config-dir` we set below. With no config dir, mpv never scans it, so it can't find
+            // `subfont.ttf` (the libass fallback font; without it subtitles render blank) or a user
+            // `mpv.conf`. Re-enable config so config-dir actually takes effect. This is exactly what
+            // Android's MPVView does (`config`=`yes`); the iOS port had omitted it.
+            check(mpv_set_option_string(ctx, "config", "yes"))
             check(mpv_set_option_string(ctx, "config-dir", configDir))
             check(mpv_set_option_string(ctx, "save-position-on-quit", "no"))
         }

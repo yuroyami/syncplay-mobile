@@ -301,6 +301,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     }
 
     override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
+        installMpvSubfontIfNeeded()
         ctx.resolveUri(location.file.uri)?.let {
             if (isInitialized) MPVLib.destroy()
             mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
@@ -310,6 +311,7 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     }
 
     override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
+        installMpvSubfontIfNeeded()
         if (isInitialized) MPVLib.destroy()
         mpvView.initialize(ctx.filesDir.path, ctx.cacheDir.path)
         mpvObserverAttach()

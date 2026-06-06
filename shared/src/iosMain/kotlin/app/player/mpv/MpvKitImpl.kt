@@ -443,6 +443,7 @@ class MpvKitImpl(
 
     @OptIn(ExperimentalForeignApi::class)
     override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
+        installMpvSubfontIfNeeded()
         val path = location.file.path
         // Open a blocking descriptor eagerly (while PlayerImpl's security scope is freshest) and
         // hand mpv the fd via `fdclose://`, instead of letting mpv do its own deferred O_NONBLOCK
@@ -478,6 +479,7 @@ class MpvKitImpl(
     }
 
     override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
+        installMpvSubfontIfNeeded()
         bridge.loadURL(location.url)
     }
 

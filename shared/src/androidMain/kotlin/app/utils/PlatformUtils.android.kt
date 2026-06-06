@@ -246,6 +246,12 @@ actual fun readFileBytes(path: String): ByteArray? {
     }
 }
 
+actual fun fileExists(path: String): Boolean = try {
+    java.io.File(path).exists()
+} catch (_: Exception) {
+    false
+}
+
 actual fun getMpvConfFilePath(): String? {
     return try {
         val ctx = contextObtainer()

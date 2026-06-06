@@ -178,6 +178,12 @@ expect fun writeFileBytes(path: String, bytes: ByteArray)
 expect fun readFileBytes(path: String): ByteArray?
 
 /**
+ * Returns true if a file exists at [path]. Used to make one-time installs (e.g. the mpv libass
+ * fallback font) idempotent without reading the whole file.
+ */
+expect fun fileExists(path: String): Boolean
+
+/**
  * Returns the absolute path where mpv looks for its user configuration file, or null on
  * platforms where mpv does not honor a persistent config file (iOS). On Android this resolves
  * to `{filesDir}/mpv.conf` — the `config-dir` mpv is initialized with in MPVView.
