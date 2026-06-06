@@ -39,6 +39,11 @@ import platform.AVFAudio.AVAudioSession
 import platform.AVFAudio.AVAudioSessionCategoryPlayback
 import platform.AVFAudio.AVAudioSessionModeMoviePlayback
 import platform.AVFAudio.setActive
+import platform.Foundation.NSNotificationCenter
+import platform.Foundation.NSOperationQueue
+import platform.UIKit.UIApplicationDidEnterBackgroundNotification
+import platform.UIKit.UIApplicationWillEnterForegroundNotification
+import platform.darwin.NSObjectProtocol
 import platform.posix.O_RDONLY
 import platform.posix.fstat
 import platform.posix.open
@@ -73,6 +78,22 @@ class MpvKitImpl(
     // known), so the base parseMedia() must not announce it again on iOS. See PlayerImpl.
     override val announcesFileLoadViaEvent: Boolean = true
     override val trackerJobInterval: Duration = 500.milliseconds
+
+    /**
+     * Observers for the app background/foreground transitions. mpv binds its video output and the
+     * MoltenVK swapchain to the CAMetalLayer; iOS purges that GPU surface while the app is
+     * backgrounded, leaving a dead swapchain that renders as a purple/garbage frame on return (the
+     * reported bug; the "purple after reconnect" case is the same thing, since that reconnect
+     * follows a background/foreground cycle). A dead swapchain cannot be repaired by re-rendering
+     * into it — it must be recreated. We do that by toggling the video track off before
+     * backgrounding ([UIApplicationDidEnterBackgroundNotification] -> `vid=no`, which tears the VO
+     * + swapchain down cleanly) and back on when returning ([UIApplicationWillEnterForegroundNotification]
+     * -> `vid=auto`, which rebuilds them and force-refreshes the current frame, repainting even
+     * while paused). This is exactly the fix MPVKit's own iOS demo uses
+     * (MPVMetalViewController.enterBackground / enterForeground).
+     */
+    private var didEnterBackgroundObserver: NSObjectProtocol? = null
+    private var willEnterForegroundObserver: NSObjectProtocol? = null
 
     override fun initialize() {
         // Compose's UIKitView factory can re-fire on recomposition; calling
@@ -137,9 +158,49 @@ class MpvKitImpl(
         }
 
         configureAudioSession()
+        registerLifecycleObservers()
 
         isInitialized = true
         startTrackingProgress()
+    }
+
+    /**
+     * Register the background/foreground observers that recreate mpv's video surface across an app
+     * background cycle. See [didEnterBackgroundObserver]. Both callbacks land on the main queue and
+     * just flip the `vid` track via the (thread-safe) mpv C API.
+     */
+    private fun registerLifecycleObservers() {
+        val center = NSNotificationCenter.defaultCenter
+        val queue = NSOperationQueue.mainQueue
+
+        didEnterBackgroundObserver = center.addObserverForName(
+            name = UIApplicationDidEnterBackgroundNotification,
+            `object` = null,
+            queue = queue
+        ) { _ ->
+            // Drop the video track BEFORE iOS purges the GPU surface, so the VO + swapchain are
+            // torn down cleanly rather than left dangling on a dead CAMetalLayer drawable.
+            if (isInitialized) bridge.setOptionString("vid", "no")
+        }
+
+        willEnterForegroundObserver = center.addObserverForName(
+            name = UIApplicationWillEnterForegroundNotification,
+            `object` = null,
+            queue = queue
+        ) { _ ->
+            // Re-select the video track: mpv rebuilds the VO + swapchain from scratch and
+            // force-refreshes the current frame (repaints even while paused), replacing the purple
+            // surface. No play() needed — playback state stays under the room's control.
+            if (isInitialized) bridge.setOptionString("vid", "auto")
+        }
+    }
+
+    private fun removeLifecycleObservers() {
+        val center = NSNotificationCenter.defaultCenter
+        didEnterBackgroundObserver?.let { center.removeObserver(it) }
+        willEnterForegroundObserver?.let { center.removeObserver(it) }
+        didEnterBackgroundObserver = null
+        willEnterForegroundObserver = null
     }
 
     /**
@@ -164,6 +225,9 @@ class MpvKitImpl(
 
     override suspend fun destroy() {
         if (!isInitialized) return
+        // Drop the lifecycle observers first, so a background/foreground notification firing during
+        // teardown can't poke the bridge we're about to destroy.
+        removeLifecycleObservers()
         withContext(Dispatchers.Main) {
             bridge.onPropertyChange = null
             bridge.onEvent = null
@@ -366,6 +430,13 @@ class MpvKitImpl(
     override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
         if (!isInitialized) return
         withContext(Dispatchers.Main.immediate) {
+            // The subtitle is a separately-picked, security-scoped file; PlayerImpl only holds the
+            // *video's* scope. Without claiming the subtitle's own scope here, mpv's `sub-add` open
+            // fails with EPERM and the sideloaded sub silently never appears (the bug). Mirror
+            // VlcKitImpl.loadExternalSubImpl: claim the scope and leave it held — mpv keeps the file
+            // open to stream cues as playback advances, so releasing it early would break the sub
+            // mid-playback.
+            uri.nsUrl.startAccessingSecurityScopedResource()
             bridge.addSubtitleFile(uri.path)
         }
     }

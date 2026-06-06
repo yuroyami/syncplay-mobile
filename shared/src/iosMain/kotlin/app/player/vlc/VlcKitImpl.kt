@@ -20,6 +20,7 @@ import app.preferences.Preferences.VLC_CUSTOM_FLAGS
 import app.preferences.settings.SettingCategory
 import app.preferences.value
 import app.room.RoomViewmodel
+import app.utils.generateTimestampMillis
 import app.utils.loggy
 import cocoapods.VLCKit.VLCEventsLegacyConfiguration
 import cocoapods.VLCKit.VLCLibrary
@@ -72,6 +73,7 @@ import syncplaymobile.shared.generated.resources.uisetting_audio_delay_title
 import syncplaymobile.shared.generated.resources.uisetting_categ_vlc
 import syncplaymobile.shared.generated.resources.uisetting_subtitle_delay_summary
 import syncplaymobile.shared.generated.resources.uisetting_subtitle_delay_title
+import kotlin.math.abs
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -117,6 +119,10 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         get() = 250.milliseconds
 
     private var pausedSeekPosition: Long? = null
+
+    /** Wall-clock time [pausedSeekPosition] was last set, for the convergence-timeout backstop in
+     *  [currentPositionMs] that guarantees the post-seek shadow can never freeze our position. */
+    private var seekShadowSetAtMs: Long = 0L
 
     /**
      * Debounce job for the libvlc "Paused" state. VLCKit 4 emits transient Paused events
@@ -809,9 +815,10 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
             val player = vlcPlayer ?: return@withContext
             if (player.media == null) return@withContext
             // A real play ends the first-frame priming window, so a subsequent Playing
-            // state is surfaced normally rather than swallowed.
+            // state is surfaced normally rather than swallowed. The post-seek shadow is left for
+            // [currentPositionMs]'s convergence logic to clear — clearing it here would expose the
+            // brief stale-clock window right after a seek-then-play as a phantom backward jump.
             primingFirstFrame = false
-            pausedSeekPosition = null // VLC becomes reliable at updating time, again
             player.play()
         }
     }
@@ -845,13 +852,13 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
             // setTime on a media-less VLCMediaPlayer enters the same libdispatch path
             // and dereferences the NULL libvlc handle.
             if (player.media == null) return@launch
-            // Always shadow the player's clock with our requested position until VLC's
-            // time-changed callback fires (which means the player has caught up). Without
-            // this, VLCKit 4 has a window between setTime() and the next time-update where
-            // vlcPlayer.time can return 0 or a stale value — the protocol's seek detector
-            // sees this as a sudden 4-second drop and broadcasts a phantom "user jumped
-            // from X to 0" to the room. The shadow gets cleared in mediaPlayerTimeChanged.
+            // Shadow the player's clock with our requested position until the live clock actually
+            // converges on it (see [currentPositionMs]). VLCKit 4 has a window between setTime()
+            // and the next time-update where vlcPlayer.time can return 0 or a stale value — the
+            // protocol's seek detector would see that as a sudden drop and broadcast a phantom
+            // "user jumped from X to 0" to the room.
             pausedSeekPosition = toPositionMs
+            seekShadowSetAtMs = generateTimestampMillis()
             player.setTime(toPositionMs.toVLCTime())
         }
     }
@@ -862,27 +869,31 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
      * @return Current position in milliseconds
      */
     override fun currentPositionMs(): Long {
-        // If paused and we have a manual position → use it
-        // A live VLCKit clock of 0/null means "not known yet" (a buffer dip, or the moment
-        // right after media injection), NOT a real jump to the start. Returning 0 there made
-        // the sync layer broadcast a phantom "seeked to 0" to the room. Treat a non-positive
-        // sample as unknown and fall back to the last good tracked time.
+        // A live VLCKit clock of 0/null means "not known yet" (a buffer dip, or the moment right
+        // after media injection), NOT a real jump to the start; and VLCKit 4 occasionally leaks a
+        // raw libvlc clock tick (~1.7e15 ms) through .time. Treat a non-positive or implausibly
+        // large (> 24h) sample as unknown and fall back to the last good tracked time.
+        val live = vlcPlayer?.time?.value()?.longValue ?: 0L
+        val liveValid = live in 1L..MAX_PLAUSIBLE_POSITION_MS
+
         pausedSeekPosition?.let { shadow ->
-            // VLCKIT-DIAG (temporary): catch a clock-shaped value (~1.7e15) leaking via the
-            // seek shadow. 24h is larger than any real media position, so anything above it
-            // is garbage, not a legitimate playhead.
-            if (shadow > 86_400_000L) {
-                loggy("🟥🟥🟥 VLCKIT-DIAG2 shadow garbage: pausedSeekPosition=$shadow ms, duration=${playerManager.timeFullMillis.value} ms")
+            // After seekTo() we report the seek target (not the live clock) so the brief
+            // post-setTime window where vlcPlayer.time is 0/stale can't be broadcast as a phantom
+            // jump. We drop the shadow the moment the live clock converges on the target — and, as
+            // a backstop, after SEEK_SHADOW_MAX_HOLD_MS if a valid clock never converges (e.g. the
+            // seek was overridden). WITHOUT this convergence/timeout the shadow sticks forever on a
+            // seek-while-playing — no Playing state transition fires to clear it — so our reported
+            // position freezes and the whole room rewinds to it. That is the "stuck after seek" bug.
+            val converged = liveValid && abs(live - shadow) <= SEEK_CONVERGENCE_MS
+            val expired = liveValid &&
+                    generateTimestampMillis() - seekShadowSetAtMs > SEEK_SHADOW_MAX_HOLD_MS
+            if (converged || expired) {
+                pausedSeekPosition = null
+                return live
             }
             return shadow
         }
-        val live = vlcPlayer?.time?.value()?.longValue ?: 0L
-        // VLCKIT-DIAG (temporary): log the raw VLCKit reading whenever it's implausibly large,
-        // so we can see exactly what vlcPlayer.time returns at the moment the bad seek fires.
-        if (live > 86_400_000L) {
-            loggy("🟥🟥🟥 VLCKIT-DIAG live garbage: raw vlcPlayer.time=$live ms, duration=${playerManager.timeFullMillis.value} ms, lastTracked=${playerManager.timeCurrentMillis.value}")
-        }
-        return if (live > 0L) live else playerManager.timeCurrentMillis.value
+        return if (liveValid) live else playerManager.timeCurrentMillis.value
     }
 
     /**
@@ -947,6 +958,21 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
          * size is shown unscaled (1.0×).
          */
         const val SUBTITLE_SIZE_DEFAULT = 16
+
+        /** A real media playhead can't exceed a day; a larger [VLCMediaPlayer.time] reading is a
+         *  leaked raw libvlc clock value, so [currentPositionMs] treats it as "unknown". */
+        const val MAX_PLAUSIBLE_POSITION_MS = 86_400_000L
+
+        /** Live clock within this distance of the post-seek shadow target counts as "converged",
+         *  at which point [currentPositionMs] drops the shadow and reports the live clock. Sized
+         *  to comfortably exceed one tracker tick of playback so it triggers on the first sample
+         *  after the seek lands, yet stay under the protocol's 1 s seek threshold. */
+        const val SEEK_CONVERGENCE_MS = 1_000L
+
+        /** Hard cap on how long the post-seek shadow is honored if a valid live clock never
+         *  converges on it (e.g. the seek was overridden). Prevents the shadow from freezing our
+         *  reported position — and thus rewinding the whole room — indefinitely. */
+        const val SEEK_SHADOW_MAX_HOLD_MS = 3_000L
     }
 
     /********** VLC-Specific Helper Methods **********/
@@ -1005,10 +1031,11 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                     // channel-health collector would broadcast a bogus "unpaused" to the
                     // room. The Paused state that immediately follows clears the flag.
                     // A real (or transient) Playing cancels any pending debounced pause.
+                    // The post-seek shadow is cleared by [currentPositionMs]'s convergence logic,
+                    // not here, so a seek that doesn't change play-state still clears it.
                     pauseDebounceJob?.cancel()
                     if (!primingFirstFrame) {
                         playerManager.isNowPlaying.value = true
-                        pausedSeekPosition = null
                     }
                 }
                 VLCMediaPlayerState.VLCMediaPlayerStatePaused -> {
@@ -1055,15 +1082,12 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         }
 
         override fun mediaPlayerTimeChanged(aNotification: NSNotification) {
-            // We can't read vlcPlayer.time here (it would assert in libvlc — see the
-            // class doc for VlcDelegate), but the mere fact that VLCKit fired this
-            // notification tells us the player's clock is ticking and has caught up
-            // with whatever setTime() we last issued. We deliberately do NOT drop the
-            // post-seek shadow here anymore: this notification often arrives from a tick
-            // queued BEFORE the seek landed, so clearing the shadow now made
-            // currentPositionMs briefly report the pre-seek position (a phantom backward
-            // jump for the room). The shadow is instead cleared by the main-thread tracker
-            // once the live clock actually converges on the target (see startTrackingProgress).
+            // We can't read vlcPlayer.time here (it would assert in libvlc — see the class doc for
+            // VlcDelegate), and we deliberately do NOT drop the post-seek shadow here: this
+            // notification often arrives from a tick queued BEFORE the seek landed, so clearing the
+            // shadow now made currentPositionMs briefly report the pre-seek position (a phantom
+            // backward jump for the room). The shadow is instead cleared by [currentPositionMs]
+            // once the live clock actually converges on the seek target.
         }
 
         /**
