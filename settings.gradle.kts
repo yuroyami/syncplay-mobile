@@ -18,11 +18,13 @@ dependencyResolutionManagement {
     }
 }
 
-plugins {
-    //This will automatically download any necessary runtimes for our compose plugins
-    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
-}
-
+// NOTE (issue #105 / IzzyOnDroid reproducible builds): do NOT re-add the
+// foojay-resolver-convention plugin, and do NOT pin a JVM toolchain vendor. Foojay makes Gradle
+// DOWNLOAD a toolchain, and a vendor pin (e.g. ADOPTIUM) forces a specific one. RB builders are
+// network-restricted and provision their own JDK 21, so a forced download/vendor-match fails the
+// whole build. The JDK version is requested vendor-neutrally via gradle.properties
+// (org.gradle.toolchains.jvm.version=21) and gradle/gradle-daemon-jvm.properties (toolchainVersion=21),
+// which any locally-provisioned JDK 21 satisfies.
 
 rootProject.name = "SyncplayMobile"
 include(":androidApp")
