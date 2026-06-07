@@ -8,7 +8,6 @@ import app.protocol.ProtocolManager.Companion.FASTFORWARD_BEHIND_THRESHOLD
 import app.protocol.ProtocolManager.Companion.FASTFORWARD_EXTRA_TIME
 import app.protocol.ProtocolManager.Companion.FASTFORWARD_RESET_THRESHOLD
 import app.protocol.ProtocolManager.Companion.FASTFORWARD_THRESHOLD
-import app.protocol.ProtocolManager.Companion.SEEK_THRESHOLD
 import app.protocol.ProtocolManager.Companion.SLOWDOWN_RATE
 import app.protocol.ProtocolManager.Companion.SLOWDOWN_RESET_THRESHOLD
 import app.protocol.ProtocolManager.Companion.SLOWDOWN_THRESHOLD
@@ -26,7 +25,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.math.abs
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
@@ -258,16 +256,6 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             } else {
                 withContext(Dispatchers.Main.immediate) { viewmodel.player.currentPositionMs() / 1000.0 }
             }
-            val playerPosSec = withContext(Dispatchers.Main.immediate) {
-                viewmodel.player.currentPositionMs() / 1000.0
-            }
-            val playerDiff = abs(playerPosSec - position)
-            val globalDiff = abs(protocol.extrapolatedGlobalPositionMs() / 1000.0 - position)
-            // Never report a seek based on a 0/unknown player position (a buffer dip, or a
-            // sample taken right after media injection): that 0 would otherwise be broadcast
-            // to the room as a "seek to 0" and yank every peer back to the start.
-            val seeked = playerPosSec > 0.0 && playerDiff > SEEK_THRESHOLD && globalDiff > SEEK_THRESHOLD
-
             /* `play` MUST be the state we just acknowledged from the server (`!paused`),
              * NOT the transient `viewmodel.player.isPlaying()`. On VLCKit 4 the libvlc
              * pause/play API is asynchronous: pause() returns before vlc_player_Pause has
@@ -291,11 +279,18 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             network.sendAsync(
                 protocol.buildStatePacket(
                     serverTime = latencyCalculation,
-                    // Send doSeek only when we genuinely seeked; never an explicit `false`
-                    // every tick (matches the PC client, which omits it on a plain report).
-                    doSeek = seeked.takeIf { it },
+                    // Mobile owns its embedded player, so every real seek is announced explicitly
+                    // via dispatcher.sendSeek (seekbar, fast-seek, gestures, chapters, seek-to,
+                    // undo). There is no out-of-band seek to discover, so this periodic ACK never
+                    // re-derives one — it just omits doSeek, exactly like the PC client (whose ACK
+                    // path is structurally incapable of emitting a seek: it compares the player
+                    // against itself). The old re-derivation here compared the player against the
+                    // inbound server position and could only ever fire as a DUPLICATE of an
+                    // already-announced seek during the ignoringOnTheFly window, which produced a
+                    // phantom duplicate "X jumped from A to B" ~5s after a genuine seek.
+                    doSeek = null,
                     position = ackPos,
-                    changeState = 0,
+                    isLocalStateChange = false,
                     /* `paused` may be null here (the inbound playstate didn't carry one);
                      * fall back to globalPaused which we treat as the current room state. */
                     play = !(paused ?: protocol.globalPaused)
@@ -307,7 +302,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                     serverTime = latencyCalculation,
                     doSeek = null,
                     position = null,
-                    changeState = 0,
+                    isLocalStateChange = false,
                     play = null
                 )
             )

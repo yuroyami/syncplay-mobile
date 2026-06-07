@@ -77,7 +77,13 @@ class MpvKitImpl(
     // We announce a loaded file from the "file-loaded" event below (once the real duration is
     // known), so the base parseMedia() must not announce it again on iOS. See PlayerImpl.
     override val announcesFileLoadViaEvent: Boolean = true
-    override val trackerJobInterval: Duration = 500.milliseconds
+    // No manual position poll: the MPVKit bridge pushes a precise `time-pos` Double on every
+    // frame (see onPropertyChange below), which already drives timeCurrentMillis — the only
+    // consumer (the seekbar). Unlike AVPlayer/VLCKit there is no system transport-control actor
+    // to catch out of band (supportsPictureInPicture=false), and sync reads currentPositionMs()
+    // live, so a 500ms poll was pure duplication. If the observer ever stops feeding the seekbar
+    // after a background/foreground vid=no/auto cycle, restore a poll here (e.g. 1.seconds).
+    override val trackerJobInterval: Duration = Duration.ZERO
 
     /**
      * Observers for the app background/foreground transitions. mpv binds its video output and the

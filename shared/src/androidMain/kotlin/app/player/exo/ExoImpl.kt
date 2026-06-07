@@ -129,11 +129,12 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
                 /* IMPORTANT: must stay false. When true, ExoPlayer silently invokes pause()
                  * on transient/permanent audio-focus loss (notifications, system sounds, OS
                  * doze, Bluetooth glitches). That fires onIsPlayingChanged(false), which the
-                 * State.kt tick (line ~220) then broadcasts to the room as `play=false`,
-                 * causing the spurious "User X paused" event after long sessions (the bug
-                 * reported as the 30–60 minute auto-pause). If we ever need polite focus
-                 * handling, add a custom AudioFocusListener that pauses LOCALLY only and
-                 * does NOT mutate viewmodel.playerManager.isNowPlaying. */
+                 * isNowPlaying divergence collector in ProtocolManager.startChannelHealthMonitoring()
+                 * (see ProtocolManager.kt ~190, which explicitly names audio-focus loss) then
+                 * broadcasts to the room as `play=false`, causing the spurious "User X paused"
+                 * event after long sessions (the bug reported as the 30–60 minute auto-pause). If
+                 * we ever need polite focus handling, add a custom AudioFocusListener that pauses
+                 * LOCALLY only and does NOT mutate viewmodel.playerManager.isNowPlaying. */
                 false
             )
             .build()
@@ -266,28 +267,26 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
         viewmodel.media?.tracks?.clear()
 
         withContext(Dispatchers.Main) {
-            withContext(Dispatchers.Main) {
-                val tracks = exoplayer?.currentTracks ?: return@withContext
-                for (group in tracks.groups) {
-                    val trackGroup = group.mediaTrackGroup
-                    val trackType = group.type
-                    if (trackType == C.TRACK_TYPE_AUDIO || trackType == C.TRACK_TYPE_TEXT) {
-                        for (i in (0 until trackGroup.length)) {
-                            val format = trackGroup.getFormat(i)
-                            val index = trackGroup.indexOf(format)
+            val tracks = exoplayer?.currentTracks ?: return@withContext
+            for (group in tracks.groups) {
+                val trackGroup = group.mediaTrackGroup
+                val trackType = group.type
+                if (trackType == C.TRACK_TYPE_AUDIO || trackType == C.TRACK_TYPE_TEXT) {
+                    for (i in (0 until trackGroup.length)) {
+                        val format = trackGroup.getFormat(i)
+                        val index = trackGroup.indexOf(format)
 
-                            /** Creating a custom Track instance for every track in a track group **/
-                            val exoTrack = ExoTrack(
-                                trackGroup = trackGroup,
-                                format = format,
-                                name = "${format.label} [${format.language?.uppercase() ?: "UND"}]",
-                                type = trackType.toCommonType(),
-                                index = index,
-                                selected = group.isTrackSelected(index)
-                            )
+                        /** Creating a custom Track instance for every track in a track group **/
+                        val exoTrack = ExoTrack(
+                            trackGroup = trackGroup,
+                            format = format,
+                            name = "${format.label} [${format.language?.uppercase() ?: "UND"}]",
+                            type = trackType.toCommonType(),
+                            index = index,
+                            selected = group.isTrackSelected(index)
+                        )
 
-                            viewmodel.media?.tracks?.add(exoTrack)
-                        }
+                        viewmodel.media?.tracks?.add(exoTrack)
                     }
                 }
             }
@@ -329,7 +328,13 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
         /* We need to cast MediaController to ExoPlayer since they're roughly the same */
         withContext(Dispatchers.Main.immediate) {
-            analyzeTracks(viewmodel.media ?: return@withContext)
+            // No analyzeTracks() here: re-applying the saved overrides below does not need the
+            // media.tracks UI list rebuilt (that refreshes on-demand when the track sheet opens,
+            // see RoomControlPanel ~265). analyzeTracks clears+rebuilds media.tracks and retriggers
+            // onTracksChanged on every foreground — wasted work, since no engine is released across
+            // pause/resume, so re-adding the stored overrides is all that's needed to restore the
+            // selection. (This path is reached only from onResume; it is the sole reapply caller.)
+            if (viewmodel.media == null) return@withContext
 
             exoplayer?.apply {
                 val builder = trackSelectionParameters.buildUpon()

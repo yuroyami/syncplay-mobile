@@ -59,23 +59,34 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
      * post-seek value. [sendSeek] auto-fills it as a fallback if it hasn't been set
      * during this user gesture, but that captures the post-seek position when the
      * caller already nudged the player first — so prefer setting it explicitly.
+     *
+     * Single-use: [RoomCallback.onSomeoneSeeked] consumes it (resets to the [NO_PENDING_SEEK]
+     * sentinel) the first time it renders a self-seek. Without this, a stray second self
+     * doSeek echo would re-render the SAME stale `from` while `to` advanced with playback,
+     * producing a phantom duplicate "X jumped from A to B". A negative sentinel (never a
+     * legitimate playhead, unlike 0 which is a valid "seek from the very start") tells the
+     * reader to fall back to the live position so the duplicate collapses into a no-op.
      */
-    var pendingSeekFromMs: Long = 0L
+    var pendingSeekFromMs: Long = NO_PENDING_SEEK
 
     fun sendSeek(newPosMs: Long) {
         if (viewmodel.isSoloMode) return
 
         viewmodel.viewModelScope.launch(Dispatchers.IO) {
-            val playing = viewmodel.player.isPlaying()
-            // Seeks don't change pause state, so we don't touch protocol.expectedPaused
-            // here. The pause-broadcast flow collector keys off [PlayerManager.isNowPlaying]
-            // changes, which a seek alone won't produce.
+            // A seek never changes pause state (so we don't touch protocol.expectedPaused here),
+            // which means the truthful `play` value is the room's already-known intent — NOT a
+            // live `player.isPlaying()` probe. On VLCKit 4 that probe returns the stale
+            // pre-transition value right after a pause, so seeking while paused could emit
+            // play=true and make the server broadcast a spurious "X played" to every peer.
+            // expectedPlaying reflects local intent immediately (no round-trip lag, unlike
+            // globalPaused which only updates from inbound server State).
+            val playing = viewmodel.protocol.expectedPlaying
             network.send(
                 viewmodel.protocol.buildStatePacket(
                     serverTime = null,
                     doSeek = true,
                     position = newPosMs / 1000.0,
-                    changeState = 1,
+                    isLocalStateChange = true,
                     play = playing
                 )
             )
@@ -154,7 +165,7 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
                     serverTime = null,
                     doSeek = null,
                     position = posSec,
-                    changeState = 1,
+                    isLocalStateChange = true,
                     play = playback.play
                 )
             )
@@ -232,8 +243,11 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
         }
     }
 
-    private companion object {
+    companion object {
         /** Static feature manifest the client advertises in its `Hello`. */
         val clientFeatures = RoomFeatures()
+
+        /** Sentinel for [pendingSeekFromMs] meaning "no unconsumed user seek". */
+        const val NO_PENDING_SEEK: Long = -1L
     }
 }

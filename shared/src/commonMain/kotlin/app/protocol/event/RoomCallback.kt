@@ -157,7 +157,16 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
         if (seeker.isNotSelf()) hapticIf(HAPTIC_ON_SEEKED)
         onMainThread {
-            val oldPosMs = if (seeker.isSelf()) dispatcher.pendingSeekFromMs else viewmodel.player.currentPositionMs()
+            // Read-and-consume the pending pre-seek position for self-seeks. Consuming it
+            // (resetting to the sentinel) is what defuses a phantom duplicate echo: if a
+            // stray second self doSeek arrives, the sentinel is already spent, so we fall
+            // back to the live position for `from` — making `from ≈ to`, which the noOpSeek
+            // guard below then suppresses instead of rendering "jumped from <stale> to <now>".
+            val oldPosMs = if (seeker.isSelf() && dispatcher.pendingSeekFromMs != RoomEventDispatcher.NO_PENDING_SEEK) {
+                dispatcher.pendingSeekFromMs.also { dispatcher.pendingSeekFromMs = RoomEventDispatcher.NO_PENDING_SEEK }
+            } else {
+                viewmodel.player.currentPositionMs()
+            }
             // toPosition is full-precision seconds. Multiply *as Double* before truncating
             // to Long ms — `toPosition.toLong() * 1000L` first truncates fractional seconds
             // and loses up to 999 ms.
@@ -294,7 +303,7 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         // packets during the loop, followed by clear(), would silently lose them.
         val drained = session.outboundQueue.toList()
         session.outboundQueue.clear()
-        for (m in drained) network.transmitPacket(m, isHello = false)
+        for (m in drained) network.transmitPacket(m, queueable = true)
 
         // Mirror python's reIdentifyAsController — after every (re)connect, if we're
         // in a controlled room and we know the operator password, re-auth so the server

@@ -122,6 +122,10 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
         if (reconnectionJob?.isActive == true) return
 
         reconnectionJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
+            // Drop the stale sync anchor so the first State on the new socket re-anchors the
+            // player to the authoritative room position (mirrors PC's _performRetryStateReset).
+            // Runs once per reconnect campaign (the isActive guard above prevents re-entry).
+            viewmodel.protocol.resetSyncAnchorForReconnect()
             while (isActive && state.value != ConnectionState.CONNECTED) {
                 state.value = ConnectionState.SCHEDULING_RECONNECT
                 // Clamp the user-configurable interval: it can be 0, which would otherwise
@@ -181,7 +185,14 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
      */
     suspend fun send(message: WireMessage) {
         if (viewmodel.isSoloMode) return
-        transmitPacket(message.toJson(), isHello = message is WireMessage.Hello)
+        // Hello must never be queued (the handshake re-runs on reconnect). State must never be
+        // queued either: it carries a position/seek that was true the instant the socket died,
+        // but the app owns the player so by reconnect the playhead has moved — replaying a frozen
+        // State (worst case doSeek=true to a stale target) would yank the whole room. State
+        // regenerates fresh from the live player via the ACK path after reconnect, matching PC,
+        // which has no outbound queue at all. Chat/playlist/ready ARE legitimate to replay.
+        val queueable = message !is WireMessage.Hello && message !is WireMessage.State
+        transmitPacket(message.toJson(), queueable = queueable)
     }
 
     /** Fire-and-forget [send] — launched on [Dispatchers.IO]. */
@@ -191,9 +202,10 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
 
     /**
      * Appends CRLF, writes to socket with a 10s timeout. Retries up to 3 times before giving up.
-     * On final failure non-Hello packets get queued in [Session.outboundQueue].
+     * On final failure, packets flagged [queueable] get queued in [Session.outboundQueue] for
+     * replay on reconnect. Hello and State are NOT queueable (see [send]).
      */
-    suspend fun transmitPacket(json: String, isHello: Boolean = false, retryCounter: Int = 0) {
+    suspend fun transmitPacket(json: String, queueable: Boolean = true, retryCounter: Int = 0) {
         withContext(Dispatchers.IO) {
             try {
                 withTimeout(10.seconds) {
@@ -205,12 +217,12 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
                 loggy(e.stackTraceToString())
                 if (retryCounter >= 3) {
                     loggy("SOCKET INVALID")
-                    if (!isHello) {
+                    if (queueable) {
                         viewmodel.session.outboundQueue.add(json)
                     }
                     onError()
                 } else {
-                    transmitPacket(json, isHello, retryCounter = retryCounter + 1)
+                    transmitPacket(json, queueable, retryCounter = retryCounter + 1)
                 }
             }
         }

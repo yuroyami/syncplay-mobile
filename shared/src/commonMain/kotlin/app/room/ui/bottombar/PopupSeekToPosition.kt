@@ -244,11 +244,20 @@ object PopupSeekToPosition {
                             val hhMs = hh * 3600 * 1000
                             val result = ssMs + mmMs + hhMs
 
-                            if (viewmodel.isSoloMode) {
-                                viewmodel.seeks.add(Pair(viewmodel.player.currentPositionMs(), result))
-                            }
-
+                            // Announce the seek to the room, exactly like every other seek entry
+                            // point (seekbar, fast-seek, gestures, chapters, undo). Previously this
+                            // dialog only moved the LOCAL player and never called sendSeek, so in a
+                            // real room the seek did not propagate to peers (and with SYNC_REWIND
+                            // on, the local player could be yanked back to the room position a tick
+                            // later). sendSeek is a no-op in solo mode, so this is safe there too.
+                            val fromMs = viewmodel.player.currentPositionMs()
+                            viewmodel.dispatcher.pendingSeekFromMs = fromMs
+                            viewmodel.dispatcher.sendSeek(result)
                             viewmodel.player.seekTo(result)
+
+                            if (viewmodel.isSoloMode) {
+                                viewmodel.seeks.add(Pair(fromMs, result))
+                            }
 
                             viewmodel.dispatchOSD { getString(Res.string.room_seek_toposition_success, timestampFromMillis(result)) }
                         }

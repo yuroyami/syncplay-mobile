@@ -256,11 +256,24 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
         }
     }
 
+    /**
+     * Optional settling delay (ms) before a load command is issued in [inject]. Defaults to 0.
+     *
+     * Mobile owns its in-process engines: each is constructed synchronously in [initialize] and
+     * self-guards on `isInitialized`, so there is normally nothing to wait for. The old
+     * unconditional `delay(500)` was a port of PC's "let the external IPC player process wake up"
+     * assumption, and it sat BEFORE the load command even issued, so it could not let a load
+     * settle — it only delayed the start of every media load by half a second (a visible stall on
+     * playlist auto-advance and on ExoPlayer subtitle reloads, which re-enter [inject]). An engine
+     * that genuinely needs a post-init settle window may override this to a positive value.
+     */
+    protected open val injectSettleDelayMs: Long = 0L
+
     private suspend inline fun <T> inject(source: T, crossinline toMedia: suspend (T) -> MediaFile, crossinline impl: suspend (MediaFile) -> Unit) {
         val media = toMedia(source)
         withContext(Dispatchers.Main) {
             try {
-                delay(500) //Some players aren't ready right away (mpv, vlc)
+                if (injectSettleDelayMs > 0) delay(injectSettleDelayMs)
                 impl(media)
                 parseMedia(media)
             } catch (e: Exception) {

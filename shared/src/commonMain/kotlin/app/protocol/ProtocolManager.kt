@@ -117,6 +117,16 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     private var expectedPaused: Boolean = true
 
     /**
+     * The room's *intended* play state as the app authoritatively knows it, with no engine
+     * probe. Set synchronously by [noteExpectedPlaybackState] before the player is touched and
+     * by the divergence collector. Outbound paths must read this instead of `player.isPlaying()`,
+     * which on VLCKit 4 returns a stale pre-transition value in the async window right after a
+     * pause/play toggle — broadcasting that stale value makes the server think the watcher
+     * unpaused the room. Same reasoning as the ACK path's `play = !paused` defense.
+     */
+    val expectedPlaying: Boolean get() = !expectedPaused
+
+    /**
      * Starts the channel-health coroutines for the current room session.
      *
      * Two jobs run while CONNECTED:
@@ -199,7 +209,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
                         serverTime = null,
                         doSeek = null,
                         position = nowMs / 1000.0,
-                        changeState = 1,
+                        isLocalStateChange = true,
                         play = isPlaying
                     )
                 )
@@ -249,6 +259,26 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
     }
 
     /**
+     * Lightweight per-connection reset for a TRANSIENT reconnect (NOT a room change or teardown,
+     * which use [invalidate]). Clears only the sync anchor and the ignoringOnTheFly counters so
+     * the first server `State` on the new socket re-triggers the first-sync re-anchor in
+     * RoomServerMessageHandler (force-seek to the authoritative room position + re-apply
+     * pause/play). Without this, [lastGlobalUpdate] stays non-null across the reconnect, the
+     * re-anchor is skipped, and sub-rewind-threshold (<4s) drift can persist when the server's
+     * rejoin `State` is self/null-attributed. Mirrors PC's `_performRetryStateReset`.
+     *
+     * Deliberately leaves [session] (userlist/playlist must survive), the player, [speedChanged]
+     * / [behindFirstDetected] (the slowdown/fastforward state self-heals via the normal sync
+     * algorithm once States resume), and [pingService] intact.
+     */
+    fun resetSyncAnchorForReconnect() {
+        lastGlobalUpdate = null
+        lastGlobalPositionSetAt = null
+        serverIgnFly = 0
+        clientIgnFly = 0
+    }
+
+    /**
      * The room's *current* expected position in ms, extrapolated from the last server
      * `State`. While the room is playing, advances by wall-clock time elapsed since
      * [lastGlobalPositionSetAt]. Mirrors python's `getGlobalPosition()` — without the
@@ -274,7 +304,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         serverTime: Double?,
         doSeek: Boolean?,
         position: Double?,
-        changeState: Int,
+        isLocalStateChange: Boolean,
         play: Boolean?
     ): WireMessage.State {
         val clientIgnoreIsNotSet = clientIgnFly == 0 || serverIgnFly != 0
@@ -293,7 +323,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
             clientRtt = pingService.rtt
         )
 
-        if (changeState == 1) {
+        if (isLocalStateChange) {
             _clientIgnFly.incrementAndGet()
         }
 

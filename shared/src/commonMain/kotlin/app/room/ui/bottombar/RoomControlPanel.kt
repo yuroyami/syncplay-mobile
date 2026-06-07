@@ -316,11 +316,13 @@ fun RoomControlPanelCard(modifier: Modifier) {
                 icon = Icons.Filled.Theaters,
                 onClick = {
                     haptic()
-
-                    viewmodel.viewModelScope.launch {
-                        viewmodel.player.analyzeChapters(viewmodel.media ?: return@launch)
-                        chaptersPopup.value = true
-                    }
+                    // No analyzeChapters() here: this button only renders when media.chapters is
+                    // already non-empty (see the `isNotEmpty()` guard above), and chapters are
+                    // immutable file metadata the seekbar's LaunchedEffect(media.fileName) already
+                    // populated. Re-analyzing on every open just re-derives an identical list, and
+                    // on VLCKit it clear()s + delay(500)s the shared chapter list, blanking the
+                    // seekbar dots for half a second each time.
+                    chaptersPopup.value = true
                 },
                 popupVisibility = chaptersPopup,
                 popupTitle = stringResource(Res.string.room_chapters),
