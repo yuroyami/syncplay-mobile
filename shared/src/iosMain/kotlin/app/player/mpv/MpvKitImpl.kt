@@ -456,6 +456,11 @@ class MpvKitImpl(
     @OptIn(ExperimentalForeignApi::class)
     override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
         installMpvSubfontIfNeeded()
+        // Load PAUSED, like Android (MPVView primes pause=true at init, and Android rebuilds
+        // mpv per inject so every load starts paused). This bridge is long-lived and mpv's
+        // `pause` property persists across loadfile — left unprimed it defaults to no, so a
+        // fresh inject auto-played instead of waiting for the room (or the user) to unpause.
+        bridge.setPaused(true)
         val path = location.file.path
         // Open a blocking descriptor eagerly (while PlayerImpl's security scope is freshest) and
         // hand mpv the fd via `fdclose://`, instead of letting mpv do its own deferred O_NONBLOCK
@@ -492,6 +497,8 @@ class MpvKitImpl(
 
     override suspend fun injectVideoURLImpl(location: MediaFileLocation.Remote) {
         installMpvSubfontIfNeeded()
+        // Same paused-load contract as injectVideoFileImpl — see the comment there.
+        bridge.setPaused(true)
         bridge.loadURL(location.url)
     }
 

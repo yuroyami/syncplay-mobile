@@ -85,6 +85,7 @@ import app.player.PlayerImpl
 import app.preferences.Preferences.UNDO_SEEK_NO_CONFIRM
 import app.preferences.set
 import app.preferences.watchPref
+import app.subtitles.SubtitleDownloadResult
 import app.subtitles.SubtitleSearch
 import syncplaymobile.shared.generated.resources.room_sub_search_download_from_web
 import syncplaymobile.shared.generated.resources.room_sub_search_downloads
@@ -112,6 +113,9 @@ import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_button_desc_audio_tracks
 import syncplaymobile.shared.generated.resources.room_button_desc_subtitle_tracks
 import syncplaymobile.shared.generated.resources.room_button_desc_subtitle_tracks_import_from_file
+import syncplaymobile.shared.generated.resources.room_subs_download_failed
+import syncplaymobile.shared.generated.resources.room_subs_downloaded_remaining
+import syncplaymobile.shared.generated.resources.room_subs_quota_reached
 import syncplaymobile.shared.generated.resources.room_chapters
 import syncplaymobile.shared.generated.resources.room_chapters_jump
 import syncplaymobile.shared.generated.resources.room_chapters_skip
@@ -651,10 +655,25 @@ fun RoomControlPanelCard(modifier: Modifier) {
                                             .clickable(enabled = isDownloading == null) {
                                                 isDownloading = result.fileId
                                                 scope.launch(Dispatchers.IO) {
-                                                    val path = SubtitleSearch.download(result.fileId)
-                                                    if (path != null) {
-                                                        val filename = path.substringAfterLast('/')
-                                                        viewmodel.player.loadSubtitleFromPath(path, filename)
+                                                    when (val outcome = SubtitleSearch.download(result.fileId)) {
+                                                        is SubtitleDownloadResult.Success -> {
+                                                            viewmodel.player.loadSubtitleFromPath(outcome.path, outcome.fileName)
+                                                            // Free-plan keys allow only a handful of downloads per
+                                                            // day (searches are unlimited) — keep the user aware.
+                                                            viewmodel.dispatchOSD {
+                                                                getString(Res.string.room_subs_downloaded_remaining, outcome.remaining)
+                                                            }
+                                                        }
+                                                        is SubtitleDownloadResult.QuotaExceeded -> {
+                                                            viewmodel.dispatchOSD {
+                                                                getString(Res.string.room_subs_quota_reached, outcome.resetTime)
+                                                            }
+                                                        }
+                                                        SubtitleDownloadResult.Failed -> {
+                                                            viewmodel.dispatchOSD {
+                                                                getString(Res.string.room_subs_download_failed)
+                                                            }
+                                                        }
                                                     }
                                                     isDownloading = null
                                                     showSubtitleSearch = false

@@ -424,6 +424,9 @@
     <string name="room_shared_playlist_limit">Shared playlist limit reached (%1$d items / %2$d characters)</string>
     <string name="room_ready_set_by">%1$s was set as ready by %2$s</string>
     <string name="room_not_ready_set_by">%1$s was set as not ready by %2$s</string>
+    <string name="room_subs_downloaded_remaining">Subtitle loaded. %1$d subtitle downloads left today (searching is unlimited).</string>
+    <string name="room_subs_quota_reached">Daily subtitle download limit reached. Resets in %1$s.</string>
+    <string name="room_subs_download_failed">Subtitle download failed. Check your connection and try again.</string>
 
     <string name="setting_media_resolver_title">Resolve streaming URLs</string>
     <string name="setting_media_resolver_summary">Extract direct video URLs from supported sites (YouTube, SoundCloud, PeerTube on Android; YouTube on iOS) so you can paste a page link and have it play. Native extraction, no yt-dlp or Python.</string>

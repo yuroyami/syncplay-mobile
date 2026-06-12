@@ -1,41 +1,69 @@
 package app.subtitles
 
+import SyncplayMobile.shared.BuildConfig
 import app.utils.getLogDirectoryPath
 import app.utils.httpClient
 import app.utils.loggy
-import io.ktor.client.call.body
+import app.utils.writeTextFile
+import de.jensklingenberg.ktorfit.Ktorfit
+import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.get
-import io.ktor.client.request.headers
+import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
 
 /**
- * Searches and downloads subtitles from the OpenSubtitles API.
+ * Searches and downloads subtitles from the OpenSubtitles **.com** REST API via a
+ * [Ktorfit]-generated [OpenSubtitlesAPI] (same pattern as the Klipy client) — the old
+ * hand-rolled requests targeted the right host but called `/download` as a GET with a
+ * query parameter, which the API rejects (the docs require a POST with a JSON body),
+ * so downloads never worked.
  */
 object SubtitleSearch {
-    private const val BASE_URL = "https://api.opensubtitles.com/api/v1"
-    private const val API_KEY = "iesFjGxVcXtBMnEbxMRYyWbU3M1UEaaL"
+    private const val BASE_URL = "https://api.opensubtitles.com/api/v1/"
+
+    /** Consumer key from local.properties (`yuroyami.keyOpenSubsApi`) — see build.gradle.kts. */
+    private val API_KEY = BuildConfig.OPENSUBTITLES_API_KEY
 
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
     private val client by lazy {
         httpClient.config {
             /* Surface 4xx/5xx as ResponseException — Ktor 3's default of false means the
-             * call validator never fires and `body<T>()` runs through ContentNegotiation
-             * on the error body, which the lenient Json below would silently parse as
-             * OpenSubtitlesSearchResponse(data=emptyList()). Result was empty searches with
-             * no log entry. With expectSuccess=true, the catch block writes the real cause. */
+             * call validator never fires and deserialization runs on the error body, which
+             * the lenient Json below would silently parse as an empty response. Result was
+             * empty searches with no log entry. With expectSuccess=true, the catch block
+             * writes the real cause (e.g. 406 quota exceeded, 401 bad key). */
             expectSuccess = true
 
             install(ContentNegotiation) {
                 json(json)
             }
+
+            /* Re-installing DefaultRequest REPLACES the base client's defaults (same plugin
+             * key), so the app-wide "SynkplayMobile/x.y.z" UA never stacks with ours.
+             * OpenSubtitles documents that the UA must identify the app as "Name vX.Y.Z"
+             * and blocks generic or comma-merged UAs. */
+            defaultRequest {
+                header(HttpHeaders.UserAgent, "Synkplay v${BuildConfig.APP_VERSION}")
+                header("Api-Key", API_KEY)
+                header(HttpHeaders.Accept, "application/json")
+            }
         }
+    }
+
+    private val api: OpenSubtitlesAPI by lazy {
+        Ktorfit.Builder()
+            .baseUrl(BASE_URL)
+            .httpClient(client)
+            .build()
+            .createOpenSubtitlesAPI()
     }
 
     /**
@@ -52,28 +80,21 @@ object SubtitleSearch {
             .trim()
     }
 
-    /** Searches for subtitles by query. */
+    /** Searches for subtitles by query, most-downloaded first. */
     suspend fun search(query: String, language: String = "en"): List<SubtitleResult> {
         return try {
-            val response = client.get("$BASE_URL/subtitles") {
-                url {
-                    parameters.append("query", query)
-                    parameters.append("languages", language)
-                    parameters.append("order_by", "download_count")
-                    parameters.append("order_direction", "desc")
-                }
-                headers {
-                    append("Api-Key", API_KEY)
-                    /* Replace the base httpClient's UA wholesale — append() would stack
-                     * "Syncplay-Mobile v1.0,SynkplayMobile/0.19.1" via mergeHeaders, and
-                     * OpenSubtitles documents that comma-merged or "generic-looking" UAs
-                     * are blocked. `remove` first ensures a single, clean UA. */
-                    remove(HttpHeaders.UserAgent)
-                    append(HttpHeaders.UserAgent, "Syncplay-Mobile v1.0")
-                }
-            }
-            val body = response.body<OpenSubtitlesSearchResponse>()
-            body.data.map { item ->
+            // Doc rules: languages lower-case, comma-separated, alphabetically sorted.
+            val languages = language.split(',')
+                .map { it.trim().lowercase() }
+                .filter { it.isNotEmpty() }
+                .sorted()
+                .joinToString(",")
+                .ifEmpty { "en" }
+
+            val response = api.search(query = query.trim().lowercase(), languages = languages)
+            loggy("SubtitleSearch: ${response.totalCount} results for '$query' [$languages]")
+
+            response.data.map { item ->
                 SubtitleResult(
                     fileId = item.attributes.files.firstOrNull()?.fileId ?: 0,
                     filename = item.attributes.files.firstOrNull()?.fileName ?: "",
@@ -83,6 +104,8 @@ object SubtitleSearch {
                     hearingImpaired = item.attributes.hearingImpaired
                 )
             }.filter { it.fileId > 0 }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             loggy("SubtitleSearch error: ${e.message}")
             e.printStackTrace()
@@ -90,35 +113,72 @@ object SubtitleSearch {
         }
     }
 
-    /** Downloads a subtitle file and saves it locally, returning the file path. */
-    suspend fun download(fileId: Int): String? {
+    /**
+     * Downloads a subtitle file and saves it locally.
+     *
+     * Note the free-plan economics: searches are unlimited, but the API enforces a
+     * DAILY DOWNLOAD QUOTA per consumer key (5/day on the free plan). The download
+     * response reports [SubtitleDownloadResult.Success.remaining]; blowing the quota
+     * comes back as HTTP 406, surfaced as [SubtitleDownloadResult.QuotaExceeded] so
+     * the UI can tell the user instead of failing silently.
+     */
+    suspend fun download(fileId: Int): SubtitleDownloadResult {
         return try {
-            val response = client.get("$BASE_URL/download") {
-                url { parameters.append("file_id", fileId.toString()) }
-                headers {
-                    append("Api-Key", API_KEY)
-                    remove(HttpHeaders.UserAgent)
-                    append(HttpHeaders.UserAgent, "Syncplay-Mobile v1.0")
-                }
+            val info = api.requestDownload(OpenSubtitlesDownloadRequest(fileId = fileId))
+            loggy("SubtitleSearch: download link acquired, quota remaining=${info.remaining} (resets ${info.resetTime})")
+            if (info.link.isEmpty()) {
+                loggy("SubtitleSearch: no link in download response — ${info.message}")
+                return SubtitleDownloadResult.Failed
             }
-            val downloadInfo = json.decodeFromString<OpenSubtitlesDownloadResponse>(response.bodyAsText())
-            val subtitleUrl = downloadInfo.link
 
-            /* Download actual subtitle file content */
-            val subtitleContent = client.get(subtitleUrl).bodyAsText()
+            /* The link is a short-lived direct URL to the UTF-8 subtitle text. */
+            val subtitleContent = client.get(info.link).bodyAsText()
 
-            /* Save to app's log/subtitle directory */
-            val dir = getLogDirectoryPath() ?: return null
-            val filename = downloadInfo.fileName
+            val dir = getLogDirectoryPath() ?: return SubtitleDownloadResult.Failed
+            // The server controls file_name — never let it traverse out of our directory.
+            val filename = info.fileName.substringAfterLast('/').substringAfterLast('\\')
+                .ifBlank { "subtitle_$fileId.srt" }
             val path = "$dir/$filename"
-            app.utils.appendToFile(path, subtitleContent)
-            path
+            // Overwrite, not append: re-downloading the same subtitle used to concatenate
+            // two copies of the file, which players parse as one giant broken cue.
+            writeTextFile(path, subtitleContent)
+            SubtitleDownloadResult.Success(path = path, fileName = filename, remaining = info.remaining)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: ClientRequestException) {
+            // 406 = daily download quota exhausted. The error body still carries the quota
+            // fields ({"requests":N,"remaining":0,"message":"...","reset_time":"..."}).
+            if (e.response.status == HttpStatusCode.NotAcceptable) {
+                val quota = runCatching {
+                    json.decodeFromString<OpenSubtitlesDownloadResponse>(e.response.bodyAsText())
+                }.getOrNull()
+                loggy("SubtitleSearch: download quota exhausted — ${quota?.message}")
+                // Quota windows are daily; if the error body didn't parse, "24 hours" beats
+                // rendering "Resets in ." in the OSD.
+                SubtitleDownloadResult.QuotaExceeded(
+                    resetTime = quota?.resetTime?.ifBlank { null } ?: "24 hours"
+                )
+            } else {
+                loggy("SubtitleSearch download error: ${e.message}")
+                SubtitleDownloadResult.Failed
+            }
         } catch (e: Exception) {
             loggy("SubtitleSearch download error: ${e.message}")
             e.printStackTrace()
-            null
+            SubtitleDownloadResult.Failed
         }
     }
+}
+
+/** Outcome of [SubtitleSearch.download], rich enough for user-facing quota messaging. */
+sealed class SubtitleDownloadResult {
+    /** [remaining] = downloads left in the key's daily quota window (5/day on the free plan). */
+    data class Success(val path: String, val fileName: String, val remaining: Int) : SubtitleDownloadResult()
+
+    /** Daily quota exhausted (HTTP 406). [resetTime] is human-readable, e.g. "12 hours". */
+    data class QuotaExceeded(val resetTime: String) : SubtitleDownloadResult()
+
+    object Failed : SubtitleDownloadResult()
 }
 
 data class SubtitleResult(
@@ -128,37 +188,4 @@ data class SubtitleResult(
     val releaseInfo: String,
     val downloadCount: Int,
     val hearingImpaired: Boolean
-)
-
-/* ===== API response models ===== */
-
-@Serializable
-data class OpenSubtitlesSearchResponse(
-    val data: List<OpenSubtitlesItem> = emptyList()
-)
-
-@Serializable
-data class OpenSubtitlesItem(
-    val attributes: OpenSubtitlesAttributes
-)
-
-@Serializable
-data class OpenSubtitlesAttributes(
-    val language: String = "",
-    val release: String = "",
-    @SerialName("download_count") val downloadCount: Int = 0,
-    @SerialName("hearing_impaired") val hearingImpaired: Boolean = false,
-    val files: List<OpenSubtitlesFile> = emptyList()
-)
-
-@Serializable
-data class OpenSubtitlesFile(
-    @SerialName("file_id") val fileId: Int = 0,
-    @SerialName("file_name") val fileName: String = ""
-)
-
-@Serializable
-data class OpenSubtitlesDownloadResponse(
-    val link: String = "",
-    @SerialName("file_name") val fileName: String = ""
 )

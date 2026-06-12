@@ -235,6 +235,14 @@ buildConfig {
     buildConfigField("DEBUG_SYNCPLAY_PROTOCOL", false)
     buildConfigField("EXOPLAYER_ONLY", exoOnly)
     buildConfigField("KLIPY_API_KEY", AppConfig.localProperties(rootDir).getProperty("yuroyami.keyKlipyApi"))
+    /* OpenSubtitles .com REST API consumer key (https://www.opensubtitles.com/consumers).
+     * Falls back to the legacy in-repo key, which the gateway currently rejects
+     * ("You cannot consume this service") — drop a fresh key into local.properties. */
+    buildConfigField(
+        "OPENSUBTITLES_API_KEY",
+        AppConfig.localProperties(rootDir).getProperty("yuroyami.keyOpenSubsApi")
+            ?: "iesFjGxVcXtBMnEbxMRYyWbU3M1UEaaL"
+    )
 
     /* Trinity brand colors — exposed so Theming.kt reads them from the SSOT */
     buildConfigField("TRINITY_COLOR_1", AppConfig.TRINITY_1)

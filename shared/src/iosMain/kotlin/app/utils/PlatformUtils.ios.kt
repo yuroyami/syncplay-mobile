@@ -38,6 +38,7 @@ import platform.Foundation.NSFileManager
 import platform.Foundation.NSFileSize
 import platform.Foundation.NSNumber
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
+import platform.Foundation.NSSelectorFromString
 import platform.Foundation.NSString
 import platform.Foundation.NSURL
 import platform.Foundation.NSUTF8StringEncoding
@@ -51,9 +52,11 @@ import platform.Foundation.timeIntervalSince1970
 import platform.Foundation.writeData
 import platform.Foundation.writeToFile
 import platform.UIKit.UIApplication
+import platform.UIKit.UIInterfaceOrientationMask
 import platform.UIKit.UIInterfaceOrientationMaskAll
 import platform.UIKit.UIInterfaceOrientationMaskLandscape
 import platform.UIKit.UIInterfaceOrientationMaskPortrait
+import platform.UIKit.UIWindow
 import platform.UIKit.UIWindowScene
 import platform.UIKit.UIWindowSceneGeometryPreferencesIOS
 import platform.ifaddrs.getDeviceLocalIp
@@ -183,28 +186,47 @@ actual fun ClipEntry.getText(): String? {
     return this.getPlainText()
 }
 
+/**
+ * Applies an orientation mask: updates the delegate's answer for
+ * `supportedInterfaceOrientationsForWindow`, requests the new geometry, and — crucially —
+ * pokes the root view controller with `setNeedsUpdateOfSupportedInterfaceOrientations()`.
+ *
+ * Without that poke, iOS 16+ CACHES the last supported-orientations answer and never
+ * re-queries the delegate. Forcing landscape for the room worked (the geometry request
+ * names a concrete orientation), but unlocking on exit silently didn't: a request with
+ * mask "All" names no target orientation, the system keeps the current geometry, and —
+ * with the stale cached mask still in force — rotation stays dead. Symptom: leave a room
+ * once and the app is stuck in landscape until process death.
+ */
+private fun applyOrientationMask(mask: UIInterfaceOrientationMask) {
+    delegato.myOrientationMask = mask
+    val scene = UIApplication.sharedApplication.connectedScenes.firstOrNull() as? UIWindowScene
+    scene?.requestGeometryUpdateWithPreferences(
+        geometryPreferences = UIWindowSceneGeometryPreferencesIOS(interfaceOrientations = mask),
+        errorHandler = null
+    )
+    // Not exposed in Kotlin's UIKit bindings yet — invoke the iOS 16+ selector dynamically.
+    // respondsToSelector doubles as the availability guard on older systems.
+    val rootVc = (scene?.windows?.firstOrNull() as? UIWindow)?.rootViewController
+    val needsUpdate = NSSelectorFromString("setNeedsUpdateOfSupportedInterfaceOrientations")
+    if (rootVc?.respondsToSelector(needsUpdate) == true) {
+        rootVc.performSelector(needsUpdate)
+    }
+}
+
 @Composable
 actual fun EnterRoomMode(portrait: Boolean) {
     LaunchedEffect(portrait) {
-        val mask = if (portrait) UIInterfaceOrientationMaskPortrait else UIInterfaceOrientationMaskLandscape
-        delegato.myOrientationMask = mask
-        (UIApplication.sharedApplication.connectedScenes.firstOrNull() as? UIWindowScene)
-            ?.requestGeometryUpdateWithPreferences(
-                geometryPreferences = UIWindowSceneGeometryPreferencesIOS(interfaceOrientations = mask),
-                errorHandler = null
-            )
+        applyOrientationMask(
+            if (portrait) UIInterfaceOrientationMaskPortrait else UIInterfaceOrientationMaskLandscape
+        )
     }
 }
 
 @Composable
 actual fun ExitRoomMode() {
     LaunchedEffect(null) {
-        delegato.myOrientationMask = UIInterfaceOrientationMaskAll
-        (UIApplication.sharedApplication.connectedScenes.firstOrNull() as? UIWindowScene)
-            ?.requestGeometryUpdateWithPreferences(
-                geometryPreferences = UIWindowSceneGeometryPreferencesIOS(interfaceOrientations = UIInterfaceOrientationMaskAll),
-                errorHandler = null
-            )
+        applyOrientationMask(UIInterfaceOrientationMaskAll)
     }
 }
 
@@ -249,6 +271,13 @@ actual fun appendToFile(path: String, content: String) {
         val data = nsString.dataUsingEncoding(NSUTF8StringEncoding) ?: return
         handle.writeData(data)
         handle.closeFile()
+    } catch (_: Exception) { }
+}
+
+actual fun writeTextFile(path: String, content: String) {
+    try {
+        NSString.create(string = content)
+            .writeToFile(path, atomically = true, encoding = NSUTF8StringEncoding, error = null)
     } catch (_: Exception) { }
 }
 

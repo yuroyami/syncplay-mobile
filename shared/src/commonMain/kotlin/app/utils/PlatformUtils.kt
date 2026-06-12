@@ -150,6 +150,12 @@ expect fun getLogDirectoryPath(): String?
 expect fun appendToFile(path: String, content: String)
 
 /**
+ * Writes [content] to [path], REPLACING any existing file. Use this for downloaded
+ * artifacts (e.g. subtitles) where appending to a previous copy would corrupt the file.
+ */
+expect fun writeTextFile(path: String, content: String)
+
+/**
  * Lists files in the given directory, returning their names.
  */
 expect fun listFiles(directoryPath: String): List<String>

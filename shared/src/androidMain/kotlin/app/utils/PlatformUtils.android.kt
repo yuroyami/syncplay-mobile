@@ -209,6 +209,12 @@ actual fun appendToFile(path: String, content: String) {
     } catch (_: Exception) { }
 }
 
+actual fun writeTextFile(path: String, content: String) {
+    try {
+        java.io.File(path).writeText(content)
+    } catch (_: Exception) { }
+}
+
 actual fun listFiles(directoryPath: String): List<String> {
     return try {
         java.io.File(directoryPath).listFiles()?.map { it.name } ?: emptyList()
