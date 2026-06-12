@@ -231,6 +231,12 @@ class MpvKitImpl(
 
     override suspend fun destroy() {
         if (!isInitialized) return
+        // Same destroy contract as the Android engines: flip the guard first so every
+        // `isInitialized`-gated method (including the background/foreground vid toggles)
+        // refuses to touch the bridge from here on, then cancel the supervisor so any
+        // coroutine launched on the player scopes stops retaining the room graph.
+        isInitialized = false
+        playerSupervisorJob.cancel()
         // Drop the lifecycle observers first, so a background/foreground notification firing during
         // teardown can't poke the bridge we're about to destroy.
         removeLifecycleObservers()

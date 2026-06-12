@@ -11,9 +11,9 @@ import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.readLineStrict
 import io.ktor.utils.io.writeStringUtf8
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -79,14 +79,19 @@ class KtorNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
 
                 viewmodel.viewModelScope.launch {
                     try {
+                        // readLineStrict suspends until a full line is available, so this
+                        // loop drains the socket at line granularity with no artificial
+                        // pacing. The old `awaitContent() + delay(100)` throttled inbound
+                        // processing to ~10 lines/second — a join burst (Hello, List,
+                        // State, playlist, ready states) queued up seconds of lag and
+                        // inflated every RTT measurement taken during the backlog.
                         while (true) {
-                            connection?.input?.awaitContent()
-                            input?.readLineStrict()?.let {
-                                handlePacket(it)
-                            }
-
-                            delay(100)
+                            val line = input?.readLineStrict() ?: break
+                            handlePacket(line)
                         }
+                        viewmodel.callback.onDisconnected()
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (_: Exception) {
                         viewmodel.callback.onDisconnected()
                     }

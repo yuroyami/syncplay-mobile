@@ -419,8 +419,11 @@
     <string name="uisetting_swipe_gestures_summary">Vertical swipe on left side for brightness, right side for volume.</string>
 
     <string name="setting_trusted_domains_title">Trusted Domains</string>
-    <string name="setting_trusted_domains_summary">Only auto-load URLs from these domains. Leave empty to allow all. Comma-separated (e.g. example.com, cdn.host.net).</string>
+    <string name="setting_trusted_domains_summary">Only auto-load URLs from these domains. Matches the exact host, its www. variant, *.wildcards, and optional path prefixes (e.g. example.com/videos). Comma-separated. When empty, no peer-pushed URL auto-loads.</string>
     <string name="room_untrusted_domain_warning">Blocked URL from untrusted domain: %1$s. Add it to Trusted Domains in settings to allow.</string>
+    <string name="room_shared_playlist_limit">Shared playlist limit reached (%1$d items / %2$d characters)</string>
+    <string name="room_ready_set_by">%1$s was set as ready by %2$s</string>
+    <string name="room_not_ready_set_by">%1$s was set as not ready by %2$s</string>
 
     <string name="setting_media_resolver_title">Resolve streaming URLs</string>
     <string name="setting_media_resolver_summary">Extract direct video URLs from supported sites (YouTube, SoundCloud, PeerTube on Android; YouTube on iOS) so you can paste a page link and have it play. Native extraction, no yt-dlp or Python.</string>

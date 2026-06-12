@@ -378,11 +378,7 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
         playerScopeMain.launch {
             while (isActive) {
                 if (isSeekable()) {
-                    val pos = currentPositionMs()
-                    playerManager.timeCurrentMillis.value = pos
-                    if (!viewmodel.isSoloMode) {
-                        //TODO is this necessary ? viewmodel.protocolManager.globalPositionMs = pos.toDouble()
-                    }
+                    playerManager.timeCurrentMillis.value = currentPositionMs()
                 }
                 delay(trackerJobInterval)
             }

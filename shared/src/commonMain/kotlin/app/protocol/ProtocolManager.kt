@@ -354,6 +354,13 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
          */
         const val SYNCPLAY_PROTOCOL_VERSION = "1.7.5"
 
+        /**
+         * The compatibility shim PC clients put in `Hello.version` (protocols.py:165:
+         * `hello["version"] = "1.2.255"  # Used so newer clients work on 1.2.X server`).
+         * Legacy 1.2.X servers only read `version`; modern servers prefer `realversion`.
+         */
+        const val SYNCPLAY_LEGACY_VERSION = "1.2.255"
+
         /** Playback drift threshold in seconds before a corrective seek is triggered. */
         const val SEEK_THRESHOLD = 1L
 

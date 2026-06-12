@@ -6,6 +6,7 @@ import app.player.Playback
 import app.preferences.Preferences
 import app.preferences.Preferences.UNPAUSE_ACTION
 import app.preferences.value
+import app.protocol.ProtocolManager.Companion.SYNCPLAY_LEGACY_VERSION
 import app.protocol.ProtocolManager.Companion.SYNCPLAY_PROTOCOL_VERSION
 import app.protocol.WireMessage
 import app.protocol.models.RoomFeatures
@@ -42,7 +43,9 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
                     username = session.currentUsername,
                     password = passwordHash,
                     room = Room(session.currentRoom),
-                    version = SYNCPLAY_PROTOCOL_VERSION,
+                    // PC wire shape: `version` carries the 1.2.X compatibility constant,
+                    // `realversion` the actual protocol version (protocols.py:165-166).
+                    version = SYNCPLAY_LEGACY_VERSION,
                     realversion = SYNCPLAY_PROTOCOL_VERSION,
                     features = clientFeatures
                 )

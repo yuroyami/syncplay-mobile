@@ -1,5 +1,6 @@
 package app.protocol.wire
 
+import app.protocol.models.LenientRoomFeaturesSerializer
 import app.protocol.models.RoomFeatures
 import kotlinx.serialization.Serializable
 
@@ -19,6 +20,7 @@ data class HelloData(
     val room: Room? = null,
     val version: String? = null,
     val realversion: String? = null,
+    @Serializable(with = LenientRoomFeaturesSerializer::class)
     val features: RoomFeatures = RoomFeatures(),
     val motd: String? = null
 )

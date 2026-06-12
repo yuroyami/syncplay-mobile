@@ -169,7 +169,13 @@ class ClientConnection(
         set.controllerAuth?.let { handleControllerAuth(w, it) }
         set.playlistChange?.let { server.setPlaylist(w, it.files ?: emptyList()) }
         set.playlistIndex?.let { server.setPlaylistIndex(w, it.index ?: 0) }
-        set.features?.let { features = it }
+        // PC updates the WATCHER (protocols.py: `self._watcher.setFeatures`) — that's what
+        // List responses read from. Updating only this connection's copy left the watcher's
+        // features stale for the rest of the session.
+        set.features?.let {
+            features = it
+            w.features = it
+        }
     }
 
     override suspend fun onListRequest(message: WireMessage.ListRequest) {

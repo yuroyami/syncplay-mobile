@@ -18,6 +18,7 @@ import app.protocol.event.RoomEventDispatcher
 import app.protocol.models.TlsState
 import app.protocol.network.NetworkManager
 import app.room.sharedplaylist.SharedPlaylistManager
+import app.utils.FileComparison
 import app.utils.availablePlatformPlayerEngines
 import app.utils.instantiateNetworkManager
 import app.utils.loggy
@@ -149,11 +150,16 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
                 if (user.name == session.currentUsername) continue //We ain't gonna compare with ourselves
                 val theirFile = user.file ?: continue //User has no file
 
-                // Map mismatch conditions to their respective warning messages
+                // Map mismatch conditions to their respective warning messages. These use the
+                // python-parity comparators (utils.py sameFilename/sameFileduration/sameFilesize):
+                // case-insensitive names, raw-vs-hashed cross-comparison for privacy-mode peers,
+                // the **Hidden filename** / size-0 sentinels matching anything, and a 2.5s
+                // duration tolerance. Raw equality here false-warned against every PC user with
+                // a privacy mode on, and on any sub-3s duration rounding difference.
                 val mismatches = listOf(
-                    (localMedia.fileName != theirFile.fileName) to Res.string.room_file_mismatch_warning_name,
-                    (localMedia.fileDuration != theirFile.fileDuration) to Res.string.room_file_mismatch_warning_duration,
-                    (localMedia.fileSize != theirFile.fileSize) to Res.string.room_file_mismatch_warning_size
+                    !FileComparison.sameFilename(localMedia.fileName, theirFile.fileName) to Res.string.room_file_mismatch_warning_name,
+                    !FileComparison.sameFileduration(localMedia.fileDuration ?: 0.0, theirFile.fileDuration ?: 0.0) to Res.string.room_file_mismatch_warning_duration,
+                    !FileComparison.sameFilesize(localMedia.fileSize, theirFile.fileSize) to Res.string.room_file_mismatch_warning_size
                 )
 
                 // If all three mismatch, skip showing a warning

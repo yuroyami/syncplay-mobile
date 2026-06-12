@@ -42,6 +42,14 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
     private var channel: Channel? = null
 
     /**
+     * The event loop group backing [channel]. Must be shut down with the channel:
+     * each group owns native NIO threads, and the old code created a fresh group per
+     * [connectSocket] without ever releasing it — every reconnect leaked threads for
+     * the lifetime of the process.
+     */
+    private var group: EventLoopGroup? = null
+
+    /**
      * The channel pipeline containing all handlers for processing data (in and out).
      * Used for inserting the SSL handler during TLS upgrade.
      */
@@ -63,13 +71,18 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
      */
     override suspend fun connectSocket() {
         val group: EventLoopGroup = NioEventLoopGroup()
+        this.group = group
         val b = Bootstrap()
         b.group(group) /* Assigning the event loop group to the bootstrap */
             .channel(NioSocketChannel::class.java) /* We want a NIO Socket Channel */
             .handler(object : ChannelInitializer<SocketChannel>() {
                 override fun initChannel(ch: SocketChannel) {
                     pipeline = ch.pipeline()
-                    pipeline.addLast("framer", DelimiterBasedFrameDecoder(8192, *Delimiters.lineDelimiter()))
+                    // 64 KiB, matching our own server's framer. The old 8192 was HALF of
+                    // Twisted's 16384 line cap: a fat List response (big room + a playlist
+                    // near the protocol's 10000-char limit) overflowed the decoder, killed
+                    // the channel, and the reconnect refetched the same List in a loop.
+                    pipeline.addLast("framer", DelimiterBasedFrameDecoder(65536, *Delimiters.lineDelimiter()))
                     pipeline.addLast(StringDecoder())
                     pipeline.addLast(StringEncoder())
                     pipeline.addLast(object : SimpleChannelInboundHandler<String>() {
@@ -138,6 +151,10 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
             channel = null
         } catch (e: Exception) {
             e.printStackTrace()
+        } finally {
+            // Release the NIO threads with the channel — see [group].
+            group?.shutdownGracefully()
+            group = null
         }
     }
 

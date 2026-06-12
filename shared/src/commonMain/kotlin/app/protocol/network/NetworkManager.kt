@@ -13,9 +13,11 @@ import app.protocol.models.TlsState
 import app.protocol.syncplayJson
 import app.room.RoomViewmodel
 import app.utils.loggy
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.isActive
@@ -152,22 +154,65 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     }
 
     /**
+     * Inbound lines, processed STRICTLY one at a time, in arrival order, by the single
+     * consumer below. The old implementation launched one coroutine per line on
+     * [Dispatchers.Default] — a multithreaded pool with no ordering guarantee — so two
+     * `State`s could be handled out of order or *concurrently*, interleaving their
+     * mutations of `protocol.globalPaused`/`globalPositionMs`/ignoringOnTheFly across
+     * threads. The python reference protocol is strictly serial (one Twisted reactor);
+     * our own server side already enforces the same with `limitedParallelism(1)`. A
+     * channel + single consumer goes one step further than a confined dispatcher: a
+     * handler that *suspends* mid-message (the Main-thread hops in onState) still
+     * finishes the whole message before the next line is even read.
+     */
+    private val inboundLines = Channel<String>(capacity = Channel.UNLIMITED)
+
+    init {
+        viewmodel.viewModelScope.launch(Dispatchers.Default) {
+            for (line in inboundLines) processPacket(line)
+        }
+    }
+
+    /**
+     * Enqueues a raw inbound line for ordered processing. Called from raw transport
+     * threads (Netty event loop / Ktor reader / SwiftNIO callback) — must not block.
+     */
+    fun handlePacket(jsonString: String) {
+        inboundLines.trySend(jsonString)
+    }
+
+    /**
      * Decodes a raw inbound line and dispatches the typed [WireMessage] to
      * [viewmodel.serverHandler]. Same Kotlinx Serialization plumbing as the server's
      * mirror-image pipeline.
      */
-    fun handlePacket(jsonString: String) {
-        viewmodel.viewModelScope.launch(Dispatchers.Default) {
-            if (BuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("**SERVER** $jsonString")
+    private suspend fun processPacket(jsonString: String) {
+        if (BuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("**SERVER** $jsonString")
 
-            try {
-                val message = syncplayJson.decodeFromString(WireMessageDeserializer, jsonString)
-                message.dispatch(viewmodel.serverHandler)
-            } catch (e: SerializationException) {
-                loggy("Problematic Json: $jsonString")
-                loggy("Serialization error: ${e.message}")
-                throw e
-            }
+        try {
+            val message = syncplayJson.decodeFromString(WireMessageDeserializer, jsonString)
+            message.dispatch(viewmodel.serverHandler)
+        } catch (e: SerializationException) {
+            // A single unparseable line must NOT tear down the session. The Syncplay
+            // python protocol is loosely typed and periodically sends shapes our strict
+            // models don't expect (a user's `features` as `[]`, a `size` number-vs-string,
+            // a future field of the wrong type, see issue #152). Rethrowing here used to
+            // propagate into this dispatch coroutine, drop the connection and spin the
+            // reconnect loop — re-fetching the same poisoned List and crashing again every
+            // few seconds. Log the offending line and skip it; every other message still
+            // flows. Mirrors the server side's ClientConnection.handlePacket, which already
+            // swallows-and-continues rather than crashing.
+            loggy("Skipping unparseable server message: $jsonString")
+            loggy("Reason: ${e.message}")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // A handler blowing up on one message must kill neither the consumer loop nor
+            // the process (this loop is the app's protocol heart — an uncaught exception
+            // here used to take the whole app down, e.g. a TLS upgrade failure surfacing
+            // through onReceivedTLS). Log loudly and move on to the next line.
+            loggy("Handler failed on message: $jsonString")
+            loggy(e.stackTraceToString())
         }
     }
 
@@ -202,7 +247,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
 
     /**
      * Appends CRLF, writes to socket with a 10s timeout. Retries up to 3 times before giving up.
-     * On final failure, packets flagged [queueable] get queued in [Session.outboundQueue] for
+     * On final failure, packets flagged [queueable] get queued via [Session.queueOutbound] for
      * replay on reconnect. Hello and State are NOT queueable (see [send]).
      */
     suspend fun transmitPacket(json: String, queueable: Boolean = true, retryCounter: Int = 0) {
@@ -218,7 +263,7 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
                 if (retryCounter >= 3) {
                     loggy("SOCKET INVALID")
                     if (queueable) {
-                        viewmodel.session.outboundQueue.add(json)
+                        viewmodel.session.queueOutbound(json)
                     }
                     onError()
                 } else {

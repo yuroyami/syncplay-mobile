@@ -1,5 +1,6 @@
 package app.protocol.wire
 
+import app.protocol.models.LenientRoomFeaturesSerializer
 import app.protocol.models.RoomFeatures
 import kotlinx.serialization.Serializable
 
@@ -18,5 +19,6 @@ data class ListUserData(
     val isReady: Boolean? = null,
     val file: FileData? = null,
     val controller: Boolean = false,
+    @Serializable(with = LenientRoomFeaturesSerializer::class)
     val features: RoomFeatures? = null
 )

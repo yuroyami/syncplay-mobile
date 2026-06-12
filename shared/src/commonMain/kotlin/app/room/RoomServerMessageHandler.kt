@@ -25,6 +25,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.getString
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_not_ready_set_by
+import syncplaymobile.shared.generated.resources.room_ready_set_by
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
@@ -105,14 +109,6 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             // position + messageAge. All threshold comparisons must use this aged value.
             val agedPosition = if (paused) position else position + messageAge
 
-            // 🟥🟥🟥 VLCKIT-DIAG (temporary): a real playhead can't exceed 24h. If the inbound
-            // server position is implausible, the garbage arrived over the wire — not generated
-            // locally. If this stays silent but the outbound VlcKitImpl probe fires, we're the
-            // source and the server is just echoing us back.
-            if (agedPosition > 86_400.0) {
-                loggy("🟥🟥🟥 VLCKIT-DIAG1 inbound: server position=$position s, messageAge=$messageAge s, agedPosition=$agedPosition s, doSeek=$doSeek, setBy=$setBy")
-            }
-
             // ONLY a genuine room-state transition: the last room pause-state we recorded
             // differs from what the server just sent. Do NOT also test
             // `paused == viewmodel.player.isPlaying()` here — that fires on a *local
@@ -142,11 +138,6 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                     // first-sync back at the server.
                     protocol.noteExpectedPlaybackState(paused = paused)
                     val firstSeekMs = (agedPosition * 1000.0).toLong()
-                    // 🟥🟥🟥 VLCKIT-DIAG (temporary): unconditional — this once-per-session forced
-                    // seek is the prime suspect for the first-file bug. If firstSeekMs is sane here
-                    // but currentPositionMs() logs garbage moments later, VLCKit corrupts a clean
-                    // seek. If firstSeekMs is already huge, the bad value came from the server above.
-                    loggy("🟥🟥🟥 VLCKIT-DIAG first-sync: forcing seekTo=$firstSeekMs ms (agedPosition=$agedPosition s), paused=$paused")
                     withContext(Dispatchers.Main) {
                         viewmodel.player.seekTo(firstSeekMs)
                         if (paused) viewmodel.player.pause() else viewmodel.player.play()
@@ -311,14 +302,16 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
 
     override suspend fun onSet(message: WireMessage.Set) {
         val set = message.data
-        when {
-            set.user != null -> handleUserSet(set.user)
-            set.ready != null -> handleReadySet(set.ready)
-            set.playlistIndex != null -> handlePlaylistIndex(set.playlistIndex)
-            set.playlistChange != null -> handlePlaylistChange(set.playlistChange)
-            set.newControlledRoom != null -> handleNewControlledRoom(set.newControlledRoom)
-            set.controllerAuth != null -> handleControllerAuth(set.controllerAuth)
-        }
+        // Process EVERY key present, not just the first — python's handleSet iterates the
+        // whole Set dict, and a server may legally bundle several commands in one message.
+        // playlistChange is applied before playlistIndex so a bundled index can resolve
+        // against the new entries.
+        set.user?.let { handleUserSet(it) }
+        set.ready?.let { handleReadySet(it) }
+        set.playlistChange?.let { handlePlaylistChange(it) }
+        set.playlistIndex?.let { handlePlaylistIndex(it) }
+        set.newControlledRoom?.let { handleNewControlledRoom(it) }
+        set.controllerAuth?.let { handleControllerAuth(it) }
         // No List request after every Set. The python client mutates its userlist in
         // place from the very Set it just received (see `_SetUser` / `setReady` in
         // protocols.py); [handleUserSet] and [handleReadySet] do the same. The public
@@ -394,7 +387,14 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
     }
 
     override suspend fun onError(message: WireMessage.Error) {
-        message.data.message?.let { loggy("Server error: $it") }
+        val errorText = message.data.message ?: return
+        loggy("Server error: $errorText")
+        // Surface it — PC shows server errors via ui.showErrorMessage. Log-only made a
+        // server kick ("Wrong password supplied") invisible: the user just saw an eternal
+        // "attempting reconnection" with no reason. The raw server text is shown verbatim,
+        // same as PC (these messages originate in English on the server).
+        dispatcher.broadcastMessage(message = { errorText }, isChat = false, isError = true)
+        viewmodel.dispatchOSD(OSDCategory.WARNING) { errorText }
     }
 
     // -----------------------------------------------------------
@@ -413,11 +413,24 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
      *  - file present, no event              → update file in place (`modUser`)
      */
     private suspend fun handleUserSet(userMap: Map<String, UserSetData>) {
-        val (userName, userData) = userMap.entries.firstOrNull() ?: return
+        // Python iterates every user in the Set dict — the official server usually sends
+        // one, but nothing in the protocol forbids several.
+        for ((userName, userData) in userMap) handleSingleUserSet(userName, userData)
+    }
 
+    private suspend fun handleSingleUserSet(userName: String, userData: UserSetData) {
         val current = session.userList.value
         val updated = current.toMutableList()
         var changed = false
+
+        // The broadcast carries the user's room. Our user list models ONLY the current
+        // room (unlike PC's all-rooms pane), so the room field decides membership:
+        //  - join/switch INTO our room  → appears in the list
+        //  - switch OUT of our room    → removed (previously they ghosted in the list
+        //    until the next 15s List probe — python's modUser moves them immediately)
+        // A missing room (defensive: python always sends one) is treated as ours.
+        val eventRoom = userData.room?.name
+        val inOurRoom = eventRoom == null || eventRoom == session.currentRoom
 
         userData.event?.let { event ->
             when {
@@ -426,10 +439,10 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                     if (idx >= 0) {
                         updated.removeAt(idx)
                         changed = true
+                        callback.onSomeoneLeft(userName)
                     }
-                    callback.onSomeoneLeft(userName)
                 }
-                event.joined != null -> {
+                event.joined != null && inOurRoom -> {
                     if (updated.none { it.name == userName }) {
                         val nextIndex = (updated.maxOfOrNull { it.index } ?: 0) + 1
                         updated.add(
@@ -445,6 +458,32 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                     }
                     callback.onSomeoneJoined(userName)
                 }
+                // joined another room: not in our view, nothing to render.
+            }
+        }
+
+        // No event but a room is present: a room SWITCH (server's sendRoomSwitchMessage
+        // broadcasts a bare `Set.user` with the new room).
+        if (userData.event == null && eventRoom != null && userName != session.currentUsername) {
+            val idx = updated.indexOfFirst { it.name == userName }
+            if (!inOurRoom && idx >= 0) {
+                // Moved away from our room — drop them from the list immediately.
+                updated.removeAt(idx)
+                changed = true
+            } else if (inOurRoom && idx < 0) {
+                // Moved into our room.
+                val nextIndex = (updated.maxOfOrNull { it.index } ?: 0) + 1
+                updated.add(
+                    User(
+                        name = userName,
+                        index = nextIndex,
+                        readiness = false,
+                        file = null,
+                        isController = false,
+                    )
+                )
+                changed = true
+                callback.onSomeoneJoined(userName)
             }
         }
 
@@ -460,7 +499,8 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 updated[idx] = updated[idx].copy(file = mediaFile)
                 changed = true
             }
-            callback.onSomeoneLoadedFile(userName, file.name ?: "", file.duration ?: 0.0)
+            // Announce file loads only for users we can see (our room).
+            if (idx >= 0) callback.onSomeoneLoadedFile(userName, file.name ?: "", file.duration ?: 0.0)
         }
 
         if (changed) session.userList.emit(updated)
@@ -483,6 +523,23 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
         val updated = current.toMutableList()
         updated[idx] = updated[idx].copy(readiness = isReady)
         session.userList.emit(updated)
+
+        // A controller set someone ELSE's readiness (setOthersReadiness feature) — announce
+        // it like PC does, otherwise the change is invisible beyond the icon flip.
+        val setBy = ready.setBy
+        if (setBy != null && setBy != userName) {
+            val resource = if (isReady) Res.string.room_ready_set_by else Res.string.room_not_ready_set_by
+            dispatcher.broadcastMessage(
+                message = { getString(resource, userName, setBy) },
+                isChat = false
+            )
+        }
+
+        // Keep our own ready flag in sync when WE are the one being set (otherwise the
+        // ready button and instaplay gating disagree with what the room sees).
+        if (userName == session.currentUsername) {
+            session.ready.value = isReady
+        }
     }
 
     private fun handlePlaylistIndex(playlistIndex: PlaylistIndexData) {

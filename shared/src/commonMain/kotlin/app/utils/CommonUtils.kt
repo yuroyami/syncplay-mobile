@@ -38,6 +38,20 @@ fun generateClockstamp(): String {
 private fun Int.fixDigits() = this.toString().padStart(2, '0')
 
 /**
+ * Shared-playlist size limits, from the reference python server's `constants.py`
+ * (`PLAYLIST_MAX_ITEMS` / `PLAYLIST_MAX_CHARACTERS`, enforced via `playlistIsValid`).
+ * The official server silently refuses any `playlistChange` exceeding these and sends
+ * the old playlist back — so the client must not let the user build one, and our own
+ * built-in server must enforce the same rule on inbound changes.
+ */
+const val PLAYLIST_MAX_ITEMS = 250
+const val PLAYLIST_MAX_CHARACTERS = 10000
+
+/** Python's `utils.playlistIsValid`. */
+fun playlistIsValid(files: List<String>): Boolean =
+    files.size <= PLAYLIST_MAX_ITEMS && files.sumOf { it.length } <= PLAYLIST_MAX_CHARACTERS
+
+/**
  * List of supported video file extensions.
  * We pass this to the file selection (FileKit)
  */

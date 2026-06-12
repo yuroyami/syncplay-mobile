@@ -4,7 +4,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import app.utils.getFileName
 import app.utils.getFileSize
-import app.utils.sha256
 import com.eygraber.uri.Uri
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.name
@@ -37,8 +36,6 @@ data class MediaFile(
     val chapters: SnapshotStateList<Chapter> = mutableStateListOf(),
 ) {
     companion object {
-        fun String.hashed() = sha256(this).toHexString(HexFormat.Default)
-
         suspend fun PlatformFile.mediaFromFile(): MediaFile {
             val loc = MediaFileLocation.Local(this)
            return withContext(Dispatchers.IO) {

@@ -6,7 +6,10 @@ import app.preferences.Preferences
 import app.preferences.value
 import app.protocol.WireMessage
 import app.room.RoomViewmodel
+import app.utils.PLAYLIST_MAX_CHARACTERS
+import app.utils.PLAYLIST_MAX_ITEMS
 import app.utils.appName
+import app.utils.playlistIsValid
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.name
 import io.github.vinceglb.filekit.readString
@@ -16,6 +19,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_shared_playlist_limit
 import syncplaymobile.shared.generated.resources.room_shared_playlist_no_directories
 import syncplaymobile.shared.generated.resources.room_shared_playlist_not_found
 import syncplaymobile.shared.generated.resources.room_untrusted_domain_warning
@@ -83,6 +87,22 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
         }
     }
 
+    /**
+     * Rejects playlists exceeding the protocol's caps (python's `playlistIsValid`,
+     * 250 items / 10000 characters) BEFORE broadcasting. The official server refuses
+     * an oversized `playlistChange` and re-sends the old playlist — without this gate
+     * the user's additions just silently vanish a round-trip later.
+     * @return true when the list is over the limits (caller must abort the broadcast).
+     */
+    private fun rejectsOversizedPlaylist(files: List<String>): Boolean {
+        if (playlistIsValid(files)) return false
+        val warning: suspend () -> String =
+            { getString(Res.string.room_shared_playlist_limit, PLAYLIST_MAX_ITEMS, PLAYLIST_MAX_CHARACTERS) }
+        viewmodel.dispatchOSD(getter = warning)
+        viewmodel.dispatcher.broadcastMessage(message = warning, isChat = false, isError = true)
+        return true
+    }
+
     /** Adds URLs from the url adding popup, de-duplicating against the existing list and within
      *  the incoming batch itself. */
     fun addURLs(urls: List<String>) {
@@ -97,6 +117,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             }
         }
         if (merged.size == session.sharedPlaylist.size) return
+        if (rejectsOversizedPlaylist(merged)) return
         viewmodel.networkManager.sendAsync(WireMessage.playlistChange(merged))
     }
 
@@ -126,6 +147,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             toAdd.add(file)
         }
         if (toAdd.isEmpty()) return
+        if (rejectsOversizedPlaylist(session.sharedPlaylist + toAdd.map { it.name })) return
 
         MediaAccessRegistry.rememberFiles(toAdd)
         for (file in toAdd) session.sharedPlaylist.add(file.name)
@@ -168,6 +190,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
 
         val merged = session.sharedPlaylist.toMutableList()
         for (n in names) if (!merged.contains(n)) merged.add(n)
+        if (rejectsOversizedPlaylist(merged)) return
 
         // Broadcast the new list *before* the index (same reasoning as addFiles): peers must
         // have the entries before their index update can resolve and auto-load one.
@@ -285,6 +308,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
             val lines = content.split("\n").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
             if (lines.isEmpty()) return@launch
             if (alsoShuffle) lines.shuffle()
+            if (rejectsOversizedPlaylist(lines)) return@launch
             // The local user is importing this playlist, so any URLs in it are trusted by consent.
             lines.filter { isRemoteUrl(it) }.forEach { locallyAddedUrls.add(it) }
             viewmodel.networkManager.sendAsync(WireMessage.playlistChange(lines))
@@ -311,25 +335,63 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     /**
      * Checks whether a remote URL is allowed to auto-load.
      *
-     * Mirrors PC's `isURITrusted` with `onlySwitchToTrustedDomains` left at its safe default (on):
-     * a peer-pushed http(s) URL is only trusted if it matches a configured trusted domain. Crucially,
-     * when *no* trusted domains are configured we do NOT blanket-allow every URL — that would let any
-     * peer silently auto-switch the room onto an arbitrary URL. URLs the local user added themselves
-     * are exempt (see [locallyAddedUrls]), since adding one is explicit consent.
+     * Mirrors PC's `_isURITrustableAndTrusted` (client.py:565) with `onlySwitchToTrustedDomains`
+     * at its safe default (on): a peer-pushed http(s) URL is only trusted if it matches a
+     * configured trusted-domain entry. Crucially, when *no* trusted domains are configured we
+     * do NOT blanket-allow every URL — that would let any peer silently auto-switch the room
+     * onto an arbitrary URL. URLs the local user added themselves are exempt (see
+     * [locallyAddedUrls]), since adding one is explicit consent.
      */
     private fun isUrlTrusted(url: String): Boolean {
         // The local user added this URL — explicit consent, always allowed.
         if (locallyAddedUrls.contains(url)) return true
 
         val trustedRaw = Preferences.TRUSTED_DOMAINS.value().trim()
-        val trustedDomains = trustedRaw.split("\n", ",").map { it.trim().lowercase() }.filter { it.isNotEmpty() }
+        val trustedEntries = trustedRaw.split("\n", ",").map { it.trim().lowercase() }.filter { it.isNotEmpty() }
         // Nothing configured: do not auto-trust arbitrary peer-pushed URLs (PC safe default).
-        if (trustedDomains.isEmpty()) return false
+        if (trustedEntries.isEmpty()) return false
 
         val urlDomain = extractDomain(url)
+        val urlPath = extractPath(url)
 
-        return trustedDomains.any { trusted ->
-            urlDomain == trusted || urlDomain.endsWith(".$trusted")
+        return trustedEntries.any { entry -> trustedEntryMatches(entry, urlDomain, urlPath) }
+    }
+
+    /** Extracts the path component, e.g. "https://h.com/videos/x.mp4" → "/videos/x.mp4". */
+    private fun extractPath(url: String): String {
+        val afterScheme = url.substringAfter("://")
+        val slash = afterScheme.indexOf('/')
+        return if (slash >= 0) afterScheme.substring(slash) else ""
+    }
+
+    companion object {
+        /**
+         * One trusted-domain entry against one URL, with PC's exact matching rules
+         * (client.py:565-602):
+         *  - entry `host/path` splits on the first `/`; the path is a required URL-path prefix
+         *  - the host matches itself and its `www.` variant — NOT arbitrary subdomains
+         *    (the old `endsWith(".$trusted")` trusted every subdomain, which is more
+         *    permissive than the user asked for)
+         *  - explicit wildcards are supported: each `*` matches exactly one label,
+         *    e.g. `*.example.com` trusts `cdn.example.com` but not `a.b.example.com`
+         */
+        internal fun trustedEntryMatches(entry: String, urlDomain: String, urlPath: String): Boolean {
+            val trustedDomain = entry.substringBefore('/')
+            val trustedPath = entry.substringAfter('/', missingDelimiterValue = "")
+
+            val hostMatches = when {
+                urlDomain == trustedDomain || urlDomain == "www.$trustedDomain" -> true
+                '*' in trustedDomain -> {
+                    val pattern = trustedDomain
+                        .split('*')
+                        .joinToString("([^.]+)") { Regex.escape(it) }
+                    Regex("^$pattern$", RegexOption.IGNORE_CASE).matches(urlDomain)
+                }
+                else -> false
+            }
+            if (!hostMatches) return false
+            if (trustedPath.isNotEmpty() && !urlPath.startsWith("/$trustedPath")) return false
+            return true
         }
     }
 }

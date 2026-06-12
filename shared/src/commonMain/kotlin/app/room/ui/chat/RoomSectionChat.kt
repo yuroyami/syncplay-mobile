@@ -129,7 +129,12 @@ fun ChatTextField(
     }
 
     fun send() {
-        val msgToSend = msg.replace("\\", "").take(149)
+        // Cap at the limit the server declared in its Hello (officially 150; third-party
+        // servers may differ) instead of a hardcoded 149 — and never strip characters:
+        // the old `replace("\\", "")` silently mangled any message containing a backslash
+        // (paths, emoticons). kotlinx-serialization escapes JSON correctly on its own.
+        val maxLen = viewmodel.session.roomFeatures.maxChatMessageLength.coerceAtLeast(1)
+        val msgToSend = msg.take(maxLen)
         if (msgToSend.isNotBlank()) {
             viewmodel.dispatcher.sendMessage(msgToSend)
         }

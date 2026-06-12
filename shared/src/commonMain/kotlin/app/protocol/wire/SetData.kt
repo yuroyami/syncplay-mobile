@@ -1,5 +1,6 @@
 package app.protocol.wire
 
+import app.protocol.models.LenientRoomFeaturesSerializer
 import app.protocol.models.RoomFeatures
 import kotlinx.serialization.Serializable
 
@@ -27,5 +28,6 @@ data class SetData(
     val ready: ReadyData? = null,
     val playlistIndex: PlaylistIndexData? = null,
     val playlistChange: PlaylistChangeData? = null,
+    @Serializable(with = LenientRoomFeaturesSerializer::class)
     val features: RoomFeatures? = null
 )

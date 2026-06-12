@@ -12,6 +12,7 @@ import app.server.model.ServerConfig.Companion.SERVER_STATE_INTERVAL_MS
 import app.server.model.ServerWatcher
 import app.utils.generateTimestampMillis
 import app.utils.loggy
+import app.utils.playlistIsValid
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -201,9 +202,12 @@ class SyncplayServer(
     // --- Broadcasting messages ---
 
     private fun sendJoinMessage(watcher: ServerWatcher) {
+        // PC sends version AND features with the joined event (server.py:167) so peers
+        // know the joiner's capabilities without waiting for a List round-trip.
         val event = UserEvent(
             joined = JsonPrimitive(true),
-            version = watcher.version
+            version = watcher.version,
+            features = watcher.features
         )
         roomManager.broadcast(watcher) { w ->
             if (w != watcher) {
@@ -275,7 +279,11 @@ class SyncplayServer(
 
     fun setPlaylist(watcher: ServerWatcher, files: List<String>) {
         val room = watcher.room ?: return
-        if (room.canControl(watcher)) {
+        // PC gates on `room.canControl(watcher) and playlistIsValid(files)` (server.py:236):
+        // an oversized playlist is refused and the sender gets the room's current playlist
+        // back, exactly like a non-controller. Accepting it unbounded lets one client make
+        // the server relay megabyte broadcasts to every watcher.
+        if (room.canControl(watcher) && playlistIsValid(files)) {
             room.setPlaylist(files, watcher)
             roomManager.broadcastRoom(watcher) { w ->
                 _connections[w]?.sendPlaylist(watcher.name, files)
@@ -341,6 +349,10 @@ class SyncplayServer(
         supportsManagedRooms = true,
         persistentRooms = false,
         supportsChat = !config.disableChat,
+        // PC advertises this unconditionally (server.py:100). Our setReady() already
+        // implements controller-set-others; without the flag, PC clients (which gate the
+        // feature on it via @requireServerFeature) would never use it.
+        setOthersReadiness = true,
         maxChatMessageLength = config.maxChatMessageLength,
         maxUsernameLength = config.maxUsernameLength,
         maxRoomNameLength = MAX_ROOM_NAME_LENGTH,

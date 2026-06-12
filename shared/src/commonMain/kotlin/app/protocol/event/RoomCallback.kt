@@ -253,10 +253,6 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         loggy("SYNCPLAY Protocol: Playlist updated by $user")
         if (user.isNotEmpty()) hapticIf(HAPTIC_ON_PLAYLIST)
 
-        if (viewmodel.session.sharedPlaylist.isNotEmpty() && viewmodel.session.spIndex.intValue == -1) {
-            //changePlaylistSelection(0)
-        }
-
         if (user == "") return
         val osdMessage: suspend () -> String = { getString(Res.string.room_shared_playlist_updated, user) }
         dispatcher.broadcastMessage(message = osdMessage, isChat = false)
@@ -299,10 +295,9 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
         viewmodel.media?.let { network.sendAsync(WireMessage.file(it.toFileData())) }
 
-        // Drain the queue with a snapshot — otherwise transmitPacket re-adding failed
-        // packets during the loop, followed by clear(), would silently lose them.
-        val drained = session.outboundQueue.toList()
-        session.outboundQueue.clear()
+        // Atomic snapshot-and-clear under the queue's lock — a failed transmit during the
+        // replay loop below re-queues safely without racing the drain.
+        val drained = session.drainOutbound()
         for (m in drained) network.transmitPacket(m, queueable = true)
 
         // Mirror python's reIdentifyAsController — after every (re)connect, if we're
@@ -370,7 +365,21 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         if (supported) {
             dispatcher.broadcastMessage(message = { getString(Res.string.room_tls_supported) }, isChat = false)
             network.tls = TlsState.TLS_YES
-            network.upgradeTls()
+            try {
+                network.upgradeTls()
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // A failed handshake (bad/expired cert, MITM, transport dropped mid-upgrade)
+                // must surface as a connection failure — NOT propagate. This used to escape
+                // into the packet-dispatch coroutine, whose catch only covered
+                // SerializationException, and crash the whole process. Treat the socket as
+                // dead and let the normal retry loop take over (it re-arms TLS_ASK itself).
+                loggy("TLS upgrade failed: ${e.stackTraceToString()}")
+                network.terminateExistingConnection()
+                onConnectionFailed()
+                return
+            }
         } else {
             dispatcher.broadcastMessage(message = { getString(Res.string.room_tls_not_supported) }, isChat = false, isError = true)
             network.tls = TlsState.TLS_NO

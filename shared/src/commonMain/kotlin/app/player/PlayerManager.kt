@@ -44,10 +44,14 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
 
     @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
     override fun invalidate() {
-        // GlobalScope required — viewModelScope is already cancelled at this point
+        // GlobalScope required — viewModelScope is already cancelled at this point.
+        // destroy() must be exception-contained: GlobalScope has no parent to swallow a
+        // failure, so an engine throwing mid-teardown would be an uncaught crash on the
+        // way OUT of a room.
         platformCallback.mediaSessionFinalize()
         GlobalScope.launch {
-            player.destroy()
+            runCatching { player.destroy() }
+                .onFailure { app.utils.loggy("Player destroy failed: ${it.stackTraceToString()}") }
         }
         media.value = null
         isNowPlaying.value = false

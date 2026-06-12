@@ -166,6 +166,13 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
      */
     override suspend fun destroy() {
         if (!isInitialized) return
+        // Same destroy contract as the Android engines (ExoImpl/MpvImpl/VlcImpl): flip the
+        // guard first so per-method `isInitialized` checks bail, then cancel the supervisor
+        // so the 250ms position tracker stops. Without the cancel, the tracker job outlives
+        // the room, keeps polling a torn-down player, and retains the whole RoomViewmodel
+        // graph after every room exit.
+        isInitialized = false
+        playerSupervisorJob.cancel()
 
         try {
             removeAudioSessionObservers()

@@ -224,6 +224,11 @@ object AVPlayerEngine: PlayerEngine {
          */
         override suspend fun destroy() {
             if (!isInitialized) return
+            // Same destroy contract as the Android engines: guard down first, then cancel
+            // the supervisor so the 250ms position tracker stops polling the (about to be
+            // nulled) player and stops retaining the RoomViewmodel graph after room exit.
+            isInitialized = false
+            playerSupervisorJob.cancel()
 
             avPlayer?.let { NSNotificationCenter.defaultCenter.removeObserver(it) }
 
@@ -232,7 +237,6 @@ object AVPlayerEngine: PlayerEngine {
             avPlayer?.finalize()
             avPlayer = null
             avContainer = null
-            isInitialized = false
         }
 
         /**

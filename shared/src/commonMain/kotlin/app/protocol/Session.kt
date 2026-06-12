@@ -9,6 +9,8 @@ import app.protocol.models.RoomFeatures
 import app.protocol.models.User
 import app.room.models.Message
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class Session(val protocol: ProtocolManager) {
     var serverHost: String = "151.80.32.178"
@@ -28,8 +30,25 @@ class Session(val protocol: ProtocolManager) {
     val userList = MutableStateFlow(listOf<User>())
     val messageSequence = MutableStateFlow<List<Message>>(emptyList())
 
-    /** Outgoing packets queued while disconnected, flushed on reconnection. */
-    val outboundQueue = mutableListOf<String>()
+    /**
+     * Outgoing packets queued while disconnected, flushed on reconnection.
+     * Guarded by [outboundQueueLock]: the failure path of `transmitPacket` appends from
+     * arbitrary IO threads while `onConnected` drains — a plain list raced (an `add`
+     * landing between the drain's snapshot and `clear()` was silently lost).
+     */
+    private val outboundQueue = mutableListOf<String>()
+    private val outboundQueueLock = Mutex()
+
+    suspend fun queueOutbound(json: String) {
+        outboundQueueLock.withLock { outboundQueue.add(json) }
+    }
+
+    /** Atomically snapshots and empties the queue. */
+    suspend fun drainOutbound(): List<String> = outboundQueueLock.withLock {
+        val snapshot = outboundQueue.toList()
+        outboundQueue.clear()
+        snapshot
+    }
 
     val sharedPlaylist = mutableStateListOf<String>()
 

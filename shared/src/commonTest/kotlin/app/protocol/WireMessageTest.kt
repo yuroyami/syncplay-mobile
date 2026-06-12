@@ -12,9 +12,11 @@ import app.protocol.wire.StateData
 import app.protocol.wire.UserEvent
 import app.protocol.wire.UserSetData
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
@@ -90,6 +92,21 @@ class WireMessageTest {
         assertContainsKey(json, "Set")
         assertContainsKey(json, "file")
         assertContainsKey(json, "movie.mkv")
+    }
+
+    @Test
+    fun `FileData size encodes digits as a JSON number and a hash as a string`() {
+        // Python wire shape: raw byte counts (and the hidden-size sentinel 0) are numbers,
+        // only the 12-char privacy hash is a string.
+        val numeric = syncplayJson.encodeToString(
+            WireMessage.file(FileData(name = "movie.mkv", duration = 7200.0, size = "1024"))
+        )
+        assertTrue("\"size\":1024" in numeric, "raw size should encode as a number: $numeric")
+
+        val hashed = syncplayJson.encodeToString(
+            WireMessage.file(FileData(name = "abc123", duration = 7200.0, size = "deadbeef0000"))
+        )
+        assertTrue("\"size\":\"deadbeef0000\"" in hashed, "hashed size should stay a string: $hashed")
     }
 
     @Test
@@ -419,6 +436,117 @@ class WireMessageTest {
             """{"Chat":{"username":"alice","message":"hi"}}""",
             syncplayJson.encodeToString(WireMessage.chatBroadcast("alice", "hi"))
         )
+    }
+
+    // ============================================================
+    // Lenient inbound shapes — loosely-typed python protocol drift
+    // ============================================================
+    //
+    // The wire protocol is duck-typed on the python side and periodically hands us a
+    // value in a shape our strict @Serializable models don't expect. Historically each
+    // such shape aborted the WHOLE message decode (one bad sub-field blanks the entire
+    // user list and spins the reconnect loop). These pin the two that bit in production
+    // (issue #152) and assert the decode survives. They run on the plain JVM test target
+    // with no R8 / minification — proving the failures are source-level wire-shape
+    // mismatches, not a release-build obfuscation problem.
+
+    /**
+     * Issue #152 (madeline-celeste, v0.22.2): a self-hosted server sent a user's `features`
+     * as an empty array `[]` instead of an object. The strict RoomFeatures serializer threw
+     * "Expected object, but had array … JSON input: []", aborting the List decode and
+     * blanking the user-info tab. The whole line (incl. a bare-number `size`) must now decode.
+     */
+    @Test
+    fun `List user with features as empty array decodes to defaults`() {
+        val json = """{"List":{"myroom":{"alice":{"position":0,"file":{"name":"x.mkv","duration":1420.024064,"size":401358678},"controller":false,"isReady":false,"features":[]}}}}"""
+        val decoded = syncplayJson.decodeFromString(WireMessageDeserializer, json)
+        assertTrue(decoded is WireMessage.ListResponse, "Got ${decoded::class.simpleName}")
+        val user = decoded.rooms["myroom"]?.get("alice")
+        assertNotNull(user, "alice should be present despite features:[]")
+        assertNotNull(user.features, "features:[] should fall back to defaults, not null")
+        assertEquals(true, user.features.supportsChat)
+        // bare-number `size` normalizes to its string form (FileSizeSerializer)
+        assertEquals("401358678", user.file?.size)
+    }
+
+    @Test
+    fun `List user with features as object preserves flags`() {
+        val json = """{"List":{"r":{"bob":{"position":0,"features":{"chat":false,"readiness":true,"maxChatMessageLength":200}}}}}"""
+        val decoded = syncplayJson.decodeFromString(WireMessageDeserializer, json) as WireMessage.ListResponse
+        val f = decoded.rooms["r"]?.get("bob")?.features
+        assertNotNull(f)
+        assertEquals(false, f.supportsChat)
+        assertEquals(true, f.supportsReadiness)
+        assertEquals(200, f.maxChatMessageLength)
+    }
+
+    @Test
+    fun `joined event carries version and features like PC`() {
+        // PC server.py:167 sends {"joined": True, "version": ..., "features": {...}};
+        // features must also survive the [] shape from minimal servers.
+        val json = """{"Set":{"user":{"erin":{"room":{"name":"r"},"event":{"joined":true,"version":"1.7.0","features":{"chat":false}}}}}}"""
+        val decoded = syncplayJson.decodeFromString(WireMessageDeserializer, json) as WireMessage.Set
+        val event = decoded.data.user?.get("erin")?.event
+        assertNotNull(event)
+        assertEquals("1.7.0", event.version)
+        assertEquals(false, event.features?.supportsChat)
+
+        val arrayShape = """{"Set":{"user":{"frank":{"event":{"joined":true,"features":[]}}}}}"""
+        val tolerant = syncplayJson.decodeFromString(WireMessageDeserializer, arrayShape) as WireMessage.Set
+        assertNotNull(tolerant.data.user?.get("frank")?.event?.features)
+    }
+
+    @Test
+    fun `List user with unknown future feature keys is tolerated`() {
+        // PC clients send uiMode / setOthersReadiness that our model doesn't declare.
+        val json = """{"List":{"r":{"carol":{"position":0,"features":{"chat":true,"uiMode":"GUI","setOthersReadiness":true}}}}}"""
+        val decoded = syncplayJson.decodeFromString(WireMessageDeserializer, json) as WireMessage.ListResponse
+        assertNotNull(decoded.rooms["r"]?.get("carol")?.features)
+    }
+
+    @Test
+    fun `Set user broadcast with features as empty array decodes`() {
+        val json = """{"Set":{"user":{"dave":{"file":{"name":"y.mkv","duration":10.0,"size":"hashed"},"features":[]}}}}"""
+        val decoded = syncplayJson.decodeFromString(WireMessageDeserializer, json) as WireMessage.Set
+        val u = decoded.data.user?.get("dave")
+        assertNotNull(u)
+        assertEquals("hashed", u.file?.size)
+    }
+
+    @Test
+    fun `Hello with features as empty array decodes to defaults`() {
+        val json = """{"Hello":{"username":"x","room":{"name":"r"},"version":"1.7.3","realversion":"1.7.3","features":[]}}"""
+        val decoded = syncplayJson.decodeFromString(WireMessageDeserializer, json) as WireMessage.Hello
+        assertEquals(true, decoded.data.features.supportsChat)
+    }
+
+    @Test
+    fun `FileData size decodes from both a number and a string`() {
+        val asNumber = """{"Set":{"file":{"name":"a.mkv","duration":1.0,"size":401358678}}}"""
+        val asString = """{"Set":{"file":{"name":"a.mkv","duration":1.0,"size":"401358678"}}}"""
+        val n = syncplayJson.decodeFromString(WireMessageDeserializer, asNumber) as WireMessage.Set
+        val s = syncplayJson.decodeFromString(WireMessageDeserializer, asString) as WireMessage.Set
+        assertEquals("401358678", n.data.file?.size)
+        assertEquals("401358678", s.data.file?.size)
+    }
+
+    /**
+     * The python server relays a roommate's file dict verbatim, so the `size` value's JSON
+     * type is fully attacker/bug-controlled. A non-primitive size must surface as
+     * [SerializationException] — the only type [app.protocol.network.NetworkManager]'s
+     * skip-a-poisoned-line catch covers. FileSizeSerializer used `error()`
+     * (IllegalStateException), which escaped that catch and killed the process.
+     */
+    @Test
+    fun `FileData size as object or array fails as SerializationException`() {
+        val asObject = """{"Set":{"user":{"eve":{"file":{"name":"z.mkv","duration":1.0,"size":{"k":1}}}}}}"""
+        val asArray = """{"Set":{"user":{"eve":{"file":{"name":"z.mkv","duration":1.0,"size":[1,2]}}}}}"""
+        assertFailsWith<SerializationException> {
+            syncplayJson.decodeFromString(WireMessageDeserializer, asObject)
+        }
+        assertFailsWith<SerializationException> {
+            syncplayJson.decodeFromString(WireMessageDeserializer, asArray)
+        }
     }
 
     // ============================================================
