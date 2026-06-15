@@ -43,6 +43,7 @@ libswresample.so
 lbswscale.so
 Pods/
 *.mychanges
+*.kmpssot.bak
 
 buildscripts/deps
 buildscripts/deps/*

@@ -21,8 +21,29 @@
       "tintColor": "#f72800",
       "patreonURL": "https://patreon.com/SidenaAkram?utm_medium=unknown&utm_source=join_link&utm_campaign=creatorshare_creator&utm_content=copyLink",
       "category": "entertainment",
-      "screenshots": [],
+      "screenshots": [
+        "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS1.png",
+        "https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/SS2.png"
+      ],
       "versions": [
+        {
+          "downloadURL": "https://github.com/yuroyami/syncplay-mobile/releases/download/v0.23.0/synkplay-0.23.0-ios.ipa",
+          "size": 89785854,
+          "version": "0.23.0",
+          "buildVersion": "1000023000",
+          "date": "2026-06-13T03:04:40+00:00",
+          "localizedDescription": "Major protocol-compatibility and stability release. Fixes file-privacy hashing so sync checks match the PC client, eliminates false file-mismatch warnings, processes server messages strictly in order, hardens reconnection (no more disconnect loops in large rooms, malformed-message resilience, TLS-failure handling), enforces shared-playlist limits, lets controllers set other users' readiness, and removes leftover sync-path latency. iOS: fixes memory leaks when leaving a room.",
+          "minOSVersion": "14.0"
+        },
+        {
+          "downloadURL": "https://github.com/yuroyami/syncplay-mobile/releases/download/v0.22.2/synkplay-0.22.2-ios.ipa",
+          "size": 89703561,
+          "version": "0.22.2",
+          "buildVersion": "1000022002",
+          "date": "2026-06-07T05:20:30+00:00",
+          "localizedDescription": "MPV is now available on iOS (MPVKit), bringing broad format support and libass subtitles to the default player. Also fixes a phantom duplicate-seek announcement.",
+          "minOSVersion": "14.0"
+        },
         {
           "downloadURL": "https://github.com/yuroyami/syncplay-mobile/releases/download/v0.21.10/synkplay-0.21.10-ios.ipa",
           "size": 85643712,

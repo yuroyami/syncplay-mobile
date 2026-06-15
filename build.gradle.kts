@@ -1,5 +1,5 @@
 plugins {
-    id("io.github.yuroyami.kmpssot") version "1.3.1"
+    id("io.github.yuroyami.kmpssot") version "1.4.0"
 
     alias(libs.plugins.kotlin.multiplatform).apply(false)
     alias(libs.plugins.kotlin.android).apply(false)
@@ -27,6 +27,8 @@ kmpSsot {
 
     sharedModule     = "shared"
     androidAppModule = "androidApp"
+
+    javaVersion = 21 // preserved: pre-1.4.0 forced JDK 21
 
     appLogoPngForeground = File("${rootDir}/shared/src/commonMain/composeResources/drawable/logo_fg.png")
     appLogoPngBackground = File("${rootDir}/shared/src/commonMain/composeResources/drawable/logo_bg.png")
