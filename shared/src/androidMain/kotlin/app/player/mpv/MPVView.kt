@@ -29,17 +29,13 @@ class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(context, attr
         MPVLib.setOptionString("config-dir", configDir)
         for (opt in arrayOf("gpu-shader-cache-dir", "icc-cache-dir"))
             MPVLib.setOptionString(opt, cacheDir)
-        initOptions() // do this before init() so user-supplied config can override our choices
+        initOptions() // run before init() so user-supplied config can override these choices
         MPVLib.init()
-        /* Hardcoded options: */
-        // we need to call write-watch-later manually
         MPVLib.setOptionString("save-position-on-quit", "no")
-        // would crash before the surface is attached
+        // force-window off until a surface is attached, else mpv crashes
         MPVLib.setOptionString("force-window", "no")
-        // "no" wouldn't work and "yes" is not intended by the UI
         MPVLib.setOptionString("idle", "once")
 
-        /** Applying syncplay-specific options */
         val playerOptions = PlayerOptions.get()
         MPVLib.setOptionString("alang", playerOptions.audioPreference)
         MPVLib.setOptionString("slang", playerOptions.ccPreference)
@@ -52,14 +48,14 @@ class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(context, attr
 
     var voInUse: String = ""
     private fun initOptions() {
-        // apply phone-optimized defaults
+        // phone-optimized defaults
         MPVLib.setOptionString("profile", "fast")
 
 
         voInUse = if (MPV_GPU_NEXT.value()) "gpu-next" else "gpu"
         val hwdec = if (MPV_HARDWARE_ACCELERATION.value()) "auto" else "no"
 
-        // vo: set display fps as reported by android
+        // report the display's actual refresh rate to mpv as display-fps-override
         val refreshRate = @Suppress("DEPRECATION") if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             context.display.refreshRate
         } else {
@@ -73,7 +69,6 @@ class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(context, attr
 
         MPVLib.setOptionString("display-fps-override", refreshRate.toString())
 
-        // set non-complex options
         data class Property(val preference_name: String, val mpv_option: String)
 
         val opts = arrayOf(
@@ -92,12 +87,8 @@ class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(context, attr
         )
 
         for ((preference_name, mpv_option) in opts) {
-            //val preference = sharedPreferences.getString(preference_name, "")
-            //if (!preference.isNullOrBlank())
             MPVLib.setOptionString(mpv_option, "")
         }
-
-        // set more options
 
         val debandMode = "" //TODO: Preferencize: sharedPreferences.getString("video_debanding", "")
         if (debandMode == "gradfun") {
@@ -128,11 +119,10 @@ class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(context, attr
         MPVLib.setOptionString("tls-verify", "yes")
         MPVLib.setOptionString("tls-ca-file", "${this.context.filesDir.path}/cacert.pem")
         MPVLib.setOptionString("input-default-bindings", "yes")
-        // Limit demuxer cache since the defaults are too high for mobile devices
+        // Limit demuxer cache; mpv's defaults are too high for mobile devices
         val cacheMegs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) 64 else 32
         MPVLib.setOptionString("demuxer-max-bytes", "${cacheMegs * 1024 * 1024}")
         MPVLib.setOptionString("demuxer-max-back-bytes", "${cacheMegs * 1024 * 1024}")
-        //
         val screenshotDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
         screenshotDir.mkdirs()
         MPVLib.setOptionString("screenshot-directory", screenshotDir.path)
@@ -158,7 +148,6 @@ class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(context, attr
     }
 
     private fun observeProperties() {
-        // This observes all properties needed by MPVView, MPVActivity or other classes
         data class Property(val name: String, val format: Int = MPV_FORMAT_NONE)
         val p = arrayOf(
             Property("time-pos", MPV_FORMAT_INT64),
@@ -203,7 +192,6 @@ class MPVView(context: Context, attrs: AttributeSet) : SurfaceView(context, attr
         get() = MPVLib.getPropertyDouble("speed")
         set(speed) = MPVLib.setPropertyDouble("speed", speed!!)
 
-    /***************** Surface callbacks ******************/
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
         MPVLib.setPropertyString("android-surface-size", "${width}x$height")
     }

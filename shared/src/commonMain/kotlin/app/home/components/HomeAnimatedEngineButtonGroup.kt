@@ -51,10 +51,9 @@ fun HomeAnimatedEngineButtonGroup(
     ) {
         engines.forEach { engine ->
             val isSelected = engine.name == selectedEngine
-            
-            // Animate the weight
+
             val animatedWeight by animateFloatAsState(
-                targetValue = if (isSelected) 1f else 0.5f, // Adjust these values as needed
+                targetValue = if (isSelected) 1f else 0.5f,
                 animationSpec = spring()
             )
             
@@ -87,8 +86,7 @@ fun HomeAnimatedEngineButtonGroup(
                         modifier = Modifier.size(26.dp),
                         contentDescription = null
                     )
-                    
-                    // Animate the text visibility
+
                     AnimatedVisibility(
                         visible = isSelected,
                         enter = fadeIn() + expandHorizontally(),

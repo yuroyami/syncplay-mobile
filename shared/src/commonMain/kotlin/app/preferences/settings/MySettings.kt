@@ -88,7 +88,6 @@ import syncplaymobile.shared.generated.resources.uisetting_categ_osd
 import syncplaymobile.shared.generated.resources.uisetting_categ_player_settings
 import syncplaymobile.shared.generated.resources.uisetting_categ_sync_mechanisms
 
-/* Styles */
 val settingGLOBALstyle = SettingStyling(
     iconSize = 30
 )
@@ -238,11 +237,10 @@ val SETTINGS_GLOBAL = listOf(GLOBAL_GENERAL, GLOBAL_LANGUAGE, GLOBAL_SYNCING, GL
  * Engine-agnostic in-room settings.
  *
  * Engine-specific categories (VLC flags, MPV config import/export, MPV hardware/profile
- * knobs, etc.) are NOT listed here on purpose — each [app.player.PlayerImpl] returns its
- * own via [app.player.PlayerImpl.configurableSettings], and [CardRoomPrefs] injects only
- * the active engine's settings into this list at runtime. Keeping them out of this static
- * list is what makes the in-room prefs adapt to the selected player instead of exposing
- * VLC knobs to ExoPlayer users or both VLC and MPV knobs to each other.
+ * knobs) are intentionally absent: each [app.player.PlayerImpl] returns its own via
+ * [app.player.PlayerImpl.configurableSettings], and CardRoomPrefs injects only the active
+ * engine's settings into this list at runtime. This keeps in-room prefs adapted to the
+ * selected player rather than exposing every engine's knobs to all users.
  */
 val SETTINGS_ROOM: List<SettingCategory> = listOf(
     INROOM_SYNC,

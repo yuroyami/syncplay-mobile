@@ -149,7 +149,6 @@ internal inline fun <reified T> Pref<T>.SettingComposable() {
 
             /** Trailing Content */
             when {
-                //If boolean setting, show checkbox as trailing
                 isBooleanSetting -> Checkbox(
                     checked = value as Boolean,
                     enabled = isEnabled,
@@ -161,7 +160,6 @@ internal inline fun <reified T> Pref<T>.SettingComposable() {
                     }
                 )
 
-                //If textfield setting, show textfield as trailing
                 textfieldConfig != null -> HomeTextField(
                     modifier = Modifier.weight(1f),
                     value = value as String,
@@ -176,14 +174,12 @@ internal inline fun <reified T> Pref<T>.SettingComposable() {
                     clearFocusWhenDone = true
                 )
 
-                //If multi-choice list, show list icon as trailing
                 multiChoiceConfig != null -> Icon(
                     imageVector = Icons.AutoMirrored.Filled.List,
                     contentDescription = "",
                     tint = MaterialTheme.colorScheme.outline
                 )
 
-                //If slider, show value as trailing
                 sliderConfig != null -> Text(
                     modifier = Modifier.defaultMinSize(minWidth = 42.dp),
                     text = value.toString(),
@@ -193,7 +189,6 @@ internal inline fun <reified T> Pref<T>.SettingComposable() {
                     textAlign = TextAlign.Center
                 )
 
-                //If color picking, show color as trailing
                 showColorConfig != null -> Button(
                     onClick = { renderableComposableState.value = true },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(value as Int)),
@@ -239,7 +234,6 @@ internal inline fun <reified T> Pref<T>.SettingComposable() {
         }
     }
 
-    //Show color picker if it's color setting, it handles visibility internally
     showColorConfig?.let {
         ColorPickingPopup(
             visibilityState = renderableComposableState,

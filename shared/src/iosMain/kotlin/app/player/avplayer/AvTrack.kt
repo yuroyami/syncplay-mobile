@@ -6,14 +6,12 @@ import platform.AVFoundation.AVMediaSelectionGroup
 import platform.AVFoundation.AVMediaSelectionOption
 
 /**
- * Extended Track interface for AVPlayer tracks.
- *
- * Includes references to AVFoundation's media selection option and group
- * required for track switching operations.
+ * [Track] carrying the AVFoundation media selection option and its group, both required to
+ * switch tracks via the media selection API.
  */
 class AvTrack(
-    val sOption: AVMediaSelectionOption, /* The AVFoundation media selection option representing this track */
-    val sGroup: AVMediaSelectionGroup, /* The media selection group this track belongs to */
+    val sOption: AVMediaSelectionOption,
+    val sGroup: AVMediaSelectionGroup,
     override val name: String,
     override val type: PlayerImpl.TrackType?,
     override val index: Int,

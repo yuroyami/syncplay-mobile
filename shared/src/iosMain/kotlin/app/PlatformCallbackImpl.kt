@@ -29,16 +29,8 @@ import platform.UIKit.shortcutItems
  * This object bridges the gap between Syncplay's platform-agnostic code and iOS APIs.
  */
 object ApplePlatformCallback : PlatformCallback {
-    /**
-     * Called when playback state changes.
-     *
-     * Currently used to update Picture-in-Picture controls (pause/play buttons).
-     * TODO: Implement PiP control updates.
-     *
-     * @param paused True if playback is paused, false if playing
-     */
+    /** TODO: update PiP pause/play buttons when playback state changes. */
     override fun onPlayback(paused: Boolean) {
-        //TODO: Here we only need to update PIP pause/play buttons or other params.
     }
 
     /**
@@ -47,9 +39,8 @@ object ApplePlatformCallback : PlatformCallback {
      * Dispatches to whichever engine is currently active:
      * - **AVPlayer** uses [AVPictureInPictureController] built around [AVPlayerLayer]
      *   (the iOS-native path, gated by [AVPictureInPictureController.isPictureInPictureSupported]).
-     * - **VLCKit 4** runs PiP via VLCKit's own `VLCPictureInPictureWindowControlling`
-     *   protocol (see [VlcKitImpl.enterPictureInPicture]). This requires VLCKit ≥ 4.0; the 3.x
-     *   line had no PiP support.
+     * - **VLCKit** (≥ 4.0) runs PiP via its own `VLCPictureInPictureWindowControlling`
+     *   protocol (see [VlcKitImpl.enterPictureInPicture]).
      * - MPV has no native iOS PiP and is excluded by `supportsPictureInPicture = false`.
      *
      * @param enable True to enter PiP mode, false to exit it.
@@ -82,37 +73,16 @@ object ApplePlatformCallback : PlatformCallback {
         }
     }
 
-    /**
-     * Maximum brightness value for iOS devices (normalized to 1.0).
-     */
     private const val MAX_VOLUME = 100
 
-    /**
-     * Maximum brightness value for iOS devices (normalized to 1.0).
-     */
+    /** iOS brightness is a normalized 0.0–1.0 value. */
     private const val MAX_BRIGHTNESS = 1.0f
 
-    /**
-     * Gets the maximum brightness level.
-     *
-     * @return 1.0 (iOS uses normalized 0.0-1.0 range)
-     */
     override fun getMaxBrightness() = MAX_BRIGHTNESS
 
-    /**
-     * Gets the current screen brightness level.
-     *
-     * @return Current brightness as a float between 0.0 and 1.0
-     */
     override fun getCurrentBrightness(): Float = UIScreen.mainScreen.brightness.toFloat()
 
-    /**
-     * Sets the screen brightness level.
-     *
-     * Automatically coerces the value to the valid range (0.0 to 1.0).
-     *
-     * @param v The new brightness level (0.0 = minimum, 1.0 = maximum)
-     */
+    /** Coerces into the valid 0.0–1.0 brightness range before applying. */
     override fun changeCurrentBrightness(v: Float) {
         UIScreen.mainScreen.brightness = v.coerceIn(0.0f, MAX_BRIGHTNESS).toDouble()
     }
@@ -134,14 +104,7 @@ object ApplePlatformCallback : PlatformCallback {
         // No-op on iOS
     }
 
-    /**
-     * Handles language change requests by opening iOS Settings.
-     *
-     * Since iOS requires language changes to be made in system Settings, this
-     * opens the Settings app to let the user change the app's language preference.
-     *
-     * @param newLang The requested language code (not used, as iOS handles the change)
-     */
+    /** Opens iOS Settings — iOS only allows per-app language changes there, not in-app. */
     override fun onLanguageChanged(newLang: String) {
         NSURL(string = UIApplicationOpenSettingsURLString).let { url ->
             UIApplication.sharedApplication.openURL(url, mapOf<Any?, Any>(), null)
@@ -149,14 +112,8 @@ object ApplePlatformCallback : PlatformCallback {
     }
 
     /**
-     * Creates a Home Screen Quick Action (3D Touch shortcut) for quickly joining a room.
-     *
-     * Encodes the room configuration into the shortcut type string, allowing the app
-     * to parse it later when the shortcut is tapped. Uses a favorite icon to represent
-     * saved room configurations.
-     *
-     * @receiver HomeViewmodel for accessing the snack manager
-     * @param joinInfo The room configuration to save as a shortcut
+     * Adds a Home Screen Quick Action for joining a room. The [JoinConfig] is encoded into the
+     * shortcut's `type` string (joined by `','#'`) so it can be parsed back when tapped.
      */
     override fun HomeViewmodel.onSaveConfigShortcut(joinInfo: JoinConfig) {
         val type = with(joinInfo) { listOf(user, room, ip, port.toString(), pw) }.joinToString("','#'")
@@ -169,18 +126,13 @@ object ApplePlatformCallback : PlatformCallback {
             userInfo = null
         )
 
-        // Add the shortcut item to the application
         UIApplication.sharedApplication.shortcutItems = UIApplication.sharedApplication.shortcutItems?.plus(shortcutItem)
 
         //TODO: Localize
         snackItAsync("Shortcut added: ${joinInfo.room}")
     }
 
-    /**
-     * Removes all saved room configuration shortcuts from the Home Screen.
-     *
-     * Clears the entire shortcut items array, removing all Quick Actions.
-     */
+    /** Removes all room-join Quick Actions from the Home Screen. */
     override fun onEraseConfigShortcuts() {
         UIApplication.sharedApplication.shortcutItems = emptyList<UIApplicationShortcutItem>()
     }

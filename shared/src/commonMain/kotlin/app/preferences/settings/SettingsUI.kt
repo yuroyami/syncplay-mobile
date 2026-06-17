@@ -63,7 +63,7 @@ import com.composeunstyled.rememberScrollbarState
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.milliseconds
 
-/** Object class that will wrap everything related to settings (including composables for UI) */
+/** Composables that render setting categories: a navigable grid plus the per-category detail screen. */
 object SettingsUI {
 
     enum class Layout {
@@ -81,19 +81,17 @@ object SettingsUI {
         cardSize: Float = 64f,
         gridColumns: Int = 3,
     ) {
-        /** Variable to store which category is accessed (null means we're at the root level, no category selected */
+        /** Currently opened category; null means the root grid is shown. */
         var enteredCategory by remember { mutableStateOf<SettingCategory?>(null) }
 
-        /** We have to wrap our settings grid with AnimatedVisibility in order to do animations */
         AnimatedVisibility(
             modifier = modifier, visible = state.value == SettingGridState.NAVIGATING_CATEGORIES, exit = fadeOut(), enter = fadeIn()
         ) {
 
             when (layout) {
                 Layout.SETTINGS_ROOM -> {
-                    /** FlowRow arranges cards horizontally, then creates another row when space doesn't suffice.
-                     *  Wrapped in a vertically scrollable Column so overflow categories stay reachable when the
-                     *  grid has more rows than fit on screen (e.g. room settings + engine-injected category). */
+                    /** FlowRow wraps cards onto extra rows; the scrollable Column keeps overflow categories
+                     *  reachable when the grid has more rows than fit (e.g. room settings + engine-injected category). */
                     Column(
                         modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
                     ) {

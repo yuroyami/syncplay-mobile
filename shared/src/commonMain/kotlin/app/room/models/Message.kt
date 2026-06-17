@@ -5,9 +5,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import app.utils.generateClockstamp
 
-/***************************************************************************************************
- * Message wrapper class. It encapsulates all information and data we need about a single message  *
- ***************************************************************************************************/
+/** A single chat or system message and the data needed to render it. */
 data class Message(
     /** The sender of the message. Null when it's not a chat message */
     var sender: String? = null,
@@ -21,11 +19,11 @@ data class Message(
     /** If the message refers to a chat/action by the app user themself */
     var isMainUser: Boolean = false,
 
-    /** Whether the message is an error message (and therefore should be colored in Error color (red in default) */
+    /** Whether the message is an error, rendered in the error color (red by default). */
     var isError: Boolean = false
 ) {
 
-    /** indicates that this message has been seen */
+    /** Whether this message has been seen. */
     var seen = false
 
     /** Whether the message content is a GIF/image URL (for inline rendering in chat).
@@ -70,16 +68,14 @@ data class Message(
      * @param msgPalette A [MessagePalette] that contains colors and properties
      **/
     fun factorize(msgPalette: MessagePalette): AnnotatedString {
-        /* An AnnotatedString builder that will append child AnnotatedStings together */
         val builder = AnnotatedString.Builder()
 
-        /* First, an AnnotatedString instance of the timestamp */
         val timestampAS = AnnotatedString(
             text = if (msgPalette.includeTimestamp) "[$timestamp] " else "- ",
             spanStyle = SpanStyle(msgPalette.timestampColor)
         )
 
-        /* Now, the AnnotatedString instance of the message content */
+        // Chat messages get a "sender: " tag; system/error messages are content only.
         val contentAS = if (sender != null) {
             val minibuilder = AnnotatedString.Builder()
 
@@ -110,7 +106,6 @@ data class Message(
             )
         }
 
-        /* Finally, we append our little annotatedStrings into our builder */
         builder.append(timestampAS)
         builder.append(contentAS)
 

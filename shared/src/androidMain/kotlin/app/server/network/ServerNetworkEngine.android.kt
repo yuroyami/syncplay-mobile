@@ -107,14 +107,12 @@ actual class ServerNetworkEngine actual constructor(
     actual fun stop() {
         isRunning = false
 
-        // Close all client connections
         for ((channel, connection) in clientChannels.toMap()) {
             connection.onConnectionLost()
             channel.close()
         }
         clientChannels.clear()
 
-        // Shutdown server
         serverChannel?.close()?.sync()
         serverChannel = null
 

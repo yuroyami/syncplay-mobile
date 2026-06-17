@@ -18,28 +18,20 @@ import kotlinx.coroutines.runBlocking
 import okio.Path.Companion.toPath
 
 /**
- * Global DataStore instance for application preferences.
- *
- * This lateinit variable must be initialized using [createDataStore] before any
- * preference operations are performed. Accessing this before initialization
- * will throw [UninitializedPropertyAccessException].
+ * Global DataStore instance for application preferences. Must be assigned via [createDataStore]
+ * before any preference access; reading it earlier throws [UninitializedPropertyAccessException].
  */
 lateinit var datastore: DataStore<Preferences>
 
 
 /**
- * Application-lifetime coroutine scope for DataStore operations.
- *
- * This scope lives for the entire app process and is never cancelled,
- * making it perfect for singletons like DataStore that need to persist
- * throughout the app lifecycle.
- *
- * Uses SupervisorJob so failures in one coroutine don't cancel others.
+ * Process-lifetime coroutine scope for DataStore. Never cancelled. Uses [SupervisorJob] so one
+ * failed child doesn't tear down the others.
  */
 val datastoreScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
 
-/** The actual HOT FLOW that emits data... we collect from it only once here (lazily) */
+/** Hot [StateFlow] of all preferences, collected once and shared eagerly for the whole process. */
 val datastoreStateFlow: StateFlow<Preferences> by lazy {
     datastore.data.stateIn(
         scope = datastoreScope,
@@ -49,25 +41,17 @@ val datastoreStateFlow: StateFlow<Preferences> by lazy {
 }
 
 /**
- * Composition-level preferences snapshot. Collected ONCE at the root composable ([app.AdamScreen])
- * and consumed by [app.preferences.watchPref] via [derivedStateOf] — zero per-composable flow overhead.
- *
- * Uses [staticCompositionLocalOf] because the [State] reference itself never changes;
- * composables that read [State.value] subscribe to its changes automatically via Compose's
- * snapshot system.
+ * Composition-level preferences snapshot, provided once at the root composable ([app.AdamScreen])
+ * and read by [app.preferences.watchPref] via [derivedStateOf], avoiding per-composable flow
+ * collection. [staticCompositionLocalOf] is correct because the [State] reference never changes;
+ * reads of [State.value] still recompose via the snapshot system.
  */
 val LocalPrefsState = staticCompositionLocalOf<State<Preferences>> {
     mutableStateOf(datastoreStateFlow.value)
 }
 
 /**
- * Creates a [DataStore] instance with the specified file path.
- *
- * This factory function initializes the Preference DataStore with the given path.
- * The DataStore is created without corruption handling or migrations by default.
- *
- * @param producePath Lambda that provides the file path for storing preferences
- * @return Configured [DataStore] instance ready for use
+ * Builds the preference [DataStore] at [producePath]. No corruption handler, no migrations.
  */
 fun createDataStore(
     producePath: () -> String,

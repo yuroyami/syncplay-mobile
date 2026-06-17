@@ -43,9 +43,8 @@ import SyncplayMobile.shared.BuildConfig
 
 actual val platform: Platform = Platform.Android
 
-/* Cached singleton — `get()` would create a fresh OkHttp engine on every access. Keep one
- * shared client so connection pooling actually works. Defaults match the iOS twin:
- * HttpTimeout for fail-fast on flaky CDNs, User-Agent for CDNs that filter on it. */
+/* Lazily cached singleton so one OkHttp engine is shared and connection pooling works.
+ * HttpTimeout fails fast on flaky CDNs; User-Agent is set for CDNs that filter on it. */
 actual val httpClient: HttpClient by lazy {
     HttpClient(OkHttp) {
         install(HttpTimeout) {
@@ -53,12 +52,8 @@ actual val httpClient: HttpClient by lazy {
             connectTimeoutMillis = 10_000
             socketTimeoutMillis = 15_000
         }
-        /* Full HTTP transcript piped into loggy() — mirrors iOS for parity. Filter
-         * restricts logging to JSON API hosts; for the iOS rationale see the comment
-         * in PlatformUtils.ios.kt (Darwin's response-channel split truncates binary
-         * body delivery when the plugin tees for logging). Android's OkHttp engine
-         * doesn't have the same bug, but keeping the same filter avoids logging
-         * 100KB+ of base64-ish image bytes per tile, which would drown the log. */
+        /* Full HTTP transcript piped into loggy(). The host filter restricts logging to
+         * JSON API hosts so that 100KB+ image-tile bodies don't drown the log. */
         install(Logging) {
             logger = app.utils.KtorLoggyLogger
             level = LogLevel.ALL
@@ -72,10 +67,8 @@ actual val httpClient: HttpClient by lazy {
 }
 
 /**
- * List of media player engines available on Android.
- *
- * Includes ExoPlayer, MPV, and VLC. Actual availability depends on build flavor
- * (noLibs vs withLibs).
+ * Media player engines on Android: ExoPlayer, MPV, VLC. MPV and VLC only resolve at runtime
+ * in the `full` build flavor; the `exoOnly` flavor ships without their native libraries.
  */
 actual val availablePlatformPlayerEngines: List<PlayerEngine> =
     listOf(ExoEngine, MpvEngine, VlcEngine)

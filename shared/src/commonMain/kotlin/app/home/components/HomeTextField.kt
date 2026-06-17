@@ -47,13 +47,13 @@ import app.uicomponents.gradientOverlay
 import app.uicomponents.tvFocusable
 import com.composeunstyled.UnstyledIcon
 
-// We drive BasicTextField directly instead of compose-unstyled 2.0's UnstyledTextField + TextInput
-// because TextInput invokes its inner text composable wrap-content (innerTextField is internal),
-// which means textAlign = Center has no extra width to center within. Calling BasicTextField
-// directly lets us wrap the inner text in a fillMaxWidth Box so center alignment is visible.
+// Uses BasicTextField directly rather than compose-unstyled's UnstyledTextField + TextInput:
+// TextInput wrap-contents its inner text composable (innerTextField is internal), so
+// textAlign = Center has no extra width to center within. BasicTextField lets the inner text
+// sit in a fillMaxWidth Box, making center alignment visible.
 //
-// The wrapper also bridges the existing value/onValueChange API of 13+ callers onto the new
-// stateful TextFieldState. The two-way sync is loop-free thanks to equality checks.
+// Bridges a value/onValueChange API onto the stateful TextFieldState; the two-way sync stays
+// loop-free via the equality checks below.
 @Composable
 fun HomeTextField(
     modifier: Modifier,
@@ -141,8 +141,8 @@ fun HomeTextField(
                         innerTextField()
                     }
                 }
-                // We either show a dropdown cursor or we fill the space with a transparent icon so
-                // that the input text remains exactly in the center.
+                // Dropdown cursor, or a transparent icon filling the same space so the input
+                // text stays exactly centered.
                 if (dropdownState != null) {
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownState.value, modifier = Modifier.gradientOverlay())
                 } else if (icon != null) {

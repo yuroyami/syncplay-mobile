@@ -1,724 +1,387 @@
-# Syncplay Mobile - Codebase Reference
+# Synkplay — Codebase Reference
 
-Kotlin Multiplatform (KMP) mobile port of [Syncplay](https://syncplay.pl), a synchronized media playback application. The PC source is in `syncplay-pc-src-master/` for protocol reference.
+Kotlin Multiplatform (KMP) mobile port of [Syncplay](https://syncplay.pl), a synchronized media-playback app for Android and iOS. The reference Python/Twisted desktop client lives in `syncplay-pc-src-master/` and the mobile code is a deliberate port of its protocol and sync algorithm. This document maps the code **as it stands at version 0.23.0** (2026-06-17).
 
-**App name:** Synkplay | **Version:** 0.19.1 | **Package:** com.yuroyami.syncplay
+**App name:** Synkplay | **Version:** 0.23.0 | **Min SDK (Android):** 26 | **iOS deployment:** 14.0
+
+| | |
+|---|---|
+| Package (full flavor) | `com.yuroyami.syncplay` |
+| Package (exoOnly flavor) | `com.reddnek.syncplay` |
+| iOS bundle base | `com.yuroyami.syncplay.iosApp` |
+| Android flavors | `full` (ExoPlayer + MPV + VLC native libs) / `exoOnly` (ExoPlayer only, no native libs) |
+| Shared-state SSOT | kmp-ssot plugin `io.github.yuroyami.kmpssot` 1.4.0 (appName/version/bundleId) |
+
+---
 
 ## Table of Contents
-- [Architecture Overview](#architecture-overview)
-- [Module Structure](#module-structure)
-- [Syncplay Protocol Reference](#syncplay-protocol-reference)
+- [Overview](#overview)
+- [Module & Build Structure](#module--build-structure)
+- [Key Dependencies](#key-dependencies)
+- [Syncplay Protocol (as implemented)](#syncplay-protocol-as-implemented)
 - [Synchronization Algorithm](#synchronization-algorithm)
-- [Mobile App Module Breakdown](#mobile-app-module-breakdown)
-- [Expect/Actual Declarations](#expectactual-declarations)
-- [Feature Parity Matrix](#feature-parity-matrix)
+- [Subsystem Breakdown](#subsystem-breakdown)
+- [expect/actual Map](#expectactual-map)
+- [Player Engines](#player-engines)
+- [Built-in Server](#built-in-server)
 - [Architectural Patterns](#architectural-patterns)
-- [Dependency Map](#dependency-map)
-- [Known Gaps and TODOs](#known-gaps-and-todos)
+- [Known Gaps & Platform Limitations](#known-gaps--platform-limitations)
 
 ---
 
-## Architecture Overview
+## Overview
 
-### PC App (Python, Twisted)
-```
-syncplay-pc-src-master/syncplay/
-  client.py          Core client: sync algorithm, player polling, state management
-  server.py          Server: rooms, watchers, state broadcast, controlled rooms
-  protocols.py       JSON-over-TCP protocol (Twisted LineReceiver)
-  constants.py       All thresholds, timeouts, limits
-  clientManager.py   Client startup orchestrator
-  messages.py        i18n message framework
-  utils.py           Utility functions
-  players/           Media player drivers (VLC, MPV, MPlayer, MPC, IINA)
-  ui/                GUI (Qt/PySide) and CLI interfaces
-```
+**Desktop reference (Python, Twisted).** Event-driven: the client polls its external player every 0.1 s and sends a `State` to the server every 1 s; the server broadcasts authoritative room state. JSON objects delimited by `\r\n` over TCP, optional opportunistic TLS.
 
-**Architecture:** Event-driven (Twisted reactor). Client polls player every 0.1s, sends state to server every 1s. Server broadcasts room state to all watchers. JSON newline-delimited protocol over TCP with optional TLS.
-
-### Mobile App (Kotlin Multiplatform)
-```
-shared/src/
-  commonMain/kotlin/app/     Shared business logic + Compose UI
-  androidMain/kotlin/app/    Android player engines, Netty networking, services
-  iosMain/kotlin/app/        iOS player engines, SwiftNIO networking, bridges
-androidApp/                  Android application shell
-iosApp/                      iOS application shell (Swift + Xcode)
-```
-
-**Architecture:** MVVM with reactive StateFlow. Compose Multiplatform UI. Protocol layer is a direct port of the PC client/server. Platform-specific code handles player engines and TLS networking.
+**Mobile (KMP).** MVVM with reactive `StateFlow`, Compose Multiplatform UI in `commonMain`, platform code in `androidMain`/`iosMain`. The protocol layer is a port of the desktop client and server; platform code handles player engines, TLS networking, and OS integration. A central difference from desktop: **mobile owns its embedded player** (no external player to poll over IPC), which removes the desktop client's out-of-band seek re-derivation and lets sync rely on explicit seek announcements.
 
 ---
 
-## Module Structure
+## Module & Build Structure
 
-### Gradle Modules
-| Module | Purpose |
-|--------|---------|
-| `:shared` | KMP library: commonMain + androidMain + iosMain |
-| `:androidApp` | Android app shell (depends on :shared) |
-| `buildSrc` | Build config (AppConfig.kt, NativeBuildConfig.kt) |
+| Gradle module | Purpose |
+|---|---|
+| `:shared` | KMP library: `commonMain` + `androidMain` + `iosMain` + `commonTest` |
+| `:androidApp` | Android app shell (single Activity, depends on `:shared`) |
+| `buildSrc` | Build config helpers: `AppConfig.kt`, `NativeBuildConfig.kt` |
+| `iosApp/` | Xcode/SwiftUI shell hosting the Compose UI plus Swift bridges |
 
-### Build Configuration
-- **Kotlin:** 2.3.20 | **AGP:** 9.1.0 | **Compose Multiplatform:** 1.11.0-beta02
-- **Min SDK (Android):** 26 | **iOS Deployment:** 14.0
-- **Java toolchain:** 21 | **NDK:** 29.0.14206865
-- **Build flavors (Android):** `exoOnly` (ExoPlayer only) and `full` (ExoPlayer + MPV + VLC)
-- **ABI splits:** armeabi-v7a, arm64-v8a, x86, x86_64
+**Toolchain (from `gradle.properties` / `libs.versions.toml`):** Kotlin 2.4.0, AGP 9.2.1, Compose Multiplatform 1.12.0-alpha01, compileSdk 37, minSdk 26, targetSdk 37, NDK 29.0.14206865, Java toolchain 21, buildToolsVersion 37.0.0 (pinned for reproducible builds).
 
-### Key Dependencies
+**`exoOnly` flag** is the single source of truth resolved by `AppConfig.resolveExoOnly(providers)` (overridable with `-PexoOnly=true`), read by both `shared` (the `EXOPLAYER_ONLY` BuildConfig field) and `androidApp` (flavor selection). `exoOnly` switches the applicationId to `com.reddnek.syncplay`, skips the mpv/VLC native build scripts, and ships no native player libs.
+
+**buildSrc `AppConfig.kt`** holds: `localProperties(rootDir)` (signing secrets — caller must pass `rootDir` explicitly), the Trinity brand colors (`0xFF4FD1FF` cyan / `0xFF5A7CFF` blue / `0xFF7A3CFF` purple), `abiCodes` (armeabi-v7a→armv7l, arm64-v8a→arm64, x86, x86_64), `mpvLibs` (9 `.so` files), and custom non-plugin propagators: `propagateTrinityColors()` (rewrites `ic_launcher_foreground.xml` gradient stops), `propagateDefaultStrings()` (copies `values-en/strings.xml` → `values/strings.xml`). `propagateAllCustom()` runs them.
+
+**`NativeBuildConfig.kt`** registers the mpv cross-compile `Exec` task (`runAndroidMpvNativeBuildScripts`, disabled on Windows) and `validateNdk()` (fails if the NDK dir is missing or misversioned).
+
+**Release artifacts.** `androidReleaseAll` (root `build.gradle.kts`) shells out to **three** separate `./gradlew` runs to produce 7 files into `AndroidAppOutput/`: 5 full ABI-split release APKs, 1 exoOnly universal APK, 1 full AAB. Three processes are required because only one product flavor exists per Gradle invocation, and ABI splits and the AAB are mutually exclusive in one task graph (AGP issuetracker 402800800).
+
+**Android-only native gotchas.** `restoreMpvLibcxx` copies the NDK r29 `libc++_shared.so` into `src/main/libs/<abi>/`; `verifyMpvLibcxx` greps for the `from_chars_floating` symbol and fails the build if missing (libVLC's older libc++ lacks `__from_chars_floating_point`, crashing mpv at load). `exoOnly` runs `pruneStaleExoOnlyLibcxx` so the exo-only APK deterministically uses the VLC AAR's libc++.
+
+**Reproducible-build constraints (IzzyOnDroid, issue #105).** Do NOT re-add foojay-resolver or pin a JVM toolchain vendor; JDK 21 is requested vendor-neutrally. `mavenLocal()` stays in `pluginManagement` until kmp-ssot is on the Gradle Plugin Portal; `jitpack.io` is for the NewPipe Extractor.
+
+---
+
+## Key Dependencies
+
 | Category | Library | Version |
-|----------|---------|---------|
-| Networking | Ktor | 3.4.2 |
-| Serialization | kotlinx-serialization | 1.10.0 |
-| Persistence | DataStore | 1.3.0-alpha07 |
-| Coroutines | kotlinx-coroutines | 1.10.2 |
-| Media (Android) | Media3/ExoPlayer | 1.10.0 |
-| Media (Android) | libVLC | 4.0.0-eap24 |
-| Media (iOS) | MobileVLCKit | 3.7.2 |
+|---|---|---|
+| Networking (client) | Ktor | 3.5.0 |
 | TLS (Android) | Netty | 4.1.131.Final |
-| TLS (Android) | Conscrypt | 2.5.3 |
-| Images | Coil | 3.4.0 |
+| TLS provider (Android) | Conscrypt | 2.5.3 |
+| Serialization | kotlinx-serialization-json | 1.11.0 |
+| HTTP/REST (Klipy, OpenSubtitles) | Ktorfit | 2.7.4 (compiler plugin pinned `2.3.5`, tracks Kotlin ABI) |
+| Persistence | DataStore (preferences-core) | 1.3.0-alpha09 |
+| Coroutines | kotlinx-coroutines | 1.11.0 |
+| Atomics | atomicfu | 0.33.0 |
+| Date/time | kotlinx-datetime | 0.8.0 |
+| Media (Android) | Media3 / ExoPlayer | 1.10.1 |
+| Media (Android) | libVLC | 4.0.0-eap26 |
+| Media (iOS) | VLCKit (CocoaPods) | 4.0.0a19 |
+| Images / GIF | Coil3 | 3.4.0 |
 | Theming | MaterialKolor | 5.0.0-alpha07 |
+| Color picker | kolor-picker | 2.1.0 |
 | Logging | Kermit | 2.1.0 |
-| Navigation | Navigation3 | alpha |
+| Navigation | Navigation3 (runtime/ui) | 1.1.1 |
+| Hashing | KotlinCrypto (md/sha1/sha2/digest) | 0.8.0 |
+| Files | FileKit | 0.14.1 |
+| Stream resolver (Android) | NewPipe Extractor | v0.24.6 |
+| Skiko (force-pinned) | skiko | 0.148.1 |
+
+`skiko` is force-pinned across all configurations because its native binary must match what Compose was compiled against; bump it when compose-multiplatform is upgraded. The ExoPlayer FFmpeg audio renderer ships as a local AAR (`libs/libffmpeg_media3exo_1.8.0.aar`). On iOS, MPVKit and YouTubeKit are Swift Package Manager packages wired in via the Xcode project, not declared here.
 
 ---
 
-## Syncplay Protocol Reference
+## Syncplay Protocol (as implemented)
 
-### Wire Format
-JSON objects delimited by `\r\n` (CRLF) over TCP. Optional TLS upgrade before Hello.
+JSON objects delimited by `\r\n` (CRLF) over TCP. The wire layer is `app.protocol.wire.*` (one `@Serializable` DTO per payload; most fields nullable so one class serves both directions). The message envelopes are the `WireMessage` sealed hierarchy. **Note:** older `ClientMessage`/`ServerMessage`/`SyncplayProtocolHandler` names are gone — everything routes through `WireMessage` / `WireMessageDeserializer` / `WireMessageHandler`, shared by both the client (`app.room.RoomServerMessageHandler`) and the built-in server (`app.server.ClientConnection`).
 
-### Message Types
+### `WireMessage` sealed hierarchy (`protocol/WireMessage.kt`)
 
-#### Client -> Server
+Five variants are **wire-symmetric** (same JSON both directions): `Hello`, `State`, `Set`, `TLS`, `Error`. Two keys are split because their payloads differ by direction:
 
-**Hello** (first message after optional TLS)
+| Variant | Direction | Shape |
+|---|---|---|
+| `ChatRequest` | client→server | `{"Chat": "msg"}` (bare string) |
+| `ChatBroadcast` | server→client | `{"Chat": {"username", "message"}}` |
+| `ListRequest` | client→server | `{"List": null}` |
+| `ListResponse` | server→client | `{"List": {"<room>": {"<user>": ListUserData}}}` |
+
+Each subclass implements `toJson()` as `syncplayJson.encodeToString(this)` **on purpose**: encoding via the `WireMessage` interface type would invoke the polymorphic serializer and inject an illegal `"type"` class discriminator. `dispatch(handler)` is the visitor that calls the matching `on…` method. `ListRequest.placeholder` defaults to `JsonNull` (not Kotlin `null`) so `{"List":null}` survives `explicitNulls=false` instead of collapsing to `{}`.
+
+`WireMessageDeserializer` (`JsonContentPolymorphicSerializer`) routes by the first top-level key, and by payload shape for the two asymmetric keys: `Chat` string→`ChatRequest`, else `ChatBroadcast`; `List` JsonObject (even empty `{}`)→`ListResponse`, else→`ListRequest`. Non-object input and unknown keys throw **`SerializationException`** — the only exception type the skip-a-poisoned-line catch covers in `NetworkManager`/`ClientConnection`.
+
+`WireMessageHandler` is the side-agnostic visitor interface; all methods default to no-op. The client overrides `onHello/onState/onSet/onTLS/onError/onListResponse/onChatBroadcast`; the server overrides `onHello/onState/onSet/onTLS/onError/onListRequest/onChatRequest`.
+
+### `syncplayJson` (`protocol/SyncplayJson.kt`)
+
+The one shared `Json` for both directions: `ignoreUnknownKeys=true`, `coerceInputValues=true`, `encodeDefaults=true` (byte-compat with the Python server, e.g. keeping empty `motd`), `explicitNulls=false` (drop null fields to match Python omitting absent keys).
+
+### Real JSON shapes
+
+**Hello** (handshake, both directions; `HelloData`):
 ```json
-{"Hello": {"username": "user", "password": "md5hash", "room": {"name": "room"},
-  "version": "1.7.3", "realversion": "1.7.3",
-  "features": {"sharedPlaylists": true, "chat": true, "featureList": true,
-               "readiness": true, "managedRooms": true}}}
+{"Hello": {"username": "u", "password": "md5hex", "room": {"name": "r"},
+  "version": "1.2.255", "realversion": "1.7.5",
+  "features": {"sharedPlaylists": true, "chat": true, "readiness": true,
+               "managedRooms": true, "setOthersReadiness": true}}}
 ```
+Client advertises `realversion = "1.7.5"` (matches PC `RECENT_CLIENT_THRESHOLD`) and `version = "1.2.255"` (legacy 1.2.x compat shim). `password` is client-only; `motd` is server-only.
 
-**State** (periodic sync, ~1/sec)
+**State** (`StateData` = `playstate` + `ping` + `ignoringOnTheFly`):
 ```json
-{"State": {"playstate": {"position": 123.45, "paused": false, "doSeek": false},
-  "ping": {"latencyCalculation": <serverEchoTimestamp>, "clientLatencyCalculation": <clientTimestamp>, "clientRtt": 0.045},
-  "ignoringOnTheFly": {"client": 0}}}
-```
-
-**Set** (room/file/ready/playlist changes)
-```json
-{"Set": {"file": {"name": "Movie.mkv", "duration": 7200.5, "size": 5368709120}}}
-{"Set": {"ready": {"isReady": true, "manuallyInitiated": true}}}
-{"Set": {"room": {"name": "new-room"}}}
-{"Set": {"playlistChange": {"files": ["file1.mkv", "file2.mkv"]}}}
-{"Set": {"playlistIndex": {"index": 2}}}
-{"Set": {"controllerAuth": {"room": "+roomname:hash", "password": "AB-123-456"}}}
-```
-
-**Chat**
-```json
-{"Chat": "message text"}
-```
-
-**List** (request user list)
-```json
-{"List": null}
-```
-
-**TLS** (negotiate encryption)
-```json
-{"TLS": {"startTLS": "send"}}
-```
-
-#### Server -> Client
-
-**Hello** (response with assigned username, features, MOTD)
-```json
-{"Hello": {"username": "user", "room": {"name": "room"}, "version": "1.2.255",
-  "realversion": "1.7.5", "features": {...}, "motd": "Welcome!"}}
-```
-
-**State** (authoritative room state)
-```json
-{"State": {"playstate": {"position": 123.45, "paused": false, "doSeek": false, "setBy": "user"},
-  "ping": {"latencyCalculation": <clientEchoTimestamp>, "serverRtt": 0.050,
-           "clientLatencyCalculation": <serverEchoTimestamp>},
+{"State": {"playstate": {"position": 123.45, "paused": false, "doSeek": false, "setBy": "u"},
+  "ping": {"latencyCalculation": <echo>, "clientLatencyCalculation": <ts>,
+           "clientRtt": 0.045, "serverRtt": 0.05},
   "ignoringOnTheFly": {"server": 0, "client": 0}}}
 ```
+`position` is **full-precision seconds (Double) — never rounded**; sub-second precision drives server desync detection and slowest-watcher selection.
 
-**Set** (user/room/playlist events)
+**Set** (`SetData`; each direction populates a subset):
 ```json
-{"Set": {"user": {"username": {"event": {"joined": {}}}}}}
-{"Set": {"user": {"username": {"event": {"left": {}}}}}}
-{"Set": {"user": {"username": {"file": {"name": "f.mkv", "duration": 100, "size": 1000}}}}}
-{"Set": {"ready": {"username": "user", "isReady": true, "manuallyInitiated": true}}}
-{"Set": {"newControlledRoom": {"roomName": "+room:HASH12", "password": "AB-123-456"}}}
-{"Set": {"controllerAuth": {"user": "u", "room": "r", "success": true}}}
+{"Set": {"file": {"name": "M.mkv", "duration": 7200.5, "size": 5368709120}}}
+{"Set": {"ready": {"isReady": true, "manuallyInitiated": true}}}
+{"Set": {"room": {"name": "new-room"}}}
+{"Set": {"playlistChange": {"user": "u", "files": ["a.mkv", "b.mkv"]}}}
+{"Set": {"playlistIndex": {"user": "u", "index": 2}}}
+{"Set": {"controllerAuth": {"room": "+r:HASH", "password": "AB-123-456"}}}
+{"Set": {"user": {"u": {"event": {"joined": {}}, "room": {"name": "r"}}}}}
+{"Set": {"newControlledRoom": {"roomName": "+r:HASH12", "password": "AB-123-456"}}}
 ```
 
-**List** (room/user details)
-```json
-{"List": {"roomName": {"user1": {"file": {...}, "position": 120.5, "controller": false, "isReady": true}}}}
-```
+**FileData.size is polymorphic** (`FileSizeSerializer`): decodes a JSON number, string, or `0` all to `String`; encodes a raw byte count (and the hidden sentinel `0`) as a JSON **number** but the 12-char privacy hash as a **string**. `deserialize` throws `SerializationException` on a non-primitive.
 
-**Chat** / **Error** / **TLS**
-```json
-{"Chat": {"username": "user", "message": "hello"}}
-{"Error": {"message": "error text"}}
-{"TLS": {"startTLS": true}}
-```
+**TLS:** client `{"TLS":{"startTLS":"send"}}`, server `{"TLS":{"startTLS":"true"|"false"}}`. **Chat/Error/List** as above.
 
-### Connection Sequence
-```
-Client ──TCP connect──> Server
-Client ──TLS {startTLS: "send"}──> Server  (if TLS enabled)
-Client <──TLS {startTLS: true/false}── Server
-  [TLS handshake if supported]
-Client ──Hello──> Server
-Client <──Hello── Server  (assigns username, room, features)
-Client ──Set(Joined)──> Server
-Client <──List── Server  (user list)
-Client <──State── Server  (initial room state, triggers first sync)
-  [Periodic State exchange begins]
-```
+### Tolerant features decoding
 
-### Authentication
-- **Server password:** Client sends MD5 hash, server compares with its own MD5 hash
-- **Controlled rooms:** Room name format `+baseName:HASH12CHARS`. Hash = SHA1(SHA256(baseName + SHA256(salt)) + SHA256(salt) + password)[:12].upper(). Password format: `XX-###-###`
+`RoomFeatures` is decoded with `LenientRoomFeaturesSerializer` everywhere it appears in inbound JSON (`HelloData`, `ListUserData`, `SetData`, `UserEvent`): an inbound `features` that is **not** a JSON object (e.g. `features: []` from a minimal/third-party server, issue #152) decodes to default `RoomFeatures` instead of aborting the whole message. Defaults: all feature flags `true`; `maxChatMessageLength=150`, `maxUsernameLength=16`, `maxRoomNameLength=35`, `maxFilenameLength=250`. `@SerialName` maps `readiness→supportsReadiness`, `managedRooms→supportsManagedRooms`, `chat→supportsChat`, `sharedPlaylists→supportsSharedPlaylists`.
 
-### Feature Negotiation
-Server Hello response includes `features` object. Client adapts behavior:
-- `supportsChat`, `supportsReadiness`, `supportsManagedRooms`
-- `maxChatMessageLength` (150), `maxUsernameLength` (16), `maxRoomNameLength` (35), `maxFilenameLength` (250)
+### Authentication & controlled rooms
+
+- **Server password:** client sends hex MD5; server compares against its own MD5. (`md5()` in CommonUtils returns raw bytes.)
+- **Controlled rooms** (`RoomPasswordProvider`, pinned to Python `utils.py`): name format `+baseName:HASH12`. `saltHash = SHA256(salt).hex`; `provisional = SHA256(roomName + saltHash).hex`; `result = SHA1(provisional + saltHash + password).hex[:12].uppercase()`. Password format `XX-###-###` (regex `[A-Z]{2}-\d{3}-\d{3}`).
 
 ---
 
 ## Synchronization Algorithm
 
-### Constants (matching PC client)
+### Constants (`ProtocolManager.Companion`, matching PC `constants.py`)
+
 | Constant | Value | Purpose |
-|----------|-------|---------|
-| SEEK_THRESHOLD | 1s | Min diff to count as seek |
-| SLOWDOWN_RATE | 0.95 | Playback speed during slowdown |
-| SLOWDOWN_THRESHOLD | 1.5s | Start slowdown when behind by this |
-| SLOWDOWN_RESET_THRESHOLD | 0.1s | Revert speed when diff < this |
-| REWIND_THRESHOLD | 4s | Force seek if behind by this (matches PC `DEFAULT_REWIND_THRESHOLD`) |
-| FASTFORWARD_BEHIND_THRESHOLD | 1.75s | Detect ahead condition |
-| FASTFORWARD_THRESHOLD | 5s | Trigger fastforward after sustained |
-| FASTFORWARD_EXTRA_TIME | 0.25s | Overshoot compensation |
-| FASTFORWARD_RESET_THRESHOLD | 3s | Cooldown period |
-| PROTOCOL_TIMEOUT | 12.5s | Connection assumed dead |
-| SERVER_STATE_INTERVAL | 1000ms | Server update frequency |
-| PING_MOVING_AVERAGE_WEIGHT | 0.85 | RTT smoothing factor |
+|---|---|---|
+| `rewindThreshold` | 4 s | Force corrective rewind (PC `DEFAULT_REWIND_THRESHOLD`) |
+| `SEEK_THRESHOLD` | 1 s | Min diff to count as a seek |
+| `SLOWDOWN_RATE` | 0.95 | Playback speed during slowdown |
+| `SLOWDOWN_THRESHOLD` | 1.5 s | Start slowdown when ahead by this |
+| `SLOWDOWN_RESET_THRESHOLD` | 0.1 s | Revert speed |
+| `FASTFORWARD_BEHIND_THRESHOLD` | 1.75 s | Detect "behind" condition |
+| `FASTFORWARD_THRESHOLD` | 5.0 s | Trigger fastforward after sustained lag |
+| `FASTFORWARD_EXTRA_TIME` | 0.25 s | Overshoot |
+| `FASTFORWARD_RESET_THRESHOLD` | 3.0 s | Cooldown |
+| `PING_MOVING_AVERAGE_WEIGHT` | 0.85 | RTT EMA weight (`PingService`) |
+| `LIST_PROBE_INTERVAL_SECONDS` | 15 | Keep-channel-warm empty List |
+| `WATCHDOG_INTERVAL_SECONDS` | 5 | Silent-disconnect watchdog tick |
+| `STATE_TIMEOUT_SECONDS` | 15 | No State for this long → reconnect |
 
-### Latency Compensation (PingService)
-```
-RTT = currentTime - echoedTimestamp
-averageRtt = 0.85 * averageRtt + 0.15 * RTT    (EMA smoothing)
-forwardDelay = averageRtt / 2                    (symmetric case)
-             + (clientRtt - serverRtt)           (asymmetry compensation, if server faster)
-```
+### Latency (`PingService`)
 
-### State Handler Algorithm (State.kt handle())
-On receiving server State:
-1. Parse `ignoringOnTheFly` counters (feedback suppression)
-2. Extract position, paused, doSeek, setBy from playstate
-3. Calculate `messageAge` from PingService.forwardDelay
-4. If `clientIgnFly == 0`, update global state:
-   - Store globalPaused, globalPositionMs (adjusted for drift if playing)
-   - On first sync: seek player to position + set pause/play
-5. **Seek handling:** If doSeek, reset speed to 1.0, broadcast seek callback
-6. **Rewind** (if SYNC_REWIND enabled): diff > rewindThreshold && !doSeek -> rewind to server pos
-7. **Fastforward** (if SYNC_FASTFORWARD enabled): diff < -1.75s -> track duration, trigger at -5s with +0.25s extra, cooldown at 3s
-8. **Slowdown** (if SYNC_SLOWDOWN enabled): diff > 1.5s && !paused && setBy != self -> speed=0.95; diff < 0.1s -> speed=1.0
-9. Pause state change: trigger onSomeonePaused() or onSomeonePlayed()
-10. Send acknowledgment State back with current position
+`RTT = now − echoedTimestamp`; `rtt = 0.85·rtt + 0.15·RTT` (EMA). `forwardDelay = avrRtt/2`, plus `(rtt − senderRtt)` when `senderRtt < rtt` (asymmetry: our upload is slower). Timestamps are full-precision seconds; negative RTT or senderRtt is ignored.
 
-### Readiness / Unpause Logic (RoomEventDispatcher)
-When user presses play, `instaplayConditionsMet()` checks UNPAUSE_ACTION preference:
-- `IfAlreadyReady`: Play only if user is already marked ready
-- `IfOthersReady`: Play only if all others are ready
-- `IfMinUsersReady`: Play if >= 2 users ready (including self)
-- `Always`: No readiness gating
+### State handler (`RoomServerMessageHandler.onState`)
 
----
+1. Stamp `protocol.lastStateReceivedAt` first (feeds the channel-health watchdog), even for a State that gets ignored.
+2. Parse `ignoringOnTheFly`: a server counter sets `serverIgnFly` and clears `clientIgnFly`; a matching client counter clears `clientIgnFly`.
+3. Extract `position`, `paused`, `doSeek`, `setBy`; feed `ping` into `PingService`; `messageAge = pingService.forwardDelay`.
+4. If `clientIgnFly == 0`: `agedPosition = paused ? position : position + messageAge`; `diff = playerPosSec − agedPosition`. `pausedChanged = (globalPaused != paused)` — deliberately **not** compared against `player.isPlaying()` (VLCKit's async/stale value would spam OSD). Update `globalPaused`, `globalPositionMs`, `lastGlobalPositionSetAt`.
+5. **First sync** (`lastGlobalUpdate == null`, media loaded): call `noteExpectedPlaybackState(paused)` first, then seek to `agedPosition` and apply pause/play.
+6. **Seek:** `doSeek && setBy != null` → reset speed to 1.0, fire `onSomeoneSeeked`.
+7. **Rewind** (`SYNC_REWIND`): `diff > rewindThreshold && !doSeek` → `onSomeoneBehind`.
+8. **Fastforward** (`SYNC_FASTFORWARD` **and** (follower-in-controlled-room **or** `SYNC_DONT_SLOW_WITH_ME`)): track sustained lag past `FASTFORWARD_BEHIND_THRESHOLD`, trigger at `−FASTFORWARD_THRESHOLD` with `+FASTFORWARD_EXTRA_TIME`, then cooldown. In a normal room everyone can control, so nobody force-fastforwards unless `SYNC_DONT_SLOW_WITH_ME` opts in.
+9. **Slowdown** (`SYNC_SLOWDOWN`, not paused, not a seek): `diff > 1.5` and `setBy != self` → speed 0.95; revert at `diff < 0.1`.
+10. Pause transition → `onSomeonePlayed` / `onSomeonePaused`.
+11. **ACK** with our own State. The `play` value is `!paused` from the inbound message (**not** `player.isPlaying()` — VLCKit 4's pause/play is async; ACKing a stale `isPlaying()` makes the public server rebroadcast a phantom unpause). The periodic ACK always omits `doSeek` (mobile owns its player; real seeks are announced explicitly via `dispatcher.sendSeek`). `SYNC_DONT_SLOW_WITH_ME` uses the extrapolated room position for the ACK.
 
-## Mobile App Module Breakdown
+The desync-correction block is gated on `viewmodel.media != null` (with no media, `diff` looks like multi-second lag and would fire a phantom OSD).
 
-### Core App (`shared/src/commonMain/kotlin/app/`)
+### Channel health & playback broadcast (`ProtocolManager`)
 
-| File | Purpose |
-|------|---------|
-| `AbstractManager.kt` | Base class for managers with coroutine dispatch utilities (onMainThread, onIOThread) |
-| `AdamScreen.kt` | Root composable: navigation via NavDisplay, CompositionLocal providers (theme, viewmodel, palette) |
-| `PlatformCallback.kt` | Interface for platform ops: brightness, PiP, orientation, haptics, media session, shortcuts |
-| `Screen.kt` | Sealed interface: Home, Room(joinConfig?), ThemeCreator(theme?), ServerHost |
-| `SyncplayViewmodel.kt` | App-level VM: backstack, theme management, custom themes, shared playlist toggle |
+While CONNECTED, two coroutines run: a **List-probe** every 15 s (keeps the channel warm) and a **watchdog** every 5 s that terminates the socket and fires `onDisconnected()` if no State arrives for 15 s. Playback changes are **callback-driven, not polled**: a collector on `PlayerManager.isNowPlaying` broadcasts a State **only** when the engine-reported state diverges from `expectedPaused`. Deliberate changes call `noteExpectedPlaybackState()` first to suppress re-broadcast; only engine-driven auto pause/resume (buffer underrun, audio-focus loss, EOF) actually broadcasts. Outbound paths read `expectedPlaying`, never a live `isPlaying()` probe. `serverIgnFly`/`clientIgnFly` are atomicfu atomics (built from `Dispatchers.IO`).
 
-### Home Screen (`home/`)
+`invalidate()` is full teardown; `resetSyncAnchorForReconnect()` is the lightweight transient-reconnect reset (clears `lastGlobalUpdate`, `lastGlobalPositionSetAt`, and the ignFly counters only) so the first State on a new socket re-anchors. Mirrors PC `_performRetryStateReset`.
 
-| File | Purpose |
-|------|---------|
-| `HomeScreen.kt` | Join UI: username, room, server (dropdown with syncplay.pl:8995-8999), port, password, engine selector |
-| `HomeViewmodel.kt` | Join room logic, snackbar state |
-| `JoinConfig.kt` | Serializable config: user, room, ip, port, pw. Persistence via DataStore |
-| `components/HomeAnimatedEngineButtonGroup.kt` | Animated player engine selector with gradient borders |
-| `components/HomeTextField.kt` | Gradient-bordered text input with icons |
-| `components/HomeTopBar.kt` | Logo, settings grid, theme picker, about popup |
-| `components/PopupAPropos.kt` | About dialog: version, developer info, solo mode button |
-| `components/PopupDidYaKnow.kt` | First-launch tips dialog |
+### Readiness / unpause (`RoomEventDispatcher`)
 
-### Player Abstraction (`player/`)
-
-| File | Purpose |
-|------|---------|
-| `PlayerEngine.kt` | Interface: name, isDefault, isAvailable, img, createImpl() factory |
-| `PlayerImpl.kt` | Abstract player: lifecycle (initialize/destroy), playback (play/pause/seekTo/setSpeed), media injection (URL/file), tracks (analyze/select/reapply), chapters (analyze/jump/skip), volume, aspect ratio, screenshot, subtitle loading, VideoPlayer() composable |
-| `PlayerManager.kt` | State management: isPlayerReady, media, isNowPlaying, timeCurrentMillis, timeFullMillis, currentTrackChoices persistence |
-| `Playback.kt` | Enum: PAUSE(false), PLAY(true) |
-| `models/Chapter.kt` | Data: index, name, timeOffsetMillis |
-| `models/MediaFile.kt` | Data: location, fileName, fileSize, fileDuration, tracks, chapters. Factory: mediaFromFile(), mediaFromUrl() |
-| `models/MediaFileLocation.kt` | Sealed: Local(PlatformFile), Remote(url) |
-| `models/PlayerOptions.kt` | ExoPlayer buffer config: maxBuffer, minBuffer, playbackBuffer, audioPreference, ccPreference |
-| `models/Track.kt` | Abstract: name, type (AUDIO/SUBTITLE), index, selected |
-| `models/TrackChoices.kt` | Engine-specific track selection state persistence across media changes |
-
-### Protocol Client (`protocol/`)
-
-| File | Purpose |
-|------|---------|
-| `ProtocolManager.kt` | Orchestrator: session, global state, sync thresholds, PingService, JSON serializer with polymorphic message types |
-| `Session.kt` | Shared state: server/port/username/room/password, roomFeatures, userList (StateFlow), messageSequence (StateFlow), outboundQueue, sharedPlaylist, spIndex |
-| `SyncplayProtocolHandler.kt` | Interface: onHello/State/Set/List/Chat/TLS/ErrorReceived(), routeMessage() |
-| `event/ClientMessage.kt` | Sealed class outbound packets: Hello, Joined, EmptyList, Readiness, File, Chat, State, PlaylistChange, PlaylistIndex, ControllerAuth, RoomChange, TLS |
-| `event/RoomCallback.kt` | Inbound event handlers: onSomeonePaused/Played/Joined/Left/Seeked/Behind/FastForwarded, onConnected/Disconnected/ConnectionFailed, onReceivedTLS, onNewControlledRoom, etc. Haptic feedback per event |
-| `event/RoomEventDispatcher.kt` | Outbound actions: sendHello, sendSeek, sendMessage, controlPlayback (readiness gating), seekBckwd/seekFrwrd, broadcastMessage |
-| `models/ConnectionState.kt` | Enum: DISCONNECTED, CONNECTING, CONNECTED, SCHEDULING_RECONNECT |
-| `models/PingService.kt` | RTT calculation with EMA smoothing (weight=0.85), asymmetry-aware forwardDelay |
-| `models/RoomFeatures.kt` | Serializable: isolateRooms, supportsReadiness/Chat/ManagedRooms, max lengths |
-| `models/TlsState.kt` | Enum: TLS_NO, TLS_ASK, TLS_YES |
-| `models/User.kt` | Data: index, name, readiness, file, isController |
-| `network/NetworkManager.kt` | Abstract: connect/reconnect/send/handlePacket, state (ConnectionState flow), tls, engine enum. Reconnection with interval. Failed transmit queues to outboundQueue (except Hello) |
-| `network/KtorNetworkManager.kt` | Ktor sockets implementation. No TLS support (Ktor limitation). Used as fallback on both platforms |
-| `network/ServerMessageDeserializer.kt` | JsonContentPolymorphicSerializer: routes by top-level JSON key to typed deserializer |
-| `server/Hello.kt` | Server Hello response: username, room, features, motd. Handler: updates session, sends Joined + EmptyList, calls onConnected |
-| `server/State.kt` | Server State: playstate + ping + ignoringOnTheFly. Handler: full sync algorithm (see above) |
-| `server/Set.kt` | Server Set: user events (join/left/file), room, controllerAuth, ready, playlist changes. Handler: routes to specific callbacks |
-| `server/ListResponse.kt` | Server List: room->user map. Handler: builds User objects, emits to userList StateFlow |
-| `server/Chat.kt` | Server Chat: username + message. Handler: calls onChatReceived |
-| `server/Error.kt` | Server Error: message string |
-| `server/TLS.kt` | Server TLS: startTLS boolean. Handler: calls onReceivedTLS |
-| `server/FileData.kt` | Shared: name, duration, size |
-| `server/ServerMessage.kt` | Sealed interface with handle() method |
-
-### Server Hosting (`server/`)
-
-| File | Purpose |
-|------|---------|
-| `SyncplayServer.kt` | Main server: addWatcher/removeWatcher, setWatcherRoom, startStateTimer (100ms initial + 1000ms interval), sendState, forcePositionUpdate, sendChat, setReady, setPlaylist, authRoomController, shutdown |
-| `ServerRoomManager.kt` | Room lifecycle: moveWatcher, getOrCreateRoom (auto-creates ControlledServerRoom if name matches), deleteRoomIfEmpty, findFreeUsername (appends `_`), broadcast/broadcastRoom |
-| `ServerViewmodel.kt` | UI ViewModel: config editing (port/password/motd/flags), start/stop server, public IP fetch (ipify.org), server logs |
-| `ClientConnection.kt` | Per-client protocol handler (SyncplayProtocolHandler impl): onHello (validate/auth/addWatcher), onState (update watcher), onSet (route commands), sendHello/sendState/sendList/sendChat/etc. Password check via MD5 |
-| `model/ServerConfig.kt` | Data: port (8999), password, isolateRooms, disableReady/Chat, salt, motd, maxLengths |
-| `model/ServerRoom.kt` | Room state: watchers, playState (0=paused/1=playing), position (with elapsed calc), playlist. getPosition() uses slowest watcher if stale >1s |
-| `model/ControlledServerRoom.kt` | Extends ServerRoom: controllers map, canControl() gate on setPaused/setPosition/setPlaylist |
-| `model/ServerWatcher.kt` | Client representation: position (with elapsed), file, ready, features. updateState() detects pause changes and adjusts for messageAge |
-| `model/RoomPasswordProvider.kt` | Controlled room crypto: SHA256+SHA1 hash chain, password format XX-###-###, regex validation |
-| `network/ServerNetworkEngine.kt` | Expect class: startListening(port), stop(). Actual: Netty (Android), Ktor sockets (iOS) |
-| `protocol/InboundMessageHandler.kt` | Routes JSON keys to ClientConnection handlers. Special: Chat comes as string, not object |
-| `protocol/OutboundMessageBuilder.kt` | JSON builders for all server->client messages |
-| `ui/ServerHostScreen.kt` | Compose UI: config form, start/stop, status, connected clients, IPs, scrollable log |
-
-### Room UI (`room/`)
-
-| File | Purpose |
-|------|---------|
-| `RoomViewmodel.kt` | Central coordinator: all managers (uiState, playerManager, networkManager, protocol, callback, dispatcher, playlistManager), isSoloMode, player engine loading, connection initiation, file mismatch checking, OSD dispatch |
-| `RoomUiStateManager.kt` | UI state: msg, orientation, PiP, visibleHUD, tab cards (mutual exclusion), tabLock, controlPanel, gifPanel, hudInteractionSignal, hasActiveOverlay, uiOpacity, lifecycle forwarding |
-| `RoomScreenUI.kt` | Main room composable: landscape/portrait layouts, VideoPlayer, background artwork, gesture interceptor, play button, chat, status, tabs, sliding cards, bottom bar, auto-hide HUD logic, popups (seek-to, chat history, managed room) |
-| `models/Message.kt` | Chat message: sender, timestamp, content, isMainUser, isError, seen, isImageUrl. factorize() for styled AnnotatedString |
-| `models/MessagePalette.kt` | Colors: timestamp, selftag, friendtag, systemmsg, usermsg, errormsg, includeTimestamp |
-| `sharedplaylist/SharedPlaylistManager.kt` | Operations: shuffle, addURLs, addFiles, clearPlaylist, deleteItem, sendPlaylistSelection, changePlaylistSelection, retrieveFile, isUrlTrusted (domain validation) |
-| `sharedplaylist/PlaylistExt.kt` | Expect functions: addFolderToPlaylist, iterateDirectory, savePlaylistLocally, loadPlaylistLocally |
-
-### Room UI Components (`room/ui/`)
-
-**bottombar/**
-| File | Purpose |
-|------|---------|
-| `RoomSectionBottomBar.kt` | Container: ready toggle + seekbar + control panel + media add + video controls |
-| `RoomSeekbar.kt` | Interactive seekbar: chapter dots, time display, seek bubble, server-synced seeking |
-| `RoomReadyButton.kt` | Ready/not-ready toggle (green/red), broadcasts to server |
-| `RoomControlsAboveSeekbar.kt` | Fast seek buttons, custom skip, chapter skip |
-| `RoomControlPanel.kt` | Advanced: aspect ratio, screenshot, seek-to, undo seek, subtitle/audio/chapter dropdowns |
-| `RoomMediaAddButton.kt` | Add from storage/URL menu with URL input popup |
-| `PopupSeekToPosition.kt` | HH:MM:SS time input dialog for precise seeking |
-| `BlackContrastUnderlay.kt` | Gradient overlay for HUD readability |
-
-**chat/**
-| File | Purpose |
-|------|---------|
-| `RoomSectionChat.kt` | Chat root: text field + chat box or GIF panel |
-| `ChatTextField.kt` | Message input with send/GIF/clear buttons, 149 char limit |
-| `ChatBox.kt` | Message history (LazyColumn), configurable appearance, inline image thumbnails |
-| `RoomFadingChatLayout.kt` | Transient messages when HUD hidden, configurable fade duration |
-| `GifPanel.kt` | GIF/sticker search via Klipy API: search, trending, recents, grid layout |
-
-**misc/**
-| File | Purpose |
-|------|---------|
-| `RoomPlayButton.kt` | Center play/pause with animated background circle |
-| `RoomGestureInterceptor.kt` | Double-tap seek, vertical swipe brightness (left)/volume (right), long-press haptic |
-| `RoomBackgroundArtwork.kt` | Syncplay logo when no video loaded |
-
-**rightcards/**
-| File | Purpose |
-|------|---------|
-| `RoomSectionSlidingCards.kt` | Animated card container (slide horizontal in landscape, vertical in portrait) |
-| `CardUserInfo.kt` | User list: readiness icon, controller badge, filename, duration, size |
-| `CardSharedPlaylist.kt` | Playlist management: add file/folder/URL, import/export, shuffle, media dirs, clear |
-| `CardRoomPrefs.kt` | In-room settings grid with player-specific settings |
-
-**statinfo/**
-| File | Purpose |
-|------|---------|
-| `RoomSectionStatusInfo.kt` | Room name, connection status, OSD messages, currently playing file, reconnect button |
-
-**tabs/**
-| File | Purpose |
-|------|---------|
-| `RoomTabSection.kt` | Tab buttons: settings, playlist, user info, overflow menu (chat history, orientation, PiP, managed room, leave) |
-| `RoomTab.kt` | Individual tab card (active/inactive states) |
-| `ChatHistoryPopup.kt` | Full message history modal with scrollbar |
-| `PopupManagedRoom.kt` | Create managed room (with generated password) or identify as operator |
-
-### Preferences (`preferences/`)
-
-| File | Purpose |
-|------|---------|
-| `Datastore.kt` | Global DataStore instance, scope, hot StateFlow of all preferences |
-| `Pref.kt` | Type-safe preference wrapper: key mapping, sync read (value()), reactive flow, composable watch (watchPref()), async write (set()) |
-| `PrefExtraConfig.kt` | Sealed interfaces for UI rendering: PerformAction, BooleanCallback, Slider, MultiChoice, ShowComposable, ColorPick, YesNoDialog, TextField |
-| `Preferences.kt` | Central registry of all 60+ preferences (see below) |
-| `SettingComposable.kt` | Generic composable renderer for any Pref with all extra config types |
-| `settings/MySettings.kt` | Setting categories and groups (SETTINGS_GLOBAL, SETTINGS_ROOM) |
-| `settings/SettingCategory.kt` | Category data class with DSL builder |
-| `settings/SettingStyling.kt` | Data: titleSize, summarySize, iconSize, paddingUsed |
-| `settings/SettingsUI.kt` | Settings grid layout and rendering |
-| `settings/PopupColorPicker.kt` | Color selection dialog |
-| `settings/PopupTrustedDomains.kt` | Trusted domain management dialog |
-
-### Preference Categories
-
-**Global Settings (SETTINGS_GLOBAL):**
-- General: REMEMBER_INFO, NEVER_SHOW_TIPS, ERASE_SHORTCUTS, MEDIA_DIRECTORIES
-- Language: DISPLAY_LANG, AUDIO_LANG, CC_LANG
-- Syncing: READY_FIRST_HAND, UNPAUSE_ACTION, PAUSE_ON_SOMEONE_LEAVE, FILE_MISMATCH_WARNING, HASH_FILENAME, HASH_FILESIZE
-- Network: TLS_ENABLE, NETWORK_ENGINE, TRUSTED_DOMAINS
-- Advanced: EXPORT_LOGS, CLEAR_LOGS, GLOBAL_RESET_DEFAULTS
-
-**Room Settings (SETTINGS_ROOM):**
-- Sync Mechanisms: SYNC_DONT_SLOW_WITH_ME, SYNC_FASTFORWARD, SYNC_SLOWDOWN, SYNC_REWIND
-- Chat Colors: COLOR_TIMESTAMP/SELFTAG/FRIENDTAG/SYSTEMMSG/USERMSG/ERRORMSG
-- Chat Properties: MSG_ACTIVATE_STAMP, MSG_OUTLINE_*, MSG_SHADOW_*, MSG_BG_OPACITY, MSG_FONTSIZE, MSG_MAXCOUNT, MSG_FADING_DURATION, MSG_BOX_ACTION
-- Player: CUSTOM_SEEK_FRONT/AMOUNT, SUBTITLE_SIZE, SEEK_FORWARD/BACKWARD_JUMP, SHOW_CHAPTER_DOTS, CHAPTER_DOTS_CLICKABLE, DOUBLETAP_SEEK, SWIPE_GESTURES, OSD_DURATION
-- Haptics: HAPTIC_ON_JOINED/LEFT/CHAT/PAUSED/PLAYED/SEEKED/PLAYLIST/CONNECTION
-- Advanced: ROOM_UI_OPACITY, HUD_AUTO_HIDE_TIMEOUT, RECONNECTION_INTERVAL, INROOM_RESET_DEFAULTS
-- MPV-specific: MPV_HARDWARE_ACCELERATION, MPV_GPU_NEXT, MPV_DEBUG_MODE, MPV_VIDSYNC, MPV_PROFILE, MPV_INTERPOLATION
-- ExoPlayer-specific: EXO_MAX_BUFFER, EXO_MIN_BUFFER, EXO_SEEK_BUFFER
-
-### Theme System (`theme/`)
-
-| File | Purpose |
-|------|---------|
-| `BuiltinThemes.kt` | Predefined themes: PYNCSLAY, GrayOLED, ALLEY_LAMP, SILVER_LAKE (default), BLANK_THEME |
-| `SaveableTheme.kt` | Serializable theme: primary/secondary/tertiary/neutral colors, contrast, isDark, isAMOLED, PaletteStyle, syncplayGradients |
-| `ThemeCreatorScreen.kt` | Theme editor UI: color pickers, palette style, AMOLED, contrast |
-| `ThemePicker.kt` | Theme selection grid: built-in + custom themes |
-| `Theming.kt` | Utilities: flexibleGradient, backgroundGradient, brand colors (NeoSP1/2/3), semantic colors (MSG_*), spacing tokens, ROOM_ICON_SIZE |
-
-### Klipy GIF Integration (`klipy/`)
-
-| File | Purpose |
-|------|---------|
-| `KlipyAPI.kt` | Ktorfit API: searchGifs/Stickers, trending, recents, share analytics |
-| `GifSearchResponse.kt` | Response models: GifItem, GifFile (hd/md/sm/xs), GifFormat |
-| `KlipyUtils.kt` | Client wrapper: search, trending, recents, trackShare. Uses unique user ID |
-
-### UI Components (`uicomponents/`)
-
-| File | Purpose |
-|------|---------|
-| `AnimatedImage.kt` | Expect/actual: animated GIF/WebP display |
-| `FlexibleIcon.kt` | Gradient-tinted icon with shadow and click |
-| `FlexibleText.kt` | Layered text rendering: shadow + stroke + gradient fill |
-| `Fonts.kt` | Font accessors: lexend, jost, saira, helvetica, syncplay (Directive4) |
-| `FreeAnimatedVisibility.kt` | Scope-disambiguated AnimatedVisibility wrapper |
-| `MessagePalette.kt` | Derives chat colors from preferences as composable State |
-| `MultiChoiceDialog.kt` | Radio-button selection dialog |
-| `Overlays.kt` | Modifiers: gradientOverlay, solidOverlay (SrcAtop blend) |
-| `PopupMediaDirs.kt` | Media directory management popup |
-| `ScreenDimensions.kt` | Screen size accessors (px) |
-| `SyncplayPopup.kt` | Gradient-bordered popup dialog base |
-
-### Utilities (`utils/`)
-
-| File | Purpose |
-|------|---------|
-| `CommonUtils.kt` | Constants (vidExs: 40+ extensions, ccExs, playlistExs), generateClockstamp(), md5(), sha256(), @ProtocolApi annotation |
-| `LogUtils.kt` | File logging with 7-day retention, loggy(), logFile export, clearLogs() |
-| `PlatformUtils.kt` | Expect declarations: timestamps, file ops, system bars, weak refs, device IP, platform enum, player engines |
+`controlPlayback` gates outbound on `uiState.isInBackground` (background auto-pause must not propagate) and on `UNPAUSE_ACTION` readiness when `supportsReadiness`. `instaplayConditionsMet` implements four modes: `IfAlreadyReady`, `IfOthersReady`, `IfMinUsersReady` (needs ≥2 ready), `Always` (default `IfOthersReady`). A controlled room without a controller can never unpause; a blocked unpause marks the user ready instead. `noteExpectedPlaybackState` is set **before** touching the player to avoid a re-broadcast race. `pendingSeekFromMs` is single-use (sentinel `NO_PENDING_SEEK = -1L`).
 
 ---
 
-## Expect/Actual Declarations
+## Subsystem Breakdown
 
-### Network Layer
-| Expect | Android Actual | iOS Actual |
-|--------|---------------|------------|
-| `instantiateNetworkManager()` | `NettyNetworkManager` or `KtorNetworkManager` (based on NETWORK_ENGINE pref) | `SwiftNioNetworkManager` or `KtorNetworkManager` |
-| `ServerNetworkEngine` | Netty ServerBootstrap | Ktor raw sockets |
+### App root (`commonMain/app/`)
 
-### Player Engines
-| Expect | Android Actual | iOS Actual |
-|--------|---------------|------------|
-| `availablePlatformPlayerEngines` | [ExoEngine, MpvEngine, VlcEngine] | [VlcKitEngine, AVPlayerEngine] + MpvKitEngine if bridge registered |
+| File | Purpose |
+|---|---|
+| `AdamScreen.kt` | Root composable: per-screen ViewModels via `viewModelFactory`, `NavDisplay` backstack, CompositionLocals (`LocalGlobalViewmodel`, `LocalRoomViewmodel`, `LocalTheme`, `LocalScreen`, `LocalSettingStyling`, `LocalChatPalette`, `LocalRoomUiState`, `LocalPrefsState`). `entryProvider` maps Screen→composable. |
+| `SyncplayViewmodel.kt` | App-level VM: `backstack` (starts at `Home`), theme state, custom-theme CRUD (`changeTheme/saveNewTheme/deleteTheme`), shared-playlist toggle, persisted `USER_ID` (Uuid v7 hex, used only for Klipy). |
+| `Screen.kt` | `@Serializable sealed interface Screen : NavKey`: `Home`, `Room(joinConfig?)`, `ThemeCreator(themeToEdit?)`, `ServerHost`. |
+| `AbstractManager.kt` | Base for managers: `onMainThread` (`Dispatchers.Main.immediate`), `onIOThread`, open `invalidate()`, all on `vm.viewModelScope`. |
+| `PlatformCallback.kt` | Platform ops interface: PiP, brightness, haptics, media session, server service, language, shortcuts, `launchSystemFilePicker`. |
 
-### Playlist Operations
-| Expect | Android Actual | iOS Actual |
-|--------|---------------|------------|
-| `addFolderToPlaylist(uri)` | DocumentsContract tree enumeration | NSFileCoordinator with security-scoped access |
-| `iterateDirectory(uri, target, onFound)` | Recursive DocumentsContract walk | NSFileManager enumeration with bookmarks |
-| `savePlaylistLocally(uri)` | ContentResolver output stream | NSString file writing |
-| `loadPlaylistLocally(uri, shuffle)` | ContentResolver input stream | NSString file reading |
+### Home (`commonMain/app/home/`)
 
-### Platform Utilities
-| Expect | Android Actual | iOS Actual |
-|--------|---------------|------------|
-| `generateTimestampMillis()` | System.currentTimeMillis() | NSDate-based |
-| `getFileName(uri)` | ContentResolver query | NSURL attributes |
-| `getFileSize(uri)` | ContentResolver query | NSURL attributes |
-| `getDeviceIpAddress()` | NetworkInterface enumeration | C interop (ifaddrs) |
-| `HideSystemBars()` | WindowInsetsController | UIApplication statusBar |
-| `platform` | Platform.Android | Platform.IOS |
-| `AnimatedImage` composable | Coil3 AsyncImage | CGImageSource + UIImage.animatedImage |
+`HomeScreen.kt` (join UI; `officialServers` = `syncplay.pl:8995`–`8999`; the default host `151.80.32.178` is shown in the UI as `syncplay.pl`; sanitizes username/room: strip backslashes, cap username 149 / room 34), `HomeViewmodel.kt` (`joinRoom(config?)`; null = solo mode; owns snackbar), `JoinConfig.kt` (`@Serializable user/room/ip/port/pw`; defaults ip `syncplay.pl`, port 8997; `save()` only when `REMEMBER_INFO`). Components: `HomeAnimatedEngineButtonGroup`, `HomeTextField` (gradient-bordered, center-aligned `BasicTextField` bridging `value/onValueChange` onto `TextFieldState`), `HomeTopBar` (logo→About, theme picker, expandable global settings grid), `PopupAPropos` (version, GitHub releases link, Solo-mode button via `joinRoom(null)`), `PopupDidYaKnow` (first-launch tips, `NEVER_SHOW_TIPS`).
 
-### Platform Callbacks (PlatformCallback interface)
-| Method | Android Impl | iOS Impl |
-|--------|-------------|----------|
-| `onPictureInPicture()` | PiP params + RemoteAction | AVPictureInPictureController |
-| `changeCurrentBrightness()` | WindowManager.LayoutParams | UIScreen.main.brightness |
-| `onScreenOrientationChanged()` | Activity.requestedOrientation | UIWindowScene geometry update |
-| `performHapticFeedback()` | Vibrator API | UIImpactFeedbackGenerator |
-| `mediaSessionInitialize()` | Foreground service start | No-op |
-| `serverServiceStart()` | Foreground service start | No-op |
-| `onLanguageChanged()` | Per-app language (AppCompatDelegate) | Opens iOS Settings |
+### Protocol (`commonMain/app/protocol/`)
+
+| File | Purpose |
+|---|---|
+| `ProtocolManager.kt` | Sync orchestrator: `Session`, global state, ignFly atomics, `PingService`, channel-health, `buildStatePacket`, sync constants, version constants. |
+| `Session.kt` | Per-connection state: server/user/room/password, `roomFeatures` (setter mirrors flags into protocol StateFlows), `userList`/`messageSequence` StateFlows, mutex-guarded `outboundQueue`, `sharedPlaylist`, `spIndex` (−1 = none), `ready` (inits from `READY_FIRST_HAND`), readiness counters. Defaults: host `151.80.32.178`, port 8997. |
+| `WireMessage.kt` / `WireMessageDeserializer.kt` / `WireMessageHandler.kt` | See [protocol section](#syncplay-protocol-as-implemented). |
+| `SyncplayJson.kt` | The shared `syncplayJson`. |
+| `models/PingService.kt` | RTT EMA + asymmetry-aware `forwardDelay`. |
+| `models/RoomFeatures.kt` | Feature flags + `LenientRoomFeaturesSerializer`. |
+| `models/User.kt` | `index, name, readiness, file?, isController` (index 0 = current user). |
+| `models/ConnectionState.kt` | `DISCONNECTED, CONNECTING, CONNECTED, SCHEDULING_RECONNECT`. |
+| `models/TlsState.kt` | `TLS_NO, TLS_ASK, TLS_YES` (used by Netty and SwiftNIO). |
+| `event/RoomCallback.kt` | Inbound events: pause/play/seek/rewind/fastforward, join/left, chat, playlist, file, TLS, controller-auth, connection lifecycle; emits OSD/chat + haptics. `SEEK_NOOP_THRESHOLD_MS=1000` suppresses sub-second seeks; self-seek "from" consumed single-use from `pendingSeekFromMs`; all `player.play/pause/seekTo` gated on `media != null` (VLCKit-4 NULL-media segfault). |
+| `event/RoomEventDispatcher.kt` | Outbound actions: `sendHello`, `sendSeek`, `controlPlayback` (readiness gating + background gate), seek fwd/bwd, `broadcastMessage`. `clientFeatures` static manifest. No-ops in solo mode. |
+| `wire/*` | One `@Serializable` DTO per payload: `HelloData`, `StateData`/`PlaystateData`/`PingData`/`IgnoringOnTheFlyData`, `SetData`/`UserSetData`/`UserEvent`, `ListUserData`, `ReadyData`, `ChatData`, `ControllerAuthData`/`NewControlledRoom`, `PlaylistChangeData`/`PlaylistIndexData`, `FileData` (+`FileSizeSerializer`), `Room`, `TLSData`, `ErrorData`. |
+| `network/NetworkManager.kt` | Abstract client TCP layer. `enum NetworkEngine {KTOR, NETTY, SWIFTNIO}`. Inbound is **strictly serial**: an unbounded `Channel<String>` drained by one consumer → `syncplayJson.decodeFromString(WireMessageDeserializer)` → `dispatch(serverHandler)`. `processPacket` catches only `SerializationException` to skip a poisoned line; `reconnect()` owns the retry loop (re-entry guard on `Job.isActive`); `send()` never queues Hello/State, queues Chat/playlist/ready; `transmitPacket` appends CRLF, 10 s timeout, 3 retries then queue. No-op in solo mode. |
+| `network/KtorNetworkManager.kt` | Ktor TCP fallback. `supportsTLS()=false`; `upgradeTls()` is a no-op (Ktor lacks opportunistic TLS, KTOR-6623). |
+
+### Room (`commonMain/app/room/`)
+
+| File | Purpose |
+|---|---|
+| `RoomViewmodel.kt` | Central coordinator owning all managers (`uiState`, `playerManager`, `networkManager`, `protocol`, `callback`, `dispatcher`, `serverHandler`, `playlistManager`). `enum OSDCategory {SAME_ROOM, OTHER_ROOM, SLOWDOWN, WARNING}`. `isSoloMode = (joinConfig == null)`. Rewrites `syncplay.pl` → `151.80.32.178` at connect. `checkFileMismatches` uses `FileComparison`. `dispatchOSD(category,…)` gates on per-category prefs + `OSD_NON_OPERATOR`. |
+| `RoomServerMessageHandler.kt` | The client `WireMessageHandler` — the full sync algorithm and user-list/chat/TLS/error handling. |
+| `MediaFileWireExt.kt` | `MediaFile.toFileData()` applying `HASH_FILENAME`/`HASH_FILESIZE` privacy modes ('1' raw / '2' 12-char SHA-256 / sentinels). Unknown duration sent as `0.0`. |
+| `RoomScreenUI.kt` | Main room composable: landscape/portrait, video surface (kept composed at alpha 0 when no video), HUD, gesture interceptor, popups, D-pad focus (`LocalRoomInitialFocus`). `EnterRoomMode(isPortrait)` is the single orientation/windowing source. |
+| `RoomUiStateManager.kt` | HUD/tab/orientation/PiP/popup state + lifecycle forwarding. Tab cards mutually exclusive; `uiOpacity = ROOM_UI_OPACITY/100`; `onLifecycleStop` pauses unless in PiP. |
+
+**`room/ui/bottombar/`** — `RoomSectionBottomBar` (container; most controls only render when `hasVideo`), `RoomSeekbar` (chapter dots, drag bubble, D-pad seek; `analyzeChapters` called here in `LaunchedEffect(media.fileName)` — single owner), `RoomReadyButton` (hidden in solo; sends `WireMessage.readiness`), `RoomControlPanel` (aspect/screenshot/seek-to/undo-seek + unified Audio & Subtitles sheet with OpenSubtitles search; chapter dropdown deliberately does **not** re-analyze), `RoomControlsAboveSeekbar` (FastRewind/FastForward), `RoomMediaAddButton` (storage picker / Android-only custom chooser for SMB/cloud / URL), `PopupSeekToPosition` (HH:MM:SS + `customSkip`), `BlackContrastUnderlay`. Every seek path follows the same contract: set `pendingSeekFromMs`, `sendSeek(target)` (no-op in solo), `player.seekTo(target)`. Both file/subtitle pickers use the FileKit #575 iOS workaround (launch-after-dismiss).
+
+**`room/ui/chat/`** — `RoomSectionChat` (renders only when `supportsChat`; caps at `roomFeatures.maxChatMessageLength`, does **not** strip backslashes), `GifPanel` (Klipy GIF/sticker search; iOS tiles need `fillMaxWidth` and alpha-as-parameter), `RoomFadingChatLayout` (transient message when HUD hidden), `ChatTextField`/`ChatBox`.
+
+**`room/ui/rightcards/`** — `RoomSectionSlidingCards` (animated container; horizontal in landscape, vertical in portrait), `CardUserInfo` (readiness/controller/file; skipped in solo), `CardSharedPlaylist` (add/shuffle/import/export; skipped in solo), `CardRoomPrefs` (renders `SETTINGS_ROOM` + the active engine's `configurableSettings()`).
+
+**`room/ui/tabs/`** — `RoomSectionTabs` (settings/playlist/userinfo/lock + overflow: PiP, managed-room, leave; portrait/landscape toggle gated behind `if(false)`), `RoomTab`, `RoomUnlockableLayout`, `PopupManagedRoom` (create managed room or identify as operator; sends `WireMessage.controllerAuth`).
+
+**`room/ui/misc/`** — `RoomPlayButton` (center, readiness-gated `controlPlayback`), `RoomGestureInterceptor` (double-tap seek, long-press continuous seek, swipe brightness left / volume right; only attaches when HUD hidden), `RoomBackgoundArtwork` (note filename typo; logo on gradient when no video). **`room/ui/statinfo/`** — `RoomSectionStatusInfo` (room name, connection state, reconnect, OSD, SxxExx badge; hidden in solo).
+
+**`room/sharedplaylist/`** — `SharedPlaylistManager` (shuffle/add/select/import-export/trusted-domain gating; caps `PLAYLIST_MAX_ITEMS=250`, `PLAYLIST_MAX_CHARACTERS=10000`; `trustedEntryMatches` mirrors PC: exact host + www variant + single-label `*` wildcards + optional path prefix, no arbitrary subdomains), `MediaAccessRegistry` (durable bookmark store — the playlist transmits filenames only, so each client re-opens by name via iOS security-scoped bookmarks / Android persistable SAF URIs; self-heals by re-indexing remembered dirs), `PlaylistExt.kt` (`expect PlatformFile.indexMediaTree(): Map<String, ByteArray>`).
+
+### Player (`commonMain/app/player/`)
+
+`PlayerImpl.kt` (abstract engine base: lifecycle, playback, track/chapter analysis, `injectVideoURL`/`injectVideoFile`, `VideoPlayer()` composable, `startTrackingProgress`; `playerSupervisorJob` backs `playerScopeMain`/`IO`; `PLAYLIST_ADVANCE_MIN_DURATION_MS=10_000`, `PLAYLIST_ADVANCE_NEAR_END_MS=5_000`; `announcesFileLoadViaEvent`, `supportsScreenshot`, `trackerJobInterval` open hooks; iOS security-scoped file access held by the base), `PlayerManager` (`isPlayerReady`, `media`, `isNowPlaying`, `timeCurrentMillis`/`timeFullMillis`; `invalidate()` tears down on `GlobalScope` with `runCatching`), `PlayerEngine`, `Playback` (PAUSE/PLAY), `MpvSubfont.installMpvSubfontIfNeeded()` (copies bundled `subfont.ttf` into mpv's config dir — both platforms; mpv must run `config=yes`), `resolver/MediaResolver.kt` (`expect val mediaResolver`; `ResolvedMedia`, `urlLooksLikeDirectMedia`, `extractYoutubeId`). Models in `player/models/`: `MediaFile` (duration in seconds, size a String of bytes), `MediaFileLocation` (`Local`/`Remote` + `commonUri`), `Track`, `TrackChoices` (Exo `Any?` override / mpv `Int` / vlc `String` id — standing TODO to make a sealed class), `PlayerOptions` (Exo buffers; `get()` multiplies `EXO_MAX/MIN_BUFFER` by 1000), `Chapter`.
+
+### Preferences (`commonMain/app/preferences/`)
+
+`Pref<T>` (type-safe wrapper + `SettingConfig` DSL; `prefKeyMapper` supports Boolean/Int/Long/Float/Double/String/Set/ByteArray, throws otherwise; `value()` reads a synchronous snapshot, `flow()`/`watchPref()` reactive). `Datastore.kt` (lateinit global `datastore`, process-lifetime `datastoreScope`, eager hot `datastoreStateFlow` via `runBlocking`, `LocalPrefsState`). `PrefExtraConfig.kt` (`PerformAction`, `BooleanCallback`, `Slider`, `MultiChoice`, `ShowComposable`, `ColorPick`, `YesNoDialog`, `TextField`). `Preferences.kt` (the 60+ Pref registry; `SYNKPLAY_PREFS = "syncplayprefs.preferences_pb"`; `NETWORK_ENGINE` default `netty` Android / `swiftnio` iOS; `UNPAUSE_ACTION` default `IfOthersReady`; `MEDIA_RESOLVER_ENABLED` default true; `GLOBAL/INROOM_RESET_DEFAULTS` clear the whole DataStore). `SettingComposable.kt` (generic renderer; a String pref with no extraConfig becomes a TextField). `settings/` — `MySettings.kt` (`SETTINGS_GLOBAL` = General/Language/Syncing/Network/Advanced; `SETTINGS_ROOM` = Sync/ChatColors/ChatProps/Player/OSD/Advanced; engine categories injected at runtime, not in the static list), `SettingsUI.kt`, `SettingCategory.kt`, `SettingStyling.kt`, `PopupColorPicker.kt`, `PopupTrustedDomains.kt`.
+
+### Theme (`commonMain/app/theme/`)
+
+`SaveableTheme` (serializable; lazy `dynamicScheme` via MaterialKolor `SPEC_2021`), `BuiltinThemes` (default `SILVER_LAKE`; also `PYNCSLAY`, `GrayOLED`, `ALLEY_LAMP`, `BLANK_THEME`), `ThemePicker` (`availableThemes` = SILVER_LAKE/PYNCSLAY/GrayOLED/ALLEY_LAMP), `ThemeCreatorScreen`, `Theming` (brand `NeoSP1/2/3` from `BuildConfig.TRINITY_COLOR_*`, `SP_GRADIENT`, semantic chat/readiness colors `READY_GREEN=0xFF6ECB5A`/`UNREADY_RED=0xFFE85455`, spacing tokens; `flexibleGradient` returns the brand gradient when the active theme has `syncplayGradients`, else Material primary/secondary/tertiary).
+
+### Klipy (`commonMain/app/klipy/`)
+
+`KlipyAPI` (Ktorfit; gifs/stickers search/trending/recent + share analytics), `GifSearchResponse.kt` (`KlipySearchResponse`/`KlipySearchWrapper`/`KlipyItem`/`KlipyFile`/`KlipyResolution`/`KlipyFormat` — every field defaulted for sparse responses), `KlipyUtils` (`search/trending/recents/trackShare`; `BASE_URL = …/api/v1/${KLIPY_API_KEY}/`; per-client HTTP config sets only `Accept` to avoid a duplicate UA that Cloudflare flags).
+
+### Subtitles (`commonMain/app/subtitles/`)
+
+`OpenSubtitlesAPI` (Ktorfit; search params declared **alphabetically** because the API 301-redirects non-canonical query order; download is a POST with `{"file_id": N}`), `SubtitleSearch` (`API_KEY = BuildConfig.OPENSUBTITLES_API_KEY`; `expectSuccess=true`; re-installs `DefaultRequest` with UA `Synkplay v<version>`; free plan = unlimited search, ~5 downloads/day → HTTP 406 surfaces as `SubtitleDownloadResult.QuotaExceeded`; downloads sanitized against path traversal and written with `writeTextFile`).
+
+### Utils (`commonMain/app/utils/`)
+
+`CommonUtils.kt` (`appName`, `@ProtocolApi`, `vidExs`/`audioExs`/`ccExs`/`playlistExs`, `videoFileKitType` — omits the extension filter on iOS so the iOS 26 picker doesn't dim files, `playlistIsValid`, `md5`/`sha256`, `generateRoomPassword`, `isPlayableMediaFilename`), `FileComparisonUtils.kt` (`object FileComparison`, ported 1:1 from Python `utils.py`: `PRIVACY_HIDDENFILENAME="**Hidden filename**"`, `hashFilename`/`hashFilesize` = SHA-256 hex truncated to 12, `FILENAME_STRIP_REGEX = [-~_.\[\](): ]`, `DIFFERENT_DURATION_THRESHOLD=2.5s`, case-insensitive raw↔hashed cross-compare, size '0'/'' matches anything — **must stay byte-identical to Python**), `LogUtils.kt` (`loggy`, 7-day retention, Ktor logger bridge), `PlatformUtils.kt` (expect declarations), `VlcFlags.kt` (`tokenizeVlcFlags` — quote-aware splitter, no escapes).
 
 ---
 
-## Feature Parity Matrix
+## expect/actual Map
 
-| Feature | PC Client | Mobile Client | Notes |
-|---------|:---------:|:-------------:|-------|
-| **Core Protocol** | | | |
-| Connect to server | Y | Y | Full wire-format compatibility |
-| TLS encryption | Y | Y | Netty (Android), SwiftNIO (iOS), no Ktor TLS yet |
-| Room join/switch | Y | Y | |
-| Server password auth | Y | Y | MD5 hashing |
-| **Synchronization** | | | |
-| Position sync | Y | Y | Full algorithm port |
-| Pause/play sync | Y | Y | |
-| Seek sync | Y | Y | |
-| Slowdown (95% speed) | Y | Y | Configurable per-pref |
-| Fastforward | Y | Y | |
-| Rewind on desync | Y | Y | 4s threshold (matches PC) |
-| Latency compensation | Y | Y | EMA-smoothed RTT |
-| ignoringOnTheFly | Y | Y | Feedback suppression |
-| **User Features** | | | |
-| Chat | Y | Y | With inline GIF/image support (mobile-only) |
-| User readiness | Y | Y | 4 unpause action modes |
-| Shared playlists | Y | Y | Add/remove/shuffle/import/export |
-| Playlist auto-advance | Y | Y | On playback end |
-| File privacy (hash name/size) | Y | Y | 3 modes each |
-| Trusted domains | Y | Y | With popup editor |
-| **Controlled Rooms** | | | |
-| Create managed room | Y | Y | SHA256+SHA1 password hash |
-| Identify as operator | Y | Y | |
-| Controller-only state changes | Y | Y | |
-| **Server Hosting** | | | |
-| Built-in server | Y | Y | Full server port in mobile app |
-| Room isolation | Y | Y | PublicServerRoomManager |
-| Disable chat/ready | Y | Y | Server config flags |
-| Persistent rooms | Y | N | No SQLite database on mobile server |
-| Server statistics | Y | N | No stats recording |
-| IPv6 support | Y | N | Mobile server is IPv4 only |
-| **Player Support** | | | |
-| VLC | Y | Y | Android: libVLC 4.0.0-eap24, iOS: MobileVLCKit 3.7.2 |
-| MPV | Y | Y | Android: JNI, iOS: MPVKit bridge |
-| ExoPlayer | N | Y | Android-only, mobile default |
-| AVPlayer | N | Y | iOS-only, native Apple player |
-| MPlayer/MPC/IINA | Y | N | Desktop-only players |
-| Speed control | Y | Y | All engines |
-| Chapter support | Y | Y | MPV, VLC (not ExoPlayer, not AVPlayer) |
-| External subtitles | Y | Y | All except AVPlayer |
-| **UI Features** | | | |
-| GUI | Y (Qt) | Y (Compose) | Full Compose Multiplatform |
-| CLI | Y | N | |
-| Dark mode | Y | Y | Full theme system with AMOLED, custom themes |
-| OSD notifications | Y | Y | Configurable duration |
-| **Mobile-Only Features** | | | |
-| Picture-in-Picture | N | Y | Android + iOS (AVPlayer) |
-| Gesture controls | N | Y | Double-tap seek, swipe brightness/volume |
-| Haptic feedback | N | Y | 8 configurable event types |
-| GIF chat | N | Y | Klipy API integration |
-| Home screen shortcuts | N | Y | Quick join configs |
-| Solo/offline mode | N | Y | Play without server |
-| Multiple player engines | N | Y | Switch between ExoPlayer/MPV/VLC at runtime |
-| Theme creator | N | Y | Custom Material3 themes |
-| Android TV support | N | Y | D-pad navigation |
-| **Missing from Mobile** | | | |
-| File switch manager | Y | N | Auto-find matching files across users |
-| Console/CLI interface | Y | N | |
-| Per-user offset | Y | N | Manual time offset |
-| MPC-HC/MPC-BE/MPlayer/IINA | Y | N | Desktop-specific players |
-| Persistent rooms (server) | Y | N | No database |
+| Expect | Android actual | iOS actual |
+|---|---|---|
+| `instantiateNetworkManager()` | `NettyNetworkManager` (pref `netty`) else `KtorNetworkManager` | `SwiftNioNetworkManager` (pref `swiftnio`) else `KtorNetworkManager` |
+| `ServerNetworkEngine` | Netty `ServerBootstrap` | Ktor raw sockets (IPv4 `0.0.0.0`) |
+| `availablePlatformPlayerEngines` | `[ExoEngine, MpvEngine, VlcEngine]` | `[AVPlayerEngine, MpvKitEngine, VlcKitEngine]` |
+| `httpClient` | OkHttp lazy singleton (15/10/15 s; UA `SynkplayMobile/<ver>`; logging filtered to `api.*`) | Darwin lazy singleton (same timeouts; NSURLCache 32 MB/256 MB; logging filtered to `api.*`) |
+| `mediaResolver` | `NewPipeMediaResolver` (YouTube/SoundCloud/PeerTube/Bandcamp/MediaCCC) | `YouTubeKitMediaResolver` (YouTube only; no-op if bridge unregistered) |
+| `indexMediaTree()` | SAF tree (DocumentFile) / `java.io.File`; child document-URI bytes | NSFileManager walk holding the dir scope; per-file security-scoped bookmarks |
+| `WeakRef<T>` | `java.lang.ref.WeakReference` | `WeakReference` |
+| `EnterRoomMode`/`ExitRoomMode` | hide bars + lock orientation | UIKit orientation mask + `setNeedsUpdateOfSupportedInterfaceOrientations` |
+| `getDeviceIpAddress` | `NetworkInterface` (first non-loopback IPv4) | C interop (`ifaddrs`) |
+| `getMpvConfFilePath` | `{filesDir}/mpv.conf` | `<Documents>/mpv.conf` |
+| `consumePendingShortcut` | always null (uses Intents) | returns + clears a pending shortcut JoinConfig |
+| `AnimatedImage` | Coil3 `AsyncImage` | `CGImageSource`/`UIImage.animatedImage` with a 64-entry LRU cache; alpha forwarded to `UIImageView.alpha` |
+| `platformCallback` (PlatformCallback) | `SyncplayActivity` impl (PiP, brightness, haptics via Vibrator, foreground services, system file picker) | `ApplePlatformCallback` (PiP per engine, brightness, language→Settings, shortcuts, haptics; media-session/server-service no-ops; `launchSystemFilePicker` returns null) |
+
+iOS Swift bridges (registered at startup in `iosApp/iOSApp.swift`): `instantiateSwiftNioNetworkManager`, `instantiateMpvKitPlayer`, `instantiateYouTubeKitBridge`. The Kotlin sides are abstract classes / nullable factory vars in `iosMain` whose `isAvailable` tracks registration.
+
+---
+
+## Player Engines
+
+| Engine | Platform | Chapters | External subs | PiP | Notes |
+|---|---|:-:|:-:|:-:|---|
+| ExoPlayer (Media3) | Android | ✗ | ✓ | (Android PiP) | Default on `exoOnly`; `handleAudioFocus` **must stay false** or focus-loss auto-pause broadcasts a phantom unpause; ext subs require media reload; tracker 500 ms |
+| MPV (libmpv/JNI) | Android | ✓ | ✓ | ✗ | `full` flavor only and the default there; precise double `time-pos` seeking; needs NDK r29 libc++; `MpvSubfont` for subs; tracker 500 ms |
+| VLC (libVLC 4) | Android | ✓ | ✓ | ✗ | `full` flavor only, experimental; track ids are Strings ('-1' = none); user `VLC_CUSTOM_FLAGS` appended last; volume 0–200 |
+| AVPlayer (AVFoundation) | iOS | ✗ | ✗ | ✓ | Experimental; KVO on `timeControlStatus` — only `Playing` counts (buffering must not); MP4/HLS only; per-inject new AVPlayer instance |
+| MPVKit (libmpv via Swift) | iOS | ✓ | ✓ | ✗ | Default + experimental; Swift `MpvKitPlayerBridge` over MoltenVK/Vulkan; `vo=gpu-next` forced; toggles `vid=no/auto` on bg/fg to rebuild the swapchain; `announcesFileLoadViaEvent=true`; tracker pushes time-pos (interval 0) |
+| VLCKit 4 | iOS | ✓ | ✓ | ✓ | 250 ms main-thread position tracker (NOT libvlc callbacks — lock assert); `VLCEventsLegacyConfiguration` for async callbacks; `:start-paused`; seek-shadow convergence; every play/pause/seek guarded on `media != null`; configures AVAudioSession; volume 0–200 |
+
+**iOS PiP** dispatches per engine in `ApplePlatformCallback.onPictureInPicture`: AVPlayer uses `AVPictureInPictureController(avPlayerLayer)`; VLCKit 4 uses its own `enter/exitPictureInPicture` via the `VlcDrawable` PiP protocol stack; **MPVKit has no PiP**. All gated on `AVPictureInPictureController.isPictureInPictureSupported()`.
+
+**Destroy contract (all Android engines + iOS MpvKitImpl/VlcKitImpl/AVPlayerImpl):** flip `isInitialized=false` **first** (so every `isInitialized`-gated method refuses the engine), then cancel `playerSupervisorJob` (stops the position tracker, releases the `RoomViewmodel` graph), then release the native engine. mpv's process-global handle hard-crashes (`CHECK_MPV_INIT()`) if a tracker poll outlives teardown; its global observer list must be detached first.
+
+---
+
+## Built-in Server
+
+The mobile app can host a full Syncplay server, a direct port of `server.py`/`utils.py`. **All shared state is confined to one thread:** `SyncplayServer.serverDispatcher = Dispatchers.IO.limitedParallelism(1)`, mirroring the single Twisted reactor. Inbound dispatch, per-watcher state timers, and connection-lost cleanup all hop onto it via `onServerThread{}`.
+
+| File | Purpose |
+|---|---|
+| `server/SyncplayServer.kt` | Rooms, watchers, per-watcher state timer (initial forced State after 100 ms `doSeek=true`, then every `SERVER_STATE_INTERVAL_MS=1000`), broadcasting, controlled-room auth, `buildServerFeatures` (advertises `setOthersReadiness=true`, `persistentRooms=false`). |
+| `server/ClientConnection.kt` | Per-client `WireMessageHandler`: decodes inbound JSON inside `onServerThread{}`, builds typed outbound via `sendTyped → toJson()`. MD5 password check; `onTLS` always answers `tlsResponse(false)` (no server TLS); filenames truncated to 250. |
+| `server/ServerRoomManager.kt` | Room lifecycle, `findFreeUsername` (appends `_`), broadcast/broadcastRoom; `PublicServerRoomManager` (room isolation) overrides `broadcast` to the sender's room only. `getOrCreateRoom` returns `ControlledServerRoom` for `+` names. |
+| `server/ServerViewmodel.kt` | Host-screen VM: config (port default 8999, validated 1–65535), `ServerStatus`, logs, device/public IP (`api.ipify.org`); invokes `serverServiceStart/Stop`. |
+| `server/ui/ServerHostScreen.kt` | Config form, start/stop, status, IPs, client count, log. Shows an iOS warning (background hosting unreliable). |
+| `server/model/ServerRoom.kt` | Base room: `STATE_PAUSED=0`/`STATE_PLAYING=1`; `getPosition()` advances by wall-clock and adopts the slowest watcher when stale >1 s. |
+| `server/model/ControlledServerRoom.kt` | Gates `setPaused/setPosition/setPlaylist/setPlaylistIndex` on `canControl`; `getControllers()` returns empty (mirrors PC). |
+| `server/model/ServerWatcher.kt` | `updateState` adds `messageAge` on unpause; relays pause changes; `compareTo` pushes no-position/no-file watchers last. |
+| `server/model/ServerConfig.kt` | Port 8999, `isolateRooms=true`; `MAX_*` (chat 150, username 16, room 35, filename 250); `PROTOCOL_TIMEOUT_SECONDS=12.5`; `hashedPassword` = MD5 hex. |
+| `server/model/RoomPasswordProvider.kt` | Controlled-room hash chain + `XX-###-###` validation. |
+| `server/network/ServerNetworkEngine.{android,ios}.kt` | Netty `ServerBootstrap` (Android, `DelimiterBasedFrameDecoder` 64 KiB) / Ktor raw sockets (iOS, IPv4); both feed CRLF lines to `ClientConnection.handlePacket`. |
+
+The Android server process is kept alive by `SyncplayServerService` (a foreground notification only; logic runs in `ServerViewmodel`'s scope). The general media-session foreground service is `SyncplayMediaSessionService`.
 
 ---
 
 ## Architectural Patterns
 
-### State Management
-- **MVVM** with `ViewModel` + `StateFlow`/`MutableStateFlow`
-- `RoomViewmodel` is the central coordinator, owns all managers
-- Managers (`PlayerManager`, `RoomUiStateManager`, `ProtocolManager`, etc.) extend `AbstractManager` for coroutine scope
-- UI collects StateFlows in composables via `collectAsState()`
-
-### Dependency Injection
-- **Manual DI** via constructor injection and lazy initialization
-- No DI framework (no Koin/Hilt/etc.)
-- Platform factories via expect/actual pattern
-- `CompositionLocal` for UI-scoped dependencies (theme, viewmodel, palette)
-
-### Navigation
-- `NavDisplay` (Navigation3 alpha) with `SnapshotStateList<Screen>` backstack
-- Screens are `@Serializable` sealed interface subtypes
-- Entry decorators for transitions
-
-### Networking
-- **Client:** Abstract `NetworkManager` with platform-specific implementations
-  - Android default: Netty (TLS support)
-  - iOS default: SwiftNIO (TLS support)
-  - Fallback: Ktor raw sockets (no TLS)
-- **Server:** `ServerNetworkEngine` expect/actual
-  - Android: Netty ServerBootstrap
-  - iOS: Ktor raw sockets
-- Reconnection: configurable interval, queues unsent packets in `outboundQueue`
-
-### Player Architecture
-- Abstract `PlayerImpl` defines full interface
-- `PlayerEngine` object provides factory + metadata
-- Platform implementations:
-  - Android: ExoImpl (Media3), MpvImpl (JNI), VlcImpl (libVLC)
-  - iOS: AVPlayerEngine (AVFoundation), MpvKitImpl (bridge to Swift), VlcKitImpl (VLCKit)
-- Track choices persisted across media switches via `TrackChoices`
-- `VideoPlayer()` composable per engine renders native video surface
-
-### Protocol Architecture
-- Messages are `@Serializable` data classes implementing `ServerMessage` sealed interface
-- Each message type has a `handle()` method that processes itself (visitor-like pattern)
-- `ServerMessageDeserializer` (JsonContentPolymorphicSerializer) routes by JSON key
-- Outbound messages built via `ClientMessage` sealed class with `toJson()` serialization
-- `SyncplayProtocolHandler` interface shared between client and server code
-
-### Preference System
-- Type-safe `Pref<T>` wrapper with DataStore backend
-- Cached `StateFlow` per preference for reactive UI
-- `SettingConfig` DSL for auto-generating settings UI (title, summary, icon, extra config)
-- Categories organize settings into groups with icons
+- **MVVM + StateFlow.** `RoomViewmodel` is the central hub owning all managers (each extends `AbstractManager` for `viewModelScope` dispatch). UI collects StateFlows in composables.
+- **Manual DI.** No framework; constructor injection, lazy init, platform factories via `expect`/`actual`, and `CompositionLocal` for UI-scoped deps.
+- **Navigation.** Navigation3 `NavDisplay` over a `SnapshotStateList<Screen>` backstack owned by `SyncplayViewmodel`; `Screen` subtypes are `@Serializable`.
+- **Protocol visitor.** `WireMessage` sealed hierarchy; `dispatch(handler)` calls the matching `WireMessageHandler` method. Same handler interface implemented by client and server. `toJson()` per subclass to avoid the polymorphic `"type"` discriminator.
+- **Serial inbound processing.** One unbounded `Channel<String>` drained by a single consumer on both client (`NetworkManager`) and server (`limitedParallelism(1)`), matching the Python single-reactor model and preventing interleaved State mutations.
+- **Preference system.** Type-safe `Pref<T>` over DataStore with a hot `StateFlow` and a `SettingConfig` DSL that auto-generates the settings UI. A single snapshotted `LocalPrefsState` feeds `watchPref()` via `derivedStateOf` (no per-composable flow collection).
+- **Tolerant deserialization invariant.** Any malformed inbound sub-field must throw `SerializationException` (never `IllegalStateException`/`error()`), the only type the skip-a-poisoned-line catch covers; a TLS-handshake failure in `RoomCallback.onReceivedTLS` must be caught locally for the same reason.
 
 ---
 
-## Dependency Map
+## Known Gaps & Platform Limitations
 
-```
-SyncplayViewmodel
-  ├── backstack: SnapshotStateList<Screen>
-  ├── currentTheme / customThemes (Preferences-backed)
-  └── homeWeakRef / roomWeakRef
+**Missing vs desktop:** file-switch manager (auto-find matching files across users), per-user time offset, persistent rooms / SQLite on the mobile server (ephemeral only), server statistics, IPv6 server (IPv4 only), CLI/console UI, desktop players (MPC-HC/BE, MPlayer, IINA).
 
-HomeViewmodel
-  ├── JoinConfig (serializable)
-  └── navigates to → Screen.Room(joinConfig)
+**Code-level TODOs:** `TrackChoices` → sealed class; `PlayerManager.timeCurrentMillis/timeFullMillis` → `media.fileTimePos`/`fileDuration`; suppress `RoomSectionStatusInfo` overlay in PiP; portrait/landscape overflow toggle gated behind `if(false)`; check operator status before opening the identify popup; `CardSharedPlaylist` clipboard API migration; VLC Android time-tracking / hw-sw switch / `changeSubtitleSize`; `SyncplayViewmodel.isSharedPlaylistEnabled` not advertised to the server.
 
-RoomViewmodel (central hub)
-  ├── RoomUiStateManager (UI state)
-  ├── PlayerManager
-  │   ├── PlayerImpl (platform-specific)
-  │   │   ├── ExoImpl / MpvImpl / VlcImpl (Android)
-  │   │   └── AVPlayerImpl / MpvKitImpl / VlcKitImpl (iOS)
-  │   └── TrackChoices
-  ├── NetworkManager (platform-specific)
-  │   ├── NettyNetworkManager (Android default)
-  │   ├── SwiftNioNetworkManager (iOS default)
-  │   └── KtorNetworkManager (fallback)
-  ├── ProtocolManager
-  │   ├── Session (shared state)
-  │   │   ├── userList: StateFlow<List<User>>
-  │   │   ├── messageSequence: StateFlow<List<Message>>
-  │   │   ├── sharedPlaylist
-  │   │   └── outboundQueue
-  │   └── PingService
-  ├── RoomCallback (inbound protocol events)
-  │   └── → updates Session, PlayerManager, dispatches UI messages
-  ├── RoomEventDispatcher (outbound user actions)
-  │   └── → sends via NetworkManager
-  └── SharedPlaylistManager
-      └── → uses Session.sharedPlaylist, NetworkManager
-
-ServerViewmodel
-  ├── SyncplayServer
-  │   ├── ServerRoomManager
-  │   │   ├── ServerRoom / ControlledServerRoom
-  │   │   │   └── ServerWatcher[]
-  │   │   └── RoomPasswordProvider
-  │   └── ClientConnection[] (per-client protocol handlers)
-  │       ├── OutboundMessageBuilder
-  │       └── InboundMessageHandler
-  └── ServerNetworkEngine (platform-specific)
-```
-
----
-
-## Known Gaps and TODOs
-
-### Code-Level TODOs
-- `TrackChoices`: Comment says "TODO: Convert to sealed class for type safety" (currently uses engine-specific fields)
-- `PlayerManager.timeCurrentMillis/timeFullMillis`: Comments say "TODO: replace with media.fileTimePos/fileDuration"
-- `KtorNetworkManager.upgradeTls()`: TODO - opportunistic TLS not supported by Ktor (issue #6623)
-- `PlayerImpl.takeScreenshot()`: Returns null on most engines (only partially implemented)
-
-### Missing PC Features
-- **File switch manager:** PC auto-finds matching files when one user plays a different file. Mobile has no equivalent
-- **Per-user time offset:** PC allows manual offset adjustment per user
-- **Persistent rooms (server):** PC server saves room state to SQLite. Mobile server is ephemeral only
-- **Server statistics:** PC server records client version stats hourly
-- **IPv6 server:** PC server listens on both IPv4 and IPv6. Mobile server is IPv4 only
-- **Console UI:** PC has a CLI interface alternative to GUI
-
-### Platform Limitations
-- **iOS server hosting:** May not work reliably in background (no foreground services on iOS)
-- **iOS TLS (server-side):** Mobile server always responds `TLS: false` (no server TLS)
-- **AVPlayer:** No external subtitle support, no chapter support, limited format support
-- **ExoPlayer:** No chapter support
-- **Ktor networking:** No TLS upgrade support - must use Netty (Android) or SwiftNIO (iOS) for encrypted connections
-
-### Architectural Notes
-- No DI framework - manual wiring could become complex as features grow
-- Some iOS functionality requires Swift bridges (MpvKitBridge, SwiftNioNetworkManager) registered at app init
-- `VlcPlayer4.kt` in iosMain is commented out (legacy code)
-- Rewind threshold is 4s, matching PC's `DEFAULT_REWIND_THRESHOLD` in `constants.py`
-- Server password comparison uses MD5 (protocol requirement, not a security concern since it's over TLS)
+**Platform limitations:**
+- **iOS server hosting** may not run reliably in the background (no foreground services); the mobile server always answers `TLS: false` (no server-side cert support).
+- **Ktor networking** has no opportunistic TLS upgrade (KTOR-6623); encrypted connections require Netty (Android) or SwiftNIO (iOS).
+- **AVPlayer (iOS):** no external subtitles, no chapters, narrow format support (MP4/HLS).
+- **ExoPlayer (Android):** no chapters.
+- **MPVKit (iOS):** no PiP; no Lua/`stats.lua` (custom stats overlay); hwdec/profile changes apply only on next room join; needs `config=yes` + bundled `subfont.ttf` or subtitles render blank.
+- **mpv (Android):** requires the NDK r29 `libc++_shared.so` (verified at build time); ships only in the `full` flavor.

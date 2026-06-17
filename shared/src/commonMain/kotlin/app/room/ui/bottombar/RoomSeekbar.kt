@@ -82,13 +82,12 @@ fun RoomSeekbar(modifier: Modifier) {
     val isSliderBeingPressed by sliderInteractionSource.collectIsPressedAsState()
     val isSliderBeingFocused by sliderInteractionSource.collectIsFocusedAsState()
 
-    /* Drag/press freezes the slider so it doesn't snap back under the user's finger.
-     * Focus alone (D-pad) doesn't freeze — we intercept LEFT/RIGHT and dispatch real seeks,
-     * so the slider should keep tracking the playback position visually. */
+    /* Drag/press freezes the slider so it doesn't snap back under the user's finger. D-pad focus
+     * alone doesn't freeze: LEFT/RIGHT are intercepted as real seeks, so the slider keeps tracking
+     * the playback position visually. */
     val isSliderInUse by remember { derivedStateOf { isSliderBeingPressed || isSliderBeingDragged } }
 
     LaunchedEffect(videoCurrentTimeMs) {
-        //This passively updates slider value when video progresses
         if (!isSliderInUse) {
             sliderValue = videoCurrentTimeMs.toFloat()
         }
@@ -171,7 +170,6 @@ fun RoomSeekbar(modifier: Modifier) {
                     if (showChapterDots) {
                         chapters.forEach { chapter ->
                             if (chapter.timeOffsetMillis / 1000 != 0L) {
-                                // Calculate horizontal position fraction based on chapter timestamp
                                 val positionFraction = (chapter.timeOffsetMillis / videoFullDurationMs.toFloat().coerceAtLeast(1f))
                                 Box(
                                     modifier = Modifier

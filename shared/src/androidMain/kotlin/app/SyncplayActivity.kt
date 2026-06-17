@@ -91,14 +91,7 @@ class SyncplayActivity : ComponentActivity() {
         /** Install crash handler early so it catches everything after this point */
         CrashHandler.install()
 
-        // TEST CRASH — remove before release
-//        lifecycleScope.launch {
-//            kotlinx.coroutines.delay(500)
-//            error("Test crash: CrashOverlay is working!")
-//        }
-
-        /** Adjusting the appearance of system window decor */
-        /* Tweaking some window UI elements */
+        /** Tweaking window UI decor (transparent system bars, edge-to-edge) */
         applyActivityUiProperties()
 
         /** Binding common logic with platform logic */
@@ -183,18 +176,17 @@ class SyncplayActivity : ComponentActivity() {
             override fun getCurrentBrightness(): Float {
                 val brightness = window.attributes.screenBrightness
 
-                //Check if we already have a brightness
                 val brightnesstemp = if (brightness != -1f)
                     brightness
                 else {
-                    //Check if the device is in auto mode
+                    // No window override set: fall back to system brightness. In auto mode the
+                    // raw value is unreliable, so default to 0.5.
                     if (Settings.System.getInt(
                             contentResolver,
                             Settings.System.SCREEN_BRIGHTNESS_MODE,
                             Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
                         ) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
                     ) {
-                        //cannot retrieve a value -> 0.5
                         0.5f
                     } else Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS, 128).toFloat() / 255
                 }

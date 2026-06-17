@@ -44,9 +44,9 @@ data class RoomFeatures(
  * The reference python server always sends an object, but it is not the only server out
  * there: minimal / older / third-party server implementations send an empty array `[]`
  * (or `null`) for a user that reported no features. The strict generated [RoomFeatures]
- * serializer rejects an array with *"Expected object, but had array … JSON input: []"*,
- * and because one bad sub-field aborts the **whole** `List`/`Set` decode, that single odd
- * user used to blank the entire user-info tab and spin the reconnect loop (issue #152).
+ * serializer rejects an array (*"Expected object, but had array"*), and one bad sub-field
+ * aborts the whole `List`/`Set` decode, which would blank the user-info tab and spin the
+ * reconnect loop (issue #152).
  *
  * Decode: a JSON object is parsed normally; anything else (array, primitive; JSON `null`
  * is already handled by the nullable wrapper) falls back to default [RoomFeatures] — which

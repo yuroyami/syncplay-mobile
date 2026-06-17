@@ -33,8 +33,8 @@ class Session(val protocol: ProtocolManager) {
     /**
      * Outgoing packets queued while disconnected, flushed on reconnection.
      * Guarded by [outboundQueueLock]: the failure path of `transmitPacket` appends from
-     * arbitrary IO threads while `onConnected` drains — a plain list raced (an `add`
-     * landing between the drain's snapshot and `clear()` was silently lost).
+     * arbitrary IO threads while `onConnected` drains, so the snapshot-then-clear in
+     * [drainOutbound] must be atomic against concurrent appends.
      */
     private val outboundQueue = mutableListOf<String>()
     private val outboundQueueLock = Mutex()

@@ -128,7 +128,6 @@ object CardSharedPlaylist {
         val scope = rememberCoroutineScope { Dispatchers.IO }
         val playlist = viewmodel.playlistManager
 
-        /* ActivityResultLaunchers for various shared playlist actions */
         val mediaFilePicker  = rememberFilePickerLauncher(
             type = videoFileKitType,
             mode = FileKitMode.Multiple(),
@@ -168,7 +167,6 @@ object CardSharedPlaylist {
         val mediaDirsPopupState = remember { mutableStateOf(false) }
         val addUrlsPopupState = remember { mutableStateOf(false) }
 
-        /* Now to the actual content in the card */
         val uiOpacity by viewmodel.uiState.uiOpacity.collectAsState()
         Card(
             shape = RoundedCornerShape(12.dp),
@@ -180,7 +178,6 @@ object CardSharedPlaylist {
                 verticalArrangement = Arrangement.SpaceEvenly,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                /* Card title */
                 Text(
                     text = stringResource(Res.string.room_shared_playlist),
                     color = MaterialTheme.colorScheme.primary,
@@ -188,7 +185,6 @@ object CardSharedPlaylist {
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
 
-                /* The actual shared playlist */
                 LazyColumn(
                     modifier = Modifier.fillMaxHeight(0.75f).fillMaxWidth().padding(8.dp)
                 ) {
@@ -244,7 +240,6 @@ object CardSharedPlaylist {
                                     color = MaterialTheme.colorScheme.primary,
                                 )
 
-                                //Item Action: Play
                                 DropdownMenuItem(
                                     text = { Text(text = stringResource(Res.string.play)) },
                                     leadingIcon = { Icon(imageVector = Icons.Default.PlayCircle, "") },
@@ -254,7 +249,6 @@ object CardSharedPlaylist {
                                     }
                                 )
 
-                                //Item Action: Delete
                                 DropdownMenuItem(
                                     text = { Text(text = stringResource(Res.string.delete)) },
                                     leadingIcon = { Icon(imageVector = Icons.Default.Delete, "") },
@@ -281,7 +275,6 @@ object CardSharedPlaylist {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
 
-                    /* Button to add file to Shared Playlist */
                     FlexibleIcon(
                         icon = Icons.AutoMirrored.Filled.NoteAdd, size = Theming.ROOM_ICON_SIZE, shadowColors = listOf(Color.Black),
                         onClick = {
@@ -289,7 +282,6 @@ object CardSharedPlaylist {
                         }
                     )
 
-                    /* Button to add link to Shared Playlist */
                     FlexibleIcon(
                         icon = Icons.Filled.AddLink, size = Theming.ROOM_ICON_SIZE, shadowColors = listOf(Color.Black),
                         onClick = {
@@ -297,7 +289,6 @@ object CardSharedPlaylist {
                         }
                     )
 
-                    /* Button to add folder to Shared Playlist */
                     FlexibleIcon(
                         icon = Icons.Filled.CreateNewFolder, size = Theming.ROOM_ICON_SIZE, shadowColors = listOf(Color.Black),
                         onClick = {
@@ -305,16 +296,14 @@ object CardSharedPlaylist {
                         }
                     )
 
-                    /* Overflow menu to show all available actions */
                     Box {
                         val sharedplaylistOverflowState = remember { mutableStateOf(false) }
 
-                        // Compose Multiplatform 1.10+ has an iOS picker race: launching a
-                        // FileKit picker while a Compose modal (this dropdown) is closing
-                        // makes the native picker fire its delegate twice → "Already
-                        // resumed" crash inside DocumentPickerDelegate. Workaround: capture
-                        // the action, dismiss the dropdown, and let LaunchedEffect run it
-                        // once the dismissal has settled. See FileKit issue/PR #575.
+                        // On iOS, launching a FileKit picker while this Compose dropdown is
+                        // still closing fires the native delegate twice ("Already resumed"
+                        // crash in DocumentPickerDelegate). Capture the action, dismiss the
+                        // dropdown, and let LaunchedEffect run it once dismissal settles.
+                        // See FileKit #575.
                         var pendingOverflowAction by remember { mutableStateOf<(() -> Unit)?>(null) }
                         LaunchedEffect(sharedplaylistOverflowState.value, pendingOverflowAction) {
                             val action = pendingOverflowAction
@@ -351,7 +340,6 @@ object CardSharedPlaylist {
 
                             val txtsize = 10f
 
-                            //Shared Playlist Action: Shuffle All
                             DropdownMenuItem(
                                 text = {
                                     Text(
@@ -366,7 +354,6 @@ object CardSharedPlaylist {
                                 }
                             )
 
-                            //Shared Playlist Action: Shuffle Rest of files
                             DropdownMenuItem(
                                 text = {
                                     Text(
@@ -385,7 +372,6 @@ object CardSharedPlaylist {
 
                             HorizontalDivider(thickness = (0.5).dp, color = MaterialTheme.colorScheme.outlineVariant)
 
-                            //Shared Playlist Action: Import playlist file (txt)
                             DropdownMenuItem(
                                 text = {
                                     Text(
@@ -400,7 +386,6 @@ object CardSharedPlaylist {
                                 }
                             )
 
-                            //Shared Playlist Action: Import playlist file (txt) with shuffling
                             DropdownMenuItem(
                                 text = {
                                     Text(
@@ -418,7 +403,6 @@ object CardSharedPlaylist {
                                 }
                             )
 
-                            //Shared Playlist Action: Export playlist to file
                             DropdownMenuItem(
                                 text = {
                                     Text(
@@ -447,7 +431,6 @@ object CardSharedPlaylist {
 
                             HorizontalDivider(thickness = (0.5).dp, color = MaterialTheme.colorScheme.outlineVariant)
 
-                            //Shared Playlist Action: Set Media Directories
                             DropdownMenuItem(
                                 text = {
                                     Text(
@@ -464,7 +447,6 @@ object CardSharedPlaylist {
 
                             HorizontalDivider(thickness = (0.5).dp, color = MaterialTheme.colorScheme.outlineVariant)
 
-                            //Shared Playlist Action: Clear playlist
                             DropdownMenuItem(
                                 text = { Text(fontSize = txtsize.sp, color = Color.LightGray, text = stringResource(Res.string.room_shared_playlist_clear_playlist)) },
                                 leadingIcon = { Icon(imageVector = Icons.Filled.ClearAll, "") },
@@ -502,14 +484,12 @@ object CardSharedPlaylist {
                 verticalArrangement = Arrangement.SpaceEvenly,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                /* The title */
                 Text(
                     text = stringResource(Res.string.room_shared_playlist_add_url),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
 
-                /* Title's subtext */
                 Text(
                     text = stringResource(Res.string.room_shared_playlist_add_url_subtext, appName),
                     color = MaterialTheme.colorScheme.primary,
@@ -519,7 +499,6 @@ object CardSharedPlaylist {
                     lineHeight = 14.sp
                 )
 
-                /* The URLs input box */
                 val urls = remember { mutableStateOf("") }
                 TextField(
                     modifier = Modifier.fillMaxWidth(0.9f),
@@ -553,7 +532,6 @@ object CardSharedPlaylist {
                     }
                 )
 
-                /* Ok button */
                 Button(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     onClick = {

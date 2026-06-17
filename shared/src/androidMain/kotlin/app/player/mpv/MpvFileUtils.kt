@@ -60,28 +60,6 @@ object MpvFileUtils {
         return filepath
     }
 
-
-//    private fun openContentFd(context: Context, uri: Uri): String? {
-//        val resolver = context.applicationContext.contentResolver
-//        Log.e("mpv", "Resolving content URI: $uri")
-//        val fd = try {
-//            val desc = resolver.openFileDescriptor(uri, "r")
-//            desc!!.detachFd()
-//        } catch (e: Exception) {
-//            Log.e("mpv", "Failed to open content fd: $e")
-//            return null
-//        }
-//        // See if we skip the indirection and read the real file directly
-//        val path = findRealPath(fd)
-//        if (path != null) {
-//            Log.e("mpv", "Found real file path: $path")
-//            ParcelFileDescriptor.adoptFd(fd).close() // we don't need that anymore
-//            return path
-//        }
-//        // Else, pass the fd to mpv
-//        return "fd://${fd}"
-//    }
-
     private fun openContentFd(context: Context, uri: Uri): String? {
         val resolver = context.applicationContext.contentResolver
         Log.e("mpv", "Resolving content URI: $uri")

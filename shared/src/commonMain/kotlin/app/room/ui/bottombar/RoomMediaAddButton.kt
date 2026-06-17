@@ -108,11 +108,9 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
         }
     }
 
-    // Compose Multiplatform 1.10+ has an iOS picker race: launching a FileKit picker
-    // while a Compose modal (this dropdown) is closing makes the native picker fire
-    // its delegate twice → "Already resumed" crash inside DocumentPickerDelegate.
-    // Workaround: dismiss the dropdown first, then launch in a LaunchedEffect once
-    // the dismissal has settled. See FileKit issue/PR #575.
+    // iOS FileKit picker race (FileKit #575): launching a picker while a Compose modal
+    // (this dropdown) is closing fires the native delegate twice -> "Already resumed" crash.
+    // Dismiss the dropdown first, then launch once the dismissal settles.
     var launchVideoPickerAfterDismiss by remember { mutableStateOf(false) }
     LaunchedEffect(showPopup, launchVideoPickerAfterDismiss) {
         if (!showPopup && launchVideoPickerAfterDismiss) {
@@ -160,9 +158,8 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
                 font = jostFont
             )
 
-            // From storage (system picker) — FileKit's default `ACTION_OPEN_DOCUMENT` SAF picker,
-            // filtered by MIME types derived from `vidExs` on Android. Opens Android's Documents UI
-            // directly. On iOS this is the UIDocumentPickerViewController.
+            // From storage (system picker): FileKit's default ACTION_OPEN_DOCUMENT SAF picker,
+            // filtered by MIME types derived from vidExs on Android; UIDocumentPickerViewController on iOS.
             DropdownMenuItem(
                 text = {
                     Row(verticalAlignment = CenterVertically) {
@@ -184,12 +181,10 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
                 }
             )
 
-            // From storage (custom picker) — Android only. Fires `ACTION_GET_CONTENT` wrapped in
-            // `Intent.createChooser()` so the user is presented with a selector of every installed
-            // file manager / explorer (FX, MiXplorer, Solid Explorer, cloud apps, SMB apps, etc.).
-            // Two use cases: (1) SMB DocumentsProviders that report opaque MIMEs filtered out by
-            // FileKit's extension filter; (2) users who prefer to browse inside a specific file
-            // manager. iOS has no analogous "chooser" API, so the item is hidden there.
+            // From storage (custom picker): Android only. Fires ACTION_GET_CONTENT in
+            // Intent.createChooser() so any installed file manager / SMB / cloud app can be picked.
+            // Covers SMB DocumentsProviders whose opaque MIMEs FileKit's extension filter rejects.
+            // iOS has no chooser API, so the item is hidden there.
             if (platform == Platform.Android) {
                 DropdownMenuItem(
                     text = {
@@ -269,7 +264,7 @@ fun AddVideoButton(modifier: Modifier, expanded: Boolean, onClick: () -> Unit) {
                 Row(modifier = Modifier.fillMaxSize(), verticalAlignment = CenterVertically, horizontalArrangement = Arrangement.SpaceAround) {
                     Icon(
                         tint = Color.DarkGray, imageVector = Icons.Filled.AddToQueue, contentDescription = "",
-                        modifier = Modifier.size(32.dp).gradientOverlay(flexibleGradient) //.align(Alignment.Center)
+                        modifier = Modifier.size(32.dp).gradientOverlay(flexibleGradient)
                     )
 
                     Text(

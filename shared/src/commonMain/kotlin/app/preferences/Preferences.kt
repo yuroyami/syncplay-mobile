@@ -315,10 +315,9 @@ object Preferences {
     val CURRENT_THEME = Pref("misc_current_theme", defaultTheme.asString())
     val CUSTOM_THEMES = Pref<Set<String>>("misc_custom_themes", emptySet())
     val KLIPY_FAVORITES = Pref<Set<String>>("misc_klipy_favorites", emptySet())
-    /** When true, the "Undo Seek" action skips its confirmation dialog. Toggled by the
-     * "Always do" button in the dialog itself. Hidden from the settings UI on purpose. */
+    /** When true, the "Undo Seek" action skips its confirmation dialog. Set by the dialog's
+     * "Always do" button. No SettingConfig, so it never appears in the settings UI. */
     val UNDO_SEEK_NO_CONFIRM = Pref("misc_undo_seek_no_confirm", false)
-    //val ROOM_ORIENTATION = PreferenceDef("misc_room_orientation", "auto")
 
     /** ------------ General -------------*/
     val REMEMBER_INFO = Pref("pref_remember_info", true) {
@@ -490,9 +489,8 @@ object Preferences {
         icon = Icons.Filled.Key
     }
     /** When true, page URLs (YouTube, SoundCloud, …) entered as media are run through the
-     *  platform's native extractor before being handed to the player. Default on — there's
-     *  no cost when the URL already points to direct media (the heuristic short-circuits)
-     *  and no remote service is involved. */
+     *  platform's native extractor before reaching the player. A heuristic short-circuits when
+     *  the URL is already direct media, so there's no cost in the common case. */
     val MEDIA_RESOLVER_ENABLED = Pref("pref_media_resolver_enabled", true) {
         title = Res.string.setting_media_resolver_title
         summary = Res.string.setting_media_resolver_summary
@@ -931,12 +929,10 @@ object Preferences {
     }
 
     /**
-     * Extra command-line flags forwarded verbatim to LibVLC on both Android (via `LibVLC(ctx, args)`)
-     * and iOS (via `VLCLibrary(args)`). Whitespace-separated; the parser is deliberately simple —
-     * it uses [tokenizeVlcFlags] which splits on whitespace while respecting `"` and `'` quoted
-     * runs so values with spaces can be passed (e.g. `--sub-text-scale="1.5"`).
-     *
-     * Takes effect the next time the VLC engine is (re)initialized.
+     * Extra command-line flags forwarded verbatim to LibVLC on Android (`LibVLC(ctx, args)`) and
+     * iOS (`VLCLibrary(args)`). Tokenized by [tokenizeVlcFlags], which splits on whitespace but
+     * honours `"`/`'` quoted runs so values with spaces work (e.g. `--sub-text-scale="1.5"`).
+     * Takes effect on the next VLC engine (re)initialization.
      */
     val VLC_CUSTOM_FLAGS = Pref("pref_vlc_custom_flags", "") {
         title = Res.string.uisetting_vlc_custom_flags_title

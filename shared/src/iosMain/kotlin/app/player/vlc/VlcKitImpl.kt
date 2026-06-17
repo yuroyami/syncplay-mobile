@@ -96,24 +96,18 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     override val supportsChapters: Boolean = true
 
     /**
-     * VLCKit 4 added native Picture-in-Picture for iOS (see NEWS, "added support for Picture-
-     * in-Picture playback on iOS and macOS"). We drive it through [VlcDrawable] — see
-     * [enterPictureInPicture] / [exitPictureInPicture].
+     * Native Picture-in-Picture, driven through [VlcDrawable]. See [enterPictureInPicture] /
+     * [exitPictureInPicture].
      */
     override val supportsPictureInPicture: Boolean = true
 
     /**
-     * VLCKit 4 rewrote its event management: delegate callbacks now come from libvlc
+     * 250 ms position tracker interval. VLCKit 4 delivers delegate callbacks from libvlc
      * worker threads (the timer thread holds `player->timer.lock` for `mediaPlayerTimeChanged`),
-     * and `mediaPlayerTimeChanged` fires only once per second by default
-     * (`timeChangeUpdateInterval` = 1.0s). We can't safely read `vlcPlayer.time` from inside
-     * the callback (libvlc's `vlc_player_Lock` asserts `!vlc_mutex_held(timer.lock)`), and
-     * even if we could, 1 Hz updates make the seekbar look stuck.
-     *
-     * So we run our own 250 ms tracker job on the main thread (just like all the other
-     * engines) and ignore VLCKit's time-change notifications for position reads. This
-     * mirrors what MobileVLCKit 3 was doing implicitly via its NSNotificationCenter-backed
-     * 4 Hz delegate.
+     * so `vlcPlayer.time` can't be read from inside the callback (libvlc's `vlc_player_Lock`
+     * asserts `!vlc_mutex_held(timer.lock)`), and `mediaPlayerTimeChanged` fires only once per
+     * second by default. A main-thread tracker job drives position reads instead, ignoring
+     * VLCKit's time-change notifications.
      */
     override val trackerJobInterval: Duration
         get() = 250.milliseconds
@@ -160,17 +154,14 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     private var didBecomeActiveObserver: NSObjectProtocol? = null
 
     /**
-     * Cleans up VLC resources and stops playback.
-     *
-     * Properly disposes of the media player, media object, and VLC library.
+     * Tears down the media player, media object, VLC library, observers and PiP controller.
      */
     override suspend fun destroy() {
         if (!isInitialized) return
-        // Same destroy contract as the Android engines (ExoImpl/MpvImpl/VlcImpl): flip the
-        // guard first so per-method `isInitialized` checks bail, then cancel the supervisor
-        // so the 250ms position tracker stops. Without the cancel, the tracker job outlives
-        // the room, keeps polling a torn-down player, and retains the whole RoomViewmodel
-        // graph after every room exit.
+        // Destroy contract shared with the Android engines (ExoImpl/MpvImpl/VlcImpl): flip the
+        // guard first so per-method `isInitialized` checks bail, then cancel the supervisor so
+        // the 250ms position tracker stops. Without the cancel the tracker job outlives the
+        // room, keeps polling a torn-down player, and retains the whole RoomViewmodel graph.
         isInitialized = false
         playerSupervisorJob.cancel()
 
@@ -276,25 +267,17 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         UIKitView(
             modifier = modifier,
             factory = {
-                // Black background, not clear: VLCKit's render view doesn't always
-                // cover the full container (transient zero-size at first layout, or
-                // when the player has no media yet), and "clear" would leak whatever
-                // happens to be behind. Different devices showed different leak
-                // colors — iPhone 13 = white (Compose surface), iPhone XS = black
-                // (prior layer state) — neither of which we want. Black matches the
-                // standard "movie theater" aesthetic and matches what AVPlayer does
-                // by default.
+                // Black background, not clear: VLCKit's render view doesn't always cover the
+                // full container (transient zero-size at first layout, or when the player has
+                // no media yet), and "clear" would leak whatever is behind it (Compose surface
+                // or prior layer state, device-dependent). Black matches AVPlayer's default.
                 val view = UIView().also { it.setBackgroundColor(UIColor.blackColor) }
                 vlcView = view
 
                 // No --freetype-fontsize flag: VLCKit 4 exposes a runtime
                 // [VLCMediaPlayer.currentSubTitleFontScale] (see [changeSubtitleSize]) that
-                // multiplies on top of libvlc's internal default base size, which already
-                // looks right out of the box. Setting --freetype-fontsize here would seed
-                // a hardcoded pixel size that the runtime scale then multiplies on top of,
-                // producing comically oversized subs. Under MobileVLCKit 3.x we had to
-                // bake the size in at launch because no runtime scale property existed;
-                // VLCKit 4 makes that workaround obsolete.
+                // multiplies on top of libvlc's internal default base size. Seeding a hardcoded
+                // pixel size here would be multiplied by that scale, producing oversized subs.
                 val baseArgs = listOf(
                     "-vv",
                     "--network-caching=2000",
@@ -303,16 +286,13 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                 )
                 // User-supplied flags from Preferences.VLC_CUSTOM_FLAGS are appended last, so
                 // they can override the defaults above (LibVLC honours the last occurrence).
-                // By default VLCKit 4 delivers its event callbacks (state/length/track/media
-                // changed) SYNCHRONOUSLY on libvlc worker threads — which is why this file grew a
-                // pile of "never touch VLC from inside a callback, always bounce to main" code.
-                // The "legacy" configuration makes every callback arrive asynchronously on the
-                // main thread instead, restoring the MobileVLCKit-3 model. Must be set before any
-                // VLCMediaPlayer / VLCMedia is created, because each one snapshots this shared
-                // config when it wires up its event handler (VLCMediaPlayer.registerObservers /
-                // VLCMedia.initInternalMediaDescriptor). NOTE: this is a behaviour change for every
-                // VLC event delivery — verify on a real device before removing any of the
-                // now-redundant main-thread bounces in VlcDelegate.
+                // VLCKit 4 delivers event callbacks (state/length/track/media changed)
+                // SYNCHRONOUSLY on libvlc worker threads by default. The "legacy" configuration
+                // makes every callback arrive asynchronously on the main thread instead. Must be
+                // set before any VLCMediaPlayer / VLCMedia is created, because each one snapshots
+                // this shared config when it wires up its event handler. WARNING: this changes
+                // every VLC event delivery path — verify on a real device before removing the
+                // main-thread bounces in VlcDelegate.
                 VLCLibrary.sharedEventsConfiguration = VLCEventsLegacyConfiguration()
 
                 val lib = VLCLibrary(baseArgs + app.utils.vlcCustomFlags())
@@ -683,16 +663,6 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         }
     }
 
-//    /**
-//     * Skips to the next chapter in the media.
-//     */
-//    override suspend fun skipChapter() {
-//        if (!isInitialized) return
-//        withContext(Dispatchers.Main.immediate) {
-//            vlcPlayer?.nextChapter()
-//        }
-//    }
-
     /**
      * Reapplies previously selected track choices.
      *
@@ -736,12 +706,10 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         vlcMedia?.parseWithOptions(VLCMediaParseLocal.toInt())
         // Show the first frame as soon as the file is injected instead of a black surface.
         // VLCKit only spins up its video output (and decodes a frame) once playback starts,
-        // and our load flow never auto-plays — so without this a freshly injected file shows
-        // nothing until the room/user unpauses. ":start-paused" makes libvlc open the input,
+        // and the load flow never auto-plays. ":start-paused" makes libvlc open the input,
         // decode + present frame 1, then immediately pause itself, so the poster frame is
         // visible while the room is still paused; the later sync-driven play()/seekTo()
-        // resume from there. (Verified ":start-paused" is a real option in this VLCKit build,
-        // so play() lands paused-on-frame-1 rather than actually starting playback.)
+        // resume from there.
         vlcMedia?.addOption(":start-paused")
         vlcPlayer?.setMedia(vlcMedia)
         primingFirstFrame = true
@@ -1008,14 +976,10 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
      *     function vlc_player_Lock, file player.c, line 992.
      *
      * The assertion is the symptom; the underlying issue is that `vlc_player_Lock` and
-     * `timer.lock` are not allowed to be held by the same thread at once. So we keep these
-     * bodies VLC-free: derive what we can from the callback parameters, and `launch` any
-     * VLC calls onto our own coroutine scope so they execute on the main thread *after*
-     * the libvlc lock has been released.
-     *
-     * This was a non-issue under MobileVLCKit 3 because callbacks went through
-     * NSNotificationCenter (a runloop hop, no libvlc locks held). VLCKit 4 rewrote the
-     * event dispatcher; see VLCKit/NEWS, "rewritten event management".
+     * `timer.lock` are not allowed to be held by the same thread at once. So these bodies stay
+     * VLC-free: derive what is possible from the callback parameters, and `launch` any VLC calls
+     * onto the coroutine scope so they execute on the main thread *after* the libvlc lock is
+     * released.
      */
     inner class VlcDelegate : NSObject(), VLCMediaPlayerDelegateProtocol {
         override fun mediaPlayerStateChanged(newState: VLCMediaPlayerState) {
@@ -1048,12 +1012,12 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                 VLCMediaPlayerState.VLCMediaPlayerStatePaused -> {
                     primingFirstFrame = false
                     // Debounce: libvlc 4 briefly flips to Paused during non-user operations
-                    // (vout rebuilds, some setTime/rate changes). Reporting it immediately
-                    // made the channel-health collector broadcast a phantom pause+unpause to
-                    // the room (the "1Hz spasm"). Only commit a Paused that is still paused a
-                    // moment later (an intervening Playing cancels this). Reading isPlaying()
-                    // is safe here because it runs on the main thread after this callback (and
-                    // libvlc's timer.lock) has returned, unlike a call inside the delegate.
+                    // (vout rebuilds, some setTime/rate changes). Reporting it immediately makes
+                    // the channel-health collector broadcast a phantom pause+unpause to the room.
+                    // Only commit a Paused that is still paused a moment later (an intervening
+                    // Playing cancels this). Reading isPlaying() is safe here because it runs on
+                    // the main thread after this callback (and libvlc's timer.lock) has returned,
+                    // unlike a call inside the delegate.
                     pauseDebounceJob?.cancel()
                     pauseDebounceJob = playerScopeMain.launch(Dispatchers.Main.immediate) {
                         delay(250)

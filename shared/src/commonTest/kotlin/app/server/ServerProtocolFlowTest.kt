@@ -17,15 +17,10 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Server-side integration tests — drive [SyncplayServer] / [ClientConnection] with raw
- * JSON lines and inspect what they emit, simulating a real client over a fake socket.
- *
- * These would have caught the [WireMessage.ListRequest] regression at the integration
- * layer too: the server never replied with a List, the user list stayed empty, and you
- * see it directly in the captured outbound packets.
- *
- * Each test wires a fresh [TestClient] into a single-instance [SyncplayServer], so two
- * "clients" can join the same room and observe each other's broadcasts.
+ * Server-side integration tests: drive [SyncplayServer] / [ClientConnection] with raw JSON lines
+ * and assert on what they emit, simulating real clients over a fake socket. Each test wires a
+ * fresh [TestClient] into a shared [SyncplayServer] instance so multiple clients can join the
+ * same room and observe each other's broadcasts.
  */
 class ServerProtocolFlowTest {
 
@@ -37,10 +32,9 @@ class ServerProtocolFlowTest {
     }
 
     /**
-     * Fake client connection: captures everything the server sends and lets the test
-     * push raw JSON lines back as if they came from a real socket. Encoding goes through
-     * [WireMessage.toJson] so even if a test passes an interface-typed reference, the
-     * wire format stays correct.
+     * Fake client connection: captures everything the server sends and lets the test push raw
+     * JSON lines back as if from a real socket. Outbound encoding goes through [WireMessage.toJson]
+     * so the wire format stays correct even when a test holds an interface-typed reference.
      */
     class TestClient(server: SyncplayServer) {
         val sent = mutableListOf<WireMessage>()
@@ -108,7 +102,7 @@ class ServerProtocolFlowTest {
     }
 
     // -----------------------------------------------------------
-    // List request — the bug we just fixed
+    // List request
     // -----------------------------------------------------------
 
     @Test
@@ -126,10 +120,8 @@ class ServerProtocolFlowTest {
     }
 
     /**
-     * Bug repro: feeds the broken `{}` shape that the previous
-     * `ListRequest(@SerialName("List") val placeholder: JsonElement? = null)` would emit.
-     * The server should drop the client because it's an unparseable line — proving that
-     * the only reason this didn't manifest as a crash was the silent SerializationException.
+     * A bare `{}` line carries no recognizable top-level key, so it must be treated as unparseable
+     * and drop the client rather than being silently accepted as a list request.
      */
     @Test
     fun `empty object payload is unparseable and drops the client`(): Unit = runBlocking {

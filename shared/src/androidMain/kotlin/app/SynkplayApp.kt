@@ -11,78 +11,46 @@ import org.conscrypt.Conscrypt
 import java.security.Security
 
 /**
- * Main Application class for the Syncplay Android app.
- *
- * Handles application-level initialization including:
- * - TLS/SSL security provider setup (Conscrypt for modern TLS support)
- * - DataStore initialization for persistent settings storage
- * - Context provider registration for accessing app context globally
- * - Optional StrictMode configuration for debugging
- *
- * This class is instantiated once per app process and lives for the entire app lifecycle.
+ * Application entry point. Runs one-time process init: installs the Conscrypt security
+ * provider (TLS 1.3 on API 24+), initializes DataStore, and registers the global context
+ * provider. Lives for the whole app process.
  */
 class SynkplayApp: Application() {
 
-    /***
-     * Performs the one-time critical initialization:
-     * 1. Installs Conscrypt security provider for TLS 1.3 support on Android 7.0+
-     * 2. Initializes DataStore for settings persistence
-     * 3. Registers context provider for global access
-     */
     override fun onCreate() {
         super.onCreate()
 
-        /* TLS (mainly TLSv1.3) support, via Conscrypt */
-        // API 24 (Nougat)
+        /* Install Conscrypt as the top-priority security provider for TLS 1.3 support. */
         runCatching {
-            // Insert Conscrypt as the highest priority security provider
-            // This enables TLS 1.3 and modern cryptographic protocols
             Security.insertProviderAt(Conscrypt.newProvider(), 1)
         }
 
-        //Initializing datastore
         datastore = dataStore(applicationContext, Preferences.SYNKPLAY_PREFS)
 
-        // Register application context provider for global access
         contextObtainer = ::returnAppContext
-
-        //if (BuildConfig.DEBUG) enableStrictMode()
     }
 
-    /**
-     * Provides the application context for global access.
-     *
-     * Used by utility functions that need context but aren't tied to a specific Activity.
-     *
-     * @return The application context
-     */
     private fun returnAppContext(): Context {
         return applicationContext
     }
 
     /**
-     * Enables Android StrictMode for detecting performance and correctness issues.
-     *
-     * **Thread Policy**: Detects blocking operations on main thread (disk I/O, network)
-     * **VM Policy**: Detects memory leaks and resource issues
-     *
-     * Useful during development to catch common mistakes.
+     * Debug-only: StrictMode to flag main-thread disk/network I/O and VM resource leaks.
      */
     private fun enableStrictMode() {
         StrictMode.setThreadPolicy(
             StrictMode.ThreadPolicy.Builder()
-                .detectAll() // Detect everything
-                .penaltyLog() // Log violations to Logcat
-                .penaltyFlashScreen() // Flash screen on violation (visual indicator)
-                //.penaltyDeath() // Crash on violation (use carefully!)
+                .detectAll()
+                .penaltyLog()
+                .penaltyFlashScreen()
                 .build()
         )
 
         StrictMode.setVmPolicy(
             StrictMode.VmPolicy.Builder()
-                .detectAll() // Detect all VM violations
-                .penaltyLog() // Log violations
-                .penaltyDeath() // Crash on violation (use carefully!)
+                .detectAll()
+                .penaltyLog()
+                .penaltyDeath()
                 .build()
         )
     }

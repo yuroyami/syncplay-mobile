@@ -10,13 +10,9 @@ import app.room.RoomViewmodel
 import io.github.vinceglb.filekit.PlatformFile
 import io.ktor.client.HttpClient
 
-/********************************************************************************
- * Collection of platform-specific utility functions that need to be actualized *
- *                   on every platform (Android/iOS)                            *
- ********************************************************************************/
+/** expect declarations actualized per platform (Android/iOS). */
 
-/** Generates the current system time as Unix epoch milliseconds.
- * @return Milliseconds since January 1, 1970, 00:00:00 UTC */
+/** Current system time as Unix epoch milliseconds (UTC). */
 expect fun generateTimestampMillis(): Long
 
 /** Global platform-specific callback handler for system-level operations.
@@ -27,44 +23,24 @@ lateinit var platformCallback: PlatformCallback
 expect class WeakRef<T: Any>
 expect fun <T : Any> createWeakRef(obj: T): WeakRef<T>
 
-/**
- * Enumeration of supported platforms where Syncplay can run.
- */
+/** Platforms Syncplay runs on, each with a display label and brand color. */
 enum class Platform(val label: String, val color: Color) {
     Android(label = "Android", color = Color(0xFF32DE84)),
     IOS(label = "iOS", color = Color(0xFFA2AAAD)),
 }
 
-/**
- * The current platform the application is running on.
- */
+/** The platform this build runs on. */
 expect val platform: Platform
 
 expect val httpClient: HttpClient
 
-/**
- * List of media player engines available on the current platform.
- * Each platform provides different player implementations (e.g., ExoPlayer on Android).
- */
+/** Media player engines available on the current platform. */
 expect val availablePlatformPlayerEngines: List<PlayerEngine>
 
-/**
- * Creates a platform-specific network manager instance for the room.
- *
- * @return Platform-specific NetworkManager implementation
- */
+/** Builds the platform-specific [NetworkManager] for this room. */
 expect fun RoomViewmodel.instantiateNetworkManager(): NetworkManager
 
-/**
- * Converts milliseconds to a human-readable timestamp in mm:ss or hh:mm:ss format.
- *
- * Automatically adjusts format based on duration:
- * - Less than 1 hour: "mm:ss" (e.g., "05:23")
- * - 1 hour or more: "hh:mm:ss" (e.g., "1:05:23")
- *
- * @param milliseconds Duration in milliseconds
- * @return Formatted time string with zero-padding
- */
+/** Formats a duration as "mm:ss" (under 1h) or "hh:mm:ss", zero-padded. */
 fun timestampFromMillis(milliseconds: Number): String {
     val secs = (milliseconds.toLong() / 1000L)
     return if (secs < 3600) {
@@ -74,38 +50,16 @@ fun timestampFromMillis(milliseconds: Number): String {
     }
 }
 
-/**
- * Extracts the filename from a file URI.
- *
- * Platform-specific implementation handles different URI schemes
- * (content:// on Android, file:// on iOS).
- *
- * @param uri The file URI string
- * @return The filename, or null if it cannot be determined
- */
+/** Filename of [uri] (content:// on Android, file:// on iOS), or null if undeterminable. */
 expect fun getFileName(uri: PlatformFile): String?
 
-/**
- * Extracts the parent folder name from a file URI.
- *
- * @param uri The file URI string
- * @return The folder name, or null if it cannot be determined
- */
+/** Parent folder name of a file URI, or null if undeterminable. */
 expect fun getFolderName(uri: String): String?
 
-/**
- * Gets the size in bytes of a file from its URI.
- *
- * @param uri The file URI string
- * @return The file size in bytes, or null if it cannot be determined
- */
+/** Size in bytes of [uri], or null if undeterminable. */
 expect fun getFileSize(uri: PlatformFile): Long?
 
-/**
- * Extracts text content from a clipboard entry.
- *
- * @return The text content, or null if the entry doesn't contain text
- */
+/** Text content of a clipboard entry, or null if it holds no text. */
 expect fun ClipEntry.getText(): String?
 
 /**
@@ -131,22 +85,13 @@ expect fun ExitRoomMode()
 
 expect fun <T : Any> WeakRef<T>?.get(): T?
 
-/**
- * Returns the device's local (WiFi/LAN) IP address, or null if unavailable.
- * Used by the server hosting feature to show users what IP to connect to.
- */
+/** Device local (WiFi/LAN) IP, or null if unavailable. Used by server hosting to show a join IP. */
 expect fun getDeviceIpAddress(): String?
 
-/**
- * Returns the platform-specific directory path for storing log files.
- * On Android: context.filesDir/logs
- * On iOS: NSDocumentDirectory/logs
- */
+/** Log directory path (Android: filesDir/logs, iOS: NSDocumentDirectory/logs). */
 expect fun getLogDirectoryPath(): String?
 
-/**
- * Appends a line to the specified file path. Creates the file if it doesn't exist.
- */
+/** Appends [content] to [path], creating the file if missing. */
 expect fun appendToFile(path: String, content: String)
 
 /**
@@ -155,20 +100,13 @@ expect fun appendToFile(path: String, content: String)
  */
 expect fun writeTextFile(path: String, content: String)
 
-/**
- * Lists files in the given directory, returning their names.
- */
+/** Names of files in [directoryPath]. */
 expect fun listFiles(directoryPath: String): List<String>
 
-/**
- * Reads the entire text content of a file at the given path.
- * Returns an empty string if the file does not exist or cannot be read.
- */
+/** Full text of the file at [path], or "" if missing/unreadable. */
 expect fun readFile(path: String): String
 
-/**
- * Deletes the file at the given path.
- */
+/** Deletes the file at [path]. */
 expect fun deleteFile(path: String)
 
 /**

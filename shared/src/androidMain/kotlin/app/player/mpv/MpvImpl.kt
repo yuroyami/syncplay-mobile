@@ -69,21 +69,20 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
 
     override suspend fun destroy() {
         if (!isInitialized) return
-        // Close the guards and stop the position tracker BEFORE tearing libmpv down. MPVLib is a
-        // process-global static handle (g_mpv); once mpvView.destroy() nulls it, any lingering call
-        // from the tracker job (isSeekable()/currentPositionMs(), polled every 500ms) sails past its
-        // `if (!isInitialized)` guard and trips the native CHECK_MPV_INIT(), aborting with "libmpv is
-        // not initialized" — reproducible by entering a room and leaving before injecting any media.
-        // Flipping isInitialized makes the per-method guards bail, and cancelling the supervisor job
-        // stops the tracker's next tick. Mirrors VlcImpl.destroy(); mpv is the one engine that hard-
-        // crashes here because its calls go through a global handle, not a nullable per-instance player.
+        // Flip the guards and stop the position tracker BEFORE tearing libmpv down. MPVLib is a
+        // process-global static handle (g_mpv); once mpvView.destroy() nulls it, any lingering
+        // tracker call (isSeekable()/currentPositionMs(), polled every 500ms) would sail past its
+        // `if (!isInitialized)` guard and trip the native CHECK_MPV_INIT(), aborting with "libmpv is
+        // not initialized". Setting isInitialized=false makes per-method guards bail; cancelling the
+        // supervisor job stops the tracker's next tick. mpv is the one engine that hard-crashes here
+        // because its calls go through a global handle, not a nullable per-instance player.
         isInitialized = false
         playerSupervisorJob.cancel()
 
         withContext(Dispatchers.Main) {
-            // Detach our observer first: MPVLib.observers is a process-global static list, so an
+            // Detach the observer first: MPVLib.observers is a process-global static list, so an
             // un-removed observer keeps this MpvImpl (and its RoomViewmodel graph) reachable past
-            // teardown until the next attach happens to replace it.
+            // teardown until the next attach replaces it.
             removeObserver()
             mpvView.destroy()
         }
@@ -346,19 +345,18 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     override fun seekTo(toPositionMs: Long) {
         if (!isInitialized) return
         super.seekTo(toPositionMs)
-        // Seek with sub-second precision. mpvView.timePos is INT-backed (whole seconds), so using
-        // it snapped every seek/chapter-jump to a second boundary and disagreed with the fractional
-        // position currentPositionMs() reports. Set the double property directly.
+        // Seek with sub-second precision via the double property. mpvView.timePos is INT-backed
+        // (whole seconds), which would snap seeks/chapter-jumps to a second boundary and disagree
+        // with the fractional position currentPositionMs() reports.
         MPVLib.setPropertyDouble("time-pos", toPositionMs.toDouble() / 1000.0)
     }
 
     override fun currentPositionMs(): Long {
         if (!isInitialized) return 0L
-        // The observed `time-pos` (mpvPos) is delivered as INT64, i.e. quantized to whole
-        // seconds, because mpv's JNI doesn't push double-format property updates. Read the
-        // precise fractional value directly here so our position reports aren't a 1-second
-        // sawtooth (which kept the room constantly disagreeing about our position and nudged
-        // the sync layer into corrective micro-seeks). Fall back to mpvPos if unavailable.
+        // The observed `time-pos` (mpvPos) arrives as INT64, quantized to whole seconds, because
+        // mpv's JNI doesn't push double-format property updates. Read the precise fractional value
+        // directly so position reports aren't a 1-second sawtooth that nudges the sync layer into
+        // corrective micro-seeks. Fall back to mpvPos if unavailable.
         val precise = MPVLib.getPropertyDouble("time-pos")
         return if (precise != null) (precise * 1000.0).toLong() else mpvPos
     }
@@ -420,7 +418,6 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
         }
     }
 
-    /** MPV EXCLUSIVE */
     private fun mpvObserverAttach() {
         removeObserver()
 
@@ -431,7 +428,6 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
                 when (property) {
                     "time-pos" -> mpvPos = value * 1000
                     "duration" -> playerManager.timeFullMillis.value = value * 1000
-                    //"file-size" -> value
                 }
             }
 

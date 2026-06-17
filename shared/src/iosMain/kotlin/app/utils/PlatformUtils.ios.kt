@@ -66,40 +66,30 @@ import kotlin.native.ref.WeakReference
 
 actual val platform: Platform = Platform.IOS
 
-/* Cached singleton — `get()` would mint a fresh Darwin engine (and a backing NSURLSession)
- * on every access, which the GIF grid hits per-tile per-scroll. The leak shows up as iOS
- * throttling new sessions a few seconds in, surfacing as "Klipy works for a moment, then
- * stops downloading anything."
+/* Lazy singleton: a fresh `get()` would mint a new Darwin engine (and NSURLSession) on every
+ * access (the GIF grid does this per-tile per-scroll), and iOS throttles new sessions, so Klipy
+ * stops downloading a few seconds in. One shared client avoids that.
  *
- * Defaults installed here apply to every caller of `httpClient` (subtitle search, Klipy
- * media downloads, AnimatedImage, etc.):
+ * Defaults here apply to every caller of `httpClient` (subtitle search, Klipy downloads,
+ * AnimatedImage, etc.):
  *
- *  - HttpTimeout: NSURLSession on Darwin has no sensible defaults — a flaky CDN can leave
- *    a request hanging indefinitely instead of failing fast. The 15s/10s/15s envelope
- *    matches what KlipyUtils already configured for its own (configured-copy) client.
- *  - defaultRequest with User-Agent: Cloudflare-fronted CDNs (static.klipy.com,
- *    OpenSubtitles, NewPipe peers) sometimes block requests with no UA. Setting one
- *    is harmless when the CDN doesn't care.
+ *  - HttpTimeout: NSURLSession on Darwin has no default timeouts, so a flaky CDN can hang a
+ *    request forever. The 15s/10s/15s envelope matches KlipyUtils' own client.
+ *  - defaultRequest User-Agent: some Cloudflare-fronted CDNs block requests with no UA.
  *
- * Per-feature `HttpClient.config { … }` calls layer additional plugins on top without
- * unsettling these defaults. */
+ * Per-feature `HttpClient.config { … }` calls layer plugins on top without disturbing these. */
 actual val httpClient: HttpClient by lazy {
     HttpClient(Darwin) {
         engine {
-            /* Honor `Cache-Control` from the response. Ktor's Darwin engine slaps
-             * `NSURLRequestReloadIgnoringCacheData` on every NSMutableURLRequest in
-             * `toNSUrlRequest()` — see ktor-client-darwin/internal/DarwinRequestUtils.kt.
-             * That makes NSURLSession bypass NSURLCache entirely, so every GIF in the
-             * panel re-downloads over the network on every HUD toggle even though Klipy's
-             * CDN sends `Cache-Control: public, max-age=86400`. configureRequest runs
-             * AFTER toNSUrlRequest(), so we can override the policy back to the protocol-
-             * driven default. Now repeat opens of the GIF panel pull from NSURLSession's
-             * disk cache and the tiles paint instantly. */
+            /* Honor response `Cache-Control`. Ktor's Darwin engine sets
+             * `NSURLRequestReloadIgnoringCacheData` on every request in `toNSUrlRequest()`, which
+             * makes NSURLSession bypass NSURLCache, so cacheable GIFs (Klipy CDN sends
+             * `max-age=86400`) re-download on every HUD toggle. configureRequest runs after
+             * toNSUrlRequest(), so this overrides the policy back to protocol-driven caching. */
             configureRequest { setCachePolicy(NSURLRequestUseProtocolCachePolicy) }
-            /* Bump NSURLCache from the default ~20 MB disk / 4 MB memory to something
-             * that comfortably holds a panel-worth of GIFs (24 × ~200 KB ≈ 5 MB) plus
-             * scrolling history. Memory cache lets HUD toggles paint instantly; disk
-             * cache survives app restarts so the trending panel comes up populated. */
+            /* Enlarge NSURLCache (from ~4 MB mem / ~20 MB disk default) to hold a panel of GIFs
+             * (24 × ~200 KB) plus scroll history. Memory cache makes HUD toggles repaint instantly;
+             * disk cache survives restarts so the trending panel comes up populated. */
             configureSession {
                 setURLCache(
                     NSURLCache(
@@ -115,19 +105,12 @@ actual val httpClient: HttpClient by lazy {
             connectTimeoutMillis = 10_000
             socketTimeoutMillis = 15_000
         }
-        /* Full HTTP transcript piped into loggy(). Restricted to JSON API endpoints
-         * via filter — including image/subtitle download URLs in the logger breaks
-         * those downloads on Darwin: the plugin tees `response.rawContent` into two
-         * channels (one for the printed transcript, one for the consumer), and the
-         * binary-body filter peeks the first 1024 bytes to detect that the body is
-         * binary. On Kotlin/Native that split misbehaves under load — the consumer
-         * side receives truncated bytes, so `AnimatedImage`'s `httpClient.get(url).body()`
-         * returns a partial GIF and CGImageSourceCreateWithData returns null. The
-         * symptom is "GIF panel populates with 24 results but tiles are blank."
-         *
-         * Logging API hosts only is enough for diagnostics — we still see request
-         * URLs, status codes, headers, and JSON bodies for everything that matters.
-         * Image fetches go through the engine without interception. */
+        /* HTTP transcript into loggy(), restricted to JSON API hosts (api.*) via the filter.
+         * Logging image/subtitle downloads breaks them on Darwin: the plugin tees
+         * `response.rawContent` into transcript and consumer channels, and on Kotlin/Native that
+         * split delivers truncated bytes under load, so a GIF body comes back partial and
+         * CGImageSourceCreateWithData returns null (blank tiles). API hosts cover all useful
+         * diagnostics; image fetches bypass the interceptor. */
         install(Logging) {
             logger = app.utils.KtorLoggyLogger
             level = LogLevel.ALL
@@ -142,10 +125,9 @@ actual val httpClient: HttpClient by lazy {
 
 actual val availablePlatformPlayerEngines: List<PlayerEngine> = buildList {
     add(AVPlayerEngine)
-    // MPVKit (libmpv) is the iOS default and sits second in the home-screen picker. Listing it is
-    // safe even when MPVKit isn't linked: the picker gates selection on engine.isAvailable (see
-    // HomeScreen), and MpvKitEngine.isAvailable is true only once the Swift MpvKitBridge factory
-    // has been registered at app startup.
+    // MPVKit (libmpv) sits second in the home-screen picker. Listing it is safe even when MPVKit
+    // isn't linked: the picker gates selection on engine.isAvailable, and MpvKitEngine.isAvailable
+    // is true only once the Swift MpvKitBridge factory is registered at app startup.
     add(MpvKitEngine)
     add(VlcKitEngine)
 }
@@ -187,16 +169,14 @@ actual fun ClipEntry.getText(): String? {
 }
 
 /**
- * Applies an orientation mask: updates the delegate's answer for
- * `supportedInterfaceOrientationsForWindow`, requests the new geometry, and — crucially —
- * pokes the root view controller with `setNeedsUpdateOfSupportedInterfaceOrientations()`.
+ * Applies an orientation mask: updates the delegate's `supportedInterfaceOrientationsForWindow`
+ * answer, requests the new geometry, and pokes the root view controller with
+ * `setNeedsUpdateOfSupportedInterfaceOrientations()`.
  *
- * Without that poke, iOS 16+ CACHES the last supported-orientations answer and never
- * re-queries the delegate. Forcing landscape for the room worked (the geometry request
- * names a concrete orientation), but unlocking on exit silently didn't: a request with
- * mask "All" names no target orientation, the system keeps the current geometry, and —
- * with the stale cached mask still in force — rotation stays dead. Symptom: leave a room
- * once and the app is stuck in landscape until process death.
+ * The poke is required: iOS 16+ caches the last supported-orientations answer and won't re-query
+ * the delegate. A geometry request naming a concrete orientation (e.g. landscape) takes effect,
+ * but an "All" mask names no target orientation, so without the poke the stale cached mask keeps
+ * rotation locked after leaving a room.
  */
 private fun applyOrientationMask(mask: UIInterfaceOrientationMask) {
     delegato.myOrientationMask = mask
@@ -205,7 +185,7 @@ private fun applyOrientationMask(mask: UIInterfaceOrientationMask) {
         geometryPreferences = UIWindowSceneGeometryPreferencesIOS(interfaceOrientations = mask),
         errorHandler = null
     )
-    // Not exposed in Kotlin's UIKit bindings yet — invoke the iOS 16+ selector dynamically.
+    // Not in Kotlin's UIKit bindings: invoke the iOS 16+ selector dynamically.
     // respondsToSelector doubles as the availability guard on older systems.
     val rootVc = (scene?.windows?.firstOrNull() as? UIWindow)?.rootViewController
     val needsUpdate = NSSelectorFromString("setNeedsUpdateOfSupportedInterfaceOrientations")

@@ -28,6 +28,7 @@ import app.preferences.watchPref
 import kotlinx.coroutines.delay
 
 
+/** Briefly shows the latest unseen non-self chat message when the HUD is hidden, then fades it out. */
 @Composable
 fun FadingMessageLayout() {
     val viewmodel = LocalRoomViewmodel.current
@@ -35,7 +36,6 @@ fun FadingMessageLayout() {
     val isInPiPMode by viewmodel.uiState.hasEnteredPipMode.collectAsState()
     val isHUDVisible by viewmodel.uiState.visibleHUD.collectAsState()
 
-    /** The layout for the fading messages & OSD messages (when HUD is hidden, or when screen is locked) */
     val fadingTimeout = MSG_FADING_DURATION.watchPref()
     val palette = LocalChatPalette.current
 

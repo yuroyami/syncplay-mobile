@@ -103,24 +103,15 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     private var reconnectionJob: Job? = null
 
     /**
-     * Schedules automatic reconnection.
-     *
-     * One coroutine owns the whole retry loop. The old design launched a single delayed
-     * [connect] and relied on the next [onConnectionFailed] to re-arm a fresh job — but a
-     * synchronous connect failure (Netty's `await` timing out, Ktor's connect throwing)
-     * re-enters [reconnect] while still nested *inside* this very job. At that moment
-     * `reconnectionJob?.isCompleted` is still `false`, so the old guard refused to
-     * reschedule and auto-reconnect died after a single attempt. We now loop here instead,
-     * and guard on [Job.isActive] so a nested re-entry is a harmless no-op (the running loop
-     * keeps retrying on its own).
-     *
-     * Stops when CONNECTED ([onConnected] sets that), or when the job is cancelled by
+     * Schedules automatic reconnection. A single coroutine owns the whole retry loop and keeps
+     * retrying until the state reaches CONNECTED ([onConnected]) or the job is cancelled by
      * [invalidate]/[terminateExistingConnection] (manual disconnect / leaving the room).
+     *
+     * The guard is on [Job.isActive], not isCompleted: a synchronous connect failure re-enters
+     * [reconnect] from within the running loop, where the job is still active, so the re-entry
+     * is a harmless no-op and the existing loop keeps driving retries.
      */
     fun reconnect() {
-        // A loop is already running — let it keep driving retries. Guarding on isActive
-        // (not isCompleted) is what fixes the single-retry bug: a synchronous connect
-        // failure re-enters here from within the loop, where the job is still active.
         if (reconnectionJob?.isActive == true) return
 
         reconnectionJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
@@ -154,16 +145,12 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     }
 
     /**
-     * Inbound lines, processed STRICTLY one at a time, in arrival order, by the single
-     * consumer below. The old implementation launched one coroutine per line on
-     * [Dispatchers.Default] — a multithreaded pool with no ordering guarantee — so two
-     * `State`s could be handled out of order or *concurrently*, interleaving their
-     * mutations of `protocol.globalPaused`/`globalPositionMs`/ignoringOnTheFly across
-     * threads. The python reference protocol is strictly serial (one Twisted reactor);
-     * our own server side already enforces the same with `limitedParallelism(1)`. A
-     * channel + single consumer goes one step further than a confined dispatcher: a
-     * handler that *suspends* mid-message (the Main-thread hops in onState) still
-     * finishes the whole message before the next line is even read.
+     * Inbound lines, processed STRICTLY one at a time in arrival order by the single consumer
+     * below. The Syncplay protocol is serial (PC runs one Twisted reactor; the server side here
+     * uses `limitedParallelism(1)`); handling two `State`s concurrently would interleave their
+     * mutations of `protocol.globalPaused`/`globalPositionMs`/ignoringOnTheFly. A channel plus
+     * single consumer also guarantees a handler that suspends mid-message (Main-thread hops in
+     * onState) finishes the whole message before the next line is read.
      */
     private val inboundLines = Channel<String>(capacity = Channel.UNLIMITED)
 
@@ -182,9 +169,8 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
     }
 
     /**
-     * Decodes a raw inbound line and dispatches the typed [WireMessage] to
-     * [viewmodel.serverHandler]. Same Kotlinx Serialization plumbing as the server's
-     * mirror-image pipeline.
+     * Decodes a raw inbound line and dispatches the typed [WireMessage] to the room's
+     * server handler. Same serialization plumbing as the server's mirror-image pipeline.
      */
     private suspend fun processPacket(jsonString: String) {
         if (BuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("**SERVER** $jsonString")
@@ -193,24 +179,18 @@ abstract class NetworkManager(val viewmodel: RoomViewmodel) : AbstractManager(vi
             val message = syncplayJson.decodeFromString(WireMessageDeserializer, jsonString)
             message.dispatch(viewmodel.serverHandler)
         } catch (e: SerializationException) {
-            // A single unparseable line must NOT tear down the session. The Syncplay
-            // python protocol is loosely typed and periodically sends shapes our strict
-            // models don't expect (a user's `features` as `[]`, a `size` number-vs-string,
-            // a future field of the wrong type, see issue #152). Rethrowing here used to
-            // propagate into this dispatch coroutine, drop the connection and spin the
-            // reconnect loop — re-fetching the same poisoned List and crashing again every
-            // few seconds. Log the offending line and skip it; every other message still
-            // flows. Mirrors the server side's ClientConnection.handlePacket, which already
-            // swallows-and-continues rather than crashing.
+            // A single unparseable line must NOT tear down the session. The Syncplay python
+            // protocol is loosely typed and periodically sends shapes the strict models reject
+            // (a user's `features` as `[]`, `size` number-vs-string, a future field of the
+            // wrong type; issue #152). Log and skip the offending line; every other message
+            // still flows. Mirrors the server side's ClientConnection.handlePacket.
             loggy("Skipping unparseable server message: $jsonString")
             loggy("Reason: ${e.message}")
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            // A handler blowing up on one message must kill neither the consumer loop nor
-            // the process (this loop is the app's protocol heart — an uncaught exception
-            // here used to take the whole app down, e.g. a TLS upgrade failure surfacing
-            // through onReceivedTLS). Log loudly and move on to the next line.
+            // A handler blowing up on one message must kill neither this consumer loop (the
+            // app's protocol heart) nor the process. Log and move on to the next line.
             loggy("Handler failed on message: $jsonString")
             loggy(e.stackTraceToString())
         }

@@ -88,7 +88,6 @@ fun ManagedRoomPopup(purpose: ManagedRoomPopupPurpose) {
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
 
-            /* The title */
             FlexibleText(
                 modifier = Modifier.padding(6.dp), text = when (purpose) {
                     ManagedRoomPopupPurpose.CREATE_MANAGED_ROOM -> stringResource(Res.string.room_overflow_create_managed_room)
@@ -126,7 +125,6 @@ fun ManagedRoomPopup(purpose: ManagedRoomPopupPurpose) {
             ) {
                 Spacer(Modifier.weight(1f))
 
-                /* Cancel button */
                 Button(
                     modifier = Modifier.padding(vertical = 8.dp).weight(3f),
                     onClick = {
@@ -139,7 +137,6 @@ fun ManagedRoomPopup(purpose: ManagedRoomPopupPurpose) {
                 }
                 Spacer(Modifier.weight(1f))
 
-                /* OK button */
                 Button(
                     modifier = Modifier.padding(vertical = 8.dp).weight(3f),
                     onClick = {

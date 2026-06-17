@@ -24,19 +24,18 @@ import kotlin.test.fail
 /**
  * Wire-format tests for the unified [WireMessage] hierarchy.
  *
- * These cover the two kinds of regressions that historically bit the protocol layer:
+ * Two classes of invariant:
  *
- *  1. **Encoding shape** — the Syncplay JSON config (`explicitNulls = false`) silently
- *     drops null fields, which collapsed [WireMessage.ListRequest] to `{}` once and broke
- *     the user list end-to-end. Every variant gets a "the top-level key is present"
- *     assertion to catch any future occurrence of the same trap.
+ *  1. **Encoding shape** — the Syncplay JSON config (`explicitNulls = false`) drops null
+ *     fields, which can collapse [WireMessage.ListRequest] to `{}` and break the user
+ *     list end-to-end. Every variant gets a "the top-level key is present" assertion.
  *
  *  2. **Deserializer routing** — [WireMessageDeserializer] disambiguates the two
  *     direction-asymmetric keys (`Chat`, `List`) by payload shape. Tests cover all four
  *     branches plus the symmetric variants.
  *
- * Round-trip tests (encode → decode → assert equality of the typed object) protect against
- * either side drifting away from the other.
+ * Round-trip tests (encode → decode → assert equality of the typed object) guard against
+ * the two sides drifting apart.
  */
 class WireMessageTest {
 
@@ -194,10 +193,9 @@ class WireMessageTest {
     }
 
     /**
-     * Regression: with `explicitNulls = false`, a nullable-with-default field collapses
-     * out of the JSON. ListRequest's `placeholder` defaults to [JsonNull] (not Kotlin
-     * `null`) so the envelope key is preserved. If someone ever switches it back to
-     * `JsonElement?`, this test catches it.
+     * With `explicitNulls = false`, a nullable-with-default field collapses out of the
+     * JSON. ListRequest's `placeholder` defaults to [JsonNull] (not Kotlin `null`) so the
+     * envelope key is preserved. Catches any switch back to `JsonElement?`.
      */
     @Test
     fun `ListRequest preserves the List key with null payload`() {
@@ -377,12 +375,11 @@ class WireMessageTest {
     // ============================================================
 
     /**
-     * Regression: Kotlinx Serialization injects a `"type"` class discriminator when you
-     * encode a sealed `@Serializable` interface via the interface type itself — that
-     * extra field is not legal Syncplay wire format and used to break ServerProtocolFlowTest
-     * before [WireMessage.toJson] was introduced. This test pins the fix: encoding via
-     * the interface goes through `toJson()` (overridden per subclass) and emits the same
-     * clean shape as encoding via the concrete subclass.
+     * Kotlinx Serialization injects a `"type"` class discriminator when you encode a
+     * sealed `@Serializable` interface via the interface type itself — that extra field
+     * is not legal Syncplay wire format. Encoding via the interface must go through
+     * `toJson()` (overridden per subclass) and emit the same clean shape as encoding via
+     * the concrete subclass.
      */
     @Test
     fun `toJson produces clean wire format even when message is held by interface type`() {
@@ -442,19 +439,15 @@ class WireMessageTest {
     // Lenient inbound shapes — loosely-typed python protocol drift
     // ============================================================
     //
-    // The wire protocol is duck-typed on the python side and periodically hands us a
-    // value in a shape our strict @Serializable models don't expect. Historically each
-    // such shape aborted the WHOLE message decode (one bad sub-field blanks the entire
-    // user list and spins the reconnect loop). These pin the two that bit in production
-    // (issue #152) and assert the decode survives. They run on the plain JVM test target
-    // with no R8 / minification — proving the failures are source-level wire-shape
-    // mismatches, not a release-build obfuscation problem.
+    // The wire protocol is duck-typed on the python side and can hand us a value in a
+    // shape our strict @Serializable models don't expect. A single bad sub-field must not
+    // abort the WHOLE message decode (that would blank the entire user list and spin the
+    // reconnect loop, issue #152). These assert the decode survives such shapes.
 
     /**
-     * Issue #152 (madeline-celeste, v0.22.2): a self-hosted server sent a user's `features`
-     * as an empty array `[]` instead of an object. The strict RoomFeatures serializer threw
-     * "Expected object, but had array … JSON input: []", aborting the List decode and
-     * blanking the user-info tab. The whole line (incl. a bare-number `size`) must now decode.
+     * Some servers send a user's `features` as an empty array `[]` instead of an object
+     * (issue #152). The line — including a bare-number `size` — must still decode, with
+     * `features` falling back to defaults rather than aborting the whole List decode.
      */
     @Test
     fun `List user with features as empty array decodes to defaults`() {
@@ -534,8 +527,8 @@ class WireMessageTest {
      * The python server relays a roommate's file dict verbatim, so the `size` value's JSON
      * type is fully attacker/bug-controlled. A non-primitive size must surface as
      * [SerializationException] — the only type [app.protocol.network.NetworkManager]'s
-     * skip-a-poisoned-line catch covers. FileSizeSerializer used `error()`
-     * (IllegalStateException), which escaped that catch and killed the process.
+     * skip-a-poisoned-line catch covers. FileSizeSerializer must not throw
+     * IllegalStateException (e.g. via `error()`), which would escape that catch.
      */
     @Test
     fun `FileData size as object or array fails as SerializationException`() {

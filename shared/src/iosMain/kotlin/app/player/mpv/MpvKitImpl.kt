@@ -78,24 +78,22 @@ class MpvKitImpl(
     // known), so the base parseMedia() must not announce it again on iOS. See PlayerImpl.
     override val announcesFileLoadViaEvent: Boolean = true
     // No manual position poll: the MPVKit bridge pushes a precise `time-pos` Double on every
-    // frame (see onPropertyChange below), which already drives timeCurrentMillis — the only
-    // consumer (the seekbar). Unlike AVPlayer/VLCKit there is no system transport-control actor
-    // to catch out of band (supportsPictureInPicture=false), and sync reads currentPositionMs()
-    // live, so a 500ms poll was pure duplication. If the observer ever stops feeding the seekbar
-    // after a background/foreground vid=no/auto cycle, restore a poll here (e.g. 1.seconds).
+    // frame (see onPropertyChange below), which drives timeCurrentMillis (the seekbar's only
+    // consumer). There is no system transport-control actor to catch out of band
+    // (supportsPictureInPicture=false), and sync reads currentPositionMs() live. If the observer
+    // ever stops feeding the seekbar after a background/foreground vid=no/auto cycle, restore a
+    // poll here (e.g. 1.seconds).
     override val trackerJobInterval: Duration = Duration.ZERO
 
     /**
-     * Observers for the app background/foreground transitions. mpv binds its video output and the
-     * MoltenVK swapchain to the CAMetalLayer; iOS purges that GPU surface while the app is
-     * backgrounded, leaving a dead swapchain that renders as a purple/garbage frame on return (the
-     * reported bug; the "purple after reconnect" case is the same thing, since that reconnect
-     * follows a background/foreground cycle). A dead swapchain cannot be repaired by re-rendering
-     * into it — it must be recreated. We do that by toggling the video track off before
-     * backgrounding ([UIApplicationDidEnterBackgroundNotification] -> `vid=no`, which tears the VO
-     * + swapchain down cleanly) and back on when returning ([UIApplicationWillEnterForegroundNotification]
+     * Observers for app background/foreground transitions. mpv binds its video output and the
+     * MoltenVK swapchain to the CAMetalLayer; iOS purges that GPU surface while backgrounded,
+     * leaving a dead swapchain that renders as a purple/garbage frame on return. A dead swapchain
+     * cannot be repaired by re-rendering into it, only recreated. Toggle the video track off before
+     * backgrounding ([UIApplicationDidEnterBackgroundNotification] -> `vid=no`, tearing the VO +
+     * swapchain down cleanly) and back on when returning ([UIApplicationWillEnterForegroundNotification]
      * -> `vid=auto`, which rebuilds them and force-refreshes the current frame, repainting even
-     * while paused). This is exactly the fix MPVKit's own iOS demo uses
+     * while paused). Matches the fix in MPVKit's iOS demo
      * (MPVMetalViewController.enterBackground / enterForeground).
      */
     private var didEnterBackgroundObserver: NSObjectProtocol? = null
@@ -444,8 +442,8 @@ class MpvKitImpl(
         withContext(Dispatchers.Main.immediate) {
             // The subtitle is a separately-picked, security-scoped file; PlayerImpl only holds the
             // *video's* scope. Without claiming the subtitle's own scope here, mpv's `sub-add` open
-            // fails with EPERM and the sideloaded sub silently never appears (the bug). Mirror
-            // VlcKitImpl.loadExternalSubImpl: claim the scope and leave it held — mpv keeps the file
+            // fails with EPERM and the sideloaded sub silently never appears. Mirror
+            // VlcKitImpl.loadExternalSubImpl: claim the scope and leave it held; mpv keeps the file
             // open to stream cues as playback advances, so releasing it early would break the sub
             // mid-playback.
             uri.nsUrl.startAccessingSecurityScopedResource()
@@ -456,10 +454,9 @@ class MpvKitImpl(
     @OptIn(ExperimentalForeignApi::class)
     override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
         installMpvSubfontIfNeeded()
-        // Load PAUSED, like Android (MPVView primes pause=true at init, and Android rebuilds
-        // mpv per inject so every load starts paused). This bridge is long-lived and mpv's
-        // `pause` property persists across loadfile — left unprimed it defaults to no, so a
-        // fresh inject auto-played instead of waiting for the room (or the user) to unpause.
+        // Load PAUSED, like Android. This bridge is long-lived and mpv's `pause` property
+        // persists across loadfile, so prime it true on every inject; otherwise a fresh load
+        // auto-plays instead of waiting for the room (or the user) to unpause.
         bridge.setPaused(true)
         val path = location.file.path
         // Open a blocking descriptor eagerly (while PlayerImpl's security scope is freshest) and

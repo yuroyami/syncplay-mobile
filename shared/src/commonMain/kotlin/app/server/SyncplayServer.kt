@@ -26,10 +26,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonPrimitive
 
 /**
- * Central Syncplay server, managing rooms, watchers, and broadcasting.
- * Port of Python's SyncFactory (syncplay-pc-src-master/syncplay/server.py).
- *
- * Completely independent of client-side code (RoomViewmodel, RoomCallback, etc.).
+ * Central Syncplay server: owns rooms, watchers, state timers, and broadcasting.
+ * Independent of client-side code (RoomViewmodel, RoomCallback, etc.).
  */
 class SyncplayServer(
     val config: ServerConfig,
@@ -37,13 +35,11 @@ class SyncplayServer(
 ) {
     /**
      * Single-threaded confinement for ALL shared server state (rooms, watchers, connections,
-     * counters, positions). PC's reference server runs on Twisted's single reactor thread; this
-     * mirrors that. Inbound packet handling ([ClientConnection.handlePacket]), the per-watcher
-     * state timers, and connection-lost cleanup all run here, so the unsynchronized [mutableMapOf]
-     * collections and plain mutable fields can never be touched by two threads at once.
-     *
-     * `limitedParallelism(1)` guarantees at most one task executes at a time and establishes the
-     * happens-before edges needed for visibility (Kotlin/Native's modern memory model + JVM).
+     * counters, positions), mirroring PC's single Twisted reactor thread. Inbound packet handling
+     * ([ClientConnection.handlePacket]), per-watcher state timers, and connection-lost cleanup all
+     * run here, so the unsynchronized [mutableMapOf] collections and plain mutable fields are never
+     * touched by two threads at once. `limitedParallelism(1)` runs at most one task at a time and
+     * establishes the happens-before edges needed for visibility.
      */
     val serverDispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(1)
 
@@ -97,19 +93,17 @@ class SyncplayServer(
         val room = watcher.room ?: return
         val setByName = room.getSetBy()?.name
 
-        // Send current playlist state to the new watcher
         val conn = _connections[watcher] ?: return
         conn.sendPlaylist(setByName ?: "", room.getPlaylist())
         room.getPlaylistIndex()?.let { conn.sendPlaylistIndex(setByName ?: "", it) }
 
-        // If controlled room, notify about existing controllers
+        // A controlled room announces its existing controllers to the new watcher.
         if (RoomPasswordProvider.isControlledRoom(truncated)) {
             for (controller in room.getControllers()) {
                 conn.sendControlledRoomAuthStatus(true, controller.name, truncated)
             }
         }
 
-        // Start periodic state timer for this watcher
         startStateTimer(watcher)
     }
 
@@ -128,8 +122,8 @@ class SyncplayServer(
 
     /**
      * Connection-lost entry point for the platform network engines, which fire on raw transport
-     * threads (Netty event loop / iOS socket). Hops onto [serverDispatcher] so the mutation of
-     * shared maps in [removeWatcher] is serialized with the timer + inbound handling.
+     * threads (Netty event loop / iOS socket). Hops onto [serverDispatcher] so [removeWatcher]'s
+     * shared-map mutation is serialized with the timer and inbound handling.
      */
     fun disconnectWatcher(watcher: ServerWatcher?) {
         if (watcher == null) return
@@ -140,15 +134,13 @@ class SyncplayServer(
 
     private fun startStateTimer(watcher: ServerWatcher) {
         stopStateTimer(watcher)
-        // Confined to serverDispatcher so timer ticks can never race inbound packet handling
-        // on the shared room/watcher/connection state. `delay` suspends without holding the
-        // single thread, so other confined work still runs between ticks.
+        // Confined to serverDispatcher so ticks never race inbound packet handling on the shared
+        // room/watcher/connection state. `delay` suspends without holding the single thread.
         stateTimerJobs[watcher] = scope.launch(serverDispatcher) {
-            // Initial forced state update
+            // Initial forced state update, then one every SERVER_STATE_INTERVAL_MS.
             delay(100)
             sendState(watcher, doSeek = true, forcedUpdate = true)
 
-            // Periodic state updates every SERVER_STATE_INTERVAL_MS
             while (isActive) {
                 delay(SERVER_STATE_INTERVAL_MS)
                 sendState(watcher, doSeek = false, forcedUpdate = false)
@@ -160,9 +152,7 @@ class SyncplayServer(
         stateTimerJobs.remove(watcher)?.cancel()
     }
 
-    /**
-     * Sends a state update to a specific watcher.
-     */
+    /** Sends the room's authoritative state to a single watcher. */
     fun sendState(watcher: ServerWatcher, doSeek: Boolean = false, forcedUpdate: Boolean = false) {
         val room = watcher.room ?: return
         val conn = _connections[watcher] ?: return
@@ -176,10 +166,7 @@ class SyncplayServer(
         conn.sendState(position, paused, doSeek, setBy, forcedUpdate)
     }
 
-    /**
-     * Forces a position update to all watchers in a room after a state change.
-     * Port of Python's SyncFactory.forcePositionUpdate().
-     */
+    /** Forces a position update to all watchers in a room after a controller's state change. */
     fun forcePositionUpdate(watcher: ServerWatcher, doSeek: Boolean, watcherPauseState: Boolean) {
         val room = watcher.room ?: return
 
@@ -193,7 +180,7 @@ class SyncplayServer(
             }
         } else {
             val conn = _connections[watcher] ?: return
-            // Send back the watcher's state first (BC compat), then the room's authoritative state
+            // A non-controller gets its own state echoed back first, then the room's authoritative state.
             conn.sendState(room.getPosition(), watcherPauseState, false, watcher, true)
             conn.sendState(room.getPosition(), room.isPaused(), true, room.getSetBy(), true)
         }
@@ -202,8 +189,8 @@ class SyncplayServer(
     // --- Broadcasting messages ---
 
     private fun sendJoinMessage(watcher: ServerWatcher) {
-        // PC sends version AND features with the joined event (server.py:167) so peers
-        // know the joiner's capabilities without waiting for a List round-trip.
+        // The joined event carries version AND features so peers learn the joiner's capabilities
+        // without waiting for a List round-trip.
         val event = UserEvent(
             joined = JsonPrimitive(true),
             version = watcher.version,
@@ -255,7 +242,7 @@ class SyncplayServer(
 
     fun setReady(watcher: ServerWatcher, isReady: Boolean, manuallyInitiated: Boolean = true, username: String? = null) {
         if (username != null && username != watcher.name) {
-            // Setting another user's readiness (controller feature)
+            // Controller-only path: set another user's readiness.
             val room = watcher.room ?: return
             if (room.canControl(watcher)) {
                 for (watcherToSet in room.getWatchers()) {
@@ -279,17 +266,15 @@ class SyncplayServer(
 
     fun setPlaylist(watcher: ServerWatcher, files: List<String>) {
         val room = watcher.room ?: return
-        // PC gates on `room.canControl(watcher) and playlistIsValid(files)` (server.py:236):
-        // an oversized playlist is refused and the sender gets the room's current playlist
-        // back, exactly like a non-controller. Accepting it unbounded lets one client make
-        // the server relay megabyte broadcasts to every watcher.
+        // Gated on canControl AND playlistIsValid: an oversized playlist is refused and the sender
+        // gets the room's current playlist back, like a non-controller. Without the size cap one
+        // client could make the server relay megabyte broadcasts to every watcher.
         if (room.canControl(watcher) && playlistIsValid(files)) {
             room.setPlaylist(files, watcher)
             roomManager.broadcastRoom(watcher) { w ->
                 _connections[w]?.sendPlaylist(watcher.name, files)
             }
         } else {
-            // Non-controllers get the room's current playlist sent back
             _connections[watcher]?.sendPlaylist(room.name, room.getPlaylist())
             room.getPlaylistIndex()?.let {
                 _connections[watcher]?.sendPlaylistIndex(room.name, it)
@@ -326,11 +311,11 @@ class SyncplayServer(
                 _connections[w]?.sendControlledRoomAuthStatus(success, watcher.name, room.name)
             }
         } catch (_: NotControlledRoomException) {
-            // Not a controlled room — generate a new controlled room name
+            // Plain room: mint a new controlled-room name for it.
             val newName = RoomPasswordProvider.getControlledRoomName(targetName, password, config.salt)
             _connections[watcher]?.sendNewControlledRoom(newName, password)
         } catch (_: IllegalArgumentException) {
-            // Invalid password format
+            // Malformed password.
             roomManager.broadcastRoom(watcher) { w ->
                 _connections[w]?.sendControlledRoomAuthStatus(false, watcher.name, room.name)
             }
@@ -339,19 +324,15 @@ class SyncplayServer(
 
     // --- Features ---
 
-    /**
-     * Builds the [RoomFeatures] payload advertised to clients in our `Hello` response.
-     * Mirrors python's `getFeatures()` server-side.
-     */
+    /** Builds the [RoomFeatures] payload advertised to clients in the `Hello` response. */
     fun buildServerFeatures(): RoomFeatures = RoomFeatures(
         isolateRooms = config.isolateRooms,
         supportsReadiness = !config.disableReady,
         supportsManagedRooms = true,
         persistentRooms = false,
         supportsChat = !config.disableChat,
-        // PC advertises this unconditionally (server.py:100). Our setReady() already
-        // implements controller-set-others; without the flag, PC clients (which gate the
-        // feature on it via @requireServerFeature) would never use it.
+        // Advertised unconditionally: setReady() implements controller-set-others, and PC clients
+        // gate that feature on this flag, so omitting it would stop them ever using it.
         setOthersReadiness = true,
         maxChatMessageLength = config.maxChatMessageLength,
         maxUsernameLength = config.maxUsernameLength,
@@ -374,9 +355,7 @@ class SyncplayServer(
         serverLog.value = serverLog.value + entry
     }
 
-    /**
-     * Shuts down the server, disconnecting all clients.
-     */
+    /** Shuts down the server, cancelling all state timers and dropping every client. */
     fun shutdown() {
         log("Server shutting down")
         for ((watcher, _) in _connections.toMap()) {

@@ -108,11 +108,9 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
      * flow emission matches our expectation. Only engine-driven auto-pauses/resumes
      * (buffer underrun, audio focus loss, EOF, etc.) trigger an actual broadcast.
      *
-     * This replaces a 250 ms polling loop that was a literal port of PC Python's
-     * `updatePlayerStatus` pipeline. PC has to poll because its player drivers (MPV
-     * IPC, VLC HTTP) expose no event API; mobile has callbacks for everything, so
-     * polling was both redundant and a source of phantom seeks (the poll would sample
-     * a player still mid-converging on a seek target and broadcast a spurious doSeek).
+     * Callback-driven rather than polled: mobile player engines expose event APIs for
+     * everything, so reacting to the flow avoids the phantom seeks a poll produces when
+     * it samples a player still mid-converging on a seek target.
      */
     private var expectedPaused: Boolean = true
 
@@ -122,7 +120,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
      * by the divergence collector. Outbound paths must read this instead of `player.isPlaying()`,
      * which on VLCKit 4 returns a stale pre-transition value in the async window right after a
      * pause/play toggle — broadcasting that stale value makes the server think the watcher
-     * unpaused the room. Same reasoning as the ACK path's `play = !paused` defense.
+     * unpaused the room.
      */
     val expectedPlaying: Boolean get() = !expectedPaused
 
@@ -136,10 +134,10 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
      *    packet and flips state to DISCONNECTED.
      *  - **State watchdog** — runs every [WATCHDOG_INTERVAL_SECONDS]. If no State message
      *    has arrived for [STATE_TIMEOUT_SECONDS] seconds while we still believe ourselves
-     *    connected, fires `onDisconnected()` which kicks off a reconnect. This is what
-     *    fixes the "app doesn't know it's disconnected until I send a chat" bug — the
-     *    Syncplay server gives up after ~10–15 unanswered State broadcasts, which matches
-     *    this 15s threshold.
+     *    connected, fires `onDisconnected()` which kicks off a reconnect. Detects silent
+     *    disconnects where the socket looks healthy locally but the server stopped sending
+     *    State. The Syncplay server gives up after ~10–15 unanswered State broadcasts,
+     *    matching this 15s threshold.
      *
      * No-op in solo mode — called from onConnected(), so the guard is defense-in-depth.
      */
@@ -179,10 +177,9 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
             }
         }
 
-        // Reactive replacement for the old 250 ms poll: react to engine-reported pause
-        // changes via the StateFlow they all already update. Suppress the very first
-        // emission (which is just the StateFlow's current value at collection time, not
-        // a change) and any emission that matches our [expectedPaused] expectation.
+        // React to engine-reported pause changes via the StateFlow they all update.
+        // Suppress the very first emission (the StateFlow's current value at collection
+        // time, not a change) and any emission matching our [expectedPaused] expectation.
         playbackBroadcastJob = viewmodel.viewModelScope.launch(Dispatchers.IO) {
             var seenInitial = false
             viewmodel.playerManager.isNowPlaying.collect { isPlaying ->

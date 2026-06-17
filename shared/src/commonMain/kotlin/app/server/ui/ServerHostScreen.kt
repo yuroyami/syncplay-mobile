@@ -133,7 +133,6 @@ fun ServerHostScreenUI(viewmodel: ServerViewmodel) {
             ) {
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // --- Configuration ---
                 HomeTextField(
                     modifier = Modifier.fillMaxWidth(),
                     value = viewmodel.port.value,
@@ -163,7 +162,6 @@ fun ServerHostScreenUI(viewmodel: ServerViewmodel) {
                     enabled = !isRunning
                 )
 
-                // --- Toggles ---
                 ToggleRow(
                     label = stringResource(Res.string.server_host_isolate_rooms),
                     checked = viewmodel.isolateRooms.value,
@@ -185,7 +183,6 @@ fun ServerHostScreenUI(viewmodel: ServerViewmodel) {
                     enabled = !isRunning
                 )
 
-                // --- iOS warning ---
                 if (platform == Platform.IOS) {
                     Text(
                         text = stringResource(Res.string.server_host_ios_warning),
@@ -196,7 +193,6 @@ fun ServerHostScreenUI(viewmodel: ServerViewmodel) {
                     )
                 }
 
-                // --- Start/Stop Button ---
                 Button(
                     onClick = {
                         if (isRunning) viewmodel.stopServer() else viewmodel.startServer()
@@ -218,10 +214,8 @@ fun ServerHostScreenUI(viewmodel: ServerViewmodel) {
                     )
                 }
 
-                // --- Status ---
                 StatusIndicator(status)
 
-                // --- Server addresses ---
                 AnimatedVisibility(visible = isRunning) {
                     val localIp = viewmodel.deviceIpAddress.value
                     val publicIp = viewmodel.publicIpAddress.value
@@ -229,7 +223,6 @@ fun ServerHostScreenUI(viewmodel: ServerViewmodel) {
                     val portValue = viewmodel.port.value
 
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        // Local address
                         if (localIp != null) {
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
@@ -258,7 +251,6 @@ fun ServerHostScreenUI(viewmodel: ServerViewmodel) {
                             }
                         }
 
-                        // Public address
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(
@@ -297,7 +289,6 @@ fun ServerHostScreenUI(viewmodel: ServerViewmodel) {
                     }
                 }
 
-                // --- Connected clients ---
                 AnimatedVisibility(visible = isRunning) {
                     val clients by viewmodel.connectedClients.collectAsState()
                     Text(
@@ -307,7 +298,6 @@ fun ServerHostScreenUI(viewmodel: ServerViewmodel) {
                     )
                 }
 
-                // --- Server Log ---
                 if (viewmodel.serverLogs.isNotEmpty()) {
                     Text(
                         text = stringResource(Res.string.server_host_server_log),

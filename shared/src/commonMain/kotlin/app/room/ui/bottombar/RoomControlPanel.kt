@@ -178,11 +178,9 @@ fun RoomControlPanelCard(modifier: Modifier) {
     var showTrackSheet by remember { mutableStateOf(false) }
     var showSubtitleSearch by remember { mutableStateOf(false) }
 
-    // Compose Multiplatform 1.10+ has an iOS picker race: launching a FileKit picker
-    // while a Compose modal (this ModalBottomSheet) is closing makes the native
-    // picker fire its delegate twice → "Already resumed" crash inside
-    // DocumentPickerDelegate. Workaround: dismiss the sheet first, then launch in a
-    // LaunchedEffect once the dismissal has settled. See FileKit issue/PR #575.
+    // iOS FileKit picker race (FileKit #575): launching a picker while a Compose modal
+    // (this ModalBottomSheet) is closing fires the native delegate twice -> "Already resumed"
+    // crash. Dismiss the sheet first, then launch once the dismissal settles.
     var launchSubtitlePickerAfterDismiss by remember { mutableStateOf(false) }
     LaunchedEffect(showTrackSheet, launchSubtitlePickerAfterDismiss) {
         if (!showTrackSheet && launchSubtitlePickerAfterDismiss) {
@@ -320,12 +318,10 @@ fun RoomControlPanelCard(modifier: Modifier) {
                 icon = Icons.Filled.Theaters,
                 onClick = {
                     haptic()
-                    // No analyzeChapters() here: this button only renders when media.chapters is
-                    // already non-empty (see the `isNotEmpty()` guard above), and chapters are
-                    // immutable file metadata the seekbar's LaunchedEffect(media.fileName) already
-                    // populated. Re-analyzing on every open just re-derives an identical list, and
-                    // on VLCKit it clear()s + delay(500)s the shared chapter list, blanking the
-                    // seekbar dots for half a second each time.
+                    // No analyzeChapters() here: chapters are immutable file metadata already
+                    // populated by the seekbar's LaunchedEffect(media.fileName), and this button
+                    // only renders when media.chapters is non-empty. Re-analyzing on VLCKit
+                    // clear()s + delay(500)s the shared chapter list, blanking the seekbar dots.
                     chaptersPopup.value = true
                 },
                 popupVisibility = chaptersPopup,

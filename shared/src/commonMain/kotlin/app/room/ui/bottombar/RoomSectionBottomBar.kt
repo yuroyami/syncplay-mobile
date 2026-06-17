@@ -41,7 +41,6 @@ fun RoomBottomBarSection(modifier: Modifier) {
             verticalAlignment = Alignment.Bottom
         ) {
             if (hasVideo) {
-                //Ready Toggle Button
                 RoomReadyButton()
 
                 RoomSeekbar(modifier = Modifier.weight(1f).padding(horizontal = 4.dp))

@@ -11,10 +11,10 @@ import kotlin.test.assertTrue
  * These guard the latency-compensation math the `State` handler uses to bias the global
  * position by message age.
  *
- * [PingService.receiveMessage] now accepts a `Double?` in fractional seconds (matching
- * what the wire actually carries). Tests still assert on ranges rather than exact
- * values, since there's an unavoidable scheduling drift between when the test
- * snapshots wall-clock and when the function call reads `generateTimestampMillis()`.
+ * [PingService.receiveMessage] takes a `Double?` in fractional seconds, matching what
+ * the wire carries. Tests assert on ranges rather than exact values, since there's an
+ * unavoidable scheduling drift between when the test snapshots wall-clock and when the
+ * function call reads `generateTimestampMillis()`.
  */
 class PingServiceTest {
 
@@ -63,8 +63,8 @@ class PingServiceTest {
     @Test
     fun `first message applies asymmetry compensation when senderRtt is lower`() {
         val ps = PingService()
-        // senderRtt < rtt → asymmetric branch even on the very first ping.
-        // python applies this from the first sample; mobile used to skip it (#12).
+        // senderRtt < rtt → asymmetric branch even on the very first ping, matching
+        // python which applies the asymmetry term from the first sample.
         ps.receiveMessage(timestamp = timestampSecondsAgo(2), senderRtt = 0.5)
         // forwardDelay = avrRtt / 2 + (rtt - senderRtt) ≈ 1.0 + 1.5 = 2.5 (with drift).
         assertTrue(

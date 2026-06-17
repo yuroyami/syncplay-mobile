@@ -70,7 +70,6 @@ object PopupColorPicker {
                 verticalArrangement = Arrangement.SpaceEvenly
             ) {
 
-                /* The title */
                 FlexibleText(
                     modifier = Modifier.weight(1f).padding(6.dp),
                     text = stringResource(Res.string.room_setting_pick_color),
@@ -80,7 +79,6 @@ object PopupColorPicker {
                     font = jostFont
                 )
 
-                /* The card that holds the color picker */
                 KolorPicker(
                     modifier = Modifier.fillMaxWidth(0.8f).weight(3f).padding(6.dp),
                     initialColor = initialColor,
@@ -90,7 +88,6 @@ object PopupColorPicker {
                     }
                 )
 
-                /* Exit button */
                 Row(
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     horizontalArrangement = Arrangement.SpaceEvenly,

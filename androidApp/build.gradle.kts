@@ -65,7 +65,6 @@ android {
             isShrinkResources = true
         }
         debug {
-            //applicationIdSuffix = ".dev"
         }
     }
 
@@ -247,11 +246,11 @@ if (!exoOnly) {
         }
     }
 
-    // Belt-and-suspenders: after the native build and the restore above, refuse to package a full
-    // APK whose mpv libc++ is missing or is the wrong one (libVLC's, which lacks the symbol). The
-    // marker is a fragment of __from_chars_floating_point's mangled name, present verbatim as a
-    // string inside any correct (r29) libc++_shared.so and absent from VLC's. Skips ABIs that do not
-    // ship libmpv.so (e.g. Windows, where the native build is disabled).
+    // After the native build and the restore above, refuse to package a full APK whose mpv libc++
+    // is missing or is the wrong one (libVLC's, which lacks the symbol). The marker is a fragment
+    // of __from_chars_floating_point's mangled name, present verbatim as a string inside any
+    // correct (NDK r29) libc++_shared.so and absent from VLC's. Skips ABIs that do not ship
+    // libmpv.so (e.g. Windows, where the native build is disabled).
     val verifyMpvLibcxx = tasks.register("verifyMpvLibcxx") {
         dependsOn(restoreMpvLibcxx)
         doLast {

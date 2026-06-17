@@ -77,8 +77,8 @@ import syncplaymobile.shared.generated.resources.room_gif_tab_recents
 import syncplaymobile.shared.generated.resources.room_gif_tab_stickers
 import syncplaymobile.shared.generated.resources.room_gif_tab_trending
 
-/** Which "source" the panel is showing when the chat input is empty. When the chat input has
- *  text, that text is treated as a search query and overrides the source — no chip switching. */
+/** Source shown when the chat input is empty. Non-empty input is treated as a search query that
+ *  overrides the source (no chip switching). */
 private enum class GifSource { TRENDING, RECENTS, FAVORITES }
 
 /**
@@ -110,15 +110,13 @@ fun GifPanel(
     val gridState = rememberLazyGridState()
     val scope = rememberCoroutineScope()
 
-    /* Long-press context menu state */
     var contextMenuMedia by remember { mutableStateOf<KlipyMedia?>(null) }
 
-    /* Favorites stored as JSON-serialized KlipyMedia in a Set<String> */
+    /* Favorites stored as JSON-serialized KlipyMedia in a Set<String>. */
     var favoriteIds by remember { mutableStateOf(loadFavoriteIds()) }
 
     LaunchedEffect(query, selectedType, selectedSource) {
-        /* Favorites are always client-side. The chat input filters by slug — typing doesn't
-         * yank the user to a search tab; it just narrows what's already loaded. */
+        /* Favorites are client-side: the chat input filters them by slug, it does not switch tabs. */
         if (selectedSource == GifSource.FAVORITES) {
             isLoading = true
             results.clear()
@@ -131,9 +129,7 @@ fun GifPanel(
             return@LaunchedEffect
         }
 
-        /* Helper — fetches a single page. When the chat input has text, search overrides the
-         * selected source for that fetch (no chip switching). When the input is empty, we
-         * fetch from the user-selected source (TRENDING / RECENTS). */
+        /* Fetches one page: non-empty input searches; empty input pulls the selected source. */
         suspend fun fetchPage(page: Int) = if (query.isNotBlank()) {
             KlipyUtils.search(query = query, type = selectedType, page = page)
         } else when (selectedSource) {
@@ -142,12 +138,11 @@ fun GifPanel(
             GifSource.FAVORITES -> error("handled above")
         }
 
-        /* Reset paging state and load first page */
         currentPage = 1
         hasNextPage = false
         isLoadingMore = false
 
-        /* Debounce only when the chat input drives a search request — keeps chip taps snappy. */
+        /* Debounce only search requests so chip taps stay snappy. */
         if (query.isNotBlank()) delay(400)
 
         isLoading = true
@@ -157,7 +152,7 @@ fun GifPanel(
         hasNextPage = first.hasNext
         isLoading = false
 
-        /* Infinite-scroll: watch for scroll-near-end and load subsequent pages */
+        /* Infinite scroll: load the next page when the grid nears its end. */
         snapshotFlow {
             val info = gridState.layoutInfo
             val lastVisible = info.visibleItemsInfo.lastOrNull()?.index ?: -1
@@ -278,24 +273,20 @@ fun GifPanel(
                     ) {
                         items(results, key = { it.id }) { media ->
                             Box(modifier = Modifier.fillMaxWidth()) {
-                                /* Alpha is forwarded to AnimatedImage as a parameter (not via
-                                 * Modifier.alpha) so the iOS UIImageView fades natively — Compose's
+                                /* Alpha is passed to AnimatedImage as a parameter (not via
+                                 * Modifier.alpha) so the iOS UIImageView fades natively: Compose's
                                  * Modifier.alpha does not propagate into UIKit interop layers.
                                  *
                                  * fillMaxWidth() on both the Box and the AnimatedImage modifier is
-                                 * required for iOS. AnimatedImage on iOS wraps a UIImageView via
-                                 * UIKitView, and UIKitView derives its size from the wrapped UIView's
+                                 * required for iOS. AnimatedImage there wraps a UIImageView via
+                                 * UIKitView, which derives its size from the wrapped view's
                                  * intrinsicContentSize. An empty UIImageView reports (0, 0), so an
-                                 * unconstrained-width modifier collapses the tile to width=0 before
-                                 * the image arrives. By the time the image loads and the imageView's
-                                 * intrinsic size becomes non-zero, the LazyGrid cell has already been
-                                 * measured and Compose doesn't re-measure UIKit interop on intrinsic-
-                                 * size changes coming from the `update` block. Constraining width
-                                 * explicitly via fillMaxWidth() (the cell already has a max-width
-                                 * upper bound from GridCells.Adaptive) bypasses the intrinsic-size
-                                 * path entirely — the tile lays out at the cell's width regardless
-                                 * of whether the image has loaded yet. Android's Coil-backed
-                                 * AsyncImage doesn't have this problem; the bug was iOS-only. */
+                                 * unconstrained-width modifier collapses the tile to width=0; Compose
+                                 * never re-measures UIKit interop when the image later loads and the
+                                 * intrinsic size becomes non-zero. Constraining width explicitly (the
+                                 * cell already has a max-width upper bound from GridCells.Adaptive)
+                                 * bypasses the intrinsic-size path so the tile lays out at the cell's
+                                 * width regardless of load state. Android's Coil AsyncImage is unaffected. */
                                 AnimatedImage(
                                     url = media.previewUrl,
                                     contentDescription = null,
@@ -316,7 +307,6 @@ fun GifPanel(
                                         )
                                 )
 
-                                /* Long-press context menu */
                                 DropdownMenu(
                                     expanded = contextMenuMedia == media,
                                     onDismissRequest = { contextMenuMedia = null },

@@ -262,10 +262,10 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
     fun onPlaylistIndexChanged(user: String, index: Int) {
         loggy("SYNCPLAY Protocol: Playlist index changed by $user to $index")
 
-        // Load for everyone — including our own echo. changePlaylistSelection() guards against
+        // Load for everyone, including our own echo. changePlaylistSelection() guards against
         // reloading a file we already have loaded, so the self-echo is a cheap no-op while a
-        // genuine selection (local click or a peer's change) actually loads the file. Gating
-        // this on isNotSelf() was why clicking a playlist item never played anything locally.
+        // genuine selection (local click or a peer's change) actually loads the file. Must not
+        // gate on isNotSelf(): that suppresses loading a locally-clicked playlist item.
         viewmodel.viewModelScope.launch {
             viewmodel.playlistManager.changePlaylistSelection(index)
         }
@@ -371,10 +371,10 @@ class RoomCallback(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
                 throw e
             } catch (e: Exception) {
                 // A failed handshake (bad/expired cert, MITM, transport dropped mid-upgrade)
-                // must surface as a connection failure — NOT propagate. This used to escape
-                // into the packet-dispatch coroutine, whose catch only covered
-                // SerializationException, and crash the whole process. Treat the socket as
-                // dead and let the normal retry loop take over (it re-arms TLS_ASK itself).
+                // must surface as a connection failure, NOT propagate: the packet-dispatch
+                // coroutine's catch only covers SerializationException, so anything else here
+                // would crash the process. Treat the socket as dead and let the retry loop
+                // take over (it re-arms TLS_ASK itself).
                 loggy("TLS upgrade failed: ${e.stackTraceToString()}")
                 network.terminateExistingConnection()
                 onConnectionFailed()

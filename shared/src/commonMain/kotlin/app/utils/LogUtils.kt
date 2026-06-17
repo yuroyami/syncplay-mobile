@@ -39,11 +39,8 @@ fun loggy(s: Any?) {
         s.toString()
     }
 
-    /* Always print to console — gating on BuildConfig.DEBUG meant release builds
-     * had zero visibility into runtime errors (Klipy/SubtitleSearch failures had
-     * no stacktrace anywhere because of this). On iOS this surfaces in Xcode's
-     * console; on Android in logcat. The log file write below preserves logs for
-     * after-the-fact export from settings. */
+    /* Always print to console (iOS: Xcode console, Android: logcat), including in release builds
+     * so runtime errors stay visible. The file write below preserves logs for export from settings. */
     Logger.e(string)
 
     synchronized(logLock) {
@@ -98,10 +95,8 @@ fun cleanupOldLogs() {
     } catch (_: Exception) { }
 }
 
-/** Exact epoch-day count for a "yyyy-MM-dd" string, using real calendar arithmetic.
- *  Throws if the string isn't a valid date; the caller catches and skips such files.
- *  (The old version approximated every month as 30 days, drifting by several days
- *   near month/year boundaries and occasionally deleting logs early or late.) */
+/** Exact epoch-day count for a "yyyy-MM-dd" string. Throws on non-date strings; callers catch
+ *  and skip those files. */
 private fun String.toEpochDays(): Long {
     val parts = split("-")
     if (parts.size != 3) throw IllegalArgumentException("Not a date: $this")

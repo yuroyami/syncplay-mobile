@@ -20,10 +20,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel for the server hosting screen.
- *
- * Completely independent of [app.room.RoomViewmodel] and client-side state.
- * Manages server lifecycle, configuration, and observable state for the UI.
+ * ViewModel for the server hosting screen: owns server lifecycle, editable config, and the
+ * observable state the UI binds to. Independent of [app.room.RoomViewmodel] and client state.
  */
 class ServerViewmodel(
     val backStack: MutableList<Screen>
@@ -77,7 +75,6 @@ class ServerViewmodel(
                 val server = SyncplayServer(config, viewModelScope)
                 _server = server
 
-                // Observe server logs
                 launch {
                     server.serverLog.collect { entries ->
                         for (entry in entries.drop(serverLogs.size)) {
@@ -86,7 +83,6 @@ class ServerViewmodel(
                     }
                 }
 
-                // Observe connected client count
                 launch {
                     server.connectedClients.collect { count ->
                         connectedClients.value = count
@@ -101,7 +97,6 @@ class ServerViewmodel(
                 deviceIpAddress.value = getDeviceIpAddress()
                 addLog("Server started on port $portInt")
 
-                // Fetch public IP in the background
                 launch {
                     publicIpLoading.value = true
                     publicIpAddress.value = try {

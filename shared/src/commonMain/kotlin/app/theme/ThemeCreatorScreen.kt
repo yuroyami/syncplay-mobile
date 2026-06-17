@@ -160,7 +160,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                                 },
                                 modifier = Modifier.padding(horizontal = 4.dp)
                             ) {
-                                Text(stringResource(Res.string.save)) //TODO
+                                Text(stringResource(Res.string.save))
                             }
                         }
                     )
@@ -342,30 +342,6 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                         )
                     }
 
-//                    Row(
-//                        verticalAlignment = Alignment.CenterVertically,
-//                        horizontalArrangement = Arrangement.SpaceBetween,
-//                        modifier = Modifier.fillMaxWidth(),
-//                    ) {
-//                        FlexibleText(
-//                            text = "is a Dark Theme", //TODO Localize
-//                            size = 14f,
-//                            textAlign = TextAlign.Center,
-//                            fillingColors = listOf(MaterialTheme.colorScheme.primary),
-//                            font = lexendFont,
-//                            strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-//                            shadowColors = if (useSPGrad) Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) } else listOf(),
-//                            shadowSize = 3f
-//                        )
-//
-//                        HorizontalDivider(Modifier.weight(1f).padding(horizontal = 4.dp).alpha(0.5f))
-//
-//                        Checkbox(
-//                            checked = newTheme.isDark,
-//                            onCheckedChange = { newTheme = newTheme.copy(isDark = it) }
-//                        )
-//                    }
-
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -524,8 +500,6 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
 
                     HorizontalDivider()
 
-                    /********$ PREVIEWS $*********/
-
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceEvenly,
@@ -606,7 +580,6 @@ fun ThemeSingleColorPicker(initialColor: Color? = null, onColorChange: (Color) -
                 pickerVisible = false
             }
         ) {
-            /* The card that holds the color picker */
             KolorPicker(
                 modifier = Modifier.width(200.dp).height(165.dp).padding(6.dp),
                 initialColor = initialColor ?: Color(22, 22, 22),

@@ -40,8 +40,8 @@ import syncplaymobile.shared.generated.resources.room_reconnect_button
 fun RoomStatusInfoSection(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
 
-    /* Top-Center info: Overall info (PING + ROOMNAME + OSD Messages) */
-    //TODO if (!pipModeObserver) {
+    // Top-center overlay: room name, user count / connection state, OSD messages.
+    // TODO: suppress while in PiP mode.
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
@@ -50,21 +50,18 @@ fun RoomStatusInfoSection(modifier: Modifier) {
             val connectionState by viewmodel.networkManager.state.collectAsState()
             val userList by viewmodel.session.userList.collectAsState()
 
-            /* Total users in the room: userList from the server already includes ourselves
-             * (the ListResponse contains all room members keyed by username). Fall back to 1
-             * while the list hasn't populated yet but we're connected, so the count doesn't
-             * flash "0 users" during join. */
+            /* userList from the server already includes ourselves (ListResponse keys every room
+             * member by username). Fall back to 1 while connected but not yet populated, so the
+             * count doesn't flash "0 users" during join. */
             val totalUsers = when {
                 userList.isNotEmpty() -> userList.size
                 connectionState == ConnectionState.CONNECTED -> 1
                 else -> 0
             }
 
-            /* Single parenthesized status: when connected, the user count itself is the
-             * status — the parens visibly carry "what the room is right now," and seeing
-             * (Connected) is redundant on top of a populated user list. Disconnected is
-             * the only state that needs an explicit label, since the user count is stale
-             * the moment the socket drops. */
+            /* When connected, show the user count as the status (it already conveys room state).
+             * Only the disconnected state gets an explicit label, since the count goes stale the
+             * moment the socket drops. */
             val parenthesized = if (connectionState == ConnectionState.CONNECTED) {
                 stringResource(Res.string.room_details_user_count, totalUsers)
             } else {

@@ -122,17 +122,16 @@ fun ChatTextField(
     val gradientBrush = Brush.linearGradient(colors = flexibleGradient)
     val msgIsNotEmpty by derivedStateOf { msg.isNotEmpty() }
 
-    /* Drop chat focus (and dismiss the soft keyboard) when the HUD hides, so the input
-     * doesn't stay focused behind an invisible overlay. */
+    /* Drop chat focus and the soft keyboard when the HUD hides, so the input is not left
+     * focused behind an invisible overlay. */
     LaunchedEffect(isHUDVisible) {
         if (!isHUDVisible) focusManager.clearFocus(force = true)
     }
 
     fun send() {
-        // Cap at the limit the server declared in its Hello (officially 150; third-party
-        // servers may differ) instead of a hardcoded 149 — and never strip characters:
-        // the old `replace("\\", "")` silently mangled any message containing a backslash
-        // (paths, emoticons). kotlinx-serialization escapes JSON correctly on its own.
+        // Cap at the server-declared limit from Hello (officially 150; third-party servers may
+        // differ). Do not strip characters: kotlinx-serialization escapes JSON on its own, so
+        // backslashes in paths/emoticons must reach the wire intact.
         val maxLen = viewmodel.session.roomFeatures.maxChatMessageLength.coerceAtLeast(1)
         val msgToSend = msg.take(maxLen)
         if (msgToSend.isNotBlank()) {
@@ -275,10 +274,9 @@ fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel, isHUDVisibl
             modifier = Modifier.fillMaxSize()
         ) {
             items(chatMessages) { chatMessage ->
-                /* Only mark as seen when the HUD is actually visible. The HUD now stays
-                 * composed (alpha-0) when hidden, so SideEffect would otherwise fire for
-                 * every new message instantly — defeating FadingMessageLayout, which only
-                 * shows unseen messages. */
+                /* Mark as seen only when the HUD is visible. The HUD stays composed (alpha-0)
+                 * when hidden, so marking unconditionally would defeat FadingMessageLayout,
+                 * which only shows unseen messages. */
                 if (isHUDVisible) {
                     SideEffect {
                         chatMessage.seen = true
@@ -299,9 +297,9 @@ fun ChatBox(modifier: Modifier = Modifier, viewmodel: RoomViewmodel, isHUDVisibl
                             strokeColors = if (msgOutlineActivate) listOf(Color.Black, Color.Black) else listOf(),
                             strokeWidth = msgOutlineThickness.toFloat()
                         )
-                        /* Alpha is forwarded to AnimatedImage as a parameter (not via
-                         * Modifier.alpha) so the iOS UIImageView fades natively — Compose's
-                         * Modifier.alpha does not propagate into UIKit interop layers. */
+                        /* Alpha is passed to AnimatedImage as a parameter (not via Modifier.alpha)
+                         * so the iOS UIImageView fades natively: Compose's Modifier.alpha does not
+                         * propagate into UIKit interop layers. */
                         AnimatedImage(
                             url = chatMessage.content,
                             contentDescription = null,

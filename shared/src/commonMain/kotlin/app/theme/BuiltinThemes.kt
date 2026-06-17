@@ -19,12 +19,7 @@ val BLANK_THEME = SaveableTheme(
     syncplayGradients = true
 )
 
-/**
- * "PyncSlay" theme - Syncplay's signature pink theme.
- *
- * Features cute pink primary colors with tonal spot palette style
- * and custom Syncplay gradients.
- */
+/** Signature pink AMOLED theme with the Rainbow palette style. */
 val PYNCSLAY = SaveableTheme(
     name = "PyncSlay",
     primaryColor = -44800,
@@ -38,12 +33,7 @@ val PYNCSLAY = SaveableTheme(
     syncplayGradients = false
 )
 
-/**
- * "GrayOLED" theme - Pure AMOLED theme optimized for OLED displays.
- *
- * Uses true black backgrounds to take advantage of OLED pixel-off technology
- * for better battery life and contrast.
- */
+/** Pure AMOLED theme: true-black backgrounds across all color slots. */
 val GrayOLED = SaveableTheme(
     name = "GrayOLED",
     primaryColor = Color.Black.toArgb(),
@@ -58,12 +48,7 @@ val GrayOLED = SaveableTheme(
     syncplayGradients = false
 )
 
-/**
- * "Alley Lamppost" theme - Warm amber theme with dark gray backgrounds.
- *
- * Inspired by vintage street lighting with warm yellow-gray primary colors
- * against dark, muted backgrounds. Uses neutral palette style.
- */
+/** Warm amber primary over dark-gray backgrounds, Neutral palette style. */
 val ALLEY_LAMP = SaveableTheme(
     name = "Alley Lamp",
     primaryColor = Color(255, 214, 111).toArgb(),

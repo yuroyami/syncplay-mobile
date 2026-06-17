@@ -79,11 +79,10 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
         audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
-        /** LoadControl (Buffering manager) and track selector (for track language preference) **/
         val options = PlayerOptions.get()
-        /* Clamp the buffer values so DefaultLoadControl's invariants always hold, even if a
-         * saved pref combo is invalid (min/max are seconds*1000=ms here, seek is already ms).
-         * DefaultLoadControl requires minBuffer <= maxBuffer and bufferForPlayback(AfterRebuffer) <= minBuffer. */
+        /* Clamp the buffer values so DefaultLoadControl's invariants always hold even with an
+         * invalid saved pref combo: it requires minBuffer <= maxBuffer and
+         * bufferForPlayback(AfterRebuffer) <= minBuffer. (min/max are ms; seek is already ms.) */
         val minBufferMs = options.minBuffer
         val maxBufferMs = maxOf(options.maxBuffer, minBufferMs)
         val bufferForPlaybackMs = minOf(options.playbackBuffer, minBufferMs)
@@ -103,43 +102,41 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
             .build()
         trackSelector.parameters = params
 
-        /** Building ExoPlayer to use FFmpeg Audio Renderer and also enable fast-seeking */
+        /* Enable the FFmpeg extension renderer (wider codec support) when its lib is present. */
         val ffmpegAvailable = FfmpegLibrary.isAvailable()
 
         loggy("FFMPEG IS AVAILABLE?: $ffmpegAvailable")
 
         exoplayer = ExoPlayer.Builder(context)
-            .setLoadControl(loadControl) /* We use the custom LoadControl we initialized before */
+            .setLoadControl(loadControl)
             .setTrackSelector(trackSelector)
             .setRenderersFactory(
                 DefaultRenderersFactory(context).setExtensionRendererMode(
                     if (ffmpegAvailable) {
-                        DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON/* We force extensions, crash if no FFmpeg, but `ffmpegAvailable` ensures they are*/
+                        DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
                     } else {
-                        DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF/* We use platform renderer, crash if playing unsupported format which means ffmpeg is missing*/
+                        DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF
                     }
                 ).setEnableDecoderFallback(true)
             )
-            .setWakeMode(C.WAKE_MODE_NETWORK) /* Prevent the service from being killed during playback */
+            .setWakeMode(C.WAKE_MODE_NETWORK) /* Keep the CPU/network awake during playback. */
             .setAudioAttributes(
                 AudioAttributes.Builder()
                     .setUsage(C.USAGE_MEDIA)
                     .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
                     .build(),
-                /* IMPORTANT: must stay false. When true, ExoPlayer silently invokes pause()
-                 * on transient/permanent audio-focus loss (notifications, system sounds, OS
-                 * doze, Bluetooth glitches). That fires onIsPlayingChanged(false), which the
-                 * isNowPlaying divergence collector in ProtocolManager.startChannelHealthMonitoring()
-                 * (see ProtocolManager.kt ~190, which explicitly names audio-focus loss) then
-                 * broadcasts to the room as `play=false`, causing the spurious "User X paused"
-                 * event after long sessions (the bug reported as the 30–60 minute auto-pause). If
-                 * we ever need polite focus handling, add a custom AudioFocusListener that pauses
-                 * LOCALLY only and does NOT mutate viewmodel.playerManager.isNowPlaying. */
+                /* MUST stay false. When true, ExoPlayer silently pause()s on transient/permanent
+                 * audio-focus loss (notifications, system sounds, OS doze, Bluetooth glitches),
+                 * firing onIsPlayingChanged(false). The isNowPlaying divergence collector in
+                 * ProtocolManager.startChannelHealthMonitoring() then broadcasts `play=false` to
+                 * the room, producing a spurious "User X paused" minutes into a session. Any
+                 * polite focus handling must pause LOCALLY only and never mutate
+                 * viewmodel.playerManager.isNowPlaying. */
                 false
             )
             .build()
 
-        exoplayer?.videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT /* Starter scaling */
+        exoplayer?.videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
 
         exoView.player = exoplayer
 
@@ -147,12 +144,11 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
         exoplayer?.addListener(object : Player.Listener {
 
-            /* This detects when the player loads a file/URL, so we tell the server */
+            /* On load completion, announce the file's duration to the server. */
             override fun onIsLoadingChanged(isLoading: Boolean) {
                 super.onIsLoadingChanged(isLoading)
 
                 if (!isLoading && exoplayer != null) {
-                    /* Updating our timeFull */
                     val durationMs = exoplayer!!.duration
                     viewmodel.playerManager.timeFullMillis.value = abs(durationMs)
 
@@ -165,30 +161,25 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
                 }
             }
 
-            /* This detects when the user pauses or plays */
+            /* Tracks local pause/play transitions. */
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 super.onIsPlayingChanged(isPlaying)
 
                 if (exoplayer != null && exoplayer?.mediaItemCount != 0) {
                     if (exoplayer!!.playbackState != ExoPlayer.STATE_BUFFERING) {
-                        viewmodel.playerManager.isNowPlaying.value = isPlaying //Just to inform UI
+                        viewmodel.playerManager.isNowPlaying.value = isPlaying
 
                         if (exoplayer!!.playbackState == ExoPlayer.STATE_ENDED) {
-                            onPlaybackEnded() //signaling end of playback
+                            onPlaybackEnded()
                         }
                     }
                 }
             }
 
-            /* This detects when a media track change has happened (such as loading a custom sub) */
+            /* Fires on any track change (e.g. loading a custom sub); re-analyze tracks. */
             override fun onTracksChanged(tracks: Tracks) {
                 super.onTracksChanged(tracks)
 
-                /* Updating our HUD's timeFull here again, just in case. */
-                //val duration = exoplayer.duration / 1000.0
-                //timeFull.longValue = kotlin.math.abs(duration.toLong())
-
-                /* Repopulate audio and subtitle track lists with the new analysis of tracks **/
                 playerScopeMain.launch lol@{
                     analyzeTracks(viewmodel.media ?: return@lol)
                 }
@@ -206,10 +197,9 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
     override suspend fun destroy() {
         if (!isInitialized) return
-        // Parity with VlcImpl/MpvImpl: close the guards and stop the 500ms position-tracker job
-        // (started at room entry) before releasing the player. Exo polls a nullable instance, not a
-        // global handle like mpv, so it doesn't hard-crash, but leaving the job alive keeps it polling
-        // a torn-down player and retains the RoomViewmodel graph it captures after every room exit.
+        // Reset the guard and cancel the 500ms position-tracker job before releasing the player.
+        // Exo polls a nullable instance (no hard crash like mpv's global handle), but leaving the
+        // job alive keeps it polling a torn-down player and retains the captured RoomViewmodel graph.
         isInitialized = false
         playerSupervisorJob.cancel()
 
@@ -276,7 +266,6 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
                         val format = trackGroup.getFormat(i)
                         val index = trackGroup.indexOf(format)
 
-                        /** Creating a custom Track instance for every track in a track group **/
                         val exoTrack = ExoTrack(
                             trackGroup = trackGroup,
                             format = format,
@@ -300,14 +289,13 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
 
         val builder = exoplayer?.trackSelector?.parameters?.buildUpon() ?: return
 
-        /* First, clearing the track selection only for the type we're changing (This helps troubleshoot many issues */
+        /* Clear only the override for the type being changed. */
         exoplayer?.trackSelector?.parameters = builder.clearOverridesOfType(type.getExoType()).build()
         when (type) {
             TrackType.SUBTITLE -> playerManager.currentTrackChoices.lastSubtitleOverride = null
             TrackType.AUDIO -> playerManager.currentTrackChoices.lastAudioOverride = null
         }
 
-        /* Now, selecting our track should one be selected */
         if (exoTrack != null) {
             val override = TrackSelectionOverride(
                 exoTrack.trackGroup,
@@ -326,14 +314,10 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
     override suspend fun reapplyTrackChoices() {
         if (!isInitialized) return
 
-        /* We need to cast MediaController to ExoPlayer since they're roughly the same */
         withContext(Dispatchers.Main.immediate) {
-            // No analyzeTracks() here: re-applying the saved overrides below does not need the
-            // media.tracks UI list rebuilt (that refreshes on-demand when the track sheet opens,
-            // see RoomControlPanel ~265). analyzeTracks clears+rebuilds media.tracks and retriggers
-            // onTracksChanged on every foreground — wasted work, since no engine is released across
-            // pause/resume, so re-adding the stored overrides is all that's needed to restore the
-            // selection. (This path is reached only from onResume; it is the sole reapply caller.)
+            // No analyzeTracks() here (this runs on every onResume): re-adding the stored overrides
+            // is all that's needed to restore the selection, since no engine is released across
+            // pause/resume. The media.tracks UI list rebuilds on-demand when the track sheet opens.
             if (viewmodel.media == null) return@withContext
 
             exoplayer?.apply {
@@ -368,7 +352,7 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
             .build()
 
         withContext(Dispatchers.Main.immediate) {
-            //Exo requires that we reload the video
+            // Exo can only attach an external subtitle by reloading the media item.
             reloadVideo()
         }
     }
@@ -492,7 +476,6 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
         }
     }
 
-    /** EXO-EXCLUSIVE */
     private fun TrackType.getExoType(): Int {
         return when (this) {
             TrackType.AUDIO -> C.TRACK_TYPE_AUDIO

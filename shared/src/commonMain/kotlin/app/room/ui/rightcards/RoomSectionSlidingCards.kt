@@ -40,7 +40,6 @@ fun RoomSectionSlidingCards(modifier: Modifier, isPortrait: Boolean = false) {
 
     val stateControlPanel by cardController.controlPanel.collectAsState()
 
-    /* The cards below */
     Column(modifier) {
         val cardBoxModifier = if (isPortrait) {
             Modifier.fillMaxWidth().weight(1f).align(Alignment.CenterHorizontally).padding(4.dp)
@@ -63,7 +62,6 @@ fun RoomSectionSlidingCards(modifier: Modifier, isPortrait: Boolean = false) {
                 slideOutHorizontally(targetOffsetX = { (screenW * 1.3).toInt() })
             }
 
-            /** User-info card (toggled on and off) */
             if (!viewmodel.isSoloMode) {
                 FreeAnimatedVisibility(
                     enter = inTransition, exit = outTransition,
@@ -74,7 +72,6 @@ fun RoomSectionSlidingCards(modifier: Modifier, isPortrait: Boolean = false) {
                 }
             }
 
-            /** Shared Playlist card (toggled on and off) */
             if (!viewmodel.isSoloMode) {
                 FreeAnimatedVisibility(
                     enter = inTransition, exit = outTransition,
@@ -85,7 +82,6 @@ fun RoomSectionSlidingCards(modifier: Modifier, isPortrait: Boolean = false) {
                 }
             }
 
-            /** In-room card (toggled on and off) */
             FreeAnimatedVisibility(
                 enter = inTransition, exit = outTransition,
                 visible = stateRoomPreferences,

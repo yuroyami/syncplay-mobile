@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/yuroyami/syncplay-mobile/blob/master/shared/src/androidMain/ic_launcher-playstore.png" width="160" alt="Synkplay">
+  <img src="https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/shared/src/androidMain/ic_launcher-playstore.png" width="160" alt="Synkplay">
 </p>
 
 <h1 align="center">Synkplay</h1>
@@ -31,17 +31,17 @@
     <td><b>Android</b></td>
     <td>
       <a href="https://github.com/yuroyami/syncplay-mobile/releases/latest">
-        <img src="https://raw.githubusercontent.com/flocke/andOTP/master/assets/badges/get-it-on-github.png" width="140" alt="GitHub Releases">
+        <img src="https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/badges/get-it-on-github.png" width="140" alt="GitHub Releases">
       </a>
     </td>
     <td>
       <a href="https://apt.izzysoft.de/fdroid/index/apk/com.reddnek.syncplay">
-        <img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" width="140" alt="IzzyOnDroid">
+        <img src="https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/badges/IzzyOnDroid.png" width="140" alt="IzzyOnDroid">
       </a>
     </td>
     <td>
       <a href="https://play.google.com/store/apps/details?id=com.yuroyami.syncplay">
-        <img src="https://i0.wp.com/reefcentral.pt/wp-content/uploads/2019/04/get-on-google-play.png?fit=564%2C168&ssl=1" width="140" alt="Google Play">
+        <img src="https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/badges/google-play.png" width="140" alt="Google Play">
       </a>
     </td>
   </tr>
@@ -54,12 +54,12 @@
     </td>
     <td>
       <a href="https://celloserenity.github.io/altdirect/?url=https://raw.githubusercontent.com/yuroyami/syncplay-mobile/refs/heads/master/altstore_yuroyami.json">
-        <img src="https://github.com/CelloSerenity/altdirect/blob/main/assets/png/AltSource_Blue.png?raw=true" width="140" alt="AltStore Source">
+        <img src="https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/badges/AltSource_Blue.png" width="140" alt="AltStore Source">
       </a>
     </td>
     <td>
       <a href="https://github.com/yuroyami/syncplay-mobile/releases/download/v0.23.0/synkplay-0.23.0-ios.ipa">
-        <img src="https://github.com/CelloSerenity/altdirect/blob/main/assets/png/Download_Blue.png?raw=true" width="140" alt="Download IPA">
+        <img src="https://raw.githubusercontent.com/yuroyami/syncplay-mobile/master/art/badges/Download_Blue.png" width="140" alt="Download IPA">
       </a>
     </td>
   </tr>
@@ -68,9 +68,10 @@
 <details>
 <summary>Notes on downloads</summary>
 
-- **Android (GitHub):** Each release ships per-ABI APKs plus a `universal` one. Most modern phones want `arm64-v8a`; pick `universal` if unsure. GitHub releases are recommended over the Play Store, which can lag behind.
-- **Android (IzzyOnDroid):** A lightweight APK built from the `exoOnly` flavor, so it carries only the ExoPlayer engine (no bundled mpv/VLC native libraries). Package id `com.reddnek.syncplay`.
-- **iOS:** The "Download IPA" button always points to the latest release. No App Store access? See the [iOS sideloading guide](https://github.com/yuroyami/syncplay-mobile/wiki/How-to-install-the-app-on-iOS) for AltStore and other methods (jailbroken and non-jailbroken).
+- **Android (GitHub):** Each release ships per-ABI APKs plus a `universal` one. Most modern phones want `arm64-v8a`; pick `universal` if unsure.
+- **Android (IzzyOnDroid):** A smaller APK built from the `exoOnly` flavor, carrying only the ExoPlayer engine (no bundled mpv/VLC native libraries). It uses package id `com.reddnek.syncplay`, so it installs **alongside** the GitHub / Play Store build (`com.yuroyami.syncplay`) rather than updating it. Keep one or the other to avoid two copies.
+- **Android (Play Store):** Same build as GitHub, but a new version can appear here a little later because of store review.
+- **iOS:** The "Download IPA" button always points to the latest release. No App Store access? Sideload via [AltStore](https://github.com/yuroyami/syncplay-mobile/wiki/How-to-install-the-app-on-iOS) with no jailbreak, or install the `.ipa` directly. See the [iOS install guide](https://github.com/yuroyami/syncplay-mobile/wiki/How-to-install-the-app-on-iOS) for both paths.
 </details>
 
 ---
@@ -87,79 +88,85 @@
 
 ## Features
 
-- **Full Syncplay compatibility.** Connects to the same servers and works seamlessly alongside the official PC client.
+- **Syncplay compatible.** Connects to the same servers and works alongside the official PC client. Position, pause, seek, and speed stay in sync.
 - **Protocol rewritten** from Python to Kotlin, covering every core feature.
-- **mpv on both platforms.** libmpv powers playback on Android and, since v0.22.2, on iOS too.
-- **Multiple video engines.** Switch player at runtime to suit your device and format.
+- **Multiple video engines, including mpv on both platforms.** Switch player at runtime to suit your device and format.
 - **Real-time chat** with emoji and inline GIFs.
-- **Shared playlists** for sequential group viewing.
-- **TLS encryption** for secure connections.
-- **Picture-in-Picture** mode.
+- **Shared playlists** for sequential group viewing, with auto-advance.
 - **Managed rooms** and a readiness system.
-- **Highly customizable.** Deep settings for UI, playback, gestures, haptics, and more.
+- **Picture-in-Picture** (Android, and iOS on AVPlayer or VLCKit).
+- **TLS encryption** for secure connections.
 - **Built-in server.** Host a room straight from the app, no PC required.
-- **Multi-language support** via community translations.
+- **Solo mode.** Watch on your own with no server, from the solo button in the About popup.
+- **Privacy controls.** The filename and file size you share with a room can be hashed or withheld.
+- **Deep customization.** Settings for the UI, playback, gestures, and haptics.
+- **Multi-language** via community translations.
 
 ---
 
-## Platform Capabilities
+## Getting Started
 
-| Feature | Android | iOS |
-|:---|:---:|:---:|
-| Chat | ✔ | ✔ |
-| Managed Rooms | ✔ | ✔ |
-| Shared Playlists | ✔ | ✔ |
-| TLS | ✔ (Netty) | ✔ (SwiftNIO) |
-| Picture-in-Picture | ✔ | ✔ (AVPlayer only) |
-| Built-in Server | ✔ | ✔ |
-| Saved Shortcuts | ✔ | ✔ |
+1. Open the app and enter a **username** and a **room** name.
+2. Pick a **server** (the official `syncplay.pl` is preselected) and a **port** (`8995`–`8999`). Add a password only if your server needs one.
+3. Tap **Join**, then load a video from device storage or paste a direct URL.
+4. Anyone in the same room on the same file plays in sync, mobile or PC.
 
-### Video Engines
+No server of your own? Use the built-in server to host a room, or solo mode to watch offline.
+
+---
+
+## Video Engines
+
+Switch engines at runtime in the room settings. `✔` in **Default** marks the engine selected out of the box.
 
 **Android**
 
 | Engine | Default | Formats | Subtitles | Chapters | Notes |
 |:---|:---:|:---|:---:|:---:|:---|
-| **mpv** (libmpv) | ✔ (full build) | Broad, incl. HEVC / mkv | Best (libass) | ✔ | Recommended |
-| **ExoPlayer** (Media3) | ✔ (lite build) | Device codecs | Basic | ✗ | Lightweight, ships in the IzzyOnDroid build |
-| **VLC** (libVLC) | | All formats | ✔ | ✔ | Experimental |
+| **mpv** (libmpv) | ✔ | Broad (HEVC, mkv, …) | Best (libass) | ✔ | Recommended: best subtitles and performance |
+| **VLC** (libVLC) | ✗ | Broad | ✔ | ✔ | Experimental |
+| **ExoPlayer** (Media3) | ✗ | Device codecs | Basic | ✗ | Lightweight; the only engine in the `exoOnly` / IzzyOnDroid build |
 
 **iOS**
 
 | Engine | Default | Formats | Subtitles | Chapters | Notes |
 |:---|:---:|:---|:---:|:---:|:---|
-| **MPVKit** (libmpv) | ✔ | Broad, incl. HEVC / mkv | Best (libass) | ✔ | New in v0.22.2, recommended |
-| **VLCKit** (MobileVLCKit) | | All formats | ✔ | ✔ | |
-| **AVPlayer** (AVFoundation) | | Device codecs | ✗ | ✗ | Experimental, native Apple player |
+| **MPVKit** (libmpv) | ✔ | Broad (HEVC, mkv, …) | Best (libass) | ✔ | New in v0.22.2; recommended |
+| **VLCKit 4** | ✗ | Broad | ✔ | ✔ | Good fallback; supports external subtitles and chapters |
+| **AVPlayer** (AVFoundation) | ✗ | Device codecs | ✗ | ✗ | Native Apple player; no external subtitles or chapters |
 
 ---
 
 ## Architecture
 
-Built with **Kotlin Multiplatform** and **Compose Multiplatform**: one shared codebase for Android and iOS.
+Built with **Kotlin Multiplatform** and **Compose Multiplatform**: one shared codebase for Android and iOS. The networking and sync protocol is a direct port of the official Syncplay client.
 
 | Layer | Technology |
 |:---|:---|
 | **UI** | Compose Multiplatform |
-| **Networking** | Netty (Android) &middot; SwiftNIO (iOS) &middot; Ktor (shared fallback) |
-| **Android players** | mpv (libmpv) &middot; ExoPlayer (Media3) &middot; VLC (libVLC) |
-| **iOS players** | MPVKit (libmpv) &middot; VLCKit (MobileVLCKit) &middot; AVPlayer (AVFoundation) |
+| **Networking** | Netty (Android) &middot; SwiftNIO (iOS) &middot; Ktor (shared fallback, no TLS) |
+| **Players** | See [Video Engines](#video-engines) |
+
+---
+
+## How this differs from official Syncplay
+
+**Mobile adds:** Picture-in-Picture, gesture controls (double-tap seek, swipe brightness/volume), haptic feedback, GIF chat, a built-in server, runtime engine switching, solo/offline mode, custom themes, and Android TV support.
+
+**Not yet ported from desktop:** the command-line interface, persistent server rooms (the built-in server is in-memory only), the file-switch manager, and per-user time offset.
 
 ---
 
 ## FAQ
 
 **Can I watch with friends who use Syncplay on PC?**
-> Yes. Synkplay speaks the same protocol, connects to the same servers, and supports the same core features.
+> Yes, fully compatible. Same protocol, same servers, same core features.
 
 **Android says "App not installed" when updating?**
-> Uninstall the previous version first, then install the new APK. This usually means the signing key or ABI differs from what you had.
+> You are likely mixing release channels. The IzzyOnDroid build (`com.reddnek.syncplay`) and the GitHub / Play build (`com.yuroyami.syncplay`) are separate apps and cannot update over each other. Uninstall the old one first, then install the build you want.
 
 **I don't have access to the iOS App Store.**
-> Sideload via [AltStore](https://github.com/yuroyami/syncplay-mobile/wiki/How-to-install-the-app-on-iOS) (non-jailbroken) or install the `.ipa` directly (jailbroken).
-
-**Which iOS engine should I pick?**
-> MPVKit is the default and handles the widest range of formats and subtitles. VLCKit is a solid fallback. AVPlayer is native but limited (no external subtitles or chapters).
+> Sideload via [AltStore](https://github.com/yuroyami/syncplay-mobile/wiki/How-to-install-the-app-on-iOS) (no jailbreak required) using the shipped source, or install the `.ipa` directly.
 
 ---
 
@@ -169,7 +176,7 @@ Built with **Kotlin Multiplatform** and **Compose Multiplatform**: one shared co
   <img src="https://hosted.weblate.org/widget/syncplay-mobile/syncplay-mobile/multi-auto.svg" alt="Translation status">
 </a>
 
-Contributions welcome! Click the badge above to add or improve translations on Weblate.
+Add or improve translations on Weblate by clicking the badge above.
 
 Thanks to **[@Zhaodaidai](https://github.com/Zhaodaidai)** (Chinese), **[@DoncanC](https://github.com/DoncanC)** (Spanish), and **[@ivy-reps](https://github.com/ivy-reps)** (Russian) for their translations.
 
@@ -177,15 +184,19 @@ Thanks to **[@Zhaodaidai](https://github.com/Zhaodaidai)** (Chinese), **[@Doncan
 
 ## Building
 
-**Requirements:** Android Studio 2025.3.1+ (and Xcode 16.3+ for iOS).
+**Requirements:** a recent Android Studio (Narwhal / 2025.2+), and Xcode 16.3+ for iOS.
 
-Clone the repo and open it in Android Studio. No extra configuration needed for the Android build.
+**Android:** clone the repo and open it in Android Studio. No extra configuration needed. Two product flavors are available:
+- `full` (default): ExoPlayer + mpv + VLC.
+- `exoOnly`: ExoPlayer only, used for the IzzyOnDroid build. Select it with `-PexoOnly=true` or the matching Gradle variant.
+
+**iOS:** run `pod install` in `iosApp/`, then open `iosApp.xcworkspace` (not the `.xcodeproj`) in Xcode and build for `arm64`.
 
 ---
 
 ## Acknowledgments
 
-- [Official Syncplay](https://syncplay.pl/) for maintaining such remarkable software
+- [Official Syncplay](https://syncplay.pl/) for building and maintaining Syncplay
 - [Et0h](https://github.com/Et0h/) for his work on official Syncplay and help in our issue tracker
 - [soredake](https://github.com/soredake) for thorough testing
 - [Osanosa](https://github.com/Osanosa) for valuable contributions
@@ -200,5 +211,5 @@ Clone the repo and open it in Android Studio. No extra configuration needed for 
 ---
 
 <p align="center">
-  <sub>Licensed under <a href="https://www.gnu.org/licenses/agpl-3.0.en.html">AGPL-3.0</a></sub>
+  <sub>Licensed under <a href="./LICENSE">AGPL-3.0</a></sub>
 </p>

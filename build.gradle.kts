@@ -28,7 +28,7 @@ kmpSsot {
     sharedModule     = "shared"
     androidAppModule = "androidApp"
 
-    javaVersion = 21 // preserved: pre-1.4.0 forced JDK 21
+    javaVersion = 21
 
     appLogoPngForeground = File("${rootDir}/shared/src/commonMain/composeResources/drawable/logo_fg.png")
     appLogoPngBackground = File("${rootDir}/shared/src/commonMain/composeResources/drawable/logo_bg.png")
@@ -44,32 +44,23 @@ kmpSsot {
 }
 
 /*
- * androidReleaseAll: build every shippable Android artifact in one command and
- * collect them under AndroidAppOutput/ at the repo root.
- *
- * Produces 7 files for a release:
+ * androidReleaseAll: build every shippable Android artifact and collect them under
+ * AndroidAppOutput/ at the repo root. Produces 7 files:
  *   full     5x release APKs   (per-ABI + universal, ABI-split)
- *   exoOnly  1x release APK    (no native libs, so no split, one universal apk)
- *   full     1x release AAB    (for Play Store upload)
+ *   exoOnly  1x release APK    (no native libs, no split, one universal apk)
+ *   full     1x release AAB    (Play Store upload)
  *
- * Why it shells out to THREE separate `./gradlew` runs instead of just
- * dependsOn(...)-ing the variant tasks (i.e. why no in-process task can do this):
+ * Shells out to THREE separate `./gradlew` runs (not in-process dependsOn) because:
+ *   1. Only ONE product flavor exists per Gradle invocation. -PexoOnly (see androidApp's
+ *      productFlavors) is read at configuration time and also flips applicationId,
+ *      native-lib packaging, ABI splits, and the preBuild native step, so "full" and
+ *      "exoOnly" can't coexist in one build model.
+ *   2. ABI splits (full APKs) and the AAB are mutually exclusive in one task graph
+ *      (AGP issuetracker 402800800, see androidApp's splits comment).
+ * Each run is a clean OS process, the isolation the per-invocation -PexoOnly switch needs.
+ * Per-file renaming happens in androidApp's onVariants block; this only gathers artifacts.
  *
- *   1. Only ONE product flavor exists per Gradle invocation. The active flavor
- *      ("full" vs "exoOnly") is decided at configuration time from -PexoOnly (see
- *      androidApp's productFlavors), and that same flag also flips applicationId,
- *      native-lib packaging, ABI splits, and the preBuild native step. The two
- *      flavors can never coexist in one build model, so they must be two separate
- *      invocations with different -PexoOnly values.
- *   2. ABI splits (full APKs) and the AAB are mutually exclusive in a single task
- *      graph (AGP issuetracker 402800800, see androidApp's splits comment). So the
- *      full APKs and the full AAB also have to be separate invocations.
- *
- * Each run is a clean OS process, which is exactly the isolation the per-invocation
- * -PexoOnly switch needs. The per-file renaming already happens in androidApp's
- * onVariants block, so here we only gather the finished artifacts.
- *
- * Run it with:  ./gradlew androidReleaseAll
+ * Run with:  ./gradlew androidReleaseAll
  */
 abstract class AndroidReleaseAllTask @Inject constructor(
     private val execOps: ExecOperations,

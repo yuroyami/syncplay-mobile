@@ -9,51 +9,25 @@ import Pods_iosApp
 import shared
 
 /**
- A network manager that uses SwiftNIO for handling asynchronous TCP connections.
-
- The `SwiftNioNetworkManager` class establishes and manages a network connection
- using SwiftNIO’s event-driven architecture. It implements `ChannelInboundHandler`
- to receive data from the server and conforms to `NetworkManager` abstract class for shared
- protocol-level operations across platforms.
-
- - Note: This class integrates with the Kotlin Multiplatform `shared` module,
-   providing the iOS-side networking implementation for Syncplay.
+ iOS networking implementation backed by SwiftNIO. Subclasses the shared `NetworkManager`
+ abstract class and implements `ChannelInboundHandler` to receive server data. Used as the
+ default iOS client because it (unlike Ktor) supports the opportunistic TLS upgrade.
  */
 @preconcurrency
 class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked Sendable {
-    /// Just a typealias for the inbound data type handled by this class.
     typealias InboundIn = ByteBuffer
 
-    /// The active network channel for the current connection.
     private var channel: Channel?
-
-    /// The event loop group managing asynchronous tasks for the connection.
     private var eventLoopGroup: EventLoopGroup?
 
-    // override let engine = SyncplayProtocol.NetworkEngine.swiftnio //This is already defaulted in shared module
-
-    /**
-     Creates a new `SwiftNioNetworkManager` instance.
-
-     - Parameter viewmodel: The `RoomViewmodel` instance used for managing session state and callbacks.
-     */
     override init(viewmodel: RoomViewmodel) {
         super.init(viewmodel: viewmodel)
     }
 
     /**
-     Establishes a TCP connection to the Syncplay server using SwiftNIO.
-
-     This method creates a new `NIOTSEventLoopGroup`, configures a connection bootstrap,
-     and connects to the server specified by the view model.
-     As you can see, it's very similar to Netty on JVM. In fact, it is both inspired by Netty and
-     maintained by some of Netty's original maintainers :)
-
-     - Throws: An error if the connection could not be established within the timeout period.
-
-     - Discussion:
-       Upon successful connection, the `channel` is stored for future communication.
-       If the connection fails, the method triggers the `onConnectionFailed()` callback.
+     Opens a TCP connection to the Syncplay server with a 10-second connect timeout. On success
+     the `channel` is retained; on failure `onConnectionFailed()` fires. Inbound bytes are
+     line-framed (`LineBasedFrameDecoder`) before reaching this handler.
      */
     override func connectSocket() async throws {
         let group = NIOTSEventLoopGroup()
@@ -87,39 +61,19 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
         }
     }
 
-    /**
-     Indicates whether this network manager supports TLS connections.
-
-     - Returns: Always `true` for this native iOS implementation.
-     */
+    /// Always `true`: SwiftNIO supports the TLS upgrade.
     override func supportsTLS() -> Bool {
         return true
     }
 
-    /**
-     Terminates any active connection and gracefully shuts down the event loop.
-
-     - Discussion:
-       This method closes the current `channel` and stops the associated
-       `eventLoopGroup` to free system resources.
-     */
+    /// Closes the channel and shuts down the event loop group.
     override func terminateExistingConnection() {
         try? channel?.close().wait()
         try? eventLoopGroup?.syncShutdownGracefully()
     }
 
-    /**
-     Writes a UTF-8 string to the active network channel.
-
-     - Parameter s: The string to send to the server.
-
-     - Throws: An error if the channel is not available or the write operation fails.
-
-     - Discussion:
-       This method encodes the string as UTF-8 data and writes it to the
-       underlying NIO channel. If the channel becomes unavailable during
-       the operation, it triggers the `onDisconnected()` callback.
-     */
+    /// Writes a UTF-8 string to the channel. Triggers `onDisconnected()` if the channel is
+    /// unavailable or the write fails.
     override func writeActualString(s: String) async throws {
         guard let channel = channel else {
             viewmodel.callback.onDisconnected()
@@ -140,16 +94,11 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
     }
 
     /**
-     Upgrades the existing TCP connection to use TLS encryption AND awaits the handshake.
-
-     - Discussion:
-       Inserts a `NIOSSLClientHandler` at the start of the channel pipeline and a
-       one-shot tracking handler that resolves a promise when the TLS handshake
-       completes (signaled by `TLSUserEvent.handshakeCompleted`). Mirrors python's
-       `handshakeCompleted` callback contract — the caller (RoomCallback.onReceivedTLS)
-       sends `Hello` immediately after we return, so we must be fully ciphered by then.
-
-       If initialization fails, it triggers the `onConnectionFailed()` callback.
+     Upgrades the connection to TLS and awaits the handshake before returning. Inserts a
+     `NIOSSLClientHandler` at the head of the pipeline plus a one-shot tracking handler that
+     resolves once `TLSUserEvent.handshakeCompleted` fires. The caller
+     (`RoomCallback.onReceivedTLS`) sends `Hello` immediately after this returns, so the channel
+     must be fully ciphered by then. On failure, triggers `onConnectionFailed()`.
      */
     override func upgradeTls() async throws {
         guard let channel = channel else { return }
@@ -174,17 +123,7 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
 
     // MARK: - Channel Handler Methods
 
-    /**
-     Handles inbound data received from the network channel.
-
-     - Parameters:
-        - context: The current channel handler context.
-        - data: The data received, wrapped in a `NIOAny` container.
-
-     - Discussion:
-       This method decodes the incoming `ByteBuffer` into a UTF-8 string and
-       forwards it to `handlePacket(data:)` for further processing.
-     */
+    /// Decodes the inbound `ByteBuffer` as UTF-8 and forwards it to `handlePacket(jsonString:)`.
     func channelRead(context: ChannelHandlerContext, data: NIOAny) {
         var buffer = self.unwrapInboundIn(data)
         let readableBytes = buffer.readableBytes
@@ -195,39 +134,20 @@ class SwiftNioNetworkManager: NetworkManager, ChannelInboundHandler, @unchecked 
         }
     }
 
-    /**
-     Called when all pending read operations are complete.
-
-     - Parameter context: The current channel handler context.
-
-     - Discussion:
-       This method ensures that all buffered data is flushed after a read cycle.
-     */
+    /// Flushes buffered data after a read cycle.
     func channelReadComplete(context: ChannelHandlerContext) {
         context.flush()
     }
 
-    /**
-     Handles errors that occur during channel operations.
-
-     - Parameters:
-        - context: The current channel handler context.
-        - error: The error that occurred.
-
-     - Discussion:
-       This method logs the error and may trigger recovery or cleanup actions.
-     */
     func errorCaught(context: ChannelHandlerContext, error: Error) {
         print("Reader exception: \(error)")
-        // context.close(promise: nil)
     }
 }
 
 /**
- One-shot handler that resolves [promise] once the TLS handshake fires
- `TLSUserEvent.handshakeCompleted`, then removes itself from the pipeline.
- Used by `SwiftNioNetworkManager.upgradeTls` to make TLS upgrade a true
- await-until-ready operation rather than a fire-and-forget pipeline mutation.
+ One-shot handler that resolves `promise` once the TLS handshake fires
+ `TLSUserEvent.handshakeCompleted`, then removes itself from the pipeline. Lets
+ `SwiftNioNetworkManager.upgradeTls` await the handshake instead of firing and forgetting.
  */
 private final class TLSHandshakeTrackingHandler: ChannelInboundHandler, RemovableChannelHandler {
     typealias InboundIn = NIOAny

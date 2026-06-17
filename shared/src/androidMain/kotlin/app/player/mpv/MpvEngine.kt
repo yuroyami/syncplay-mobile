@@ -9,18 +9,10 @@ import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.mpv
 
 /**
- * MPV - Powerful open-source media player with extensive format support.
+ * MPV engine descriptor (Android). Backed by native libmpv via [MpvImpl]/[MPVView].
  *
- * **Characteristics:**
- * - Most powerful player with advanced features
- * - Supports most video/audio codecs and containers
- * - Mildly stable (occasional issues with edge cases)
- * - Default for withLibs builds
- * - Requires native libraries
- *
- * **Best for:** Users who need broad format support and advanced features
- *
- * **Availability:** Only in withLibs build flavor
+ * Available and the default engine only in the `full` build flavor (when EXOPLAYER_ONLY is false);
+ * absent in `exoOnly` builds, which ship no native player libraries.
  */
 @Suppress("KotlinConstantConditions")
 object MpvEngine: PlayerEngine {

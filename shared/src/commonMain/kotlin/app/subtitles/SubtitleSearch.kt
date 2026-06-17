@@ -20,36 +20,31 @@ import kotlinx.serialization.json.Json
 
 /**
  * Searches and downloads subtitles from the OpenSubtitles **.com** REST API via a
- * [Ktorfit]-generated [OpenSubtitlesAPI] (same pattern as the Klipy client) — the old
- * hand-rolled requests targeted the right host but called `/download` as a GET with a
- * query parameter, which the API rejects (the docs require a POST with a JSON body),
- * so downloads never worked.
+ * [Ktorfit]-generated [OpenSubtitlesAPI] (same pattern as the Klipy client).
  */
 object SubtitleSearch {
     private const val BASE_URL = "https://api.opensubtitles.com/api/v1/"
 
-    /** Consumer key from local.properties (`yuroyami.keyOpenSubsApi`) — see build.gradle.kts. */
+    /** Consumer key from local.properties (`yuroyami.keyOpenSubsApi`). */
     private val API_KEY = BuildConfig.OPENSUBTITLES_API_KEY
 
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
     private val client by lazy {
         httpClient.config {
-            /* Surface 4xx/5xx as ResponseException — Ktor 3's default of false means the
-             * call validator never fires and deserialization runs on the error body, which
-             * the lenient Json below would silently parse as an empty response. Result was
-             * empty searches with no log entry. With expectSuccess=true, the catch block
-             * writes the real cause (e.g. 406 quota exceeded, 401 bad key). */
+            /* Surface 4xx/5xx as ResponseException. Without this (Ktor 3 defaults to false) the
+             * call validator never fires and the lenient Json below silently parses the error body
+             * as an empty response, so searches come back empty with no log entry. With this on,
+             * the catch block writes the real cause (e.g. 406 quota exceeded, 401 bad key). */
             expectSuccess = true
 
             install(ContentNegotiation) {
                 json(json)
             }
 
-            /* Re-installing DefaultRequest REPLACES the base client's defaults (same plugin
-             * key), so the app-wide "SynkplayMobile/x.y.z" UA never stacks with ours.
-             * OpenSubtitles documents that the UA must identify the app as "Name vX.Y.Z"
-             * and blocks generic or comma-merged UAs. */
+            /* Re-installing DefaultRequest REPLACES the base client's defaults (same plugin key),
+             * so the app-wide UA doesn't stack with this one. OpenSubtitles requires the UA to
+             * identify the app as "Name vX.Y.Z" and blocks generic or comma-merged UAs. */
             defaultRequest {
                 header(HttpHeaders.UserAgent, "Synkplay v${BuildConfig.APP_VERSION}")
                 header("Api-Key", API_KEY)
@@ -139,8 +134,8 @@ object SubtitleSearch {
             val filename = info.fileName.substringAfterLast('/').substringAfterLast('\\')
                 .ifBlank { "subtitle_$fileId.srt" }
             val path = "$dir/$filename"
-            // Overwrite, not append: re-downloading the same subtitle used to concatenate
-            // two copies of the file, which players parse as one giant broken cue.
+            // Overwrite, not append: appending would concatenate two copies of the same
+            // subtitle, which players parse as one broken cue.
             writeTextFile(path, subtitleContent)
             SubtitleDownloadResult.Success(path = path, fileName = filename, remaining = info.remaining)
         } catch (e: CancellationException) {

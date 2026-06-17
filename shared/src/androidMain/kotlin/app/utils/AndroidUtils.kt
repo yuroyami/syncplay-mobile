@@ -23,33 +23,15 @@ import io.github.vinceglb.filekit.dialogs.toAndroidUri
 import java.util.Locale
 
 /**
- * Global function reference for obtaining the application Context.
- *
- * Initialized in [com.yuroyami.app.SyncplayApp.onCreate] to provide
- * access to the application context from anywhere in the codebase without
- * passing Context through multiple layers. This is generally safe because
- * the app has one visible context which is the SyncplayActivity so there are
- * no multiple processes/daemons of the app. There is only one task.
- *
- * **Usage:**
- * ```kotlin
- * val context = contextObtainer()
- * ```
+ * Global accessor for the application Context, initialized at app startup. Safe because the
+ * app runs as a single task with one visible context (the SyncplayActivity), so there is no
+ * multi-process ambiguity.
  */
 lateinit var contextObtainer: () -> Context
 
 /**
- * Creates a DataStore instance for persistent key-value storage on Android.
- *
- * Wraps the common-code createDataStore function with Android-specific file path
- * resolution. The DataStore file is created in the app's internal files' directory.
- *
- * DataStore is used throughout the app for storing user preferences, settings,
- * and configuration values that persist across app sessions.
- *
- * @param context Android context for accessing the app's file directory
- * @param fileName Name of the DataStore file (e.g., "syncplay_prefs")
- * @return DataStore<Preferences> instance for reading/writing key-value data
+ * Creates a DataStore in the app's internal files directory, resolving the path before
+ * delegating to the common-code factory.
  */
 fun dataStore(context: Context, fileName: String): DataStore<Preferences> =
     createDataStore(
@@ -57,17 +39,9 @@ fun dataStore(context: Context, fileName: String): DataStore<Preferences> =
     )
 
 /**
- * Changes the app's language/locale at runtime.
- *
- * Creates a new configuration context with the specified locale. This affects
- * how resources (strings, layouts) are resolved for this context.
- *
- * Note: This uses the deprecated Configuration constructor and setLocale, but is
- * still the recommended approach for runtime locale changes until a better API
- * is available.
+ * Returns a new Context whose resources resolve against the given locale.
  *
  * @param lang ISO 639-1 language code (e.g., "en", "fr", "ar")
- * @return A new Context with the specified locale applied
  */
 @Suppress("DEPRECATION")
 fun Context.changeLanguage(lang: String): Context {
@@ -79,16 +53,8 @@ fun Context.changeLanguage(lang: String): Context {
 }
 
 /**
- * Binds a lifecycle watchdog observer to the Activity.
- *
- * Used to track Activity lifecycle events
- * and notify the LifecycleManager when the Activity transitions between states.
- *
- * When implemented, this would:
- * - Observe lifecycle events (CREATE, START, RESUME, PAUSE, STOP)
- * - Forward events to the lifecycle watchdog for handling background state
- * - Enable features like pausing playback when app goes to background
- *
+ * Forwards Activity lifecycle events (CREATE/START/RESUME/PAUSE/STOP) to the room's
+ * UI state manager so it can react to background/foreground transitions.
  */
 fun SyncplayActivity.bindWatchdog() {
     roomViewmodel?.uiState?.let { watchdog ->

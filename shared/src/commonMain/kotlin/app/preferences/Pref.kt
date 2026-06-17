@@ -35,16 +35,15 @@ class Pref<T>(
         }
     }
 
-    /** Cached preference key — avoids recreating on every read/write */
+    /** Cached typed key, built lazily on first read/write. */
     @PublishedApi
     internal var cachedKey: Preferences.Key<*>? = null
 
-    /** Cached flow — avoids rebuilding the map/distinctUntilChanged chain every time */
+    /** Cached flow so the map/distinctUntilChanged chain is built only once. */
     @PublishedApi
     internal var cachedFlow: Flow<T>? = null
 
-    //Type erasure is annoying, W-we have to cast Pref<*> to its corresponding type
-    //or else we can't call pref.SettingComposable() since it uses a reified generic parameter
+    // Casts Pref<*> to its concrete element type so SettingComposable's reified generic resolves.
     @Composable
     fun Render() {
         @Suppress("UNCHECKED_CAST")
@@ -62,10 +61,8 @@ class Pref<T>(
 }
 
 /**
- * Maps preference key names to type-safe [Preferences.Key] instances.
- *
- * This generic function provides compile-time type safety for preference keys
- * by leveraging Kotlin's reified generics. It supports all DataStore preference types.
+ * Builds the typed [Preferences.Key] for [name] from the reified element type. Supports Boolean,
+ * Int, Long, Float, Double, String, Set<String> and ByteArray; throws on any other type.
  */
 @Suppress("UNCHECKED_CAST")
 inline fun <reified T> prefKeyMapper(name: String): Preferences.Key<T> {

@@ -28,16 +28,12 @@ import app.utils.loggy
 import kotlinx.serialization.SerializationException
 
 /**
- * Server-side per-client protocol handler. Port of Python's `SyncServerProtocol`
- * (`syncplay-pc-src-master/syncplay/protocols.py`).
+ * Server-side per-client protocol handler.
  *
- * Implements [WireMessageHandler] for incoming wire messages — typed payloads from the
- * shared [WireMessage] hierarchy, decoded by [WireMessageDeserializer]. Outbound traffic
+ * Implements [WireMessageHandler] for inbound messages, which are typed payloads from the
+ * shared [WireMessage] hierarchy decoded by [WireMessageDeserializer]. Outbound traffic
  * builds the same hierarchy (the client decodes it identically) and serializes via
- * [syncplayJson].
- *
- * Both directions therefore share the same Kotlinx Serialization pipeline; only the
- * end-tunnel handling differs.
+ * [syncplayJson], so both directions share one Kotlinx Serialization pipeline.
  */
 class ClientConnection(
     val server: SyncplayServer,
@@ -63,9 +59,8 @@ class ClientConnection(
 
     /**
      * Encodes a [WireMessage] and writes it to the wire. Routes through
-     * [WireMessage.toJson] so the concrete-subclass serializer is always used —
-     * encoding via the interface type would otherwise inject a `"type"` discriminator
-     * the protocol doesn't allow.
+     * [WireMessage.toJson] so the concrete-subclass serializer is used; encoding via the
+     * interface type would inject a `"type"` discriminator the protocol doesn't allow.
      */
     private fun sendTyped(message: WireMessage) {
         sendFn(message.toJson())
@@ -78,21 +73,19 @@ class ClientConnection(
     }
 
     fun onConnectionLost() {
-        // Called from raw transport threads (Netty/iOS); route through the server's confined
+        // Called from raw transport threads (Netty/iOS); routes through the server's confined
         // dispatcher so removeWatcher's shared-map mutation can't race the timer / inbound work.
         server.disconnectWatcher(watcher)
     }
 
     /**
      * Decodes a raw wire-JSON line via [WireMessageDeserializer] and dispatches to the
-     * matching `on…` method through [WireMessage.dispatch]. Mirrors the client-side
-     * `NetworkManager.handlePacket` pipeline.
+     * matching `on…` method through [WireMessage.dispatch].
      */
     suspend fun handlePacket(jsonString: String) {
         if (BuildConfig.DEBUG_SYNCPLAY_PROTOCOL) loggy("**CLIENT** $jsonString")
-        // Confine all inbound dispatch (and the shared-state mutations it triggers) to the
-        // server's single thread, matching PC's single-reactor model. Decoding is cheap and
-        // kept inside the confinement for simplicity; the heavy lifting is the dispatch.
+        // All inbound dispatch and the shared-state mutations it triggers are confined to the
+        // server's single thread, matching PC's single-reactor model.
         server.onServerThread {
             try {
                 val message = syncplayJson.decodeFromString(WireMessageDeserializer, jsonString)
@@ -169,9 +162,8 @@ class ClientConnection(
         set.controllerAuth?.let { handleControllerAuth(w, it) }
         set.playlistChange?.let { server.setPlaylist(w, it.files ?: emptyList()) }
         set.playlistIndex?.let { server.setPlaylistIndex(w, it.index ?: 0) }
-        // PC updates the WATCHER (protocols.py: `self._watcher.setFeatures`) — that's what
-        // List responses read from. Updating only this connection's copy left the watcher's
-        // features stale for the rest of the session.
+        // Features must be written to the WATCHER, not just this connection's copy: List
+        // responses read the watcher's features.
         set.features?.let {
             features = it
             w.features = it
@@ -278,17 +270,15 @@ class ClientConnection(
         val clientLatCalc = if (clientLatencyCalculation > 0) clientLatencyCalculation else null
         if (clientLatencyCalculation > 0) clientLatencyCalculation = 0.0
 
-        // Build the ignoringOnTheFly block exactly as PC does (protocols.py sendState, ~729-735).
-        // The per-client counter is reset ONLY when it is actually carried in this outgoing
-        // message — never decoupled on a plain `!forced` tick. This preserves feedback
-        // suppression: forced echoes that carry `client: N` clear it, and non-forced ticks
+        // Feedback suppression: the per-client counter is cleared ONLY when actually carried in
+        // this outgoing message. Forced echoes that carry `client: N` clear it; non-forced ticks
         // that send nothing leave the client's pending correction intact.
         val ignoring = if (serverIgnoringOnTheFly != 0 || clientIgnoringOnTheFly != 0) {
             val data = IgnoringOnTheFlyData(
                 server = serverIgnoringOnTheFly.takeIf { it != 0 },
                 client = clientIgnoringOnTheFly.takeIf { it != 0 }
             )
-            // Mirrors PC: the client counter is zeroed at the moment it is placed in the packet.
+            // Client counter is zeroed at the moment it is placed in the packet.
             if (clientIgnoringOnTheFly != 0) clientIgnoringOnTheFly = 0
             data
         } else null

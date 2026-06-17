@@ -24,94 +24,55 @@ import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.suspendCancellableCoroutine
 
 /**
- * Netty-based implementation of NetworkManager for Android.
- *
- * Uses Netty's high-performance asynchronous networking framework to provide
- * TCP socket connectivity with TLS support. Netty is the default network engine
- * on Android due to its stability and efficiency.
- *
- * @property viewmodel The parent RoomViewModel that owns this manager
+ * Netty-based [NetworkManager] for Android: async TCP socket with TLS support.
+ * Default network engine on Android.
  */
 class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) {
 
     override val engine = NetworkEngine.NETTY
 
-    /**
-     * The active Netty channel for communication with the server.
-     */
     private var channel: Channel? = null
 
     /**
-     * The event loop group backing [channel]. Must be shut down with the channel:
-     * each group owns native NIO threads, and the old code created a fresh group per
-     * [connectSocket] without ever releasing it — every reconnect leaked threads for
-     * the lifetime of the process.
+     * Event loop group backing [channel]. Must be shut down together with the channel:
+     * each group owns native NIO threads, so a group released later than its channel leaks
+     * those threads for the process lifetime.
      */
     private var group: EventLoopGroup? = null
 
-    /**
-     * The channel pipeline containing all handlers for processing data (in and out).
-     * Used for inserting the SSL handler during TLS upgrade.
-     */
+    /** Channel pipeline; the SSL handler is inserted here during TLS upgrade. */
     lateinit var pipeline: ChannelPipeline
 
     /**
-     * Establishes a TCP connection to the Syncplay server using Netty.
-     *
-     * Bootstraps a Netty client with:
-     * - NIO event loop group for async I/O
-     * - String encoding/decoding handlers
-     * - Line delimiter-based frame decoder (CRLF)
-     * - Custom inbound handler for received packets
-     *
-     * Waits up to 10 seconds for connection to succeed, triggering
-     * onConnectionFailed if timeout occurs.
-     *
-     * @throws Exception if connection fails (caught and triggers onConnectionFailed)
+     * Opens a TCP connection to the Syncplay server. Bootstraps a NIO client with string
+     * codecs, a CRLF line-frame decoder, and an inbound handler that forwards each line to
+     * [handlePacket]. Waits up to 10s; on timeout calls onConnectionFailed.
      */
     override suspend fun connectSocket() {
         val group: EventLoopGroup = NioEventLoopGroup()
         this.group = group
         val b = Bootstrap()
-        b.group(group) /* Assigning the event loop group to the bootstrap */
-            .channel(NioSocketChannel::class.java) /* We want a NIO Socket Channel */
+        b.group(group)
+            .channel(NioSocketChannel::class.java)
             .handler(object : ChannelInitializer<SocketChannel>() {
                 override fun initChannel(ch: SocketChannel) {
                     pipeline = ch.pipeline()
-                    // 64 KiB, matching our own server's framer. The old 8192 was HALF of
-                    // Twisted's 16384 line cap: a fat List response (big room + a playlist
-                    // near the protocol's 10000-char limit) overflowed the decoder, killed
-                    // the channel, and the reconnect refetched the same List in a loop.
+                    // 64 KiB line cap, matching the built-in server's framer. Must stay large
+                    // enough for a fat List response (big room plus a playlist near the protocol's
+                    // 10000-char limit); a smaller cap overflows the decoder and loops reconnects.
                     pipeline.addLast("framer", DelimiterBasedFrameDecoder(65536, *Delimiters.lineDelimiter()))
                     pipeline.addLast(StringDecoder())
                     pipeline.addLast(StringEncoder())
                     pipeline.addLast(object : SimpleChannelInboundHandler<String>() {
-                        /**
-                         * Logs channel lifecycle events for debugging.
-                         */
                         override fun userEventTriggered(ctx: ChannelHandlerContext?, evt: Any?) {
                             super.userEventTriggered(ctx, evt)
                             loggy("Channel event: ${evt.toString()}")
                         }
 
-                        /**
-                         * Processes incoming string messages (complete lines).
-                         *
-                         * @param ctx The channel handler context
-                         * @param msg The received line of text (packet)
-                         */
                         override fun channelRead0(ctx: ChannelHandlerContext?, msg: String?) {
                             if (msg != null) handlePacket(msg)
                         }
 
-                        /**
-                         * Handles exceptions on the channel.
-                         *
-                         * Logs the error and triggers disconnection callback.
-                         *
-                         * @param ctx The channel handler context
-                         * @param cause The exception that occurred
-                         */
                         @Deprecated("Deprecated in Java")
                         override fun exceptionCaught(ctx: ChannelHandlerContext?, cause: Throwable?) {
                             super.exceptionCaught(ctx, cause)
@@ -122,8 +83,7 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
                 }
             })
 
-        /** After we're done bootstrapping Netty, now it's time to connect */
-        TrafficStats.setThreadStatsTag(0xF00DFAF) //Satisfies Android's StrictMode policy
+        TrafficStats.setThreadStatsTag(0xF00DFAF) // Satisfies Android's StrictMode policy
 
         val f = b.connect(
             viewmodel.session.serverHost,
@@ -133,17 +93,12 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
         if (!success) {
             viewmodel.callback.onConnectionFailed()
         } else {
-            /* This is the channel, only variable we should memorize from the entire bootstrap/connection phase */
             channel = f.channel()
             loggy("$channel")
         }
     }
 
-    /**
-     * Closes the Netty channel and cleans up resources.
-     *
-     * Waits for the close operation to complete before nullifying the channel reference.
-     */
+    /** Closes the channel and shuts down [group], releasing its NIO threads. */
     override fun terminateExistingConnection() {
         try {
             loggy("Terminating network session.")
@@ -158,14 +113,7 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
         }
     }
 
-    /**
-     * Writes a string to the Netty channel.
-     *
-     * Flushes immediately and attaches a listener to detect write failures.
-     * Triggers disconnection callback if the write operation fails.
-     *
-     * @param s The string to write to the channel
-     */
+    /** Writes and flushes [s]; a failed write triggers onDisconnected. */
     override suspend fun writeActualString(s: String) {
         val f = channel?.writeAndFlush(s)
         f?.addListener(ChannelFutureListener { future ->
@@ -176,21 +124,12 @@ class NettyNetworkManager(viewmodel: RoomViewmodel) : NetworkManager(viewmodel) 
         })
     }
 
-    /**
-     * Indicates TLS support status.
-     *
-     * @return true - Netty supports TLS encryption
-     */
     override fun supportsTLS() = true
 
     /**
-     * Upgrades the connection to TLS by inserting an SSL handler into the pipeline,
-     * then suspends until the TLS handshake completes (or fails).
-     *
-     * Suspending until handshake completion is what makes a subsequent `Hello` write
-     * actually go out as ciphertext. Without the await, the SSL handler still buffers
-     * the Hello in practice, but we'd be relying on a timing-sensitive implementation
-     * detail rather than the protocol's stated contract.
+     * Inserts an SSL handler at the front of the pipeline and suspends until the TLS handshake
+     * completes (or fails). Awaiting the handshake guarantees a subsequent `Hello` write goes out
+     * as ciphertext rather than relying on the SSL handler's buffering as a timing detail.
      */
     override suspend fun upgradeTls() = suspendCancellableCoroutine<Unit> { cont ->
         try {

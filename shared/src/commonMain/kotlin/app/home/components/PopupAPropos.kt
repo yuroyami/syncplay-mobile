@@ -77,7 +77,6 @@ object PopupAPropos {
                         imageVector = vectorResource(Res.drawable.syncplay_logo_gradient),
                         contentDescription = "",
                         modifier = Modifier.requiredSize(96.dp)
-                        //      .radiantOverlay(offset = Offset(x = 50f, y = 65f))
                     )
 
                     Spacer(Modifier.width(10.dp))
@@ -86,7 +85,6 @@ object PopupAPropos {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.SpaceAround
                     ) {
-                        /** title */
                         SyncplayishText(
                             string = appName,
                             textAlign = TextAlign.Center,
@@ -145,7 +143,7 @@ object PopupAPropos {
                             visibilityState.value = false
 
                             globalViewmodel.viewModelScope.launch {
-                                //Passing null to indicate we're in offline mode
+                                // null = offline / solo mode
                                 homeViewmodel.joinRoom(null)
                             }
                         },

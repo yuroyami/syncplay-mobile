@@ -1,6 +1,6 @@
 package app.protocol.models
 
-/** The 4 States of Connection - Needed for the protocol to function seamlessly */
+/** Network connection lifecycle states tracked by the NetworkManager. */
 enum class ConnectionState {
     DISCONNECTED,
     CONNECTING,

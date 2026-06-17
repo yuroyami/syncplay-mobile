@@ -150,18 +150,16 @@ fun RoomGestureInterceptor(modifier: Modifier) {
             }
         }
 
-        /** Actual gesture-detection logic box.
+        /* Gesture-detection box, layered ON TOP of the HUD (see RoomScreenUI).
          *
-         * IMPORTANT: this Box sits ON TOP of the HUD (see RoomScreenUI). When the HUD is
-         * VISIBLE we attach NO pointerInput modifiers at all — touches then fall through
-         * to the HUD beneath (chat input, buttons, scrollable lists). When the HUD is
-         * HIDDEN we attach the tap / drag gesture handlers; this both (a) intercepts
-         * touches that would otherwise reach the still-alive but invisible HUD elements
-         * (preventing ghost clicks) and (b) routes them to volume/brightness/seek/show-HUD.
+         * HUD VISIBLE: no pointerInput modifiers attached, so touches fall through to the HUD
+         * beneath (chat input, buttons, scrollable lists).
+         * HUD HIDDEN: tap/drag handlers attached. They intercept touches that would otherwise hit
+         * the still-alive but invisible HUD elements (preventing ghost clicks) and route them to
+         * volume/brightness/seek/show-HUD.
          *
-         * Edge gating (issue #13): vertical drags are ignored when the touch starts in
-         * the top/bottom 8% of the screen so that QS / nav bar pull gestures don't get
-         * swallowed by the volume/brightness handler.
+         * Edge gating: vertical drags starting in the top/bottom 8% are ignored so quick-settings
+         * and nav-bar pull gestures aren't swallowed by the volume/brightness handler.
          */
         val haptic = LocalHapticFeedback.current
         val softwareKB = LocalSoftwareKeyboardController.current
@@ -287,7 +285,6 @@ fun RoomGestureInterceptor(modifier: Modifier) {
 
                                             currentVolume = newVolume
 
-                                            // Only apply if changed
                                             if (newVolume != lastAppliedVolume) {
                                                 viewmodel.player.changeCurrentVolume(newVolume)
                                                 haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)

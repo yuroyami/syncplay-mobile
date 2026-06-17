@@ -79,14 +79,13 @@ fun HomeTopBar(viewmodel: HomeViewmodel) {
 
     Card(
         modifier = Modifier.fillMaxWidth()
-            .background(color = Color.Transparent /* Paletting.BG_DARK_1 */),
+            .background(color = Color.Transparent),
         shape = RoundedCornerShape(
             topEnd = 0.dp, topStart = 0.dp, bottomEnd = 12.dp, bottomStart = 12.dp
         ),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 12.dp),
     ) {
-        /* Settings Button */
         val settingState = remember { mutableStateOf(SettingGridState.COLLAPSED) }
 
         Column(
@@ -96,7 +95,6 @@ fun HomeTopBar(viewmodel: HomeViewmodel) {
             ListItem(
                 modifier = Modifier.fillMaxWidth().padding(top = (TopAppBarDefaults.windowInsets.asPaddingValues().calculateTopPadding())),
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                /* Syncplay Header (logo + text) */
                 headlineContent = {
                     Row(
                         modifier = Modifier.clip(CircleShape).background(
@@ -189,7 +187,6 @@ fun HomeTopBar(viewmodel: HomeViewmodel) {
                 }
             )
 
-            /* Settings */
             AnimatedVisibility(
                 modifier = Modifier.fillMaxWidth(),
                 visible = settingState.value != SettingGridState.COLLAPSED,

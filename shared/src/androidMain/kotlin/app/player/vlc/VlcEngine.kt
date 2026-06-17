@@ -9,17 +9,8 @@ import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.vlc
 
 /**
- * VLC - Popular cross-platform media player with maximum format support.
- *
- * **Characteristics:**
- * - Widest format support including QuickTime, Xvid, and obscure codecs
- * - Very powerful but least stable (potential crashes/bugs)
- * - Large library size
- * - Requires native libraries
- *
- * **Best for:** Users who need to play uncommon/legacy formats despite stability risks
- *
- * **Availability:** Only in withLibs build flavor
+ * libVLC engine: widest format/codec coverage. Marked experimental.
+ * Available only in the `full` flavor (absent when EXOPLAYER_ONLY).
  */
 object VlcEngine : PlayerEngine {
     override val isAvailable: Boolean = !BuildConfig.EXOPLAYER_ONLY

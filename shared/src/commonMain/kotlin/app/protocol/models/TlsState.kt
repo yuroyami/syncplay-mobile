@@ -1,6 +1,6 @@
 package app.protocol.models
 
-/** The 3 TLS modes that the Netty client has to work with */
+/** TLS negotiation state for the network manager: not enabled, asked but unconfirmed, active. */
 enum class TlsState {
     TLS_NO,
     TLS_ASK,

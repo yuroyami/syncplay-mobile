@@ -3,30 +3,13 @@ package app.protocol.network
 import app.room.RoomViewmodel
 
 /**
- * Factory function reference for instantiating the SwiftNIO-based network manager on iOS.
+ * Factory hook for the SwiftNIO-based [NetworkManager] on iOS — the default iOS engine.
  *
- * ## Why SwiftNIO?
- * The iOS implementation uses SwiftNIO, a native high-performance networking framework
- * written entirely in Swift.
+ * SwiftNIO is used over Ktor's iOS transport because Ktor on iOS is unstable and offers
+ * no StartTLS support, which the Syncplay protocol's opportunistic TLS upgrade requires.
  *
- * ## Why Not Ktor on iOS?
- * Ktor's iOS implementation has shown several critical issues:
- * - Frequent crashes and instability
- * - No StartTLS support
- *
- * ## Implementation Architecture
- * The actual SwiftNIO implementation can be found at:
- * ```
- * iosApp/iosApp/SwiftNioNetworkManager.swift
- * ```
- *
- * ## Usage
- * This function reference is initialized by the Swift side during app startup:
- * ```swift
- * instantiateSwiftNioNetworkManager = { viewmodel in
- *     // Swift-implemented NetworkManager instance
- * }
- * ```
+ * The implementation lives in Swift at `iosApp/iosApp/SwiftNioNetworkManager.swift` and
+ * assigns this reference during app startup; it stays null until then.
  *
  * @see NetworkManager
  */

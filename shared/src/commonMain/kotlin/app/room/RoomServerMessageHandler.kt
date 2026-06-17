@@ -110,14 +110,12 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             val agedPosition = if (paused) position else position + messageAge
 
             // ONLY a genuine room-state transition: the last room pause-state we recorded
-            // differs from what the server just sent. Do NOT also test
-            // `paused == viewmodel.player.isPlaying()` here — that fires on a *local
-            // player/room divergence* rather than a transition, so when an engine reports a
-            // stale isPlaying() (VLCKit's is asynchronous and unreliable — see the ACK note
-            // below) the "X paused/unpaused" OSD + callbacks re-fire on every 1 Hz State for
-            // as long as the divergence persists, producing the runaway "X unpaused, X
-            // unpaused…" spam. Player drift is corrected by the rewind/fastforward/slowdown
-            // block above and the channel-health collector, not by re-announcing here.
+            // differs from what the server just sent. Must NOT also test
+            // `paused == viewmodel.player.isPlaying()` — that fires on a local player/room
+            // divergence rather than a transition, so a stale async isPlaying() (VLCKit's)
+            // would re-fire the "X paused/unpaused" OSD on every 1 Hz State. Player drift is
+            // corrected by the rewind/fastforward/slowdown block and the channel-health
+            // collector, not by re-announcing here.
             val pausedChanged = protocol.globalPaused != paused
             val diff = withContext(Dispatchers.Main.immediate) {
                 (viewmodel.player.currentPositionMs() / 1000.0) - agedPosition
@@ -173,15 +171,11 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                     callback.onSomeoneBehind(setBy ?: "", agedPosition)
                 }
 
-                /* Fast-forward if persistently behind. Mirrors python's gating: only triggers
-                 * when we cannot control the room (in a controlled room as a non-controller),
-                 * OR when SYNC_DONT_SLOW_WITH_ME is on. Without this, a controller in their
-                 * own controlled room would yank themselves forward over their own pace. */
-                // PC gates fast-forward on !canControl(): only a follower in a controlled (+)
-                // room force-fastforwards to keep up. In a normal room everyone can control,
-                // so nobody force-fastforwards there (the room follows the slowest member via
-                // rewind/slowdown). The old !isControllerInControlledRoom() was also true in
-                // normal rooms, so it yanked normal-room clients forward on any sustained lag.
+                /* Fast-forward if persistently behind. PC gates this on !canControl(): only a
+                 * follower in a controlled (+) room force-fastforwards to keep up. In a normal
+                 * room everyone can control, so nobody force-fastforwards there (the room
+                 * follows the slowest member via rewind/slowdown). SYNC_DONT_SLOW_WITH_ME opts
+                 * in regardless. */
                 val canFastForward = Preferences.SYNC_FASTFORWARD.value()
                         && (isInControlledRoomWithoutController() || Preferences.SYNC_DONT_SLOW_WITH_ME.value())
                 if (diff < -FASTFORWARD_BEHIND_THRESHOLD && doSeek != true && canFastForward) {
@@ -229,13 +223,6 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 if (!paused) callback.onSomeonePlayed(setBy ?: "")
                 if (paused) callback.onSomeonePaused(setBy ?: "")
             }
-
-            // No baseline-priming needed here anymore: the pause-broadcast flow
-            // collector keys off PlayerManager.isNowPlaying changes, and pause-state
-            // changes are routed through dispatcher.controlPlayback (in onSomeonePaused
-            // / onSomeonePlayed), which sets expectedPaused itself before touching the
-            // player. Pure seeks (doSeek=true, rewind, fastforward) don't toggle
-            // isNowPlaying, so no flow emission to suppress.
         }
 
         // Acknowledge with our own State packet.
@@ -248,37 +235,22 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 withContext(Dispatchers.Main.immediate) { viewmodel.player.currentPositionMs() / 1000.0 }
             }
             /* `play` MUST be the state we just acknowledged from the server (`!paused`),
-             * NOT the transient `viewmodel.player.isPlaying()`. On VLCKit 4 the libvlc
-             * pause/play API is asynchronous: pause() returns before vlc_player_Pause has
-             * actually transitioned the player state, so isPlaying() right after pause()
-             * still reports true. If we ACK that stale value when the server told us to
-             * pause, we send State(play=true) — which the public Syncplay server interprets
-             * as "this watcher is unpausing the room" and broadcasts the unpause to every
-             * peer, who then unpauses locally and an OSD pop says "iPhone played." A few
-             * cycles later the player has actually paused, the flow collector in
-             * ProtocolManager sees the divergence and broadcasts the pause again, which
-             * peers also apply — producing the user-visible "unpause then re-pause"
-             * artifact whenever someone on Android pauses while a peer is on VLCKit.
-             *
-             * Acknowledging `!paused` from the inbound message is correct because we just
-             * applied that state in the block above. If the application actually fails
-             * (engine refuses pause due to buffer underrun, audio focus loss, etc.) the
-             * isNowPlaying StateFlow will emit a divergence and the flow collector in
-             * ProtocolManager will broadcast the truth — which is the right place for that
-             * detection, since by then the player has settled into a steady state instead
-             * of the transient post-call window we'd otherwise be sampling here. */
+             * NOT the transient `viewmodel.player.isPlaying()`. VLCKit 4's libvlc pause/play
+             * API is asynchronous: pause() returns before the player has transitioned, so
+             * isPlaying() right after pause() still reports true. ACKing that stale value
+             * would send State(play=true) when the server told us to pause, which the public
+             * Syncplay server reads as "this watcher is unpausing the room" and rebroadcasts.
+             * `!paused` is correct because we applied that state in the block above; a genuine
+             * application failure is caught later by the isNowPlaying StateFlow divergence in
+             * ProtocolManager, once the player has settled. */
             network.sendAsync(
                 protocol.buildStatePacket(
                     serverTime = latencyCalculation,
                     // Mobile owns its embedded player, so every real seek is announced explicitly
-                    // via dispatcher.sendSeek (seekbar, fast-seek, gestures, chapters, seek-to,
-                    // undo). There is no out-of-band seek to discover, so this periodic ACK never
-                    // re-derives one — it just omits doSeek, exactly like the PC client (whose ACK
-                    // path is structurally incapable of emitting a seek: it compares the player
-                    // against itself). The old re-derivation here compared the player against the
-                    // inbound server position and could only ever fire as a DUPLICATE of an
-                    // already-announced seek during the ignoringOnTheFly window, which produced a
-                    // phantom duplicate "X jumped from A to B" ~5s after a genuine seek.
+                    // via dispatcher.sendSeek. There is no out-of-band seek to discover, so this
+                    // periodic ACK never re-derives one — it omits doSeek, like the PC client
+                    // (whose ACK compares the player against itself, never against the inbound
+                    // server position).
                     doSeek = null,
                     position = ackPos,
                     isLocalStateChange = false,
@@ -319,11 +291,6 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
         // configured (`roomsDbFile` set on server), so we cannot rely on it.
     }
 
-    /**
-     * True if we're in a `+room:HASH` controlled room and have not authenticated as
-     * controller yet. Used to gate fastforward, instaplay, and the auto re-auth on
-     * reconnect — same rule as python's `currentUser.canControl()` (inverted).
-     */
     /**
      * True when we ARE in a controlled (+) room but are NOT a controller, so we must follow
      * the controller's pace. Mirrors python's `!currentUser.canControl()`. In a normal room
@@ -389,10 +356,8 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
     override suspend fun onError(message: WireMessage.Error) {
         val errorText = message.data.message ?: return
         loggy("Server error: $errorText")
-        // Surface it — PC shows server errors via ui.showErrorMessage. Log-only made a
-        // server kick ("Wrong password supplied") invisible: the user just saw an eternal
-        // "attempting reconnection" with no reason. The raw server text is shown verbatim,
-        // same as PC (these messages originate in English on the server).
+        // Surface server errors (e.g. "Wrong password supplied") to chat + OSD, like PC's
+        // ui.showErrorMessage. Shown verbatim — these originate in English on the server.
         dispatcher.broadcastMessage(message = { errorText }, isChat = false, isError = true)
         viewmodel.dispatchOSD(OSDCategory.WARNING) { errorText }
     }
@@ -403,9 +368,8 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
 
     /**
      * Mirrors python's `_SetUser` (protocols.py): mutates the local user list directly
-     * from the Set we just received, instead of round-tripping a List request. Without
-     * this, `session.userList` only refreshes on the periodic 15-second probe, which
-     * is what surfaces as "user info takes 5+ seconds to update."
+     * from the Set we just received, instead of round-tripping a List request, so user-list
+     * changes show up immediately rather than on the next periodic probe.
      *
      * Wire shape per user:
      *  - `event.joined` (with optional file) → add to list
@@ -425,9 +389,8 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
 
         // The broadcast carries the user's room. Our user list models ONLY the current
         // room (unlike PC's all-rooms pane), so the room field decides membership:
-        //  - join/switch INTO our room  → appears in the list
-        //  - switch OUT of our room    → removed (previously they ghosted in the list
-        //    until the next 15s List probe — python's modUser moves them immediately)
+        //  - join/switch INTO our room → appears in the list
+        //  - switch OUT of our room    → removed immediately (mirrors python's modUser)
         // A missing room (defensive: python always sends one) is treated as ours.
         val eventRoom = userData.room?.name
         val inOurRoom = eventRoom == null || eventRoom == session.currentRoom

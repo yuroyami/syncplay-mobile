@@ -74,7 +74,6 @@ fun RoomTabSection(modifier: Modifier) {
         verticalAlignment = CenterVertically
     ) {
 
-        /* The tabs in the top-right corner */
         /* In-room settings */
         RoomTab(
             modifier = Modifier.width(54.dp),
@@ -100,7 +99,6 @@ fun RoomTabSection(modifier: Modifier) {
 
             Spacer(modifier = Modifier.weight(1f))
 
-            /* User Info card tab */
             RoomTab(
                 modifier = Modifier.width(54.dp),
                 icon = Icons.Filled.Groups,
@@ -150,7 +148,6 @@ fun RoomTabSection(modifier: Modifier) {
                     }
                 }
             ) {
-                /* Popup title */
                 Text(
                     modifier = Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 8.dp, vertical = 4.dp),
                     text = stringResource(Res.string.room_overflow_title),

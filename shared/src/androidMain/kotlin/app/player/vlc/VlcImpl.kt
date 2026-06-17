@@ -59,25 +59,20 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
     override val supportsChapters: Boolean = true
     override val trackerJobInterval: Duration = 200.milliseconds
 
-    //TODO CHANGE HOW TIME IS TRACKED
-
     @UiThread
     override fun initialize() {
-        // "-vv" keeps the default verbose logging; any user-supplied flags from
-        // Preferences.VLC_CUSTOM_FLAGS are appended verbatim so they can override LibVLC defaults.
+        // "-vv" verbose logging; user flags from VLC_CUSTOM_FLAGS append after so they override defaults.
         libvlc = LibVLC(ctx, listOf("-vv") + app.utils.vlcCustomFlags())
         vlcPlayer = MediaPlayer(libvlc)
         vlcPlayer?.attachViews(vlcView, null, true, true)
 
-        // Force the default scale (preserves aspect ratio and centers the video).
+        // SURFACE_BEST_FIT preserves aspect ratio and centers the video.
         vlcPlayer?.videoScale = MediaPlayer.ScaleType.SURFACE_BEST_FIT
 
-        // Workaround for a libVLC 4 eap centering issue: the TextureView/SurfaceView that
-        // attachViews() inserts into VLCVideoLayout gets laid out with default FrameLayout
-        // gravity (TOP|START), so when the scaled video is narrower than the parent, the
-        // black bar ends up on the right side only. Force center-gravity on every child
-        // surface any time the layout changes so both the initial layout and any later
-        // relayout (orientation change, etc.) stay centered. */
+        // libVLC 4 eap centering quirk: surfaces attachViews() inserts into VLCVideoLayout get
+        // default FrameLayout gravity (TOP|START), so a video narrower than the parent leaves the
+        // black bar on the right only. Re-force CENTER gravity on every child on each layout pass
+        // (initial and later relayouts like orientation changes).
         vlcView.viewTreeObserver.addOnGlobalLayoutListener { centerVlcSurfaces(vlcView) }
         centerVlcSurfaces(vlcView)
 
@@ -128,7 +123,6 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
                 return@AndroidView vlcView
             },
             onRelease = {
-                //vlcPlayer?.detachViews()
             }
         )
     }
@@ -153,8 +147,8 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
                 vlcPlayer?.setAudioDelay(it * 1000L)
             }
         }
-        // Custom LibVLC launch flags — only meaningful when the VLC engine is actually the
-        // one constructing a LibVLC instance, so attached to the engine-specific category.
+        // LibVLC launch flags: only meaningful when this engine constructs the LibVLC instance,
+        // hence attached to the VLC-specific category.
         +VLC_CUSTOM_FLAGS
     }
 
@@ -252,14 +246,6 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
             vlcPlayer?.chapter = chapter.index
         }
     }
-//
-//    override suspend fun skipChapter() {
-//        if (!isInitialized) return
-//
-//        withContext(Dispatchers.Main.immediate) {
-//            vlcPlayer?.nextChapter()
-//        }
-//    }
 
     override suspend fun reapplyTrackChoices() {
         if (!isInitialized) return
@@ -382,13 +368,12 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
         //TODO
     }
 
-    /** VLC EXCLUSIVE */
     private fun vlcAttachObserver() {
         vlcPlayer?.setEventListener { event ->
             when (event.type) {
                 MediaPlayer.Event.Playing, MediaPlayer.Event.Paused -> {
                     if (vlcPlayer?.hasMedia() == true) {
-                        viewmodel.playerManager.isNowPlaying.value = vlcPlayer?.isPlaying == true //Just to inform UI
+                        viewmodel.playerManager.isNowPlaying.value = vlcPlayer?.isPlaying == true
                     }
                 }
 
@@ -401,7 +386,6 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
 
                 MediaPlayer.Event.LengthChanged -> {
                     if (vlcPlayer?.hasMedia() == true) {
-                        /* Updating our timeFull */
                         val durationMs = vlcPlayer!!.length
 
                         viewmodel.playerManager.timeFullMillis.value = abs(durationMs)

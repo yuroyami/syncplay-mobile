@@ -71,9 +71,7 @@ object CardUserInfo {
                     .padding(PaddingValues(start = 8.dp, top = 4.dp, bottom = 8.dp, end = 12.dp))
             ) {
                 items(userlist) { user ->
-                    /* A row for Username, Filename, and File properties */
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        /* User's readiness icon */
                         Icon(
                             modifier = Modifier.size(Theming.USER_INFO_IC_SIZE.dp),
                             imageVector = if (user.readiness) Icons.Filled.Check else Icons.Filled.Clear,
@@ -96,7 +94,6 @@ object CardUserInfo {
                             )
                         }
 
-                        /* User's name */
                         Text(
                             modifier = Modifier
                                 .padding(horizontal = 4.dp)
@@ -109,7 +106,6 @@ object CardUserInfo {
                         )
                     }
 
-                    /* Filename row */
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Spacer(Modifier.width((Theming.USER_INFO_IC_SIZE * 1.25).dp))
 
@@ -130,14 +126,11 @@ object CardUserInfo {
                         )
                     }
 
-                    /* File properties row (only if file does exist) */
                     if (user.file != null) {
                         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
 
-                            /* Small spacer to align texts together */
                             Spacer(Modifier.width((Theming.USER_INFO_IC_SIZE * 2.5).dp))
 
-                            /* File properties */
                             val fileSize = user.file?.fileSize?.toDoubleOrNull()?.div(1000000.0)?.toString() ?: "???"
                             val fileDuration = timestampFromMillis(user.file?.fileDuration?.times(1000)?.toLong() ?: 0)
                             Text(

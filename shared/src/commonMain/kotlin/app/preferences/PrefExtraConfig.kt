@@ -11,7 +11,7 @@ sealed interface PrefExtraConfig {
         val onClick: () -> Unit
     ) : PrefExtraConfig
 
-    //Only using this when the boolean change callback is needed
+    /** Boolean pref that also fires a side-effect callback on toggle. */
     data class BooleanCallback(
         val onBooleanChanged: (b: Boolean) -> Unit
     ) : PrefExtraConfig

@@ -8,33 +8,21 @@ import org.kotlincrypto.hash.md.MD5
 import org.kotlincrypto.hash.sha2.SHA256
 import kotlin.time.Clock
 
-/********************************************************************************
- * Collection of Kotlin/Native utility functions that work across all platforms *
- * without requiring platform-specific implementations (expect/actual).         *
- ********************************************************************************/
+/** Platform-agnostic utility functions (no expect/actual). */
 
-/** App name sourced from BuildConfig (defined once in AppConfig.kt in buildSrc) */
+/** App name sourced from BuildConfig (defined in AppConfig.kt in buildSrc). */
 val appName: String = BuildConfig.APP_NAME
 
 /** Marker annotation for protocol-related builders and scopes. */
 annotation class ProtocolApi
 
-/**
- * Generates a timestamp string in HH:MM:SS format using the current system time.
- *
- * @return Formatted time string (e.g., "14:23:05")
- */
+/** Current local time as an "HH:MM:SS" string (e.g. "14:23:05"). */
 fun generateClockstamp(): String {
     val c = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
     return "${c.hour.fixDigits()}:${c.minute.fixDigits()}:${c.second.fixDigits()}"
 }
 
-/**
- * Pads an integer to 2 digits with leading zeros.
- * This is used only by [generateClockstamp]
- *
- * @return String padded to at least 2 characters (e.g., 5 becomes "05")
- */
+/** Pads an int to 2 digits with a leading zero (5 -> "05"). Used by [generateClockstamp]. */
 private fun Int.fixDigits() = this.toString().padStart(2, '0')
 
 /**
@@ -51,10 +39,7 @@ const val PLAYLIST_MAX_CHARACTERS = 10000
 fun playlistIsValid(files: List<String>): Boolean =
     files.size <= PLAYLIST_MAX_ITEMS && files.sumOf { it.length } <= PLAYLIST_MAX_CHARACTERS
 
-/**
- * List of supported video file extensions.
- * We pass this to the file selection (FileKit)
- */
+/** Supported video file extensions, used as the FileKit picker filter. */
 val vidExs = listOf(
     "mp4", "3gp", "av1", "mkv", "m4v", "mov", "wmv", "flv", "avi", "webm",
     "ogg", "ogv", "mpeg", "mpg", "m2v", "ts", "mts", "m2ts", "vob",
@@ -99,51 +84,22 @@ fun isPlayableMediaFilename(filename: String): Boolean {
     return ext in vidExs || ext in audioExs
 }
 
-/**
- * List of supported subtitle/closed caption file extensions.
- * We pass this to the file selection (FileKit)
- */
+/** Supported subtitle/closed-caption file extensions, used as the FileKit picker filter. */
 val ccExs = listOf("srt", "sub", "sbv", "ass", "ssa", "usf", "idx", "vtt", "smi", "rt", "txt")
 
-/**
- * List of supported playlist file extensions.
- * We pass this to the file selection (FileKit)
- */
+/** Supported playlist file extensions, used as the FileKit picker filter. */
 val playlistExs = listOf("txt", "m3u")
 
-/**
- * Computes the MD5 hash of a string.
- *
- * Syncplay servers accept passwords as MD5 hashes digested in hexadecimal format.
- *
- * @param str The input string to hash
- * @return The MD5 hash as a byte array
- */
+/** MD5 digest of [str] as raw bytes. Syncplay sends passwords as the hex MD5 hash. */
 fun md5(str: String) = MD5().digest(str.encodeToByteArray())
 
-/**
- * Computes the SHA-256 hash of a string.
- *
- * @param str The input string to hash
- * @return The SHA-256 hash as a byte array
- */
+/** SHA-256 digest of [str] as raw bytes. */
 fun sha256(str: String) = SHA256().digest(str.encodeToByteArray())
 
-/**
- * Checks if a character is an emoji.
- *
- * Detects emoji characters by checking Unicode code point ranges including:
- * - Basic emoji symbols (U+2600 to U+27BF)
- * - Emoticons (U+1F600 to U+1F64F)
- * - Pictographs and symbols
- * - Surrogate pairs for extended emoji
- *
- * @return true if the character is an emoji, false otherwise
- */
+/** True if this character falls in a common emoji code-point range or is a surrogate. */
 fun Char.isEmoji(): Boolean {
     val codePoint = this.code
     return when {
-        // Basic emoji ranges
         codePoint in 0x2600..0x27BF -> true // Various symbols
         codePoint in 0x1F600..0x1F64F -> true // Emoticons
         codePoint in 0x1F300..0x1F5FF -> true // Misc symbols and pictographs
@@ -159,15 +115,7 @@ fun Char.isEmoji(): Boolean {
     }
 }
 
-/**
- * Extracts a substring with bounds checking to prevent IndexOutOfBoundsException.
- *
- * Automatically coerces start index to 0 and end index to string length.
- *
- * @param start The starting index (will be coerced to valid range)
- * @param end The ending index (will be coerced to valid range)
- * @return The safe substring
- */
+/** substring() with [start]/[end] coerced into bounds, so it never throws. */
 fun String.substringSafely(start: Int, end: Int) = substring(start.coerceAtLeast(0), end.coerceAtMost(length))
 
 /** @return random password in "XX-###-###" format (e.g. "AB-123-456") */

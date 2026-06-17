@@ -14,58 +14,25 @@ import platform.UIKit.UIInterfaceOrientationMaskPortrait
 import platform.UIKit.UIWindow
 import platform.darwin.NSObject
 
-/**
- * Singleton instance of the UIApplicationDelegate for the Syncplay iOS app.
- *
- * Automatically registered with UIApplication on initialization. Provides a
- * reference for accessing the delegate's orientation mask from other parts of the code.
- */
+/** App delegate singleton, registered with UIApplication on init. */
 val delegato = AppleDelegate().also {
     UIApplication.sharedApplication.delegate = it
 }
 
-/**
- * Global reference to the AVPictureInPictureController for video PiP functionality.
- *
- * Initialized when entering a room with video content. Allows Picture-in-Picture
- * control from anywhere in the app.
- */
+/** Global AVPictureInPictureController, set when entering a room with video. */
 var pipcontroller: AVPictureInPictureController? = null
 
-/**
- * Application delegate for the Syncplay iOS app.
- *
- * This delegate is essential for managing iOS-specific behaviors that can't be
- * handled directly in the Compose UI layer.
- */
+/** UIApplicationDelegate handling iOS behaviors the Compose layer cannot: orientation mask and Quick Action shortcuts. */
 @Suppress("CONFLICTING_OVERLOADS")
 class AppleDelegate : NSObject(), UIApplicationDelegateProtocol {
 
-    /**
-     * Current allowed orientation mask for the application.
-     *
-     * - Portrait when outside rooms (default navigation)
-     * - Landscape when inside rooms (video playback)
-     */
+    /** Allowed orientations: portrait outside rooms, landscape inside rooms. iOS reads this via [application]. */
     var myOrientationMask: UIInterfaceOrientationMask = UIInterfaceOrientationMaskPortrait
 
-    /**
-     * Initializes the platform callback on delegate creation.
-     */
     init {
         platformCallback = ApplePlatformCallback
     }
 
-    /**
-     * Provides the allowed interface orientations for a window.
-     *
-     * Called by iOS to determine which orientations are supported. Returns the
-     * current value of [myOrientationMask] which changes based on room state.
-     *
-     * @param application The singleton app instance
-     * @param supportedInterfaceOrientationsForWindow The window querying for orientations
-     * @return Bitmask of allowed orientations
-     */
     override fun application(
         application: UIApplication,
         supportedInterfaceOrientationsForWindow: UIWindow?
@@ -73,32 +40,14 @@ class AppleDelegate : NSObject(), UIApplicationDelegateProtocol {
         return myOrientationMask
     }
 
-    /**
-     * Called when the application finishes launching.
-     *
-     * Checks if the app was launched via a Quick Action shortcut and handles it
-     * by attempting to join the configured room.
-     *
-     * @param application The singleton app instance
-     * @param didFinishLaunchingWithOptions Launch options dictionary
-     * @return false to indicate default launch handling should continue
-     */
+    /** Cold-launch entry point: routes a launching Quick Action shortcut to [handleShortcut]. */
     override fun application(application: UIApplication, didFinishLaunchingWithOptions: Map<Any?, *>?): Boolean {
         (didFinishLaunchingWithOptions?.get(UIApplicationLaunchOptionsShortcutItemKey) as? UIApplicationShortcutItem)
             ?.let { handleShortcut(it) }
         return false
     }
 
-    /**
-     * Called when a Quick Action shortcut is performed while the app is running.
-     *
-     * Handles the shortcut by joining the room encoded in the shortcut's type.
-     * Calls the completion handler with true to indicate successful handling.
-     *
-     * @param application The singleton app instance
-     * @param performActionForShortcutItem The shortcut item that was selected
-     * @param completionHandler Callback to indicate if the shortcut was handled
-     */
+    /** Handles a Quick Action tapped while the app is already running. */
     override fun application(application: UIApplication, performActionForShortcutItem: UIApplicationShortcutItem, completionHandler: (Boolean) -> Unit) {
         handleShortcut(performActionForShortcutItem)
         completionHandler(true)
@@ -108,21 +57,13 @@ class AppleDelegate : NSObject(), UIApplicationDelegateProtocol {
 }
 
 /**
- * Holds a pending shortcut [JoinConfig] to be consumed by the HomeScreen when ready.
- *
- * On cold start, the app delegate may receive the shortcut before the Compose UI and
- * HomeViewmodel are initialized. Instead of polling for the viewmodel, we store the
- * parsed JoinConfig here. The HomeScreen observes this flow and joins the room as soon
- * as it finishes initializing.
+ * Pending shortcut [JoinConfig] consumed by the HomeScreen once ready. On cold start the
+ * delegate may receive the shortcut before the Compose UI and HomeViewmodel exist, so it is
+ * parked here for HomeScreen to observe and join instead of polling for the viewmodel.
  */
 val pendingShortcutJoinConfig = MutableStateFlow<JoinConfig?>(null)
 
-/**
- * Processes a Quick Action shortcut item by parsing its room configuration
- * and posting it to [pendingShortcutJoinConfig] for the UI layer to consume.
- *
- * @param shortcut The UIApplicationShortcutItem containing room configuration
- */
+/** Parses a Quick Action shortcut's room config and posts it to [pendingShortcutJoinConfig]. */
 fun handleShortcut(shortcut: UIApplicationShortcutItem) {
     println("HANDLE AMIGO SHORTCUT $shortcut")
     runCatching {

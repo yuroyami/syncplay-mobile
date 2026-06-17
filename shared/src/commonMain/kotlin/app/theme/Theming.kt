@@ -49,7 +49,7 @@ object Theming {
     const val USER_INFO_IC_SIZE = 16
     const val USER_INFO_TXT_SIZE = 10
 
-    /* ── Legacy aliases (used outside room UI — migrate gradually) ── */
+    /* ── Legacy color aliases (referenced outside room UI) ── */
     val SP_YELLOW = Color(255, 198, 4)
     val SP_ORANGE = Color(255, 113, 54)
     val SP_PINK = Color(255, 40, 97)

@@ -28,7 +28,6 @@ fun RoomPlayButton(modifier: Modifier) {
     val viewmodel = LocalRoomViewmodel.current
     val hasVideo by viewmodel.hasVideo.collectAsState()
 
-    /** PLAY BUTTON */
     val playing by viewmodel.playerManager.isNowPlaying.collectAsState()
     val animatedColor by animateColorAsState(
         animationSpec = tween(500),

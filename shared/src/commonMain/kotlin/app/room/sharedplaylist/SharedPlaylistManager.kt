@@ -29,15 +29,13 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
     private val session get() = viewmodel.session
 
     /**
-     * The playlist entry (filename or URL) we most recently *started loading* into the player.
+     * The playlist entry (filename or URL) most recently started loading into the player.
      *
-     * This — not [Session.spIndex] — is what [changePlaylistSelection] guards on to decide
-     * whether an incoming index change actually needs a (re)load. Guarding on `spIndex` is wrong
-     * because the protocol receive path sets `spIndex` to the new index *before*
-     * `changePlaylistSelection` runs, so an `index != spIndex` check would always be false and
-     * the file would never load. Tracking the loaded source instead makes the decision robust
-     * for both local files and remote URLs, and lets us skip the redundant reload when our own
-     * index echo comes back for a file we already loaded locally.
+     * [changePlaylistSelection] guards on this, NOT [Session.spIndex], to decide whether an
+     * incoming index change needs a (re)load. The receive path sets `spIndex` to the new index
+     * before `changePlaylistSelection` runs, so an `index != spIndex` guard would always be false
+     * and the file would never load. Tracking the loaded source works for both local files and
+     * remote URLs and skips the redundant reload when our own index echo returns.
      */
     private var lastLoadedSource: String? = null
 
@@ -236,9 +234,9 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
      * that index unless it is already the loaded one.
      *
      * Called for both local and remote selections (see [app.protocol.event.RoomCallback.onPlaylistIndexChanged]).
-     * The guard is [lastLoadedSource], NOT [Session.spIndex] — the receive path already advanced
+     * The guard is [lastLoadedSource], NOT [Session.spIndex]: the receive path already advanced
      * spIndex by the time we get here, so an spIndex-equality guard would always short-circuit
-     * and nothing would ever play (the long-standing "shared playlist does nothing" bug).
+     * and nothing would ever play.
      */
     suspend fun changePlaylistSelection(index: Int) {
         if (index !in session.sharedPlaylist.indices) return /* In rare cases when this was called on an empty/short list */
@@ -369,9 +367,7 @@ class SharedPlaylistManager(val viewmodel: RoomViewmodel) : AbstractManager(view
          * One trusted-domain entry against one URL, with PC's exact matching rules
          * (client.py:565-602):
          *  - entry `host/path` splits on the first `/`; the path is a required URL-path prefix
-         *  - the host matches itself and its `www.` variant — NOT arbitrary subdomains
-         *    (the old `endsWith(".$trusted")` trusted every subdomain, which is more
-         *    permissive than the user asked for)
+         *  - the host matches itself and its `www.` variant, NOT arbitrary subdomains
          *  - explicit wildcards are supported: each `*` matches exactly one label,
          *    e.g. `*.example.com` trusts `cdn.example.com` but not `a.b.example.com`
          */

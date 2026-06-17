@@ -8,17 +8,14 @@ import app.server.model.ServerRoom
 import app.server.model.ServerWatcher
 import kotlinx.serialization.json.JsonPrimitive
 
-/**
- * Manages room lifecycle, watcher movement between rooms, and broadcasting.
- * Port of Python's RoomManager class (syncplay-pc-src-master/syncplay/server.py).
- */
+/** Manages room lifecycle, watcher movement between rooms, and broadcasting. */
 open class ServerRoomManager {
 
     protected val _rooms = mutableMapOf<String, ServerRoom>()
 
     /**
-     * Broadcasts an action to all watchers across all rooms.
-     * Override in [PublicServerRoomManager] for room-isolated behavior.
+     * Runs [action] against every watcher in every room.
+     * Overridden in [PublicServerRoomManager] to confine the reach to the sender's room.
      */
     open fun broadcast(sender: ServerWatcher, action: (ServerWatcher) -> Unit) {
         for (room in _rooms.values) {
@@ -28,9 +25,7 @@ open class ServerRoomManager {
         }
     }
 
-    /**
-     * Broadcasts an action to all watchers in the sender's room.
-     */
+    /** Runs [action] against every watcher in the sender's room. */
     fun broadcastRoom(sender: ServerWatcher, action: (ServerWatcher) -> Unit) {
         val room = sender.room ?: return
         if (room.name !in _rooms) return
@@ -39,9 +34,7 @@ open class ServerRoomManager {
         }
     }
 
-    /**
-     * Moves a watcher to a new room, removing from the old one and creating if needed.
-     */
+    /** Moves a watcher to a new room, removing it from the old one and creating the target if needed. */
     open fun moveWatcher(watcher: ServerWatcher, roomName: String) {
         val truncated = roomName.take(MAX_ROOM_NAME_LENGTH)
         removeWatcher(watcher)
@@ -49,18 +42,14 @@ open class ServerRoomManager {
         room.addWatcher(watcher)
     }
 
-    /**
-     * Removes a watcher from their current room, deleting the room if empty.
-     */
+    /** Removes a watcher from its current room, deleting the room if it becomes empty. */
     fun removeWatcher(watcher: ServerWatcher) {
         val oldRoom = watcher.room ?: return
         oldRoom.removeWatcher(watcher)
         deleteRoomIfEmpty(oldRoom)
     }
 
-    /**
-     * Gets an existing room or creates a new one. Controlled room names get ControlledServerRoom.
-     */
+    /** Returns the existing room or creates one; controlled room names yield a [ControlledServerRoom]. */
     private fun getOrCreateRoom(roomName: String): ServerRoom {
         _rooms[roomName]?.let { return it }
 
@@ -73,19 +62,13 @@ open class ServerRoomManager {
         return room
     }
 
-    /**
-     * Deletes a room if it has no watchers.
-     */
     private fun deleteRoomIfEmpty(room: ServerRoom) {
         if (room.isEmpty() && room.name.isNotEmpty()) {
             _rooms.remove(room.name)
         }
     }
 
-    /**
-     * Finds a unique username by appending underscores if the name is already taken.
-     * Port of Python's RoomManager.findFreeUsername().
-     */
+    /** Returns a unique username, appending underscores when the requested name is already taken. */
     fun findFreeUsername(username: String, maxLength: Int): String {
         var name = username.take(maxLength)
         val allNames = _rooms.values
@@ -101,9 +84,7 @@ open class ServerRoomManager {
         return name
     }
 
-    /**
-     * Returns all watchers accessible to a given user.
-     */
+    /** Returns all watchers visible to [forUser] (every room here, sender's room only when isolated). */
     open fun getAllWatchersForUser(forUser: ServerWatcher): List<ServerWatcher> {
         return _rooms.values.flatMap { it.getWatchers() }
     }
@@ -114,9 +95,8 @@ open class ServerRoomManager {
 }
 
 /**
- * Room manager for isolated rooms mode.
- * Broadcast only reaches watchers in the sender's room.
- * Port of Python's PublicRoomManager.
+ * Room manager for isolated-rooms mode: broadcasts reach only the sender's room, and a watcher
+ * sees only its own room's members.
  */
 class PublicServerRoomManager : ServerRoomManager() {
 

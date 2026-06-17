@@ -2,13 +2,11 @@ package app.protocol.models
 
 import app.player.models.MediaFile
 
-/**************************************************************************************
- * User wrapper class. It encapsulates all information and data we need about a user  *
- **************************************************************************************/
+/** One user in the current room, as modelled from the server's `List`/`Set` payloads. */
 data class User(
-    var index: Int = 0, //The index of the user, as declared by the server
-    var name: String = "", //The name that the user announced to the group
-    var readiness: Boolean, //Whether the user marked themselves ready or not
-    var file: MediaFile?, //The file info which the user is playing, null if none
-    var isController: Boolean //Whether the user controls the managed room or not
+    var index: Int = 0, // server-assigned index; 0 for the current user
+    var name: String = "",
+    var readiness: Boolean, // whether the user marked themselves ready
+    var file: MediaFile?, // file the user is playing, null if none
+    var isController: Boolean // whether the user controls the managed room
 )

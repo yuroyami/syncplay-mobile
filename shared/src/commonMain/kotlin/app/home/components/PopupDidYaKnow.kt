@@ -32,7 +32,7 @@ import syncplaymobile.shared.generated.resources.tips_dontshowmetips
 
 object PopupDidYaKnow {
 
-    /** Use only once in AdamScreen rather than declaring it in two places */
+    /** First-launch tips dialog. Declare once (in AdamScreen). */
     @Composable
     fun DidYaKnowPopup(state: MutableState<Boolean>) {
         val viewmodel = LocalGlobalViewmodel.current
@@ -43,7 +43,6 @@ object PopupDidYaKnow {
             var tipIndex by remember { mutableIntStateOf(0) }
 
             LaunchedEffect(null) {
-                //We only fetch tips when necessary
                 tips.addAll(getStringArray(Res.array.tips).map { it.replace("%1\$s", appName) }.shuffled())
             }
 
@@ -54,7 +53,6 @@ object PopupDidYaKnow {
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            //if (tipIndex == tips.size - 1) tipIndex = 0 else ++tipIndex
                             state.value = false
                         }
                     ) {

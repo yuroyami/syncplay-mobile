@@ -1,58 +1,37 @@
 import SwiftUI
 import shared
 
-/**
- * Main entry point for the Syncplay iOS application.
- * Performs critical initialization before the SwiftUI scene hierarchy is created.
- *
- * The app uses a single WindowGroup containing the main Syncplay screen with
- * safe area insets ignored for true fullscreen video playback.
- */
+/// iOS app entry point. Registers the Swift-implemented bridges that Kotlin common code calls
+/// into, then shows a single fullscreen `SyncplayScreen`.
 @main
 struct iOSApp: App {
 
-    /**
-     * Initializes the application before the UI is created.
-     *
-     * Initialization steps:
-     * 1. **Idle Timer**: Prevents screen from sleeping during video playback
-     * 2. **DataStore**: Sets up persistent storage for settings and preferences
-     * 3. **SwiftNIO Bridge**: Registers Swift-implemented network manager factory
-     *    with Kotlin, enabling Kotlin code to instantiate SwiftNIO network connections
-     *
-     * The SwiftNIO factory bridge is necessary because SwiftNIO is pure Swift with
-     * no Objective-C interoperability, making direct Kotlin/Native calls impossible.
-     */
+    /// Runs before the UI: disables the idle timer (screen-on during playback), initializes the
+    /// DataStore, and registers the SwiftNIO / MPVKit / YouTubeKit factory bridges. Each bridge
+    /// exists because the underlying library is pure Swift with no ObjC surface, so Kotlin/Native
+    /// can't instantiate it via cinterop and instead calls a registered factory closure.
     init() {
-        UIApplication.shared.isIdleTimerDisabled = true //Keep screen on
+        UIApplication.shared.isIdleTimerDisabled = true
 
         DatastoreInitKt.initializeDS()
 
-        // Bridge SwiftNIO network manager to Kotlin common code
         SwiftNioNetworkManagerKt.instantiateSwiftNioNetworkManager = { (roomViewmodel: RoomViewmodel) -> NetworkManager in
             return SwiftNioNetworkManager(viewmodel: roomViewmodel) as NetworkManager
         }
 
-        // Bridge MPVKit player to Kotlin common code
         MpvKitBridgeKt.instantiateMpvKitPlayer = { (viewmodel: RoomViewmodel) -> PlayerImpl in
             let bridge = MpvKitBridgeImpl()
             return MpvKitImpl(viewmodel: viewmodel, bridge: bridge)
         }
 
-        // Bridge YouTubeKit (pure-Swift YouTube extractor) to Kotlin common code.
-        // Without this registration, MediaResolver on iOS no-ops and page URLs are passed
-        // through to the player unresolved (fine for direct media files).
+        // Without this registration, MediaResolver on iOS no-ops and page URLs pass through to
+        // the player unresolved (fine for direct media files).
         YouTubeKitBridgeKt.instantiateYouTubeKitBridge = {
             return YouTubeKitBridgeImpl()
         }
     }
 
-    /**
-     * The root SwiftUI scene containing the app's UI hierarchy.
-     *
-     * Displays the main Syncplay screen with safe area insets ignored to enable
-     * fullscreen video playback that extends into system UI areas (notch, home indicator).
-     */
+    /// Root scene: a single `SyncplayScreen` ignoring safe-area insets for fullscreen video.
     var body: some Scene {
         WindowGroup {
             SyncplayScreen().ignoresSafeArea(.all)

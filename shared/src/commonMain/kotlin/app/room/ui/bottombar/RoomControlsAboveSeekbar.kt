@@ -15,11 +15,9 @@ import app.theme.Theming.ROOM_ICON_SIZE
 import app.uicomponents.FlexibleIcon
 
 /**
- * Minimal seek row above the seekbar: only FastRewind/FastForward.
- *
- * Chapter-skip and custom-skip buttons were moved out to keep this row compact and prevent
- * it from colliding with the chat area in portrait mode. Chapter skip is reachable from the
- * chapter dropdown in [RoomControlPanelCard]; precise seeks use the seek-to-position popup.
+ * Compact seek row above the seekbar: FastRewind and FastForward only, kept minimal to avoid
+ * colliding with the chat area in portrait. Chapter skip lives in [RoomControlPanelCard]'s chapter
+ * dropdown; precise seeks use the seek-to-position popup.
  */
 @Composable
 fun RoomBottomBarVideoControlRow(modifier: Modifier) {

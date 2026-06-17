@@ -189,26 +189,20 @@ kotlin {
     }
 }
 
-/* Pin Skiko to a single explicit version across every configuration in this module.
+/* Pin Skiko to one explicit version across every configuration in this module.
  *
- * Compose Multiplatform 1.11.0-rc01 ships with skiko 0.144.6 (declared via `strictly`).
- * Coil 3.4.0 declares an older skiko 0.9.22.2. Today Compose's `strictly` constraint
- * wins resolution and everyone ends up on 0.144.6, but the outcome is implicit and a
- * future Coil bump that goes higher than Compose's bundled version would silently swap
- * Skia's native binaries underneath Compose — ABI breaks between Skiko minors do happen,
- * since the bundled libskiko.so/dylib has to match the Kotlin bindings Compose was
- * compiled against. Forcing the version here makes the choice explicit and survives
- * either library's transitive declarations changing.
+ * Compose Multiplatform and Coil declare different skiko versions. Skiko's bundled
+ * native binary (libskiko.so/dylib) must match the Kotlin bindings Compose was compiled
+ * against, and ABI breaks between Skiko minors happen, so a transitive bump that pushed
+ * skiko higher than Compose's bundled version would silently swap Skia under Compose.
+ * Forcing the version keeps the choice explicit regardless of transitive declarations.
  *
- * `force` (rather than `strictly` on a constraint) is used because the KMP DSL doesn't
- * expose a `dependencies { constraints { } }` block inside `commonMain.dependencies { }`,
- * and applying force across all configurations covers the per-target classpaths
- * (iosArm64MainCompileKlibraries, androidReleaseRuntimeClasspath, etc.) in one place.
+ * `force` (not `strictly` on a constraint) because the KMP DSL exposes no
+ * `dependencies { constraints { } }` inside `commonMain.dependencies { }`; forcing across
+ * all configurations covers every per-target classpath in one place.
  *
- * Bump `skiko` in libs.versions.toml whenever compose-multiplatform is upgraded — match
- * what Compose actually uses, which you can confirm with
- *     ./gradlew :shared:dependencies | grep skiko
- * after the bump. */
+ * Bump `skiko` in libs.versions.toml whenever compose-multiplatform is upgraded, matching
+ * what Compose actually uses (confirm with `./gradlew :shared:dependencies | grep skiko`). */
 configurations.configureEach {
     resolutionStrategy.force("org.jetbrains.skiko:skiko:${libs.versions.skiko.get()}")
 }
@@ -258,4 +252,4 @@ tasks.register("propagateSSOT") {
             project.propagateAllCustom()
         }
     }
-}//
+}

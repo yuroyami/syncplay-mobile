@@ -13,19 +13,18 @@ import kotlinx.serialization.Serializable
  * Docs: https://opensubtitles.stoplight.io/docs/opensubtitles-api
  * Base URL: `https://api.opensubtitles.com/api/v1/`
  *
- * Every request must carry an `Api-Key` header and a non-generic `User-Agent` of the
- * form `AppName vX.Y.Z` — both are applied client-wide in [SubtitleSearch]'s client.
+ * Every request must carry an `Api-Key` header and a non-generic `User-Agent` of the form
+ * `AppName vX.Y.Z`; both are applied client-wide in [SubtitleSearch]'s client.
  */
 interface OpenSubtitlesAPI {
 
     /**
-     * Searches subtitles. Per the docs, [languages] must be lower-case, comma-separated
-     * and alphabetically sorted; queries are matched case-insensitively server-side.
+     * Searches subtitles. [languages] must be lower-case, comma-separated and alphabetically
+     * sorted; queries match case-insensitively server-side.
      *
-     * Parameters are declared in ALPHABETICAL order on purpose: the API 301-redirects
-     * any request whose query string isn't in canonical (sorted) parameter order, and
-     * Ktorfit emits parameters in declaration order — keeping them sorted saves a
-     * redirect round-trip on every search (verified live: unsorted → 301).
+     * Parameters are declared in ALPHABETICAL order: the API 301-redirects any request whose
+     * query string isn't in canonical (sorted) order, and Ktorfit emits parameters in declaration
+     * order, so keeping them sorted avoids a redirect round-trip on every search.
      */
     @GET("subtitles")
     suspend fun search(
@@ -37,10 +36,9 @@ interface OpenSubtitlesAPI {
     ): OpenSubtitlesSearchResponse
 
     /**
-     * Requests a download link for a subtitle file. The docs are explicit that this is a
-     * **POST with a JSON body** (`{"file_id": N}`) — a GET with a query parameter is
-     * rejected, which is exactly how the old implementation failed. The returned [link]
-     * is a direct, UTF-8, ~3-hour-valid URL to the subtitle text.
+     * Requests a download link for a subtitle file. MUST be a POST with a JSON body
+     * (`{"file_id": N}`); the API rejects a GET with a query parameter. The returned link is a
+     * direct, UTF-8, ~3-hour-valid URL to the subtitle text.
      */
     @POST("download")
     suspend fun requestDownload(@Body body: OpenSubtitlesDownloadRequest): OpenSubtitlesDownloadResponse
