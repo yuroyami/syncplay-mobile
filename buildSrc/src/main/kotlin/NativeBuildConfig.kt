@@ -5,21 +5,15 @@ import java.io.File
 import java.nio.file.Files
 
 /**
- * Encapsulates native-build related Gradle logic (NDK validation,
- * mpv build scripts) so that androidApp/build.gradle.kts stays
- * declarative and concise.
- *
- * Uses only Gradle-native types — no Android Gradle Plugin imports —
- * to avoid classpath conflicts in buildSrc.
+ * Native-build Gradle logic (NDK validation, mpv cross-compile task), kept out of
+ * androidApp/build.gradle.kts. Uses only Gradle-native types — no AGP imports — to avoid
+ * buildSrc classpath conflicts.
  */
 object NativeBuildConfig {
 
     /**
-     * Validates that the correct NDK version is installed.
-     * Should be called inside `afterEvaluate` for the androidApp module.
-     *
-     * @param ndkPath The resolved NDK directory
-     * @param requiredVersion The expected NDK version string
+     * Fails the build unless the exact [requiredVersion] NDK is present at [ndkPath].
+     * Call inside `afterEvaluate` for the androidApp module.
      */
     fun Project.validateNdk(
         ndkPath: File,
@@ -61,12 +55,8 @@ object NativeBuildConfig {
     }
 
     /**
-     * Registers the `runAndroidMpvNativeBuildScripts` Exec task that
-     * downloads mpv dependencies and cross-compiles native libraries
-     * for all ABI targets.
-     *
-     * @param sdkPathProvider Provider for the Android SDK directory path
-     * @param ndkPathProvider Provider for the Android NDK directory path
+     * Registers the `runAndroidMpvNativeBuildScripts` Exec task: downloads mpv deps and
+     * cross-compiles the native libs for every ABI. Disabled on Windows.
      */
     fun Project.registerNativeBuildTask(
         sdkPathProvider: () -> File,

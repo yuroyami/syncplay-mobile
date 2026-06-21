@@ -75,8 +75,6 @@ import syncplaymobile.shared.generated.resources.uisetting_subtitle_delay_summar
 import syncplaymobile.shared.generated.resources.uisetting_subtitle_delay_title
 import kotlin.math.abs
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
 class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) {
     /** VLC library instance providing codec and media parsing capabilities. */
@@ -102,21 +100,31 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     override val supportsPictureInPicture: Boolean = true
 
     /**
-     * 250 ms position tracker interval. VLCKit 4 delivers delegate callbacks from libvlc
-     * worker threads (the timer thread holds `player->timer.lock` for `mediaPlayerTimeChanged`),
-     * so `vlcPlayer.time` can't be read from inside the callback (libvlc's `vlc_player_Lock`
-     * asserts `!vlc_mutex_held(timer.lock)`), and `mediaPlayerTimeChanged` fires only once per
-     * second by default. A main-thread tracker job drives position reads instead, ignoring
-     * VLCKit's time-change notifications.
+     * No manual polling job. [Duration.ZERO] makes [shouldTrackTimeManually] false, so the base
+     * never starts the 250 ms poll. The seekbar ([PlayerManager.timeCurrentMillis]) is driven
+     * directly by [VlcDelegate.mediaPlayerTimeChanged] instead. That is safe — and not the
+     * timer.lock hazard the old comment claimed — because [VLCLibrary.sharedEventsConfiguration]
+     * is set to [VLCEventsLegacyConfiguration], which (verified from the VLCKit binary:
+     * `isAsync=true`, `dispatchQueue=main`) delivers every delegate callback async on the main
+     * thread, after libvlc has released `timer.lock`. The notification cadence is tightened in
+     * [initialize] (`timeChangeUpdateInterval`/`minimalTimePeriod`) so the seekbar ticks smoothly.
      */
     override val trackerJobInterval: Duration
-        get() = 250.milliseconds
+        get() = Duration.ZERO
 
-    private var pausedSeekPosition: Long? = null
+    // Announce the loaded file from mediaPlayerLengthChanged once the real duration is known
+    // (mirrors Android's LengthChanged handler), so the base parseMedia must NOT announce it early
+    // with a possibly-zero duration. See PlayerImpl.announcesFileLoadViaEvent.
+    override val announcesFileLoadViaEvent: Boolean = true
 
-    /** Wall-clock time [pausedSeekPosition] was last set, for the convergence-timeout backstop in
-     *  [currentPositionMs] that guarantees the post-seek shadow can never freeze our position. */
-    private var seekShadowSetAtMs: Long = 0L
+    /** Seek target held by [currentPositionMs] ONLY through the brief window after setTime() where
+     *  libvlc's clock reads 0/stale, so the room never sees a phantom backward jump. Released the
+     *  instant the live clock lands near it, or after [SEEK_GUARD_MAX_HOLD_MS] — never an indefinite
+     *  hold (that was the old freeze bug). */
+    private var pendingSeekTargetMs: Long? = null
+
+    /** Wall-clock time [pendingSeekTargetMs] was set, for the unconditional release ceiling. */
+    private var seekGuardSetAtMs: Long = 0L
 
     /**
      * Debounce job for the libvlc "Paused" state. VLCKit 4 emits transient Paused events
@@ -134,7 +142,7 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
      * [ProtocolManager]'s channel-health collector broadcast a spurious "unpaused" to the
      * room and desync everyone. While this flag is set, the delegate swallows that Playing
      * state. Cleared once the player settles into Paused/Stopped or any deliberate
-     * play()/pause() arrives. Plain var (not atomic) to match [pausedSeekPosition]'s
+     * play()/pause() arrives. Plain var (not atomic) to match [pendingSeekTargetMs]'s
      * existing main-thread-write / libvlc-thread-read pattern.
      */
     private var primingFirstFrame = false
@@ -279,7 +287,8 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                 // multiplies on top of libvlc's internal default base size. Seeding a hardcoded
                 // pixel size here would be multiplied by that scale, producing oversized subs.
                 val baseArgs = listOf(
-                    "-vv",
+                    // No "-vv": libvlc verbose logging is frame-by-frame spam that shipped to every
+                    // user in release. The user's custom flags can still re-add it if needed.
                     "--network-caching=2000",
                     "--adaptive-logic=default",
                     "--http-reconnect",
@@ -349,10 +358,11 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     override fun initialize() {
         vlcPlayer!!.setDelegate(vlcDelegate)
 
-        // Tighten VLCKit 4's notification cadence so the system PiP overlay's scrubber
-        // ticks visibly (defaults: timeChangeUpdateInterval = 1.0s, minimalTimePeriod =
-        // 500 ms). Our own time tracker (see [trackerJobInterval]) drives the in-room
-        // seekbar; this just makes the system overlay match.
+        // Drive the seekbar at ~4 Hz. timeChangeUpdateInterval is the mediaPlayerTimeChanged
+        // cadence (default 1.0s — too choppy for a seekbar); minimalTimePeriod is the hard floor
+        // between updates (default 500_000 µs = 500 ms, which would throttle us back to 2 Hz), so
+        // both must be lowered together. Must be set before play() (per VLCKit docs). Now that the
+        // notification (not a poll) is the position source, this cadence is load-bearing.
         vlcPlayer!!.timeChangeUpdateInterval = 0.25
         vlcPlayer!!.minimalTimePeriod = 250_000L  // microseconds
 
@@ -361,10 +371,8 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
 
         isInitialized = true
 
-        // Drive [PlayerManager.timeCurrentMillis] from our own 250 ms main-thread job —
-        // we can't read vlcPlayer.time from inside [VlcDelegate.mediaPlayerTimeChanged]
-        // because VLCKit 4 fires that callback with libvlc's timer.lock held. See the
-        // doc on [trackerJobInterval] for the full story.
+        // No-op for VLC now (trackerJobInterval == ZERO): the seekbar is driven by
+        // mediaPlayerTimeChanged, not a poll. Kept for symmetry with the other engines.
         startTrackingProgress()
     }
 
@@ -632,7 +640,6 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
         withContext(Dispatchers.Main) {
             val chapterDescs = vlcPlayer!!.chapterDescriptionsOfTitle(vlcPlayer!!.currentTitleIndex)
             mediafile.chapters.clear()
-            delay(500)
             chapterDescs.forEachIndexed { i, desc ->
                 val chapter = desc as? VLCMediaPlayerChapterDescription ?: return@forEachIndexed
 
@@ -740,20 +747,18 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     }
 
     override suspend fun parseMedia(media: MediaFile) {
+        // Best-effort initial read. The authoritative duration arrives via mediaPlayerLengthChanged
+        // (which also fires the room announce), so there's no retry/sentinel game here anymore —
+        // mirrors how the Android VLC engine relies on its LengthChanged event.
         val lengthMs = vlcMedia?.length?.value()?.longValue ?: 0L
-        if (lengthMs > 0) {
+        if (lengthMs > 0L) {
             playerManager.timeFullMillis.value = lengthMs
             media.fileDuration = lengthMs / 1000.0
-        } else {
-            // Parsing is async in VLCKit 4 — and for streams (HLS/DASH) duration may
-            // only be known once playback starts. Retry once after a short delay.
-            delay(1500)
-            val retryMs = vlcMedia?.length?.value()?.longValue ?: 0L
-            val dur = if (retryMs > 0) retryMs else Long.MAX_VALUE
-            playerManager.timeFullMillis.value = dur
-            media.fileDuration = if (dur == Long.MAX_VALUE) 0.0 else dur / 1000.0
         }
         super.parseMedia(media)
+        // If the length was already final at parse time, LengthChanged may not fire again, so
+        // announce now. The dedup in mediaPlayerLengthChanged stops a double-announce.
+        if (lengthMs > 0L && !viewmodel.isSoloMode) announceFileLoaded()
     }
 
     /**
@@ -821,19 +826,22 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
      */
     override fun seekTo(toPositionMs: Long) {
         super.seekTo(toPositionMs)
+        // Reflect the seek on the seekbar immediately. When paused, libvlc may not emit a
+        // mediaPlayerTimeChanged for the new position, so without this the seekbar would not move
+        // until playback resumes.
+        playerManager.timeCurrentMillis.value = toPositionMs
         playerScopeMain.launch(Dispatchers.Main.immediate) {
             val player = vlcPlayer ?: return@launch
             // Defense-in-depth NULL-media guard — same rationale as in [pause]/[play].
             // setTime on a media-less VLCMediaPlayer enters the same libdispatch path
             // and dereferences the NULL libvlc handle.
             if (player.media == null) return@launch
-            // Shadow the player's clock with our requested position until the live clock actually
-            // converges on it (see [currentPositionMs]). VLCKit 4 has a window between setTime()
-            // and the next time-update where vlcPlayer.time can return 0 or a stale value — the
-            // protocol's seek detector would see that as a sudden drop and broadcast a phantom
-            // "user jumped from X to 0" to the room.
-            pausedSeekPosition = toPositionMs
-            seekShadowSetAtMs = generateTimestampMillis()
+            // Arm the post-seek guard: there is a brief window between setTime() and libvlc
+            // re-anchoring its clock where vlcPlayer.time reads 0/stale. [currentPositionMs] reports
+            // this target through that window so the protocol's seek detector can't broadcast a
+            // phantom "user jumped from X to 0" to the room.
+            pendingSeekTargetMs = toPositionMs
+            seekGuardSetAtMs = generateTimestampMillis()
             player.setTime(toPositionMs.toVLCTime())
         }
     }
@@ -844,31 +852,28 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
      * @return Current position in milliseconds
      */
     override fun currentPositionMs(): Long {
-        // A live VLCKit clock of 0/null means "not known yet" (a buffer dip, or the moment right
-        // after media injection), NOT a real jump to the start; and VLCKit 4 occasionally leaks a
-        // raw libvlc clock tick (~1.7e15 ms) through .time. Treat a non-positive or implausibly
-        // large (> 24h) sample as unknown and fall back to the last good tracked time.
-        val live = vlcPlayer?.time?.value()?.longValue ?: 0L
-        val liveValid = live in 1L..MAX_PLAUSIBLE_POSITION_MS
+        val raw = vlcPlayer?.time?.value()?.longValue ?: -1L
+        // Implausible samples are "unknown": negative, or a leaked raw libvlc clock tick (~1.7e15 ms)
+        // that VLCKit occasionally surfaces through .time. 0 is a VALID position here (start of file /
+        // a real seek to 0); the fallback below is what treats 0 as "not known yet".
+        val live = if (raw in 0L..MAX_PLAUSIBLE_POSITION_MS) raw else -1L
 
-        pausedSeekPosition?.let { shadow ->
-            // After seekTo() we report the seek target (not the live clock) so the brief
-            // post-setTime window where vlcPlayer.time is 0/stale can't be broadcast as a phantom
-            // jump. We drop the shadow the moment the live clock converges on the target — and, as
-            // a backstop, after SEEK_SHADOW_MAX_HOLD_MS if a valid clock never converges (e.g. the
-            // seek was overridden). WITHOUT this convergence/timeout the shadow sticks forever on a
-            // seek-while-playing — no Playing state transition fires to clear it — so our reported
-            // position freezes and the whole room rewinds to it. That is the "stuck after seek" bug.
-            val converged = liveValid && abs(live - shadow) <= SEEK_CONVERGENCE_MS
-            val expired = liveValid &&
-                    generateTimestampMillis() - seekShadowSetAtMs > SEEK_SHADOW_MAX_HOLD_MS
-            if (converged || expired) {
-                pausedSeekPosition = null
-                return live
+        pendingSeekTargetMs?.let { target ->
+            // Report the seek target only through the brief post-setTime window where libvlc's clock
+            // reads 0/stale, so the room never sees a phantom jump. Release as soon as the live clock
+            // lands near the target, or after a short ceiling so an overridden seek can't pin us. The
+            // ceiling is UNCONDITIONAL on wall-clock — a dead clock can't trap it (the old freeze bug).
+            val settled = live >= 0L && abs(live - target) <= SEEK_CONVERGENCE_MS
+            val timedOut = generateTimestampMillis() - seekGuardSetAtMs > SEEK_GUARD_MAX_HOLD_MS
+            if (settled || timedOut) {
+                pendingSeekTargetMs = null
+            } else {
+                return target
             }
-            return shadow
         }
-        return if (liveValid) live else playerManager.timeCurrentMillis.value
+        // A live 0 means "not known yet" (post-load / buffer dip), so prefer the last good seekbar
+        // value over reporting a spurious 0.
+        return if (live >= 1L) live else playerManager.timeCurrentMillis.value
     }
 
     /**
@@ -938,16 +943,16 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
          *  leaked raw libvlc clock value, so [currentPositionMs] treats it as "unknown". */
         const val MAX_PLAUSIBLE_POSITION_MS = 86_400_000L
 
-        /** Live clock within this distance of the post-seek shadow target counts as "converged",
-         *  at which point [currentPositionMs] drops the shadow and reports the live clock. Sized
-         *  to comfortably exceed one tracker tick of playback so it triggers on the first sample
-         *  after the seek lands, yet stay under the protocol's 1 s seek threshold. */
+        /** Live clock within this distance of the post-seek target counts as "settled", at which
+         *  point [currentPositionMs] releases the guard and reports the live clock. Under the
+         *  protocol's 1 s seek threshold so it settles on the first sane sample after the seek. */
         const val SEEK_CONVERGENCE_MS = 1_000L
 
-        /** Hard cap on how long the post-seek shadow is honored if a valid live clock never
-         *  converges on it (e.g. the seek was overridden). Prevents the shadow from freezing our
-         *  reported position — and thus rewinding the whole room — indefinitely. */
-        const val SEEK_SHADOW_MAX_HOLD_MS = 3_000L
+        /** Hard, UNCONDITIONAL ceiling on how long the post-seek guard is honored. Short because the
+         *  event-driven position settles within a notification tick or two; the guard only bridges
+         *  the stale window right after setTime(). Prevents the guard from ever freezing our reported
+         *  position — and thus rewinding the whole room — which was the old "stuck after seek" bug. */
+        const val SEEK_GUARD_MAX_HOLD_MS = 1_000L
     }
 
     /********** VLC-Specific Helper Methods **********/
@@ -965,21 +970,17 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
     /**
      * Delegate for VLCMediaPlayer events.
      *
-     * **Critical threading rule (VLCKit 4):** these callbacks are dispatched from libvlc
-     * worker threads — `mediaPlayerTimeChanged` in particular fires from the timer thread
-     * with `player->timer.lock` held. Calling ANY method on `vlcPlayer` / `vlcMedia` (or
-     * any object that re-enters libvlc, including the PiP controller's
-     * `invalidatePlaybackState`) from inside these callbacks trips libvlc's lock-ordering
-     * assertion:
-     *
-     *     Assertion failed: (!vlc_mutex_held(&player->timer.lock)),
-     *     function vlc_player_Lock, file player.c, line 992.
-     *
-     * The assertion is the symptom; the underlying issue is that `vlc_player_Lock` and
-     * `timer.lock` are not allowed to be held by the same thread at once. So these bodies stay
-     * VLC-free: derive what is possible from the callback parameters, and `launch` any VLC calls
-     * onto the coroutine scope so they execute on the main thread *after* the libvlc lock is
-     * released.
+     * **Threading (VLCKit 4):** these callbacks are safe to call vlcPlayer/vlcMedia from. The old
+     * comment here claimed they fire on libvlc's timer thread with `player->timer.lock` held — which
+     * would assert in `vlc_player_Lock` — but that is NOT true under the events configuration this
+     * engine installs. [VLCLibrary.sharedEventsConfiguration] is set to
+     * [VLCEventsLegacyConfiguration] in [VideoPlayer], which (verified from the VLCKit binary:
+     * `isAsync=true`, `dispatchQueue=__dispatch_main_q`, and `VLCEventsHandler` calling
+     * `dispatch_async`) delivers EVERY delegate callback async on the main thread, after libvlc has
+     * returned and released `timer.lock`. So reading `vlcPlayer.time` / `isPlaying()` here is fine
+     * (see [mediaPlayerTimeChanged], and the post-delay read in the Paused branch below). Calls that
+     * re-enter the PiP controller's `invalidatePlaybackState` are still `launch`ed for ordering, not
+     * for lock safety.
      */
     inner class VlcDelegate : NSObject(), VLCMediaPlayerDelegateProtocol {
         override fun mediaPlayerStateChanged(newState: VLCMediaPlayerState) {
@@ -1034,9 +1035,9 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
                     // VLCKit 4 has no distinct "Ended" state: Stopped fires on a genuine
                     // end-of-file AND on error/teardown/manual stop. Only treat it as a
                     // natural EOF (which auto-advances the shared playlist for the WHOLE
-                    // room) when we were actually near the end. We can't read vlcPlayer.time
-                    // here (libvlc holds timer.lock during this callback), so use the last
-                    // tracked position/duration.
+                    // room) when we were actually near the end. Use the last tracked position/
+                    // duration — on a Stopped transition vlcPlayer.time is being torn down and
+                    // unreliable, so the last good seekbar value is the trustworthy reference.
                     val endPos = playerManager.timeCurrentMillis.value
                     val endDur = playerManager.timeFullMillis.value
                     if (endDur > 0L && endPos >= endDur - 1500L) {
@@ -1052,22 +1053,34 @@ class VlcKitImpl(viewmodel: RoomViewmodel): PlayerImpl(viewmodel, VlcKitEngine) 
             playerScopeMain.launch { vlcDrawable?.pipController?.invalidatePlaybackState() }
         }
 
+        /**
+         * Drives the seekbar ([PlayerManager.timeCurrentMillis]) — there is no polling job (see
+         * [trackerJobInterval]). Reading vlcPlayer.time here is legal: VLCEventsLegacyConfiguration
+         * delivers this callback async on the main thread (libvlc's timer.lock already released,
+         * verified from the VLCKit binary). Routed through [currentPositionMs] so the post-seek guard
+         * applies identically to the seekbar and to the room-facing live read.
+         */
         override fun mediaPlayerTimeChanged(aNotification: NSNotification) {
-            // We can't read vlcPlayer.time here (it would assert in libvlc — see the class doc for
-            // VlcDelegate), and we deliberately do NOT drop the post-seek shadow here: this
-            // notification often arrives from a tick queued BEFORE the seek landed, so clearing the
-            // shadow now made currentPositionMs briefly report the pre-seek position (a phantom
-            // backward jump for the room). The shadow is instead cleared by [currentPositionMs]
-            // once the live clock actually converges on the seek target.
+            playerManager.timeCurrentMillis.value = currentPositionMs()
         }
 
         /**
-         * Notify the PiP overlay when media duration becomes known (or changes mid-stream
-         * for HLS/DASH live windows). The system uses [VlcDrawable.mediaLength] for its
-         * scrubbing UI. Like the state-change handler, we bounce off the coroutine scope
-         * to avoid the timer-lock assertion.
+         * Authoritative duration source (length is milliseconds, int64). Sets the room's full-time,
+         * and — once the real duration is known — announces the loaded file to the room, deduped
+         * against the current value so repeated HLS/DASH length updates don't re-announce. Mirrors
+         * the Android VLC engine's LengthChanged handler. Also refreshes the PiP scrubber.
          */
         override fun mediaPlayerLengthChanged(length: Long) {
+            if (length > 0L) {
+                playerManager.timeFullMillis.value = length
+                if (!viewmodel.isSoloMode) {
+                    val durSec = length / 1000.0
+                    if (durSec != viewmodel.media?.fileDuration) {
+                        viewmodel.media?.fileDuration = durSec
+                        announceFileLoaded()
+                    }
+                }
+            }
             playerScopeMain.launch { vlcDrawable?.pipController?.invalidatePlaybackState() }
         }
     }
