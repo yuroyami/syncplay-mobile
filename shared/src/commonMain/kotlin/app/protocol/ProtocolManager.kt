@@ -63,7 +63,18 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
      */
     val rewindThreshold = 4L
 
-    /** Timestamp of the last received global state update, used for sync timing. */
+    /**
+     * Timestamp of the last received global state update, used for sync timing. A `null` value
+     * arms the one-shot "first sync" in [app.room.RoomServerMessageHandler.onState] (force-seek
+     * to the room position + apply pause/play on the next inbound `State`).
+     *
+     * `@Volatile` because it is read on the inbound-State consumer thread (Dispatchers.Default in
+     * NetworkManager) but written from other threads too: [resetSyncAnchorForReconnect] from the
+     * reconnect loop and [reanchorSyncOnFileLoad] from a player-engine load callback (Main / mpv
+     * IO / VLCKit delegate). Without the volatile, the consumer thread could keep observing a
+     * stale non-null value on ARM and silently skip the re-anchor. Mirrors [lastStateReceivedAt].
+     */
+    @Volatile
     var lastGlobalUpdate: Instant? = null
 
     var pingService = PingService()
@@ -273,6 +284,32 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         lastGlobalPositionSetAt = null
         serverIgnFly = 0
         clientIgnFly = 0
+    }
+
+    /**
+     * Re-arms the one-shot first-sync so the NEXT inbound server `State` hard-seeks the
+     * freshly-loaded file to the room's authoritative position and applies its pause/play state
+     * (the `lastGlobalUpdate == null` branch in [app.room.RoomServerMessageHandler.onState]).
+     *
+     * Called exactly once per newly-loaded file, from [app.player.PlayerImpl.announceFileLoaded]
+     * (the engine's confirmed file-loaded / duration-known callback, so the engine is seekable by
+     * the time the next `State` arrives). Without it, a client that receives even ONE `State`
+     * while its media is still loading latches [lastGlobalUpdate] non-null — it is stamped on
+     * every processed `State`, with or without media — so by the time the file is ready the
+     * first-sync is permanently skipped: the new file sits at position 0, paused, and in a normal
+     * room nothing pulls it forward (rewind only fires when AHEAD, fastforward is off in normal
+     * rooms). The server then adopts this watcher as the slowest member and rewinds everyone else
+     * back to it. On the desktop client the external player layer hides this by reporting
+     * `getGlobalPosition()` while no file is loaded and force-seeking on file open; the embedded
+     * player has no such layer, so this re-anchor restores the same intent.
+     *
+     * Clears ONLY [lastGlobalUpdate]. Deliberately NOT the `ignoringOnTheFly` counters (a
+     * mid-session load must keep tracking in-flight local state changes) nor [lastGlobalPositionSetAt]
+     * (harmless to keep; only feeds position extrapolation). That narrower scope is what separates
+     * this from [resetSyncAnchorForReconnect], which resets more because the socket itself changed.
+     */
+    fun reanchorSyncOnFileLoad() {
+        lastGlobalUpdate = null
     }
 
     /**

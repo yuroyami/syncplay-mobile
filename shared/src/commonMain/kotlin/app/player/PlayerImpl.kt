@@ -280,8 +280,23 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
         }
     }
 
+    /**
+     * Set by [parseMedia] the instant a NEW media is installed, consumed once by
+     * [announceFileLoaded] to re-anchor room sync for that file. Armed synchronously together
+     * with `media.value` (before any suspension point in [parseMedia]) so an early engine
+     * load callback — e.g. VLCKit's `mediaPlayerLengthChanged`, which can run on the main
+     * thread the moment [parseMedia] suspends — cannot fire [announceFileLoaded] before the
+     * flag exists. Guarantees the re-anchor happens exactly once per load even though
+     * [announceFileLoaded] itself may fire several times (HLS/DASH length refinements).
+     */
+    private var fileLoadResyncPending = false
+
     open suspend fun parseMedia(media: MediaFile) {
         playerManager.media.value = media
+        // Arm the room re-anchor for this fresh file (see [fileLoadResyncPending] /
+        // ProtocolManager.reanchorSyncOnFileLoad). Must sit with media.value, before the
+        // suspending OSD/getString calls below, so no engine callback outruns it.
+        fileLoadResyncPending = true
 
         viewmodel.dispatchOSD {
             getString(Res.string.room_selected_vid, "${viewmodel.media?.fileName}")
@@ -334,6 +349,16 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
 
         viewmodel.media?.let { viewmodel.networkManager.sendAsync(WireMessage.file(it.toFileData())) }
         viewmodel.networkManager.sendAsync(WireMessage.listRequest())
+
+        // Re-anchor room sync once per loaded file, now that the engine reports the file as
+        // loaded (and is therefore seekable before the next State arrives). Without this a file
+        // that finished loading AFTER the first server State never adopts the room's position/
+        // play-state. media != null is implied by reaching here after a load, but guard anyway —
+        // an engine callback could call this before media.value is set on some path.
+        if (fileLoadResyncPending && viewmodel.media != null) {
+            fileLoadResyncPending = false
+            viewmodel.protocol.reanchorSyncOnFileLoad()
+        }
     }
 
     fun onPlaybackEnded() {
