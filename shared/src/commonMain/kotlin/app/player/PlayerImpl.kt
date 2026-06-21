@@ -292,10 +292,16 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
     private var fileLoadResyncPending = false
 
     open suspend fun parseMedia(media: MediaFile) {
+        // Arm position masking BEFORE attaching the file. The engine sits at ~0 until the first-sync
+        // seek lands; advertising that 0 would make the server adopt us as the slowest watcher and
+        // rewind everyone (see awaitingRoomResyncDeadline). Arming first guarantees an inbound-State
+        // ACK can never observe media!=null with the mask still disarmed — while media is still null
+        // the reporter already falls back to the room position, so the ordering is safe.
+        if (!viewmodel.isSoloMode) viewmodel.protocol.markAwaitingRoomResync()
         playerManager.media.value = media
         // Arm the room re-anchor for this fresh file (see [fileLoadResyncPending] /
-        // ProtocolManager.reanchorSyncOnFileLoad). Must sit with media.value, before the
-        // suspending OSD/getString calls below, so no engine callback outruns it.
+        // ProtocolManager.reanchorSyncOnFileLoad). Must sit before the suspending OSD/getString
+        // calls below, so no engine callback outruns it.
         fileLoadResyncPending = true
 
         viewmodel.dispatchOSD {

@@ -21,6 +21,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.concurrent.Volatile
+import kotlin.math.abs
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -76,6 +77,33 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
      */
     @Volatile
     var lastGlobalUpdate: Instant? = null
+
+    /**
+     * Position-masking window for a freshly-loaded file: non-null (a future instant) means we are
+     * still catching up and every outbound `State` must advertise the room's extrapolated position
+     * instead of the engine's own (which sits at ~0 for the first second or so after a load, before
+     * the first-sync seek lands and the engine converges). `null` means "report the true local
+     * position" (not loading, or already caught up).
+     *
+     * This is the embedded-player equivalent of the desktop client's `getCalculatedPosition`
+     * (players/mpv.py), which returns `getGlobalPosition()` whenever `fileLoaded == False`. Without
+     * it a late loader reports position ~0 the instant it attaches a file, the official server adopts
+     * it as the slowest watcher and broadcasts ~0, every other client rewinds back to 0, and the
+     * loader's own rewind logic then yanks it to 0 too — so the [reanchorSyncOnFileLoad] first-sync
+     * seeks to a position the loader itself just corrupted. [reportableStatePositionSec] clears it
+     * (back to null) the moment the engine converges, the file proves too short to ever reach the
+     * room position, or this deadline passes — after which the true local position is reported again
+     * so a genuine standing desync (buffering) stays visible to the room.
+     *
+     * A SINGLE field — not a `(Boolean armed, Instant deadline)` pair — on purpose: a reader on the
+     * inbound-State thread must never observe a half-written "armed but no deadline" state and
+     * mistake it for timed-out, which would unmask and advertise the engine's ~0 (the exact poison
+     * this prevents). `@Volatile` for the same cross-thread reason as [lastGlobalUpdate]: written
+     * from the player load thread ([markAwaitingRoomResync] in parseMedia), read on the
+     * inbound-State consumer thread.
+     */
+    @Volatile
+    var awaitingRoomResyncDeadline: Instant? = null
 
     var pingService = PingService()
 
@@ -209,14 +237,11 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
                 // transitions, etc.). Tell the room and update our expectation so we
                 // don't re-broadcast on the next emission.
                 expectedPaused = !isPlaying
-                val nowMs = withContext(Dispatchers.Main.immediate) {
-                    viewmodel.player.currentPositionMs()
-                }
                 viewmodel.networkManager.sendAsync(
                     buildStatePacket(
                         serverTime = null,
                         doSeek = null,
-                        position = nowMs / 1000.0,
+                        position = reportableStatePositionSec(),
                         isLocalStateChange = true,
                         play = isPlaying
                     )
@@ -263,6 +288,7 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         clientIgnFly = 0
         speedChanged = false
         behindFirstDetected = null
+        awaitingRoomResyncDeadline = null
         pingService = PingService()
     }
 
@@ -323,6 +349,56 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
         if (globalPaused) return globalPositionMs
         val elapsedMs = (Clock.System.now() - anchor).inWholeMilliseconds.toDouble()
         return globalPositionMs + elapsedMs
+    }
+
+    /**
+     * The position (seconds) to ADVERTISE to the server in any outbound `State`, mirroring the
+     * desktop client's `getCalculatedPosition` (players/mpv.py): while a freshly-loaded file has not
+     * yet caught up to the room (see [awaitingRoomResyncDeadline]), report the room's extrapolated position
+     * instead of the local engine's (which sits at ~0 right after a load). Once the engine converges
+     * — or the file is provably too short to ever reach the room position — the flag clears and the
+     * true local position is reported, so genuine desync (buffering) is still visible to the room.
+     *
+     * Reads the engine position on the main thread, so callers may invoke it from any coroutine.
+     */
+    suspend fun reportableStatePositionSec(): Double {
+        val globalMs = extrapolatedGlobalPositionMs()
+        // No file → nothing local to report; advertise the room position (the server pushes
+        // file-less watchers last anyway, but this keeps us from ever announcing a bare 0).
+        if (viewmodel.media == null) return globalMs / 1000.0
+
+        // Single volatile read: non-null = still masking, null = report the real local position.
+        val deadline = awaitingRoomResyncDeadline
+
+        val localMs = withContext(Dispatchers.Main.immediate) {
+            viewmodel.player.currentPositionMs()
+        }.toDouble()
+
+        if (deadline == null) return localMs / 1000.0
+
+        // Catching up from a fresh load. Keep masking with the room position until the engine has
+        // converged, or until it has reached a point past which it cannot catch up (file shorter
+        // than the room position — e.g. a mismatched file), or the backstop deadline passes, so we
+        // don't lie about position forever.
+        val durationMs = viewmodel.playerManager.timeFullMillis.value.toDouble()
+        val thresholdMs = SEEK_THRESHOLD * 1000.0
+        val converged = abs(localMs - globalMs) <= thresholdMs
+        val cannotCatchUp = durationMs > 0.0 && globalMs >= durationMs - thresholdMs
+        val timedOut = Clock.System.now() >= deadline
+        if (converged || cannotCatchUp || timedOut) {
+            awaitingRoomResyncDeadline = null
+            return localMs / 1000.0
+        }
+        return globalMs / 1000.0
+    }
+
+    /**
+     * Arms the position-masking window for a freshly-loaded file. Called from
+     * [app.player.PlayerImpl.parseMedia] BEFORE `media.value` is set, so an inbound-State ACK can
+     * never observe media!=null with the mask still disarmed. See [awaitingRoomResyncDeadline].
+     */
+    fun markAwaitingRoomResync() {
+        awaitingRoomResyncDeadline = Clock.System.now() + AWAITING_ROOM_RESYNC_TIMEOUT_SECONDS.seconds
     }
 
     /**
@@ -429,5 +505,10 @@ class ProtocolManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel)
          * broken and trigger a reconnect. Chosen to match the Syncplay server's own
          * ~10–15s threshold for dropping unresponsive clients. */
         const val STATE_TIMEOUT_SECONDS = 15L
+
+        /** Max seconds a freshly-loaded file may advertise the room position instead of its own
+         * while catching up, before [reportableStatePositionSec] reverts to the true local
+         * position even if it never converged (mismatched/short file, slow device). */
+        const val AWAITING_ROOM_RESYNC_TIMEOUT_SECONDS = 30L
     }
 }

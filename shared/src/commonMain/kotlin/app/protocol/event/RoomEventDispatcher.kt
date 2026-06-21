@@ -21,7 +21,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.getString
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_set_as_ready
@@ -160,9 +159,9 @@ class RoomEventDispatcher(val viewmodel: RoomViewmodel) : AbstractManager(viewmo
         if (viewmodel.isSoloMode || !tellServer) return
 
         viewmodel.viewModelScope.launch(Dispatchers.IO) {
-            val posSec = withContext(Dispatchers.Main.immediate) {
-                viewmodel.player.currentPositionMs() / 1000.0
-            }
+            // While a fresh file is still catching up to the room, this advertises the room
+            // position rather than the engine's ~0 (mirrors PC getCalculatedPosition).
+            val posSec = viewmodel.protocol.reportableStatePositionSec()
             network.send(
                 viewmodel.protocol.buildStatePacket(
                     serverTime = null,

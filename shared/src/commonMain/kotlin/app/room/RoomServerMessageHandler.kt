@@ -232,7 +232,9 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 // mirrors python's getGlobalPosition() extrapolation.
                 protocol.extrapolatedGlobalPositionMs() / 1000.0
             } else {
-                withContext(Dispatchers.Main.immediate) { viewmodel.player.currentPositionMs() / 1000.0 }
+                // While a freshly-loaded file is still catching up, this reports the room
+                // position instead of the engine's ~0, so we never drag the room back to us.
+                protocol.reportableStatePositionSec()
             }
             /* `play` MUST be the state we just acknowledged from the server (`!paused`),
              * NOT the transient `viewmodel.player.isPlaying()`. VLCKit 4's libvlc pause/play
