@@ -45,6 +45,7 @@ import app.theme.Theming.flexibleGradient
 import app.uicomponents.FlexibleIcon
 import app.uicomponents.gradientOverlay
 import app.uicomponents.tvFocusable
+import app.uicomponents.tvTextFieldNavigation
 import com.composeunstyled.UnstyledIcon
 
 // Uses BasicTextField directly rather than compose-unstyled's UnstyledTextField + TextInput:
@@ -93,12 +94,14 @@ fun HomeTextField(
     val textColor = MaterialTheme.colorScheme.onTertiaryContainer
 
     BasicTextField(
-        state = state,
-        modifier = modifier.tvFocusable(
-            focusRequester = focusRequester,
-            shape = shape,
-            addFocusable = false,
-        ),
+            state = state,
+            modifier = modifier
+                .tvFocusable(
+                    focusRequester = focusRequester,
+                    shape = shape,
+                    addFocusable = false,
+                )
+                .tvTextFieldNavigation(enabled = enabled && dropdownState == null),
         textStyle = TextStyle(color = textColor, textAlign = TextAlign.Center),
         lineLimits = TextFieldLineLimits.SingleLine,
         enabled = enabled,
@@ -152,6 +155,6 @@ fun HomeTextField(
                     )
                 }
             }
-        },
-    )
+            },
+        )
 }

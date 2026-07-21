@@ -3,6 +3,8 @@ package app.utils
 import android.content.ContentResolver
 import android.content.Context
 import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.provider.DocumentsContract
@@ -42,6 +44,14 @@ import SyncplayMobile.shared.BuildConfig
 
 
 actual val platform: Platform = Platform.Android
+
+actual val isTelevision: Boolean
+    get() {
+        val context = contextObtainer()
+        val uiModeIsTelevision = context.resources.configuration.uiMode and
+            Configuration.UI_MODE_TYPE_MASK == Configuration.UI_MODE_TYPE_TELEVISION
+        return uiModeIsTelevision || context.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+    }
 
 /* Lazily cached singleton so one OkHttp engine is shared and connection pooling works.
  * HttpTimeout fails fast on flaky CDNs; User-Agent is set for CDNs that filter on it. */

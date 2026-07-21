@@ -43,6 +43,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -61,6 +62,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
@@ -96,6 +99,8 @@ import app.theme.Theming.flexibleGradient
 import app.uicomponents.FlexibleIcon
 import app.uicomponents.FlexibleText
 import app.uicomponents.jostFont
+import app.uicomponents.tvTextFieldNavigation
+import app.uicomponents.tvFocusProperties
 import app.utils.ccExs
 import app.utils.timestampFromMillis
 import com.composeunstyled.Thumb
@@ -566,6 +571,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
         var isSearching by remember { mutableStateOf(false) }
         var isDownloading by remember { mutableStateOf<Int?>(null) }
         val searchListState = rememberLazyListState()
+        val searchButtonFocusRequester = remember { FocusRequester() }
 
         fun doSearch() {
             if (searchQuery.isBlank()) return
@@ -602,24 +608,32 @@ fun RoomControlPanelCard(modifier: Modifier) {
                     modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 8.dp)
                 )
 
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    singleLine = true,
-                    label = { Text(stringResource(Res.string.room_sub_search_hint), fontSize = 12.sp) },
-                    trailingIcon = {
-                        Icon(
-                            Icons.Filled.Search, null,
-                            modifier = Modifier.clickable { doSearch() }
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(
-                        onSearch = { doSearch() },
-                        onDone = { doSearch() }
-                    ),
+                Box(
                     modifier = Modifier.fillMaxWidth()
-                )
+                        .tvTextFieldNavigation(right = searchButtonFocusRequester),
+                ) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        singleLine = true,
+                        label = { Text(stringResource(Res.string.room_sub_search_hint), fontSize = 12.sp) },
+                        trailingIcon = {
+                            IconButton(
+                                modifier = Modifier.focusRequester(searchButtonFocusRequester),
+                                onClick = { doSearch() },
+                            ) {
+                                Icon(Icons.Filled.Search, null)
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(
+                            onSearch = { doSearch() },
+                            onDone = { doSearch() }
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                            .tvFocusProperties { right = searchButtonFocusRequester },
+                    )
+                }
 
                 Spacer(Modifier.height(8.dp))
 

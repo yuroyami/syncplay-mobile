@@ -60,6 +60,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -82,7 +84,10 @@ import app.uicomponents.gradientOverlay
 import app.uicomponents.helveticaFont
 import app.uicomponents.jostFont
 import app.uicomponents.tvFocusable
+import app.uicomponents.tvFocusProperties
+import app.uicomponents.tvTextFieldNavigation
 import app.utils.appName
+import app.utils.isTelevision
 import app.utils.playlistExs
 import app.utils.videoFileKitType
 import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
@@ -93,6 +98,7 @@ import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.dialogs.compose.rememberFileSaverLauncher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.getString
@@ -478,6 +484,15 @@ object CardSharedPlaylist {
         ) {
             val playlist = LocalRoomViewmodel.current.playlistManager
             val clipboardManager = LocalClipboardManager.current
+            val urlsFocusRequester = remember { FocusRequester() }
+            val doneFocusRequester = remember { FocusRequester() }
+
+            LaunchedEffect(Unit) {
+                if (isTelevision) {
+                    delay(100)
+                    runCatching { urlsFocusRequester.requestFocus() }
+                }
+            }
 
             Column(
                 modifier = Modifier.fillMaxSize().padding(6.dp),
@@ -500,39 +515,48 @@ object CardSharedPlaylist {
                 )
 
                 val urls = remember { mutableStateOf("") }
-                TextField(
-                    modifier = Modifier.fillMaxWidth(0.9f),
-                    shape = RoundedCornerShape(16.dp),
-                    value = urls.value,
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                    ),
-                    trailingIcon = {
-                        IconButton(onClick = {
-                            urls.value = clipboardManager.getText().toString()
-                        }) {
-                            Icon(imageVector = Icons.Filled.ContentPaste, "", tint = MaterialTheme.colorScheme.primary)
+                Box(
+                    modifier = Modifier.fillMaxWidth()
+                        .tvTextFieldNavigation(down = doneFocusRequester),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    TextField(
+                        modifier = Modifier.fillMaxWidth(0.9f)
+                            .focusRequester(urlsFocusRequester)
+                            .tvFocusProperties { down = doneFocusRequester },
+                        shape = RoundedCornerShape(16.dp),
+                        value = urls.value,
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                        ),
+                        trailingIcon = {
+                            IconButton(onClick = {
+                                urls.value = clipboardManager.getText().toString()
+                            }) {
+                                Icon(imageVector = Icons.Filled.ContentPaste, "", tint = MaterialTheme.colorScheme.primary)
+                            }
+                        },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Filled.Link, "", tint = MaterialTheme.colorScheme.primary)
+                        },
+                        onValueChange = { urls.value = it },
+                        textStyle = TextStyle(
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontFamily = FontFamily(helveticaFont),
+                            fontSize = 16.sp,
+                        ),
+                        singleLine = true,
+                        label = {
+                            Text("URLs", color = Color.Gray)
                         }
-                    },
-                    leadingIcon = {
-                        Icon(imageVector = Icons.Filled.Link, "", tint = MaterialTheme.colorScheme.primary)
-                    },
-                    onValueChange = { urls.value = it },
-                    textStyle = TextStyle(
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontFamily = FontFamily(helveticaFont),
-                        fontSize = 16.sp,
-                    ),
-                    singleLine = true,
-                    label = {
-                        Text("URLs", color = Color.Gray)
-                    }
-                )
+                    )
+                }
 
                 Button(
+                    modifier = Modifier.focusRequester(doneFocusRequester),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     onClick = {
                         visibilityState.value = false

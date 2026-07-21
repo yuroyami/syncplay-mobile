@@ -3,6 +3,7 @@ package app.uicomponents
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -24,6 +25,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import app.theme.Theming.backgroundGradient
 import app.theme.Theming.flexibleGradient
+import app.utils.isTelevision
 
 /** Shows a popup with the given content.
  * @param dialogOpen Controls whether the popup dialog is shown or not.
@@ -65,6 +67,7 @@ fun SyncplayPopup(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.5f))
+                    .tvFocusProperties { canFocus = false }
                     .then(
                         if (dismissable) Modifier.clickable(
                             interactionSource = null,
@@ -79,6 +82,8 @@ fun SyncplayPopup(
                         .run { if (widthPercent == 0f) this else fillMaxWidth(widthPercent) }
                         .run { if (heightPercent == 0f) this else fillMaxHeight(heightPercent) }
                         .padding(24.dp)
+                        .then(if (isTelevision) Modifier.focusGroup() else Modifier)
+                        .tvFocusProperties { canFocus = false }
                         .clickable(
                             interactionSource = null,
                             indication = null

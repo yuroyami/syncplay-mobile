@@ -50,6 +50,7 @@ import app.theme.Theming
 import app.uicomponents.FlexibleText
 import app.uicomponents.SyncplayPopup
 import app.uicomponents.syncplayFont
+import app.uicomponents.tvTextFieldNavigation
 import app.utils.timestampFromMillis
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
@@ -116,7 +117,9 @@ object PopupSeekToPosition {
                     horizontalArrangement = Arrangement.Center
                 ) {
                     TextField(
-                        modifier = Modifier.width(64.dp).focusRequester(hhRequester),
+                        modifier = Modifier.width(64.dp)
+                            .focusRequester(hhRequester)
+                            .tvTextFieldNavigation(right = mmRequester),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
                         value = hours.value,
@@ -145,7 +148,9 @@ object PopupSeekToPosition {
 
 
                     TextField(
-                        modifier = Modifier.width(64.dp).focusRequester(mmRequester),
+                        modifier = Modifier.width(64.dp)
+                            .focusRequester(mmRequester)
+                            .tvTextFieldNavigation(left = hhRequester, right = ssRequester),
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                         singleLine = true,
                         value = minutes.value,
@@ -173,7 +178,9 @@ object PopupSeekToPosition {
                     Spacer(Modifier.width(12.dp))
 
                     TextField(
-                        modifier = Modifier.width(64.dp).focusRequester(ssRequester),
+                        modifier = Modifier.width(64.dp)
+                            .focusRequester(ssRequester)
+                            .tvTextFieldNavigation(left = mmRequester),
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                         singleLine = true,
                         value = seconds.value,
