@@ -12,6 +12,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,7 +22,6 @@ import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -38,7 +38,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ripple
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Brush
@@ -61,9 +61,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.LocalGlobalViewmodel
 import app.LocalTheme
 import app.Screen
-import app.uicomponents.FlexibleText
-import app.uicomponents.gradientOverlay
-import app.uicomponents.lexendFont
 import app.uicomponents.solidOverlay
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
@@ -75,7 +72,7 @@ import syncplaymobile.shared.generated.resources.theme_popup_custom_themes
 import syncplaymobile.shared.generated.resources.theme_popup_customize_button
 import syncplaymobile.shared.generated.resources.theme_popup_select_a_theme
 
-val availableThemes = listOf(SILVER_LAKE, PYNCSLAY, GrayOLED, ALLEY_LAMP)
+val availableThemes = listOf(TRINITY, DAYLIGHT, SILVER_LAKE, PYNCSLAY, GrayOLED, ALLEY_LAMP)
 
 val themeCardSize = 72.dp
 
@@ -92,196 +89,169 @@ fun ThemeMenu(visible: Boolean, onDismiss: () -> Unit) {
             val currentTheme = LocalTheme.current
             val allCustomThemes by viewmodel.customThemes.collectAsStateWithLifecycle()
 
-            val primary = MaterialTheme.colorScheme.primary
-            val srfc0 = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)
-            val srfc = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
-
             var themeToEditOrDelete by remember { mutableStateOf<SaveableTheme?>(null) }
 
             Column(
-                modifier = Modifier.background(color = srfc0),
+                modifier = Modifier
+                    .padding(horizontal = Theming.SpaceLG)
+                    .clip(MaterialTheme.shapes.extraLarge)
+                    .background(color = MaterialTheme.colorScheme.surfaceContainerHigh)
+                    .padding(Theming.SpaceLG),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                HorizontalDivider(color = Color.White, modifier = Modifier.gradientOverlay())
-
-                Spacer(Modifier.height(12.dp))
-
-                FlexibleText(
+                Text(
                     text = stringResource(Res.string.theme_popup_select_a_theme),
-                    size = 16f,
-                    textAlign = TextAlign.Center,
-                    fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                    font = lexendFont,
-                    strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-                    shadowColors = Theming.SP_GRADIENT.map { it.copy(alpha = 0.65f) },
-                    shadowSize = 3f
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
                 )
 
-                Surface(
-                    color = srfc,
-                    shape = RoundedCornerShape(2.dp),
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                    tonalElevation = 2.dp,
-                    shadowElevation = 4.dp
-                ) {
-                    Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
-                        Text(
-                            text = stringResource(Res.string.theme_popup_builtin_themes),
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.align(Alignment.Start).padding(start = 8.dp)
-                        )
+                Spacer(Modifier.height(Theming.SpaceMD))
 
-                        HorizontalDivider(
-                            modifier = Modifier
-                                .padding(start = 8.dp)
-                                .gradientOverlay(colors = listOf(primary, primary, primary, srfc, srfc))
-                        )
+                ThemeSection(title = stringResource(Res.string.theme_popup_builtin_themes)) {
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth().padding(Theming.SpaceXS),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Theming.SpaceMD),
+                    ) {
+                        items(availableThemes.size) { index ->
+                            val theme = availableThemes[index]
+                            ThemeEntry(
+                                modifier = Modifier.clickable(
+                                    interactionSource = null,
+                                    indication = ripple(),
+                                    onClick = {
+                                        themeToEditOrDelete = null
+                                        viewmodel.changeTheme(theme)
+                                    }
+                                ),
+                                theme = theme,
+                                isSelected = currentTheme == theme,
+                            )
+                        }
+                    }
+                }
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(4.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            availableThemes.forEach { theme ->
-                                ThemeEntry(
-                                    modifier = Modifier.clickable(
+                Spacer(Modifier.height(Theming.SpaceSM))
+
+                ThemeSection(title = stringResource(Res.string.theme_popup_custom_themes)) {
+                    LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Theming.SpaceXS),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Theming.SpaceMD),
+                    ) {
+                        item {
+                            AddCustomizedThemeButton(
+                                onClick = {
+                                    themeToEditOrDelete = null
+                                    globalViewmodel.backstack.add(Screen.ThemeCreator())
+                                }
+                            )
+                        }
+
+                        items(allCustomThemes.size) { index ->
+                            val theme = allCustomThemes[allCustomThemes.size - 1 - index]
+
+                            ThemeEntry(
+                                modifier = Modifier
+                                    .combinedClickable(
                                         interactionSource = null,
                                         indication = ripple(),
                                         onClick = {
                                             themeToEditOrDelete = null
                                             viewmodel.changeTheme(theme)
-                                        }
-                                    ),
-                                    theme = theme,
-                                    isSelected = currentTheme == theme,
-                                )
-                            }
-                        }
-                    }
-                }
-
-                Spacer(Modifier.height(2.dp))
-
-                Surface(
-                    color = srfc,
-                    shape = RoundedCornerShape(2.dp),
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                    tonalElevation = 2.dp,
-                    shadowElevation = 4.dp
-                ) {
-                    Column(modifier = Modifier.fillMaxWidth().padding(8.dp)) {
-                        Text(
-                            text = stringResource(Res.string.theme_popup_custom_themes),
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.align(Alignment.Start).padding(start = 8.dp)
-                        )
-
-                        HorizontalDivider(
-                            modifier = Modifier
-                                .padding(start = 8.dp)
-                                .gradientOverlay(colors = listOf(primary, primary, primary, srfc, srfc))
-                        )
-
-                        LazyRow(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(themeCardSize.times(2f))
-                                .padding(4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            item {
-                                AddCustomizedThemeButton(
-                                    onClick = {
-                                        themeToEditOrDelete = null
-                                        globalViewmodel.backstack.add(Screen.ThemeCreator())
-                                    }
-                                )
-                            }
-
-                            items(allCustomThemes.size) { index ->
-                                val theme = allCustomThemes[allCustomThemes.size - 1 - index]
-
-                                ThemeEntry(
-                                    modifier = Modifier
-                                        .combinedClickable(
-                                            interactionSource = null,
-                                            indication = ripple(),
-                                            onClick = {
-                                                themeToEditOrDelete = null
-                                                viewmodel.changeTheme(theme)
-                                            },
-                                            onLongClick = {
-                                                themeToEditOrDelete = theme
-                                            }
-                                        ).run {
-                                            if (themeToEditOrDelete == theme) {
-                                                this.border(
-                                                    width = 1.dp,
-                                                    brush = Brush.linearGradient(colors = Theming.SP_GRADIENT),
-                                                    shape = RoundedCornerShape(8.dp)
-                                                )
-                                            } else this
                                         },
-                                    theme = theme,
-                                    isSelected = currentTheme == theme
-                                )
-                            }
+                                        onLongClick = {
+                                            themeToEditOrDelete = theme
+                                        }
+                                    ).run {
+                                        if (themeToEditOrDelete == theme) {
+                                            this.border(
+                                                width = 1.dp,
+                                                brush = Brush.linearGradient(colors = Theming.SP_GRADIENT),
+                                                shape = MaterialTheme.shapes.small
+                                            )
+                                        } else this
+                                    },
+                                theme = theme,
+                                isSelected = currentTheme == theme
+                            )
                         }
+                    }
 
-                        AnimatedVisibility(
-                            visible = themeToEditOrDelete != null,
-                            enter = expandVertically(animationSpec = keyframes { durationMillis = 100 }),
-                            exit = shrinkVertically(animationSpec = keyframes { durationMillis = 100 })
-                        ) {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                                TextButton(
-                                    modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
-                                    onClick = {
-                                        themeToEditOrDelete = null
-                                    }
-                                ) {
-                                    Icon(Icons.Filled.Close, null)
-                                    Text(stringResource(Res.string.cancel))
+                    AnimatedVisibility(
+                        visible = themeToEditOrDelete != null,
+                        enter = expandVertically(animationSpec = keyframes { durationMillis = 100 }),
+                        exit = shrinkVertically(animationSpec = keyframes { durationMillis = 100 })
+                    ) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                            TextButton(
+                                modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
+                                onClick = {
+                                    themeToEditOrDelete = null
                                 }
+                            ) {
+                                Icon(Icons.Filled.Close, null)
+                                Text(stringResource(Res.string.cancel))
+                            }
 
-                                TextButton(
-                                    modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
-                                    onClick = {
-                                        viewmodel.deleteTheme(themeToEditOrDelete!!)
-                                        themeToEditOrDelete = null
-                                    }
-                                ) {
-                                    Icon(Icons.Filled.Delete, null)
-                                    Text(stringResource(Res.string.delete))
+                            TextButton(
+                                modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
+                                onClick = {
+                                    viewmodel.deleteTheme(themeToEditOrDelete!!)
+                                    themeToEditOrDelete = null
                                 }
+                            ) {
+                                Icon(Icons.Filled.Delete, null)
+                                Text(stringResource(Res.string.delete))
+                            }
 
-                                TextButton(
-                                    modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
-                                    onClick = {
-                                        globalViewmodel.backstack.add(Screen.ThemeCreator(themeToEditOrDelete))
-                                        themeToEditOrDelete = null
-                                    }
-                                ) {
-                                    Icon(Icons.Filled.Edit, null)
-                                    Text(stringResource(Res.string.edit))
+                            TextButton(
+                                modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
+                                onClick = {
+                                    globalViewmodel.backstack.add(Screen.ThemeCreator(themeToEditOrDelete))
+                                    themeToEditOrDelete = null
                                 }
+                            ) {
+                                Icon(Icons.Filled.Edit, null)
+                                Text(stringResource(Res.string.edit))
                             }
                         }
                     }
                 }
-
-                Spacer(Modifier.height(12.dp))
-
-
-                HorizontalDivider(color = Color.White, modifier = Modifier.gradientOverlay())
             }
         }
     }
 }
 
+/** One titled section of the theme picker (built-in / custom themes). */
+@Composable
+private fun ThemeSection(title: String, content: @Composable ColumnScope.() -> Unit) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.fillMaxWidth().padding(vertical = Theming.SpaceXS)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(Theming.SpaceSM)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.Start).padding(start = Theming.SpaceSM)
+            )
+
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = Theming.SpaceSM, vertical = Theming.SpaceXS),
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
+
+            content()
+        }
+    }
+}
 
 @Composable
 fun ThemeEntry(modifier: Modifier, theme: SaveableTheme, isSelected: Boolean) {
@@ -289,7 +259,7 @@ fun ThemeEntry(modifier: Modifier, theme: SaveableTheme, isSelected: Boolean) {
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(themeCardSize).padding(vertical = 8.dp)
+        modifier = Modifier.width(themeCardSize).padding(vertical = Theming.SpaceSM)
     ) {
         Card(
             modifier = modifier
@@ -297,8 +267,11 @@ fun ThemeEntry(modifier: Modifier, theme: SaveableTheme, isSelected: Boolean) {
                 .solidOverlay(
                     if (isSelected) Color.Transparent else Color.Black.copy(alpha = 0.2f)
                 ),
-            shape = RoundedCornerShape(8.dp),
-            border = BorderStroke(Dp.Hairline, color = Color.Black)
+            shape = MaterialTheme.shapes.small,
+            border = BorderStroke(
+                width = if (isSelected) 2.dp else Dp.Hairline,
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+            )
         ) {
             Box(
                 modifier = Modifier.fillMaxWidth().size(themeCardSize)
@@ -312,18 +285,22 @@ fun ThemeEntry(modifier: Modifier, theme: SaveableTheme, isSelected: Boolean) {
                 contentAlignment = Alignment.Center
             ) {
                 if (isSelected) {
-                    Icon(imageVector = Icons.Outlined.DoneOutline, contentDescription = null)
+                    Icon(
+                        imageVector = Icons.Outlined.DoneOutline,
+                        contentDescription = null,
+                        tint = dynamicScheme.onPrimary
+                    )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.size(0.dp))
-
         Text(
             modifier = Modifier.width(themeCardSize - 4.dp).padding(2.dp),
             text = theme.name,
-            autoSize = TextAutoSize.StepBased(minFontSize = 1.sp, maxFontSize = 25.sp),
+            autoSize = TextAutoSize.StepBased(minFontSize = 9.sp, maxFontSize = 14.sp),
+            style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
             maxLines = 1
         )
     }
@@ -332,21 +309,18 @@ fun ThemeEntry(modifier: Modifier, theme: SaveableTheme, isSelected: Boolean) {
 
 @Composable
 fun AddCustomizedThemeButton(onClick: () -> Unit) {
+    val outline = MaterialTheme.colorScheme.outline
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(themeCardSize).padding(vertical = 8.dp)
+        modifier = Modifier.width(themeCardSize).padding(vertical = Theming.SpaceSM)
     ) {
         Card(
             modifier = Modifier.size(themeCardSize)
-                .border(
-                    width = Dp.Hairline,
-                    color = MaterialTheme.colorScheme.primary,
-                    shape = RoundedCornerShape(8.dp)
-                )
                 .drawWithContent {
                     drawContent()
                     drawRoundRect(
-                        color = Color.Gray,
+                        color = outline,
                         style = Stroke(
                             width = 2.dp.toPx(),
                             pathEffect = PathEffect.dashPathEffect(
@@ -354,25 +328,31 @@ fun AddCustomizedThemeButton(onClick: () -> Unit) {
                                 phase = 0f
                             )
                         ),
-                        cornerRadius = CornerRadius(8.dp.toPx())
+                        cornerRadius = CornerRadius(12.dp.toPx())
                     )
                 },
-            shape = RoundedCornerShape(8.dp),
+            shape = MaterialTheme.shapes.small,
             onClick = onClick,
         ) {
             Box(
                 modifier = Modifier.fillMaxWidth().size(themeCardSize)
-                    .background(MaterialTheme.colorScheme.surface),
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(imageVector = Icons.Outlined.Add, contentDescription = null)
+                Icon(
+                    imageVector = Icons.Outlined.Add,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
             }
         }
         Text(
             modifier = Modifier.width(themeCardSize - 4.dp).safeContentPadding().padding(2.dp),
             text = stringResource(Res.string.theme_popup_customize_button),
-            autoSize = TextAutoSize.StepBased(minFontSize = 1.sp, maxFontSize = 25.sp),
+            autoSize = TextAutoSize.StepBased(minFontSize = 9.sp, maxFontSize = 14.sp),
+            style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
             maxLines = 1
         )
     }

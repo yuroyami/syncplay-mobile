@@ -1,9 +1,9 @@
 package app.room.ui.bottombar
 
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -17,8 +17,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -48,14 +50,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.clickable
-import androidx.compose.material3.ripple
 import app.LocalRoomViewmodel
 import app.preferences.Preferences.CHAPTER_DOTS_CLICKABLE
 import app.preferences.Preferences.SHOW_CHAPTER_DOTS
 import app.preferences.watchPref
 import app.theme.Theming.flexibleGradient
-import app.uicomponents.gradientOverlay
 import app.utils.timestampFromMillis
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -128,57 +127,72 @@ fun RoomSeekbar(modifier: Modifier) {
                     isSliding = true
                     viewmodel.dispatcher.pendingSeekFromMs = viewmodel.player.currentPositionMs()
                 }
+                // Visual preview only while scrubbing; the engine seek happens once, on release,
+                // instead of spamming per-frame seeks (expensive on mpv/VLC).
                 sliderValue = newVal
-                viewmodel.player.seekTo(newVal.roundToLong())
             },
             onValueChangeFinished = {
                 if (isSliding) {
                     isSliding = false
+                    val target = sliderValue.roundToLong()
                     if (!viewmodel.isSoloMode) {
-                        viewmodel.dispatcher.sendSeek(sliderValue.roundToLong())
+                        viewmodel.dispatcher.sendSeek(target)
                     }
+                    viewmodel.player.seekTo(target)
                 }
             },
-            modifier = modifier.height(56.dp),
+            modifier = Modifier.fillMaxWidth().height(56.dp),
             interactionSource = sliderInteractionSource,
             valueRange = 0f..(videoFullDurationMs.toFloat()),
             thumb = {
                 Box(
                     modifier = Modifier
-                        .height(26.dp)
-                        .width(if (isSliderBeingDragged) 8.dp else 8.dp) // keep it thin always
+                        .height(30.dp)
+                        .width(8.dp)
                         .shadow(4.dp, CircleShape)
                         .clip(CircleShape)
-                        .background(Color.DarkGray.copy(0.8f))
+                        .background(MaterialTheme.colorScheme.primary)
                 )
             },
-            track = { state ->
-                val trackThickness by animateDpAsState(targetValue = if (isSliderBeingDragged) 12.dp else 24.dp)
-                val trackRoundedness by animateIntAsState(targetValue = if (isSliderBeingDragged) 20 else 35)
+            track = { _ ->
+                val trackThickness by animateDpAsState(targetValue = if (isSliderBeingDragged) 28.dp else 20.dp)
+                val progressFraction = (sliderValue / videoFullDurationMs.toFloat().coerceAtLeast(1f)).coerceIn(0f, 1f)
 
+                /* Over-video chrome: fixed translucent white/black, readable on any frame. */
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(trackThickness)
-                        .clip(RoundedCornerShape(trackRoundedness))
-                        .background(Color.Gray).onGloballyPositioned {
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.24f))
+                        .onGloballyPositioned {
                             trackWidthPx = it.size.width
                         }
                 ) {
+                    /* Played-portion fill: the sanctioned gradient accent of the seekbar. */
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(progressFraction)
+                            .height(trackThickness)
+                            .clip(CircleShape)
+                            .background(Brush.horizontalGradient(colors = flexibleGradient))
+                            .align(CenterStart)
+                    )
+
                     val showChapterDots by SHOW_CHAPTER_DOTS.watchPref()
                     val chapterDotsClickable by CHAPTER_DOTS_CLICKABLE.watchPref()
                     if (showChapterDots) {
                         chapters.forEach { chapter ->
                             if (chapter.timeOffsetMillis / 1000 != 0L) {
                                 val positionFraction = (chapter.timeOffsetMillis / videoFullDurationMs.toFloat().coerceAtLeast(1f))
+                                /* 20dp touch target around an 8dp visual dot. */
                                 Box(
                                     modifier = Modifier
                                         .offset {
-                                            val offsetAdjustment = 4.dp.toPx()
+                                            val offsetAdjustment = 10.dp.toPx()
                                             IntOffset((positionFraction * trackWidthPx).toInt() - offsetAdjustment.toInt(), 0)
                                         }.align(CenterStart)
-                                        .size(8.dp).clip(CircleShape)
-                                        .background(Color.LightGray)
+                                        .size(20.dp).clip(CircleShape)
                                         .then(
                                             if (chapterDotsClickable) Modifier.clickable(
                                                 interactionSource = null,
@@ -188,25 +202,33 @@ fun RoomSeekbar(modifier: Modifier) {
                                                     viewmodel.player.jumpToChapter(chapter)
                                                 }
                                             } else Modifier
-                                        )
-                                )
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .clip(CircleShape)
+                                            .background(Color.White.copy(alpha = 0.9f))
+                                    )
+                                }
                             }
                         }
                     }
 
                     if (!isSliderBeingDragged) {
                         Text(
-                            modifier = Modifier.alpha(0.85f).padding(horizontal = 8.dp).align(CenterStart),
+                            modifier = Modifier.alpha(0.9f).padding(horizontal = 10.dp).align(CenterStart),
                             text = currentTimeText,
                             fontSize = 11.sp,
-                            color = Color.Black,
+                            color = Color.White,
                         )
 
                         Text(
-                            modifier = Modifier.alpha(0.85f).padding(horizontal = 8.dp).align(Alignment.CenterEnd),
+                            modifier = Modifier.alpha(0.9f).padding(horizontal = 10.dp).align(Alignment.CenterEnd),
                             text = fullTimeText,
                             fontSize = 11.sp,
-                            color = Color.Black,
+                            color = Color.White,
                         )
                     }
                 }
@@ -232,7 +254,7 @@ fun RoomSeekbar(modifier: Modifier) {
                     .offset(y = (-28).dp) // Move the bubble above the thumb needle
                     .offset(x = with(density) { bubbleOffset.toDp() })
                     .align(CenterStart)
-                    .background(Color.DarkGray.copy(0.8f), shape = RoundedCornerShape(8.dp))
+                    .background(Color.Black.copy(alpha = 0.75f), shape = RoundedCornerShape(8.dp))
                     .padding(horizontal = 6.dp, vertical = 2.dp)
                     .onGloballyPositioned {
                         bubbleTextWidth = it.size.width
@@ -242,7 +264,6 @@ fun RoomSeekbar(modifier: Modifier) {
                 Text(
                     text = "$currentSliderValueText / $fullTimeText",
                     fontSize = 11.sp,
-                    modifier = Modifier.gradientOverlay(),
                     color = Color.White
                 )
             }

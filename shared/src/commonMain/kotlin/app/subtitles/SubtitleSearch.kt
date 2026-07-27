@@ -42,11 +42,13 @@ object SubtitleSearch {
                 json(json)
             }
 
-            /* Re-installing DefaultRequest REPLACES the base client's defaults (same plugin key),
-             * so the app-wide UA doesn't stack with this one. OpenSubtitles requires the UA to
-             * identify the app as "Name vX.Y.Z" and blocks generic or comma-merged UAs. */
+            /* Re-installing DefaultRequest does NOT replace the base client's block — both config
+             * lambdas run in install order on one builder, so header() APPENDS and the UA would
+             * stack ("SynkplayMobile/x.y.z; Synkplay vx.y.z", observed in the wire log). headers[]
+             * (set) runs after the base block and overwrites its UA with the exact "Name vX.Y.Z"
+             * form OpenSubtitles requires. */
             defaultRequest {
-                header(HttpHeaders.UserAgent, "Synkplay v${BuildConfig.APP_VERSION}")
+                headers[HttpHeaders.UserAgent] = "Synkplay v${BuildConfig.APP_VERSION}"
                 header("Api-Key", API_KEY)
                 header(HttpHeaders.Accept, "application/json")
             }
@@ -75,19 +77,24 @@ object SubtitleSearch {
             .trim()
     }
 
-    /** Searches for subtitles by query, most-downloaded first. */
+    /**
+     * Searches for subtitles by query, most-downloaded first. [language] is one or more
+     * comma-separated ISO 639-1 codes; the sentinel "all" (or a blank value) drops the language
+     * filter so every language is returned.
+     */
     suspend fun search(query: String, language: String = "en"): List<SubtitleResult> {
         return try {
-            // Doc rules: languages lower-case, comma-separated, alphabetically sorted.
-            val languages = language.split(',')
+            // Doc rules: languages lower-case, comma-separated, alphabetically sorted. "all" (or
+            // empty) becomes null, which omits the filter — the API then returns all languages.
+            val languages: String? = language.split(',')
                 .map { it.trim().lowercase() }
-                .filter { it.isNotEmpty() }
+                .filter { it.isNotEmpty() && it != "all" }
                 .sorted()
                 .joinToString(",")
-                .ifEmpty { "en" }
+                .ifEmpty { null }
 
             val response = api.search(query = query.trim().lowercase(), languages = languages)
-            loggy("SubtitleSearch: ${response.totalCount} results for '$query' [$languages]")
+            loggy("SubtitleSearch: ${response.totalCount} results for '$query' [${languages ?: "all"}]")
 
             response.data.map { item ->
                 SubtitleResult(
@@ -183,4 +190,58 @@ data class SubtitleResult(
     val releaseInfo: String,
     val downloadCount: Int,
     val hearingImpaired: Boolean
+)
+
+/**
+ * Languages offered in the subtitle-search picker, as (display name -> code) pairs. Codes are
+ * OpenSubtitles ISO 639-1 (2-letter); the leading "all" sentinel drops the language filter. Order
+ * is intentional: "All languages" first, then alphabetical by name.
+ */
+val subtitleSearchLanguages: List<Pair<String, String>> = listOf(
+    "All languages" to "all",
+    "Arabic" to "ar",
+    "Bengali" to "bn",
+    "Bulgarian" to "bg",
+    "Catalan" to "ca",
+    "Chinese" to "zh",
+    "Croatian" to "hr",
+    "Czech" to "cs",
+    "Danish" to "da",
+    "Dutch" to "nl",
+    "English" to "en",
+    "Estonian" to "et",
+    "Finnish" to "fi",
+    "French" to "fr",
+    "German" to "de",
+    "Greek" to "el",
+    "Hebrew" to "he",
+    "Hindi" to "hi",
+    "Hungarian" to "hu",
+    "Icelandic" to "is",
+    "Indonesian" to "id",
+    "Italian" to "it",
+    "Japanese" to "ja",
+    "Korean" to "ko",
+    "Latvian" to "lv",
+    "Lithuanian" to "lt",
+    "Malay" to "ms",
+    "Norwegian" to "no",
+    "Persian" to "fa",
+    "Polish" to "pl",
+    "Portuguese" to "pt",
+    "Portuguese (BR)" to "pt-br",
+    "Romanian" to "ro",
+    "Russian" to "ru",
+    "Serbian" to "sr",
+    "Slovak" to "sk",
+    "Slovenian" to "sl",
+    "Spanish" to "es",
+    "Swedish" to "sv",
+    "Tamil" to "ta",
+    "Telugu" to "te",
+    "Thai" to "th",
+    "Turkish" to "tr",
+    "Ukrainian" to "uk",
+    "Urdu" to "ur",
+    "Vietnamese" to "vi",
 )

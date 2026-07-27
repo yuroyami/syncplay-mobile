@@ -1,5 +1,3 @@
-import io.github.yuroyami.kmpssot.kmpSsot
-
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.cocoapods)
@@ -16,6 +14,7 @@ plugins {
 // Overridable from the CLI / gradle.properties (-PexoOnly=true); defaults to AppConfig.exoOnly.
 // Must match androidApp's resolution so the build logic and BuildConfig agree.
 val exoOnly = AppConfig.resolveExoOnly(providers)
+
 
 kotlin {
     jvmToolchain(21)
@@ -35,6 +34,9 @@ kotlin {
         androidResources { enable = true }
     }
 
+    // Desktop (JVM) target — Windows/macOS/Linux via Compose for Desktop, hosted by :desktopApp.
+    jvm("desktop")
+
     // Activating iOS targets (iosMain)
     listOf(
         iosSimulatorArm64(), //We enable this only if we're planning to test on a simulator
@@ -52,13 +54,13 @@ kotlin {
 
     // iOS configuration
     cocoapods {
-        summary = "${kmpSsot.appName.get()} Common Code (Platform-agnostic)"
+        summary = "${AppConfig.APP_NAME} Common Code (Platform-agnostic)"
         homepage = "www.github.com/yuroyami/syncplay-mobile"
         version = "1.0.4"
         ios.deploymentTarget = "14.0"
         podfile = project.file("../iosApp/Podfile")
         framework {
-            baseName = kmpSsot.sharedModule.get()
+            baseName = AppConfig.SHARED_MODULE_NAME
             isStatic = false
         }
 
@@ -182,6 +184,30 @@ kotlin {
             implementation(libs.ktor.client.darwin)
         }
 
+        val desktopMain by getting {
+            dependencies {
+                /* Network and TLS: same Netty engine as Android (pure JVM); TLS comes from the JDK,
+                 * no Conscrypt needed on desktop. */
+                implementation(libs.netty)
+
+                /* Video player engine: libVLC via the vlcj JVM bindings */
+                implementation(libs.vlcj)
+
+                /* YouTube/SoundCloud/PeerTube stream URL extractor (pure JVM, same as Android) */
+                implementation(libs.newpipe.extractor)
+
+                /* Ktor HTTP client engine for desktop (also backs Coil's network fetcher) */
+                implementation(libs.ktor.client.okhttp)
+
+                /* Swing interop + desktop-specific Compose APIs */
+                implementation(compose.desktop.common)
+
+                /* Registers Dispatchers.Main on the AWT event thread — the whole codebase
+                 * dispatches on Dispatchers.Main(.immediate), which has no default on JVM. */
+                implementation(libs.kotlin.coroutines.swing)
+            }
+        }
+
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.serialization.json)
@@ -189,27 +215,14 @@ kotlin {
     }
 }
 
-/* Pin Skiko to one explicit version across every configuration in this module.
- *
- * Compose Multiplatform and Coil declare different skiko versions. Skiko's bundled
- * native binary (libskiko.so/dylib) must match the Kotlin bindings Compose was compiled
- * against, and ABI breaks between Skiko minors happen, so a transitive bump that pushed
- * skiko higher than Compose's bundled version would silently swap Skia under Compose.
- * Forcing the version keeps the choice explicit regardless of transitive declarations.
- *
- * `force` (not `strictly` on a constraint) because the KMP DSL exposes no
- * `dependencies { constraints { } }` inside `commonMain.dependencies { }`; forcing across
- * all configurations covers every per-target classpath in one place.
- *
- * Bump `skiko` in libs.versions.toml whenever compose-multiplatform is upgraded, matching
- * what Compose actually uses (confirm with `./gradlew :shared:dependencies | grep skiko`). */
+/* Skiko's native binary must match what Compose was compiled against — a transitive bump
+ * would silently swap Skia under Compose. Bump `skiko` in libs.versions.toml together with
+ * compose-multiplatform. Full rationale: CLAUDE.md "Key Dependencies". */
 configurations.configureEach {
     resolutionStrategy.force("org.jetbrains.skiko:skiko:${libs.versions.skiko.get()}")
 }
 
-// Custom (non-plugin) propagators: Trinity color XML rewrite, logo→imageset copy,
-// default-strings fallback. The kmp-ssot plugin handles version/appName/bundleId/
-// locales/iOS pbxproj automatically (hooked into iOS framework link tasks).
+// Custom (non-plugin) propagators: Trinity color XML rewrite + default-strings fallback.
 with(AppConfig) {
     propagateAllCustom()
 }
@@ -223,10 +236,14 @@ ktorfit {
 }
 
 buildConfig {
-    buildConfigField("APP_NAME", kmpSsot.appName.get())
-    buildConfigField("APP_VERSION", kmpSsot.versionName.get())
+    buildConfigField("APP_NAME", AppConfig.APP_NAME)
+    buildConfigField("APP_VERSION", AppConfig.VERSION_NAME)
     buildConfigField("DEBUG", false)
-    buildConfigField("DEBUG_SYNCPLAY_PROTOCOL", false)
+    // Overridable for wire-level debugging: ./gradlew ... -PdebugProtocol=true
+    buildConfigField(
+        "DEBUG_SYNCPLAY_PROTOCOL",
+        providers.gradleProperty("debugProtocol").orNull?.toBoolean() ?: false
+    )
     buildConfigField("EXOPLAYER_ONLY", exoOnly)
     buildConfigField("KLIPY_API_KEY", AppConfig.localProperties(rootDir).getProperty("yuroyami.keyKlipyApi"))
     /* OpenSubtitles .com REST API consumer key (https://www.opensubtitles.com/consumers).

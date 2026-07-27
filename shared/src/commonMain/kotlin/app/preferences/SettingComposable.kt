@@ -1,24 +1,25 @@
 package app.preferences
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.SliderDefaults.colors
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ripple
@@ -30,11 +31,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpSize
@@ -45,12 +44,7 @@ import app.LocalSettingStyling
 import app.home.components.HomeTextField
 import app.preferences.settings.PopupColorPicker.ColorPickingPopup
 import app.theme.Theming
-import app.theme.Theming.flexibleGradient
-import app.uicomponents.FlexibleIcon
-import app.uicomponents.FlexibleText
 import app.uicomponents.MultiChoiceDialog
-import app.uicomponents.sairaFont
-import app.uicomponents.solidOverlay
 import app.uicomponents.tvFocusable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -89,67 +83,70 @@ internal inline fun <reified T> Pref<T>.SettingComposable() {
 
     /** Base Composable */
     Column(
-        modifier = Modifier.fillMaxWidth().clickable(
-            interactionSource = null,
-            indication = ripple(bounded = true, color = Theming.SP_ORANGE),
-            enabled = isEnabled,
-            onClick = {
-                actionConfig?.onClick()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                interactionSource = null,
+                indication = ripple(bounded = true),
+                enabled = isEnabled,
+                onClick = {
+                    actionConfig?.onClick()
 
-                if (isBooleanSetting) {
-                    scope.launch {
-                        set(!(value as Boolean) as T)
+                    if (isBooleanSetting) {
+                        scope.launch {
+                            set(!(value as Boolean) as T)
+                        }
+                        booleanCallbackConfig?.onBooleanChanged(!(value as Boolean))
                     }
-                    booleanCallbackConfig?.onBooleanChanged(!(value as Boolean))
-                }
 
-                if (multiChoiceConfig != null || showColorConfig != null || showYesNoPopup != null || showExtraComposable != null) {
-                    renderableComposableState.value = true
+                    if (multiChoiceConfig != null || showColorConfig != null || showYesNoPopup != null || showExtraComposable != null) {
+                        renderableComposableState.value = true
+                    }
                 }
-            }
-        ).tvFocusable(enabled = isEnabled, addFocusable = false).run {
-            if (!isEnabled) {
-                Modifier.solidOverlay(Color.Black.copy(0.3f))
-            } else this
-        }.padding(styling.paddingUsed.dp),
+            )
+            .tvFocusable(enabled = isEnabled, addFocusable = false)
+            .alpha(if (isEnabled) 1f else 0.38f)
+            .padding(horizontal = (styling.paddingUsed + 4).dp, vertical = styling.paddingUsed.dp),
         horizontalAlignment = Alignment.Start
     ) {
         Row(
             verticalAlignment = CenterVertically
         ) {
-            FlexibleIcon(
-                modifier = Modifier.align(Alignment.Top),
-                tintColors = listOf(MaterialTheme.colorScheme.primary),
-                shadowColors = flexibleGradient.map { it.copy(alpha = 0.25f) },
-                icon = cfg.icon, size = styling.iconSize
+            Icon(
+                imageVector = cfg.icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(styling.iconSize.dp)
             )
+
+            Spacer(Modifier.width(Theming.SpaceLG))
 
             Column(
                 modifier = Modifier.weight(1f),
             ) {
-                FlexibleText(
+                Text(
                     text = stringResource(cfg.title),
-                    fillingColors = listOf(MaterialTheme.colorScheme.primary),
-                    strokeColors = listOf(MaterialTheme.colorScheme.outline),
-                    size = styling.titleSize,
-                    font = sairaFont
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontSize = styling.titleSize.sp,
+                        lineHeight = (styling.titleSize + 6).sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Text(
-                    modifier = Modifier,
                     text = stringResource(cfg.summary, *cfg.summaryFormatArgs),
-                    color = MaterialTheme.colorScheme.outline,
-                    style = TextStyle(
-                        shadow = Shadow(color = Color.Black, offset = Offset(1f, 1f), blurRadius = 2f)
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = styling.summarySize.sp,
+                        lineHeight = (styling.summarySize + 4).sp
                     ),
-                    fontSize = styling.summarySize.sp,
-                    lineHeight = (styling.summarySize + 2).sp
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
             /** Trailing Content */
             when {
-                isBooleanSetting -> Checkbox(
+                isBooleanSetting -> Switch(
+                    modifier = Modifier.padding(start = Theming.SpaceSM),
                     checked = value as Boolean,
                     enabled = isEnabled,
                     onCheckedChange = { b ->
@@ -161,7 +158,7 @@ internal inline fun <reified T> Pref<T>.SettingComposable() {
                 )
 
                 textfieldConfig != null -> HomeTextField(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).padding(start = Theming.SpaceSM),
                     value = value as String,
                     onValueChange = {
                         scope.launch {
@@ -174,36 +171,54 @@ internal inline fun <reified T> Pref<T>.SettingComposable() {
                     clearFocusWhenDone = true
                 )
 
-                multiChoiceConfig != null -> Icon(
-                    imageVector = Icons.AutoMirrored.Filled.List,
-                    contentDescription = "",
-                    tint = MaterialTheme.colorScheme.outline
-                )
+                multiChoiceConfig != null -> {
+                    val currentChoiceLabel = multiChoiceConfig.entries.invoke()
+                        .entries.firstOrNull { it.value == value }?.key ?: ""
+                    Text(
+                        text = currentChoiceLabel,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.padding(start = Theming.SpaceSM).widthIn(max = 140.dp)
+                    )
+                }
 
                 sliderConfig != null -> Text(
-                    modifier = Modifier.defaultMinSize(minWidth = 42.dp),
+                    modifier = Modifier.padding(start = Theming.SpaceSM),
                     text = value.toString(),
-                    color = MaterialTheme.colorScheme.tertiary,
-                    fontSize = styling.titleSize.sp,
-                    lineHeight = (styling.titleSize + 2).sp,
-                    textAlign = TextAlign.Center
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    textAlign = TextAlign.End
                 )
 
-                showColorConfig != null -> Button(
-                    onClick = { renderableComposableState.value = true },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(value as Int)),
-                    modifier = Modifier.size(24.dp)
-                ) {}
+                showColorConfig != null -> Box(
+                    modifier = Modifier
+                        .padding(start = Theming.SpaceSM)
+                        .size(28.dp)
+                        .background(color = Color(value as Int), shape = CircleShape)
+                        .border(width = 1.dp, color = MaterialTheme.colorScheme.outlineVariant, shape = CircleShape)
+                )
             }
         }
 
         /** Supporting Content beneath */
         when {
             sliderConfig != null -> {
+                val sliderInteractionSource = remember { MutableInteractionSource() }
                 Slider(
                     value = (value as Int).toFloat(),
                     enabled = isEnabled,
                     valueRange = (sliderConfig.minValue.toFloat())..(sliderConfig.maxValue.toFloat()),
+                    interactionSource = sliderInteractionSource,
+                    // Default M3 expressive thumb is a 4x44dp pill that dwarfs a settings row;
+                    // shrink it to a modest handle.
+                    thumb = {
+                        SliderDefaults.Thumb(
+                            interactionSource = sliderInteractionSource,
+                            enabled = isEnabled,
+                            thumbSize = DpSize(width = 4.dp, height = 24.dp)
+                        )
+                    },
                     onValueChange = { f ->
                         scope.launch {
                             if (f != (value as Int).toFloat()) {
@@ -213,22 +228,7 @@ internal inline fun <reified T> Pref<T>.SettingComposable() {
                             set(f.roundToInt() as T)
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-                    thumb = { state ->
-                        SliderDefaults.Thumb(
-                            interactionSource = remember { MutableInteractionSource() },
-                            sliderState = state,
-                            modifier = Modifier,
-                            colors = colors(),
-                            thumbSize = DpSize(width = 8.dp, height = 24.dp)
-                        )
-                    },
-                    track = { state ->
-                        SliderDefaults.Track(
-                            sliderState = state,
-                            thumbTrackGapSize = 1.dp
-                        )
-                    }
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = Theming.SpaceMD)
                 )
             }
         }

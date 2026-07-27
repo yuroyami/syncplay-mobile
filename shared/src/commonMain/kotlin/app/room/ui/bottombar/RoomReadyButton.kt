@@ -77,7 +77,7 @@ fun RoomReadyButton() {
                         tint = Theming.UNREADY_RED
                     )
                     Spacer(Modifier.width(4.dp))
-                    Text(stringResource(Res.string.room_not_ready), fontSize = 13.sp)
+                    Text(stringResource(Res.string.room_not_ready), fontSize = 14.sp)
                     Spacer(Modifier.width(4.dp))
                 }
             }

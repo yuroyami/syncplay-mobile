@@ -3,14 +3,20 @@ package app.room.ui.chat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,6 +47,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -80,10 +87,24 @@ fun RoomChatSection(modifier: Modifier) {
     val isHUDVisible by viewmodel.uiState.visibleHUD.collectAsState()
 
     if (isChatSupported) {
+        /* The horizontal display-cutout inset + side margins are applied per row, NOT on the
+         * column: each row's hit area then spans the full section width, so the dead strip a
+         * camera notch would otherwise leave beside the content belongs to the row in front
+         * of it instead of falling through to the HUD-dismiss handler underneath. */
+        val cutoutInsets = WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)
+
         Column(modifier = modifier) {
             ChatTextField(
                 viewmodel = viewmodel,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    /* Tap shield: consume stray taps landing around the input row (the notch
+                     * strip and the side margins). A fat-finger miss while typing must be a
+                     * no-op, never a keyboard/HUD dismissal. Real targets inside the row
+                     * (text field, buttons) sit deeper and keep consuming their own taps. */
+                    .pointerInput(Unit) { detectTapGestures { } }
+                    .windowInsetsPadding(cutoutInsets)
+                    .padding(horizontal = 8.dp),
                 gifPanelVisible = gifPanelVisible,
                 isHUDVisible = isHUDVisible
             )
@@ -95,13 +116,17 @@ fun RoomChatSection(modifier: Modifier) {
                         viewmodel.dispatcher.sendMessage(gifUrl)
                         viewmodel.uiState.gifPanelVisible.value = false
                     },
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    modifier = Modifier.weight(1f).fillMaxWidth()
+                        .windowInsetsPadding(cutoutInsets)
+                        .padding(horizontal = 8.dp),
                     isHUDVisible = isHUDVisible
                 )
             } else {
                 ChatBox(
                     viewmodel = viewmodel,
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    modifier = Modifier.weight(1f).fillMaxWidth()
+                        .windowInsetsPadding(cutoutInsets)
+                        .padding(horizontal = 8.dp),
                     isHUDVisible = isHUDVisible
                 )
             }
@@ -147,7 +172,9 @@ fun ChatTextField(
         verticalAlignment = Alignment.CenterVertically
     ) {
         OutlinedTextField(
-            modifier = modifier.alpha(0.75f).weight(1f),
+            /* Deliberately NOT the outer `modifier`: reusing it here would re-apply the
+             * row-level tap shield and inset padding onto the field itself. */
+            modifier = Modifier.alpha(0.75f).weight(1f),
             singleLine = true,
             keyboardActions = KeyboardActions(
                 onDone = {

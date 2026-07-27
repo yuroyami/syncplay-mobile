@@ -1,17 +1,22 @@
 package app.room
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeGestures
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -20,6 +25,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -27,6 +33,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.unit.dp
@@ -135,13 +142,32 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                     }
                 }
 
+                /* Fade instead of hard-flipping alpha: the single most-used transition in the app.
+                 * The HUD stays composed either way (deliberate: preserves chat state). */
+                val hudAlpha by animateFloatAsState(
+                    targetValue = if (isHUDVisible) 1f else 0f,
+                    animationSpec = tween(durationMillis = 150)
+                )
+
+                /* Two-stage background-tap dismissal. Read through rememberUpdatedState because
+                 * the pointerInput(Unit) below never restarts, so a plain capture would go stale. */
+                val density = LocalDensity.current
+                val isKeyboardOpen by rememberUpdatedState(WindowInsets.ime.getBottom(density) > 0)
+
                 Box(modifier = Modifier
                     .fillMaxSize()
-                    .alpha(if (isHUDVisible) 1f else 0f)
+                    .alpha(hudAlpha)
                     .then(if (isHUDVisible) Modifier
                         .pointerInput(Unit) {
                             detectTapGestures(onTap = {
-                                viewmodel.uiState.visibleHUD.value = false
+                                if (isKeyboardOpen) {
+                                    /* Stage 1 — typing: a stray background tap only closes the
+                                     * keyboard (drops focus). The HUD must survive it. */
+                                    focusManager.clearFocus(force = true)
+                                } else {
+                                    /* Stage 2 — no keyboard: tap hides the HUD. */
+                                    viewmodel.uiState.visibleHUD.value = false
+                                }
                             })
                         }
                     else Modifier)
@@ -153,14 +179,16 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                         if (!isPortrait) {
                             /* ===== LANDSCAPE LAYOUT ===== */
                             if (!isInPipMode && !soloMode) {
-                                /* Chat Section (Top-Left): Input and messages, extends to bottom bar */
+                                /* Chat Section (Top-Left): Input and messages, extends to bottom bar.
+                                 * Horizontal cutout inset + side margins are applied INSIDE the section
+                                 * (per row) so the strip beside a camera notch still belongs to the
+                                 * section's tap-shield instead of dismissing the keyboard/HUD. */
                                 RoomChatSection(
                                     modifier = Modifier
                                         .align(Alignment.TopStart)
                                         .fillMaxWidth(0.44f)
                                         .fillMaxHeight()
-                                        .displayCutoutPadding()
-                                        .padding(start = 8.dp, top = 8.dp, end = 8.dp, bottom = if (hasVideo) 58.dp else 8.dp)
+                                        .padding(top = 8.dp, bottom = if (hasVideo) 58.dp else 8.dp)
                                         .then(if (hasVideo) Modifier.windowInsetsPadding(WindowInsets.safeGestures.only(WindowInsetsSides.Bottom)) else Modifier)
                                 )
 
@@ -173,11 +201,13 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                                 )
                             }
 
-                            /* Tab Section (Top-Right): Tab buttons row */
+                            /* Tab Section (Top-Right): Tab buttons row. Cutout padding keeps the
+                             * buttons reachable on devices with a right-side camera notch. */
                             RoomTabSection(
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
                                     .fillMaxWidth(0.38f)
+                                    .displayCutoutPadding()
                                     .padding(8.dp)
                             )
 
@@ -187,6 +217,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                                     .align(Alignment.CenterEnd)
                                     .fillMaxSize()
                                     .zIndex(10f)
+                                    .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal))
                                     .padding(
                                         top = 74.dp,
                                         bottom = 58.dp,
@@ -203,7 +234,10 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                                     modifier = Modifier
                                         .align(Alignment.TopCenter)
                                         .fillMaxWidth()
-                                        .statusBarsPadding()
+                                        /* statusBars alone is NOT enough: the room runs immersive, and
+                                         * hidden bars report zero insets while the camera cutout is
+                                         * still physically there. Union keeps the row below the notch. */
+                                        .windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout.only(WindowInsetsSides.Top)))
                                         .padding(horizontal = 8.dp),
                                     verticalAlignment = Alignment.Top
                                 ) {
@@ -226,7 +260,7 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                                     .align(Alignment.TopCenter)
                                     .fillMaxSize()
                                     .zIndex(10f)
-                                    .statusBarsPadding()
+                                    .windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout.only(WindowInsetsSides.Top)))
                                     .padding(
                                         top = 56.dp,
                                         bottom = 58.dp,
@@ -237,15 +271,16 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
                                 isPortrait = true
                             )
 
-                            /* Chat Section (full width, from below top bar to above bottom bar) */
+                            /* Chat Section (full width, from below top bar to above bottom bar).
+                             * Side margins/cutout live inside the section (see landscape note). */
                             if (!isInPipMode && !soloMode) {
                                 RoomChatSection(
                                     modifier = Modifier
                                         .align(Alignment.BottomStart)
                                         .fillMaxWidth()
                                         .fillMaxHeight()
-                                        .statusBarsPadding()
-                                        .padding(start = 8.dp, end = 8.dp, top = 58.dp, bottom = if (hasVideo) 58.dp else 8.dp)
+                                        .windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout.only(WindowInsetsSides.Top)))
+                                        .padding(top = 58.dp, bottom = if (hasVideo) 58.dp else 8.dp)
                                         .then(if (hasVideo) Modifier.windowInsetsPadding(WindowInsets.safeGestures.only(WindowInsetsSides.Bottom)) else Modifier)
                                 )
                             }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardTab
 import androidx.compose.material.icons.automirrored.filled.NoteAdd
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.BrowseGallery
 import androidx.compose.material.icons.filled.Check
@@ -32,6 +34,7 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.HearingDisabled
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Theaters
@@ -61,6 +64,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
@@ -68,6 +72,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -82,16 +87,19 @@ import androidx.compose.material3.OutlinedTextField
 import app.LocalRoomUiState
 import app.LocalRoomViewmodel
 import app.player.PlayerImpl
+import app.preferences.Preferences.SUBTITLE_SEARCH_LANG
 import app.preferences.Preferences.UNDO_SEEK_NO_CONFIRM
 import app.preferences.set
 import app.preferences.watchPref
 import app.subtitles.SubtitleDownloadResult
 import app.subtitles.SubtitleSearch
+import app.subtitles.subtitleSearchLanguages
 import syncplaymobile.shared.generated.resources.room_sub_search_download_from_web
 import syncplaymobile.shared.generated.resources.room_sub_search_downloads
 import syncplaymobile.shared.generated.resources.room_sub_search_hint
 import syncplaymobile.shared.generated.resources.room_sub_search_no_results
 import syncplaymobile.shared.generated.resources.room_sub_search_title
+import app.theme.Theming.READY_GREEN
 import app.theme.Theming.flexibleGradient
 import app.uicomponents.FlexibleIcon
 import app.uicomponents.FlexibleText
@@ -106,6 +114,7 @@ import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
@@ -123,8 +132,8 @@ import syncplaymobile.shared.generated.resources.room_no_recent_seek
 import syncplaymobile.shared.generated.resources.room_screenshot_saved
 import syncplaymobile.shared.generated.resources.room_screenshot_unsupported
 import syncplaymobile.shared.generated.resources.room_seek_undone
+import syncplaymobile.shared.generated.resources.room_selected_sub_error
 import syncplaymobile.shared.generated.resources.room_sub_track_disable
-import syncplaymobile.shared.generated.resources.room_tracks_title
 import syncplaymobile.shared.generated.resources.room_undo_seek_always
 import syncplaymobile.shared.generated.resources.room_undo_seek_cancel
 import syncplaymobile.shared.generated.resources.room_undo_seek_confirm
@@ -404,13 +413,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
             containerColor = sheetContainerColor,
             shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
         ) {
-            /* Title */
-            Text(
-                text = stringResource(Res.string.room_tracks_title),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 12.dp)
-            )
+            /* No sheet-level title: the two columns are already labeled "Audio" / "Subtitles". */
 
             /* Split view: Audio (left) | Subtitles (right) */
             Row(
@@ -565,23 +568,33 @@ fun RoomControlPanelCard(modifier: Modifier) {
         var searchResults by remember { mutableStateOf<List<app.subtitles.SubtitleResult>>(emptyList()) }
         var isSearching by remember { mutableStateOf(false) }
         var isDownloading by remember { mutableStateOf<Int?>(null) }
+        var downloadedOk by remember { mutableStateOf<Int?>(null) }
+        var downloadError by remember { mutableStateOf<String?>(null) }
         val searchListState = rememberLazyListState()
+
+        /* Language filter — persisted (defaults to English); "all" drops the filter entirely. */
+        val selectedLangCode by SUBTITLE_SEARCH_LANG.watchPref()
+        var langMenuExpanded by remember { mutableStateOf(false) }
+        val selectedLangName = remember(selectedLangCode) {
+            subtitleSearchLanguages.firstOrNull { it.second == selectedLangCode }?.first
+                ?: selectedLangCode.uppercase()
+        }
 
         fun doSearch() {
             if (searchQuery.isBlank()) return
             searchFocusManager.clearFocus() // dismiss keyboard so the results list isn't covered
             scope.launch(Dispatchers.IO) {
                 isSearching = true
-                searchResults = SubtitleSearch.search(searchQuery)
+                searchResults = SubtitleSearch.search(searchQuery, selectedLangCode)
                 isSearching = false
             }
         }
 
-        /* Auto-search on open */
-        LaunchedEffect(Unit) {
-            if (initialQuery.isNotBlank()) {
+        /* Auto-search on open and re-run whenever the language changes (keeps the current query). */
+        LaunchedEffect(selectedLangCode) {
+            if (searchQuery.isNotBlank()) {
                 isSearching = true
-                searchResults = SubtitleSearch.search(initialQuery)
+                searchResults = SubtitleSearch.search(searchQuery, selectedLangCode)
                 isSearching = false
             }
         }
@@ -623,6 +636,71 @@ fun RoomControlPanelCard(modifier: Modifier) {
 
                 Spacer(Modifier.height(8.dp))
 
+                /* Language filter selector — anchors a dropdown of OpenSubtitles languages. */
+                Box(modifier = Modifier.align(Alignment.Start)) {
+                    Row(
+                        verticalAlignment = CenterVertically,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { langMenuExpanded = true }
+                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                    ) {
+                        Icon(
+                            Icons.Filled.Language, null,
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            selectedLangName,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Icon(
+                            Icons.Filled.ArrowDropDown, null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = langMenuExpanded,
+                        onDismissRequest = { langMenuExpanded = false },
+                        modifier = Modifier.heightIn(max = 320.dp)
+                    ) {
+                        subtitleSearchLanguages.forEach { (name, code) ->
+                            DropdownMenuItem(
+                                text = { Text(name, fontSize = 13.sp) },
+                                trailingIcon = {
+                                    if (code == selectedLangCode) {
+                                        Icon(
+                                            Icons.Filled.Check, null,
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    langMenuExpanded = false
+                                    scope.launch { SUBTITLE_SEARCH_LANG.set(code) }
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                /* Download/injection failure surfaces INSIDE the sheet (an OSD would be hidden
+                 * behind it); the sheet stays open so the user can retry another result. */
+                downloadError?.let { err ->
+                    Text(
+                        text = err,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 12.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)
+                    )
+                }
+
                 when {
                     isSearching -> {
                         Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
@@ -633,7 +711,7 @@ fun RoomControlPanelCard(modifier: Modifier) {
                         Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
                             Text(
                                 stringResource(Res.string.room_sub_search_no_results),
-                                color = Color.Gray, fontSize = 12.sp
+                                color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp
                             )
                         }
                     }
@@ -648,43 +726,53 @@ fun RoomControlPanelCard(modifier: Modifier) {
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .clickable(enabled = isDownloading == null) {
+                                            .clickable(enabled = isDownloading == null && downloadedOk == null) {
+                                                downloadError = null
                                                 isDownloading = result.fileId
                                                 scope.launch(Dispatchers.IO) {
                                                     when (val outcome = SubtitleSearch.download(result.fileId)) {
                                                         is SubtitleDownloadResult.Success -> {
-                                                            viewmodel.player.loadSubtitleFromPath(outcome.path, outcome.fileName)
-                                                            // Free-plan keys allow only a handful of downloads per
-                                                            // day (searches are unlimited) — keep the user aware.
-                                                            viewmodel.dispatchOSD {
-                                                                getString(Res.string.room_subs_downloaded_remaining, outcome.remaining)
+                                                            val injected = viewmodel.player.loadSubtitleFromPath(outcome.path, outcome.fileName)
+                                                            isDownloading = null
+                                                            if (injected) {
+                                                                // Free-plan keys allow only a handful of downloads per
+                                                                // day (searches are unlimited) — keep the user aware.
+                                                                viewmodel.dispatchOSD {
+                                                                    getString(Res.string.room_subs_downloaded_remaining, outcome.remaining)
+                                                                }
+                                                                // Let the checkmark land before the sheet leaves.
+                                                                downloadedOk = result.fileId
+                                                                delay(1000)
+                                                                showSubtitleSearch = false
+                                                            } else {
+                                                                downloadError = getString(Res.string.room_selected_sub_error)
                                                             }
                                                         }
                                                         is SubtitleDownloadResult.QuotaExceeded -> {
-                                                            viewmodel.dispatchOSD {
-                                                                getString(Res.string.room_subs_quota_reached, outcome.resetTime)
-                                                            }
+                                                            isDownloading = null
+                                                            downloadError = getString(Res.string.room_subs_quota_reached, outcome.resetTime)
                                                         }
                                                         SubtitleDownloadResult.Failed -> {
-                                                            viewmodel.dispatchOSD {
-                                                                getString(Res.string.room_subs_download_failed)
-                                                            }
+                                                            isDownloading = null
+                                                            downloadError = getString(Res.string.room_subs_download_failed)
                                                         }
                                                     }
-                                                    isDownloading = null
-                                                    showSubtitleSearch = false
                                                 }
                                             }
                                             .padding(horizontal = 8.dp, vertical = 10.dp),
                                         verticalAlignment = CenterVertically
                                     ) {
-                                        if (isDownloading == result.fileId) {
-                                            CircularProgressIndicator(
+                                        when {
+                                            isDownloading == result.fileId -> CircularProgressIndicator(
                                                 modifier = Modifier.size(16.dp).padding(end = 4.dp),
                                                 strokeWidth = 2.dp
                                             )
-                                        } else {
-                                            Icon(
+                                            downloadedOk == result.fileId -> Icon(
+                                                Icons.Filled.Check, null,
+                                                modifier = Modifier.padding(end = 8.dp),
+                                                tint = READY_GREEN
+                                            )
+                                            else -> Icon(
                                                 Icons.Filled.Download, null,
                                                 modifier = Modifier.padding(end = 8.dp),
                                                 tint = MaterialTheme.colorScheme.primary
@@ -701,14 +789,14 @@ fun RoomControlPanelCard(modifier: Modifier) {
                                                 Text(
                                                     text = "${result.language.uppercase()} · ${result.downloadCount} ${stringResource(Res.string.room_sub_search_downloads)}",
                                                     fontSize = 10.sp,
-                                                    color = Color.Gray
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
                                                 if (result.hearingImpaired) {
                                                     Spacer(Modifier.width(4.dp))
                                                     Icon(
                                                         Icons.Filled.HearingDisabled, null,
                                                         modifier = Modifier.size(12.dp),
-                                                        tint = Color.Gray
+                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                                                     )
                                                 }
                                             }
@@ -827,30 +915,29 @@ fun ControlPanelDropdownButton(
         )
 
         DropdownMenu(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = 0.dp,
             shadowElevation = 0.dp,
-            border = BorderStroke(width = Dp.Hairline, brush = Brush.linearGradient(colors = flexibleGradient)),
-            shape = RoundedCornerShape(8.dp),
+            border = BorderStroke(width = Dp.Hairline, color = MaterialTheme.colorScheme.outlineVariant),
+            shape = MaterialTheme.shapes.small,
             expanded = popupVisibility.value,
             properties = PopupProperties(
                 dismissOnBackPress = true, focusable = true, dismissOnClickOutside = true
             ),
             onDismissRequest = { popupVisibility.value = false }
         ) {
-            FlexibleText(
+            Text(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 text = popupTitle,
-                strokeColors = listOf(Color.Black),
-                size = 13f,
-                font = jostFont
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             popupItems.forEach { item ->
                 DropdownMenuItem(
                     leadingIcon = {
                         if (item.icon != null) {
-                            Icon(item.icon, null)
+                            Icon(item.icon, null, tint = MaterialTheme.colorScheme.primary)
                         }
                         if (item.isChecked != null) {
                             Checkbox(
@@ -865,7 +952,7 @@ fun ControlPanelDropdownButton(
                     text = {
                         Row(verticalAlignment = CenterVertically) {
                             Text(
-                                color = Color.LightGray,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 text = item.text
                             )
                         }

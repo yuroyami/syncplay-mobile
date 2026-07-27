@@ -4,17 +4,23 @@ import java.io.File
 import java.util.Properties
 
 /**
- * What lives here: things the kmp-ssot plugin (io.github.yuroyami.kmpssot) does NOT cover.
- * Plugin owns: appName / versionName / versionCode / bundleId / locales propagation
- * to Android + iOS. Toolchain (compileSdk/minSdk/ndkVersion) lives in gradle.properties.
- *
- * AppConfig keeps:
- *  - localProperties (signing secrets — never propagate)
- *  - exoOnly flavor flag + abi/mpv lib lists (build/packaging logic)
- *  - Trinity brand colors + custom propagators (drawable XML rewrite, logo imageset
- *    copy, default-strings fallback) that the plugin's narrow scope doesn't address
+ * Project-wide build constants and helpers. The app identity below is the single source
+ * the root kiteSsot { } block and every module read from — subprojects never touch the
+ * plugin extension directly. Toolchain versions (compileSdk/minSdk/ndkVersion) live in
+ * gradle.properties. Details: CLAUDE.md "Module & Build Structure".
  */
 object AppConfig {
+    /* ── App identity (fed into kiteSsot { } at the root; read directly by modules) ─────────────── */
+    const val APP_NAME = "Synkplay"
+    const val VERSION_NAME = "0.23.2"
+    const val BUNDLE_ID_BASE = "com.yuroyami.syncplay"
+    const val BUNDLE_ID_BASE_EXO = "com.reddnek.syncplay"
+    const val SHARED_MODULE_NAME = "shared"
+
+    /** macOS CFBundleVersion must start at 1 — jpackage rejects 0.x.y. Only feeds Info.plist. */
+    val macosPackageVersion: String
+        get() = if (VERSION_NAME.startsWith("0.")) "1." + VERSION_NAME.removePrefix("0.") else VERSION_NAME
+
     /**
      * Reads `<rootDir>/local.properties` (signing secrets) and returns the parsed [Properties].
      * The caller's `rootDir` must be passed explicitly: resolving via the JVM working directory

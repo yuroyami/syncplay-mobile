@@ -1,15 +1,19 @@
 package app.home.components
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -17,40 +21,35 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.KeyboardActionHandler
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import app.theme.Theming.flexibleGradient
-import app.uicomponents.FlexibleIcon
-import app.uicomponents.gradientOverlay
+import app.theme.Theming
 import app.uicomponents.tvFocusable
-import com.composeunstyled.UnstyledIcon
 
-// Uses BasicTextField directly rather than compose-unstyled's UnstyledTextField + TextInput:
-// TextInput wrap-contents its inner text composable (innerTextField is internal), so
-// textAlign = Center has no extra width to center within. BasicTextField lets the inner text
-// sit in a fillMaxWidth Box, making center alignment visible.
+// Uses BasicTextField directly rather than compose-unstyled's UnstyledTextField + TextInput
+// (innerTextField is internal there, which blocks custom decoration).
 //
 // Bridges a value/onValueChange API onto the stateful TextFieldState; the two-way sync stays
 // loop-free via the equality checks below.
@@ -63,7 +62,7 @@ fun HomeTextField(
     dropdownState: MutableState<Boolean>? = null,
     onValueChange: (String) -> Unit,
     type: KeyboardType? = null,
-    cornerRadius: Dp = 35.dp,
+    cornerRadius: Dp = 16.dp,
     height: Dp = 56.dp,
     clearFocusWhenDone: Boolean = false,
     enabled: Boolean = true,
@@ -78,11 +77,22 @@ fun HomeTextField(
         }
     }
 
+    // The collector below outlives recompositions (keyed on the stable state object), so it must
+    // read the CURRENT value/onValueChange, not the ones captured when it first launched. Callers
+    // like HomeScreen re-key their backing states after the saved config loads; a stale lambda
+    // here would keep writing into the orphaned pre-re-key state and edits would never reach
+    // the Join button.
+    val currentValue by rememberUpdatedState(value)
+    val currentOnValueChange by rememberUpdatedState(onValueChange)
+
     LaunchedEffect(state) {
         snapshotFlow { state.text.toString() }.collect { newText ->
-            if (newText != value) onValueChange(newText)
+            if (newText != currentValue) currentOnValueChange(newText)
         }
     }
+
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocused by interactionSource.collectIsFocusedAsState()
 
     val cornerRadiusAnimated by animateDpAsState(
         targetValue = if (dropdownState?.value == true) 0.dp else cornerRadius,
@@ -90,7 +100,10 @@ fun HomeTextField(
     )
 
     val shape = RoundedCornerShape(cornerRadiusAnimated)
-    val textColor = MaterialTheme.colorScheme.onTertiaryContainer
+    val textColor = MaterialTheme.colorScheme.onSurface
+    val borderColor by animateColorAsState(
+        targetValue = if (isFocused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
+    )
 
     BasicTextField(
         state = state,
@@ -99,11 +112,12 @@ fun HomeTextField(
             shape = shape,
             addFocusable = false,
         ),
-        textStyle = TextStyle(color = textColor, textAlign = TextAlign.Center),
+        interactionSource = interactionSource,
+        textStyle = MaterialTheme.typography.bodyLarge.copy(color = textColor, textAlign = TextAlign.Center),
         lineLimits = TextFieldLineLimits.SingleLine,
         enabled = enabled,
         readOnly = dropdownState != null,
-        cursorBrush = Brush.verticalGradient(colors = flexibleGradient),
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         keyboardOptions = KeyboardOptions(keyboardType = type ?: KeyboardType.Text),
         onKeyboardAction = KeyboardActionHandler {
             if (clearFocusWhenDone) {
@@ -116,18 +130,17 @@ fun HomeTextField(
             Row(
                 modifier = Modifier.fillMaxWidth().height(height)
                     .clip(shape)
-                    .background(MaterialTheme.colorScheme.tertiaryContainer)
-                    .border(width = Dp.Hairline, brush = Brush.linearGradient(colors = flexibleGradient), shape = shape)
-                    .padding(PaddingValues(horizontal = 4.dp, vertical = 12.dp)),
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                    .border(width = if (isFocused) 2.dp else 1.dp, color = borderColor, shape = shape)
+                    .padding(PaddingValues(horizontal = Theming.SpaceLG, vertical = Theming.SpaceSM)),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (icon != null) {
-                    FlexibleIcon(
-                        modifier = Modifier.padding(2.dp),
-                        icon = icon,
-                        shadowColors = listOf(textColor.copy(alpha = 0.5f)),
-                        tintColors = listOf(textColor),
-                        size = 36
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = if (isFocused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(end = Theming.SpaceMD).size(24.dp)
                     )
                 }
                 Box(
@@ -136,19 +149,26 @@ fun HomeTextField(
                 ) {
                     Box(modifier = Modifier.wrapContentWidth(Alignment.CenterHorizontally)) {
                         if (state.text.isEmpty() && label != null) {
-                            Text(label, color = Color.Gray)
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1
+                            )
                         }
                         innerTextField()
                     }
                 }
-                // Dropdown cursor, or a transparent icon filling the same space so the input
-                // text stays exactly centered.
+                // Trailing counterweight: mirror the leading icon (or show the dropdown chevron)
+                // so the centered text sits at the true optical center of the field.
                 if (dropdownState != null) {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownState.value, modifier = Modifier.gradientOverlay())
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownState.value)
                 } else if (icon != null) {
-                    UnstyledIcon(
-                        imageVector = Icons.Default.Done, contentDescription = null,
-                        modifier = Modifier.padding(start = 4.dp), tint = Color.Transparent
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = Color.Transparent,
+                        modifier = Modifier.padding(start = Theming.SpaceMD).size(24.dp)
                     )
                 }
             }

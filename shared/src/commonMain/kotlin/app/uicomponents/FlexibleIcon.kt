@@ -62,6 +62,7 @@ fun FlexibleIcon(
     shadowColors: List<Color> = emptyList(),
     shadowOffset: Pair<Int, Int> = Pair(1, 1),
     alpha: Float = 1f,
+    contentDescription: String? = null,
     focusRequester: FocusRequester? = null,
     tvFocus: Boolean = true,
     onClick: () -> Unit = {},
@@ -101,7 +102,7 @@ fun FlexibleIcon(
 
             Icon(
                 imageVector = icon,
-                contentDescription = null,
+                contentDescription = contentDescription,
                 modifier = if (tintColors.size <= 1) fgModifier else fgModifier.gradientOverlay(tintColors),
                 tint = tintColors.firstOrNull() ?: Color.White
             )

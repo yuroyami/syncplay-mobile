@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
@@ -64,7 +65,8 @@ fun SyncplayPopup(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.5f))
+                    // Light scrim only: the platform Dialog already dims behind us.
+                    .background(Color.Black.copy(alpha = 0.25f))
                     .then(
                         if (dismissable) Modifier.clickable(
                             interactionSource = null,
@@ -82,16 +84,12 @@ fun SyncplayPopup(
                         .clickable(
                             interactionSource = null,
                             indication = null
-                        ) { /* Consume clicks on card body to prevent scrim dismiss */ }
-                        .background(
-                            shape = RoundedCornerShape(size = cardCornerRadius.dp),
-                            brush = Brush.linearGradient(
-                                backgroundGradient.map { it.copy(alpha = alpha) }
-                            )
-                        ),
+                        ) { /* Consume clicks on card body to prevent scrim dismiss */ },
                     shape = RoundedCornerShape(size = cardCornerRadius.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                    border = BorderStroke(width = Dp(strokeWidth), brush = Brush.linearGradient(flexibleGradient))
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                    border = if (strokeWidth > 0f) {
+                        BorderStroke(width = Dp(strokeWidth), brush = Brush.linearGradient(flexibleGradient))
+                    } else null
                 ) {
                     content()
                 }

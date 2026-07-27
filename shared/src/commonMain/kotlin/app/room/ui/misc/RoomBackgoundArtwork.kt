@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.LocalRoomViewmodel
 import app.theme.Theming
+import app.uicomponents.SyncplayishText
 import app.utils.appName
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.painterResource
@@ -58,28 +59,12 @@ fun RoomBackgroundArtwork() {
 
             Spacer(modifier = Modifier.width(14.dp))
 
-            Box(modifier = Modifier.padding(bottom = 6.dp)) {
-                Text(
-                    modifier = Modifier.wrapContentWidth(),
-                    text = appName,
-                    style = TextStyle(
-                        color = Theming.SP_PALE,
-                        drawStyle = Stroke(miter = 10f, width = 2f, join = StrokeJoin.Round
-                        ),
-                        fontFamily = FontFamily(Font(Res.font.Directive4_Regular))
-                    ),
-                    fontSize = if (isInPipMode) 8.sp else 26.sp,
-                )
-                Text(
-                    modifier = Modifier.wrapContentWidth(),
-                    text = appName,
-                    style = TextStyle(
-                        brush = Brush.linearGradient(colors = Theming.SP_GRADIENT),
-                        fontFamily = FontFamily(Font(Res.font.Directive4_Regular))
-                    ),
-                    fontSize = if (isInPipMode) 8.sp else 26.sp,
-                )
-            }
+            SyncplayishText(
+                modifier = Modifier.padding(bottom = 6.dp),
+                string = appName,
+                size = if (isInPipMode) 10f else 26f,
+                colorStops = Theming.SP_GRADIENT
+            )
         }
     }
 }

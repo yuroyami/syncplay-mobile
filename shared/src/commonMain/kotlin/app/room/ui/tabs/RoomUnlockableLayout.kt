@@ -73,7 +73,7 @@ fun RoomUnlockableLayout() {
                         .align(Alignment.TopEnd)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
-                            indication = ripple(color = Theming.SP_ORANGE)
+                            indication = ripple()
                         ) {
                             cardController.tabLock.value = false
                             viewmodel.uiState.visibleHUD.value = true

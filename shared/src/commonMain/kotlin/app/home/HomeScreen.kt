@@ -13,14 +13,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Api
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Widgets
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Lan
 import androidx.compose.material.icons.outlined.MeetingRoom
 import androidx.compose.material.icons.outlined.PersonPin
@@ -31,17 +33,23 @@ import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SplitButtonDefaults
 import androidx.compose.material3.SplitButtonLayout
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -93,9 +101,12 @@ import syncplaymobile.shared.generated.resources.connect_enter_custom_server
 import syncplaymobile.shared.generated.resources.connect_port_empty_error
 import syncplaymobile.shared.generated.resources.connect_roomname
 import syncplaymobile.shared.generated.resources.connect_roomname_empty_error
+import syncplaymobile.shared.generated.resources.connect_roomname_tooltip
 import syncplaymobile.shared.generated.resources.connect_server
+import syncplaymobile.shared.generated.resources.connect_server_tooltip
 import syncplaymobile.shared.generated.resources.connect_username
 import syncplaymobile.shared.generated.resources.connect_username_empty_error
+import syncplaymobile.shared.generated.resources.connect_username_tooltip
 import syncplaymobile.shared.generated.resources.home_engine_unavailable_error
 import syncplaymobile.shared.generated.resources.home_ip_address
 import syncplaymobile.shared.generated.resources.home_password_if_any
@@ -146,7 +157,10 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
         content = { paddingValues ->
             val focusManager = LocalFocusManager.current
 
-            savedConfig?.let { config ->
+            // Render the form immediately with defaults; re-key the field states once the
+            // saved config finishes loading (sub-250ms) instead of flashing a blank screen.
+            val config = savedConfig ?: remember { JoinConfig() }
+            run {
                 Column(
                     modifier = Modifier.fillMaxSize()
                         .windowInsetsPadding(BottomAppBarDefaults.windowInsets)
@@ -166,16 +180,18 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                     Spacer(modifier = Modifier.height(paddingValues.calculateTopPadding()))
 
                     /* higher-level variables which are needed for logging in */
-                    var textUsername by remember { mutableStateOf(config.user) }
-                    var textRoomname by remember { mutableStateOf(config.room) }
+                    var textUsername by remember(savedConfig) { mutableStateOf(config.user) }
+                    var textRoomname by remember(savedConfig) { mutableStateOf(config.room) }
 
-                    var serverIsPublic by remember { mutableStateOf(true) }
+                    var serverIsPublic by remember(savedConfig) {
+                        mutableStateOf(officialServers.contains("${config.ip.replace("151.80.32.178", "syncplay.pl")}:${config.port}"))
+                    }
 
-                    var selectedServer by remember { mutableStateOf("${config.ip}:${config.port}") }
+                    var selectedServer by remember(savedConfig) { mutableStateOf("${config.ip}:${config.port}") }
 
-                    var serverAddress by remember { mutableStateOf(config.ip) }
-                    var serverPort by remember { mutableStateOf(config.port.toString()) }
-                    var serverPassword by remember { mutableStateOf(config.pw) }
+                    var serverAddress by remember(savedConfig) { mutableStateOf(config.ip) }
+                    var serverPort by remember(savedConfig) { mutableStateOf(config.port.toString()) }
+                    var serverPassword by remember(savedConfig) { mutableStateOf(config.pw) }
 
                     /* Username — first focusable on the screen; grabs initial focus for D-pad/TV
                      * users. Skipped under touch input mode so the soft keyboard doesn't pop on
@@ -190,15 +206,16 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                     }
 
                     Column(
-                        modifier = Modifier.wrapContentHeight().fillMaxWidth(),
-                        horizontalAlignment = CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)
+                        modifier = Modifier.wrapContentHeight().fillMaxWidth(0.75f),
+                        horizontalAlignment = Alignment.Start, verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         HomeLeadingTitle(
-                            string = stringResource(Res.string.connect_username)
+                            string = stringResource(Res.string.connect_username),
+                            tooltip = stringResource(Res.string.connect_username_tooltip)
                         )
 
                         HomeTextField(
-                            modifier = Modifier.fillMaxWidth(0.75f),
+                            modifier = Modifier.fillMaxWidth(),
                             icon = Icons.Outlined.PersonPin,
                             value = textUsername,
                             onValueChange = { textUsername = it },
@@ -208,15 +225,16 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
 
                     /* Roomname */
                     Column(
-                        modifier = Modifier.wrapContentHeight().fillMaxWidth(),
-                        horizontalAlignment = CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)
+                        modifier = Modifier.wrapContentHeight().fillMaxWidth(0.75f),
+                        horizontalAlignment = Alignment.Start, verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         HomeLeadingTitle(
-                            string = stringResource(Res.string.connect_roomname)
+                            string = stringResource(Res.string.connect_roomname),
+                            tooltip = stringResource(Res.string.connect_roomname_tooltip)
                         )
 
                         HomeTextField(
-                            modifier = Modifier.fillMaxWidth(0.75f),
+                            modifier = Modifier.fillMaxWidth(),
                             icon = Icons.Outlined.MeetingRoom,
                             value = textRoomname,
                             onValueChange = { textRoomname = it }
@@ -227,12 +245,13 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                     val expanded = remember { mutableStateOf(false) }
 
                     Column(
-                        modifier = Modifier.wrapContentHeight().fillMaxWidth(),
-                        horizontalAlignment = CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        modifier = Modifier.wrapContentHeight().fillMaxWidth(0.75f),
+                        horizontalAlignment = Alignment.Start,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         HomeLeadingTitle(
-                            string = stringResource(Res.string.connect_server, appName)
+                            string = stringResource(Res.string.connect_server, appName),
+                            tooltip = stringResource(Res.string.connect_server_tooltip)
                         )
 
                         ExposedDropdownMenuBox(
@@ -242,7 +261,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             }
                         ) {
                             HomeTextField(
-                                modifier = Modifier.fillMaxWidth(0.75f).menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                                modifier = Modifier.fillMaxWidth().menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                                 icon = Icons.Outlined.Lan,
                                 value = selectedServer.replace("151.80.32.178", "syncplay.pl"),
                                 dropdownState = expanded,
@@ -253,7 +272,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             val hostServerLabel = stringResource(Res.string.connect_host_own_server)
                             val servers = officialServers + customServerLabel
                             ExposedDropdownMenu(
-                                modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
+                                modifier = Modifier.background(color = MaterialTheme.colorScheme.surfaceContainerHigh),
                                 expanded = expanded.value,
                                 onDismissRequest = {
                                     expanded.value = false
@@ -261,13 +280,16 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                 servers.forEach { server ->
                                     DropdownMenuItem(
                                         text = {
-                                            Text(server.replace("151.80.32.178", "syncplay.pl"), color = Color.White)
+                                            Text(
+                                                server.replace("151.80.32.178", "syncplay.pl"),
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
                                         },
                                         onClick = {
                                             selectedServer = server
                                             expanded.value = false
 
-                                            if (server != servers[5]) {
+                                            if (server != customServerLabel) {
                                                 serverAddress = "syncplay.pl"
                                                 serverPort =
                                                     selectedServer.substringAfter("syncplay.pl:")
@@ -284,14 +306,14 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
 
                                 DropdownMenuItem(
                                     text = {
-                                        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
                                             Icon(
                                                 imageVector = Icons.Outlined.Lan,
                                                 contentDescription = null,
-                                                tint = Color.White,
+                                                tint = MaterialTheme.colorScheme.primary,
                                                 modifier = Modifier.padding(end = 8.dp)
                                             )
-                                            Text(hostServerLabel, color = Color.White)
+                                            Text(hostServerLabel, color = MaterialTheme.colorScheme.onSurface)
                                         }
                                     },
                                     onClick = {
@@ -304,7 +326,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
 
                         AnimatedVisibility(
                             visible = !serverIsPublic,
-                            modifier = Modifier.fillMaxWidth(0.75f)
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
@@ -339,7 +361,6 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                     onValueChange = { serverPassword = it.trim() },
                                     type = KeyboardType.Password,
                                     label = stringResource(Res.string.home_password_if_any),
-                                    cornerRadius = 16.dp,
                                     clearFocusWhenDone = true
                                 )
                             }
@@ -350,8 +371,8 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                     //TODO Anchor a tooltip next to our engine selection that explains each engine for better selection
 
                     Column(
-                        modifier = Modifier.wrapContentHeight().fillMaxWidth(),
-                        horizontalAlignment = CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)
+                        modifier = Modifier.wrapContentHeight().fillMaxWidth(0.75f),
+                        horizontalAlignment = Alignment.Start, verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         HomeLeadingTitle(
                             string = stringResource(Res.string.connect_choose_video_engine)
@@ -361,7 +382,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
 
                         val errorString = stringResource(Res.string.home_engine_unavailable_error)
                         HomeAnimatedEngineButtonGroup(
-                            modifier = Modifier.fillMaxWidth(0.75f),
+                            modifier = Modifier.fillMaxWidth(),
                             engines = availablePlatformPlayerEngines,
                             selectedEngine = selectedEngine,
                             onSelectEngine = { engine ->
@@ -379,12 +400,12 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         // iOS, libVLC on Android). Sits between the engine picker and the Join button.
                         val activeEngine = availablePlatformPlayerEngines.firstOrNull { it.name == selectedEngine }
                         if (activeEngine?.isExperimental == true) {
-                            FlexibleText(
+                            Text(
                                 text = "This video engine is experimental",
-                                size = 12f,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
                                 textAlign = TextAlign.Center,
-                                fillingColors = listOf(MaterialTheme.colorScheme.error),
-                                font = sairaFont
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                     }
@@ -423,7 +444,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                     }
                                 },
                                 content = {
-                                    Icon(imageVector = Icons.Filled.Api, "")
+                                    Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null)
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(stringResource(Res.string.connect_button_join), fontSize = 18.sp)
                                 }
@@ -435,16 +456,33 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                 contentPadding = PaddingValues(vertical = 16.dp),
                                 checked = false,
                                 onCheckedChange = {
-                                    with (platformCallback) {
-                                        viewmodel.onSaveConfigShortcut(
-                                            JoinConfig(
-                                                textUsername.replace("\\", "").trim(),
-                                                textRoomname.replace("\\", "").trim(),
-                                                serverAddress,
-                                                serverPort.toInt(),
-                                                serverPassword
+                                    // Same validation as the Join path: a blank/garbage port must
+                                    // not crash the shortcut saver with a NumberFormatException.
+                                    globalViewmodel.viewModelScope.launch(Dispatchers.Default) {
+                                        val errorMessage: StringResource? = when {
+                                            textUsername.isBlank() -> Res.string.connect_username_empty_error
+                                            textRoomname.isBlank() -> Res.string.connect_roomname_empty_error
+                                            serverAddress.isBlank() -> Res.string.connect_address_empty_error
+                                            serverPort.isBlank() || serverPort.toIntOrNull() == null -> Res.string.connect_port_empty_error
+                                            else -> null
+                                        }
+
+                                        if (errorMessage != null) {
+                                            viewmodel.snackIt(getString(errorMessage))
+                                            return@launch
+                                        }
+
+                                        with(platformCallback) {
+                                            viewmodel.onSaveConfigShortcut(
+                                                JoinConfig(
+                                                    textUsername.replace("\\", "").trim(),
+                                                    textRoomname.replace("\\", "").trim(),
+                                                    serverAddress,
+                                                    serverPort.toInt(),
+                                                    serverPassword
+                                                )
                                             )
-                                        )
+                                        }
                                     }
                                 },
                                 content = {
@@ -459,19 +497,49 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
             }
         }
     )
+
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeLeadingTitle(string: String) {
-    FlexibleText(
-        text = string,
-        size = 18f,
-        textAlign = TextAlign.Center,
-        fillingColors = listOf(MaterialTheme.colorScheme.primary),
-        font = sairaFont,
-        strokeColors = listOf(MaterialTheme.colorScheme.scrim),
-        shadowColors = if (useSyncplayGradient) Theming.SP_GRADIENT.map { it.copy(alpha = 0.5f) } else listOf(),
-        shadowSize = 6f,
-        fontWeight = FontWeight.W700
-    )
+fun HomeLeadingTitle(string: String, tooltip: String? = null) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = string,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+
+        if (tooltip != null) {
+            val tooltipState = rememberTooltipState(isPersistent = true)
+            val scope = rememberCoroutineScope()
+
+            TooltipBox(
+                positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
+                state = tooltipState,
+                tooltip = {
+                    PlainTooltip { Text(tooltip) }
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Info,
+                    contentDescription = tooltip,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                    modifier = Modifier
+                        .padding(start = 4.dp)
+                        .size(15.dp)
+                        .clickable(interactionSource = null, indication = null) {
+                            scope.launch {
+                                if (tooltipState.isVisible) tooltipState.dismiss() else tooltipState.show()
+                            }
+                        }
+                )
+            }
+        }
+    }
 }

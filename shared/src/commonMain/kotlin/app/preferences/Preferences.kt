@@ -399,6 +399,14 @@ object Preferences {
         )
     }
 
+    /**
+     * Language used for the OpenSubtitles "download from web" search. Holds an ISO 639-1 (2-letter)
+     * code — NOT the 3-letter [mediaLanguageEntries] codes the player track prefs use — because the
+     * OpenSubtitles API speaks 2-letter codes. The sentinel "all" means "don't filter by language".
+     * Picked inline in the subtitle-search sheet, so this has no settings-UI entry of its own.
+     */
+    val SUBTITLE_SEARCH_LANG = Pref("pref_subtitle_search_lang", "en")
+
     /** ------------ Syncing -------------*/
     val READY_FIRST_HAND = Pref("pref_ready_first_hand", true) {
         title = Res.string.setting_ready_firsthand_title
@@ -463,7 +471,7 @@ object Preferences {
     }
 
     /** ------------ Network -------------*/
-    val NETWORK_ENGINE = Pref("pref_network_engine", if (platform == Platform.Android) "netty" else "swiftnio") {
+    val NETWORK_ENGINE = Pref("pref_network_engine", if (platform == Platform.IOS) "swiftnio" else "netty") {
         title = Res.string.setting_network_engine_title
         summary = Res.string.setting_network_engine_summary
         icon = Icons.Filled.Lan
@@ -471,10 +479,11 @@ object Preferences {
         extraConfig = PrefExtraConfig.MultiChoice(
             entries = {
                 buildMap {
-                    if (platform == Platform.Android) {
-                        put(stringResource(Res.string.setting_network_engine_netty), "netty")
-                    } else {
+                    if (platform == Platform.IOS) {
                         put(stringResource(Res.string.setting_network_engine_swift_nio), "swiftnio")
+                    } else {
+                        // Android and Desktop both run the Netty engine.
+                        put(stringResource(Res.string.setting_network_engine_netty), "netty")
                     }
 
                     put(stringResource(Res.string.setting_network_engine_ktor), "ktor")

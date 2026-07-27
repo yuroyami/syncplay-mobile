@@ -6,7 +6,7 @@ import com.materialkolor.PaletteStyle
 
 
 val defaultTheme: SaveableTheme
-    get() = SILVER_LAKE
+    get() = TRINITY
 
 val BLANK_THEME = SaveableTheme(
     name = "Untitled theme",
@@ -15,6 +15,32 @@ val BLANK_THEME = SaveableTheme(
     isAMOLED = false,
     secondaryColor = null,
     tertiaryColor = Color.Cyan.toArgb(),
+    style = PaletteStyle.TonalSpot,
+    syncplayGradients = true
+)
+
+/** The flagship theme: the Trinity brand colors (cyan/blue/purple) seeded into a dark scheme. */
+val TRINITY = SaveableTheme(
+    name = "Trinity",
+    primaryColor = Theming.NeoSP2.toArgb(),
+    secondaryColor = Theming.NeoSP1.toArgb(),
+    tertiaryColor = Theming.NeoSP3.toArgb(),
+    contrast = 0.0,
+    isDark = true,
+    isAMOLED = false,
+    style = PaletteStyle.TonalSpot,
+    syncplayGradients = true
+)
+
+/** Light counterpart of Trinity: same brand seeds on a light scheme. */
+val DAYLIGHT = SaveableTheme(
+    name = "Daylight",
+    primaryColor = Theming.NeoSP2.toArgb(),
+    secondaryColor = Theming.NeoSP1.toArgb(),
+    tertiaryColor = Theming.NeoSP3.toArgb(),
+    contrast = 0.0,
+    isDark = false,
+    isAMOLED = false,
     style = PaletteStyle.TonalSpot,
     syncplayGradients = true
 )
@@ -33,12 +59,12 @@ val PYNCSLAY = SaveableTheme(
     syncplayGradients = false
 )
 
-/** Pure AMOLED theme: true-black backgrounds across all color slots. */
+/** Pure AMOLED theme: true-black backgrounds with a silver accent so controls stay visible. */
 val GrayOLED = SaveableTheme(
     name = "GrayOLED",
-    primaryColor = Color.Black.toArgb(),
-    secondaryColor = Color.Black.toArgb(),
-    tertiaryColor = Color.Black.toArgb(),
+    primaryColor = Color(0xFFCFCFCF).toArgb(),
+    secondaryColor = Color(0xFF9E9E9E).toArgb(),
+    tertiaryColor = Color(0xFF8A8A8A).toArgb(),
     neutralColor = Color.Black.toArgb(),
     neutralVariantColor = Color.Black.toArgb(),
     contrast = 0.0,

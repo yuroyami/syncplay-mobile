@@ -32,6 +32,8 @@ import app.server.ServerViewmodel
 import app.server.ui.ServerHostScreenUI
 import app.theme.SaveableTheme
 import app.theme.ThemeCreatorScreenUI
+import app.theme.appShapes
+import app.theme.appTypography
 
 /** Provides access to the global [SyncplayViewmodel] instance shared across the app. */
 val LocalGlobalViewmodel = compositionLocalOf<SyncplayViewmodel> { error("No Viewmodel provided yet") }
@@ -92,7 +94,9 @@ fun AdamScreen(onGlobalViewmodel: (SyncplayViewmodel) -> Unit) {
         LocalTheme provides currentTheme
     ) {
         MaterialTheme(
-            colorScheme = currentTheme.dynamicScheme
+            colorScheme = currentTheme.dynamicScheme,
+            typography = appTypography,
+            shapes = appShapes
         ) {
             NavDisplay(
                 backStack = backstack,

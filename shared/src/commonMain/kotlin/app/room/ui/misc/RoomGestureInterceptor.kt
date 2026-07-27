@@ -13,12 +13,16 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemGestures
+import androidx.compose.foundation.layout.waterfall
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
@@ -36,6 +40,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
@@ -47,6 +52,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import app.LocalRoomViewmodel
@@ -54,8 +60,6 @@ import app.preferences.Preferences.DOUBLETAP_SEEK
 import app.preferences.Preferences.GESTURES
 import app.preferences.Preferences.SWIPE_GESTURES
 import app.preferences.watchPref
-import app.uicomponents.screenHeightPx
-import app.uicomponents.screenWidthPx
 import app.utils.platformCallback
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -80,8 +84,22 @@ fun RoomGestureInterceptor(modifier: Modifier) {
     val seekLeftInteraction = remember { MutableInteractionSource() }
     val seekRightInteraction = remember { MutableInteractionSource() }
 
-    val h = screenHeightPx
-    val w = screenWidthPx
+    /* Real system edge-guard sizes (quick-settings pull zone, nav-bar pull zone, waterfall
+     * screen edges, camera cutout). Wrapped in rememberUpdatedState because the pointerInput
+     * coroutines below are long-lived and would otherwise keep stale composition-time
+     * captures after a rotation (the activity handles configChanges itself, so nothing
+     * recreates them). Reading .value inside the handlers always yields current values. */
+    val density = LocalDensity.current
+    val layoutDirection = LocalLayoutDirection.current
+    val topGestureGuardPx by rememberUpdatedState(
+        maxOf(
+            WindowInsets.systemGestures.getTop(density),
+            WindowInsets.displayCutout.getTop(density)
+        )
+    )
+    val bottomGestureGuardPx by rememberUpdatedState(WindowInsets.systemGestures.getBottom(density))
+    val leftGestureGuardPx by rememberUpdatedState(WindowInsets.waterfall.getLeft(density, layoutDirection))
+    val rightGestureGuardPx by rememberUpdatedState(WindowInsets.waterfall.getRight(density, layoutDirection))
 
     var currentBrightness by remember { mutableFloatStateOf(-1f) }
     var currentVolume by remember { mutableIntStateOf(-1) }
@@ -158,12 +176,15 @@ fun RoomGestureInterceptor(modifier: Modifier) {
          * the still-alive but invisible HUD elements (preventing ghost clicks) and route them to
          * volume/brightness/seek/show-HUD.
          *
-         * Edge gating: vertical drags starting in the top/bottom 8% are ignored so quick-settings
-         * and nav-bar pull gestures aren't swallowed by the volume/brightness handler.
+         * Edge gating: vertical drags starting inside the system gesture zones (quick-settings
+         * pull at the top, nav-bar pull at the bottom, waterfall side edges) are ignored so
+         * system gestures aren't swallowed by the volume/brightness handler. Uses the real
+         * inset values reported by the OS, with an 8%-of-height floor as a fallback for
+         * devices/platforms that report none.
          */
         val haptic = LocalHapticFeedback.current
         val softwareKB = LocalSoftwareKeyboardController.current
-        val edgeGuardFraction = 0.08f // 8% of screen height reserved for system gestures at top/bottom
+        val edgeGuardFraction = 0.08f // minimum guard when reported gesture insets are smaller/absent
 
         Box(
             content = {},
@@ -173,7 +194,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                         .pointerInput(gesturesEnabled, doubletapEnabled, hasVideo) {
                             detectTapGestures(
                                 onPress = { offset ->
-                                    if (gesturesEnabled && doubletapEnabled && hasVideo && offset.x > w.times(0.5f)) {
+                                    if (gesturesEnabled && doubletapEnabled && hasVideo && offset.x > size.width * 0.5f) {
                                         val press = PressInteraction.Press(offset)
                                         val job = scope.launch {
                                             delay(1000)
@@ -195,7 +216,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                         fastForward = false
                                         seekRightInteraction.emit(PressInteraction.Release(press))
                                     }
-                                    if (gesturesEnabled && doubletapEnabled && hasVideo && offset.x < w.times(0.5f)) {
+                                    if (gesturesEnabled && doubletapEnabled && hasVideo && offset.x < size.width * 0.5f) {
                                         val press = PressInteraction.Press(offset)
                                         val job = scope.launch {
                                             delay(1000)
@@ -220,7 +241,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                 onDoubleTap = if (gesturesEnabled && doubletapEnabled && hasVideo) {
                                     { offset ->
                                         scope.launch {
-                                            if (offset.x < w.times(0.5f)) {
+                                            if (offset.x < size.width * 0.5f) {
                                                 viewmodel.dispatcher.seekBckwd()
                                                 haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
 
@@ -229,7 +250,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                                 delay(200)
                                                 seekLeftInteraction.emit(PressInteraction.Release(press))
                                             }
-                                            if (offset.x > w.times(0.5f)) {
+                                            if (offset.x > size.width * 0.5f) {
                                                 viewmodel.dispatcher.seekFrwrd()
                                                 haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
 
@@ -252,10 +273,16 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                             if (gesturesEnabled && swipeEnabled && hasVideo) {
                                 detectVerticalDragGestures(
                                     onDragStart = { startOffset ->
-                                        // Edge guard: ignore drags that originate near top or bottom edges
-                                        val topEdge = h * edgeGuardFraction
-                                        val bottomEdge = h * (1f - edgeGuardFraction)
-                                        if (startOffset.y < topEdge || startOffset.y > bottomEdge) {
+                                        // Edge guard: ignore drags originating inside system gesture zones
+                                        // or on waterfall edges. size.* (not captured screen dims) so the
+                                        // values stay correct after an in-place rotation.
+                                        val guardTop = maxOf(size.height * edgeGuardFraction, topGestureGuardPx.toFloat())
+                                        val guardBottom = maxOf(size.height * edgeGuardFraction, bottomGestureGuardPx.toFloat())
+                                        if (startOffset.y < guardTop ||
+                                            startOffset.y > size.height - guardBottom ||
+                                            startOffset.x < leftGestureGuardPx ||
+                                            startOffset.x > size.width - rightGestureGuardPx
+                                        ) {
                                             initialBrightness = -1f // sentinel: drag is ignored
                                             return@detectVerticalDragGestures
                                         }
@@ -276,9 +303,9 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                         dragDistance += f
                                         vertdragOffset = pntr.position
 
-                                        if (pntr.position.x >= w * 0.5f) {
+                                        if (pntr.position.x >= size.width * 0.5f) {
                                             // Volume adjusting
-                                            val height = h / 2f
+                                            val height = size.height / 2f
                                             val maxVolume = viewmodel.player.getMaxVolume()
                                             var newVolume = (initialVolume + (-dragDistance * maxVolume / height)).roundToInt()
                                             newVolume = newVolume.coerceIn(0, maxVolume)
@@ -292,7 +319,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                             }
                                         } else {
                                             // Brightness adjusting
-                                            val height = h / 2f
+                                            val height = size.height / 2f
                                             val maxBright = platformCallback.getMaxBrightness()
                                             var newBright = initialBrightness + (-dragDistance * maxBright / height)
 
@@ -320,25 +347,28 @@ fun RoomGestureInterceptor(modifier: Modifier) {
         )
 
         with(LocalDensity.current) {
+            // Over-video chrome: fixed dark scrim + white content, independent of the app theme,
+            // so the bubbles stay readable over any video frame.
             if (currentBrightness != -1f) {
                 Row(
                     modifier = Modifier
                         .offset((vertdragOffset.x - 100).toDp(), vertdragOffset.y.toDp())
                         .clip(RoundedCornerShape(25.dp))
-                        .background(Color.LightGray)
+                        .background(Color.Black.copy(alpha = 0.65f))
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Brightness6,
-                        contentDescription = "",
+                        contentDescription = null,
+                        tint = Color.White,
                         modifier = Modifier.padding(end = 4.dp)
                     )
                     val brightness = stringResource(
                         Res.string.room_brightness,
                         "${currentBrightness.times(100).toInt()}%"
                     )
-                    Text(brightness, color = Color.Black)
+                    Text(brightness, color = Color.White)
                 }
             }
 
@@ -347,7 +377,7 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                     modifier = Modifier
                         .offset((vertdragOffset.x + 100).toDp(), vertdragOffset.y.toDp())
                         .clip(RoundedCornerShape(25.dp))
-                        .background(Color.LightGray)
+                        .background(Color.Black.copy(alpha = 0.65f))
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = CenterVertically
                 ) {
@@ -355,11 +385,12 @@ fun RoomGestureInterceptor(modifier: Modifier) {
 
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                        contentDescription = "",
+                        contentDescription = null,
+                        tint = Color.White,
                         modifier = Modifier.padding(end = 4.dp)
                     )
                     val volume = stringResource(Res.string.room_volume, "$currentVolume/$maxVolume")
-                    Text(volume, color = Color.Black)
+                    Text(volume, color = Color.White)
                 }
             }
         }

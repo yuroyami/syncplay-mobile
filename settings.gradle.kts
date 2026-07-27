@@ -1,7 +1,6 @@
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
     repositories {
-        mavenLocal() // kmp-ssot: remove once io.github.yuroyami.kmpssot is live on Gradle Plugin Portal
         mavenCentral()
         gradlePluginPortal()
         google()
@@ -18,15 +17,11 @@ dependencyResolutionManagement {
     }
 }
 
-// NOTE (issue #105 / IzzyOnDroid reproducible builds): do NOT re-add the
-// foojay-resolver-convention plugin, and do NOT pin a JVM toolchain vendor. Foojay makes Gradle
-// DOWNLOAD a toolchain, and a vendor pin (e.g. ADOPTIUM) forces a specific one. RB builders are
-// network-restricted and provision their own JDK 21, so a forced download/vendor-match fails the
-// whole build. The JDK version is requested vendor-neutrally via gradle.properties
-// (org.gradle.toolchains.jvm.version=21) and gradle/gradle-daemon-jvm.properties (toolchainVersion=21),
-// which any locally-provisioned JDK 21 satisfies.
+// Reproducible builds (issue #105 / IzzyOnDroid): do NOT add foojay-resolver and do NOT pin a
+// JVM toolchain vendor — RB builders are network-restricted and provision their own JDK 21.
+// The JDK is requested vendor-neutrally via gradle.properties + gradle-daemon-jvm.properties.
 
 rootProject.name = "SyncplayMobile"
 include(":androidApp")
 include(":shared")
-
+include(":desktopApp")

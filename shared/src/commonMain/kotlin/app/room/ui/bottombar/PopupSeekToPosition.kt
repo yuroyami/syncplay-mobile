@@ -115,92 +115,72 @@ object PopupSeekToPosition {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
+                    val fieldColors = TextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        disabledIndicatorColor = Color.Transparent,
+                    )
+                    val fieldTextStyle = MaterialTheme.typography.titleMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center
+                    )
+                    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+
                     TextField(
-                        modifier = Modifier.width(64.dp).focusRequester(hhRequester),
+                        modifier = Modifier.width(72.dp).focusRequester(hhRequester),
                         shape = RoundedCornerShape(12.dp),
                         singleLine = true,
                         value = hours.value,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         keyboardActions = KeyboardActions(onDone = {
-                            focusManager.clearFocus(true)
+                            mmRequester.requestFocus()
                         }),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.DarkGray,
-                            unfocusedContainerColor = Color.DarkGray,
-                            disabledContainerColor = Color.DarkGray,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            disabledIndicatorColor = Color.Transparent,
-                        ),
+                        colors = fieldColors,
                         onValueChange = { hours.value = it },
-                        textStyle = TextStyle(
-                            brush = Brush.linearGradient(colors = Theming.SP_GRADIENT),
-                            fontFamily = FontFamily(syncplayFont),
-                            fontSize = 16.sp,
-                        ),
-                        label = { Text("HH", color = Color.Gray) }
+                        textStyle = fieldTextStyle,
+                        label = { Text("HH", color = labelColor) }
                     )
 
                     Spacer(Modifier.width(12.dp))
 
-
                     TextField(
-                        modifier = Modifier.width(64.dp).focusRequester(mmRequester),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                        modifier = Modifier.width(72.dp).focusRequester(mmRequester),
+                        shape = RoundedCornerShape(12.dp),
                         singleLine = true,
                         value = minutes.value,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         keyboardActions = KeyboardActions(onDone = {
-                            hhRequester.requestFocus()
+                            ssRequester.requestFocus()
                         }),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.DarkGray,
-                            unfocusedContainerColor = Color.DarkGray,
-                            disabledContainerColor = Color.DarkGray,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            disabledIndicatorColor = Color.Transparent,
-                        ),
+                        colors = fieldColors,
                         onValueChange = { minutes.value = it },
-                        textStyle = TextStyle(
-                            brush = Brush.linearGradient(colors = Theming.SP_GRADIENT),
-                            fontFamily = FontFamily(syncplayFont),
-                            fontSize = 16.sp,
-                        ),
-                        label = { Text("MM", color = Color.Gray) }
+                        textStyle = fieldTextStyle,
+                        label = { Text("MM", color = labelColor) }
                     )
 
                     Spacer(Modifier.width(12.dp))
 
                     TextField(
-                        modifier = Modifier.width(64.dp).focusRequester(ssRequester),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                        modifier = Modifier.width(72.dp).focusRequester(ssRequester),
+                        shape = RoundedCornerShape(12.dp),
                         singleLine = true,
                         value = seconds.value,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         keyboardActions = KeyboardActions(onDone = {
-                            mmRequester.requestFocus()
+                            focusManager.clearFocus(true)
                         }),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.DarkGray,
-                            unfocusedContainerColor = Color.DarkGray,
-                            disabledContainerColor = Color.DarkGray,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            disabledIndicatorColor = Color.Transparent,
-                        ),
+                        colors = fieldColors,
                         onValueChange = { seconds.value = it },
-                        textStyle = TextStyle(
-                            brush = Brush.linearGradient(colors = Theming.SP_GRADIENT),
-                            fontFamily = FontFamily(syncplayFont),
-                            fontSize = 16.sp,
-                        ),
-                        label = { Text("ss", color = Color.Gray) }
+                        textStyle = fieldTextStyle,
+                        label = { Text("SS", color = labelColor) }
                     )
                 }
 
                 LaunchedEffect(Unit) {
-                    ssRequester.requestFocus()
+                    hhRequester.requestFocus()
                 }
 
                 /* Custom Skip intro */
@@ -209,7 +189,6 @@ object PopupSeekToPosition {
 
                 Button(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    border = BorderStroke(width = 1.dp, color = Color.Black),
                     modifier = Modifier.Companion,
                     onClick = {
                         viewmodel.uiState.popupSeekToPosition.value = false
@@ -226,7 +205,6 @@ object PopupSeekToPosition {
                 /* Ok button */
                 Button(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    border = BorderStroke(width = 1.dp, color = Color.Black),
                     modifier = Modifier.Companion,
                     onClick = {
                         viewmodel.uiState.popupSeekToPosition.value = false

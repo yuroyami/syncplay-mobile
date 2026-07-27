@@ -25,9 +25,9 @@ import app.preferences.Preferences.VLC_CUSTOM_FLAGS
 import app.preferences.settings.SettingCategory
 import app.room.RoomViewmodel
 import app.utils.contextObtainer
+import app.utils.playableUri
 import app.utils.uri
 import io.github.vinceglb.filekit.PlatformFile
-import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -279,8 +279,10 @@ class VlcImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcEngine) {
     override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
         withContext(Dispatchers.Main.immediate) {
             try {
+                // addSlave needs a proper MRL: a file:// uri for our own downloaded subs (a bare
+                // path was rejected), the content:// uri for picker results.
                 vlcPlayer?.addSlave(
-                    IMedia.Slave.Type.Subtitle, uri.path, true
+                    IMedia.Slave.Type.Subtitle, uri.playableUri.toString(), true
                 )
             } catch (e: Exception) {
                 e.printStackTrace()

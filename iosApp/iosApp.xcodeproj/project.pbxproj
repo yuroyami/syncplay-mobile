@@ -478,7 +478,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = D3A569DEDB2095539D3C35C7 /* Pods-iosApp.debug.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = logo;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -494,7 +494,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.23.1;
+				MARKETING_VERSION = 0.23.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yuroyami.syncplay.iosApp;
 				PRODUCT_NAME = "Synkplay";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -507,7 +507,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 2E11F2E80DF99399BD8DE767 /* Pods-iosApp.release.xcconfig */;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = logo;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -523,7 +523,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.23.1;
+				MARKETING_VERSION = 0.23.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yuroyami.syncplay.iosApp;
 				PRODUCT_NAME = "Synkplay";
 				PROVISIONING_PROFILE_SPECIFIER = "";

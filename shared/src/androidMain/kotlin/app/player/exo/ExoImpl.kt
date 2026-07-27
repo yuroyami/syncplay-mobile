@@ -43,9 +43,9 @@ import app.preferences.settings.SettingCategory
 import app.room.RoomViewmodel
 import app.utils.contextObtainer
 import app.utils.loggy
+import app.utils.playableUri
 import app.utils.uri
 import io.github.vinceglb.filekit.PlatformFile
-import io.github.vinceglb.filekit.dialogs.toAndroidUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -343,10 +343,15 @@ class ExoImpl(vm: RoomViewmodel) : PlayerImpl(vm, ExoEngine) {
     var externalSub: MediaItem.SubtitleConfiguration? = null
 
     override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
-        val authority = "${contextObtainer().packageName}.fileprovider"
+        // Was FileProvider with authority "${packageName}.fileprovider": that authority doesn't
+        // exist (the manifest declares "${applicationId}.provider"), AND filesDir/logs (where
+        // downloaded subs land) isn't in provider_paths.xml, so getUriForFile threw and the sub
+        // silently never attached. playableUri yields the content:// uri for picker results and a
+        // file:// uri for our own downloaded files, neither of which needs FileProvider.
+        val subUri = uri.playableUri
 
-        externalSub = MediaItem.SubtitleConfiguration.Builder(uri.toAndroidUri(authority))
-            .setUri(uri.toAndroidUri(authority))
+        externalSub = MediaItem.SubtitleConfiguration.Builder(subUri)
+            .setUri(subUri)
             .setMimeType(extension.mimeType)
             .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
             .build()

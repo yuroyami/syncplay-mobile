@@ -136,10 +136,10 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
 
         val scope = rememberCoroutineScope()
         DropdownMenu(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = 0.dp, shadowElevation = 0.dp,
-            border = BorderStroke(width = Dp.Hairline, brush = Brush.linearGradient(colors = flexibleGradient)),
-            shape = RoundedCornerShape(8.dp),
+            border = BorderStroke(width = Dp.Hairline, color = MaterialTheme.colorScheme.outlineVariant),
+            shape = MaterialTheme.shapes.small,
             expanded = showPopup,
             onDismissRequest = {
                 scope.launch {
@@ -148,14 +148,12 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
                 }
             }
         ) {
-            FlexibleText(
+            Text(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
                     .padding(horizontal = 2.dp),
                 text = stringResource(Res.string.room_button_desc_add),
-                strokeColors = listOf(Color.Black),
-                fillingColors = flexibleGradient,
-                size = 14f,
-                font = jostFont
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             // From storage (system picker): FileKit's default ACTION_OPEN_DOCUMENT SAF picker,
@@ -165,12 +163,11 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
                     Row(verticalAlignment = CenterVertically) {
                         FlexibleIcon(
                             icon = Icons.Filled.FolderOpen,
-                            size = ROOM_ICON_SIZE,
-                            shadowColors = listOf(Color.Black)
+                            size = ROOM_ICON_SIZE
                         ) {}
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            color = Color.LightGray,
+                            color = MaterialTheme.colorScheme.onSurface,
                             text = stringResource(Res.string.room_addmedia_offline),
                         )
                     }
@@ -191,12 +188,11 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
                         Row(verticalAlignment = CenterVertically) {
                             FlexibleIcon(
                                 icon = Icons.Filled.FolderOpen,
-                                size = ROOM_ICON_SIZE,
-                                shadowColors = listOf(Color.Black)
+                                size = ROOM_ICON_SIZE
                             ) {}
                             Spacer(Modifier.width(8.dp))
                             Text(
-                                color = Color.LightGray,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 text = stringResource(Res.string.room_addmedia_offline_system),
                             )
                         }
@@ -220,12 +216,11 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
                     Row(verticalAlignment = CenterVertically) {
                         FlexibleIcon(
                             icon = Icons.Filled.AddLink,
-                            size = ROOM_ICON_SIZE,
-                            shadowColors = listOf(Color.Black)
+                            size = ROOM_ICON_SIZE
                         ) {}
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            color = Color.LightGray,
+                            color = MaterialTheme.colorScheme.onSurface,
                             text = stringResource(Res.string.room_addmedia_online),
                         )
                     }
@@ -258,19 +253,18 @@ fun AddVideoButton(modifier: Modifier, expanded: Boolean, onClick: () -> Unit) {
             shape = RoundedCornerShape(24.dp),
             border = BorderStroke(Dp.Hairline, brush = Brush.linearGradient(colors = flexibleGradient)),
             onClick = onClick,
-            contentColor = Color.DarkGray.copy(0.5f)
+            color = MaterialTheme.colorScheme.surfaceContainerHigh
         ) {
             Box(modifier = Modifier.fillMaxSize().padding(8.dp), contentAlignment = Alignment.Center) {
                 Row(modifier = Modifier.fillMaxSize(), verticalAlignment = CenterVertically, horizontalArrangement = Arrangement.SpaceAround) {
                     Icon(
-                        tint = Color.DarkGray, imageVector = Icons.Filled.AddToQueue, contentDescription = "",
-                        modifier = Modifier.size(32.dp).gradientOverlay(flexibleGradient)
+                        tint = MaterialTheme.colorScheme.primary, imageVector = Icons.Filled.AddToQueue, contentDescription = null,
+                        modifier = Modifier.size(32.dp)
                     )
 
                     Text(
-                        modifier = Modifier.gradientOverlay(flexibleGradient),
                         text = stringResource(Res.string.room_button_desc_add), textAlign = TextAlign.Center, maxLines = 1,
-                        fontSize = 14.sp, color = Color.DarkGray, fontWeight = FontWeight.Bold
+                        fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -297,21 +291,18 @@ fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
         ) {
 
             /* The title */
-            FlexibleText(
+            Text(
                 text = stringResource(Res.string.room_addmedia_online_details),
-                strokeColors = listOf(Color.Black),
-                size = 17f,
-                font = jostFont
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             /* Title's subtext */
             Text(
                 text = stringResource(Res.string.room_addmedia_online_popup_subtext),
-                color = MaterialTheme.colorScheme.primary,
-                fontSize = 10.sp,
-                fontFamily = FontFamily(sairaFont),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
                 textAlign = TextAlign.Center,
-                lineHeight = 13.sp,
                 modifier = Modifier.fillMaxWidth(0.6f)
             )
 
@@ -325,9 +316,9 @@ fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
                 singleLine = true,
                 value = url.value,
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.DarkGray,
-                    unfocusedContainerColor = Color.DarkGray,
-                    disabledContainerColor = Color.DarkGray,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     disabledIndicatorColor = Color.Transparent,
@@ -347,22 +338,17 @@ fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
                     Icon(imageVector = Icons.Filled.Link, "", tint = MaterialTheme.colorScheme.primary)
                 },
                 onValueChange = { url.value = it },
-                textStyle = TextStyle(
-                    brush = Brush.linearGradient(
-                        colors = Theming.SP_GRADIENT
-                    ),
-                    fontFamily = FontFamily(syncplayFont),
-                    fontSize = 16.sp,
+                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                    color = MaterialTheme.colorScheme.onSurface
                 ),
                 label = {
-                    Text(stringResource(Res.string.room_addmedia_online_url), color = Color.Gray)
+                    Text(stringResource(Res.string.room_addmedia_online_url), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             )
 
             /* Ok button */
             Button(
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                border = BorderStroke(width = 1.dp, color = Color.Black),
                 onClick = {
                     visibilityState.value = false
 

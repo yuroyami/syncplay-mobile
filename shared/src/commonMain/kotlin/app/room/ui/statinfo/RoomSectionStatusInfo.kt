@@ -85,10 +85,13 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                                 viewmodel.networkManager.reconnect()
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer
+                        ),
                         shape = CircleShape
                     ) {
-                        Text(text = stringResource(Res.string.room_reconnect_button), color = Color.White)
+                        Text(text = stringResource(Res.string.room_reconnect_button))
                     }
 
                     Text(

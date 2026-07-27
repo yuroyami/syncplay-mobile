@@ -32,6 +32,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -43,18 +44,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.LocalSettingStyling
 import app.home.components.SettingGridState
 import app.theme.Theming
-import app.theme.Theming.flexibleGradient
-import app.uicomponents.FlexibleText
-import app.uicomponents.gradientOverlay
-import app.uicomponents.sairaFont
 import app.uicomponents.tvFocusable
 import com.composeunstyled.Thumb
 import com.composeunstyled.ThumbVisibility
@@ -103,7 +101,6 @@ object SettingsUI {
                         ) {
                             settings.forEach { category ->
                                 SettingCategoryCard1(
-                                    0,
                                     categ = category,
                                     titleSize = titleSize,
                                     cardSize = cardSize,
@@ -125,10 +122,9 @@ object SettingsUI {
                         contentPadding = PaddingValues(8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        settings.forEachIndexed { i, category ->
+                        settings.forEach { category ->
                             item {
                                 SettingCategoryCard2(
-                                    i,
                                     categ = category,
                                     onClick = {
                                         state.value = SettingGridState.INSIDE_CATEGORY
@@ -162,7 +158,6 @@ object SettingsUI {
 
     @Composable
     fun SettingCategoryCard1(
-        index: Int,
         modifier: Modifier = Modifier,
         categ: SettingCategory,
         titleSize: Float,
@@ -170,87 +165,77 @@ object SettingsUI {
         onClick: () -> Unit,
     ) {
         Column(
-            modifier = modifier.width(64.dp), horizontalAlignment = Alignment.CenterHorizontally
+            modifier = modifier.width(cardSize.dp), horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Card(
                 modifier = Modifier.width(cardSize.dp).aspectRatio(1f).clickable(
                     interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(color = Theming.SP_ORANGE)
-
+                    indication = ripple()
                 ) {
                     onClick()
                 }.tvFocusable(addFocusable = false),
-                shape = RoundedCornerShape(8.dp),
+                shape = MaterialTheme.shapes.small,
                 colors = CardDefaults.cardColors(
-                    containerColor = Theming.SP_GRADIENT[index % 3].copy(0.1f)
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
                 ),
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     Icon(
                         imageVector = categ.icon,
-                        contentDescription = "",
-                        modifier = modifier.size((cardSize * 0.81f).dp).align(Alignment.Center)
-                            .gradientOverlay(flexibleGradient)
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size((cardSize * 0.5f).dp).align(Alignment.Center)
                     )
-
-
                 }
             }
 
-            FlexibleText(
+            Text(
                 text = stringResource(categ.title),
-                fillingColors = flexibleGradient,
-                strokeColors = listOf(MaterialTheme.colorScheme.outline),
-                size = titleSize,
-                font = sairaFont
+                style = MaterialTheme.typography.labelMedium.copy(fontSize = titleSize.sp),
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+                maxLines = 2
             )
         }
     }
 
     @Composable
     fun SettingCategoryCard2(
-        index: Int,
         modifier: Modifier = Modifier,
         categ: SettingCategory,
         onClick: () -> Unit,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
-                .clip(shape = RoundedCornerShape(8.dp))
-                .background(Theming.SP_GRADIENT[index % 3].copy(0.1f))
-                .border(width = Dp.Hairline, color = MaterialTheme.colorScheme.outline, shape = RoundedCornerShape(8.dp))
+                .clip(shape = MaterialTheme.shapes.small)
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                .border(width = Dp.Hairline, color = MaterialTheme.colorScheme.outlineVariant, shape = MaterialTheme.shapes.small)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(color = Theming.SP_ORANGE),
+                    indication = ripple(),
                     onClick = onClick
                 )
                 .tvFocusable(addFocusable = false)
-                .padding(8.dp),
+                .padding(Theming.SpaceMD),
         ) {
-            Box(modifier = Modifier) {
-                Icon(
-                    imageVector = categ.icon,
-                    contentDescription = "",
-                    modifier = modifier.size(32.dp)
-                        .align(Alignment.Center)
-                        .gradientOverlay(flexibleGradient)
-                )
-            }
+            Icon(
+                imageVector = categ.icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(28.dp)
+            )
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(Theming.SpaceMD))
 
-            FlexibleText(
+            Text(
                 text = stringResource(categ.title),
-                fillingColors = flexibleGradient,
-                strokeColors = listOf(MaterialTheme.colorScheme.outline),
-                size = 17f,
-                font = sairaFont
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2
             )
         }
-
-
     }
 
     @Composable
@@ -267,14 +252,17 @@ object SettingsUI {
                         columnHeight = coordinates.size.height.toDp()
                     }
             }) {
-                settingCategory.settings.forEach {
-                    it.Render()
+                settingCategory.settings.forEachIndexed { index, setting ->
+                    setting.Render()
 
-                    HorizontalDivider(
-                        thickness = Dp.Hairline,
-                        modifier = Modifier.padding(horizontal = 8.dp),
-                        color = MaterialTheme.colorScheme.inverseSurface
-                    )                }
+                    if (index != settingCategory.settings.lastIndex) {
+                        HorizontalDivider(
+                            thickness = Dp.Hairline,
+                            modifier = Modifier.padding(horizontal = Theming.SpaceLG),
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
+                    }
+                }
             }
 
             UnstyledVerticalScrollbar(
@@ -282,7 +270,9 @@ object SettingsUI {
                 modifier = Modifier.align(Alignment.CenterEnd).width(4.dp).height(columnHeight)
             ) {
                 Thumb(
-                    modifier = Modifier.background(Color.Gray),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)),
                     thumbVisibility = ThumbVisibility.HideWhileIdle(enter = fadeIn(), exit = fadeOut(), hideDelay = 150.milliseconds)
                 )
             }

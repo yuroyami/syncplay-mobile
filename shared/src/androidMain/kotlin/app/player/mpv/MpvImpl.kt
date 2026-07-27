@@ -10,7 +10,6 @@ import androidx.compose.material.icons.filled.SettingsInputComponent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.net.toUri
 import androidx.media3.common.C.STREAM_TYPE_MUSIC
 import app.R
 import app.player.PlayerImpl
@@ -32,9 +31,9 @@ import app.preferences.Preferences.MPV_VIDSYNC
 import app.preferences.settings.SettingCategory
 import app.preferences.value
 import app.room.RoomViewmodel
+import app.utils.playableUri
 import app.utils.uri
 import io.github.vinceglb.filekit.PlatformFile
-import io.github.vinceglb.filekit.path
 import `is`.xyz.mpv.MPVLib
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -293,7 +292,10 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
     override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
         if (!isInitialized) return
         withContext(Dispatchers.Main) {
-            ctx.resolveUri(uri.path.toUri())?.let { subUri ->
+            // playableUri gives a file:// uri for our own downloaded subs (a bare path has no
+            // scheme, so resolveUri's `when(scheme)` fell through to null) and the content:// uri
+            // for picker results.
+            ctx.resolveUri(uri.playableUri)?.let { subUri ->
                 MPVLib.command(arrayOf("sub-add", subUri, "cached"))
             }
         }

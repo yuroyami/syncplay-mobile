@@ -117,9 +117,17 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
             // corrected by the rewind/fastforward/slowdown block and the channel-health
             // collector, not by re-announcing here.
             val pausedChanged = protocol.globalPaused != paused
-            val diff = withContext(Dispatchers.Main.immediate) {
-                (viewmodel.player.currentPositionMs() / 1000.0) - agedPosition
-            }
+            // Position comes from the tracker cache (timeCurrentMillis, refreshed every
+            // 200-500ms by each engine), NOT from a live player probe. Two reasons:
+            //  1. PC parity — the reference client compares against its 100ms-polled cache,
+            //     never a synchronous player query (client.py getPlayerPosition).
+            //  2. The protocol consumer must NEVER wait on the UI thread. On desktop, a
+            //     withContext(Main) here deadlocked the whole inbound pipeline when libVLC
+            //     was still initializing on the EDT at cold-start auto-join: the first State
+            //     suspended forever, every later message queued behind it, and the server
+            //     dropped us for not ACKing. diff consumers tolerate the <=500ms staleness
+            //     (thresholds are 1.5-4s).
+            val diff = (viewmodel.playerManager.timeCurrentMillis.value / 1000.0) - agedPosition
 
             /* Updating Global State */
             protocol.globalPaused = paused
@@ -136,7 +144,9 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                     // first-sync back at the server.
                     protocol.noteExpectedPlaybackState(paused = paused)
                     val firstSeekMs = (agedPosition * 1000.0).toLong()
-                    withContext(Dispatchers.Main) {
+                    // Fire-and-forget: the consumer must not suspend on the UI thread
+                    // (see the diff comment above). Ordering inside the launch is kept.
+                    viewmodel.viewModelScope.launch(Dispatchers.Main) {
                         viewmodel.player.seekTo(firstSeekMs)
                         if (paused) viewmodel.player.pause() else viewmodel.player.play()
                     }
@@ -147,7 +157,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
 
             if (doSeek == true && setBy != null) {
                 if (protocol.speedChanged) {
-                    withContext(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
+                    viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
                     protocol.speedChanged = false
                 }
                 callback.onSomeoneSeeked(setBy, agedPosition)
@@ -165,7 +175,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                 /* Rewind check if someone is behind */
                 if (diff > protocol.rewindThreshold && doSeek != true && Preferences.SYNC_REWIND.value()) {
                     if (protocol.speedChanged) {
-                        withContext(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
+                        viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
                         protocol.speedChanged = false
                     }
                     callback.onSomeoneBehind(setBy ?: "", agedPosition)
@@ -201,15 +211,15 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
                     if (Preferences.SYNC_SLOWDOWN.value()) {
                         if (diff > SLOWDOWN_THRESHOLD && !protocol.speedChanged) {
                             if (setBy != null && setBy != session.currentUsername) {
-                                withContext(Dispatchers.Main) { viewmodel.player.setSpeed(SLOWDOWN_RATE) }
+                                viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.player.setSpeed(SLOWDOWN_RATE) }
                                 protocol.speedChanged = true
                             }
                         } else if (protocol.speedChanged && diff < SLOWDOWN_RESET_THRESHOLD) {
-                            withContext(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
+                            viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
                             protocol.speedChanged = false
                         }
                     } else if (protocol.speedChanged) {
-                        withContext(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
+                        viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
                         protocol.speedChanged = false
                     }
                 }
@@ -217,7 +227,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
 
             if (pausedChanged) {
                 if (paused && protocol.speedChanged) {
-                    withContext(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
+                    viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.player.setSpeed(1.0) }
                     protocol.speedChanged = false
                 }
                 if (!paused) callback.onSomeonePlayed(setBy ?: "")

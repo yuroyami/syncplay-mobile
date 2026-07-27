@@ -2,6 +2,7 @@ package app.subtitles
 
 import de.jensklingenberg.ktorfit.http.Body
 import de.jensklingenberg.ktorfit.http.GET
+import de.jensklingenberg.ktorfit.http.Headers
 import de.jensklingenberg.ktorfit.http.POST
 import de.jensklingenberg.ktorfit.http.Query
 import kotlinx.serialization.SerialName
@@ -20,7 +21,8 @@ interface OpenSubtitlesAPI {
 
     /**
      * Searches subtitles. [languages] must be lower-case, comma-separated and alphabetically
-     * sorted; queries match case-insensitively server-side.
+     * sorted; queries match case-insensitively server-side. Passing null omits the filter
+     * entirely, so the API returns matches in every language.
      *
      * Parameters are declared in ALPHABETICAL order: the API 301-redirects any request whose
      * query string isn't in canonical (sorted) order, and Ktorfit emits parameters in declaration
@@ -28,7 +30,7 @@ interface OpenSubtitlesAPI {
      */
     @GET("subtitles")
     suspend fun search(
-        @Query("languages") languages: String,
+        @Query("languages") languages: String? = null,
         @Query("order_by") orderBy: String = "download_count",
         @Query("order_direction") orderDirection: String = "desc",
         @Query("page") page: Int = 1,
@@ -39,8 +41,14 @@ interface OpenSubtitlesAPI {
      * Requests a download link for a subtitle file. MUST be a POST with a JSON body
      * (`{"file_id": N}`); the API rejects a GET with a query parameter. The returned link is a
      * direct, UTF-8, ~3-hour-valid URL to the subtitle text.
+     *
+     * The explicit Content-Type header is LOAD-BEARING: Ktorfit's @Body only calls setBody(),
+     * and Ktor's ContentNegotiation serializes an outbound body only when the request declares
+     * a matching Content-Type. Without it the call dies client-side before any network I/O
+     * ("Fail to prepare request body for sending... Content-Type: null").
      */
     @POST("download")
+    @Headers("Content-Type: application/json")
     suspend fun requestDownload(@Body body: OpenSubtitlesDownloadRequest): OpenSubtitlesDownloadResponse
 }
 

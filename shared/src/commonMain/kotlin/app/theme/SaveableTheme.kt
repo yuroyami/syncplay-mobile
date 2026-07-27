@@ -31,7 +31,6 @@ data class SaveableTheme(
             tertiary = tertiaryColor?.let { Color(it) },
             contrastLevel = contrast,
             specVersion = ColorSpec.SpecVersion.SPEC_2021,
-            error = Color.Red,
             neutral = neutralColor?.let { Color(it) },
             neutralVariant = neutralVariantColor?.let { Color(it) },
             isDark = isDark,

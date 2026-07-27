@@ -129,8 +129,8 @@ object PopupMediaDirs {
                 Card(
                     modifier = Modifier.fillMaxWidth(0.9f).fillMaxHeight(0.7f)
                         .align(Alignment.CenterHorizontally).padding(6.dp),
-                    shape = RoundedCornerShape(size = 6.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.LightGray)
+                    shape = MaterialTheme.shapes.small,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest)
                 ) {
                     val dirs = Preferences.MEDIA_DIRECTORIES.watchPref()
 
@@ -145,7 +145,7 @@ object PopupMediaDirs {
                                 Row(
                                     modifier = Modifier.fillMaxWidth().padding(4.dp).clickable(
                                         interactionSource = remember { MutableInteractionSource() },
-                                        indication = ripple(color = Theming.OLD_SP_PINK)
+                                        indication = ripple()
                                     ) { itemMenuState.value = true },
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -165,7 +165,7 @@ object PopupMediaDirs {
                                         text = name,
                                         textAlign = TextAlign.Start,
                                         maxLines = 5,
-                                        color = Color(35, 35, 35),
+                                        color = MaterialTheme.colorScheme.onSurface,
                                     )
                                 }
 

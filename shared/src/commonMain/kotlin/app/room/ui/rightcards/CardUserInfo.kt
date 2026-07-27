@@ -28,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import kotlin.math.roundToLong
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.LocalRoomViewmodel
@@ -131,7 +132,10 @@ object CardUserInfo {
 
                             Spacer(Modifier.width((Theming.USER_INFO_IC_SIZE * 2.5).dp))
 
-                            val fileSize = user.file?.fileSize?.toDoubleOrNull()?.div(1000000.0)?.toString() ?: "???"
+                            val fileSize = user.file?.fileSize?.toDoubleOrNull()
+                                ?.div(1000000.0)
+                                ?.let { mb -> ((mb * 10).roundToLong() / 10.0).toString() }
+                                ?: "???"
                             val fileDuration = timestampFromMillis(user.file?.fileDuration?.times(1000)?.toLong() ?: 0)
                             Text(
                                 text = stringResource(
@@ -140,8 +144,7 @@ object CardUserInfo {
                                     fileSize
                                 ),
                                 modifier = Modifier.fillMaxWidth(),
-                                fontSize = (Theming.USER_INFO_TXT_SIZE - 2).sp,
-                                fontWeight = FontWeight.W300,
+                                fontSize = Theming.USER_INFO_TXT_SIZE.sp,
                                 color = MaterialTheme.colorScheme.outline,
                             )
                         }

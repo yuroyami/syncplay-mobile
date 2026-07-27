@@ -101,16 +101,14 @@ object PopupColorPicker {
                     }
 
                     Button(
-                        colors = ButtonDefaults.buttonColors(containerColor = Theming.OLD_SP_YELLOW),
-                        border = BorderStroke(width = 1.dp, color = Color.Black),
                         modifier = Modifier.weight(1f).padding(6.dp),
                         onClick = {
                             visibilityState.value = false
                         },
                     ) {
-                        Icon(imageVector = Icons.Filled.Done, "", tint = Color.Black)
+                        Icon(imageVector = Icons.Filled.Done, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(Res.string.done), fontSize = 14.sp, color = Color.Black)
+                        Text(stringResource(Res.string.done), fontSize = 14.sp)
                     }
 
                     Surface(

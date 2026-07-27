@@ -182,20 +182,20 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
 
     abstract suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String)
 
-    /** Loads a subtitle from a local file path (for downloaded subtitles). */
-    suspend fun loadSubtitleFromPath(path: String, filename: String) {
-        if (!isInitialized || !hasMedia()) return
-        try {
+    /**
+     * Loads a subtitle from a local file path (for downloaded subtitles). Returns true when the
+     * engine accepted the file; user-facing messaging is the caller's responsibility, so the
+     * subtitle-search UI can drive its progress/checkmark/error states off the result.
+     */
+    suspend fun loadSubtitleFromPath(path: String, filename: String): Boolean {
+        if (!isInitialized || !hasMedia()) return false
+        return try {
             val extension = filename.substringAfterLast('.', "srt").lowercase()
             loadExternalSubImpl(PlatformFile(path), extension)
-            viewmodel.dispatchOSD {
-                getString(Res.string.room_selected_sub, filename)
-            }
+            true
         } catch (e: Exception) {
             e.printStackTrace()
-            viewmodel.dispatchOSD {
-                getString(Res.string.room_selected_sub_error)
-            }
+            false
         }
     }
 

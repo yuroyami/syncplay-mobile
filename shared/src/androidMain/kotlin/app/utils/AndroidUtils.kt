@@ -18,6 +18,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import app.SyncplayActivity
 import app.preferences.createDataStore
+import io.github.vinceglb.filekit.AndroidFile
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.dialogs.toAndroidUri
 import java.util.Locale
@@ -158,3 +159,19 @@ fun ComponentActivity.applyActivityUiProperties() {
 
 val PlatformFile.uri: Uri
     get() = toAndroidUri(contextObtainer().packageName+".provider")
+
+/**
+ * A directly-openable Android [Uri] for handing this file to a player engine.
+ *
+ * Picker results wrap a `content://` Uri (SAF) and pass through untouched. Files we wrote
+ * ourselves (e.g. a subtitle downloaded into our own storage) wrap a [java.io.File] and become
+ * a `file://` Uri. Unlike [uri], this never routes through FileProvider, so it also works for
+ * app-internal paths (filesDir/logs) that aren't declared in provider_paths.xml — which is where
+ * downloaded subtitles land. A bare filesystem path (no scheme) makes ExoPlayer's content
+ * resolver, mpv's resolveUri, and VLC's addSlave all reject the file silently.
+ */
+val PlatformFile.playableUri: Uri
+    get() = when (val af = androidFile) {
+        is AndroidFile.UriWrapper -> af.uri
+        is AndroidFile.FileWrapper -> Uri.fromFile(af.file)
+    }

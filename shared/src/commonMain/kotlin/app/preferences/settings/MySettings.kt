@@ -89,13 +89,14 @@ import syncplaymobile.shared.generated.resources.uisetting_categ_player_settings
 import syncplaymobile.shared.generated.resources.uisetting_categ_sync_mechanisms
 
 val settingGLOBALstyle = SettingStyling(
-    iconSize = 30
+    iconSize = 26
 )
 
 val settingROOMstyle = SettingStyling(
-    titleSize = 11f,
-    summarySize = 8f,
-    paddingUsed = 6f
+    titleSize = 13f,
+    summarySize = 11f,
+    iconSize = 22,
+    paddingUsed = 8f
 )
 
 val GLOBAL_GENERAL = SettingCategory(

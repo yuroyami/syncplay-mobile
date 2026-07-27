@@ -1,20 +1,21 @@
 [versions] #####################################################
 #KMM-Plugins
-kotlin = "2.4.0"
+# 2.4.20 has no stable release yet (only Beta1/Beta2 on Maven Central) — 2.4.10 is the latest stable.
+kotlin = "2.4.10"
 agp = "9.2.1"
-compose-multiplatform = "1.12.0-alpha02"
+compose-multiplatform = "1.12.0-beta02"
 kSerialization = "1.11.0"
-ksp = "2.3.9"
+ksp = "2.3.10"
 skie = "0.10.12"
 buildConfig = "6.0.10"
 ktorfit = "2.7.5"
 
 #KMM-Libs
 compose-multiplatform-icons = "1.7.3"
-compose-material3 = "1.12.0-alpha02"
-lifecycleViewmodelCompose = "2.11.0-beta02"
-navigation3Runtime = "1.2.0-alpha03"
-navigation3Ui = "1.2.0-alpha01"
+compose-material3 = "1.12.0-alpha03"
+lifecycleViewmodelCompose = "2.11.0"
+navigation3Runtime = "1.2.0-alpha06"
+navigation3Ui = "1.2.0-alpha02"
 compose-unstyled = "2.7.0"
 kermit = "2.1.0"
 krypto = "0.8.0"
@@ -23,16 +24,16 @@ filekit = "0.14.2"
 kolorpicker = "2.1.0"
 uriKmp = "0.0.21"
 materialkolor = "5.0.0-alpha07"
-ktor = "3.5.0"
+ktor = "3.5.1"
 koroutines = "1.11.0"
 datetime = "0.8.0"
 atomicfu = "0.33.0"
 coil = "3.5.0"
-# Skiko: Compose 1.11.0-rc01 ships with 0.144.6; Coil 3.4.0 declares 0.9.22.2.
+# Skiko: Compose 1.12.0-beta02 ships with 0.150.1; Coil 3.5.0 declares 0.144.6.
 # Pin to the more recent (Compose's), explicitly forced so neither side regresses
 # silently when either library is bumped. Bump this to whatever the new Compose
 # release ships when upgrading compose-multiplatform.
-skiko = "0.148.2"
+skiko = "0.150.1"
 
 #Android
 coreSplashscreen = "1.2.0"
@@ -42,7 +43,7 @@ documentfile = "1.1.0"
 appcompat = "1.7.1"
 coreKtx = "1.19.0"
 desugaring = "2.1.5"
-media3 = "1.10.1"
+media3 = "1.11.0-rc01"
 netty = "4.1.131.Final" #"4.2.x" (and above) requires Api26 minimum
 conscrypt = "2.5.3"
 libvlc-android = "4.0.0-eap28"
@@ -50,6 +51,11 @@ newpipeExtractor = "v0.24.6"
 
 #iOS
 libvlc-ios = "4.0.0a19"
+
+#Desktop
+# vlcj 4.x pairs with libVLC 3.x (the current stable desktop VLC). vlcj 5 targets the
+# still-unreleased libVLC 4 — do not bump until VLC 4 desktop ships.
+vlcj = "4.8.3"
 
 [libraries] #######################################################################################
 #KMM
@@ -96,6 +102,7 @@ skiko = { module = "org.jetbrains.skiko:skiko", version.ref = "skiko" }
 
 #Android
 kotlin-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "koroutines" }
+kotlin-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "koroutines" }
 kotlin-coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "koroutines" }
 jetpack-core = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 jetpack-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
@@ -120,6 +127,9 @@ conscrypt = { module = "org.conscrypt:conscrypt-android", version.ref = "conscry
 libvlc-android = { module = "org.videolan.android:libvlc-all", version.ref = "libvlc-android" }
 newpipe-extractor = { module = "com.github.TeamNewPipe:NewPipeExtractor", version.ref = "newpipeExtractor" }
 
+#Desktop
+vlcj = { module = "uk.co.caprica:vlcj", version.ref = "vlcj" }
+
 [bundles] ########################################################################################
 compose-multiplatform = [
     "compose-foundation", "compose-ui", "compose-material3",
@@ -143,6 +153,7 @@ jetpack-androidx-extensions = ["jetpack-activity-compose", "jetpack-appcompat", 
 [plugins] ########################################################################################
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-cocoapods = { id = "org.jetbrains.kotlin.native.cocoapods", version.ref = "kotlin" }
 
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

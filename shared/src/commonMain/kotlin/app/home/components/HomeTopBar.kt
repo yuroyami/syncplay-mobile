@@ -60,6 +60,7 @@ import app.theme.Theming
 import app.theme.Theming.SP_GRADIENT
 import app.theme.Theming.flexibleGradient
 import app.uicomponents.FlexibleIcon
+import app.uicomponents.SyncplayishText
 import app.utils.appName
 import org.jetbrains.compose.resources.Font
 import org.jetbrains.compose.resources.vectorResource
@@ -81,10 +82,10 @@ fun HomeTopBar(viewmodel: HomeViewmodel) {
         modifier = Modifier.fillMaxWidth()
             .background(color = Color.Transparent),
         shape = RoundedCornerShape(
-            topEnd = 0.dp, topStart = 0.dp, bottomEnd = 12.dp, bottomStart = 12.dp
+            topEnd = 0.dp, topStart = 0.dp, bottomEnd = 16.dp, bottomStart = 16.dp
         ),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
     ) {
         val settingState = remember { mutableStateOf(SettingGridState.COLLAPSED) }
 
@@ -97,58 +98,27 @@ fun HomeTopBar(viewmodel: HomeViewmodel) {
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 headlineContent = {
                     Row(
-                        modifier = Modifier.clip(CircleShape).background(
-                            brush = Brush.linearGradient(
-                                colors = listOf(
-                                    SP_GRADIENT.first().copy(0.05f),
-                                    SP_GRADIENT.last().copy(0.05f)
-                                )
-                            )
-                        ).clickable(
+                        verticalAlignment = CenterVertically,
+                        modifier = Modifier.clip(CircleShape).clickable(
                             enabled = true,
                             interactionSource = null,
-                            indication = ripple(
-                                bounded = false, color = Color(100, 100, 100, 200)
-                            )
+                            indication = ripple(bounded = false)
                         ) { aboutpopupState.value = true }.padding(16.dp)
                     ) {
                         Image(
                             imageVector = vectorResource(Res.drawable.syncplay_logo_gradient),
-                            contentDescription = "",
+                            contentDescription = null,
                             modifier = Modifier.height(32.dp).aspectRatio(1f)
                         )
 
                         Spacer(modifier = Modifier.width(12.dp))
 
-                        Box(modifier = Modifier.padding(bottom = 6.dp)) {
-                            Text(
-                                modifier = Modifier.wrapContentWidth(),
-                                text = appName,
-                                style = TextStyle(
-                                    color = Theming.SP_PALE,
-                                    drawStyle = Stroke(
-                                        miter = 10f,
-                                        width = 2f,
-                                        join = StrokeJoin.Round
-                                    ),
-                                    shadow = Shadow(
-                                        color = Theming.NeoSP2.copy(alpha = 0.2f),
-                                        offset = Offset(0f, 10f),
-                                        blurRadius = 2f
-                                    ),
-                                    fontFamily = FontFamily(Font(Res.font.Directive4_Regular)),
-                                    fontSize = 24.sp,
-                                )
-                            )
-
-                            Text(
-                                text = appName, style = TextStyle(
-                                    brush = Brush.linearGradient(colors = SP_GRADIENT),
-                                    fontFamily = FontFamily(Font(Res.font.Directive4_Regular)),
-                                    fontSize = 24.sp,
-                                )
-                            )
-                        }
+                        SyncplayishText(
+                            modifier = Modifier.padding(bottom = 4.dp),
+                            string = appName,
+                            size = 24f,
+                            colorStops = SP_GRADIENT
+                        )
                     }
                 },
                 trailingContent = {
@@ -158,8 +128,7 @@ fun HomeTopBar(viewmodel: HomeViewmodel) {
                         FlexibleIcon(
                             icon = Icons.Outlined.Palette,
                             size = 38,
-                            tintColors = flexibleGradient,
-                            shadowColors = listOf(MaterialTheme.colorScheme.outline),
+                            tintColors = listOf(MaterialTheme.colorScheme.primary),
                             onClick = {
                                 themePopupState = true
                             }
@@ -173,8 +142,7 @@ fun HomeTopBar(viewmodel: HomeViewmodel) {
                                 SettingGridState.INSIDE_CATEGORY -> Icons.AutoMirrored.Filled.Redo
                             },
                             size = 38,
-                            tintColors = flexibleGradient,
-                            shadowColors = listOf(MaterialTheme.colorScheme.outline),
+                            tintColors = listOf(MaterialTheme.colorScheme.primary),
                             onClick = {
                                 settingState.value = when (settingState.value) {
                                     SettingGridState.COLLAPSED -> SettingGridState.NAVIGATING_CATEGORIES
