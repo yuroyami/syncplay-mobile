@@ -25,8 +25,24 @@ import app.LocalChatPalette
 import app.LocalRoomViewmodel
 import app.preferences.Preferences.MSG_FADING_DURATION
 import app.preferences.watchPref
+import app.room.models.Message
 import kotlinx.coroutines.delay
 
+internal data class FadingMessagePresentation(
+    val message: Message? = null,
+    val visible: Boolean = false,
+)
+
+internal fun nextFadingMessagePresentation(
+    current: FadingMessagePresentation,
+    latest: Message?,
+): FadingMessagePresentation {
+    return if (latest != null && !latest.isMainUser && !latest.seen) {
+        FadingMessagePresentation(message = latest, visible = true)
+    } else {
+        current.copy(visible = false)
+    }
+}
 
 /** Briefly shows the latest unseen non-self chat message when the HUD is hidden, then fades it out. */
 @Composable
@@ -40,17 +56,20 @@ fun FadingMessageLayout() {
     val palette = LocalChatPalette.current
 
     if (!isHUDVisible) {
-        var visibility by remember { mutableStateOf(false) }
+        var presentation by remember { mutableStateOf(FadingMessagePresentation()) }
         val msgs by viewmodel.session.messageSequence.collectAsState()
-        LaunchedEffect(msgs.size) {
-            if (msgs.isNotEmpty()) {
-                val lastMsg = msgs.last()
-
-                if (!lastMsg.isMainUser && !lastMsg.seen) {
-                    visibility = true
-                    delay(fadingTimeout.value.toLong() * 1000L)
-                    visibility = false
+        LaunchedEffect(msgs) {
+            presentation = nextFadingMessagePresentation(presentation, msgs.lastOrNull())
+            val displayedMessage = presentation.message
+            if (presentation.visible) {
+                delay(fadingTimeout.value.toLong() * 1000L)
+                if (presentation.message === displayedMessage) {
+                    presentation = presentation.copy(visible = false)
                 }
+            }
+            delay(FADE_OUT_MILLIS.toLong())
+            if (presentation.message === displayedMessage && !presentation.visible) {
+                presentation = FadingMessagePresentation()
             }
         }
 
@@ -58,21 +77,25 @@ fun FadingMessageLayout() {
             modifier = Modifier.fillMaxWidth().padding(24.dp),
             horizontalAlignment = Alignment.Start
         ) {
-            AnimatedVisibility(
-                enter = fadeIn(animationSpec = keyframes { durationMillis = 100 }),
-                exit = fadeOut(animationSpec = keyframes { durationMillis = 500 }),
-                visible = visibility,
-            ) {
-                Text(
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .focusable(false),
-                    overflow = TextOverflow.Ellipsis,
-                    text = msgs.last().factorize(palette),
-                    lineHeight = if (isInPiPMode) 9.sp else 15.sp,
-                    fontSize = if (isInPiPMode) 8.sp else 13.sp
-                )
+            presentation.message?.let { message ->
+                AnimatedVisibility(
+                    enter = fadeIn(animationSpec = keyframes { durationMillis = 100 }),
+                    exit = fadeOut(animationSpec = keyframes { durationMillis = FADE_OUT_MILLIS }),
+                    visible = presentation.visible,
+                ) {
+                    Text(
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .focusable(false),
+                        overflow = TextOverflow.Ellipsis,
+                        text = message.factorize(palette),
+                        lineHeight = if (isInPiPMode) 9.sp else 15.sp,
+                        fontSize = if (isInPiPMode) 8.sp else 13.sp
+                    )
+                }
             }
         }
     }
 }
+
+private const val FADE_OUT_MILLIS = 500
