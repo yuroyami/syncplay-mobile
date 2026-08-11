@@ -181,6 +181,12 @@
     <string name="room_addmedia_online_details">Load Media from a network URL</string>
     <string name="room_addmedia_online_popup_subtext">Make sure to provide direct links (for example: www.example.com/video.mp4). YouTube and other media streaming services are not supported yet.</string>
     <string name="room_addmedia_online_url">URL address</string>
+    <string name="room_addmedia_online_play_now">Play now</string>
+    <string name="room_addmedia_online_predownload">Pre-download</string>
+    <string name="room_addmedia_online_preparing">Preparing download...</string>
+    <string name="room_addmedia_online_downloading">Downloading %1$d%%</string>
+    <string name="room_addmedia_online_downloaded">Saved %1$s. Select it later from device storage.</string>
+    <string name="room_addmedia_online_download_failed">Download failed: %1$s</string>
     <string name="room_overflow_title">More Options...</string>
     <string name="room_overflow_create_managed_room">Create managed room</string>
     <string name="room_overflow_create_managed_room_tooltip">Create managed room</string>
