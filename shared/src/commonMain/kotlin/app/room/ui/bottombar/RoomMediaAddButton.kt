@@ -83,6 +83,7 @@ import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.done
 import syncplaymobile.shared.generated.resources.room_addmedia_offline
 import syncplaymobile.shared.generated.resources.room_addmedia_offline_system
+import syncplaymobile.shared.generated.resources.room_addmedia_offline_tv
 import syncplaymobile.shared.generated.resources.room_addmedia_online
 import syncplaymobile.shared.generated.resources.room_addmedia_online_details
 import syncplaymobile.shared.generated.resources.room_addmedia_online_popup_subtext
@@ -106,6 +107,12 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
             }
             showPopup = false
         }
+    }
+    val tvVideoPicker = rememberTvLocalVideoPickerLauncher { file ->
+        viewmodel.viewModelScope.launch {
+            viewmodel.player.injectVideoFile(file)
+        }
+        showPopup = false
     }
 
     // iOS FileKit picker race (FileKit #575): launching a picker while a Compose modal
@@ -158,34 +165,7 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
                 font = jostFont
             )
 
-            // From storage (system picker): FileKit's default ACTION_OPEN_DOCUMENT SAF picker,
-            // filtered by MIME types derived from vidExs on Android; UIDocumentPickerViewController on iOS.
-            DropdownMenuItem(
-                text = {
-                    Row(verticalAlignment = CenterVertically) {
-                        FlexibleIcon(
-                            icon = Icons.Filled.FolderOpen,
-                            size = ROOM_ICON_SIZE,
-                            shadowColors = listOf(Color.Black)
-                        ) {}
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            color = Color.LightGray,
-                            text = stringResource(Res.string.room_addmedia_offline),
-                        )
-                    }
-                },
-                onClick = {
-                    launchVideoPickerAfterDismiss = true
-                    showPopup = false
-                }
-            )
-
-            // From storage (custom picker): Android only. Fires ACTION_GET_CONTENT in
-            // Intent.createChooser() so any installed file manager / SMB / cloud app can be picked.
-            // Covers SMB DocumentsProviders whose opaque MIMEs FileKit's extension filter rejects.
-            // iOS has no chooser API, so the item is hidden there.
-            if (platform == Platform.Android) {
+            if (shouldUseTvLocalVideoPicker(tvVideoPicker != null)) {
                 DropdownMenuItem(
                     text = {
                         Row(verticalAlignment = CenterVertically) {
@@ -197,21 +177,67 @@ fun RoomMediaAddButton(popupStateAddMedia: MutableState<Boolean>) {
                             Spacer(Modifier.width(8.dp))
                             Text(
                                 color = Color.LightGray,
-                                text = stringResource(Res.string.room_addmedia_offline_system),
+                                text = stringResource(Res.string.room_addmedia_offline_tv),
                             )
                         }
                     },
                     onClick = {
                         showPopup = false
-                        platformCallback.launchSystemFilePicker { uri ->
-                            if (uri != null) {
-                                viewmodel.viewModelScope.launch {
-                                    viewmodel.player.injectVideoFile(PlatformFile(uri))
+                        tvVideoPicker?.invoke()
+                    }
+                )
+            } else {
+                // FileKit's ACTION_OPEN_DOCUMENT picker on Android and UIDocumentPicker on iOS.
+                DropdownMenuItem(
+                    text = {
+                        Row(verticalAlignment = CenterVertically) {
+                            FlexibleIcon(
+                                icon = Icons.Filled.FolderOpen,
+                                size = ROOM_ICON_SIZE,
+                                shadowColors = listOf(Color.Black)
+                            ) {}
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                color = Color.LightGray,
+                                text = stringResource(Res.string.room_addmedia_offline),
+                            )
+                        }
+                    },
+                    onClick = {
+                        launchVideoPickerAfterDismiss = true
+                        showPopup = false
+                    }
+                )
+
+                // Android chooser fallback for third-party file managers and cloud providers.
+                if (platform == Platform.Android) {
+                    DropdownMenuItem(
+                        text = {
+                            Row(verticalAlignment = CenterVertically) {
+                                FlexibleIcon(
+                                    icon = Icons.Filled.FolderOpen,
+                                    size = ROOM_ICON_SIZE,
+                                    shadowColors = listOf(Color.Black)
+                                ) {}
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    color = Color.LightGray,
+                                    text = stringResource(Res.string.room_addmedia_offline_system),
+                                )
+                            }
+                        },
+                        onClick = {
+                            showPopup = false
+                            platformCallback.launchSystemFilePicker { uri ->
+                                if (uri != null) {
+                                    viewmodel.viewModelScope.launch {
+                                        viewmodel.player.injectVideoFile(PlatformFile(uri))
+                                    }
                                 }
                             }
                         }
-                    }
-                )
+                    )
+                }
             }
 
             //From network URL

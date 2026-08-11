@@ -177,6 +177,10 @@
     <string name="room_button_desc_more">More Settings</string>
     <string name="room_addmedia_offline">From storage (system picker)</string>
     <string name="room_addmedia_offline_system">From storage (custom picker)</string>
+    <string name="room_addmedia_offline_tv">From storage</string>
+    <string name="room_addmedia_offline_tv_title">Choose a local video</string>
+    <string name="room_addmedia_offline_tv_permission">Video access is required to browse local files.</string>
+    <string name="room_addmedia_offline_tv_empty">No local videos found.</string>
     <string name="room_addmedia_online">From a network URL</string>
     <string name="room_addmedia_online_details">Load Media from a network URL</string>
     <string name="room_addmedia_online_popup_subtext">Make sure to provide direct links (for example: www.example.com/video.mp4). YouTube and other media streaming services are not supported yet.</string>
