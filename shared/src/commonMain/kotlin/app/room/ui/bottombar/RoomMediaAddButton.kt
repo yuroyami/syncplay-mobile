@@ -18,14 +18,17 @@ import androidx.compose.material.icons.filled.AddLink
 import androidx.compose.material.icons.filled.AddToQueue
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -84,8 +87,14 @@ import syncplaymobile.shared.generated.resources.done
 import syncplaymobile.shared.generated.resources.room_addmedia_offline
 import syncplaymobile.shared.generated.resources.room_addmedia_offline_system
 import syncplaymobile.shared.generated.resources.room_addmedia_online
+import syncplaymobile.shared.generated.resources.room_addmedia_online_download_failed
+import syncplaymobile.shared.generated.resources.room_addmedia_online_downloaded
+import syncplaymobile.shared.generated.resources.room_addmedia_online_downloading
 import syncplaymobile.shared.generated.resources.room_addmedia_online_details
+import syncplaymobile.shared.generated.resources.room_addmedia_online_play_now
 import syncplaymobile.shared.generated.resources.room_addmedia_online_popup_subtext
+import syncplaymobile.shared.generated.resources.room_addmedia_online_predownload
+import syncplaymobile.shared.generated.resources.room_addmedia_online_preparing
 import syncplaymobile.shared.generated.resources.room_addmedia_online_url
 import syncplaymobile.shared.generated.resources.room_button_desc_add
 
@@ -289,6 +298,35 @@ fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
         val scope = rememberCoroutineScope()
         val viewmodel = LocalRoomViewmodel.current
         val clipboard = LocalClipboard.current
+        val url = remember { mutableStateOf("") }
+        var downloadInProgress by remember { mutableStateOf(false) }
+        var downloadProgress by remember { mutableStateOf<Float?>(null) }
+        var downloadedFileName by remember { mutableStateOf<String?>(null) }
+        var downloadError by remember { mutableStateOf<String?>(null) }
+        val preDownloader = rememberTvVideoPreDownloader(
+            onProgress = { progress ->
+                downloadInProgress = true
+                downloadProgress = progress
+                downloadedFileName = null
+                downloadError = null
+            },
+            onComplete = { fileName ->
+                downloadInProgress = false
+                downloadProgress = 1f
+                downloadedFileName = fileName
+            },
+            onError = { error ->
+                downloadInProgress = false
+                downloadProgress = null
+                downloadError = error
+            },
+        )
+        val playNow: () -> Unit = {
+            visibilityState.value = false
+            viewmodel.viewModelScope.launch {
+                viewmodel.player.injectVideoURL(url.value.trim())
+            }
+        }
 
         Column(
             modifier = Modifier.fillMaxSize().padding(6.dp),
@@ -318,11 +356,11 @@ fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
             Spacer(Modifier.height(2.dp))
 
             /* The URL input box */
-            val url = remember { mutableStateOf("") }
             TextField(
                 modifier = Modifier.fillMaxWidth(0.9f),
                 shape = RoundedCornerShape(16.dp),
                 singleLine = true,
+                enabled = !downloadInProgress,
                 value = url.value,
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.DarkGray,
@@ -333,13 +371,16 @@ fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
                     disabledIndicatorColor = Color.Transparent,
                 ),
                 trailingIcon = {
-                    IconButton(onClick = {
-                        scope.launch {
-                            clipboard.getClipEntry()?.getText()?.let { clipboardData ->
-                                url.value = clipboardData
+                    IconButton(
+                        enabled = !downloadInProgress,
+                        onClick = {
+                            scope.launch {
+                                clipboard.getClipEntry()?.getText()?.let { clipboardData ->
+                                    url.value = clipboardData
+                                }
                             }
-                        }
-                    }) {
+                        },
+                    ) {
                         Icon(imageVector = Icons.Filled.ContentPaste, "", tint = MaterialTheme.colorScheme.primary)
                     }
                 },
@@ -359,24 +400,93 @@ fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
                 }
             )
 
-            /* Ok button */
-            Button(
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                border = BorderStroke(width = 1.dp, color = Color.Black),
-                onClick = {
-                    visibilityState.value = false
+            if (downloadInProgress) {
+                if (downloadProgress == null) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth(0.65f))
+                    Text(
+                        text = stringResource(Res.string.room_addmedia_online_preparing),
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                } else {
+                    LinearProgressIndicator(
+                        progress = { downloadProgress ?: 0f },
+                        modifier = Modifier.fillMaxWidth(0.65f),
+                    )
+                    Text(
+                        text = stringResource(
+                            Res.string.room_addmedia_online_downloading,
+                            ((downloadProgress ?: 0f) * 100f).toInt(),
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+            } else {
+                downloadedFileName?.let { fileName ->
+                    Text(
+                        text = stringResource(Res.string.room_addmedia_online_downloaded, fileName),
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+                downloadError?.let { error ->
+                    Text(
+                        text = stringResource(Res.string.room_addmedia_online_download_failed, error),
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            }
 
-                    if (url.value.trim().isNotBlank()) {
-                        viewmodel.viewModelScope.launch {
-                            viewmodel.player.injectVideoURL(url.value.trim())
+            if (preDownloader == null) {
+                Button(
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    border = BorderStroke(width = 1.dp, color = Color.Black),
+                    onClick = {
+                        visibilityState.value = false
+                        if (url.value.trim().isNotBlank()) {
+                            viewmodel.viewModelScope.launch {
+                                viewmodel.player.injectVideoURL(url.value.trim())
+                            }
                         }
+                    },
+                ) {
+                    Icon(imageVector = Icons.Filled.Done, contentDescription = "")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(Res.string.done), fontSize = 14.sp)
+                }
+            } else {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Button(
+                        enabled = !downloadInProgress && url.value.trim().isNotBlank(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        border = BorderStroke(width = 1.dp, color = Color.Black),
+                        onClick = playNow,
+                    ) {
+                        Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(Res.string.room_addmedia_online_play_now),
+                            fontSize = 14.sp,
+                        )
                     }
 
-                },
-            ) {
-                Icon(imageVector = Icons.Filled.Done, "")
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(Res.string.done), fontSize = 14.sp)
+                    Button(
+                        enabled = !downloadInProgress && url.value.trim().isNotBlank(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                        border = BorderStroke(width = 1.dp, color = Color.Black),
+                        onClick = { preDownloader(url.value.trim()) },
+                    ) {
+                        Icon(Icons.Filled.Download, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(Res.string.room_addmedia_online_predownload),
+                            fontSize = 14.sp,
+                        )
+                    }
+                }
             }
         }
     }
