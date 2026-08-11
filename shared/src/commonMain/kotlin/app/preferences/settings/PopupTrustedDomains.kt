@@ -29,6 +29,7 @@ import app.preferences.Preferences
 import app.preferences.set
 import app.preferences.value
 import app.uicomponents.SyncplayPopup
+import app.uicomponents.tvTextFieldNavigation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
@@ -78,7 +79,7 @@ fun TrustedDomainsPopup(visibilityState: MutableState<Boolean>) {
             BasicTextField(
                 value = text,
                 onValueChange = { text = it },
-                modifier = Modifier.fillMaxWidth().weight(1f),
+                modifier = Modifier.fillMaxWidth().weight(1f).tvTextFieldNavigation(),
                 textStyle = TextStyle(
                     color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 14.sp,

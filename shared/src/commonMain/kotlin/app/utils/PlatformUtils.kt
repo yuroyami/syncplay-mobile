@@ -32,6 +32,9 @@ enum class Platform(val label: String, val color: Color) {
 /** The platform this build runs on. */
 expect val platform: Platform
 
+/** Whether the current device uses the television UI mode. */
+expect val isTelevision: Boolean
+
 expect val httpClient: HttpClient
 
 /** Media player engines available on the current platform. */

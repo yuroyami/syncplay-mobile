@@ -65,6 +65,7 @@ import kotlin.math.roundToLong
 import kotlin.native.ref.WeakReference
 
 actual val platform: Platform = Platform.IOS
+actual val isTelevision: Boolean = false
 
 /* Lazy singleton: a fresh `get()` would mint a new Darwin engine (and NSURLSession) on every
  * access (the GIF grid does this per-tile per-scroll), and iOS throttles new sessions, so Klipy

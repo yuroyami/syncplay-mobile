@@ -37,6 +37,7 @@ import app.theme.Theming.flexibleGradient
 import app.uicomponents.FlexibleText
 import app.uicomponents.SyncplayPopup
 import app.uicomponents.jostFont
+import app.uicomponents.tvTextFieldNavigation
 import app.utils.generateRoomPassword
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
@@ -105,7 +106,7 @@ fun ManagedRoomPopup(purpose: ManagedRoomPopupPurpose) {
             )
 
             TextField(
-                modifier = Modifier.fillMaxWidth().padding(6.dp), singleLine = true, value = inputValue, keyboardActions = KeyboardActions(onDone = {
+                modifier = Modifier.fillMaxWidth().padding(6.dp).tvTextFieldNavigation(), singleLine = true, value = inputValue, keyboardActions = KeyboardActions(onDone = {
                     focusManager.clearFocus(true)
                 }), colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.DarkGray,

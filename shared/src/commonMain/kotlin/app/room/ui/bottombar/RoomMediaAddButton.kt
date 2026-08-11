@@ -43,6 +43,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboard
@@ -67,9 +69,11 @@ import app.uicomponents.jostFont
 import app.uicomponents.sairaFont
 import app.uicomponents.syncplayFont
 import app.uicomponents.tvFocusable
-import androidx.compose.ui.focus.focusRequester
+import app.uicomponents.tvFocusProperties
+import app.uicomponents.tvTextFieldNavigation
 import app.utils.Platform
 import app.utils.getText
+import app.utils.isTelevision
 import app.utils.loggy
 import app.utils.platform
 import app.utils.platformCallback
@@ -289,6 +293,32 @@ fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
         val scope = rememberCoroutineScope()
         val viewmodel = LocalRoomViewmodel.current
         val clipboard = LocalClipboard.current
+        val urlFocusRequester = remember { FocusRequester() }
+        val pasteFocusRequester = remember { FocusRequester() }
+        val doneFocusRequester = remember { FocusRequester() }
+        val url = remember { mutableStateOf("") }
+        val pasteUrl: () -> Unit = {
+            scope.launch {
+                clipboard.getClipEntry()?.getText()?.let { clipboardData ->
+                    url.value = clipboardData
+                }
+            }
+        }
+        val submitUrl: () -> Unit = {
+            visibilityState.value = false
+            if (url.value.trim().isNotBlank()) {
+                viewmodel.viewModelScope.launch {
+                    viewmodel.player.injectVideoURL(url.value.trim())
+                }
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            if (isTelevision) {
+                delay(100)
+                runCatching { urlFocusRequester.requestFocus() }
+            }
+        }
 
         Column(
             modifier = Modifier.fillMaxSize().padding(6.dp),
@@ -318,61 +348,85 @@ fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
             Spacer(Modifier.height(2.dp))
 
             /* The URL input box */
-            val url = remember { mutableStateOf("") }
-            TextField(
-                modifier = Modifier.fillMaxWidth(0.9f),
-                shape = RoundedCornerShape(16.dp),
-                singleLine = true,
-                value = url.value,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.DarkGray,
-                    unfocusedContainerColor = Color.DarkGray,
-                    disabledContainerColor = Color.DarkGray,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent,
-                ),
-                trailingIcon = {
-                    IconButton(onClick = {
-                        scope.launch {
-                            clipboard.getClipEntry()?.getText()?.let { clipboardData ->
-                                url.value = clipboardData
-                            }
-                        }
-                    }) {
-                        Icon(imageVector = Icons.Filled.ContentPaste, "", tint = MaterialTheme.colorScheme.primary)
-                    }
-                },
-                leadingIcon = {
-                    Icon(imageVector = Icons.Filled.Link, "", tint = MaterialTheme.colorScheme.primary)
-                },
-                onValueChange = { url.value = it },
-                textStyle = TextStyle(
-                    brush = Brush.linearGradient(
-                        colors = Theming.SP_GRADIENT
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                TextField(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .focusRequester(urlFocusRequester)
+                        .tvTextFieldNavigation(
+                            right = pasteFocusRequester,
+                            down = doneFocusRequester,
+                        )
+                        .tvFocusProperties {
+                            right = pasteFocusRequester
+                            down = doneFocusRequester
+                        },
+                    shape = RoundedCornerShape(16.dp),
+                    singleLine = true,
+                    value = url.value,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.DarkGray,
+                        unfocusedContainerColor = Color.DarkGray,
+                        disabledContainerColor = Color.DarkGray,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        disabledIndicatorColor = Color.Transparent,
                     ),
-                    fontFamily = FontFamily(syncplayFont),
-                    fontSize = 16.sp,
-                ),
-                label = {
-                    Text(stringResource(Res.string.room_addmedia_online_url), color = Color.Gray)
-                }
-            )
+                    trailingIcon = {
+                        IconButton(
+                            modifier = Modifier
+                                .tvFocusProperties {
+                                    left = urlFocusRequester
+                                    down = doneFocusRequester
+                                }
+                                .tvFocusable(
+                                    focusRequester = pasteFocusRequester,
+                                    enabled = isTelevision,
+                                    scaleWhenFocused = 1f,
+                                    onActivate = pasteUrl,
+                                ),
+                            onClick = pasteUrl,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.ContentPaste,
+                                contentDescription = "",
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    },
+                    leadingIcon = {
+                        Icon(imageVector = Icons.Filled.Link, "", tint = MaterialTheme.colorScheme.primary)
+                    },
+                    onValueChange = { url.value = it },
+                    textStyle = TextStyle(
+                        brush = Brush.linearGradient(
+                            colors = Theming.SP_GRADIENT
+                        ),
+                        fontFamily = FontFamily(syncplayFont),
+                        fontSize = 16.sp,
+                    ),
+                    label = {
+                        Text(stringResource(Res.string.room_addmedia_online_url), color = Color.Gray)
+                    }
+                )
+            }
 
             /* Ok button */
             Button(
+                modifier = Modifier
+                    .tvFocusProperties { up = urlFocusRequester }
+                    .tvFocusable(
+                        focusRequester = doneFocusRequester,
+                        enabled = isTelevision,
+                        scaleWhenFocused = 1f,
+                        onActivate = submitUrl,
+                    ),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 border = BorderStroke(width = 1.dp, color = Color.Black),
-                onClick = {
-                    visibilityState.value = false
-
-                    if (url.value.trim().isNotBlank()) {
-                        viewmodel.viewModelScope.launch {
-                            viewmodel.player.injectVideoURL(url.value.trim())
-                        }
-                    }
-
-                },
+                onClick = submitUrl,
             ) {
                 Icon(imageVector = Icons.Filled.Done, "")
                 Spacer(modifier = Modifier.width(8.dp))

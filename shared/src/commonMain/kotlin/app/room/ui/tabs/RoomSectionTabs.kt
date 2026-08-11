@@ -26,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +35,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
@@ -43,6 +45,9 @@ import app.LocalRoomUiState
 import app.LocalRoomViewmodel
 import app.room.RoomUiStateManager.Companion.RoomOrientation
 import app.uicomponents.FlexibleIcon
+import app.uicomponents.tvFocusable
+import app.uicomponents.tvFocusProperties
+import app.utils.isTelevision
 import app.utils.platformCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -128,6 +133,13 @@ fun RoomTabSection(modifier: Modifier) {
 
         Box {
             val overflowMenuState = remember { mutableStateOf(false) }
+            val pipFocusRequester = remember { FocusRequester() }
+            val createRoomFocusRequester = remember { FocusRequester() }
+            val identifyFocusRequester = remember { FocusRequester() }
+            val leaveRoomFocusRequester = remember { FocusRequester() }
+            val managedRoomsAreSupported by viewmodel.protocol.supportsManagedRooms.collectAsState()
+            val showsPip = viewmodel.player.supportsPictureInPicture
+            val showsManagedRoomActions = !viewmodel.isSoloMode && managedRoomsAreSupported
             FlexibleIcon(
                 icon = Icons.Filled.MoreVert,
                 size = 48,
@@ -136,11 +148,25 @@ fun RoomTabSection(modifier: Modifier) {
                 overflowMenuState.value = !overflowMenuState.value
             }
 
+            LaunchedEffect(overflowMenuState.value) {
+                if (isTelevision && overflowMenuState.value) {
+                    when {
+                        showsPip -> pipFocusRequester
+                        showsManagedRoomActions -> createRoomFocusRequester
+                        else -> leaveRoomFocusRequester
+                    }.requestFocus()
+                }
+            }
+
             DropdownMenu(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 shape = RoundedCornerShape(12.dp),
                 expanded = overflowMenuState.value,
-                properties = PopupProperties(dismissOnBackPress = true, dismissOnClickOutside = true),
+                properties = PopupProperties(
+                    focusable = isTelevision,
+                    dismissOnBackPress = true,
+                    dismissOnClickOutside = true,
+                ),
                 onDismissRequest = {
                     scope.launch {
                         delay(50)
@@ -155,9 +181,15 @@ fun RoomTabSection(modifier: Modifier) {
                     color = MaterialTheme.colorScheme.primary,
                 )
 
-                if (viewmodel.player.supportsPictureInPicture) {
+                if (showsPip) {
                     /* Picture-in-Picture mode */
                     RoomOverflowItem(
+                        focusRequester = pipFocusRequester,
+                        down = if (showsManagedRoomActions) {
+                            createRoomFocusRequester
+                        } else {
+                            leaveRoomFocusRequester
+                        },
                         text = stringResource(Res.string.room_overflow_pip),
                         icon = Icons.Filled.PictureInPicture,
                         onClick = {
@@ -167,32 +199,34 @@ fun RoomTabSection(modifier: Modifier) {
                     )
                 }
 
-                val managedRoomAreSupported by viewmodel.protocol.supportsManagedRooms.collectAsState()
-                if (!viewmodel.isSoloMode) {
-                    if (managedRoomAreSupported) {
-                        /* Create managed room */
-                        RoomOverflowItem(
-                            text = stringResource(Res.string.room_overflow_create_managed_room),
-                            icon = Icons.Filled.SupervisedUserCircle,
-                            onClick = {
-                                overflowMenuState.value = false
-                                viewmodel.uiState.popupCreateManagedRoom.value = true
-                            }
-                        )
+                if (showsManagedRoomActions) {
+                    /* Create managed room */
+                    RoomOverflowItem(
+                        focusRequester = createRoomFocusRequester,
+                        up = if (showsPip) pipFocusRequester else null,
+                        down = identifyFocusRequester,
+                        text = stringResource(Res.string.room_overflow_create_managed_room),
+                        icon = Icons.Filled.SupervisedUserCircle,
+                        onClick = {
+                            overflowMenuState.value = false
+                            viewmodel.uiState.popupCreateManagedRoom.value = true
+                        }
+                    )
 
-                        /* Identify as room operator */
-                        RoomOverflowItem(
-                            text = stringResource(Res.string.room_overflow_identify_as_operator),
-                            icon = Icons.Filled.SupervisorAccount,
-                            onClick = {
-                                overflowMenuState.value = false
+                    /* Identify as room operator */
+                    RoomOverflowItem(
+                        focusRequester = identifyFocusRequester,
+                        up = createRoomFocusRequester,
+                        down = leaveRoomFocusRequester,
+                        text = stringResource(Res.string.room_overflow_identify_as_operator),
+                        icon = Icons.Filled.SupervisorAccount,
+                        onClick = {
+                            overflowMenuState.value = false
 
-                                //TODO: Check if user is already operator
-                                viewmodel.uiState.popupIdentifyAsRoomOperator.value = true
-                            }
-                        )
-                    }
-
+                            //TODO: Check if user is already operator
+                            viewmodel.uiState.popupIdentifyAsRoomOperator.value = true
+                        }
+                    )
                 }
 
                 /* Toggle portrait/landscape mode */
@@ -200,6 +234,7 @@ fun RoomTabSection(modifier: Modifier) {
                     val currentOrientation by cardController.roomOrientation.collectAsState()
                     val isCurrentlyPortrait = currentOrientation == RoomOrientation.PORTRAIT
                     RoomOverflowItem(
+                        focusRequester = leaveRoomFocusRequester,
                         text = stringResource(
                             if (isCurrentlyPortrait) Res.string.room_overflow_landscape_mode
                             else Res.string.room_overflow_portrait_mode
@@ -215,6 +250,12 @@ fun RoomTabSection(modifier: Modifier) {
 
                 /* Leave room item */
                 RoomOverflowItem(
+                    focusRequester = leaveRoomFocusRequester,
+                    up = when {
+                        showsManagedRoomActions -> identifyFocusRequester
+                        showsPip -> pipFocusRequester
+                        else -> null
+                    },
                     text = stringResource(Res.string.room_overflow_leave_room),
                     icon = Icons.AutoMirrored.Filled.Logout,
                     onClick = {
@@ -233,9 +274,23 @@ fun RoomTabSection(modifier: Modifier) {
 fun RoomOverflowItem(
     text: String,
     icon: ImageVector,
+    focusRequester: FocusRequester,
+    up: FocusRequester? = null,
+    down: FocusRequester? = null,
     onClick: () -> Unit
 ) {
     DropdownMenuItem(
+        modifier = Modifier
+            .tvFocusProperties {
+                up?.let { this.up = it }
+                down?.let { this.down = it }
+            }
+            .tvFocusable(
+                focusRequester = focusRequester,
+                enabled = isTelevision,
+                scaleWhenFocused = 1f,
+                onActivate = onClick,
+            ),
         leadingIcon = { Icon(imageVector = icon, contentDescription = null) },
         text = { Text(text = text) },
         onClick = onClick
