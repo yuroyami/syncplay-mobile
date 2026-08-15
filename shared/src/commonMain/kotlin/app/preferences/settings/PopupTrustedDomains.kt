@@ -51,7 +51,6 @@ fun TrustedDomainsPopup(visibilityState: MutableState<Boolean>) {
         dialogOpen = visibilityState.value,
         widthPercent = 0.85f,
         heightPercent = 0.7f,
-        strokeWidth = 0.5f,
         onDismiss = { visibilityState.value = false }
     ) {
         Column(

@@ -65,8 +65,6 @@ fun ManagedRoomPopup(purpose: ManagedRoomPopupPurpose) {
     return SyncplayPopup(
         dialogOpen = visible,
         widthPercent = 0.7f,
-        strokeWidth = 0.5f,
-        alpha = 0.9f,
         onDismiss = {
             state.value = false
         }

@@ -5,6 +5,13 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import app.utils.generateClockstamp
 
+/** Unicode BiDi "First Strong Isolate" (U+2068): text until the matching PDI resolves its
+ *  direction on its own without reordering surrounding text. */
+private const val BIDI_ISOLATE_START = "\u2068"
+
+/** Unicode BiDi "Pop Directional Isolate" (U+2069): closes a [BIDI_ISOLATE_START] run. */
+private const val BIDI_ISOLATE_END = "\u2069"
+
 /** A single chat or system message and the data needed to render it. */
 data class Message(
     /** The sender of the message. Null when it's not a chat message */
@@ -53,7 +60,7 @@ data class Message(
         if (sender != null) {
             builder.append(
                 AnnotatedString(
-                    text = "$sender:",
+                    text = "$BIDI_ISOLATE_START$sender$BIDI_ISOLATE_END:",
                     spanStyle = SpanStyle(
                         color = if (isMainUser) msgPalette.selftagColor else msgPalette.friendtagColor,
                         fontWeight = FontWeight.Companion.SemiBold
@@ -76,11 +83,14 @@ data class Message(
         )
 
         // Chat messages get a "sender: " tag; system/error messages are content only.
+        // Sender and content are each wrapped in Unicode first-strong-isolate marks so an RTL
+        // message (or RTL username) reorders only within itself. Without the isolates, the BiDi
+        // algorithm merges "[time] name: content" into one run and scrambles the visual order.
         val contentAS = if (sender != null) {
             val minibuilder = AnnotatedString.Builder()
 
             val tag = AnnotatedString(
-                text = "$sender: ",
+                text = "$BIDI_ISOLATE_START$sender$BIDI_ISOLATE_END: ",
                 spanStyle = SpanStyle(
                     color = if (isMainUser) msgPalette.selftagColor else msgPalette.friendtagColor,
                     fontWeight = FontWeight.Companion.SemiBold
@@ -89,7 +99,7 @@ data class Message(
             minibuilder.append(tag)
 
             val chatTEXT = AnnotatedString(
-                text = content,
+                text = "$BIDI_ISOLATE_START$content$BIDI_ISOLATE_END",
                 spanStyle = SpanStyle(
                     color = msgPalette.usermsgColor,
                     fontWeight = FontWeight.Companion.Medium

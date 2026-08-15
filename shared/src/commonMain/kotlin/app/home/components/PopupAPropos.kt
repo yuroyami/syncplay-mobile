@@ -60,13 +60,13 @@ object PopupAPropos {
 
         return SyncplayPopup(
             dialogOpen = visibilityState.value,
-            strokeWidth = 0f,
+            widthPercent = 0.85f,
             onDismiss = { visibilityState.value = false }
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth().padding(6.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceAround
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
 
                 Row(

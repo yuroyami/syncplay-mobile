@@ -6,8 +6,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,6 +21,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -25,6 +30,7 @@ import app.LocalChatPalette
 import app.LocalRoomViewmodel
 import app.preferences.Preferences.MSG_FADING_DURATION
 import app.preferences.watchPref
+import app.uicomponents.AnimatedImage
 import kotlinx.coroutines.delay
 
 
@@ -63,15 +69,45 @@ fun FadingMessageLayout() {
                 exit = fadeOut(animationSpec = keyframes { durationMillis = 500 }),
                 visible = visibility,
             ) {
-                Text(
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .focusable(false),
-                    overflow = TextOverflow.Ellipsis,
-                    text = msgs.last().factorize(palette),
-                    lineHeight = if (isInPiPMode) 9.sp else 15.sp,
-                    fontSize = if (isInPiPMode) 8.sp else 13.sp
-                )
+                val lastMsg = msgs.last()
+                if (lastMsg.isImageUrl) {
+                    /* GIF/image message: show the sender tag + the rendered image, never the raw
+                     * URL (mirrors how ChatBox renders these inline). */
+                    Row(
+                        modifier = Modifier.fillMaxWidth(0.8f).focusable(false),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            modifier = Modifier.weight(1f, fill = false),
+                            overflow = TextOverflow.Ellipsis,
+                            text = lastMsg.factorizeSenderTag(palette),
+                            lineHeight = if (isInPiPMode) 9.sp else 15.sp,
+                            fontSize = if (isInPiPMode) 8.sp else 13.sp
+                        )
+                        /* Alpha as a parameter (not Modifier.alpha): the iOS UIImageView interop
+                         * layer ignores Compose alpha modifiers. */
+                        AnimatedImage(
+                            url = lastMsg.content,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            alpha = 1f,
+                            modifier = Modifier
+                                .padding(start = 4.dp)
+                                .size(if (isInPiPMode) 40.dp else 64.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                        )
+                    }
+                } else {
+                    Text(
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .focusable(false),
+                        overflow = TextOverflow.Ellipsis,
+                        text = lastMsg.factorize(palette),
+                        lineHeight = if (isInPiPMode) 9.sp else 15.sp,
+                        fontSize = if (isInPiPMode) 8.sp else 13.sp
+                    )
+                }
             }
         }
     }

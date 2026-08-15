@@ -5,26 +5,32 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.KeyboardActionHandler
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -127,6 +133,9 @@ fun HomeTextField(
             }
         },
         decorator = { innerTextField ->
+            /* Clear (X) appears only on editable, non-empty fields. */
+            val showClear = dropdownState == null && enabled && state.text.isNotEmpty()
+
             Row(
                 modifier = Modifier.fillMaxWidth().height(height)
                     .clip(shape)
@@ -142,6 +151,10 @@ fun HomeTextField(
                         tint = if (isFocused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(end = Theming.SpaceMD).size(24.dp)
                     )
+                } else if (showClear) {
+                    // Leading counterweight for the trailing X on icon-less fields, so the
+                    // centered text does not drift sideways when the X appears.
+                    Spacer(modifier = Modifier.padding(end = Theming.SpaceMD).size(24.dp))
                 }
                 Box(
                     modifier = Modifier.weight(1f),
@@ -159,12 +172,29 @@ fun HomeTextField(
                         innerTextField()
                     }
                 }
-                // Trailing counterweight: mirror the leading icon (or show the dropdown chevron)
-                // so the centered text sits at the true optical center of the field.
-                if (dropdownState != null) {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownState.value)
-                } else if (icon != null) {
-                    Icon(
+                // Trailing slot: dropdown chevron, or a clear (X) button when there is text,
+                // else a transparent counterweight mirroring the leading icon so the centered
+                // text sits at the true optical center of the field.
+                when {
+                    dropdownState != null -> ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownState.value)
+
+                    showClear -> Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .padding(start = Theming.SpaceMD)
+                            .size(24.dp)
+                            .clip(CircleShape)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = ripple(bounded = false, radius = 16.dp)
+                            ) {
+                                state.edit { replace(0, length, "") }
+                            }
+                    )
+
+                    icon != null -> Icon(
                         imageVector = icon,
                         contentDescription = null,
                         tint = Color.Transparent,

@@ -276,7 +276,6 @@ fun AddVideoButton(modifier: Modifier, expanded: Boolean, onClick: () -> Unit) {
 fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
     return SyncplayPopup(
         dialogOpen = visibilityState.value,
-        strokeWidth = 0.5f,
         widthPercent = 0.8f,
         onDismiss = { visibilityState.value = false }
     ) {
@@ -285,8 +284,8 @@ fun AddUrlPopup(visibilityState: MutableState<Boolean>) {
         val clipboard = LocalClipboard.current
 
         Column(
-            modifier = Modifier.fillMaxSize().padding(6.dp),
-            verticalArrangement = Arrangement.SpaceEvenly,
+            modifier = Modifier.fillMaxWidth().padding(6.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 

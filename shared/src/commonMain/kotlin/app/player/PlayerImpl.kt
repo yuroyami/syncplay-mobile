@@ -25,6 +25,8 @@ import app.utils.platform
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.startAccessingSecurityScopedResource
 import io.github.vinceglb.filekit.stopAccessingSecurityScopedResource
+import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -32,6 +34,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.getString
 import syncplaymobile.shared.generated.resources.Res
@@ -77,6 +81,9 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
      *  screenshot button in the room control panel so it only shows where it actually works. */
     open val supportsScreenshot: Boolean = false
 
+    /** Whether room drift correction may temporarily request a playback rate other than 1.0. */
+    open val supportsSpeedAdjustment: Boolean = true
+
     /** When true, the engine announces a freshly loaded file to the room itself, typically from
      *  a player "file-loaded" event once the real duration is known, so [parseMedia] must NOT
      *  also fire [announceFileLoaded] on iOS. Without this guard such engines announce the file
@@ -95,23 +102,64 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
      * one scope is ever held at a time. On Android the FileKit start/stop calls are no-ops.
      */
     private var scopedFile: PlatformFile? = null
+    private var scopedFileAccessStarted: Boolean = false
+
+    /**
+     * A media replacement is one transaction: resolve metadata, publish it, stop/open the engine,
+     * and announce it. Serializing the whole sequence prevents two playlist events from crossing
+     * their state, native handles, or file-descriptor ownership between those stages.
+     */
+    private val mediaInjectionMutex = Mutex()
+    private val closing = atomic(false)
 
     private fun beginScopedFileAccess(file: PlatformFile) {
-        val previous = scopedFile
-        if (previous != null && previous != file) runCatching { previous.stopAccessingSecurityScopedResource() }
-        runCatching { file.startAccessingSecurityScopedResource() }
-        scopedFile = file
+        // Re-loading the same file must not increment NSURL's grant count without a matching stop.
+        if (scopedFile == file && scopedFileAccessStarted) return
+
+        releaseScopedFileAccess()
+        scopedFileAccessStarted = runCatching {
+            file.startAccessingSecurityScopedResource()
+        }.getOrDefault(false)
+        scopedFile = file.takeIf { scopedFileAccessStarted }
     }
 
+    /**
+     * Releases the local file grant retained for playback.
+     *
+     * [PlayerManager] calls this after every engine teardown, including when [destroy] fails, so
+     * an iOS room cannot strand a security-scoped resource until process exit.
+     */
     private fun releaseScopedFileAccess() {
-        scopedFile?.let { runCatching { it.stopAccessingSecurityScopedResource() } }
+        if (scopedFileAccessStarted) {
+            scopedFile?.let { runCatching { it.stopAccessingSecurityScopedResource() } }
+        }
         scopedFile = null
+        scopedFileAccessStarted = false
     }
 
     @UiThread
     abstract fun initialize()
 
     abstract suspend fun destroy()
+
+    /**
+     * Synchronously marks this instance closed, wakes engine-specific readiness waits, then waits
+     * for any media replacement transaction before destroying its native state and file grant.
+     */
+    internal suspend fun destroyAndReleaseMedia() {
+        if (!closing.compareAndSet(false, true)) return
+        onClosing()
+        mediaInjectionMutex.withLock {
+            try {
+                destroy()
+            } finally {
+                releaseScopedFileAccess()
+            }
+        }
+    }
+
+    /** Called before teardown waits on [mediaInjectionMutex], so an engine can wake load waiters. */
+    protected open fun onClosing() = Unit
 
     abstract suspend fun configurableSettings(): SettingCategory?
 
@@ -264,46 +312,74 @@ abstract class PlayerImpl(val viewmodel: RoomViewmodel, val engine: PlayerEngine
      */
     protected open val injectSettleDelayMs: Long = 0L
 
-    private suspend inline fun <T> inject(source: T, crossinline toMedia: suspend (T) -> MediaFile, crossinline impl: suspend (MediaFile) -> Unit) {
-        val media = toMedia(source)
-        withContext(Dispatchers.Main) {
-            try {
-                if (injectSettleDelayMs > 0) delay(injectSettleDelayMs)
-                impl(media)
-                parseMedia(media)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                viewmodel.dispatchOSD {
-                    getString(Res.string.room_msg_problem_loading_file)
+    private suspend inline fun <T> inject(
+        source: T,
+        crossinline toMedia: suspend (T) -> MediaFile,
+        crossinline impl: suspend (MediaFile) -> Unit,
+    ) {
+        mediaInjectionMutex.withLock {
+            if (closing.value) throw CancellationException("Player is closing")
+            val media = toMedia(source)
+            withContext(Dispatchers.Main) {
+                try {
+                    if (injectSettleDelayMs > 0) delay(injectSettleDelayMs)
+                    // Install the new media BEFORE the engine load command: engine load events can
+                    // fire DURING impl() (mpv's START_FILE, VLCKit's LengthChanged) and they read
+                    // viewmodel.media for the room announce. With the old install-after-impl order,
+                    // a 2nd+ injected file could get announced with the PREVIOUS file's name, size
+                    // and duration.
+                    installMedia(media)
+                    impl(media)
+                    parseMedia(media)
+                } catch (cancellation: CancellationException) {
+                    throw cancellation
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    viewmodel.dispatchOSD {
+                        getString(Res.string.room_msg_problem_loading_file)
+                    }
                 }
             }
         }
     }
 
     /**
-     * Set by [parseMedia] the instant a NEW media is installed, consumed once by
-     * [announceFileLoaded] to re-anchor room sync for that file. Armed synchronously together
-     * with `media.value` (before any suspension point in [parseMedia]) so an early engine
-     * load callback — e.g. VLCKit's `mediaPlayerLengthChanged`, which can run on the main
-     * thread the moment [parseMedia] suspends — cannot fire [announceFileLoaded] before the
-     * flag exists. Guarantees the re-anchor happens exactly once per load even though
-     * [announceFileLoaded] itself may fire several times (HLS/DASH length refinements).
+     * Installs [media] as the active file, synchronously and before the engine sees the load
+     * command. Split out of [parseMedia] so no engine callback can ever observe the previous
+     * file's state after a new injection started.
      */
-    private var fileLoadResyncPending = false
-
-    open suspend fun parseMedia(media: MediaFile) {
+    private fun installMedia(media: MediaFile) {
         // Arm position masking BEFORE attaching the file. The engine sits at ~0 until the first-sync
         // seek lands; advertising that 0 would make the server adopt us as the slowest watcher and
         // rewind everyone (see awaitingRoomResyncDeadline). Arming first guarantees an inbound-State
-        // ACK can never observe media!=null with the mask still disarmed — while media is still null
+        // ACK can never observe media!=null with the mask still disarmed; while media is still null
         // the reporter already falls back to the room position, so the ordering is safe.
         if (!viewmodel.isSoloMode) viewmodel.protocol.markAwaitingRoomResync()
         playerManager.media.value = media
         // Arm the room re-anchor for this fresh file (see [fileLoadResyncPending] /
-        // ProtocolManager.reanchorSyncOnFileLoad). Must sit before the suspending OSD/getString
-        // calls below, so no engine callback outruns it.
+        // ProtocolManager.reanchorSyncOnFileLoad).
         fileLoadResyncPending = true
+        // Wipe the previous file's duration: engines (and mpv's duration-wait loop) treat a
+        // positive value as "this file's duration is known". Leaking the old value made the
+        // very first announce of a newly injected file carry stale metadata.
+        playerManager.timeFullMillis.value = 0L
+    }
 
+    /**
+     * Set by [installMedia] the instant a NEW media is installed, consumed once by
+     * [announceFileLoaded] to re-anchor room sync for that file. Armed synchronously together
+     * with `media.value`, before the engine load command even runs, so an early engine
+     * load callback (e.g. VLCKit's `mediaPlayerLengthChanged`) cannot fire
+     * [announceFileLoaded] before the flag exists. Guarantees the re-anchor happens exactly
+     * once per load even though [announceFileLoaded] itself may fire several times
+     * (HLS/DASH length refinements).
+     */
+    private var fileLoadResyncPending = false
+
+    open suspend fun parseMedia(media: MediaFile) {
+        // Media installation (mask arming, media.value, resync flag, duration wipe) already
+        // happened in [installMedia] before the engine load command; this stage only handles
+        // the user-visible OSD, the iOS no-event announce path, and subtitle sizing.
         viewmodel.dispatchOSD {
             getString(Res.string.room_selected_vid, "${viewmodel.media?.fileName}")
         }

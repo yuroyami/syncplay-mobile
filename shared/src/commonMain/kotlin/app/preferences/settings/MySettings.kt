@@ -4,25 +4,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.ConnectWithoutContact
 import androidx.compose.material.icons.filled.Hub
-import androidx.compose.material.icons.filled.NotificationsActive
-import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SettingsSuggest
 import androidx.compose.material.icons.filled.Stream
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VideoLabel
 import app.preferences.Preferences.AUDIO_LANG
+import app.preferences.Preferences.CHAT_COLORS_ENTRY
 import app.preferences.Preferences.CLEAR_LOGS
 import app.preferences.Preferences.CC_LANG
-import app.preferences.Preferences.COLOR_ERRORMSG
-import app.preferences.Preferences.COLOR_FRIENDTAG
-import app.preferences.Preferences.COLOR_SELFTAG
-import app.preferences.Preferences.COLOR_SYSTEMMSG
-import app.preferences.Preferences.COLOR_TIMESTAMP
-import app.preferences.Preferences.COLOR_USERMSG
 import app.preferences.Preferences.CUSTOM_SEEK_AMOUNT
 import app.preferences.Preferences.CUSTOM_SEEK_FRONT
-import app.preferences.Preferences.DOUBLETAP_SEEK
 import app.preferences.Preferences.DISPLAY_LANG
 import app.preferences.Preferences.ERASE_SHORTCUTS
 import app.preferences.Preferences.EXPORT_LOGS
@@ -36,15 +28,9 @@ import app.preferences.Preferences.HAPTIC_ON_PAUSED
 import app.preferences.Preferences.HAPTIC_ON_PLAYED
 import app.preferences.Preferences.HAPTIC_ON_PLAYLIST
 import app.preferences.Preferences.HAPTIC_ON_SEEKED
-import app.preferences.Preferences.OSD_DURATION
-import app.preferences.Preferences.OSD_NON_OPERATOR
 import app.preferences.Preferences.OSD_OTHER_ROOM
-import app.preferences.Preferences.OSD_SAME_ROOM
-import app.preferences.Preferences.OSD_SLOWDOWN
-import app.preferences.Preferences.OSD_WARNINGS
 import app.preferences.Preferences.CHAPTER_DOTS_CLICKABLE
 import app.preferences.Preferences.SHOW_CHAPTER_DOTS
-import app.preferences.Preferences.SWIPE_GESTURES
 import app.preferences.Preferences.HASH_FILENAME
 import app.preferences.Preferences.HASH_FILESIZE
 import app.preferences.Preferences.INROOM_RESET_DEFAULTS
@@ -81,10 +67,8 @@ import syncplaymobile.shared.generated.resources.settings_categ_general
 import syncplaymobile.shared.generated.resources.settings_categ_language
 import syncplaymobile.shared.generated.resources.settings_categ_network
 import syncplaymobile.shared.generated.resources.settings_categ_syncing
-import syncplaymobile.shared.generated.resources.uisetting_categ_chat_colors
 import syncplaymobile.shared.generated.resources.uisetting_categ_chat_properties
 import syncplaymobile.shared.generated.resources.uisetting_categ_haptics
-import syncplaymobile.shared.generated.resources.uisetting_categ_osd
 import syncplaymobile.shared.generated.resources.uisetting_categ_player_settings
 import syncplaymobile.shared.generated.resources.uisetting_categ_sync_mechanisms
 
@@ -159,17 +143,11 @@ val INROOM_SYNC = SettingCategory(
     +SYNC_REWIND
 }
 
-val INROOM_CHATCOLORS = SettingCategory(
-    title = Res.string.uisetting_categ_chat_colors,
-    icon = Icons.Filled.Palette,
-) {
-    +COLOR_TIMESTAMP; +COLOR_SELFTAG; +COLOR_FRIENDTAG; +COLOR_SYSTEMMSG; +COLOR_USERMSG; +COLOR_ERRORMSG
-}
-
 val INROOM_CHAT_PROPERTIES = SettingCategory(
     title = Res.string.uisetting_categ_chat_properties,
     icon = Icons.AutoMirrored.Filled.Chat
 ) {
+    +CHAT_COLORS_ENTRY
     +MSG_ACTIVATE_STAMP
     +MSG_OUTLINE_ACTIVATE
     +MSG_OUTLINE_THICKNESS
@@ -178,6 +156,9 @@ val INROOM_CHAT_PROPERTIES = SettingCategory(
     +MSG_BG_OPACITY
     +MSG_FONTSIZE
     +MSG_FADING_DURATION
+    /* Sole survivor of the old OSD category: chat is already an on-screen display, so the only
+     * OSD toggle worth keeping is whether events from OTHER rooms surface here. */
+    +OSD_OTHER_ROOM
 }
 
 val INROOM_PLAYER_SETTINGS = SettingCategory(
@@ -191,9 +172,11 @@ val INROOM_PLAYER_SETTINGS = SettingCategory(
     +SEEK_BACKWARD_JUMP
     +SHOW_CHAPTER_DOTS
     +CHAPTER_DOTS_CLICKABLE
-    +DOUBLETAP_SEEK
-    +SWIPE_GESTURES
-
+    /* Preferred track languages, mirrored from the global Language category so they are
+     * reachable mid-session too. */
+    +AUDIO_LANG
+    +CC_LANG
+    /* DOUBLETAP_SEEK and SWIPE_GESTURES moved to the in-room quick control panel. */
 }
 
 val INROOM_HAPTICS = SettingCategory(
@@ -208,18 +191,6 @@ val INROOM_HAPTICS = SettingCategory(
     +HAPTIC_ON_SEEKED
     +HAPTIC_ON_PLAYLIST
     +HAPTIC_ON_CONNECTION
-}
-
-val INROOM_OSD = SettingCategory(
-    title = Res.string.uisetting_categ_osd,
-    icon = Icons.Filled.NotificationsActive,
-) {
-    +OSD_DURATION
-    +OSD_SAME_ROOM
-    +OSD_NON_OPERATOR
-    +OSD_OTHER_ROOM
-    +OSD_SLOWDOWN
-    +OSD_WARNINGS
 }
 
 val INROOM_ADVANCED = SettingCategory(
@@ -245,9 +216,7 @@ val SETTINGS_GLOBAL = listOf(GLOBAL_GENERAL, GLOBAL_LANGUAGE, GLOBAL_SYNCING, GL
  */
 val SETTINGS_ROOM: List<SettingCategory> = listOf(
     INROOM_SYNC,
-    INROOM_CHATCOLORS,
     INROOM_CHAT_PROPERTIES,
     INROOM_PLAYER_SETTINGS,
-    INROOM_OSD,
     INROOM_ADVANCED,
 )

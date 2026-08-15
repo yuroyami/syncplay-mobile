@@ -91,7 +91,6 @@ object PopupMediaDirs {
             dialogOpen = visibilityState.value,
             widthPercent = 0.9f,
             heightPercent = 0.85f,
-            strokeWidth = 0.5f,
             onDismiss = { visibilityState.value = false }) {
 
             val directoryPicker = rememberDirectoryPickerLauncher { directoryUri ->

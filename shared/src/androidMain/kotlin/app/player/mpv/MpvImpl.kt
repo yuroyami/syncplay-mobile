@@ -449,15 +449,19 @@ class MpvImpl(vm: RoomViewmodel) : PlayerImpl(vm, MpvEngine) {
                     MPVLib.MpvEvent.MPV_EVENT_START_FILE -> {
                         if (viewmodel.isSoloMode) return
                         playerScopeIO.launch {
-                            while (true) {
-                                if (playerManager.timeFullMillis.value.toDouble() > 0) {
-                                    playerManager.media.value?.fileDuration = playerManager.timeFullMillis.value.toDouble().div(1000.0)
-
-                                    announceFileLoaded()
-                                    break
-                                }
+                            // timeFullMillis is wiped to 0 on every inject (PlayerImpl.installMedia),
+                            // so this genuinely waits for THIS file's duration event. Before that
+                            // wipe existed, the previous file's stale duration made the wait exit
+                            // instantly on 2nd+ injections and the room got announced stale
+                            // metadata (old name/size/duration). Bounded wait: files with no
+                            // detectable duration (live streams) still announce, with 0.
+                            var waitedMs = 0L
+                            while (playerManager.timeFullMillis.value <= 0 && waitedMs < 5000) {
                                 delay(50)
+                                waitedMs += 50
                             }
+                            playerManager.media.value?.fileDuration = playerManager.timeFullMillis.value.toDouble().div(1000.0)
+                            announceFileLoaded()
                         }
                     }
 

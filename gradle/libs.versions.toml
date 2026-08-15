@@ -3,28 +3,27 @@
 # 2.4.20 has no stable release yet (only Beta1/Beta2 on Maven Central) — 2.4.10 is the latest stable.
 kotlin = "2.4.10"
 agp = "9.2.1"
-compose-multiplatform = "1.12.0-beta02"
+compose-multiplatform = "1.12.0-rc01"
 kSerialization = "1.11.0"
 ksp = "2.3.10"
-skie = "0.10.12"
-buildConfig = "6.0.10"
+skie = "0.10.14"
 ktorfit = "2.7.5"
 
 #KMM-Libs
 compose-multiplatform-icons = "1.7.3"
 compose-material3 = "1.12.0-alpha03"
 lifecycleViewmodelCompose = "2.11.0"
-navigation3Runtime = "1.2.0-alpha06"
+navigation3Runtime = "1.2.0-alpha04"
 navigation3Ui = "1.2.0-alpha02"
-compose-unstyled = "2.7.0"
+compose-unstyled = "2.9.0"
 kermit = "2.1.0"
 krypto = "0.8.0"
-datastore = "1.3.0-alpha09"
+datastore = "1.3.0-alpha10"
 filekit = "0.14.2"
 kolorpicker = "2.1.0"
 uriKmp = "0.0.21"
-materialkolor = "5.0.0-alpha07"
-ktor = "3.5.1"
+materialkolor = "5.0.0"
+ktor = "3.5.2"
 koroutines = "1.11.0"
 datetime = "0.8.0"
 atomicfu = "0.33.0"
@@ -37,17 +36,21 @@ skiko = "0.150.1"
 
 #Android
 coreSplashscreen = "1.2.0"
-corePip = "1.0.0-alpha02"
+corePip = "1.0.0-alpha03"
 activityCompose = "1.13.0"
 documentfile = "1.1.0"
-appcompat = "1.7.1"
+appcompat = "1.8.0"
 coreKtx = "1.19.0"
 desugaring = "2.1.5"
-media3 = "1.11.0-rc01"
+media3 = "1.11.0"
 netty = "4.1.131.Final" #"4.2.x" (and above) requires Api26 minimum
-conscrypt = "2.5.3"
-libvlc-android = "4.0.0-eap28"
+conscrypt = "2.6.2"
+libvlc-android = "4.0.0-eap29"
 newpipeExtractor = "v0.24.6"
+
+# Local publications until the two libraries reach a remote repository.
+kiteplayer = "0.0.4"
+kitecodec-plugin = "0.0.6"
 
 #iOS
 libvlc-ios = "4.0.0a19"
@@ -55,7 +58,7 @@ libvlc-ios = "4.0.0a19"
 #Desktop
 # vlcj 4.x pairs with libVLC 3.x (the current stable desktop VLC). vlcj 5 targets the
 # still-unreleased libVLC 4 — do not bump until VLC 4 desktop ships.
-vlcj = "4.8.3"
+vlcj = "4.12.1"
 
 [libraries] #######################################################################################
 #KMM
@@ -125,6 +128,8 @@ m3-common = { module = "androidx.media3:media3-common", version.ref = "media3" }
 netty = { module = "io.netty:netty-all", version.ref = "netty" }
 conscrypt = { module = "org.conscrypt:conscrypt-android", version.ref = "conscrypt" }
 libvlc-android = { module = "org.videolan.android:libvlc-all", version.ref = "libvlc-android" }
+kiteplayer-compose-interop = { module = "io.github.yuroyami:kiteplayer-compose-interop", version.ref = "kiteplayer" }
+kiteplayer-compose-video = { module = "io.github.yuroyami:kiteplayer-compose-video", version.ref = "kiteplayer" }
 newpipe-extractor = { module = "com.github.TeamNewPipe:NewPipeExtractor", version.ref = "newpipeExtractor" }
 
 #Desktop
@@ -160,6 +165,9 @@ compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "
 compose-plugin = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
 
 
+# Supplies the FFmpeg libraries required by KitePlayer's iOS link.
+kitecodec = { id = "io.github.yuroyami.kitecodec", version.ref = "kitecodec-plugin" }
+
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-kmp-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp"}
 
@@ -167,7 +175,4 @@ kSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktorfit = { id = "de.jensklingenberg.ktorfit", version.ref = "ktorfit" }
 
-buildConfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildConfig" }
-
 touchlab-skie = { id = "co.touchlab.skie", version.ref = "skie" }
-

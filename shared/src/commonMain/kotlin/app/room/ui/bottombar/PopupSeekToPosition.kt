@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -72,15 +71,14 @@ object PopupSeekToPosition {
 
         SyncplayPopup(
             dialogOpen = visible,
-            strokeWidth = 0.5f,
             onDismiss = { viewmodel.uiState.popupSeekToPosition.value = false }
         ) {
             val viewmodel = LocalRoomViewmodel.current
             val focusManager = LocalFocusManager.current
 
             Column(
-                modifier = Modifier.fillMaxSize().padding(6.dp),
-                verticalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier.padding(6.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 

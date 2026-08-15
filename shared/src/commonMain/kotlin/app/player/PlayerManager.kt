@@ -49,8 +49,9 @@ class PlayerManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmodel) {
         // failure, so an engine throwing mid-teardown would be an uncaught crash on the
         // way OUT of a room.
         platformCallback.mediaSessionFinalize()
+        val closingPlayer = player
         GlobalScope.launch {
-            runCatching { player.destroy() }
+            runCatching { closingPlayer.destroyAndReleaseMedia() }
                 .onFailure { app.utils.loggy("Player destroy failed: ${it.stackTraceToString()}") }
         }
         media.value = null

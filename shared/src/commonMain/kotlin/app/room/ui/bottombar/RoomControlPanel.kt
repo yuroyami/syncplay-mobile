@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,8 +30,8 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.BrowseGallery
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ClosedCaptionDisabled
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.HearingDisabled
 import androidx.compose.material.icons.filled.History
@@ -38,10 +39,11 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Theaters
+import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material.icons.filled.VideoSettings
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Switch
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -87,18 +89,23 @@ import androidx.compose.material3.OutlinedTextField
 import app.LocalRoomUiState
 import app.LocalRoomViewmodel
 import app.player.PlayerImpl
+import app.preferences.Preferences.DOUBLETAP_SEEK
 import app.preferences.Preferences.SUBTITLE_SEARCH_LANG
+import app.preferences.Preferences.SWIPE_GESTURES
 import app.preferences.Preferences.UNDO_SEEK_NO_CONFIRM
 import app.preferences.set
 import app.preferences.watchPref
 import app.subtitles.SubtitleDownloadResult
 import app.subtitles.SubtitleSearch
 import app.subtitles.subtitleSearchLanguages
+import syncplaymobile.shared.generated.resources.room_gestures_panel_title
 import syncplaymobile.shared.generated.resources.room_sub_search_download_from_web
 import syncplaymobile.shared.generated.resources.room_sub_search_downloads
 import syncplaymobile.shared.generated.resources.room_sub_search_hint
 import syncplaymobile.shared.generated.resources.room_sub_search_no_results
 import syncplaymobile.shared.generated.resources.room_sub_search_title
+import syncplaymobile.shared.generated.resources.uisetting_doubletap_seek_title
+import syncplaymobile.shared.generated.resources.uisetting_swipe_gestures_title
 import app.theme.Theming.READY_GREEN
 import app.theme.Theming.flexibleGradient
 import app.uicomponents.FlexibleIcon
@@ -129,8 +136,6 @@ import syncplaymobile.shared.generated.resources.room_chapters
 import syncplaymobile.shared.generated.resources.room_chapters_jump
 import syncplaymobile.shared.generated.resources.room_chapters_skip
 import syncplaymobile.shared.generated.resources.room_no_recent_seek
-import syncplaymobile.shared.generated.resources.room_screenshot_saved
-import syncplaymobile.shared.generated.resources.room_screenshot_unsupported
 import syncplaymobile.shared.generated.resources.room_seek_undone
 import syncplaymobile.shared.generated.resources.room_selected_sub_error
 import syncplaymobile.shared.generated.resources.room_sub_track_disable
@@ -218,20 +223,8 @@ fun RoomControlPanelCard(modifier: Modifier) {
             }
         }
 
-        /* Screenshot: shown only for engines that actually support it (MPV on both platforms). */
-        if (viewmodel.player.supportsScreenshot) {
-            FlexibleIcon(
-                icon = Icons.Filled.CameraAlt,
-                size = iconSize, shadowColors = listOf(Color.Black)
-            ) {
-                composeScope.launch(Dispatchers.IO) {
-                    val success = viewmodel.player.takeScreenshot()
-                    viewmodel.dispatchOSD {
-                        getString(if (success) Res.string.room_screenshot_saved else Res.string.room_screenshot_unsupported)
-                    }
-                }
-            }
-        }
+        /* Screenshot button removed for now: it did nothing perceivable on most engines.
+         * PlayerImpl.takeScreenshot() stays available for a future, working implementation. */
 
         /* Seek To */
         FlexibleIcon(
@@ -263,6 +256,39 @@ fun RoomControlPanelCard(modifier: Modifier) {
             } else {
                 pendingUndoSeek = lastSeek
             }
+        }
+
+        /* Touch gestures: quick toggles for double-tap seek and swipe brightness/volume.
+         * Lives here (not in the settings card) so gestures can be flipped mid-playback. */
+        run {
+            val gesturesPopup = remember { mutableStateOf(false) }
+            val doubletapSeek by DOUBLETAP_SEEK.watchPref()
+            val swipeGestures by SWIPE_GESTURES.watchPref()
+
+            ControlPanelDropdownButton(
+                icon = Icons.Filled.TouchApp,
+                onClick = { haptic() },
+                popupVisibility = gesturesPopup,
+                popupTitle = stringResource(Res.string.room_gestures_panel_title),
+                popupItems = listOf(
+                    ControlPanelDropdownAction(
+                        text = stringResource(Res.string.uisetting_doubletap_seek_title),
+                        isChecked = doubletapSeek,
+                        dismissOnClick = false,
+                        action = {
+                            scope.launch { DOUBLETAP_SEEK.set(!doubletapSeek) }
+                        }
+                    ),
+                    ControlPanelDropdownAction(
+                        text = stringResource(Res.string.uisetting_swipe_gestures_title),
+                        isChecked = swipeGestures,
+                        dismissOnClick = false,
+                        action = {
+                            scope.launch { SWIPE_GESTURES.set(!swipeGestures) }
+                        }
+                    )
+                )
+            )
         }
 
         /* Unified Audio & Subtitles button */
@@ -606,7 +632,12 @@ fun RoomControlPanelCard(modifier: Modifier) {
             shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(400.dp)
+                /* No fixed height: cap at 400dp but shrink with the keyboard (imePadding), so the
+                 * query field keeps its full height while typing instead of getting crushed,
+                 * especially in landscape where the keyboard eats half the screen. */
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                    .imePadding()
+                    .heightIn(max = 400.dp)
             ) {
                 Text(
                     text = stringResource(Res.string.room_sub_search_title),
@@ -621,10 +652,22 @@ fun RoomControlPanelCard(modifier: Modifier) {
                     singleLine = true,
                     label = { Text(stringResource(Res.string.room_sub_search_hint), fontSize = 12.sp) },
                     trailingIcon = {
-                        Icon(
-                            Icons.Filled.Search, null,
-                            modifier = Modifier.clickable { doSearch() }
-                        )
+                        Row(verticalAlignment = CenterVertically) {
+                            /* Clear (X): wipes the query so a fresh title can be typed at once. */
+                            if (searchQuery.isNotEmpty()) {
+                                Icon(
+                                    Icons.Filled.Close, null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.clickable { searchQuery = "" }
+                                )
+                                Spacer(Modifier.width(8.dp))
+                            }
+                            Icon(
+                                Icons.Filled.Search, null,
+                                modifier = Modifier.clickable { doSearch() }
+                            )
+                            Spacer(Modifier.width(4.dp))
+                        }
                     },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(
@@ -891,7 +934,11 @@ private fun performUndoSeek(
 data class ControlPanelDropdownAction(
     val text: String,
     val icon: ImageVector? = null,
+    /** Non-null renders a trailing Switch reflecting this state (toggle row). */
     val isChecked: Boolean? = null,
+    /** When false, the dropdown stays open after the action fires (toggle rows that the user
+     *  may want to flip several times in a row). */
+    val dismissOnClick: Boolean = true,
     val action: () -> Unit
 )
 
@@ -934,18 +981,20 @@ fun ControlPanelDropdownButton(
             )
 
             popupItems.forEach { item ->
+                fun fire() {
+                    item.action()
+                    if (item.dismissOnClick) popupVisibility.value = false
+                }
+
                 DropdownMenuItem(
-                    leadingIcon = {
-                        if (item.icon != null) {
-                            Icon(item.icon, null, tint = MaterialTheme.colorScheme.primary)
-                        }
-                        if (item.isChecked != null) {
-                            Checkbox(
-                                checked = item.isChecked,
-                                onCheckedChange = {
-                                    item.action()
-                                    popupVisibility.value = false
-                                }
+                    leadingIcon = item.icon?.let { icon ->
+                        { Icon(icon, null, tint = MaterialTheme.colorScheme.primary) }
+                    },
+                    trailingIcon = item.isChecked?.let { checked ->
+                        {
+                            Switch(
+                                checked = checked,
+                                onCheckedChange = { fire() }
                             )
                         }
                     },
@@ -957,8 +1006,7 @@ fun ControlPanelDropdownButton(
                             )
                         }
                     }, onClick = {
-                        item.action()
-                        popupVisibility.value = false
+                        fire()
                     }
                 )
             }

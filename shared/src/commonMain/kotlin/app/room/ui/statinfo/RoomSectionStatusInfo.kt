@@ -1,39 +1,27 @@
 package app.room.ui.statinfo
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewModelScope
 import app.LocalRoomViewmodel
 import app.protocol.models.ConnectionState
 import app.theme.Theming
 import app.uicomponents.sairaFont
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
 import syncplaymobile.shared.generated.resources.room_details_current_room
 import syncplaymobile.shared.generated.resources.room_details_user_count
-import syncplaymobile.shared.generated.resources.room_more_info_change_network_engine_msg
 import syncplaymobile.shared.generated.resources.room_ping_disconnected
-import syncplaymobile.shared.generated.resources.room_reconnect_button
 
 
 @Composable
@@ -75,34 +63,8 @@ fun RoomStatusInfoSection(modifier: Modifier) {
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
             )
 
-            val userListAlreadyPopulated by derivedStateOf { userList.isNotEmpty() }
-
-            AnimatedVisibility(connectionState == ConnectionState.DISCONNECTED && userListAlreadyPopulated) {
-                Column {
-                    Button(
-                        onClick = {
-                            viewmodel.viewModelScope.launch(Dispatchers.IO) {
-                                viewmodel.networkManager.reconnect()
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            contentColor = MaterialTheme.colorScheme.onErrorContainer
-                        ),
-                        shape = CircleShape
-                    ) {
-                        Text(text = stringResource(Res.string.room_reconnect_button))
-                    }
-
-                    Text(
-                        text = stringResource(Res.string.room_more_info_change_network_engine_msg),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.fillMaxWidth(0.95f),
-                        textAlign = TextAlign.Center,
-                        fontSize = 12.sp,
-                    )
-                }
-            }
+            /* No manual reconnect button: NetworkManager.reconnect() already retries on its own
+             * whenever the socket drops, so the button only duplicated automatic behavior. */
 
             val osd by remember { viewmodel.osdMsg }
             if (osd.isNotEmpty()) Text(

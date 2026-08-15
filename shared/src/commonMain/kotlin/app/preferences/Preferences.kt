@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.LogoDev
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Opacity
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Pin
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SlowMotionVideo
@@ -52,6 +53,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.preferences.core.edit
 import app.theme.Theming
 import app.theme.defaultTheme
+import app.preferences.settings.ChatColorsPopup
 import app.preferences.settings.TrustedDomainsPopup
 import app.uicomponents.PopupMediaDirs.MediaDirsPopup
 import app.utils.Platform
@@ -152,6 +154,8 @@ import syncplaymobile.shared.generated.resources.uisetting_audio_delay_summary
 import syncplaymobile.shared.generated.resources.uisetting_audio_delay_title
 import syncplaymobile.shared.generated.resources.uisetting_custom_seek_amount_summary
 import syncplaymobile.shared.generated.resources.uisetting_custom_seek_amount_title
+import syncplaymobile.shared.generated.resources.uisetting_categ_chat_colors
+import syncplaymobile.shared.generated.resources.uisetting_chat_colors_entry_summary
 import syncplaymobile.shared.generated.resources.uisetting_custom_seek_front_summary
 import syncplaymobile.shared.generated.resources.uisetting_custom_seek_front_title
 import syncplaymobile.shared.generated.resources.uisetting_doubletap_seek_summary
@@ -540,6 +544,18 @@ object Preferences {
     }
 
     /** ------------ Chat Colors -------------*/
+    /** Single entry that opens [app.preferences.settings.ChatColorsPopup] gathering all the
+     *  COLOR_* prefs below. The individual color prefs no longer appear as standalone rows. */
+    val CHAT_COLORS_ENTRY = Pref("pref_inroom_chat_colors_entry", "") {
+        title = Res.string.uisetting_categ_chat_colors
+        summary = Res.string.uisetting_chat_colors_entry_summary
+        icon = Icons.Filled.Palette
+
+        extraConfig = PrefExtraConfig.ShowComposable(
+            composable = { ChatColorsPopup(this) }
+        )
+    }
+
     val COLOR_TIMESTAMP = Pref("pref_inroom_color_timestamp", Theming.MSG_TIMESTAMP.toArgb()) {
         title = Res.string.uisetting_timestamp_color_title
         summary = Res.string.uisetting_timestamp_summary

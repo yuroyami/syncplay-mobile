@@ -349,7 +349,7 @@
     <string name="media_directories_add_folder">Ordner hinzufügen</string>
     <string name="media_directories_delete">Aus Liste entfernen</string>
     <string name="media_directories_show_full_path">Vollständigen Pfad anzeigen</string>
-    <string name="media_directories_going_for_pick_rationale">"Verzeichnis auswählen, um Playlist als Datei zu speichern"</string>
+    <string name="media_directories_going_for_pick_rationale">Verzeichnis auswählen, um Playlist als Datei zu speichern</string>
 
 
     <string name="about_version">• Version: %1$s</string>

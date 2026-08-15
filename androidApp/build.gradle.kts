@@ -91,6 +91,11 @@ android {
                     excludes += ("**/$mpvLib")
                 }
                 excludes += ("**/libvlc.so")
+                // KitePlayer's FFmpeg backend, the single largest native library here: it carries
+                // a whole statically linked FFmpeg, so leaving it in would cost this flavor more
+                // than mpv and VLC together and defeat the point of shipping no native players.
+                // KitePlayerPlatform.isAvailable detects that this payload is absent.
+                excludes += ("**/libkitecodec_jni.so")
             }
         }
     } else {

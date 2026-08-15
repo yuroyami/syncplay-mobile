@@ -1,3 +1,6 @@
+import io.github.yuroyami.kitecodec.gradle.FFmpegLicense
+import io.github.yuroyami.kitecodec.gradle.FFmpegSource
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.cocoapods)
@@ -7,14 +10,9 @@ plugins {
     alias(libs.plugins.kSerialization)
     alias(libs.plugins.ksp)
     //alias(libs.plugins.touchlab.skie)
-    alias(libs.plugins.buildConfig)
     alias(libs.plugins.ktorfit)
+    alias(libs.plugins.kitecodec)
 }
-
-// Overridable from the CLI / gradle.properties (-PexoOnly=true); defaults to AppConfig.exoOnly.
-// Must match androidApp's resolution so the build logic and BuildConfig agree.
-val exoOnly = AppConfig.resolveExoOnly(providers)
-
 
 kotlin {
     jvmToolchain(21)
@@ -138,6 +136,14 @@ kotlin {
             /* Atomics (used only for logs at the moment) */
             implementation(libs.atomicfu)
 
+            /* One coordinate re-exports KitePlayer's default assembly, facade and core API. */
+            implementation(libs.kiteplayer.compose.interop)
+
+            /* Experimental pure-Compose KitePlayer renderer; registered only in debug mobile
+             * builds. Common since KitePlayer 0.0.4, whose jvm target carries the software
+             * frame path, so the desktop target resolves it too. */
+            implementation(libs.kiteplayer.compose.video)
+
             /* Coil for async image loading (GIF panel) */
             implementation(libs.bundles.coil)
 
@@ -235,30 +241,17 @@ ktorfit {
     compilerPluginVersion.set("2.3.5")
 }
 
-buildConfig {
-    buildConfigField("APP_NAME", AppConfig.APP_NAME)
-    buildConfigField("APP_VERSION", AppConfig.VERSION_NAME)
-    buildConfigField("DEBUG", false)
-    // Overridable for wire-level debugging: ./gradlew ... -PdebugProtocol=true
-    buildConfigField(
-        "DEBUG_SYNCPLAY_PROTOCOL",
-        providers.gradleProperty("debugProtocol").orNull?.toBoolean() ?: false
-    )
-    buildConfigField("EXOPLAYER_ONLY", exoOnly)
-    buildConfigField("KLIPY_API_KEY", AppConfig.localProperties(rootDir).getProperty("yuroyami.keyKlipyApi"))
-    /* OpenSubtitles .com REST API consumer key (https://www.opensubtitles.com/consumers).
-     * Falls back to the legacy in-repo key, which the gateway currently rejects
-     * ("You cannot consume this service") — drop a fresh key into local.properties. */
-    buildConfigField(
-        "OPENSUBTITLES_API_KEY",
-        AppConfig.localProperties(rootDir).getProperty("yuroyami.keyOpenSubsApi")
-            ?: "iesFjGxVcXtBMnEbxMRYyWbU3M1UEaaL"
-    )
+/* KiteCodec's klib needs this local FFmpeg tree when linking the iOS framework. */
+val kiteCodecFfmpegRoot = providers.gradleProperty("kitecodec.ffmpeg.localRoot")
+    .orElse(provider { AppConfig.localProperties(rootDir).getProperty("kitecodec.ffmpeg.localRoot") })
+    .map { File(it).absoluteFile.normalize() }
 
-    /* Trinity brand colors — exposed so Theming.kt reads them from the SSOT */
-    buildConfigField("TRINITY_COLOR_1", AppConfig.TRINITY_1)
-    buildConfigField("TRINITY_COLOR_2", AppConfig.TRINITY_2)
-    buildConfigField("TRINITY_COLOR_3", AppConfig.TRINITY_3)
+kitecodec {
+    ffmpeg {
+        source.set(kiteCodecFfmpegRoot.map { FFmpegSource.Local }.orElse(FFmpegSource.System))
+        localRoot.fileProvider(kiteCodecFfmpegRoot)
+        license.set(FFmpegLicense.LGPL)
+    }
 }
 
 tasks.register("propagateSSOT") {

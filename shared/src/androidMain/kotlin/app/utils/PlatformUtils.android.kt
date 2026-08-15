@@ -18,6 +18,9 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import app.player.PlayerEngine
 import app.player.exo.ExoEngine
+import app.player.kite.AndroidKiteMediaResolver
+import app.player.kite.KiteEngine
+import app.player.kite.kiteComposeEngine
 import app.player.mpv.MpvEngine
 import app.player.vlc.VlcEngine
 import app.preferences.Preferences.NETWORK_ENGINE
@@ -67,11 +70,18 @@ actual val httpClient: HttpClient by lazy {
 }
 
 /**
- * Media player engines on Android: ExoPlayer, MPV, VLC. MPV and VLC only resolve at runtime
- * in the `full` build flavor; the `exoOnly` flavor ships without their native libraries.
+ * Media player engines on Android. The existing native-view KitePlayer path ships normally;
+ * its experimental pure-Compose sibling is exposed only by a debug, non-exo build.
  */
-actual val availablePlatformPlayerEngines: List<PlayerEngine> =
-    listOf(ExoEngine, MpvEngine, VlcEngine)
+actual val availablePlatformPlayerEngines: List<PlayerEngine> = buildList {
+    add(ExoEngine)
+    add(MpvEngine)
+    add(VlcEngine)
+    add(KiteEngine(AndroidKiteMediaResolver))
+    if (BuildConfig.IS_DEBUG && !BuildConfig.EXOPLAYER_ONLY && kiteComposeEngine.isAvailable) {
+        add(kiteComposeEngine)
+    }
+}
 
 actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {
     val preferredEngine = NETWORK_ENGINE.value()

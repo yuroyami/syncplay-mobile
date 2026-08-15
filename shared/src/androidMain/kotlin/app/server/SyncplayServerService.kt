@@ -12,9 +12,9 @@ import app.R
  * Android foreground service for keeping the Syncplay server alive when the app is backgrounded.
  *
  * Follows the same pattern as [app.player.SyncplayMediaSessionService] but with a separate
- * notification channel. The actual server logic runs in [ServerViewmodel]'s coroutine scope;
- * this service only provides the foreground notification that prevents Android from killing
- * the process.
+ * notification channel. The actual server logic runs in [ServerHostSession]'s process-lifetime
+ * coroutine scope; this service only provides the foreground notification that prevents
+ * Android from killing the process.
  */
 class SyncplayServerService : Service() {
 
@@ -26,7 +26,10 @@ class SyncplayServerService : Service() {
 
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, buildNotification(port, clients))
-        return START_STICKY
+        // NOT sticky: the server itself lives in ServerHostSession's in-process memory. If the
+        // process dies, a sticky restart would only resurrect a notification with no server
+        // behind it.
+        return START_NOT_STICKY
     }
 
     private fun createNotificationChannel() {

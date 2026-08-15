@@ -33,7 +33,7 @@
     <string name="connect_roomname">Room name</string>
     <string name="connect_server">Server</string>
     <string name="connect_choose_video_engine">Video engine</string>
-    <string name="connect_username_tooltip">Pick any name you like, it\'s just what others in the room see.</string>
+    <string name="connect_username_tooltip">Pick any name you like, it's just what others in the room see.</string>
     <string name="connect_roomname_tooltip">Any name works. Friends who enter the same room name get synced together.</string>
     <string name="connect_server_tooltip">All official servers work the same. Everyone must join the same server and port.</string>
     <string name="connect_button_join">Join Room</string>
@@ -219,7 +219,7 @@
     <string name="room_undo_seek_message">This will rewind everyone in the room back to where you were before your last seek (%1$s → %2$s).</string>
     <string name="room_undo_seek_confirm">Undo seek</string>
     <string name="room_undo_seek_cancel">Cancel</string>
-    <string name="room_undo_seek_always">Always do — don\'t ask again</string>
+    <string name="room_undo_seek_always">Always do — don't ask again</string>
     <string name="room_seek_toposition_title">Seek to precise position</string>
     <string name="room_seek_toposition_timeformat">Hour:Minute:Second</string>
     <string name="room_seek_toposition_timediff">Skipping %1$sseconds of time</string>
@@ -341,8 +341,8 @@
 
     <!-- UI Settings Categories -->
     <string name="uisetting_categ_chat_colors">Chat colors</string>
-    <string name="uisetting_categ_player_settings">Player settings</string>
-    <string name="uisetting_categ_chat_properties">Chat properties</string>
+    <string name="uisetting_categ_player_settings">Player</string>
+    <string name="uisetting_categ_chat_properties">Chat</string>
 
     <!-- UI Settings -->
     <string name="uisetting_apply">APPLY</string>
@@ -418,7 +418,7 @@
     <string name="uisetting_doubletap_seek_title">Double-Tap to Seek</string>
     <string name="uisetting_doubletap_seek_summary">Seek forward/backward by double-tapping screen sides. Disabling this removes the single-tap delay caused by double-tap detection.</string>
 
-    <string name="uisetting_swipe_gestures_title">Swipe Gestures</string>
+    <string name="uisetting_swipe_gestures_title">Brightness/Volume Swipe</string>
     <string name="uisetting_swipe_gestures_summary">Vertical swipe on left side for brightness, right side for volume.</string>
 
     <string name="setting_trusted_domains_title">Trusted Domains</string>
@@ -453,7 +453,7 @@
     <string name="uisetting_osd_warnings_summary">Show red on-screen warnings for situations like file mismatch, being alone in the room, or connection errors.</string>
 
     <!-- mpv.conf import/export (Android-only; mpv on iOS doesn't read a user config file) -->
-    <string name="uisetting_categ_mpv">mpv Configuration</string>
+    <string name="uisetting_categ_mpv">mpv</string>
     <string name="uisetting_mpv_import_conf_title">Import mpv.conf</string>
     <string name="uisetting_mpv_import_conf_summary">Replace the active mpv.conf with a file you pick. Takes effect next time mpv is initialized.</string>
     <string name="uisetting_mpv_export_conf_title">Export mpv.conf</string>
@@ -463,7 +463,7 @@
     <string name="uisetting_mpv_conf_missing">No mpv.conf to export yet — import one first or start mpv at least once.</string>
 
     <!-- VLC custom flags (appended to LibVLC init args on both platforms) -->
-    <string name="uisetting_categ_vlc">VLC Player</string>
+    <string name="uisetting_categ_vlc">VLC</string>
     <string name="uisetting_vlc_custom_flags_title">Custom VLC flags</string>
     <string name="uisetting_vlc_custom_flags_summary">Extra command-line flags passed to LibVLC on init. Separate flags with spaces (e.g. --file-caching=5000 --network-caching=3000). Takes effect next time the VLC engine initializes.</string>
 
@@ -500,7 +500,7 @@
     <string name="media_directories_add_folder">Add folder</string>
     <string name="media_directories_delete">Remove from list</string>
     <string name="media_directories_show_full_path">Show full path</string>
-    <string name="media_directories_going_for_pick_rationale">"Select directory to save playlist to as a file"</string>
+    <string name="media_directories_going_for_pick_rationale">Select directory to save playlist to as a file</string>
 
 
     <string name="about_version">• Version: %1$s</string>
@@ -521,4 +521,7 @@
         <item>%1$s Mobile allows you to play media from direct links. However, YouTube is NOT supported, yet.</item>
         <item>If you want to minimize the room temporarily without leaving, you can go into "Picture-in-Picture" mode where the screen is a small floating screen above other apps.</item>
     </string-array>
+    <string name="room_gestures_panel_title">Gestures</string>
+    <string name="uisetting_chat_colors_entry_summary">Set the color of each part of chat messages</string>
+    <string name="server_host_background_note">The server keeps running in the background until you stop it here.</string>
 </resources>

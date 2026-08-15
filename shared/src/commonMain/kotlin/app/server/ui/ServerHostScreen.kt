@@ -83,6 +83,7 @@ import syncplaymobile.shared.generated.resources.server_host_status_starting
 import syncplaymobile.shared.generated.resources.server_host_status_stopped
 import syncplaymobile.shared.generated.resources.server_host_stop
 import syncplaymobile.shared.generated.resources.server_host_address
+import syncplaymobile.shared.generated.resources.server_host_background_note
 import syncplaymobile.shared.generated.resources.server_host_port_forward_hint
 import syncplaymobile.shared.generated.resources.server_host_public_address
 import syncplaymobile.shared.generated.resources.server_host_public_address_fetching
@@ -215,6 +216,16 @@ fun ServerHostScreenUI(viewmodel: ServerViewmodel) {
                 }
 
                 StatusIndicator(status)
+
+                AnimatedVisibility(visible = isRunning) {
+                    Text(
+                        text = stringResource(Res.string.server_host_background_note),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 12.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
 
                 AnimatedVisibility(visible = isRunning) {
                     val localIp = viewmodel.deviceIpAddress.value

@@ -208,7 +208,7 @@ class RoomServerMessageHandler(private val viewmodel: RoomViewmodel) : WireMessa
 
                 /* Slow down to cover time difference */
                 if (doSeek != true && !paused) {
-                    if (Preferences.SYNC_SLOWDOWN.value()) {
+                    if (Preferences.SYNC_SLOWDOWN.value() && viewmodel.player.supportsSpeedAdjustment) {
                         if (diff > SLOWDOWN_THRESHOLD && !protocol.speedChanged) {
                             if (setBy != null && setBy != session.currentUsername) {
                                 viewmodel.viewModelScope.launch(Dispatchers.Main) { viewmodel.player.setSpeed(SLOWDOWN_RATE) }

@@ -37,7 +37,6 @@ import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SplitButtonDefaults
-import androidx.compose.material3.SplitButtonLayout
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
@@ -410,13 +409,18 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         }
                     }
 
-                    /* join button + shortcut saver */
-                    SplitButtonLayout(
+                    /* join button + shortcut saver. A plain Row with a weighted leading button
+                     * instead of SplitButtonLayout: the pair then always spans exactly the same
+                     * 0.75-fraction width as the text fields above, keeping the button symmetric
+                     * within the screen on any width (tablets included). */
+                    Row(
                         modifier = Modifier.fillMaxWidth(0.75f),
-                        leadingButton = {
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(SplitButtonDefaults.Spacing)
+                    ) {
                             SplitButtonDefaults.LeadingButton(
                                 contentPadding = PaddingValues(vertical = 16.dp),
-                                modifier = Modifier.fillMaxWidth(0.85f).tvFocusable(addFocusable = false),
+                                modifier = Modifier.weight(1f).tvFocusable(addFocusable = false),
                                 onClick = {
                                     globalViewmodel.viewModelScope.launch(Dispatchers.Default) {
                                         val errorMessage: StringResource? = when {
@@ -449,8 +453,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                     Text(stringResource(Res.string.connect_button_join), fontSize = 18.sp)
                                 }
                             )
-                        },
-                        trailingButton = {
+
                             SplitButtonDefaults.TrailingButton(
                                 modifier = Modifier.tvFocusable(addFocusable = false),
                                 contentPadding = PaddingValues(vertical = 16.dp),
@@ -489,8 +492,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                     Icon(imageVector = Icons.Filled.Widgets, null)
                                 }
                             )
-                        }
-                    )
+                    }
 
                     Spacer(modifier = Modifier.height(10.dp))
                 }

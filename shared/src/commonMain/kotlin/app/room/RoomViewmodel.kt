@@ -10,6 +10,7 @@ import app.player.PlayerImpl
 import app.player.PlayerManager
 import app.player.models.MediaFile
 import app.preferences.Preferences
+import app.preferences.set
 import app.preferences.value
 import app.protocol.ProtocolManager
 import app.protocol.Session
@@ -102,8 +103,15 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
 
             launch {
                 val preferred = Preferences.PLAYER_ENGINE.value()
-                val engine = availablePlatformPlayerEngines.firstOrNull { it.name == preferred }
-                    ?: availablePlatformPlayerEngines.first()
+                val engine = availablePlatformPlayerEngines
+                    .firstOrNull { it.name == preferred && it.isAvailable }
+                    ?: availablePlatformPlayerEngines.first { it.isAvailable }
+                if (engine.name != preferred) {
+                    // A debug-only engine can disappear when a release build replaces the app.
+                    // Persist the effective fallback so the picker never displays a stale,
+                    // unselected engine name after that transition.
+                    Preferences.PLAYER_ENGINE.set(engine.name)
+                }
                 playerManager.player = engine.createImpl(this@RoomViewmodel)
                 playerManager.isPlayerReady.value = true
             }

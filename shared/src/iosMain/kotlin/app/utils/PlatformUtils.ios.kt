@@ -7,6 +7,9 @@ import androidx.compose.ui.platform.ClipEntry
 import app.delegato
 import app.player.PlayerEngine
 import app.player.avplayer.AVPlayerEngine
+import app.player.kite.IosKiteMediaResolver
+import app.player.kite.KiteEngine
+import app.player.kite.kiteComposeEngine
 import app.player.mpv.MpvKitEngine
 import app.player.vlc.VlcKitEngine
 import app.preferences.Preferences.NETWORK_ENGINE
@@ -130,6 +133,12 @@ actual val availablePlatformPlayerEngines: List<PlayerEngine> = buildList {
     // is true only once the Swift MpvKitBridge factory is registered at app startup.
     add(MpvKitEngine)
     add(VlcKitEngine)
+    // KitePlayer, the same KiteImpl the Android list ends with: one implementation, two phones.
+    add(KiteEngine(IosKiteMediaResolver))
+    // Its experimental pure-Compose sibling is exposed only by a debug build, same as Android.
+    if (BuildConfig.IS_DEBUG && kiteComposeEngine.isAvailable) {
+        add(kiteComposeEngine)
+    }
 }
 
 actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {

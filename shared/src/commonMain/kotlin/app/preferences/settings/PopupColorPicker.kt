@@ -59,7 +59,6 @@ object PopupColorPicker {
             dialogOpen = visibilityState.value,
             widthPercent = 0.7f,
             heightPercent = 0.85f,
-            strokeWidth = 0.5f,
             onDismiss = { visibilityState.value = false }
         ) {
             var color by remember { mutableStateOf(initialColor) }

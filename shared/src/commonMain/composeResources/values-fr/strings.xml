@@ -244,7 +244,7 @@
     <string name="setting_network_engine_swift_nio">SwiftNIO (Recommandé + TLS)</string>
     <string name="setting_network_engine_ktor">Ktor (Expérimental)</string>
     <string name="setting_export_log_title">Exporter les journaux</string>
-    <string name="setting_export_log_summary">Exporter les journaux de l\'application de cette session sous forme de fichier texte vers votre appareil</string>
+    <string name="setting_export_log_summary">Exporter les journaux de l'application de cette session sous forme de fichier texte vers votre appareil</string>
 
     <!-- UI Settings Categories -->
     <string name="uisetting_categ_chat_colors">Couleurs du chat</string>
@@ -258,7 +258,7 @@
     <string name="uisetting_msgoutline_title">Contour des messages</string>
     <string name="uisetting_msgoutline_summary">Active un contour autour des messages pour éviter qu'ils se fondent dans la vidéo.</string>
     <string name="uisetting_msgoutline_thickness_title">Épaisseur du contour des messages</string>
-    <string name="uisetting_msgoutline_thickness_summary">Épaisseur du contour des messages de chat lorsqu\'il est activé.</string>
+    <string name="uisetting_msgoutline_thickness_summary">Épaisseur du contour des messages de chat lorsqu'il est activé.</string>
     <string name="uisetting_msgshadow_title">Ombre des messages</string>
     <string name="uisetting_msgshadow_summary">Ajoute une ombre aux messages pour une meilleure lisibilité.</string>
     <string name="uisetting_msgboxaction_title">Fonction du bouton OK du clavier</string>
@@ -348,7 +348,7 @@
     <string name="media_directories_add_folder">Ajouter un dossier</string>
     <string name="media_directories_delete">Supprimer de la liste</string>
     <string name="media_directories_show_full_path">Afficher le chemin complet</string>
-    <string name="media_directories_going_for_pick_rationale">"Sélectionnez le répertoire où sauvegarder la playlist en tant que fichier"</string>
+    <string name="media_directories_going_for_pick_rationale">Sélectionnez le répertoire où sauvegarder la playlist en tant que fichier</string>
 
     <string name="about_version">• Version : %1$s</string>
     <string name="about_developed_by">• Développé par : yuroyami</string>
@@ -380,7 +380,7 @@
     <string name="server_host_isolate_rooms">Isoler les salles</string>
     <string name="server_host_disable_chat">Désactiver le chat</string>
     <string name="server_host_disable_ready">Désactiver le statut Prêt</string>
-    <string name="server_host_ios_warning">Sur iOS, le serveur s\'arrêtera lorsque l\'application passe en arrière-plan.</string>
+    <string name="server_host_ios_warning">Sur iOS, le serveur s'arrêtera lorsque l'application passe en arrière-plan.</string>
     <string name="server_host_address">Adresse locale (Wi-Fi/LAN)</string>
     <string name="server_host_public_address">Adresse publique (Internet)</string>
     <string name="server_host_public_address_fetching">Récupération…</string>
@@ -388,7 +388,7 @@
     <string name="server_host_port_forward_hint">Pour les amis en dehors de votre réseau, le port %1$s doit être redirigé sur votre routeur.</string>
     <string name="server_host_clients_connected">%1$d client(s) connecté(s)</string>
     <string name="server_host_server_log">Journal du serveur</string>
-    <string name="server_host_status_running">En cours d\'exécution</string>
+    <string name="server_host_status_running">En cours d'exécution</string>
     <string name="server_host_status_stopped">Arrêté</string>
     <string name="server_host_status_starting">Démarrage…</string>
     <string name="server_host_status_error">Erreur</string>
@@ -406,9 +406,9 @@
     <!-- Room overflow and misc -->
     <string name="room_overflow_landscape_mode">Mode paysage</string>
     <string name="room_overflow_portrait_mode">Mode portrait</string>
-    <string name="room_screenshot_saved">Capture d\'écran enregistrée</string>
-    <string name="room_screenshot_unsupported">La capture d\'écran n\'est pas prise en charge par ce lecteur</string>
-    <string name="room_untrusted_domain_warning">URL bloquée provenant d\'un domaine non fiable : %1$s. Ajoutez-le aux Domaines de confiance dans les paramètres pour l\'autoriser.</string>
+    <string name="room_screenshot_saved">Capture d'écran enregistrée</string>
+    <string name="room_screenshot_unsupported">La capture d'écran n'est pas prise en charge par ce lecteur</string>
+    <string name="room_untrusted_domain_warning">URL bloquée provenant d'un domaine non fiable : %1$s. Ajoutez-le aux Domaines de confiance dans les paramètres pour l'autoriser.</string>
 
     <!-- Settings: logs and trusted domains -->
     <string name="setting_clear_logs_title">Effacer les journaux</string>
@@ -433,35 +433,35 @@
 
     <!-- UI settings: chapter markers -->
     <string name="uisetting_show_chapter_dots_title">Afficher les marqueurs de chapitres</string>
-    <string name="uisetting_show_chapter_dots_summary">Afficher les marqueurs de chapitres sur la barre de progression lorsqu\'ils sont disponibles.</string>
+    <string name="uisetting_show_chapter_dots_summary">Afficher les marqueurs de chapitres sur la barre de progression lorsqu'ils sont disponibles.</string>
     <string name="uisetting_chapter_dots_clickable_title">Marqueurs de chapitres cliquables</string>
     <string name="uisetting_chapter_dots_clickable_summary">Appuyez sur un marqueur de chapitre pour aller à cette position.</string>
 
     <!-- UI settings: gestures -->
     <string name="uisetting_doubletap_seek_title">Double-tap pour avancer/reculer</string>
-    <string name="uisetting_doubletap_seek_summary">Avancez ou reculez en double-tapant sur les côtés de l\'écran. Désactiver ceci supprime le délai du simple tap causé par la détection du double-tap.</string>
+    <string name="uisetting_doubletap_seek_summary">Avancez ou reculez en double-tapant sur les côtés de l'écran. Désactiver ceci supprime le délai du simple tap causé par la détection du double-tap.</string>
     <string name="uisetting_swipe_gestures_title">Gestes de balayage</string>
     <string name="uisetting_swipe_gestures_summary">Balayage vertical sur le côté gauche pour la luminosité, côté droit pour le volume.</string>
 
     <!-- UI settings: HUD and OSD -->
     <string name="uisetting_osd_duration_title">Durée des messages OSD</string>
-    <string name="uisetting_osd_duration_summary">Nombre de secondes d\'affichage des messages d\'état à l\'écran (ex. changements de ratio, sélections de pistes). Mettez 0 pour désactiver les messages OSD.</string>
+    <string name="uisetting_osd_duration_summary">Nombre de secondes d'affichage des messages d'état à l'écran (ex. changements de ratio, sélections de pistes). Mettez 0 pour désactiver les messages OSD.</string>
 
     <!-- UI settings: haptics -->
-    <string name="uisetting_haptic_on_joined_title">Quelqu\'un a rejoint</string>
-    <string name="uisetting_haptic_on_joined_summary">Vibrer lorsque quelqu\'un rejoint la salle.</string>
-    <string name="uisetting_haptic_on_left_title">Quelqu\'un est parti</string>
-    <string name="uisetting_haptic_on_left_summary">Vibrer lorsque quelqu\'un quitte la salle.</string>
-    <string name="uisetting_haptic_on_paused_title">Quelqu\'un a mis en pause</string>
-    <string name="uisetting_haptic_on_paused_summary">Vibrer lorsque quelqu\'un met la lecture en pause.</string>
-    <string name="uisetting_haptic_on_played_title">Quelqu\'un a repris la lecture</string>
-    <string name="uisetting_haptic_on_played_summary">Vibrer lorsque quelqu\'un reprend la lecture.</string>
-    <string name="uisetting_haptic_on_seeked_title">Quelqu\'un a cherché</string>
-    <string name="uisetting_haptic_on_seeked_summary">Vibrer lorsque quelqu\'un effectue un saut dans la vidéo.</string>
+    <string name="uisetting_haptic_on_joined_title">Quelqu'un a rejoint</string>
+    <string name="uisetting_haptic_on_joined_summary">Vibrer lorsque quelqu'un rejoint la salle.</string>
+    <string name="uisetting_haptic_on_left_title">Quelqu'un est parti</string>
+    <string name="uisetting_haptic_on_left_summary">Vibrer lorsque quelqu'un quitte la salle.</string>
+    <string name="uisetting_haptic_on_paused_title">Quelqu'un a mis en pause</string>
+    <string name="uisetting_haptic_on_paused_summary">Vibrer lorsque quelqu'un met la lecture en pause.</string>
+    <string name="uisetting_haptic_on_played_title">Quelqu'un a repris la lecture</string>
+    <string name="uisetting_haptic_on_played_summary">Vibrer lorsque quelqu'un reprend la lecture.</string>
+    <string name="uisetting_haptic_on_seeked_title">Quelqu'un a cherché</string>
+    <string name="uisetting_haptic_on_seeked_summary">Vibrer lorsque quelqu'un effectue un saut dans la vidéo.</string>
     <string name="uisetting_haptic_on_chat_title">Message de chat reçu</string>
-    <string name="uisetting_haptic_on_chat_summary">Vibrer lors de la réception d\'un message de chat.</string>
+    <string name="uisetting_haptic_on_chat_summary">Vibrer lors de la réception d'un message de chat.</string>
     <string name="uisetting_haptic_on_playlist_title">Playlist mise à jour</string>
     <string name="uisetting_haptic_on_playlist_summary">Vibrer lorsque la playlist partagée est mise à jour.</string>
     <string name="uisetting_haptic_on_connection_title">Événement de connexion</string>
-    <string name="uisetting_haptic_on_connection_summary">Vibrer en cas d\'échec de connexion ou de déconnexion.</string>
+    <string name="uisetting_haptic_on_connection_summary">Vibrer en cas d'échec de connexion ou de déconnexion.</string>
 </resources>

@@ -142,9 +142,14 @@ class MpvKitImpl(
                 "file-loaded" -> {
                     if (!viewmodel.isSoloMode) {
                         playerScopeIO.launch {
-                            // Wait for duration to become available
-                            while (playerManager.timeFullMillis.value <= 0L) {
+                            // Wait for THIS file's duration: timeFullMillis is wiped to 0 on every
+                            // inject (PlayerImpl.installMedia), so a stale value from the previous
+                            // file can no longer satisfy this wait and cause an announce with old
+                            // metadata. Bounded so duration-less media (live streams) still announce.
+                            var waitedMs = 0L
+                            while (playerManager.timeFullMillis.value <= 0L && waitedMs < 5000) {
                                 delay(50)
+                                waitedMs += 50
                             }
                             playerManager.media.value?.fileDuration =
                                 playerManager.timeFullMillis.value.toDouble() / 1000.0

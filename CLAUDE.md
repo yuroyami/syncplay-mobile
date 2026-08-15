@@ -49,7 +49,7 @@ Kotlin Multiplatform (KMP) port of [Syncplay](https://syncplay.pl), a synchroniz
 
 **Toolchain (from `gradle.properties` / `libs.versions.toml`):** Kotlin 2.4.10, AGP 9.2.1, Compose Multiplatform 1.12.0-alpha01, compileSdk 37, minSdk 26, targetSdk 37, NDK 29.0.14206865, Java toolchain 21, buildToolsVersion 37.0.0 (pinned for reproducible builds).
 
-**`exoOnly` flag** is the single source of truth resolved by `AppConfig.resolveExoOnly(providers)` (overridable with `-PexoOnly=true`), read by both `shared` (the `EXOPLAYER_ONLY` BuildConfig field) and `androidApp` (flavor selection). `exoOnly` switches the applicationId to `com.reddnek.syncplay`, skips the mpv/VLC native build scripts, and ships no native player libs.
+**`exoOnly` flag** is the single source of truth resolved by `AppConfig.resolveExoOnly(providers)` (overridable with `-PexoOnly=true`), used by root KiteSSOT to emit the commonMain `EXOPLAYER_ONLY` BuildConfig field and by `androidApp` for flavor selection. `exoOnly` switches the applicationId to `com.reddnek.syncplay`, skips the mpv/VLC native build scripts, and ships no native player libs.
 
 **buildSrc holds all non-trivial build logic; the four `build.gradle.kts` files stay declarative.**
 - `AppConfig.kt` — app identity SSOT fed into the plugin block and read by modules (`APP_NAME`, `VERSION_NAME`, `BUNDLE_ID_BASE`/`_EXO`, `SHARED_MODULE_NAME`, `macosPackageVersion` — jpackage rejects 0.x.y), `localProperties(rootDir)` (signing secrets — caller must pass `rootDir` explicitly), Trinity brand colors (`0xFF4FD1FF` cyan / `0xFF5A7CFF` blue / `0xFF7A3CFF` purple), `abiCodes`, `mpvLibs` (9 `.so` files), and the custom propagators `propagateTrinityColors()` (rewrites `ic_launcher_foreground.xml` gradient stops) + `propagateDefaultStrings()` (`values-en/strings.xml` → `values/strings.xml`); `propagateAllCustom()` runs them.
@@ -59,6 +59,7 @@ Kotlin Multiplatform (KMP) port of [Syncplay](https://syncplay.pl), a synchroniz
 
 **KiteSSOT migration (DONE, 2026-07-24).** The SSOT plugin is `io.github.yuroyami.kitessot` 2.0.2 (Gradle Plugin Portal; successor of kmp-ssot). Root `build.gradle.kts` holds the whole `kiteSsot { }` config, fed from `AppConfig`. Key semantics vs the old kmp-ssot:
 - Identity applies in AGP `finalizeDsl` (AFTER module DSL), so the exoOnly applicationId swap lives in the root block (`bundleIdBase = if (exoOnly) …`), NOT in androidApp's `defaultConfig`. A module-level override cannot win anymore.
+- Runtime constants are generated directly into `shared/commonMain` by `kiteSsot { buildConfig { } }`; no platform `expect`/`actual` declarations are used. `DEBUG` is true only for an explicit Android debug-only Gradle invocation. KiteSSOT owns one commonMain object per invocation, so mixed/aggregate variant builds conservatively use `DEBUG=false` while remaining buildable.
 - versionCode scheme is identical to kmp-ssot (`1xxxyyyzzz`; 0.23.1 → `1000023001`) — store continuity holds.
 - Branding is on-demand: launcher assets regenerate ONLY via `kiteSsotSyncAndroidLogo` (no more per-build icon stomping / launcher-PNG git noise). `compileSdk >= 33` in the block makes that task emit `mipmap-anydpi-v33` wrappers with the themed-icon `<monochrome>` layer (issue #143); the previous hand-written v33 files + `drawable/ic_launcher_monochrome.xml` were deleted — the plugin owns all launcher assets now (ownership manifests under `.kitessot/`).
 - `kiteSsotDoctor` / `kiteSsotCheck` / `kiteSsotPlan` are the diagnostics; `kiteSsotVerify` gates releases.
@@ -71,7 +72,7 @@ Kotlin Multiplatform (KMP) port of [Syncplay](https://syncplay.pl), a synchroniz
 
 **Android-only native gotchas.** `restoreMpvLibcxx` copies the NDK r29 `libc++_shared.so` into `src/main/libs/<abi>/`; `verifyMpvLibcxx` greps for the `from_chars_floating` symbol and fails the build if missing (libVLC's older libc++ lacks `__from_chars_floating_point`, crashing mpv at load). `exoOnly` runs `pruneStaleExoOnlyLibcxx` so the exo-only APK deterministically uses the VLC AAR's libc++.
 
-**Reproducible-build constraints (IzzyOnDroid, issue #105).** Do NOT re-add foojay-resolver or pin a JVM toolchain vendor; JDK 21 is requested vendor-neutrally. `mavenLocal()` was REMOVED from `pluginManagement` (kitessot resolves from the Gradle Plugin Portal) — do not re-add it; `jitpack.io` is for the NewPipe Extractor.
+**Reproducible-build constraints (IzzyOnDroid, issue #105).** Do NOT re-add foojay-resolver or pin a JVM toolchain vendor; JDK 21 is requested vendor-neutrally. `mavenLocal()` is temporarily present and content-filtered to `io.github.yuroyami` only while KitePlayer 0.0.4 and the KiteCodec 0.0.6 plugin are local publications. A clean release runner must publish those twins locally first (and provide KiteCodec's iOS FFmpeg tree), or switch to their eventual remote repository; arbitrary Maven-local artifacts must never be allowed to shadow Central. `jitpack.io` is for the NewPipe Extractor.
 
 ---
 

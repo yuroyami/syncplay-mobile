@@ -16,13 +16,12 @@ plugins {
     alias(libs.plugins.ksp).apply(false)
 
     alias(libs.plugins.ktorfit).apply(false)
-
-    alias(libs.plugins.buildConfig).apply(false)
 }
 
 // KiteSSOT applies app identity in AGP finalizeDsl (AFTER module DSL blocks), so the
 // exoOnly applicationId swap must happen here, not inside androidApp's defaultConfig.
 val exoOnly = AppConfig.resolveExoOnly(providers)
+val localProperties = AppConfig.localProperties(rootDir)
 
 kiteSsot {
     appName = AppConfig.APP_NAME
@@ -59,6 +58,36 @@ kiteSsot {
     appLogoPngForeground = layout.projectDirectory.file("shared/src/commonMain/composeResources/drawable/logo_fg.png")
     appLogoPngBackground = layout.projectDirectory.file("shared/src/commonMain/composeResources/drawable/logo_bg.png")
     appLogoAndroidSafeZoneRatio = 0.5
+
+    buildConfig {
+        enabled = true
+        includeIdentity = false
+        packageName = "SyncplayMobile.shared"
+        className = "BuildConfig"
+
+        stringField("APP_NAME", AppConfig.APP_NAME)
+        stringField("APP_VERSION", AppConfig.VERSION_NAME)
+        // NOT "DEBUG": KiteSSOT generates a PUBLIC object, so every field becomes a property on the
+        // exported ObjC header, and Xcode defines DEBUG=1 in Debug configs, so "BOOL DEBUG"
+        // preprocesses to "BOOL 1" and every iOS Debug build fails to precompile the module.
+        booleanField("IS_DEBUG", true)
+        // Overridable for wire-level debugging: ./gradlew ... -PdebugProtocol=true
+        booleanField(
+            "DEBUG_SYNCPLAY_PROTOCOL",
+            providers.gradleProperty("debugProtocol").orNull?.toBoolean() ?: false,
+        )
+        booleanField("EXOPLAYER_ONLY", exoOnly)
+        stringField("KLIPY_API_KEY", localProperties.getProperty("yuroyami.keyKlipyApi") ?: "")
+        // A local OpenSubtitles client key can replace the legacy fallback.
+        stringField(
+            "OPENSUBTITLES_API_KEY",
+            localProperties.getProperty("yuroyami.keyOpenSubsApi")
+                ?: "iesFjGxVcXtBMnEbxMRYyWbU3M1UEaaL",
+        )
+        longField("TRINITY_COLOR_1", AppConfig.TRINITY_1)
+        longField("TRINITY_COLOR_2", AppConfig.TRINITY_2)
+        longField("TRINITY_COLOR_3", AppConfig.TRINITY_3)
+    }
 }
 
 registerAndroidReleaseAllTask()

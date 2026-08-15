@@ -87,15 +87,32 @@ class VlcjImpl(vm: RoomViewmodel) : PlayerImpl(vm, VlcjEngine) {
         }
     }
 
-    private val renderCallback = RenderCallback { _, nativeBuffers, bufferFormat ->
-        val src: ByteBuffer = nativeBuffers?.getOrNull(0) ?: return@RenderCallback
-        val w = bufferFormat.width
-        val h = bufferFormat.height
-        val rowBytes = bufferFormat.pitches.getOrNull(0) ?: (w * 4)
-        pipeline.deliver(w, h, rowBytes) { dst ->
-            src.rewind()
-            src.get(dst, 0, minOf(src.remaining(), dst.size))
+    /* vlcj 4.12 turned RenderCallback into a 3-method interface (lock/display/unlock, with the
+     * display size appended to display()), so this can no longer be a SAM lambda. The lock
+     * hooks are for double-buffered renderers; our pipeline copies synchronously in display(),
+     * so they stay no-ops. We keep reading the BUFFER dimensions/pitches (not displayWidth/
+     * displayHeight): the pipeline wants the source buffer geometry, aspect math happens later. */
+    private val renderCallback = object : RenderCallback {
+        override fun lock(mediaPlayer: MediaPlayer) {}
+
+        override fun display(
+            mediaPlayer: MediaPlayer,
+            nativeBuffers: Array<ByteBuffer>,
+            bufferFormat: BufferFormat,
+            displayWidth: Int,
+            displayHeight: Int
+        ) {
+            val src: ByteBuffer = nativeBuffers.getOrNull(0) ?: return
+            val w = bufferFormat.width
+            val h = bufferFormat.height
+            val rowBytes = bufferFormat.pitches.getOrNull(0) ?: (w * 4)
+            pipeline.deliver(w, h, rowBytes) { dst ->
+                src.rewind()
+                src.get(dst, 0, minOf(src.remaining(), dst.size))
+            }
         }
+
+        override fun unlock(mediaPlayer: MediaPlayer) {}
     }
 
     /* --------------------------------- lifecycle ---------------------------------- */
