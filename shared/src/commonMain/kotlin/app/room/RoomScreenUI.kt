@@ -26,9 +26,13 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.foundation.background
+import app.preferences.Preferences.VIDEO_BACKGROUND_COLOR
+import app.preferences.flow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.InputMode
@@ -105,10 +109,17 @@ fun RoomScreenUI(viewmodel: RoomViewmodel) {
             /* Video Surface */
             val playerIsReady by viewmodel.playerManager.isPlayerReady.collectAsState()
             if (playerIsReady) {
+                /* The backdrop behind the picture (the letterbox bars). KiteVideo's letterbox is
+                 * transparent by design, so without this the app theme (gray) showed through.
+                 * Black by default, user-colorable. Placed AFTER alpha in the chain so the
+                 * no-video state stays fully invisible. */
+                val videoBackground by remember { VIDEO_BACKGROUND_COLOR.flow() }
+                    .collectAsState(initial = 0xFF000000.toInt())
                 viewmodel.player.VideoPlayer(
                     modifier = Modifier
                         .fillMaxSize()
-                        .alpha(if (hasVideo) 1f else 0f), // Keeps composable alive even if hidden
+                        .alpha(if (hasVideo) 1f else 0f) // Keeps composable alive even if hidden
+                        .background(Color(videoBackground)),
                     onPlayerReady = {
                         platformCallback.mediaSessionInitialize()
                     }

@@ -64,7 +64,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import app.LocalGlobalViewmodel
 import app.Screen
-import app.home.components.HomeAnimatedEngineButtonGroup
+import app.home.components.HomeEngineWheel
 import app.home.components.HomeTextField
 import app.home.components.HomeTopBar
 import app.home.components.PopupDidYaKnow.DidYaKnowPopup
@@ -380,7 +380,7 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                         val selectedEngine by PLAYER_ENGINE.watchPref()
 
                         val errorString = stringResource(Res.string.home_engine_unavailable_error)
-                        HomeAnimatedEngineButtonGroup(
+                        HomeEngineWheel(
                             modifier = Modifier.fillMaxWidth(),
                             engines = availablePlatformPlayerEngines,
                             selectedEngine = selectedEngine,
@@ -394,19 +394,6 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                                 }
                             }
                         )
-
-                        // Warn when the chosen engine is flagged experimental (MPVKit/AVPlayer on
-                        // iOS, libVLC on Android). Sits between the engine picker and the Join button.
-                        val activeEngine = availablePlatformPlayerEngines.firstOrNull { it.name == selectedEngine }
-                        if (activeEngine?.isExperimental == true) {
-                            Text(
-                                text = "This video engine is experimental",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.error,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
                     }
 
                     /* join button + shortcut saver. A plain Row with a weighted leading button

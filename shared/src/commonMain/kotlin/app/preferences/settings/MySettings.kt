@@ -54,6 +54,7 @@ import app.preferences.Preferences.ROOM_UI_OPACITY
 import app.preferences.Preferences.SEEK_BACKWARD_JUMP
 import app.preferences.Preferences.SEEK_FORWARD_JUMP
 import app.preferences.Preferences.SUBTITLE_SIZE
+import app.preferences.Preferences.VIDEO_BACKGROUND_COLOR
 import app.preferences.Preferences.SYNC_DONT_SLOW_WITH_ME
 import app.preferences.Preferences.SYNC_FASTFORWARD
 import app.preferences.Preferences.SYNC_REWIND
@@ -172,6 +173,7 @@ val INROOM_PLAYER_SETTINGS = SettingCategory(
     +SEEK_BACKWARD_JUMP
     +SHOW_CHAPTER_DOTS
     +CHAPTER_DOTS_CLICKABLE
+    +VIDEO_BACKGROUND_COLOR
     /* Preferred track languages, mirrored from the global Language category so they are
      * reachable mid-session too. */
     +AUDIO_LANG

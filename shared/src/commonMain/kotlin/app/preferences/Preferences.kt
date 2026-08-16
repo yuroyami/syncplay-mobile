@@ -27,17 +27,23 @@ import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Lan
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.BrightnessMedium
+import androidx.compose.material.icons.filled.Colorize
+import androidx.compose.material.icons.filled.Contrast
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.LogoDev
 import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Opacity
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.VerticalAlignBottom
 import androidx.compose.material.icons.filled.Pin
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SlowMotionVideo
 import androidx.compose.material.icons.filled.SortByAlpha
 import androidx.compose.material.icons.filled.SpatialAudio
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material.icons.filled.SupervisedUserCircle
 import androidx.compose.material.icons.filled.Swipe
 import androidx.compose.material.icons.filled.TouchApp
@@ -182,6 +188,32 @@ import syncplaymobile.shared.generated.resources.uisetting_haptic_on_seeked_summ
 import syncplaymobile.shared.generated.resources.uisetting_haptic_on_seeked_title
 import syncplaymobile.shared.generated.resources.uisetting_human_color_summary
 import syncplaymobile.shared.generated.resources.uisetting_human_color_title
+import syncplaymobile.shared.generated.resources.uisetting_kite_audio_delay_summary
+import syncplaymobile.shared.generated.resources.uisetting_kite_audio_delay_title
+import syncplaymobile.shared.generated.resources.uisetting_kite_debug_stats_summary
+import syncplaymobile.shared.generated.resources.uisetting_kite_debug_stats_title
+import syncplaymobile.shared.generated.resources.uisetting_kite_eq_brightness_summary
+import syncplaymobile.shared.generated.resources.uisetting_kite_eq_brightness_title
+import syncplaymobile.shared.generated.resources.uisetting_kite_eq_contrast_summary
+import syncplaymobile.shared.generated.resources.uisetting_kite_eq_contrast_title
+import syncplaymobile.shared.generated.resources.uisetting_kite_eq_hue_summary
+import syncplaymobile.shared.generated.resources.uisetting_kite_eq_hue_title
+import syncplaymobile.shared.generated.resources.uisetting_kite_eq_saturation_summary
+import syncplaymobile.shared.generated.resources.uisetting_kite_eq_saturation_title
+import syncplaymobile.shared.generated.resources.uisetting_kite_hw_summary
+import syncplaymobile.shared.generated.resources.uisetting_kite_hw_title
+import syncplaymobile.shared.generated.resources.uisetting_kite_preserve_pitch_summary
+import syncplaymobile.shared.generated.resources.uisetting_kite_preserve_pitch_title
+import syncplaymobile.shared.generated.resources.uisetting_video_bg_color_summary
+import syncplaymobile.shared.generated.resources.uisetting_video_bg_color_title
+import syncplaymobile.shared.generated.resources.uisetting_kite_sub_pos_summary
+import syncplaymobile.shared.generated.resources.uisetting_kite_sub_pos_title
+import syncplaymobile.shared.generated.resources.uisetting_kite_sub_autoselect_summary
+import syncplaymobile.shared.generated.resources.uisetting_kite_sub_autoselect_title
+import syncplaymobile.shared.generated.resources.uisetting_kite_sub_delay_summary
+import syncplaymobile.shared.generated.resources.uisetting_kite_sub_delay_title
+import syncplaymobile.shared.generated.resources.uisetting_kite_sub_scale_summary
+import syncplaymobile.shared.generated.resources.uisetting_kite_sub_scale_title
 import syncplaymobile.shared.generated.resources.uisetting_messagery_alpha_summary
 import syncplaymobile.shared.generated.resources.uisetting_messagery_alpha_title
 import syncplaymobile.shared.generated.resources.uisetting_mpv_gpunext_summary
@@ -773,6 +805,68 @@ object Preferences {
         icon = Icons.Filled.Swipe
     }
 
+    /** ------------ KitePlayer Settings -------------*/
+    val KITE_HARDWARE_ACCELERATION = Pref("pref_kite_hw", true) {
+        title = Res.string.uisetting_kite_hw_title
+        summary = Res.string.uisetting_kite_hw_summary
+        icon = Icons.Filled.Speed
+    }
+    val KITE_SUBTITLE_AUTOSELECT = Pref("pref_kite_sub_autoselect", true) {
+        title = Res.string.uisetting_kite_sub_autoselect_title
+        summary = Res.string.uisetting_kite_sub_autoselect_summary
+        icon = Icons.Filled.Subtitles
+    }
+    val KITE_SUBTITLE_SCALE = Pref("pref_kite_sub_scale", 100) {
+        title = Res.string.uisetting_kite_sub_scale_title
+        summary = Res.string.uisetting_kite_sub_scale_summary
+        icon = Icons.Filled.FormatSize
+    }
+    val KITE_SUBTITLE_DELAY_MS = Pref("pref_kite_sub_delay_ms", 0) {
+        title = Res.string.uisetting_kite_sub_delay_title
+        summary = Res.string.uisetting_kite_sub_delay_summary
+        icon = Icons.Filled.Timer
+    }
+    val KITE_AUDIO_DELAY_MS = Pref("pref_kite_audio_delay_ms", 0) {
+        title = Res.string.uisetting_kite_audio_delay_title
+        summary = Res.string.uisetting_kite_audio_delay_summary
+        icon = Icons.Filled.Timer
+    }
+    val KITE_PRESERVE_PITCH = Pref("pref_kite_preserve_pitch", true) {
+        title = Res.string.uisetting_kite_preserve_pitch_title
+        summary = Res.string.uisetting_kite_preserve_pitch_summary
+        icon = Icons.Filled.MusicNote
+    }
+    val KITE_SUBTITLE_POS = Pref("pref_kite_sub_pos", 100) {
+        title = Res.string.uisetting_kite_sub_pos_title
+        summary = Res.string.uisetting_kite_sub_pos_summary
+        icon = Icons.Filled.VerticalAlignBottom
+    }
+    val KITE_EQ_BRIGHTNESS = Pref("pref_kite_eq_brightness", 0) {
+        title = Res.string.uisetting_kite_eq_brightness_title
+        summary = Res.string.uisetting_kite_eq_brightness_summary
+        icon = Icons.Filled.BrightnessMedium
+    }
+    val KITE_EQ_CONTRAST = Pref("pref_kite_eq_contrast", 100) {
+        title = Res.string.uisetting_kite_eq_contrast_title
+        summary = Res.string.uisetting_kite_eq_contrast_summary
+        icon = Icons.Filled.Contrast
+    }
+    val KITE_EQ_SATURATION = Pref("pref_kite_eq_saturation", 100) {
+        title = Res.string.uisetting_kite_eq_saturation_title
+        summary = Res.string.uisetting_kite_eq_saturation_summary
+        icon = Icons.Filled.Palette
+    }
+    val KITE_EQ_HUE = Pref("pref_kite_eq_hue", 0) {
+        title = Res.string.uisetting_kite_eq_hue_title
+        summary = Res.string.uisetting_kite_eq_hue_summary
+        icon = Icons.Filled.Colorize
+    }
+    val KITE_DEBUG_STATS = Pref("pref_kite_debug_stats", false) {
+        title = Res.string.uisetting_kite_debug_stats_title
+        summary = Res.string.uisetting_kite_debug_stats_summary
+        icon = Icons.Filled.Adb
+    }
+
     /** ------------ MPV Settings -------------*/
     val MPV_HARDWARE_ACCELERATION = Pref("pref_mpv_hw", true) {
         title = Res.string.uisetting_mpv_hardware_acceleration_title
@@ -868,6 +962,18 @@ object Preferences {
         title = Res.string.uisetting_haptic_on_connection_title
         summary = Res.string.uisetting_haptic_on_connection_summary
         icon = Icons.Filled.Vibration
+    }
+
+    /**
+     * The colour behind the video picture (the letterbox area). Black by default, because a
+     * letterbox that is anything else reads as a rendering bug; picker for whoever disagrees.
+     * Opaque ARGB, same storage convention as the chat colour prefs.
+     */
+    val VIDEO_BACKGROUND_COLOR = Pref("pref_video_background_color", androidx.compose.ui.graphics.Color.Black.toArgb()) {
+        title = Res.string.uisetting_video_bg_color_title
+        summary = Res.string.uisetting_video_bg_color_summary
+        icon = Icons.Filled.Brush
+        extraConfig = PrefExtraConfig.ColorPick
     }
 
     /** ------------ Advanced -------------*/

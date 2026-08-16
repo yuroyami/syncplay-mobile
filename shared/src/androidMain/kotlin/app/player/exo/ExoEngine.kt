@@ -15,6 +15,7 @@ import syncplaymobile.shared.generated.resources.exoplayer
 object ExoEngine : PlayerEngine {
     override val name = "ExoPlayer"
     override val isDefault = BuildConfig.EXOPLAYER_ONLY
+    override val isSystem = true
     override val isAvailable = true
     override val img = Res.drawable.exoplayer
 

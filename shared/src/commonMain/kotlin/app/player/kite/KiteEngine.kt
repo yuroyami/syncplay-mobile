@@ -18,9 +18,11 @@ import syncplaymobile.shared.generated.resources.kiteplayer
  * MediaCodec on Android and VideoToolbox on iOS, both inside FFmpeg, with a measured software
  * fallback rather than a silent failure.
  *
- * Experimental, and honestly so: KitePlayer has no public release, no qualification on physical
- * hardware, and its subtitle support today covers SubRip and WebVTT only. Styled ASS subtitles
- * are seen as tracks but not yet drawn.
+ * Experimental, and honestly so: KitePlayer has no public release and no full qualification on
+ * physical hardware. Its subtitle support covers SubRip and WebVTT, embedded or loaded as
+ * external files during playback; styled ASS subtitles are seen as tracks but not yet drawn.
+ * Speed (0.25x to 4x, pitch preserved), chapters, aspect modes and runtime subtitle/audio
+ * delays arrived with 0.0.5.
  */
 @Suppress("KotlinConstantConditions")
 internal class KiteEngine(

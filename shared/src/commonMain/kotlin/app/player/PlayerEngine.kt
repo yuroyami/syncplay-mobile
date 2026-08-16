@@ -11,6 +11,12 @@ interface PlayerEngine {
     /** True if this is the default engine for the current platform. */
     val isDefault: Boolean
 
+    /** True if this engine is the operating system's own player rather than a bundled one
+     *  (Media3/ExoPlayer on Android, AVFoundation on iOS). Surfaced as a "System" badge: it tells
+     *  the user this is the platform's native path, with no extra native libraries behind it.
+     *  Desktop has no such engine, so nothing there sets it. Defaults to false. */
+    val isSystem: Boolean get() = false
+
     /** True if the engine is available and instantiable on this platform. */
     val isAvailable: Boolean
 

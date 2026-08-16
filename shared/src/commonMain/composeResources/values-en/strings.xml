@@ -52,6 +52,10 @@
     <string name="home_password_if_any">Password (if any)</string>
 
     <string name="home_engine_unavailable_error">This engine is unavailable. Did you download the right APK?</string>
+    <string name="connect_engine_badge_default">Default</string>
+    <string name="connect_engine_badge_experimental">Experimental</string>
+    <string name="connect_engine_badge_system">System</string>
+    <string name="connect_engine_badge_unavailable">Unavailable</string>
 
     <!-- Server hosting -->
     <string name="server_host_title">Host Server</string>
@@ -394,6 +398,33 @@
     <string name="uisetting_reconnect_interval_summary">How many seconds to wait for reconnection on each failure of connection or disconneciton. Default is 2 seconds.</string>
     <string name="uisetting_resetdefault_title">Reset Default Settings</string>
     <string name="uisetting_resetdefault_summary">Reset all of the above settings to default.</string>
+    <string name="uisetting_categ_kite">KitePlayer</string>
+    <string name="uisetting_kite_hw_title">Hardware Acceleration</string>
+    <string name="uisetting_kite_hw_summary">Decode video on the device\'s hardware decoder (MediaCodec/VideoToolbox) when possible. Turning this off forces software decoding. Applies the next time a file is loaded.</string>
+    <string name="uisetting_kite_sub_autoselect_title">Show subtitles automatically</string>
+    <string name="uisetting_kite_sub_autoselect_summary">Select the media\'s default subtitle track as soon as a file opens. Turn off to start with subtitles hidden. Applies the next time a file is loaded.</string>
+    <string name="uisetting_kite_sub_scale_title">Subtitle size</string>
+    <string name="uisetting_kite_sub_scale_summary">Scale subtitle text relative to its authored size, in percent. Takes effect immediately.</string>
+    <string name="uisetting_kite_sub_delay_title">Subtitle delay (ms)</string>
+    <string name="uisetting_kite_sub_delay_summary">Shift subtitle timing in milliseconds. Positive shows subtitles later. Takes effect immediately.</string>
+    <string name="uisetting_kite_audio_delay_title">Audio delay (ms)</string>
+    <string name="uisetting_kite_audio_delay_summary">Compensate for late-arriving sound (e.g. Bluetooth): a positive value presents video earlier by that much. Takes effect immediately.</string>
+    <string name="uisetting_video_bg_color_title">Video background color</string>
+    <string name="uisetting_video_bg_color_summary">The color behind the video picture (the letterbox bars). Black by default.</string>
+    <string name="uisetting_kite_preserve_pitch_title">Keep pitch at changed speed</string>
+    <string name="uisetting_kite_preserve_pitch_summary">Keep voices at their natural pitch when playback speed changes. Turn off to let pitch rise and fall with speed, like a tape. Takes effect immediately.</string>
+    <string name="uisetting_kite_sub_pos_title">Subtitle position (%)</string>
+    <string name="uisetting_kite_sub_pos_summary">Where subtitles sit vertically: 100 is the bottom edge, lower values lift them up the screen. Subtitles with authored positions do not move. Takes effect immediately.</string>
+    <string name="uisetting_kite_eq_brightness_title">Video brightness</string>
+    <string name="uisetting_kite_eq_brightness_summary">Lighten or darken the picture, -100 to 100, 0 is neutral. Takes effect immediately.</string>
+    <string name="uisetting_kite_eq_contrast_title">Video contrast (%)</string>
+    <string name="uisetting_kite_eq_contrast_summary">Contrast about mid-grey, 0 to 200 percent, 100 is neutral. Takes effect immediately.</string>
+    <string name="uisetting_kite_eq_saturation_title">Video saturation (%)</string>
+    <string name="uisetting_kite_eq_saturation_summary">Colourfulness, 0 to 200 percent: 100 is neutral, 0 is black and white. Takes effect immediately.</string>
+    <string name="uisetting_kite_eq_hue_title">Video hue (degrees)</string>
+    <string name="uisetting_kite_eq_hue_summary">Rotate the colours around the neutral axis, -180 to 180 degrees, 0 is neutral. Takes effect immediately.</string>
+    <string name="uisetting_kite_debug_stats_title">Engine statistics logging</string>
+    <string name="uisetting_kite_debug_stats_summary">Log one line per engine statistics tick (decoded/submitted frames, drift, underruns) for diagnosing playback issues.</string>
     <string name="uisetting_mpv_hardware_acceleration_title">Hardware Acceleration</string>
     <string name="uisetting_mpv_hardware_acceleration_summary">Disable this to use software acceleration instead.</string>
     <string name="uisetting_mpv_gpunext_title">Use gpu-next</string>

@@ -21,7 +21,7 @@ import syncplaymobile.shared.generated.resources.vlc
  */
 object VlcKitEngine : PlayerEngine {
     override val isAvailable: Boolean = true
-    override val isDefault: Boolean = false
+    override val isDefault: Boolean = true
     override val name: String = "VLCKit" //We name this one VLCKit to differentiate it from Android's VLC when saving to datastore
     override val img: DrawableResource = Res.drawable.vlc
 

@@ -1,6 +1,8 @@
 package app.player.kite
 
 import androidx.annotation.UiThread
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SettingsInputComponent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
@@ -11,16 +13,36 @@ import app.player.models.Chapter
 import app.player.models.MediaFile
 import app.player.models.MediaFileLocation
 import app.player.models.Track
+import app.preferences.Preferences.KITE_AUDIO_DELAY_MS
+import app.preferences.Preferences.KITE_DEBUG_STATS
+import app.preferences.Preferences.KITE_EQ_BRIGHTNESS
+import app.preferences.Preferences.KITE_EQ_CONTRAST
+import app.preferences.Preferences.KITE_EQ_HUE
+import app.preferences.Preferences.KITE_EQ_SATURATION
+import app.preferences.Preferences.KITE_HARDWARE_ACCELERATION
+import app.preferences.Preferences.KITE_PRESERVE_PITCH
+import app.preferences.Preferences.KITE_SUBTITLE_AUTOSELECT
+import app.preferences.Preferences.KITE_SUBTITLE_DELAY_MS
+import app.preferences.Preferences.KITE_SUBTITLE_POS
+import app.preferences.Preferences.KITE_SUBTITLE_SCALE
+import app.preferences.PrefExtraConfig
 import app.preferences.settings.SettingCategory
+import app.preferences.value
 import app.room.RoomViewmodel
 import app.utils.loggy
 import io.github.vinceglb.filekit.PlatformFile
+import io.github.yuroyami.kiteplayer.HwdecPolicy
 import io.github.yuroyami.kiteplayer.KitePlayer
 import io.github.yuroyami.kiteplayer.KitePlayerPlatform
 import io.github.yuroyami.kiteplayer.MediaItem
 import io.github.yuroyami.kiteplayer.PlaybackStatus
+import io.github.yuroyami.kiteplayer.PlayerConfig
 import io.github.yuroyami.kiteplayer.SeekMode
+import io.github.yuroyami.kiteplayer.SubtitleConfig
+import io.github.yuroyami.kiteplayer.SubtitleSource
 import io.github.yuroyami.kiteplayer.TrackKind
+import io.github.yuroyami.kiteplayer.VideoAdjustments
+import io.github.yuroyami.kiteplayer.VideoScale
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -29,6 +51,8 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.uisetting_categ_kite
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -90,6 +114,9 @@ internal class KiteImpl(
     /** KitePlayer publishes a duration once the container is parsed, so nothing is polled for it. */
     private var durationWatcher: Job? = null
 
+    /** Temporary diagnostic for the background-return video slowdown. Remove once root-caused. */
+    private var statsWatcher: Job? = null
+
     /**
      * KitePlayer publishes position through its own progress flow, but Syncplay's shared tracker
      * reads [currentPositionMs] on a timer, and reading it costs one atomic load. Matching mpv's
@@ -97,35 +124,78 @@ internal class KiteImpl(
      */
     override val trackerJobInterval: Duration = 250.milliseconds
 
-    /** The engine reads chapters from no container yet, so the UI must not offer chapter jumps. */
-    override val supportsChapters: Boolean = false
+    /** Chapters ride the snapshot since KitePlayer 0.0.5, so the UI may offer chapter jumps. */
+    override val supportsChapters: Boolean = true
 
-    /** No frame-grab path is exposed on the facade yet. */
+    /** No gallery-saving frame-grab path is wired yet; captureFrame exists but lands nowhere. */
     override val supportsScreenshot: Boolean = false
 
-    /** KitePlayer 0.0.3 deliberately supports 1.0x only. */
-    override val supportsSpeedAdjustment: Boolean = false
+    /** Real since KitePlayer 0.0.5: a pitch-preserving tempo stage within 0.25x to 4x. */
+    override val supportsSpeedAdjustment: Boolean = true
 
     /** Android hosts PiP generically; iOS has no KitePlayer-specific PiP controller yet. */
     override val supportsPictureInPicture: Boolean
         get() = KitePlayerPlatform.supportsPictureInPicture
 
-    /**
-     * KitePlayer does not stretch the picture: it presents at the source's own aspect and letterboxes
-     * inside whatever box it is given, so there is no ratio to cycle through.
-     */
-    override val canChangeAspectRatio: Boolean = false
+    /** Fit, Fill and Stretch since 0.0.5, cycled in [switchAspectRatio]. */
+    override val canChangeAspectRatio: Boolean = true
 
     @UiThread
     override fun initialize() {
         if (isInitialized) return
-        kite = requireNotNull(KitePlayerPlatform.createOrNull()) {
+        // The engine-level settings read once at creation; the runtime ones (delays, subtitle
+        // scale) are ALSO seeded here so a fresh room starts where the sliders sit.
+        val config = PlayerConfig(
+            hardwareDecode = if (KITE_HARDWARE_ACCELERATION.value()) HwdecPolicy.Auto else HwdecPolicy.Off,
+            subtitles = SubtitleConfig(
+                autoSelect = KITE_SUBTITLE_AUTOSELECT.value(),
+                fontScale = (KITE_SUBTITLE_SCALE.value() / 100f).coerceAtLeast(0.05f),
+                delay = KITE_SUBTITLE_DELAY_MS.value().milliseconds,
+            ),
+        )
+        val player = requireNotNull(KitePlayerPlatform.createOrNull(config)) {
             "KitePlayer is unavailable: ${KitePlayerPlatform.availability}"
         }
+        player.setAudioDelay(KITE_AUDIO_DELAY_MS.value().milliseconds)
+        player.setPreservePitch(KITE_PRESERVE_PITCH.value())
+        player.setSubtitlePosition(subtitlePositionFromPref(KITE_SUBTITLE_POS.value()))
+        player.setVideoAdjustments(adjustmentsFromPrefs())
+        kite = player
         isInitialized = true
         loggy("KitePlayer: engine created")
         startTrackingProgress()
         watchEngineState()
+        if (KITE_DEBUG_STATS.value()) watchEngineStats()
+    }
+
+    /**
+     * The engine-statistics log, now behind the KITE_DEBUG_STATS setting. One line per stats
+     * tick (KitePlayer publishes them once a second) tells which layer stalls when playback
+     * misbehaves: decodedVideoFrames stalling means the decoder, submittedFrames stalling means
+     * the schedule or the renderer refused frames, and both advancing while the screen is
+     * static means the frames are drawn by nobody (the Compose/UIKit drawing side). The
+     * background-return slowdown investigation reads exactly these lines, so enable the setting
+     * before reproducing it on a device.
+     */
+    private fun watchEngineStats() {
+        val player = kite ?: return
+        statsWatcher?.cancel()
+        statsWatcher = playerScopeMain.launch {
+            var lastDecoded = -1L
+            var lastSubmitted = -1L
+            player.stats.collect { s ->
+                if (s.decodedVideoFrames == lastDecoded && s.submittedFrames == lastSubmitted) return@collect
+                lastDecoded = s.decodedVideoFrames
+                lastSubmitted = s.submittedFrames
+                loggy(
+                    "KiteStats: status=${player.state.value.status}" +
+                        " decoded=${s.decodedVideoFrames} submitted=${s.submittedFrames}" +
+                        " headless=${s.headlessFrames} droppedLate=${s.droppedFramesLate}" +
+                        " repeated=${s.repeatedFrames} underruns=${s.audioUnderruns}" +
+                        " drift=${s.avDrift} hwdec=${s.hardwareDecode} master=${s.masterClock}",
+                )
+            }
+        }
     }
 
     /**
@@ -197,6 +267,8 @@ internal class KiteImpl(
         presentedPlayer.cancel()
         durationWatcher?.cancel()
         durationWatcher = null
+        statsWatcher?.cancel()
+        statsWatcher = null
 
         // Cancellation above is still required when teardown races an injection waiting for the
         // first video output; only resource teardown itself can be skipped in the empty state.
@@ -223,8 +295,89 @@ internal class KiteImpl(
         playerSupervisorJob.cancel()
     }
 
-    /** Nothing to tune yet: the engine exposes no per-engine options through its facade. */
-    override suspend fun configurableSettings(): SettingCategory? = null
+    override suspend fun configurableSettings() = SettingCategory(
+        title = Res.string.uisetting_categ_kite,
+        icon = Icons.Filled.SettingsInputComponent,
+    ) {
+        // Creation-time settings: they say so in their summaries and apply at the next load.
+        +KITE_HARDWARE_ACCELERATION
+        +KITE_SUBTITLE_AUTOSELECT
+        // Runtime settings: the callbacks reach the live engine immediately.
+        +KITE_SUBTITLE_SCALE.apply {
+            config?.extraConfig = PrefExtraConfig.Slider(maxValue = 300, minValue = 25) { percent ->
+                kite?.setSubtitleScale((percent / 100f).coerceAtLeast(0.05f))
+            }
+        }
+        +KITE_SUBTITLE_DELAY_MS.apply {
+            config?.extraConfig = PrefExtraConfig.Slider(maxValue = 10_000, minValue = -10_000) { ms ->
+                kite?.setSubtitleDelay(ms.milliseconds)
+            }
+        }
+        +KITE_AUDIO_DELAY_MS.apply {
+            config?.extraConfig = PrefExtraConfig.Slider(maxValue = 1_000, minValue = -1_000) { ms ->
+                kite?.setAudioDelay(ms.milliseconds)
+            }
+        }
+        +KITE_PRESERVE_PITCH.apply {
+            config?.extraConfig = PrefExtraConfig.BooleanCallback { preserve ->
+                // At 1.0x the two mechanisms are the same bypass; away from it the engine rides
+                // its internal precise seek and refuses typed on an unseekable source.
+                try {
+                    kite?.setPreservePitch(preserve)
+                } catch (refused: UnsupportedOperationException) {
+                    loggy("KitePlayer: pitch-law change refused: ${refused.message}")
+                }
+            }
+        }
+        +KITE_SUBTITLE_POS.apply {
+            config?.extraConfig = PrefExtraConfig.Slider(maxValue = 100, minValue = 10) { percent ->
+                kite?.setSubtitlePosition(subtitlePositionFromPref(percent))
+            }
+        }
+        +KITE_EQ_BRIGHTNESS.apply {
+            config?.extraConfig = PrefExtraConfig.Slider(maxValue = 100, minValue = -100) { _ ->
+                kite?.setVideoAdjustments(adjustmentsFromPrefs())
+            }
+        }
+        +KITE_EQ_CONTRAST.apply {
+            config?.extraConfig = PrefExtraConfig.Slider(maxValue = 200, minValue = 0) { _ ->
+                kite?.setVideoAdjustments(adjustmentsFromPrefs())
+            }
+        }
+        +KITE_EQ_SATURATION.apply {
+            config?.extraConfig = PrefExtraConfig.Slider(maxValue = 200, minValue = 0) { _ ->
+                kite?.setVideoAdjustments(adjustmentsFromPrefs())
+            }
+        }
+        +KITE_EQ_HUE.apply {
+            config?.extraConfig = PrefExtraConfig.Slider(maxValue = 180, minValue = -180) { _ ->
+                kite?.setVideoAdjustments(adjustmentsFromPrefs())
+            }
+        }
+        +KITE_DEBUG_STATS.apply {
+            config?.extraConfig = PrefExtraConfig.BooleanCallback { enabled ->
+                if (enabled) watchEngineStats() else {
+                    statsWatcher?.cancel()
+                    statsWatcher = null
+                }
+            }
+        }
+    }
+
+    /**
+     * The four equalizer sliders speak Synkplay's own units (percent-shaped ints); the engine
+     * speaks one VideoAdjustments value. Rebuilt whole on every slider move, because the engine
+     * bakes the colour matrix once per SETTING, so partial updates would buy nothing.
+     */
+    private fun adjustmentsFromPrefs() = VideoAdjustments(
+        brightness = (KITE_EQ_BRIGHTNESS.value() / 100f).coerceIn(-1f, 1f),
+        contrast = (KITE_EQ_CONTRAST.value() / 100f).coerceIn(0f, 2f),
+        saturation = (KITE_EQ_SATURATION.value() / 100f).coerceIn(0f, 2f),
+        hueDegrees = KITE_EQ_HUE.value().toFloat().coerceIn(-180f, 180f),
+    )
+
+    /** The slider says percent from the top of the allowed band; the engine takes a fraction. */
+    private fun subtitlePositionFromPref(percent: Int) = (percent / 100f).coerceIn(0.1f, 1f)
 
     override suspend fun hasMedia(): Boolean =
         isInitialized && kite?.state?.value?.media != null
@@ -273,10 +426,26 @@ internal class KiteImpl(
         kite?.selectTrack(kind, (track as? KiteTrack)?.trackId)
     }
 
-    /** No source reads a chapter list out of a container yet, so there is nothing to analyse. */
-    override suspend fun analyzeChapters(mediafile: MediaFile) = Unit
+    override suspend fun analyzeChapters(mediafile: MediaFile) {
+        if (!isInitialized) return
+        val chapters = kite?.state?.value?.chapters ?: return
+        mediafile.chapters.clear()
+        chapters.forEachIndexed { index, chapter ->
+            mediafile.chapters.add(
+                Chapter(
+                    index = index,
+                    name = chapter.title ?: "Chapter ${index + 1}",
+                    timeOffsetMillis = chapter.start.inWholeMilliseconds,
+                ),
+            )
+        }
+    }
 
-    override suspend fun jumpToChapter(chapter: Chapter) = Unit
+    override suspend fun jumpToChapter(chapter: Chapter) {
+        // The base class broadcasts the seek to the room; the local jump is ours.
+        super.jumpToChapter(chapter)
+        seekTo(chapter.timeOffsetMillis)
+    }
 
     /**
      * Re-selects whatever the user last chose, after a reload replaced the track list.
@@ -288,11 +457,37 @@ internal class KiteImpl(
     override suspend fun reapplyTrackChoices() = Unit
 
     /**
-     * External subtitle files are not loadable yet: the facade takes them only as part of the
-     * media item at open time, and nothing consumes them there. The engine's own subtitle work is
-     * limited to SubRip and WebVTT tracks already inside the container.
+     * Loads a subtitle file into the running engine (KitePlayer 0.0.5): the track appears in the
+     * list, is selected immediately, and its cues run through the same timing path container
+     * subtitles use. SubRip and WebVTT, the engine's text path.
+     *
+     * The resolver gives Android's content URIs an openable path, exactly like video; the
+     * resolution is released as soon as the call returns, because the engine reads the file once
+     * at add time and never again.
      */
-    override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) = Unit
+    override suspend fun loadExternalSubImpl(uri: PlatformFile, extension: String) {
+        val player = kite ?: return
+        val resolved = mediaResolver.resolve(uri)
+            ?: error("KitePlayer cannot open the subtitle file $uri")
+        try {
+            // The video path hands the engine an fd THROUGH its demuxer open options; the
+            // subtitle reader is a plain file read with no options channel, so an fd-shaped
+            // resolution is respelled as the fd's own filesystem name, which any fopen can
+            // read for as long as [resolved] keeps the descriptor alive. iOS resolutions are
+            // real paths and skip this entirely.
+            val readablePath = resolved.openOptions["fd"]
+                ?.let { fd -> "/proc/self/fd/$fd" }
+                ?: resolved.uri
+            withContext(Dispatchers.IO) {
+                val id = player.addExternalSubtitle(SubtitleSource(uri = readablePath))
+                loggy("KitePlayer: external subtitle added as $id")
+            }
+            loggy("KitePlayer: tracks=${player.state.value.tracks}")
+            loggy("KitePlayer: warnings=${player.warningHistory().joinToString { it.warning.toString() }}")
+        } finally {
+            resolved.release()
+        }
+    }
 
     override suspend fun injectVideoFileImpl(location: MediaFileLocation.Local) {
         val player = awaitPresentedPlayer()
@@ -351,9 +546,14 @@ internal class KiteImpl(
     }
 
     override suspend fun setSpeed(speed: Double) {
-        // The shared sync policy checks supportsSpeedAdjustment before requesting 0.95x. Keep
-        // this defensive guard because KitePlayer correctly throws for unsupported rates.
-        if (speed == 1.0) kite?.setSpeed(speed)
+        // Real since 0.0.5: a pitch-preserving tempo stage. The engine refuses a live change on
+        // an unseekable source (there is no epoch boundary to ride); the room's 0.95x slowdown
+        // then simply does not happen, which is the honest outcome for a live stream.
+        try {
+            kite?.setSpeed(speed.coerceIn(KitePlayer.SPEED_MIN, KitePlayer.SPEED_MAX))
+        } catch (refused: UnsupportedOperationException) {
+            loggy("KitePlayer: speed change refused: ${refused.message}")
+        }
     }
 
     override suspend fun isSeekable(): Boolean = kite?.state?.value?.seekable == true
@@ -370,13 +570,29 @@ internal class KiteImpl(
     @UiThread
     override fun currentPositionMs(): Long = kite?.position()?.inWholeMilliseconds ?: 0L
 
-    override suspend fun switchAspectRatio(): String = "Fit"
+    override suspend fun switchAspectRatio(): String {
+        val player = kite ?: return "Fit"
+        val next = when (player.state.value.videoScale) {
+            VideoScale.Fit -> VideoScale.Fill
+            VideoScale.Fill -> VideoScale.Stretch
+            VideoScale.Stretch -> VideoScale.Fit
+        }
+        player.setVideoScale(next)
+        return when (next) {
+            VideoScale.Fit -> "Fit"
+            VideoScale.Fill -> "Fill (crop)"
+            VideoScale.Stretch -> "Stretch"
+        }
+    }
 
     /**
-     * Subtitle sizing is not adjustable yet. The engine rasterises cues at a size it chooses, and
-     * the facade exposes no scale, so accepting the value silently would be a lie.
+     * The shared subtitle-size control speaks in the app's own units, 16 being its default; the
+     * engine speaks in a multiplier over the authored size. Mapping the two at 16-to-1.0 keeps
+     * the one slider meaning the same thing on every engine.
      */
-    override suspend fun changeSubtitleSize(newSize: Int) = Unit
+    override suspend fun changeSubtitleSize(newSize: Int) {
+        kite?.setSubtitleScale((newSize / 16f).coerceAtLeast(0.05f))
+    }
 
     @Composable
     override fun VideoPlayer(modifier: Modifier, onPlayerReady: () -> Unit) {
