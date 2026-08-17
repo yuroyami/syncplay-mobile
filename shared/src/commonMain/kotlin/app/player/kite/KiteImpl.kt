@@ -564,7 +564,13 @@ internal class KiteImpl(
         super.seekTo(toPositionMs)
         // seekLater is KitePlayer's non-suspending seek: it hands the request to the engine's own
         // seek machine and returns, which is exactly the contract this UiThread member needs.
-        kite?.seekLater(toPositionMs.milliseconds, SeekMode.Precise)
+        // KeyframeThenRefine is mpv's two-phase feel (owner report 2026-08-17): the keyframe at
+        // or before the target presents IMMEDIATELY, and the engine decodes forward to the exact
+        // frame behind it. Precise here made a bar drag on a long-GOP 3GB file sit on the old
+        // picture for the whole decode-forward, which read as the player "reloading". The
+        // position mask reports the exact target throughout, so the room protocol and the seek
+        // bar never see the intermediate keyframe position.
+        kite?.seekLater(toPositionMs.milliseconds, SeekMode.KeyframeThenRefine)
     }
 
     @UiThread
