@@ -56,9 +56,6 @@ kitecodec-plugin = "0.0.6"
 libvlc-ios = "4.0.0a19"
 
 #Desktop
-# vlcj 4.x pairs with libVLC 3.x (the current stable desktop VLC). vlcj 5 targets the
-# still-unreleased libVLC 4 — do not bump until VLC 4 desktop ships.
-vlcj = "4.12.1"
 
 [libraries] #######################################################################################
 #KMM
@@ -133,7 +130,6 @@ kiteplayer-compose-video = { module = "io.github.yuroyami:kiteplayer-compose-vid
 newpipe-extractor = { module = "com.github.TeamNewPipe:NewPipeExtractor", version.ref = "newpipeExtractor" }
 
 #Desktop
-vlcj = { module = "uk.co.caprica:vlcj", version.ref = "vlcj" }
 
 [bundles] ########################################################################################
 compose-multiplatform = [

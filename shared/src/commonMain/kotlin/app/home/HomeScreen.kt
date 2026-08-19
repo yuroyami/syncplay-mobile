@@ -379,6 +379,19 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
 
                         val selectedEngine by PLAYER_ENGINE.watchPref()
 
+                        // A saved engine that this build no longer has is not a selection, it is a
+                        // leftover. Desktop dropped VLC and mpv, so an existing install opens with
+                        // PLAYER_ENGINE = "VLC" and the wheel, finding no such engine, sits on
+                        // whatever is at index 0 while the preference still names the dead one.
+                        // Write the platform default over it once instead.
+                        LaunchedEffect(selectedEngine, availablePlatformPlayerEngines) {
+                            if (availablePlatformPlayerEngines.none { it.name == selectedEngine }) {
+                                availablePlatformPlayerEngines
+                                    .firstOrNull { it.isDefault }
+                                    ?.let { PLAYER_ENGINE.set(it.name) }
+                            }
+                        }
+
                         val errorString = stringResource(Res.string.home_engine_unavailable_error)
                         HomeEngineWheel(
                             modifier = Modifier.fillMaxWidth(),

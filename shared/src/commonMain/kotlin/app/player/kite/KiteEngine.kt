@@ -29,8 +29,9 @@ internal class KiteEngine(
     private val mediaResolver: KiteMediaResolver,
     override val name: String = "KitePlayer",
     private val presentation: KitePlayerPresentation = KiteInteropPresentation,
+    /** Desktop passes true: it is the only engine there, so it must also be the default one. */
+    override val isDefault: Boolean = false,
 ) : PlayerEngine {
-    override val isDefault: Boolean = false
 
     /**
      * False in the `exoOnly` Android flavor, which ships no native player libraries: that build

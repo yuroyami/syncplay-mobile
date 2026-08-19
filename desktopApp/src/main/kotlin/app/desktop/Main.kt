@@ -12,7 +12,6 @@ import androidx.compose.ui.window.rememberWindowState
 import app.AdamScreen
 import app.SyncplayViewmodel
 import app.player.Playback
-import app.preferences.Preferences
 import app.preferences.set
 import app.utils.initializeDatastore
 import app.utils.platformCallback
@@ -20,7 +19,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 /** Global viewmodel handle, mirroring the Android Activity / iOS controller pattern. */
 var globalViewmodel: SyncplayViewmodel? = null
@@ -32,18 +30,8 @@ fun main(args: Array<String>) {
     initializeDatastore()
     platformCallback = DesktopPlatformCallback
 
-    // --engine vlc|mpv persists the engine choice BEFORE any UI reads it, so a scripted
-    // auto-join uses the requested engine on this very launch.
-    args.toList().zipWithNext().firstOrNull { it.first == "--engine" }?.second?.let { requested ->
-        val name = when (requested.lowercase()) {
-            "mpv" -> "mpv"
-            "vlc", "vlcj" -> "VLC"
-            else -> null
-        }
-        if (name != null) {
-            runBlocking { Preferences.PLAYER_ENGINE.set(name) }
-        }
-    }
+    // --engine is gone with the engines it switched between. Desktop runs KitePlayer and only
+    // KitePlayer, so there is nothing for a launch flag to choose.
 
     parseJoinArgs(args)
 

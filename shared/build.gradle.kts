@@ -196,8 +196,6 @@ kotlin {
                  * no Conscrypt needed on desktop. */
                 implementation(libs.netty)
 
-                /* Video player engine: libVLC via the vlcj JVM bindings */
-                implementation(libs.vlcj)
 
                 /* YouTube/SoundCloud/PeerTube stream URL extractor (pure JVM, same as Android) */
                 implementation(libs.newpipe.extractor)

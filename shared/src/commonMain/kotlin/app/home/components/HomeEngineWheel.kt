@@ -49,6 +49,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import app.player.PlayerEngine
@@ -120,7 +121,23 @@ fun HomeEngineWheel(
             val settled = wasScrolling && !scrolling
             wasScrolling = scrolling
             if (!settled || programmatic) return@collect
-            val landed = currentEngines.getOrNull(listState.centeredIndex()) ?: return@collect
+
+            // THE DETENT, BY HAND. rememberSnapFlingBehavior only runs on a FLING, and a desktop
+            // mouse wheel never produces one: its deltas go straight to the scroll axis and the
+            // list simply stops wherever the last notch left it, between two engines. A trackpad
+            // drag released at rest has the same shape. So whenever a scroll ends anywhere but
+            // dead center, close the remaining gap here before anything reads the selection.
+            val index = listState.centeredIndex()
+            if (abs(listState.signedDistanceFromCenter(index)) > CenteredTolerance) {
+                programmatic = true
+                try {
+                    listState.animateScrollToItem(index)
+                } finally {
+                    programmatic = false
+                }
+            }
+
+            val landed = currentEngines.getOrNull(index) ?: return@collect
             if (landed.name != currentSelected) currentOnSelect(landed)
             settleTick++
         }
@@ -142,7 +159,12 @@ fun HomeEngineWheel(
 
     LaunchedEffect(selectedEngine, engines, settleTick) {
         val target = engines.indexOfFirst { it.name == selectedEngine }
-        if (target < 0 || listState.centeredIndex() == target) return@LaunchedEffect
+        if (target < 0) return@LaunchedEffect
+        // "Is the right engine NEAREST the center" is not the same question as "is it centered".
+        // The old check asked the first one, so a wheel resting a fifth of a slot off target
+        // believed it had nothing to do and stayed visibly crooked. Ask about the offset instead.
+        val offBy = abs(listState.signedDistanceFromCenter(target))
+        if (listState.centeredIndex() == target && offBy <= CenteredTolerance) return@LaunchedEffect
         programmatic = true
         try {
             // Instant on the very first pass so the wheel never renders off-target, animated
@@ -229,9 +251,12 @@ fun HomeEngineWheel(
                         .graphicsLayer {
                             // Draw-phase read of layoutInfo: a new scroll offset invalidates
                             // drawing alone, never composition, so dragging costs no recomposition.
+                            // One clamp, not two. The old code clamped to 1.25 slots and then
+                            // re-clamped to 1 for scale and alpha, so the tilt alone ran to 52
+                            // degrees while the comment beside it promised 42.
                             val signed = listState.signedDistanceFromCenter(index)
-                                .coerceIn(-MaxDistance, MaxDistance)
-                            val distance = abs(signed).coerceAtMost(1f)
+                                .coerceIn(-1f, 1f)
+                            val distance = abs(signed)
                             val shrink = lerp(1f, NeighbourScale, distance)
                             scaleX = shrink
                             scaleY = shrink
@@ -271,6 +296,8 @@ private fun EngineWheelItem(engine: PlayerEngine, modifier: Modifier = Modifier)
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
         )
         // One badge only: a wheel item is too narrow for a row of them, so the most important
@@ -296,6 +323,8 @@ private fun EngineWheelItem(engine: PlayerEngine, modifier: Modifier = Modifier)
                 style = MaterialTheme.typography.labelSmall,
                 color = badge.second,
                 maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
                     .background(color = badge.second.copy(alpha = 0.12f), shape = BadgeShape)
                     .padding(horizontal = 5.dp, vertical = 1.dp),
@@ -327,15 +356,27 @@ private fun LazyListState.signedDistanceFromCenter(index: Int): Float {
 private val WheelShape = RoundedCornerShape(24.dp)
 private val BadgeShape = RoundedCornerShape(6.dp)
 private val CapsuleShape = RoundedCornerShape(22.dp)
-private val ItemWidth = 112.dp
+/**
+ * Wide enough for the longest engine name over the longest badge, which is "Kite Compose" over
+ * "Experimental". At 112.dp both clipped mid-word, and a clipped label under a centered capsule is
+ * the one thing on this screen that cannot be read as deliberate.
+ */
+private val ItemWidth = 136.dp
 private val WheelHeight = 96.dp
-private val CapsuleWidth = 128.dp
+
+/**
+ * Derived, never a second number. The capsule was 128.dp against a 112.dp item, so the frame was
+ * 16.dp wider than the thing it framed and both neighbours leaked into it.
+ */
+private val CapsuleWidth = ItemWidth + 12.dp
 private val CapsuleHeight = 84.dp
 private val IconSize = 36.dp
 private val FadeWidth = 36.dp
 private const val NeighbourScale = 0.74f
 private const val NeighbourAlpha = 0.32f
-private const val MaxDistance = 1.25f
+
+/** How far off center still counts as centered, in item widths. Below one pixel at this size. */
+private const val CenteredTolerance = 0.004f
 private const val MaxTiltDegrees = 42f
 private const val InwardPull = 0.08f
 private const val CameraDistanceDp = 9f

@@ -3,8 +3,7 @@ package app.utils
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ClipEntry
 import app.player.PlayerEngine
-import app.player.mpvjvm.MpvJvmEngine
-import app.player.vlcj.VlcjEngine
+import app.player.kite.desktopKiteEngine
 import app.preferences.Preferences.NETWORK_ENGINE
 import app.preferences.value
 import app.protocol.network.KtorNetworkManager
@@ -50,9 +49,18 @@ actual val httpClient: HttpClient by lazy {
     }
 }
 
-/** Desktop engines: libVLC via vlcj (default, natives always bundled) and libmpv via JNA
- *  (available when the library is bundled or system-installed — see MpvNativeLoader). */
-actual val availablePlatformPlayerEngines: List<PlayerEngine> = listOf(VlcjEngine, MpvJvmEngine)
+/**
+ * Desktop has ONE engine, and it is KitePlayer.
+ *
+ * vlcj and libmpv are gone from here on the owner's instruction: the desktop build is a KitePlayer
+ * build, not a shell around whatever native player happens to be installed. That also takes their
+ * bundled natives out of the distribution.
+ *
+ * The engine renders through the pure-Compose path, which on the JVM is not a choice: KitePlayer's
+ * native-surface path compiles for the JVM but draws nothing, because desktop has no equivalent of
+ * a SurfaceView to hand it. See KiteDesktopEngine.
+ */
+actual val availablePlatformPlayerEngines: List<PlayerEngine> = listOf(desktopKiteEngine)
 
 actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {
     return when (NETWORK_ENGINE.value()) {

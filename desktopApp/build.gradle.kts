@@ -1,4 +1,3 @@
-import DesktopNativesConfig.registerDesktopNativeTasks
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
@@ -21,7 +20,6 @@ dependencies {
     implementation(libs.compose.viewmodel)
 
     /* For the vlcSmokeTest entry point. */
-    implementation(libs.vlcj)
 }
 
 /* Same explicit Skiko pin as :shared — see the comment there. */
@@ -62,9 +60,7 @@ compose.desktop {
     }
 }
 
-/* Per-OS bundled natives (libVLC + libmpv) live under desktopApp/resources/<os>-<arch>/,
- * packaged by Compose into the app image. Tasks + rationale: buildSrc/DesktopNativesConfig.kt. */
-compose.desktop.application.nativeDistributions.appResourcesRootDir.set(
-    project.layout.projectDirectory.dir("resources")
-)
-registerDesktopNativeTasks()
+/* No bundled player natives any more. libVLC and libmpv used to be downloaded into
+ * desktopApp/resources/<os>-<arch>/ and packaged into the app image, 277 MB of it on macOS alone.
+ * The desktop build runs one engine now, KitePlayer, and its decoder rides inside the KiteCodec
+ * jar, so there is nothing left to bundle and no appResourcesRootDir to point at. */
