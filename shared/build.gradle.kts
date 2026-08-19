@@ -249,6 +249,12 @@ kitecodec {
         source.set(kiteCodecFfmpegRoot.map { FFmpegSource.Local }.orElse(FFmpegSource.System))
         localRoot.fileProvider(kiteCodecFfmpegRoot)
         license.set(FFmpegLicense.LGPL)
+        /* Stated, not inherited: this tree carries the dav1d AV1 software decoder, and plugin
+         * 0.0.11 refuses a build whose script does not say so. Before this line the app linked
+         * dav1d for two releases without any of its own build saying it (KiteCodec 0.0.11
+         * changelog); if the tree ever loses dav1d, the build now fails here instead of AV1
+         * silently dying at runtime with FFmpeg's -78. */
+        dav1d.set(true)
     }
 }
 
