@@ -49,7 +49,7 @@ libvlc-android = "4.0.0-eap29"
 newpipeExtractor = "v0.24.6"
 
 # Local publications until the two libraries reach a remote repository.
-kiteplayer = "0.0.9"
+kiteplayer = "0.0.10"
 kitecodec-plugin = "0.0.6"
 
 #iOS
