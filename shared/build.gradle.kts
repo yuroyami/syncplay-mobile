@@ -1,5 +1,3 @@
-import io.github.yuroyami.kitecodec.gradle.FFmpegLicense
-import io.github.yuroyami.kitecodec.gradle.FFmpegSource
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -11,7 +9,6 @@ plugins {
     alias(libs.plugins.ksp)
     //alias(libs.plugins.touchlab.skie)
     alias(libs.plugins.ktorfit)
-    alias(libs.plugins.kitecodec)
 }
 
 kotlin {
@@ -237,25 +234,6 @@ ktorfit {
     // A mismatch crashes compilation with "IrGenerationExtension cannot be cast to
     // ProjectExtensionDescriptor". Map: Kotlin 2.3.x -> 2.3.3, Kotlin 2.4.0+ -> 2.3.5.
     compilerPluginVersion.set("2.3.5")
-}
-
-/* KiteCodec's klib needs this local FFmpeg tree when linking the iOS framework. */
-val kiteCodecFfmpegRoot = providers.gradleProperty("kitecodec.ffmpeg.localRoot")
-    .orElse(provider { AppConfig.localProperties(rootDir).getProperty("kitecodec.ffmpeg.localRoot") })
-    .map { File(it).absoluteFile.normalize() }
-
-kitecodec {
-    ffmpeg {
-        source.set(kiteCodecFfmpegRoot.map { FFmpegSource.Local }.orElse(FFmpegSource.System))
-        localRoot.fileProvider(kiteCodecFfmpegRoot)
-        license.set(FFmpegLicense.LGPL)
-        /* Stated, not inherited: this tree carries the dav1d AV1 software decoder, and plugin
-         * 0.0.11 refuses a build whose script does not say so. Before this line the app linked
-         * dav1d for two releases without any of its own build saying it (KiteCodec 0.0.11
-         * changelog); if the tree ever loses dav1d, the build now fails here instead of AV1
-         * silently dying at runtime with FFmpeg's -78. */
-        dav1d.set(true)
-    }
 }
 
 tasks.register("propagateSSOT") {

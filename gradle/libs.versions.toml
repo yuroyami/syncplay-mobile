@@ -50,8 +50,7 @@ libvlc-android = "4.0.0-eap29"
 newpipeExtractor = "v0.24.6"
 
 # Local publications until the two libraries reach a remote repository.
-kiteplayer = "0.0.10"
-kitecodec-plugin = "0.0.11"
+kiteplayer = "0.0.11"
 
 #iOS
 libvlc-ios = "4.0.0a19"
@@ -163,7 +162,6 @@ compose-plugin = { id = "org.jetbrains.compose", version.ref = "compose-multipla
 
 
 # Supplies the FFmpeg libraries required by KitePlayer's iOS link.
-kitecodec = { id = "io.github.yuroyami.kitecodec", version.ref = "kitecodec-plugin" }
 
 # Root-applied single source of truth for app identity, version, and SDK levels.
 kitessot = { id = "io.github.yuroyami.kitessot", version.ref = "kitessot" }
