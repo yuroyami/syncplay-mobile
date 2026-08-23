@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		02FB671D91E24A7CB7E7A012 /* YouTubeKitBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68924F8AA816462CBBC97055 /* YouTubeKitBridge.swift */; };
 		0404ED202BB9374F00FCDAB5 /* NIO in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED1F2BB9374F00FCDAB5 /* NIO */; };
 		0404ED222BB9374F00FCDAB5 /* NIOConcurrencyHelpers in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED212BB9374F00FCDAB5 /* NIOConcurrencyHelpers */; };
 		0404ED242BB9374F00FCDAB5 /* NIOCore in Frameworks */ = {isa = PBXBuildFile; productRef = 0404ED232BB9374F00FCDAB5 /* NIOCore */; };
@@ -32,10 +33,9 @@
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
 		2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
+		4FD3AE45A5F9405184490A5A /* YouTubeKit in Frameworks */ = {isa = PBXBuildFile; productRef = 58170E465ECA4DCB82958108 /* YouTubeKit */; };
 		FA34718F2F85BF5A00698C93 /* MPVKit-GPL in Frameworks */ = {isa = PBXBuildFile; productRef = FA34718E2F85BF5A00698C93 /* MPVKit-GPL */; };
 		FA3471912F85C0AB00698C93 /* MpvKitBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA3471902F85C0AB00698C93 /* MpvKitBridge.swift */; };
-		4FD3AE45A5F9405184490A5A /* YouTubeKit in Frameworks */ = {isa = PBXBuildFile; productRef = 58170E465ECA4DCB82958108 /* YouTubeKit */; };
-		02FB671D91E24A7CB7E7A012 /* YouTubeKitBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68924F8AA816462CBBC97055 /* YouTubeKitBridge.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -64,12 +64,12 @@
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
 		2E11F2E80DF99399BD8DE767 /* Pods-iosApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iosApp.release.xcconfig"; path = "Target Support Files/Pods-iosApp/Pods-iosApp.release.xcconfig"; sourceTree = "<group>"; };
+		68924F8AA816462CBBC97055 /* YouTubeKitBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YouTubeKitBridge.swift; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Synkplay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Synkplay.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF8C242A565B00829871 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		D3A569DEDB2095539D3C35C7 /* Pods-iosApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-iosApp.debug.xcconfig"; path = "Target Support Files/Pods-iosApp/Pods-iosApp.debug.xcconfig"; sourceTree = "<group>"; };
 		E94BC4DE8C9E41F2FD82ABC4 /* Pods_iosApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_iosApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FA3471902F85C0AB00698C93 /* MpvKitBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MpvKitBridge.swift; sourceTree = "<group>"; };
-		68924F8AA816462CBBC97055 /* YouTubeKitBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YouTubeKitBridge.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -192,7 +192,6 @@
 				7555FF77242A565900829871 /* Sources */,
 				7555FF79242A565900829871 /* Resources */,
 				AF7767E45ABA9495FE76EAA2 /* Frameworks */,
-				C8723751F12803B87AD3693E /* [CP] Copy Pods Resources */,
 				99731DE2F7DA9AABD20CBDC3 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
@@ -321,23 +320,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-iosApp/Pods-iosApp-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		C8723751F12803B87AD3693E /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-iosApp/Pods-iosApp-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-iosApp/Pods-iosApp-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-iosApp/Pods-iosApp-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -487,7 +469,7 @@
 				DEVELOPMENT_TEAM = B5573QN48P;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Synkplay";
+				INFOPLIST_KEY_CFBundleDisplayName = Synkplay;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -496,7 +478,7 @@
 				);
 				MARKETING_VERSION = 0.23.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yuroyami.syncplay.iosApp;
-				PRODUCT_NAME = "Synkplay";
+				PRODUCT_NAME = Synkplay;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -516,7 +498,7 @@
 				DEVELOPMENT_TEAM = B5573QN48P;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Synkplay";
+				INFOPLIST_KEY_CFBundleDisplayName = Synkplay;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.video";
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -525,7 +507,7 @@
 				);
 				MARKETING_VERSION = 0.23.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.yuroyami.syncplay.iosApp;
-				PRODUCT_NAME = "Synkplay";
+				PRODUCT_NAME = Synkplay;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -588,20 +570,20 @@
 				minimumVersion = 1.20.1;
 			};
 		};
-		FA34718D2F85BF5A00698C93 /* XCRemoteSwiftPackageReference "MPVKit" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/mpvkit/MPVKit.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.41.0;
-			};
-		};
 		CFFEC47450D849B6945A6C7A /* XCRemoteSwiftPackageReference "YouTubeKit" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/alexeichhorn/YouTubeKit.git";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 0.4.8;
+			};
+		};
+		FA34718D2F85BF5A00698C93 /* XCRemoteSwiftPackageReference "MPVKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mpvkit/MPVKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.41.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -677,15 +659,15 @@
 			package = 04FEEA382BBD821400E9AC8F /* XCRemoteSwiftPackageReference "swift-nio-transport-services" */;
 			productName = NIOTransportServices;
 		};
-		FA34718E2F85BF5A00698C93 /* MPVKit-GPL */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = FA34718D2F85BF5A00698C93 /* XCRemoteSwiftPackageReference "MPVKit" */;
-			productName = "MPVKit-GPL";
-		};
 		58170E465ECA4DCB82958108 /* YouTubeKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = CFFEC47450D849B6945A6C7A /* XCRemoteSwiftPackageReference "YouTubeKit" */;
 			productName = YouTubeKit;
+		};
+		FA34718E2F85BF5A00698C93 /* MPVKit-GPL */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA34718D2F85BF5A00698C93 /* XCRemoteSwiftPackageReference "MPVKit" */;
+			productName = "MPVKit-GPL";
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

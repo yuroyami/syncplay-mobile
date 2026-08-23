@@ -5,7 +5,8 @@ platform :ios, '14.1'
 target 'iosApp' do
   use_frameworks!
 
+  # VLCKit is NOT declared here. It is a dependency of the shared framework, declared once in
+  # shared/build.gradle.kts so its version comes from libs.versions.toml and Kotlin gets the
+  # cocoapods.VLCKit bindings from it. CocoaPods links it into this target transitively.
   pod 'shared', :path => '../shared'
-  pod 'VLCKit'
-  pod 'SPLPing', '1.1.8'
 end

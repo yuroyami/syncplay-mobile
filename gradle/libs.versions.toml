@@ -50,7 +50,7 @@ libvlc-android = "4.0.0-eap29"
 newpipeExtractor = "v0.24.6"
 
 # Local publications until the two libraries reach a remote repository.
-kiteplayer = "0.0.13"
+kiteplayer = "0.0.14"
 
 #iOS
 libvlc-ios = "4.0.0a19"
