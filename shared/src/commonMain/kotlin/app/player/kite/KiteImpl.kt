@@ -189,9 +189,16 @@ internal class KiteImpl(
                 lastSubmitted = s.submittedFrames
                 loggy(
                     "KiteStats: status=${player.state.value.status}" +
+                        " pos=${player.position().inWholeMilliseconds}" +
                         " decoded=${s.decodedVideoFrames} submitted=${s.submittedFrames}" +
                         " headless=${s.headlessFrames} droppedLate=${s.droppedFramesLate}" +
                         " repeated=${s.repeatedFrames} underruns=${s.audioUnderruns}" +
+                        // The three that say WHICH layer is short when playback crawls: a decoder
+                        // that cannot keep up shows a low fps with a full video queue, while a
+                        // reader that cannot keep up shows both queues near empty and rebuffers
+                        // climbing. Without them a crawl looks the same either way.
+                        " fps=${s.videoDecodeFps.toInt()} videoQms=${s.videoQueueDepth.inWholeMilliseconds}" +
+                        " audioQms=${s.audioQueueDepth.inWholeMilliseconds} rebuffers=${s.rebuffers}" +
                         " drift=${s.avDrift} hwdec=${s.hardwareDecode} master=${s.masterClock}",
                 )
             }
