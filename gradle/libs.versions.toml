@@ -49,7 +49,7 @@ libvlc-android = "4.0.0-eap29"
 newpipeExtractor = "v0.24.6"
 
 # Local publications until the two libraries reach a remote repository.
-kiteplayer = "0.0.18"
+kiteplayer = "0.0.20"
 
 #iOS
 libvlc-ios = "4.0.0a19"
@@ -124,8 +124,7 @@ m3-common = { module = "androidx.media3:media3-common", version.ref = "media3" }
 netty = { module = "io.netty:netty-all", version.ref = "netty" }
 conscrypt = { module = "org.conscrypt:conscrypt-android", version.ref = "conscrypt" }
 libvlc-android = { module = "org.videolan.android:libvlc-all", version.ref = "libvlc-android" }
-kiteplayer-compose-interop = { module = "io.github.yuroyami:kiteplayer-compose-interop", version.ref = "kiteplayer" }
-kiteplayer-compose-video = { module = "io.github.yuroyami:kiteplayer-compose-video", version.ref = "kiteplayer" }
+kiteplayer-compose-ui = { module = "io.github.yuroyami:kiteplayer-compose-ui", version.ref = "kiteplayer" }
 newpipe-extractor = { module = "com.github.TeamNewPipe:NewPipeExtractor", version.ref = "newpipeExtractor" }
 
 #Desktop

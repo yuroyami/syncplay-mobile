@@ -133,13 +133,10 @@ kotlin {
             /* Atomics (used only for logs at the moment) */
             implementation(libs.atomicfu)
 
-            /* One coordinate re-exports KitePlayer's default assembly, facade and core API. */
-            implementation(libs.kiteplayer.compose.interop)
-
-            /* Experimental pure-Compose KitePlayer renderer; registered only in debug mobile
-             * builds. Common since KitePlayer 0.0.4, whose jvm target carries the software
-             * frame path, so the desktop target resolves it too. */
-            implementation(libs.kiteplayer.compose.video)
+            /* KitePlayerVideo, the runtime-choice layer: one coordinate re-exports both
+             * rendering products plus KitePlayer's default assembly, facade and core API.
+             * The in-room renderer toggle rides its path parameter. */
+            implementation(libs.kiteplayer.compose.ui)
 
             /* Coil for async image loading (GIF panel) */
             implementation(libs.bundles.coil)

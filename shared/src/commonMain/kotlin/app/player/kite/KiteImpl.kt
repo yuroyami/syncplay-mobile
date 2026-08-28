@@ -19,6 +19,7 @@ import app.preferences.Preferences.KITE_EQ_BRIGHTNESS
 import app.preferences.Preferences.KITE_EQ_CONTRAST
 import app.preferences.Preferences.KITE_EQ_HUE
 import app.preferences.Preferences.KITE_EQ_SATURATION
+import app.preferences.Preferences.KITE_COMPOSE_RENDERER
 import app.preferences.Preferences.KITE_HARDWARE_ACCELERATION
 import app.preferences.Preferences.KITE_PRESERVE_PITCH
 import app.preferences.Preferences.KITE_SUBTITLE_AUTOSELECT
@@ -28,6 +29,9 @@ import app.preferences.Preferences.KITE_SUBTITLE_SCALE
 import app.preferences.PrefExtraConfig
 import app.preferences.settings.SettingCategory
 import app.preferences.value
+import app.preferences.watchPref
+import io.github.yuroyami.kiteplayer.compose.KitePlayerVideo
+import io.github.yuroyami.kiteplayer.compose.KiteRenderPath
 import app.room.RoomViewmodel
 import app.utils.generateTimestampMillis
 import app.utils.loggy
@@ -77,7 +81,6 @@ internal class KiteImpl(
     viewmodel: RoomViewmodel,
     engine: KiteEngine,
     private val mediaResolver: KiteMediaResolver,
-    private val presentation: KitePlayerPresentation,
 ) : PlayerImpl(viewmodel, engine) {
 
     /**
@@ -201,9 +204,7 @@ internal class KiteImpl(
                         // climbing. Without them a crawl looks the same either way.
                         " fps=${s.videoDecodeFps.toInt()} videoQms=${s.videoQueueDepth.inWholeMilliseconds}" +
                         " audioQms=${s.audioQueueDepth.inWholeMilliseconds} rebuffers=${s.rebuffers}" +
-                        " drift=${s.avDrift} hwdec=${s.hardwareDecode} master=${s.masterClock}" +
-                        // TEMP DIAG: the renderer's draw truth (what actually reached the glass).
-                        " " + ((presentation as? KiteProbeCapable)?.probe() ?: "probe=nocast"),
+                        " drift=${s.avDrift} hwdec=${s.hardwareDecode} master=${s.masterClock}",
                 )
             }
         }
@@ -225,11 +226,6 @@ internal class KiteImpl(
      * [trackerJobInterval] only has to carry the position.
      */
     private fun watchEngineState() {
-        // TEMP DIAG: name the presentation actually held, so a wiring mistake cannot hide.
-        loggy(
-            "KiteImpl: presentation=${presentation::class.simpleName}" +
-                " probeCapable=${presentation is KiteProbeCapable}",
-        )
         val player = kite ?: return
         durationWatcher?.cancel()
         durationWatcher = playerScopeMain.launch {
@@ -318,6 +314,9 @@ internal class KiteImpl(
         // Creation-time settings: they say so in their summaries and apply at the next load.
         +KITE_HARDWARE_ACCELERATION
         +KITE_SUBTITLE_AUTOSELECT
+        // Runtime: flipping it recomposes VideoPlayer, which swaps the presentation over the
+        // running player (KitePlayerVideo path change; the engine keeps position and play state).
+        +KITE_COMPOSE_RENDERER
         // Runtime settings: the callbacks reach the live engine immediately.
         +KITE_SUBTITLE_SCALE.apply {
             config?.extraConfig = PrefExtraConfig.Slider(maxValue = 300, minValue = 25) { percent ->
@@ -638,18 +637,25 @@ internal class KiteImpl(
 
     @Composable
     override fun VideoPlayer(modifier: Modifier, onPlayerReady: () -> Unit) {
-        // Construct from the composition that owns the output. The presentation publishes
-        // readiness only after its surface/renderer is attached, so an early media injection waits
-        // for the same invariant whether this is the native-view or a pure-Compose path.
+        // Construct from the composition that owns the output. KitePlayerVideo reports its
+        // renderer attached, so an early media injection waits for the same invariant on the
+        // native-view and the pure-Compose path alike. Flipping the pref swaps the presentation
+        // over the RUNNING player: the engine rebuilds a coupled decoder at position by itself.
         LaunchedEffect(Unit) {
             initialize()
         }
         val composedKite by kiteFlow.collectAsState()
-        presentation.Content(player = composedKite, modifier = modifier) { presented ->
-            if (presented === kiteFlow.value && presentedPlayer.complete(presented)) {
-                onPlayerReady()
-            }
-        }
+        val composeRenderer by KITE_COMPOSE_RENDERER.watchPref()
+        KitePlayerVideo(
+            player = composedKite,
+            modifier = modifier,
+            path = if (composeRenderer) KiteRenderPath.ComposeCanvas else KiteRenderPath.NativeView,
+            onRendererAttached = { presented ->
+                if (presented === kiteFlow.value && presentedPlayer.complete(presented)) {
+                    onPlayerReady()
+                }
+            },
+        )
     }
 
     /** KitePlayer owns its own output volume; there is no system stream to read here. */

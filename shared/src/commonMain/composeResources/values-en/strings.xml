@@ -399,6 +399,8 @@
     <string name="uisetting_resetdefault_title">Reset Default Settings</string>
     <string name="uisetting_resetdefault_summary">Reset all of the above settings to default.</string>
     <string name="uisetting_categ_kite">KitePlayer</string>
+    <string name="uisetting_kite_compose_renderer_title">Compose renderer (experimental)</string>
+    <string name="uisetting_kite_compose_renderer_summary">Draw video as real Compose content instead of the native platform view. Switches live, even mid-playback. The picture may blink for under a second while the decoder follows.</string>
     <string name="uisetting_kite_hw_title">Hardware Acceleration</string>
     <string name="uisetting_kite_hw_summary">Decode video on the device\'s hardware decoder (MediaCodec/VideoToolbox) when possible. Turning this off forces software decoding. Applies the next time a file is loaded.</string>
     <string name="uisetting_kite_sub_autoselect_title">Show subtitles automatically</string>

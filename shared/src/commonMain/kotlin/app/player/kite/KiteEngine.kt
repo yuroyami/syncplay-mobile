@@ -18,6 +18,11 @@ import syncplaymobile.shared.generated.resources.kiteplayer
  * MediaCodec on Android and VideoToolbox on iOS, both inside FFmpeg, with a measured software
  * fallback rather than a silent failure.
  *
+ * Presentation is KitePlayerVideo since 0.0.20: one composable hosting either the native view or
+ * the pure-Compose renderer, switchable while media plays through the in-room
+ * [app.preferences.Preferences.KITE_COMPOSE_RENDERER] toggle. The old per-platform presentation
+ * strategies and the separate debug-only "Kite Compose" engine are gone with it.
+ *
  * Experimental, and honestly so: KitePlayer has no public release and no full qualification on
  * physical hardware. Its subtitle support covers SubRip and WebVTT, embedded or loaded as
  * external files during playback; styled ASS subtitles are seen as tracks but not yet drawn.
@@ -27,11 +32,11 @@ import syncplaymobile.shared.generated.resources.kiteplayer
 @Suppress("KotlinConstantConditions")
 internal class KiteEngine(
     private val mediaResolver: KiteMediaResolver,
-    override val name: String = "KitePlayer",
-    private val presentation: KitePlayerPresentation = KiteInteropPresentation,
     /** Desktop passes true: it is the only engine there, so it must also be the default one. */
     override val isDefault: Boolean = false,
 ) : PlayerEngine {
+
+    override val name: String = "KitePlayer"
 
     /**
      * False in the `exoOnly` Android flavor, which ships no native player libraries: that build
@@ -45,5 +50,5 @@ internal class KiteEngine(
     override val img: DrawableResource = Res.drawable.kiteplayer
 
     override fun createImpl(viewmodel: RoomViewmodel): PlayerImpl =
-        KiteImpl(viewmodel, this, mediaResolver, presentation)
+        KiteImpl(viewmodel, this, mediaResolver)
 }

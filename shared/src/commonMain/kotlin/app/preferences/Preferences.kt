@@ -42,6 +42,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SlowMotionVideo
 import androidx.compose.material.icons.filled.SortByAlpha
 import androidx.compose.material.icons.filled.SpatialAudio
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material.icons.filled.SupervisedUserCircle
@@ -201,6 +202,8 @@ import syncplaymobile.shared.generated.resources.uisetting_kite_eq_hue_title
 import syncplaymobile.shared.generated.resources.uisetting_kite_eq_saturation_summary
 import syncplaymobile.shared.generated.resources.uisetting_kite_eq_saturation_title
 import syncplaymobile.shared.generated.resources.uisetting_kite_hw_summary
+import syncplaymobile.shared.generated.resources.uisetting_kite_compose_renderer_summary
+import syncplaymobile.shared.generated.resources.uisetting_kite_compose_renderer_title
 import syncplaymobile.shared.generated.resources.uisetting_kite_hw_title
 import syncplaymobile.shared.generated.resources.uisetting_kite_preserve_pitch_summary
 import syncplaymobile.shared.generated.resources.uisetting_kite_preserve_pitch_title
@@ -807,6 +810,11 @@ object Preferences {
     }
 
     /** ------------ KitePlayer Settings -------------*/
+    val KITE_COMPOSE_RENDERER = Pref("pref_kite_compose_renderer", false) {
+        title = Res.string.uisetting_kite_compose_renderer_title
+        summary = Res.string.uisetting_kite_compose_renderer_summary
+        icon = Icons.Filled.Layers
+    }
     val KITE_HARDWARE_ACCELERATION = Pref("pref_kite_hw", true) {
         title = Res.string.uisetting_kite_hw_title
         summary = Res.string.uisetting_kite_hw_summary

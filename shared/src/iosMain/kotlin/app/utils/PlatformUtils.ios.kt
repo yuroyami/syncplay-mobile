@@ -9,8 +9,6 @@ import app.player.PlayerEngine
 import app.player.avplayer.AVPlayerEngine
 import app.player.kite.IosKiteMediaResolver
 import app.player.kite.KiteEngine
-import app.player.kite.KiteIosDiagPresentation
-import app.player.kite.kiteComposeEngine
 import app.player.mpv.MpvKitEngine
 import app.player.vlc.VlcKitEngine
 import app.preferences.Preferences.NETWORK_ENGINE
@@ -135,12 +133,8 @@ actual val availablePlatformPlayerEngines: List<PlayerEngine> = buildList {
     add(MpvKitEngine)
     add(VlcKitEngine)
     // KitePlayer, the same KiteImpl the Android list ends with: one implementation, two phones.
-    // TEMP DIAG: the probe presentation retains the video view so KiteStats can log draw truth.
-    add(KiteEngine(IosKiteMediaResolver, presentation = KiteIosDiagPresentation))
-    // Its experimental pure-Compose sibling is exposed only by a debug build, same as Android.
-    if (BuildConfig.IS_DEBUG && kiteComposeEngine.isAvailable) {
-        add(kiteComposeEngine)
-    }
+    // The renderer (native view or pure Compose) is an in-room toggle now, not a second engine.
+    add(KiteEngine(IosKiteMediaResolver))
 }
 
 actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {

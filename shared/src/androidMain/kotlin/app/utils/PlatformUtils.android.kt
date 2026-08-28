@@ -20,7 +20,6 @@ import app.player.PlayerEngine
 import app.player.exo.ExoEngine
 import app.player.kite.AndroidKiteMediaResolver
 import app.player.kite.KiteEngine
-import app.player.kite.kiteComposeEngine
 import app.player.mpv.MpvEngine
 import app.player.vlc.VlcEngine
 import app.preferences.Preferences.NETWORK_ENGINE
@@ -77,10 +76,8 @@ actual val availablePlatformPlayerEngines: List<PlayerEngine> = buildList {
     add(ExoEngine)
     add(MpvEngine)
     add(VlcEngine)
+    // One KitePlayer entry: the renderer (native view or pure Compose) is an in-room toggle now.
     add(KiteEngine(AndroidKiteMediaResolver))
-    if (BuildConfig.IS_DEBUG && !BuildConfig.EXOPLAYER_ONLY && kiteComposeEngine.isAvailable) {
-        add(kiteComposeEngine)
-    }
 }
 
 actual fun RoomViewmodel.instantiateNetworkManager(): NetworkManager {
