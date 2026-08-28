@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -76,6 +77,7 @@ import app.preferences.watchPref
 import app.theme.Theming
 import app.theme.Theming.useSyncplayGradient
 import app.uicomponents.FlexibleText
+import app.uicomponents.dropdownMenuMaxHeight
 import app.uicomponents.sairaFont
 import app.uicomponents.tvFocusable
 import app.utils.appName
@@ -271,7 +273,9 @@ fun HomeScreenUI(viewmodel: HomeViewmodel) {
                             val hostServerLabel = stringResource(Res.string.connect_host_own_server)
                             val servers = officialServers + customServerLabel
                             ExposedDropdownMenu(
-                                modifier = Modifier.background(color = MaterialTheme.colorScheme.surfaceContainerHigh),
+                                modifier = Modifier
+                                    .heightIn(max = dropdownMenuMaxHeight)
+                                    .background(color = MaterialTheme.colorScheme.surfaceContainerHigh),
                                 expanded = expanded.value,
                                 onDismissRequest = {
                                     expanded.value = false

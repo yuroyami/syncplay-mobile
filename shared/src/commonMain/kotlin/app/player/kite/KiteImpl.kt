@@ -29,6 +29,7 @@ import app.preferences.PrefExtraConfig
 import app.preferences.settings.SettingCategory
 import app.preferences.value
 import app.room.RoomViewmodel
+import app.utils.generateTimestampMillis
 import app.utils.loggy
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.yuroyami.kiteplayer.HwdecPolicy
@@ -38,6 +39,7 @@ import io.github.yuroyami.kiteplayer.MediaItem
 import io.github.yuroyami.kiteplayer.PlaybackStatus
 import io.github.yuroyami.kiteplayer.PlayerConfig
 import io.github.yuroyami.kiteplayer.SeekMode
+import kotlinx.coroutines.CancellationException
 import io.github.yuroyami.kiteplayer.SubtitleConfig
 import io.github.yuroyami.kiteplayer.SubtitleSource
 import io.github.yuroyami.kiteplayer.TrackKind
@@ -199,7 +201,9 @@ internal class KiteImpl(
                         // climbing. Without them a crawl looks the same either way.
                         " fps=${s.videoDecodeFps.toInt()} videoQms=${s.videoQueueDepth.inWholeMilliseconds}" +
                         " audioQms=${s.audioQueueDepth.inWholeMilliseconds} rebuffers=${s.rebuffers}" +
-                        " drift=${s.avDrift} hwdec=${s.hardwareDecode} master=${s.masterClock}",
+                        " drift=${s.avDrift} hwdec=${s.hardwareDecode} master=${s.masterClock}" +
+                        // TEMP DIAG: the renderer's draw truth (what actually reached the glass).
+                        " " + ((presentation as? KiteProbeCapable)?.probe() ?: "probe=nocast"),
                 )
             }
         }
@@ -221,6 +225,11 @@ internal class KiteImpl(
      * [trackerJobInterval] only has to carry the position.
      */
     private fun watchEngineState() {
+        // TEMP DIAG: name the presentation actually held, so a wiring mistake cannot hide.
+        loggy(
+            "KiteImpl: presentation=${presentation::class.simpleName}" +
+                " probeCapable=${presentation is KiteProbeCapable}",
+        )
         val player = kite ?: return
         durationWatcher?.cancel()
         durationWatcher = playerScopeMain.launch {
@@ -430,7 +439,18 @@ internal class KiteImpl(
         // A null track means "none", which the engine spells as a null id. Anything that is not
         // one of ours cannot be resolved to a stream, so it is treated the same way rather than
         // guessed at.
-        kite?.selectTrack(kind, (track as? KiteTrack)?.trackId)
+        try {
+            val change = kite?.selectTrack(kind, (track as? KiteTrack)?.trackId)
+            loggy("KitePlayer: selectTrack($kind, ${track?.name ?: "none"}) -> $change")
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (refused: Exception) {
+            // The engine refuses typed (unseekable source, backend without a subtitle decoder,
+            // an id the media does not have). Swallowing that here is what made a refused change
+            // read as "nothing happens" (owner report 2026-08-26), so it goes to the OSD.
+            loggy("KitePlayer: selectTrack($kind) refused: ${refused.message}")
+            viewmodel.dispatchOSD { refused.message ?: "Track change refused" }
+        }
     }
 
     override suspend fun analyzeChapters(mediafile: MediaFile) {
@@ -544,12 +564,20 @@ internal class KiteImpl(
         }
     }
 
+    // TEMP DIAG (pause/seek latency hunt): before/after lines measure how long the engine's
+    // transactional pause/play takes to apply. Remove once the wedge is root-caused.
     override suspend fun pause() {
+        val t0 = generateTimestampMillis()
+        loggy("KiteCmd: pause() commanded, status=${kite?.state?.value?.status}")
         kite?.pause()
+        loggy("KiteCmd: pause() applied in ${generateTimestampMillis() - t0}ms, status=${kite?.state?.value?.status}")
     }
 
     override suspend fun play() {
+        val t0 = generateTimestampMillis()
+        loggy("KiteCmd: play() commanded, status=${kite?.state?.value?.status}")
         kite?.play()
+        loggy("KiteCmd: play() applied in ${generateTimestampMillis() - t0}ms, status=${kite?.state?.value?.status}")
     }
 
     override suspend fun setSpeed(speed: Double) {
@@ -577,6 +605,7 @@ internal class KiteImpl(
         // picture for the whole decode-forward, which read as the player "reloading". The
         // position mask reports the exact target throughout, so the room protocol and the seek
         // bar never see the intermediate keyframe position.
+        loggy("KiteCmd: seekLater(${toPositionMs}ms) fired, status=${kite?.state?.value?.status}") // TEMP DIAG
         kite?.seekLater(toPositionMs.milliseconds, SeekMode.KeyframeThenRefine)
     }
 

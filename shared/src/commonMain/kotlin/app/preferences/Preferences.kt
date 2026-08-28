@@ -793,7 +793,8 @@ object Preferences {
         dependencyEnable = { SHOW_CHAPTER_DOTS.value() }
     }
 
-    val DOUBLETAP_SEEK = Pref("pref_inroom_doubletap_seek", true) {
+    /** Off by default: double-tap-to-seek fights with tap-to-reveal-HUD for most users. */
+    val DOUBLETAP_SEEK = Pref("pref_inroom_doubletap_seek", false) {
         title = Res.string.uisetting_doubletap_seek_title
         summary = Res.string.uisetting_doubletap_seek_summary
         icon = Icons.Filled.TouchApp

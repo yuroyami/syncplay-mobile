@@ -25,14 +25,15 @@ val localProperties = AppConfig.localProperties(rootDir)
 
 kiteSsot {
     appName = AppConfig.APP_NAME
-    versionName = AppConfig.VERSION_NAME
-    bundleIdBase = if (exoOnly) AppConfig.BUNDLE_ID_BASE_EXO else AppConfig.BUNDLE_ID_BASE
-    iosBundleSuffix = ".iosApp"
+    version = AppConfig.VERSION_NAME
+    appId = if (exoOnly) AppConfig.BUNDLE_ID_BASE_EXO else AppConfig.BUNDLE_ID_BASE
 
-    sharedProjectPath = ":shared"
-    androidApplicationProjects.add(":androidApp")
+    jvmTarget = 21
 
-    javaVersion = 21
+    modules {
+        shared = ":shared"
+        androidApps(":androidApp")
+    }
 
     // SDK/toolchain values come from gradle.properties (single value source; the modules
     // read the same keys). compileSdk >= 33 also makes the logo sync emit the themed-icon
@@ -41,26 +42,32 @@ kiteSsot {
         compileSdk = providers.gradleProperty("android.compileSdk").get().toInt()
         minSdk = providers.gradleProperty("android.minSdk").get().toInt()
         targetSdk = providers.gradleProperty("android.targetSdk").get().toInt()
-        ndkVersion = providers.gradleProperty("android.ndkVersion").get()
+        ndk = providers.gradleProperty("android.ndkVersion").get()
     }
 
-    // Mutation stays on-demand in KiteSSOT: these flags only ENABLE the explicit sync
-    // tasks (kiteSsotSyncAndroidLogo / kiteSsotSyncIosConfig); normal builds never
-    // rewrite sources. Run the iOS config sync after every version bump.
-    syncIos = true
     ios {
+        bundleIdSuffix = ".iosApp"
+
         // Compatibility assertion for the universal AppIcon installer only (matches the
         // cocoapods deploymentTarget in :shared); it does not configure Xcode.
         deploymentTarget = "14.0"
+
+        // Mutation stays on-demand in KiteSSOT: configuring this block only ENABLES the
+        // explicit kiteSsotSyncIosConfig / kiteSsotSyncIosLogo tasks; normal builds never
+        // rewrite sources. Run the iOS config sync after every version bump.
+        sync { }
     }
-    propagateLogo = true
-    cleanupLegacyLogoArtifacts = true
-    appLogoPngForeground = layout.projectDirectory.file("shared/src/commonMain/composeResources/drawable/logo_fg.png")
-    appLogoPngBackground = layout.projectDirectory.file("shared/src/commonMain/composeResources/drawable/logo_bg.png")
-    appLogoAndroidSafeZoneRatio = 0.5
+
+    // Same rule as ios { sync }: this block authorizes kiteSsotSyncAndroidLogo and
+    // kiteSsotSyncIosLogo, it does not run them.
+    logo {
+        foreground = layout.projectDirectory.file("shared/src/commonMain/composeResources/drawable/logo_fg.png")
+        background = layout.projectDirectory.file("shared/src/commonMain/composeResources/drawable/logo_bg.png")
+        androidSafeZone = 0.5
+        takeOverLegacyIcons = true
+    }
 
     buildConfig {
-        enabled = true
         includeIdentity = false
         packageName = "SyncplayMobile.shared"
         className = "BuildConfig"
@@ -70,7 +77,22 @@ kiteSsot {
         // NOT "DEBUG": KiteSSOT generates a PUBLIC object, so every field becomes a property on the
         // exported ObjC header, and Xcode defines DEBUG=1 in Debug configs, so "BOOL DEBUG"
         // preprocesses to "BOOL 1" and every iOS Debug build fails to precompile the module.
-        booleanField("IS_DEBUG", true)
+        //
+        // The value is detected per invocation, never hardcoded (2026-08-26: a hardcoded `true`
+        // shipped debug-only engine entries in Release binaries). iOS: the pod script phase passes
+        // -Pkotlin.native.cocoapods.configuration=Debug|Release, the authoritative signal there.
+        // Android/desktop: the requested task names carry the variant. Anything ambiguous (mixed
+        // variants, sync, no variant in the name) is conservatively NOT debug.
+        val requestedTasks = gradle.startParameter.taskNames.map { it.lowercase() }
+        val podConfiguration =
+            providers.gradleProperty("kotlin.native.cocoapods.configuration").orNull?.lowercase()
+        val isDebugInvocation = when {
+            podConfiguration != null -> podConfiguration == "debug"
+            requestedTasks.any { it.contains("release") } -> false
+            requestedTasks.any { it.contains("debug") } -> true
+            else -> false
+        }
+        booleanField("IS_DEBUG", isDebugInvocation)
         // Overridable for wire-level debugging: ./gradlew ... -PdebugProtocol=true
         booleanField(
             "DEBUG_SYNCPLAY_PROTOCOL",

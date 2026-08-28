@@ -154,8 +154,8 @@
     <string name="room_setting_pick_color">选择颜色</string>
     <string name="room_reconnect_button">重新连接</string>
     <string name="room_more_info_change_network_engine_msg">如果您遇到连接问题，请尝试在设置 > 网络中将网络引擎更改为Ktor。</string>
-    <string name="room_volume">音量：%1$s</string>
-    <string name="room_brightness">亮度：%1$s</string>
+    <string name="room_volume">音量</string>
+    <string name="room_brightness">亮度</string>
     <string name="room_coming_soon">即将推出！</string>
     <string name="room_chapters_skip">跳过章节</string>
     <string name="room_chapters">章节</string>

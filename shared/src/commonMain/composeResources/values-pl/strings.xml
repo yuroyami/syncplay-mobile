@@ -165,8 +165,8 @@
     <string name ="room_setting_pick_color">Wybierz kolor</string>
     <string name ="room_reconnect_button">Połącz ponownie</string>
     <string name="room_more_info_change_network_engine_msg">Spróbuj zmienić silnik sieciowy w Ustawienia > Sieć na Ktor, jeśli masz problemy z połączeniem.</string>
-    <string name="room_volume">Głośność: %1$s</string>
-    <string name="room_brightness">Jasność: %1$s</string>
+    <string name="room_volume">Głośność</string>
+    <string name="room_brightness">Jasność</string>
     <string name="room_coming_soon">Wkrótce!</string>
     <string name="room_chapters_skip">Pomiń rozdział</string>
     <string name="room_chapters">Rozdziały</string>

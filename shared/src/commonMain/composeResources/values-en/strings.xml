@@ -207,8 +207,8 @@
     <string name ="room_setting_pick_color">Pick a Color</string>
     <string name ="room_reconnect_button">Reconnect</string>
     <string name="room_more_info_change_network_engine_msg">Try changing network engine in Settings > Network to Ktor if you're experiencing connection issues.</string>
-    <string name="room_volume">Volume: %1$s</string>
-    <string name="room_brightness">Brightness: %1$s</string>
+    <string name="room_volume">Volume</string>
+    <string name="room_brightness">Brightness</string>
     <string name="room_coming_soon">Coming soon!</string>
     <string name="room_chapters_skip">Skipped to next chapter</string>
     <string name="room_chapters_jump">Chapter: %1$s</string>

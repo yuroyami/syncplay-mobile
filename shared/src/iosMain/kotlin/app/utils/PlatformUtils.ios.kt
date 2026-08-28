@@ -9,6 +9,7 @@ import app.player.PlayerEngine
 import app.player.avplayer.AVPlayerEngine
 import app.player.kite.IosKiteMediaResolver
 import app.player.kite.KiteEngine
+import app.player.kite.KiteIosDiagPresentation
 import app.player.kite.kiteComposeEngine
 import app.player.mpv.MpvKitEngine
 import app.player.vlc.VlcKitEngine
@@ -134,7 +135,8 @@ actual val availablePlatformPlayerEngines: List<PlayerEngine> = buildList {
     add(MpvKitEngine)
     add(VlcKitEngine)
     // KitePlayer, the same KiteImpl the Android list ends with: one implementation, two phones.
-    add(KiteEngine(IosKiteMediaResolver))
+    // TEMP DIAG: the probe presentation retains the video view so KiteStats can log draw truth.
+    add(KiteEngine(IosKiteMediaResolver, presentation = KiteIosDiagPresentation))
     // Its experimental pure-Compose sibling is exposed only by a debug build, same as Android.
     if (BuildConfig.IS_DEBUG && kiteComposeEngine.isAvailable) {
         add(kiteComposeEngine)

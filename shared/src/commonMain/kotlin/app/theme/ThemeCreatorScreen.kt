@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -65,6 +66,7 @@ import app.home.HomeLeadingTitle
 import app.home.components.HomeTextField
 import app.room.ui.tabs.RoomTab
 import app.uicomponents.FlexibleText
+import app.uicomponents.dropdownMenuMaxHeight
 import app.uicomponents.jostFont
 import app.uicomponents.lexendFont
 import app.utils.appName
@@ -475,7 +477,9 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                             )
 
                             ExposedDropdownMenu(
-                                modifier = Modifier.background(color = MaterialTheme.colorScheme.tertiaryContainer),
+                                modifier = Modifier
+                                    .heightIn(max = dropdownMenuMaxHeight)
+                                    .background(color = MaterialTheme.colorScheme.tertiaryContainer),
                                 expanded = paletteSelector.value,
                                 onDismissRequest = {
                                     paletteSelector.value = false

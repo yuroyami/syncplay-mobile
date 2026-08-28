@@ -2,12 +2,11 @@
 #KMM-Plugins
 # 2.4.20 has no stable release yet (only Beta1/Beta2 on Maven Central) — 2.4.10 is the latest stable.
 kotlin = "2.4.10"
-agp = "9.3.1"
-kitessot = "3.0.1"
-compose-multiplatform = "1.12.0-rc01"
+agp = "9.3.2"
+kitessot = "3.0.2"
+compose-multiplatform = "1.12.0"
 kSerialization = "1.11.0"
 ksp = "2.3.11"
-skie = "0.10.14"
 ktorfit = "2.7.5"
 
 #KMM-Libs
@@ -50,7 +49,7 @@ libvlc-android = "4.0.0-eap29"
 newpipeExtractor = "v0.24.6"
 
 # Local publications until the two libraries reach a remote repository.
-kiteplayer = "0.0.14"
+kiteplayer = "0.0.18"
 
 #iOS
 libvlc-ios = "4.0.0a19"
@@ -172,5 +171,3 @@ android-kmp-library = { id = "com.android.kotlin.multiplatform.library", version
 kSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktorfit = { id = "de.jensklingenberg.ktorfit", version.ref = "ktorfit" }
-
-touchlab-skie = { id = "co.touchlab.skie", version.ref = "skie" }

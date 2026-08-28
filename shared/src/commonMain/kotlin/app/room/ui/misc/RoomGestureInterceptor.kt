@@ -5,32 +5,24 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemGestures
 import androidx.compose.foundation.layout.waterfall
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material.icons.filled.Brightness6
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -43,9 +35,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -64,10 +54,6 @@ import app.utils.platformCallback
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.stringResource
-import syncplaymobile.shared.generated.resources.Res
-import syncplaymobile.shared.generated.resources.room_brightness
-import syncplaymobile.shared.generated.resources.room_volume
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -101,9 +87,8 @@ fun RoomGestureInterceptor(modifier: Modifier) {
     val leftGestureGuardPx by rememberUpdatedState(WindowInsets.waterfall.getLeft(density, layoutDirection))
     val rightGestureGuardPx by rememberUpdatedState(WindowInsets.waterfall.getRight(density, layoutDirection))
 
-    var currentBrightness by remember { mutableFloatStateOf(-1f) }
-    var currentVolume by remember { mutableIntStateOf(-1) }
-    var vertdragOffset by remember { mutableStateOf(Offset.Zero) }
+    /* Live swipe-gesture readout; null while no drag is in progress. */
+    var gestureValue by remember { mutableStateOf<GestureValue?>(null) }
 
     // Track initial and last values for drag gestures
     var initialBrightness by remember { mutableFloatStateOf(0f) }
@@ -295,13 +280,11 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                     },
                                     onDragEnd = {
                                         dragDistance = 0f
-                                        currentBrightness = -1f
-                                        currentVolume = -1
+                                        gestureValue = null
                                     },
                                     onVerticalDrag = { pntr, f ->
                                         if (initialBrightness < 0f) return@detectVerticalDragGestures // edge-ignored drag
                                         dragDistance += f
-                                        vertdragOffset = pntr.position
 
                                         if (pntr.position.x >= size.width * 0.5f) {
                                             // Volume adjusting
@@ -310,7 +293,15 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                             var newVolume = (initialVolume + (-dragDistance * maxVolume / height)).roundToInt()
                                             newVolume = newVolume.coerceIn(0, maxVolume)
 
-                                            currentVolume = newVolume
+                                            /* Engines that boost past 100% (VLC: 0..200) show their raw
+                                             * value, so 150 reads as "150%"; the rest map onto 0..100. */
+                                            val volumeSpan = maxVolume.coerceAtLeast(1)
+                                            gestureValue = GestureValue(
+                                                kind = GestureValueKind.VOLUME,
+                                                display = if (volumeSpan > 100) newVolume else newVolume * 100 / volumeSpan,
+                                                fraction = newVolume / volumeSpan.toFloat(),
+                                                normalMark = if (volumeSpan > 100) 100f / volumeSpan else 1f
+                                            )
 
                                             if (newVolume != lastAppliedVolume) {
                                                 viewmodel.player.changeCurrentVolume(newVolume)
@@ -329,7 +320,11 @@ fun RoomGestureInterceptor(modifier: Modifier) {
                                             }
                                             newBright = newBright.coerceIn(0f, 1f)
 
-                                            currentBrightness = newBright
+                                            gestureValue = GestureValue(
+                                                kind = GestureValueKind.BRIGHTNESS,
+                                                display = (newBright * 100f).roundToInt(),
+                                                fraction = newBright
+                                            )
 
                                             // Only apply if changed significantly (avoid tiny fluctuations)
                                             if (abs(newBright - lastAppliedBrightness) >= 0.025f) {
@@ -346,53 +341,11 @@ fun RoomGestureInterceptor(modifier: Modifier) {
             )
         )
 
-        with(LocalDensity.current) {
-            // Over-video chrome: fixed dark scrim + white content, independent of the app theme,
-            // so the bubbles stay readable over any video frame.
-            if (currentBrightness != -1f) {
-                Row(
-                    modifier = Modifier
-                        .offset((vertdragOffset.x - 100).toDp(), vertdragOffset.y.toDp())
-                        .clip(RoundedCornerShape(25.dp))
-                        .background(Color.Black.copy(alpha = 0.65f))
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Brightness6,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.padding(end = 4.dp)
-                    )
-                    val brightness = stringResource(
-                        Res.string.room_brightness,
-                        "${currentBrightness.times(100).toInt()}%"
-                    )
-                    Text(brightness, color = Color.White)
-                }
-            }
-
-            if (currentVolume != -1) {
-                Row(
-                    modifier = Modifier
-                        .offset((vertdragOffset.x + 100).toDp(), vertdragOffset.y.toDp())
-                        .clip(RoundedCornerShape(25.dp))
-                        .background(Color.Black.copy(alpha = 0.65f))
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = CenterVertically
-                ) {
-                    val maxVolume = remember { viewmodel.player.getMaxVolume() }
-
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.padding(end = 4.dp)
-                    )
-                    val volume = stringResource(Res.string.room_volume, "$currentVolume/$maxVolume")
-                    Text(volume, color = Color.White)
-                }
-            }
-        }
+        /* Swipe readout: one centered pill at the top instead of two bubbles chasing the
+         * finger. Feeds it null on drag end so it fades itself out. */
+        RoomGestureValueHud(
+            active = gestureValue,
+            modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth()
+        )
     }
 }

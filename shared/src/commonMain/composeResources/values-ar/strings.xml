@@ -166,8 +166,8 @@
     <string name ="room_setting_pick_color">اختر لوناً</string>
     <string name ="room_reconnect_button">إعادة الاتصال</string>
     <string name="room_more_info_change_network_engine_msg">جرب تغيير محرك الشبكة في الإعدادات > الشبكة إلى Ktor إذا كنت تواجه مشاكل في الاتصال.</string>
-    <string name="room_volume">مستوى الصوت: %1$s</string>
-    <string name="room_brightness">السطوع: %1$s</string>
+    <string name="room_volume">مستوى الصوت</string>
+    <string name="room_brightness">السطوع</string>
     <string name="room_coming_soon">قريباً!</string>
     <string name="room_chapters_skip">تخطي الفصل</string>
     <string name="room_chapters">الفصول</string>

@@ -28,6 +28,15 @@ internal interface KitePlayerPresentation {
     )
 }
 
+/**
+ * TEMP DIAG (draw-truth hunt, 2026-08-25): a presentation that can answer for the renderer's own
+ * presented/superseded/failed counters, the numbers the engine's stats deliberately do not carry.
+ */
+internal interface KiteProbeCapable {
+    /** Never null: an unavailable probe must SAY so rather than vanish from the log line. */
+    fun probe(): String
+}
+
 /** The shipping KitePlayer path: Compose hosts the platform-native video view. */
 internal object KiteInteropPresentation : KitePlayerPresentation {
     @Composable

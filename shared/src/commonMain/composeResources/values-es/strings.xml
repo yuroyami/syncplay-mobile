@@ -154,8 +154,8 @@
     <string name="room_setting_pick_color">Elegir un color</string>
     <string name="room_reconnect_button">Reconectar</string>
     <string name="room_more_info_change_network_engine_msg">Intenta cambiar el motor de red en Configuración > Red a Ktor si experimentas problemas de conexión.</string>
-    <string name="room_volume">Volumen: %1$s</string>
-    <string name="room_brightness">Brillo: %1$s</string>
+    <string name="room_volume">Volumen</string>
+    <string name="room_brightness">Brillo</string>
     <string name="room_coming_soon">¡Próximamente!</string>
     <string name="room_chapters_skip">Saltar capítulo</string>
     <string name="room_chapters">Capítulos</string>

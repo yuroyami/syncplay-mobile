@@ -154,8 +154,8 @@
     <string name="room_setting_pick_color">Выберите цвет</string>
     <string name="room_reconnect_button">Переподключиться</string>
     <string name="room_more_info_change_network_engine_msg">Попробуйте изменить сетевой движок в Настройки > Сеть на Ktor, если у вас возникают проблемы с подключением.</string>
-    <string name="room_volume">Громкость: %1$s</string>
-    <string name="room_brightness">Яркость: %1$s</string>
+    <string name="room_volume">Громкость</string>
+    <string name="room_brightness">Яркость</string>
     <string name="room_coming_soon">Скоро!</string>
     <string name="room_chapters_skip">Пропустить главу</string>
     <string name="room_chapters">Главы</string>

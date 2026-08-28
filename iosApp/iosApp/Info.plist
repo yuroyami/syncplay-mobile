@@ -37,6 +37,16 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Synkplay saves video screenshots to your photo library.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
+	<key>UIFileSharingEnabled</key>
+	<true/>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UILaunchStoryboardName</key>
@@ -44,13 +54,6 @@
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>armv7</string>
-	</array>
-	<key>UIBackgroundModes</key>
-	<array>
-		<!-- Required for Picture-in-Picture: iOS won't keep audio/video alive in the
-		     PiP window once the app is backgrounded unless this background mode is
-		     declared. AVPictureInPictureController and VLCKit 4's PiP both need it. -->
-		<string>audio</string>
 	</array>
 	<key>UIRequiresFullScreen</key>
 	<true/>
@@ -61,7 +64,5 @@
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Synkplay saves video screenshots to your photo library.</string>
 </dict>
 </plist>

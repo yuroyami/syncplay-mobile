@@ -58,16 +58,10 @@ syncplay-pc-src-master
 
 #we should also hide claude hidden dir which is used by Claude Code
 .claude
-# Fable 5 audit deliverables (local only)
-F5_AUDIT2.md
-F5_BOMB.md
-FABLE5_AUDIT.md
-FABLE5_AUDIT_REPORT.html
-FABLE5_GITHUB_ISSUE_TRACKER_REPORT.md
-SYNKPLAY_FRESH_AUDIT_REPORT.html
-UIUX_AUDIT.md
-# Stale local duplicate of CLAUDE.md kept for other AI tooling
-AGENTS.md
+# Consolidated engineering ledger, the single source of truth for open defects.
+# Local only: it lists unfixed security findings, and this repo is public.
+# Remove this line once the P0 security items in it are fixed, if you want it public.
+SSOT.md
 
 # Desktop: downloaded libVLC natives (fetched by :desktopApp:fetchVlcNatives, ~185MB)
 desktopApp/resources/
