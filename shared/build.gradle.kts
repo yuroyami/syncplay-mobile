@@ -27,6 +27,7 @@ kotlin {
         compileSdk { version = release(providers.gradleProperty("android.compileSdk").get().toInt()) }
         minSdk = providers.gradleProperty("android.minSdk").get().toInt()
         androidResources { enable = true }
+        withHostTest {}
     }
 
     // Desktop (JVM) target — Windows/macOS/Linux via Compose for Desktop, hosted by :desktopApp.
