@@ -89,6 +89,8 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.room_hud_auto_hide_summary
+import syncplaymobile.shared.generated.resources.room_hud_auto_hide_title
 import syncplaymobile.shared.generated.resources.language_codes
 import syncplaymobile.shared.generated.resources.language_names
 import syncplaymobile.shared.generated.resources.media_directories
@@ -843,6 +845,13 @@ object Preferences {
         title = Res.string.uisetting_swipe_gestures_title
         summary = Res.string.uisetting_swipe_gestures_summary
         icon = Icons.Filled.Swipe
+    }
+
+    /** The HUD hides itself after a few idle seconds; off keeps it up until tapped away. */
+    val HUD_AUTO_HIDE = Pref("pref_inroom_hud_auto_hide", true) {
+        title = Res.string.room_hud_auto_hide_title
+        summary = Res.string.room_hud_auto_hide_summary
+        icon = Icons.Filled.Timer
     }
 
     /** ------------ KitePlayer Settings -------------*/

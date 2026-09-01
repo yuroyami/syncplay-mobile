@@ -1,6 +1,5 @@
 package app.room
 
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -22,11 +21,11 @@ import app.room.sharedplaylist.SharedPlaylistManager
 import app.utils.FileComparison
 import app.utils.availablePlatformPlayerEngines
 import app.utils.instantiateNetworkManager
+import app.uicomponents.frames.NoticeQueue
+import app.uicomponents.frames.NoticeSeverity
 import app.utils.loggy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
@@ -194,18 +193,16 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
         get() = joinConfig == null
 
 
-    val osdMsg = mutableStateOf("")
-    private var osdJob: Job? = null
-    fun dispatchOSD(getter: suspend () -> String) {
-        val durationSec = app.preferences.Preferences.OSD_DURATION.value()
-        if (durationSec <= 0) return
+    /** The room's transient messages: at most three on screen, a warning never dropped for info. */
+    val notices = NoticeQueue()
 
-        osdJob?.cancel()
-        osdJob = viewModelScope.launch {
-            osdMsg.value = getter()
-            delay(durationSec * 1000L)
-            osdMsg.value = ""
-        }
+    fun dispatchOSD(getter: suspend () -> String) = dispatchNotice(NoticeSeverity.Info, getter)
+
+    /** The hold comes from the notice duration preference; zero switches notices off. */
+    private fun dispatchNotice(severity: NoticeSeverity, getter: suspend () -> String) {
+        val holdMs = Preferences.OSD_DURATION.value() * 1000L
+        if (holdMs <= 0L) return
+        viewModelScope.launch { notices.post(getter(), severity, holdMs) }
     }
 
     /**
@@ -239,7 +236,13 @@ class RoomViewmodel(val joinConfig: JoinConfig?, val backStack: SnapshotStateLis
             if (!originIsController && !prefs.OSD_NON_OPERATOR.value()) return
         }
 
-        dispatchOSD(getter)
+        val severity = when (category) {
+            OSDCategory.SAME_ROOM -> NoticeSeverity.Info
+            OSDCategory.OTHER_ROOM -> NoticeSeverity.Quiet
+            OSDCategory.SLOWDOWN -> NoticeSeverity.Sync
+            OSDCategory.WARNING -> NoticeSeverity.Warn
+        }
+        dispatchNotice(severity, getter)
     }
 
     /************ Extension Properties for Quick Access ***************/

@@ -118,7 +118,7 @@ The full sequence with its gates is in [IMPLEMENTATION](IMPLEMENTATION.md).
 
 ## How this is verified
 
-There is a headless render harness in `shared/src/desktopTest/kotlin/app/preferences/`. It draws
+There is a headless render harness in `shared/src/desktopTest/kotlin/app/design/`. It draws
 real Compose composables with no emulator and writes PNGs, which is how every measurement in
 [PREF_SYSTEM](PREF_SYSTEM/README.md) was produced.
 
@@ -133,8 +133,24 @@ distance, and the cutout device in both orientations.
 
 ## Status
 
-Design only. Nothing here is implemented. The three prototype files under
-`shared/src/desktopTest/kotlin/app/preferences/` are measurement and reference: the harness
-stays and grows into the golden set, the console prototype is the reference for the controls and
-is deleted once they move into `uicomponents`, and the earlier Material based prototype is
-deleted with it.
+Implemented, in the order of [IMPLEMENTATION](IMPLEMENTATION.md):
+
+- FOUNDATION: the tokens (`Space`, `Radius`, `Motion`, `Type`, `Palette`, `Tier`), the controls
+  under `uicomponents/controls`, the frames under `uicomponents/frames`, and the lint ratchet.
+- TEXT_AND_ICONS: the five type roles, the drawn glyph set, the Material type bridge.
+- GLASS_SURFACES: `surface(tier)` and `chromeSurface`. The old glass API still exists where
+  surfaces have not moved yet.
+- POPUPS: `Modal` with its three sizes and the compact sheet. Older popups are migrated as their
+  surfaces land.
+- PREF_SYSTEM: the settings console, search, groups, the in-room panel and the engine categories.
+- TRANSPORT: one seek path, the scrub track, the play key, jump keys, the control strip and its
+  modals for tracks, subtitle search and chapters.
+- ROOM_SHELL: `RoomFrame` docks, the rail, the side panels at a real width, HUD auto-hide behind
+  its switch, PiP and solo resolved in the frame, the artwork.
+- STATUS_AND_OSD: the notice queue in the room, the status line.
+- ROOM_CARDS: the roster rows and the panel chrome.
+
+Still to do: CHAT, GESTURES 3 and 4, MEDIA_INTAKE, HOME, THEMING, SERVER_HOST, the remaining
+POPUPS and GLASS steps, NAVIGATION back handling and transitions, DESKTOP_AND_KEYBOARD, TV, the
+ACCESSIBILITY reduced-motion switch, the COPY pass, and the items in [BUGS](BUGS.md) that belong
+to those surfaces.

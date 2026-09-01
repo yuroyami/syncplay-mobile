@@ -58,6 +58,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Shape
+import app.theme.Radius
+import app.uicomponents.frames.PanelFrame
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -126,7 +129,7 @@ import app.uicomponents.glassSurface
 object CardSharedPlaylist {
 
     @Composable
-    fun SharedPlaylistCard() {
+    fun SharedPlaylistCard(shape: Shape = Radius.panelShape) {
         val viewmodel = LocalRoomViewmodel.current
         val scope = rememberCoroutineScope { Dispatchers.IO }
         val playlist = viewmodel.playlistManager
@@ -170,25 +173,9 @@ object CardSharedPlaylist {
         val mediaDirsPopupState = remember { mutableStateOf(false) }
         val addUrlsPopupState = remember { mutableStateOf(false) }
 
-        Card(
-            modifier = Modifier.glassSurface(shape = RoundedCornerShape(12.dp), material = GlassMaterial.Thin),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        ) {
-            Column(modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.SpaceEvenly,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = stringResource(Res.string.room_shared_playlist),
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-
+        PanelFrame(title = stringResource(Res.string.room_shared_playlist), modifier = Modifier.fillMaxSize(), shape = shape, scrollable = false) {
                 LazyColumn(
-                    modifier = Modifier.fillMaxHeight(0.75f).fillMaxWidth().padding(8.dp)
+                    modifier = Modifier.weight(1f).fillMaxWidth().padding(8.dp)
                 ) {
                     itemsIndexed(viewmodel.session.sharedPlaylist) { index, item ->
 
@@ -477,7 +464,6 @@ object CardSharedPlaylist {
                         }
                     }
                 }
-            }
         }
 
         MediaDirsPopup(mediaDirsPopupState)

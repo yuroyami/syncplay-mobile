@@ -27,7 +27,7 @@ class SettingsGolden {
         DesignHarness.render("settings-categories", 360) { SettingsCategoryList(SETTINGS_GLOBAL) {} }
 
         assertTrue(network.contentHeightDp <= 260, "network category ${network.contentHeightDp}dp exceeds its 260dp budget")
-        assertTrue(player.contentHeightDp <= 640, "player category ${player.contentHeightDp}dp exceeds its 640dp budget")
+        assertTrue(player.contentHeightDp <= 690, "player category ${player.contentHeightDp}dp exceeds its 690dp budget")
         assertTrue(chat.contentHeightDp <= 900, "chat category ${chat.contentHeightDp}dp exceeds its 900dp budget")
     }
 }

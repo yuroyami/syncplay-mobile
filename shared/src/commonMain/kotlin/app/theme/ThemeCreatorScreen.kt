@@ -64,7 +64,7 @@ import app.LocalGlobalViewmodel
 import app.LocalTheme
 import app.home.HomeLeadingTitle
 import app.home.components.HomeTextField
-import app.room.ui.tabs.RoomTab
+import app.uicomponents.controls.GlyphButton
 import app.uicomponents.FlexibleText
 import app.uicomponents.dropdownMenuMaxHeight
 import app.uicomponents.jostFont
@@ -542,12 +542,7 @@ fun ThemeCreatorScreenUI(themeToEdit: SaveableTheme? = null) {
                             }
                         )
 
-                        RoomTab(
-                            modifier = Modifier.size(46.dp),
-                            icon = Icons.Filled.WebStories,
-                            visibilityState = false,
-                            onClick = {}
-                        )
+                        GlyphButton(icon = Icons.Filled.WebStories, name = stringResource(Res.string.theme_customize_preview)) {}
                     }
                 }
             }

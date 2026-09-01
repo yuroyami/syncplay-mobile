@@ -1,7 +1,11 @@
 package app.room.ui.statinfo
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -9,107 +13,82 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import app.LocalRoomViewmodel
 import app.protocol.models.ConnectionState
-import app.theme.Theming
-import app.uicomponents.sairaFont
+import app.theme.Radius
+import app.theme.Space
+import app.theme.Type
+import app.theme.palette
+import app.uicomponents.chromeSurface
+import app.uicomponents.controls.RowGap
+import app.uicomponents.controls.Tag
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
-import syncplaymobile.shared.generated.resources.room_details_current_room
+import syncplaymobile.shared.generated.resources.room_connecting
 import syncplaymobile.shared.generated.resources.room_details_user_count
 import syncplaymobile.shared.generated.resources.room_ping_disconnected
-import app.uicomponents.darkGlassPill
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.Arrangement
+import syncplaymobile.shared.generated.resources.room_reconnecting
 
+private val EPISODE = Regex("(?:s|season)(\\d{1,2})(?:e|episode)(\\d{1,2})")
 
+/**
+ * The status line: a 6dp connection square, the room name, the user count or the connection
+ * state, and the episode tag when the file name carries one. Notices live elsewhere now.
+ */
 @Composable
-fun RoomStatusInfoSection(modifier: Modifier) {
+fun RoomStatusInfoSection(modifier: Modifier = Modifier) {
     val viewmodel = LocalRoomViewmodel.current
+    val p = palette
+    val connectionState by viewmodel.networkManager.state.collectAsState()
+    val userList by viewmodel.session.userList.collectAsState()
 
-    // Top-center overlay: room name, user count / connection state, OSD messages.
-    // TODO: suppress while in PiP mode.
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+    // The server's list includes us; while joining, show one instead of a flash of zero.
+    val totalUsers = when {
+        userList.isNotEmpty() -> userList.size
+        connectionState == ConnectionState.CONNECTED -> 1
+        else -> 0
+    }
+    val square = when (connectionState) {
+        ConnectionState.CONNECTED -> p.ok
+        ConnectionState.CONNECTING, ConnectionState.SCHEDULING_RECONNECT -> p.accent
+        ConnectionState.DISCONNECTED -> p.bad
+    }
+    val state = when (connectionState) {
+        ConnectionState.CONNECTED -> stringResource(Res.string.room_details_user_count, totalUsers)
+        ConnectionState.CONNECTING -> stringResource(Res.string.room_connecting)
+        ConnectionState.SCHEDULING_RECONNECT -> stringResource(Res.string.room_reconnecting)
+        ConnectionState.DISCONNECTED -> stringResource(Res.string.room_ping_disconnected)
+    }
+    val episode = remember(viewmodel.media?.fileName) {
+        viewmodel.media?.fileName?.lowercase()?.let { EPISODE.find(it) }?.let { m ->
+            "S" + m.groupValues[1].padStart(2, '0') + "E" + m.groupValues[2].padStart(2, '0')
+        }
+    }
+
+    Row(
         modifier = modifier
+            .chromeSurface(Radius.panelShape)
+            .heightIn(min = Space.rowCompact)
+            .padding(horizontal = Space.gap),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (!viewmodel.isSoloMode) {
-            val connectionState by viewmodel.networkManager.state.collectAsState()
-            val userList by viewmodel.session.userList.collectAsState()
-
-            /* userList from the server already includes ourselves (ListResponse keys every room
-             * member by username). Fall back to 1 while connected but not yet populated, so the
-             * count doesn't flash "0 users" during join. */
-            val totalUsers = when {
-                userList.isNotEmpty() -> userList.size
-                connectionState == ConnectionState.CONNECTED -> 1
-                else -> 0
-            }
-
-            /* When connected, show the user count as the status (it already conveys room state).
-             * Only the disconnected state gets an explicit label, since the count goes stale the
-             * moment the socket drops. */
-            val parenthesized = if (connectionState == ConnectionState.CONNECTED) {
-                stringResource(Res.string.room_details_user_count, totalUsers)
-            } else {
-                stringResource(Res.string.room_ping_disconnected)
-            }
-
-            /* Over-video chrome rule: fixed white-on-dark-glass, not theme roles. */
-            Text(
-                text = stringResource(Res.string.room_details_current_room, viewmodel.session.currentRoom) +
-                        " ($parenthesized)",
-                fontSize = 11.sp,
-                color = Color.White.copy(alpha = 0.85f),
-                modifier = Modifier
-                    .darkGlassPill(RoundedCornerShape(16.dp))
-                    .padding(horizontal = 12.dp, vertical = 5.dp),
-            )
-
-            /* No manual reconnect button: NetworkManager.reconnect() already retries on its own
-             * whenever the socket drops, so the button only duplicated automatic behavior. */
-
-            val osd by remember { viewmodel.osdMsg }
-            if (osd.isNotEmpty()) Text(
-                modifier = Modifier
-                    .fillMaxWidth(0.95f)
-                    .darkGlassPill(RoundedCornerShape(16.dp))
-                    .padding(horizontal = 14.dp, vertical = 6.dp),
-                fontSize = 11.sp,
-                lineHeight = (Theming.USER_INFO_TXT_SIZE + 4).sp,
-                color = Color.White,
-                text = osd,
-                fontFamily = FontFamily(sairaFont),
-                textAlign = TextAlign.Center,
-            )
-            if (osd.isEmpty()) viewmodel.media?.let {
-                val filename = it.fileName.lowercase()
-                if (filename.contains(Regex("(s|season)(\\d{1,2})(e|episode)(\\d{1,2})"))) {
-                    val season =
-                        Regex("(s|season)(\\d{1,2})").find(filename)?.groupValues?.get(
-                            2
-                        )?.toInt() ?: 0
-                    val episode =
-                        Regex("(e|episode)(\\d{1,2})").find(filename)?.groupValues?.get(
-                            2
-                        )?.toInt() ?: 0
-                    Text(
-                        text = "S${season}E${episode}",
-                        fontSize = 11.sp,
-                        color = Color.White.copy(alpha = 0.85f),
-                        modifier = Modifier
-                            .darkGlassPill(RoundedCornerShape(16.dp))
-                            .padding(horizontal = 12.dp, vertical = 5.dp),
-                    )
-                }
-            }
+        Box(Modifier.size(6.dp).background(square, Radius.tightShape))
+        RowGap(Space.gapTight + 2.dp)
+        Text(
+            text = viewmodel.session.currentRoom,
+            style = Type.label,
+            color = p.ink,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false),
+        )
+        RowGap(Space.gapTight + 2.dp)
+        Text(state, style = Type.value, color = p.inkDim, maxLines = 1)
+        if (episode != null) {
+            RowGap(Space.gapTight + 2.dp)
+            Tag(episode)
         }
     }
 }

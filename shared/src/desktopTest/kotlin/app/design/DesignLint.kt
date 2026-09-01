@@ -21,9 +21,9 @@ class DesignLint {
     private val bridgeFiles = setOf("Tokens.kt", "AppTypography.kt", "SaveableTheme.kt")
 
     private val baseline = mapOf(
-        "material3 component imports" to 128,
-        "sp literals outside Tokens.kt" to 84,
-        "MaterialTheme.typography or ripple" to 35,
+        "material3 component imports" to 121,
+        "sp literals outside Tokens.kt" to 81,
+        "MaterialTheme.typography or ripple" to 32,
         "text sizes under 11sp" to 19,
     )
 

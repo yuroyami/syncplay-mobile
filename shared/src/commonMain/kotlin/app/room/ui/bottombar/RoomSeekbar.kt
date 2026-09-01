@@ -127,6 +127,7 @@ fun RoomSeekbar(modifier: Modifier) {
                 onValueChange = { f ->
                     if (!dragging) {
                         dragging = true
+                        viewmodel.uiState.scrubbing.value = true
                         // The origin is captured before the engine moves, on the first drag event.
                         dragFromMs = viewmodel.player.currentPositionMs()
                     }
@@ -135,6 +136,7 @@ fun RoomSeekbar(modifier: Modifier) {
                 onValueChangeFinished = {
                     if (!dragging) return@ScrubTrack
                     dragging = false
+                    viewmodel.uiState.scrubbing.value = false
                     val targetMs = (preview * durationMs).roundToLong()
                     // A release on a chapter mark jumps to it: a 20dp target around a 1dp mark.
                     val hitRadius = with(density) { 10.dp.toPx() }

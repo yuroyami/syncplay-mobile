@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Stream
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.VideoLabel
+import app.preferences.Preferences.HUD_AUTO_HIDE
 import app.preferences.Preferences.AUDIO_LANG
 import app.preferences.Preferences.CHAT_COLORS_ENTRY
 import app.preferences.Preferences.CLEAR_LOGS
@@ -197,6 +198,7 @@ val INROOM_PLAYER_SETTINGS = SettingCategory(
     title = Res.string.uisetting_categ_player_settings,
     icon = Icons.Filled.VideoLabel,
 ) {
+    +HUD_AUTO_HIDE
     group(Res.string.settings_group_seeking) {
         +SEEK_FORWARD_JUMP
         +SEEK_BACKWARD_JUMP

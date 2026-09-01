@@ -604,4 +604,18 @@
     <string name="room_audio_track_selected">Audio: %1$s</string>
     <string name="room_subtitle_track_selected">Subtitles: %1$s</string>
     <string name="room_sub_search_language">Language</string>
+    <!-- Room shell (design overhaul) -->
+    <string name="room_hud_auto_hide_title">Hide controls automatically</string>
+    <string name="room_hud_auto_hide_summary">After a few idle seconds. Off keeps them up until you tap.</string>
+    <string name="room_waiting_for_file">Waiting for a file</string>
+    <string name="room_leave_question">Leave the room?</string>
+    <string name="room_managed_room">Managed room</string>
+    <string name="room_lock">Lock the screen</string>
+    <string name="room_connecting">Connecting</string>
+    <string name="room_reconnecting">Reconnecting</string>
+    <string name="room_alone">Nobody else is here yet.</string>
+    <string name="room_file_same">Same file</string>
+    <string name="room_file_different">Different file</string>
+    <string name="room_file_none">No file</string>
+    <string name="room_file_has">Has a file</string>
 </resources>

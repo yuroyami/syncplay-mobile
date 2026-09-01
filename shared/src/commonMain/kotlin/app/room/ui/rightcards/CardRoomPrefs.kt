@@ -9,6 +9,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
+import app.theme.Radius
 import app.LocalRoomViewmodel
 import app.preferences.settings.LocalSettingsDensity
 import app.preferences.settings.SettingCategory
@@ -28,7 +30,7 @@ object CardRoomPrefs {
 
     /** In-room settings: the same console list as the global screen, inside the panel frame. */
     @Composable
-    fun InRoomSettingsCard() {
+    fun InRoomSettingsCard(shape: Shape = Radius.panelShape) {
         val viewmodel = LocalRoomViewmodel.current
         var categories: List<SettingCategory>? by remember { mutableStateOf(null) }
         var open by remember { mutableStateOf<SettingCategory?>(null) }
@@ -41,6 +43,7 @@ object CardRoomPrefs {
         PanelFrame(
             title = title,
             modifier = Modifier.fillMaxSize(),
+            shape = shape,
             actions = {
                 if (open != null) GlyphButton(BackGlyph, name = "Back", onClick = { open = null })
             },

@@ -1,67 +1,42 @@
 package app.room.ui.misc
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import app.LocalRoomViewmodel
-import app.theme.Theming
+import app.theme.Space
+import app.theme.Type
+import app.theme.palette
 import app.uicomponents.SynkplayLogo
-import app.uicomponents.SyncplayishText
-import app.utils.appName
-import org.jetbrains.compose.resources.Font
-import org.jetbrains.compose.resources.painterResource
-import syncplaymobile.shared.generated.resources.Directive4_Regular
+import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
-import syncplaymobile.shared.generated.resources.synkplay_logo
+import syncplaymobile.shared.generated.resources.room_waiting_for_file
 
-/** The Syncplay artwork that is displayed in the video frame when no video is loaded */
+/** The room ground before a file loads: the mark at 12 percent and one line, nothing to admire. */
 @Composable
 fun RoomBackgroundArtwork() {
     val viewmodel = LocalRoomViewmodel.current
     val isInPipMode by viewmodel.uiState.hasEnteredPipMode.collectAsState()
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(brush = Brush.linearGradient(colors = Theming.backgroundGradient)),
-    ) {
-        Column(
-            modifier = Modifier
-                .wrapContentWidth()
-                .align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-
-            SynkplayLogo(modifier = Modifier.height(if (isInPipMode) 40.dp else 84.dp).aspectRatio(1f))
-
-            Spacer(modifier = Modifier.width(14.dp))
-
-            SyncplayishText(
-                modifier = Modifier.padding(bottom = 6.dp),
-                string = appName,
-                size = if (isInPipMode) 10f else 26f
-            )
+    val p = palette
+    Box(Modifier.fillMaxSize().background(p.ground), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            SynkplayLogo(modifier = Modifier.size(if (isInPipMode) 40.dp else 84.dp).alpha(0.12f))
+            if (!isInPipMode) {
+                Spacer(Modifier.height(Space.gap))
+                Text(stringResource(Res.string.room_waiting_for_file), style = Type.note, color = p.inkDim)
+            }
         }
     }
 }

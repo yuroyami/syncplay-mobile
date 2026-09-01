@@ -14,10 +14,12 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
 
     val msg = MutableStateFlow<String>("")
 
-    companion object {
-        enum class RoomOrientation { LANDSCAPE, PORTRAIT }
-    }
-    val roomOrientation = MutableStateFlow<RoomOrientation>(RoomOrientation.LANDSCAPE)
+    /** Bumped on any pointer or key activity in the room; the HUD idle timer restarts on it. */
+    val hudActivity = MutableStateFlow(0L)
+    fun noteHudActivity() { hudActivity.value = hudActivity.value + 1 }
+
+    /** True while the track is being dragged; the HUD never hides mid-scrub. */
+    val scrubbing = MutableStateFlow(false)
 
     val hasEnteredPipMode = MutableStateFlow(false)
     val visibleHUD = MutableStateFlow(true)
@@ -115,5 +117,6 @@ class RoomUiStateManager(val viewmodel: RoomViewmodel) : AbstractManager(viewmod
         hasEnteredPipMode.value = false
         visibleHUD.value = true
         gifPanelVisible.value = false
+        scrubbing.value = false
     }
 }
