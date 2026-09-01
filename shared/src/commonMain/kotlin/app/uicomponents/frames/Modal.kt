@@ -34,6 +34,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import org.jetbrains.compose.resources.stringResource
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.action_close
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -165,7 +168,7 @@ internal fun ModalFrame(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(title, style = Type.label, color = p.ink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                        if (dismissable) GlyphButton(CloseGlyph, name = "Close", onClick = onDismiss, tint = p.inkDim)
+                        if (dismissable) GlyphButton(CloseGlyph, name = stringResource(Res.string.action_close), onClick = onDismiss, tint = p.inkDim)
                     }
                     Rule()
                 }

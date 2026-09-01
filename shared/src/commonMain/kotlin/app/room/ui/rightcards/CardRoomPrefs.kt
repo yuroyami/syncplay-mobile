@@ -24,6 +24,7 @@ import app.uicomponents.controls.ProgressBar
 import app.uicomponents.frames.PanelFrame
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.action_back
 import syncplaymobile.shared.generated.resources.room_card_title_in_room_prefs
 
 object CardRoomPrefs {
@@ -45,7 +46,7 @@ object CardRoomPrefs {
             modifier = Modifier.fillMaxSize(),
             shape = shape,
             actions = {
-                if (open != null) GlyphButton(BackGlyph, name = "Back", onClick = { open = null })
+                if (open != null) GlyphButton(BackGlyph, name = stringResource(Res.string.action_back), onClick = { open = null })
             },
         ) {
             val list = categories

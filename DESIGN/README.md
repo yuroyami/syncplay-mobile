@@ -182,6 +182,11 @@ Implemented, in the order of [IMPLEMENTATION](IMPLEMENTATION.md):
   chat selection, the focus ring no longer scales, docks are focus groups, and the swipes have
   scrub rows in the gestures panel. Not done: desktop scrollbars through the frames, drop, the
   cursor hiding in fullscreen, the TV density flag.
+- COPY: every settings title fits 24 characters and every summary 48, in sentence case; nine
+  summaries kept their operational text as editor details; the two Android-style escapes and
+  the last hardcoded English glyph names are gone; a copy lint runs with the design tests.
 
-Still to do: the COPY pass, the icon set, the desktop scrollbars and drop, the TV density flag,
-and the items in [BUGS](BUGS.md) that belong to those surfaces.
+Still to do: the icon set (TEXT_AND_ICONS 4), the error and notice copy pass, the desktop
+scrollbars and drop, the cursor hiding in fullscreen, the TV density flag, the Android server
+notification's client count, the media registry's file count and lost-access state, and the
+Android chooser on persistable grants.

@@ -25,6 +25,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import org.jetbrains.compose.resources.stringResource
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.action_back
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -70,7 +73,7 @@ fun ScreenFrame(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (onBack != null) {
-                    GlyphButton(BackGlyph, name = "Back", onClick = onBack, size = Space.glyphLarge)
+                    GlyphButton(BackGlyph, name = stringResource(Res.string.action_back), onClick = onBack, size = Space.glyphLarge)
                 }
                 Text(
                     text = title,

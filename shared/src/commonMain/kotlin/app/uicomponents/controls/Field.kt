@@ -22,6 +22,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import org.jetbrains.compose.resources.stringResource
+import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.action_clear
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
@@ -110,7 +113,7 @@ fun Field(
                 if (showClear && value.isNotEmpty() && enabled && !readOnly) {
                     GlyphButton(
                         icon = CloseGlyph,
-                        name = "Clear",
+                        name = stringResource(Res.string.action_clear),
                         onClick = { onValueChange("") },
                         tint = p.inkDim,
                         // Never a focus stop: keyboard traversal jumps field to field, not to the clear glyph.

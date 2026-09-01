@@ -89,6 +89,15 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 import syncplaymobile.shared.generated.resources.Res
+import syncplaymobile.shared.generated.resources.uisetting_doubletap_seek_detail
+import syncplaymobile.shared.generated.resources.uisetting_vlc_custom_flags_detail
+import syncplaymobile.shared.generated.resources.ui_setting_mpv_profile_detail
+import syncplaymobile.shared.generated.resources.ui_setting_mpv_vidsync_detail
+import syncplaymobile.shared.generated.resources.ui_setting_mpv_interpolation_detail
+import syncplaymobile.shared.generated.resources.setting_media_resolver_detail
+import syncplaymobile.shared.generated.resources.setting_disable_glass_detail
+import syncplaymobile.shared.generated.resources.setting_trusted_domains_detail
+import syncplaymobile.shared.generated.resources.setting_tls_detail
 import syncplaymobile.shared.generated.resources.setting_reduce_motion_summary
 import syncplaymobile.shared.generated.resources.setting_reduce_motion_title
 import syncplaymobile.shared.generated.resources.server_host_disable_ready
@@ -575,6 +584,7 @@ object Preferences {
     val TLS_ENABLE = Pref("pref_tls", true) {
         title = Res.string.setting_tls_title
         summary = Res.string.setting_tls_summary
+        detail = Res.string.setting_tls_detail
         summaryFormatArgs = arrayOf(appName)
         icon = Icons.Filled.Key
     }
@@ -584,6 +594,7 @@ object Preferences {
     val MEDIA_RESOLVER_ENABLED = Pref("pref_media_resolver_enabled", true) {
         title = Res.string.setting_media_resolver_title
         summary = Res.string.setting_media_resolver_summary
+        detail = Res.string.setting_media_resolver_detail
         icon = Icons.Filled.Language
     }
 
@@ -599,6 +610,7 @@ object Preferences {
     val DISABLE_FROSTED_GLASS = Pref("pref_disable_frosted_glass", false) {
         title = Res.string.setting_disable_glass_title
         summary = Res.string.setting_disable_glass_summary
+        detail = Res.string.setting_disable_glass_detail
         icon = Icons.Filled.BlurOff
     }
 
@@ -606,6 +618,7 @@ object Preferences {
     val TRUSTED_DOMAINS = Pref("pref_trusted_domains", "") {
         title = Res.string.setting_trusted_domains_title
         summary = Res.string.setting_trusted_domains_summary
+        detail = Res.string.setting_trusted_domains_detail
         icon = Icons.Filled.Web
 
         extraConfig = PrefExtraConfig.ShowComposable(
@@ -889,6 +902,7 @@ object Preferences {
     val DOUBLETAP_SEEK = Pref("pref_inroom_doubletap_seek", false) {
         title = Res.string.uisetting_doubletap_seek_title
         summary = Res.string.uisetting_doubletap_seek_summary
+        detail = Res.string.uisetting_doubletap_seek_detail
         icon = Icons.Filled.TouchApp
     }
 
@@ -991,16 +1005,19 @@ object Preferences {
     val MPV_VIDSYNC = Pref("pref_mpv_video_sync", "audio") {
         title = Res.string.ui_setting_mpv_vidsync_title
         summary = Res.string.ui_setting_mpv_vidsync_summary
+        detail = Res.string.ui_setting_mpv_vidsync_detail
         icon = Icons.Filled.SlowMotionVideo
     }
     val MPV_PROFILE = Pref("pref_mpv_profile", "fast") {
         title = Res.string.ui_setting_mpv_profile_title
         summary = Res.string.ui_setting_mpv_profile_summary
+        detail = Res.string.ui_setting_mpv_profile_detail
         icon = Icons.Filled.SupervisedUserCircle
     }
     val MPV_INTERPOLATION = Pref("pref_mpv_interpolation", false) {
         title = Res.string.ui_setting_mpv_interpolation_title
         summary = Res.string.ui_setting_mpv_interpolation_summary
+        detail = Res.string.ui_setting_mpv_interpolation_detail
         icon = Icons.Filled.Animation
     }
 
@@ -1187,6 +1204,7 @@ object Preferences {
     val VLC_CUSTOM_FLAGS = Pref("pref_vlc_custom_flags", "") {
         title = Res.string.uisetting_vlc_custom_flags_title
         summary = Res.string.uisetting_vlc_custom_flags_summary
+        detail = Res.string.uisetting_vlc_custom_flags_detail
         icon = Icons.Filled.Keyboard
         extraConfig = PrefExtraConfig.TextField()
     }
