@@ -93,7 +93,7 @@ fun Modal(
     ) {
         DialogBackdropBlur()
         CompositionLocalProvider(LocalInDialogWindow provides true) {
-            ModalFrame(size, title, dismissable, onDismiss, actions, body, inset)
+            ModalFrame(size, title, dismissable, onDismiss, actions, inset, body)
         }
     }
 }
@@ -106,8 +106,8 @@ internal fun ModalFrame(
     dismissable: Boolean,
     onDismiss: () -> Unit,
     actions: (@Composable RowScope.() -> Unit)?,
-    body: @Composable ColumnScope.() -> Unit,
     inset: Boolean = true,
+    body: @Composable ColumnScope.() -> Unit,
 ) {
     val p = palette
     val density = LocalDensity.current
